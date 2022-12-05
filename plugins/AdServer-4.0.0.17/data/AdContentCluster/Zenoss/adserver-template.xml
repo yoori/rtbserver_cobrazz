@@ -1,0 +1,53 @@
+<zendmd>
+  <templates>
+    <template name="OixServerMonitoringRequest" prefix="SubAgent-Shell-AdServer-MIB">
+      <oids>
+        <oid name="adRequestExecTime" type="GAUGE"/>
+        <oid name="adRequestExecStatus" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="Monitoring Ad Request Critical Execution Time"
+          oid="adRequestExecTime"
+          min="0" max="2" evclass="/OIX/AdServer" severity="5"/>
+        <threshold name="Monitoring Ad Request Execution Time"
+          oid="adRequestExecTime"
+          min="0" max="1" evclass="/OIX/AdServer" severity="4"/>
+        <threshold name="Monitoring Ad Request Execution Status"
+          oid="adRequestExecStatus"
+          min="0" max="0" evclass="/OIX/AdServer" severity="5"/>
+      </thresholds>
+      <graphs>
+        <graph name="OixServer Monitoring Request Processing" units="seconds">
+          <oid name="adRequestExecTime" type="AREA"/>
+        </graph>
+      </graphs>
+    </template>
+
+    <template name="OixServerApache" prefix="SubAgent-Shell-AdServer-Apache-MIB">
+      <oids>
+        <oid name="apsTotalAccesses" type="DERIVE"/>
+
+        <oid name="apsWaitingForConnection" type="GAUGE"/>
+        <oid name="apsKeepAlive" type="GAUGE"/>
+        <oid name="apsReadingRequest" type="GAUGE"/>
+        <oid name="apsSendingReply" type="GAUGE"/>
+      </oids>
+      <graphs>
+        <graph name="OixServer HTTP Requests" units="requests">
+          <oid name="apsTotalAccesses" type="AREA" rename="Req per sec"/>
+        </graph>
+        <graph name="OixServer Apache Workers State" units="workers">
+          <oid name="apsOpenSlots" type="AREA" rename="open"/>
+          <oid name="apsOtherSlots" type="AREA" rename="other" stacked="True"/>
+          <oid name="apsDNSLookup" type="AREA" rename="resolving" stacked="True"/>
+          <oid name="apsKeepAlive" type="AREA" rename="keepalive" stacked="True"/>
+          <oid name="apsWaitingForConnection" type="AREA" rename="waiting" stacked="True"/>
+          <oid name="apsReadingRequest" type="AREA" rename="reading" stacked="True"/>
+          <oid name="apsSendingReply" type="AREA" rename="sending" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+
+__CLUSTER_CONNECTIONS_TEMPLATE__
+  </templates>
+</zendmd>

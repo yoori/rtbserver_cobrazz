@@ -1,0 +1,62 @@
+-- $Id: CampaignServer.mib 105853 2012-08-02 11:05:29Z jurij_kuznecov $
+
+CampaignServer-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  campaignSvcs FROM AdServer-MIB;
+
+campaignServer OBJECT IDENTIFIER ::= { campaignSvcs 1 }
+
+index OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Index value used by the process"
+  ::= { campaignServer 1 }
+
+campaignCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of loaded campaigns"
+  ::= { campaignServer 100 }
+
+tagCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of loaded tags"
+  ::= { campaignServer 101 }
+
+behavChannelCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of loaded behavioral channels"
+  ::= { campaignServer 102 }
+
+lastDBUpdateTime OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Absolute GMT time point when finished last update (db update in central, corba update in remote)"
+  ::= { campaignServer 103 }
+
+lastDBUpdateDelay OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Now - lastDBUpdateTime, where now is system time received in value requesting context"
+  ::= { campaignServer 104 }
+
+expressionChannelCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The number of active expression channels"
+  ::= { campaignServer 105 }
+
+END
+

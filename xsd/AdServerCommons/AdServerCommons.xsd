@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common for services XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <!-- Oracle DBConnection -->
+  <xsd:complexType name="DBConnectionType">
+    <xsd:attribute name="db" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database access username.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="password" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database access password.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="schema" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Database schema.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="statement_timeout" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Timeout for execute statements at this connection.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- Oracle DBConnection ends -->
+
+  <!-- Postgres connection-->
+  <xsd:complexType name="PGConnectionType">
+    <xsd:attribute name="connection_string" type="xsd:string" use="required"/>
+  </xsd:complexType>
+  <!-- Postgres connection ends -->
+
+  <!-- CorbaObjectRef -->
+  <xsd:complexType name="CorbaObjectRefType">
+    <xsd:sequence>
+      <xsd:element name="Secure" type="SecureParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Secure params.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Corba object name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="service_index" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Index for AdServer service in cluster.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ref" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Corba object reference.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- CorbaObjectRef ends -->
+
+  <!-- MultiCorbaObjectRef -->
+  <xsd:complexType name="MultiCorbaObjectRefType">
+    <xsd:sequence>
+      <xsd:element name="Ref" type="CorbaObjectRefType" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Set of references to equal interfaces.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Corba object name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- MultiCorbaObjectRef ends -->
+
+  <!-- CorbaConfig -->
+  <xsd:complexType name="CorbaConfigType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="EndpointConfigType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Endpoint.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="threading-pool" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Corba threading pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- CorbaConfig ends -->
+
+  <!-- EndpointConfig -->
+  <xsd:complexType name="EndpointConfigType">
+    <xsd:sequence>
+      <xsd:element name="Secure" type="SecureParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Endpoint secure params.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Object" type="EndpointObjectType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Endpoint.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="host" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Listen interface. By default use canonical host name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ior_names" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>hostnames in ior, separated ','</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>port.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- EndpointConfig -->
+
+  <!-- EndpointObject -->
+  <xsd:complexType name="EndpointObjectType">
+    <xsd:attribute name="servant" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- EndpointObject -->
+
+  <!-- SecureParams -->
+  <xsd:complexType name="SecureParamsType">
+    <xsd:attribute name="key" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Name of file with secure key</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="certificate" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Name of file with certificate
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="certificate_authority" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Name of file with peer certificate authority
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="key-word" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Certificate password
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- SecureParams ends -->
+
+  <!-- Logger -->
+  <xsd:complexType name="ErrorLoggerType">
+    <xsd:sequence>
+      <xsd:element name="SysLog" type="SysLogType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Parameters of logging to syslog.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Suffix" type="ErrorLogSuffixType" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Parameters of logging to syslog.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="filename" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets the log file name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="log_level" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Logging level on the start of service</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SysLogType">
+    <xsd:attribute name="log_level" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets logging level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ErrorLogSuffixType">
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Suffix of log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="size_span" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Sets size limit for log rotation, in bytes.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="time_span" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Sets time interval for log rotation, in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="min_log_level" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Sets minimum logging level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_log_level" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets maximum logging level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="LanguageSegmentorType">
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Name of segmentor</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="country" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Country of segmentor</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="base" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Path to initialization file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="ShortenedTime">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="\d{1,2}:\d{2}"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="CampaignFilterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="active"/>
+      <xsd:enumeration value="virtual"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ChannelFilterType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="active"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="LogFlushPolicyType">
+    <xsd:attribute name="size" type="xsd:positiveInteger" use="optional"/>
+    <xsd:attribute name="period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="XsltTokenType">
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="value" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="StatsDumperType">
+    <xsd:sequence>
+      <xsd:element name="StatsDumperRef" type="CorbaObjectRefType"/>
+    </xsd:sequence>
+    <xsd:attribute name="period" type="xsd:positiveInteger" default="60"/>
+    <xsd:attribute name="provide_channel_counters" type="xsd:boolean" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SNMPConfigType">
+    <xsd:attribute name="mib_dirs" type="xsd:string" use="required"/>
+    <xsd:attribute name="index" type="xsd:nonNegativeInteger" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="UseReferrerType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="empty"/>
+      <xsd:enumeration value="domain"/>
+      <xsd:enumeration value="path"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="TemplateCacheType">
+    <xsd:attribute name="root" type="xsd:string" use="required"/>
+    <xsd:attribute name="size" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="timeout" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqAddressType">
+    <xsd:attribute name="domain" type="xsd:string" default="*"/>
+    <xsd:attribute name="port" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="ZmqSocketPatternType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="PUB"/>
+      <xsd:enumeration value="SUB"/>
+      <xsd:enumeration value="PULL"/>
+      <xsd:enumeration value="PUSH"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="ZmqServerSecurity">
+    <xsd:attribute name="server_secret" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqClientSecurity">
+    <xsd:attribute name="server_public" type="xsd:string" use="required"/>
+    <xsd:attribute name="client_secret" type="xsd:string" use="required"/>
+    <xsd:attribute name="client_public" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqSocketType">
+    <xsd:sequence>
+      <xsd:element name="Address" type="ZmqAddressType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="ServerSecurity" type="ZmqServerSecurity" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ClientSecurity" type="ZmqClientSecurity" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="hwm" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="linger" type="xsd:integer" use="optional"/>
+    <xsd:attribute name="reconnect_interval" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="type" type="ZmqSocketPatternType" use="required"/>
+    <xsd:attribute name="non_block" type="xsd:boolean" default="false"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="StorageConfigType">
+    <xsd:attribute name="min_free_space" type="xsd:nonNegativeInteger" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SecurityTokenType">
+    <xsd:attribute name="key0" type="xsd:string" use="required"/>
+    <xsd:attribute name="key1" type="xsd:string" use="required"/>
+    <xsd:attribute name="key2" type="xsd:string" use="required"/>
+    <xsd:attribute name="key3" type="xsd:string" use="required"/>
+    <xsd:attribute name="key4" type="xsd:string" use="required"/>
+    <xsd:attribute name="key5" type="xsd:string" use="required"/>
+    <xsd:attribute name="key6" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <!-- Kafka producer topic configuration -->
+  <xsd:complexType name="KafkaTopic">
+    <xsd:attribute name="topic"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="message_queue_size"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="brokers"
+      type="xsd:string"
+      use="required"/>
+  </xsd:complexType>
+
+</xsd:schema>

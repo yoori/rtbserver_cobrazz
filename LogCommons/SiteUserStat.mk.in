@@ -1,0 +1,6 @@
+@siteuserstat_deps@
+sources := SiteUserStat.cpp
+
+includes := .
+@siteuserstat_post@
+

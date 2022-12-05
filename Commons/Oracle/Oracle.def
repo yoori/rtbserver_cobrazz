@@ -1,0 +1,10 @@
+name="Oracle"
+so_files=Oracle
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons
+
+if [ "$use_occi" = "use_occi" ]; then
+  osbe_cxx_dep OCCI
+fi;

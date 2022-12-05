@@ -1,0 +1,7 @@
+@usercoloreachcontainertestexe_deps@
+
+sources := UserColoReachContainerTest.cpp
+target := UserColoReachContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,6 @@
+@userinfoexchangerskels_deps@
+
+corba_skeleton_idls := UserInfoExchanger.idl
+corba_idl_includes := .
+
+@userinfoexchangerskels_post@

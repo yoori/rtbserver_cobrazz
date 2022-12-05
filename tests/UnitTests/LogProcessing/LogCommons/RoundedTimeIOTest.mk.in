@@ -1,0 +1,6 @@
+@roundedtimeiotestexe_deps@
+
+sources := RoundedTimeIOTest.cpp
+target := RoundedTimeIOTest
+
+include $(top_srcdir)/tests/Test.post.rules

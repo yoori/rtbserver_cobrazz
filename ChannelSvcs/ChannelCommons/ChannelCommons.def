@@ -1,0 +1,10 @@
+name="ChannelCommons"
+so_files=ChannelCommons
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep http
+osbe_cxx_dep Commons
+osbe_cxx_dep BLogic
+osbe_cxx_dep LogCommons
+osbe_cxx_dep ColoUpdateStat

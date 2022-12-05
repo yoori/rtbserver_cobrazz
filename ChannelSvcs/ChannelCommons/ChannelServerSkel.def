@@ -1,0 +1,5 @@
+name="ChannelServerSkel"
+so_files=ChannelServerSkel
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Commons
+osbe_cxx_dep ChannelServerStubs

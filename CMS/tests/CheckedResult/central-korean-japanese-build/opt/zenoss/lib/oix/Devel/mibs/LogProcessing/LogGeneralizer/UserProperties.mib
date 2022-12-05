@@ -1,0 +1,117 @@
+
+UserProperties-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  logGeneralizer FROM LogGeneralizer-MIB;
+
+userProperties OBJECT IDENTIFIER ::= { logGeneralizer 101 }
+
+inputTimeAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on processing the input directory"
+  ::= { userProperties 1 }
+
+inputTimeMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on processing the input directory"
+  ::= { userProperties 2 }
+
+inputTimeTotal OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total time spent on processing the input directory"
+  ::= { userProperties 3 }
+
+inputTimePerFileAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on processing an input file"
+  ::= { userProperties 4 }
+
+inputTimePerFileMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on processing an input file"
+  ::= { userProperties 5 }
+
+inputSuccessCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of successfully processed input files"
+  ::= { userProperties 6 }
+
+inputErrorCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of input files that the service has failed to process"
+  ::= { userProperties 7 }
+
+outputTimeAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on writing log data to disk or database"
+  ::= { userProperties 8 }
+
+outputTimeMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on writing log data to disk or database"
+  ::= { userProperties 9 }
+
+outputTimeTotal OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total time spent on writing log data to disk or database"
+  ::= { userProperties 10 }
+
+outputRecordsAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average number of log data records written per operation"
+  ::= { userProperties 11 }
+
+outputRecordsMax OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max number of log data records written per operation"
+  ::= { userProperties 12 }
+
+outputRecordsTotal OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of log data records written"
+  ::= { userProperties 13 }
+
+outputSuccessCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of successful write operations"
+  ::= { userProperties 14 }
+
+outputErrorCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of failed write operations"
+  ::= { userProperties 15 }
+
+END
+

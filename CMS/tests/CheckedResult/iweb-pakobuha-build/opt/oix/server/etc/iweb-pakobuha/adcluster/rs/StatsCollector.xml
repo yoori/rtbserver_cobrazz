@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/Controlling/StatsCollectorConfig.xsd">
+  <cfg:StatsCollectorConfig>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10118">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="StatsCollector" name="StatsCollector"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:SNMPConfig mib_dirs="/usr/share/snmp/mibs:/opt/foros/server/share/snmp/mibs:/opt/oix/server/mibs:/opt/oix/server/mibs/Controlling" index="2"/>
+    <cfg:Rules>
+      <cfg:Rule prefix="userInfoSvcsMatch" type="Measurable"/>
+      <cfg:Rule prefix="userInfoSvcsMerge" type="Measurable"/>
+      <cfg:Rule prefix="channelSvcsMatch" type="Measurable"/>
+      <cfg:Rule prefix="requestInfoFilling" type="Measurable"/>
+      <cfg:Rule prefix="creativeSelection" type="Measurable"/>
+      <cfg:Rule prefix="creativeSelectionLocal" type="Measurable"/>
+      <cfg:Rule name="userInfoSvcsUsers" prefix="UserCount" type="Countable"/>
+      <cfg:Rule name="userInfoSvcsDailyUsers" prefix="DailyUsers" type="Countable"/>
+    </cfg:Rules>
+    <cfg:Logger filename="/opt/foros/server/var/log/StatsCollector/StatsCollector.log" log_level="7" sys_log="true">
+      <cfg:TimeSpanPolicy time="86400"/>
+      <cfg:SizeSpanPolicy size="104857600"/>
+    </cfg:Logger>
+  </cfg:StatsCollectorConfig>
+</cfg:AdConfiguration>

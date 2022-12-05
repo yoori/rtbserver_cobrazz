@@ -1,0 +1,6 @@
+@campaignmanagerlogger_deps@
+
+sources := CampaignManagerLogger.cpp
+target := CampaignManagerLogger
+
+@campaignmanagerlogger_post@

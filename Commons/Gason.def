@@ -1,0 +1,5 @@
+name="Gason"
+so_files=Gason
+
+osbe_cxx_dep Generics
+#osbe_cxx_dep RequestMatchers

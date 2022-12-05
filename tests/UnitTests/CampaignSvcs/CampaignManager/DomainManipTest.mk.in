@@ -1,0 +1,7 @@
+@domainmaniptestexe_deps@
+
+sources := DomainManipTest.cpp
+target := DomainManipTest
+test_arguments := -p $(srcdir)/Data/DomainConfig.xml
+
+include $(top_srcdir)/tests/Test.post.rules

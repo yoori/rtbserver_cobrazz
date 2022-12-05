@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_SUBDIR([ErrorPooling])
+OSBE_CONFIG_SUBDIR([LogCommons])
+OSBE_CONFIG_SUBDIR([LogGenerator])
+OSBE_CONFIG_SUBDIR([SyncLogsActive])

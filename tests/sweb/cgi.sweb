@@ -1,0 +1,1015 @@
+[[toc:2]]
+
+This source implements {{{sweb.cgi}}} script in SWeb itself.
+{{{sweb.cgi}}} is used to format {{{.sweb}}} files to be viewed with
+the browser.  User level documentation of SWeb syntax is [[doc | here]].
+This documents describes the implementation of SWeb markup.
+
+= Markup syntax =
+
+We begin by describing how SWeb markup is being processed.
+
+Below we introduce transformations in the order they are applied to
+the input {{{.sweb}}} file.
+
+Before everything else we replace each tab character with eight
+spaces, because later we will count indentation.
+
+<<expand tabs in chunk:?>>=
+  <<chunk>> =~ s/\t/ " " x 8 /ge;
+
+Test:
+       Indented with 7 spaces.
+	Indented with a tab.
+         Indented with 9 spaces.
+
+
+== Escaping ==
+
+  _User documentation is [[doc#escaping | here]]_.
+
+We start with escapes.  We replace backslash followed by punctuation
+character (like {{{\*}}}) with backslash, period, hexadecimal code of
+that character, and another period ({{{\.2a.}}}).  The exception is
+{{{\}}}} in {{{\}}}}}}.
+
+<<process doc:?>>=
+  <<doc>> =~ s{ \\ ( [[:punct:]] ) (?: (?<! \} ) | (?! \}\} ) ) }
+              {
+                  sprintf "\\.%x.", ord $1
+              }xge;
+
+Thus we effectively remove all escaped characters from the input, so
+that they won't affect markup processing (periods are not special, so
+introducing them is OK).  Note that every {{{\.}}} in the input is too
+replaced with {{{\.2e.}}}, so there is no collision when we perform
+reverse transformation.
+
+There are two cases when we substitute escaped character back:
+
+* in [[#embedded HTML]] we do
+
+  <<expand escapes in HTML:?>>=
+    <<HTML>> =~ s{ \\ \. ( [[:xdigit:]]+ ) \. }
+                 {
+                      chr hex $1
+                 }xge;
+
+* otherwise we have to escape HTML
+
+  <<expand escapes in chunk:?>>=
+    <<chunk>> =~ s{ \\ \. ( [[:xdigit:]]+ ) \. }
+                  {
+                      $q->escapeHTML(chr hex $1)
+                  }xge;
+
+We do the second type of transformation before we inject saved chunks
+back (see next section)
+
+<<expand chunks:?>>=
+  <<expand escapes in chunk:'<<chunks>>'>>
+
+The following macro is handy if later we realize that the escape was
+inside [[#verbatim]] block, and we have to revert it.
+
+<<revert escapes in:?>>=
+  <<in>> =~ s{ \\ \. ( [[:xdigit:]]+ ) \. }
+             {
+                 "\\" . chr hex $1
+             }xge;
+
+Test:
+
+ \<<not a macro>>
+
+ * \ (single backslash)
+ * \\ (single backslash)
+ * \* (asterisk)
+ * \} (closing brace)
+ * .\.. (three periods)
+ * \{{{}}} (three opening braces followed by three closing braces)
+ * \{{{\}}} (three opening braces followed by backslash followed by
+   three closing braces)
+ * {{{\}}} (verbatim backslash)
+ * {{{{{{}}}}}} (verbatim three opening braces followed by three
+   closing braces)
+ * \}}} (backslash followed by three closing braces)
+ * }}} (three closing braces)
+
+
+== Verbatim ==
+
+  _User documentation is [[doc#verbatim | here]]_.
+
+Now that we effectively removed all escaped characters, all markup
+sequences stand for themselves.  Verbatim block is enclosed between
+{{{{{{}}} and {{{}}}}}}.  To avoid any further processing of its
+contents we remove it from the input too, and place special marker
+{{{\~V}}} in it's place.  Note again, no collision is possible because
+every {{{\~}}} in the input has been already processed [[#escaping |
+above]].
+
+<<globals>>=
+  my @verbatim;
+
+<<process doc:?>>=
+  <<doc>> =~ s{ \{\{\{ ( .+? \}* ) \}\}\} }
+              {
+                  push @verbatim, $1;
+                  "\\~V"
+              }xsge;
+
+Note the trick above: verbatim block is _greedy_ on its closing
+{{{}}}}}}.  In verbatim block backslash *does not* escape anything,
+and stands for itself.  But how to put {{{}}}}}} inside verbatim block
+then, if it means end-of-block, and there's no escaping?  The solution
+is to make closing marker greedy: if more than three {{{}}}} are
+found, all but last three belong to the _inside_ of the block.  This
+gives us a way to put literal {{{}}}}}} at the end of the block.  See
+[[doc#verbatim | user doc]] for how to put it in the middle (it's
+easy, really: close first part of the block, put {{{}}}}}} in the
+block by itself, open remaining part of the block).
+
+On expansion we have to revert every backslash back, because it stands
+for itself.  Then we escape characters special to HTML itself, to be
+output as is.  We do not use {{{<pre>}}} for formatting, because it
+introduces line break, and we want {{{inline}}} verbatim blocks too.
+So we replace spaces with {{{&nbsp;}}} and newlines with {{{<br />}}}.
+Verbatim blocks are output in monospace with {{{<tt>}}}.
+
+<<expand verbatim>>=
+  my $verbatim = shift @verbatim;
+  <<revert escapes in:'$verbatim'>>
+  $verbatim = $q->escapeHTML($verbatim);
+  $verbatim =~ s/ /&nbsp;/g;
+  $verbatim =~ s|\n|<br />\n|g;
+  "<tt>" . $verbatim . "</tt>"
+
+
+{{{@verbatim}}} list works as a queue: first we {{{push}}} all verbatim
+blocks at the end, and then we {{{shift}}} them in order from the head.
+
+We use the same substitution trick for [[#embedded HTML]], [[#Table of
+Contents]] and [[#links]] later.  When performing expansion, we have
+to do it in one go.  Otherwise, if we first expand {{{\~V}}}, it may
+introduce {{{\~H}}} in the buffer, and its expansion will go wrongly.
+
+<<expand chunks:?>>=
+  <<chunks>> =~ s{ \\ ~ ( [VHL] | T([1-6]) ) }
+                 {
+                     my $mark = $1;
+                     my $level = $2;
+                     if ($mark eq 'V') {
+                         <<expand verbatim>>
+                     } elsif ($mark eq 'H') {
+                         <<expand embedded HTML>>
+                     } elsif ($mark eq 'L') {
+                         <<expand links>>
+                     } elsif ($mark =~ /^T/) {
+                         <<expand Table of Contents to level:'$level'>>
+                     }
+                 }xge;
+
+
+Test:
+
+  {{{
+    This is verbatim text.
+    # * \
+    * [[ text ]] _text_ [[[ text ]]]
+    } }}
+    \}}}{{{}}}}}}{{{
+    }}}{{{<<not a macro>>
+  }}}
+
+== Embedded HTML ==
+
+  _User documentation is [[doc#when everything else fails embedded HTML | here]]_.
+
+Embedded HTML is enclosed between {{{[[[}}} and {{{]]]}}}.  Like with
+[[#verbatim]], we remove it from the input, and place {{{\~H}}} in its
+place.
+
+<<globals>>=
+  my @html;
+
+<<process doc:?>>=
+  <<doc>> =~ s{ \[\[\[ ( .+? ) \]\]\] }
+              {
+                  push @html, $1;
+                  "\\~H"
+              }xsge;
+
+On expand we also expand escaped characters, without leading
+backslash: escaping *does* work in embedded HTML.  Also for obvious
+reasons we do not escape characters special to HTML.
+
+<<expand embedded HTML>>=
+  my $html = shift @html;
+  <<expand escapes in HTML:'$html'>>
+  $html
+
+Test (2x2 table):
+
+  [[[
+    <table border="1">
+      <tr><td>a</td><td>b</td></tr>
+      <tr><td>c</td><td>d</td></tr>
+    \</table>
+  ]]]
+
+  This is output as is: <table>text</table>.
+
+
+== Escape HTML ==
+
+After we removed embedded HTML blocks from the input, we escape all
+HTML special characters that are left in the input.
+
+<<process doc:?>>=
+  <<doc>> = $q->escapeHTML(<<doc>>);
+
+
+== Headers ==
+
+  _User documentation is [[doc#headers | here]]_.
+
+Header is one to six {{{=}}}, some text, and the same number of
+{{{=}}}, all on a line my themselves.  If first {{{=}}} is not
+indented, an anchor is placed at the point, and header info is
+remembered in {{{@headers}}} to build [[#Table of Contents]] later.
+
+<<globals>>=
+  my @headers;
+
+<<process doc:?>>=
+  <<doc>> =~ s{ ^ ( [ ]* ) ( ={1,6} ) [ ]* ( .+? ) [ ]* \2 [ ]* $ }
+              {
+                  my $level = length($2);
+                  my $name = $3;
+                  if (length($1) == 0) {
+                      my $unescaped_name = $name;
+                      <<expand escapes in chunk:'$unescaped_name'>>
+                      my $anchor = lc $unescaped_name;
+                      $anchor =~ s/[^[:alnum:]]+/-/g;
+                      $anchor =~ s/-$//;
+                      push @headers, [$level, "#$anchor", $unescaped_name];
+                      $name = "<a name=\"$anchor\"></a>$name"
+                  }
+                  "$1<h$level>$name</h$level>"
+              }xmge;
+
+We use the following Cascading Style Sheet (aka CSS) for headers:
+
+<<CSS>>=
+  h1, h2, h3, h4, h5, h6 {
+    color: #000080;
+  }
+
+
+Test:
+
+  === Header 3 ===
+
+
+== Table of Contents ==
+
+  _User documentation is [[doc#Table of Contents | here]]_.
+
+We remove {{{[[toc:n]]}}} from the input, and insert {{{\~Tn}}}, where
+{{{n}}} is 1 to 6---the level to which expand Table of Contents.
+
+<<process doc:?>>=
+  <<doc>> =~ s{ ^ ( [ ]* ) \[\[ [ ]* toc:([1-6]) [ ]* \]\] [ ]* $ }
+              {
+                  "$1\\~T$2"
+              }xmge;
+
+On expand we create Table of Contents as a nested lists of links.
+
+<<expand Table of Contents to level:?>>=
+  my $toc = "<div class=\"toc\">\n";
+  my $nesting = 0; 
+  foreach my $h (@headers) {
+      my $l = $h->[0];
+      next if $l > <<level>>;
+
+      while ($nesting > $l) {
+          $toc .= "</ul>\n";
+          --$nesting;
+      }
+      while ($nesting < $l) {
+          $toc .= "<ul>\n";
+          ++$nesting;
+      }
+      $toc .= "<li><a href=\"$h->[1]\">$h->[2]</a></li>\n";
+  }
+  while ($nesting > 0) {
+      $toc .= "</ul>\n";
+      --$nesting;
+  }
+  $toc .= "</div>\n";
+  $toc
+
+Second {{{while}}} loop handles the situation when {{{= H1 =}}} is
+erroneously followed by {{{=== H3 ===}}}.  In this case *H3* will be
+correctly nested _two_ levels relatively to *H1*.
+
+CSS for Table of Contents:
+
+<<CSS>>=
+  .toc {
+    font-size: 90%;
+  }
+
+Test ({{{[[toc:1]]}}}):
+
+  [[toc:1]]
+
+== Links ==
+
+  _User documentation is [[doc#links | here]]_.
+
+We do substitution trick once more to replace links with {{{\~L}}}.
+We only do this for the URLs to avoid their further processing.
+
+A link consists of an address, a fragment ({{{#like-this}}}), and a
+link name after vertical bar.  All three are optional, however we
+expect that the link is not empty.  When address begins with the
+scheme (like {{{http://}}}), it is absolute.  Otherwise it is the name
+of the page with optional fragment, or the fragment of the current
+page.  In this case we normalize fragment that may be spelled in a
+relaxed way.  If page contains {{{/}}}, it should specify the
+namespace.  Otherwise referenced page is in the same namespace as the
+referencing page.
+
+When name is not given, we use the URL itself (address + fragment) as
+the name.
+
+<<globals>>=
+  my @url;
+
+<<process doc:?>>=
+  <<doc>> =~ s{ \[\[ [ \n]* ( .*? ) ( (?: \# .+? )? ) [ \n]*
+                     (?: \| [ \n]* ( [^|]+? ) [ \n]* )? \]\] }
+              {
+                  my $url = $1;
+                  my $fragment = $2;
+                  my $name = $3;
+                  if ($url =~ m|^\w+://|) {
+                      unless (defined $name) {
+                          push @url, $url . $fragment;
+                          $name = "\\~L";
+                      }
+                  } else {
+                      unless (defined $name) {
+                          if ($fragment =~ /./) {
+                              $name = $fragment;
+                              $name =~ s/^#//;
+                          } else {
+                              $name = $url;
+                          }
+                      }
+                      if ($url =~ m|/|) {
+                          $url = $q->url() . "/$url";
+                      }
+                      $fragment = lc $fragment;
+                      $fragment =~ s/[^[:alnum:]]+/-/g;
+                      $fragment =~ s/^-/#/;
+                  }
+
+                  push @url, $url . $fragment;
+                  "<a href=\"\\~L\">$name</a>"
+              }xsge;
+
+<<expand links>>=
+  my $url = shift @url;
+  <<expand escapes in chunk:'$url'>>
+  $url
+
+Test:
+
+  * empty {{{[[]]}}}: here -->[[]]<--
+  * more examples are on [[doc#links | doc]] page
+
+
+== Text style ==
+
+  _User documentation is [[doc#text style | here]]_.
+
+_Italic_ text is enclosed within {{{_}}} on the same line.
+
+<<process doc:?>>=
+  <<doc>> =~ s{ _ ( .+? ) _ }
+              {<i>$1</i>}xg;
+
+
+*Bold* text is enclosed within {{{*}}} on the same line.  However the
+processing of it is different because {{{*}}} at the start of the line
+also denotes list item (see [[#Blocks]]).  So we have to process each
+line _from right to left_ to make the following work:
+
+  * Bullet with *bold*
+
+<<globals>>=
+sub bold {
+    my ($doc) = @_;
+
+    $$doc =~ s{ ^ ( .* ) \* ( .+? ) \* }
+              {
+                  my $text = $1;
+                  my $bold = $2;
+                  bold(\$text);
+                  "$text<b>$bold</b>"
+              }xmge;
+}
+<<>>
+
+<<process doc:?>>=
+  bold(\<<doc>>);
+
+Test:
+
+  * Bullet with *bold*
+  * *Bold* again
+
+
+== Tables ==
+
+  _User documentation is [[doc#tables | here]]_.
+
+The processing is straightforward.  See user documentation for the
+description of the format.
+
+<<process doc:?>>=
+  <<doc>> =~ s{ ^ ( [ ]* ) ( ( \|\|? ) [^|\n]+ (?: \3 [^|\n]+ )* \3 [ ]*
+                  (?: \n \1  ( \|\|? ) [^|\n]+ (?: \4 [^|\n]+ )* \4 [ ]* )* )
+              }
+              {
+                  my $indent = $1;
+                  my $body = $2;
+                  $body =~ s{ ^ [ ]* \|(\|)? } { $1 ? "<th>" : "<td>"}xmge;
+                  $body =~ s{ \|(\|)? [ ]* $ } { $1 ? "</th>" : "</td>"}xmge;
+                  $body =~ s{ [ ]* \|(\|)? [ ]* }
+                            { $1 ? "</th><th>" : "</td><td>" }xmge;
+                  $body =~ s{ ^ ( .+ ) $ } {$indent<tr>$1</tr>}xmg;
+                  "$indent<table class=\"table\">\n$body$indent</table>\n"
+              }xmge;
+
+CSS for tables:
+
+<<CSS>>=
+  .table td, .table th {
+    border: 1px solid #d0d0d0;
+    padding: 3px;
+  }
+  .table th {
+    background: #f0f0f0;
+  }
+
+Test:
+
+  || A      || B      ||
+  |  text a   |     +3    |
+  | {{{a | b}}} | _text b_  |
+  || A     || B     ||
+
+
+== Line break ==
+
+  _User documentation is [[doc#line break | here]]_.
+
+Backslash at the end of line.
+
+<<process doc:?>>=
+  <<doc>> =~ s{ \\ [ ]* $ }
+              {<br />}xmg;
+
+Test:
+
+  Like\
+  this.
+
+
+== Horizontal line ==
+
+  _User documentation is [[doc#horizontal line | here]]_.
+
+Four or more dashes on a line by themselves.
+
+<<process doc:?>>=
+  <<doc>> =~ s{ ^ ( [ ]* ) -{4,} [ ]* $ }
+              {$1<hr />}xmg;
+
+CSS for horizontal line:
+
+<<CSS>>=
+  hr {
+    height: 3px;
+    background: #000080;
+  }
+
+Test (indented line):
+
+  ----
+
+== Blocks ==
+
+  _User documentation is [[doc#blocks | here]]_.
+
+A block is a piece of text that _"visually stands out"_.  For the
+sample text layout shown on the left parsing order is shown on the
+right:
+
+{{{
+    aaaaaaaaaaaaaaaaaaaaaaaaaa\        1|
+    aaaaaaaaaaaaaaaaaaaaaaaaaa\         |
+    aaaaaaaaaaaaaaaaaaaaaaa             |
+                                        |
+      bbbbbbbbbbbbb\                    |  1.1| 
+      bbbbbb                            |     |
+
+    cccccccccccccccccccccccccc\        2|
+    cccccccccccccccc                    |
+      # ddddddddddddddd\                |  2.1|  2.1.1|
+       dddddddddddddddd\                |     |       |
+       dddd                             |     |       |
+                                        |     |       |
+          eeeeeeeee\                    |     |       |  2.1.1.1|
+          eeeeeeeee                     |     |       |         |
+                                        |     |
+      # ffffffff\                       |     |  2.1.2|       
+        ffffffff                        |     |       |
+                                        |
+      * gggggggg\                       |  2.2|  2.2.1|       
+        gggggggg                        |     |       |
+
+    hhhhhhhhhhhh\                      3|
+    hhhhhhhh                            |
+}}}
+
+
+Blocks are processed with {{{block()}}} function:
+
+<<process blocks:?>>=
+  block(\<<blocks>>);
+
+{{{s///g}}} in {{{block()}}} function first finds the block 1.  It
+consists of a _head_ ({{{aaa...}}}) and an optional _tail_
+({{{bbb...}}}).  Essentially the head is the text that is indented to
+the same level as the first line of the block, and tail is optional
+chunks of empty lines followed by text that is indented further to the
+right.
+
+Then {{{block()}}} calls itself recursively for tail {{{bbb...}}}.
+Nested call finds block _head_ {{{bbb...}}}  and no tail.  Recursion
+ends, block 1.1 is wrapped in {{{<p>}}}, and inner {{{block()}}}
+returns.  Top level {{{block()}}} wraps tail {{{<p>bbb...</p>}}} in
+{{{<blockquote>}}}, and the whole block
+{{{aaa...<blockquote><p>bbb...</p></blockquote>}}} is wrapped in
+{{{<p>}}}.
+
+Next iteration of {{{s///g}}} matches block 2 from {{{ccc...}}} to
+{{{ggg...}}} inclusively.  Again {{{block()}}} recursively calls
+itself.  Inner call to {{{block()}}} matches block 2.1.  Note that
+{{{# ddd...}}} and {{{# fff...}}} end up in one block, even though
+they are indented to the same level.  This is a special handling of
+the list marker {{{#}}}.  However {{{* ggg...}}} doesn't belong to
+this block, because list marker is different.  For lists {{{block()}}}
+calls {{{list()}}}.  The result will be wrapped in {{{<ol>}}} or
+{{{<ul>}}} depending on list type.
+
+<<process blocks:?>>=
+sub block {
+    my ($doc) = @_;
+    $$doc =~ s{ ^ ( ( [ ]* ) (?: ([#*]) [ ]* )? \S .*
+                    (?(3) | (?: \n \2 (?! [#*] ) \S .* )* )
+                  )
+                  ( (?: (?: \n [ ]* )* \n \2 (?: [ ] | \3 ) .* )* )
+              }
+              {
+                  my $head = $1;
+                  my $tail = $4;
+                  if ($3) {
+                      my $l = $3 eq '#' ? 'ol' : 'ul';
+                      my $block = "$head$tail";
+                      list(\$block);
+                      "<$l>\n$block</$l>\n"
+                  } else {
+                      if (length($tail)) {
+                          block(\$tail);
+                          $tail = "<blockquote>\n$tail</blockquote>\n";
+                      }
+                      "<p>\n" . $head . $tail . "</p>\n";
+                  }
+              }xmge;
+}
+<<>>
+
+{{{s///g}}} in {{{list()}}} matches each list item separately.  For
+our example given list 2.1 it will first match list item 2.1.1, and
+will recursively call {{{block()}}} and stripped list mark.  We also
+line up lines that are to the right of list mark, but to the left of
+the first line of the list item.  This for
+
+{{{
+      # ddddddddddddddd\
+       dddddddddddddddd\
+       dddd
+
+          eeeeeeeee\
+          eeeeeeeee
+}}}
+
+we will recursively call {{{block()}}} passing it
+
+{{{
+        ddddddddddddddd\
+        dddddddddddddddd\
+        dddd
+
+          eeeeeeeee\
+          eeeeeeeee
+}}}
+
+Each list item is then wrapped in {{{<li>}}}.
+
+<<process blocks:?>>=
+sub list {
+    my ($doc) = @_;
+    $$doc =~ s{ ^ ( [ ]* ) [#*]                      ( ( [ ]* ) .*
+                  (?: (?: \n [ ]* )* \n \1 [ ] .+ )* )
+              }
+              {
+                  my $block = "$1 $2";
+                  my $indent = length($1) + length($3);
+                  $block =~ s/^ {1,$indent}(?=\S)/" " x ($indent + 1)/mge;
+                  block(\$block);
+                  "<li>\n" . $block . "</li>\n"
+              }xmge;
+}
+<<>>
+
+
+Test:
+
+    aaaaaaaaaaaaaaaaaaaaaaaaaa\
+    aaaaaaaaaaaaaaaaaaaaaaaaaa\
+    aaaaaaaaaaaaaaaaaaaaaaa
+
+      bbbbbbbbbbbbb\
+      bbbbbb
+
+    cccccccccccccccccccccccccc\
+    cccccccccccccccc
+      # ddddddddddddddd\
+       dddddddddddddddd\
+       dddd
+
+          eeeeeeeee\
+          eeeeeeeee
+
+      # ffffffff\
+        ffffffff
+
+      * gggggggg\
+        gggggggg
+
+    hhhhhhhhhhhh\
+    hhhhhhhh
+
+
+= Formatting the code =
+
+For a given {{{.sweb}}} we first build a syntax tree
+
+<<build syntax tree:?>>=
+use Lexer;
+use Parser;
+
+my $lexer = new Lexer("$page.sweb", $fh);
+my $parser = new Parser;
+<<tree>> = $parser->run($lexer);
+die "$page.sweb: parse failed" unless defined <<tree>>;
+close($fh);
+<<>>
+
+({{{$page}}} is the base name of {{{.sweb}}} file and {{{$fh}}} is its
+file handle).  Then we format the page
+
+<<format tree:? into HTML:?>>=
+<<HTML>> = <<tree>>->apply(\&process);
+<<process blocks:'<<HTML>>'>>
+<<expand chunks:'<<HTML>>'>>
+<<>>
+
+{{{process()}}} traverses over documentation and code chunks,
+formatting them accordingly
+
+<<globals>>=
+sub process {
+    my ($children) = @_;
+
+    my $doc = '';
+    foreach my $c (@$children) {
+        if (ref $c) {
+            <<format code>>
+        } else {
+            <<format documentation>>
+        }
+    }
+    return $doc;
+}
+<<>>
+
+Formatting of documentation is straightforward
+
+<<format documentation>>=
+  my $chunk = $c;
+  <<expand tabs in chunk:'$chunk'>>
+  <<process doc:'$chunk'>>
+
+  $doc .= $chunk;
+
+For code chunks we first skip comment chunks (customary denoted as
+{{{<###>= ...}}}).  Then we figure out the indentation of the macro
+definition itself as the whitespace before macro name.  Thus
+
+  * Example:
+
+      <<example>>=
+        ...
+
+will be indented correctly.  Then we format the chunk with
+{{{process_def()}}}, indent it accordingly, save as preformatted HTML,
+and place {{{\~H}}} in its place, that will be expanded later together
+with [[#embedded HTML]].
+
+<<format code>>=
+  my $macro = $c->macro;
+  next if $macro->name eq '#';
+
+  my $indent = $macro->apply(\&get_indent);
+
+  my $code = $c->apply(sub { process_def($macro->args, @_) });
+  <<expand tabs in chunk:'$code'>>
+  $code =~ s/^(<[^>]+>) {$indent}/$1/; 
+  $code =~ s/^ {1,$indent}//gm;
+  push @html, $code;
+
+  $doc .= " " x $indent . '<div class="def">\\~H</div>' . "\n";
+
+<<globals>>=
+sub get_indent {
+    my ($children) = @_;
+
+    $children->[0] =~ /^( *)/;
+
+    return length($1);
+}
+<<>>
+
+Code chunk syntax is described [[doc#code | here]].  Given a syntax
+tree of a macro definition, we format it by wrapping each element in a
+{{{<span>}}} of a corresponding CSS class.  HTML special characters in
+the code are escaped.
+
+<<globals>>=
+sub process_def {
+    my ($params, $children, $func) = @_;
+
+    my $code = '';
+    foreach my $c (@$children) {
+        if (ref $c) {
+            if ($c->isa('Macro')) {
+                if (exists $params->{$c->signature}) {
+                    $code .= '<span class="param">';
+                    $code .= $c->apply($func);
+                    $code .= '</span>';
+                } else {
+                    $code .= '<span class="macro">';
+                    $code .= $c->apply($func);
+                    $code .= '</span>';
+                }
+            } elsif ($c->isa('Word') && (my @a = $c->arg)) {
+                $code .= '<span class="param">';
+                $code .= $c->apply($func);
+                $code .= '</span>';
+            } elsif ($c->isa('CodeLine')) {
+                $code .= '<span class="code">';
+                $code .= $c->apply($func);
+                $code .= '</span>';
+            } elsif ($c->isa('EndCode')) {
+                $code .= '<span class="macro">';
+                $code .= $c->apply($func);
+                $code .= '</span>';
+            } else {
+                $code .= $c->apply($func);
+            }
+        } else {
+            $code .= $q->escapeHTML($c);
+        }
+    }
+    return $code;
+}
+<<>>
+
+CSS classes used for code are
+
+<<CSS>>=
+  .def {
+    font-family: monospace;
+    white-space: pre;
+    background: #f0f0f0;
+  }
+  .macro {
+    color: blue;
+  }
+  .param {
+    color: green;
+  }
+  .code {
+    color: black;
+  }
+
+
+= CGI =
+
+Here is the implementation of {{{sweb.cgi}}} itself.
+
+<<CGI>>=
+#! /usr/bin/perl
+# -*- cperl -*-
+#
+# THIS IS A GENERATED FILE.  DO NOT EDIT.  ALL CHANGES WILL BE LOST.
+#
+use warnings;
+use strict;
+<<>>
+
+We begin by reading the configuration file.
+
+<<CGI>>=
+our $config;
+
+BEGIN {
+    my $config_file = './sweb.config';
+
+    $config = do $config_file;
+    unless ($config) {
+        die "While reading $config_file: $!" if ($!);
+        die "While compiling $config_file: $@" if ($@);
+        die "While executing $config_file: returned '$config'";
+    }
+}
+
+use lib $config->{lib};
+<<>>
+
+We do so in the {{{BEGIN}}} block because we use the result at compile
+time (for {{{use lib}}} for instance).
+
+Normally there are two configuration files in the installation.  One
+is located in the same directory as the source of {{{sweb.cgi}}}.  It
+is used for [[doc#previewing the result]].  This config sets library
+path to current directory, and allows {{{/../}}} components in file
+paths.
+
+<<local sweb.cgi config>>=
+my %config = (
+    namespace => {
+        '/preview' => ['Preview', './'],
+    },
+    allow_dot_dot => 1,
+    lib => '.',
+);
+
+\%config;
+<<>>
+
+Another configuration file is located where {{{sweb.cgi}}} is
+installed, and is used in production
+
+<<CGI sweb.cgi config>>=
+my %config = (
+    namespace => {
+        '/sweb' => ['SWeb',
+                    '/home/taskbot/taskbot/repo/foros/server/tests/sweb'],
+        '/test' => ['Auto tests',
+                    '/home/taskbot/taskbot/repo/foros/server/tests/AutoTests/Units',
+                    'https://confluence.ocslab.com/display/ADS'],
+    },
+    lib => '/home/taskbot/taskbot/repo/foros/server/tests/sweb',
+);
+
+\%config;
+<<>>
+
+The format of each {{{namespace}}} entry is _[title, path, fallback]_,
+where _title_ is the name of the namespace, _path_ is where to search
+{{{.sweb}}} files of this namespace, and optional _fallback_ is an URL
+to fall back to when page wasn't found.  Key of the hash is
+{{{/namespace}}} component name.
+
+During the CGI run all errors are passed back to the user
+
+<<CGI>>=
+use CGI;
+use CGI::Carp qw(fatalsToBrowser);
+
+my $q = new CGI;
+if ($q->cgi_error) {
+    print $q->header(-status => $q->cgi_error);
+
+    exit(0);
+}
+<<>>
+
+Upon the request we process given path component.  If there's no path
+at all, we show the page listing available namespaces.  If only
+namespace component is present in the path, we list all pages within
+this namespace.  Otherwise, when the path is {{{/namespace/page}}} we
+show that page, or fallback in the case the page is missing.
+
+<<CGI>>=
+my $self = $q->url();
+my $fh;
+my $path_info = $q->path_info || "/";
+
+die "'$path_info' should not contain /../\n"
+    if $path_info =~ m|/../| && ! $config->{allow_dot_dot};
+
+my ($namespace, $page) = $path_info =~ m| ^ ( / [^/]* ) ( (?: / .* )? ) $ |x;
+my $paths = $config->{namespace}->{$namespace};
+if (! defined $paths) {
+    my @namespaces;
+    while (my ($k, $v) = each %{$config->{namespace}}) {
+       $k =~ s|^/||;
+       push @namespaces, [$k, $v->[0]];
+    }
+    @namespaces = map({ "[[$self/$_->[0] | $_->[1]]]" }
+                      sort { $a->[1] cmp $b->[1] } @namespaces);
+    my $sweb = join("\n* ", "=== Available namespaces ===", @namespaces);
+    open($fh, '<', \$sweb);
+    $page = "Namespaces";
+} else {
+    my $found;
+    if ($page =~ m|^/.|) {
+        $page =~ s|^/||;
+        $found = open($fh, '<:utf8', "$paths->[1]/$page.sweb");
+        if (! $found && $paths->[2]) {
+            print $q->redirect("$paths->[2]/$page");
+            exit(0);
+        }
+    }
+
+    unless ($found) {
+        my @files = map({ s|.*/(.+)\.sweb$|$1|; "[[$self$namespace/$_ | $_]]" }
+                        sort glob "$paths->[1]/*.sweb");
+        my $sweb = join("\n* ", "=== Available pages ===", @files);
+        $sweb .= "\n\\\nFallback URL: [[$paths->[2]]]"
+            if $paths->[2];
+        open($fh, '<', \$sweb);
+        $page = "Pages";
+    }
+}
+<<>>
+
+The rest of the processing is self-explanatory:
+
+<<CGI>>=
+<<globals>>
+
+my $tree;
+<<build syntax tree:'$tree'>>
+
+my $html;
+<<format tree:'$tree' into HTML:'$html'>>
+
+my $css = q[
+  <<CSS>>
+];
+
+print $q->header(-type => 'text/html; charset=utf-8');
+print $q->start_html(-style => { -code => $css },
+                     -title => $page);
+print $html;
+print $q->end_html;
+<<>>
+
+= Installation =
+
+Adjust {{{<<CGI sweb.cgi config>>}}} above and generate the source code:
+
+{{{
+  ./sweb.pl cgi.sweb expand.sweb
+}}}
+
+<<@eval>>=
+  <<expand:'"CGI"' into file:'"sweb.cgi"'>>
+  <<expand:'"local sweb.cgi config"' into file:'"sweb.config"'>>
+  <<expand:'"CGI sweb.cgi config"' into file:'"sweb.config-cgi"'>>
+
+Copy {{{sweb.cgi}}} and {{{sweb.config-cgi}}} to Web server CGI
+directory, rename {{{sweb.config-cgi}}} to {{{sweb.config}}}.  Fix
+file rights.

@@ -1,0 +1,8 @@
+# -*- sh -*-
+
+set -o errexit -o nounset -o noclobber
+
+
+"$TASKBOT" $TASKBOT_OPTIONS "$TASKBOT_ORIG_CONFIG" \
+    -c "sleep $[$TASKBOT_SELECT_TIMEOUT + 5]; echo test"
+echo $?

@@ -1,0 +1,6 @@
+@campaignconfig_deps@
+
+sources := CampaignConfig.cpp CreativeTemplate.cpp
+target := CampaignConfig
+
+@campaignconfig_post@

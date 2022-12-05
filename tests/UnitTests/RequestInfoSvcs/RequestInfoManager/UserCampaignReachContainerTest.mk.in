@@ -1,0 +1,9 @@
+@usercampaignreachcontainertestexe_deps@
+
+sources := UserCampaignReachContainerTest.cpp \
+  UserCampaignReachContainerMTTest.cpp
+
+target := UserCampaignReachContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

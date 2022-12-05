@@ -1,0 +1,56 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  struct UserMotionDescriptor
+  {
+    uint time;
+    string request_id;
+  };
+  
+  autoreader UserMotionReader<UserMotionDescriptor>;
+
+  autowriter UserMotionWriter<UserMotionDescriptor>;
+
+  struct UserFraudProtectionProfileDescriptor
+  {
+    uint version;
+
+    uint fraud_time;
+    list<UserMotionDescriptor> requests;
+
+    // requests for rollback if user will be detected as fraud
+    list<UserMotionDescriptor> rollback_requests;
+    list<UserMotionDescriptor> clicks;
+  };
+
+  reader UserFraudProtectionProfileReader<UserFraudProtectionProfileDescriptor>
+  {
+    version;
+
+    fraud_time;
+    list<UserMotionReader> requests;
+    list<UserMotionReader> rollback_requests;
+    list<UserMotionReader> clicks;
+  };
+  
+  writer UserFraudProtectionProfileWriter<UserFraudProtectionProfileDescriptor>
+  {
+    version;
+
+    fraud_time;
+    list<UserMotionWriter> requests;
+    list<UserMotionWriter> rollback_requests;
+    list<UserMotionWriter> clicks;
+  };
+
+  struct UserFraudProtectionProfileVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader UserFraudProtectionProfileVersionReader<
+    UserFraudProtectionProfileVersionDescriptor>;
+}
+}
+

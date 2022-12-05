@@ -1,0 +1,26 @@
+name="BiddingFrontend"
+so_files=BiddingFrontend
+
+osbe_cxx_dep Stream
+osbe_cxx_dep IPMap
+osbe_cxx_dep CORBACommons
+
+osbe_cxx_dep Polyglot
+
+osbe_cxx_dep Commons
+osbe_cxx_dep ChannelControllerStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep DomainParser
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep UserBindServerStubs
+osbe_cxx_dep RequestMatchers
+osbe_cxx_dep FrontendStatistic
+osbe_cxx_dep UserIdController
+osbe_cxx_dep CommonModule
+
+osbe_cxx_dep FeConfig
+osbe_cxx_dep Tanx
+osbe_cxx_dep Baidu
+osbe_cxx_dep Gason
+osbe_cxx_dep Google

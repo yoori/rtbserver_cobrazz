@@ -1,0 +1,115 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Profiling Server Configuration File XML Schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="ProfilingServerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10175">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="dmp_profiling_info_port" type="xsd:positiveInteger" use="optional" default="10190">
+      <xsd:annotation>
+        <xsd:documentation>
+         0mq bind socket port for DMPProfilingInfo stream.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="DMPProfileFilterType">
+    <xsd:attribute name="keep-time" type="xsd:positiveInteger" use="optional" default="345600">
+      <xsd:annotation>
+        <xsd:documentation>Time duration to keep DMPProfileInfo hashes in seconds (4 days by default).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="enable" type="xsd:boolean" use="optional" default="false">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep-time-period" type="xsd:positiveInteger" use="optional" default="3600">
+      <xsd:annotation>
+        <xsd:documentation>Time interval size in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="chunk-count" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>Count of chunks in time interval.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="chunk-size" type="xsd:positiveInteger" use="optional" default="1048576">
+      <xsd:annotation>
+        <xsd:documentation>Size of chunk in bytes.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="time-precision" type="xsd:positiveInteger" use="optional" default="30">
+      <xsd:annotation>
+        <xsd:documentation>Precision for request time to calculate hash.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="ProfilingServerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="dmpProfilingInfoBindSocket" type="ZmqBindSocketType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="dmpProfileFilter" type="DMPProfileFilterType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="zmq_io_threads" type="xsd:nonNegativeInteger" use="optional" default="20">
+      <xsd:annotation>
+        <xsd:documentation>
+          IOThread count for ZmqContext.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="work_threads" type="xsd:nonNegativeInteger" use="optional" default="20">
+      <xsd:annotation>
+        <xsd:documentation>
+          Threads count for the messages processing.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="bind_url_suffix" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Threads count for the messages processing.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="debug_on" type="xsd:boolean" use="optional" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Threads count for the messages processing.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

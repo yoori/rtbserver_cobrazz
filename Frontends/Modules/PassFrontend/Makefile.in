@@ -1,0 +1,9 @@
+@passfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := \
+  RequestInfoFiller.cpp \
+  PassFrontend.cpp
+
+@passfrontend_post@

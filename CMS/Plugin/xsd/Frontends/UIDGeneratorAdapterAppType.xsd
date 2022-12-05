@@ -1,0 +1,58 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      FCGI Server Configuration File XML Schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="UIDGeneratorAdapterNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10132">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="dmp_profiling_info_port" type="xsd:positiveInteger" use="optional" default="10133">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UIDGeneratorAdapterConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="UIDGeneratorAdapterNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="dmpProfilingInfoConnectSocket" type="ZmqConnectSocketType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="distribute_strategy" type="DistributeStrategyType" use="optional" default="both">
+      <xsd:annotation>
+        <xsd:documentation>ZMQ stream distribution strategy (both, first only or second only fe subclusters)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

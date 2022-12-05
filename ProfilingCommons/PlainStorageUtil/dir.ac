@@ -1,0 +1,4 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([PlainStorageUtilExe], [PlainStorageUtil.mk])
+OSBE_CXX_DEF([LevelCheckUtilExe], [LevelCheckUtil.mk])

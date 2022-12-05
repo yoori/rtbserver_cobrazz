@@ -1,0 +1,8 @@
+name="CampaignServer_v350"
+so_files=CampaignServer_v350
+
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep Commons
+osbe_cxx_dep CampaignServerStubs_v350
+osbe_cxx_dep CampaignServerSkels

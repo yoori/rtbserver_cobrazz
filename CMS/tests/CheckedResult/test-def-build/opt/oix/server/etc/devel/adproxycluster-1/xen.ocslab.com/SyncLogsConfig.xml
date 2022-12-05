@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/LogProcessing/SyncLogsConfig.xsd">
+  <cfg:SyncLogsConfig log_root="/opt/foros/server/var/log/SyncLogs" check_logs_period="10" host_check_period="10">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="12312">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/SyncLogs/SyncLogs">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+    <cfg:ClusterConfig root_logs_dir="/opt/foros/server/var/log" definite_hash_schema="/opt/oix/server/xsd/AdServerCommons/HostDistributionFile.xsd">
+      <cfg:FeedRouteGroup local_copy_command_type="rsync" remote_copy_command_type="rsync" tries_per_file="2" local_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:10114/ad-logs##DST_PATH##" remote_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:10114/ad-logs##DST_PATH##">
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="LogProxy/CCGStat/CCGStat.log_*" destination="/LogGeneralizer/In/CCGStat"/>
+          <cfg:files source="LogProxy/CCStat/CCStat.log_*" destination="/LogGeneralizer/In/CCStat"/>
+          <cfg:files source="LogProxy/CampaignStat/CampaignStat.log_*" destination="/LogGeneralizer/In/CampaignStat"/>
+          <cfg:files source="LogProxy/AdvertiserUserStat/AdvertiserUserStat.log_*" destination="/LogGeneralizer/In/AdvertiserUserStat"/>
+          <cfg:files source="LogProxy/ColoUsers/ColoUsers.log_*" destination="/LogGeneralizer/In/ColoUsers"/>
+          <cfg:files source="LogProxy/CreativeStat/CreativeStat.log_*" destination="/LogGeneralizer/In/CreativeStat"/>
+          <cfg:files source="LogProxy/OptOutStat/OptOutStat.log_*" destination="/LogGeneralizer/In/OptOutStat"/>
+          <cfg:files source="LogProxy/WebStat/WebStat.log_*" destination="/LogGeneralizer/In/WebStat"/>
+          <cfg:files source="LogProxy/ChannelTriggerStat/ChannelTriggerStat.log_*" destination="/LogGeneralizer/In/ChannelTriggerStat"/>
+          <cfg:files source="LogProxy/ChannelTriggerImpStat/ChannelTriggerImpStat.log_*" destination="/LogGeneralizer/In/ChannelTriggerImpStat"/>
+          <cfg:files source="LogProxy/SiteReferrerStat/SiteReferrerStat.log_*" destination="/LogGeneralizer/In/SiteReferrerStat"/>
+          <cfg:files source="LogProxy/UserProperties/UserProperties.log_*" destination="/LogGeneralizer/In/UserProperties"/>
+          <cfg:files source="LogProxy/ChannelPerformance/ChannelPerformance.log_*" destination="/LogGeneralizer/In/ChannelPerformance"/>
+          <cfg:files source="LogProxy/ExpressionPerformance/ExpressionPerformance.log_*" destination="/LogGeneralizer/In/ExpressionPerformance"/>
+          <cfg:files source="LogProxy/CCGKeywordStat/CCGKeywordStat.log_*" destination="/LogGeneralizer/In/CCGKeywordStat"/>
+          <cfg:files source="LogProxy/SiteChannelStat/SiteChannelStat.log_*" destination="/LogGeneralizer/In/SiteChannelStat"/>
+          <cfg:files source="LogProxy/ChannelPriceRange/ChannelPriceRange.log_*" destination="/LogGeneralizer/In/ChannelPriceRange"/>
+          <cfg:files source="LogProxy/ChannelInventory/ChannelInventory.log_*" destination="/LogGeneralizer/In/ChannelInventory"/>
+          <cfg:files source="LogProxy/ChannelInventoryEstimationStat/ChannelInventoryEstimationStat.log_*" destination="/LogGeneralizer/In/ChannelInventoryEstimationStat"/>
+          <cfg:files source="LogProxy/ActionStat/ActionStat.log_*" destination="/LogGeneralizer/In/ActionStat"/>
+          <cfg:files source="LogProxy/ActionRequest/ActionRequest.log_*" destination="/LogGeneralizer/In/ActionRequest"/>
+          <cfg:files source="LogProxy/KeywordStat/KeywordStat.log_*" destination="/LogGeneralizer/In/KeywordStat"/>
+          <cfg:files source="LogProxy/ChannelHitStat/ChannelHitStat.log_*" destination="/LogGeneralizer/In/ChannelHitStat"/>
+          <cfg:files source="LogProxy/PassbackStat/PassbackStat.log_*" destination="/LogGeneralizer/In/PassbackStat"/>
+          <cfg:files source="LogProxy/CMPStat/CMPStat.log_*" destination="/LogGeneralizer/In/CMPStat"/>
+          <cfg:files source="LogProxy/RequestTriggerStat/RequestTriggerStat.log_*" destination="/LogGeneralizer/In/RequestTriggerStat"/>
+          <cfg:files source="LogProxy/RequestTriggerChannelStat/RequestTriggerChannelStat.log_*" destination="/LogGeneralizer/In/RequestTriggerChannelStat"/>
+          <cfg:files source="LogProxy/MarginRuleStat/MarginRuleStat.log_*" destination="/LogGeneralizer/In/MarginRuleStat"/>
+          <cfg:files source="LogProxy/WebwiseDiscoverItemStat/WebwiseDiscoverItemStat.log_*" destination="/LogGeneralizer/In/WebwiseDiscoverItemStat"/>
+          <cfg:files source="LogProxy/WebwiseDiscoverTagStat/WebwiseDiscoverTagStat.log_*" destination="/LogGeneralizer/In/WebwiseDiscoverTagStat"/>
+          <cfg:files source="LogProxy/WebwiseDiscoverItems/WebwiseDiscoverItems.log_*" destination="/LogGeneralizer/In/WebwiseDiscoverItems"/>
+          <cfg:files source="LogProxy/PublisherInventory/PublisherInventory.log_*" destination="/LogGeneralizer/In/PublisherInventory"/>
+          <cfg:files source="LogProxy/ChannelCountStat/ChannelCountStat.log_*" destination="/LogGeneralizer/In/ChannelCountStat"/>
+          <cfg:files source="LogProxy/ChannelImpInventory/ChannelImpInventory.log_*" destination="/LogGeneralizer/In/ChannelImpInventory"/>
+          <cfg:files source="CampaignServer/Out/ColoUpdateStat/ColoUpdateStat.log_*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
+          <cfg:files source="ChannelProxy/Out/ColoUpdateStat/ColoUpdateStat.log_*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
+          <cfg:files source="LogProxy/SiteStat/SiteStat.log_*" destination="/LogGeneralizer/In/SiteStat"/>
+          <cfg:files source="LogProxy/KeywordInventory/KeywordInventory.log_*" destination="/LogGeneralizer/In/KeywordInventory"/>
+          <cfg:files source="LogProxy/PageLoadsDailyStat/PageLoadsDailyStat.log_*" destination="/LogGeneralizer/In/PageLoadsDailyStat"/>
+          <cfg:files source="LogProxy/TagAuctionStat/TagAuctionStat.log_*" destination="/LogGeneralizer/In/TagAuctionStat"/>
+          <cfg:hosts source="xen.ocslab.com" destination="xen.ocslab.com"/>
+        </cfg:Route>
+      </cfg:FeedRouteGroup>
+    </cfg:ClusterConfig>
+  </cfg:SyncLogsConfig>
+</cfg:AdConfiguration>

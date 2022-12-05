@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/LogProcessing/ExpressionMatcherConfig.xsd">
+  <cfg:ExpressionMatcherConfig daily_processing_time="00:01" log_root="/opt/foros/server/var/log/ExpressionMatcher" update_period="30" inventory_users_percentage="100" colo_id="1">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10113">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ExpressionMatcher" name="ExpressionMatcher"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/ExpressionMatcher/ExpressionMatcher">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:CampaignServerRef name="CampaignServer" ref="corbaloc:iiop:ads-nbmaster:10106/CampaignServer_v24"/>
+    <cfg:UserInfoManagerControllerRef name="UserInfoManagerController" ref="corbaloc:iiop:ads-nbmaster:10102/UserInfoManagerController"/>
+    <cfg:ChunksConfig chunks_prefix="Inventory_" chunks_root="/opt/foros/server/var/cache/Inventory/"/>
+    <cfg:EstimationChunksConfig chunks_prefix="Estimation_" chunks_root="/opt/foros/server/var/cache/Estimation/"/>
+    <cfg:UserTriggerMatchChunksConfig chunks_prefix="UserTriggerMatch_" chunks_root="/opt/foros/server/var/cache/UserTriggerMatch/"/>
+    <cfg:RequestTriggerMatchChunksConfig chunks_prefix="RequestTriggerMatch_" chunks_root="/opt/foros/server/var/cache/RequestTriggerMatch/"/>
+    <cfg:LogProcessing threads="4">
+      <cfg:InLogs log_root="/opt/foros/server/var/log/ExpressionMatcher/In/" check_logs_period="10">
+        <cfg:RequestBasicChannels/>
+      </cfg:InLogs>
+      <cfg:OutLogs log_root="/opt/foros/server/var/log/ExpressionMatcher/Out/">
+        <cfg:ChannelInventory period="10"/>
+        <cfg:ChannelImpInventory period="10"/>
+        <cfg:ChannelPriceRange period="10"/>
+        <cfg:ChannelInventoryActivity period="3600"/>
+        <cfg:ChannelEstimation period="10"/>
+        <cfg:ChannelPerformance period="10"/>
+        <cfg:ChannelTriggerImpStat period="10"/>
+      </cfg:OutLogs>
+    </cfg:LogProcessing>
+  </cfg:ExpressionMatcherConfig>
+</cfg:AdConfiguration>

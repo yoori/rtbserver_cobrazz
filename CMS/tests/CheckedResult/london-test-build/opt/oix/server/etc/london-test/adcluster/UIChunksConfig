@@ -1,0 +1,10 @@
+
+
+  %ui_chunks = (
+    chunks_count => 10,
+    chunk_hosts => [ 
+     'rnode02',
+     ],
+    chunks_root => '/opt/foros/server/var/cache/Users/',
+  );
+

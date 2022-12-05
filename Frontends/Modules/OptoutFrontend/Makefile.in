@@ -1,0 +1,9 @@
+@optoutfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := OptoutFrontend.cpp \
+  OptoutFrontendStat.cpp \
+  RequestInfoFiller.cpp
+
+@optoutfrontend_post@

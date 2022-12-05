@@ -1,0 +1,167 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:cms="http://foros.com/cms/commonTypes"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Application Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import schemaLocation="./cms-commons.xsd" namespace="http://foros.com/cms/commonTypes"/>
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="AppConfigType">
+    <xsd:sequence>
+      <xsd:element name="forosZoneManagement" type="ZoneManagementType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>All that is necessary for the management of Phorm subcluster</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ispZoneManagement" type="ispZoneManagementType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>All that is necessary for the management of services owned by ISP</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ZenOSS" type="ZenOSSType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Enable and configure ZenOSS monitoring</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="develParams" type="DevelParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            The parameters for developers, tweakers, checkers, etc.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="autorestart" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>Switches on/off ability to start services when host is rebooted.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZoneManagementType">
+    <xsd:sequence>
+      <xsd:element name="private_key" type="cms:Text" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Private key file, if defined the value of "ssh_key"
+            will be ignored, and private key file will stored by standard path</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="user_name" type="NoLeadingTrailingSpaces" default="aduser">
+      <xsd:annotation>
+        <xsd:documentation>
+          User account for server processes up.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user_group" type="NoLeadingTrailingSpaces" default="adgroup">
+      <xsd:annotation>
+        <xsd:documentation>
+          Shell group name of account need for server processes up.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ssh_key" type="NoLeadingSpaces" default="/home/${user_name}/.ssh/adkey">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to ssh key. The key is using for authentication of hosts in a cluster.
+          Need for login between AdCluster hosts. The value ignored if private_key defined.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="public_key" type="PublicKeyType" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>SSH public key string</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ispZoneManagementType">
+    <xsd:complexContent>
+      <xsd:extension base="ZoneManagementType">
+        <xsd:attribute name="separate_isp_zone" type="xsd:boolean" use="optional" default="false">
+          <xsd:annotation>
+            <xsd:documentation>Management settings for TR services located in custom ISP zone config.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="DevelParamsType">
+    <xsd:attribute name="management_bin_root" type="NoLeadingTrailingSpaces"/>
+    <xsd:attribute name="management_lib_root" type="NoLeadingTrailingSpaces"/>
+    <xsd:attribute name="autorestart_state_root" type="NoLeadingTrailingSpaces"/>
+    <xsd:attribute name="valgrind" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          If installed, used valgrind - a suite of tools for debugging and profiling.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="suppression-file" type="NoLeadingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          URL to file contain valgrind suppressions.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZenOSSType">
+    <xsd:attribute name="enabled" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>Switches on/off</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="collector" type="xsd:string" default="localhost">
+      <xsd:annotation>
+        <xsd:documentation>Zenoss collector</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="group" type="xsd:string" default="OIX/Server">
+      <xsd:annotation>
+        <xsd:documentation>Zenoss groups</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="location" type="xsd:string" default="">
+      <xsd:annotation>
+        <xsd:documentation>Zenoss location</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="system" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Zenoss system</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="community" type="xsd:string" default="public">
+      <xsd:annotation>
+        <xsd:documentation>SNMP community</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="install_root" type="xsd:string" default="/opt/zenoss">
+      <xsd:annotation>
+        <xsd:documentation>Zenoss install root</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+
+  <xsd:simpleType name="PublicKeyType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="|-|ssh-[^#]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+</xsd:schema>

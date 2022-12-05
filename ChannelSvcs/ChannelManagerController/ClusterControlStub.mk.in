@@ -1,0 +1,9 @@
+@clustercontrol_deps@
+sources := ChannelClusterControlImpl.cpp
+includes := .
+
+corba_stub_idls := ChannelClusterControl.idl
+corba_includes := .
+corba_idl_includes := .
+
+@clustercontrol_post@

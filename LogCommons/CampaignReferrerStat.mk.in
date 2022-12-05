@@ -1,0 +1,6 @@
+@campaignreferrerstat_deps@
+sources := CampaignReferrerStat.cpp
+
+includes := .
+@campaignreferrerstat_post@
+

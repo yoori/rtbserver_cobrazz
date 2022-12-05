@@ -1,0 +1,6 @@
+@researchprofstat_deps@
+sources := ResearchProfStat.cpp
+
+includes := .
+@researchprofstat_post@
+

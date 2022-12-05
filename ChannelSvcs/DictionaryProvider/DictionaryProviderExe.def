@@ -1,0 +1,11 @@
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Generics
+osbe_cxx_dep Xerces
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep DictionaryProviderConfig
+osbe_cxx_dep Commons
+osbe_cxx_dep DictionaryProvider
+osbe_cxx_dep ChannelCommons

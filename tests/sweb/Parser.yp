@@ -1,0 +1,336 @@
+# Parse::Yapp grammar for sweb.
+
+%token CHAR
+%token NEWLINE
+%token WHITESPACE
+%token ENDCODE
+
+
+%%
+
+
+start:
+    input
+    { new AST($_[1]) }
+  ;
+
+input:
+    doc
+  | input def doc
+    { push @{$_[1]}, @_[2,3]; $_[1] }
+  ;
+
+doc:
+    /* empty */
+  | text
+  ;
+
+text:
+    CHAR text_maybe
+    { shift; [@_] }
+  ;
+
+text_maybe:
+    /* empty */
+  | text_maybe CHAR
+    { push @{$_[1]}, $_[2]; $_[1] }
+  ;
+
+def:
+    { push @{ $_[0]->YYData->{inside} },
+           "define started at " . $_[0]->YYData->{lexer}->where }
+    macro
+    { $_[0]->YYData->{lexer}->push(
+          '='                    => '=',
+          '\s'                   => 'WHITESPACE',
+          '.'                    => 'CHAR'
+      ) }
+    '='
+    { $_[0]->YYData->{lexer}->pop;
+      $_[0]->YYData->{in_code} = 1 }
+    code
+    { pop @{ $_[0]->YYData->{inside} };
+      $_[0]->YYData->{in_code} = 0;
+      new Def(@_[2,4,6]) }
+  ;
+
+macro:
+    '<<MACRO'
+    { push @{ $_[0]->YYData->{inside} },
+           "macro started at " . $_[0]->YYData->{lexer}->where;
+
+      my $c;
+      if ($_[0]->YYData->{in_code}) {
+          $c = $_[0]->YYData->{macro_close};
+      } else {
+          my $o = "\\" . substr($_[1], -1, 1);
+          $c = open2close($o);
+
+          $_[0]->YYData->{macro_open} = $o;
+          $_[0]->YYData->{macro_close} = $c;
+      }
+
+      $_[0]->YYData->{lexer}->push(
+          "$c>"                  => 'MACRO>>',
+          ':'                    => ':',
+          '\?'                   => '?',
+          '\n | \r\n? | [ \t]+'  => 'WHITESPACE',
+          "[^$c:?\\n\\r \\t]+"   => 'CHAR',
+          '.'                    => 'CHAR'
+      ) }
+    whitespace_maybe macro_name param_maybe 'MACRO>>'
+    { $_[0]->YYData->{lexer}->pop;
+      new Macro(pop @{ $_[0]->YYData->{inside} },
+                @_[1,3,4,5,6]) }
+  ;
+
+whitespace_maybe:
+    /* empty */
+  | whitespace_maybe WHITESPACE
+    { push @{$_[1]}, $_[2]; $_[1] }
+  ;
+
+whitespace:
+    WHITESPACE whitespace_maybe
+    { shift; [@_] }
+  ;
+
+macro_name:
+    word
+    { [ $_[1] ] }
+  | macro_name param_whitespace word
+    { push @{$_[1]}, @_[2,3]; $_[1] }
+  ;
+
+word:
+    text
+    { new Word($_[1]) }
+  ;
+
+param_whitespace:
+    param whitespace_maybe
+    { shift; [@_] }
+  | whitespace
+  ;
+
+param_maybe:
+    /* empty */
+  | param_whitespace
+  ;
+
+param:
+    ':'
+    { my @value;
+      if ($_[0]->YYData->{in_code}) {
+          @value = ( '[[:punct:]]' => '<VALUE' );
+      } else {
+          @value = ( '\?' => '?' );
+      }
+
+      $_[0]->YYData->{lexer}->push(
+          @value,
+          '\s'                   => 'WHITESPACE',
+          '.'                    => 'CHAR'
+      ) }
+    arg
+    { $_[0]->YYData->{lexer}->pop;
+      new Param(@_[1,3]) }
+  ;
+
+arg:
+    '?'        # Works only in def.
+  | { $_[0]->YYError unless $_[0]->YYData->{in_code} }
+    '<VALUE'   # Works only in code.
+    { push @{ $_[0]->YYData->{inside} },
+           "value started at " . $_[0]->YYData->{lexer}->where;
+
+      my $c = "\\" . open2close($_[2]);
+      my $o = $_[0]->YYData->{macro_open};
+
+      $_[0]->YYData->{lexer}->push(
+          "<$o"                  => '<<MACRO',
+          "$c"                   => 'VALUE>',
+          "[^<$c]+"              => 'CHAR',
+          '.'                    => 'CHAR'
+      ) }
+    value 'VALUE>'
+    { pop @{ $_[0]->YYData->{inside} };
+      $_[0]->YYData->{lexer}->pop;
+      [ $_[2], new CodeLine($_[4]), $_[5] ] }
+  ;
+
+value:
+    text_maybe
+  | value macro text_maybe
+    { push @{$_[1]}, @_[2,3]; $_[1] }
+  ;
+
+code:
+    { my $o = $_[0]->YYData->{macro_open};
+
+      $_[0]->YYData->{lexer}->push(
+          "<$o"                  => '<<MACRO',
+          '[ \t]* (?:\n|\r\n?)'  => 'NEWLINE',
+          '[ \t]+'               => 'WHITESPACE',
+          '[^< \t\n\r]+'         => 'CHAR',
+          '.'                    => 'CHAR'
+      ) }
+    whitespace_maybe
+    { $_[0]->YYData->{lexer}->pop;
+
+      my $o = $_[0]->YYData->{macro_open};
+      my $c = $_[0]->YYData->{macro_close};
+      $_[0]->YYData->{lexer}->push(
+          "^\s*<$o$c>"           => 'ENDCODE',
+          "<$o"                  => '<<MACRO',
+          '[ \t]* (?:\n|\r\n?)'  => 'NEWLINE',
+          '^[ ]*\t'              => 'TAB',
+          '^[ ]+'                => 'WHITESPACE',
+          '[^< \t\n\r]+'         => 'CHAR',
+          '.'                    => 'CHAR'
+      ) }
+    code_block
+    { $_[0]->YYData->{lexer}->pop;
+      new Code(@_[2,4]) }
+  ;
+
+code_block:
+    code_line NEWLINE
+    { [ new CodeLine($_[1]), $_[2] ] }
+  | NEWLINE empty_lines_maybe code_multiline
+    { shift; [@_] }
+  ;
+
+empty_lines_maybe:
+    /* empty */
+  | empty_lines_maybe NEWLINE
+    { push @{$_[1]}, $_[2]; $_[1] }
+  ;
+
+code_line:
+    text code_line_rest
+    { shift; [@_] }
+  | macro text_maybe code_line_rest
+    { shift; [@_] }
+  ;
+
+code_line_rest:
+    /* empty */
+  | code_line_rest macro text_maybe
+    { push @{$_[1]}, @_[2,3]; $_[1] }
+  ;
+
+code_multiline:
+    endcode
+  | code_line NEWLINE code_maybe endcode
+    { [ new CodeLine($_[1]), @_[2,3,4] ] }
+  | code_indented endcode_maybe
+    { shift; [@_] }
+  ;
+
+endcode:
+    ENDCODE NEWLINE
+    { new EndCode(@_[1,2]) }
+  ;
+
+endcode_maybe:
+    /* empty */
+  | endcode
+  ;
+
+code_maybe:
+    /* empty */
+  | code_maybe NEWLINE
+    { push @{$_[1]}, new EmptyLine($_[2]); $_[1] }
+  | code_maybe whitespace_maybe code_line NEWLINE
+    { push @{$_[1]}, new CodeLine(@_[2,3]), $_[4]; $_[1] }
+  ;
+
+code_indented:
+    WHITESPACE code_line NEWLINE
+    { $_[0]->YYData->{lexer}->pop;
+
+      my $indent = length($_[1]);
+      $_[0]->YYData->{indent} = $indent;
+
+      my $o = $_[0]->YYData->{macro_open};
+      my $c = $_[0]->YYData->{macro_close};
+      $_[0]->YYData->{lexer}->push(
+          "^\s*<$o$c>"           => 'ENDCODE',
+          "<$o"                  => '<<MACRO',
+          '[ \t]* (?:\n|\r\n?)'  => 'NEWLINE',
+          "^[ ]{$indent}[ \\t]*" => 'WHITESPACE',
+          '^[ ]*\t'              => 'TAB',
+          '^[ ]*<[[:punct:]]'    => '<<MACRO',  # Start of the *next* def.
+          '[^< \t\n\r]+'         => 'CHAR',
+          '.'                    => 'CHAR'
+      );
+      [ $_[1], new CodeLine($_[2]), $_[3] ] }
+  | code_indented NEWLINE
+    { push @{$_[1]}, new EmptyLine($_[2]); $_[1] }
+  | code_indented WHITESPACE code_line NEWLINE
+    { my $indent = substr($_[2], 0, $_[0]->YYData->{indent}, '');
+      push @{$_[1]}, $indent, new CodeLine(@_[2,3]), $_[4]; $_[1] }
+  ;
+
+
+%%
+
+
+use strict;
+use warnings;
+
+use AST;
+
+
+sub open2close {
+    my ($c) = @_;
+
+    $c =~ tr/[]{}()<>/][}{)(></;
+
+    return $c;
+}
+
+
+sub _error {
+    my $self = shift;
+
+    my $symbol;
+    if (defined $self->YYCurval) {
+        $symbol = "'" . $self->YYCurtok;
+        $symbol .= " " . $self->YYCurval
+          if $self->YYCurval ne $self->YYCurtok && $self->YYCurval !~ /^\s*$/;
+        $symbol .= "'";
+    } else {
+        $symbol = "end of file";
+    }
+
+    my $msg = "Syntax error at " . $self->YYData->{lexer}->where
+      . " near $symbol,\n"
+      . "expected '" . join("|", $self->YYExpect) . "'";
+
+    while (my $inside = pop @{ $self->YYData->{inside} }) {
+        $msg .= "\n  inside $inside";
+    }
+
+    die "$msg\n";
+}
+
+
+sub run {
+    my $self = shift;
+    my ($lexer) = @_;
+
+    $lexer->push(
+          '^\s*<[[:punct:]]'     => '<<MACRO',
+          '.+'                   => 'CHAR'
+    );
+    $self->YYData->{lexer} = $lexer;
+    my $tree = $self->YYParse(yylex => $lexer->get_lexer,
+#                              yydebug => 0x1f,
+                              yyerror => \&_error);
+
+    $tree->normalize;
+
+    return $tree;
+}

@@ -1,0 +1,4 @@
+@allocator_deps@
+sources := Allocator.cpp
+includes := .
+@allocator_post@

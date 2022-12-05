@@ -1,0 +1,73 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  struct ChannelMatchDescriptor
+  {
+    uint channel_id;
+    uint time;
+    uint triggers_in_channel;
+    uint matched_triggers;
+    array<uint> positive_matches;
+    array<uint> negative_matches;
+  };
+
+  autoreader ChannelMatchReader<ChannelMatchDescriptor>;
+
+  writer ChannelMatchWriter<ChannelMatchDescriptor>
+  {
+    channel_id;
+    time;
+    triggers_in_channel;
+    matched_triggers;
+    (cpp_vector) positive_matches;
+    (cpp_vector) negative_matches;
+  };
+
+  struct ImpressionMarkerDescriptor
+  {
+    uint time;
+    string request_id;
+  };
+
+  autoreader ImpressionMarkerReader<ImpressionMarkerDescriptor>;
+
+  autowriter ImpressionMarkerWriter<ImpressionMarkerDescriptor>;
+
+  struct UserTriggerMatchProfile
+  {
+    uint version;
+    array<ChannelMatchDescriptor> page_matches;
+    array<ChannelMatchDescriptor> search_matches;
+    array<ChannelMatchDescriptor> url_matches;
+    array<ChannelMatchDescriptor> url_keyword_matches;
+    array<ImpressionMarkerDescriptor> impressions;
+  };
+
+  reader UserTriggerMatchReader<UserTriggerMatchProfile>
+  {
+    array<ChannelMatchReader> page_matches;
+    array<ChannelMatchReader> search_matches;
+    array<ChannelMatchReader> url_matches;
+    array<ChannelMatchReader> url_keyword_matches;
+    array<ImpressionMarkerReader> impressions;
+  };
+
+  writer UserTriggerMatchWriter<UserTriggerMatchProfile>
+  {
+    version;
+    array<ChannelMatchWriter> page_matches;
+    array<ChannelMatchWriter> search_matches;
+    array<ChannelMatchWriter> url_matches;
+    array<ChannelMatchWriter> url_keyword_matches;
+    array<ImpressionMarkerWriter> impressions;
+  };
+
+  struct UserTriggerMatchVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader UserTriggerMatchVersionReader<UserTriggerMatchVersionDescriptor>;
+}
+}

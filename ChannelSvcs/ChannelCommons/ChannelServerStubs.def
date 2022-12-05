@@ -1,0 +1,4 @@
+name="ChannelServerStubs"
+so_files=ChannelServerStubs
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep ChannelCommons

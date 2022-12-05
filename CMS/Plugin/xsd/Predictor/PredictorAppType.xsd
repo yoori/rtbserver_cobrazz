@@ -1,0 +1,142 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Predictor Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="PredictorNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="PredictorConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="syncServer" type="SyncServerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            File merger settings.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="merger" type="MergerParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            File merger settings.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="svmGenerator" type="SVMGeneratorType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           SVM generator settings.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="log_days_to_keep" type="xsd:nonNegativeInteger" use="optional" default="90">
+      <xsd:annotation>
+        <xsd:documentation>Number of days for keep processed logs.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="MergerParamsType">
+    <xsd:sequence>
+      <xsd:element name="impression" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Impression logs processing configuration.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="click" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Click logs processing configuration.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+        <xsd:element name="action" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Action logs processing configuration.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="max_timeout" type="xsd:nonNegativeInteger" use="optional" default="0">
+      <xsd:annotation>
+        <xsd:documentation>Max timeout - delta between 2 different log types (seconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="sleep_timeout" type="xsd:nonNegativeInteger" use="optional" default="300">
+      <xsd:annotation>
+        <xsd:documentation>Sleep timeout between two merger cycles.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingParamsType">
+    <xsd:attribute name="from" type="xsd:integer" use="optional" default="-1">
+      <xsd:annotation>
+        <xsd:documentation>Start log processing delta: finish time = current time - from (in hours).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="to" type="xsd:integer" use="optional" default="4">
+      <xsd:annotation>
+        <xsd:documentation>Finish log processing delta: finish time = current time + to (in hours).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SyncServerType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="enable_backup" type="xsd:boolean" use="optional" default="false">
+      <xsd:annotation>
+        <xsd:documentation>Backup research logs</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SVMGeneratorType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="PredictorNetworkParamsType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>
+
+

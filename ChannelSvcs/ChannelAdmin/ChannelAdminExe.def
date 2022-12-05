@@ -1,0 +1,14 @@
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Logger
+osbe_cxx_dep Generics
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep Commons
+osbe_cxx_dep UtilCommons
+
+osbe_cxx_dep ChannelCommons
+osbe_cxx_dep ChannelProxy
+osbe_cxx_dep ChannelServerStubs
+osbe_cxx_dep ChannelControllerStubs
+osbe_cxx_dep ChannelSessionFactory
+
+osbe_cxx_dep DictionaryProvider

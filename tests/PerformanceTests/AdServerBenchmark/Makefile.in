@@ -1,0 +1,15 @@
+
+@adserverbenchmarkexe_deps@
+sources := \
+  Statistics.cpp \
+  Report.cpp \
+  AdServerClient.cpp \
+  BenchmarkStorage.cpp \
+  Benchmark.cpp \
+  Configuration.cpp \
+  Application.cpp \
+  Main.cpp \
+
+target := AdServerBenchmark
+
+@adserverbenchmarkexe_post@

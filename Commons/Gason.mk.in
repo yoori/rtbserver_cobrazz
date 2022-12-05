@@ -1,0 +1,5 @@
+@gason_deps@
+
+sources := Gason.cpp
+
+@gason_post@

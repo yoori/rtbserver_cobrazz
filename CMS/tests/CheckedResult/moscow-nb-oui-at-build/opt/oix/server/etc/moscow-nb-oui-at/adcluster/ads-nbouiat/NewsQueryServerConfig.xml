@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/DiscoverSvcs/NewsQueryServerConfig.xsd">
+  <cfg:NewsQueryServerConfig config_update_period="30" log_root="/opt/foros/server/var/log/NewsQueryServer/Out">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10125">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStats" name="ProcessStats"/>
+        <cfg:Object servant="NewsQueryServer" name="NewsQueryServer"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/NewsQueryServer/NewsQueryServer">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:NewsItemServerCorbaRef name="NewsItemServer">
+      <cfg:Ref ref="corbaloc:iiop:ads-nbouiat:10124/NewsItemServer_v24"/>
+    </cfg:NewsItemServerCorbaRef>
+    <cfg:CampaignServerCorbaRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:ads-nbouiat:10106/CampaignServer_v24"/>
+    </cfg:CampaignServerCorbaRef>
+    <cfg:MainCache enable="true"/>
+    <cfg:CustomCache/>
+    <cfg:ServerMode thread_count="10" query_news_count="100">
+      <cfg:DBConnection db="AdServerDbForRead" user="BS_NIGHTLY_BUILDS_OIX_AUTO" password="adserver"/>
+      <cfg:NewsServer ref="http://d.foros-rubytest.net:8080/psp/eng/search" request_params="t=x&amp;o=1.3&amp;z=armge&amp;l=2" request_count_params="t=x&amp;o=1.3&amp;z=a" rss_schema="/opt/oix/server/xsd/DiscoverSvcs/XSearch.xsd" monitoring_ref="http://d.oix-rubytest.net:8080/sysmon"/>
+    </cfg:ServerMode>
+    <cfg:DiscoverChannelStateLogger period="10"/>
+    <cfg:DiscoverFeedStateLogger period="10"/>
+  </cfg:NewsQueryServerConfig>
+</cfg:AdConfiguration>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:PermanentFeConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server//xsd/Frontends/PermanentFeConfig.xsd">
+  <cfg:OsConfig>
+    <cfg:OsMatcher name="WinNT" marker="Windows NT" regexp="Windows NT(?: )?(\d+\.\d+).*(SV1)"/>
+    <cfg:OsMatcher name="WinNT" marker="Windows NT" regexp="Windows NT(?: )?(\d+\.\d+)|Windows NT[;)]"/>
+    <cfg:OsMatcher name="WinNT" marker="WinNT" regexp="WinNT(\d+\.\d+)?"/>
+    <cfg:OsMatcher name="Win98" marker="Windows 98"/>
+    <cfg:OsMatcher name="Win98" marker="Win98"/>
+    <cfg:OsMatcher name="Win98" marker="Win 9x"/>
+    <cfg:OsMatcher name="MacOSX" marker="Mac OS X"/>
+    <cfg:OsMatcher name="Mac" marker="Mac_PowerPC"/>
+    <cfg:OsMatcher name="Mac" marker="Macintosh"/>
+    <cfg:OsMatcher name="Linux" marker="Linux"/>
+    <cfg:OsMatcher name="Win95" marker="Windows 95"/>
+    <cfg:OsMatcher name="Win95" marker="Win95"/>
+    <cfg:OsMatcher name="WinCE" marker="Windows CE"/>
+    <cfg:OsMatcher name="WinME" marker="Windows ME"/>
+    <cfg:OsMatcher name="WinXP" marker="Windows XP"/>
+    <cfg:OsMatcher name="SunOS" marker="SunOS"/>
+  </cfg:OsConfig>
+  <cfg:BrowserConfig>
+    <cfg:BrowserMatcher name="Chrome" marker="Chrome" regexp="\sChrome[/ ](\d+.\d+(?:.\d+)*)"/>
+    <cfg:BrowserMatcher name="Opera" marker="Opera" regexp="Opera/.*\sVersion/(\d+.\d+(?:.\d+)*)"/>
+    <cfg:BrowserMatcher name="MSIE" marker="MSIE" regexp="\sMSIE\s+(\d+.\d+(?:.\d+)*)"/>
+    <cfg:BrowserMatcher name="Firefox" marker="Firefox" regexp="\sFirefox/(\d+.\d+(?:.\d+)*)"/>
+    <cfg:BrowserMatcher name="Netscape" marker="Netscape" regexp="\sNetscape(?:6)?/(\d+\.\d+(?:\.\d+)*)"/>
+    <cfg:BrowserMatcher name="Safari" marker="Safari" regexp="\sVersion/(\d+[.\d]*)\s+Safari/"/>
+    <cfg:BrowserMatcher name="CompuServe" marker="CS" regexp="\sCS(?: )?2000 (\d+\.\d+(?:\.\d+)*)"/>
+    <cfg:BrowserMatcher name="AOL" marker="AOL" regexp="\sAOL/(\d+\.\d+(?:\.\d+)*)"/>
+    <cfg:BrowserMatcher name="Firebird" marker="Firebird" regexp="\sFirebird/(\d+\.\d+(?:\.\d+)*)"/>
+    <cfg:BrowserMatcher name="Camino" marker="Camino" regexp="\sCamino/(\d+\.\d+(?:\.\d+)*)"/>
+    <cfg:BrowserMatcher name="Mozilla" marker="Mozilla" regexp="Mozilla/(\d+\.\d+(?:\.\d+)*).*Gecko/\d+$"/>
+  </cfg:BrowserConfig>
+  <cfg:UserAgentMatcherConfig filter_path="user_agent_filter.txt"/>
+</cfg:PermanentFeConfiguration>

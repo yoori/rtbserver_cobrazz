@@ -1,0 +1,16 @@
+@userinfomanagerexe_deps@
+
+sources := UserInfoManagerMain.cpp \
+  FileRWStats.cpp \
+  UserInfoManagerImpl.cpp \
+  UserInfoManagerControlImpl.cpp \
+  UserInfoContainer.cpp \
+  UserInfoManagerLogger.cpp \
+  UserInfoManagerStat.cpp
+
+corba_skeleton_idls := UserInfoManager.idl UserInfoManagerControl.idl
+corba_idl_includes := .
+
+target := UserInfoManager
+
+@userinfomanagerexe_post@

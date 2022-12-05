@@ -1,0 +1,7 @@
+@userbindcontrollerconfig_deps@
+sources := 
+includes := .
+xsd_files := UserBindControllerConfig.xsd
+xsd_includes := xsd
+
+@userbindcontrollerconfig_post@

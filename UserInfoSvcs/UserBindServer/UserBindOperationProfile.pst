@@ -1,0 +1,30 @@
+namespace AdServer
+{
+namespace UserInfoSvcs
+{
+  /* user preferences getting operation */
+  struct UserBindGetOperationDescriptor
+  {
+    uint version;
+    string external_id;
+    uint time;
+    string current_user_id;
+  };
+
+  autoreader UserBindGetOperationReader<UserBindGetOperationDescriptor>;
+  autowriter UserBindGetOperationWriter<UserBindGetOperationDescriptor>;
+
+  /* fraud marking operation */
+  struct UserBindAddOperationDescriptor
+  {
+    uint version;
+    string external_id;
+    string user_id;
+    uint time;
+    uint resave_if_exists;
+  };
+
+  autoreader UserBindAddOperationReader<UserBindAddOperationDescriptor>;
+  autowriter UserBindAddOperationWriter<UserBindAddOperationDescriptor>;
+}
+}

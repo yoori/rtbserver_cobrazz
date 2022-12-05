@@ -1,0 +1,5 @@
+name="ExpressionMatcher"
+so_files=ExpressionMatcher
+
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Commons

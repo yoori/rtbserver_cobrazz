@@ -1,0 +1,7 @@
+@requestinfomanagerconfig_deps@
+sources := 
+includes := .
+xsd_files := RequestInfoManagerConfig.xsd
+xsd_includes := xsd
+
+@requestinfomanagerconfig_post@

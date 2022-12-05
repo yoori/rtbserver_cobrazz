@@ -1,0 +1,10 @@
+include Common.pre.rules
+
+description := InitChunksTest
+
+export PERL5LIB := $(top_srcdir)/CMS/Plugin/lib:$(PERL5LIB)
+
+test_command := $(srcdir)/ConfigureUserChunksTest.pl $(srcdir)
+vg_test_command = $(test_command)
+
+include $(top_srcdir)/tests/Test.post.rules

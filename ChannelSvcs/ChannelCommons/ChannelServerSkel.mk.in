@@ -1,0 +1,7 @@
+@channelserverskel_deps@
+
+corba_skeleton_idls := ChannelUpdateBase.idl ChannelServer.idl
+corba_idl_includes := .
+
+@channelserverskel_post@
+

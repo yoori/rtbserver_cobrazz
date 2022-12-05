@@ -1,0 +1,6 @@
+include Common.pre.rules
+
+target_directory_list :=			\
+	Cluster					\
+
+include $(osbe_builddir)/config/Direntry.post.rules

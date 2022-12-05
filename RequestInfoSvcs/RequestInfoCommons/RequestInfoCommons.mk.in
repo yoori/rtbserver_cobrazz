@@ -1,0 +1,19 @@
+@requestinfocommons_deps@
+
+plain_sources := \
+  RequestProfile.pst \
+  RequestOperationProfile.pst \
+  UserChannelInventoryProfile.pst \
+  UserCampaignReachProfile.pst \
+  UserActionProfile.pst \
+  UserSiteReachProfile.pst \
+  UserFraudProtectionProfile.pst \
+  PassbackProfile.pst \
+  UserTagRequestMergeProfile.pst \
+  UserTriggerMatchProfile.pst \
+  RequestTriggerMatchProfile.pst \
+  ConsiderMessages.pst \
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@requestinfocommons_post@

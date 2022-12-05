@@ -1,0 +1,19 @@
+
+-> REQ :
+   |
+   | notice_non_considered
+   |
+-> NOTICE :
+   |
+   | impression_non_considered
+   |
+-> IMP -> MOVE if user_id != request.user_id
+          eval costs
+   |
+   | click_non_considered
+   |
+-> CLICK -> MOVE if RS_MOVED
+   |
+   |
+   |
+-> ACT -> MOVE if RS_MOVED

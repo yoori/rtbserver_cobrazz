@@ -1,0 +1,12 @@
+include Common.pre.rules
+
+target_directory_list := \
+        ChannelCommons \
+        ChannelServer \
+        ChannelAdmin \
+        ChannelManagerController \
+        ChannelProxy \
+        DictionaryProvider \
+        TriggerFilter \
+
+include $(osbe_builddir)/config/Direntry.post.rules

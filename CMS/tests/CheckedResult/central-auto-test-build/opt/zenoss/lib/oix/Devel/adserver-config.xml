@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/Devel/mibs:/opt/zenoss/lib/oix/Devel/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/Devel/mibs/Controlling"/>
+  <hosts>
+    <host name="xen.ocslab.com" monitor="localhost" group="OIX/Server" location="" system="devel/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

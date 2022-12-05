@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common Frontends Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="FCGIServerConfig" type="FCGIServerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="FCGIServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="BindSocket" type="BindSocketType" minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+      <xsd:element name="Logger" type="ErrorLoggerType"/>
+      <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BindSocketType">
+    <xsd:attribute name="bind" type="xsd:string" default="fcgi.sock"/>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" default="1000"/>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" default="1"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ModuleType">
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+</xsd:schema>

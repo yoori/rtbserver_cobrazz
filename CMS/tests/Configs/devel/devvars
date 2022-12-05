@@ -1,0 +1,17 @@
+%CONFIG = (
+  HOME => $ENV{'HOME'},
+  SERVER_ROOT => $ENV{'server_root'},
+  CONFIG_ROOT => $ENV{'config_root'},
+  WORKSPACE_ROOT => $ENV{'workspace_root'},
+  UNIXCOMMONS_ROOT => $ENV{'unixcommons_root'},
+  USER => aduser,
+  USERGROUP => adgroup,
+  HOST => 'node0-nb',
+  PORT_BASE => 10000,
+# SOURCE_PORT_BASE => 12000,
+# SOURCE_HOST => 'xen.ocslab.com',
+  VERSION => $ENV{'VERSION'},
+  NAME_POSTFIX => 'Devel',
+  SYS_LOG => 'false',
+  LOG_LEVEL => "$ENV{'LOG_LEVEL'}",
+);

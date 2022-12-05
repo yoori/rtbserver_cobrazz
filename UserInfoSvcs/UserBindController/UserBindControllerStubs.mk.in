@@ -1,0 +1,10 @@
+@userbindcontrollerstubs_deps@
+
+sources := UserBindOperationDistributor.cpp
+includes := .
+
+corba_stub_idls := UserBindController.idl
+corba_includes := .
+corba_idl_includes := .
+
+@userbindcontrollerstubs_post@

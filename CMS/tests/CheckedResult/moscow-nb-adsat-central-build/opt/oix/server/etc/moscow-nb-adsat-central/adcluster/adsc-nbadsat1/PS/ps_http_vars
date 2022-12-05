@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'http://a.foros-nbadsat.net',
+            'ps_host' => 'http://a.foros-nbadsat.net',
+            'toolbar_base' => 'http://http://b.foros-nbadsat.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'http://http://b.foros-nbadsat.net/tag/1.js',
+            'adimage_server' => 'http://foroscrv-nbadsat.net',
+          );
+        
+
+    1;
+

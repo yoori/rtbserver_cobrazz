@@ -1,0 +1,12 @@
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep CORBACommons
+
+osbe_cxx_dep UtilCommons
+osbe_cxx_dep ChannelMatcher
+osbe_cxx_dep UserFreqCapProfile
+
+osbe_cxx_dep UserInfoManagerStubs
+osbe_cxx_dep UserInfoManagerControlStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep UserInfoExchangerStubs

@@ -1,0 +1,6 @@
+@campaignuserstat_deps@
+sources := CampaignUserStat.cpp
+
+includes := .
+@campaignuserstat_post@
+

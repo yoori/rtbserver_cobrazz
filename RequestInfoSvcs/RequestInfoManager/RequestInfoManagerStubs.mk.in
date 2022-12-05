@@ -1,0 +1,8 @@
+@requestinfomanagerstubs_deps@
+sources := 
+includes := .
+
+corba_stub_idls := RequestInfoManager.idl
+corba_includes := .
+corba_idl_includes := .
+@requestinfomanagerstubs_post@

@@ -1,0 +1,215 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:cms="http://foros.com/cms/commonTypes"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Profilings Cluster Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import schemaLocation="./cms-commons.xsd" namespace="http://foros.com/cms/commonTypes"/>
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+  <xsd:include schemaLocation="./AdClusterAppType.xsd"/>
+
+  <xsd:complexType name="AdProfilingClusterConfigType">
+    <xsd:sequence>
+      <xsd:element name="environment" type="ClusterEnvironmentType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define environment params: pathes and account for server processes up.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="secureParams" type="SecureCertificateAuthority" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Secure connections parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="coloParams" type="ProfilingColoParamsType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Options specific to a particular collocation.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Cookies" type="CookiesType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Options for cookies. By default if domain isn't defined will be used:
+              Root domain of Ad domain for OPTED_OUT cookie, and Ad domain for other.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="snmpStats" type="SNMPStatsConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP stats config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="IPMapping" type="IPMappingConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Describe IP mapping to colo identifiers
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="remote" type="AdProfilingClusterRemoteConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Remote is type of the cluster when the cluster is connected to the another cluster.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="enable_search_term_stats" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable SearchTermStats collection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdProfilingClusterRemoteConfigType">
+    <xsd:sequence>
+      <xsd:element name="campaignServerRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to CampaignServer.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="channelProxyRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to ChannelProxy.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="connect_timeout" type="xsd:nonNegativeInteger" default="86400">
+      <xsd:annotation>
+        <xsd:documentation>
+          AdServer  will stop  campaign  serving if  can't connect  to
+          central colo during this value (in seconds).
+          0 means don't stop serving. Default value 86400 seconds.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingColoParamsType">
+    <xsd:sequence>
+      <xsd:element name="virtualServer" type="ProfilingVirtualServerType"
+        minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Virtual server.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="uid_key" type="cms:Text" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>The private key used to UID signing.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="temporary_uid_key" type="cms:Text" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>The private key used to temporary UID signing.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="country" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Country code that will be used for loading Campaigns and Channels (in remote).
+          See ISO 3166 standard to get samples.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="enabled_countries" type="xsd:string" default="">
+      <xsd:annotation>
+        <xsd:documentation>
+          Comma separated list of country codes that the platform needs to handle.
+          All other countries will be ignored and passed back (no UID generation, no profiling or channel matching, no RTB user binding).
+          Leave empty to enable from all.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="segmentor" type="SegmentorsType" use="optional" default="Polyglot">
+      <xsd:annotation>
+        <xsd:documentation>
+          Segmentor witch will be used for segment request keywords
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Collocation identifier. Not zero.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingVirtualServerType">
+    <xsd:sequence>
+      <xsd:element name="profilingDomain" type="ProfilingDomainType" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for profiling frontend module.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="80">
+      <xsd:annotation>
+        <xsd:documentation>
+          External HTTP listen port for domain. Usually, load balancer listen port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="internal_port" type="xsd:positiveInteger" default="10180">
+      <xsd:annotation>
+        <xsd:documentation>
+          External HTTP listen port for domain. Usually, load balancer listen port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_alive" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable persistent HTTP connections.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_alive_timeout" type="xsd:positiveInteger" default="5">
+      <xsd:annotation>
+        <xsd:documentation>
+          Amount of time the server will wait for subsequent requests on a persistent connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_keep_alive_requests" type="xsd:nonNegativeInteger" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of requests allowed on a persistent HTTP connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

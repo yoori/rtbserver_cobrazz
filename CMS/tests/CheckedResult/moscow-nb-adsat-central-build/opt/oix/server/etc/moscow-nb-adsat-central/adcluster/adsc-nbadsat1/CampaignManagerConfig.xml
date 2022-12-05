@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/CampaignSvcs/CampaignManagerConfig.xsd">
+  <cfg:CampaignManager log_root="/opt/foros/server/var/log/CampaignManager" config_update_period="20" campaigns_update_timeout="0" ecpm_update_period="7" campaigns_type="all" colocation_id="1" domain_config_path="/opt/oix/server/etc/moscow-nb-adsat-central/adcluster/adsc-nbadsat1/DomainConfig.xml">
+    <cfg:CorbaConfig threading-pool="40">
+      <cfg:Endpoint host="*" port="10107">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="CampaignManager" name="CampaignManager"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/CampaignManager/CampaignManager">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <!--Comment the line below to disable support for Asian languages-->
+    <cfg:Polyglot base="/opt/foros/polyglot/dict/"/>
+    <cfg:Creative creative_file_dir="/opt/foros/server/var/www/Creatives" template_file_dir="/opt/oix/server/var/www/Templates">
+      <cfg:CreativeRule name="unsecure" image_url="http://foroscrv-nbadsat.net/creatives" ad_click_url="http://a.oix-nbadsat.net/services/AdClickServer" ad_image_server="http://oixcrv-nbadsat.net" track_pixel_url="http://a.oix-nbadsat.net/services/ImprTrack/pt.gif" action_pixel_url="http://a.oix-nbadsat.net/services/ActionServer/SetCookie" fms_app="rtmp://fms.london.foros.com/ondemand" local_passback_prefix="http://b.oix-nbadsat.net/tags/" dynamic_creative_prefix="http://oixcrv-nbadsat.net/services/dcreative"/>
+      <cfg:CreativeRule name="secure" image_url="https://foroscrv-nbadsat.net/creatives" ad_click_url="https://a.oix-nbadsat.net/services/AdClickServer" ad_image_server="https://oixcrv-nbadsat.net" track_pixel_url="https://a.oix-nbadsat.net/services/ImprTrack/pt.gif" action_pixel_url="https://a.oix-nbadsat.net/services/ActionServer/SetCookie" fms_app="rtmp://fms.london.foros.com/ondemand" local_passback_prefix="https://b.oix-nbadsat.net/tags/" dynamic_creative_prefix="https://oixcrv-nbadsat.net/services/dcreative"/>
+    </cfg:Creative>
+    <cfg:CampaignServerCorbaRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:adsc-nbadsat0:10106/CampaignServer_v25"/>
+      <cfg:Ref ref="corbaloc:iiop:adsc-nbadsat1:10106/CampaignServer_v25"/>
+    </cfg:CampaignServerCorbaRef>
+    <cfg:Logging inventory_users_percentage="100" trigger_channel_requests_percentage="100" distrib_count="4">
+      <cfg:ChannelTriggerStat flush_period="10"/>
+      <cfg:ChannelHitStat flush_period="10"/>
+      <cfg:RequestBasicChannels flush_period="10" adrequest_anonymize="false"/>
+      <cfg:OptOutStat flush_period="10"/>
+      <cfg:WebStat flush_period="10"/>
+      <cfg:CreativeStat flush_period="10"/>
+      <cfg:MarginRuleStat flush_period="10"/>
+      <cfg:KeywordStat flush_period="10"/>
+      <cfg:ActionRequest flush_period="10"/>
+      <cfg:PassbackStat flush_period="10"/>
+      <cfg:UserAgentStat flush_period="10"/>
+      <cfg:Request flush_period="10"/>
+      <cfg:Impression flush_period="10"/>
+      <cfg:Click flush_period="10"/>
+      <cfg:AdvertiserAction flush_period="10"/>
+      <cfg:PassbackImpression flush_period="10"/>
+      <cfg:PublisherInventory flush_period="10"/>
+      <cfg:UserProperties flush_period="10"/>
+      <cfg:TagRequest flush_period="10"/>
+      <cfg:ChannelMatchRequest flush_period="10" adrequest_anonymize="false"/>
+      <cfg:CcgStat flush_period="10"/>
+      <cfg:CcStat flush_period="10"/>
+      <cfg:TagAuctionStat flush_period="10"/>
+    </cfg:Logging>
+  </cfg:CampaignManager>
+</cfg:AdConfiguration>

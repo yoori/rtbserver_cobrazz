@@ -1,0 +1,9 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([OptionalValueIOTestExe], [OptionalValueIOTest.mk])
+OSBE_CXX_DEF([RoundedTimeIOTestExe], [RoundedTimeIOTest.mk])
+OSBE_CXX_DEF([SearchFilesTestExe], [SearchFilesTest.mk])
+OSBE_CXX_DEF([StringIOTestExe], [StringIOTest.mk])
+OSBE_CXX_DEF([FileReceiverExe], [FileReceiver.mk])
+OSBE_CXX_DEF([LogCommonsTest], [LogCommonsTest.mk])
+OSBE_CXX_DEF([FileReceiverFacadeTest], [FileReceiverFacadeTest.mk])

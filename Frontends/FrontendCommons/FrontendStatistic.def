@@ -1,0 +1,6 @@
+name="FrontendStatistic"
+so_files=FrontendStatistic
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep Logger
+osbe_cxx_dep StatsDumper

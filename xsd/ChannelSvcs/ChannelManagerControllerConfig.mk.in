@@ -1,0 +1,8 @@
+@channelmanagercontrollerconfig_deps@
+sources :=
+includes := 
+xsd_files := ChannelManagerControllerConfig.xsd
+xsd_includes := . 
+
+@channelmanagercontrollerconfig_post@
+

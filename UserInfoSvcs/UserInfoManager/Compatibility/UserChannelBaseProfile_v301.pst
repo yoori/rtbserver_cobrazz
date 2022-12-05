@@ -1,0 +1,182 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v301
+{
+  struct SessionMatches
+  {
+    uint channel_id;
+    list<uint> timestamps;
+  };
+
+  autoreader SessionMatchesReader<SessionMatches>;
+  autowriter SessionMatchesWriter<SessionMatches>;
+    
+  struct HistoryVisits
+  {
+    uint channel_id;
+    uint visits;
+  };
+
+  autoreader HistoryVisitsReader<HistoryVisits>;
+  autowriter HistoryVisitsWriter<HistoryVisits>;
+
+  struct HistoryMatches
+  {
+    uint channel_id;
+    uint weight;
+  };
+
+  autoreader HistoryMatchesReader<HistoryMatches>;
+  autowriter HistoryMatchesWriter<HistoryMatches>;
+
+  struct HTCandidates
+  {
+    uint channel_id;
+    uint req_visits;
+    uint visits;
+    uint weight;
+  };
+
+  autoreader HTCandidatesReader<HTCandidates>;
+  autowriter HTCandidatesWriter<HTCandidates>;
+
+  struct PartlyVisits
+  {
+    uint visits;
+    uint min_visits;
+  };
+
+  autoreader PartlyVisitsReader<PartlyVisits>;
+  autowriter PartlyVisitsWriter<PartlyVisits>;
+
+  struct PartlyVisitsSection
+  {
+    uint channel_id;
+    PartlyVisits max_visits;
+    list<PartlyVisits> all_ht_visits;
+    list<PartlyVisits> all_history_visits;
+  };
+
+  reader PartlyVisitsSectionReader<PartlyVisitsSection>
+  {
+    channel_id;
+    PartlyVisitsReader max_visits;
+    list<PartlyVisitsReader> all_ht_visits;
+    list<PartlyVisitsReader> all_history_visits;
+  };
+
+  writer PartlyVisitsSectionWriter<PartlyVisitsSection>
+  {
+    channel_id;
+    PartlyVisitsWriter max_visits;
+    list<PartlyVisitsWriter> all_ht_visits;
+    list<PartlyVisitsWriter> all_history_visits;
+  };
+
+  struct ChannelsInfo
+  {
+    list<HTCandidates> ht_candidates;
+    list<HistoryMatches> history_matches;
+    list<HistoryVisits> history_visits;
+    list<SessionMatches> session_matches;
+
+    list<PartlyVisitsSection> unused_1;
+    list<PartlyVisitsSection> unused_2;
+  };
+
+  reader ChannelsInfoReader<ChannelsInfo>
+  {
+    list<HTCandidatesReader> ht_candidates;
+    list<HistoryMatchesReader> history_matches;
+    list<HistoryVisitsReader> history_visits;
+    list<SessionMatchesReader> session_matches;
+
+    list<PartlyVisitsSectionReader> unused_1;
+    list<PartlyVisitsSectionReader> unused_2;
+  };
+   
+  writer ChannelsInfoWriter<ChannelsInfo>
+  {
+    list<HTCandidatesWriter> ht_candidates;
+    list<HistoryMatchesWriter> history_matches;
+    list<HistoryVisitsWriter> history_visits;
+    list<SessionMatchesWriter> session_matches;
+
+    list<PartlyVisitsSectionWriter> unused_1;
+    list<PartlyVisitsSectionWriter> unused_2;
+  };
+
+  struct ChannelsProfileVersion
+  {
+    uint version;
+  };
+
+  autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;    
+  autowriter ChannelsProfileVersionWriter<ChannelsProfileVersion>;    
+    
+  struct PersistentMatches
+  {
+    list<uint> channel_ids;
+  };
+
+  autoreader PersistentMatchesReader<PersistentMatches>;
+  autowriter PersistentMatchesWriter<PersistentMatches>;
+
+  struct ChannelsProfile
+  {
+    uint version;
+    uint create_time;
+    uint history_time;
+    uint ignore_fraud_time;
+    uint last_request_time;
+    uint session_start;
+    uint household;
+    uint first_colo_id;
+    uint last_colo_id;
+    string cohort;
+    
+    PersistentMatches persistent_matches;
+    ChannelsInfo page_channels;
+    ChannelsInfo search_channels;
+    ChannelsInfo url_channels;
+  };
+ 
+  reader ChannelsProfileReader<ChannelsProfile>
+  {
+    version;
+    create_time;
+    history_time;
+    ignore_fraud_time;
+    last_request_time;
+    session_start;
+    household;
+    first_colo_id;
+    last_colo_id;
+    cohort;
+    
+    PersistentMatchesReader persistent_matches;
+    ChannelsInfoReader page_channels;
+    ChannelsInfoReader search_channels;
+    ChannelsInfoReader url_channels;
+  };
+   
+  writer ChannelsProfileWriter<ChannelsProfile>
+  {
+    version;
+    create_time;
+    history_time;
+    ignore_fraud_time;
+    last_request_time;
+    session_start;
+    household;
+    first_colo_id;
+    last_colo_id;
+    cohort;
+    
+    PersistentMatchesWriter persistent_matches;
+    ChannelsInfoWriter page_channels;
+    ChannelsInfoWriter search_channels;
+    ChannelsInfoWriter url_channels;
+  };
+}
+}

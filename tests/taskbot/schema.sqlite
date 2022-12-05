@@ -1,0 +1,85 @@
+-- -*- sql -*-
+
+PRAGMA page_size = 8192;
+
+CREATE TABLE branch (
+        id INTEGER PRIMARY KEY,
+        description TEXT NOT NULL         
+);
+
+CREATE UNIQUE INDEX branch_description ON branch (description);
+
+
+CREATE TABLE task (
+        id INTEGER PRIMARY KEY,
+
+        root_task_id INTEGER REFERENCES task (id),
+        parent_task_id INTEGER REFERENCES task (id),
+        branch_id INTEGER REFERENCES branch (id),
+
+        description TEXT NOT NULL,
+        is_command BOOL NOT NULL,
+        start TIMESTAMP NOT NULL,
+        finish TIMESTAMP NOT NULL,
+        error_message TEXT
+);
+
+CREATE INDEX task_description_root_task_id_parent_task_id
+        ON task (description, root_task_id, parent_task_id);
+
+
+CREATE TABLE command (
+        -- command inherits task.
+        task_id INTEGER PRIMARY KEY REFERENCES task (id),
+
+        stdout_gzipped BOOL NOT NULL,
+        stdout BLOB NOT NULL,
+        stderr_gzipped BOOL NOT NULL,
+        stderr BLOB NOT NULL,
+        exit_status INTEGER
+);
+
+
+CREATE TABLE running_task (
+        -- running_task inherits task.
+        task_id INTEGER PRIMARY KEY REFERENCES task (id),
+
+        host TEXT NOT NULL,
+        pid INTEGER NOT NULL,
+        user TEXT NOT NULL
+);
+
+CREATE INDEX running_task_host_pid ON running_task (host, pid);
+CREATE INDEX running_task_user_host ON running_task (user, host);
+
+
+CREATE TABLE history (
+        -- history inherits task.
+        task_id INTEGER PRIMARY KEY REFERENCES task (id),
+        link_task_id INTEGER NOT NULL REFERENCES task (id),
+
+        html_table_row TEXT NOT NULL
+);
+
+
+CREATE TABLE report (
+        id INTEGER PRIMARY KEY,
+
+        task_id INTEGER NOT NULL REFERENCES task (id),
+
+        gzipped BOOL NOT NULL,
+        html TEXT NOT NULL
+);
+
+
+CREATE TABLE file (
+        id INTEGER PRIMARY KEY,
+
+        task_id INTEGER NOT NULL REFERENCES task (id),
+
+        name TEXT NOT NULL,
+        fullpath TEXT NOT NULL,
+        content TEXT
+);
+
+CREATE INDEX file_name_task_id ON file (name, task_id);

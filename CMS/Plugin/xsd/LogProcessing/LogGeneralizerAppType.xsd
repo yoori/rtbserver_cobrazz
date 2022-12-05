@@ -1,0 +1,420 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Log Generalizer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="LogGeneralizerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10111">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="LogGeneralizerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="LogGeneralizerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="statLogging" type="LogGeneralizerStatsLoggingType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Statistics logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerStatLoggingType">
+    <xsd:attribute name="max_upload_task_count" type="xsd:positiveInteger" default="4">
+      <xsd:annotation>
+        <xsd:documentation>
+          Max count of concurrent DB upload tasks for CreativeStat and CMPStat
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="file_check_period" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of checking of appearing new logs
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Max time of saving new logs
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_size" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum cache size of records for saving
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerStatsLoggingType">
+    <xsd:complexContent>
+      <xsd:extension base="LogGeneralizerStatLoggingType">
+        <xsd:sequence>
+          <xsd:element name="CCGKeywordStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CCGKeywordStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CCGStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CCGStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CCStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CCStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CampaignStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CampaignStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ColoUsers" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ColoUsers.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="PageLoadsDailyStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for PageLoadsDailyStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="SiteStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for SiteStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="TagAuctionStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for TagAuctionStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CMPStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CMPStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CreativeStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CreativeStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="WebStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for WebStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ActionRequest" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ActionRequest.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="AdvertiserUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for AdvertiserUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CCGUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CCGUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CCUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CCUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CampaignUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CampaignUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelCountStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelCountStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelHitStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelHitStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelImpInventory" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelImpInventory.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelInventory" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelInventory.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelInventoryEstimationStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelInventoryEstimationStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelPerformance" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelPerformance.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelPriceRange" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelPriceRange.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ColoUpdateStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ColoUpdateStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ColoUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ColoUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ExpressionPerformance" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ExpressionPerformance.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="GlobalColoUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for GlobalColoUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="PassbackStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for PassbackStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="PublisherInventory" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for PublisherInventory.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="SiteChannelStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for SiteChannelStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="SiteReferrerStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for SiteReferrerStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="CampaignReferrerStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for CampaignReferrerStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="SiteUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for SiteUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="UserProperties" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for UserProperties.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ActionStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ActionStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="OptOutStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for OptOutStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelOverlapUserStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelOverlapUserStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelTriggerImpStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelTriggerImpStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="ChannelTriggerStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for ChannelTriggerStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="DeviceChannelCountStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for DeviceChannelCountStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="SearchEngineStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for SearchEngineStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="TagPositionStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for TagPositionStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="UserAgentStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for UserAgentStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="SearchTermStat" type="LogGeneralizerStatLoggingType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Statistics logging parameters for SearchTermStat.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="search_term_count_threshold" type="xsd:unsignedByte" default="10">
+          <xsd:annotation>
+            <xsd:documentation>
+              Minimum hits count for SearchTermStat logs
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,16 @@
+include Common.pre.rules
+
+libraries := Commons
+
+test_directory_list := \
+  PerformanceTests \
+  LogProcessing	\
+  UnitTests \
+  AutoTests \
+  Modeling \
+  Utils
+
+target_directory_list := \
+  $(test_directory_list) \
+
+include $(osbe_builddir)/config/Direntry.post.rules

@@ -1,0 +1,33 @@
+@autotestsstatisticsunits_deps@
+
+sources := \
+  ActionStatsTest.cpp \
+  CCGKeywordStatsTest.cpp \
+  CMPStatTest.cpp \
+  ColoUsers.cpp \
+  UserPropertiesTest.cpp \
+  StatsHourlyLoggingTest.cpp \
+  StatsHourlyNumShowingTest.cpp \
+  SiteChannelStatsTest.cpp \
+  PassbackStatsTest.cpp \
+  OptOutLoggingTest.cpp \
+  OldLogsLoadingTest.cpp \
+  ActionRequestsTests.cpp \
+  StatProfilesExpirationTest.cpp \
+  PublisherInventoryTest.cpp \
+  CampaignStartupTest.cpp \
+  FraudProtectionFeatureTest.cpp \
+  StatsHourlyActionsTest.cpp \
+  GEOChannelsStats.cpp \
+  WebStatFrontendProtocolTest.cpp \
+  ZeroCollectorTest.cpp \
+  AverageUsersCost.cpp \
+  SiteUserStatsTest.cpp \
+  AdvertiserUserStatsTest.cpp \
+  PageLoadsDailyStats.cpp \
+  TargetingChannelStats.cpp \
+  RemoteColoUpdateStats.cpp \
+
+
+includes := .
+@autotestsstatisticsunits_post@

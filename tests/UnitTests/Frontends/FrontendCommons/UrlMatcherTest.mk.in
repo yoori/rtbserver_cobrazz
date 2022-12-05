@@ -1,0 +1,6 @@
+@urlmatchertestcommonexe_deps@
+
+target := UrlMatcherTest
+sources := UrlMatcherTest.cpp
+
+include $(top_srcdir)/tests/Test.post.rules

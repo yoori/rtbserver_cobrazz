@@ -1,0 +1,6 @@
+@sitereferrerstat_deps@
+sources := SiteReferrerStat.cpp
+
+includes := .
+@sitereferrerstat_post@
+

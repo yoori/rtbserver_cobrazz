@@ -1,0 +1,6 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([SyncLogs])
+OSBE_CONFIG_SUBDIR([LogGeneralizer])
+OSBE_CONFIG_SUBDIR([LogGeneralizerAdmin])

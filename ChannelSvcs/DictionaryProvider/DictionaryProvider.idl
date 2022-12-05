@@ -1,0 +1,37 @@
+/**
+* @file DictionaryProvider.idl
+* @autor Andrey Gusev
+* @Id:
+**/
+
+#ifndef AD_CHANNEL_SVCS_DICTIONARY_PROVIDER_IDL_
+#define AD_CHANNEL_SVCS_DICTIONARY_PROVIDER_IDL_
+
+#include<Commons/CorbaTypes.idl>
+#include<ChannelSvcs/ChannelCommons/ChannelCommons.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+
+    interface DictionaryProvider
+    {
+      struct Lexeme
+      {
+        CORBACommons::StringSeq forms;
+      };
+
+      typedef sequence<Lexeme> LexemeSeq;
+
+      // return lexeme sequence for requested words with keeping order
+      // empty lexeme in sequence if lexeme not found (length of output sequence must be equal words length)
+      LexemeSeq get_lexemes(in string language, in CORBACommons::StringSeq words)
+        raises(NotReady, ImplementationException);
+    };
+
+  };
+};
+
+#endif
+

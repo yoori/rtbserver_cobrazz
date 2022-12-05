@@ -1,0 +1,8 @@
+name="CampaignServer_v310"
+so_files=CampaignServer_v310
+
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep Commons
+osbe_cxx_dep CampaignServerStubs_v310
+osbe_cxx_dep CampaignServer_v320

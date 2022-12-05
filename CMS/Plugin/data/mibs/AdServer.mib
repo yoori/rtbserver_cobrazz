@@ -1,0 +1,29 @@
+AdServer-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
+
+foros MODULE-IDENTITY
+    -- refer to ExtUTCTime definition for the LAST-UPDATED format
+    -- one of possible is YYYYMMDDHHMMZ
+  LAST-UPDATED "200906251500Z"
+  ORGANIZATION "Phorm, Inc."
+  CONTACT-INFO "admin@foros.com"
+  DESCRIPTION "Phorm MIB data"
+  ::= { enterprises 28675 }
+
+adserver OBJECT IDENTIFIER ::=
+  { foros 2 }
+
+logProcessing OBJECT IDENTIFIER ::= { adserver 1 }
+
+controlling OBJECT IDENTIFIER ::= { adserver 2 }
+
+campaignSvcs OBJECT IDENTIFIER ::= { adserver 3 }
+
+monitoring OBJECT IDENTIFIER ::= { adserver 5 }
+
+requestInfoSvcs OBJECT IDENTIFIER ::= { adserver 6 }
+
+END
+

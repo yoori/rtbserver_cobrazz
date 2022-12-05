@@ -1,0 +1,391 @@
+namespace AdServer
+{
+namespace UserInfoSvcs
+{
+  struct UserOperationBaseDescriptor
+  {
+    uint operation_type;
+    uint version;
+    string user_id;
+  };
+
+  autoreader UserOperationBaseReader<UserOperationBaseDescriptor>;
+
+  /* user preferences getting operation */
+  struct UserGetPreferencesOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    string token;
+    uint time;
+  };
+
+  autoreader UserGetPreferencesOperationReader<UserGetPreferencesOperationDescriptor>;
+  autowriter UserGetPreferencesOperationWriter<UserGetPreferencesOperationDescriptor>;
+
+  /* fraud marking operation */
+  struct UserFraudOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint fraud_time;
+  };
+
+  autoreader UserFraudOperationReader<UserFraudOperationDescriptor>;
+  autowriter UserFraudOperationWriter<UserFraudOperationDescriptor>;
+
+  /* channel match operation */
+  struct ChannelTriggerMatch
+  {
+    uint channel_id;
+    uint channel_trigger_id;
+  };
+
+  autoreader ChannelTriggerMatchReader<ChannelTriggerMatch>;
+  autowriter ChannelTriggerMatchWriter<ChannelTriggerMatch>;
+
+  struct CoordData
+  {
+    bytes latitude;
+    bytes longitude;
+    bytes accuracy;
+  };
+
+  autoreader CoordDataReader<CoordData>;
+  autowriter CoordDataWriter<CoordData>;
+  
+  struct UserMatchOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint temporary;
+    uint time;
+    int request_colo_id;
+    int last_colo_id;
+    int placement_colo_id;
+    array<ChannelTriggerMatch> page_channels;
+    array<ChannelTriggerMatch> search_channels;
+    array<ChannelTriggerMatch> url_channels;
+    array<ChannelTriggerMatch> url_keyword_channels;
+    list<uint> persistent_channels;
+    char change_last_request;
+    uint household;
+    string cohort;
+
+    uint repeat_trigger_timeout;
+    char filter_contextual_triggers;
+
+    array<CoordData> coord_data;
+  };
+
+  reader UserMatchOperationReader<UserMatchOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    temporary;
+    time;
+    request_colo_id;
+    last_colo_id;
+    placement_colo_id;
+    array<ChannelTriggerMatchReader> page_channels;
+    array<ChannelTriggerMatchReader> search_channels;
+    array<ChannelTriggerMatchReader> url_channels;
+    array<ChannelTriggerMatchReader> url_keyword_channels;
+    persistent_channels;
+    change_last_request;
+    household;
+    cohort;
+
+    repeat_trigger_timeout;
+    filter_contextual_triggers;
+
+    array<CoordDataReader> coord_data;
+  };
+
+  writer UserMatchOperationWriter<UserMatchOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    temporary;
+    time;
+    request_colo_id;
+    last_colo_id;
+    placement_colo_id;
+    array<ChannelTriggerMatchWriter> page_channels;
+    array<ChannelTriggerMatchWriter> search_channels;
+    array<ChannelTriggerMatchWriter> url_channels;
+    array<ChannelTriggerMatchWriter> url_keyword_channels;
+    persistent_channels;
+    change_last_request;
+    household;
+    cohort;
+
+    repeat_trigger_timeout;
+    filter_contextual_triggers;
+
+    array<CoordDataWriter> coord_data;
+  };
+
+  /* merge operation */
+  struct UserMergeOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    uint exchange_merge;
+    char change_last_request;
+    bytes merge_base_profile;
+    bytes merge_add_profile;
+    bytes merge_history_profile;
+    bytes merge_freq_cap_profile;
+    uint household;
+    int request_colo_id;
+  };
+
+  autoreader UserMergeOperationReader<UserMergeOperationDescriptor>;
+  autowriter UserMergeOperationWriter<UserMergeOperationDescriptor>;
+
+  /* freq caps update operation */
+  struct SeqOrderDescriptor
+  {
+    uint ccg_id;
+    uint set_id;
+    uint imps;
+  };
+
+  autoreader SeqOrderDescriptorReader<SeqOrderDescriptor>;
+  autowriter SeqOrderDescriptorWriter<SeqOrderDescriptor>;
+
+  struct UserFreqCapUpdateOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    string request_id;
+    list<uint> freq_caps;
+    list<uint> uc_freq_caps;
+    list<uint> virtual_freq_caps;
+    array<SeqOrderDescriptor> seq_orders;
+    list<uint> campaign_ids;
+    list<uint> uc_campaign_ids;
+  };
+
+  reader UserFreqCapUpdateOperationReader<UserFreqCapUpdateOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    request_id;
+    freq_caps;
+    uc_freq_caps;
+    virtual_freq_caps;
+    array<SeqOrderDescriptorReader> seq_orders;
+    campaign_ids;
+    uc_campaign_ids;
+  };
+  
+  writer UserFreqCapUpdateOperationWriter<UserFreqCapUpdateOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    request_id;
+    freq_caps;
+    uc_freq_caps;
+    virtual_freq_caps;
+    array<SeqOrderDescriptorWriter> seq_orders;
+    campaign_ids;
+    uc_campaign_ids;
+  };
+
+  /* freq caps confirm operation */
+  struct UserFreqCapConfirmOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    string request_id;
+
+    array<uint> publisher_accounts;
+  };
+
+  autoreader UserFreqCapConfirmOperationReader<UserFreqCapConfirmOperationDescriptor>;
+  autowriter UserFreqCapConfirmOperationWriter<UserFreqCapConfirmOperationDescriptor>;
+
+  /* update user preferences operation */
+  struct CategoryChannelUpdateDescriptor
+  {
+    uint id;
+    uint status;
+  };
+
+  autoreader CategoryChannelUpdateReader<CategoryChannelUpdateDescriptor>;
+  autowriter CategoryChannelUpdateWriter<CategoryChannelUpdateDescriptor>;
+
+  struct DiscoverChannelUpdateDescriptor
+  {
+    uint id;
+    uint status;
+    uint weight;
+  };
+
+  autoreader DiscoverChannelUpdateReader<DiscoverChannelUpdateDescriptor>;
+  autowriter DiscoverChannelUpdateWriter<DiscoverChannelUpdateDescriptor>;
+
+  struct UserUpdatePreferencesOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    array<CategoryChannelUpdateDescriptor> categories;
+    array<DiscoverChannelUpdateDescriptor> discover_channels;
+  };
+
+  reader UserUpdatePreferencesOperationReader<
+    UserUpdatePreferencesOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    array<CategoryChannelUpdateReader> categories;
+    array<DiscoverChannelUpdateReader> discover_channels;
+  };
+
+  writer UserUpdatePreferencesOperationWriter<
+    UserUpdatePreferencesOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    array<CategoryChannelUpdateWriter> categories;
+    array<DiscoverChannelUpdateWriter> discover_channels;
+  };
+
+  /* update user properties operation */
+  struct PropertyUpdateDescriptor
+  {
+    string name;
+    string value;
+  };
+
+  autoreader PropertyUpdateReader<PropertyUpdateDescriptor>;
+  autowriter PropertyUpdateWriter<PropertyUpdateDescriptor>;
+
+  struct UserUpdatePropertiesOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    array<PropertyUpdateDescriptor> properties;
+  };
+
+  reader UserUpdatePropertiesOperationReader<
+    UserUpdatePropertiesOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    array<PropertyUpdateReader> properties;
+  };
+
+  writer UserUpdatePropertiesOperationWriter<
+    UserUpdatePropertiesOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    array<PropertyUpdateWriter> properties;
+  };
+
+  /* update user properties operation */
+  struct FreqCapInfoDescriptor
+  {
+    uint fc_id;
+    uint lifelimit;
+    uint period;
+    uint window_limit;
+    uint window_time;
+  };
+
+  autoreader FreqCapInfoReader<FreqCapInfoDescriptor>;
+  autowriter FreqCapInfoWriter<FreqCapInfoDescriptor>;
+
+  struct AudienceChannelDescriptor
+  {
+    uint channel_id;
+    uint time;
+  };
+
+  autoreader AudienceChannelDescriptorReader<AudienceChannelDescriptor>;
+  autowriter AudienceChannelDescriptorWriter<AudienceChannelDescriptor>;
+
+  struct AudienceChannelsOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+    string user_id;
+    uint time;
+    array<AudienceChannelDescriptor> audience_channels;
+  };
+
+  reader AudienceChannelsOperationReader<
+    AudienceChannelsOperationDescriptor>
+  {
+    uint operation_type;
+    uint version;
+    string user_id;
+    uint time;
+    array<AudienceChannelDescriptorReader> audience_channels;
+  };
+
+  writer AudienceChannelsOperationWriter<
+    AudienceChannelsOperationDescriptor>
+  {
+    uint operation_type;
+    uint version;
+    string user_id;
+    uint time;
+    array<AudienceChannelDescriptorWriter> audience_channels;
+  };
+
+  struct UserOperationTypeDescriptor
+  {
+    uint operation_type;
+    uint version;
+  };
+
+  autoreader UserOperationTypeReader<UserOperationTypeDescriptor>;
+}
+}

@@ -1,0 +1,6 @@
+@svmgeneratorexe_deps@
+
+sources := Application.cpp
+target := SVMGenerator
+
+@svmgeneratorexe_post@

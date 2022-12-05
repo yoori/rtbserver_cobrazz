@@ -1,0 +1,5 @@
+name="CampaignTypes"
+so_files=CampaignTypes
+
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons

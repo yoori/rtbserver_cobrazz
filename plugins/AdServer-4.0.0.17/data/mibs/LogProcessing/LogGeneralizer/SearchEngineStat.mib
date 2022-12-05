@@ -1,0 +1,118 @@
+-- $Id: SearchEngineStat.mib 111751 2012-11-09 12:57:58Z alexandr_kashkirov $
+
+SearchEngineStat-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  logGeneralizer FROM LogGeneralizer-MIB;
+
+searchEngineStat OBJECT IDENTIFIER ::= { logGeneralizer 151 }
+
+inputTimeAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on processing the input directory"
+  ::= { searchEngineStat 1 }
+
+inputTimeMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on processing the input directory"
+  ::= { searchEngineStat 2 }
+
+inputTimeTotal OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total time spent on processing the input directory"
+  ::= { searchEngineStat 3 }
+
+inputTimePerFileAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on processing an input file"
+  ::= { searchEngineStat 4 }
+
+inputTimePerFileMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on processing an input file"
+  ::= { searchEngineStat 5 }
+
+inputSuccessCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of successfully processed input files"
+  ::= { searchEngineStat 6 }
+
+inputErrorCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of input files that the service has failed to process"
+  ::= { searchEngineStat 7 }
+
+outputTimeAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on writing log data to disk or database"
+  ::= { searchEngineStat 8 }
+
+outputTimeMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on writing log data to disk or database"
+  ::= { searchEngineStat 9 }
+
+outputTimeTotal OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total time spent on writing log data to disk or database"
+  ::= { searchEngineStat 10 }
+
+outputRecordsAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average number of log data records written per operation"
+  ::= { searchEngineStat 11 }
+
+outputRecordsMax OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max number of log data records written per operation"
+  ::= { searchEngineStat 12 }
+
+outputRecordsTotal OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of log data records written"
+  ::= { searchEngineStat 13 }
+
+outputSuccessCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of successful write operations"
+  ::= { searchEngineStat 14 }
+
+outputErrorCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of failed write operations"
+  ::= { searchEngineStat 15 }
+
+END
+

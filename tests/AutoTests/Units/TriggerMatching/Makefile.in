@@ -1,0 +1,32 @@
+@autoteststriggermatchingunits_deps@
+
+sources := \
+  BadReferersProcessingTest.cpp \
+  BrokenChannelTriggers.cpp \
+  BrokenRequestTest.cpp \
+  ChannelSearchAdminTest.cpp \
+  CombinedHardSoftMatchingTest.cpp \
+  ContextChannelsTest.cpp \
+  ExactUrlMatching.cpp \
+  KeywordsNormalizationTest.cpp \
+  MultiLangChannelMatching.cpp \
+  MultiLangSearchRefererParsingTest.cpp \
+  MultipleChannelsMatchingTest.cpp \
+  NegativeMatchTest.cpp \
+  PrimaryChannelsMatchingTest.cpp \
+  RefererMatchingTest.cpp \
+  RefererUrlParsingTest.cpp \
+  SoftTriggerMatchingTest.cpp \
+  UrlNormalizationTest.cpp \
+  UrlTriggerTypeTest.cpp \
+  NoAdvNoTrackTest.cpp \
+  OptoutMatching.cpp \
+  BannedChAdReqProfDisabling.cpp \
+  RemoteTriggersCheck.cpp \
+  GEOChannelsMatching.cpp \
+  LemmatisationTest.cpp \
+  ExactKeywordMatching.cpp \
+  URLKeywordsDecoding.cpp
+
+includes := .
+@autoteststriggermatchingunits_post@

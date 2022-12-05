@@ -1,0 +1,12 @@
+name="ProfilingCommons"
+
+so_files=
+
+osbe_cxx_dep String
+osbe_cxx_dep Stream
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep PlainStorage
+osbe_cxx_dep RocksDB
+
+#osbe_cxx_dep PlainStorage3

@@ -1,0 +1,35 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v24
+{
+  /* item appear list for specific date interval */
+  struct SiteDateReachDescriptor
+  {
+    uint date;
+    list<uint> appear_list;
+  };
+
+  autoreader SiteDateReachReader<SiteDateReachDescriptor>;
+
+  /* reach profile */
+  struct UserSiteReachProfileDescriptor
+  {
+    uint version;
+    uint last_request_day;
+
+    list<SiteDateReachDescriptor> daily_appear_lists;
+    list<SiteDateReachDescriptor> monthly_appear_lists;
+  };
+
+  reader UserSiteReachProfileReader<
+    UserSiteReachProfileDescriptor>
+  {
+    version;
+    last_request_day;
+    
+    list<SiteDateReachReader> daily_appear_lists;
+    list<SiteDateReachReader> monthly_appear_lists;
+  };
+}
+}
+

@@ -1,0 +1,654 @@
+[[toc:4]]
+
+= Overview of SWeb =
+
+SWeb stands for _Simple Web_, a
+[[http://en.wikipedia.org/wiki/Literate_programming | literate
+programming]] tool for writing well-documented code in any programming
+language.  Note that the meaning of _Web_ with respect to literate
+programming has nothing to do with _WEB_ as in _World Wide Web_.  The
+term, as well as the approach itself, has been invented by Donald
+E. Knuth.
+
+There are two main components in SWeb:
+
+* {{{sweb.cgi}}} allows viewing formatted documentation found in
+  {{{.sweb}}} with the browser.
+
+* {{{sweb.pl}}} takes {{{.sweb}}} files and produces one or more
+  source code files.  Format of {{{.sweb}}} files is described below.
+
+= SWeb syntax =
+
+Each SWeb file consists of documentation chunks and code chunks.
+Documentation chunks may be just any text (unless it denotes the
+beginning of [[#code]] chunk).  However, to be viewed with
+{{{sweb.cgi}}}, the documentation should be formatted according to
+markup described below.
+
+== Documentation ==
+
+Documentation consists of plain text with some Wiki-like markup
+formatting.  {{{sweb.cgi}}} recognizes the following constructs.  As
+an early note, line break in the input *does not* produce line break
+in the formatted output (which is done [[ #line break | explicitly]]).
+You don't have to write the whole paragraph in one line to avoid line
+breaks.
+
+=== Headers ===
+
+There are six types of section headers.  Each header is one to six
+{{{=}}} followed by some text, followed by the same number of {{{=}}},
+all on the line by itself.  For example
+
+{{{
+  = Header 1 =
+  == Header 2 ==
+  === Header 3 ===
+  ==== Header 4 ====
+  ===== Header 5 =====
+  ====== Header 6 ======
+}}}
+
+will produce
+
+  = Header 1 =
+  == Header 2 ==
+  === Header 3 ===
+  ==== Header 4 ====
+  ===== Header 5 =====
+  ====== Header 6 ======
+
+When first {{{=}}} is not indented the anchor is placed before the
+header.  Anchor name is header text with runs of non-alphanumeric
+characters replaced with {{{-}}}.  You may create links to sections
+with {{{[[#name]]}}} or {{{[[page#name]]}}} (see [[#links]]).
+
+
+=== Table of Contents ===
+
+Placing {{{[[toc:N]]}}} anywhere in the documentation (on the line by
+itself) will produce Table of Contents at that point down to level
+{{{N}}} (should be 1 to 6).
+
+{{{
+  [[toc:2]]
+}}}
+
+gives
+
+  [[toc:2]]
+
+=== Text style ===
+
+*Bold* text produced like this:
+
+{{{
+  *bold text*
+}}}
+
+_Italic_ like this:
+
+{{{
+  _italic text_
+}}}
+
+Both may nest in each other:
+_italic with *bold*_ and *bold with _italic_*.
+
+Note that opening and closing marks should appear on the same line.
+Single * or _ on the line will stand for itself.
+
+=== Line break ===
+
+To break the line put {{{\}}} as the last character.  All other line
+breaks in the input are treated as ordinary spaces:
+
+{{{
+  This
+  is
+  a
+  line \
+  break.
+}}}
+
+will produce
+
+  This
+  is
+  a
+  line \
+  break.
+
+=== Links ===
+
+Links are creates by surrounding the address with {{{[[}}} and
+{{{]]}}}.  Address may be an absolute URL starting with scheme (like
+{{{http://}}}), or a page name.  {{{#}}} denotes a fragment of the
+page.  Link text may be given after the {{{|}}}:
+
+{{{
+  [[http://taskbot.ocslab.com/taskbot/browse.cgi]]
+  is a link to
+  [[http://taskbot.ocslab.com/taskbot/browse.cgi
+    | taskbot]].
+
+  Link to [[#links | this section]], named [[#Links]].
+
+  Link to [[doc]] ([[doc | this very page]]).
+
+  Documentation is in the namespace }}}{{{{{{sweb}}}}}}{{{: [[sweb/doc|doc]]
+
+  Implementation: [[cgi#links | here]]
+}}}
+
+that produce
+
+  [[http://taskbot.ocslab.com/taskbot/browse.cgi]]
+  is a link to
+  [[http://taskbot.ocslab.com/taskbot/browse.cgi
+    | taskbot]].
+
+  Link to [[#links | this section]], named [[#Links]].
+
+  Link to [[doc]] ([[doc | this very page]]).
+
+  Documentation is in the namespace {{{sweb}}}: [[sweb/doc|doc]]
+
+  Implementation: [[cgi#links | here]]
+
+
+=== Horizontal line ===
+
+Four or more {{{-}}} on a line by itself produce horizontal line:
+
+{{{
+----------------------------------------
+}}}
+
+will result in the line as below:
+
+----------------------------------------
+
+=== Blocks ===
+
+A block is a piece of text that is formatted as a single entity.
+
+==== Paragraphs ====
+
+A paragraph is a piece of text visually distinct from the surrounding
+text.  For example, this very text is a separate paragraph.
+
+Indented input will produce indented output.  For example
+
+{{{
+  Text.
+  Same paragraph.
+
+  Another paragraph.
+
+    Indented text.
+      More indentation.
+
+    Indent again.
+  Normal text.
+}}}
+
+will produce
+
+  Text.
+  Same paragraph.
+
+  Another paragraph.
+
+    Indented text.
+      More indentation.
+
+    Indent again.
+  Normal text.
+
+
+==== Lists ====
+
+There are two types of lists: enumerated and not enumerated.
+Enumerated lists produced like this:
+
+{{{
+  # First
+  # Second
+    # Nested 1
+    # Nested 2
+  # Third
+}}}
+
+that produce
+
+  # First
+  # Second
+    # Nested 1
+    # Nested 2
+  # Third
+
+Lists with bullets are denoted by {{{*}}} instead of {{{#}}}:
+
+{{{
+  * One
+  * Two (*bold*)
+  * *Bold* too
+}}}
+
+that produce (note that {{{*bold*}}} works as expected)
+
+  * One
+  * Two (*bold*)
+  * *Bold* too
+
+Lists of both types may nest in each other:
+
+  # This
+    * is
+    * an
+  # example
+
+Note that examples above are indented because the input is indented.
+Lists in column zero look like this:
+
+# Number
+* Bullet
+
+=== Tables ===
+
+A table consists of header rows and data rows.  Header rows are a list
+of items separated with and surrounded by {{{||}}}.  Data rows use
+single {{{|}}} for separation.  Left column of {{{|}}} must be lined
+up.  For example:
+
+{{{
+  || This || is || a || header ||
+  | This   | is  | a  | data    |
+  | more   |     |    | data    |
+  || another || header || ||      ||
+  | data      |         |  | again |
+}}}
+
+will produce
+
+  || This || is || a || header ||
+  | This   | is  | a  | data    |
+  | more   |     |    | data    |
+  || another || header || ||      ||
+  | data      |         |  | again |
+
+
+=== Verbatim ===
+
+Everything between {{{{{{}}} and {{{}}}}}} is output as-is.  No
+further processing is done on the contents of verbatim block.  For
+example, this is {{{*verbatim*inline*}}}, or
+
+{{{
+  * This \\\*is* a _verbatim_ [[text]]
+}}}
+
+Note that verbatim block is greedy on its closing {{{}}}}}}.  This
+means that in the sequence of _n + 3_ closing braces first _n_ belong
+to the _inside_ of the block, and last three denote the end of block.
+This is why {{{{{{}}}}}}}}} produced three closing braces earlier.  To
+insert them in the multi-line verbatim block you have to play the
+trick:
+
+{{{{{{
+  To be viewed in output only: }}}{{{}}}}}}{{{{{{}}}}}}}}}{{{{{{}}}{{{.
+}}}{{{}}}}}}
+
+that gives
+
+{{{
+  To be viewed in output only: }}}{{{}}}}}}{{{.
+}}}
+
+Escaping (see next section) doesn't work (nor required) in verbatim
+block: every character stands for itself, including backslash.
+
+=== Escaping ===
+
+To escape a punctuation character (non-whitespace character that is
+not letter or digit) precede it with {{{\}}}.  This will disable
+special markup meaning of that character, if any.  Backslash in every
+other position will stand for itself (except for [[#line break]]).
+
+Backslash always means itself in verbatim blocks.
+
+=== When everything else fails (embedded HTML) ===
+
+  *Note:* use of embedded HTML is *not recommended*.  In general,
+  while writing {{{.sweb}}} you should concentrate on _contents_, not
+  _appearance_.  If you absolutely have to insert a custom formatting,
+  first consider whether there should be a markup command for it.  If
+  so, request one instead of embedding HTML.
+
+You can embed plain HTML into the {{{.sweb}}} by surrounding it with
+{{{[[[}}} and {{{]]]}}}.  For instance
+
+{{{
+  [[[
+    <table border="1">
+    <tr><td>HTML</td><td>table</td></tr>
+    \</table>
+  ]]]
+}}}
+
+will give
+
+  [[[
+    <table border="1">
+    <tr><td>HTML</td><td>table</td></tr>
+    \</table>
+  ]]]
+
+Note that {{{</}}} (that is, left angel followed by punctuation
+character) as the first non-whitespace token on the line is a valid
+beginning of the block of code (see [[#code]] section), so we had to
+escape it (alternatively we could put it on the previous line where it
+wouldn't be the first non-whitespace token).
+
+
+== Previewing the result ==
+
+To preview the formatted result of {{{MySource.sweb}}} switch
+to the directory where {{{sweb.pl}}} is located, and do the
+following:
+
+# Create {{{sweb.cgi}}} if not done already
+
+  {{{
+    ./sweb.pl cgi.sweb expand.sweb
+  }}}
+
+# Generate HTML
+
+  {{{
+    perl ./sweb.cgi /preview/path/to/MySource? | sed -e '1,2d' > /tmp/MySource.html
+  }}}
+
+  {{{/preview}}} and {{{?}}} around file base name are required.
+
+# Open {{{/tmp/MySource.html}}} with the browser
+
+
+== Code ==
+
+This section describes the syntax of the code chunks of {{{.sweb}}}
+file.  Note that {{{sweb.cgi}}} process code chunks _before_
+documentation chunks.  This means that you can't put code chunk in,
+say, [[#verbatim]] block.
+
+=== Macro definitions ===
+
+Each code chunk is essentially a macro definition.  In its simplest
+form the definition looks like this:
+
+<* macro name *>= code
+
+where {{{*}}} may be any punctuation character (i.e., non-whitespace
+that is not a letter or digit).  In other words, one of
+
+{{{
+  ! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
+}}}
+
+When opening character is {{{[}}} or {{{{}}} or {{{(}}} or {{{<}}},
+corresponding closing character should be {{{]}}} or {{{}}}} or
+{{{)}}} or {{{>}}} respectively:
+
+<<macro name>>= code
+
+(it also works vice versa, but is considered a bad style).
+
+{{{macro name}}} is the name of the macro.  Macro names are case and
+whitespace insensitive.  {{{code}}} is a single line of code.
+Multi-line definition looks like this:
+
+<*macro*>=
+code line 1;
+code line 2;
+...
+<**>
+
+Here {{{<**>}}} is an end-of-code marker.  Again, {{{*}}} denotes any
+given punctuation character.  The _same_ character (or balanced pair
+of characters) should be used throughout one definition:
+
+<:macro:>=
+<<>> <-- part of the code
+
+Next line is the end-of-code marker:
+<::>
+
+When code lines are indented, you may omit end-of-code marker:
+
+<*macro*>=
+  code line 1;
+  code line 2;
+  ...
+
+In this case definition ends on the first line that is indented less
+than the first code line.
+
+Given macro may be defined more than once.  All definitions are simply
+concatenated into one in the order they appear in the {{{.sweb}}}
+file.
+
+<<macro>>=
+  code1;
+
+then somewhere else
+
+<<macro>>=
+  code2;
+
+is equivalent to
+
+<<macro>>=
+  code1;
+
+  code2;
+
+
+=== Calling other macros ===
+
+A macro may call other macros.  Contents of the called macro will be
+substituted at the point of the call.
+
+<<main action>>=
+  do_something();
+
+  <<other actions>>
+
+  more_actions();
+
+<:other actions:>=
+  action1();
+  action2();
+
+On macro expansion the contents of {{{other actions}}} will be
+substituted at the point where it is called in {{{main action}}}.
+Expansion works recursively to any depth.  Loops are detected and
+reported as error.
+
+=== Parameters ===
+
+Macros may have any number of parameters.  In macro name parameter is
+denoted with {{{:?}}} appended to the word, like
+
+<<macro with param:?>>=
+  result = <<param>>;
+
+Here {{{param}}} is a parameter of the macro.  The call
+{{{<<param>>}}} in the body of this macro refers to this parameter,
+not to some other macro with name {{{param}}}.  In other words,
+parameters have local scope, and shadow outer macro definitions.
+
+On macro call parameter value passed like this:
+
+<<other macro>>=
+  value = 5;
+  <<macro with param:"value">>
+
+Parameter value here is {{{value}}}.  {{{"}}} surrounding it are part
+of the syntax (not part of the value), and may be any punctuation
+character or pair thereof, as described for {{{*}}} above.
+
+The value may itself have calls to other macros:
+
+<<code>>=
+  <<macro with param:"'value with the call to <<macro with param1:"v1"
+    and param2:"v2">>'">>
+
+<<macro with param1:? and param2:?>>= "<<param1>> + <<param2>>"
+
+The call above will be parsed correctly even though nested call uses
+the same value delimiter as the outer call, {{{"}}}.  Also node that
+{{{'}}} are part of the value.  The above will expand to
+
+{{{
+  result = 'value with the call to "v1 + v2"';
+}}}
+
+There are no escaping rules in macro definition chunks, every
+character means itself.  This means that once you chose say, {{{<<}}}
+and {{{>>}}}, to be macro delimiters for a given definition, they are
+always used to surround macro name.  If you use {{{<<}}} or {{{>>}}}
+as part of the code, you have to choose other macro delimiters that
+are not appear in the code itself, for instance {{{<:}}} and {{{:>}}}.
+The same is true for value delimiters.  For instance,
+
+<:output the value:?:>=
+  std::cout << <:value:> << std::endl;
+
+=== Macro name and macro signature ===
+
+For macro
+
+<<execute action:? and place result into file:?>>= ...
+
+macro _name_ is {{{execute action and place result into file}}}.  Full
+notation {{{execute action:? and place result into file:?}}} is called
+a macro _signature_.  Multiple definitions of macros with the same
+_name_ should have the same signature.  Thus
+
+<<a b>>= ...
+<<b a>>= ...
+
+are different macros,
+
+<<  a:? B >>= ...
+<<A:?
+  b>>= ...
+
+are the same macro and will be concatenated, while
+
+<<a:? b>>= ...
+<<a b:?>>= ...
+
+is an error.
+
+
+=== Tips and tricks ===
+
+* The point of literate programming is to produce well documented
+  code.  Macro names should explain their purpose.  For instance,
+
+    <<read contents of file:? into buffer:?>>= ...
+    <<process lines matching regexp:?>>= ...
+
+* Macros that are defined but not used are silently ignored.  Thus its
+  possible to have libraries of macros.
+
+* To temporary comment out macro call it is not enough to precede it
+  with the comment token.  For instance
+
+  {{{
+    // <<macro>>
+  }}}
+
+  may not work in C++, because {{{<<macro>>}}} may expand to more than
+  one line, and only the first line will be commented out.  The trick
+  is to put a space inside {{{<<}}} to make it appear as two separate
+  tokens, and thus prevent macro expansion
+
+  {{{
+    // < <macro>>
+  }}}
+
+  Closing {{{>>}}} in this case won't be recognised as having any
+  special meaning.
+
+* In documentation processed with {{{sweb.cgi}}} write
+
+  {{{
+    \<<not a macro>>
+  }}}
+
+  to produce
+
+    \<<not a macro>>
+
+  at the beginning of the line.  In verbatim block write
+
+  {{{
+    {{{
+      }}}}}}{{{{{{<<not a macro>>
+    }}}}}}{{{
+  }}}
+
+  to get
+
+  {{{
+    }}}{{{<<not a macro>>
+  }}}
+
+  Again, this is required only when {{{<*}}} is the first
+  non-whitespace token on the line.
+
+
+== Generating source code files ==
+
+To generate the code from {{{MySource.sweb}}}, run
+
+{{{
+  /path/to/sweb.pl MySource.sweb /path/to/expand.sweb
+}}}
+
+{{{expand.sweb}}} is located in the same directory as {{{sweb.pl}}},
+and defines macro {{{expand:? into file:?}}} (see [[expand |
+definition]]).  Multiple files are processed as if their contents is
+concatenated into one file, in a given order.  Definition of the same
+macro across different files is *prohibited*.
+
+  _Note:_ in the future we'll implement {{{@include}}} macro, and you
+  won't have to specify libraries like {{{expand.sweb}}} on the
+  command line.
+
+{{{.sweb}}} should define the macro with a special name {{{@eval}}}.
+Normally it will look like this:
+
+<<perl>>=
+#! /usr/bin/perl
+#
+# THIS IS A GENERATED FILE.  DO NOT EDIT.  ALL CHANGES WILL BE LOST.
+#
+print "Hello, world!\n";
+<<>>
+
+<<@eval>>=
+  <<expand:'"perl"' into file:'"hello_world.pl"'>>
+
+Upon execution of {{{sweb.pl}}} the contents of {{{perl}}} macro will
+be expanded into file {{{hello_world.pl}}} in the current directory.
+
+
+= Example =
+
+For complete example see the original implementation of {{{sweb.cgi}}}
+[[cgi | here]].

@@ -1,0 +1,76 @@
+include Common.pre.rules
+
+# declaration
+
+directories := $(top_srcdir) $(realpath @unixcommons_idls_path@)
+namespaces := AdServer CORBACommons
+idls := \
+  CampaignSvcs/CampaignCommons/CampaignCommons.idl \
+  CampaignSvcs/CampaignManager/CampaignManager.idl \
+  CampaignSvcs/CampaignServer/CampaignServer.idl \
+  CampaignSvcs/CampaignServer/StatInfo.idl \
+  ChannelSearchSvcs/ChannelSearchService/ChannelSearchService.idl \
+  ChannelSvcs/ChannelCommons/ChannelCommons.idl \
+  ChannelSvcs/ChannelManagerController/ChannelClusterControl.idl \
+  ChannelSvcs/ChannelManagerController/ChannelManagerController.idl \
+  ChannelSvcs/ChannelProxy/ChannelProxy.idl \
+  ChannelSvcs/ChannelServer/ChannelServer.idl \
+  ChannelSvcs/ChannelServer/ChannelUpdateBase.idl \
+  Commons/CookieInfoPack.idl \
+  Commons/CorbaTypes.idl \
+  Commons/FreqCapInfo.idl \
+  Controlling/StatsCollector/StatsCollector.idl \
+  CORBACommons/CorbaObjectRef.idl \
+  CORBACommons/Stats.idl \
+  CORBACommons/ProcessControl.idl \
+  RequestInfoSvcs/ExpressionMatcher/ExpressionMatcher.idl \
+  RequestInfoSvcs/RequestInfoManager/RequestInfoManager.idl \
+  UserInfoSvcs/UserInfoExchanger/UserInfoExchanger.idl \
+  UserInfoSvcs/UserInfoManagerController/UserInfoClusterControl.idl \
+  UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.idl \
+  UserInfoSvcs/UserInfoManager/UserInfoManagerControl.idl \
+  UserInfoSvcs/UserInfoManager/UserInfoManager.idl
+
+
+# implementation
+
+VPATH += $(directories)
+
+IDLC := omniidl -bpython $(addprefix -I,$(directories))
+
+_rule = $(patsubst %,%_idl.py,$(notdir $(basename $(1))))
+_compiled_idls := $(foreach _idl,$(idls),$(call _rule,$(_idl)))
+
+all : $(_compiled_idls)
+
+define _compile_idl
+$(call _rule,$(1)) : $(1)
+
+endef
+
+$(foreach _idl,$(idls),$(eval $(call _compile_idl,$(_idl))))
+
+@CD_TB@$(_compiled_idls)@CD_TE@ :
+	@CD_CB@
+	@CD_LB@$(IDLC) $<@CD_LE@
+	@CD_CE@
+
+_namespaces_dirs_rule = $(1) $(1)__POA
+_namespaces_dirs := $(foreach _dir,$(namespaces),$(call _namespaces_dirs_rule,$(_dir)))
+
+.PHONY : clean_pyc cleanall_py
+
+# omniidl bug. Doesn't support parallel build for Python back-end.
+.NOTPARALLEL: $(_compiled_idls)
+
+clean : clean_pyc
+
+clean_pyc :
+	rm -f $(patsubst %.py,%.pyc,$(_compiled_idls)) $(_cmd_deps)
+	-find $(_namespaces_dirs) -name __init__.pyc -exec rm -f \{} \; 2>/dev/null 
+
+cleanall : cleanall_py
+
+cleanall_py :
+	rm -f $(_compiled_idls) $(_namespaces_py)
+	rm -rf $(_namespaces_dirs)

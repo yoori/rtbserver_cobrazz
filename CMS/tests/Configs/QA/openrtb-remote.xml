@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="tanx-remote"
+  description="Moscow Remote OpenRTB Test"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="vrtb" hostName="vrtb"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <configuration>
+      <environment xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+        <forosZoneManagement>
+          <private_key>-----BEGIN RSA PRIVATE KEY-----
+MIICWwIBAAKBgQDQNIRHWBKTRsd6NdFcIc5SdZeV7Tz2xtLzTSk5JuXEcek12Epu
+U77ROGfV7U2KE0kzGLwksi6K9DP57IDarSmNSQf+2phfaDIiclnpN8UVozqBBhyd
+IVcZ2/Wszq3AL67MxyJcB2jw2eZxgtQFxN6maD0ZeHwN2I8mPcqqg5l97QIBIwKB
+gQCsg0kH6eOBV+ccHfacy42yCal8OZjpuq7Jl7RxLtuixMiLszZbafXgjdJgy+/K
+LTymrhg7qZRHP15EG7s42J7EBiE2i6hTbbp8NeHxud0mfxnOvWnNNpu8PgQABs+v
+d30i7QhJ6MaV6r9buNUi0T6BYjNI3BiQEBQ+8Lv2ntR57wJBAPelXAttViCwUTcX
+nyJLotGxGzbrTsEJjPJyzbfOI6WQEprx3bsTmcHZFXQZpIeu+fKpUbGBuPw4lJnw
+kdEHkk8CQQDXOo0dydC6P6VA2VJ7xtGZPhzY72hcMH2V1lHQ3CELkIcxbRxFDWRd
+1vYvp33WuBkiXrZ2uWBfAFdVLDWsQgkDAkEAhm+1n82jyJo6t4HaC02hh8aLHdAy
+EQUvQclLGqMaqlWGcV66MlsY9DQEVPf6Owc3OpZuLSkp6AF1PZ/aIQQcOQJAGJj6
+L0pDvYOd24aNFXXOz69TwQVrAzi95T0QqifJQyZ12cNTsB7JpFMU0j8HETmcePTh
+pysg9OoYnAUNcsW34wJAA/QcRkJ41N0Bk+UZ3a6+n7TRA4jcQeATpuj9pmjBJ5RQ
+1RXmEhyZjmEbXrpUzs1Q4/9LiwfRYx2gjYYvYchtYw==
+-----END RSA PRIVATE KEY-----</private_key>
+        </forosZoneManagement>
+      </environment>
+    </configuration>
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+          enable_search_term_stats="true"
+          referrer_logging_site_referrer_stats="disabled">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <secureParams ca="ca.pem"/>
+          <coloParams
+            colo_id="1"
+            enabled_countries="ru"
+            ad_request_profiling="ad-request profiling disabled, stats collection enabled"
+            set_uid="parameter"
+            probe_uid="true">
+            <virtualServer>
+              <adservingDomain name="a.rubylan.net"/>
+              <thirdPartyContentDomain name="a.rubylan.net"/>
+              <biddingDomain name="a.rubylan.net"/>
+            </virtualServer>
+          </coloParams>
+          <inventoryStats simplifying="100"/>
+          <snmpStats enable="true" monitoring_tag_id="2157"/>
+          <remote connect_timeout="90000">
+            <campaignServerRef host="vnode0" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <channelProxyRef host="vnode0" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <sTunnelRef host="vnode0" port="10200"/>
+          </remote>
+        </cluster>
+      </configuration>
+
+      <!-- lp, ui, be -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubCluster">
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessing">
+          <configuration>
+            <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <syncLogs>
+                <logging log_level="7"/>
+                <fileTransferring file_check_period="10" host_check_period="10" logs_backup="false"/>
+              </syncLogs>
+
+              <syncLogsServer>
+                <networkParams port="10114"/>
+                <logging log_level="1" sys_log="false"/>
+              </syncLogsServer>
+            </logProcessing>
+          </configuration>
+        </serviceGroup>
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="LocalProxyDevel">
+
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/ChannelProxy"
+            name="ChannelProxyDevel"
+            host="vrtb"/>
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/STunnelClient"
+            name="STunnelClientDevel"
+            host="vrtb"/>
+        </serviceGroup>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcher"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizer"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManager"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServer"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/StatsCollector"
+          name="StatsCollectorDevel"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/DictionaryProvider"
+          name="DictionaryProvider"
+          host="vrtb"/>
+
+      </serviceGroup>
+
+      <!-- fe -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster">
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <channelServing>
+              <scaleParams chunks_count="10"/>
+            </channelServing>
+          </frontendCluster>
+        </configuration>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManager"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerController"
+          host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer"
+          host="vrtb">
+            <configuration>
+              <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <updateParams period="30" chunks_count="32"/>
+              </channelServer>
+            </configuration>
+         </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelController"
+           host="vrtb"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserBindServer"
+          name="UserBindServerDevel"
+          host="vrtb">
+          <configuration>
+            <userBindServer
+              xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="12028"/>
+              <logging log_level="7" sys_log="false"/>
+            </userBindServer>
+          </configuration>
+        </service>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserBindController"
+          name="UserBindController"
+          host="vrtb">
+          <configuration>
+            <userBindController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </userBindController>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="Frontend"
+          host="vrtb">
+            <configuration>
+              <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <webServerParams
+                  timeout="300"
+                  keep_alive="true"
+                  max_clients="100"
+                  min_spare_threads="50"
+                  max_spare_threads="50"
+                  threads_per_process="100"/>
+                <debugInfo use_acl="false" show_history_profile="true"/>
+                <requestModule>
+                  <logging log_level="7"/>
+                  <session timeout="30"/>
+                </requestModule>
+                <impressionModule>
+                  <logging log_level="7"/>
+                </impressionModule>
+                <clickModule>
+                  <logging log_level="7"/>
+                </clickModule>
+                <actionModule>
+                  <logging log_level="7"/>
+                </actionModule>
+                <optoutModule>
+                  <logging log_level="7" log_ip="true"/>
+                </optoutModule>
+                <pubTagModule/>
+                <statusModule/>
+                <biddingModule/>
+                <userBindModule/>
+              </frontend>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/BillingServer"
+            name="BillingServer"
+            host="vrtb"/>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+            name="CampaignManager"
+            host="vrtb">
+
+            <configuration>
+              <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <updateParams
+                  update_period="20"
+                  ecpm_update_period="10"
+                  campaign_types="all"/>
+                <statLogging flush_period="10"/>
+              </campaignManager>
+            </configuration>
+
+          </service>
+      </serviceGroup>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

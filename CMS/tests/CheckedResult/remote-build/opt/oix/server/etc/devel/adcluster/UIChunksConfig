@@ -1,0 +1,10 @@
+
+
+  %ui_chunks = (
+    chunks_count => 10,
+    chunk_hosts => [ 
+     'xen.ocslab.com',
+     ],
+    chunks_root => '/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/cache/Users/',
+  );
+

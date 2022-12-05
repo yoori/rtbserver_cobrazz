@@ -1,0 +1,372 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : MICO.def
+# Author : Konstantin Sadov <Konstantin.Sadov@gmail.com>
+
+case $host_os in
+  cygwin*)
+    MICO_cxx_corba_orb_defs__lib_prefix=
+    MICO_cxx_corba_orb_defs__lib_suffix=.lib
+    MICO_cxx_corba_orb_defs__lib_debug_suffix=d.lib
+    MICO_cxx_corba_orb_defs__exe_suffix=.exe
+    ;;
+  *)
+    MICO_cxx_corba_orb_defs__lib_prefix=lib
+    MICO_cxx_corba_orb_defs__lib_suffix=.so
+    MICO_cxx_corba_orb_defs__lib_debug_suffix=d.so
+    MICO_cxx_corba_orb_defs__exe_suffix=
+    ;;
+esac
+
+cxx_corba_orb_identifier="MICO"
+cxx_corba_orb_known_name="MICO"
+cxx_corba_orb_platforms='cygwin% solaris% linux% freebsd%'
+cxx_corba_orb_default_for_platforms=''
+cxx_corba_orb_location_search_hint=\
+"mico/orb_mico.h CORBA.h idl$MICO_cxx_corba_orb_defs__exe_suffix"
+cxx_corba_orb_location_search_opt_func="MICO_cxx_search_opt_func"
+cxx_corba_orb_location_search_acknowledge_func=\
+"MICO_cxx_search_acknowledge_func"
+
+MICO_cxx_corba_orb_defs()
+{
+  if test "$osbe_enable_guess_location" -eq "0" -o \
+     "`osbe_var_undefined CXX_CORBA_IDL`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_CPPFLAGS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_IDLPPFLAGS`" -eq "0"; then
+    MICO_cxx_corba_orb_defs__no_guess_location="1"
+  else
+    MICO_cxx_corba_orb_defs__no_guess_location="0"
+  fi
+
+  MICO_cxx_corba_orb_defs__libs="mico2.3.13"
+
+  MICO_cxx_corba_orb_defs__release="1"
+
+  if test -n "$cxx_corba_orb_dir"; then
+
+#
+# If there is a root dir defined will provide directory defaults and
+# check if release or debug version exist
+#
+    if test "$osbe_enable_guess_location" -eq "0" -o \
+       "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "0" -a \
+       "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "0"; then
+
+#
+# If not allowed to guess, will just assign most probable lib paths
+#
+      MICO_cxx_corba_orb_defs__lib_path="${cxx_corba_orb_dir}/lib"
+
+    else
+
+#
+# If allowed to guess, will detect lib paths
+#
+      MICO_cxx_corba_orb_defs__lib_names=\
+`osbe_wrap_words "$MICO_cxx_corba_orb_defs__lib_prefix" \
+"$MICO_cxx_corba_orb_defs__lib_suffix" "$MICO_cxx_corba_orb_defs__libs"`
+
+      osbe_guess_each_location "$cxx_corba_orb_dir" \
+                               "$MICO_cxx_corba_orb_defs__lib_names" \
+                               "MICO libraries" \
+                               MICO_cxx_corba_orb_defs__lib_path \
+                               "MICO_cxx_search_opt_func"
+
+      if test -z "$MICO_cxx_corba_orb_defs__lib_path"; then
+
+        MICO_cxx_corba_orb_defs__lib_names=\
+`osbe_wrap_words "$MICO_cxx_corba_orb_defs__lib_prefix" \
+"$MICO_cxx_corba_orb_defs__lib_debug_suffix" "$MICO_cxx_corba_orb_defs__libs"`
+
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "$MICO_cxx_corba_orb_defs__lib_names" \
+                                 "MICO debug libraries" \
+                                 MICO_cxx_corba_orb_defs__lib_path \
+                                 "MICO_cxx_search_opt_func"
+
+        if test -n "$MICO_cxx_corba_orb_defs__lib_path"; then
+          MICO_cxx_corba_orb_defs__release="0"
+        fi
+
+      fi
+
+    fi
+
+#
+# Detecting CXX_CORBA_IDL
+#
+    if test "`osbe_var_undefined CXX_CORBA_IDL`" -eq "1"; then
+      MICO_cxx_corba_orb_defs__idl_compiler=\
+"idl$MICO_cxx_corba_orb_defs__exe_suffix"
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect idl compiler path
+#
+        MICO_cxx_corba_orb_defs__idl_compiler_path=\
+`osbe_guess_location "MICO IDL compiler" \
+                     "$cxx_corba_orb_dir" \
+                     "$MICO_cxx_corba_orb_defs__idl_compiler" \
+                     "MICO_cxx_search_opt_func"`
+
+        if test -n "$MICO_cxx_corba_orb_defs__idl_compiler_path"; then
+          CXX_CORBA_IDL=\
+`osbe_suffix_words "/$MICO_cxx_corba_orb_defs__idl_compiler" \
+                   "$MICO_cxx_corba_orb_defs__idl_compiler_path"`
+        fi
+
+      else
+#
+# If not allowed to guess, will just assign most probable idl compiler path
+#
+        CXX_CORBA_IDL=\
+"${cxx_corba_orb_dir}/bin/idl$MICO_cxx_corba_orb_defs__exe_suffix"
+      fi
+
+    fi
+
+#
+# Detecting CXX_CORBA_CPPFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_CPPFLAGS`" -eq "1"; then
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect C++ include paths
+#
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "mico/orb_mico.h CORBA.h" \
+                                 "MICO headers" \
+                                 MICO_cxx_corba_orb_defs__include_path \
+                                 "MICO_cxx_search_opt_func" \
+                                 "MICO_cxx_search_acknowledge_func"
+      else
+
+#
+# If not allowed to guess, will just assign most probable C++ include paths
+#
+        MICO_cxx_corba_orb_defs__include_path="${cxx_corba_orb_dir}/include"
+
+      fi
+
+      if test -n "$MICO_cxx_corba_orb_defs__include_path"; then
+        CXX_CORBA_CPPFLAGS=\
+`osbe_prefix_words "-I" "$MICO_cxx_corba_orb_defs__include_path"`
+      fi
+
+      case $host_os in
+        cygwin*)
+          CXX_CORBA_CPPFLAGS="-DWIN32 $CXX_CORBA_CPPFLAGS"
+          ;;
+      esac
+
+    fi
+
+#
+# Detecting CXX_CORBA_IDLPPFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_IDLPPFLAGS`" -eq "1"; then
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect IDL include paths
+#
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "mico/orb.idl" \
+                                 "MICO IDL headers" \
+                                 MICO_cxx_corba_orb_defs__include_path \
+                                 "MICO_cxx_search_opt_func"
+      else
+#
+# If not allowed to guess, will just assign most probable IDL include paths
+#
+        MICO_cxx_corba_orb_defs__include_path="$cxx_corba_orb_dir"
+
+      fi
+
+      if test -n "$MICO_cxx_corba_orb_defs__include_path"; then
+        CXX_CORBA_IDLPPFLAGS=\
+`osbe_prefix_words "-I" "$MICO_cxx_corba_orb_defs__include_path"`
+      fi
+
+    fi
+
+#    $echo "CXX_CORBA_IDLPPFLAGS: $CXX_CORBA_IDLPPFLAGS"
+
+#
+# Detecting CXX_CORBA_LDFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "1"; then
+
+      CXX_CORBA_LDFLAGS=\
+`osbe_prefix_words "-L" "$MICO_cxx_corba_orb_defs__lib_path"`
+
+    fi
+
+  fi
+
+  CXX_CORBA_SKELSUFFIX=${CXX_CORBA_SKELSUFFIX-"_s"}
+  CXX_CORBA_STUBSUFFIX=${CXX_CORBA_STUBSUFFIX-""}
+
+  CXX_CORBA_EXTRA_IDLFLAGS=${CXX_CORBA_EXTRA_IDLFLAGS-""}
+
+  if test "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "1"; then
+
+    if test "$MICO_cxx_corba_orb_defs__release" = "1"; then
+      CXX_CORBA_LIBS=`osbe_prefix_words "-l" "$MICO_cxx_corba_orb_defs__libs"`
+    else
+      CXX_CORBA_LIBS=`osbe_wrap_words "-l" "d" "$MICO_cxx_corba_orb_defs__libs"`
+    fi
+
+  fi
+}
+
+MICO_cxx_corba_orb_postconfig()
+{
+  CXX_CORBA_IDLINCLUDEBASE='$(top_builddir)'
+  CXX_CORBA_OUTPUTDIRFLAG='--output-dir'
+
+  CXX_CORBA_IDLFLAGS=\
+"${CXX_CORBA_EXTRA_IDLFLAGS}\
+ --codegen-c++\
+ --c++-skel\
+ --use-quotes\
+ --hh-suffix CXX_CORBA_STUBSUFFIX.hpp\
+ --c++-suffix CXX_CORBA_STUBSUFFIX.cpp\
+ --skel-suffix CXX_CORBA_SKELSUFFIX"
+ CXX_CORBA_POST_IDL='@$$(MICO_POST_IDL)'
+ CXX_CORBA_ORB_POST_RULES=\
+'MICO_POST_IDL = \
+N=$(basename $(notdir $<)) ; \
+F=$(@D)/$$N ; \
+SCO=$${F}.CXX_CORBA_STUBSUFFIX.cpp ; \
+SCT=$${F}$(CXX_CORBA_STUBSUFFIX).cpp ; \
+KCO=$${F}CXX_CORBA_SKELSUFFIX.CXX_CORBA_STUBSUFFIX.cpp ; \
+KCT=$${F}$(CXX_CORBA_SKELSUFFIX).cpp ; \
+SHO=$${F}.CXX_CORBA_STUBSUFFIX.hpp ; \
+SHT=$${F}$(CXX_CORBA_STUBSUFFIX).hpp ; \
+KHT=$${F}$(CXX_CORBA_SKELSUFFIX).hpp ; \
+( sed -e "s/\.CXX_CORBA_STUBSUFFIX\.hpp/$(CXX_CORBA_STUBSUFFIX).hpp/" <$$SCO >$$SCT && \
+sed -e "s/\.CXX_CORBA_STUBSUFFIX\.hpp/$(CXX_CORBA_SKELSUFFIX).hpp/" <$$KCO >$$KCT && \
+sed -e "s/\.CXX_CORBA_STUBSUFFIX\.hpp/$(CXX_CORBA_STUBSUFFIX).hpp/" <$$SHO >$$SHT && \
+echo \\\\\#include \"$${N}$(CXX_CORBA_STUBSUFFIX).hpp\" >$$KHT && \
+$(RM) $(RM_FLAGS) $$SCO $$KCO $$SHO) || \
+( $(RM) $(RM_FLAGS) $$SCO $$SCT $$KCO $$KCT $$SHO $$SHT $$KHT ; exit 1 )
+
+ifneq ($(abspath $(top_builddir)),$(abspath $(top_srcdir)))
+
+.PHONY : _create_links_mico
+
+_mico_par_o := (
+_mico_par_c := )
+
+$(shell $(RM) $(RM_FLAGS) $(corba_stub_idls))
+
+_create_links_mico : $(corba_stub_idls)
+	@$(subst \#, ,$(join $(patsubst %,$(_mico_par_o)\#test\#-e\#%\#||\#,$(corba_stub_idls)),$(join $(patsubst %,ln\#-s\#%\#,$(abspath $+)),$(patsubst %,%\#$(_mico_par_c)\#&&\#,$(dir $(corba_stub_idls))))))echo created links
+
+$(_corba_deps) : | _create_links_mico
+
+endif'
+
+  if test -n "$cxx_corba_orb_dir"; then
+    _cxx_corba_orb_mico_idl_libpath="${cxx_corba_orb_dir}/lib"
+  fi
+
+  osbe_ask_for_pe_string \
+    "Please enter library path(s) for MICO IDL compiler" \
+    "Library path(s) for MICO IDL compiler" \
+    _cxx_corba_orb_mico_idl_libpath \
+    "cxx.corba.orb.mico.idl.libpath" \
+    "1"
+
+  for _osbe_corba_orb_mico_path in $_cxx_corba_orb_mico_idl_libpath; do
+    _cxx_corba_orb_mico_idl_libpath_list=\
+"${_cxx_corba_orb_mico_idl_libpath_list}:${_osbe_corba_orb_mico_path}"
+  done
+
+  if test -n "$cxx_corba_orb_dir"; then
+    _cxx_corba_orb_mico_binpath="${cxx_corba_orb_dir}/bin"
+  fi
+
+  osbe_ask_for_pe_string \
+    "Please enter MICO binaries directory path(s)" \
+    "MICO binaries directory path(s)" \
+    _cxx_corba_orb_mico_binpath \
+    "cxx.corba.orb.mico.binpath" \
+    "1"
+
+  for _osbe_corba_orb_mico_path in $_cxx_corba_orb_mico_binpath; do
+    _cxx_corba_orb_mico_binpath_list=\
+"${_cxx_corba_orb_mico_binpath_list}:${_osbe_corba_orb_mico_path}"
+  done
+
+  case $host_os in
+    cygwin*)
+      CXX_CORBA_ORB_PRE_RULES=\
+"export PATH :=\$(PATH)${_cxx_corba_orb_mico_binpath_list}\
+${_cxx_corba_orb_mico_idl_libpath_list}"
+      ;;
+    *)
+      CXX_CORBA_ORB_PRE_RULES=\
+"export LD_LIBRARY_PATH :=\$(LD_LIBRARY_PATH)\
+${_cxx_corba_orb_mico_idl_libpath_list}
+export PATH :=\$(PATH)${_cxx_corba_orb_mico_binpath_list}"
+      ;;
+  esac
+
+  CXX_CORBA_ORB_PRE_RULES=\
+"export LD_LIBRARY_PATH :=\$(LD_LIBRARY_PATH)\
+${_cxx_corba_orb_mico_idl_libpath_list}
+export PATH :=\$(PATH)${_cxx_corba_orb_mico_binpath_list}"
+
+  osbe_cxx_use_lib "mico_openssl" \
+                   "OpenSSL for MICO" \
+                   "" \
+                   "" \
+                   "ssl crypto" \
+                   "" \
+                   "External/MICO_OpenSSL.pre.rules" \
+                   "openssl/ssl.h \
+${MICO_cxx_corba_orb_defs__lib_prefix}ssl$MICO_cxx_corba_orb_defs__lib_suffix \
+${MICO_cxx_corba_orb_defs__lib_prefix}crypto$MICO_cxx_corba_orb_defs__lib_suffix"
+
+  CXX_CORBA_ORB_LIBRARIES=\
+"include \$(osbe_builddir)/config/CXX/External/MICO_OpenSSL.pre.rules"
+}
+
+MICO_cxx_search_opt_func()
+{
+  $echo "-type f -o -type l"
+}
+
+MICO_cxx_search_acknowledge_func()
+{
+  MICO_cxx_search_acknowledge_func__signature=`cat "$1"|grep "MICO "`
+
+  if test -z "$MICO_cxx_search_acknowledge_func__signature"; then
+    $echo "0"
+  else
+    $echo "1"
+  fi
+}

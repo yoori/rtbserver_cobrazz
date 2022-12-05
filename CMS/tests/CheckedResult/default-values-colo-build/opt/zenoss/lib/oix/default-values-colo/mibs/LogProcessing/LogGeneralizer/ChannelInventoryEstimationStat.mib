@@ -1,0 +1,117 @@
+
+ChannelInventoryEstimationStat-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  logGeneralizer FROM LogGeneralizer-MIB;
+
+channelInventoryEstimationStat OBJECT IDENTIFIER ::= { logGeneralizer 121 }
+
+inputTimeAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on processing the input directory"
+  ::= { channelInventoryEstimationStat 1 }
+
+inputTimeMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on processing the input directory"
+  ::= { channelInventoryEstimationStat 2 }
+
+inputTimeTotal OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total time spent on processing the input directory"
+  ::= { channelInventoryEstimationStat 3 }
+
+inputTimePerFileAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on processing an input file"
+  ::= { channelInventoryEstimationStat 4 }
+
+inputTimePerFileMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on processing an input file"
+  ::= { channelInventoryEstimationStat 5 }
+
+inputSuccessCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of successfully processed input files"
+  ::= { channelInventoryEstimationStat 6 }
+
+inputErrorCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of input files that the service has failed to process"
+  ::= { channelInventoryEstimationStat 7 }
+
+outputTimeAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average time spent on writing log data to disk or database"
+  ::= { channelInventoryEstimationStat 8 }
+
+outputTimeMax OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max time spent on writing log data to disk or database"
+  ::= { channelInventoryEstimationStat 9 }
+
+outputTimeTotal OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total time spent on writing log data to disk or database"
+  ::= { channelInventoryEstimationStat 10 }
+
+outputRecordsAvg OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Average number of log data records written per operation"
+  ::= { channelInventoryEstimationStat 11 }
+
+outputRecordsMax OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Max number of log data records written per operation"
+  ::= { channelInventoryEstimationStat 12 }
+
+outputRecordsTotal OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of log data records written"
+  ::= { channelInventoryEstimationStat 13 }
+
+outputSuccessCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of successful write operations"
+  ::= { channelInventoryEstimationStat 14 }
+
+outputErrorCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Total number of failed write operations"
+  ::= { channelInventoryEstimationStat 15 }
+
+END
+

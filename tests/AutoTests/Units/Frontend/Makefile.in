@@ -1,0 +1,15 @@
+@autotestsfrontendunits_deps@
+
+sources := \
+  ForbiddenUserAgentsTest.cpp \
+  InvalidCookiesTest.cpp \
+  InvalidRedirectURLTest.cpp \
+  InvalidURLParamTest.cpp \
+  LongHeaderApacheStabilityTest.cpp \
+  UidTest.cpp \
+  UidWithPlusTest.cpp \
+  OptOutTest.cpp \
+  URLEncodingTest.cpp
+
+includes := .
+@autotestsfrontendunits_post@

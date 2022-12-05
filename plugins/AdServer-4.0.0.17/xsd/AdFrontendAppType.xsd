@@ -1,0 +1,853 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:cms="http://foros.com/cms/commonTypes"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Ad Frontend Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import schemaLocation="./cms-commons.xsd" namespace="http://foros.com/cms/commonTypes"/>
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="AdFCGINetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10176">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGINetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10177">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindFCGINetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10178">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindIntFCGINetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10179">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindAddFCGINetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10193">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdFrontendCommonConfigType">
+    <xsd:sequence>
+      <xsd:element name="adFCGINetworkParams" type="AdFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGINetworkParams" type="RtbFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="userBindFCGINetworkParams" type="UserBindFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="userBindIntFCGINetworkParams" type="UserBindIntFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="userBindAddFCGINetworkParams" type="UserBindAddFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="webServerParams" type="WebServerParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Parameters of web-server.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="debugInfo" type="DebugInfoParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdRequest update information timeouts.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="FrontendLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define log rotation and clean up parameters for common log files of frontend modules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="FrontendThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdFrontendConfigType">
+    <xsd:complexContent>
+      <xsd:extension base="AdFrontendCommonConfigType">
+        <xsd:sequence>
+          <xsd:element name="requestModule" type="AdRequestFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Advertising service requests.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="contentModule" type="AdContentFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+               <xsd:documentation>
+                 Ad dynamic resources requests.
+               </xsd:documentation>
+             </xsd:annotation>
+           </xsd:element>
+           <xsd:element name="impressionModule" type="AdImpressionFrontendConfigType" minOccurs="0" maxOccurs="1">
+             <xsd:annotation>
+               <xsd:documentation>
+                 ImpressionTracking module.
+               </xsd:documentation>
+             </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="clickModule" type="AdClickFrontendConfigType" minOccurs="0" maxOccurs="1">
+              <xsd:annotation>
+                <xsd:documentation>
+                  Click module.
+                </xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="actionModule" type="AdActionFrontendConfigType" minOccurs="0" maxOccurs="1">
+              <xsd:annotation>
+                <xsd:documentation>
+                  Action module.
+                 </xsd:documentation>
+              </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="optoutModule" type="AdOptOutFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Opt-out module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="pubPixelModule" type="AdPubPixelFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Pub pixel module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="pageSenseModule" type="PageSenseFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Service PageSense requests module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="passbackModule" type="PassbackFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Passback requests module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="passbackPixelModule" type="PassbackPixelFrontendConfigType"
+            minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Passback pixel requests module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="statusModule" type="ModStatusType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Monitoring services status module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="adInstModule" type="AdInstFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                AdInstFrontend module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="adOpModule" type="AdOpFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                AdOpFrontend module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="webStatModule" type="WebStatFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                WebStatFrontend module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="biddingModule" type="BiddingFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Bidding module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="userBindModule" type="UserBindFrontendConfigType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                User bind module.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>       
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ModuleLoggingParamsType">
+    <xsd:attribute name="log_level" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Sets logging level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="FrontendLoggingParamsType">
+    <xsd:attribute name="log_level" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Sets logging level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="rotate_size" type="xsd:positiveInteger" use="optional" default="100">
+      <xsd:annotation>
+        <xsd:documentation>Defines size policy for log rotation (MBytes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="rotate_time" type="xsd:positiveInteger" use="optional" default="1440">
+      <xsd:annotation>
+        <xsd:documentation>Defines time policy for log rotation (minutes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="error_size_cleanup" type="xsd:nonNegativeInteger" use="optional" default='1000'>
+      <xsd:annotation>
+        <xsd:documentation>The maximum size of the log files with errors (Mbytes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="error_time_cleanup" type="xsd:nonNegativeInteger" use="optional" default='14400'>
+      <xsd:annotation>
+        <xsd:documentation>The maximum time for keep errors log files (minutes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="FrontendThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdRequestFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdRequest logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="session" type="AdRequestSessionParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdRequest session.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="update" type="AdRequestUpdateParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdRequest update information timeouts.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="set_uid" type="AdRequestSetUidType" default="parameter">
+      <xsd:annotation>
+        <xsd:documentation>
+          If values is always, server always sets a new uid;
+          If values is parameter, server sets a new uid on the setuid=1 parameter;
+          If values is never, server never sets a new uid.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="probe_uid" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          If checked, server uses probe uid.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="p3p_header" type="NoLeadingTrailingSpaces"
+     default="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;">
+      <xsd:annotation>
+        <xsd:documentation>
+          HTTP P3P Header content.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdRequestSessionParamsType">
+    <xsd:attribute name="timeout" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Timeout of Ad request.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdRequestUpdateParamsType">
+    <xsd:attribute name="period" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          CampaignServer data renewal period for AdFrontend (seconds).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="DebugInfoParamsType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Debug information settings
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="use_acl" type="xsd:boolean" default="true">
+        <xsd:annotation>
+          <xsd:documentation>
+            Allow debug output for list of IP adresses. If unchecked, all adresses are allowed.
+          </xsd:documentation>
+        </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="acl" type="cms:Text" default="">
+      <xsd:annotation>
+        <xsd:documentation>
+          List of allowed IP adresses for debug output.
+          Leave empty to deny from all. Otherwise list allowed IP addresses, one per line.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="colocations" type="IntegerListType" default="">
+      <xsd:annotation>
+        <xsd:documentation>
+          List of allowed colocations for debug output.
+          Leave empty to allow from all. Otherwise list allowed colocation separated by comma.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="show_history_profile" type="xsd:boolean" default="false">
+        <xsd:annotation>
+          <xsd:documentation>
+            Show channel list from history profile in the debug output, it is unchecked by default.
+          </xsd:documentation>
+        </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdContentFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="cache" type="AdContentFrontendCacheConfigType"
+        minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Dynamic resources caching parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdImpressionFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdImpression Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdClickFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdClick Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="threads" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          The number of threads perform click channels matching.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="task_limit" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          The number of tasks in the matching click channels queue.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="set_uid" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          If values is true, server set a new uid
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="probe_uid" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          If checked, server uses probe uid.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdActionFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdIAction Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="set_uid" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Set uid cookie on action request, default value is true 
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="threads" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          The number of threads perform action channels matching.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="task_limit" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          The number of tasks in the matching action channels queue.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdOptOutFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="AdOptOutLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdOptOut Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="enable" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdPubPixelFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdPubPixel Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="WebStatFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            WebStat Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="BiddingFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Bidding Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="source" type="RTBSourceConfigType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="max_bid_time" type="xsd:positiveInteger" default="50">
+      <xsd:annotation>
+        <xsd:documentation>
+          maximum request time processing in ms.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of dumping log information to disk.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" default="1000">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Bidding Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="max_request_time" type="xsd:positiveInteger" default="400">
+      <xsd:annotation>
+        <xsd:documentation>
+          maximum request time processing in ms.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" default="1000">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="match_threads" type="xsd:positiveInteger" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="bind_pending_task_limit" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="match_pending_task_limit" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="set_uid" type="xsd:boolean" default="true"/>
+    <xsd:attribute name="create_profile" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="PageSenseFrontendConfigType">
+    <xsd:attribute name="caching" type="NoLeadingTrailingSpaces" default="no-store">
+      <xsd:annotation>
+        <xsd:documentation>
+          Specify cache-control directives in HTTP request headers.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdOptOutLoggingParamsType">
+    <xsd:complexContent>
+      <xsd:extension base="ModuleLoggingParamsType">
+        <xsd:attribute name="log_ip" type="xsd:boolean">
+          <xsd:annotation>
+            <xsd:documentation>
+              Additional logging. True allow the logging of ip addresses of clients.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="PassbackFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Passback Frontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="PassbackPixelFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdInstFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdInstFrontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdOpFrontendConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="ModuleLoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdOpFrontend logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="WebServerParamsType">
+    <xsd:attribute name="timeout" type="xsd:positiveInteger" default="3">
+      <xsd:annotation>
+        <xsd:documentation>
+          Apache request timeout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="request_headers_reading_timeout" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Request headers reading timeout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="request_body_reading_timeout" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Request body reading timeout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_limit" type="xsd:positiveInteger" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Upper limit on configurable number of frontend processes.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="start_servers" type="xsd:positiveInteger" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of child server processes created at frontend startup.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_clients" type="xsd:positiveInteger" default="16000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum clients of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="path" type="NoLeadingTrailingSpaces">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ModStatusType">
+    <xsd:attribute name="enable" type="xsd:boolean" default="true" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enables status module.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="status_path" type="NoLeadingTrailingSpaces" default="/server-status">
+      <xsd:annotation>
+        <xsd:documentation>
+          Url to view statistic of queries on apache. Allow get status information from frontend.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="AdRequestSetUidType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="always"/>
+      <xsd:enumeration value="parameter"/>
+      <xsd:enumeration value="never"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+</xsd:schema>

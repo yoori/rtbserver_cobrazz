@@ -1,0 +1,1231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common Frontends Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="FeConfiguration" type="FeConfigurationType"/>
+
+  <xsd:complexType name="FeConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="CommonFeConfiguration" type="CommonFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="AdFeConfiguration" type="AdFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="AdInstFeConfiguration" type="AdInstFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ContentFeConfiguration" type="ContentFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ClickFeConfiguration" type="ClickFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ImprTrackFeConfiguration" type="ImprTrackFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ActionFeConfiguration" type="ActionFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="PassFeConfiguration" type="PassFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="PassPixelFeConfiguration" type="PassPixelFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="WebStatFeConfiguration" type="WebStatFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="PubPixelFeConfiguration" type="PubPixelFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="BidFeConfiguration" type="BidFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="UserBindFeConfiguration" type="UserBindFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="OptOutFeConfiguration" type="OptOutFeConfigurationType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="CommonFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Common configuration for each fe module, that
+        contain options that is independent from colocation
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="ResponseHeaders"
+        type="ResponseHeadersType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="GeoIP"
+        type="GeoIPType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="CampaignServerCorbaRef"
+        type="MultiCorbaObjectRefType"/>
+
+      <xsd:element name="CampaignManagerRef"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"/>
+
+      <xsd:element name="UserInfoManagerControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"
+        maxOccurs="2"/>
+
+      <xsd:element name="ChannelManagerControllerRefs"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"/>
+
+      <xsd:element name="UserBindControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"
+        maxOccurs="2"/>
+
+      <xsd:element name="Cookies" type="CookiesType"/>
+
+      <xsd:element name="OptOutRemoveCookies" type="CookieNameListType"/>
+
+      <xsd:element name="OutdatedCookies"
+        type="CookieNameListType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="UserIdConfig"
+        type="UserIdConfigType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
+      <xsd:element name="IpEncryptConfig"
+        type="IpEncryptConfigType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="TemplateRule"
+        type="TemplateRuleType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+
+      <xsd:element name="StatsDumper"
+        type="StatsDumperType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="DebugInfo"
+        type="DebugInfoType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
+      <xsd:element name="IPMapping"
+        type="IPMappingType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="CountryFiltering"
+        type="CountryFilteringType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="Polyglot"
+        type="LanguageSegmentorType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="Chinese"
+        type="LanguageSegmentorType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="SkipExternalIds"
+        type="SkipExternalIdsType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="request_domain" type="xsd:string" use="required"/>
+    <xsd:attribute name="colo_id" type="xsd:integer" use="required"/>
+    <xsd:attribute name="user_agent_filter_path" type="xsd:string"/>
+    <xsd:attribute name="domain_config_path" type="xsd:string" use="required"/>
+    <xsd:attribute name="ip_salt" type="xsd:string" use="required"/>
+    <xsd:attribute name="ip_logging_enabled" type="xsd:boolean" default="false"/>
+
+    <xsd:attribute name="channel_factory_threads" type="xsd:positiveInteger" use="required">
+       <xsd:annotation>
+         <xsd:documentation>
+          Count threads in channel factory
+         </xsd:documentation>
+       </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="update_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets colocations update period (seconds).
+          Colocations info gets from CampaignServer.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="service_index" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>This is used for campaign server calls distribution.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="profiling_log_sampling" type="xsd:float" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Sampling rate to be applied to profiling log.
+          If 0, then log is disabled.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CookieNameListType">
+    <xsd:sequence>
+      <xsd:element name="Cookie"
+        type="CookieNameType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="CookieNameType">
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CookiesType">
+    <xsd:sequence>
+      <xsd:element name="ResponseHeader"
+        type="HttpHeaderType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+      <xsd:element name="Cookie"
+        type="CookieParamsType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+      <xsd:element name="RemoveCookie"
+        type="RemoveCookieParamsType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="domain" type="xsd:string" use="required"/>
+    <xsd:attribute name="path" type="xsd:string" use="required"/>
+    <xsd:attribute name="expires" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CookieParamsType">
+    <xsd:annotation>
+      <xsd:documentation>
+        One Cookie configuration
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="domain" type="xsd:string" use="optional"/>
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+    <xsd:attribute name="expires" type="xsd:positiveInteger" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="RemoveCookieParamsType">
+    <xsd:annotation>
+      <xsd:documentation>
+        One Cookie remove configuration
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="domain" type="xsd:string" use="optional"/>
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="IPMappingType">
+    <xsd:sequence>
+      <xsd:element name="Rule" type="IPMappingRuleType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="IPMappingRuleType">
+    <xsd:attribute name="ip_range" type="xsd:string" use="required"/>
+    <xsd:attribute name="cohorts" type="xsd:string" use="required"/>
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="profile_referer" type="xsd:boolean" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CountryFilteringType">
+    <xsd:sequence>
+      <xsd:element name="Country" type="CountryFilterType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="CountryFilterType">
+    <xsd:attribute name="country_code" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BidFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Common configuration for each bid module, that
+        contain options that is independent from colocation
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="GoogleUriList" type="UriListType"/>
+
+      <xsd:element name="OpenRtbUriList" type="UriListType"/>
+
+      <xsd:element name="AppNexusUriList" type="UriListType"/>
+
+      <xsd:element name="AdXmlUriList" type="UriListType"
+        minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="ClickStarUriList" type="UriListType"
+        minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="DAOUriList" type="UriListType"
+        minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Source" type="BidSourceConfigurationType" minOccurs="0" maxOccurs="unbounded"/>
+
+      <xsd:element name="Account" type="BidAccountTraitsType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="max_pending_tasks"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="interrupted_threads"
+      type="xsd:positiveInteger"
+      use="optional" default="10"/>
+    <xsd:attribute name="interrupted_max_pending_tasks"
+      type="xsd:positiveInteger"
+      use="optional" default="100"/>
+    <xsd:attribute name="request_timeout"
+      type="xsd:positiveInteger"
+      use="optional"/>
+    <xsd:attribute name="flush_period"
+      type="xsd:positiveInteger"
+      use="optional"/>
+    <xsd:attribute name="trace_mapping" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="intervalsBlacklist" type="xsd:string" default=""/>
+    <xsd:attribute name="enable_profile_referer" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable / disable WebIndex profiling on request.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="CPMValueType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[0-9]*(\.[0-9]{0,6})?"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="BidAccountTraitsType">
+    <xsd:attribute name="account_id"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="max_cpm_value"
+      type="CPMValueType"
+      use="optional"/>
+    <xsd:attribute name="display_billing_id"
+      type="xsd:positiveInteger"
+      use="optional"/>
+    <xsd:attribute name="video_billing_id"
+      type="xsd:positiveInteger"
+      use="optional"/>
+    <xsd:attribute name="google_encryption_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          google encoding key
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_integrity_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          google integrity key
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Configuration for profiling module, that
+        contain options that is independent from colocation
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType"/>
+      <xsd:element name="ProfilingInfoSocket" type="ZmqSocketType"/>
+      <xsd:element name="AnonymousStatsSocket" type="ZmqSocketType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="zmq_io_threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+
+    <xsd:attribute name="zmq_socket_count"
+      type="xsd:positiveInteger"
+      use="required"/>
+
+    <xsd:attribute name="enable_search_term_stats" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable SearchTermStats collection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="log_dropped_interval" type="xsd:positiveInteger" default="5">
+      <xsd:annotation>
+        <xsd:documentation>
+          Interval for logging count of dropped messages.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="enable_anonymous_stats" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable AnonymousStats messages stream
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SkipExternalIdsType">  
+    <xsd:sequence>
+      <xsd:element name="Id"
+        type="SkipExternalIdType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="skip_external_ids" type="xsd:string" use="required"/>
+  </xsd:complexType>
+  
+  <xsd:complexType name="SkipExternalIdType">
+    <xsd:attribute name="value" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BidSourceConfigurationType">
+    <xsd:attribute name="id" type="xsd:string" use="required"/>
+    <xsd:attribute name="default_account_id" type="xsd:nonNegativeInteger" use="optional"/>
+
+    <xsd:attribute name="instantiate_type" type="BidInstantiateType" use="required"/>
+    <xsd:attribute name="notice" type="NoticeInstantiateType" use="required"/>
+    <xsd:attribute name="request_type" type="BidRequestType" use="optional"/>
+
+    <xsd:attribute name="vast_instantiate_type" type="BidInstantiateType" use="required"/>
+    <xsd:attribute name="vast_notice" type="NoticeInstantiateType" use="required"/>
+
+    <xsd:attribute name="native_instantiate_type" type="NativeInstantiateType" use="required"/>
+    <xsd:attribute name="native_impression_tracker_type" 
+                   type="NativeImpressionTrackerType" use="optional"/>
+    <xsd:attribute name="native_notice" type="NoticeInstantiateType" use="required"/>
+
+    <xsd:attribute name="truncate_domain" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="seat" type="xsd:string" use="optional"/>
+    <xsd:attribute name="appnexus_member_id" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="notice_url" type="xsd:string" use="optional"/>
+    <xsd:attribute name="fill_adid" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="ipw_extension" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="max_bid_time" type="xsd:positiveInteger" use="optional"/>
+    <xsd:attribute name="skip_ext_category" type="xsd:boolean" default="false"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Common configuration for each fe module, that
+        contain options that is independent from colocation
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="session_timeout" type="xsd:positiveInteger" use="required">
+       <xsd:annotation>
+         <xsd:documentation>
+           ISP property: session timeout - timeout after
+           which session is considered finished
+         </xsd:documentation>
+       </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="inventory_users_percentage" type="xsd:positiveInteger" use="required">
+       <xsd:annotation>
+         <xsd:documentation>
+         </xsd:documentation>
+       </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="set_uid" type="xsd:string" use="required">
+       <xsd:annotation>
+         <xsd:documentation>
+           ISP property: behavior server on setting a new uid for user
+         </xsd:documentation>
+       </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="probe_uid" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          If checked, server uses probe uid
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="ad_request_profiling" type="xsd:boolean" use="required">
+       <xsd:annotation>
+         <xsd:documentation>
+           Do profiling at ad requests
+         </xsd:documentation>
+       </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="use_referrer_site_referrer_stats" type="UseReferrerType" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Referrer logging in SitesReferrerStats tables.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="enable_profile_referer" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable / disable WebIndex profiling on request.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="max_pending_tasks"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdInstFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Configuration for ad instantiate module
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ContentFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Configuration of content fe module
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="DirectoryList" type="DirectoryListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="TemplateCache" type="TemplateCacheType"/>
+      <xsd:element name="XsltToken" type="XsltTokenType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ClickFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="PathUriList" type="UriListType"/>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="template_file"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="match_task_limit"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+
+    <xsd:attribute name="set_uid" type="xsd:string" use="required">
+     <xsd:annotation>
+       <xsd:documentation>
+         ISP property: behavior server on setting a new uid for user
+       </xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="probe_uid" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          If checked, server uses probe uid
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_pending_tasks"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ImprTrackFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="DefaultKeys" type="EncryptionKeysType"
+        minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Default encryption keys
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="AccountTraits" type="AccountTraitsType"
+        minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Account encryption keys
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="SiteTraits" type="SiteTraitsType"
+        minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Site encryption keys
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="BindURL" type="RedirectURLType"
+        minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="track_pixel_path"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="template_file"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="track_pixel_content_type"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="match_threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+    <xsd:attribute name="match_task_limit"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="RedirectURLType">
+    <xsd:attribute name="template" type="xsd:string" use="required"/>
+    <xsd:attribute name="use_keywords" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="keywords" type="xsd:string" default=""/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EncryptionKeysType">
+    <xsd:attribute name="openx_encryption_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          openx encription key in hex format
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="openx_integrity_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          openx integrity key in hex format
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_encryption_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          google encoding key
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_integrity_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          google integrity key
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="holder_id"
+      type="xsd:positiveInteger"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Account or Site ID
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AccountTraitsType">
+    <xsd:complexContent>
+      <xsd:extension base="EncryptionKeysType">
+        <xsd:attribute name="account_id" type="xsd:positiveInteger"
+          use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="SiteTraitsType">
+    <xsd:complexContent>
+      <xsd:extension base="EncryptionKeysType">
+        <xsd:attribute name="site_id" type="xsd:positiveInteger"
+          use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="ActionFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="PathUriList" type="UriListType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="UriList" type="UriListType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="PixelUriList" type="UriListType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Redirect" type="RedirectURLType"
+        minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="track_pixel_path"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="track_html_path"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="use_referrer_action_stats" type="UseReferrerType" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Referrer logging in ActionStats tables.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="set_uid" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="max_pending_tasks"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="match_task_limit"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="OptOutFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        OptOut frontend configuration
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="SecurityToken" type="SecurityTokenType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Security token generator config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_ip"
+      type="xsd:boolean"
+      use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="WebStatFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        WebStat frontend configuration
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="YandexNotificationUriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="pixel_path"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="rid_public_key"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <!-- PubPixelFeConfigurationType -->
+  <xsd:complexType name="PubPixelFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        PubPixel frontend configuration
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <!-- UserBindFeConfigurationType -->
+  <xsd:complexType name="UserBindAllowedPassbackType">
+    <xsd:attribute name="domain" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindSourceType">
+    <xsd:attribute name="id" type="xsd:string" use="required"/>
+    <xsd:attribute name="redirect" type="xsd:string" use="required"/>
+    <xsd:attribute name="passback" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="weight" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="keywords" type="xsd:string" default=""/>
+    <xsd:attribute name="location" type="xsd:string" default=""/>
+    <xsd:attribute name="redirect_empty_uid" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindKeywordRedirectRuleType">
+    <xsd:attribute name="keywords" type="xsd:string" default=""/>
+    <xsd:attribute name="redirect" type="xsd:string" use="required"/>
+    <xsd:attribute name="passback" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="weight" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="redirect_empty_uid" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SourceKeyType">
+    <xsd:attribute name="yandex_key" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindFeConfigurationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        user bind frontend configuration
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="PathUriList" type="UriListType"/>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="PixelUriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="AllowedPassback" type="UserBindAllowedPassbackType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="Source" type="UserBindSourceType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="Keys" type="SourceKeyType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="set_uid" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="create_profile" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="pixel_path" type="xsd:string" use="optional"/>
+    <xsd:attribute name="pixel_content_type"
+      type="xsd:string"
+      use="required"/>
+    <xsd:attribute name="cookie_mapping_log" type="xsd:boolean" default="true"/>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="match_threads" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="match_pending_task_limit"
+      type="xsd:positiveInteger"
+      use="required"/>
+
+    <xsd:attribute name="bind_pending_task_limit"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="max_request_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="enable_profiling" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="nosecure_redirect" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <!-- -->
+  <xsd:complexType name="ResponseHeadersType">
+    <xsd:sequence>
+      <xsd:element name="Header"
+        type="HttpHeaderType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="HttpHeaderType">
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation> http header name. </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="value" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation> http header value. </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UriListType">
+    <xsd:sequence>
+      <xsd:element name="Uri"
+        type="UriType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="DirectoryListType">
+    <xsd:sequence>
+      <xsd:element name="Directory"
+        type="DirectoryType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UriType">
+    <xsd:attribute name="path" type="xsd:string" use="required"/>
+    <xsd:attribute name="marker" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DirectoryType">
+    <xsd:attribute name="path" type="xsd:string" use="required"/>
+    <xsd:attribute name="root" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="GeoIPType">
+    <xsd:attribute name="path" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="PassFeConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="domain" type="xsd:string" use="required"/>
+    <xsd:attribute name="secure_domain" type="xsd:string"/>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="PassPixelFeConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UriList" type="UriListType"/>
+      <xsd:element name="Logger" type="FrontendLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="track_pixel_path" type="xsd:string" use="required"/>
+    <xsd:attribute name="threads"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserIdBlackListType">
+    <xsd:annotation>
+      <xsd:documentation>
+        UID blacklist. One uid per line. Empty line skipped. Line started from '#' - ignored.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string"/>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserIdConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Paths to verification keys
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UserIdBlackList" type="UserIdBlackListType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="private_key" type="xsd:string" use="required"/>
+    <xsd:attribute name="public_key" type="xsd:string" use="required"/>
+    <xsd:attribute name="temp_public_key" type="xsd:string" use="required"/>
+    <xsd:attribute name="ssp_public_key" type="xsd:string" use="required"/>
+    <xsd:attribute name="ssp_private_key" type="xsd:string" use="required"/>
+    <xsd:attribute name="cache_size" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="temp_cache_size" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="ssp_cache_size" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="ssp_uid_key" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="IpEncryptConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Paths to keys for decode client ip
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:attribute name="key" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="TemplateRuleType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Templates (text, xslt) initialization properties: tokens, ...
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="XsltToken" type="XsltTokenType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="main_domain" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DebugInfoType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Debug information settings
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="ips" type="xsd:string" default="">
+        <xsd:annotation>
+          <xsd:documentation>
+            Allowed IP adresses list for debuging quires.
+            One IP address shoulb one one string.
+            Uses, if debugUseACL set tot true.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="colocations" type="xsd:string" default="">
+        <xsd:annotation>
+          <xsd:documentation>
+            List of allowed colocations for debug output.
+            Empty is allowng from all. Otherwise list allowed colocation separated by comma.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="use_acl" type="xsd:boolean" default="true">
+        <xsd:annotation>
+          <xsd:documentation>
+            Use allowed IP list for debuging quires. If false, all allow.
+          </xsd:documentation>
+        </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="show_history_matching" type="xsd:boolean" default="false">
+        <xsd:annotation>
+          <xsd:documentation>
+            Show channel list from history profile in AdServer debug output, by default is true
+          </xsd:documentation>
+        </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="BidInstantiateType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="url"/>
+      <xsd:enumeration value="nonsecure url"/>
+      <xsd:enumeration value="url in body"/>
+      <xsd:enumeration value="video url"/>
+      <xsd:enumeration value="nonsecure video url"/>
+      <xsd:enumeration value="video url in body"/>
+      <xsd:enumeration value="body"/>
+      <xsd:enumeration value="script with url"/>
+      <xsd:enumeration value="iframe with url"/>
+      <xsd:enumeration value="url parameters"/>
+      <xsd:enumeration value="encoded url parameters"/>
+      <xsd:enumeration value="data parameter value"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NoticeInstantiateType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="disabled"/>
+      <xsd:enumeration value="nurl"/>
+      <xsd:enumeration value="burl"/>
+      <xsd:enumeration value="nurl and burl"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="BidRequestType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="openrtb"/>
+      <xsd:enumeration value="openrtb with click url"/>
+      <xsd:enumeration value="openx"/>
+      <xsd:enumeration value="liverail"/>
+      <xsd:enumeration value="adriver"/>
+      <xsd:enumeration value="appnexus"/>
+      <xsd:enumeration value="yandex"/>
+      <xsd:enumeration value="google"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="FrontendLoggerType">
+    <xsd:attribute name="log_level"
+      type="xsd:positiveInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="NativeInstantiateType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="none"/>
+      <xsd:enumeration value="ext"/>
+      <xsd:enumeration value="adm"/>
+      <xsd:enumeration value="adm_native"/>
+      <xsd:enumeration value="escape_slash_adm"/>
+
+      <xsd:enumeration value="native_as_element-1.2"/>
+      <xsd:enumeration value="adm-1.2"/>
+      <xsd:enumeration value="adm_native-1.2"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NativeImpressionTrackerType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="imp"/>
+      <xsd:enumeration value="js"/>
+      <xsd:enumeration value="resources"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+</xsd:schema>

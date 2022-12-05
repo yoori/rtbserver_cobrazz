@@ -1,0 +1,10 @@
+include Common.pre.rules
+
+target_makefile_list :=	\
+  OracleEnvironmentTest.mk \
+  OracleExecuteTest.mk \
+  OracleStatementTest.mk \
+  OracleTimedOutTest.mk \
+  OracleBlobTest.mk
+  
+include $(osbe_builddir)/config/Makentry.post.rules

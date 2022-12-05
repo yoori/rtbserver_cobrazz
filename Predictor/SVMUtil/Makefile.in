@@ -1,0 +1,7 @@
+@svmutilexe_deps@
+
+sources := Application.cpp
+
+target := SVMUtil
+
+@svmutilexe_post@

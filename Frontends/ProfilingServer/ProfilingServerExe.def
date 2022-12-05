@@ -1,0 +1,19 @@
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep XMLUtility
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+
+osbe_cxx_dep RequestMatchers
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep ProfilingServerConfig
+osbe_cxx_dep ZeroMQ
+osbe_cxx_dep UtilCommons
+osbe_cxx_dep DMPProfilingInfo
+osbe_cxx_dep KafkaProducer
+osbe_cxx_dep HashFilter

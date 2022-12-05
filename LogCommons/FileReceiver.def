@@ -1,0 +1,4 @@
+name="FileReceiver"
+so_files=FileReceiver
+osbe_cxx_dep Generics
+osbe_cxx_dep LogCommons

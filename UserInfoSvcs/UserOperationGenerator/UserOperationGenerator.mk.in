@@ -1,0 +1,9 @@
+@useroperationgenerator_deps@
+
+sources := \
+  UserOperationGeneratorImpl.cpp \
+  UserOperationGeneratorMain.cpp \
+
+target := UserOperationGenerator
+
+@useroperationgenerator_post@

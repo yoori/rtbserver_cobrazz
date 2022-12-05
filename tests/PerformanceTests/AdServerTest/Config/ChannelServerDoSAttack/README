@@ -1,0 +1,16 @@
+Test configuration for simulation Channel Service DoS attack.
+
+INFORMATION: 
+           You must change "test:ServerBase" parameter in the Config.xml 
+           file to your foros/server.
+
+           You may add ugly keywords to keyword.txt file, 
+           ugly urls - urls.txt file.
+
+
+ATTENTION: 
+           You must very careful change others Config.xml parameters, 
+           because you may make dummy configuration and get incorrect 
+           test result.
+
+

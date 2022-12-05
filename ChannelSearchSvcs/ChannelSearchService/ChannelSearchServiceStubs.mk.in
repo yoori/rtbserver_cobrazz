@@ -1,0 +1,8 @@
+@channelsearchservice_deps@
+sources :=
+includes := .
+
+corba_stub_idls := ChannelSearchService.idl
+corba_includes := .
+corba_idl_includes := .
+@channelsearchservice_post@

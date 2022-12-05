@@ -1,0 +1,24 @@
+
+
+  @colocation_hosts = (
+    'xen.ocslab.com', 
+  );
+
+  %ri_chunks = (
+    host =>
+      
+        [ 'xen.ocslab.com', ],
+        
+    chunks => {
+                'user_action_chunks' => [
+                  'UserAction_',
+                  '/home/jurij_kuznecov/projects/foros/run/trunk/var/cache/UserActions/', ],
+                'user_campaign_reach_chunks' => [
+                  'UserCampaignReach_',
+                  '/home/jurij_kuznecov/projects/foros/run/trunk/var/cache/UserCampaignReach/', ],
+                'request_chunks' => [
+                  'Request_',
+                  '/home/jurij_kuznecov/projects/foros/run/trunk/var/cache/Requests/', ],
+              },
+  );
+

@@ -1,0 +1,16 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([UserInfoCommons])
+
+OSBE_CONFIG_SUBDIR([UserInfoExchanger])
+OSBE_CONFIG_SUBDIR([UserInfoExchangerProxy])
+OSBE_CONFIG_SUBDIR([UserInfoManager])
+OSBE_CONFIG_SUBDIR([UserInfoManagerController])
+OSBE_CONFIG_SUBDIR([UserInfoAdmin])
+
+OSBE_CONFIG_SUBDIR([UserBindServer])
+OSBE_CONFIG_SUBDIR([UserBindController])
+OSBE_CONFIG_SUBDIR([UserBindAdmin])
+OSBE_CONFIG_SUBDIR([UserBindUtil])
+
+OSBE_CONFIG_SUBDIR([UserOperationGenerator])

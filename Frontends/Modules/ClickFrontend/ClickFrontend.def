@@ -1,0 +1,11 @@
+name="ClickFrontend"
+so_files=ClickFrontend
+
+osbe_cxx_dep http
+
+osbe_cxx_dep Commons
+osbe_cxx_dep FeConfig
+
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep CommonModule
+osbe_cxx_dep FCGI

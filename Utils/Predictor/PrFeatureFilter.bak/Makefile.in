@@ -1,0 +1,6 @@
+@prfeaturefilterexe_deps@
+
+sources := Application.cpp
+target := PrFeatureFilter
+
+@prfeaturefilterexe_post@

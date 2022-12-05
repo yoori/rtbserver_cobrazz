@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      LogGeneralizer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="LogGeneralizerConfig" type="LogGeneralizerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:simpleType name="LogUploadType2">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="csv"/>
+      <xsd:enumeration value="csv_xsearch"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="LogUploadType4">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="postgres"/>
+      <xsd:enumeration value="postgres_csv"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="XSearchStatParamsType">
+    <xsd:attribute name="url" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerDBConnectionType">
+    <xsd:sequence>
+      <xsd:element name="Postgres" type="PGConnectionType" minOccurs="1" maxOccurs="1"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="HitsFilteringParamsType">
+    <xsd:attribute name="min_count" type="xsd:unsignedByte" use="required"/>
+    <xsd:attribute name="file_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="table_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="days_to_keep" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingParamsType">
+    <xsd:attribute name="check_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_time" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_upload_task_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="backup_mode" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="optional" default="1"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingParamsHFType">
+    <xsd:sequence>
+      <xsd:element name="HitsFiltering" type="HitsFilteringParamsType" minOccurs="1" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="check_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_time" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_upload_task_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="backup_mode" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="optional" default="1"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingParamsDeferrableType">
+    <xsd:attribute name="check_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="check_deferred_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_time" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_upload_task_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="backup_mode" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="optional" default="1"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingParamsDeferrableCSVType">
+    <xsd:attribute name="check_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="check_deferred_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="upload_type" type="LogUploadType4" use="required"/>
+    <xsd:attribute name="max_time" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_upload_task_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="backup_mode" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="optional" default="1"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingParamsXSearchType">
+    <xsd:attribute name="check_logs_period" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="upload_type" type="LogUploadType2" use="required"/>
+    <xsd:attribute name="max_time" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_upload_task_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="backup_mode" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="optional" default="1"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+
+      <xsd:element name="CMPStat" type="LogProcessingParamsDeferrableCSVType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CreativeStat" type="LogProcessingParamsDeferrableCSVType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="WebwiseDiscoverItemStat" type="LogProcessingParamsXSearchType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="SearchTermStat" type="LogProcessingParamsHFType" minOccurs="0" maxOccurs="1"/>
+
+<!-- CSV only writers -->
+      <xsd:element name="CampaignStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelCountStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ColoUsers" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="SiteStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="WebStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="AdvertiserUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CCStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CCGStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CCGKeywordStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CCGUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CCUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CampaignUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ColoUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="GlobalColoUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="PageLoadsDailyStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="PassbackStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="SiteUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="ActionRequest" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ActionStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ColoUpdateStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="WebwiseDiscoverItems" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="WebwiseDiscoverTagStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CCGSelectionFailureStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelHitStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelImpInventory" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelInventory" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelInventoryEstimationStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelOverlapUserStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelPerformance" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelPriceRange" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelTriggerImpStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ChannelTriggerStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="DeviceChannelCountStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ExpressionPerformance" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="SearchEngineStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="SiteReferrerStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="CampaignReferrerStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="TagAuctionStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="TagPositionStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="UserAgentStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="UserProperties" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="LogGeneralizerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP support config for LogGeneralizer
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for LogGeneralizer
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="DBConnection" type="LogGeneralizerDBConnectionType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="XSearchStatParams" type="XSearchStatParamsType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="LogProcessing" type="LogProcessingType" minOccurs="1" maxOccurs="1"/>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="input_logs_dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="output_logs_dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="db_dump_timeout" type="xsd:positiveInteger"/>
+
+  </xsd:complexType>
+</xsd:schema>

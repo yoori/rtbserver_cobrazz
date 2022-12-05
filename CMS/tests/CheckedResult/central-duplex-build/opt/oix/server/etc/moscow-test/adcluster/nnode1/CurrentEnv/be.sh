@@ -1,0 +1,12 @@
+campaign_server_port=10106
+export campaign_server_port
+
+news_query_server_port=10125
+export news_query_server_port
+
+user_info_manager_port=10101
+export user_info_manager_port
+
+sync_logs_port=10112
+export sync_logs_port
+

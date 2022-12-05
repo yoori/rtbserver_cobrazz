@@ -1,0 +1,7 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([StatisticsDirectories.mk])
+OSBE_CONFIG_FILE([StatisticsUnits.mk])
+
+OSBE_CONFIG_SUBDIR([Channel])
+
+OSBE_CXX_DEF([AutoTestsStatisticsUnits])

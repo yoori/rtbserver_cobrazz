@@ -1,0 +1,14 @@
+@channelcontainer_deps@
+
+sources  := ContainerMatchers.cpp \
+          DictionaryMatcher.cpp \
+ 					SoftMatcher.cpp \
+ 					ChannelChunk.cpp \
+ 					ChannelContainer.cpp \
+ 					UpdateContainer.cpp
+
+
+target   := ChannelContainer
+
+@channelcontainer_post@
+

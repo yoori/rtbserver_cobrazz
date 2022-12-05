@@ -1,0 +1,29 @@
+name="RequestOutLogger"
+so_files=RequestOutLogger
+
+osbe_cxx_dep LogCommons
+osbe_cxx_dep UserProperties
+osbe_cxx_dep ChannelPerformance
+osbe_cxx_dep ExpressionPerformance
+osbe_cxx_dep CreativeStat
+osbe_cxx_dep ChannelTriggerStat
+osbe_cxx_dep CcgKeywordStat
+osbe_cxx_dep CcgStat
+osbe_cxx_dep CmpStat
+osbe_cxx_dep SiteReferrerStat
+osbe_cxx_dep Request
+osbe_cxx_dep AdRequestLogger
+osbe_cxx_dep ActionStat
+osbe_cxx_dep SiteUserStat
+osbe_cxx_dep PassbackStat
+osbe_cxx_dep ChannelImpInventory
+osbe_cxx_dep SiteReferrerStat
+osbe_cxx_dep CampaignReferrerStat
+osbe_cxx_dep PageLoadsDailyStat
+osbe_cxx_dep CampaignUserStat
+osbe_cxx_dep CcgUserStat
+osbe_cxx_dep CcUserStat
+osbe_cxx_dep TagPositionStat
+osbe_cxx_dep BidCostStat
+
+osbe_cxx_dep ResearchLogs

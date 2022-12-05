@@ -1,0 +1,1 @@
+OSBE_CXX_DEF([KafkaProducer], [Makefile])

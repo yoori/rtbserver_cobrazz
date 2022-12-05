@@ -1,0 +1,6 @@
+@ctroptimizertestexe_deps@
+
+sources := CTROptimizerTest.cpp
+target := CTROptimizerTest
+
+include $(top_srcdir)/tests/Test.post.rules

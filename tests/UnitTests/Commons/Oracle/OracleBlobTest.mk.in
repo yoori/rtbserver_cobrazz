@@ -1,0 +1,7 @@
+@oracleblobtestexe_deps@
+
+sources := BlobTest.cpp
+includes := .
+target := OracleBlobTest
+
+include $(top_srcdir)/tests/Test.post.rules

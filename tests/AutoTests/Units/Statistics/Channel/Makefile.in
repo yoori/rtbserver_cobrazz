@@ -1,0 +1,19 @@
+@autotestschannelstatisticsunits_deps@
+
+sources := \
+  UserSet.cpp \
+  ChannelHitTest.cpp \
+  ChannelTriggerStatsTest.cpp \
+  ChannelTriggerImpStatsTest.cpp \
+  ExpressionChannelPerformancesTest.cpp \
+  ChannelPriceRangeLogging.cpp \
+  ChannelImpInventoryTest.cpp \
+  ChannelInventoryTest.cpp \
+  ChannelInventoryEstimStatsTest.cpp \
+  ChannelInventoryEstimMergeUsers.cpp \
+  ChannelInventoryEstimLevelDown.cpp \
+  ChannelOverlapStats.cpp \
+  ChannelTriggerPerformanceTest.cpp
+
+includes := .
+@autotestschannelstatisticsunits_post@

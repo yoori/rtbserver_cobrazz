@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'https://adsr-nbadsat0',
+            'ps_host' => 'https://adsr-nbadsat0',
+            'toolbar_base' => 'https://http://ntp.rubylan.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'https://http://ntp.rubylan.net/tag/1.js',
+            'adimage_server' => 'https://adsr-nbadsat0',
+          );
+        
+
+    1;
+

@@ -1,0 +1,14 @@
+@oracle_deps@
+
+sources := \
+  OraException.cpp \
+  Environment.cpp \
+  Connection.cpp \
+  Statement.cpp \
+  ResultSet.cpp \
+  TimeoutControl.cpp \
+  ConnectionPool.cpp
+
+includes := .
+
+@oracle_post@

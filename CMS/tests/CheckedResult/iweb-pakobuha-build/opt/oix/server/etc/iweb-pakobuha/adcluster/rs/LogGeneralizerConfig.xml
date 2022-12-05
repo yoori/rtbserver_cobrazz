@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/LogProcessing/LogGeneralizerConfig.xsd">
+  <cfg:LogGeneralizerConfig log_root="/opt/foros/server/var/log/LogGeneralizer" input_logs_dir="/opt/oix/server/var/log/LogGeneralizer/In" output_logs_dir="/opt/oix/server/var/log/LogGeneralizer/Out" check_deferred_logs_period="20">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10111">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="LogGeneralizer" name="LogGeneralizer"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:SNMPConfig mib_dirs="/usr/share/snmp/mibs:/opt/foros/server/share/snmp/mibs:/opt/oix/server/mibs:/opt/oix/server/mibs/LogProcessing/LogGeneralizer" index="0"/>
+    <cfg:Logger filename="/opt/foros/server/var/log/LogGeneralizer/LogGeneralizer.log" log_level="7" sys_log="true">
+      <cfg:TimeSpanPolicy time="86400"/>
+      <cfg:SizeSpanPolicy size="104857600"/>
+    </cfg:Logger>
+    <cfg:LogProcessing type="ColoUsers" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="UserProperties" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelPerformance" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ExpressionPerformance" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="CreativeStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelInventory" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelPriceRange" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="OptOutStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="CCGKeywordStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelTriggerStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelHitStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="SiteReferrerStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="SiteChannelStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="KeywordStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ActionRequest" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ActionStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="PassbackStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="MarginRuleStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="CMPStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelImpInventory" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="PublisherInventory" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="SiteStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="KeywordInventory" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="CCGStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="CCStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="CampaignStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="AdvertiserUserStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ColoUpdateStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="WebwiseDiscoverItems" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="WebwiseDiscoverItemStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="WebwiseDiscoverTagStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="DiscoverChannelState" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="DiscoverFeedState" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="RequestTriggerStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="RequestTriggerChannelStat" check_logs_period="10" max_time="10" max_size="10100"/>
+    <cfg:LogProcessing type="ChannelInventoryEstimationStat" check_logs_period="10" max_time="10" max_size="10100"/>
+  </cfg:LogGeneralizerConfig>
+</cfg:AdConfiguration>

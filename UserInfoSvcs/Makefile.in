@@ -1,0 +1,16 @@
+include Common.pre.rules
+
+target_directory_list := \
+   UserInfoCommons \
+   UserInfoExchanger \
+   UserInfoManager \
+   UserInfoManagerController \
+   UserInfoExchangerProxy \
+   UserInfoAdmin \
+   UserBindServer \
+   UserBindController \
+   UserBindUtil \
+   UserBindAdmin \
+   UserOperationGenerator
+
+include $(osbe_builddir)/config/Direntry.post.rules

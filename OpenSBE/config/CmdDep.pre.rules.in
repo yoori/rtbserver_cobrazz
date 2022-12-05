@@ -1,0 +1,92 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : CmdDep.pre.rules.in
+# Author : Konstantin Sadov <Konstantin.Sadov@gmail.com>
+
+#
+# Command Depend logic
+#
+
+CMD_DEP_EXT := .co.d
+
+CMD_DEP_ALL := all$(CMD_DEP_EXT)
+
+
+.PHONY : $(CMD_DEP_ALL)
+
+$(CMD_DEP_ALL) : ;
+
+_cmd_deps :=
+
+.PHONY : clean_cmd_deps
+
+clean : clean_cmd_deps
+
+clean_cmd_deps :
+	-$(RM) $(RM_FLAGS) $(_cmd_deps)
+
+define osbe_command_depend_target1
+ifneq ($(command_dependencies),off)
+_cmd_deps := $(_cmd_deps) $(1)$(CMD_DEP_EXT)
+
+$(1)$(CMD_DEP_EXT) : $(CMD_DEP_ALL)
+
+$(1) : $(1)$(CMD_DEP_EXT)
+
+endif
+endef
+
+osbe_command_depend_target = $(foreach _target,$(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9),$(eval $(call osbe_command_depend_target1,$(_target))))$(foreach _target,$(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9),$(_target) $(_target)$(CMD_DEP_EXT))
+
+define osbe_command_depend
+@$(if $(findstring $(@D),.), , mkdir -p $(@D) && )perl -we 'use strict; \
+my ($$unique, @commands) = @ARGV; \
+if ($$unique eq "") \
+{ \
+  $$| = 1; \
+  foreach (@commands) \
+  { \
+    /^\s*(-?)(@?)\s*(.*?)\s*$$/; \
+    next if $$3 eq ""; \
+    print("$$3\n") if $$2 ne "@"; \
+    system($$3) && ($$1 eq "-" || exit($$? >> 8)); \
+  } \
+} \
+else \
+{ \
+  my $$command = join(":", @commands); \
+  my $$out = 1; \
+  if (-f $$unique) \
+  { \
+    undef $$/; my $$old; \
+    if (open(FILE, $$unique)) { $$old = <FILE>; close(FILE); } \
+    $$out = $$command ne $$old; \
+  } \
+  if ($$out) \
+  { \
+    open(FILE, ">$$unique") || die $$!; \
+    print FILE $$command; \
+    close(FILE); \
+  } \
+} \
+exit(0);' \
+  '$(filter %$(CMD_DEP_EXT),$@)' \
+  $(1) $(2) $(3) $(4) $(5) $(6) $(7) $(8) $(9)
+endef

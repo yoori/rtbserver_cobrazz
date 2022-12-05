@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+  <creative>
+    <token name="test" value="TEST"/>
+    <token name="test" value="TEST2"/>
+    <token name="test" value="js_encode sensible string \|/
+      TEST2"/>
+    <token name="test" value="ES KÖNNEN ZUSÄTZLICHE"/>
+    <token name="test" value="في التماث"/>
+    <token name="test" value="Русский"/>
+  </creative>

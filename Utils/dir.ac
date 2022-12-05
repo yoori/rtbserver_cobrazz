@@ -1,0 +1,9 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_SUBDIR([ProfileDump])
+OSBE_CONFIG_SUBDIR([UserIdUtil])
+OSBE_CONFIG_SUBDIR([UserExtractUtil])
+
+OSBE_CONFIG_SUBDIR([CTRGenerator])
+OSBE_CONFIG_SUBDIR([UIDGeneratorUtil])
+OSBE_CONFIG_SUBDIR([DNSDecodeUtil])
+OSBE_CONFIG_SUBDIR([TrivialCTRConfigGenerator])

@@ -1,0 +1,9 @@
+@actionfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := RequestInfoFiller.cpp \
+  ActionFrontend.cpp \
+  ActionFrontendStat.cpp
+
+@actionfrontend_post@

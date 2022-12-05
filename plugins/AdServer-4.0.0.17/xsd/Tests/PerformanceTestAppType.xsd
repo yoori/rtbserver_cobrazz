@@ -1,0 +1,135 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Performance Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+  <xsd:include schemaLocation="./TestCommons.xsd"/>
+
+  <xsd:complexType name="PerformanceTestConfigType">
+    <xsd:sequence>
+      <xsd:element name="test" type="TestType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="add_confluence_report" type="xsd:boolean" use="optional"  default="false">
+      <xsd:annotation>
+        <xsd:documentation>Adding test results to confluence report.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>    
+  </xsd:complexType>
+
+  <xsd:complexType name="TestType">
+    <xsd:sequence>
+      <xsd:choice> 
+        <xsd:sequence>
+          <xsd:element name="campaigns" type="CampaignsType" minOccurs="1" maxOccurs="1">
+             <xsd:unique name="unique-campaign-type">
+               <xsd:selector xpath="ptest:campaign" />
+               <xsd:field xpath="type" />
+             </xsd:unique>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:sequence>
+          <xsd:element name="campaignsCount" type="EntityCountType" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+      </xsd:choice> 
+      <xsd:choice> 
+        <xsd:sequence>
+          <xsd:element name="channels" type="ChannelsType" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+        <xsd:sequence>
+          <xsd:element name="channelsCount" type="EntityCountType" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+      </xsd:choice> 
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:ID" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Test identificator using for DB entities, config files, etc.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="empty_tids_percentage" type="PercentageType" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Percentage requests without tid parameter.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="referer_func" type="RefererFuncEnumType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Referer selection policy.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="referer_size" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Maximal referers size of referer_kw(w), context_kw(w) and referer parameters.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="click_rate" type="PercentageDecimalType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Percentage of click requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="action_rate" type="PercentageDecimalType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Percentage of action requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="passback_rate" type="PercentageDecimalType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Percentage of passback requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="optout_rate" type="PercentageType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Percentage of request from opted out (without cookies) client.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ad_all_optouts" type="xsd:boolean" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Send all optout requests with tid.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="have_ron" type="xsd:boolean" use="optional" default="false">
+     <xsd:annotation>
+        <xsd:documentation>Create RON campaign for test.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="create_free_tags" type="xsd:boolean" use="optional" default="true">
+     <xsd:annotation>
+        <xsd:documentation>Create free tags for test.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="initial_requests_count" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Count of requests sending to server at 1st second</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="requests_increment" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Requests increment, request's count difference between current and next seconds</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ft_size" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Average size (in bytes) of full text for adrequest's ft parameter</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ft_channels_percentage" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Percentage of channel's phrase in one full text</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="http_method" type="HttpMethodEnumType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Percentage of channel's phrase in one full text</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

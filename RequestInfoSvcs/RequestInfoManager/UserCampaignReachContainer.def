@@ -1,0 +1,11 @@
+name="UserCampaignReachContainer"
+so_files=UserCampaignReachContainer
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep PlainStorage2
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep Commons
+osbe_cxx_dep ProfilingCommons
+osbe_cxx_dep RequestInfoCommons
+osbe_cxx_dep RequestInfoManagerCompatibility

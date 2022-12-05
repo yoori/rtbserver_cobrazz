@@ -1,0 +1,8 @@
+@optouttestexe_deps@
+sources := test.cpp
+
+includes := .
+
+target := OptOutTest
+@optouttestexe_post@
+

@@ -1,0 +1,8 @@
+name="CampaignConfigModifier"
+so_files=CampaignConfigModifier
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+osbe_cxx_dep Postgres
+osbe_cxx_dep LogGeneralizer

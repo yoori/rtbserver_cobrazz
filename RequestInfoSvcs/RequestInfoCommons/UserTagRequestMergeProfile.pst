@@ -1,0 +1,55 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  struct TagGroupDescriptor
+  {
+    string country;
+    uint colo_id;
+    uint site_id;
+    uint page_load_id;
+    uint referer_hash;
+
+    uint min_time;
+    uint max_time;
+    array<uint> tags;
+    uint ad_shown;
+  };
+  
+  autoreader TagGroupReader<TagGroupDescriptor>;
+
+  autowriter TagGroupWriter<TagGroupDescriptor>;
+
+  struct UserTagRequestMergeProfileDescriptor
+  {
+    uint version;
+
+    // ordered by max_time
+    array<TagGroupDescriptor> tag_groups;
+  };
+
+  reader UserTagRequestMergeProfileReader<
+    UserTagRequestMergeProfileDescriptor>
+  {
+    version;
+
+    array<TagGroupReader> tag_groups;
+  };
+  
+  writer UserTagRequestMergeProfileWriter<
+    UserTagRequestMergeProfileDescriptor>
+  {
+    version;
+
+    array<TagGroupWriter> tag_groups;
+  };
+
+  struct UserTagRequestMergeVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader UserTagRequestMergeVersionReader<
+    UserTagRequestMergeVersionDescriptor>;
+}
+}

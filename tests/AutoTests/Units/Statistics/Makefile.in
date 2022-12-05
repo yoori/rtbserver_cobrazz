@@ -1,0 +1,9 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  StatisticsDirectories.mk \
+  StatisticsUnits.mk
+
+StatisticsUnits.mk : StatisticsDirectories.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

@@ -1,0 +1,4 @@
+@campaignadminexe_deps@
+sources := Application.cpp CampaignServerUtils.cpp
+target := CampaignAdmin
+@campaignadminexe_post@

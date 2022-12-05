@@ -1,0 +1,7 @@
+@userbindserverconfig_deps@
+sources := 
+includes := .
+xsd_files := UserBindServerConfig.xsd
+xsd_includes := xsd
+
+@userbindserverconfig_post@

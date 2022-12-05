@@ -1,0 +1,12 @@
+name="PassFrontend"
+so_files=PassFrontend
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons
+osbe_cxx_dep ProcessingTemplates
+
+osbe_cxx_dep FeConfig
+
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep CommonModule

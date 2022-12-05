@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>45</ttl>
+<reqDate since_epoch="1239866033">Thu, 16 Apr 2009 07:13:53 GMT</reqDate>
+<total>1</total>
+<items>
+<item>
+  <title><![CDATA[Early observations from around the major leagues (The Sporting News)]]></title>
+  <description><![CDATA[The Sporting News - It&#x27;s too soon to call anything a trend, but items of interest litter the Major League Baseball landscape. A look at the most interesting early development in each division:]]></description>
+  <pubDate>Wed, 15 Apr 2009 17:05:24 GMT</pubDate>
+  <link><![CDATA[http://us.rd.yahoo.com/dailynews/rss/sports/*http://news.yahoo.com/s/sn/20090415/sp_sn/earlyobservationsfromaroundthemajorleagues]]></link>
+  <guid>2474515308455170724</guid>
+    <language><![CDATA[eng]]></language>
+  <event>
+    <id>12958713115955332715</id>
+    <capacity>1</capacity>
+  </event>
+  <source>
+    <title><![CDATA[Yahoo! News: Sports News]]></title>
+    <link><![CDATA[http://rss.news.yahoo.com/rss/sports]]></link>
+    <country><![CDATA[USA]]></country>
+  </source>
+</item>
+</items>
+</result>

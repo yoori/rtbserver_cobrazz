@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      ZmqBalancer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+  
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ZmqBalancerConfig" type="ZmqBalancerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqBalancerConfigType">
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+
+      <xsd:element name="BalancingRoute" type="BalancingRouteType"
+        minOccurs="1" maxOccurs="unbounded"/>
+
+      <xsd:element name="Logger" type="ErrorLoggerType"/>
+    </xsd:sequence>
+    <xsd:attribute name="zmq_io_threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="log_dropped_interval" type="xsd:positiveInteger" default="5"/>
+    <xsd:attribute name="app_name" type="xsd:string" default="ZmqBalancer"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BalancingRouteType">
+    <xsd:sequence>
+      <xsd:element name="BindSocket" type="ZmqSocketType"/>
+      <xsd:element name="ConnectSocket" type="ZmqSocketType"/>
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="work_threads" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+</xsd:schema>

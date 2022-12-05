@@ -1,0 +1,6 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([CampaignManagerConfig], [CampaignManagerConfig.mk])
+OSBE_CXX_DEF([CampaignServerConfig], [CampaignServerConfig.mk])
+OSBE_CXX_DEF([DomainConfig], [DomainConfig.mk])
+OSBE_CXX_DEF([BillingServerConfig], [BillingServerConfig.mk])

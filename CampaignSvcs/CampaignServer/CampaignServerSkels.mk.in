@@ -1,0 +1,8 @@
+@campaignserverskels_deps@
+sources := 
+includes := .
+
+corba_skeleton_idls := StatInfo.idl BillStatInfo.idl CampaignServer.idl
+corba_includes := .
+corba_idl_includes := .
+@campaignserverskels_post@

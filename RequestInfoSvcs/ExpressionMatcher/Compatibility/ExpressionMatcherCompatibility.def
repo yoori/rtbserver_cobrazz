@@ -1,0 +1,7 @@
+name="ExpressionMatcherCompatibility"
+so_files=ExpressionMatcherCompatibility
+
+osbe_cxx_dep Commons
+osbe_cxx_dep ReferenceCounting
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep RequestInfoCommons

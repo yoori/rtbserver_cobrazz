@@ -1,0 +1,7 @@
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep String
+osbe_cxx_dep Generics
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep UtilCommons
+
+osbe_cxx_dep ExpressionMatcherStubs

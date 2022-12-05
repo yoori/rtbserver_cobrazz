@@ -1,0 +1,12 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep PlainStorage3
+osbe_cxx_dep Allocator
+
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep UserInfoExchangerConfig
+osbe_cxx_dep UserInfoExchangerStubs
+osbe_cxx_dep UserInfoExchangerSkels

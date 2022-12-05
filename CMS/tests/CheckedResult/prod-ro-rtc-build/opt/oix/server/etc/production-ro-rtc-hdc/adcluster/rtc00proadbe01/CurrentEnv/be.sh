@@ -1,0 +1,9 @@
+campaign_server_port=10106
+export campaign_server_port
+
+expression_matcher_port=10113
+export expression_matcher_port
+
+sync_logs_port=10112
+export sync_logs_port
+

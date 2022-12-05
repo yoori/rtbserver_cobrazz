@@ -1,0 +1,5 @@
+@requestinfocontainer_deps@
+
+sources := RequestInfoContainer.cpp
+
+@requestinfocontainer_post@

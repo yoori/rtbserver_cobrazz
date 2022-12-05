@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema 
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:xse="http://www.codesynthesis.com/xmlns/xml-schema-extension"
+  targetNamespace="http://www.peopleonpage.com/xsd/tests/PerformanceTests" 
+  xmlns="http://www.peopleonpage.com/xsd/tests/PerformanceTests" 
+  elementFormDefault="qualified" xml:lang="en" version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Adserver performance tests common config types
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="ClientRequestType">
+    <xsd:sequence>
+      <xsd:element name="requestConstraint">
+	<xsd:annotation>
+	  <xsd:documentation>References a QoS definition.</xsd:documentation>
+	</xsd:annotation>
+	<xsd:complexType mixed="true">
+	  <xsd:attribute name="ref" type="xsd:IDREF" use="optional" xse:refType="requestConstraintType">
+	    <xsd:annotation>
+	      <xsd:documentation>References a QoS definition. In presence of this attribute, all other
+		attributes and elements within this requestConstraint are meaningless.</xsd:documentation>
+	    </xsd:annotation>
+	  </xsd:attribute>
+	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name="request" type="RequestType"/>
+    </xsd:sequence>
+    <xsd:attribute name="period" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+	<xsd:documentation>Sets the frequency for channel ad requests, 
+	  in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="statisticsIntervalDump" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+	<xsd:documentation>If present, specifies how often a statistics
+	  dump must performed for query channels requests. Measured in seconds</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="GeneratedRequestType">
+    <xsd:sequence>
+      <xsd:element name="requestConstraint">
+	<xsd:annotation>
+	  <xsd:documentation>References a QoS definition.</xsd:documentation>
+	</xsd:annotation>
+	<xsd:complexType mixed="true">
+	  <xsd:attribute name="ref" type="xsd:IDREF" use="optional" xse:refType="requestConstraintType">
+	    <xsd:annotation>
+	      <xsd:documentation>References a QoS definition. In presence of this attribute, all other
+		attributes and elements within this requestConstraint are meaningless.</xsd:documentation>
+	    </xsd:annotation>
+	  </xsd:attribute>
+	</xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="statisticsIntervalDump" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+	<xsd:documentation>If present, specifies how often a statistics
+	  dump must performed for click requests. Measured in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="OptOutType">
+    <xsd:sequence>
+      <xsd:element name="requestConstraint">
+	<xsd:annotation>
+	  <xsd:documentation>References a QoS definition.</xsd:documentation>
+	</xsd:annotation>
+	<xsd:complexType mixed="true">
+	  <xsd:attribute name="ref" type="xsd:IDREF" use="optional" xse:refType="requestConstraintType">
+	    <xsd:annotation>
+	      <xsd:documentation>References a QoS definition. In presence of this attribute, all other
+		attributes and elements within this requestConstraint are meaningless.</xsd:documentation>
+	    </xsd:annotation>
+	  </xsd:attribute>
+	</xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="statisticsIntervalDump" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+	<xsd:documentation>If present, specifies how often a statistics
+	  dump must be performed for action tracking requests. The frequency is
+	  measured in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="url" type="xsd:string">
+      <xsd:annotation>
+	<xsd:documentation>Specify OptOut request URL.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+
+  <xsd:complexType name="requestConstraintType">
+    <xsd:all>
+      <xsd:element name="timeout" type="xsd:nonNegativeInteger" minOccurs="0">
+	<xsd:annotation>
+	  <xsd:documentation>Specifies the amount of time
+	    available for completing a request.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+      <xsd:element name="intendedTime" type="xsd:nonNegativeInteger" minOccurs="0">
+	<xsd:annotation>
+	  <xsd:documentation>The amount of time available for completing a request in a timely manner.
+	  </xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+      <xsd:element name="failedPercentage" type="xsd:nonNegativeInteger" minOccurs="0">
+	<xsd:annotation>
+	  <xsd:documentation>Maximum acceptable percentage of failed requests.
+	  </xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+      <xsd:element name="prolongedPercentage" type="xsd:nonNegativeInteger" minOccurs="0">
+	<xsd:annotation>
+	  <xsd:documentation>Maximum acceptable percentage of prolonged requests.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+    </xsd:all>
+    <xsd:attribute name="name" type="xsd:ID" use="required">
+      <xsd:annotation>
+	<xsd:documentation>Name is used for referencing a definition further in the configuration file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="samplingSize" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+	<xsd:documentation>Specifies the number of latest requests the QoS constraints apply to. The test
+	  terminates, if constraints expressed using elements timeout, intendedTime, failedPercentage, and
+	  prolongedPercentage are violated in respect to the latest samplingSize requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RequestType">
+    <xsd:sequence>
+      <xsd:element name="parameter" type="HTTPEntityType" minOccurs="0" maxOccurs="unbounded">
+	<xsd:annotation>
+	  <xsd:documentation>Instructs the client to use a certain parameter in the request.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+      <xsd:element name="header" type="HTTPEntityType" minOccurs="0" maxOccurs="unbounded">
+	<xsd:annotation>
+	  <xsd:documentation>Instructs the client to create a certain HTTP header in the request.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+      <xsd:element name="body" type="xsd:anyType" minOccurs="0">
+	<xsd:annotation>
+	  <xsd:documentation>Specifies request HTTP body.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="url" type="xsd:string">
+      <xsd:annotation>
+	<xsd:documentation>Sets URL suffix for requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="method" type="HTTPMethodName">
+      <xsd:annotation>
+	<xsd:documentation>Sets the HTTP method to be used for requests.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="HTTPMethodName">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="post"/>
+      <xsd:enumeration value="get"/>
+      <xsd:enumeration value="POST"/>
+      <xsd:enumeration value="GET"/>
+      <xsd:enumeration value="Post"/>
+      <xsd:enumeration value="Get"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="HTTPEntityType" mixed="true">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string"> 
+        <xsd:attribute name="name" type="xsd:string" use="required">
+          <xsd:annotation>
+	    <xsd:documentation>Sets the HTTP entity name.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="empty_prc" type="xsd:nonNegativeInteger" use="optional" default="0">
+          <xsd:annotation>
+            <xsd:documentation>Using for request parameters/headers. Define percentage of requests, 
+                               which shouldn't use this parameter/header</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension> 
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+ <xsd:complexType name="serverBaseType">
+    <xsd:sequence>
+      <xsd:element name="url" type="xsd:string" maxOccurs="unbounded">
+	<xsd:annotation>
+	  <xsd:documentation>Specifies a base address of the tested server. Base addresses are
+	    used to construct requests to the server.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+ <xsd:complexType name="setType">
+    <xsd:sequence>
+      <xsd:element name="item" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+	<xsd:annotation>
+	  <xsd:documentation>Specifies a text item contained in a set element.</xsd:documentation>
+	</xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:ID" use="required">
+      <xsd:annotation>
+	<xsd:documentation>Name is used for referencing a definition further in the configuration file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+ </xsd:complexType>
+
+
+ <xsd:simpleType name="PercentageType">
+   <xsd:restriction base="xsd:decimal">
+     <xsd:fractionDigits value="2"/>
+     <xsd:minInclusive value="0.00"/>                                  
+     <xsd:maxInclusive value="100.00"/>
+   </xsd:restriction>
+ </xsd:simpleType>
+
+</xsd:schema>

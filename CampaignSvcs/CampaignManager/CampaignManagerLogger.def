@@ -1,0 +1,25 @@
+name="CampaignManagerLogger"
+so_files=CampaignManagerLogger
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+
+osbe_cxx_dep ActionRequest
+osbe_cxx_dep AdRequestLogger
+osbe_cxx_dep CcgStat
+osbe_cxx_dep ChannelHitStat
+osbe_cxx_dep ChannelTriggerStat
+osbe_cxx_dep CreativeStat
+osbe_cxx_dep PassbackStat
+osbe_cxx_dep Request
+osbe_cxx_dep RequestBasicChannels
+osbe_cxx_dep SearchTermStat
+osbe_cxx_dep SearchEngineStat
+osbe_cxx_dep TagAuctionStat
+osbe_cxx_dep TagRequest
+osbe_cxx_dep UserAgentStat
+osbe_cxx_dep UserProperties
+osbe_cxx_dep WebStat
+osbe_cxx_dep TagPositionStat
+osbe_cxx_dep ResearchWebStat
+osbe_cxx_dep ResearchProfStat

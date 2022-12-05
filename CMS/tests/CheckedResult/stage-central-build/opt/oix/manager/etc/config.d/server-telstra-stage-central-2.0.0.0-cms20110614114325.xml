@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AdServer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:str="http://exslt.org/strings" sms-version="2" init="%%SUDO%%" brief="version 2.0.0.0 configuration for telstra-stage-central colocation released at 2011-09-20 18:35:35" transport="ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot;. /opt/foros/server/etc/telstra-stage-central/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;" user="aduser">
+  <BatchCommands>
+    <BatchCommand name="redistribute">
+      <Command command="stop">
+        <Group>ui</Group>
+      </Command>
+      <Command command="start">
+        <Group>ui-distribution</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="troubleshoot">
+      <Command command="start">
+        <Group>troubleshoot</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="clear-stat-backup">
+      <Command command="start">
+        <Group>clear-stat-backup</Group>
+      </Command>
+    </BatchCommand>
+  </BatchCommands>
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adcluster">
+    <Service name="ui-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="adsrv.stage"/>
+    <Service name="ui-UserInfoManagerController" type="AdServer::UserInfoSvcs::UserInfoManagerController" host="adsrv.stage"/>
+    <Service name="lp-LogGeneralizer" type="AdServer::LogProcessing::LogGeneralizer" host="adsrv.stage"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="adsrv.stage"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="adsrv.stage"/>
+    <Service name="lp-ExpressionMatcher" type="AdServer::LogProcessing::ExpressionMatcher" host="adsrv.stage"/>
+    <Service name="lp-KeywordMatcher" type="AdServer::RequestInfoSvcs::KeywordMatcher" host="adsrv.stage"/>
+    <Service name="lp-RequestInfoManager" type="AdServer::RequestInfoSvcs::RequestInfoManager" host="adsrv.stage"/>
+    <Service name="be-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="adsrv.stage"/>
+    <Service name="be-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="adsrv.stage"/>
+    <Service name="be-NewsQueryServer" type="AdServer::DiscoverSvcs::NewsQueryServer" host="adsrv.stage"/>
+    <Service name="be-NewsCacheController" type="AdServer::DiscoverSvcs::NewsCacheController" host="adsrv.stage"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="adsrv.stage"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="adsrv.stage"/>
+    <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="adsrv.stage"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="adsrv.stage"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="adsrv.stage"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="adsrv.stage"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adcluster" timeout="600">
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="adsrv.stage"/></Services>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" env="adcluster"><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="adsrv.stage"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="adsrv.stage"/></Services>
+  <Services transport="/bin/sh -c &quot;$SMS_TEXT&quot;" start="%%START_NOLOOP_DONE%%" force="0" check-hosts="">
+    <Service name="ui-UserInfoChecker" type="AdServer::UserInfoSvcs::UserInfoChecker" host="localhost" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/telstra-stage-central-2.0.0.0-cms20110920143523/lib ; /opt/oix/server/manager/telstra-stage-central-2.0.0.0-cms20110920143523/bin/ConfigureUserChunks.pl check --chunks-count=10 --target-hosts='adsrv.stage,' --chunks-root='/opt/oix/server/var/cache/Users/' --transport='ssh:/home/aduser/.ssh/adkey' || ( EX=$? ; if [ $EX -eq 1 ] ; then eval 'echo -e %%SMS_COLOR_ERROR%%redistribution required%%SMS_COLOR_PLAIN%%' &amp;&amp; exit 1 ; else exit -1 ; fi ; )"/>
+    <Service name="ui-UserInfoDistributor" type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/telstra-stage-central-2.0.0.0-cms20110920143523/lib ; /opt/oix/server/manager/telstra-stage-central-2.0.0.0-cms20110920143523/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='adsrv.stage,' --chunks-root='/opt/oix/server/var/cache/Users/' --transport='ssh:/home/aduser/.ssh/adkey' --force=%%force%% --check-hosts=%%check-hosts%%"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
+    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="pbe.stage"/>
+    <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="pbe.stage"/>
+    <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="pbe.stage"/>
+    <Service name="pbe1-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="pbe.stage"/>
+    <Service name="pbe1-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="pbe.stage"/>
+    <Service name="pbe1-NewsQueryProxy" type="AdServer::DiscoverSvcs::NewsQueryProxy" host="pbe.stage"/>
+    <Service name="pbe1-STunnelServer" type="AdServer::LogProcessing::STunnelServer" host="pbe.stage"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="pbe.stage"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adproxycluster-1" timeout="600"/>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" env="adproxycluster-1">
+    <Service name="pbe1-LogProxyConfigurator" type="AdServer::LogProcessing::LogProxyConfigurator" host="pbe.stage"/></Services>
+  <Services start="%%START_NOLOOP_DONE%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" report_dir="/opt/foros/manager/var/server-telstra-stage-central" cmd="REPORTFILE=%%report%%; treport_dir=`dirname $REPORTFILE`; ERROR_LOG=$treport_dir/error_description_%%SMS_UNIQUE%%; ">
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="adsrv.stage" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m telstra-stage-central -o /opt/oix/server/var/tr_report_adsrv.stage_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host adsrv.stage. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="adsrv.stage" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_adsrv.stage_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from adsrv.stage. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="adsrv.stage" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="adsrv.stage" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="pbe.stage" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m telstra-stage-central -o /opt/oix/server/var/tr_report_pbe.stage_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host pbe.stage. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="pbe.stage" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_pbe.stage_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from pbe.stage. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="pbe.stage" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="pbe.stage" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="localhost" start_cmd="%%cmd%% rm -f $ERROR_LOG"/>
+    <Service name="troubleshoot-Printer" type="AdServer::TReportPrinter" host="localhost" start_cmd="%%SMS_TR_PRINT%%"/>
+    <Service name="troubleshoot-Checker" type="AdServer::TReportChecker" host="localhost" start_cmd="%%SMS_TR_CHECK%%"/>
+    <Service name="troubleshoot-Collector" type="AdServer::TReportCollector" host="localhost" start_cmd="%%cmd%% tar --ignore-failed-read -cf $REPORTFILE --remove-files -C $treport_dir tr_report_adsrv.stage_%%SMS_UNIQUE%%.tar.gz tr_report_pbe.stage_%%SMS_UNIQUE%%.tar.gz error_description_%%SMS_UNIQUE%%; return 0"/>
+  </Services>
+  <Groups>
+    <Group name="ui-distribution">
+      <Mask>*:*-UserInfoDistributor</Mask>
+    </Group>
+    <Group name="ui">
+      <Mask>ui-*,*</Mask>
+      <Group type="exclude">ui-distribution</Group>
+    </Group>
+    <Group name="be">
+      <Mask>be-*,*</Mask>
+    </Group>
+    <Group name="dbaccess">
+      <Mask>dbaccess-*,*</Mask>
+    </Group>
+    <Group name="lp">
+      <Mask>lp-*,*</Mask>
+    </Group>
+    <Group name="localproxy">
+      <Mask>localproxy-*,*</Mask>
+    </Group>
+    <Group name="fe1">
+      <Mask>fe1-*,*</Mask>
+    </Group>
+    <Group name="pbe1">
+      <Mask>pbe1-*,*</Mask>
+    </Group>
+    <Group name="troubleshoot">
+      <Mask>troubleshoot-*,*</Mask>
+    </Group>
+    <Group name="clear-stat-backup">
+      <Mask>clear-stat-backup-*,*</Mask>
+    </Group>
+    <Group name="adsrv.stage">
+      <Mask>*,adsrv.stage</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+    </Group>
+    <Group name="pbe.stage">
+      <Mask>*,pbe.stage</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+    </Group>
+    <Group name="all">
+      <Mask>*,*</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">ui-distribution</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+    </Group>
+  </Groups>
+  <Dependences>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+        <Type>AdServer::ChannelSvcs::ChannelProxy</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSearchSvcs::ChannelSearchService</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::LogGeneralizer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsQueryProxy</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DBAccess</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+        <Type>AdServer::LogProcessing::LogGeneralizer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoChecker</Type>
+        <Type>AdServer::Controlling::StatsCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManagerController</Type>
+        <Type>AdServer::PreStart</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+        <Type>AdServer::RequestInfoSvcs::RequestInfoManager</Type>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoManagerController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::RequestInfoSvcs::RequestInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+        <Type>AdServer::RequestInfoSvcs::KeywordMatcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+        <Type>AdServer::PreStart</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::PreStart</Type>
+        <Type>AdServer::PSConfigurator</Type>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+        <Type>AdServer::Controlling::StatsCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::SyncLogs</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::SyncLogsServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::LogProxyConfigurator</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::STunnelServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCollector</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportFetcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportFetcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReport</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCleaner</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportPrinter</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCleaner</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReport</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportChecker</Type>
+      </Master>
+    </Dependence>
+  </Dependences>
+</AdServer>

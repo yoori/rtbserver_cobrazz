@@ -1,0 +1,18 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  DomainParser.mk \
+  CampaignManagerStubs.mk \
+  CreativeTemplateArgs.mk \
+  CampaignManagerLogger.mk \
+  CampaignConfig.mk \
+  CampaignIndex.mk \
+  CampaignConfigSource.mk \
+  CTRProvider.mk \
+  PassbackTemplate.mk \
+  CampaignManager.mk \
+  SecToken.mk \
+  BidCostProvider.mk
+
+
+include $(osbe_builddir)/config/Makentry.post.rules

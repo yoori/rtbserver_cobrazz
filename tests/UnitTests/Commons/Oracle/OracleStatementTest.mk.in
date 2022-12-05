@@ -1,0 +1,8 @@
+@oraclestatementtestexe_deps@
+
+sources  := StatementTest.cpp
+target   := OracleStatementTest
+test_arguments := -l //oraads/addbads.ocslab.com -u ads_3 -p adserver -i 200 -m 5
+
+#include $(top_srcdir)/tests/Test.post.rules
+@oraclestatementtestexe_post@

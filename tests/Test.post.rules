@@ -1,0 +1,91 @@
+test_dir = $(top_builddir)/test
+tmp_dir = $(test_dir)/tmp
+
+timeout ?= 10
+
+vg_prefix = valgrind -q --tool=memcheck --leak-check=full --num-callers=50 --suppressions=$$TEST_TOP_SRC_DIR/tests/Test.supp
+
+# if no_vg is unset
+vg_timeout ?= 20
+vg_test_arguments ?= $(test_arguments)
+
+
+# Effective commands and description
+ifneq ($(target),)
+description ?= $(target)
+test_command ?= $(target) $(test_arguments)
+vg_test_command ?= $(vg_prefix) $(target) $(vg_test_arguments)
+endif
+
+stdout = $(test_dir)/$(description).out
+stderr = $(test_dir)/$(description).err
+
+vg_stdout = $(test_dir)/$(description).vg.out
+vg_stderr = $(test_dir)/$(description).vg.err
+
+
+define check_commands
+  if [ -z "$(test_command)" -a -z "$(vg_test_command)" ]; then \
+    echo No command specified for the test; \
+  else \
+  \
+  echo "Running $(description) test..."; \
+  mkdir -p "$(test_dir)"; \
+  mkdir -p "$(tmp_dir)"; \
+  \
+  pwd=`pwd`; \
+  export TEST_TEST_DIR=`echo $(test_dir) | sed -e "s:^[^/]:$$pwd/&:"`; \
+  export TEST_TMP_DIR=`echo $(tmp_dir) | sed -e "s:^[^/]:$$pwd/&:"`; \
+  export TEST_SRC_DIR=`echo $(srcdir) | sed -e "s:^[^/]:$$pwd/&:"`; \
+  export TEST_TOP_SRC_DIR=`echo $(top_srcdir) | sed -e "s:^[^/]:$$pwd/&:"`; \
+  export TEST_DATA_DIR=`echo $(top_srcdir)/tests/Data | sed -e "s:^[^/]:$$pwd/&:"`; \
+  \
+  trap 'echo Signal caught' 2; \
+  source $(top_srcdir)/tests/Data/tests.config \
+    "$(top_srcdir)" "$(tmp_dir)" "$(srcdir)"; \
+  \
+  if [ -n "$(test_command)" ]; then \
+    echo $(description) $(test_command) >/dev/null; \
+    echo -n >"$(stdout)" 2>"$(stderr)"; \
+    start=`date +%s`; \
+    perl "$(top_srcdir)/tests/Test.pl" $(timeout) \
+      "$(test_command)" >>"$(stdout)" 2>>"$(stderr)"; \
+    if [ "$$?" -eq 0 ]; then \
+      if [ ! -s "$(stderr)" ]; then \
+        rm -f "$(stderr)"; \
+      fi; \
+    fi; \
+    stop=`date +%s`; \
+    passed=`expr $$stop - $$start`; \
+    echo Total time: `expr $$passed / 60` minutes `expr $$passed % 60` seconds >>"$(stdout)"; \
+  fi; \
+  \
+  if [ -z "$(no_vg)" ] ; then \
+    echo $(description) $(vg_test_command) >/dev/null; \
+    echo -n >"$(vg_stdout)" 2>"$(vg_stderr)"; \
+    start=`date +%s`; \
+    perl "$(top_srcdir)/tests/Test.pl" $(vg_timeout) \
+      "$(vg_test_command)" >>"$(vg_stdout)" 2>>"$(vg_stderr)"; \
+    if [ "$$?" -eq 0 ]; then \
+      if [ ! -s "$(vg_stderr)" ]; then \
+        rm -f "$(vg_stderr)"; \
+      fi; \
+    fi; \
+    stop=`date +%s`; \
+    passed=`expr $$stop - $$start`; \
+    echo Total time: `expr $$passed / 60` minutes `expr $$passed % 60` seconds >>"$(vg_stdout)"; \
+  fi; \
+  \
+  fi;
+  \
+endef
+
+clean: clean_check
+
+clean_check:
+	-@$(RM) $(RM_FLAGS) $(stdout) $(stderr) $(vg_stdout) $(vg_stderr)
+
+ifneq ($(target),)
+include $(osbe_builddir)/config/CXX/Ex.post.rules
+endif
+include $(osbe_builddir)/config/Check.post.rules

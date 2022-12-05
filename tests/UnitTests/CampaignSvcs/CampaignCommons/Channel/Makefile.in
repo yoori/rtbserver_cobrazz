@@ -1,0 +1,6 @@
+@expressionchanneltestexe_deps@
+
+sources := ExpressionChannelTest.cpp
+target := ExpressionChannelTest
+
+include $(top_srcdir)/tests/Test.post.rules

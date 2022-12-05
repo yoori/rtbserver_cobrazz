@@ -1,0 +1,8 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([CreativeSelectionDirectories.mk])
+OSBE_CONFIG_FILE([CreativeSelectionUnits.mk])
+
+OSBE_CONFIG_SUBDIR([TextBidding])
+
+
+OSBE_CXX_DEF([AutoTestsCreativeSelectionUnits])

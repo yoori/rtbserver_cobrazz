@@ -1,0 +1,6 @@
+@libxslttestexe_deps@
+
+sources := LibXsltTest.cpp
+target := LibXsltTest
+
+include $(top_srcdir)/tests/Test.post.rules

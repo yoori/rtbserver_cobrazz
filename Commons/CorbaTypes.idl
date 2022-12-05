@@ -1,0 +1,27 @@
+#ifndef _CORBATYPES_IDL_
+#define _CORBATYPES_IDL_
+
+module CORBACommons
+{
+  typedef octet FixedTimestampInfo[8];
+  typedef sequence<octet> OctSeq;
+  typedef sequence<octet, 8> TimestampInfo;
+  typedef sequence<TimestampInfo> TimestampSeq;
+  typedef OctSeq RequestIdInfo;
+  typedef OctSeq UserIdInfo;
+  typedef OctSeq DecimalInfo;
+  typedef OctSeq OptionalDecimalInfo;
+  typedef sequence<string> StringSeq;
+  typedef sequence<RequestIdInfo> RequestIdInfoSeq;
+  typedef sequence<DecimalInfo> DecimalInfoSeq;
+  typedef sequence<unsigned long> IdSeq;
+
+  struct PartlyMatchResult
+  {
+    unsigned long channel_id;
+    unsigned long visits;
+    unsigned long minimum_visits;
+  };
+};
+
+#endif // _CORBATYPES_IDL_

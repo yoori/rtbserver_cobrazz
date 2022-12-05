@@ -1,0 +1,43 @@
+#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROL_IDL_
+#define _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROL_IDL_
+
+#include <CORBACommons/Stats.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    typedef sequence<unsigned long> ChunkIdSeq;
+
+    struct ChunksConfig
+    {
+      ChunkIdSeq chunk_ids;
+      unsigned long common_chunks_number;
+    };
+    
+    enum UserInfoManagerStatus
+    {
+      S_READY, // ready but not admited to cluster
+      S_ADMITTED
+    };
+        
+    interface UserInfoManagerControl
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      void 
+      get_source_info(out ChunksConfig user_info_source)
+        raises(ImplementationException);
+
+      /** get status from controlled services */
+      UserInfoManagerStatus status() raises(ImplementationException);
+
+      void admit() /* raises() */;
+    };
+  }; // module UserInfoSvcs
+}; // module AdServer
+
+#endif // _USER_INFO_SVCS_USER_INFO_SERVER_CONTROL_IDL_

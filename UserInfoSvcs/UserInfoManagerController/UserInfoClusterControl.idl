@@ -1,0 +1,28 @@
+#ifndef _USER_INFO_CLUSTER_CONTROLLER_IDL_
+#define _USER_INFO_CLUSTER_CONTROLLER_IDL_
+
+#include <CORBACommons/ProcessControl.idl>
+#include <CORBACommons/Stats.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    interface _TAO_BUG
+    {
+      CORBACommons::AProcessControl::ALIVE_STATUS get_alive_type();
+      string
+      comment();
+    };
+
+    interface UserInfoClusterControl : CORBACommons::IProcessControl
+    {
+    };
+    
+    interface UserInfoClusterStats : CORBACommons::ProcessStatsControl
+    {
+    };
+  };//module UserInfolSvcs
+}; // module AdServer
+
+#endif //_USER_INFO_CLUSTER_CONTROLLER_IDL_

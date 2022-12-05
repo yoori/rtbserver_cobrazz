@@ -1,0 +1,38 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v340
+{
+  /* merge operation */
+  struct UserMergeOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    uint exchange_merge;
+    char change_last_request;
+    bytes merge_base_profile;
+    bytes merge_add_profile;
+    bytes merge_history_profile;
+    uint household;
+    int request_colo_id;
+  };
+
+  autoreader UserMergeOperationReader<UserMergeOperationDescriptor>;
+  autowriter UserMergeOperationWriter<UserMergeOperationDescriptor>;
+
+  struct UserFreqCapConfirmOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    string request_id;
+  };
+
+  autoreader UserFreqCapConfirmOperationReader<UserFreqCapConfirmOperationDescriptor>;
+  autowriter UserFreqCapConfirmOperationWriter<UserFreqCapConfirmOperationDescriptor>;
+}
+}

@@ -1,0 +1,45 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : Ex.post.rules.in
+# Author : Pavel Gubin <pgubin@ipmce.ru>
+
+ifndef _EX_POST_RULES_
+define _EX_POST_RULES_
+1
+endef
+
+includes :=
+
+cxx_target := $(subst %,$(target),$(strip $(EX_TARGET_TEMPLATE)))
+
+cxx_type := ex
+_link_files_dir := bin
+_rules_type :=
+
+include $(osbe_builddir)/config/CXX/CXX.mk
+
+@CD_TB@$(cxx_target)@CD_TE@ : $(_objs)
+	@CD_CB@
+	@CD_LB@$(LD_EX) $(LD_FLAGS) -o $@ $(_objs) $(LIBS) $(EXTERNAL_LIBS)@CD_LE@
+	@CD_LB@-$(RM) $(RM_FLAGS) $(top_builddir)/$(_link_files_dir)/$@@CD_LE@
+	@CD_LB@$(LN_S) ..$(reldir)/$@ $(top_builddir)/$(_link_files_dir)/$@@CD_LE@
+	@CD_CE@
+
+endif #_EX_POST_RULES_

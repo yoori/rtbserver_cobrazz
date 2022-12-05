@@ -1,0 +1,32 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Test Results Processing Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="TestResultProcessingType">
+    <xsd:sequence>      
+      <xsd:element name="mailList" type="xsd:string"
+                   minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            mailList
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>      
+    <xsd:attribute name="url" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="http-root" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="http-test-path" type="NoLeadingTrailingSpaces" use="optional"/>
+    <xsd:attribute name="history-path" type="NoLeadingTrailingSpaces" use="optional"/>
+    <xsd:attribute name="dst-sub-path" type="NoLeadingTrailingSpaces" use="optional"/>
+  </xsd:complexType>
+
+</xsd:schema>

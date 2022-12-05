@@ -1,0 +1,12 @@
+name="ActionFrontend"
+so_files=ActionFrontend
+
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep IPMap
+osbe_cxx_dep Commons
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep FeConfig
+osbe_cxx_dep FrontendStatistic
+osbe_cxx_dep UserIdController

@@ -1,0 +1,15 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([UserFreqCapProfileTest])
+
+OSBE_CONFIG_SUBDIR([ChannelsMatcherTest])
+OSBE_CONFIG_SUBDIR([MatcherPerformanceTest])
+OSBE_CONFIG_SUBDIR([DeleteExcessVisitsTest])
+
+OSBE_CONFIG_SUBDIR([UserInfoContainerTest])
+OSBE_CONFIG_SUBDIR([UserBindContainerTest])
+OSBE_CONFIG_SUBDIR([UserOperationGeneratorTest])
+OSBE_CONFIG_SUBDIR([DMPProfilingInfoTest])
+
+OSBE_CONFIG_SUBDIR([CompatibilityTest])

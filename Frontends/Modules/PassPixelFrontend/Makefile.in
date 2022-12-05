@@ -1,0 +1,9 @@
+@passpixelfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := \
+  RequestInfoFiller.cpp \
+  PassPixelFrontend.cpp
+
+@passpixelfrontend_post@

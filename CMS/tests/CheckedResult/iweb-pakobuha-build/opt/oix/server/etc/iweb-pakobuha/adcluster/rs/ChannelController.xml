@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/ChannelSvcs/ChannelManagerControllerConfig.xsd">
+  <cfg:ChannelControllerConfig count_chunks="10" source_id="1">
+    <cfg:Primary host="rs"/>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10104">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelManagerController" name="ChannelManagerController"/>
+        <cfg:Object servant="ChannelClusterControl" name="ChannelClusterControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:ColoSettings colo="4" version="2.0.0.0"/>
+    <cfg:ChannelSource>
+      <cfg:ProxySource>
+        <cfg:CampaignRefs name="CampaignServer">
+          <cfg:Ref ref="corbaloc:iiop:rs:10106/CampaignServer_v9"/>
+        </cfg:CampaignRefs>
+        <cfg:ProxyConnectionRef name="ChannelProxy" ref="corbaloc:iiop:rs:10120/ChannelProxy_v05"/>
+      </cfg:ProxySource>
+    </cfg:ChannelSource>
+    <cfg:ChannelHost>
+      <cfg:ChannelServerControlRef name="ChannelServerControl" ref="corbaloc:iiop:rs:10103/ChannelServerControl"/>
+      <cfg:ChannelServerProcRef name="ChannelServerProc" ref="corbaloc:iiop:rs:10103/ProcessControl"/>
+      <cfg:ChannelServerRef name="ChannelServer" ref="corbaloc:iiop:rs:10103/ChannelServer"/>
+      <cfg:ChannelUpdateRef name="ChannelUpdate" ref="corbaloc:iiop:rs:10103/ChannelUpdate"/>
+      <cfg:ChannelStatRef name="ProcessStatsControl" ref="corbaloc:iiop:rs:10103/ProcessStatsControl"/>
+    </cfg:ChannelHost>
+    <cfg:Logger filename="/opt/foros/server/var/log/ChannelController/ChannelController.log" log_level="7" sys_log="true">
+      <cfg:TimeSpanPolicy time="86400"/>
+      <cfg:SizeSpanPolicy size="104857600"/>
+    </cfg:Logger>
+  </cfg:ChannelControllerConfig>
+</cfg:AdConfiguration>

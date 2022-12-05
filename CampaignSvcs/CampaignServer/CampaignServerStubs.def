@@ -1,0 +1,4 @@
+name="CampaignServerStubs"
+so_files=CampaignServerStubs
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep CampaignCommonsStubs

@@ -1,0 +1,89 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v24
+{
+  struct UserCampaignReachProfileVersionDescriptor
+  {
+    uint version;
+  };
+  
+  autoreader UserCampaignReachProfileVersionReader<
+    UserCampaignReachProfileVersionDescriptor>;
+
+  /* item appear list for specific date interval */
+  struct DateReachDescriptor
+  {
+    uint date;
+    list<uint> appear_list;
+  };
+
+  autoreader DateReachReader<DateReachDescriptor>;
+
+  autowriter DateReachWriter<DateReachDescriptor>;
+
+  /* all appear entities for some item type */
+  struct ItemReachDescriptor
+  {
+    list<DateReachDescriptor> daily_appear_lists;
+    list<DateReachDescriptor> monthly_appear_lists;
+    list<uint> total_appear_list;
+  };
+  
+  reader ItemReachReader<ItemReachDescriptor>
+  {
+    list<DateReachReader> daily_appear_lists;
+    list<DateReachReader> monthly_appear_lists;
+    total_appear_list;
+  };
+
+  writer ItemReachWriter<ItemReachDescriptor>
+  {
+    list<DateReachWriter> daily_appear_lists;
+    list<DateReachWriter> monthly_appear_lists;
+    total_appear_list;
+  };
+
+  /* reach profile */
+  struct UserCampaignReachProfileDescriptor
+  {
+    uint version;
+    uint last_request_day;
+
+    ItemReachDescriptor campaign_appears;
+    ItemReachDescriptor ccg_appears;
+    ItemReachDescriptor cc_appears;
+    ItemReachDescriptor adv_appears;
+    ItemReachDescriptor adv_display_appears;
+    ItemReachDescriptor adv_text_appears;
+  };
+
+  reader UserCampaignReachProfileReader<
+    UserCampaignReachProfileDescriptor>
+  {
+    version;
+    last_request_day;
+    
+    ItemReachReader campaign_appears;
+    ItemReachReader ccg_appears;
+    ItemReachReader cc_appears;
+    ItemReachReader adv_appears;
+    ItemReachReader adv_display_appears;
+    ItemReachReader adv_text_appears;
+  };
+  
+  writer UserCampaignReachProfileWriter<
+    UserCampaignReachProfileDescriptor>
+  {
+    version;
+    last_request_day;
+
+    ItemReachWriter campaign_appears;
+    ItemReachWriter ccg_appears;
+    ItemReachWriter cc_appears;
+    ItemReachWriter adv_appears;
+    ItemReachWriter adv_display_appears;
+    ItemReachWriter adv_text_appears;
+  };
+}
+}
+

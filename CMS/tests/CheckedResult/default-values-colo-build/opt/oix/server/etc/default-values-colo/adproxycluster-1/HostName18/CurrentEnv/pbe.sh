@@ -1,0 +1,6 @@
+news_item_server_port=10174
+export news_item_server_port
+
+news_query_proxy_port=10177
+export news_query_proxy_port
+

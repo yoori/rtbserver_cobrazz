@@ -1,0 +1,4 @@
+name="ChannelCountStat"
+so_files=ChannelCountStat
+osbe_cxx_dep Commons
+osbe_cxx_dep LogCommons

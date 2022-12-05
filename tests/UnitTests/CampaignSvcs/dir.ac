@@ -1,0 +1,8 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([CampaignCommons])
+OSBE_CONFIG_SUBDIR([CampaignServer])
+OSBE_CONFIG_SUBDIR([CampaignManager])
+OSBE_CONFIG_SUBDIR([CampaignSelect])
+OSBE_CONFIG_SUBDIR([BillingServer])

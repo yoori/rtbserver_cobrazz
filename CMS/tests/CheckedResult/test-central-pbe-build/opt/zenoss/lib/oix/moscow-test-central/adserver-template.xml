@@ -1,0 +1,145 @@
+<zendmd>
+  <templates>
+    <template name="OixServerMonitoringRequest" prefix="SubAgent-Shell-AdServer-MIB">
+      <oids>
+        <oid name="adRequestExecTime" type="GAUGE"/>
+        <oid name="adRequestExecStatus" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="Monitoring Ad Request Critical Execution Time" oid="adRequestExecTime"
+          min="0" max="2" evclass="/OIX/AdServer" severity="5"/>
+        <threshold name="Monitoring Ad Request Execution Time" oid="adRequestExecTime"
+          min="0" max="1" evclass="/OIX/AdServer" severity="4"/>
+        <threshold name="Monitoring Ad Request Execution Status" oid="adRequestExecStatus"
+          min="0" max="0" evclass="/OIX/AdServer" severity="4"/>
+      </thresholds>
+      <graphs>
+        <graph name="OixServer Monitoring Request Processing" units="seconds">
+          <oid name="adRequestExecTime" type="AREA"/>
+        </graph>
+      </graphs>
+    </template>
+
+    <template name="OixServerApache" prefix="SubAgent-Shell-AdServer-Apache-MIB">
+      <oids>
+        <oid name="apsTotalAccesses" type="DERIVE"/>
+
+        <oid name="apsWaitingForConnection" type="GAUGE"/>
+        <oid name="apsKeepAlive" type="GAUGE"/>
+        <oid name="apsReadingRequest" type="GAUGE"/>
+        <oid name="apsSendingReply" type="GAUGE"/>
+      </oids>
+      <graphs>
+        <graph name="OixServer HTTP Requests" units="requests">
+          <oid name="apsTotalAccesses" type="AREA" rename="Req per sec"/>
+        </graph>
+        <graph name="OixServer Apache Workers State" units="workers">
+          <oid name="apsWaitingForConnection" type="AREA" rename="waiting"/>
+          <oid name="apsKeepAlive" type="AREA" rename="keepalive" stacked="True"/>
+          <oid name="apsReadingRequest" type="AREA" rename="reading" stacked="True"/>
+          <oid name="apsSendingReply" type="AREA" rename="sending" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+
+    <template name="OixServerLogGeneralizer">
+      <oids>
+        <oid prefix="ActionRequest-MIB" name="actionRequest.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ActionStat-MIB" name="actionStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CampaignStat-MIB" name="campaignStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CCGKeywordStat-MIB" name="ccgKeywordStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CCGStat-MIB" name="ccgStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CCStat-MIB" name="ccStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelHitStat-MIB" name="channelHitStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelInventory-MIB" name="channelInventory.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelInventoryEstimationStat-MIB" name="channelInventoryEstimationStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelPerformance-MIB" name="channelPerformance.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelPriceRange-MIB" name="channelPriceRange.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelTriggerStat-MIB" name="channelTriggerStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ColoUsers-MIB" name="coloUsers.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CreativeStat-MIB" name="creativeStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ExpressionPerformance-MIB" name="expressionPerformance.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="KeywordStat-MIB" name="keywordStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="OptOutStat-MIB" name="optOutStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="PassbackStat-MIB" name="passbackStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="RequestTriggerChannelStat-MIB" name="requestTriggerChannelStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="RequestTriggerStat-MIB" name="requestTriggerStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="WebwiseDiscoverItems-MIB" name="webwiseDiscoverItems.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="WebwiseDiscoverItemStat-MIB" name="webwiseDiscoverItemStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="WebwiseDiscoverTagStat-MIB" name="webwiseDiscoverTagStat.outputRecordsAvg" type="GAUGE"/>
+      </oids>
+      <graphs>
+        <graph name="OixServer LogGeneralizer Main stats" units="Records per operation">
+          <oid name="coloUsers.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="creativeStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="keywordStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="optOutStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="passbackStat.outputRecordsAvg" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="OixServer LogGeneralizer Channel stats" units="Records per operation">
+          <oid name="channelHitStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelInventory.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelInventoryEstimationStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelPerformance.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelPriceRange.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelTriggerStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="expressionPerformance.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="requestTriggerChannelStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="requestTriggerStat.outputRecordsAvg" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="OixServer LogGeneralizer Action stats" units="Records per operation">
+          <oid name="actionRequest.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="actionStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="ccgKeywordStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="ccgStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="ccStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="campaignStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="webwiseDiscoverItemStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="webwiseDiscoverItems.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="webwiseDiscoverTagStat.outputRecordsAvg" type="AREA" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+    <template name="OixServerCommons" prefix="StatsCollector-MIB">
+      <oids>
+        <!-- Development vars -->
+        <!-- 1. User Frontend Profiles Space -->
+        <oid name="userFreqCapProfiles-AreaSize.0" type="DERIVE"/>
+        <oid name="userHistoryProfiles-AreaSize.0" type="DERIVE"/>
+        <oid name="userWDProfiles-AreaSize.0" type="DERIVE"/>
+        <oid name="userTempProfiles-AreaSize.0" type="DERIVE"/>
+        <oid name="userBaseProfiles-AreaSize.0" type="DERIVE"/>
+        <oid name="userAdditionalProfiles-AreaSize.0" type="DERIVE"/>
+        <!-- Common vars-->
+        <oid name="userProfiles-AreaSize.0" type="DERIVE"/>
+        <!-- 2. User Frontend Profiles Channels -->
+        <oid name="userProfiles-DiscoverChannels-Avg.0" type="GAUGE"/>
+        <oid name="userProfiles-AdChannels-Avg.0" type="GAUGE"/>
+        <!-- 3. Ad Requests -->
+        <oid name="adRequestWithImpression-OptInUser-Count.0" type="GAUGE"/>
+        <oid name="adRequestWithImpression-nonOptInUser-Count.0" type="GAUGE"/>
+        <oid name="adRequest-Count.0" type="GAUGE"/>
+      </oids>
+      <graphs>
+        <graph name="User Frontend Profiles Space" units="bytes">
+          <oid name="userFreqCapProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userHistoryProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userWDProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userTempProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userBaseProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userAdditionalProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userProfiles-AreaSize.0"/>
+        </graph>
+        <graph name="User Frontend Profiles Channels" units="quantity">
+          <oid name="userProfiles-DiscoverChannels-Avg.0" type="AREA" stacked="True"/>
+          <oid name="userProfiles-AdChannels-Avg.0" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="Ad Requests" units="quantity">
+          <oid name="adRequestWithImpression-OptInUser-Count.0" type="AREA" stacked="True"/>
+          <oid name="adRequestWithImpression-nonOptInUser-Count.0" type="AREA" stacked="True"/>
+          <oid name="adRequest-Count.0"/>
+        </graph>
+      </graphs>
+    </template>
+  </templates>
+</zendmd>

@@ -1,0 +1,5 @@
+@uidgeneratorprotocol_deps@
+
+protobuf_sources := UIDGeneratorProtocol.proto
+
+@uidgeneratorprotocol_post@

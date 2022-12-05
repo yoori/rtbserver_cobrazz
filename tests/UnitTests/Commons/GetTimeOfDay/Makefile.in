@@ -1,0 +1,8 @@
+@gettimeofdaytestexe_deps@
+
+sources := GetTimeOfDay.cpp
+target := GetTimeOfDayTest
+
+test_arguments := 10 5
+
+include $(top_srcdir)/tests/Test.post.rules

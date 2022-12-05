@@ -1,0 +1,6 @@
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep SyncLogsConfig
+
+osbe_cxx_dep SyncLogs

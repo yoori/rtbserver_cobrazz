@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/Frontends/ProfilingServerConfig.xsd">
+  <cfg:ProfilingServerConfig zmq_io_threads="1" work_threads="20">
+    <cfg:CorbaConfig threading-pool="1">
+      <cfg:Endpoint host="*" port="10175">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/ProfilingServer/ProfilingServer" log_level="8">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="8" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:ProfilingInfoSocket type="PULL" hwm="1" non_block="false">
+      <cfg:Address domain="*" port="10186"/>
+    </cfg:ProfilingInfoSocket>
+    <cfg:AnonymousStatsSocket type="PULL" hwm="1" non_block="false">
+      <cfg:Address domain="*" port="10187"/>
+    </cfg:AnonymousStatsSocket>
+    <cfg:CampaignManagerRef name="CampaignManager">
+      <cfg:Ref ref="corbaloc:iiop:vnode1:10107/CampaignManager_v2000"/>
+      <cfg:Ref ref="corbaloc:iiop:vnode2:10107/CampaignManager_v2000"/>
+    </cfg:CampaignManagerRef>
+    <cfg:UserInfoManagerControllerGroup name="UserInfoManagerControllers">
+      <cfg:Ref ref="corbaloc:iiop:vnode1:10102/UserInfoManagerController_v300"/>
+      <cfg:Ref ref="corbaloc:iiop:vnode2:10102/UserInfoManagerController_v300"/>
+    </cfg:UserInfoManagerControllerGroup>
+  </cfg:ProfilingServerConfig>
+</cfg:AdConfiguration>

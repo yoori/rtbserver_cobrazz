@@ -1,0 +1,6 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([UserInventoryContainerTestExe], [UserInventoryContainerTest.mk])
+OSBE_CXX_DEF([UserTriggerMatchContainerTestExe], [UserTriggerMatchContainerTest.mk])
+OSBE_CXX_DEF([ExpressionChannelIndexTestExe], [ExpressionChannelIndexTest.mk])
+OSBE_CXX_DEF([UserColoReachContainerTestExe], [UserColoReachContainerTest.mk])

@@ -1,0 +1,36 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep Vanga
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep Commons
+osbe_cxx_dep SNMPAgentX
+
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep ExpressionMatcherConfig
+osbe_cxx_dep FileReceiver
+osbe_cxx_dep ProfileMap
+
+# out loggers
+osbe_cxx_dep AdRequestLogger
+osbe_cxx_dep RequestBasicChannels
+osbe_cxx_dep ChannelInventory
+osbe_cxx_dep ChannelImpInventory
+osbe_cxx_dep ChannelPriceRange
+osbe_cxx_dep ChannelPerformance
+osbe_cxx_dep ChannelTriggerImpStat
+osbe_cxx_dep ColoUserStat
+osbe_cxx_dep ChannelOverlapUserStat
+
+# CORBA stubs
+osbe_cxx_dep CampaignCommonsStubs
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep ExpressionMatcherStubs
+
+osbe_cxx_dep ExpressionChannel
+osbe_cxx_dep UserInventoryContainer
+osbe_cxx_dep UserTriggerMatchContainer
+osbe_cxx_dep UserColoReachContainer
+osbe_cxx_dep ExpressionChannelMatcher

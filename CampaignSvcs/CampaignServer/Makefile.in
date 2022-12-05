@@ -1,0 +1,15 @@
+include Common.pre.rules
+
+target_makefile_list :=	\
+  CampaignConfigModifier.mk \
+  CampaignServerStubs.mk \
+  CampaignServerSkels.mk \
+  CampaignServer.mk \
+  BillStatServerSource.mk \
+  Compatibility.mk
+
+# These cross-directory dependencies won't be generated automatically.
+Compatibility.mk : CampaignServerSkels.mk
+CampaignServer.mk : Compatibility.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

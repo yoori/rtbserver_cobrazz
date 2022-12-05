@@ -1,0 +1,100 @@
+namespace AdServer
+{
+namespace UserInfoSvcs
+{
+  struct FreqCap
+  {
+    uint fc_id;
+    uint total_impressions;
+    array<uint> last_impressions;
+  };
+
+  autoreader FreqCapReader<FreqCap>;
+  writer FreqCapWriter<FreqCap>
+  {
+    fc_id;
+    total_impressions;
+    (cpp_vector) last_impressions;
+  };
+
+  struct UcFreqCap
+  {
+    string request_id;
+    uint time;
+    array<uint> freq_cap_ids;
+    array<uint> imps;
+  };
+
+  autoreader UcFreqCapReader<UcFreqCap>;
+  autowriter UcFreqCapWriter<UcFreqCap>;
+
+  struct SeqOrder
+  {
+    uint ccg_id;
+    uint set_id;
+    uint imps;
+  };
+
+  autoreader SeqOrderReader<SeqOrder>;
+  autowriter SeqOrderWriter<SeqOrder>;
+
+  struct PublisherAccount
+  {
+    uint publisher_account_id;
+    uint timestamp;
+  };
+
+  autoreader PublisherAccountReader<PublisherAccount>;
+  autowriter PublisherAccountWriter<PublisherAccount>;
+
+  struct CampaignFreq
+  {
+    uint campaign_id;
+    uint imps;
+  };
+
+  autoreader CampaignFreqReader<CampaignFreq>;
+  autowriter CampaignFreqWriter<CampaignFreq>;
+
+  struct UserFreqCapProfile
+  {
+    uint version;
+    array<FreqCap> freq_caps;
+    array<UcFreqCap> uc_freq_caps;
+    array<FreqCap> virtual_freq_caps;
+    array<SeqOrder> seq_orders;
+    array<PublisherAccount> publisher_accounts;
+    array<CampaignFreq> campaign_freqs;
+  };
+
+  reader UserFreqCapProfileReader<UserFreqCapProfile>
+  {
+    version;
+    array<FreqCapReader> freq_caps;
+    array<UcFreqCapReader> uc_freq_caps;
+    array<FreqCapReader> virtual_freq_caps;
+    array<SeqOrderReader> seq_orders;
+    array<PublisherAccountReader> publisher_accounts;
+    array<CampaignFreqReader> campaign_freqs;
+  };
+
+  writer UserFreqCapProfileWriter<UserFreqCapProfile>
+  {
+    version;
+    array<FreqCapWriter> freq_caps;
+    array<UcFreqCapWriter> uc_freq_caps;
+    array<FreqCapWriter> virtual_freq_caps;
+    array<SeqOrderWriter> seq_orders;
+    array<PublisherAccountWriter> publisher_accounts;
+    array<CampaignFreqWriter> campaign_freqs;
+  };
+
+  struct UserFreqCapProfileVersion
+  {
+    uint version;
+  };
+
+  autoreader UserFreqCapProfileVersionReader<
+    UserFreqCapProfileVersion>;
+}
+}

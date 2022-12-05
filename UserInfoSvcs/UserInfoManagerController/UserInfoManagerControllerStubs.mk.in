@@ -1,0 +1,10 @@
+@userinfomanagercontrollerstubs_deps@
+
+sources := UserInfoManagerSessionFactory.cpp UserInfoOperationDistributor.cpp UserInfoManagerSessionImpl.cpp
+includes := .
+
+corba_stub_idls := UserInfoManagerController.idl
+corba_includes := .
+corba_idl_includes := .
+
+@userinfomanagercontrollerstubs_post@

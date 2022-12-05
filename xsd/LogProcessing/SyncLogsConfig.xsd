@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      SyncLogs Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="SyncLogsConfig" type="SyncLogsConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:simpleType name="FetchType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="full"/>
+      <xsd:enumeration value="new"/>
+      <xsd:enumeration value="commited"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <!-- SyncLogs -->
+  <xsd:complexType name="SyncLogsConfigType">
+    <xsd:annotation>
+      <xsd:documentation>SyncLogs process runtime parameters.</xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>Sets logger options, such as log file name.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ClusterConfig" type="ClusterConfigType"/>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+
+    <xsd:attribute name="check_logs_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets period of time (seconds) to check logs for sending to destination.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="host_check_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets period of time (seconds) before the next destination check if it was anavailable.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="hostname" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <!-- ClusterConfig -->
+  <xsd:complexType name="ClusterConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="FeedRouteGroup" type="FeedRouteGroupType"
+        minOccurs="0" maxOccurs="unbounded"/>
+
+      <xsd:element name="FetchRouteGroup" type="FetchRouteGroupType"
+        minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="root_logs_dir" type="xsd:string" use="optional"/>
+    <xsd:attribute name="definite_hash_schema" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="FeedRouteGroupType">
+    <xsd:annotation>
+       <xsd:documentation>
+       </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="Route" type="RouteType"
+                   minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="local_copy_command" type="xsd:string" use="required"/>
+    <xsd:attribute name="remote_copy_command" type="xsd:string" use="required"/>
+
+    <xsd:attribute name="local_copy_command_type" type="xsd:string" use="required"/>
+    <xsd:attribute name="remote_copy_command_type" type="xsd:string" use="required"/>
+
+    <xsd:attribute name="parse_source" type="xsd:boolean" use="optional"/>
+    <xsd:attribute name="unlink_source" type="xsd:boolean" use="optional"/>
+    <xsd:attribute name="interruptible" type="xsd:boolean" use="optional"/>
+
+    <xsd:attribute name="tries_per_file" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets how many times SyncLogs will try to send a file in failure cases.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="check_logs_period" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>check logs perion for group</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="pool_threads" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of threads for pool this route group move tasks,
+          0 - no pooling, move will be seralized by log route,
+          1 - serialize move tasks by all routes
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="FetchRouteGroupType">
+    <xsd:annotation>
+       <xsd:documentation>
+       </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="Route" type="RouteType"
+                   minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="local_copy_command" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          This command is copy file on local host.
+          Supprored templates: SRC_PATH, DST_PATH, SRC_HOST, DST_HOST
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="remote_copy_command" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          This command is copy file from/to local host to remote host.
+          Supprored templates: SRC_PATH, DST_PATH, SRC_HOST, DST_HOST
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="ssh_command" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Command to be used to invoke ls or rm on remote host.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="remote_ls_command" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Command to be used when list directory on remote host.
+          Supprored templates: PATH, FILENAME
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="remote_rm_command" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Command to be used when delete file on remote host.
+          Supprored templates: PATH, FILENAME
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="check_logs_period" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>check logs perion for group</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="RouteType">
+    <xsd:annotation>
+       <xsd:documentation>
+       </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="files" type="SrcDestType"
+                   minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="hosts" type="SrcDestType"
+                   minOccurs="1" maxOccurs="1"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="type" type="xsd:string" use="required"/>
+    <xsd:attribute name="post_command" type="xsd:string" use="optional"/>
+    <xsd:attribute name="pattern" type="xsd:string" use="optional"/>
+    <xsd:attribute name="fetch_type" type="FetchType" use="optional" default="full"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SrcDestType">
+    <xsd:attribute name="source" type="xsd:string" use="required"/>
+    <xsd:attribute name="destination" type="xsd:string" use="required"/>
+    <xsd:attribute name="pattern" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+</xsd:schema>

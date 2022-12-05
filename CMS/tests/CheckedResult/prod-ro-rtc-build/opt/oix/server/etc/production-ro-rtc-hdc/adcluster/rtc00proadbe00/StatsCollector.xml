@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/Controlling/StatsCollectorConfig.xsd">
+  <cfg:StatsCollectorConfig>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10118">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="StatsCollector" name="StatsCollector"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:SNMPConfig mib_dirs="/usr/share/snmp/mibs:/opt/foros/server/mibs:/opt/oix/server/mibs/Controlling" index="0"/>
+    <cfg:Rules>
+      <cfg:Rule prefix="historyMatch" type="Measurable"/>
+      <cfg:Rule prefix="usersMerge" type="Measurable"/>
+      <cfg:Rule prefix="triggersMatch" type="Measurable"/>
+      <cfg:Rule prefix="requestParsing" type="Measurable"/>
+      <cfg:Rule prefix="creativeSelection" type="Measurable"/>
+      <cfg:Rule prefix="creativeSelectionLocal" type="Measurable"/>
+      <cfg:Rule name="adRequest-Count" prefix="adRequest-Count" type="Countable"/>
+      <cfg:Rule name="adRequestWithImpression-OptInUser-Count" prefix="adRequestWithImpression-OptInUser-Count" type="Countable"/>
+      <cfg:Rule name="adRequestWithImpression-nonOptInUser-Count" prefix="adRequestWithImpression-nonOptInUser-Count" type="Countable"/>
+      <cfg:Rule name="adRequestWithPassback-OptInUser-Count" prefix="adRequestWithPassback-OptInUser-Count" type="Countable"/>
+      <cfg:Rule name="adRequestWithPassback-nonOptInUser-Count" prefix="adRequestWithPassback-nonOptInUser-Count" type="Countable"/>
+      <cfg:Rule name="campaignSelect-OptOutUser-Count" prefix="campaignSelect-OptOutUser-Count" type="Countable"/>
+      <cfg:Rule name="campaignSelect-OptInUser-Count" prefix="campaignSelect-OptInUser-Count" type="Countable"/>
+      <cfg:Rule name="campaignSelect-ProbeUser-Count" prefix="campaignSelect-ProbeUser-Count" type="Countable"/>
+      <cfg:Rule name="campaignSelect-TemporaryUser-Count" prefix="campaignSelect-TemporaryUser-Count" type="Countable"/>
+      <cfg:Rule name="campaignSelect-UndefinedUser-Count" prefix="campaignSelect-UndefinedUser-Count" type="Countable"/>
+      <cfg:Rule name="passbackRequest-Count" prefix="passbackRequest-Count" type="Countable"/>
+      <cfg:Rule name="profilingRequest-ReceivedTriggers-Count" prefix="profilingRequest-ReceivedTriggers-Count" type="Countable"/>
+      <cfg:Rule name="profilingRequest-MatchedTriggers-Count" prefix="profilingRequest-MatchedTriggers-Count" type="Countable"/>
+      <cfg:Rule name="profilingRequest-TriggeredChannels-Count" prefix="profilingRequest-TriggeredChannels-Count" type="Countable"/>
+      <cfg:Rule name="profilingRequest-Count" prefix="profilingRequest-Count" type="Countable"/>
+      <cfg:Rule name="ooRequest-InOp-Count" prefix="ooRequest-InOp-Count" type="Countable"/>
+      <cfg:Rule name="ooRequest-OutOp-Count" prefix="ooRequest-OutOp-Count" type="Countable"/>
+      <cfg:Rule name="ooRequest-StatusOp-Count" prefix="ooRequest-StatusOp-Count" type="Countable"/>
+      <cfg:Rule name="actionRequest-OptInUser-Count" prefix="actionRequest-OptInUser-Count" type="Countable"/>
+      <cfg:Rule name="actionRequest-nonOptInUser-Count" prefix="actionRequest-nonOptInUser-Count" type="Countable"/>
+      <cfg:Rule name="discoverRequest-OptInUser-Count" prefix="discoverRequest-OptInUser-Count" type="Countable"/>
+      <cfg:Rule name="discoverRequest-nonOptInUser-Count" prefix="discoverRequest-nonOptInUser-Count" type="Countable"/>
+      <cfg:Rule name="userProfiles" prefix="userProfiles" type="Countable" variable1="Set"/>
+      <cfg:Rule name="dailyUsers-Count" prefix="DailyUsers" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userBaseProfiles-AreaSize" prefix="userBaseProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userTempProfiles-AreaSize" prefix="userTempProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userAdditionalProfiles-AreaSize" prefix="userAdditionalProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userHistoryProfiles-AreaSize" prefix="userHistoryProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userFreqCapProfiles-AreaSize" prefix="userFreqCapProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userWDProfiles-AreaSize" prefix="userWDProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userProfiles-AreaSize" prefix="userProfiles-AreaSize" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userProfiles-AdChannels" prefix="userProfiles-AdChannels" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userProfiles-DiscoverChannels" prefix="userProfiles-DiscoverChannels" type="Countable" variable1="Set"/>
+      <cfg:Rule name="userProfiles-AdChannels-Avg" prefix="userProfiles-AdChannels" variable1="userProfiles-AdChannels" variable2="userProfiles" type="Average"/>
+      <cfg:Rule name="userProfiles-DiscoverChannels-Avg" prefix="userProfiles-DiscoverChannels" variable1="userProfiles-DiscoverChannels" variable2="userProfiles" type="Average"/>
+    </cfg:Rules>
+    <cfg:Logger filename="/opt/foros/server/var/log/StatsCollector/StatsCollector">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+  </cfg:StatsCollectorConfig>
+</cfg:AdConfiguration>

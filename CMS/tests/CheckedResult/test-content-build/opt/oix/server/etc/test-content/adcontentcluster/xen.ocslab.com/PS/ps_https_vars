@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'https://xen.ocslab.com',
+            'ps_host' => 'https://xen.ocslab.com',
+            'toolbar_base' => 'https://http://b.foros-rubytest.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'https://http://b.foros-rubytest.net/tag/1.js',
+            'adimage_server' => 'https://xen.ocslab.com',
+          );
+        
+
+    1;
+

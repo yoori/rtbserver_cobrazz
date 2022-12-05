@@ -1,0 +1,58 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  struct ConsiderMessageVersion
+  {
+    uint version;
+  };
+
+  autoreader ConsiderMessageVersionReader<ConsiderMessageVersion>;
+
+  struct ConsiderActionDescriptor
+  {
+    uint version;
+    string user_id;
+    uint time;
+    string revenue;
+  };
+
+  autoreader ConsiderActionReader<ConsiderActionDescriptor>;
+  autowriter ConsiderActionWriter<ConsiderActionDescriptor>;
+
+  struct ConsiderClickDescriptor
+  {
+    uint version;
+    string user_id;
+    string request_id;
+    uint time;
+    string revenue;
+  };
+
+  autoreader ConsiderClickReader<ConsiderClickDescriptor>;
+  autowriter ConsiderClickWriter<ConsiderClickDescriptor>;
+
+  struct ConsiderImpressionDescriptor
+  {
+    uint version;
+    string user_id;
+    string request_id;
+    uint time;
+    string revenue;
+    array<uint> channels;
+  };
+
+  autoreader ConsiderImpressionReader<ConsiderImpressionDescriptor>;
+  autowriter ConsiderImpressionWriter<ConsiderImpressionDescriptor>;
+
+  struct ConsiderRequestDescriptor
+  {
+    uint version;
+    string user_id;
+    uint time;
+  };
+
+  autoreader ConsiderRequestReader<ConsiderRequestDescriptor>;
+  autowriter ConsiderRequestWriter<ConsiderRequestDescriptor>;
+}
+}

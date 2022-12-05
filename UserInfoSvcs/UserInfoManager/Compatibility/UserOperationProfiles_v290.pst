@@ -1,0 +1,24 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v290
+{
+/* merge operation */
+  struct UserMergeOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    uint exchange_merge;
+    char change_last_request;
+    bytes merge_base_profile;
+    bytes merge_add_profile;
+    bytes merge_history_profile;
+    uint household;
+  };
+
+  autoreader UserMergeOperationReader<UserMergeOperationDescriptor>;
+  
+}
+}

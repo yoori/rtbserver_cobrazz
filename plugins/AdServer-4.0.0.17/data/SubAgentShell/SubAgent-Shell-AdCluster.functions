@@ -1,0 +1,268 @@
+use strict;
+use warnings;
+use Time::HiRes qw(gettimeofday);
+our $config;
+
+my $adserver_monitoring_profiling_requests_number = 0;
+my $adserver_monitoring_profiling_uid_number = 0;
+
+my $adserver_monitoring_requests_number = 0;
+my $adserver_monitoring_uid_number = 0;
+
+use constant ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER => 20;
+
+eval('require "SignedUids.pm"');
+if ($@)
+{
+  die "failed to load, because : $@";
+}
+
+sub adServerMonitoringProfilingRequestMIB
+{
+  my ($mib, $cfg) = @_;
+
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $mon_host_name = $cfg->{'args'}[0]->{'host_name'};
+  $mib_index = ".$mib_index";
+
+  my $start_time = gettimeofday();
+
+  my $url = "http://$mon_host_name/services/nslookup?" .
+    "glbfcap=0&prck=0&" .
+    "referer-kw=Channel+Server+Monitoring&" .
+    "uid=" . $signed_uids::monitoring_uids[$adserver_monitoring_profiling_uid_number];
+
+  my $out = `curl -s -m $config->{'cmd_timeout'} --referer 'channel.server${adserver_monitoring_profiling_requests_number}.com/check/me/please' '$url'`;
+  my $r = $? >> 8;
+  my $status = ($r != 0 ? 1 : 0);
+
+  $$mib{'profilingRequestExecTime' . $mib_index} = sprintf(
+    '%.3f', scalar(gettimeofday()) - $start_time);
+  $$mib{'profilingRequestExecStatus' . $mib_index} = $status;
+  $$mib{'profilingRequestUrl' . $mib_index} = $url;
+
+  if($r == 0)
+  {
+    $adserver_monitoring_profiling_requests_number =
+      ++$adserver_monitoring_profiling_requests_number % ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER;
+    $adserver_monitoring_profiling_uid_number =
+      ++$adserver_monitoring_profiling_uid_number % scalar(@signed_uids::monitoring_uids);
+  }
+
+  return $status;
+}
+
+sub adServerMonitoringAdRequestMIB
+{
+  my ($mib, $cfg) = @_;
+
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $mon_host_name = $cfg->{'args'}[0]->{'host_name'};
+  my $mon_tag_id = $cfg->{'args'}[0]->{'tag_id'};
+  my $mon_country = $cfg->{'args'}[0]->{'country'};
+  $mib_index = ".$mib_index";
+
+  my $start_time = gettimeofday();
+
+  my $url = "http://$mon_host_name/services/nslookup?" .
+    "glbfcap=0&prck=0&" .
+    "referer-kw=Channel+Server+Monitoring&" .
+    "uid=" . $signed_uids::monitoring_uids[$adserver_monitoring_uid_number] . "&" .
+    "tid=$mon_tag_id&" .
+    "loc.name=$mon_country";
+
+  my $out = `curl -s -m $config->{'cmd_timeout'} --referer 'channel.server${adserver_monitoring_requests_number}.com/check/me/please' '$url'`;
+  my $r = $? >> 8;
+  my $status = ($r != 0 || $out !~ m/Channel Server is running/ ? 1 : 0);
+
+  $$mib{'adRequestExecTime' . $mib_index} = sprintf(
+    '%.3f', scalar(gettimeofday()) - $start_time);
+  $$mib{'adRequestExecStatus' . $mib_index} = $status;
+  $$mib{'adRequestUrl' . $mib_index} = $url;
+
+  if($r == 0)
+  {
+    $adserver_monitoring_requests_number =
+      ++$adserver_monitoring_requests_number % ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER;
+    $adserver_monitoring_uid_number =
+      ++$adserver_monitoring_uid_number % scalar(@signed_uids::monitoring_uids);
+  }
+
+  return $status;
+}
+
+sub adServerMonitoringBidRequestMIB{
+  my ($mib, $cfg) = @_;
+
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $mon_host_name = $cfg->{'args'}[0]->{'host_name'};
+  my $mon_sid = $cfg->{'args'}[0]->{'sid'};
+  my $mon_device_ip = $cfg->{'args'}[0]->{'ip'};
+  $mib_index = ".$mib_index";
+
+  my $post = '{"imp":[{"banner":{"w":728,"h":90}}],"device":{"ua":"Mozilla/5.0 (Windows NT 6.0; rv:12.0) Gecko/20100101 Firefox/14.0","ip":"'.$mon_device_ip.'"}}';
+  my $cmd = "curl -i -H 'Content-Type: application/json' --data '$post' 'http://$mon_host_name/openrtb?sid=$mon_sid' 2>/dev/null";
+
+  my $start_time = gettimeofday();
+
+  open(FH, '-|', $cmd) or return 0;
+  my @l = <FH>;
+  close FH;
+
+  my $o = join ('', @l);
+  my $status = ($o =~ 'Channel Server is running' ? 1 : 0);
+
+  $$mib{'bidRequestExecTime' . $mib_index} = sprintf(
+    '%.3f', scalar(gettimeofday()) - $start_time);
+  $$mib{'bidRequestExecStatus' . $mib_index} = $status;
+  $$mib{'bidRequestUrl' . $mib_index} = $cmd;
+
+  return $status;
+
+}
+
+
+sub processLogFolder
+{
+  my ($mib, $mib_name, $mib_index, $in_folder, $out_folder, $totals) = @_;
+
+  if ( -e "$in_folder" )
+  {
+    my $in_files_counter =
+      `ls -U1 $in_folder 2>/dev/null | grep -c -vE '^Error\$|^Intermediate\$'`;
+
+    my $intermediate_files_counter =
+      `ls -U1 $in_folder/Intermediate 2>/dev/null | wc -l`;
+
+    my $error_files_counter =
+      `find $in_folder/Error -type f 2>/dev/null | wc -l`;
+
+    $$mib{$mib_name . 'In' . $mib_index} =
+      $in_files_counter + $intermediate_files_counter;
+    $$mib{$mib_name . 'Error' . $mib_index} = $error_files_counter;
+
+    $totals->[0] += $in_files_counter; #in
+    $totals->[1] += $intermediate_files_counter; #intermediate
+    $totals->[2] += $error_files_counter;
+  }
+  if ( -e "$out_folder" )
+  {
+    my $out_files_counter =
+      `ls -U1 $out_folder 2>/dev/null | wc -l`;
+
+    $$mib{$mib_name . 'Out' . $mib_index} = $out_files_counter;
+    $totals->[3] += $out_files_counter;
+  }
+}
+
+sub processFoldersArray
+{
+  my ($mib, $mib_index, $log_root, $prefix, $service_name, $folders) = @_;
+
+  my @totals = (0, 0, 0, 0);
+  foreach my $log_name (@$folders)
+  {
+    my $mib_name = $prefix . $log_name;
+    my $in_folder = $log_root . $service_name . '/In/' . $log_name;
+    my $out_folder = $log_root . $service_name . '/Out/' . $log_name;
+
+    processLogFolder($mib, $mib_name, $mib_index, $in_folder, $out_folder, \@totals);
+  }
+  if ($prefix ne '')
+  {
+    $$mib{$prefix . 'TotalIn' . $mib_index} = $totals[0];
+    $$mib{$prefix . 'TotalIntermediate' . $mib_index} = $totals[1];
+    $$mib{$prefix . 'TotalError' . $mib_index} = $totals[2];
+    $$mib{$prefix . 'TotalOut' . $mib_index} = $totals[3];
+  }
+}
+
+sub adServerFilesInFoldersMIB
+{
+  my ($mib, $cfg) = @_;
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  $mib_index = ".$mib_index";
+  my $log_root = $cfg->{'args'}[0]->{'log_root'} . '/';
+
+  my @totals_dump = (0, 0, 0, 0);
+
+  processLogFolder($mib, 'emRequestBasicChannels', $mib_index,
+    $log_root . 'ExpressionMatcher/In/RequestBasicChannels', '', \@totals_dump);
+
+  my @rim_folders = (
+    'Request',
+    'PassbackImpression',
+    'TagRequest',
+    'Impression',
+    'PassbackOpportunity',
+    'Click',
+    'AdvertiserAction',
+  );
+
+  processFoldersArray(
+    $mib, $mib_index, $log_root, 'rim', 'RequestInfoManager', \@rim_folders);
+
+  my @uim_totals = (0, 0, 0, 0);
+  processLogFolder($mib, 'uimUserOp2', $mib_index,
+    $log_root . 'UserInfoManager/In/UserOp_2', '', \@uim_totals);
+  processLogFolder($mib, 'uimUserOp1', $mib_index,
+    $log_root . 'UserInfoManager/In/UserOp_1', '', \@uim_totals);
+  $$mib{'uimTotalIn' . $mib_index} = $uim_totals[0];
+  $$mib{'uimTotalIntermediate' . $mib_index} = $uim_totals[1];
+  $$mib{'uimTotalError' . $mib_index} = $uim_totals[2];
+  $$mib{'uimTotalOut' . $mib_index} = $uim_totals[3];
+
+  my @lg_folders = (
+    'ActionRequest',
+    'ActionStat',
+    'AdvertiserUserStat',
+    'CampaignStat',
+    'CampaignUserStat',
+    'CCGKeywordStat',
+    'CCGSelectionFailureStat',
+    'CCGStat',
+    'CCGUserStat',
+    'CCStat',
+    'CCUserStat',
+    'ChannelCountStat',
+    'ChannelHitStat',
+    'ChannelImpInventory',
+    'ChannelInventory',
+    'ChannelInventoryEstimationStat',
+    'ChannelOverlapUserStat',
+    'ChannelPerformance',
+    'ChannelPriceRange',
+    'ChannelTriggerImpStat',
+    'ChannelTriggerStat',
+    'CMPStat',
+    'ColoUpdateStat',
+    'ColoUsers',
+    'ColoUserStat',
+    'CreativeStat',
+    'DeviceChannelCountStat',
+    'ExpressionPerformance',
+    'GlobalColoUserStat',
+    'OptOutStat',
+    'PageLoadsDailyStat',
+    'PassbackStat',
+    'PublisherInventory',
+    'SearchEngineStat',
+    'SearchTermStat',
+    'SiteChannelStat',
+    'SiteReferrerStat',
+    'SiteStat',
+    'SiteUserStat',
+    'TagAuctionStat',
+    'TagPositionStat',
+    'UserAgentStat',
+    'UserProperties',
+    'WebStat',
+  );
+  processFoldersArray(
+    $mib, $mib_index, $log_root, 'lg', 'LogGeneralizer', \@lg_folders);
+}
+
+return 1;

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="moscow-pbe-test"
+  description="Moscow pbe config"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+
+  <host name="vnode0" hostName="vnode0"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <serviceGroup descriptor="AdProxyCluster" name="AdProxyCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            server_root="/opt/foros/server"/>
+          <secureParams ca="ca.pem"/>
+          <campaignServerRef host="nnode0" port="10106"/>
+          <channelControllerRef host="nnode0" port="10104"/>
+          <syncLogs xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10112"/>
+            <logging log_level="4"/>
+            <fileTransferring file_check_period="10" host_check_period="10">
+              <logMove host="nnode0"/>
+              <dataSourceRef host="foros" path="filesender"/>
+            </fileTransferring>
+          </syncLogs>
+        </cluster>
+      </configuration>
+
+      <service
+        descriptor="AdProxyCluster/UserInfoExchanger"
+        host="vnode0">
+        <configuration>
+          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10110"/>
+            <externalNetworkParams port="10210" host="vnode0"/>
+            <logging log_level="4"/>
+          </userInfoExchanger>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/ChannelProxy"
+        host="vnode0">
+        <configuration>
+          <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10105"/>
+            <externalNetworkParams port="10205" host="vnode0"/>
+            <logging log_level="4"/>
+          </channelProxy>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/CampaignServer"
+        host="vnode0">
+        <configuration>
+          <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10106"/>
+            <externalNetworkParams port="10206" host="vnode0"/>
+            <logging log_level="4"/>
+            <updateParams update_period="30" ecpm_update_period="30"/>
+          </campaignServer>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/STunnelServer"
+        host="vnode0">
+        <configuration>
+          <sTunnelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10200" internal_port="10122"/>
+          </sTunnelServer>
+        </configuration>
+      </service>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

@@ -1,0 +1,23 @@
+name="AutoTestsUnits"
+so_files=AutoTestsUnits
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep Commons
+osbe_cxx_dep AutoTestsCommons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep AutoTestsConfig
+osbe_cxx_dep LocalParamsConfig
+
+osbe_cxx_dep AutoTestsFrontendUnits
+osbe_cxx_dep AutoTestsUserProfilesExchangeUnits
+osbe_cxx_dep AutoTestsGranularUpdateUnits
+osbe_cxx_dep AutoTestsNoDBUpdateUnits
+osbe_cxx_dep AutoTestsTriggerMatchingUnits
+osbe_cxx_dep AutoTestsUserProfilingUnits
+osbe_cxx_dep AutoTestsCreativeSelectionUnits
+osbe_cxx_dep AutoTestsCreativeInstantiationUnits
+osbe_cxx_dep AutoTestsStatisticsUnits
+osbe_cxx_dep AutoTestsZerodowntimeUnits
+

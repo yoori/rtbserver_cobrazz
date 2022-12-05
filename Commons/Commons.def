@@ -1,0 +1,10 @@
+name="Commons"
+so_files=Commons
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Stream
+osbe_cxx_dep http
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep SegmentorManager
+osbe_cxx_dep GenericSegmentor
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep ZeroMQ

@@ -1,0 +1,9 @@
+@ctrgeneratorlib_deps@
+
+sources := \
+  CalculateParamsFilter.cpp \
+  CTRGenerator.cpp
+
+includes := .
+
+@ctrgeneratorlib_post@

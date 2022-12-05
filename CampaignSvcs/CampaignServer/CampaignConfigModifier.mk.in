@@ -1,0 +1,7 @@
+@campaignconfigmodifier_deps@
+
+sources := CampaignConfigModifier.cpp \
+  StatLogGeneralizerSource.cpp \
+  StatDBSource.cpp
+
+@campaignconfigmodifier_post@

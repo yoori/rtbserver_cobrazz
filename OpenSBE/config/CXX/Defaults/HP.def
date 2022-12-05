@@ -1,0 +1,41 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : HP.def
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+cxx_known_name="HP aC++"
+cxx_platforms="hpux%"
+cxx_default_for_platforms="hpux%"
+
+HP_defs()
+{
+  CXX=${CXX-"aCC"}
+  CXXFLAGS=${CXXFLAGS-"+w -g +O4 +Z"}
+  OBJ_EXT=${OBJ_EXT-".o"}
+  LD_EX=${LD_EX-"aCC"}
+  LD_SO=${LD_SO-"aCC -b"}
+  LDFLAGS=${LDFLAGS-"-Wl,+s"}
+  AR=${AR-"ar"}
+  ARFLAGS=${ARFLAGS-"rcus"}
+  AR_TARGET_TEMPLATE=${AR_TARGET_TEMPLATE-"lib%.a"}
+  EX_TARGET_TEMPLATE=${EX_TARGET_TEMPLATE-"%"}
+  SO_PRIMARY_TARGET_TEMPLATE=${SO_PRIMARY_TARGET_TEMPLATE-"lib%.sl"}
+  SO_SECONDARY_TARGET_TEMPLATE=${SO_SECONDARY_TARGET_TEMPLATE-""}
+}

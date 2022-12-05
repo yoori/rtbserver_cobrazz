@@ -1,0 +1,12 @@
+@channelsearchserviceexe_deps@
+
+sources := ChannelMatcher.cpp \
+  ChannelSearchServiceMain.cpp \
+  ChannelSearchServiceImpl.cpp
+
+corba_skeleton_idls := ChannelSearchService.idl
+corba_idl_includes := .
+
+target := ChannelSearchService
+
+@channelsearchserviceexe_post@

@@ -1,0 +1,46 @@
+namespace AdServer
+{
+namespace Profiling
+{
+  struct DMPProfilingInfoDescriptor
+  {
+    uint version;
+    uint time;
+    string source;
+    string external_user_id;
+    // dns encoded <uid>,<source1>/<ext_id1>, ... ,<sourceN>/id
+    // priority for first element
+    string bind_user_ids;
+    string url;
+    string keywords;
+    int longitude;
+    int latitude;
+  };
+
+  reader DMPProfilingInfoReader<DMPProfilingInfoDescriptor>
+  {
+    version;
+    time;
+    source;
+    external_user_id;
+    bind_user_ids;
+    url;
+    keywords;
+    longitude;
+    latitude;
+  };
+
+  writer DMPProfilingInfoWriter<DMPProfilingInfoDescriptor>
+  {
+    version;
+    time;
+    source;
+    external_user_id;
+    bind_user_ids;
+    url;
+    keywords;
+    longitude;
+    latitude;
+  };
+}
+}

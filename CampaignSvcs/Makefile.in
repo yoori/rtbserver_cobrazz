@@ -1,0 +1,10 @@
+include Common.pre.rules
+
+target_directory_list := \
+ CampaignCommons \
+ CampaignServer \
+ CampaignManager \
+ CampaignAdmin \
+ BillingServer
+
+include $(osbe_builddir)/config/Direntry.post.rules

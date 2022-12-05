@@ -1,0 +1,21 @@
+@commons_deps@
+
+corba_stub_idls := CookieInfoPack.idl FreqCapInfo.idl CorbaTypes.idl CampaignFreq.idl
+corba_includes := .
+corba_idl_includes := .
+
+sources := CorbaConfig.cpp \
+  HostDistribution.cpp \
+  PathManip.cpp \
+  CountActiveObject.cpp \
+  ZmqConfig.cpp \
+  IPCrypter.cpp \
+  UserInfoManip.cpp \
+  Algs.cpp \
+  CsvReader.cpp \
+  ExternalUserIdUtils.cpp \
+  ZmqSocketHolder.cpp \
+  SecToken.cpp
+
+includes := .
+@commons_post@

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server//xsd/ChannelSvcs/ChannelManagerControllerConfig.xsd">
+  <cfg:ChannelControllerConfig count_chunks="10" source_id="1">
+    <cfg:Primary host="HostName11"/>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10104">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelManagerController" name="ChannelManagerController"/>
+        <cfg:Object servant="ChannelClusterControl" name="ChannelClusterControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:ColoSettings colo="1" version="2.0.0.0"/>
+    <cfg:ChannelSource>
+      <cfg:RegularSource>
+        <cfg:CampaignRefs name="CampaignServer">
+          <cfg:Ref ref="corbaloc:iiop:HostName7:10106/CampaignServer_v24"/>
+        </cfg:CampaignRefs>
+        <cfg:DBConnection db="AdServerDbForRead" user="adserver" password="adserver"/>
+      </cfg:RegularSource>
+    </cfg:ChannelSource>
+    <cfg:ControlGroup>
+      <cfg:ChannelHost>
+        <cfg:ChannelServerControlRef name="ChannelServerControl" ref="corbaloc:iiop:HostName10:10103/ChannelServerControl"/>
+        <cfg:ChannelServerProcRef name="ChannelServerProc" ref="corbaloc:iiop:HostName10:10103/ProcessControl"/>
+        <cfg:ChannelServerRef name="ChannelServer" ref="corbaloc:iiop:HostName10:10103/ChannelServer"/>
+        <cfg:ChannelUpdateRef name="ChannelUpdate" ref="corbaloc:iiop:HostName10:10103/ChannelUpdate"/>
+        <cfg:ChannelStatRef name="ProcessStatsControl" ref="corbaloc:iiop:HostName10:10103/ProcessStatsControl"/>
+      </cfg:ChannelHost>
+    </cfg:ControlGroup>
+    <cfg:Logger filename="/opt/foros/server/var/log/ChannelController/ChannelController">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+  </cfg:ChannelControllerConfig>
+</cfg:AdConfiguration>

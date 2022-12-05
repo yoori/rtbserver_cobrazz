@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server//xsd/LogProcessing/LogGeneralizerConfig.xsd">
+  <cfg:LogGeneralizerConfig log_root="/opt/foros/server/var/log/LogGeneralizer" input_logs_dir="/opt/oix/server/var/log/LogGeneralizer/In" output_logs_dir="/opt/oix/server/var/log/LogGeneralizer/Out">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10111">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="LogGeneralizer" name="LogGeneralizer"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/LogGeneralizer/LogGeneralizer">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+    <cfg:DBConnection db="AdServerDbForLogProcessing" user="adserver" password="adserver"/>
+    <cfg:LogProcessing>
+      <cfg:ActionRequest check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ActionStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:AdvertiserUserStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:CCGKeywordStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:CCGStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:CCStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:CampaignStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelCountStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelHitStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelImpInventory check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelInventory check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelInventoryEstimationStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelPerformance check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelPriceRange check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ColoUpdateStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ColoUsers check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:DiscoverChannelState check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:DiscoverFeedState check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ExpressionPerformance check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:KeywordInventory check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:KeywordStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:MarginRuleStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:OptOutStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:PageLoadsDailyStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:PassbackStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:PublisherInventory check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:RequestTriggerChannelStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:RequestTriggerStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:SiteChannelStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:SiteReferrerStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:SiteStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:TagAuctionStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:UserProperties check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:WebwiseDiscoverItemStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:WebwiseDiscoverItems check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:WebwiseDiscoverTagStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:CMPStat check_logs_period="10" check_deferred_logs_period="20" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:CreativeStat check_logs_period="10" check_deferred_logs_period="20" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelTriggerStat check_logs_period="10" upload_type="csv_and_oracle" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:WebStat upload_type="csv" check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+      <cfg:ChannelTriggerImpStat check_logs_period="10" max_time="10" max_size="10000" backup_mode="false"/>
+    </cfg:LogProcessing>
+  </cfg:LogGeneralizerConfig>
+</cfg:AdConfiguration>

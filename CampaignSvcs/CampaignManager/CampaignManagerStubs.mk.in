@@ -1,0 +1,8 @@
+@campaignmanagerstubs_deps@
+sources := 
+includes := .
+
+corba_stub_idls := CampaignManager.idl
+corba_includes := .
+corba_idl_includes := .
+@campaignmanagerstubs_post@

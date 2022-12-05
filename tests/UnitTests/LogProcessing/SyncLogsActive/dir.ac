@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([SyncLogsActiveTestExe], [SyncLogsActive.mk])
+OSBE_CXX_DEF([FeedRouteProcessorTest], [FeedRouteProcessorTest.mk])
+OSBE_CXX_DEF([FeedRouteGroupProcessorTest], [FeedRouteGroupProcessorTest.mk])

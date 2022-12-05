@@ -1,0 +1,7 @@
+@searchfilestestexe_deps@
+
+sources := SearchFilesTest.cpp
+target := SearchFilesTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

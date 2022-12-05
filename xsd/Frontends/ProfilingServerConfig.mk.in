@@ -1,0 +1,8 @@
+@profilingserverconfig_deps@
+sources := 
+includes := .
+xsd_files := ProfilingServerConfig.xsd
+
+xsd_includes := .
+
+@profilingserverconfig_post@

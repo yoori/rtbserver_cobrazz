@@ -1,0 +1,9 @@
+@profilemap_deps@
+
+sources := \
+  ProfileMapFactory.cpp \
+  RocksDBProfileMap.cpp
+
+target := ProfileMap
+
+@profilemap_post@

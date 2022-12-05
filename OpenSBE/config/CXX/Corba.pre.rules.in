@@ -1,0 +1,59 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : Corba.pre.rules.in
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+ifndef _CORBA_PRE_RULES_
+define _CORBA_PRE_RULES_
+1
+endef
+
+ifeq ($(origin rg_first_level), undefined)
+  rg_first_level:=yes
+endif
+
+ifeq ($(rg_first_level), yes)
+  rg_first_level:=no
+@CXX_CORBA_ORB_LIBRARIES@
+  rg_first_level:=yes
+  rg_rules_dep_from += $$(osbe_builddir)/config/CXX/Corba.pre.rules
+else
+@CXX_CORBA_ORB_LIBRARIES@
+endif
+
+
+CPP_FLAGS := $(CPP_FLAGS) @CXX_CORBA_CPPFLAGS@
+CXX_FLAGS := $(CXX_FLAGS) @CXX_CORBA_CXXFLAGS@
+LD_FLAGS  := $(LD_FLAGS) @CXX_CORBA_LDFLAGS@
+LIBS      := @CXX_CORBA_LIBS@ $(LIBS)
+
+CXX_CORBA_ORB_ID := @CXX_CORBA_ORB_ID@
+CXX_CORBA_IDL := @CXX_CORBA_IDL@
+CXX_CORBA_OUTPUTDIRFLAG := @CXX_CORBA_OUTPUTDIRFLAG@
+CXX_CORBA_SKELSUFFIX := @CXX_CORBA_SKELSUFFIX@
+CXX_CORBA_STUBSUFFIX := @CXX_CORBA_STUBSUFFIX@
+CXX_CORBA_IDLPPFLAGS := @CXX_CORBA_IDLPPFLAGS@
+CXX_CORBA_EXTRA_IDLFLAGS := @CXX_CORBA_EXTRA_IDLFLAGS@
+CXX_CORBA_IDLFLAGS := @CXX_CORBA_IDLFLAGS@
+CXX_CORBA_IDLINCLUDEBASE = @CXX_CORBA_IDLINCLUDEBASE@
+
+@CXX_CORBA_ORB_PRE_RULES@
+
+endif #_CORBA_PRE_RULES_

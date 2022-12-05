@@ -1,0 +1,24 @@
+@autotestscommons_deps@
+
+sources := \
+  Common.cpp \
+  AutoTestsXsd.cpp \
+  Reflection.cpp \
+  FailContext.cpp \
+  ClientRequest.cpp \
+  BaseAdClient.cpp \
+  Cookie.cpp \
+  Logger.cpp \
+  Connection.cpp \
+  PGConnection.cpp \
+  BaseUnit.cpp \
+  BaseDBUnit.cpp \
+  DebugInfo.cpp \
+  AdClient.cpp \
+  Utils.cpp \
+  GlobalSettings.cpp \
+  Shutdown.cpp \
+  LocalAudinceChannel.cpp
+
+includes := .
+@autotestscommons_post@

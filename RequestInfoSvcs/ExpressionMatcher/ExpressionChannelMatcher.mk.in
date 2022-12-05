@@ -1,0 +1,6 @@
+@expressionchannelmatcher_deps@
+sources := ChannelMatcher.cpp
+
+corba_skeleton_idls := .
+corba_idl_includes := .
+@expressionchannelmatcher_post@

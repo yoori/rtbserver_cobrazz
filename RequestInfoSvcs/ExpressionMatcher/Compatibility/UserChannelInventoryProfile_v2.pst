@@ -1,0 +1,93 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v2
+{
+  struct ChInvByCMPCellDescriptor
+  {
+    // KEY
+    uint ecpm;
+    string country;
+    string tag_size;
+
+    // VALUE
+    list<uint> channel_list;
+  };
+
+  autoreader ChInvByCMPCellReader<ChInvByCMPCellDescriptor>;
+
+  autowriter ChInvByCMPCellWriter<ChInvByCMPCellDescriptor>;
+
+  /* Channel Inventory Profile */
+  struct UserChannelInventoryProfileDescriptor
+  {
+    uint version;
+    uint last_request_time;
+    uint last_daily_processing_time;
+
+    string sum_revenue;
+    uint imp_count;
+
+    list<uint> total_channel_list;
+    list<uint> active_channel_list;
+
+    list<uint> display_impop_no_imp_channel_list;
+    list<uint> display_imp_other_channel_list;
+    list<uint> display_imp_channel_list;
+    
+    list<uint> text_impop_no_imp_channel_list;
+    list<uint> text_imp_other_channel_list;
+    list<uint> text_imp_channel_list;
+
+    list<ChInvByCMPCellDescriptor> channel_price_ranges;
+  };
+
+  reader UserChannelInventoryProfileReader<
+    UserChannelInventoryProfileDescriptor>
+  {
+    version;
+    last_request_time;
+    last_daily_processing_time;
+
+    sum_revenue;
+    imp_count;
+
+    total_channel_list;
+    active_channel_list;
+
+    display_impop_no_imp_channel_list;
+    display_imp_other_channel_list;
+    display_imp_channel_list;
+
+    text_impop_no_imp_channel_list;
+    text_imp_other_channel_list;
+    text_imp_channel_list;
+
+    list<ChInvByCMPCellReader> channel_price_ranges;
+  };
+
+  writer UserChannelInventoryProfileWriter<
+    UserChannelInventoryProfileDescriptor>
+  {
+    version;
+    last_request_time;
+    last_daily_processing_time;
+
+    sum_revenue;
+    imp_count;
+
+    total_channel_list;
+    active_channel_list;
+
+    display_impop_no_imp_channel_list;
+    display_imp_other_channel_list;
+    display_imp_channel_list;
+
+    text_impop_no_imp_channel_list;
+    text_imp_other_channel_list;
+    text_imp_channel_list;
+
+    list<ChInvByCMPCellWriter> channel_price_ranges;
+  };
+}
+}
+

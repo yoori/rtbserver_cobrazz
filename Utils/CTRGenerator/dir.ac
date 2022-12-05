@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([CTRGeneratorLib], [CTRGeneratorLib.mk])
+OSBE_CXX_DEF([CTRGeneratorExe], [CTRGeneratorExe.mk])
+

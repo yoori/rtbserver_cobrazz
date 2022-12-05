@@ -1,0 +1,13 @@
+name="CommonModule"
+so_files=CommonModule
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+
+osbe_cxx_dep Commons
+osbe_cxx_dep FeConfig
+osbe_cxx_dep RequestMatchers
+osbe_cxx_dep DomainParser
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep Polyglot
+osbe_cxx_dep UserIdController

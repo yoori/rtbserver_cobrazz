@@ -1,0 +1,196 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  /* item appear list for specific date interval
+  */
+  struct ColoIdAppearanceDescriptor
+  {
+    uint id;                        // colo id
+    uint last_appearance_date;
+    uint64 prev_appearances_mask;
+  };
+
+  autoreader ColoIdAppearanceReader<ColoIdAppearanceDescriptor>;
+
+  autowriter ColoIdAppearanceWriter<ColoIdAppearanceDescriptor>;
+
+  struct ColoCreateTimeDescriptor
+  {
+    uint id;                        // colo id
+    uint create_time;               // ISP timezone 
+  }
+
+  autoreader ColoCreateTimeReader<ColoCreateTimeDescriptor>;
+
+  autowriter ColoCreateTimeWriter<ColoCreateTimeDescriptor>;
+
+  struct ChInvByCMPCellDescriptor
+  {
+    // KEY
+    uint ecpm;
+    string country;
+    string tag_size;
+
+    // VALUE
+    list<uint> channel_list;
+  };
+
+  autoreader ChInvByCMPCellReader<ChInvByCMPCellDescriptor>;
+
+  writer ChInvByCMPCellWriter<ChInvByCMPCellDescriptor>
+  {
+    ecpm;
+    country;
+    tag_size;
+    (cpp_vector) channel_list;
+  };
+
+  struct ChannelInventoryDayDescriptor
+  {
+    // TODO: migrate to array's
+    uint date;
+    list<uint> total_channel_list;
+    list<uint> active_channel_list;
+
+    list<uint> display_impop_no_imp_channel_list;
+    list<uint> display_imp_other_channel_list;
+    list<uint> display_imp_channel_list;
+
+    list<uint> text_impop_no_imp_channel_list;
+    list<uint> text_imp_other_channel_list;
+    list<uint> text_imp_channel_list;
+
+    list<ChInvByCMPCellDescriptor> channel_price_ranges;
+  };
+
+  reader ChannelInventoryDayReader<
+    ChannelInventoryDayDescriptor>
+  {
+    date;
+    total_channel_list;
+    active_channel_list;
+    display_impop_no_imp_channel_list;
+    display_imp_other_channel_list;
+    display_imp_channel_list;
+    text_impop_no_imp_channel_list;
+    text_imp_other_channel_list;
+    text_imp_channel_list;
+    list<ChInvByCMPCellReader> channel_price_ranges;
+  };
+
+  writer ChannelInventoryDayWriter<
+    ChannelInventoryDayDescriptor>
+  {
+    date;
+    (cpp_vector) total_channel_list;
+    (cpp_vector) active_channel_list;
+    (cpp_vector) display_impop_no_imp_channel_list;
+    (cpp_vector) display_imp_other_channel_list;
+    (cpp_vector) display_imp_channel_list;
+    (cpp_vector) text_impop_no_imp_channel_list;
+    (cpp_vector) text_imp_other_channel_list;
+    (cpp_vector) text_imp_channel_list;
+    list<ChInvByCMPCellWriter> channel_price_ranges;
+  };
+
+  struct UserChannelInventoryProfileVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader UserChannelInventoryProfileVersionReader<
+    UserChannelInventoryProfileVersionDescriptor>;
+
+  struct UserColoReachProfileDescriptor
+  {
+    uint version;
+    uint create_time;
+    list<ColoIdAppearanceDescriptor> colo_appears;
+    list<ColoIdAppearanceDescriptor> isp_colo_appears;
+    list<ColoCreateTimeDescriptor>   isp_colo_create_time;
+  };
+
+  reader UserColoReachProfileReader<
+    UserColoReachProfileDescriptor>
+  {
+    version;
+    create_time;
+
+    list<ColoIdAppearanceReader> colo_appears;
+    list<ColoIdAppearanceReader> isp_colo_appears;
+    list<ColoCreateTimeReader> isp_colo_create_time;
+  };
+
+  writer UserColoReachProfileWriter<
+    UserColoReachProfileDescriptor>
+  {
+    version;
+    create_time;
+
+    list<ColoIdAppearanceWriter> colo_appears;
+    list<ColoIdAppearanceWriter> isp_colo_appears;
+    list<ColoCreateTimeWriter> isp_colo_create_time;
+  };
+
+  struct UserChannelInventoryProfileDescriptor
+  {
+    uint version;
+    uint create_time;
+    uint last_request_time;
+    uint last_daily_processing_time;
+
+    string sum_revenue;
+    uint imp_count;
+    list<ColoIdAppearanceDescriptor> colo_appears;
+    list<ColoIdAppearanceDescriptor> colo_ad_appears;
+    list<ColoIdAppearanceDescriptor> colo_merge_appears;
+    list<ColoIdAppearanceDescriptor> isp_colo_appears;
+    list<ColoIdAppearanceDescriptor> isp_colo_ad_appears;
+    list<ColoIdAppearanceDescriptor> isp_colo_merge_appears;
+    list<ChannelInventoryDayDescriptor> days;
+    list<ColoCreateTimeDescriptor>   isp_colo_create_time;
+  };
+
+  reader UserChannelInventoryProfileReader<
+    UserChannelInventoryProfileDescriptor>
+  {
+    version;
+    create_time;
+    last_request_time;
+    last_daily_processing_time;
+
+    sum_revenue;
+    imp_count;
+    list<ColoIdAppearanceReader> colo_appears;
+    list<ColoIdAppearanceReader> colo_ad_appears;
+    list<ColoIdAppearanceReader> colo_merge_appears;
+    list<ColoIdAppearanceReader> isp_colo_appears;
+    list<ColoIdAppearanceReader> isp_colo_ad_appears;
+    list<ColoIdAppearanceReader> isp_colo_merge_appears;
+    list<ChannelInventoryDayReader> days;
+    list<ColoCreateTimeReader>   isp_colo_create_time;
+  };
+
+  writer UserChannelInventoryProfileWriter<
+    UserChannelInventoryProfileDescriptor>
+  {
+    version;
+    create_time;
+    last_request_time;
+    last_daily_processing_time;
+
+    sum_revenue;
+    imp_count;
+
+    list<ColoIdAppearanceWriter> colo_appears;
+    list<ColoIdAppearanceWriter> colo_ad_appears;
+    list<ColoIdAppearanceWriter> colo_merge_appears;
+    list<ColoIdAppearanceWriter> isp_colo_appears;
+    list<ColoIdAppearanceWriter> isp_colo_ad_appears;
+    list<ColoIdAppearanceWriter> isp_colo_merge_appears;
+    list<ChannelInventoryDayWriter> days;
+    list<ColoCreateTimeWriter>   isp_colo_create_time;
+  };
+}
+}

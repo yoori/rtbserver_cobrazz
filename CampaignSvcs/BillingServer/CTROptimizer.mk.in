@@ -1,0 +1,6 @@
+@ctroptimizer_deps@
+
+sources := CTROptimizer.cpp
+target := CTROptimizer
+
+@ctroptimizer_post@

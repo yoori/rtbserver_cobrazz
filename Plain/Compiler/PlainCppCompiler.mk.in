@@ -1,0 +1,6 @@
+@plaincppcompilerexe_deps@
+
+sources := CppCompiler.cpp
+target := PlainCppCompiler
+
+@plaincppcompilerexe_post@

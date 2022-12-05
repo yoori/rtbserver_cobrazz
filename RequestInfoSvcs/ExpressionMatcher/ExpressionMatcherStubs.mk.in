@@ -1,0 +1,10 @@
+@expressionmatcherstubs_deps@
+
+sources := 
+includes := .
+
+corba_stub_idls := ExpressionMatcher.idl
+corba_includes := .
+corba_idl_includes := .
+
+@expressionmatcherstubs_post@

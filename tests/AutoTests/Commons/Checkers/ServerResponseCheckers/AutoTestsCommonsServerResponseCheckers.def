@@ -1,0 +1,8 @@
+name="AutoTestsCommonsServerResponseCheckers"
+so_files=AutoTestsCommonsServerResponseCheckers
+
+osbe_cxx_dep Stream
+osbe_cxx_dep String
+osbe_cxx_dep Tanx
+osbe_cxx_dep Gason
+osbe_cxx_dep AdServerCommons

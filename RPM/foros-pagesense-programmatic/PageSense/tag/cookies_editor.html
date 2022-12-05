@@ -1,0 +1,151 @@
+<html>
+<head>
+    <title>Cookies Editor</title>
+    <style>
+        table
+        {
+            border-collapse:collapse;
+        }
+        table, th, td {
+            border: 1px solid black; 
+            padding:5px;
+        }
+        input.large {
+            width: 200px;
+        }
+        input.small {
+            width: 70px;
+        }
+    </style>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+</head>
+<body>
+<h1>Cookies Editor</h1>
+<form name="cookies">
+<table> 
+    <thead>
+        <th>Name</th>
+        <th>Value</th>
+        <th>Expiry</th>
+        <th>Actions</th>
+    </thead>
+    <tbody>
+        <tr id="cookie_template" style="display:none">
+            <td><input name="name" class="small"/></td>
+            <td><input name="value" class="large"/></td>
+            <td><input name="expiry" placeholder="session" class="large"/>&nbsp;<button type="button" name="session">Session</button><button type="button" name="m15">15 minutes</button></td>
+            <td><button type="button" name="delete">Delete</button></td>
+        </tr>
+    </tbody>
+</table>
+    <button type="button" id="add_button">Add Cookie</button>
+    <p>
+    <button type="button" id="save_button">Save Changes</button>
+            </p>
+</form>
+<script>
+var init = false;
+
+// adds a new line to the table
+function add_cookie(name,value)
+{
+    var t = $("#cookie_template").clone();
+      
+    t.appendTo($("#cookie_template").parent());
+    t.find("button[name=delete]").click(function () {
+        $(this).parents("tr").remove();
+    });
+    t.find("button[name=session]").click(function () {
+        $(this).parents("tr").find("[name=expiry]").val("");
+    });
+    t.find("button[name=m15]").click(function () {
+        var d = new Date((new Date()).getTime()+15*60000)
+        $(this).parents("tr").find("[name=expiry]").val(d.toUTCString());
+    });
+    var d = new Date();
+    d.setFullYear(d.getFullYear()+1);
+    t.find("[name=expiry]").val(d.toUTCString());
+    t.find("[name=name]").val(name);
+    t.find("[name=value]").val(value);
+    t.show();
+}
+
+function add_new_cookie()
+{
+    add_cookie("","");
+}
+
+
+function get_cookies() {
+    var cookies = document.cookie.split(';');
+    var res = {};
+    $.each(cookies, function (i,v) {
+        var c = v.split('=');
+        var name = $.trim(c[0]);
+        if (name === '') return;
+        res[name]=unescape(c[1]);
+    });
+    return res;
+}
+
+// returns a hash of table values
+function get_table_values(){
+    var res = {};
+    $.each($("tr:visible"), function () {
+        var row = $(this);
+        var name = row.find("[name=name]").val();
+        if (name === undefined) return;
+        if (name === '') return;
+        res[name] = { value : row.find("[name=value]").val(),
+             expiry : row.find("[name=expiry]").val()}
+    });
+    return res;
+}
+
+var domain = (function ()
+{
+    var d = window.location.hostname;
+    var parts = d.split('.');
+    var count = parts.length;
+    if (count < 3) return d;
+    if ($.inArray(parts[count-1],['com','net']))
+        return parts[count-2]+"."+parts[count-1]
+    else
+        return parts[count-3]+"."+parts[count-2]+"."+parts[count-1];
+})();
+
+
+function save_changes() {
+    var old_cookies = get_cookies();
+    var new_cookies = get_table_values();
+    // delete cookies that are no longer present
+    $.each(old_cookies, function (k,v) {
+        if(!(k in new_cookies))
+            document.cookie = encodeURIComponent(k) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=" + domain + "; path=/";;
+    });
+    $.each(new_cookies, function (k,v) {
+        var expires = v.expiry;
+        if (expires !== '')
+            expires = "; expires="+expires;
+        document.cookie = encodeURIComponent(k) + "=" + encodeURIComponent(v.value) + expires + "; domain=" + domain + "; path=/";
+    });
+    alert("Changes saved!");
+    location.reload();
+}
+
+
+$(document).ready(function (){
+    if (init) return;
+    init = true;
+    var c = get_cookies();
+    $.each(c, function(k,v) {
+        add_cookie(k,v);
+    });
+    add_new_cookie();
+    $("#add_button").click(add_new_cookie);
+    $("#save_button").click(save_changes);
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,737 @@
+{
+   Free/delete/delete[] mismatch
+   Memcheck:Free
+   fun:*free*
+   fun:*dynamic_cast*
+}
+
+{
+   TAO make_TSS_TYPE
+   Memcheck:Leak
+   fun:*nothrow_t*
+   fun:*make_TSS_TYPE*
+   fun:*ts_get*
+}
+
+{
+   SSL_read returns uninitialized
+   Memcheck:Value4
+   fun:*ACE_SSL_SOCK_Stream*recv*
+}
+
+{
+   SSL_pending returns uninitialized
+   Memcheck:Cond
+   fun:*TAO*SSLIOP*Connection_Handler*pos_io_hook*
+}
+
+{
+   Crypto
+   Memcheck:Cond
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Value4
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Param
+   write(buf)
+   obj:/lib/libc-2.5.so
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Addr4
+   fun:*AES_cbc_encrypt*
+}
+
+{
+   Crypto
+   Memcheck:Cond
+   fun:memset
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Value4
+   fun:memset
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Cond
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Value4
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Cond
+   fun:memcpy
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Value4
+   fun:memcpy
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   KLT
+   Memcheck:Addr1
+   obj:/usr/lib/libstdc++.so.6.0.8
+   fun:*valarray_fill*
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Addr1
+   fun:*memcpy*
+   fun:*replace*normal_iterator*
+   fun:*valarray_fill*
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Addr1
+   fun:*memcpy*
+   obj:/usr/lib/libstdc++.so.6.0.8
+   obj:/usr/lib/libstdc++.so.6.0.8
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Addr1
+   obj:/usr/lib/libstdc++.so.6.0.8
+   obj:/usr/lib/libstdc++.so.6.0.8
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:normalizeEomi
+   fun:normalize_JosaEomi
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:normalizeJosa
+   fun:normalize_JosaEomi
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:surname_freq
+   fun:is_personname
+   fun:more_scoring
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:is_name_valid
+   fun:is_personname
+   fun:more_scoring
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:basic_score_failed
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Addr4
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:getBestFailed_1
+   fun:getBestFailed
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:JosaEomi2sylMore
+   fun:getBestFailed_1
+   fun:getBestFailed
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:*strcpy
+   fun:save_np
+   fun:single_word
+   fun:tail_guess
+   fun:ham_hangul
+   fun:ham_ascii2
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:save_np
+   fun:single_word
+   fun:tail_guess
+   fun:ham_hangul
+   fun:ham_ascii2
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:is_noun
+   fun:dic_access
+   fun:head_confirm
+   fun:ham_hangul
+   fun:ham_ascii2
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:*strcpy
+   fun:copy_kword
+   fun:is_noun
+   fun:dic_access
+   fun:head_confirm
+   fun:ham_hangul
+   fun:ham_ascii2
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:check_Wi_dropped
+   fun:is_verb
+   fun:nominal_eomi
+   fun:is_noun
+   fun:dic_access
+   fun:head_confirm
+   fun:ham_hangul
+   fun:ham_ascii2
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:tail_guess
+   fun:ham_hangul
+   fun:ham_ascii2
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:getBestFailed_1
+   fun:getBestFailed
+   fun: basic_score
+   fun: morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:normalize_JosaEomi
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:KSSMtoKSC
+   fun:hamout_KSSM2KSC
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:tail_class
+   fun:get_stems_word
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:is_HighFreq1SylJosa
+   fun:basic_score_guess
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:KSSMcode
+   fun:is_verb
+   fun:dic_access
+   fun:head_confirm
+   fun:ham_hangul
+   fun:Ham
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   KLT
+   Memcheck:Cond
+   fun:score_adjust
+   fun:more_scoring
+   fun:basic_score
+   fun:morph_anal_TS
+   fun:get_base_stems
+   fun:get_keylist
+   fun:get_keyarray
+   fun:get_stems_TS
+   fun:get_tokens_TS
+   fun:*Language*Segmentor*Korean*KltSegmentor*segmentation*list*
+}
+
+{
+   XERCES
+   Memcheck:Cond
+   fun:*xercesc*XMLUTF8Transcoder*transcodeFrom*
+   fun:*xercesc*XMLReader*xcodeMoreChars*
+   fun:*xercesc*XMLReader*refreshCharBuffer*
+   obj:/usr/lib/libxerces-c.so.27.0
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:CMP_*
+   obj:/opt/oracle/product/10g/instantclient/lib/libnnz10.so
+   fun:A_X931RandomGenerateBytes*
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:CMP_*
+   fun:CMP_*
+   obj:/opt/oracle/product/10g/instantclient/lib/libnnz10.so
+   fun:A_X931RandomGenerateBytes*
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+   fun:kpu8lgn
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcebf
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Value4
+   fun:ztced_einit
+   fun:ztcedgks
+   fun:ztcedi
+   fun:ztcebi
+   fun:ztcei
+   fun:ztceenc
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Value4
+   fun:ztcedecb
+   fun:ztcedencbk
+   fun:ztceb_encblk
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Value4
+   fun:ztceaencbk
+   fun:ztceb_encblk
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Value4
+   fun:ztceadecbk
+   fun:ztceb_decblk
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Value4
+   fun:ztceai
+   fun:ztcebi
+   fun:ztcei
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Value4
+   fun:ztucbtx
+   fun:ztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:slpmloclfv
+   fun:slpmloc
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:nassky
+   fun:nszssk
+   fun:nszssk2
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:nlstdggo
+   fun:nlstdgg
+   obj:/opt/oracle/product/10g/instantclient/lib/libclntsh.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Overlap
+   fun:*memcpy
+   fun:*oracle*occi*MapImpl*concat*
+   obj:/opt/oracle/product/10g/instantclient/lib/libocci.so.10.1
+}
+
+{
+   OCCI
+   Memcheck:Cond
+   fun:_intel_fast_memcmp
+}
+
+{
+   OCCI
+   Memcheck:Addr8
+   obj:/opt/oracle/product/10g/instantclient/lib/libnnz10.so
+}
+
+{
+   libc
+   Memcheck:Free
+   fun:*free
+   fun:free_mem
+   fun:__libc_freeres
+   fun:*
+   fun:_Exit
+}
+
+# OCCI version 11.1 suppressions
+# begin <
+
+# leaks of OCCI initialization
+
+{
+   OCCILeak1
+   Memcheck:Value8
+   ...
+   fun:ztceenc
+   ...
+   fun:ztcr2seed
+   fun:ztcrseed3
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+{
+   OCCILeak2
+   Memcheck:Value8
+   ...
+   fun:kpuauthxa
+   fun:kpuauth
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+{
+   OCCILeak3
+   Memcheck:Addr8
+   fun:__intel_new_memcpy
+   ...
+   obj:*/libocci.so.11.1
+   ...
+}
+
+{
+   OCCILeak4
+   Memcheck:Value8
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+   fun:ztcr2seed 
+   fun:ztcrseed3
+}
+
+{
+   OCCILeak5
+   Memcheck:Leak
+   ...
+   fun:lpminit
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+{
+   OCCILeak6
+   Memcheck:Leak
+   ...
+   fun:lxlinit
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+{
+   OCCILeak7
+   Memcheck:Leak
+   ...
+   fun:kpeDbgProcessInit
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+{
+   OCCILeak8
+   Memcheck:Leak
+   ...
+   fun:dbg*
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+# conditional jumps of OCCI initialization
+
+{
+   OCCIJump2
+   Memcheck:Cond
+   ...
+   fun:kpuauthxa
+   fun:kpuauth
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+# valgrind check errors of OCCI initialization
+# may be removed for more clear analysis
+
+{
+   OCCIJump1
+   Memcheck:Cond
+   ...
+   obj:*/libclntsh.so.11.1
+   ...
+   fun:ztcsh
+   fun:kpusattr
+   fun:OCIAttrSet
+}
+
+{
+   OCCIWrite1
+   Memcheck:Param
+   write(buf)
+   ...
+   obj:*/libclntsh.so.11.1
+   fun:nsntwrn
+   fun:nspsend
+   fun:nsdofls
+   fun:nsdo
+   obj:*/libclntsh.so.11.1
+   ...
+}
+
+# OCCI version 11.1 suppressions
+# > end

@@ -1,0 +1,3 @@
+user_info_manager_controller_port=10102
+export user_info_manager_controller_port
+

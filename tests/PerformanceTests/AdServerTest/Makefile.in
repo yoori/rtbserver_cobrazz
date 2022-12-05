@@ -1,0 +1,12 @@
+@adservertestexe_deps@
+sources := Application.cpp \
+	   QuerySender.cpp \
+	   Configuration.cpp \
+           Statistics.cpp \
+           Report.cpp \
+           SecondStartWaiter.cpp \
+           Main.cpp \
+
+target := AdServerTest
+
+@adservertestexe_post@

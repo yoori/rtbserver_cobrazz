@@ -1,0 +1,6 @@
+@creativetemplateargs_deps@
+
+sources := CreativeTemplateArgs.cpp
+target := CreativeTemplateArgs
+
+@creativetemplateargs_post@

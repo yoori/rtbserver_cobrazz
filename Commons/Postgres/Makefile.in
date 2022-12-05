@@ -1,0 +1,14 @@
+@postgres_deps@
+
+sources := \
+  ResultSet.cpp \
+  Statement.cpp \
+  Environment.cpp \
+  Connection.cpp \
+  ConnectionPool.cpp \
+  SqlStream.cpp \
+  Lob.cpp
+
+includes := .
+
+@postgres_post@

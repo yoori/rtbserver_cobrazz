@@ -1,0 +1,6 @@
+@tanx_deps@
+
+protobuf_sources := \
+  tanx-bidding.proto
+
+@tanx_post@

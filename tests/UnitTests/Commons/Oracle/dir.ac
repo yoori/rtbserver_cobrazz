@@ -1,0 +1,9 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([OracleTimedOutTestExe], [OracleTimedOutTest.mk])
+OSBE_CXX_DEF([OracleExecuteTestExe], [OracleExecuteTest.mk])
+OSBE_CXX_DEF([OracleEnvironmentTestExe], [OracleEnvironmentTest.mk])
+
+#OSBE_CXX_DEF([OraclePlSqlBlockUtilExe], [OraclePlSqlBlockUtil.mk])
+OSBE_CXX_DEF([OracleStatementTestExe], [OracleStatementTest.mk])
+OSBE_CXX_DEF([OracleBlobTestExe], [OracleBlobTest.mk])

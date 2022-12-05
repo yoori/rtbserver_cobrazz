@@ -1,0 +1,4 @@
+@controladminexe_deps@
+sources := Application.cpp
+target := ControlAdmin
+@controladminexe_post@

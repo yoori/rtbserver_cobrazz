@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://foros.com/cms/applicationDescriptor ./xsd/application.xsd"
+             xmlns="http://foros.com/cms/applicationDescriptor"
+             type="AdServer"
+             description="Advertising Server"
+             version="4.0.0.17"
+             configSchema="xsd/AppConfig.xsd">
+  <makeConfig>
+    <exec executable="AdServerConf.sh">
+      <arg value="${COLOXMLPATH}"/>
+      <arg value="${NODEXPATH}"/>
+      <arg value="${BUILDROOT}"/>
+      <arg value="${PLUGINROOT}"/>
+      <arg value="${VERSION}"/>
+      <arg value="${RELEASE}"/>
+    </exec>
+  </makeConfig>
+
+  <configRpmSpec rpmName="foros-config-server-${COLO_NAME}">
+    <exec executable="AdServerSpec.sh">
+      <arg value="${COLOXMLPATH}"/>
+      <arg value="${NODEXPATH}"/>
+      <arg value="${PLUGINROOT}"/>
+      <arg value="${SPECPATH}"/>
+      <arg value="${PACKAGENAME}"/>
+      <arg value="${BUILDROOT}"/>
+      <arg value="${VERSION}"/>
+      <arg value="${RELEASE}"/>
+    </exec>
+  </configRpmSpec>
+
+  <!-- Central & Remote configuration -->
+  <serviceGroup id="2"
+    type="AdCluster"
+    configSchema="xsd/AdClusterApp.xsd"
+    minOccurs="0"
+    maxOccurs="1">
+    <serviceGroup id="3"
+       type="BackendSubCluster"
+       configSchema="xsd/BackendSubClusterApp.xsd">
+
+      <serviceGroup
+        type="LogProcessing"
+        configSchema="xsd/LogProcessing/LogProcessingApp.xsd">
+      </serviceGroup>
+
+      <serviceGroup
+        type="LocalProxy"
+        minOccurs="0"
+        maxOccurs="1">
+        <service
+          type="ChannelProxy"
+          configSchema="xsd/ChannelServing/ChannelProxyApp.xsd"/>
+        <service
+          type="STunnelClient"
+          configSchema="xsd/LogProcessing/STunnelClientApp.xsd"/>
+      </serviceGroup>
+
+      <service
+        type="CampaignServer"
+        configSchema="xsd/CampaignManagement/CampaignServerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="LogGeneralizer"
+        configSchema="xsd/LogProcessing/LogGeneralizerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="ExpressionMatcher"
+        configSchema="xsd/LogProcessing/ExpressionMatcherApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="StatReceiver"
+        configSchema="xsd/LogProcessing/StatReceiverApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="StatsCollector"
+        configSchema="xsd/Controlling/StatsCollectorApp.xsd"
+        minOccurs="0"
+        maxOccurs="1"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="RequestInfoManager"
+        configSchema="xsd/LogProcessing/RequestInfoManagerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="DictionaryProvider"
+        configSchema="xsd/ChannelServing/DictionaryProviderApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="UserOperationGenerator"
+        configSchema="xsd/UserInfoProfiling/UserOperationGeneratorApp.xsd"
+        minOccurs="0"
+        maxOccurs="1"
+        minHostOccurs="0"
+        maxHostOccurs="1"/>
+
+      <service
+        type="Predictor"
+        configSchema="xsd/Predictor/PredictorApp.xsd"
+        minOccurs="0"
+        maxOccurs="1"
+        minHostOccurs="0"
+        maxHostOccurs="1"/>
+    </serviceGroup>
+
+    <serviceGroup
+      type="FrontendSubCluster"
+      minOccurs="1"
+      maxOccurs="2"
+      configSchema="xsd/FrontendSubClusterApp.xsd">
+
+      <service
+        type="UserInfoManager"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"
+        configSchema="xsd/UserInfoProfiling/UserInfoManagerApp.xsd"/>
+
+      <service type="UserInfoManagerController"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"
+        configSchema="xsd/UserInfoProfiling/UserInfoManagerControllerApp.xsd"/>
+
+      <service
+        type="ChannelServer"
+        configSchema="xsd/ChannelServing/ChannelServerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="ChannelController"
+        configSchema="xsd/ChannelServing/ChannelControllerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service type="ChannelSearchService"
+        configSchema="xsd/ChannelServing/ChannelSearchServiceApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="UserBindServer"
+        configSchema="xsd/UserInfoProfiling/UserBindServerApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="0"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="UserBindController"
+        configSchema="xsd/UserInfoProfiling/UserBindControllerApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="0"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="BillingServer"
+        configSchema="xsd/CampaignManagement/BillingServerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="CampaignManager"
+        configSchema="xsd/CampaignManagement/CampaignManagerApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="ConvServer"
+        configSchema="xsd/Frontends/ConvServerApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+     <service
+       type="HttpFrontend"
+       configSchema="xsd/FrontendHostApp.xsd"
+       minOccurs="0"
+       maxOccurs="unbounded"
+       minHostOccurs="1"
+       maxHostOccurs="unbounded"/>
+
+     <service
+       type="ZmqProfilingBalancer"
+       configSchema="xsd/Frontends/ZmqProfilingBalancerApp.xsd"
+       minOccurs="0"
+       maxOccurs="unbounded"
+       minHostOccurs="1"
+       maxHostOccurs="unbounded"/>
+
+     <service
+       type="ProfilingServer"
+       configSchema="xsd/Frontends/ProfilingServerApp.xsd"
+       minOccurs="0"
+       maxOccurs="unbounded"
+       minHostOccurs="1"
+       maxHostOccurs="unbounded"/>
+
+     <!--
+     <service
+       type="FCGIServer"
+       configSchema="xsd/Frontends/FCGIServerApp.xsd"
+       minOccurs="0"
+       maxOccurs="unbounded"
+       minHostOccurs="1"
+       maxHostOccurs="unbounded"/>
+     -->
+
+     <service
+       type="UIDGeneratorAdapter"
+       configSchema="xsd/Frontends/UIDGeneratorAdapterApp.xsd"
+       minOccurs="0"
+       maxOccurs="unbounded"
+       minHostOccurs="1"
+       maxHostOccurs="unbounded"/>
+
+    </serviceGroup>
+
+    <serviceGroup
+      type="Tests"
+      minOccurs="0"
+      maxOccurs="1"
+      configSchema="xsd/Tests/TestsApp.xsd">
+
+      <service
+        type="AutoTest"
+        minOccurs="0"
+        maxOccurs="1"
+        configSchema="xsd/Tests/AutoTestApp.xsd">
+      </service>
+
+      <service
+        type="PerformanceTest"
+        minOccurs="0"
+        maxOccurs="1"
+        configSchema="xsd/Tests/PerformanceTestApp.xsd"/>
+
+      <service
+        type="BenchmarkTest"
+        minOccurs="0"
+        maxOccurs="1"
+        configSchema="xsd/Tests/BenchmarkTestApp.xsd"/>
+
+    </serviceGroup>
+
+  </serviceGroup>
+  <!--/AdCluster -->
+  <!--/Central & Remote configuration -->
+
+  <!-- Proxy configuration -->
+  <serviceGroup
+    id="4"
+    type="AdProxyCluster"
+    configSchema="xsd/AdProxyClusterApp.xsd"
+    minOccurs="0"
+    maxOccurs="unbounded">
+
+    <service
+      type="CampaignServer"
+      configSchema="xsd/CampaignManagement/CampaignServerApp.xsd"/>
+
+    <service
+      type="UserInfoExchanger"
+      configSchema="xsd/UserInfoProfiling/UserInfoExchangerApp.xsd"/>
+
+    <service
+      type="ChannelProxy"
+      configSchema="xsd/ChannelServing/ChannelProxyApp.xsd"/>
+
+    <service
+      type="STunnelServer"
+      configSchema="xsd/LogProcessing/STunnelServerApp.xsd"/>
+
+  </serviceGroup>
+  <!--/AdProxyCluster-->
+
+  <!-- AdProfilingCluster -->
+  <serviceGroup
+    type="AdProfilingCluster"
+    configSchema="xsd/AdProfilingClusterApp.xsd"
+    minOccurs="0"
+    maxOccurs="unbounded">
+
+    <serviceGroup
+      type="BackendSubCluster"
+      configSchema="xsd/BackendSubClusterApp.xsd">
+
+      <serviceGroup
+        type="LocalProxy"
+        minOccurs="0"
+        maxOccurs="1">
+        <service
+          type="ChannelProxy"
+          configSchema="xsd/ChannelServing/ChannelProxyApp.xsd"/>
+      </serviceGroup>
+
+      <service
+        type="CampaignServer"
+        configSchema="xsd/CampaignManagement/CampaignServerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="DictionaryProvider"
+        configSchema="xsd/ChannelServing/DictionaryProviderApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+    </serviceGroup>
+
+    <serviceGroup
+      type="FrontendSubCluster"
+      minOccurs="1"
+      maxOccurs="2"
+      configSchema="xsd/FrontendSubClusterApp.xsd">
+
+      <service
+        type="ChannelServer"
+        configSchema="xsd/ChannelServing/ChannelServerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="ChannelController"
+        configSchema="xsd/ChannelServing/ChannelControllerApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="CampaignManager"
+        configSchema="xsd/CampaignManagement/CampaignManagerApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
+        type="Frontend"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        configSchema="xsd/FrontendHostApp.xsd"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+    </serviceGroup>
+
+  </serviceGroup>
+  <!--/AdProfilingCluster-->
+
+</application>

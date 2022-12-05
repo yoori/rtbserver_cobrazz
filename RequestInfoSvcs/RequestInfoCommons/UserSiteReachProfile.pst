@@ -1,0 +1,48 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  /* item appear list for specific date interval */
+  struct SiteAppearanceDescriptor
+  {
+    uint id;
+    uint last_appearance_date;
+    uint64 prev_appearances_mask;
+  };
+
+  autoreader SiteAppearanceReader<SiteAppearanceDescriptor>;
+
+  autowriter SiteAppearanceWriter<SiteAppearanceDescriptor>;
+
+  /* reach profile */
+  struct UserSiteReachProfileDescriptor
+  {
+    uint version;
+
+    list<SiteAppearanceDescriptor> appearance_list;
+  };
+
+  reader UserSiteReachProfileReader<
+    UserSiteReachProfileDescriptor>
+  {
+    version;
+    
+    list<SiteAppearanceReader> appearance_list;
+  };
+  
+  writer UserSiteReachProfileWriter<
+    UserSiteReachProfileDescriptor>
+  {
+    version;
+
+    list<SiteAppearanceWriter> appearance_list;
+  };
+
+  reader UserSiteReachProfileVersionReader<
+    UserSiteReachProfileDescriptor>
+  {
+    version;
+  };
+}
+}
+

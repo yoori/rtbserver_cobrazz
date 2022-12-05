@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AdServer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:str="http://exslt.org/strings" sms-version="2" init="%%SUDO%%" brief="version 2.0.0.0 configuration for Devel colocation released at 2011-09-20 18:32:16" transport="ssh -o &quot;BatchMode yes&quot; -i /home/jurij_kuznecov/.ssh/adkey %%HOST%% &quot;. /home/jurij_kuznecov/projects/foros/run/trunk/pbe-etc/devel/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;" user="jurij_kuznecov">
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/home/jurij_kuznecov/projects/foros/server/trunk/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
+    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="xen.ocslab.com"/>
+    <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="xen.ocslab.com"/>
+    <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="xen.ocslab.com"/>
+    <Service name="pbe1-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="xen.ocslab.com"/>
+    <Service name="pbe1-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="xen.ocslab.com"/>
+    <Service name="pbe1-NewsQueryProxy" type="AdServer::DiscoverSvcs::NewsQueryProxy" host="xen.ocslab.com"/>
+    <Service name="pbe1-STunnelServer" type="AdServer::LogProcessing::STunnelServer" host="xen.ocslab.com"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="xen.ocslab.com"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/home/jurij_kuznecov/projects/foros/server/trunk/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adproxycluster-1" timeout="600"/>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/home/jurij_kuznecov/projects/foros/server/trunk/bin/adserver.pl %%HOST%% %%TYPE%%" env="adproxycluster-1">
+    <Service name="pbe1-LogProxyConfigurator" type="AdServer::LogProcessing::LogProxyConfigurator" host="xen.ocslab.com"/></Services>
+  <Services start="%%START_NOLOOP_DONE%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" report_dir="/opt/foros/manager/var/server-devel" cmd="REPORTFILE=%%report%%; treport_dir=`dirname $REPORTFILE`; ERROR_LOG=$treport_dir/error_description_%%SMS_UNIQUE%%; ">
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="xen.ocslab.com" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/jurij_kuznecov/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/home/jurij_kuznecov/projects/foros/server/trunk/bin; ERROR_LOG=$ERROR_LOG; /home/jurij_kuznecov/projects/oix/server/trunk/bin/TReport.pl -w /home/jurij_kuznecov/projects/oix/run/trunk/pbe-var -c /home/jurij_kuznecov/projects/oix/run/trunk/pbe-etc -b /home/jurij_kuznecov/projects/oix/server/trunk -m devel -o /home/jurij_kuznecov/projects/oix/run/trunk/pbe-var/tr_report_xen.ocslab.com_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host xen.ocslab.com. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="xen.ocslab.com" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/jurij_kuznecov/.ssh/adkey %%HOST%%:/home/jurij_kuznecov/projects/foros/run/trunk/pbe-var/tr_report_xen.ocslab.com_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from xen.ocslab.com. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="xen.ocslab.com" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/jurij_kuznecov/.ssh/adkey %%HOST%% rm -f /home/jurij_kuznecov/projects/foros/run/trunk/pbe-var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="xen.ocslab.com" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/jurij_kuznecov/.ssh/adkey %%HOST%% find /home/jurij_kuznecov/projects/foros/run/trunk/pbe-var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="localhost" start_cmd="%%cmd%% rm -f $ERROR_LOG"/>
+    <Service name="troubleshoot-Printer" type="AdServer::TReportPrinter" host="localhost" start_cmd="%%SMS_TR_PRINT%%"/>
+    <Service name="troubleshoot-Checker" type="AdServer::TReportChecker" host="localhost" start_cmd="%%SMS_TR_CHECK%%"/>
+    <Service name="troubleshoot-Collector" type="AdServer::TReportCollector" host="localhost" start_cmd="%%cmd%% tar --ignore-failed-read -cf $REPORTFILE --remove-files -C $treport_dir tr_report_xen.ocslab.com_%%SMS_UNIQUE%%.tar.gz error_description_%%SMS_UNIQUE%%; return 0"/>
+  </Services>
+  <Groups>
+    <Group name="pbe1">
+      <Mask>pbe1-*,*</Mask>
+    </Group>
+    <Group name="troubleshoot">
+      <Mask>troubleshoot-*,*</Mask>
+    </Group>
+    <Group name="clear-stat-backup">
+      <Mask>clear-stat-backup-*,*</Mask>
+    </Group>
+    <Group name="xen.ocslab.com">
+      <Mask>*,xen.ocslab.com</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+    </Group>
+    <Group name="all">
+      <Mask>*,*</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">ui-distribution</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+    </Group>
+  </Groups>
+  <Dependences>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::LogProxyConfigurator</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::STunnelServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCollector</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportFetcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportFetcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReport</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCleaner</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportPrinter</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCleaner</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReport</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportChecker</Type>
+      </Master>
+    </Dependence>
+  </Dependences>
+</AdServer>

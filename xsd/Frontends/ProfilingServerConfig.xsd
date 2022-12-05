@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common Frontends Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ProfilingServerConfig" type="ProfilingServerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="KafkaDMPProfilingStorageType">
+    <xsd:sequence>
+       <xsd:element name="UidGeneratorTopic" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+       <xsd:element name="ClickStreamTopic" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+       <xsd:element name="GeoTopic" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>    
+  </xsd:complexType>
+
+  <xsd:complexType name="DMPProfileFilterType">
+    <xsd:attribute name="keep_time" type="xsd:positiveInteger" use="optional" default="86400">
+      <xsd:annotation>
+        <xsd:documentation>Time duration to keep DMPProfileInfo hashes in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_time_period" type="xsd:positiveInteger" use="optional" default="3600">
+      <xsd:annotation>
+        <xsd:documentation>Time interval size in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="chunk_count" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>Count of chunks in time interval.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="chunk_size" type="xsd:positiveInteger" use="optional" default="1048576">
+      <xsd:annotation>
+        <xsd:documentation>Size of chunk in bytes.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="time_precision" type="xsd:positiveInteger" use="optional" default="30">
+      <xsd:annotation>
+        <xsd:documentation>Precision for request time to calculate hash.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+      <xsd:element name="Logger" type="ErrorLoggerType"/>
+      <xsd:element name="DMPProfilingInfoSocket" type="ZmqSocketType"/>
+      <xsd:element name="DMPProfileFilter" 
+                   type="DMPProfileFilterType"
+                   minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="KafkaDMPProfilingStorage"
+                   type="KafkaDMPProfilingStorageType"
+                   minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="ChannelManagerControllerRefs"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"/>
+
+      <xsd:element name="UserBindControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"
+        maxOccurs="2"/>
+
+      <xsd:element name="UserInfoManagerControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="1"
+        maxOccurs="2"/>
+
+      <xsd:element name="CampaignManagerRef"
+        type="MultiCorbaObjectRefType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="zmq_io_threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+
+    <xsd:attribute name="work_threads"
+      type="xsd:positiveInteger"
+      use="required"/>
+
+    <xsd:attribute name="debug_on"
+      type="xsd:boolean"
+      use="required"/>
+
+    <xsd:attribute name="bind_url_suffix"
+      type="xsd:string"
+      use="optional"/>
+  </xsd:complexType>
+
+</xsd:schema>

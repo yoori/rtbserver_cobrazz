@@ -1,0 +1,12 @@
+name="UserTriggerMatchContainer"
+so_files=UserTriggerMatchContainer
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep Commons
+osbe_cxx_dep PlainStorage2
+osbe_cxx_dep PlainStorage3
+osbe_cxx_dep ProfilingCommons
+osbe_cxx_dep ExpressionMatcherCompatibility
+osbe_cxx_dep RequestInfoCommons

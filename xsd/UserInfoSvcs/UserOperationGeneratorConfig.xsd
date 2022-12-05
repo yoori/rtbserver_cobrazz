@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      UserOperationGenerator Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element 
+        name="UserOperationGeneratorConfig" type="UserOperationGeneratorConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserOperationGeneratorConfigType">
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for UserInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="OutLogs" type="OutLogsType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="in_snapshot_path" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>In path for snapshot.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="temp_snapshot_path" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Path of temporary snapshot (used for considtent update).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="snapshot_path" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Path of current snapshot.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="load_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Period of synchronization of snapshots</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="load_command" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Command for load new configuration into temporary path</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="work_threads" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Count of threads for sync</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="refresh_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Period of refresh channel's expiration date in profile</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="OutLogsType">
+    <xsd:sequence>
+      <xsd:element name="UserOp" type="LogFlushPolicyType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+</xsd:schema>

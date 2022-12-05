@@ -1,0 +1,6 @@
+@channelpricerange_deps@
+sources := ChannelPriceRange.cpp
+
+includes := .
+@channelpricerange_post@
+

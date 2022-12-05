@@ -1,0 +1,12 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([AutoTestsCommonsDirectory.mk])
+OSBE_CONFIG_FILE([AutoTestsCommons.mk])
+
+OSBE_CONFIG_SUBDIR([Admins])
+OSBE_CONFIG_SUBDIR([Stats])
+OSBE_CONFIG_SUBDIR([ORM])
+OSBE_CONFIG_SUBDIR([Request])
+OSBE_CONFIG_SUBDIR([Checkers])
+
+OSBE_CXX_DEF([AutoTestsCommons])
+

@@ -1,0 +1,939 @@
+
+#ifndef CAMPAIGNSVCS_CAMPAIGNCAMPAIGNMANAGER_CAMPAIGNMANAGER_IDL
+#define CAMPAIGNSVCS_CAMPAIGNCAMPAIGNMANAGER_CAMPAIGNMANAGER_IDL
+
+#include <Commons/CorbaTypes.idl>
+#include <Commons/CampaignFreq.idl>
+#include <CampaignSvcs/CampaignCommons/CampaignCommons.idl>
+
+module AdServer
+{
+  module CampaignSvcs_v360
+  {
+    /**
+     * CampaignManager selects CCID by various request parameters which
+     * described by RequestParams struct.
+     */
+    interface CampaignManager
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      exception IncorrectArgument
+      {};
+
+      exception NotReady
+      {
+        string description;
+      };
+
+      struct ChannelTriggerMatchInfo
+      {
+        unsigned long channel_trigger_id;
+        unsigned long channel_id;
+      };
+
+      typedef sequence<ChannelTriggerMatchInfo> ChannelTriggerMatchSeq;
+
+      struct TriggerMatchResult
+      {
+        ChannelTriggerMatchSeq url_channels;
+        ChannelTriggerMatchSeq pkw_channels;
+        ChannelTriggerMatchSeq skw_channels;
+        ChannelTriggerMatchSeq ukw_channels;
+        ChannelIdSeq uid_channels;
+      };
+
+      struct CCGKeywordInfo
+      {
+        unsigned long ccg_keyword_id;
+        unsigned long ccg_id;
+        unsigned long channel_id;
+        CORBACommons::DecimalInfo max_cpc;
+        CORBACommons::DecimalInfo ctr;
+        string click_url;
+        string original_keyword;
+      };
+
+      typedef sequence<CCGKeywordInfo> CCGKeywordSeq;
+      typedef sequence<unsigned long> FreqCapIdSeq;
+
+      struct TokenInfo
+      {
+        string name;
+        string value;
+      };
+
+      typedef sequence<TokenInfo> TokenSeq;
+
+      struct TokenImageInfo
+      {
+        string name;
+        string value;
+        unsigned long width;
+        unsigned long height;
+      };
+
+      typedef sequence<TokenImageInfo> TokenImageSeq;
+
+      struct GeoInfo
+      {
+        string country;
+        string region;
+        string city;
+      };
+
+      typedef sequence<GeoInfo> GeoInfoSeq;
+
+      struct GeoCoordInfo
+      {
+        CORBACommons::DecimalInfo longitude;
+        CORBACommons::DecimalInfo latitude;
+        CORBACommons::DecimalInfo accuracy;
+      };
+
+      typedef sequence<GeoCoordInfo> GeoCoordInfoSeq;
+
+      struct SeqOrderInfo
+      {
+        unsigned long ccg_id;
+        unsigned long set_id;
+        unsigned long imps;
+      };
+
+      typedef sequence<SeqOrderInfo> SeqOrderSeq;
+
+      typedef sequence<string> ExternalCreativeCategoryIdSeq;
+
+      typedef sequence<unsigned long> AllowedDurationSeq;
+
+      struct NativeDataToken
+      {
+        string name;
+        boolean required;
+      };
+
+      typedef sequence<NativeDataToken> NativeDataTokens;
+
+      struct NativeImageToken
+      {
+        string name;
+        boolean required;
+        unsigned long width;
+        unsigned long height;
+      };
+
+      typedef sequence<NativeImageToken> NativeImageTokens;
+
+      struct AdSlotInfo
+      {
+        unsigned long ad_slot_id;
+
+        string format;
+        unsigned long tag_id;
+        StringSeq sizes; // used for RTB instead tag_id
+        string ext_tag_id;
+        CORBACommons::DecimalInfo min_ecpm; // minimum bound to ecpm for RTB selection
+        string min_ecpm_currency_code;
+        StringSeq currency_codes;
+
+        boolean passback;
+
+        // -1 for undefined value
+        long up_expand_space;
+        long right_expand_space;
+        long left_expand_space;
+        long tag_visibility;
+        long tag_predicted_viewability;
+        long down_expand_space;
+        unsigned long video_min_duration;
+        long video_max_duration;
+        long video_skippable_max_duration;
+        long video_allow_skippable;
+        long video_allow_unskippable;
+        unsigned long video_width;
+        unsigned long video_height;
+
+        ExternalCreativeCategoryIdSeq exclude_categories;
+        ExternalCreativeCategoryIdSeq required_categories;
+
+        unsigned long debug_ccg;
+
+        // For AppNexus VAST Bidder
+        AllowedDurationSeq allowed_durations;
+
+        // ADSC-10918 native ads
+        NativeDataTokens native_data_tokens;   // data assets
+        NativeImageTokens native_image_tokens; // image assets
+        unsigned long native_ads_impression_tracker_type;
+
+        boolean fill_track_html;
+      };
+
+      typedef sequence<AdSlotInfo> AdSlotSeq;
+
+      // CommonAdRequestInfo
+      // common ad request information required for instantiate creative
+      //
+      struct CommonAdRequestInfo
+      {
+        CORBACommons::TimestampInfo time;
+        CORBACommons::RequestIdInfo request_id; // global_request_id
+        string creative_instantiate_type;
+        unsigned long request_type;
+        unsigned long random;
+        boolean test_request;
+        boolean log_as_test;
+        unsigned long colo_id;
+        string external_user_id;
+        string source_id;
+        GeoInfoSeq location; // max length = 1
+        GeoCoordInfoSeq coord_location;
+        string full_referer;
+        string referer;//cat refer form for logging
+        StringSeq urls;
+        string security_token;
+        string pub_impr_track_url;
+        string pub_param;
+        string preclick_url;
+        string click_prefix_url;
+        string original_url;
+        CORBACommons::UserIdInfo track_user_id;
+        CORBACommons::UserIdInfo user_id;
+        unsigned long user_status;
+        string signed_user_id;
+        string peer_ip;
+        string user_agent;
+        string cohort;
+        unsigned long hpos;
+        string ext_track_params;
+        TokenSeq tokens;
+
+        boolean set_cookie;
+
+        // passback parameters
+        string passback_type;
+        string passback_url;
+      };
+
+      // ContextAdRequestInfo
+      // common ad request information required for log ad selection
+      //
+      struct ContextAdRequestInfo
+      {
+        boolean enabled_notice;
+
+        string client;
+        string client_version;
+        ChannelIdSeq platform_ids;
+        ChannelIdSeq geo_channels;
+        string platform;
+        string full_platform;
+        string web_browser;
+
+        string ip_hash;
+
+        boolean profile_referer;
+        unsigned long page_load_id;
+
+        // hash by referer value, including path
+        //   and parameters (used in TagRequest log)
+        unsigned long full_referer_hash;
+        // Hash by domain for Request logs and CTR calculation.
+        unsigned long short_referer_hash;
+      };
+
+      struct RequestParams
+      {
+        CommonAdRequestInfo common_info;
+        ContextAdRequestInfo context_info;
+
+        // publisher_site_id, publisher_account_ids used for select tag_id
+        unsigned long publisher_site_id;
+        ULongSeq publisher_account_ids;
+
+        boolean fill_track_pixel;
+        boolean fill_iurl;
+        unsigned long ad_instantiate_type;
+
+        // ad selection and profiling parameters
+        boolean only_display_ad;
+        FreqCapIdSeq full_freq_caps;
+        SeqOrderSeq seq_orders;
+        Commons::CampaignFreqSeq campaign_freqs;
+
+        CORBACommons::UserIdInfo household_id;
+        CORBACommons::UserIdInfo merged_user_id;
+
+        unsigned long search_engine_id;
+        string search_words;
+
+        boolean page_keywords_present;
+        boolean profiling_available;
+        boolean fraud;
+
+        ChannelIdSeq channels;
+        ChannelIdSeq hid_channels;
+        CCGKeywordSeq ccg_keywords;
+        CCGKeywordSeq hid_ccg_keywords;
+
+        TriggerMatchResult trigger_match_result;
+
+        TimestampInfo client_create_time;
+        //TimestampInfo client_last_request;
+        TimestampInfo session_start;
+        PublisherAccountIdSeq exclude_pubpixel_accounts;
+
+        unsigned long tag_delivery_factor;
+        unsigned long ccg_delivery_factor;
+        unsigned long preview_ccid;
+
+        AdSlotSeq ad_slots;
+
+        boolean required_passback;
+
+        // flags for type of profiling request (ProfilingInfo|AnonymousStats)
+        unsigned long profiling_type;
+
+        // debug
+        boolean disable_fraud_detection;
+        boolean need_debug_info;
+
+        string page_keywords;
+        string url_keywords;
+
+        string ssp_location;
+      };
+
+      struct AnonymousRequestInfo
+      {
+        CORBACommons::TimestampInfo time;
+        unsigned long colo_id;
+        unsigned long user_status;
+        boolean test_request;
+        unsigned long search_engine_id;
+        string search_words;
+        string client;
+        string client_version;
+        ChannelIdSeq platform_ids;
+        string full_platform;
+        string web_browser;
+        string user_agent;
+        string search_engine_host;
+        string country_code;
+        boolean page_keywords_present;
+      };
+
+      struct TrackCreativeInfo
+      {
+        unsigned long ccid;
+        unsigned long ccg_keyword_id;
+        CORBACommons::RequestIdInfo request_id;
+        CORBACommons::DecimalInfo ctr;
+      };
+
+      typedef sequence<TrackCreativeInfo>
+        TrackCreativeSeq;
+
+      struct UserIdHashModInfo
+      {
+        boolean defined;
+        unsigned long value;
+      };
+
+      typedef sequence<ContextAdRequestInfo> ContextAdRequestSeq;
+
+      struct InstantiateAdInfo
+      {
+        CommonAdRequestInfo common_info;
+        ContextAdRequestSeq context_info; // optional (max size = 1)
+        string format;
+        unsigned long publisher_site_id;
+        unsigned long publisher_account_id;
+        unsigned long tag_id;
+        unsigned long tag_size_id;
+        TrackCreativeSeq creatives;
+        unsigned long creative_id; // preview mode
+
+        UserIdHashModInfo user_id_hash_mod;
+        CORBACommons::UserIdInfo merged_user_id;
+        PublisherAccountIdSeq pubpixel_accounts;
+        string open_price;
+        string openx_price;
+        string liverail_price;
+        string google_price;
+        string ext_tag_id;
+        unsigned long video_width;
+        unsigned long video_height;
+
+        boolean consider_request;
+        boolean enabled_notice;
+        boolean emulate_click;
+        CORBACommons::DecimalInfo pub_imp_revenue;
+        boolean pub_imp_revenue_defined;
+      };
+
+      struct InstantiateAdResult
+      {
+        string creative_body;
+        string mime_format;
+        CORBACommons::RequestIdInfoSeq request_ids;
+      };
+
+      struct PassbackInfo
+      {
+        CORBACommons::RequestIdInfo request_id;
+        UserIdHashModInfo user_id_hash_mod;
+        string passback;
+        TimestampInfo time;
+      };
+
+      struct PassbackTrackInfo
+      {
+        TimestampInfo time;
+        string country;
+        unsigned long colo_id;
+        unsigned long tag_id;
+        unsigned long user_status;
+      };
+
+      struct ClickInfo
+      {
+        TimestampInfo time;
+        TimestampInfo bid_time;
+        unsigned long colo_id;
+        unsigned long tag_id;
+        unsigned long tag_size_id;
+        unsigned long ccid;
+        unsigned long ccg_keyword_id;
+        unsigned long creative_id;
+        CORBACommons::UserIdInfo match_user_id;
+        CORBACommons::UserIdInfo cookie_user_id;
+        CORBACommons::RequestIdInfo request_id;
+        UserIdHashModInfo user_id_hash_mod;
+        string relocate;
+        string referer;
+        boolean log_click;
+        CORBACommons::DecimalInfo ctr;
+        TokenSeq tokens;
+      };
+
+      struct ImpressionInfo
+      {
+        TimestampInfo time;
+        TimestampInfo bid_time;
+        UserIdHashModInfo user_id_hash_mod;
+        TrackCreativeSeq creatives;
+        unsigned long pub_imp_revenue_type;
+        CORBACommons::DecimalInfo pub_imp_revenue;
+        unsigned long request_type;
+        unsigned long verify_type;
+        CORBACommons::UserIdInfo user_id;
+        string referer;
+        long viewability;
+        string action_name;
+      };
+
+      struct ActionInfo
+      {
+        TimestampInfo time;
+        boolean test_request;
+        boolean log_as_test;
+        boolean campaign_id_defined;
+        unsigned long campaign_id;
+        boolean action_id_defined;
+        unsigned long action_id;
+        string order_id;
+        boolean action_value_defined;
+        CORBACommons::DecimalInfo action_value;
+        //string country_code;
+        string referer;
+
+        unsigned long user_status;
+        CORBACommons::UserIdInfo user_id;
+        string ip_hash;
+        ChannelIdSeq platform_ids;
+
+        string peer_ip;
+        GeoInfoSeq location; // max length = 1
+      };
+
+      struct WebOperationInfo
+      {
+        CORBACommons::TimestampInfo time;
+        unsigned long colo_id;
+        unsigned long tag_id;
+        unsigned long cc_id;
+        string ct;
+        string curct;
+        string browser;
+        string os;
+        string app;
+        string source;
+        string operation;
+        string user_bind_src;
+        char result;
+        unsigned long user_status;
+        boolean test_request;
+        CORBACommons::RequestIdInfoSeq request_ids;
+        CORBACommons::RequestIdInfo global_request_id;
+        string referer;
+        string ip_address;
+        string external_user_id;
+        string user_agent;
+      };
+
+      struct CreativeTemplateFileInfo
+      {
+        string creative_format;
+        string creative_size;
+        string app_format;
+        string mime_format;
+        boolean track_impr;
+        CreativeTemplateType type;
+        string template_file;
+        TimestampInfo timestamp;
+        OptionValueSeq tokens;
+        OptionValueSeq hidden_tokens;
+        char status; // status
+      };
+
+      struct AdaptedCampaignInfo
+      {
+        CampaignInfo info;
+        ExpressionInfo expression;
+        CORBACommons::DecimalInfo ecpm;
+        CORBACommons::DecimalInfo ctr;
+      };
+
+      struct AdaptedTagInfo
+      {
+        TagInfo info;
+        CORBACommons::DecimalInfoSeq cpms;
+      };
+
+      typedef sequence<AdaptedCampaignInfo> AdaptedCampaignInfoSeq;
+      typedef sequence<AdaptedTagInfo> AdaptedTagInfoSeq;
+      typedef sequence<CreativeTemplateFileInfo> CreativeTemplateFileInfoSeq;
+
+      struct CampaignConfig
+      {
+        AppFormatSeq app_formats;
+        SizeSeq sizes;
+        AccountInfoSeq accounts;
+        CreativeOptionSeq creative_options;
+        AdaptedCampaignInfoSeq campaigns;
+        EcpmSeq campaign_ecpms;
+        SiteInfoSeq sites;
+        AdaptedTagInfoSeq tags;
+        CurrencyInfoSeq currencies;
+        ColocationInfoSeq colocations;
+        CountryInfoSeq countries;
+        FreqCapSeq frequency_caps;
+        CreativeTemplateFileInfoSeq creative_template_files;
+        CampaignKeywordSeq campaign_keywords;
+        ExpressionChannelSeq expression_channels;
+        CreativeCategorySeq creative_categories;
+        AdvActionInfoSeq adv_actions;
+        CategoryChannelSeq category_channels;
+        GeoChannelSeq geo_channels;
+        GeoCoordChannelSeq geo_coord_channels;
+        WebOperationSeq web_operations;
+
+        unsigned long currency_exchange_id;
+        TimestampInfo fraud_user_deactivate_period;
+        CORBACommons::DecimalInfo cost_limit;
+        unsigned long google_publisher_account_id;
+        TimestampInfo master_stamp;
+        TimestampInfo first_load_stamp;
+        TimestampInfo finish_load_stamp;
+        TimestampInfo global_params_timestamp;
+        TimestampInfo creative_categories_timestamp;
+      };
+
+      struct CategoryChannelNodeInfo;
+      typedef sequence<CategoryChannelNodeInfo> CategoryChannelNodeSeq;
+
+      struct CategoryChannelNodeInfo
+      {
+        unsigned long channel_id;
+        string name;
+        unsigned long flags;
+        CategoryChannelNodeSeq child_category_channels;
+      };
+
+      struct CreativeParams
+      {
+        unsigned long ccid;
+        unsigned long tag_id;
+        string format;
+        string original_url;
+        string peer_ip;
+      };
+
+      struct ChannelSearchResult
+      {
+        unsigned long channel_id;
+        unsigned long use_count;
+        ULongSeq matched_simple_channels;
+        ULongSeq ccg_ids;
+        string discover_query;
+        string language;
+      };
+
+      typedef sequence<ChannelSearchResult> ChannelSearchResultSeq;
+
+      typedef sequence<unsigned long> CategoryChannelIdSeq;
+
+      struct DiscoverChannelResult
+      {
+        unsigned long channel_id;
+        string name;
+        string query;
+        string annotation;
+        unsigned long weight;
+        CategoryChannelIdSeq categories;
+        string country_code;
+        string language;
+      };
+
+      typedef sequence<DiscoverChannelResult> DiscoverChannelResultSeq;
+
+      // Creative expanding constants
+      const octet CREATIVE_EXPANDING_LEFT = 1;
+      const octet CREATIVE_EXPANDING_RIGHT = CREATIVE_EXPANDING_LEFT << 1;
+      const octet CREATIVE_EXPANDING_UP = CREATIVE_EXPANDING_LEFT << 2;
+      const octet CREATIVE_EXPANDING_DOWN = CREATIVE_EXPANDING_LEFT << 3;
+
+      struct CreativeSelectResult
+      {
+        CORBACommons::RequestIdInfo request_id;
+        unsigned long ccid;
+        unsigned long cmp_id;
+        unsigned long campaign_group_id;
+        unsigned long order_set_id;
+        unsigned long advertiser_id;
+        // REQ-3833. Some SSPs require the field
+        string advertiser_name;
+        string creative_size;
+        CORBACommons::DecimalInfo revenue;
+        CORBACommons::DecimalInfo ecpm;
+        CORBACommons::DecimalInfo pub_ecpm;
+        string click_url;
+        string destination_url;
+        string creative_version_id;
+        unsigned long creative_id;
+        boolean https_safe_flag;
+        // Expanding flags
+        octet expanding;
+      };
+
+      typedef sequence<CreativeSelectResult> CreativeSelectResultSeq;
+
+      struct CreativeSelectDebugInfo
+      {
+        CORBACommons::DecimalInfo imp_revenue;
+        CORBACommons::DecimalInfo click_revenue;
+        CORBACommons::DecimalInfo action_revenue;
+
+        CORBACommons::DecimalInfo ecpm_bid;
+
+        string action_adv_url;
+        string html_url;
+
+        string triggered_expression;
+        string full_expression;
+      };
+
+      typedef sequence<CreativeSelectDebugInfo> CreativeSelectDebugInfoSeq;
+
+      struct AdSlotDebugInfo
+      {
+        unsigned long tag_id;
+        unsigned long tag_size_id;
+        unsigned long site_id;
+        unsigned long site_rate_id;
+
+        unsigned long min_no_adv_ecpm;
+        unsigned long min_text_ecpm;
+        unsigned long auction_type;
+
+        string track_pixel_url;
+        CORBACommons::DecimalInfo cpm_threshold;
+        boolean walled_garden;
+
+        CreativeSelectDebugInfoSeq selected_creatives;
+
+        string trace_ccg;
+      };
+
+      struct AdSlotResult
+      {
+        unsigned long ad_slot_id;
+        CORBACommons::RequestIdInfo request_id; // ad selection request id
+
+        boolean passback;
+        string passback_url;
+
+        string creative_body;
+        string notice_url;
+        StringSeq track_pixel_urls;
+        string yandex_track_params;
+
+        // AIT_URL, AIT_SCRIPT_WITH_URL, AIT_IFRAME_WITH_URL
+        string creative_url;
+
+        // AIT_URL_PARAMS, AIT_DATA_URL_PARAM
+        string track_pixel_params;
+        string click_params;
+
+        string mime_format;
+        string iurl;
+
+        boolean test_request;
+
+        CreativeSelectResultSeq selected_creatives;
+
+        ExternalCreativeCategoryIdSeq external_visual_categories;
+        ExternalCreativeCategoryIdSeq external_content_categories;
+
+        string pub_currency_code;
+        unsigned long overlay_width;
+        unsigned long overlay_height;
+        TokenSeq tokens;
+        TokenSeq ext_tokens;
+        boolean track_impr;
+        string tag_size;
+        FreqCapIdSeq freq_caps;
+        FreqCapIdSeq uc_freq_caps;
+        AdSlotDebugInfo debug_info;
+
+        // ADSC-10918
+        TokenSeq native_data_tokens;
+        TokenImageSeq native_image_tokens;
+        string track_html_body;
+      };
+
+      typedef sequence<AdSlotResult> AdSlotResultSeq;
+
+      struct AdRequestDebugInfo
+      {
+        unsigned long colo_id;
+        ULongSeq geo_channels;
+        ULongSeq platform_channels;
+        unsigned long last_platform_channel_id;
+        unsigned long user_group_id;
+      };
+
+      struct RequestCreativeResult
+      {
+        AdSlotResultSeq ad_slots;
+
+        TimestampInfo process_time;
+
+        AdRequestDebugInfo debug_info;
+      };
+
+      struct CommonMatchRequestInfo
+      {
+        ChannelIdSeq channels;
+        ChannelTriggerMatchSeq pkw_channels; // part of TriggerMatchResult
+        ChannelIdSeq hid_channels;
+        unsigned long colo_id;
+        GeoInfoSeq location;
+        GeoCoordInfoSeq coord_location;
+        string full_referer;
+      };
+
+      struct MatchRequestInfo
+      {
+        CORBACommons::UserIdInfo user_id;
+        CORBACommons::UserIdInfo household_id;
+        TimestampInfo request_time;
+        CommonMatchRequestInfo match_info;
+        string source;
+      };
+
+      struct GetConfigInfo
+      {
+        boolean geo_channels;
+      };
+
+      enum OptOperation
+      {
+        OO_IN,
+        OO_OUT,
+        OO_STATUS,
+        OO_FORCED_IN
+      };
+
+      struct TrackCreativeResultInfo
+      {
+        unsigned long campaign_id;
+        unsigned long advertiser_id;
+      };
+
+      typedef sequence<TrackCreativeResultInfo>
+        TrackCreativeResultSeq;
+
+      struct ImpressionResultInfo
+      {
+        TrackCreativeResultSeq creatives;
+      };
+
+      struct ClickResultInfo
+      {
+        string url;
+        unsigned long campaign_id;
+        unsigned long advertiser_id;
+      };
+
+      typedef CORBACommons::OctSeq CreativeFile;
+
+      void get_campaign_creative(
+        in RequestParams request_params,
+        out string hostname,
+        out RequestCreativeResult request_result)
+        raises (ImplementationException, NotReady);
+
+      void process_match_request(
+        in MatchRequestInfo match_request_info)
+        raises (ImplementationException, NotReady);
+
+      void match_geo_channels(
+        in GeoInfoSeq location,
+        in GeoCoordInfoSeq coord_location,
+        out ChannelIdSeq geo_channels,
+        out ChannelIdSeq coord_channels)
+        raises (ImplementationException, NotReady);
+
+      void
+      instantiate_ad(
+        in InstantiateAdInfo instantiate_ad_info,
+        out InstantiateAdResult instantiate_ad_result)
+        raises (ImplementationException, NotReady);
+
+      /** get_channel_links(...)
+       * input: set of channel_id with type 'C'(Channel)
+       * output: sequence of struct ChannelSearchResult:
+       * all channel_ids with defined name that use any
+       * channel from input set, use_count is number of named
+       * channels that use this channel.
+       */
+      ChannelSearchResultSeq get_channel_links(
+        in ChannelIdSeq channels,
+        in boolean match)
+        raises (ImplementationException);
+
+      /**
+       * @param country The country code to filter channels in result,
+       *   if empty - no filter tethering
+       */
+      DiscoverChannelResultSeq
+      get_discover_channels(
+        in ChannelWeightSeq channels,
+        in string country,
+        in string language,
+        in boolean all)
+        raises (ImplementationException, NotReady);
+
+      CategoryChannelNodeSeq get_category_channels(
+        in string language)
+        raises (ImplementationException, NotReady);
+
+      /** Interface section for actions consideration */
+      void consider_passback(in PassbackInfo pass_info)
+        raises(ImplementationException, NotReady);
+
+      void consider_passback_track(in PassbackTrackInfo pass_info)
+        raises(ImplementationException, NotReady);
+
+      boolean
+      get_click_url(
+        in ClickInfo click_info,
+        out ClickResultInfo click_result_info)
+        raises (ImplementationException, NotReady);
+
+      void verify_impression(
+        in ImpressionInfo impression_info,
+        out ImpressionResultInfo impression_result_info)
+        raises (ImplementationException, NotReady);
+
+      void action_taken(in ActionInfo action_info)
+        raises (ImplementationException, NotReady);
+
+      /**
+       * Method for confirmation opt-in opt-out operations
+       * @param ct Cohort from request
+       * @param curct Cohort from cookies
+       */
+      void verify_opt_operation(
+        in unsigned long time,
+        in long colo_id,
+        in string referer,
+        in OptOperation operation,
+        in unsigned long status, //status of operation
+        in unsigned long user_status, //user status
+        in boolean log_as_test,
+        in string browser,
+        in string os,
+        in string ct,
+        in string curct,
+        in CORBACommons::UserIdInfo user_id)
+        raises (NotReady);
+
+      void consider_web_operation(in WebOperationInfo web_op_info)
+        raises (ImplementationException, IncorrectArgument, NotReady);
+
+      /** Interface section for trace & debug interface */
+      CampaignConfig get_config(in GetConfigInfo get_config_props)
+        raises (ImplementationException);
+
+      void trace_campaign_selection_index(
+        out string trace_xml)
+        raises (ImplementationException);
+
+      void trace_campaign_selection(
+        in unsigned long campaign_id,
+        in RequestParams request_params,
+        in AdSlotInfo ad_slot,
+        in unsigned long auction_type,
+        in boolean test_request,
+        out string trace_xml)
+        raises (ImplementationException);
+
+      boolean get_campaign_creative_by_ccid(
+        in CreativeParams params,
+        out string creative_body)
+        raises (ImplementationException);
+
+      ColocationFlagsSeq
+      get_colocation_flags()
+        raises (ImplementationException, NotReady);
+
+      StringSeq
+      get_pub_pixels(
+        in string country,
+        in unsigned long user_status,
+        in PublisherAccountIdSeq publisher_account_ids)
+        raises (NotReady);
+
+      void
+      process_anonymous_request(
+        in AnonymousRequestInfo anon_request_info)
+        raises (ImplementationException, NotReady);
+
+      void
+      get_file(
+        in string file_name,
+        out CreativeFile file)
+        raises (ImplementationException);
+    };
+
+  }; // module CampaignSvcs
+
+}; // module AdServer
+
+#endif // CAMPAIGNSVCS_CAMPAIGNCAMPAIGNMANAGER_CAMPAIGNMANAGER_IDL

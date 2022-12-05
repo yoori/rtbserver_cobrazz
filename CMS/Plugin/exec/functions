@@ -1,0 +1,17 @@
+# -*-Shell-script-*-
+#common functions
+
+get_hosts_by_xpath()
+{
+  APP_XML=$1
+  PLUGIN_ROOT=$2
+  EXEC=$3
+  XPATH=$4
+  if [ -z "$XPATH" ]; then
+    echo "XPATH is empty " >&2
+  else
+   SERVICE_HOSTS=`$EXEC/GetHosts.sh --app-xml "$APP_XML" --host-service-xpath "$XPATH" --plugin-root "$PLUGIN_ROOT" | awk '{ split($0, a, " "); for(i in a) b[a[i]] = 1; ORS = " "; for (i in b) print i};'` 
+   echo "$SERVICE_HOSTS"
+  fi
+}
+

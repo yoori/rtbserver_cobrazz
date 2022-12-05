@@ -1,0 +1,18 @@
+@autoteststextbiddingcreativeselectionunits_deps@
+
+sources := \
+  BiddingLogicTest.cpp \
+  TextAdvertisingTest.cpp \
+  TextAndDisplayCreativesCompetitionTest.cpp \
+  TextDisplayAdvertisingWatershedTest.cpp \
+  AccountCurrencyTest.cpp \
+  ChannelTargetingTest.cpp \
+  TextAdNetAndGrossTest.cpp \
+  KeywordClickUrlTest.cpp \
+  CTRCalculationLogicTest.cpp \
+  TextChannelAndKeywordCreativesCompetition.cpp \
+  TextChannelCCGs.cpp \
+  CTREffectTest.cpp
+
+includes := .
+@autoteststextbiddingcreativeselectionunits_post@

@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<colo:colocation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:configuration="http://www.adintelligence.net/xsd/AdServer/Configuration" xsi:schemaLocation="http://www.phorm.com/cms/colocation /opt/cms/share/model/colocation.xsd" name="channel-groups" description="Lab Central Config">
+  <host name="uk00labpbe00" hostName="uk00labpbe00"/>
+  <host name="uk00labadsrv01" hostName="uk00labadsrv01"/>
+  <host name="uk00labadsrv00" hostName="uk00labadsrv00"/>
+
+  <application descriptor="AdServer-3.5.6.274">
+    <configuration>
+      <configuration:environment>
+        <configuration:forosZoneManagement
+          ssh_key="/home/aduser/.ssh/adkey"
+          user_group="adgroup"
+          user_name="aduser"/>
+      </configuration:environment>
+    </configuration>
+
+    <serviceGroup id="14185" descriptor="AdCluster" name="AdCluster">
+      <configuration><configuration:cluster>
+          <configuration:secureParams ca="ca.pem"/>
+          <configuration:coloParams colo_id="268">
+            <configuration:virtualServer>
+            <configuration:httpsParams>
+              <configuration:cert>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIFYTCCBEmgAwIBAgIHTxoNWtWCwzANBgkqhkiG9w0BAQUFADCByjELMAkGA1UE
+BhMCVVMxEDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAY
+BgNVBAoTEUdvRGFkZHkuY29tLCBJbmMuMTMwMQYDVQQLEypodHRwOi8vY2VydGlm
+aWNhdGVzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkxMDAuBgNVBAMTJ0dvIERhZGR5
+IFNlY3VyZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTERMA8GA1UEBRMIMDc5Njky
+ODcwHhcNMTEwMTEyMTk0MTU1WhcNMTMwMTEyMTk0MTU1WjBXMRgwFgYDVQQKEw9h
+LnBob3JtbGFicy5jb20xITAfBgNVBAsTGERvbWFpbiBDb250cm9sIFZhbGlkYXRl
+ZDEYMBYGA1UEAxMPYS5waG9ybWxhYnMuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOC
+AQ8AMIIBCgKCAQEApCs+wOCalu5c5C1+ef7bOeWlH3+P68BdDTI21/Z8IZxLRsn2
+G8rQm27lfvYKF1a47S9nWqIv/kBk1J8NNpVgF1qCflPd2BxbsU9L+4IAZVBx9Udo
+u3rqJ2gNDr0MqpnR/915JubPCIUS95jqwDDlHrBg4C6m+88FmHoaPqLv6e57UegH
+E0Xprmwrc/In3YpPxiLoYInNVqUMOnNK33iOxCTttYzW7xbH7pu1V4XS30q3LiBd
+ni4JQ1EKhCTi8QfqRyZpQxiWgg4P5wowma1Urmq0fAGc8s8J/s8KRyV3CytUsLy/
+Oqjhed1120Q+Yh9Ssh0l6QOEqEVwKDYtzezaUwIDAQABo4IBvDCCAbgwDwYDVR0T
+AQH/BAUwAwEBADAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDgYDVR0P
+AQH/BAQDAgWgMDMGA1UdHwQsMCowKKAmoCSGImh0dHA6Ly9jcmwuZ29kYWRkeS5j
+b20vZ2RzMS0yOC5jcmwwTQYDVR0gBEYwRDBCBgtghkgBhv1tAQcXATAzMDEGCCsG
+AQUFBwIBFiVodHRwczovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMIGA
+BggrBgEFBQcBAQR0MHIwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmdvZGFkZHku
+Y29tLzBKBggrBgEFBQcwAoY+aHR0cDovL2NlcnRpZmljYXRlcy5nb2RhZGR5LmNv
+bS9yZXBvc2l0b3J5L2dkX2ludGVybWVkaWF0ZS5jcnQwHwYDVR0jBBgwFoAU/axh
+MpNsRdbi7oVfmrrndplozOcwLwYDVR0RBCgwJoIPYS5waG9ybWxhYnMuY29tghN3
+d3cuYS5waG9ybWxhYnMuY29tMB0GA1UdDgQWBBTi02GA6zyC3wg9lfnOldZ9aBiV
++TANBgkqhkiG9w0BAQUFAAOCAQEANHuKcpdzD5rXB4IpBNnBtf79x3poKLAtm1sX
+7hx/XMBBN943zvOhnL6dtB3epU3lSJeM3x2Zu9dbao872TIURqw/hGNIY47ig4JM
+iE18h+zjgOCGWMcMI0kktYcEdOYpPygKJHNlezpanObPor+/bAbb54cI0tWaxgvl
+dhsIpz9mi1JBHetEMPwZLIpJaRUCNtJD3c5TSomeLZkSCJB4O3LhHwQoPJGb4KcO
+7f74F8l+Zk6HTmxstzS9/9bwMj3rSvVkIcOoaTLVKIeHBSAY3mhIPbfSfkmDnvTN
+wlLL5r4UEohCA9ilmGyAb4yydVs1bp+EOqCqfwTiDj0NXnmbAg==
+-----END CERTIFICATE-----
+</configuration:content>
+              </configuration:cert>
+              <configuration:key>
+                <configuration:content>-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEApCs+wOCalu5c5C1+ef7bOeWlH3+P68BdDTI21/Z8IZxLRsn2
+G8rQm27lfvYKF1a47S9nWqIv/kBk1J8NNpVgF1qCflPd2BxbsU9L+4IAZVBx9Udo
+u3rqJ2gNDr0MqpnR/915JubPCIUS95jqwDDlHrBg4C6m+88FmHoaPqLv6e57UegH
+E0Xprmwrc/In3YpPxiLoYInNVqUMOnNK33iOxCTttYzW7xbH7pu1V4XS30q3LiBd
+ni4JQ1EKhCTi8QfqRyZpQxiWgg4P5wowma1Urmq0fAGc8s8J/s8KRyV3CytUsLy/
+Oqjhed1120Q+Yh9Ssh0l6QOEqEVwKDYtzezaUwIDAQABAoIBAQCe5qTE+CFpeao7
+ybUjzATR02+yPzxEylrGzRW8j32y4p8SE6W9XN/xsrM74lX+JRi1qy500Yt2o0l1
+a8XUUV1C/X5VXEPcTAaMZt56wGg1qFnFOasr3FsMbXBGFcJO1rgm2m3Ls5gs/PFQ
+6pg+EpWS0NHT7BQAo28dGQKSIg/p8jha0LUE+SCgp7kghbJtBI1qKCTMjclRcss1
+p4xOa3YTGwMShsjz1KZ4i+CbFR8K26X5WNDdrqsOW2OX+KBa/atNmzu/6ISet5KY
+Fc2vXSRO6swXLu8zKpD03GZbi/+aznuKvZ0ohfxH2zpl7U5vBTPbic1HsNPQ5FWp
+R9oFdzaBAoGBAM0+tkj1D6SEdHLp6X4SIWsmPn1hWIs9xRQj4Gwx16EODFYMbblI
+4wEdouHES/2H+cIFxFbGYxK4+gZgXYwJdAPDfcMzDTHO9VKS4SAzM1GtWuRxmJzA
+r+DQGE8ORQdZugvT2WMVZybSxaNpizOBWiNt1Brxy4HM4LSXR8DuLo4hAoGBAMzE
+KcK+hGDn+YFpIa5DYwohIgwTGBWFouPqfiq6F37Cg3cBdI/Cit+pysZLNtJ98W3z
+LpmimKKPxSiPd1WpxFoNDDQli6twtXCtHQ4FyUQVXWo4Y4Cq5Q3zss3BGJFvs2VZ
+kfXhbaZ7o4MtuP4bln8IgIGNb1F5MDnigsGBU9HzAoGAdk7M4lcocivLuCWvavVm
+gA4mfT1sva6YeJiJl7RPWE3xvHQjl2c1OwJrTnpJV1ZXGIkceOyYVUV9EcnggoU8
+c6LvTmKSG4DxlmyGCnqY/V7RAtecIddMSmmJaaCPF8KX5JN0PpIqyI08UYrYK5NH
+cx6u4e044pRHfrGpMcPZ4CECgYEAnBM1BYQz4K1QR2x7yJkCh3kDu5JePCFVLEXT
+Dvwy5mKa0/2e++i784k2zvgLfFuUx0qhjWca0mWlUKoxunChAkaJs8GeePl6wryg
+tcyBQUzLnCgI58zatEy5UA1LjadHZQvlrjW6XzhERLt4Eu+yQXeYg6brX31w3d4h
+7h6GZjMCgYBcW+OcapI/69dOUFdDQL4C9/IbnjxmvDEKbBkMYVTeF/1zsLF0rRjf
+ZB/5NmJ69Gv+QAEViG7cfzJawcqJbAnZkxwPzrOC5D7AEu6OEEwr1d7P3nei9Ece
+/LS1FvwLB4wfN3sKC5Qnc5p2yNlkogW5XnRu2bfgh2OipJCzFhm//g==
+-----END RSA PRIVATE KEY-----
+</configuration:content>
+              </configuration:key>
+              <configuration:ca>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIE3jCCA8agAwIBAgICAwEwDQYJKoZIhvcNAQEFBQAwYzELMAkGA1UEBhMCVVMx
+ITAfBgNVBAoTGFRoZSBHbyBEYWRkeSBHcm91cCwgSW5jLjExMC8GA1UECxMoR28g
+RGFkZHkgQ2xhc3MgMiBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTAeFw0wNjExMTYw
+MTU0MzdaFw0yNjExMTYwMTU0MzdaMIHKMQswCQYDVQQGEwJVUzEQMA4GA1UECBMH
+QXJpem9uYTETMBEGA1UEBxMKU2NvdHRzZGFsZTEaMBgGA1UEChMRR29EYWRkeS5j
+b20sIEluYy4xMzAxBgNVBAsTKmh0dHA6Ly9jZXJ0aWZpY2F0ZXMuZ29kYWRkeS5j
+b20vcmVwb3NpdG9yeTEwMC4GA1UEAxMnR28gRGFkZHkgU2VjdXJlIENlcnRpZmlj
+YXRpb24gQXV0aG9yaXR5MREwDwYDVQQFEwgwNzk2OTI4NzCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMQt1RWMnCZM7DI161+4WQFapmGBWTtwY6vj3D3H
+KrjJM9N55DrtPDAjhI6zMBS2sofDPZVUBJ7fmd0LJR4h3mUpfjWoqVTr9vcyOdQm
+VZWt7/v+WIbXnvQAjYwqDL1CBM6nPwT27oDyqu9SoWlm2r4arV3aLGbqGmu75RpR
+SgAvSMeYddi5Kcju+GZtCpyz8/x4fKL4o/K1w/O5epHBp+YlLpyo7RJlbmr2EkRT
+cDCVw5wrWCs9CHRK8r5RsL+H0EwnWGu1NcWdrxcx+AuP7q2BNgWJCJjPOq8lh8BJ
+6qf9Z/dFjpfMFDniNoW1fho3/Rb2cRGadDAW/hOUoz+EDU8CAwEAAaOCATIwggEu
+MB0GA1UdDgQWBBT9rGEyk2xF1uLuhV+auud2mWjM5zAfBgNVHSMEGDAWgBTSxLDS
+kdRMEXGzYcs9of7dqGrU4zASBgNVHRMBAf8ECDAGAQH/AgEAMDMGCCsGAQUFBwEB
+BCcwJTAjBggrBgEFBQcwAYYXaHR0cDovL29jc3AuZ29kYWRkeS5jb20wRgYDVR0f
+BD8wPTA7oDmgN4Y1aHR0cDovL2NlcnRpZmljYXRlcy5nb2RhZGR5LmNvbS9yZXBv
+c2l0b3J5L2dkcm9vdC5jcmwwSwYDVR0gBEQwQjBABgRVHSAAMDgwNgYIKwYBBQUH
+AgEWKmh0dHA6Ly9jZXJ0aWZpY2F0ZXMuZ29kYWRkeS5jb20vcmVwb3NpdG9yeTAO
+BgNVHQ8BAf8EBAMCAQYwDQYJKoZIhvcNAQEFBQADggEBANKGwOy9+aG2Z+5mC6IG
+OgRQjhVyrEp0lVPLN8tESe8HkGsz2ZbwlFalEzAFPIUyIXvJxwqoJKSQ3kbTJSMU
+A2fCENZvD117esyfxVgqwcSeIaha86ykRvOe5GPLL5CkKSkB2XIsKd83ASe8T+5o
+0yGPwLPk9Qnt0hCqU7S+8MxZC9Y7lhyVJEnfzuz9p0iRFEUOOjZv2kWzRaJBydTX
+RE4+uXR21aITVSzGh6O1mawGhId/dQb8vxRMDsxuxN89txJx9OjxUUAiKEngHUuH
+qDTMBqLdElrRhjZkAzVvb3du6/KFUJheqwNTrZEjYx8WnM25sgVjOuH0aBsXBTWV
+U+4=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIE+zCCBGSgAwIBAgICAQ0wDQYJKoZIhvcNAQEFBQAwgbsxJDAiBgNVBAcTG1Zh
+bGlDZXJ0IFZhbGlkYXRpb24gTmV0d29yazEXMBUGA1UEChMOVmFsaUNlcnQsIElu
+Yy4xNTAzBgNVBAsTLFZhbGlDZXJ0IENsYXNzIDIgUG9saWN5IFZhbGlkYXRpb24g
+QXV0aG9yaXR5MSEwHwYDVQQDExhodHRwOi8vd3d3LnZhbGljZXJ0LmNvbS8xIDAe
+BgkqhkiG9w0BCQEWEWluZm9AdmFsaWNlcnQuY29tMB4XDTA0MDYyOTE3MDYyMFoX
+DTI0MDYyOTE3MDYyMFowYzELMAkGA1UEBhMCVVMxITAfBgNVBAoTGFRoZSBHbyBE
+YWRkeSBHcm91cCwgSW5jLjExMC8GA1UECxMoR28gRGFkZHkgQ2xhc3MgMiBDZXJ0
+aWZpY2F0aW9uIEF1dGhvcml0eTCCASAwDQYJKoZIhvcNAQEBBQADggENADCCAQgC
+ggEBAN6d1+pXGEmhW+vXX0iG6r7d/+TvZxz0ZWizV3GgXne77ZtJ6XCAPVYYYwhv
+2vLM0D9/AlQiVBDYsoHUwHU9S3/Hd8M+eKsaA7Ugay9qK7HFiH7Eux6wwdhFJ2+q
+N1j3hybX2C32qRe3H3I2TqYXP2WYktsqbl2i/ojgC95/5Y0V4evLOtXiEqITLdiO
+r18SPaAIBQi2XKVlOARFmR6jYGB0xUGlcmIbYsUfb18aQr4CUWWoriMYavx4A6lN
+f4DD+qta/KFApMoZFv6yyO9ecw3ud72a9nmYvLEHZ6IVDd2gWMZEewo+YihfukEH
+U1jPEX44dMX4/7VpkI+EdOqXG68CAQOjggHhMIIB3TAdBgNVHQ4EFgQU0sSw0pHU
+TBFxs2HLPaH+3ahq1OMwgdIGA1UdIwSByjCBx6GBwaSBvjCBuzEkMCIGA1UEBxMb
+VmFsaUNlcnQgVmFsaWRhdGlvbiBOZXR3b3JrMRcwFQYDVQQKEw5WYWxpQ2VydCwg
+SW5jLjE1MDMGA1UECxMsVmFsaUNlcnQgQ2xhc3MgMiBQb2xpY3kgVmFsaWRhdGlv
+biBBdXRob3JpdHkxITAfBgNVBAMTGGh0dHA6Ly93d3cudmFsaWNlcnQuY29tLzEg
+MB4GCSqGSIb3DQEJARYRaW5mb0B2YWxpY2VydC5jb22CAQEwDwYDVR0TAQH/BAUw
+AwEB/zAzBggrBgEFBQcBAQQnMCUwIwYIKwYBBQUHMAGGF2h0dHA6Ly9vY3NwLmdv
+ZGFkZHkuY29tMEQGA1UdHwQ9MDswOaA3oDWGM2h0dHA6Ly9jZXJ0aWZpY2F0ZXMu
+Z29kYWRkeS5jb20vcmVwb3NpdG9yeS9yb290LmNybDBLBgNVHSAERDBCMEAGBFUd
+IAAwODA2BggrBgEFBQcCARYqaHR0cDovL2NlcnRpZmljYXRlcy5nb2RhZGR5LmNv
+bS9yZXBvc2l0b3J5MA4GA1UdDwEB/wQEAwIBBjANBgkqhkiG9w0BAQUFAAOBgQC1
+QPmnHfbq/qQaQlpE9xXUhUaJwL6e4+PrxeNYiY+Sn1eocSxI0YGyeR+sBjUZsE4O
+WBsUs5iB0QQeyAfJg594RAoYC5jcdnplDQ1tgMQLARzLrUc+cb53S8wGd9D0Vmsf
+SxOaFIqII6hR8INMqzW/Rn453HWkrugp++85j09VZw==
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIC5zCCAlACAQEwDQYJKoZIhvcNAQEFBQAwgbsxJDAiBgNVBAcTG1ZhbGlDZXJ0
+IFZhbGlkYXRpb24gTmV0d29yazEXMBUGA1UEChMOVmFsaUNlcnQsIEluYy4xNTAz
+BgNVBAsTLFZhbGlDZXJ0IENsYXNzIDIgUG9saWN5IFZhbGlkYXRpb24gQXV0aG9y
+aXR5MSEwHwYDVQQDExhodHRwOi8vd3d3LnZhbGljZXJ0LmNvbS8xIDAeBgkqhkiG
+9w0BCQEWEWluZm9AdmFsaWNlcnQuY29tMB4XDTk5MDYyNjAwMTk1NFoXDTE5MDYy
+NjAwMTk1NFowgbsxJDAiBgNVBAcTG1ZhbGlDZXJ0IFZhbGlkYXRpb24gTmV0d29y
+azEXMBUGA1UEChMOVmFsaUNlcnQsIEluYy4xNTAzBgNVBAsTLFZhbGlDZXJ0IENs
+YXNzIDIgUG9saWN5IFZhbGlkYXRpb24gQXV0aG9yaXR5MSEwHwYDVQQDExhodHRw
+Oi8vd3d3LnZhbGljZXJ0LmNvbS8xIDAeBgkqhkiG9w0BCQEWEWluZm9AdmFsaWNl
+cnQuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDOOnHK5avIWZJV16vY
+dA757tn2VUdZZUcOBVXc65g2PFxTXdMwzzjsvUGJ7SVCCSRrCl6zfN1SLUzm1NZ9
+WlmpZdRJEy0kTRxQb7XBhVQ7/nHk01xC+YDgkRoKWzk2Z/M/VXwbP7RfZHM047QS
+v4dk+NoS/zcnwbNDu+97bi5p9wIDAQABMA0GCSqGSIb3DQEBBQUAA4GBADt/UG9v
+UJSZSWI4OB9L+KXIPqeCgfYrx+jFzug6EILLGACOTb2oWH+heQC1u+mNr0HZDzTu
+IYEZoDJJKPTEjlbVUjP9UNV+mWwD5MlM/Mtsq2azSiGM5bUMMj4QssxsodyamEwC
+W/POuZ6lcg5Ktz885hZo+L7tdEy8W9ViH0Pd
+-----END CERTIFICATE-----
+</configuration:content>
+              </configuration:ca>
+            </configuration:httpsParams>
+            <configuration:adservingDomain name="a.foroslabs.com"/>
+            <configuration:adservingDomain name="b.foroslabs.com"/>
+            <configuration:thirdPartyContentDomain name="foroscrv-lab.net"/>            
+            </configuration:virtualServer>
+          </configuration:coloParams>
+          <configuration:Cookies domain=".foroslabs.com" path="/"/>
+          <configuration:inventoryStats simplifying="100"/>
+          <configuration:snmpStats enable="true"/>
+          <configuration:central>
+            <configuration:pgConnection connection_string="host=uk00labforos00.ocslab.com port=5432 dbname=nb_trunk_manual user=ro password=adserver"/>
+            <configuration:pgConnectionForLogProcessing connection_string="host=uk00labforos00.ocslab.com port=5432 dbname=nb_trunk_manual user=ads password=adserver"/>
+
+            <configuration:statFilesReceiverRef host="uk00labforos00" port="10873"/>
+            <configuration:dataSourceRef host="uk00labforos00" path="filesender" port="8873"/>
+          </configuration:central>
+        </configuration:cluster></configuration>
+      <serviceGroup id="14186" descriptor="AdCluster/BackendSubCluster" name="BackendSubCluster">
+        <configuration><configuration:backendCluster/></configuration>
+        <serviceGroup id="14190" descriptor="AdCluster/BackendSubCluster/LogProcessing" name="LogProcessing">
+          <configuration><configuration:logProcessing/></configuration>
+        </serviceGroup>
+        <service id="14191" descriptor="AdCluster/BackendSubCluster/CampaignServer" name="CampaignServer" host="uk00labadsrv01">
+          <configuration><configuration:campaignServer/></configuration>
+        </service>
+        <service id="14195" descriptor="AdCluster/BackendSubCluster/StatsCollector" name="StatsCollector" host="uk00labadsrv00">
+          <configuration><configuration:statsCollector period="60"/></configuration>
+        </service>
+        <service id="14196" descriptor="AdCluster/BackendSubCluster/ExpressionMatcher" name="ExpressionMatcher" host="uk00labadsrv01">
+          <configuration><configuration:expressionMatcher>
+              <configuration:statLogging activity_flush_period="3600" file_check_period="10" flush_period="300"/>
+            </configuration:expressionMatcher></configuration>
+        </service>
+        <service id="14197" descriptor="AdCluster/BackendSubCluster/LogGeneralizer" name="LogGeneralizer" host="uk00labadsrv01">
+          <configuration><configuration:logGeneralizer/></configuration>
+        </service>
+        <service id="14198" descriptor="AdCluster/BackendSubCluster/RequestInfoManager" name="RequestInfoManager" host="uk00labadsrv01">
+          <configuration><configuration:requestInfoManager>
+              <configuration:statLogging file_check_period="10" flush_period="300"/>
+            </configuration:requestInfoManager></configuration>
+        </service>
+      </serviceGroup>
+      <serviceGroup id="14201" descriptor="AdCluster/FrontendSubCluster" name="FrontendSubCluster-1">
+        <configuration>
+          <configuration:frontendCluster>
+            <configuration:channelServing>
+              <configuration:scaleParams chunks_count="10"/>
+            </configuration:channelServing>
+          </configuration:frontendCluster>
+        </configuration>
+        <service id="14188" descriptor="AdCluster/FrontendSubCluster/UserInfoManager" name="UserInfoManager" host="uk00labadsrv00"/>
+        <service id="14189" descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController" name="UserInfoManagerController" host="uk00labadsrv00"/>
+        <service id="14203" descriptor="AdCluster/FrontendSubCluster/ChannelController" name="ChannelController" host="uk00labadsrv00">
+          <configuration>
+            <configuration:channelController hosts_in_group="0"/>
+            </configuration>
+        </service>
+        <service id="14204" descriptor="AdCluster/FrontendSubCluster/ChannelSearchService" name="ChannelSearchService" host="uk00labadsrv00"/>
+
+        <service id="14205" descriptor="AdCluster/FrontendSubCluster/ChannelServer" name="ChannelServer" host="uk00labadsrv00">
+          <configuration><configuration:channelServer/></configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/BillingServer"
+          name="BillingServerDevel"
+          host="uk00labadsrv00"/>
+
+        <service id="14206" descriptor="AdCluster/FrontendSubCluster/CampaignManager" name="CampaignManager" host="uk00labadsrv00">
+          <configuration><configuration:campaignManager>
+              <configuration:statLogging flush_period="300"/>
+            </configuration:campaignManager></configuration>
+        </service>
+        <service id="14207" descriptor="AdCluster/FrontendSubCluster/Frontend" name="Frontend" host="uk00labadsrv00">
+          <configuration><configuration:frontend>
+              <configuration:requestModule p3p_header="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;">
+                <configuration:session timeout="30"/>
+              </configuration:requestModule>
+              <configuration:impressionModule/>
+              <configuration:clickModule/>
+              <configuration:actionModule/>
+              <configuration:optoutModule enable="true"/>
+              <configuration:pageSenseModule caching="no-store" enable="true"/>
+              <configuration:pubTagModule/>
+              <configuration:passbackModule/>
+            </configuration:frontend></configuration>
+        </service>
+      </serviceGroup>
+      <serviceGroup id="14208" descriptor="AdCluster/FrontendSubCluster" name="FrontendSubCluster-2">
+        <configuration>
+          <configuration:frontendCluster>
+              <configuration:channelServing>
+                <configuration:scaleParams chunks_count="10"/>
+              </configuration:channelServing>
+          </configuration:frontendCluster>
+        </configuration>
+        <service id="14188" descriptor="AdCluster/FrontendSubCluster/UserInfoManager" name="UserInfoManager" host="uk00labadsrv01"/>
+        <service id="14189" descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController" name="UserInfoManagerController" host="uk00labadsrv01"/>
+        <service id="14210" descriptor="AdCluster/FrontendSubCluster/ChannelSearchService" name="ChannelSearchService" host="uk00labadsrv01"/>
+        <service id="14211" descriptor="AdCluster/FrontendSubCluster/ChannelServer" name="ChannelServer" host="uk00labadsrv01">
+          <configuration><configuration:channelServer/></configuration>
+        </service>
+        <service id="14212" descriptor="AdCluster/FrontendSubCluster/ChannelController" name="ChannelController" host="uk00labadsrv01">
+        </service>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/BillingServer"
+          name="BillingServerDevel"
+          host="uk00labadsrv01"/>
+        <service id="14213" descriptor="AdCluster/FrontendSubCluster/CampaignManager" name="CampaignManager" host="uk00labadsrv01">
+          <configuration><configuration:campaignManager>
+              <configuration:statLogging flush_period="300"/>
+            </configuration:campaignManager></configuration>
+        </service>
+        <service id="14214" descriptor="AdCluster/FrontendSubCluster/Frontend" name="Frontend" host="uk00labadsrv01">
+          <configuration><configuration:frontend>
+              <configuration:requestModule p3p_header="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;">
+                <configuration:session timeout="30"/>
+              </configuration:requestModule>
+              <configuration:impressionModule/>
+              <configuration:clickModule/>
+              <configuration:actionModule/>
+              <configuration:optoutModule enable="true"/>
+              <configuration:pageSenseModule caching="no-store" enable="true"/>
+              <configuration:pubTagModule/>
+              <configuration:passbackModule/>
+            </configuration:frontend></configuration>
+        </service>
+      </serviceGroup>
+    </serviceGroup>
+    <serviceGroup id="14215" descriptor="AdProxyCluster" name="AdProxyCluster">
+      <configuration><configuration:cluster>
+          <configuration:secureParams ca="ca.pem"/>
+          <configuration:channelControllerRef host="uk00labadsrv00" port="10104"/>
+          <configuration:syncLogs>
+            <configuration:logging error_size_cleanup="104857600" error_time_cleanup="86400" log_level="4" rotate_size="100" rotate_time="1" sys_log="true" trace_size_cleanup="104857600" trace_time_cleanup="86400"/>
+            <configuration:fileTransferring file_check_period="10" host_check_period="10" logs_backup="false" port="10114">
+              <configuration:logMove host="uk00labadsrv01"/>
+              <configuration:dataSourceRef host="uk00labforos00" path="filesender" port="8873"/>
+            </configuration:fileTransferring>
+          </configuration:syncLogs>
+        </configuration:cluster></configuration>
+      <service id="14216" descriptor="AdProxyCluster/UserInfoExchanger" host="uk00labpbe00">
+        <configuration><configuration:userInfoExchanger>
+            <configuration:externalNetworkParams host="uk00labpbe00" secure="true" port="10210"/>
+          </configuration:userInfoExchanger></configuration>
+      </service>
+      <service id="14217" descriptor="AdProxyCluster/ChannelProxy" host="uk00labpbe00">
+        <configuration><configuration:channelProxy>
+            <configuration:externalNetworkParams host="uk00labpbe00" secure="true" port="10205"/>
+          </configuration:channelProxy></configuration>
+      </service>
+      <service id="14218" descriptor="AdProxyCluster/CampaignServer" host="uk00labpbe00">
+        <configuration><configuration:campaignServer>
+            <configuration:externalNetworkParams host="uk00labpbe00" secure="true" port="10206"/>
+            <configuration:updateParams ecpm_update_period="30" stat_sync_period="3600" update_period="30"/>
+          </configuration:campaignServer></configuration>
+      </service>
+      <service id="14219" descriptor="AdProxyCluster/STunnelServer" host="uk00labpbe00">
+        <configuration><configuration:sTunnelServer/></configuration>
+      </service>
+    </serviceGroup>
+  </application>
+</colo:colocation>
+

@@ -1,0 +1,18 @@
+campaign_server_port=10106
+export campaign_server_port
+
+log_generalizer_port=10111
+export log_generalizer_port
+
+sync_logs_port=10112
+export sync_logs_port
+
+stats_collector_port=10118
+export stats_collector_port
+
+channel_proxy_port=10120
+export channel_proxy_port
+
+news_query_proxy_port=10127
+export news_query_proxy_port
+

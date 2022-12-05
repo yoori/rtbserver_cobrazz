@@ -1,0 +1,4 @@
+name="FCGIServerConfig"
+so_files=FCGIServerConfig
+osbe_cxx_feature_dep XSDTree
+osbe_cxx_dep AdServerCommons

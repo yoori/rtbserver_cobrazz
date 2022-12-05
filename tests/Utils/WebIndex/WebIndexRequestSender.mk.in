@@ -1,0 +1,6 @@
+@webindexrequestsenderexe_deps@
+
+sources := WebIndexRequestSender.cpp
+target := WebIndexRequestSender
+
+@webindexrequestsenderexe_post@

@@ -1,0 +1,9 @@
+OSBE_CONFIG_SUBDIR([Compatibility])
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([Compatibility.mk])
+
+OSBE_CXX_DEF([UserInfoContainer], [UserInfoContainer.mk])
+OSBE_CXX_DEF([UserInfoManagerStubs], [UserInfoManagerStubs.mk])
+OSBE_CXX_DEF([UserInfoManagerControlStubs], [UserInfoManagerControlStubs.mk])
+OSBE_CXX_DEF([UserInfoManagerExe], [UserInfoManager.mk])

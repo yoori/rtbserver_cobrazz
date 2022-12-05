@@ -1,0 +1,6 @@
+@userproperties_deps@
+sources := UserProperties.cpp
+
+includes := .
+@userproperties_post@
+

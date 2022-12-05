@@ -1,0 +1,9 @@
+@zmqbalancer_deps@
+
+sources := \
+  ZmqBalancer.cpp \
+  ZmqStreamStats.cpp
+
+target := ZmqBalancer
+
+@zmqbalancer_post@

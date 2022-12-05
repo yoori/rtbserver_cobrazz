@@ -1,0 +1,6 @@
+@expressionchannel_deps@
+
+sources := ExpressionChannel.cpp
+includes := .
+
+@expressionchannel_post@

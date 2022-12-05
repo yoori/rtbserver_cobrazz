@@ -1,0 +1,11 @@
+@requestmatchers_deps@
+
+sources := RequestMatchers.cpp \
+  UserInfoClient.cpp \
+  UserBindClient.cpp \
+  UserAgentMatcher.cpp \
+  ChannelServerSessionPool.cpp
+
+includes :=
+
+@requestmatchers_post@

@@ -1,0 +1,37 @@
+namespace Profiles
+{
+  struct SegmentMatches
+  {
+    uint segment_id;
+    list<uint> timestamps;
+  };
+
+  autoreader SegmentMatchesReader<SegmentMatches>;
+
+  writer SegmentMatchesWriter<SegmentMatches>
+  {
+    segment_id;
+    (cpp_vector) timestamps;
+  };
+
+  struct SegmentProfile
+  {
+    uint version;
+
+    array<SegmentMatches> segment_matches;
+  };
+ 
+  reader SegmentProfileReader<SegmentProfile>
+  {
+    version;
+
+    array<SegmentMatchesReader> segment_matches;
+  };
+
+  writer SegmentProfileWriter<SegmentProfile>
+  {
+    version;
+
+    array<SegmentMatchesWriter> (cpp_vector) segment_matches;
+  };
+}

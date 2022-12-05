@@ -1,0 +1,6 @@
+name="PlainStorage3"
+so_files=PlainStorage3
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons

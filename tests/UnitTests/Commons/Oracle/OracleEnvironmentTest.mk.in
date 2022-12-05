@@ -1,0 +1,7 @@
+@oracleenvironmenttestexe_deps@
+
+sources := EnvironmentTest.cpp
+includes := .
+target := OracleEnvironmentTest
+
+@oracleenvironmenttestexe_post@

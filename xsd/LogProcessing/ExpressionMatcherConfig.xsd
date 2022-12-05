@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      ExpressionMatcher Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ExpressionMatcherConfig" type="ExpressionMatcherConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        ExpressionMatcher process runtime parameters.
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Corba interface configuration.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP support config for ExpressionMatcher
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Sets logger options, such as log file name.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType" minOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CampaignServer references
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ExpressionMatcherGroup" type="MultiCorbaObjectRefType"/>
+
+      <xsd:element name="UserInfoManagerControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="1"
+        maxOccurs="2"/>
+
+      <xsd:element name="ChunksDistribution" type="ChunksDistributionType">
+        <xsd:annotation>
+          <xsd:documentation>
+            path to chunks distribution file
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Storage" type="StorageConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            storage config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChunksConfig" type="ChunksConfigWithDaysToKeepType">
+        <xsd:annotation>
+          <xsd:documentation>
+            inventory chunks config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="TriggerImpsConfig" type="TriggerImpsConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            trigger impressions stats collection config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="HouseholdColoReachChunksConfig" type="LevelChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="LogProcessing" type="LogProcessingType">
+        <xsd:annotation>
+          <xsd:documentation>
+            log processing properties
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="DailyProcessing" type="DailyProcessingType">
+        <xsd:annotation>
+          <xsd:documentation>
+            daily processing properties
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="update_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Sets expression channels update period (seconds).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Service Logs directory.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="inventory_users_percentage" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percentage of users, that take part in collection
+          of ChannelInventory statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required"/>
+
+    <xsd:attribute name="enable_channel_overlap_stats" type="xsd:boolean" use="optional" default="true"/>
+    <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="service_host_name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <!--
+  <xsd:complexType name="ChunksConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of user info chunks (file pathes, file attributes)
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="chunks_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="life_time" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+  -->
+
+  <xsd:complexType name="LevelChunksConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of user info chunks (file pathes, file attributes)
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="chunks_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="chunks_number" type="xsd:positiveInteger" use="optional" default="4"/>
+    <xsd:attribute name="rw_buffer_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="rwlevel_max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_undumped_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_levels0" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChunksConfigWithDaysToKeepType">
+    <xsd:complexContent>
+      <xsd:extension base="LevelChunksConfigType">
+        <xsd:attribute name="days_to_keep" type="xsd:positiveInteger" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingType">
+    <xsd:sequence>
+      <xsd:element name="InLogs" type="InLogsType"/>
+      <xsd:element name="OutLogs" type="OutLogsType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="adrequest_anonymize" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="cache_blocks" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="channel_match_cache_size" type="xsd:nonNegativeInteger" use="optional" default="4294967296">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="InLogsType">
+    <xsd:sequence>
+      <xsd:element name="RequestBasicChannels" type="InLogType"/>
+      <xsd:element name="ConsiderClick" type="InLogType"/>
+      <xsd:element name="ConsiderImpression" type="InLogType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="check_logs_period" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="InLogType">
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+    <xsd:attribute name="intermediate" type="xsd:string" use="optional" default="Intermediate"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="OutLogsType">
+    <xsd:sequence>
+      <xsd:element name="ChannelInventory" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelImpInventory" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelPriceRange" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelInventoryActivity" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelPerformance" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelTriggerImpStat" type="LogFlushPolicyType"/>
+      <xsd:element name="GlobalColoUserStat" type="LogFlushPolicyType"/>
+      <xsd:element name="ColoUserStat" type="LogFlushPolicyType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DailyProcessingType">
+    <xsd:attribute name="processing_time" type="ShortenedTime" use="required"/>
+    <xsd:attribute name="thread_pool_size" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of threads for Daily Process.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="TriggerImpsConfigType">
+    <xsd:sequence>
+      <xsd:element name="UserChunksConfig" type="LevelChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            user trigger match chunks config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="TempUserChunksConfig" type="LevelChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            user trigger match chunks config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="RequestChunksConfig" type="LevelChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            request trigger match chunks config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="positive_triggers_group_size" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="negative_triggers_group_size" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_trigger_visits" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChunksDistributionType">
+    <xsd:attribute name="distribution_file_path" type="xsd:string" use="required"/>
+    <xsd:attribute name="distribution_file_schema" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+</xsd:schema>

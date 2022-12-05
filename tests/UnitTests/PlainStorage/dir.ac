@@ -1,0 +1,6 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([SeqTest])
+OSBE_CONFIG_SUBDIR([FullTest])
+OSBE_CONFIG_SUBDIR([DiagnosisTest])
+#OSBE_CONFIG_SUBDIR([TokyoCabinetTest])

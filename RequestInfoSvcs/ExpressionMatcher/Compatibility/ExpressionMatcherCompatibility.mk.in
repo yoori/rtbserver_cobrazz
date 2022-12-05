@@ -1,0 +1,16 @@
+@expressionmatchercompatibility_deps@
+
+sources := \
+  UserChannelInventoryProfileAdapter.cpp \
+  UserTriggerMatchProfileAdapter.cpp \
+  UserColoReachProfileAdapter.cpp \
+  RequestTriggerMatchProfileAdapter.cpp
+
+plain_sources := \
+  UserChannelInventoryProfile_v281.pst \
+  UserTriggerMatchProfile_v0.pst \
+  RequestTriggerMatchProfile_v330.pst
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@expressionmatchercompatibility_post@

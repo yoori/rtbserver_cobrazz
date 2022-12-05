@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="pakobuha"
+  description="IWEB PAKOBUHA"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="www.pakobuha.net" hostName="www.pakobuha.net"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <secureParams ca="ca.pem"/>
+          <coloParams colo_id="4" set_uid="never">
+            <virtualServer port="10180" internal_port="10180">
+              <adservingDomain name="a.pakobuha.net"/>
+              <adservingDomain name="b.pakobuha.net"/>
+              <thirdPartyContentDomain name="c.pakobuha.net"/>
+            </virtualServer>
+          </coloParams>
+          <inventoryStats simplifying="100"/>
+          <snmpStats enable="true"/>
+          <userProfiling>
+            <userInfoExchangerRef host="vnode0" port="10210">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </userInfoExchangerRef>
+          </userProfiling>
+          <remote connect_timeout="2700">
+            <campaignServerRef host="vnode0" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <channelProxyRef host="vnode0" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <sTunnelRef host="vnode0" port="10200"/>
+          </remote>
+        </cluster>
+      </configuration>
+
+      <!-- lp, ui, be -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubCluster">
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessing">
+          <configuration>
+            <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <syncLogs>
+                <networkParams port="10112"/> <logging log_level="7"/>
+                <fileTransferring file_check_period="10" host_check_period="10" logs_backup="true"/>
+              </syncLogs>
+
+              <syncLogsServer>
+                <networkParams port="10114"/>
+                <logging log_level="1" sys_log="false"/>
+              </syncLogsServer>
+            </logProcessing>
+          </configuration>
+       </serviceGroup>
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="LocalProxyDevel">
+
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/ChannelProxy"
+            name="ChannelProxyDevel"
+            host="www.pakobuha.net">
+            <configuration>
+              <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10120"/>
+                <logging log_level="4"/>
+              </channelProxy>
+            </configuration>
+          </service>
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/STunnelClient"
+            name="STunnelClientDevel"
+            host="www.pakobuha.net">
+            <configuration>
+              <sTunnelClient xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10121"/>
+              </sTunnelClient>
+            </configuration>
+          </service>
+        </serviceGroup>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcher"
+          host="www.pakobuha.net">
+          <configuration>
+            <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10113"/>
+              <logging log_level="7"/>
+              <updateParams period="30"/>
+              <statLogging file_check_period="10" flush_period="10" activity_flush_period="3600"/>
+            </expressionMatcher>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizer"
+          host="www.pakobuha.net">
+          <configuration>
+            <logGeneralizer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10111"/>
+              <logging log_level="7"/>
+              <statLogging file_check_period="10" flush_period="10" flush_size="10100"/>
+            </logGeneralizer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManager"
+          host="www.pakobuha.net">
+          <configuration>
+            <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10116"/>
+              <logging log_level="7"/>
+              <statLogging file_check_period="10" flush_period="30"/>
+            </requestInfoManager>
+          </configuration>
+        </service>
+
+       <service
+          descriptor="AdCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServer"
+          host="www.pakobuha.net">
+          <configuration>
+            <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10106"/>
+              <logging log_level="4"/>
+              <updateParams update_period="900" ecpm_update_period="900"/>
+            </campaignServer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/StatsCollector"
+          name="StatsCollector"
+          host="www.pakobuha.net">
+            <configuration>
+            <statsCollector xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </statsCollector>
+            </configuration>
+        </service>
+
+        <!--
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="">
+        </serviceGroup>
+        -->
+      </serviceGroup>
+
+      <!-- fe -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster-1">
+<!--
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <DACS script="fe"/>
+          </frontendCluster>
+        </configuration>
+-->
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <channelServing>
+              <scaleParams chunks_count="10"/>
+            </channelServing>
+          </frontendCluster>
+        </configuration>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManager"
+          host="www.pakobuha.net"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerController"
+          host="www.pakobuha.net"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer"
+          host="www.pakobuha.net">
+          <configuration>
+            <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10103"/>
+              <logging log_level="4"/>
+              <updateParams period="900" chunks_count="32"/>
+            </channelServer>
+          </configuration>
+        </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelController"
+           host="www.pakobuha.net">
+          <configuration>
+            <channelController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10104"/>
+              <logging log_level="7"/>
+            </channelController>
+          </configuration>
+        </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
+           name="ChannelSearchService"
+           host="www.pakobuha.net">
+          <configuration>
+            <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10115"/>
+              <logging log_level="7"/>
+            </channelSearchService>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="Frontend"
+          host="www.pakobuha.net">
+            <configuration>
+              <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <webServerParams
+                  timeout="300"
+                  keep_alive="true"
+                  max_clients="100"
+                  min_spare_threads="50"
+                  max_spare_threads="50"
+                  threads_per_process="100"/>
+                <requestModule>
+                  <logging log_level="7"/>
+                  <session timeout="30"/>
+                </requestModule>
+                <impressionModule>
+                  <logging log_level="7"/>
+                </impressionModule>
+                <clickModule>
+                  <logging log_level="7"/>
+                </clickModule>
+                <actionModule>
+                  <logging log_level="7"/>
+                </actionModule>
+                <optoutModule>
+                  <logging log_level="7" log_ip="true"/>
+                </optoutModule>
+                <pageSenseModule/>
+                <pubTagModule/>
+              </frontend>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/BillingServer"
+            name="BillingServer"
+            host="www.pakobuha.net">
+            <configuration>
+              <billingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10131"/>
+              </billingServer>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+            name="CampaignManager"
+            host="www.pakobuha.net">
+            <configuration>
+              <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10107"/>
+                <logging log_level="7"/>
+                <updateParams
+                  update_period="20"
+                  ecpm_update_period="10"
+                  campaign_types="all"/>
+                <statLogging flush_period="10"/>
+              </campaignManager>
+            </configuration>
+          </service>
+
+      </serviceGroup>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

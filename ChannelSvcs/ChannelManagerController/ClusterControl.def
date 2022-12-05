@@ -1,0 +1,6 @@
+name="ChannelClusterControl"
+so_files=ChannelClusterControl
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep CORBACommons

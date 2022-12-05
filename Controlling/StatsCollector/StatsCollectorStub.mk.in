@@ -1,0 +1,8 @@
+@statscollectorstub_deps@
+
+corba_stub_idls := StatsCollector.idl
+corba_idl_includes := . 
+corba_includes := . 
+
+@statscollectorstub_post@
+

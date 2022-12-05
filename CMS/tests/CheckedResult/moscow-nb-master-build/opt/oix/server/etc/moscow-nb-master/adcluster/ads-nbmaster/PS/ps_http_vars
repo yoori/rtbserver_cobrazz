@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'http://a.foros-nbmaster.net:10180',
+            'ps_host' => 'http://a.foros-nbmaster.net:10180',
+            'toolbar_base' => 'http://http://b.foros-nbmaster.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'http://http://b.foros-nbmaster.net/tag/1.js',
+            'adimage_server' => 'http://foroscrv-nbmaster.net',
+          );
+        
+
+    1;
+

@@ -1,0 +1,4 @@
+@channeladminexe_deps@
+sources := Application.cpp
+target := ChannelAdmin
+@channeladminexe_post@

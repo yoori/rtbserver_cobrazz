@@ -1,0 +1,4 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CXX_DEF([UserInfoClusterControlStubs], [UserInfoClusterControlStubs.mk])
+OSBE_CXX_DEF([UserInfoManagerControllerStubs], [UserInfoManagerControllerStubs.mk])
+OSBE_CXX_DEF([UserInfoManagerControllerExe], [UserInfoManagerController.mk])

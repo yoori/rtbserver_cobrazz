@@ -1,0 +1,19 @@
+@autotestscommonsrequest_deps@
+
+sources := \
+  BaseRequest.cpp \
+  ActionRequest.cpp \
+  ProtoBuf.cpp \
+  TanxRequest.cpp \
+  BaiduRequest.cpp \
+  ClickRequest.cpp \
+  ConversationRequest.cpp \
+  ImpressionRequest.cpp \
+  NSLookupRequest.cpp \
+  OptOutRequest.cpp \
+  UserBindRequest.cpp \
+  OpenRTBRequest.cpp \
+  Common.cpp
+
+includes := .
+@autotestscommonsrequest_post@

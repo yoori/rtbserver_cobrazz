@@ -1,0 +1,10 @@
+@channelcontrollerstubs_deps@
+
+sources :=
+includes := .
+
+corba_stub_idls := ChannelManagerController.idl
+corba_includes := .
+corba_idl_includes := .
+
+@channelcontrollerstubs_post@

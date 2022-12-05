@@ -1,0 +1,12 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep UserInfoManagerControllerConfig
+osbe_cxx_dep UserInfoManagerStubs
+osbe_cxx_dep UserInfoManagerControlStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep UserInfoClusterControlStubs

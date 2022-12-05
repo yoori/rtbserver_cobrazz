@@ -1,0 +1,45 @@
+
+#ifndef CHANNEL_CLUSTER_CONTROLLER_IDL_
+#define CHANNEL_CLUSTER_CONTROLLER_IDL_
+
+#include <CORBACommons/ProcessControl.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+    typedef sequence<CORBACommons::IProcessControl>
+      ProcessControlDescriptionSeq;
+
+    valuetype ChannelClusterSession supports CORBACommons::AProcessControl
+    {
+      private ProcessControlDescriptionSeq servers;
+    };
+
+    interface TAO_BUG
+    {
+      CORBACommons::AProcessControl::ALIVE_STATUS get_alive_type();
+      string
+      comment();
+    };
+
+    interface ChannelClusterControl : CORBACommons::IProcessControl
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      ChannelClusterSession get_control_session()
+        raises(ImplementationException);
+
+    };
+
+    /*
+    interface ChannelClusterController : AChannelClusterController
+    {
+    };*/
+};//module ChannelSvcs
+}; // module AdServer
+
+#endif //CHANNEL_CLUSTER_CONTROLLER_IDL_

@@ -1,0 +1,5 @@
+@requestoutlogger_deps@
+
+sources := RequestOutLogger.cpp
+
+@requestoutlogger_post@

@@ -1,0 +1,4 @@
+@billingprocessor_deps@
+sources := BillingProcessor.cpp
+
+@billingprocessor_post@

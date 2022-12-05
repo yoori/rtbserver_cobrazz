@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      CTRGenerator Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:element name="CTRGeneratorData" type="CTRGeneratorDataType"/>
+
+  <xsd:complexType name="CTRGeneratorDataType">
+    <xsd:sequence>
+      <xsd:element name="Value" type="ValueType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="base_weight" type="xsd:decimal" default="0"/>
+    <xsd:attribute name="default_weight" type="xsd:decimal" default="0"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ValueType">
+    <xsd:sequence>
+      <xsd:element name="BasicFeatureValue" type="BasicFeatureValueType"
+        minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="weight" type="xsd:decimal" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BasicFeatureValueType">
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="value" type="xsd:string" use="required"/>
+  </xsd:complexType>
+</xsd:schema>

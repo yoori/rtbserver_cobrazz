@@ -1,0 +1,8 @@
+@userinfomanagercontrolstubs_deps@
+sources := 
+includes := .
+
+corba_stub_idls := UserInfoManagerControl.idl
+corba_includes := .
+corba_idl_includes := .
+@userinfomanagercontrolstubs_post@

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/moscow-test-remote2/mibs:/opt/zenoss/lib/oix/moscow-test-remote2/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/moscow-test-remote2/mibs/Controlling"/>
+  <hosts>
+    <host name="vnode4" monitor="localhost" group="OIX/Server" location="" system="moscow_test_remote2/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+      <service name="OixServerCommons" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

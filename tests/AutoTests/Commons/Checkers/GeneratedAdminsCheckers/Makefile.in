@@ -1,0 +1,17 @@
+@autotestscommonsgeneratedadminscheckers_deps@
+
+sources := \
+	ActionChecker.cpp \
+	ColocationChecker.cpp \
+	MarginChecker.cpp \
+	TagChecker.cpp \
+	CreativeChecker.cpp \
+	CampaignChecker.cpp \
+	CreativeTemplatesChecker.cpp \
+	SimpleChannelChecker.cpp \
+	ChannelCategoryChecker.cpp \
+	ExpressionChannelChecker.cpp \
+	SiteChecker.cpp
+
+includes := .
+@autotestscommonsgeneratedadminscheckers_post@

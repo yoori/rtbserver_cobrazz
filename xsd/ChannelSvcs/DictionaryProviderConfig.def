@@ -1,0 +1,5 @@
+name="DictionaryProviderConfig"
+name="DictionaryProviderConfig"
+so_files="DictionaryProviderConfig"
+osbe_cxx_feature_dep XSDTree
+osbe_cxx_dep AdServerCommons

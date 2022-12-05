@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- It's news russian discover channel -->
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>93</ttl>
+<reqDate since_epoch="1239866087">Thu, 16 Apr 2009 07:14:47 GMT</reqDate>
+<total>2</total>
+<items>
+<!-- News1 -->
+<item>
+<title>E1B391CF4C5C427d910CE466C621A050</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest2.com/news1.html]]></link>
+<description><![CDATA[It is a fake news1 for discover channel 2 of WebwiseDiscoverCategoriesTest.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[ru]]></language>
+<guid>E1B391CF4C5C427d910CE466C621A050</guid>
+<event>
+<id></id>
+<capacity>2</capacity>
+</event>
+<categories>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest2/]]></category>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest3/]]></category>
+</categories>
+<source>
+<title>E1B391CF4C5C427d910CE466C621A050</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest2.com/news1/rss1.xml]]></link>
+<country><![CDATA[RUS]]></country>
+</source>
+</item>
+
+</items>
+</result>

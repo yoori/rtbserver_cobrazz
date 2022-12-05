@@ -1,0 +1,82 @@
+use strict;
+use warnings;
+our $config;
+
+my $adserver_monitoring_profiling_requests_number = 0;
+
+my $adserver_monitoring_requests_number = 0;
+
+use constant ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER => 20;
+
+sub adServerMonitoringProfilingRequestMIB
+{
+  my ($mib, $cfg) = @_;
+
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $mon_host_name = $cfg->{'args'}[0]->{'host_name'};
+  $mib_index = ".$mib_index";
+
+  my $start_time = gettimeofday();
+
+  my $url = "http://$mon_host_name/services/nslookup?" .
+    "glbfcap=0&prck=0&" .
+    "referer-kw=Channel+Server+Monitoring&";
+
+  my $out = `curl -s -i -m $config->{'cmd_timeout'} --referer 'channel.server${adserver_monitoring_profiling_requests_number}.com/check/me/please' '$url'`;
+  my $r = $? >> 8;
+  my $status = ($r != 0 ? 1 : 0);
+
+  $$mib{'profilingRequestExecTime' . $mib_index} = sprintf(
+    '%.3f', scalar(gettimeofday()) - $start_time);
+  $$mib{'profilingRequestExecStatus' . $mib_index} = $status;
+  $$mib{'profilingRequestUrl' . $mib_index} = $url;
+
+  if($r == 0)
+  {
+    $adserver_monitoring_profiling_requests_number =
+      ++$adserver_monitoring_profiling_requests_number % ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER;
+  }
+
+  return $status;
+}
+
+sub adServerMonitoringAdRequestMIB
+{
+  my ($mib, $cfg) = @_;
+
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $mon_host_name = $cfg->{'args'}[0]->{'host_name'};
+  my $mon_tag_id = $cfg->{'args'}[0]->{'tag_id'};
+  my $mon_country = $cfg->{'args'}[0]->{'country'};
+  $mib_index = ".$mib_index";
+
+  my $start_time = gettimeofday();
+
+  my $url = "http://$mon_host_name/services/nslookup?" .
+    "glbfcap=0&prck=0&" .
+    "referer-kw=Channel+Server+Monitoring&" .
+    "tid=$mon_tag_id&" .
+    "loc.name=$mon_country";
+
+  my $out = `curl -s -i -m $config->{'cmd_timeout'} --referer 'channel.server${adserver_monitoring_requests_number}.com/check/me/please' '$url'`;
+  my $r = $? >> 8;
+  $out =~ m/\s*HTTP\/\d+\.\d+\s(\d*).*/;
+  my $status = ($r != 0 || $1 ne 200 ? 1 : 0);
+
+  $$mib{'adRequestExecTime' . $mib_index} = sprintf(
+    '%.3f', scalar(gettimeofday()) - $start_time);
+  $$mib{'adRequestExecStatus' . $mib_index} = $status;
+  $$mib{'adRequestUrl' . $mib_index} = $url;
+
+  if($r == 0)
+  {
+    $adserver_monitoring_requests_number =
+      ++$adserver_monitoring_requests_number % ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER;
+  }
+
+  return $status;
+}
+
+return 1;

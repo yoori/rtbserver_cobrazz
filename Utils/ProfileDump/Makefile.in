@@ -1,0 +1,6 @@
+@profiledumpexe_deps@
+
+sources := Application.cpp
+target := ProfileDump
+
+@profiledumpexe_post@

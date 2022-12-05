@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="telstra-prestage"
+  description="Prestage config"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="adsrvpre" hostName="adsrvpre"/>
+  <host name="pbepre" hostName="pbepre"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <coloParams colo_id="84">
+            <virtualServer port="10180" internal_port="10180">
+              <adservingDomain name="a.prestaging.forosdev.com"/>
+              <adservingDomain name="b.prestaging.forosdev.com"/>
+              <thirdPartyContentDomain name="c.prestaging.forosdev.com"/>            
+            </virtualServer>
+          </coloParams>
+          <inventoryStats simplifying="100"/>
+          <central>
+            <pgConnection connection_string="host=stat-dev1.ocslab.com port=5432 dbname=bs_ads_dev user=ro password=adserver"/>
+            <pgConnectionForLogProcessing connection_string="host=stat-dev1.ocslab.com port=5432 dbname=bs_ads_dev user=ads password=adserver"/>
+
+            <statFilesReceiverRef host="undefined" port="10873"/>
+            <dataSourceRef host="foros" path="filesender"/>
+          </central>
+        </cluster>
+      </configuration>
+
+      <!-- lp, ui, be -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubCluster">
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessing">
+          <configuration>
+            <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <syncLogs>
+                <networkParams port="10112"/>
+                <logging log_level="4"/>
+                <fileTransferring file_check_period="10" host_check_period="10"/>
+              </syncLogs>
+
+              <syncLogsServer>
+                <networkParams port="10114"/>
+                <logging log_level="1" sys_log="false"/>
+              </syncLogsServer>
+            </logProcessing>
+          </configuration>
+        </serviceGroup>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcher"
+          host="adsrvpre">
+          <configuration>
+            <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10113"/>
+              <logging log_level="4"/>
+              <updateParams period="30"/>
+              <statLogging file_check_period="10" flush_period="10" activity_flush_period="3600"/>
+            </expressionMatcher>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizer"
+          host="adsrvpre">
+          <configuration>
+            <logGeneralizer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10111"/>
+              <logging log_level="4"/>
+              <statLogging file_check_period="10" flush_period="10" flush_size="10000"/>
+            </logGeneralizer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManager"
+          host="adsrvpre">
+          <configuration>
+            <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10116"/>
+              <logging log_level="4"/>
+              <statLogging file_check_period="10" flush_period="30"/>
+            </requestInfoManager>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServer"
+          host="adsrvpre">
+          <configuration>
+            <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10106"/>
+              <logging log_level="4"/>
+              <updateParams update_period="30" ecpm_update_period="30"/>
+            </campaignServer>
+          </configuration>
+        </service>
+      </serviceGroup>
+
+      <!-- fe -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster">
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <channelServing>
+              <scaleParams chunks_count="10"/>
+            </channelServing>
+          </frontendCluster>
+        </configuration>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManager"
+          host="adsrvpre"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerController"
+          host="adsrvpre"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer"
+          host="adsrvpre">
+            <configuration>
+              <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10103"/>
+                <logging log_level="4"/>
+                <updateParams period="30" chunks_count="32"/>
+              </channelServer>
+            </configuration>
+        </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelController"
+           host="adsrvpre">
+            <configuration>
+              <channelController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10104"/>
+                <logging log_level="4"/>
+              </channelController>
+            </configuration>
+        </service>
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
+           name="ChannelSearchService"
+           host="adsrvpre">
+            <configuration>
+              <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10109"/>
+                <logging log_level="4"/>
+              </channelSearchService>
+            </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="Frontend"
+          host="adsrvpre">
+            <configuration>
+              <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <webServerParams
+                  timeout="300"
+                  keep_alive="true"
+                  max_clients="100"
+                  min_spare_threads="50"
+                  max_spare_threads="50"
+                  threads_per_process="100"/>
+                <requestModule>
+                  <logging log_level="4"/>
+                  <session timeout="30"/>
+                </requestModule>
+                <impressionModule>
+                  <logging log_level="4"/>
+                </impressionModule>
+                <clickModule>
+                  <logging log_level="4"/>
+                </clickModule>
+                <actionModule>
+                  <logging log_level="4"/>
+                </actionModule>
+                <optoutModule>
+                  <logging log_level="4" log_ip="false"/>
+                </optoutModule>
+                <pageSenseModule/>
+                <pubTagModule/>
+              </frontend>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/BillingServer"
+            name="BillingServer"
+            host="adsrvpre"/>
+
+          <service
+              descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+              name="CampaignManager"
+              host="adsrvpre">
+            <configuration>
+              <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10107"/>
+                <logging log_level="4"/>
+                <updateParams
+                  update_period="20"
+                  ecpm_update_period="10"
+                  campaign_types="all"/>
+                <statLogging flush_period="10"/>
+              </campaignManager>
+            </configuration>
+          </service>
+
+      </serviceGroup>
+    </serviceGroup>
+
+    <serviceGroup descriptor="AdProxyCluster" name="AdProxyCluster">
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            server_root="/opt/foros/server"/>
+          <secureParams ca="ca.pem"/>
+          <campaignServerRef host="adsrvpre" port="10106"/>
+          <channelControllerRef host="adsrvpre" port="10104"/>
+          <syncLogs xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <logging log_level="4"/>
+            <fileTransferring file_check_period="10" host_check_period="10">
+              <logMove host="adsrv.pre"/>
+              <dataSourceRef host="foros" path="filesender"/>
+            </fileTransferring>
+          </syncLogs>
+        </cluster>
+      </configuration>
+
+      <service
+        descriptor="AdProxyCluster/UserInfoExchanger"
+        host="pbepre">
+        <configuration>
+          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10210" host="pbepre"/>
+            <logging log_level="4"/>
+          </userInfoExchanger>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/ChannelProxy"
+        host="pbepre">
+        <configuration>
+          <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10205" host="pbepre"/>
+            <logging log_level="4"/>
+          </channelProxy>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/CampaignServer"
+        host="pbepre">
+        <configuration>
+          <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10206" host="pbepre"/>
+            <logging log_level="4"/>
+            <updateParams update_period="30" ecpm_update_period="30"/>
+          </campaignServer>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/STunnelServer"
+        host="pbepre">
+        <configuration>
+          <sTunnelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"/>
+        </configuration>
+      </service>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

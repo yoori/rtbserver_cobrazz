@@ -1,0 +1,25 @@
+
+#ifndef AD_CHANNEL_SVCS_PROXY_28_IDL_
+#define AD_CHANNEL_SVCS_PROXY_28_IDL_
+
+#include <ChannelSvcs/ChannelProxy/ChannelUpdate_v28.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+    interface tao_bag_v28
+    {
+      void p1() raises(ImplementationException);
+    };
+
+    interface ChannelProxy_v28 : ChannelUpdate_v28
+    {
+    };
+
+  }; // module ChannelSvcs
+  
+}; // module AdServer
+
+#endif //AD_CHANNEL_SVCS_PROXY_28_IDL_
+

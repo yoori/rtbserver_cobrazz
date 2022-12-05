@@ -1,0 +1,24 @@
+
+
+  @colocation_hosts = (
+    'adsr-nbadsat0', 'adsp-nbadsat0', 'adsp-nbadsat1', 'adsc-nbadsat0', 'adsc-nbadsat1', 
+  );
+
+  %ri_chunks = (
+    host =>
+      
+        [ 'adsr-nbadsat0', ],
+        
+    chunks => {
+                'user_action_chunks' => [
+                  'UserAction_',
+                  '/opt/foros/server/var/cache/UserActions/', ],
+                'user_campaign_reach_chunks' => [
+                  'UserCampaignReach_',
+                  '/opt/foros/server/var/cache/UserCampaignReach/', ],
+                'request_chunks' => [
+                  'Request_',
+                  '/opt/foros/server/var/cache/Requests/', ],
+              },
+  );
+

@@ -1,0 +1,6 @@
+@devicechannelcountstat_deps@
+sources := DeviceChannelCountStat.cpp
+
+includes := .
+@devicechannelcountstat_post@
+

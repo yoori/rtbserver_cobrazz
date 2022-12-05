@@ -1,0 +1,77 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      User Info Exchanger Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="UserInfoExchangerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10160">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoExchangerExternalNetworkParamsType">
+    <xsd:complexContent>
+      <xsd:extension base="ExternalNetworkParamsType">
+        <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10210">
+          <xsd:annotation>
+            <xsd:documentation>Port to accept connections from other colocations.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoExchangerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <xsd:complexType name="UserInfoExchangerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="UserInfoExchangerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="externalNetworkParams" type="UserInfoExchangerExternalNetworkParamsType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings available from the Internet.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="UserInfoExchangerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element> 
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>

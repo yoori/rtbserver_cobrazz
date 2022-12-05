@@ -1,0 +1,8 @@
+include Common.pre.rules
+
+description := XslTransformTest
+
+test_command := $(srcdir)/Test.sh $(srcdir)/Data
+vg_test_command = $(test_command) '$(vg_prefix) --quiet'
+
+include $(top_srcdir)/tests/Test.post.rules

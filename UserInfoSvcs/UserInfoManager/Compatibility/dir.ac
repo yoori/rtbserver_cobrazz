@@ -1,0 +1,6 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([UserBaseProfileAdapter], [UserBaseProfileAdapter.mk])
+OSBE_CXX_DEF([UserHistoryProfileAdapter], [UserHistoryProfileAdapter.mk])
+OSBE_CXX_DEF([UserOperationProfilesAdapter], [UserOperationProfilesAdapter.mk])
+OSBE_CXX_DEF([UserFreqCapProfileAdapter], [UserFreqCapProfileAdapter.mk])

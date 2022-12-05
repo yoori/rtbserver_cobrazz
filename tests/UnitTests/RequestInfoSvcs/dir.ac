@@ -1,0 +1,4 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([ExpressionMatcher])
+OSBE_CONFIG_SUBDIR([RequestInfoManager])

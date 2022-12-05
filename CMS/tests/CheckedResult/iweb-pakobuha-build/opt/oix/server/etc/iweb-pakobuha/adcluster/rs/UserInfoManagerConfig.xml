@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/UserInfoSvcs/UserInfoManagerConfig.xsd">
+  <cfg:UserInfoManagerConfig channels_update_period="30" profile_lifetime="180" temp_profile_lifetime="30" profiles_cleanup_time="00:01" clean_user_profiles="true" session_timeout="30" history_optimization_period="3600" root_dir="/opt/foros/server/var/log/UserInfoManager/Out/" colo_id="4">
+    <cfg:CorbaConfig threading-pool="40">
+      <cfg:Endpoint host="*" port="10101">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="UserInfoManager" name="UserInfoManager"/>
+        <cfg:Object servant="UserInfoManagerControl" name="UserInfoManagerControl"/>
+        <cfg:Object servant="UserInfoManagerStats" name="UserInfoManagerStats"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/UserInfoManager/UserInfoManager.log" log_level="7" sys_log="true">
+      <cfg:TimeSpanPolicy time="86400"/>
+      <cfg:SizeSpanPolicy size="104857600"/>
+    </cfg:Logger>
+    <cfg:ChunksConfig common_chunks_number="10" chunks_root="/opt/foros/server/var/cache/Users/"/>
+    <cfg:CampaignServerRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:rs:10106/CampaignServer_v9"/>
+    </cfg:CampaignServerRef>
+    <cfg:StatsDumper period="60">
+      <cfg:StatsDumperRef name="StatsDumperRef" ref="corbaloc:iiop:rs:10118/StatsCollector"/>
+    </cfg:StatsDumper>
+    <cfg:UserInfoExchangerParameters set_get_profiles_period="60" colo_request_timeout="600" customer_id="4">
+      <cfg:UserInfoExchangerRef name="UserInfoExchanger" ref="corbaloc:ssliop:vnode0:10210/UserInfoExchanger">
+        <cfg:Secure key="/opt/foros/server/etc/iweb-pakobuha/adcluster/rs/cert/skey.pem" certificate="/opt/oix/server/etc/iweb-pakobuha/adcluster/rs/cert/scert.pem" certificate_authority="/opt/oix/server/etc/iweb-pakobuha/adcluster/rs/cert/ca.pem" key-word="adserver"/>
+      </cfg:UserInfoExchangerRef>
+    </cfg:UserInfoExchangerParameters>
+    <cfg:FreqCaps confirm_timeout="60"/>
+  </cfg:UserInfoManagerConfig>
+</cfg:AdConfiguration>

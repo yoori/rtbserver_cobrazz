@@ -1,0 +1,7 @@
+
+pkgName='foros-server'
+specFile='server.spec'
+jiraKey='ADSC'
+vcsModules[$vcsModule]=$modBuild
+vcsModules[unixcommons]=`svnCat "" unixcommons.version "" 1`
+rpmMacros=("-D '__server_type remote'" "-D '__server_type central'" "-D '__target noarch'")

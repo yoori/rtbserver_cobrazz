@@ -1,0 +1,6 @@
+@transactionmaptestexe_deps@
+
+sources := TransactionMapTest.cpp
+target := TransactionMapTest
+
+include $(top_srcdir)/tests/Test.post.rules

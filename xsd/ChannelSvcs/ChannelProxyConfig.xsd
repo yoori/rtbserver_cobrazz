@@ -1,0 +1,81 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      ChannelProxy Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ChannelProxyConfig" type="ChannelProxyConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelProxyConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:choice>
+        <xsd:element  name="ControllerCorbaRefs"
+                      type="MultiCorbaObjectRefType"
+                      minOccurs="1"
+                      maxOccurs="1">
+        </xsd:element>
+        <xsd:element  name="ProxyCorbaRefs"
+                      type="MultiCorbaObjectRefType"
+                      minOccurs="1"
+                      maxOccurs="1">
+        </xsd:element>
+      </xsd:choice>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for ChannelProxy
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="UpdateStatLogger" 
+        type="LogFlushPolicyType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Colo update statistic logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" default="40">
+      <xsd:annotation>
+        <xsd:documentation>
+          Count threads in load factory
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    
+  </xsd:complexType>
+
+</xsd:schema>

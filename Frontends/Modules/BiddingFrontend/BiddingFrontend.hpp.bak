@@ -1,0 +1,437 @@
+#ifndef ADSERVER_BIDDINGFRONTEND_HPP
+#define ADSERVER_BIDDINGFRONTEND_HPP
+
+#include <eh/Exception.hpp>
+
+#include <Logger/Logger.hpp>
+#include <Logger/DistributorLogger.hpp>
+
+#include <Generics/ActiveObject.hpp>
+#include <Generics/Statistics.hpp>
+#include <Generics/Scheduler.hpp>
+#include <Generics/TaskRunner.hpp>
+#include <Generics/Uuid.hpp>
+#include <Generics/AtomicInt.hpp>
+
+#include <Sync/PosixLock.hpp>
+
+#include <HTTP/Http.hpp>
+#include <HTTP/HTTPCookie.hpp>
+
+#include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/AtomicInt.hpp>
+#include <Commons/Interval.hpp>
+
+#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
+#include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
+
+#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <Frontends/FrontendCommons/UserInfoClient.hpp>
+#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+
+#include "GroupLogger.hpp"
+#include "RequestInfoFiller.hpp"
+#include "BiddingFrontendStat.hpp"
+#include "JsonFormatter.hpp"
+
+namespace AdServer
+{
+namespace Bidding
+{  
+  struct Interrupter: public virtual ReferenceCounting::Interface
+  {
+    virtual bool
+    interrupt() const throw() = 0;
+  };
+
+  class Frontend:
+    private FrontendCommons::HTTPExceptions,
+    //private Logging::LoggerCallbackHolder,
+    private GroupLogger,
+    //private Generics::CompositeActiveObject,
+    public FrontendCommons::FrontendTaskPool,
+    public virtual ReferenceCounting::AtomicImpl
+  {
+    using GroupLogger::logger;
+
+  public:
+    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+
+    typedef Configuration::FeConfig::CommonFeConfiguration_type
+      CommonFeConfiguration;
+
+    typedef Configuration::FeConfig::BidFeConfiguration_type
+      BiddingFeConfiguration;
+
+  public:
+    Frontend(
+      Configuration* frontend_config,
+      Logging::Logger* logger,
+      CommonModule* common_module,
+      StatHolder* stats) throw (eh::Exception);
+
+    virtual bool
+    will_handle(const String::SubString& uri) throw ();
+
+    virtual void
+    handle_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::HttpResponseWriter_var response_writer)
+      throw();
+
+    /** Performs initialization for the module child process. */
+    virtual void
+    init() throw(eh::Exception);
+
+    /** Performs shutdown for the module child process. */
+    virtual void
+    shutdown() throw();
+
+  protected:
+    virtual ~Frontend() throw();
+
+    int
+    handle_request_(
+      const FCGI::HttpRequest& request,
+      FCGI::HttpResponse& response)
+      throw ();
+
+  private:
+    struct TraceLevel
+    {
+      enum
+      {
+        LOW = Logging::Logger::TRACE,
+        MIDDLE,
+        HIGH
+      };
+    };
+
+    typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
+    typedef std::unique_ptr<BiddingFeConfiguration> ConfigPtr;
+
+    class RequestTask;
+    typedef ReferenceCounting::SmartPtr<RequestTask>
+      RequestTask_var;
+
+    class RequestParamsHolder :
+       public AdServer::CampaignSvcs::CampaignManager::RequestParams,   
+       public ReferenceCounting::AtomicImpl
+    {
+    protected:
+      virtual ~RequestParamsHolder() throw() = default;
+    };
+
+    typedef ReferenceCounting::SmartPtr<RequestParamsHolder> RequestParamsHolder_var;
+    typedef ReferenceCounting::ConstPtr<RequestParamsHolder> ConstRequestParamsHolder_var;
+
+    class GoogleRequestTask;
+    class OpenRtbRequestTask;
+    class AppNexusRequestTask;
+    class UpdateConfigTask;
+    class FlushStateTask;
+    class InterruptPassbackTask;
+
+    struct ExtConfig: public ReferenceCounting::AtomicImpl
+    {
+      struct Colocation
+      {
+        unsigned long flags;
+      };
+
+      typedef std::map<unsigned long, Colocation>
+        ColocationMap;
+
+      ColocationMap colocations;
+
+    protected:
+      virtual ~ExtConfig() throw() {}
+    };
+
+    typedef ReferenceCounting::SmartPtr<ExtConfig>
+      ExtConfig_var;
+
+    typedef Sync::Policy::PosixThreadRW
+      ExtConfigSyncPolicy;
+    typedef Sync::Policy::PosixThread
+      MaxPendingSyncPolicy;
+
+    typedef Commons::IntervalSet<Generics::Time>
+      BlacklistedTimeIntervals;
+
+
+  private:
+    void
+    process_openrtb_request_(
+      bool& bad_request,
+      OpenRtbRequestTask* request_task,
+      RequestInfo& request_info,
+      const char* bid_request)
+      throw();
+
+    void
+    process_appnexus_request_(
+      bool& bad_request,
+      AppNexusRequestTask* request_task,
+      RequestInfo& request_info,
+      const char* bid_request)
+      throw();
+
+    void
+    process_google_request_(
+      GoogleRequestTask* request_task,
+      RequestInfo& request_info,
+      const Google::BidRequest& bid_request)
+      throw();
+
+    void
+    parse_configs_() throw(Exception);
+
+    void
+    resolve_user_id_(
+      AdServer::Commons::UserId& match_user_id,
+      AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
+      RequestInfo& request_info)
+      throw();
+
+    void
+    trigger_match_(
+      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_out trigger_matched_channels,
+      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      const RequestInfo& request_info,
+      const AdServer::Commons::UserId& user_id,
+      CORBA::String_var& hostname,
+      const char* keywords = 0)
+      throw();
+
+    void
+    history_match_(
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out history_match_result,
+      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      const RequestInfo& request_info,
+      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+      const AdServer::Commons::UserId& user_id,
+      const Generics::Time& time,
+      CORBA::String_var& hostname)
+      throw();
+
+    void
+    get_ccg_keywords_(
+      AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var& ccg_keywords,
+      const RequestInfo& request_info,
+      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
+      throw();
+
+    bool
+    process_bid_request_(
+      const char* fn,
+      AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out
+        campaign_match_result,
+      AdServer::Commons::UserId& user_id,
+      RequestTask* request_task,
+      RequestInfo& request_info,
+      const std::string& keywords) throw();
+
+
+    void
+    interrupted_select_campaign_(
+      RequestTask* request_task) throw();
+
+    void
+    select_campaign_(
+      AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out
+        campaign_match_result,
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
+        history_match_result,
+      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
+      const RequestInfo& request_info,
+      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      const AdServer::Commons::UserId& user_id,
+      bool passback,
+      CORBA::String_var& hostname,
+      bool interrupted)
+      throw();
+
+    bool
+    consider_campaign_selection_(
+      const AdServer::Commons::UserId& user_id,
+      const Generics::Time& time,
+      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+        campaign_match_result,
+      CORBA::String_var& hostname)
+      throw();
+
+    void
+    fill_openrtb_response_(
+      std::ostream& response_ostr,
+      const RequestInfo& request_info,
+      const AdServer::CampaignSvcs::CampaignManager::
+        RequestParams& request_params,
+      const JsonProcessingContext& context,
+      const AdServer::CampaignSvcs::CampaignManager::
+        RequestCreativeResult& campaign_match_result)
+      throw();
+
+    void
+    fill_yandex_response_(
+      std::ostream& response_ostr,
+      const RequestInfo& request_info,
+      const AdServer::CampaignSvcs::CampaignManager::
+        RequestParams& request_params,
+      const JsonProcessingContext& context,
+      const AdServer::CampaignSvcs::CampaignManager::
+        RequestCreativeResult& campaign_match_result)
+      throw();
+
+    void
+    fill_account_traits_() throw();
+
+    void
+    limit_max_cpm_(
+      AdServer::CampaignSvcs::RevenueDecimal& val,
+      const AdServer::CampaignSvcs::ULongSeq& account_ids)
+      const throw();
+
+    static AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
+    get_empty_history_matching_()
+      throw(eh::Exception);
+
+    static void
+    protobuf_log_handler_(
+      google::protobuf::LogLevel level,
+      const char* filename,
+      int line,
+      const std::string& message);
+
+    void
+    update_config_() throw ();
+
+    void
+    flush_state_() throw ();
+
+    void
+    set_ext_config_(ExtConfig* config) throw();
+
+    ExtConfig_var
+    get_ext_config_() throw();
+
+    bool
+    check_interrupt_(
+      const char* fun,
+      const char* stage,
+      const RequestTask* task)
+      throw();
+
+    void
+    interrupt_(
+      const char* fun,
+      const char* stage,
+      const RequestTask* task)
+      throw();
+
+    Generics::Time
+    get_request_timeout_(const FCGI::HttpRequest& request) throw ();
+
+    static
+    AdServer::CampaignSvcs::AdInstantiateType
+    adapt_instantiate_type_(const std::string& inst_type_str)
+      throw(Exception);
+
+    static
+    SourceTraits::NativeAdsInstantiateType
+    adapt_native_ads_instantiate_type_(
+      const std::string& inst_type_str)
+      throw(Exception);
+
+    static
+    AdServer::CampaignSvcs::NativeAdsImpressionTrackerType
+    adapt_native_ads_impression_tracker_type_(
+      const std::string& imp_type_str)
+      throw(Exception);
+
+    void
+    fill_native_response_(
+      AdServer::Commons::JsonObject* json,
+      const JsonAdSlotProcessingContext::Native& native_context,
+      const AdServer::CampaignSvcs::CampaignManager::
+        AdSlotResult& ad_slot_result,
+      bool need_escape,
+      bool add_root_native);
+
+  private:
+
+    // ADSC-10554
+    // Interrupted requests queue
+    Generics::TaskExecutor_var passback_task_runner_;
+    
+    // configuration
+    CommonConfigPtr common_config_;
+    ConfigPtr config_;
+    Configuration_var frontend_config_;
+    CommonModule_var common_module_;
+    unsigned long colo_id_;
+    SourceMap sources_;
+    Generics::Time request_timeout_;
+    std::unique_ptr<RequestInfoFiller> request_info_filler_;
+    BlacklistedTimeIntervals blacklisted_time_intervals_;
+    RequestInfoFiller::AccountTraitsById account_traits_;
+
+    // external services
+    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
+    FrontendCommons::UserBindClient_var user_bind_client_;
+    FrontendCommons::UserInfoClient_var user_info_client_;
+    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
+
+    Generics::Planner_var planner_;
+    Generics::TaskExecutor_var task_runner_;
+    Generics::TaskRunner_var control_task_runner_;
+    StatHolder_var stats_;
+
+    mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;
+    ExtConfig_var ext_config_;
+
+    Generics::AtomicInt bid_task_count_;
+    Generics::AtomicInt passback_task_count_;
+
+    mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
+    unsigned long reached_max_pending_tasks_;
+  };
+}
+}
+
+// Inlines
+namespace AdServer
+{
+namespace Bidding
+{
+  inline
+  Frontend::~Frontend() throw ()
+  {}
+
+  inline
+  void
+  Frontend::set_ext_config_(ExtConfig* config)
+    throw()
+  {
+    ExtConfig_var new_config = ReferenceCounting::add_ref(config);
+
+    ExtConfigSyncPolicy::WriteGuard lock(ext_config_lock_);
+    ext_config_.swap(new_config);
+  }
+
+  inline
+  Frontend::ExtConfig_var
+  Frontend::get_ext_config_() throw()
+  {
+    ExtConfigSyncPolicy::ReadGuard lock(ext_config_lock_);
+    return ext_config_;
+  }
+}
+}
+
+#endif // ADSERVER_BIDDINGFRONTEND_HPP

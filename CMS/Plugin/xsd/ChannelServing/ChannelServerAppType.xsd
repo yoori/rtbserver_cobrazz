@@ -1,0 +1,110 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Channel Server Configuration File XML Schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="ChannelServerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10103">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelServingConfigType">
+    <xsd:sequence>
+      <xsd:element name="scaleParams" type="ScaleParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Channels data scaling parameters between ChannelServing instances.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ScaleParamsType">
+    <xsd:attribute name="chunks_count" type="xsd:positiveInteger" use="optional" default="32">
+      <xsd:annotation>
+        <xsd:documentation>Chunks count.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelServerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <xsd:complexType name="ChannelServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="ChannelServerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="ChannelServerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element> 
+      <xsd:element name="updateParams" type="UpdateParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Fetching new data and data changes.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UpdateParamsType">
+    <xsd:attribute name="period" type="xsd:positiveInteger" use="optional" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of checking changes of triggers in database.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="memory_size" type="xsd:positiveInteger" use="optional" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Size of additional memory to use on update.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="chunks_count" type="xsd:positiveInteger" use="optional" default="32">
+      <xsd:annotation>
+        <xsd:documentation>
+          Count chunks in ChannelServer. Increasing this parameter, descrease necessary memory for update,
+           but increase it is time.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

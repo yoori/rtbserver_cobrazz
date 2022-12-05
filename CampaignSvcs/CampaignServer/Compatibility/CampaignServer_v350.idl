@@ -1,0 +1,306 @@
+
+#ifndef CAMPAIGNSVCS_CAMPAIGNSERVER_CAMPAIGNSERVER_V350_IDL
+#define CAMPAIGNSVCS_CAMPAIGNSERVER_CAMPAIGNSERVER_V350_IDL
+
+#include <CampaignSvcs/CampaignServer/Compatibility/CampaignCommons_v350.idl>
+#include <CampaignSvcs/CampaignServer/Compatibility/BillStatInfo_v350.idl>
+#include <CampaignSvcs/CampaignServer/StatInfo.idl>
+
+module AdServer
+{
+  module CampaignSvcs_v350
+  {
+    typedef sequence<boolean> EmptySeq;
+    struct StatInfo
+    {
+      EmptySeq empty;
+    };
+
+    struct DiscoverChannel
+    {
+      unsigned long channel_id;
+      string query;
+      string annotation;
+      string language;
+      ULongSeq categories;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<DiscoverChannel> DiscoverChannelSeq;
+
+    struct DiscoverSourceInfo
+    {
+      DiscoverChannelSeq discover_channels;
+      CategoryChannelSeq category_channels;
+    };
+
+    struct SimpleChannelAnswer
+    {
+      SimpleChannelKeySeq simple_channels;
+      BehavParamInfoSeq behav_params;
+      KeyBehavParamInfoSeq key_behav_params;
+      TimestampInfo timezone_offset;
+      TimestampInfo master_stamp;
+      CORBACommons::DecimalInfo cost_limit;
+    };
+
+    struct BriefSimpleChannelAnswer
+    {
+      BriefSimpleChannelKeySeq simple_channels;
+      BriefBehavParamInfoSeq behav_params;
+      BriefKeyBehavParamInfoSeq key_behav_params;
+      CORBACommons::FixedTimestampInfo timezone_offset;
+      CORBACommons::FixedTimestampInfo master_stamp;
+    };
+
+    struct BehaveInfo
+    {
+      boolean is_context;
+      char trigger_type;
+      unsigned long weight;
+    };
+
+    typedef sequence<BehaveInfo> BehaveInfoSeq;
+    
+    struct CSSimpleChannel
+    {
+      unsigned long channel_id;
+      string country_code;
+      string language;
+      char channel_type;
+      char status;
+      BehaveInfoSeq behave_info;
+    };
+
+    typedef sequence<CSSimpleChannel> CSSimpleChannelSeq;
+
+    struct ChannelServerChannelAnswer 
+    {
+      CSSimpleChannelSeq simple_channels;
+      CORBACommons::DecimalInfo cost_limit;
+    };
+    
+    /**
+     * Struct describes options for get_config method of CampaignServer
+     */
+    struct CampaignGetConfigSettings
+    {
+      TimestampInfo timestamp;
+      unsigned long server_id;
+
+      unsigned long portion;
+      unsigned long portions_number;
+
+      // ColoStats
+      unsigned long colo_id;
+      string version;
+
+      // filters
+      string campaign_statuses;
+      string channel_statuses;
+      string country;
+
+      // required entities
+      boolean no_deleted;
+      boolean provide_only_tags;
+      boolean provide_channel_triggers;
+
+      // don't send geo channels, if geo channels timestamp
+      // isn't changed (timestamp value independently)
+      TimestampInfo geo_channels_timestamp;
+    };
+
+    struct FraudConditionConfig
+    {
+      FraudConditionSeq rules;
+      TimestampInfo deactivate_period;
+    };
+
+    struct DetectorsConfig
+    {
+      TimestampInfo timestamp;
+      SearchEngineSeq engines;
+      WebBrowserSeq web_browsers;
+      PlatformSeq platforms;
+    };
+
+    struct FreqCapConfigInfo
+    {
+      FreqCapSeq freq_caps;
+    };
+
+    struct ExpressionChannelCCGInfo
+    {
+      unsigned long channel_id;
+      CCGIdSeq ccgs;
+    };
+
+    typedef sequence<ExpressionChannelCCGInfo> ExpressionChannelCCGSeq;
+
+    struct ChannelTriggersInfo
+    {
+      unsigned long channel_id;
+      unsigned long page_min_visits;
+      unsigned long search_min_visits;
+      unsigned long url_min_visits;
+      unsigned long url_keyword_min_visits;
+      unsigned long page_time_to;
+      unsigned long search_time_to;
+      unsigned long url_time_to;
+      unsigned long url_keyword_time_to;
+      ULongSeq page_triggers;
+      ULongSeq search_triggers;
+      ULongSeq url_triggers;
+      ULongSeq url_keyword_triggers;
+    };
+
+    typedef sequence<ChannelTriggersInfo> ChannelTriggersSeq;
+
+    struct ExpressionChannelsInfo
+    {
+      TimestampInfo timestamp;
+      TimestampInfo first_load_stamp;
+
+      ExpressionChannelSeq expression_channels;
+      ExpressionChannelCCGSeq expression_channel_ccgs;
+      ChannelIdSeq overlap_channel_ids;
+
+      ChannelTriggersSeq activate_channel_triggers;
+      DeletedIdSeq delete_simple_channels;
+    };
+
+    /**
+     * Implements interaction with the Database Server and provides
+     * Campaign Managers with channel updates. Normal interaction with
+     * CampaignServer should include at first need_config() invokation
+     * then (if true returned) get_config() invokation to request all
+     * necessary updates.
+     */
+    interface CampaignServer
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      exception NotReady
+      {
+        string description;
+      };
+
+      exception NotSupport
+      {
+        string description;
+      };
+
+      struct GetExpressionChannelsInfo
+      {
+        CORBACommons::TimestampInfo timestamp;
+
+        unsigned long portion;
+        unsigned long portions_number;
+
+        string channel_types;
+        string channel_statuses;
+        boolean provide_ccg_links;
+        boolean provide_channel_triggers;
+        boolean provide_overlap_channel_ids;
+      };
+
+      struct GetSimpleChannelsInfo
+      {
+        unsigned long portion;
+        unsigned long portions_number;
+        string channel_statuses;
+      };
+
+      struct PassbackInfo
+      {
+        string passback_type;
+        string passback_code;
+        string passback_url;
+        unsigned long width;
+        unsigned long height;
+        string size;
+
+        string mime_format;
+        boolean active;
+      };
+
+      /**
+       * Returns a configuration update.
+       *
+       * @return CampaignConfigUpdateInfo instance
+       * that will store the configuration update information.
+       */
+      CampaignConfigUpdateInfo get_config(
+        in CampaignGetConfigSettings get_config_settings)
+        raises (ImplementationException, NotReady);
+
+      boolean need_config(
+        in TimestampInfo req_timestamp)
+        raises (ImplementationException, NotReady);
+
+      /**
+       * Returns ecpm update.
+       *
+       * @return Current ecpms for all campaigns.
+       */
+      EcpmSeq get_ecpms(in TimestampInfo request_timestamp)
+        raises (ImplementationException);
+
+      /* return expression channels with requested type,
+       * including inactive (but not deleted)
+       */
+      ExpressionChannelsInfo get_expression_channels(
+        in GetExpressionChannelsInfo params)
+        raises (ImplementationException, NotReady);
+
+      DiscoverSourceInfo get_discover_channels(
+        in unsigned long portion,
+        in unsigned long portions_number)
+        raises (ImplementationException, NotReady);
+
+      PassbackInfo get_tag_passback(
+        in unsigned long tag_id,
+        in string app_format)
+        raises (ImplementationException, NotReady);
+
+      BriefSimpleChannelAnswer brief_simple_channels(
+        in GetSimpleChannelsInfo params)
+        raises (ImplementationException, NotReady);
+
+      SimpleChannelAnswer simple_channels(
+        in GetSimpleChannelsInfo params)
+        raises (ImplementationException, NotReady);
+
+      ChannelServerChannelAnswer chsv_simple_channels(
+        in GetSimpleChannelsInfo params)
+        raises (ImplementationException, NotReady);
+
+      FraudConditionConfig fraud_conditions()
+        raises (ImplementationException, NotReady);
+
+      FreqCapConfigInfo freq_caps()
+        raises (ImplementationException, NotReady);
+
+      ColocationFlagsSeq
+      get_colocation_flags()
+        raises (ImplementationException, NotReady);
+
+      /* return all search enginies if any changed after request_timestamp */
+      DetectorsConfig detectors(
+        in TimestampInfo request_timestamp)
+        raises (ImplementationException, NotReady);
+
+      void update_stat() raises(NotSupport, ImplementationException);
+
+      StatInfo get_stat() raises(NotSupport, NotReady);
+
+      BillStatInfo
+      get_bill_stat() raises(NotSupport, NotReady);
+    };
+  }; // module CampaignSvcs
+}; // module AdServer
+
+#endif // CAMPAIGNSVCS_CAMPAIGNSERVER_CAMPAIGNSERVER_V350_IDL

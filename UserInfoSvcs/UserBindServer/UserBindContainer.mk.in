@@ -1,0 +1,11 @@
+@userbindcontainer_deps@
+
+sources := \
+  ExternalIdHashAdapter.cpp \
+  ChunkUtils.cpp \
+  UserBindContainer.cpp \
+  UserBindChunk.cpp \
+  BindRequestContainer.cpp \
+  BindRequestChunk.cpp
+
+@userbindcontainer_post@

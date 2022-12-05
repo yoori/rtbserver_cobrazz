@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/jurij_kuznecov/projects/foros/server/trunk/xsd/ChannelSvcs/ChannelServerConfig.xsd">
+  <cfg:ChannelServerConfig count_chunks="32" update_size="50" update_period="30" log_root="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/log/ChannelServer/Out">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="12403">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelServerControl" name="ChannelServerControl"/>
+        <cfg:Object servant="ChannelServer" name="ChannelServer"/>
+        <cfg:Object servant="ChannelUpdate" name="ChannelUpdate"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:MatchOptions unmatched_triggers="false">
+      <cfg:AllowPort>80</cfg:AllowPort>
+    </cfg:MatchOptions>
+    <cfg:Logger filename="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/log/ChannelServer/ChannelServer">
+      <cfg:SysLog log_level="12"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="12" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:UpdateStatLogger size="3" period="30" path="ColoUpdateStat"/>
+    <!--Comment the line below to disable support for Asian languages-->
+    <cfg:Polyglot base="/opt/foros/polyglot/dict/"/>
+  </cfg:ChannelServerConfig>
+</cfg:AdConfiguration>

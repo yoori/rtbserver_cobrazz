@@ -1,0 +1,15 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([AdServerCommons])
+OSBE_CONFIG_SUBDIR([ChannelSvcs])
+OSBE_CONFIG_SUBDIR([ChannelSearchSvcs])
+OSBE_CONFIG_SUBDIR([CampaignSvcs])
+OSBE_CONFIG_SUBDIR([UserInfoSvcs])
+OSBE_CONFIG_SUBDIR([RequestInfoSvcs])
+OSBE_CONFIG_SUBDIR([LogProcessing])
+OSBE_CONFIG_SUBDIR([Frontends])
+OSBE_CONFIG_SUBDIR([Controlling])
+OSBE_CONFIG_SUBDIR([Utils])
+OSBE_CONFIG_SUBDIR([Predictor])
+
+OSBE_CONFIG_SUBDIR([tests])

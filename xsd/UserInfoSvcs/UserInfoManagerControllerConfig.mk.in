@@ -1,0 +1,7 @@
+@userinfomanagercontrollerconfig_deps@
+sources := 
+includes := .
+xsd_files := UserInfoManagerControllerConfig.xsd
+xsd_includes := xsd
+
+@userinfomanagercontrollerconfig_post@

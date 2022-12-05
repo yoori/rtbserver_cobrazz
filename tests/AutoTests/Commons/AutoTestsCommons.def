@@ -1,0 +1,20 @@
+name="AutoTestsCommons"
+so_files=AutoTestsCommons
+
+osbe_cxx_dep postgresql
+osbe_cxx_dep Stream
+osbe_cxx_dep http
+osbe_cxx_dep Logger
+
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep AutoTestsConfig
+osbe_cxx_dep LocalParamsConfig
+osbe_cxx_dep Tanx
+osbe_cxx_dep Gason
+
+osbe_cxx_dep AutoTestsCommonsAdmins
+osbe_cxx_dep AutoTestsCommonsStats
+osbe_cxx_dep AutoTestsCommonsORM
+osbe_cxx_dep AutoTestsCommonsRequest
+osbe_cxx_dep AutoTestsCommonsCheckers

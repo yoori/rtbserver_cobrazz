@@ -1,0 +1,9 @@
+@uidgeneratoradapterconfig_deps@
+
+sources := 
+includes := .
+xsd_files := UIDGeneratorAdapterConfig.xsd
+
+xsd_includes := .
+
+@uidgeneratoradapterconfig_post@

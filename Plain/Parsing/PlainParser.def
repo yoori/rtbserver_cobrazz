@@ -1,0 +1,6 @@
+name="PlainParser"
+so_files=PlainParser
+
+osbe_cxx_dep PlainDeclaration
+osbe_cxx_dep PlainCode
+osbe_cxx_dep PlainCpp

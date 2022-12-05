@@ -1,0 +1,7 @@
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+osbe_cxx_dep RequestInfoContainer
+osbe_cxx_dep UserCampaignReachContainer
+osbe_cxx_dep UserActionInfoContainer
+osbe_cxx_dep PassbackContainer

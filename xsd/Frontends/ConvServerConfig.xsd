@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common Frontends Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ConvServerConfig" type="ConvServerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="ConvServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+      <xsd:element name="Logger" type="ErrorLoggerType"/>
+
+      <xsd:element name="ChannelManagerControllerRefs"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"/>
+
+      <xsd:element name="UserBindControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="0"
+        maxOccurs="2"/>
+
+      <xsd:element name="UserInfoManagerControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="1"
+        maxOccurs="2"/>
+
+      <xsd:element name="CampaignManagerRef"
+        type="MultiCorbaObjectRefType"/>
+
+      <xsd:element name="InLogs" type="InLogsType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="InLogsType">
+    <xsd:sequence>                                                                                                                
+      <xsd:element name="AdvertiserAction" type="InLogType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="check_logs_period" type="xsd:positiveInteger"
+      use="required"/>                                           
+    <xsd:attribute name="threads" type="xsd:positiveInteger"
+      use="optional" default="10"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="InLogType">
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,6 @@
+@billstatserversource_deps@
+
+sources := BillStatServerSource.cpp \
+  BillStatSource.cpp
+
+@billstatserversource_post@

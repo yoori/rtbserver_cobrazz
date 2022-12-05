@@ -1,0 +1,6 @@
+@campaignconfigmodifiertestexe_deps@
+
+sources := CampaignConfigModifierTest.cpp
+target := CampaignConfigModifierTest
+
+include $(top_srcdir)/tests/Test.post.rules

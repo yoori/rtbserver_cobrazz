@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+  elementFormDefault="qualified" 
+  xml:lang="en" 
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      UserBindServerConfig Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UserBindServerConfig" type="UserBindServerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindServerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for UserInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Storage" type="StorageType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Persistent storage traits
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="BindRequestStorage" type="BindRequestStorageType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Persistent storage traits
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="OperationBackup"
+        type="OperationBackupType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            user operations backup parameters
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="OperationLoad"
+        type="OperationLoadType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            user operations uploading parameters
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserIdBlackList" type="UserIdBlackListType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            UID blacklist.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="min_age" type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="bind_on_min_age" type="xsd:boolean"
+      use="required"/>
+    <xsd:attribute name="max_bad_event" type="xsd:nonNegativeInteger"
+      use="required"/>
+    <xsd:attribute name="partition_index" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="partitions_number" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserIdBlackListType">
+    <xsd:annotation>
+      <xsd:documentation>
+        UID blacklist. One uid per line. Empty line skipped. Line started from '#' - ignored.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string"/>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="StorageType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation> 
+    </xsd:annotation>
+    <xsd:attribute name="dump_period" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="bound_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="bound_expire_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="portions" type="xsd:positiveInteger" use="required"/>
+
+    <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>
+
+    <xsd:attribute name="user_bind_keep_mode"
+      type="UserBindKeepModeType" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="BindRequestStorageType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation> 
+    </xsd:annotation>
+    <xsd:attribute name="prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="portions" type="xsd:positiveInteger" use="required"/>
+
+    <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="OperationBackupType">
+    <xsd:attribute name="dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="file_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="rotate_period" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="OperationLoadType">
+    <xsd:attribute name="dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="file_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="check_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="unprocessed_dir" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="UserBindKeepModeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="keep slave"/>
+      <xsd:enumeration value="keep only master"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>

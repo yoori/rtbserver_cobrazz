@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- It's news english discover channel -->
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>93</ttl>
+<reqDate since_epoch="1239866087">Thu, 16 Apr 2009 07:14:47 GMT</reqDate>
+<total>1</total>
+<items>
+
+<!-- News1 -->
+<item>
+<title>6A77946CD1E94d56BCD54D74531E3FCC</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest1.com/news1.html]]></link>
+<description><![CDATA[It is a fake news1 for discover channel 1 of WebwiseDiscoverCategoriesTest.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[eng]]></language>
+<guid>6A77946CD1E94d56BCD54D74531E3FCC</guid>
+<event>
+<id></id>
+<capacity>2</capacity>
+</event>
+<categories>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest1/]]></category>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest2/]]></category>
+</categories>
+<source>
+<title>6A77946CD1E94d56BCD54D74531E3FCC</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest1.com/news1/rss1.xml]]></link>
+<country><![CDATA[GBR]]></country>
+</source>
+</item>
+
+</items>
+</result>

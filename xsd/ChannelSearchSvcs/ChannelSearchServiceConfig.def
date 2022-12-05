@@ -1,0 +1,4 @@
+name="ChannelSearchServiceConfig"
+so_files=ChannelSearchServiceConfig
+osbe_cxx_feature_dep XSDTree
+osbe_cxx_dep AdServerCommons

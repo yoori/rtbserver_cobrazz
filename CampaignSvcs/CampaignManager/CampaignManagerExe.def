@@ -1,0 +1,33 @@
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Stream
+osbe_cxx_dep http
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep Commons
+osbe_cxx_dep XslTransformer
+osbe_cxx_dep Gason
+osbe_cxx_dep PlainStorage3
+
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep CampaignManagerConfig
+
+osbe_cxx_dep CampaignCommonsStubs
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep CampaignTypes
+
+osbe_cxx_dep ProcessControlVars
+
+osbe_cxx_dep ExpressionChannelIndex
+osbe_cxx_dep CreativeTemplateArgs
+osbe_cxx_dep CampaignConfig
+osbe_cxx_dep CampaignConfigSource
+osbe_cxx_dep CampaignIndex
+osbe_cxx_dep DomainParser
+osbe_cxx_dep CampaignManagerLogger
+osbe_cxx_dep PassbackTemplate
+osbe_cxx_dep SecToken
+osbe_cxx_dep BillingServerStubs
+osbe_cxx_dep KafkaProducer
+
+osbe_cxx_dep CTRProvider
+osbe_cxx_dep BidCostProvider

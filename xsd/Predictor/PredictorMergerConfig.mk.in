@@ -1,0 +1,7 @@
+@predictormergerconfig_deps@
+sources := 
+includes := .
+xsd_files := PredictorMergerConfig.xsd
+xsd_includes := xsd
+
+@predictormergerconfig_post@

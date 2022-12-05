@@ -1,0 +1,8 @@
+
+include Common.pre.rules
+include $(osbe_builddir)/config/Documentation/Doxygen.pre.rules
+
+doxygen_config := Doxyfile
+doxygen_output := Doxydir
+
+include $(osbe_builddir)/config/Documentation/Doxygen.post.rules

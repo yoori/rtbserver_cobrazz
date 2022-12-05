@@ -1,0 +1,15 @@
+@channelserverexe_deps@
+
+corba_idl_includes := .
+
+sources := ChannelServerVariant.cpp \
+  ChannelServerImpl.cpp \
+  ChannelServerControlImpl.cpp \
+  ChannelUpdateImpl.cpp \
+  ProcessStatsControl.cpp \
+  ChannelServerMain.cpp
+
+target   := ChannelServer
+
+@channelserverexe_post@
+

@@ -1,0 +1,104 @@
+namespace AdServer
+{
+  namespace UserInfoSvcs_v2
+  {
+    struct ColoTimestamp
+    {
+      uint colo_id;
+      uint timestamp;
+    };
+    
+    autoreader ColoTimestampReader<ColoTimestamp>;
+
+    struct SessionMatches
+    {
+      uint channel_id;
+      list<uint> timestamps;
+    };
+    
+    autoreader SessionMatchesReader<SessionMatches>;
+
+    struct HistoryVisits
+    {
+      uint channel_id;
+      uint visits;
+    };
+    
+    autoreader HistoryVisitsReader<HistoryVisits>;
+
+    struct HistoryMatches
+    {
+      uint channel_id;
+      uint weight;
+    };
+    
+    autoreader HistoryMatchesReader<HistoryMatches>;
+
+    struct HTCandidates
+    {
+      uint channel_id;
+      uint req_visits;
+      uint visits;
+      uint weight;
+    };
+    
+    autoreader HTCandidatesReader<HTCandidates>;
+
+    struct ChannelsInfo
+    {
+      list<HTCandidates> ht_candidates;
+      list<HistoryMatches> history_matches;
+      list<HistoryVisits> history_visits;
+      list<SessionMatches> session_matches;
+    };
+    
+    reader ChannelsInfoReader<ChannelsInfo>
+    {
+      list<HTCandidatesReader> ht_candidates;
+      list<HistoryMatchesReader> history_matches;
+      list<HistoryVisitsReader> history_visits;
+      list<SessionMatchesReader> session_matches;
+    };
+
+    struct ChannelsProfileVersion
+    {
+      uint version;
+    };
+    
+    autoreader ChannelsProfileVersionReader<ChannelsProfileVersion>;
+    
+    struct ChannelsProfile
+    {
+      uint version;
+      uint create_time;
+      uint history_time;
+      uint ignore_fraud_time;
+      uint last_request_time;
+   
+      list<ColoTimestamp> colo_ts_list;
+      
+      ChannelsInfo context_channels;
+      ChannelsInfo page_channels;
+      ChannelsInfo search_channels;
+      ChannelsInfo url_channels;
+    };
+    
+ 
+    reader ChannelsProfileReader<ChannelsProfile>
+    {
+      version;
+      create_time;
+      history_time;
+      ignore_fraud_time;
+      last_request_time;
+      
+      list<ColoTimestampReader> colo_ts_list;
+      
+      ChannelsInfoReader context_channels;
+      ChannelsInfoReader page_channels;
+      ChannelsInfoReader search_channels;
+      ChannelsInfoReader url_channels;
+    };
+    
+  }
+}

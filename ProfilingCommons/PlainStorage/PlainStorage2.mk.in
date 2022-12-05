@@ -1,0 +1,12 @@
+@plainstorage2_deps@
+
+sources := \
+  File.cpp \
+  FileLayer.cpp \
+  MemLayer.cpp \
+  FragmentLayer.cpp \
+  DefaultAllocatorLayer.cpp
+
+target := PlainStorage2
+
+@plainstorage2_post@

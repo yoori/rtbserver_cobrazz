@@ -1,0 +1,4 @@
+@xsltransformadminexe_deps@
+sources := XslTransformAdmin.cpp
+target := XslTransformAdmin
+@xsltransformadminexe_post@

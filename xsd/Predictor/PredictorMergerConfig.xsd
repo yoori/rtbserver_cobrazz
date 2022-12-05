@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:xse="http://www.codesynthesis.com/xmlns/xml-schema-extension"
+            xmlns:lib="http://www.codesynthesis.com/xmlns/library"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+<xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+<xsd:annotation>
+  <xsd:documentation>
+    Predictor merger XML configuration file
+  </xsd:documentation>
+</xsd:annotation>
+
+<xsd:element name="MergerConfiguration" type="MergerConfigurationType"/>
+
+<xsd:complexType name="MergerConfigurationType">
+  <xsd:sequence>
+     <xsd:element name="Logger" type="ErrorLoggerType"/>
+     <xsd:element name="Impression" type="InputLogsType"/>
+     <xsd:element name="Click" type="InputLogsType"/>
+     <xsd:element name="Action" type="InputLogsType"/>
+  </xsd:sequence>
+  <xsd:attribute name="output_path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Output path for PRImpression files.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="max_timeout" type="xsd:nonNegativeInteger" use="optional" default="3600">
+    <xsd:annotation>
+      <xsd:documentation>Max timeout between two logs types (seconds).</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="log_days_to_keep" type="xsd:nonNegativeInteger" use="optional" default="90">
+    <xsd:annotation>
+      <xsd:documentation>Number of days to keep processed logs.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="sleep_timeout" type="xsd:nonNegativeInteger" use="optional" default="300">
+    <xsd:annotation>
+      <xsd:documentation>Sleep timeout between merge cycles.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+
+<xsd:complexType name="InputLogsType">
+  <xsd:attribute name="path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Log path.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="from" type="xsd:integer" use="optional" default="-1">
+    <xsd:annotation>
+      <xsd:documentation>
+        Processing 'from' parameter (in hours, relative to current time).
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="to" type="xsd:integer" use="optional" default="4">
+    <xsd:annotation>
+      <xsd:documentation>
+        Processing 'to' parameter (in hours, relative to current time).
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+</xsd:schema>
+

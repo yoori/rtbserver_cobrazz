@@ -1,0 +1,175 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      User Info Manager Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="UserInfoManagerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10101">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoManagerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoManagerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="UserInfoManagerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="UserInfoManagerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>     
+      <xsd:element name="updateParams" type="UserInfoManagerUpdateParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Fetching new data and data changes.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="profilesCleanupParams" type="ProfilesCleanupParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define user profiles clean up process.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="matchParams" type="MatchParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define user profiles session timeout.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="storage" type="UserInfoManagerStorageType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            storage usage configuration
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilesCleanupParamsType">
+    <xsd:attribute name="life_time" type="xsd:positiveInteger" default="180">
+      <xsd:annotation>
+        <xsd:documentation>
+          Life time of profile for one user in days
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="temp_life_time" type="xsd:positiveInteger" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Life time of temporary profile for one user in minutes
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="clean_time" type="NoLeadingTrailingSpaces" use="optional" default="00:01">
+      <xsd:annotation>
+        <xsd:documentation>
+          Time of cleaning profile
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="clean_user_profiles" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoManagerUpdateParamsType">
+    <xsd:attribute name="update_period" type="xsd:positiveInteger" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of getting channel rules from Campaign Server
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="MatchParamsType">
+    <xsd:attribute name="session_timeout" type="xsd:positiveInteger" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="repeat_trigger_timeout" type="xsd:nonNegativeInteger" default="60">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoManagerStorageType">
+    <xsd:complexContent>
+      <xsd:extension base="StorageType">
+        <xsd:attribute name="max_add_undumped_size" type="xsd:positiveInteger" default="300">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by Add storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="max_temp_undumped_size" type="xsd:positiveInteger" default="300">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by Temp storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="max_history_undumped_size" type="xsd:positiveInteger" default="300">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by History storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="max_base_undumped_size" type="xsd:positiveInteger" default="3072">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by Base storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="max_freq_cap_undumped_size" type="xsd:positiveInteger" default="3072">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by FreqCap storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+</xsd:schema>

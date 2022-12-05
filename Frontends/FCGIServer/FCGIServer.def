@@ -1,0 +1,34 @@
+osbe_cxx_dep Boost
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep XMLUtility
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+
+osbe_cxx_dep RequestMatchers
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep FCGIServerConfig
+osbe_cxx_dep UtilCommons
+
+osbe_cxx_dep BiddingFrontend
+osbe_cxx_dep DirectoryModule
+osbe_cxx_dep PubPixelFrontend
+osbe_cxx_dep ContentFrontend
+osbe_cxx_dep WebStatFrontend
+osbe_cxx_dep ActionFrontend
+osbe_cxx_dep UserBindFrontend
+osbe_cxx_dep PassFrontend
+osbe_cxx_dep PassPixelFrontend
+osbe_cxx_dep OptoutFrontend
+osbe_cxx_dep AdInstFrontend
+osbe_cxx_dep ClickFrontend
+osbe_cxx_dep ImprTrackFrontend
+osbe_cxx_dep AdFrontend
+
+osbe_cxx_dep FCGI

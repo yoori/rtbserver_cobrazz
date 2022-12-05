@@ -1,0 +1,7 @@
+name="UidChannelSnapshot"
+so_files=UidChannelSnapshot
+
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons
+osbe_cxx_dep PlainStorage3
+osbe_cxx_dep SyncLogs

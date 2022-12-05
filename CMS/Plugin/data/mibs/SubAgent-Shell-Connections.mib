@@ -1,0 +1,503 @@
+SubAgent-Shell-Connections-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Gauge32 FROM SNMPv2-SMI
+  InetPortNumber FROM INET-ADDRESS-MIB
+  connectionsStatesEntry FROM SubAgent-Shell-AdServer-MIB
+  TEXTUAL-CONVENTION FROM SNMPv2-TC
+  OBJECT-GROUP FROM SNMPv2-CONF;
+
+connectionsStatesMIB MODULE-IDENTITY
+  LAST-UPDATED "201507070000Z"  -- July 07, 2015
+  ORGANIZATION "Phluidmedia, Inc."
+  CONTACT-INFO "admin@foros.com"
+  DESCRIPTION  "The MIB module to describe AdCluster connections states."
+  REVISION     "201507070000Z"
+  DESCRIPTION  "First revision"
+  ::= { connectionsStatesEntry 1 }
+
+connectionsStates OBJECT IDENTIFIER ::= { connectionsStatesEntry 2 }
+
+
+-- The service connections table
+
+connectionStatesTable OBJECT-TYPE
+  SYNTAX     SEQUENCE OF ConnectionStatesEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION "Statistics for a TCP/IP states of the cluster connections.
+              There will be one row in this table for each service."
+  ::= { connectionsStates 1 }
+
+connectionStatesEntry OBJECT-TYPE
+  SYNTAX     ConnectionStatesEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION "Statistics for a particular service type."
+  INDEX      { connectionLocalPort,
+               connectionStatsIndex }
+  ::= { connectionStatesTable 1 }
+
+StateName ::= TEXTUAL-CONVENTION
+  STATUS  current
+  DESCRIPTION "The name of TCP/IP state"
+  SYNTAX       INTEGER {
+    unknown(0),
+    synSent(1),
+    synReceived(2),
+    established(3),
+    finWait1(4),
+    finWait2(5),
+    timeWait(6),
+    closeWait(7),
+    lastAck(8),
+    closing(9)
+  }
+
+ConnectionStatesEntry ::= SEQUENCE
+{
+  connectionLocalPort  InetPortNumber,
+  connectionStatsIndex StateName,
+
+  campaignManager           Gauge32,
+  campaignServer            Gauge32,
+  channelController         Gauge32,
+  channelProxy              Gauge32,
+  channelSearchService      Gauge32,
+  channelServer             Gauge32,
+  dictionaryProvider        Gauge32,
+  expressionMatcher         Gauge32,
+  logGeneralizer            Gauge32,
+  proxySyncLogs             Gauge32,
+  requestInfoManager        Gauge32,
+  syncLogs                  Gauge32,
+  statsCollector            Gauge32,
+  userBindServer            Gauge32,
+  userInfoExchanger         Gauge32,
+  userInfoManager           Gauge32,
+  userInfoManagerController Gauge32,
+  userBindController        Gauge32,
+  frontend                  Gauge32,
+  FCGIServer                Gauge32,
+  billingServer             Gauge32
+}
+
+connectionLocalPort OBJECT-TYPE
+  SYNTAX      InetPortNumber
+  MAX-ACCESS  not-accessible
+  STATUS      current
+  DESCRIPTION "The local port number for this Frontend connection."
+   ::= { connectionStatesEntry 1 }
+
+connectionStatsIndex OBJECT-TYPE
+  SYNTAX      StateName
+  MAX-ACCESS  not-accessible
+  STATUS      current
+  DESCRIPTION "TCP/IP state name"
+  ::= { connectionStatesEntry 2 }
+
+campaignManager OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for campaign manager CORBA connections."
+  ::= { connectionStatesEntry 3 }
+
+campaignServer OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for campaign server CORBA connections."
+  ::= { connectionStatesEntry 4 }
+
+channelController OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for channel controller CORBA connections."
+  ::= { connectionStatesEntry 5 }
+
+channelProxy OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for channelProxy CORBA connections."
+  ::= { connectionStatesEntry 6 }
+
+channelSearchService OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for channel search service CORBA connections."
+  ::= { connectionStatesEntry 7 }
+
+channelServer OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for channel server CORBA connections."
+  ::= { connectionStatesEntry 8 }
+
+dictionaryProvider OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for dictionary provider CORBA connections."
+  ::= { connectionStatesEntry 9 }
+
+expressionMatcher OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for expression matcher CORBA connections."
+  ::= { connectionStatesEntry 10 }
+
+logGeneralizer OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for logGeneralizer CORBA connections."
+  ::= { connectionStatesEntry 11 }
+
+proxySyncLogs OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for proxySyncLogs CORBA connections."
+  ::= { connectionStatesEntry 17 }
+
+requestInfoManager OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for requestInfoManager CORBA connections."
+  ::= { connectionStatesEntry 18 }
+
+syncLogs OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for syncLogs CORBA connections."
+  ::= { connectionStatesEntry 19 }
+
+statsCollector OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for statsCollector CORBA connections."
+  ::= { connectionStatesEntry 20 }
+
+userBindServer OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for userBindServer CORBA connections."
+  ::= { connectionStatesEntry 21 }
+
+userInfoExchanger OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for userInfoExchanger CORBA connections."
+  ::= { connectionStatesEntry 22 }
+
+userInfoManager OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for userInfoManager CORBA connections."
+  ::= { connectionStatesEntry 23 }
+
+userInfoManagerController OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for userInfoManagerController CORBA connections."
+  ::= { connectionStatesEntry 24 }
+
+userBindController OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Counters of TCP/IP states for userBindController CORBA connections."
+  ::= { connectionStatesEntry 25 }
+
+frontend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "TCP/IP states counters for HTTP frontend."
+  ::= { connectionStatesEntry 26 }
+
+FCGIServer OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "TCP/IP states counters for FCGIServer."
+  ::= { connectionStatesEntry 27 }
+
+billingServer OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "TCP/IP states counters for billingServer CORBA connections."
+  ::= { connectionStatesEntry 28 }
+
+connectionsStatesGroup OBJECT-GROUP
+  OBJECTS
+  {
+    campaignManager,
+    campaignServer,
+    channelController,
+    channelProxy,
+    channelSearchService,
+    channelServer,
+    dictionaryProvider,
+    expressionMatcher,
+    logGeneralizer,
+    proxySyncLogs,
+    requestInfoManager,
+    syncLogs,
+    statsCollector,
+    userBindServer,
+    userInfoExchanger,
+    userInfoManager,
+    userInfoManagerController,
+    userBindController,
+    frontend,
+
+    campaignManagerAvgRecv,
+    campaignManagerAvgSend,
+    campaignManagerAvgMaxRecv,
+    campaignManagerAvgMaxSend,
+    channelServerAvgRecv,
+    channelServerAvgSend,
+    channelServerAvgMaxRecv,
+    channelServerAvgMaxSend,
+    userBindServerAvgRecv,
+    userBindServerAvgSend,
+    userBindServerAvgMaxRecv,
+    userBindServerAvgMaxSend,
+    feUserInfoManagerAvgRecv,
+    feUserInfoManagerAvgSend,
+    feUserInfoManagerAvgMaxRecv,
+    feUserInfoManagerAvgMaxSend,
+    feCampaignManagerAvgRecv,
+    feCampaignManagerAvgSend,
+    feCampaignManagerAvgMaxRecv,
+    feCampaignManagerAvgMaxSend,
+    feChannelServerAvgRecv,
+    feChannelServerAvgSend,
+    feChannelServerAvgMaxRecv,
+    feChannelServerAvgMaxSend,
+    feUserBindServerAvgRecv,
+    feUserBindServerAvgSend,
+    feUserBindServerAvgMaxRecv,
+    feUserBindServerAvgMaxSend
+
+  }
+  STATUS      current
+  DESCRIPTION "A collection of objects providing information
+              about the connections activity."
+
+  ::= { connectionsStatesEntry 3 }
+
+campaignManagerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for input CORBA connections to CampaignManager."
+  ::= { connectionsStatesEntry 4 }
+
+campaignManagerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for input CORBA connections to CampaignManager."
+  ::= { connectionsStatesEntry 5 }
+
+campaignManagerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for input CORBA connections to CampaignManager."
+  ::= { connectionsStatesEntry 6 }
+
+campaignManagerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for input CORBA connections to CampaignManager."
+  ::= { connectionsStatesEntry 7 }
+
+channelServerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for input CORBA connections to ChannelServer."
+  ::= { connectionsStatesEntry 8 }
+
+channelServerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for input CORBA connections to ChannelServer."
+  ::= { connectionsStatesEntry 9 }
+
+channelServerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for input CORBA connections to ChannelServer."
+  ::= { connectionsStatesEntry 10 }
+
+channelServerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for input CORBA connections to ChannelServer."
+  ::= { connectionsStatesEntry 11 }
+
+userBindServerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for input CORBA connections to UserBindServer."
+  ::= { connectionsStatesEntry 12 }
+
+userBindServerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for input CORBA connections to UserBindServer."
+  ::= { connectionsStatesEntry 13 }
+
+userBindServerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for input CORBA connections to UserBindServer."
+  ::= { connectionsStatesEntry 14 }
+
+userBindServerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for input CORBA connections to UserBindServer."
+  ::= { connectionsStatesEntry 15 }
+
+
+feUserInfoManagerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for frontend connections to UserInfoManager."
+  ::= { connectionsStatesEntry 50 }
+
+feUserInfoManagerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for frontend connections to UserInfoManager."
+  ::= { connectionsStatesEntry 51 }
+
+feUserInfoManagerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for frontend connections to UserInfoManager."
+  ::= { connectionsStatesEntry 52 }
+
+feUserInfoManagerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for frontend connections to UserInfoManager."
+  ::= { connectionsStatesEntry 53 }
+
+feCampaignManagerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for frontend connections to CampaignManager."
+  ::= { connectionsStatesEntry 54 }
+
+feCampaignManagerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for frontend connections to CampaignManager."
+  ::= { connectionsStatesEntry 55 }
+
+feCampaignManagerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for frontend connections to CampaignManager."
+  ::= { connectionsStatesEntry 56 }
+
+feCampaignManagerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for frontend connections to CampaignManager."
+  ::= { connectionsStatesEntry 57 }
+
+feChannelServerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for frontend connections to ChannelServer."
+  ::= { connectionsStatesEntry 58 }
+
+feChannelServerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for frontend connections to ChannelServer."
+  ::= { connectionsStatesEntry 59 }
+
+feChannelServerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for frontend connections to ChannelServer."
+  ::= { connectionsStatesEntry 60 }
+
+feChannelServerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for frontend connections to ChannelServer."
+  ::= { connectionsStatesEntry 61 }
+
+feUserBindServerAvgRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of received bytes for frontend connections to UserBindServer."
+  ::= { connectionsStatesEntry 62 }
+
+feUserBindServerAvgSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average value of sent bytes for frontend connections to UserBindServer."
+  ::= { connectionsStatesEntry 63 }
+
+feUserBindServerAvgMaxRecv OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum received bytes values for frontend connections to UserBindServer."
+  ::= { connectionsStatesEntry 64 }
+
+feUserBindServerAvgMaxSend OBJECT-TYPE
+  SYNTAX Gauge32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The average of 10% maximum sent bytes values for frontend connections to UserBindServer."
+  ::= { connectionsStatesEntry 65 }
+
+
+END

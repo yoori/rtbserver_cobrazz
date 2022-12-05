@@ -1,0 +1,12 @@
+@userbindcontrollerexe_deps@
+
+sources := \
+  UserBindControllerMain.cpp \
+  UserBindControllerImpl.cpp
+
+corba_skeleton_idls := UserBindController.idl
+corba_idl_includes := .
+
+target := UserBindController
+
+@userbindcontrollerexe_post@

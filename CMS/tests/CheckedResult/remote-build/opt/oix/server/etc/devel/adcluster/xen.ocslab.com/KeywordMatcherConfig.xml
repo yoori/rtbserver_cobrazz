@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/jurij_kuznecov/projects/foros/server/trunk/xsd/RequestInfoSvcs/KeywordMatcherConfig.xsd">
+  <cfg:KeywordMatcherConfig>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10108">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="KeywordMatcher" name="KeywordMatcher"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/log/KeywordMatcher/KeywordMatcher">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:UserChunksConfig chunks_prefix="UserKeywords_" chunks_root="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/cache/UserKeywords/"/>
+    <cfg:RequestChunksConfig chunks_prefix="RequestKeywords_" chunks_root="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/cache/RequestKeywords/"/>
+    <cfg:LogProcessing threads="4">
+      <cfg:InLogs log_root="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/log/KeywordMatcher/In/" check_logs_period="10">
+        <cfg:ChannelMatchRequest/>
+      </cfg:InLogs>
+      <cfg:OutLogs log_root="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/log/KeywordMatcher/Out/">
+        <cfg:KeywordInventory period="60"/>
+      </cfg:OutLogs>
+    </cfg:LogProcessing>
+  </cfg:KeywordMatcherConfig>
+</cfg:AdConfiguration>

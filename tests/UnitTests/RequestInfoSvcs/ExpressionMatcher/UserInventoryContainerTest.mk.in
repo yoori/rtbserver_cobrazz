@@ -1,0 +1,7 @@
+@userinventorycontainertestexe_deps@
+
+sources := UserInventoryContainerTest.cpp
+target := UserInventoryContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

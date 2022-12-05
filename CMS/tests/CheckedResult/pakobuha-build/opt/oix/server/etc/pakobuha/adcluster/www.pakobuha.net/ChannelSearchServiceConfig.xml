@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/ChannelSearchSvcs/ChannelSearchServiceConfig.xsd">
+  <cfg:ChannelSearchServiceConfig>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10115">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelSearch" name="ChannelSearch"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/ChannelSearchService/ChannelSearchService">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:ChannelControllerCorbaRef name="ChannelManagerController" ref="corbaloc:iiop:www.pakobuha.net:10104/ChannelManagerController"/>
+    <cfg:CampaignServerCorbaRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:www.pakobuha.net:10106/CampaignServer_v24"/>
+    </cfg:CampaignServerCorbaRef>
+    <cfg:NewsCacheControllerCorbaRef name="NewsCacheController">
+      <cfg:Ref ref="corbaloc:iiop:www.pakobuha.net:10126/NewsCacheController"/>
+    </cfg:NewsCacheControllerCorbaRef>
+    <!--Comment the line below to disable support for Asian languages-->
+    <cfg:Polyglot base="/opt/foros/polyglot/dict/"/>
+  </cfg:ChannelSearchServiceConfig>
+</cfg:AdConfiguration>

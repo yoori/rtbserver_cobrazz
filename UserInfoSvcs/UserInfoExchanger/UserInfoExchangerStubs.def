@@ -1,0 +1,4 @@
+name="UserInfoExchangerStubs"
+so_files=UserInfoExchangerStubs
+
+osbe_cxx_feature_dep CORBA

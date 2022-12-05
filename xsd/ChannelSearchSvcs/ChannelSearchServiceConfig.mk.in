@@ -1,0 +1,7 @@
+@channelsearchserviceconfig_deps@
+sources :=
+includes :=
+xsd_files := ChannelSearchServiceConfig.xsd
+xsd_includes := .
+
+@channelsearchserviceconfig_post@

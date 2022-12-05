@@ -1,0 +1,4 @@
+name="RequestInfoManagerStubs"
+so_files=RequestInfoManagerStubs
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep CORBACommons

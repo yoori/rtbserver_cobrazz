@@ -1,0 +1,15 @@
+@channelproxyexe_deps@
+sources := ChannelProxyImpl.cpp ChannelProxyMain.cpp ChannelProxyImpl_v28.cpp
+
+corba_skeleton_idls := \
+  ChannelProxy.idl \
+  ChannelProxy_v28.idl \
+  ChannelUpdate_v28.idl \
+
+
+corba_idl_includes := .
+
+target := ChannelProxy
+
+@channelproxyexe_post@
+

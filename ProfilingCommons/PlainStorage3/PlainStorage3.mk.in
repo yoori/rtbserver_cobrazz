@@ -1,0 +1,13 @@
+@plainstorage3_deps@
+
+sources := \
+  FileController.cpp \
+  RandomAccessFile.cpp \
+  FileReader.cpp \
+  FileWriter.cpp \
+  LoadingProgressCallbackBase.cpp \
+  LoadingProgressCallback.cpp
+
+target := PlainStorage3
+
+@plainstorage3_post@

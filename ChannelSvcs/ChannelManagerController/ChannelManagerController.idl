@@ -1,0 +1,50 @@
+
+#ifndef AD_CHANNEL_SVCS_CHANNEL_MANAGER_CONTROLLER_IDL_
+#define AD_CHANNEL_SVCS_CHANNEL_MANAGER_CONTROLLER_IDL_
+
+#include <ChannelSvcs/ChannelCommons/ChannelCommons.idl>
+#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.idl>
+#include <ChannelSvcs/ChannelCommons/ChannelServer.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+    /* server data module*/
+    module Protected
+    {
+      struct ChannelServerDescription
+      {
+        ChannelServer channel_server;
+      };
+
+      typedef sequence<ChannelServerDescription> ChannelServerDescriptionSeq;
+      typedef sequence<ChannelServerDescriptionSeq> GroupDescriptionSeq;
+    };
+
+    /** ChannelServer Session */
+    valuetype ChannelServerSession supports ChannelServerBase
+    {
+      private Protected::GroupDescriptionSeq channel_servers;
+    };
+
+    abstract interface ChannelLoadSessionBase
+    {
+      ChannelLoadSession get_load_session()
+        raises(ImplementationException);
+    };
+
+    /**
+     * ChannelManager doesn't doing anything now 
+     */
+    interface ChannelManagerController : ChannelLoadSessionBase
+    {
+      ChannelServerSession get_channel_session()
+        raises(ImplementationException);
+    };
+    
+  }; // module ChannelSvcs
+  
+}; // module AdServer
+
+#endif //AD_CHANNEL_SVCS_CHANNEL_MANAGER_CONTROLLER_IDL_

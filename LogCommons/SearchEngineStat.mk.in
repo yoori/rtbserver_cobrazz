@@ -1,0 +1,6 @@
+@searchenginestat_deps@
+sources := SearchEngineStat.cpp
+
+includes := .
+@searchenginestat_post@
+

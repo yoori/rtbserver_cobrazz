@@ -1,0 +1,3 @@
+name="AutoTestsConfig"
+so_files=AutoTestsConfig
+osbe_cxx_feature_dep XSDTree

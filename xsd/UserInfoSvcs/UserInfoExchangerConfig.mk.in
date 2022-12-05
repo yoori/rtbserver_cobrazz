@@ -1,0 +1,7 @@
+@userinfoexchangerconfig_deps@
+sources := 
+includes := .
+xsd_files := UserInfoExchangerConfig.xsd
+xsd_includes := xsd
+
+@userinfoexchangerconfig_post@

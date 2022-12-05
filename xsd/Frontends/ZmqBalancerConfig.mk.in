@@ -1,0 +1,8 @@
+@zmqbalancerconfig_deps@
+sources := 
+includes := .
+xsd_files := ZmqBalancerConfig.xsd
+
+xsd_includes := .
+
+@zmqbalancerconfig_post@

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:FeConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:str="http://exslt.org/strings" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/Frontends/FeConfig.xsd">
+  <cfg:CommonFeConfiguration user_agent_filter_path="user_agent_filter.txt" request_domain="dns.rubylan.net" colo_id="1">
+    <cfg:ResponseHeaders>
+      <cfg:Header name="Cache-Control" value="no-store, no-cache"/>
+    </cfg:ResponseHeaders>
+    <cfg:GeoIP path="/usr/share/GeoIP/ipv4.csv"/>
+    <cfg:CampaignServerRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:HostName7:10106/CampaignServer_v25"/>
+    </cfg:CampaignServerRef>
+    <cfg:CampaignManagerRef name="CampaignManager" ref="corbaloc:iiop:localhost:10107/CampaignManager"/>
+    <cfg:UserInfoManagerControllerGroup name="UserInfoManagerControllers">
+      <cfg:Ref ref="corbaloc:iiop:HostName2:10102/UserInfoManagerController_v24"/>
+    </cfg:UserInfoManagerControllerGroup>
+    <cfg:Cookies domain=".rubylan.net" path="/" expires="365">
+      <cfg:ResponseHeader name="P3P" value="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;"/>
+      <cfg:Cookie name="lc" domain=".rubylan.net" path="/" expires="365"/>
+      <cfg:Cookie name="uid" domain=".rubylan.net" path="/" expires="365"/>
+      <cfg:Cookie name="trialoptin" domain=".rubylan.net" path="/" expires="730"/>
+      <cfg:Cookie name="oi_prompt" domain=".rubylan.net" path="/" expires="365"/>
+      <cfg:Cookie name="OPTED_IN" domain=".rubylan.net" path="/" expires="365"/>
+      <cfg:Cookie name="OPTED_OUT" domain=".rubylan.net" path="/" expires="730"/>
+      <cfg:Cookie name="ap" domain=".rubylan.net" path="/" expires="365"/>
+      <cfg:RemoveCookie name="lc" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="lc" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="uid" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="uid" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="trialoptin" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="trialoptin" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="oi_prompt" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="oi_prompt" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="OPTED_IN" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="OPTED_IN" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="ap" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="ap" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="OPTED_OUT" domain=".rubylan.net" path="/"/>
+      <cfg:RemoveCookie name="MARef" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="MARKw" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="MASKw" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="MARKww" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="MASKww" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="sizenotsup" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="ct.pswnd" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="session_activity" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="freq_caps4" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="freq_caps5" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="session_info" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="state_change" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="action_info" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="action_info2" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="v_freq_caps" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="uc_freq_caps" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="last_colo" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="fc" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="ai" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="si" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="vfc" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="ucfc" domain="" path="/services/"/>
+      <cfg:RemoveCookie name="sc" domain="" path="/services/"/>
+    </cfg:Cookies>
+    <cfg:OptOutRemoveCookies>
+      <cfg:Cookie name="MARef"/>
+      <cfg:Cookie name="MARKw"/>
+      <cfg:Cookie name="MASKw"/>
+      <cfg:Cookie name="MARKww"/>
+      <cfg:Cookie name="MASKww"/>
+      <cfg:Cookie name="sizenotsup"/>
+      <cfg:Cookie name="ct.pswnd"/>
+      <cfg:Cookie name="session_activity"/>
+      <cfg:Cookie name="freq_caps4"/>
+      <cfg:Cookie name="freq_caps5"/>
+      <cfg:Cookie name="session_info"/>
+      <cfg:Cookie name="state_change"/>
+      <cfg:Cookie name="action_info"/>
+      <cfg:Cookie name="action_info2"/>
+      <cfg:Cookie name="v_freq_caps"/>
+      <cfg:Cookie name="uc_freq_caps"/>
+      <cfg:Cookie name="last_colo"/>
+      <cfg:Cookie name="fc"/>
+      <cfg:Cookie name="ai"/>
+      <cfg:Cookie name="si"/>
+      <cfg:Cookie name="sc"/>
+      <cfg:Cookie name="vfc"/>
+      <cfg:Cookie name="ucfc"/>
+      <cfg:Cookie name="lc"/>
+      <cfg:Cookie name="uid"/>
+      <cfg:Cookie name="trialoptin"/>
+      <cfg:Cookie name="oi_prompt"/>
+      <cfg:Cookie name="OPTED_IN"/>
+      <cfg:Cookie name="ap"/>
+    </cfg:OptOutRemoveCookies>
+    <cfg:OutdatedCookies>
+      <cfg:Cookie name="session_activity"/>
+      <cfg:Cookie name="freq_caps4"/>
+      <cfg:Cookie name="freq_caps5"/>
+      <cfg:Cookie name="uc_freq_caps"/>
+      <cfg:Cookie name="session_info"/>
+      <cfg:Cookie name="state_change"/>
+      <cfg:Cookie name="last_colo"/>
+    </cfg:OutdatedCookies>
+    <cfg:UserIdConfig cache_size="100000" temp_cache_size="100000" private_key="/opt/foros/server/share/uuid_keys/private.der" public_key="/opt/oix/server/share/uuid_keys/public.der" temp_private_key="/opt/oix/server/share/uuid_keys/private_temp.der" temp_public_key="/opt/oix/server/share/uuid_keys/public_temp.der"/>
+  </cfg:CommonFeConfiguration>
+  <cfg:AdFeConfiguration sign_uid="true" ad_request_profiling="false" log_level="7" session_timeout="30" channel_factory_threads="10" inventory_users_percentage="100" update_period="60">
+    <cfg:UriList>
+      <cfg:Uri path="/services/AdChannelServer"/>
+      <cfg:Uri path="/services/nslookup"/>
+    </cfg:UriList>
+    <cfg:ChannelManagerControllerRefs name="ChannelManagerControllers">
+      <cfg:Ref ref="corbaloc:iiop:HostName11:10104/ChannelManagerController"/>
+    </cfg:ChannelManagerControllerRefs>
+    <!--Comment the line below to disable support for Asian languages-->
+    <cfg:Polyglot base="/opt/foros/polyglot/dict/"/>
+  </cfg:AdFeConfiguration>
+  <cfg:ContentFeConfiguration log_level="7">
+    <cfg:UriList>
+      <cfg:Uri path="/services/dcreative"/>
+    </cfg:UriList>
+    <cfg:TemplateCache root="/opt/foros/server/var/www/Creatives/" size="52428800" timeout="10"/>
+    <cfg:XsltToken name="ADIMAGE-SERVER" value="http://cv.rubylan.net"/>
+    <cfg:XsltToken name="ADIMAGE-PATH-PREFIX" value="http://cv.rubylan.net/creatives"/>
+  </cfg:ContentFeConfiguration>
+  <cfg:ClickFeConfiguration log_level="7">
+    <cfg:UriList>
+      <cfg:Uri path="/services/AdClickServer/"/>
+    </cfg:UriList>
+  </cfg:ClickFeConfiguration>
+  <cfg:ImprTrackFeConfiguration log_level="7" track_pixel_path="/opt/foros/server/var/www/aux/pt.gif">
+    <cfg:UriList>
+      <cfg:Uri path="/services/ImprTrack/pt.gif"/>
+    </cfg:UriList>
+  </cfg:ImprTrackFeConfiguration>
+  <cfg:ActionFeConfiguration log_level="7" track_pixel_path="/opt/foros/server/var/www/aux/pt.gif">
+    <cfg:UriList>
+      <cfg:Uri path="/services/ActionServer"/>
+    </cfg:UriList>
+  </cfg:ActionFeConfiguration>
+  <cfg:OptOutFeConfiguration log_level="7" log_ip="false">
+    <cfg:UriList>
+      <cfg:Uri path="/services/OO"/>
+    </cfg:UriList>
+  </cfg:OptOutFeConfiguration>
+  <cfg:DiscoverFeConfiguration log_level="7" self_ref="http://dns.rubylan.net" xslt_root="/opt/foros/server/var/www/WebwiseDiscover/templates" version="2.0">
+    <cfg:UriList>
+      <cfg:Uri path="/services/discover"/>
+      <cfg:Uri path="/services/discover/main"/>
+      <cfg:Uri path="/services/discover/banner"/>
+    </cfg:UriList>
+    <cfg:ClickUriList>
+      <cfg:Uri path="/services/discover/click"/>
+    </cfg:ClickUriList>
+    <cfg:TrackUriList>
+      <cfg:Uri path="/services/discover/dfc" marker="ufc"/>
+      <cfg:Uri path="/services/discover/dit"/>
+    </cfg:TrackUriList>
+    <cfg:NewsCacheControllerRefs name="NewsCacheController">
+      <cfg:Ref ref="corbaloc:iiop:HostName8:10126/NewsCacheController"/>
+    </cfg:NewsCacheControllerRefs>
+    <cfg:NewsItemServerRefs name="NewsItemServer">
+      <cfg:Ref ref="corbaloc:iiop:HostName8:10124/NewsItemServer_v24"/>
+    </cfg:NewsItemServerRefs>
+    <cfg:ContentControl max_recommendations="30" max_news_number="30">
+      <cfg:XsltToken name="ADIMAGE_SERVER" value="http://cv.rubylan.net"/>
+      <cfg:XsltToken name="DISCOVER_SERVER" value="http://dns.rubylan.net/services/discover"/>
+      <cfg:XsltToken name="ADIMAGE-SERVER" value="http://cv.rubylan.net"/>
+      <cfg:XsltToken name="DISCOVER-SERVER" value="http://dns.rubylan.net/services/discover"/>
+    </cfg:ContentControl>
+  </cfg:DiscoverFeConfiguration>
+  <cfg:PassFeConfiguration log_level="7" domain="http://dns.rubylan.net" secure_domain="https://dns.rubylan.net" track_pixel_path="/opt/foros/server/var/www/aux/pt.gif">
+    <cfg:UriList>
+      <cfg:Uri path="/services/passback"/>
+    </cfg:UriList>
+    <cfg:TrackUriList>
+      <cfg:Uri path="/services/passback.gif"/>
+    </cfg:TrackUriList>
+  </cfg:PassFeConfiguration>
+  <cfg:UpFeConfiguration log_level="7" self_ref="http://dns.rubylan.net" xslt_file="/opt/foros/server/var/www/WebwiseDiscover/templates/user-prefs/uprefs.xsl" up_token_timeout="1800">
+    <cfg:UriList>
+      <cfg:Uri path="/services/preferences"/>
+    </cfg:UriList>
+    <cfg:DataUriList>
+      <cfg:Uri path="/services/userdata"/>
+    </cfg:DataUriList>
+    <cfg:DataControl max_profile_size="10000" max_params="20" max_name_len="20" max_value_len="1000"/>
+    <cfg:ContentControl>
+      <cfg:XsltToken name="ADIMAGE_SERVER" value="http://cv.rubylan.net"/>
+    </cfg:ContentControl>
+  </cfg:UpFeConfiguration>
+  <cfg:AdOpConfiguration nouid_cache_control="max-age=432000, max-stale=432000" optin_cache_control="no-store, no-cache, must-revalidate" log_level="7" nouid_script="/opt/foros/server/var/www/PageSense/http/tag/pb.js" optin_script="/opt/oix/server/var/www/PageSense/http/tag/1.js">
+    <cfg:UriList>
+      <cfg:Uri path="/services/adop"/>
+    </cfg:UriList>
+  </cfg:AdOpConfiguration>
+  <cfg:WebStatFeConfiguration log_level="7" pixel_path="/opt/foros/server/var/www/aux/pt.gif">
+    <cfg:UriList>
+      <cfg:Uri path="/services/sl.gif"/>
+    </cfg:UriList>
+  </cfg:WebStatFeConfiguration>
+</cfg:FeConfiguration>

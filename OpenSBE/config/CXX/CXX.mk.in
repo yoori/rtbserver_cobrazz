@@ -1,0 +1,188 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : CXX.post.rules.in
+# Author : Konstantin Sadov <Konstantin.Sadov@gmail.com>
+
+ifndef _CXX_MK_
+define _CXX_MK_
+1
+endef
+
+libname ?= $(target)
+
+CXX_PARSE_LD_LIBRARY_PATH = $(addprefix -L,$(subst :, ,$(LD_LIBRARY_PATH)))
+
+_objs_rule = $(addsuffix .$(cxx_type)$(OBJ_EXT),$(basename $1))
+_objs := $(foreach _source,$(sources),$(call _objs_rule,$(_source)))
+_objs_deps_rule = $(addsuffix .$(cxx_type)$(DEP_EXT),$(basename $1))
+_objs_deps := $(foreach _source,$(sources),$(call _objs_deps_rule,$(_source)))
+#$(warning objs: "$(_objs)" objs_deps: "$(_objs_deps)")
+
+_link_target := $(firstword $(cxx_target))
+_link_dep := $(and $(_link_target),$(_link_target).link$(DEP_EXT))
+
+_ph_export := no
+_ph_prepare := no
+_ph_effective_flags := $(filter-out -I%,$(CXX) $(CXX_FLAGS) $(CPP_FLAGS))
+_ph_source_file := $(strip $(precompiled_header))
+_ph_dep :=
+ifneq (@CXX_PH_SUPPORTED@,)
+ifeq ($(_ph_source_file),)
+  ifeq ($(origin precompiled_header),undefined)
+    ifneq ($(strip $(PRECOMPILED_HEADER)),)
+      # check $(PRECOMPILED_HEADER_FLAGS) and use $(PRECOMPILED_HEADER)
+
+      ifneq ($(_ph_effective_flags),$(PRECOMPILED_HEADER_FLAGS))
+        $(warning Precompiled header to use was compiled with different compiler flags)
+      endif
+      _ph_file := $(PRECOMPILED_HEADER)
+    endif
+  else
+    # Don't use precompiled header and stop using it
+
+    _ph_export := yes
+  endif
+else
+  # Prepare, use and export $(precompiled_header)
+
+  _ph_prepare := yes
+  _ph_export := yes
+  _ph_file := @CXX_PH_FILE@
+  _ph_dep := $(addsuffix $(DEP_EXT),$(basename $(_ph_file)))
+endif
+endif
+
+ifneq ($(_ph_file),)
+_ph_result := @CXX_PH_RESULT@
+_ph_usage := @CXX_PH_USAGE@
+_ph_flags := @CXX_PH_FLAGS@
+else
+_ph_result :=
+_ph_usage :=
+_ph_flags :=
+endif
+#$(warning _ph_export: "$(_ph_export)" _ph_prepare: "$(_ph_prepare)" _ph_file: "$(_ph_file)" _ph_effective_flags: "$(_ph_effective_flags)" _ph_source_file: "$(_ph_source_file)" _ph_dep: "$(_ph_dep)" _ph_result: "$(_ph_result)" _ph_usage: "$(_ph_usage)" _ph_flags: "$(_ph_flags)")
+
+_deps := $(_deps) $(_objs_deps) $(_link_dep) $(_ph_dep)
+
+_includes := $(foreach _path,$(includes),-I$(top_srcdir)/$(_path))
+CPP_FLAGS := $(call _suppress_dup,-I,$(_includes) $(CPP_FLAGS))
+LD_FLAGS := $(call _suppress_dup,-L,$(LD_FLAGS))
+_link_files_path := $(addprefix $(top_builddir)/$(_link_files_dir)/,$(cxx_target))
+
+ifneq ($(_rules_type),)
+include $(osbe_builddir)/config/CXX/RulesGen.mk
+
+.PHONY : rules
+
+all : rules
+
+rules :
+	perl -w "$(osbe_srcdir)/bin/rulesgen.pl" -$(_rules_type)
+endif
+
+ifneq ($(cxx_target),)
+all : $(cxx_target) $(_link_dep)
+
+$(cxx_target) : | $(_deps_prerequisites)
+
+@CD_TB@$(_link_dep)@CD_TE@ : $(_link_target)
+	@CD_CB@
+	@CD_LB@$(LINK_DEP) $(_link_target) $(LD_FLAGS) $(LIBS) $(EXTERNAL_LIBS) $(LINK_DEP_FLAGS)@CD_LE@
+	@CD_CE@
+
+else
+all : $(_deps_prerequisites)
+endif
+
+.PHONY : clean_cxx cleanall_cxx
+
+clean : clean_cxx
+
+clean_cxx :
+	-$(RM) $(RM_FLAGS) $(_ph_file) $(_ph_result) $(_objs) $(_deps)
+
+cleanall : cleanall_cxx
+
+cleanall_cxx :
+	-$(RM) $(RM_FLAGS) $(cxx_target) $(_link_files_path)
+ifneq ($(_rules_type),)
+	-$(RM) $(RM_FLAGS) $(rg_expanded_rules_path).$(_rules_type).pre.rules
+endif
+
+define _objs_rules
+$(call _objs_deps_rule,$(1)) : $(1)
+
+$(call _objs_rule,$(1)) : $(1) $(call _objs_deps_rule,$(1))
+
+endef
+
+$(foreach _source,$(sources),$(eval $(call _objs_rules,$(_source))))
+
+@CD_TB@$(_objs_deps)@CD_TE@ :
+	@CD_CB@
+	@CD_LB@$(CXX_DEP) $@ $(CPP_FLAGS) $(_ph_usage) $<@CD_LE@
+	@CD_CE@
+
+@CD_TB@$(_objs)@CD_TE@ :
+	@CD_CB@
+	@CD_LB@$(CXX) -c $(CXX_FLAGS) $(CPP_FLAGS) $(_ph_usage) -o $@ $<@CD_LE@
+	@CD_CE@
+
+ifneq ($(_ph_file),)
+# Use precompiled header
+
+$(_objs_deps) : $(_ph_result)
+
+ifeq ($(_ph_prepare),yes)
+# Prepare precompiled header
+
+all : $(_ph_result)
+
+@CD_TB@$(_ph_result)@CD_TE@ : $(_ph_file) $(_ph_dep)
+	@CD_CB@
+	@CD_LB@$(CXX) -c $(_ph_flags) $(CXX_FLAGS) $(CPP_FLAGS) -o $@ $<@CD_LE@
+	@CD_CE@
+
+@CD_TB@$(_ph_dep)@CB_TE@ : $(_ph_file)
+	@CD_CB@
+	@CD_LB@$(CXX_DEP) $@ $(_ph_flags) $(CPP_FLAGS) $<@CD_LE@
+	@CD_CE@
+
+@CD_TB@$(_ph_file)@CD_TE@ : $(_ph_source_file)
+	@CD_CB@
+	@CD_LB@@echo "#include <$(abspath $<)>" >$@@CD_LE@
+	@CD_CE@
+else
+# Use prepared precompiled header
+
+$(_ph_result) : $(_ph_file)
+	@echo Precompiled header $(_ph_file) to use is not compiled >&2 ; exit 1
+endif
+endif
+
+ifndef OSBE_MAKE_CLEAN_GOAL
+$(foreach _dep,$(wildcard $(_deps)),$(eval include $(_dep)))
+endif
+
+# to be able to run C++ code producing tools BEFORE any dep-files generation
+$(_deps) : | $(_deps_prerequisites)
+
+endif #_CXX_MK_

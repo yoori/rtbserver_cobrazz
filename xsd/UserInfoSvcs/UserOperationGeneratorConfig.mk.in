@@ -1,0 +1,7 @@
+@useroperationgeneratorconfig_deps@
+sources := 
+includes := .
+xsd_files := UserOperationGeneratorConfig.xsd
+xsd_includes := xsd
+
+@useroperationgeneratorconfig_post@

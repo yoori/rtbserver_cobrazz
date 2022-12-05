@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      RequestInfoManager Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="RequestInfoManagerConfig" type="RequestInfoManagerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="RequestInfoManagerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP support config for RequestInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for RequestInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserActionChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserCampaignReachChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserFraudProtectionChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="PassbackChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserSiteReachChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="TagRequestGroupingConfig"
+        type="TagRequestGroupingConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="BidChunksConfig" type="ChunksConfigType"
+        minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Profiling" type="ProfilingType" minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Billing" type="BillingType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="LogProcessing" type="LogProcessingType">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType" minOccurs="1"/>
+
+      <xsd:element name="UserInfoManagerControllerGroup"
+        type="MultiCorbaObjectRefType"
+        minOccurs="1"
+        maxOccurs="2"/>
+
+    </xsd:sequence>
+
+    <xsd:attribute name="action_ignore_time" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          in seconds, this value described in https://confluence.ocslab.com/display/ADS/Action+Tracking+II
+          by default AdServer use 60.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="use_referrer_site_referrer_stats" type="UseReferrerType" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Referrer logging in SitesReferrerStats tables.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required"/>
+
+    <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="services_count" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChunksConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of user info chunks (file pathes, file attributes)
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="chunks_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="TagRequestGroupingConfigType">
+    <xsd:complexContent>
+      <xsd:extension base="ChunksConfigType">
+        <xsd:attribute name="merge_time_bound" type="xsd:positiveInteger" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="ProfilingEndpointType"
+        minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="user_id_private_key" type="xsd:string" use="required"/>
+    <xsd:attribute name="sending_window" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_pool_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="repeat_trigger_timeout" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingType">
+    <xsd:sequence>
+      <xsd:element name="InLogs" type="InLogsType"/>
+      <xsd:element name="OutLogs" type="OutLogsType"/>
+    </xsd:sequence>
+    <xsd:attribute name="cache_blocks" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="InLogsType">
+    <xsd:sequence>
+      <xsd:element name="Request" type="InLogType"/>
+      <xsd:element name="Impression" type="InLogType"/>
+      <xsd:element name="Click" type="InLogType"/>
+      <xsd:element name="AdvertiserAction" type="InLogType"/>
+      <xsd:element name="PassbackImpression" type="InLogType"/>
+      <xsd:element name="TagRequest" type="InLogType"/>
+      <xsd:element name="RequestOperation" type="InLogType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="check_logs_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="10"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="OutLogsType">
+    <xsd:sequence>
+      <xsd:element name="CreativeStat" type="LogFlushPolicyType"/>
+      <xsd:element name="UserProperties" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelPerformance" type="LogFlushPolicyType"/>
+      <xsd:element name="SiteChannelStat" type="LogFlushPolicyType"/>
+      <xsd:element name="ExpressionPerformance" type="LogFlushPolicyType"/>
+      <xsd:element name="CcgKeywordStat" type="LogFlushPolicyType"/>
+      <xsd:element name="CmpStat" type="LogFlushPolicyType"/>
+      <xsd:element name="ActionStat" type="LogFlushPolicyType"/>
+      <xsd:element name="ChannelImpInventory" type="LogFlushPolicyType"/>
+
+      <xsd:element name="CcgUserStat" type="LogFlushPolicyType"/>
+      <xsd:element name="CcUserStat" type="LogFlushPolicyType"/>
+      <xsd:element name="CampaignUserStat" type="LogFlushPolicyType"/>
+      <xsd:element name="AdvertiserUserStat" type="LogFlushPolicyType"/>
+
+      <xsd:element name="PassbackStat" type="LogFlushPolicyType"/>
+
+      <xsd:element name="SiteUserStat" type="LogFlushPolicyType"/>
+      <xsd:element name="SiteReferrerStat" type="LogFlushPolicyType"/>
+      <xsd:element name="PageLoadsDailyStat" type="LogFlushPolicyType"/>
+      <xsd:element name="TagPositionStat" type="LogFlushPolicyType"/>
+      <xsd:element name="CampaignReferrerStat" type="LogFlushPolicyType"/>
+
+      <xsd:element name="ResearchAction" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ResearchBid" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ResearchImpression" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="ResearchClick" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="BidCostStat" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="RequestOperation" type="RequestOperationFlushPolicyType"
+        minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="ConsiderAction" type="LogFlushPolicyType"/>
+      <xsd:element name="ConsiderClick" type="LogFlushPolicyType"/>
+      <xsd:element name="ConsiderImpression" type="LogFlushPolicyType"/>
+      <xsd:element name="ConsiderRequest" type="LogFlushPolicyType"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="notify_impressions" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="notify_revenue" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="InLogType">
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+    <xsd:attribute name="priority" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingEndpointType">
+    <xsd:attribute name="url" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="RequestOperationFlushPolicyType">
+    <xsd:complexContent>
+      <xsd:extension base="LogFlushPolicyType">
+        <xsd:attribute name="chunks_count" type="xsd:positiveInteger" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="BillingType">
+    <xsd:sequence>
+      <xsd:element name="BillingServerCorbaRef" type="MultiCorbaObjectRefType" minOccurs="1" maxOccurs="1"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="storage_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="dump_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="send_delayed_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+</xsd:schema>

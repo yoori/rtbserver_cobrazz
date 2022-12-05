@@ -1,0 +1,6 @@
+@filereceiver_deps@
+sources := FileReceiver.cpp
+
+includes := .
+@filereceiver_post@
+

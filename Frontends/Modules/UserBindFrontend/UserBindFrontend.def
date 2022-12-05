@@ -1,0 +1,15 @@
+name="UserBindFrontend"
+so_files=UserBindFrontend
+
+osbe_cxx_dep Stream
+osbe_cxx_dep http
+osbe_cxx_dep CORBACommons
+
+osbe_cxx_dep Polyglot
+
+osbe_cxx_dep Commons
+osbe_cxx_dep UserBindServerStubs
+osbe_cxx_dep RequestMatchers
+
+osbe_cxx_dep FeConfig
+osbe_cxx_dep CommonModule

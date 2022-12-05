@@ -1,0 +1,16 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([Bin])
+#OSBE_CONFIG_SUBDIR([Preload])
+OSBE_CONFIG_SUBDIR([CampaignSvcs])
+OSBE_CONFIG_SUBDIR([Commons])
+#OSBE_CONFIG_SUBDIR([Controlling])
+OSBE_CONFIG_SUBDIR([ChannelSvcs])
+OSBE_CONFIG_SUBDIR([Frontends])
+OSBE_CONFIG_SUBDIR([LogProcessing])
+OSBE_CONFIG_SUBDIR([PlainStorage])
+OSBE_CONFIG_SUBDIR([PlainStorage3])
+OSBE_CONFIG_SUBDIR([ProfilingCommons])
+OSBE_CONFIG_SUBDIR([RequestInfoSvcs])
+OSBE_CONFIG_SUBDIR([UserInfoSvcs])
+

@@ -1,0 +1,11 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  CreativeTemplateArgsTest.mk \
+  SequencePackerTest.mk \
+  DomainManipTest.mk \
+  CampaignSelectionIndexTest.mk \
+  SecTokenTest.mk \
+  CTRProviderTest.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

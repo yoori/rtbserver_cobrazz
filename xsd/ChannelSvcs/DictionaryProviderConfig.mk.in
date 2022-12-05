@@ -1,0 +1,8 @@
+@dictionaryproviderconfig_deps@
+sources :=
+includes := 
+xsd_files := DictionaryProviderConfig.xsd
+xsd_includes := . 
+
+@dictionaryproviderconfig_post@
+

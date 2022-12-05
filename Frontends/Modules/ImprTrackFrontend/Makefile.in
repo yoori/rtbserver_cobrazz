@@ -1,0 +1,8 @@
+@imprtrackfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := ImprTrackFrontend.cpp \
+  RequestInfoFiller.cpp
+
+@imprtrackfrontend_post@

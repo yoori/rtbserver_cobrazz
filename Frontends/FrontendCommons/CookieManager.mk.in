@@ -1,0 +1,6 @@
+@cookiemanager_deps@
+
+sources := CookieManager.cpp
+includes :=
+
+@cookiemanager_post@

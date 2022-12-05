@@ -1,0 +1,46 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v290
+{
+  struct FreqCap
+  {
+    uint fc_id;
+    uint total_impressions;
+    list<uint> last_impressions;
+  };
+
+  autoreader FreqCapReader<FreqCap>;
+  autowriter FreqCapWriter<FreqCap>;
+
+  struct UcFreqCap
+  {
+    string request_id;
+    uint time;
+    list<uint> freq_cap_ids;
+  };
+
+  autoreader UcFreqCapReader<UcFreqCap>;
+  autowriter UcFreqCapWriter<UcFreqCap>;
+
+  struct Profile
+  {
+    list<FreqCap> freq_caps;
+    list<UcFreqCap> uc_freq_caps;
+    list<UcFreqCap> virtual_freq_caps;
+  };
+
+  reader ProfileReader<Profile>
+  {
+    list<FreqCapReader> freq_caps;
+    list<UcFreqCapReader> uc_freq_caps;
+    list<FreqCapReader> virtual_freq_caps;
+  };
+
+  writer ProfileWriter<Profile>
+  {
+    list<FreqCapWriter> freq_caps;
+    list<UcFreqCapWriter> uc_freq_caps;
+    list<FreqCapWriter> virtual_freq_caps;
+  };
+}
+}

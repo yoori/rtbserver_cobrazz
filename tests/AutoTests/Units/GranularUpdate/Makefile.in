@@ -1,0 +1,22 @@
+@autotestsgranularupdateunits_deps@
+
+sources := \
+  ActionGranularUpdateTest.cpp \
+  BehavParamsGranularUpdateTest.cpp \
+  ChannelCategoryGrannularUpdateTest.cpp \
+  ChannelsGrannularUpdateTest.cpp \
+  ColocationGranularUpdateTest.cpp \
+  CreativeCategoryGranularUpdateTest.cpp \
+  CreativeTemplateGranularUpdateTest.cpp \
+  GlobalParamsGranularUpdateTest.cpp \
+  SearchEngineDynamicUpdateTest.cpp \
+  SiteUpdateTest.cpp \
+  TagUpdateTest.cpp \
+  DynamicTriggerListUpdate.cpp \
+  CampaignCreativeUpdate.cpp \
+  CampaignUpdateTest.cpp \
+  CCGKeywordUpdate.cpp \
+  ChannelStatusTest.cpp
+
+includes := .
+@autotestsgranularupdateunits_post@

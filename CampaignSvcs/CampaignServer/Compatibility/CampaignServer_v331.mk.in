@@ -1,0 +1,10 @@
+@campaignserver_v331_deps@
+
+sources := CampaignServerImpl_v331.cpp
+includes := .
+
+corba_skeleton_idls := CampaignCommons_v331.idl CampaignServer_v331.idl
+corba_includes := .
+corba_idl_includes := .
+
+@campaignserver_v331_post@

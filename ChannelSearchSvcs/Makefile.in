@@ -1,0 +1,9 @@
+include Common.pre.rules
+include $(osbe_builddir)/config/Install.pre.rules
+
+target_directory_list :=			\
+	ChannelSearchService			\
+	ChannelSearchAdmin			\
+
+include $(osbe_builddir)/config/Direntry.post.rules
+include $(osbe_builddir)/config/Install.post.rules

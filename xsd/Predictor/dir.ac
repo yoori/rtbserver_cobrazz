@@ -1,0 +1,4 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([PredictorMergerConfig], [PredictorMergerConfig.mk])
+OSBE_CXX_DEF([CTRPredictorSVMGeneratorConfig], [CTRPredictorSVMGeneratorConfig.mk])

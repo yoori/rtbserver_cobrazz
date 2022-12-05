@@ -1,0 +1,4 @@
+name="Baidu"
+so_files=Baidu
+
+osbe_cxx_feature_dep ProtoBuf

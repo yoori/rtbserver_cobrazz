@@ -1,0 +1,765 @@
+-- This file describe whole oids for StatCollector service with process suffix .processId
+-- Other our .mib files can omit this suffix. Thus, we use it implicitly.
+
+StatsCollector-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, Counter64 FROM SNMPv2-SMI
+  TEXTUAL-CONVENTION, DisplayString FROM SNMPv2-TC
+  controlling FROM AdServer-MIB;
+
+statsCollectorMIB MODULE-IDENTITY
+  LAST-UPDATED "201507070000Z"  -- July 07, 2015
+  ORGANIZATION "Phluidmedia, Inc."
+  CONTACT-INFO "admin@foros.com"
+  DESCRIPTION  "The MIB module to describe AdCluster statistics."
+  REVISION     "201507070000Z"
+  DESCRIPTION  "First revision"
+  ::= { controlling 1 }
+
+  statsCollector OBJECT IDENTIFIER ::= { controlling 2 }
+
+statsCollectionTable OBJECT-TYPE
+  SYNTAX     SEQUENCE OF StatsCollectionEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "Statistics for the cluster. Include aggregated values."
+  ::= { statsCollector 1 }
+
+statsCollectionEntry OBJECT-TYPE
+  SYNTAX     StatsCollectionEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "Statistics for specific host and process."
+  INDEX      { hostId, processId }
+  ::= { statsCollectionTable 1 }
+
+StatsCollectionEntry ::= SEQUENCE
+{
+  hostId        Unsigned32,
+  processId     Unsigned32,
+
+  historyMatch-Count                            Counter64,
+  historyMatch-Total                            DisplayString,
+  historyMatch-Max                              DisplayString,
+  historyMatch-Min                              DisplayString,
+  historyMatch-Average                          DisplayString,
+  usersMerge-Count                              Counter64,
+  usersMerge-Total                              DisplayString,
+  usersMerge-Max                                DisplayString,
+  usersMerge-Min                                DisplayString,
+  usersMerge-Average                            DisplayString,
+  triggersMatch-Count                           Counter64,
+  triggersMatch-Total                           DisplayString,
+  triggersMatch-Max                             DisplayString,
+  triggersMatch-Min                             DisplayString,
+  triggersMatch-Average                         DisplayString,
+  adRequest-Count                               Counter64,
+  campaignSelect-OptInUser-Count                Unsigned32,
+  campaignSelect-OptOutUser-Count               Unsigned32,
+  userProfiles                                  Unsigned32,
+  dailyUsers-Count                              Unsigned32,
+  userBaseProfiles-AreaSize                     Counter64,
+  userTempProfiles-AreaSize                     Counter64,
+  userAdditionalProfiles-AreaSize               Counter64,
+  userHistoryProfiles-AreaSize                  Counter64,
+  userFreqCapProfiles-AreaSize                  Counter64,
+  userWDProfiles-AreaSize                       Counter64,
+  userProfiles-AreaSize                         Counter64,
+  userProfiles-AllocatorCacheSize               Counter64,  
+  userProfiles-AdChannels-Avg                   DisplayString,
+  userProfiles-DiscoverChannels-Avg             DisplayString,
+  adRequestWithImpression-OptInUser-Count       Counter64,
+  adRequestWithImpression-nonOptInUser-Count    Counter64,
+  adRequestWithPassback-OptInUser-Count         Counter64,
+  adRequestWithPassback-nonOptInUser-Count      Counter64,
+  actionRequest-OptInUser-Count                 Counter64,
+  actionRequest-nonOptInUser-Count              Counter64,
+  ooRequest-InOp-Count                          Counter64,
+  ooRequest-OutOp-Count                         Counter64,
+  ooRequest-StatusOp-Count                      Counter64,
+  profilingRequest-Count                        Counter64,
+  profilingRequest-ReceivedTriggers-Count       Counter64,
+  profilingRequest-MatchedTriggers-Count        Counter64,
+  profilingRequest-TriggeredChannels-Count      Counter64,
+  passbackRequest-Count                         Counter64,
+  campaignSelect-ProbeUser-Count                Counter64,
+  campaignSelect-TemporaryUser-Count            Counter64,
+  campaignSelect-UndefinedUser-Count            Counter64,
+  requestParsing-Count                          Counter64,
+  requestParsing-Total                          DisplayString,
+  requestParsing-Max                            DisplayString,
+  requestParsing-Min                            DisplayString,
+  requestParsing-Average                        DisplayString,
+  creativeSelection-Count                       Counter64,
+  creativeSelection-Total                       DisplayString,
+  creativeSelection-Max                         DisplayString,
+  creativeSelection-Min                         DisplayString,
+  creativeSelection-Average                     DisplayString,
+  creativeSelectionLocal-Count                  Counter64,
+  creativeSelectionLocal-Total                  DisplayString,
+  creativeSelectionLocal-Max                    DisplayString,
+  creativeSelectionLocal-Min                    DisplayString,
+  creativeSelectionLocal-Average                DisplayString,
+  rtbRequestCount                               Counter64,
+  rtbRequestBidCount                            Counter64,
+  rtbRequestTanxCount                           Counter64,
+  rtbRequestTanxBidCount                        Counter64,
+  rtbRequestBaiduCount                          Counter64,
+  rtbRequestBaiduBidCount                       Counter64,
+  rtbRequestOpenRTBCount                        Counter64,
+  rtbRequestOpenRTBBidCount                     Counter64,
+  rtbRequestOtherCount                          Counter64,
+  rtbRequestOtherBidCount                       Counter64,
+  rtbRequestTimeoutCount                        Counter64,
+  rtbRequestSkipCount                           Counter64,
+  rtbRequestTimeCounter                         Counter64
+}
+
+hostId OBJECT-TYPE
+  SYNTAX     Unsigned32
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "The network address (IP address) for the host (in network byte order),
+          that provide statistical information. 0 means localhost and indicate aggregated
+          summary information from other hosts."
+  ::= { statsCollectionEntry 1 }
+
+processId OBJECT-TYPE
+  SYNTAX     Unsigned32
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "This ID allow separate indicators from different instances of service
+          simultaneously runned on the host."
+  ::= { statsCollectionEntry 2 }
+
+  historyMatch-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of UserInfo matching"
+    ::= { statsCollectionEntry 4 }
+
+  historyMatch-Total OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total time of UserInfo matching "
+    ::= { statsCollectionEntry 5 }
+
+  historyMatch-Max OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Maximun time of UserInfo matching "
+    ::= { statsCollectionEntry 6 }
+
+  historyMatch-Min OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Minimum time of UserInfo matching "
+    ::= { statsCollectionEntry 7 }
+
+  historyMatch-Average OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average time of Userinfo matching"
+    ::= { statsCollectionEntry 8 }
+
+  usersMerge-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of UserInfo merging"
+    ::= { statsCollectionEntry 9 }
+
+  usersMerge-Total OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total time of UserInfo merging "
+    ::= { statsCollectionEntry 10 }
+
+  usersMerge-Max OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Maximun time of UserInfo merging "
+    ::= { statsCollectionEntry 11 }
+
+  usersMerge-Min OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Minimum time of UserInfo merging "
+    ::= { statsCollectionEntry 12 }
+
+  usersMerge-Average OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average time of Userinfo merging"
+    ::= { statsCollectionEntry 13 }
+
+  triggersMatch-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of triggers matching"
+    ::= { statsCollectionEntry 14 }
+
+  triggersMatch-Total OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total time of triggers matching "
+    ::= { statsCollectionEntry 15 }
+
+  triggersMatch-Max OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Maximun time of triggers matching "
+    ::= { statsCollectionEntry 16 }
+
+  triggersMatch-Min OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Minimum time of triggers matching "
+    ::= { statsCollectionEntry 17 }
+
+  triggersMatch-Average OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average time of triggers matching"
+    ::= { statsCollectionEntry 18 }
+
+  adRequest-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of queries with defined tid"
+    ::= { statsCollectionEntry 19 }
+
+  campaignSelect-OptInUser-Count OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of optin users"
+    ::= { statsCollectionEntry 20 }
+
+  campaignSelect-OptOutUser-Count OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of optout users"
+    ::= { statsCollectionEntry 21 }
+
+  userProfiles OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count users uid"
+    ::= { statsCollectionEntry 22 }
+
+  dailyUsers-Count OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count daily users"
+    ::= { statsCollectionEntry 23 }
+
+  userBaseProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by base profiles"
+    ::= { statsCollectionEntry 24 }
+
+  userTempProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by temporary profiles"
+    ::= { statsCollectionEntry 25 }
+
+  userAdditionalProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by addative profiles"
+    ::= { statsCollectionEntry 26 }
+
+  userHistoryProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by history profiles"
+    ::= { statsCollectionEntry 27 }
+
+  userFreqCapProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by freq cap profiles"
+    ::= { statsCollectionEntry 28 }
+
+  userWDProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by wd impression profiles"
+    ::= { statsCollectionEntry 29 }
+
+  userProfiles-AreaSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Space used by profiles"
+    ::= { statsCollectionEntry 30 }
+
+  userProfiles-AllocatorCacheSize OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Memory cache used by profiles"
+    ::= { statsCollectionEntry 82 }
+
+  userProfiles-AdChannels-Avg OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average number of Ad Channels in User Profile"
+    ::= { statsCollectionEntry 31 }
+
+  userProfiles-DiscoverChannels-Avg OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average number of Discover Channels in User Profile"
+    ::= { statsCollectionEntry 32 }
+
+  adRequestWithImpression-OptInUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Ad request from opted in users"
+    ::= { statsCollectionEntry 33 }
+
+  adRequestWithImpression-nonOptInUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Ad request from opted out users"
+    ::= { statsCollectionEntry 34 }
+
+  adRequestWithPassback-OptInUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count passback queries from opted in users"
+    ::= { statsCollectionEntry 35 }
+
+  adRequestWithPassback-nonOptInUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count passbacks queries from opted out users"
+    ::= { statsCollectionEntry 36 }
+
+  actionRequest-OptInUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count action queries from opted in users"
+    ::= { statsCollectionEntry 37 }
+
+  actionRequest-nonOptInUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count action queries from opted out users"
+    ::= { statsCollectionEntry 38 }
+
+  ooRequest-InOp-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count opt in operations"
+    ::= { statsCollectionEntry 41 }
+
+  ooRequest-OutOp-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count opt out operations"
+    ::= { statsCollectionEntry 42 }
+
+  ooRequest-StatusOp-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count status operations"
+    ::= { statsCollectionEntry 43 }
+
+  profilingRequest-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total profiling requests"
+    ::= { statsCollectionEntry 44 }
+
+  profilingRequest-ReceivedTriggers-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total received triggers"
+    ::= { statsCollectionEntry 45 }
+
+  profilingRequest-MatchedTriggers-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total matched triggers"
+    ::= { statsCollectionEntry 46 }
+
+  profilingRequest-TriggeredChannels-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total matched channels"
+    ::= { statsCollectionEntry 47 }
+
+  passbackRequest-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of passback queries"
+    ::= { statsCollectionEntry 48 }
+
+  campaignSelect-ProbeUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of campagin selection for probe users"
+    ::= { statsCollectionEntry 49 }
+
+  campaignSelect-TemporaryUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of campagin selection for temporary users"
+    ::= { statsCollectionEntry 50 }
+
+  campaignSelect-UndefinedUser-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of campagin selection for undefined users"
+    ::= { statsCollectionEntry 51 }
+
+  requestParsing-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of request parsing"
+    ::= { statsCollectionEntry 52 }
+
+  requestParsing-Total OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total time of request parsing"
+    ::= { statsCollectionEntry 53 }
+
+  requestParsing-Max OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Maximun time of request parsing"
+    ::= { statsCollectionEntry 54 }
+
+  requestParsing-Min OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Minimum time of request parsing"
+    ::= { statsCollectionEntry 55 }
+
+  requestParsing-Average OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average time of request parsing"
+    ::= { statsCollectionEntry 56 }
+
+  creativeSelection-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of creative selection"
+    ::= { statsCollectionEntry 57 }
+
+  creativeSelection-Total OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total time of creative selection"
+    ::= { statsCollectionEntry 58 }
+
+  creativeSelection-Max OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Maximun time of creative selection"
+    ::= { statsCollectionEntry 59 }
+
+  creativeSelection-Min OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Minimum time of creative selection"
+    ::= { statsCollectionEntry 60 }
+
+  creativeSelection-Average OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average time of creative selection on the manager"
+    ::= { statsCollectionEntry 61 }
+
+  creativeSelectionLocal-Count OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of creative selection on the manager"
+    ::= { statsCollectionEntry 62 }
+
+  creativeSelectionLocal-Total OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total time of creative selection on the manager"
+    ::= { statsCollectionEntry 63 }
+
+  creativeSelectionLocal-Max OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Maximun time of creative selection on the manager"
+    ::= { statsCollectionEntry 64 }
+
+  creativeSelectionLocal-Min OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Minimum time of creative selection on the manager"
+    ::= { statsCollectionEntry 65 }
+
+  creativeSelectionLocal-Average OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Average time of creative selection on the manager"
+    ::= { statsCollectionEntry 66 }
+
+  rtbRequestCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of all bidding requests"
+    ::= { statsCollectionEntry 67 }
+
+  rtbRequestBidCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of all bidding requests"
+    ::= { statsCollectionEntry 68 }
+
+  rtbRequestTanxCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of TanX requests"
+    ::= { statsCollectionEntry 69 }
+
+  rtbRequestTanxBidCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of TanX bids made"
+    ::= { statsCollectionEntry 70 }
+
+  rtbRequestBaiduCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of Baidu requests"
+    ::= { statsCollectionEntry 71 }
+
+  rtbRequestBaiduBidCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of Baidu bids made"
+    ::= { statsCollectionEntry 72 }
+
+  rtbRequestOpenRTBCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of OpenRTB requests"
+    ::= { statsCollectionEntry 73 }
+
+  rtbRequestOpenRTBBidCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of OpenRTB bids made"
+    ::= { statsCollectionEntry 74 }
+
+  rtbRequestOtherCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of other bid requests"
+    ::= { statsCollectionEntry 75 }
+
+  rtbRequestOtherBidCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Count of other bid requests"
+    ::= { statsCollectionEntry 76 }
+
+  rtbRequestTimeoutCount OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "Count of requests that interrupted by timeout"
+    ::= { statsCollectionEntry 77 }
+
+  rtbRequestSkipCount OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The number of skipped requests"
+    ::= { statsCollectionEntry 78 }
+
+  rtbRequestTimeCounter OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The aggregate time, milliseconds"
+    ::= { statsCollectionEntry 79 }
+
+
+rtbTimeoutsTable OBJECT-TYPE
+  SYNTAX     SEQUENCE OF RtbTimeoutsEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "Statistics for bidding requests timeouts.
+          There will be one row in this table for specific time gap."
+  ::= { statsCollector 2 }
+
+rtbTimeoutsEntry OBJECT-TYPE
+  SYNTAX     RtbTimeoutsEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "Statistics for requests interrupted during specified timeout."
+  INDEX      { timeoutsIndex, hostIdIndex, processIdIndex }
+  ::= { rtbTimeoutsTable 1 }
+
+TimeoutName ::= TEXTUAL-CONVENTION
+  STATUS     current
+  DESCRIPTION
+         "The name of timeout gap"
+  SYNTAX       INTEGER {
+    time10ms(0),
+    time20ms(1),
+    time30ms(2),
+    time40ms(3),
+    time50ms(4),
+    time60ms(5),
+    time70ms(6),
+    time80ms(7),
+    time90ms(8),
+    time100ms(9),
+    time200ms(10),
+    time300ms(11),
+    time400ms(12),
+    time500ms(13),
+    time600ms(14),
+    time700ms(15),
+    time800ms(16),
+    time900ms(17),
+    time1sec(18),
+    time2sec(19),
+    time3sec(20),
+    time4sec(21),
+    time5sec(22),
+    time6sec(23),
+    time7sec(24),
+    time8sec(25),
+    time9sec(26),
+    time10sec(27)
+  }
+
+RtbTimeoutsEntry ::= SEQUENCE
+{
+  timeoutsIndex  TimeoutName,
+  hostIdIndex    Unsigned32,
+  processIdIndex Unsigned32,
+
+  timeoutCount   Unsigned32
+}
+
+timeoutsIndex OBJECT-TYPE
+  SYNTAX     TimeoutName
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "The ordinal number for rows in the table."
+  ::= { rtbTimeoutsEntry 1 }
+
+hostIdIndex OBJECT-TYPE
+  SYNTAX     Unsigned32
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "The network address (IP address) for the host (in network byte order),
+          that provide statistical information. 0 means localhost and indicate aggregated
+          summary information from other hosts."
+  ::= { rtbTimeoutsEntry 2 }
+
+processIdIndex OBJECT-TYPE
+  SYNTAX     Unsigned32
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+         "This ID allow separate indicators from different instances of service simultaneously runned on the host."
+  ::= { rtbTimeoutsEntry 3 }
+
+timeoutCount OBJECT-TYPE
+  SYNTAX     Unsigned32
+  MAX-ACCESS read-only
+  STATUS     current
+  DESCRIPTION
+         "The number of timed out requests."
+  ::= { rtbTimeoutsEntry 4 }
+
+END

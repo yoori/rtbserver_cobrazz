@@ -1,0 +1,60 @@
+
+module AdServer
+{
+  module ChannelSearchSvcs
+  {
+
+    struct ChannelSearchResult
+    {
+      unsigned long long channel_id;
+      unsigned long reuse;
+    };
+
+    typedef sequence<ChannelSearchResult> ChannelSearchResultSeq;
+
+    // match structs
+    typedef sequence<unsigned long long > CCGIdSeq;
+
+    typedef sequence<unsigned long long > TrChIdSeq;
+
+    struct ChannelMatchInfo
+    {
+      unsigned long long channel_id;
+      TrChIdSeq triggers;
+      CCGIdSeq ccgs;
+    };
+
+    typedef sequence<ChannelMatchInfo> ChannelMatchSeq;
+
+    struct MatchInfo
+    {
+      ChannelMatchSeq channels;
+    };
+
+    struct WMatchInfo
+    {
+      ChannelMatchSeq channels;
+    };
+
+    interface ChannelSearch
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      ChannelSearchResultSeq search(in string phrase)
+        raises(ImplementationException);
+
+      ChannelSearchResultSeq wsearch(in wstring phrase)
+        raises(ImplementationException);
+
+      MatchInfo match(in string url, in string phrase, in long channels_count)
+        raises(ImplementationException);
+
+      WMatchInfo wmatch(in wstring url, in wstring phrase, in long channels_count)
+        raises(ImplementationException);
+    };
+
+  }; // module ChannelSearchSvcs
+}; // module AdServer

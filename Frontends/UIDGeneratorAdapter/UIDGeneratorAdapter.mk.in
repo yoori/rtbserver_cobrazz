@@ -1,0 +1,12 @@
+@uidgeneratoradapterexe_deps@
+
+sources := KeywordsProcessor.cpp \
+  DescriptorHandlerPoller.cpp \
+  AcceptorDescriptorHandler.cpp \
+  UIDGeneratorAdapterLogger.cpp \
+  UIDGeneratorAdapterImpl.cpp \
+  UIDGeneratorAdapterMain.cpp
+
+target := UIDGeneratorAdapter
+
+@uidgeneratoradapterexe_post@

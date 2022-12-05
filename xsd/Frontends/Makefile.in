@@ -1,0 +1,11 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  FeConfig.mk \
+  ProfilingServerConfig.mk \
+  ConvServerConfig.mk \
+  FCGIServerConfig.mk \
+  UIDGeneratorAdapterConfig.mk \
+  ZmqBalancerConfig.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

@@ -1,0 +1,12 @@
+@userinfomanagercontrollerexe_deps@
+sources := \
+  UserInfoManagerControllerMain.cpp \
+  UserInfoClusterControlImpl.cpp \
+  UserInfoManagerControllerImpl.cpp
+
+corba_skeleton_idls := UserInfoManagerController.idl UserInfoClusterControl.idl
+corba_idl_includes := .
+
+target := UserInfoManagerController
+
+@userinfomanagercontrollerexe_post@

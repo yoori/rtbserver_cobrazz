@@ -1,0 +1,9 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([UserInfoExchangerConfig], [UserInfoExchangerConfig.mk])
+OSBE_CXX_DEF([UserInfoManagerControllerConfig], [UserInfoManagerControllerConfig.mk])
+OSBE_CXX_DEF([UserInfoExchangerProxyConfig], [UserInfoExchangerProxyConfig.mk])
+OSBE_CXX_DEF([UserInfoManagerConfig], [UserInfoManagerConfig.mk])
+OSBE_CXX_DEF([UserBindServerConfig], [UserBindServerConfig.mk])
+OSBE_CXX_DEF([UserBindControllerConfig], [UserBindControllerConfig.mk])
+OSBE_CXX_DEF([UserOperationGeneratorConfig], [UserOperationGeneratorConfig.mk])

@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_FILE([ConfigureUserChunksTest.mk])
+OSBE_CONFIG_FILE([ConfigureEMChunksTest.mk])
+OSBE_CONFIG_FILE([CleanupLogsTest.mk])

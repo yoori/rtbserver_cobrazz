@@ -1,0 +1,57 @@
+#ifndef USERINFOSVCS_USERBINDCONTROLLER_IDL_
+#define USERINFOSVCS_USERBINDCONTROLLER_IDL_
+
+#include <CORBACommons/ProcessControl.idl>
+#include <UserInfoSvcs/UserBindServer/UserBindServer.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    valuetype UserBindMapperValueType supports UserBindMapper
+    {
+      private boolean non_empty_;
+    };
+
+    struct UserBindDescription
+    {
+      UserBindServer user_bind_server;
+      UserBindServer::ChunkIdSeq chunk_ids;
+    };
+
+    typedef sequence<UserBindDescription>
+      UserBindDescriptionSeq;
+
+    /*
+    interface _TAO_BUG
+    {
+      CORBACommons::AProcessControl::ALIVE_STATUS get_alive_type();
+
+      string
+      comment();
+    };
+    */
+
+    interface UserBindClusterControl: CORBACommons::IProcessControl
+    {};
+
+    /**
+     *  UserBindController
+     */
+    interface UserBindController
+    {
+      exception NotReady {};
+
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      UserBindDescriptionSeq
+      get_session_description()
+        raises(ImplementationException, NotReady);
+    };
+  }; // module UserInfoSvcs
+}; // module AdServer
+
+#endif // USERINFOSVCS_USERBINDCONTROLLER_IDL_

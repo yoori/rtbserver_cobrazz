@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/jurij_kuznecov/projects/foros/server/trunk/xsd/ChannelSvcs/ChannelProxyConfig.xsd">
+  <cfg:ChannelProxyConfig log_root="/home/jurij_kuznecov/projects/foros/run/trunk/pbe-var/log/ChannelProxy/Out">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="12305">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelProxy_v06" name="ChannelProxy_v06"/>
+        <cfg:Object servant="ChannelProxy_v05" name="ChannelProxy_v05"/>
+      </cfg:Endpoint>
+      <cfg:Endpoint host="xen.ocslab.com" port="12355">
+        <cfg:Secure key="/home/jurij_kuznecov/projects/foros/run/trunk/pbe-etc/devel/adproxycluster-1/xen.ocslab.com/cert/skey.pem" certificate="/home/jurij_kuznecov/projects/oix/run/trunk/pbe-etc/devel/adproxycluster-1/xen.ocslab.com/cert/scert.pem" certificate_authority="/home/jurij_kuznecov/projects/oix/run/trunk/pbe-etc/devel/adproxycluster-1/xen.ocslab.com/cert/ca.pem" key-word="adserver"/>
+        <cfg:Object servant="ChannelProxy_v06" name="ChannelProxy_v06"/>
+        <cfg:Object servant="ChannelProxy_v05" name="ChannelProxy_v05"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:ControllerCorbaRefs name="ChannelController">
+      <cfg:Ref ref="corbaloc:iiop:xen.ocslab.com:12104/ChannelManagerController"/>
+    </cfg:ControllerCorbaRefs>
+    <cfg:Logger filename="/home/jurij_kuznecov/projects/foros/run/trunk/pbe-var/log/ChannelProxy/ChannelProxy">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+    <cfg:UpdateStatLogger size="3" period="30" path="ColoUpdateStat"/>
+  </cfg:ChannelProxyConfig>
+</cfg:AdConfiguration>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>87</ttl>
+<reqDate since_epoch="1239866087">Thu, 16 Apr 2009 07:14:47 GMT</reqDate>
+<total>1</total>
+<items>
+<item>
+  <id>63743E8F4B94428a8F3D167585E10BBD</id>
+  <title><![CDATA[Police: Car bomb kills 11 in northern Iraq (AP)]]></title>
+  <description><![CDATA[AP - A car bomb exploded Wednesday near a government security convoy in the northern oil city of Kirkuk, killing at least 11 guards and wounding about 20 other people, police said.]]></description>
+  <pubDate>Wed, 15 Apr 2009 20:00:28 GMT</pubDate>
+  <link><![CDATA[http://us.rd.yahoo.com/dailynews/rss/mostviewed/*http://news.yahoo.com/s/ap/20090415/ap_on_re_mi_ea/ml_iraq]]></link>
+  <guid>11810860021731976878</guid>
+    <language><![CDATA[eng]]></language>
+  <event>
+    <id>2546617303190267070</id>
+    <capacity>4</capacity>
+  </event>
+  <images>
+    <image src="http://d.yimg.com/a/p/ap/20090415/capt.e50de843443e428d9fa3c7a92a7b1ef5.ml_iraq_bombing_bag107.jpg?x=130&#x26;y=95&#x26;q=85&#x26;sig=3CRyzz1yEoPKMcM4a2wGXQ--" width="129" height="95" alt="A U.S. Army soldier stands at the site of a bombing in Kirkuk, 180 miles, or 290 kilometers, north of Baghdad, Iraq, Wednesday, April 15, 2009. Iraqi police say a parked car bomb targeted a passing convoy in the disputed northern city of Kirkuk. (AP Photo/Emad Matti)"/>
+  </images>
+  <source>
+    <title><![CDATA[Yahoo! News: Most Viewed]]></title>
+    <link><![CDATA[http://rss.news.yahoo.com/rss/mostviewed]]></link>
+    <country><![CDATA[USA]]></country>
+  </source>
+</item>
+</items>
+</result>

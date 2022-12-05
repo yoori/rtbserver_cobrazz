@@ -1,0 +1,188 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      ChannelManagerController Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ChannelControllerConfig" type="ChannelControllerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ControllerSetupType">
+    <xsd:attribute name="control" type="xsd:boolean" use = "required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelControllerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="Primary" type="ControllerSetupType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Section setup controller mode
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ColoSettings" type="ColoSettingsType"
+        minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="ChannelSource" type="ChannelSourceType"/>
+
+      <xsd:element name="ControlGroup" 
+                   type="ControlGroupType"
+                   minOccurs="1"
+                   maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Control Group of hosts
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for ChannelManagerController
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    
+    <xsd:attribute name="count_chunks" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="source_id" type="xsd:integer" use="required"/>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="ControlGroupType">
+    <xsd:sequence>
+      <xsd:element name="ChannelHost" 
+                   type="ChannelHostType"
+                   minOccurs="1"
+                   maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            host references
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="RegularSourceType">
+    <xsd:sequence>
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="PGConnection" type="PGConnectionType">
+        <xsd:annotation>
+          <xsd:documentation>Defines Postrgess connection string for accessing to AdServer database.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ColoSettingsType">
+    <xsd:attribute name="colo" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="version" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProxySourceType">
+    <xsd:sequence>
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType"/>
+      <xsd:element name="ProxyRefs" type="MultiCorbaObjectRefType" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="use_local_on_first_load" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelSourceType">
+    <xsd:choice>
+      <xsd:element name="RegularSource" type="RegularSourceType"/>
+      <xsd:element name="ProxySource" type="ProxySourceType"/>
+    </xsd:choice>
+    <xsd:attribute name="local_groups" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelHostType">
+    <xsd:sequence>
+      <xsd:element name="ChannelServerControlRef" 
+                   type="CorbaObjectRefType"
+                   minOccurs="1"
+                   maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            ChannelServerControl reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChannelServerProcRef" 
+                   type="CorbaObjectRefType"
+                   minOccurs="1"
+                   maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            ChannelServerControl process control reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChannelServerRef" 
+                   type="CorbaObjectRefType"
+                   minOccurs="1"
+                   maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            ChannelServerControl reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChannelUpdateRef" 
+                   type="CorbaObjectRefType"
+                   minOccurs="1"
+                   maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            ChannelUpdate reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChannelStatRef" 
+                   type="CorbaObjectRefType"
+                   minOccurs="0"
+                   maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            ChannelServer statistic reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>

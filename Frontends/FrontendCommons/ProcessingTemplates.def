@@ -1,0 +1,7 @@
+name="ProcessingTemplates"
+so_files=ProcessingTemplates
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep FCGI
+osbe_cxx_dep Commons

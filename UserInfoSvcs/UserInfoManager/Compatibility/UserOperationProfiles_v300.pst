@@ -1,0 +1,41 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v300
+{
+  struct UserFreqCapUpdateOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    string request_id;
+    list<uint> freq_caps;
+    list<uint> uc_freq_caps;
+    list<uint> virtual_freq_caps;
+  };
+
+  autoreader UserFreqCapUpdateOperationReader<UserFreqCapUpdateOperationDescriptor>;
+
+  struct UserMatchOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint temporary;
+    uint time;
+    int request_colo_id;
+    int last_colo_id;
+    int placement_colo_id;
+    list<uint> page_channels;
+    list<uint> search_channels;
+    list<uint> url_channels;
+    list<uint> persistent_channels;
+    char change_last_request;
+    uint household;
+  };
+
+  autoreader UserMatchOperationReader<UserMatchOperationDescriptor>;
+}
+}

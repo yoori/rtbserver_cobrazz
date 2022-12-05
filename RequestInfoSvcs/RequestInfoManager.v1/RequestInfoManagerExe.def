@@ -1,0 +1,28 @@
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep SNMPAgentX
+
+osbe_cxx_dep Commons
+
+osbe_cxx_dep RequestInfoManagerConfig
+
+osbe_cxx_dep RequestInfoManagerStubs
+osbe_cxx_dep ExpressionMatcherStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep LogCommons
+
+osbe_cxx_dep RequestLogLoader
+osbe_cxx_dep RequestOutLogger
+
+osbe_cxx_dep RequestInfoContainer
+osbe_cxx_dep UserCampaignReachContainer
+osbe_cxx_dep UserActionInfoContainer
+osbe_cxx_dep UserFraudProtectionContainer
+osbe_cxx_dep PassbackContainer
+osbe_cxx_dep UserSiteReachContainer
+osbe_cxx_dep UserTagRequestMergeContainer
+osbe_cxx_dep TagRequestProfiler
+osbe_cxx_dep BillingProcessor

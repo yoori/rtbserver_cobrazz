@@ -1,0 +1,7 @@
+@autotestsconfig_deps@
+sources := 
+includes := .
+xsd_files := AutoTests.xsd
+xsd_includes := xsd
+
+@autotestsconfig_post@

@@ -1,0 +1,106 @@
+#ifndef CAMPAIGNSVCS_CAMPAIGNSERVER_STATINFO_IDL
+#define CAMPAIGNSVCS_CAMPAIGNSERVER_STATINFO_IDL
+
+#include <CampaignSvcs/CampaignCommons/CampaignCommons.idl>
+
+module AdServer
+{
+module CampaignSvcs_v360
+{
+  struct CreativeStatInfo
+  {
+    unsigned long cc_id;
+    long impressions;
+    long clicks;
+    long actions;
+  };
+
+  typedef sequence<CreativeStatInfo> CreativeStatSeq;
+
+  struct PublisherCCGStatInfo
+  {
+    unsigned long pub_account_id;
+    CORBACommons::DecimalInfo amount;
+  };
+
+  typedef sequence<PublisherCCGStatInfo> PublisherCCGStatSeq;
+
+  struct TagCCGStatInfo
+  {
+    unsigned long tag_id;
+    CORBACommons::DecimalInfo cur_pub_isp_amount;
+    CORBACommons::DecimalInfo cur_adv_amount;
+    CORBACommons::DecimalInfo cur_adv_comm_amount;
+    CORBACommons::DecimalInfo prev_pub_isp_amount;
+    CORBACommons::DecimalInfo prev_adv_amount;
+    CORBACommons::DecimalInfo prev_adv_comm_amount;
+  };
+
+  typedef sequence<TagCCGStatInfo> TagCCGStatSeq;
+
+  struct CtrResetStatInfo
+  {
+    unsigned long ctr_reset_id;
+    unsigned long impressions;
+  };
+
+  typedef sequence<CtrResetStatInfo> CtrResetStatSeq;
+
+  struct CCGStatInfo
+  {
+    unsigned long ccg_id;
+    long impressions;
+    long clicks;
+    long actions;
+
+    CORBACommons::DecimalInfo amount; // adv_amount + adv_cmp_amount
+    CORBACommons::DecimalInfo comm_amount;
+    CORBACommons::DecimalInfo daily_amount; // adv_daily_amount + adv_daily_cmp_amount
+    CORBACommons::DecimalInfo daily_comm_amount;
+
+    CORBACommons::DecimalInfo prev_hour_amount;
+    CORBACommons::DecimalInfo prev_hour_comm_amount;
+    CORBACommons::DecimalInfo current_hour_amount;
+    CORBACommons::DecimalInfo current_hour_comm_amount;
+      
+    CreativeStatSeq creatives;
+    PublisherCCGStatSeq publishers;
+    TagCCGStatSeq tags;
+    CtrResetStatSeq ctr_resets;
+  };
+
+  typedef sequence<CCGStatInfo> CCGStatSeq;
+
+  struct CampaignStatInfo
+  {
+    unsigned long campaign_id;
+    CORBACommons::DecimalInfo amount;
+    CORBACommons::DecimalInfo comm_amount;
+    CORBACommons::DecimalInfo daily_amount;
+    CORBACommons::DecimalInfo daily_comm_amount;
+    CCGStatSeq ccgs;
+  };
+
+  struct AmountStatInfo
+  {
+    unsigned long id;
+    CORBACommons::DecimalInfo amount;
+    CORBACommons::DecimalInfo comm_amount;
+    CORBACommons::DecimalInfo daily_amount;
+    CORBACommons::DecimalInfo daily_comm_amount;
+  };
+
+  typedef sequence<AmountStatInfo> AmountStatSeq;
+  typedef AmountStatSeq AccountStatSeq;
+  typedef sequence<CampaignStatInfo> CampaignStatSeq;
+
+  struct StatInfo
+  {
+    // AvgRateSeq avg_rates;
+    AccountStatSeq accounts;
+    CampaignStatSeq campaigns;
+  };
+};
+};
+
+#endif /*CAMPAIGNSVCS_CAMPAIGNSERVER_STATINFO_IDL*/

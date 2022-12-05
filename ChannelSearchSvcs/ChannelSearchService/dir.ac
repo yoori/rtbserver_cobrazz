@@ -1,0 +1,5 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([ChannelSearchService], [ChannelSearchServiceStubs.mk])
+OSBE_CXX_DEF([ChannelSearchServiceExe], [ChannelSearchService.mk])

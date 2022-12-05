@@ -1,0 +1,8 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([AutoTestsCommonsCheckersDirectory.mk])
+OSBE_CONFIG_FILE([AutoTestsCommonsCheckers.mk])
+
+OSBE_CONFIG_SUBDIR([GeneratedAdminsCheckers])
+OSBE_CONFIG_SUBDIR([ServerResponseCheckers])
+
+OSBE_CXX_DEF([AutoTestsCommonsCheckers])

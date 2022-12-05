@@ -1,0 +1,1162 @@
+SubAgent-Shell-LogFiles-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Gauge32 FROM SNMPv2-SMI
+  logfilesCountersEntry FROM SubAgent-Shell-AdServer-MIB;
+
+emRequestBasicChannelsIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of request basic channels log files in folder In."
+  ::= { logfilesCountersEntry 2 }
+
+emRequestBasicChannelsError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of request basic channels log files in folder Error."
+  ::= { logfilesCountersEntry 52 }
+
+rimRequestIn   OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of request log files in folder In."
+  ::= { logfilesCountersEntry 4 }
+
+rimPassbackImpressionIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of passback impression log files in folder In."
+  ::= { logfilesCountersEntry 5 }
+
+rimTagRequestIn  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of tag request log files in folder In."
+  ::= { logfilesCountersEntry 6 }
+
+rimImpressionIn   OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of impressions log files in folder In."
+  ::= { logfilesCountersEntry 7 }
+
+rimPassbackOpportunityIn  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of passback opportunity log files in folder In."
+  ::= { logfilesCountersEntry 8 }
+
+rimClickIn  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of click log files in folder In."
+  ::= { logfilesCountersEntry 9 }
+
+rimAdvertiserActionIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of advertiser actions log files in folder In."
+  ::= { logfilesCountersEntry 10 }
+
+rimRequestError   OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of request log files in folder Error."
+  ::= { logfilesCountersEntry 54 }
+
+rimPassbackImpressionError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of passback impression log files in folder Error."
+  ::= { logfilesCountersEntry 55 }
+
+rimTagRequestError  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of tag request log files in folder Error."
+  ::= { logfilesCountersEntry 56 }
+
+rimImpressionError   OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of impressions log files in folder Error."
+  ::= { logfilesCountersEntry 57 }
+
+rimPassbackOpportunityError  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of passback opportunity log files in folder Error."
+  ::= { logfilesCountersEntry 58 }
+
+rimClickError  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of click log files in folder Error."
+  ::= { logfilesCountersEntry 59 }
+
+rimAdvertiserActionError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of advertiser actions log files in folder Error."
+  ::= { logfilesCountersEntry 60 }
+
+rimTotalIn     OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all In folders."
+  ::= { logfilesCountersEntry 221 }
+
+rimTotalIntermediate     OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Intermediate folders."
+  ::= { logfilesCountersEntry 222 }
+
+rimTotalError  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Error folders."
+  ::= { logfilesCountersEntry 223 }
+
+rimTotalOut    OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Out folders."
+  ::= { logfilesCountersEntry 224 }
+
+uimUserOp2In OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of user op2 log files in folder In."
+  ::= { logfilesCountersEntry 11 }
+
+uimUserOp1In OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of user op1 log files in folder In."
+  ::= { logfilesCountersEntry 12 }
+
+uimUserOp2Error OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of user op2 log files in folder Error."
+  ::= { logfilesCountersEntry 61 }
+
+uimUserOp1Error OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of user op1 log files in folder Error."
+  ::= { logfilesCountersEntry 62 }
+
+uimTotalIn     OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all In folders."
+  ::= { logfilesCountersEntry 13 }
+
+uimTotalIntermediate     OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Intermediate folders."
+  ::= { logfilesCountersEntry 14 }
+
+uimTotalError  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Error folders."
+  ::= { logfilesCountersEntry 15 }
+
+uimTotalOut    OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Out folders."
+  ::= { logfilesCountersEntry 16 }
+
+lgActionRequestIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ActionRequest's log files in folder In."
+  ::= { logfilesCountersEntry 63 }
+
+lgActionRequestError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ActionRequest's log files in folder Error."
+  ::= { logfilesCountersEntry 64 }
+
+lgActionRequestOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ActionRequest's processed log files in folder Out."
+  ::= { logfilesCountersEntry 65 }
+
+lgActionStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ActionStat's log files in folder In."
+  ::= { logfilesCountersEntry 66 }
+
+lgActionStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ActionStat's log files in folder Error."
+  ::= { logfilesCountersEntry 67 }
+
+lgActionStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ActionStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 68 }
+
+lgAdvertiserUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of AdvertiserUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 69 }
+
+lgAdvertiserUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of AdvertiserUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 70 }
+
+lgAdvertiserUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of AdvertiserUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 71 }
+
+lgCampaignStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CampaignStat's log files in folder In."
+  ::= { logfilesCountersEntry 72 }
+
+lgCampaignStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CampaignStat's log files in folder Error."
+  ::= { logfilesCountersEntry 73 }
+
+lgCampaignStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CampaignStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 74 }
+
+lgCampaignUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CampaignUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 75 }
+
+lgCampaignUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CampaignUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 76 }
+
+lgCampaignUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CampaignUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 77 }
+
+lgCCGKeywordStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGKeywordStat's log files in folder In."
+  ::= { logfilesCountersEntry 78 }
+
+lgCCGKeywordStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGKeywordStat's log files in folder Error."
+  ::= { logfilesCountersEntry 79 }
+
+lgCCGKeywordStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGKeywordStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 80 }
+
+lgCCGSelectionFailureStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGSelectionFailureStat's log files in folder In."
+  ::= { logfilesCountersEntry 81 }
+
+lgCCGSelectionFailureStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGSelectionFailureStat's log files in folder Error."
+  ::= { logfilesCountersEntry 82 }
+
+lgCCGSelectionFailureStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGSelectionFailureStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 83 }
+
+lgCCGStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGStat's log files in folder In."
+  ::= { logfilesCountersEntry 84 }
+
+lgCCGStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGStat's log files in folder Error."
+  ::= { logfilesCountersEntry 85 }
+
+lgCCGStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 86 }
+
+lgCCGUserStatIn OBJECT-TYPE 	 
+  SYNTAX      Gauge32 	 
+  MAX-ACCESS  read-only 	 
+  STATUS      current 	 
+  DESCRIPTION "The number of CCGUserStat's log files in folder In." 	 
+  ::= { logfilesCountersEntry 87 } 	 
+	  	 
+lgCCGUserStatError OBJECT-TYPE 	 
+  SYNTAX      Gauge32 	 
+  MAX-ACCESS  read-only 	 
+  STATUS      current 	 
+  DESCRIPTION "The number of CCGUserStat's log files in folder Error." 	 
+  ::= { logfilesCountersEntry 88 }
+
+lgCCGUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCGUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 89 }
+
+lgCCStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCStat's log files in folder In."
+  ::= { logfilesCountersEntry 90 }
+
+lgCCStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCStat's log files in folder Error."
+  ::= { logfilesCountersEntry 91 }
+
+lgCCStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 92 }
+
+lgCCUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 93 }
+
+lgCCUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 94 }
+
+lgCCUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CCUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 95 }
+
+lgChannelCountStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelCountStat's log files in folder In."
+  ::= { logfilesCountersEntry 96 }
+
+lgChannelCountStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelCountStat's log files in folder Error."
+  ::= { logfilesCountersEntry 97 }
+
+lgChannelCountStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelCountStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 98 }
+
+lgChannelHitStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelHitStat's log files in folder In."
+  ::= { logfilesCountersEntry 99 }
+
+lgChannelHitStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelHitStat's log files in folder Error."
+  ::= { logfilesCountersEntry 100 }
+
+lgChannelHitStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelHitStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 101 }
+
+lgChannelImpInventoryIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelImpInventory's log files in folder In."
+  ::= { logfilesCountersEntry 102 }
+
+lgChannelImpInventoryError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelImpInventory's log files in folder Error."
+  ::= { logfilesCountersEntry 103 }
+
+lgChannelImpInventoryOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelImpInventory's processed log files in folder Out."
+  ::= { logfilesCountersEntry 104 }
+
+lgChannelInventoryIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelInventory's log files in folder In."
+  ::= { logfilesCountersEntry 105 }
+
+lgChannelInventoryError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelInventory's log files in folder Error."
+  ::= { logfilesCountersEntry 106 }
+
+lgChannelInventoryOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelInventory's processed log files in folder Out."
+  ::= { logfilesCountersEntry 107 }
+
+lgChannelInventoryEstimationStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelInventoryEstimationStat's log files in folder In."
+  ::= { logfilesCountersEntry 108 }
+
+lgChannelInventoryEstimationStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelInventoryEstimationStat's log files in folder Error."
+  ::= { logfilesCountersEntry 109 }
+
+lgChannelInventoryEstimationStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelInventoryEstimationStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 110 }
+
+lgChannelOverlapUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelOverlapUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 111 }
+
+lgChannelOverlapUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelOverlapUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 112 }
+
+lgChannelOverlapUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelOverlapUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 113 }
+
+lgChannelPerformanceIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelPerformance's log files in folder In."
+  ::= { logfilesCountersEntry 114 }
+
+lgChannelPerformanceError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelPerformance's log files in folder Error."
+  ::= { logfilesCountersEntry 115 }
+
+lgChannelPerformanceOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelPerformance's processed log files in folder Out."
+  ::= { logfilesCountersEntry 116 }
+
+lgChannelPriceRangeIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelPriceRange's log files in folder In."
+  ::= { logfilesCountersEntry 117 }
+
+lgChannelPriceRangeError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelPriceRange's log files in folder Error."
+  ::= { logfilesCountersEntry 118 }
+
+lgChannelPriceRangeOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelPriceRange's processed log files in folder Out."
+  ::= { logfilesCountersEntry 119 }
+
+lgChannelTriggerImpStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelTriggerImpStat's log files in folder In."
+  ::= { logfilesCountersEntry 120 }
+
+lgChannelTriggerImpStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelTriggerImpStat's log files in folder Error."
+  ::= { logfilesCountersEntry 121 }
+
+lgChannelTriggerImpStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelTriggerImpStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 122 }
+
+lgChannelTriggerStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelTriggerStat's log files in folder In."
+  ::= { logfilesCountersEntry 123 }
+
+lgChannelTriggerStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelTriggerStat's log files in folder Error."
+  ::= { logfilesCountersEntry 124 }
+
+lgChannelTriggerStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ChannelTriggerStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 125 }
+
+lgCMPStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CMPStat's log files in folder In."
+  ::= { logfilesCountersEntry 126 }
+
+lgCMPStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CMPStat's log files in folder Error."
+  ::= { logfilesCountersEntry 127 }
+
+lgCMPStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CMPStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 128 }
+
+lgColoUpdateStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUpdateStat's log files in folder In."
+  ::= { logfilesCountersEntry 129 }
+
+lgColoUpdateStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUpdateStat's log files in folder Error."
+  ::= { logfilesCountersEntry 130 }
+
+lgColoUpdateStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUpdateStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 131 }
+
+lgColoUsersIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUsers's log files in folder In."
+  ::= { logfilesCountersEntry 132 }
+
+lgColoUsersError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUsers's log files in folder Error."
+  ::= { logfilesCountersEntry 133 }
+
+lgColoUsersOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUsers's processed log files in folder Out."
+  ::= { logfilesCountersEntry 134 }
+
+lgColoUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 135 }
+
+lgColoUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 136 }
+
+lgColoUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ColoUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 137 }
+
+lgCreativeStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CreativeStat's log files in folder In."
+  ::= { logfilesCountersEntry 138 }
+
+lgCreativeStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CreativeStat's log files in folder Error."
+  ::= { logfilesCountersEntry 139 }
+
+lgCreativeStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of CreativeStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 140 }
+
+lgDeviceChannelCountStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of DeviceChannelCountStat's log files in folder In."
+  ::= { logfilesCountersEntry 141 }
+
+lgDeviceChannelCountStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of DeviceChannelCountStat's log files in folder Error."
+  ::= { logfilesCountersEntry 142 }
+
+lgDeviceChannelCountStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of DeviceChannelCountStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 143 }
+
+lgExpressionPerformanceIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ExpressionPerformance's log files in folder In."
+  ::= { logfilesCountersEntry 150 }
+
+lgExpressionPerformanceError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ExpressionPerformance's log files in folder Error."
+  ::= { logfilesCountersEntry 151 }
+
+lgExpressionPerformanceOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ExpressionPerformance's processed log files in folder Out."
+  ::= { logfilesCountersEntry 152 }
+
+lgGlobalColoUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of GlobalColoUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 153 }
+
+lgGlobalColoUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of GlobalColoUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 154 }
+
+lgGlobalColoUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of GlobalColoUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 155 }
+
+lgOptOutStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of OptOutStat's log files in folder In."
+  ::= { logfilesCountersEntry 162 }
+
+lgOptOutStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of OptOutStat's log files in folder Error."
+  ::= { logfilesCountersEntry 163 }
+
+lgOptOutStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of OptOutStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 164 }
+
+lgPageLoadsDailyStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PageLoadsDailyStat's log files in folder In."
+  ::= { logfilesCountersEntry 165 }
+
+lgPageLoadsDailyStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PageLoadsDailyStat's log files in folder Error."
+  ::= { logfilesCountersEntry 166 }
+
+lgPageLoadsDailyStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PageLoadsDailyStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 167 }
+
+lgPassbackStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PassbackStat's log files in folder In."
+  ::= { logfilesCountersEntry 168 }
+
+lgPassbackStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PassbackStat's log files in folder Error."
+  ::= { logfilesCountersEntry 169 }
+
+lgPassbackStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PassbackStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 170 }
+
+lgPublisherInventoryIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PublisherInventory's log files in folder In."
+  ::= { logfilesCountersEntry 171 }
+
+lgPublisherInventoryError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PublisherInventory's log files in folder Error."
+  ::= { logfilesCountersEntry 172 }
+
+lgPublisherInventoryOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of PublisherInventory's processed log files in folder Out."
+  ::= { logfilesCountersEntry 173 }
+
+lgSearchEngineStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SearchEngineStat's log files in folder In."
+  ::= { logfilesCountersEntry 174 }
+
+lgSearchEngineStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SearchEngineStat's log files in folder Error."
+  ::= { logfilesCountersEntry 175 }
+
+lgSearchEngineStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SearchEngineStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 176 }
+
+lgSearchTermStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SearchTermStat's log files in folder In."
+  ::= { logfilesCountersEntry 177 }
+
+lgSearchTermStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SearchTermStat's log files in folder Error."
+  ::= { logfilesCountersEntry 178 }
+
+lgSearchTermStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SearchTermStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 179 }
+
+lgSiteChannelStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteChannelStat's log files in folder In."
+  ::= { logfilesCountersEntry 180 }
+
+lgSiteChannelStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteChannelStat's log files in folder Error."
+  ::= { logfilesCountersEntry 181 }
+
+lgSiteChannelStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteChannelStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 182 }
+
+lgSiteReferrerStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteReferrerStat's log files in folder In."
+  ::= { logfilesCountersEntry 183 }
+
+lgSiteReferrerStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteReferrerStat's log files in folder Error."
+  ::= { logfilesCountersEntry 184 }
+
+lgSiteReferrerStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteReferrerStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 185 }
+
+lgSiteStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteStat's log files in folder In."
+  ::= { logfilesCountersEntry 186 }
+
+lgSiteStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteStat's log files in folder Error."
+  ::= { logfilesCountersEntry 187 }
+
+lgSiteStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 188 }
+
+lgSiteUserStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteUserStat's log files in folder In."
+  ::= { logfilesCountersEntry 189 }
+
+lgSiteUserStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteUserStat's log files in folder Error."
+  ::= { logfilesCountersEntry 190 }
+
+lgSiteUserStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of SiteUserStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 191 }
+
+lgTagAuctionStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of TagAuctionStat's log files in folder In."
+  ::= { logfilesCountersEntry 192 }
+
+lgTagAuctionStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of TagAuctionStat's log files in folder Error."
+  ::= { logfilesCountersEntry 193 }
+
+lgTagAuctionStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of TagAuctionStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 194 }
+
+lgTagPositionStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of TagPositionStat's log files in folder In."
+  ::= { logfilesCountersEntry 195 }
+
+lgTagPositionStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of TagPositionStat's log files in folder Error."
+  ::= { logfilesCountersEntry 196 }
+
+lgTagPositionStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of TagPositionStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 197 }
+
+lgUserAgentStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of UserAgentStat's log files in folder In."
+  ::= { logfilesCountersEntry 198 }
+
+lgUserAgentStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of UserAgentStat's log files in folder Error."
+  ::= { logfilesCountersEntry 199 }
+
+lgUserAgentStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of UserAgentStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 200 }
+
+lgUserPropertiesIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of UserProperties's log files in folder In."
+  ::= { logfilesCountersEntry 201 }
+
+lgUserPropertiesError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of UserProperties's log files in folder Error."
+  ::= { logfilesCountersEntry 202 }
+
+lgUserPropertiesOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of UserProperties's processed log files in folder Out."
+  ::= { logfilesCountersEntry 203 }
+
+lgWebStatIn OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of WebStat's log files in folder In."
+  ::= { logfilesCountersEntry 204 }
+
+lgWebStatError OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of WebStat's log files in folder Error."
+  ::= { logfilesCountersEntry 205 }
+
+lgWebStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of WebStat's processed log files in folder Out."
+  ::= { logfilesCountersEntry 206 }
+
+lgExtStatOut OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of ExtStat's log files in folder Out."
+  ::= { logfilesCountersEntry 216 }
+
+lgTotalIn     OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all In folders."
+  ::= { logfilesCountersEntry 217 }
+
+lgTotalIntermediate     OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Intermediate folders."
+  ::= { logfilesCountersEntry 218 }
+
+lgTotalError  OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Error folders."
+  ::= { logfilesCountersEntry 219 }
+
+lgTotalOut    OBJECT-TYPE
+  SYNTAX      Gauge32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "The number of log files in all Out folders."
+  ::= { logfilesCountersEntry 220 }
+
+END

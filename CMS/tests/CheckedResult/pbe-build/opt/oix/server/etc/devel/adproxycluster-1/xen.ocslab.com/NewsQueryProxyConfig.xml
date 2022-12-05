@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/jurij_kuznecov/projects/foros/server/trunk/xsd/DiscoverSvcs/NewsQueryProxyConfig.xsd">
+  <cfg:NewsQueryProxyConfig>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10177">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="NewsQueryProxy_v24" name="NewsQueryProxy"/>
+        <cfg:Object servant="NewsQueryProxy_v24" name="NewsQueryProxy_v24"/>
+        <cfg:Object servant="NewsQueryProxy_v6" name="NewsQueryProxy_v6"/>
+      </cfg:Endpoint>
+      <cfg:Endpoint host="xen.ocslab.com" port="10227">
+        <cfg:Secure key="/home/jurij_kuznecov/projects/foros/run/trunk/pbe-etc/devel/adproxycluster-1/xen.ocslab.com/cert/skey.pem" certificate="/home/jurij_kuznecov/projects/oix/run/trunk/pbe-etc/devel/adproxycluster-1/xen.ocslab.com/cert/scert.pem" certificate_authority="/home/jurij_kuznecov/projects/oix/run/trunk/pbe-etc/devel/adproxycluster-1/xen.ocslab.com/cert/ca.pem" key-word="adserver"/>
+        <cfg:Object servant="NewsQueryProxy_v24" name="NewsQueryProxy_v24"/>
+        <cfg:Object servant="NewsQueryProxy_v6" name="NewsQueryProxy_v6"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/home/jurij_kuznecov/projects/foros/run/trunk/pbe-var/log/NewsQueryProxy/NewsQueryProxy">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:NewsCacheControllerCorbaRef name="NewsCacheController">
+      <cfg:Ref ref="corbaloc:iiop:nnode0:10226/NewsCacheController"/>
+    </cfg:NewsCacheControllerCorbaRef>
+  </cfg:NewsQueryProxyConfig>
+</cfg:AdConfiguration>

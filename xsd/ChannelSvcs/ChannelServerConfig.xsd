@@ -1,0 +1,166 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      ChannelServer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ChannelServerConfig" type="ChannelServerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelServerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="MatchOptions" type="MatchOptionsType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Match options
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="DictionaryRefs" type="MultiCorbaObjectRefType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            References on dictionary provider service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for ChannelServer
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UpdateStatLogger"
+        type="LogFlushPolicyType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Colo update statistic logger
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Segmentors" type="SegmentorSettingsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration of language segmentors
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+   </xsd:sequence>
+
+    <!--
+    <xsd:attribute name="country" type="xsd:string" use="required"/>
+    -->
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="count_chunks" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Set count chunks in channel container
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="merge_size" type="xsd:positiveInteger" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Set memory limit on merging in Mb
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ccg_portion" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum count of keywords witch loadded for one time
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="update_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Set update period in seconds
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="reschedule_period" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Set reschedule period in seconds
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="SegmentorSettingsType">
+    <xsd:sequence>
+      <xsd:element name="Segmentor" type="LanguageSegmentorType" minOccurs="0" maxOccurs="2">
+        <xsd:annotation>
+          <xsd:documentation>
+            Library for support of japanese language.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="matching_segmentor" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Segmentor for matching
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="MatchOptionsType">
+    <xsd:sequence>
+      <xsd:element name="AllowPort" type="xsd:positiveInteger" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="match_logger_file" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Match logger file name
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="nonstrict" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable non strict keywords matching
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,14 @@
+Define {{{expand:? into file:?}}} macro, which is normally called from
+{{{@eval}}}.
+
+<<expand:? into file:?>>=
+  {
+    my $file = <<file>>;
+    open(my $fh, '>', $file)
+      or die "open(> $file): $!";
+
+    $sweb->expand($fh, <<expand>>);
+
+    close($fh)
+      or die "close(> $file): $!";
+  }

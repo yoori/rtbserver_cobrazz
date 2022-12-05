@@ -1,0 +1,314 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : ORBacus.def
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+cxx_corba_orb_identifier="ORBacus"
+cxx_corba_orb_known_name="ORBacus"
+cxx_corba_orb_platforms='cygwin% solaris% linux% freebsd%'
+cxx_corba_orb_default_for_platforms='cygwin% solaris% linux% freebsd%'
+cxx_corba_orb_location_search_hint="OB/CORBA.h OB/orb.idl idl"
+case $host_os in
+  cygwin*) cxx_corba_orb_location_search_hint=\
+"${cxx_corba_orb_location_search_hint}.exe";;
+esac
+cxx_corba_orb_location_search_opt_func="ORBacus_cxx_search_opt_func"
+cxx_corba_orb_location_search_acknowledge_func=\
+"ORBacus_cxx_search_acknowledge_func"
+
+ORBacus_cxx_corba_orb_defs()
+{
+  if test "$osbe_enable_guess_location" -eq "0" -o \
+     "`osbe_var_undefined CXX_CORBA_IDL`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_CPPFLAGS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_IDLPPFLAGS`" -eq "0"; then
+    ORBacus_cxx_corba_orb_defs__no_guess_location="1"
+  else
+    ORBacus_cxx_corba_orb_defs__no_guess_location="0"
+  fi
+
+  ORBacus_cxx_corba_orb_defs__libs="OB OBNaming JTC"
+  ORBacus_cxx_corba_orb_defs__release="1"
+
+  if test -n "$cxx_corba_orb_dir"; then
+
+#
+# If there is a root dir defined will provide directory defaults and
+# check if release or debug version exist
+#
+    if test "$osbe_enable_guess_location" -eq "0" -o \
+       "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "0" -a \
+       "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "0"; then
+
+#
+# If not allowed to guess, will just assign most probable lib path
+#
+      ORBacus_cxx_corba_orb_defs__lib_path="$cxx_corba_orb_dir/lib"
+
+    else
+
+#
+# If allowed to guess, will detect lib paths
+#
+      case $host_os in
+        cygwin*) ORBacus_cxx_corba_orb_defs__lib_names=\
+`osbe_suffix_words ".lib" "$ORBacus_cxx_corba_orb_defs__libs"`;;
+              *) ORBacus_cxx_corba_orb_defs__lib_names=\
+`osbe_wrap_words "lib" ".so" "$ORBacus_cxx_corba_orb_defs__libs"`;;
+      esac
+
+      osbe_guess_each_location "$cxx_corba_orb_dir" \
+                               "$ORBacus_cxx_corba_orb_defs__lib_names" \
+                               "ORBacus libraries" \
+                               ORBacus_cxx_corba_orb_defs__lib_path \
+                               "ORBacus_cxx_search_opt_func"
+
+      if test -z "$ORBacus_cxx_corba_orb_defs__lib_path"; then
+
+        case $host_os in
+          cygwin*) ORBacus_cxx_corba_orb_defs__lib_names=\
+`osbe_suffix_words "d.lib" "$ORBacus_cxx_corba_orb_defs__libs"`;;
+                *) ORBacus_cxx_corba_orb_defs__lib_names=\
+`osbe_wrap_words "lib" "d.so" "$ORBacus_cxx_corba_orb_defs__libs"`;;
+        esac
+
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "$ORBacus_cxx_corba_orb_defs__lib_names" \
+                                 "ORBacus debug libraries" \
+                                 ORBacus_cxx_corba_orb_defs__lib_path \
+                                 "ORBacus_cxx_search_opt_func"
+
+        if test -n "$ORBacus_cxx_corba_orb_defs__lib_path"; then
+          ORBacus_cxx_corba_orb_defs__release="0"
+        fi
+
+      fi
+
+    fi
+
+#
+# Detecting CXX_CORBA_IDL
+#
+    if test "`osbe_var_undefined CXX_CORBA_IDL`" -eq "1"; then
+
+      case $host_os in
+        cygwin*) ORBacus_cxx_corba_orb_defs__idl_compiler="idl.exe";;
+              *) ORBacus_cxx_corba_orb_defs__idl_compiler="idl";;
+      esac
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect idl compiler path
+#
+        ORBacus_cxx_corba_orb_defs__idl_compiler_path=\
+`osbe_guess_location "ORBacus IDL compiler" \
+                     "$cxx_corba_orb_dir" \
+                     "$ORBacus_cxx_corba_orb_defs__idl_compiler" \
+                     "ORBacus_cxx_search_opt_func"`
+
+        if test -n "$ORBacus_cxx_corba_orb_defs__idl_compiler_path"; then
+          CXX_CORBA_IDL=\
+`osbe_suffix_words "/$ORBacus_cxx_corba_orb_defs__idl_compiler" \
+                   "$ORBacus_cxx_corba_orb_defs__idl_compiler_path"`
+        fi
+
+      else
+#
+# If not allowed to guess, will just assign most probable idl compiler path
+#
+        CXX_CORBA_IDL="$cxx_corba_orb_dir/bin/idl"
+      fi
+
+    fi
+#
+# Detecting CXX_CORBA_CPPFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_CPPFLAGS`" -eq "1"; then
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect C++ include paths
+#
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "CORBA.h OB/CORBA.h" \
+                                 "ORBacus headers" \
+                                 ORBacus_cxx_corba_orb_defs__include_path \
+                                 "ORBacus_cxx_search_opt_func" \
+                                 "ORBacus_cxx_search_acknowledge_func"
+
+      else
+#
+# If not allowed to guess, will just assign most probable C++ include paths
+#
+        ORBacus_cxx_corba_orb_defs__include_path=\
+"$cxx_corba_orb_dir/include/OB $cxx_corba_orb_dir/include"
+
+      fi
+
+      if test -n "$ORBacus_cxx_corba_orb_defs__include_path"; then
+        CXX_CORBA_CPPFLAGS=\
+`osbe_prefix_words "-I" "$ORBacus_cxx_corba_orb_defs__include_path ."`
+      fi
+
+    fi
+
+#
+# Detecting CXX_CORBA_IDLPPFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_IDLPPFLAGS`" -eq "1"; then
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect IDL include paths
+#
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "orb.idl OB/orb.idl" \
+                                 "ORBacus IDL headers" \
+                                 ORBacus_cxx_corba_orb_defs__include_path \
+                                 "ORBacus_cxx_search_opt_func" \
+                                 "ORBacus_cxx_search_acknowledge_func"
+
+      else
+#
+# If not allowed to guess, will just assign most probable IDL include paths
+#
+        ORBacus_cxx_corba_orb_defs__include_path=\
+"$cxx_corba_orb_dir/idl/OB $cxx_corba_orb_dir/idl"
+
+      fi
+
+      if test -n "$ORBacus_cxx_corba_orb_defs__include_path"; then
+        CXX_CORBA_IDLPPFLAGS=\
+`osbe_prefix_words "-I" "$ORBacus_cxx_corba_orb_defs__include_path"`
+      fi
+    fi
+
+#
+# Detecting CXX_CORBA_LDFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "1"; then
+
+      CXX_CORBA_LDFLAGS=\
+`osbe_prefix_words "-L" "$ORBacus_cxx_corba_orb_defs__lib_path"`
+
+    fi
+
+  fi
+
+  CXX_CORBA_SKELSUFFIX=${CXX_CORBA_SKELSUFFIX-"_s"}
+  CXX_CORBA_STUBSUFFIX=${CXX_CORBA_STUBSUFFIX-""}
+
+  CXX_CORBA_EXTRA_IDLFLAGS=${CXX_CORBA_EXTRA_IDLFLAGS-""}
+
+  if test "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "1"; then
+
+    if test "$ORBacus_cxx_corba_orb_defs__release" = "1"; then
+      CXX_CORBA_LIBS=\
+`osbe_prefix_words "-l" "$ORBacus_cxx_corba_orb_defs__libs"`
+    else
+      CXX_CORBA_LIBS=\
+`osbe_wrap_words "-l" "d" "$ORBacus_cxx_corba_orb_defs__libs"`
+    fi
+
+    case $host_os in
+      linux*) CXX_CORBA_LIBS="${CXX_CORBA_LIBS} -lpthread -ldl";;
+    esac
+  fi
+
+  if test "`osbe_var_undefined CXX_CORBA_CXXFLAGS`" -eq "1"; then
+    case $host_os in
+      cygwin*) \
+        if test "$ORBacus_cxx_corba_orb_defs__release" = "1"; then
+          CXX_CORBA_CXXFLAGS="-MD -GR"
+        else
+          CXX_CORBA_CXXFLAGS="-MDd -GR"
+        fi;;
+      *) CXX_CORBA_CXXFLAGS="";;
+    esac
+  fi
+}
+
+ORBacus_cxx_corba_orb_postconfig()
+{
+  CXX_CORBA_OUTPUTDIRFLAG="--output-dir"
+
+  CXX_CORBA_IDLFLAGS=\
+"${CXX_CORBA_EXTRA_IDLFLAGS} --c-suffix .cpp --h-suffix .hpp"
+
+  if test -n "$CXX_CORBA_SKELSUFFIX"; then
+    CXX_CORBA_IDLFLAGS=\
+"${CXX_CORBA_IDLFLAGS} --skel-suffix ${CXX_CORBA_SKELSUFFIX}"
+  fi
+
+  if test -n "$CXX_CORBA_STUBSUFFIX"; then
+    CXX_CORBA_IDLFLAGS=\
+"${CXX_CORBA_IDLFLAGS} --stub-suffix ${CXX_CORBA_STUBSUFFIX}"
+  fi
+
+  _cxx_corba_orb_orbacus_idl_libpath="$ORBacus_cxx_corba_orb_defs__lib_path"
+
+  osbe_ask_for_pe_string \
+    "Please enter library path(s) for ORBacus IDL compiler" \
+    "Library path(s) for ORBacus IDL compiler" \
+    _cxx_corba_orb_orbacus_idl_libpath \
+    "cxx.corba.orb.orbacus.idl.libpath" \
+    "1"
+
+  for _osbe_corba_orb_orbacus_path in $_cxx_corba_orb_orbacus_idl_libpath; do
+    _cxx_corba_orb_orbacus_idl_libpath_list=\
+"${_cxx_corba_orb_orbacus_idl_libpath_list}:${_osbe_corba_orb_orbacus_path}"
+  done
+
+  case $host_os in
+    cygwin*) CXX_CORBA_ORB_PRE_RULES=\
+"export PATH :=\$(PATH)${_cxx_corba_orb_orbacus_idl_libpath_list}";;
+            *) CXX_CORBA_ORB_PRE_RULES=\
+"export LD_LIBRARY_PATH :=\$(LD_LIBRARY_PATH)\
+${_cxx_corba_orb_orbacus_idl_libpath_list}";;
+  esac
+
+  CXX_CORBA_ORB_POST_RULES=\
+'
+define corba_orb_rules_post_config
+CPP_FLAGS := -I$$(top_builddir)$(reldir) $$(CPP_FLAGS)
+
+endef
+
+rules_post_config := $(rules_post_config)$(corba_orb_rules_post_config)
+'
+}
+
+ORBacus_cxx_search_opt_func()
+{
+  $echo "-type f -o -type l"
+}
+
+ORBacus_cxx_search_acknowledge_func()
+{
+  ORBacus_cxx_search_acknowledge_func__signature=`cat "$1"|grep "IONA "`
+
+  if test -z "$ORBacus_cxx_search_acknowledge_func__signature"; then
+    $echo "0"
+  else
+    $echo "1"
+  fi
+}

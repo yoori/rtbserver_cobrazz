@@ -1,0 +1,8 @@
+@autotestsunits_deps@
+
+sources := \
+  MetaTest.cpp \
+  SubAgentTest.cpp
+
+includes := .
+@autotestsunits_post@

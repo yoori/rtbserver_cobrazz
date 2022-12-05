@@ -1,0 +1,666 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      CampaignManager Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="CampaignManager" type="CampaignManagerType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="IpEncryptConfigType">
+    <xsd:attribute name="key" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignManagerType">
+    <xsd:annotation>
+      <xsd:documentation>Campaign Manager process runtime parameters.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>Sets logger options, such as log file name.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Creative" type="CampaignManagerCreative">
+        <xsd:annotation>
+          <xsd:documentation>Defines parameters required for setting ad creative options.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>Defines refs to corba object CampaignServer</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Billing" type="BillingType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Billing configuration</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logging" type="CampaignManagerLoggingType">
+        <xsd:annotation>
+          <xsd:documentation>All log properties.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="IpEncryptConfig" type="IpEncryptConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Ip encode config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SecurityToken" type="SecurityTokenType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Security token generator config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CTRConfig" type="CTRConfigType" minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>CTR config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ConvRateConfig" type="CTRConfigType" minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Conversion rate config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="BidCostConfig" type="CTRConfigType" minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Bid Cost config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CountryWhitelist" type="CountriesType" minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Country whitelist</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="KafkaAdsSpacesStorage" type="KafkaTopic" minOccurs="0" 
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Kafka Ads space storage</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="KafkaMatchStorage" type="KafkaTopic" minOccurs="0" 
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Kafka Match space storage</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="output_logs_dir" type="xsd:string" use="optional"/>
+
+    <xsd:attribute name="config_update_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets config update period (seconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="campaigns_update_timeout" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Stop campaigns serving if campaigns config is timed out (seconds).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="ecpm_update_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets ecpm update period (seconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="campaigns_type" type="CampaignFilterType" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Says, what CampaignManager
+    must select only all, only active or only virtual campaigns
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="colocation_id" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets the colocation id.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="uc_freq_caps_lifetime" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Lifetime of record in uc_freq_caps cookies in seconds. By default 60 seconds.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="domain_config_path" type="xsd:string" use="required"/>
+
+    <xsd:attribute name="service_index" type="xsd:string" use="required"/>
+    <xsd:attribute name="rid_private_key" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CTRConfigType">
+    <xsd:attribute name="root" type="xsd:string" use="required"/>
+    <xsd:attribute name="capture_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="expire_timeout" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="check_period" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CountryType">
+    <xsd:attribute name="country_code" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CountriesType">
+    <xsd:sequence>
+      <xsd:element name="Country" type="CountryType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <!-- CampaignManagerCreative -->
+  <xsd:complexType name="CampaignManagerCreative">
+    <xsd:sequence>
+      <xsd:element name="ContentCache" type="TemplateCacheType"/>
+      <xsd:element name="CreativeRule"
+        type="CampaignManagerCreativeRuleType" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Rules for instantiating of creatives
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="SourceRule"
+        type="SourceInstantiateRuleType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Detail rules for instantiating creative links
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="creative_file_dir" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Base directory for creative files.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="template_file_dir" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Template file local prefix.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="post_instantiate_script_template_file" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>File for instantiate body for post
+        instantiate script model.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="post_instantiate_script_mime_format" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Mime format body for post instantiate
+        script model.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="post_instantiate_iframe_template_file" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>File for instantiate body for post
+        instantiate iframe model.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="post_instantiate_iframe_mime_format" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Mime format body for post instantiate
+        iframe model.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="instantiate_track_html_file" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>File for instantiate body 
+        for instantiate jstracker HTML.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="drop_https_safe" type="xsd:boolean" use="optional">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- CampaignManagerCreative ends -->
+
+  <!-- CampaignManagerCreativeRuleType -->
+  <xsd:complexType name="CampaignManagerCreativeRuleType">
+    <xsd:sequence>
+      <xsd:element name="Token" type="XsltTokenType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Name of rule.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ad_click_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Click url to be used when producing ad creatives.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ad_server" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Ad server address to be used when producing ad creatives.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ad_image_server" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Ad image server address to be used when producing ad creatives.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="track_pixel_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Track pixel URL used in impression verification.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="notice_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="action_pixel_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Action pixel URL used in action tracking.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="image_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Url to be used to prefix image urls.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="publ_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Url to be used to prefix publisher resources.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user_bind_url" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Url to be used to prefix user bind request.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="local_passback_prefix" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Url to be used to prefix relative passback urls.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="dynamic_creative_prefix" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Url to be used to prefix dynamic source links.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="passback_template_path_prefix" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Prefix for passback template files.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="passback_pixel_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Passback pixel URL used in passback verification.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="pub_pixels_optin" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A URL to dynamic service that returns HTML with all opt in pixels for user's country.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="pub_pixels_optout" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A URL to dynamic service that returns HTML with all opt out pixels for user's country.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="script_instantiate_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A URL to service for post instantiate creative requested from script.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="iframe_instantiate_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A URL to service for post instantiate creative requested from iframe.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="nonsecure_direct_instantiate_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A non secure URL to service for post instantiate creative.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="direct_instantiate_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A URL to service for post instantiate creative.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="video_instantiate_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A URL to service for post instantiate video
+        creative.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="nonsecure_video_instantiate_url" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>A non secure URL to service for post instantiate video
+        creative.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="secure" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Instantinate secure prefix for url.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- CampaignManagerCreativeRuleType ends -->
+
+  <!-- SourceInstantiateRuleType -->
+  <xsd:complexType name="SourceInstantiateRuleType">
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Name of instantiate (normaly equal to RTB source)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="click_prefix" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Click url prefix.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mime_encoded_click_prefix" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Mimed preclick.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="preclick" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Preclick.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mime_encoded_preclick" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Mimed preclick.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="vast_preclick" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Vast preclick.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mime_encoded_vast_preclick" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Mimed vast preclick.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <!-- BillingType -->
+  <xsd:complexType name="BillingType">
+    <xsd:sequence>
+      <xsd:element name="BillingServerCorbaRef" type="MultiCorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>Defines refs to BillingServer's</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="confirm_bids" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Push bids into BillingServer's.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="check_bids" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Check bids on BillingServer's.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="optimize_campaign_ctr" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignManagerLoggingType">
+    <xsd:sequence>
+      <xsd:element name="ChannelTriggerStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ChannelTriggerStat verify logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChannelHitStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ChannelHitStat verify logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="RequestBasicChannels"
+        type="RequestBasicChannelsLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>RequestBasicChannels logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="WebStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>WebStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ResearchWebStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ResearchWebStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ProfilingResearch" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ProfilingResearch logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CreativeStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>CreativeStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ActionRequest" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ActionRequest logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="PassbackStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>PassbackStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserAgentStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>UserAgentStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Request" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Request logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Impression" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Impression logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Click" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Click logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="AdvertiserAction" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>AdvertiserAction logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="PassbackImpression" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>PassbackImpression logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserProperties" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>UserProperties logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="TagRequest" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>TagRequest logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CcgStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>CcgStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="CcStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>CcStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SearchTermStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>SearchTermStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SearchEngineStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>SearchEngineStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="TagAuctionStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>TagAuctionStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="TagPositionStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>TagPositionStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="inventory_users_percentage" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Percentage of users, that take part in collection
+          of ChannelInventory statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="distrib_count" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Defines distribution counter.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="profiling_research_record_limit" type="xsd:positiveInteger" default="5000">
+      <xsd:annotation>
+        <xsd:documentation>Limit records profiling research log</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="profiling_log_sampling" type="xsd:float" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Sampling rate to be applied to research profiling log.
+          If 0, then log is disabled.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="use_referrer_site_referrer_stats" type="UseReferrerType" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Referrer logging in ResearchProf logs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <!-- CampaignManagerLogger -->
+  <xsd:complexType name="CampaignManagerLoggerType">
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines size policy for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines time policy in seconds for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignManagerLoggerWithAdRequestAnonymizingType">
+    <xsd:complexContent>
+      <xsd:extension base="CampaignManagerLoggerType">
+        <xsd:attribute name="adrequest_anonymize" type="xsd:boolean" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="RequestBasicChannelsLoggerType">
+    <xsd:complexContent>
+      <xsd:extension base="CampaignManagerLoggerWithAdRequestAnonymizingType">
+        <xsd:attribute name="dump_channel_triggers" type="xsd:boolean" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <!-- CampaignManagerLogger ends-->
+
+</xsd:schema>

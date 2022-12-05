@@ -1,0 +1,8 @@
+name="KafkaProducer"
+so_files=KafkaProducer
+
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep ReferenceCounting
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+osbe_cxx_dep Kafka

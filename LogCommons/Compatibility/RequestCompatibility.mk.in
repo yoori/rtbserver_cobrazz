@@ -1,0 +1,9 @@
+@requestcompatibility_deps@
+
+sources := \
+  Request_Base.cpp \
+  Request_v354.cpp \
+  Request_v360.cpp \
+  Request_v361.cpp
+
+@requestcompatibility_post@

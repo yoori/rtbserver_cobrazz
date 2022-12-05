@@ -1,0 +1,17 @@
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([AutoTestsDirectoryUnits.mk])
+OSBE_CONFIG_FILE([AutoTestsUnits.mk])
+
+OSBE_CONFIG_SUBDIR([Frontend])
+OSBE_CONFIG_SUBDIR([GranularUpdate])
+OSBE_CONFIG_SUBDIR([NoDBUpdate])
+OSBE_CONFIG_SUBDIR([UserProfilesExchange])
+OSBE_CONFIG_SUBDIR([TriggerMatching])
+OSBE_CONFIG_SUBDIR([UserProfiling])
+OSBE_CONFIG_SUBDIR([CreativeSelection])
+OSBE_CONFIG_SUBDIR([CreativeInstantiation])
+OSBE_CONFIG_SUBDIR([Statistics])
+OSBE_CONFIG_SUBDIR([Zerodowntime])
+
+OSBE_CXX_DEF([AutoTestsUnits])

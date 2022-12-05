@@ -1,0 +1,6 @@
+saxon
+cms-cli
+
+OpenSBE : /home/jurij_kuznecov/projects/foros-dependencies => sudo ./OpenSBE-build.sh
+xsd : ./RPM/build-xsd-8.sh
+vanga : /home/jurij_kuznecov/projects/foros-dependencies/vanga : sudo ./RPM/build.sh 1.0.0.17

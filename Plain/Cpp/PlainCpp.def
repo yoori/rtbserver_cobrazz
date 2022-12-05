@@ -1,0 +1,8 @@
+name="Plain Cpp"
+so_files=PlainCpp
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ReferenceCounting
+
+osbe_cxx_dep PlainDeclaration
+osbe_cxx_dep PlainCode

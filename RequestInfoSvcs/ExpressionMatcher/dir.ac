@@ -1,0 +1,13 @@
+OSBE_CONFIG_SUBDIR([Compatibility])
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([Compatibility.mk])
+
+OSBE_CXX_DEF([ExpressionChannelMatcher], [ExpressionChannelMatcher.mk])
+
+OSBE_CXX_DEF([UserInventoryContainer], [UserInventoryContainer.mk])
+OSBE_CXX_DEF([UserTriggerMatchContainer], [UserTriggerMatchContainer.mk])
+OSBE_CXX_DEF([UserColoReachContainer], [UserColoReachContainer.mk])
+
+OSBE_CXX_DEF([ExpressionMatcherStubs], [ExpressionMatcherStubs.mk])
+OSBE_CXX_DEF([ExpressionMatcherExe], [ExpressionMatcher.mk])

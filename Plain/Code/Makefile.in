@@ -1,0 +1,11 @@
+@plaincode_deps@
+
+sources := \
+  Element.cpp \
+  Declarator.cpp
+
+includes := Plain
+
+target := PlainCode
+
+@plaincode_post@

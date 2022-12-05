@@ -1,0 +1,12 @@
+name="RequestMatchers"
+so_files=RequestMatchers
+
+osbe_cxx_dep http
+osbe_cxx_dep SegmentorCommons
+osbe_cxx_dep BLogic
+osbe_cxx_dep Commons
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep UserBindControllerStubs
+osbe_cxx_dep ChannelSessionFactory
+osbe_cxx_dep FeConfig

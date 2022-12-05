@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common Frontends Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UIDGeneratorAdapterConfig" type="UIDGeneratorAdapterConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="UIDGeneratorAdapterConfigType">
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+      <xsd:element name="Logger" type="ErrorLoggerType"/>
+      <xsd:element name="Processing" type="UIDGeneratorAdapterProcessingType"/>
+      <xsd:element name="LogProcessing" type="LogProcessingType">
+        <xsd:annotation>
+          <xsd:documentation>
+
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UIDGeneratorAdapterProcessingType">
+    <xsd:sequence>
+      <xsd:element name="ZmqSend" type="ZmqSocketType"/>
+    </xsd:sequence>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="send_threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="source" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="LogProcessingType">
+    <xsd:sequence>
+      <xsd:element name="OutLogs" type="OutLogsType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="OutLogsType">
+    <xsd:sequence>
+      <xsd:element name="KeywordHitStat" type="LogFlushPolicyType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+  </xsd:complexType>
+</xsd:schema>

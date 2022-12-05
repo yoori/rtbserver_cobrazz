@@ -1,0 +1,6 @@
+@requestbasicchannels_deps@
+sources := RequestBasicChannels.cpp
+
+includes := .
+@requestbasicchannels_post@
+

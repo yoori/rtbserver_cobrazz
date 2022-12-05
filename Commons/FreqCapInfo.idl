@@ -1,0 +1,21 @@
+#ifndef _FREQCAPINFO_IDL_
+#define _FREQCAPINFO_IDL_
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module Commons
+  {
+    struct FreqCapInfo
+    {
+      unsigned long fc_id;
+      unsigned long lifelimit;
+      CORBACommons::TimestampInfo period;
+      unsigned long window_limit;
+      CORBACommons::TimestampInfo window_time;
+    };    
+  };
+};
+
+#endif // _FREQCAPINFO_IDL_

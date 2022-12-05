@@ -1,0 +1,6 @@
+@colousers_deps@
+sources := ColoUsers.cpp
+
+includes := .
+@colousers_post@
+

@@ -1,0 +1,123 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Campaign Server Configuration File XML Schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="CampaignServerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10106">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignServerExternalNetworkParamsType">
+    <xsd:complexContent>
+      <xsd:extension base="ExternalNetworkParamsType">
+        <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10206">
+          <xsd:annotation>
+            <xsd:documentation>Port to accept connections from other colocations.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignServerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="CampaignServerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="externalNetworkParams" type="CampaignServerExternalNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings available from the Internet.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="CampaignServerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="updateParams" type="CampaignServerUpdateParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Fetching new data and data changes.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignServerUpdateParamsType">
+    <xsd:attribute name="primary" type="xsd:boolean" use="optional" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Primary CampaignServer do update itself,
+          non primary campaign servers get updates from the neighbour primary server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="update_period" type="xsd:positiveInteger" use="optional" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of checking changes of campaigns in database.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="bill_stat_update_period" type="xsd:positiveInteger" use="optional" default="3600">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of reloading bill stats.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="stat_sync_period" type="xsd:positiveInteger" use="optional" default="3600">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of synchronization stat counters with DB.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ecpm_update_period" type="xsd:positiveInteger" use="optional" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period updating of ECPM's.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,17 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep MessageSaver
+osbe_cxx_dep LogCommons
+osbe_cxx_dep FileReceiver
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep BillStatServerSource
+
+osbe_cxx_dep BillingServerConfig
+osbe_cxx_dep BillingServerStubs
+osbe_cxx_dep BillingContainer
+osbe_cxx_dep CTROptimizer

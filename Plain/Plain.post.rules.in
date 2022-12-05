@@ -1,0 +1,48 @@
+ifndef _PLAIN_POST_RULES_
+define _PLAIN_POST_RULES_
+1
+endef
+
+_unixcommons_lib_path=@unixcommons_lib_path@
+_bin_dir := $(top_builddir)/bin
+export LD_LIBRARY_PATH := $(top_builddir)/lib:$(_unixcommons_lib_path):$(LD_LIBRARY_PATH)
+export PATH := $(_bin_dir):$(PATH)
+
+_plain_stub_rule = $(addsuffix .cpp,$(basename $1))
+_plain_stubs := $(foreach _pst,$(plain_sources),$(call _plain_stub_rule,$(_pst)))
+_plain_stub_headers := $(patsubst %.cpp,%.hpp,$(_plain_stubs))
+_plain_all_stub_files := $(_plain_stubs) $(_plain_stub_headers)
+_plain_includes := $(foreach _path,$(plain_includes),-I$(top_builddir)/$(_path))
+
+sources := $(sources) $(_plain_stubs)
+
+CPP_FLAGS := $(call _suppress_dup,-I,$(_plain_includes) $(CPP_FLAGS))
+CPP_FLAGS := $(CPP_FLAGS) -I$(top_srcdir)
+
+_deps_prerequisites := $(_plain_stubs) $(_deps_prerequisites)
+
+define _plain_rules
+$(call _plain_stub_rule,$(1)) : $(1) $(_bin_dir)/PlainCppCompiler
+
+endef
+
+$(foreach _pst,$(plain_sources),$(eval $(call _plain_rules,$(_pst))))
+
+@CD_TB@$(_plain_stubs)@CD_TE@ :
+	@CD_CB@
+	@CD_LB@PlainCppCompiler --output-hpp=$(patsubst %.cpp,%.hpp,$@) --output-cpp=$@ $<@CD_LE@
+	@CD_CE@
+
+.PHONY : clean_plain cleanall_plain
+
+clean: clean_plain
+
+clean_plain:
+	-$(RM) $(RM_FLAGS) $(_plain_stubs)
+
+cleanall: cleanall_plain
+
+cleanall_plain:
+	-$(RM) $(RM_FLAGS) $(_plain_stub_headers)
+
+endif #_PLAIN_POST_RULES_

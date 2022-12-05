@@ -1,0 +1,5 @@
+name="CampaignServerStubs_v320"
+so_files=CampaignServerStubs_v320
+
+osbe_cxx_dep Commons
+osbe_cxx_feature_dep CORBA

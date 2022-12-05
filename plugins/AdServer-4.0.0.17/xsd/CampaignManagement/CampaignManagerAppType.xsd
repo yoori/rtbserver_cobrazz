@@ -1,0 +1,121 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Campaign Manager Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="CampaignManagerNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10107">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignManagerThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="40">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <xsd:complexType name="CampaignManagerConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="CampaignManagerNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="CampaignManagerThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element> 
+      <xsd:element name="updateParams" type="CampaignManagerUpdateParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Fetching new data and data changes.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="statLogging" type="CampaignManagerStatLoggingType" minOccurs="0" maxOccurs="1">
+         <xsd:annotation>
+          <xsd:documentation>
+            Statistics logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignManagerUpdateParamsType">
+    <xsd:attribute name="update_period" type="xsd:positiveInteger" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of getting changes of campaigns from CampaignServer.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ecpm_update_period" type="xsd:positiveInteger" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period updating of ECPM's.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="campaign_types" type="CampaignTypesEnumType" default="all">
+      <xsd:annotation>
+        <xsd:documentation>
+          Type of campaigns which should be loading.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="CampaignTypesEnumType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="all"/>
+       <xsd:enumeration value="active"/>
+       <xsd:enumeration value="virtual"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="CampaignManagerStatLoggingType">
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of dumping log information to disk.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="internal_logs_flush_period" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of dumping internal logs information to disk. Affect on RBC, TagRequest, Impression, AdvertiserAction, Click.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,9 @@
+name="StatsDumper"
+so_files=StatsDumper
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Commons
+osbe_cxx_dep Stream
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep Logger
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep StatsCollectorStub

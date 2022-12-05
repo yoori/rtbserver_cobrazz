@@ -1,0 +1,6 @@
+@partlymatchtestexe_deps@
+
+sources := PartlyMatchTest.cpp
+target := PartlyMatchTest
+
+include $(top_srcdir)/tests/Test.post.rules

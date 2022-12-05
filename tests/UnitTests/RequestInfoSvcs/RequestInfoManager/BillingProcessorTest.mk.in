@@ -1,0 +1,6 @@
+@billingprocessortestexe_deps@
+
+sources := BillingProcessorTest.cpp
+target := BillingProcessorTest
+
+@billingprocessortestexe_post@

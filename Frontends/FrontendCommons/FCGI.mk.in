@@ -1,0 +1,10 @@
+@fcgi_deps@
+
+sources := FCGI.cpp \
+  FrontendInterface.cpp \
+  FrontendTaskPool.cpp
+
+includes :=
+
+@fcgi_post@
+

@@ -1,0 +1,18 @@
+@campaignserverexe_deps@
+
+corba_includes := ./Compatibility/
+corba_idl_includes := .
+
+sources  := \
+  ModifyConfigSource.cpp \
+  CampaignConfigDBSource.cpp \
+  CampaignConfigServerSource.cpp \
+  CampaignServerImpl.cpp \
+  CampaignServerLogger.cpp \
+  CampaignServerMain.cpp \
+  CampaignServerStatValues.cpp \
+  BillStatDBSource.cpp
+
+target := CampaignServer
+
+@campaignserverexe_post@

@@ -1,0 +1,4 @@
+@usercampaignreachcontainer_deps@
+sources := UserCampaignReachContainer.cpp
+
+@usercampaignreachcontainer_post@

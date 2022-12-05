@@ -1,0 +1,17 @@
+@autotestscreativeinstantiationunits_deps@
+
+sources := \
+  CreativeFilesPresenceTest.cpp \
+  NonRecursiveExistingToken.cpp \
+  TokenPrefixesTest.cpp \
+  XsltCreativeTemplateValidation.cpp \
+  UnexistingTokenInCreativeOption.cpp \
+  OutOfScopeToken.cpp \
+  OutOfScopeRecursiveSub.cpp \
+  DynamicCreativeContentTest.cpp \
+  PublisherAndAdvertiserTracking.cpp \
+  DynamicCreativeTest.cpp \
+  RequestTokensSubstitution.cpp
+
+includes := .
+@autotestscreativeinstantiationunits_post@

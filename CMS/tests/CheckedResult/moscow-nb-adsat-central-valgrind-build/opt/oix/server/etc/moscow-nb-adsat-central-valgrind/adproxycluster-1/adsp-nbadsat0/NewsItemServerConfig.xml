@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/DiscoverSvcs/NewsItemServerConfig.xsd">
+  <cfg:NewsItemServerConfig config_update_period="30" log_root="/opt/foros/server/var/log/NewsItemServer/Out" deactivated_cleanup_time="86400">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10174">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer_v24"/>
+        <cfg:Object servant="NewsItemServer_v6" name="NewsItemServer_v6"/>
+      </cfg:Endpoint>
+      <cfg:Endpoint host="adsp-nbadsat0" port="10224">
+        <cfg:Secure key="/opt/foros/server/etc/moscow-nb-adsat-central-valgrind/adproxycluster-1/adsp-nbadsat0/cert/skey.pem" certificate="/opt/oix/server/etc/moscow-nb-adsat-central-valgrind/adproxycluster-1/adsp-nbadsat0/cert/scert.pem" certificate_authority="/opt/oix/server/etc/moscow-nb-adsat-central-valgrind/adproxycluster-1/adsp-nbadsat0/cert/ca.pem" key-word="adserver"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer_v24"/>
+        <cfg:Object servant="NewsItemServer_v6" name="NewsItemServer_v6"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/NewsItemServer/NewsItemServer">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:ProxyMode portions_number="50">
+      <cfg:NewsItemServerCorbaRef name="NewsItemServer">
+        <cfg:Ref ref="corbaloc:iiop:adsc-nbadsat0:10124/NewsItemServer_v24"/>
+      </cfg:NewsItemServerCorbaRef>
+    </cfg:ProxyMode>
+    <cfg:WebwiseDiscoverItemStatLogger period="10"/>
+    <cfg:WebwiseDiscoverTagStatLogger period="10"/>
+    <cfg:WebwiseDiscoverItemsLogger period="10"/>
+  </cfg:NewsItemServerConfig>
+</cfg:AdConfiguration>

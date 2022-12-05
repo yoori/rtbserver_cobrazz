@@ -1,0 +1,87 @@
+include Common.pre.rules
+include $(osbe_builddir)/config/Install.pre.rules
+
+additional_list :=
+
+define @build_tests@
+  "defined"
+endef
+ifdef build_tests
+additional_list := $(additional_list) tests doc
+endif
+
+target_directory_list := \
+  Plain \
+  xsd \
+  Commons \
+  UtilCommons \
+  LogCommons \
+  ProfilingCommons \
+  ChannelSvcs \
+  CampaignSvcs \
+  UserInfoSvcs \
+  RequestInfoSvcs \
+  LogProcessing	\
+  Controlling \
+  Frontends \
+  ChannelSearchSvcs \
+  Predictor \
+  PredictorSvcs \
+  Utils \
+  $(additional_list) \
+
+RequestInfoSvcs : Plain
+UserInfoSvcs : Plain
+WordNet : Plain
+
+dest_server_dir=$(destdir)$(prefix)
+
+define install_commands
+  echo "Installing AdServer to $(dest_server_dir) ..."
+
+  $(INSTALL_DIR) $(top_srcdir)/CampaignSvcs/CampaignAdmin/data $(dest_server_dir)/data "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DATA) $(top_srcdir)/foros-server.supp $(dest_server_dir)/data && \
+  $(INSTALL_DATA) $(top_srcdir)/tests/AutoTests/Config/Config.xml $(dest_server_dir)/data && \
+  $(INSTALL_DATA) $(top_srcdir)/data/UserPref.xsl $(dest_server_dir)/data && \
+  $(INSTALL_DIR) $(top_builddir)/bin $(dest_server_dir)/bin && \
+  $(INSTALL_DIR) $(top_srcdir)/bin $(dest_server_dir)/bin "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_builddir)/lib $(dest_server_dir)/lib && \
+  $(INSTALL_DIR) $(top_srcdir)/xsd $(dest_server_dir)/xsd "*.xsd" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/DACS $(dest_server_dir)/DACS "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/CMS/Plugin/data/mibs $(dest_server_dir)/mibs "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/Predictor/Scripts $(dest_server_dir)/Predictor "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/tests/AutoTests/PerlUtils/NightlyScripts \
+    $(dest_server_dir)/lib/utils/tests/AutoTests/PerlUtils/NightlyScripts "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/tests/AutoTests/Units \
+    $(dest_server_dir)/lib/utils/tests/AutoTests/Units "" \
+    -name ".svn" -prune -a -false -o -true -name "*.pm" && \
+  $(INSTALL_DIR) $(top_srcdir)/tests/PerformanceTests/PerlUtils \
+    $(dest_server_dir)/lib/utils/tests/PerformanceTests/PerlUtils "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/tests/Commons/Perl/DB \
+    $(dest_server_dir)/lib/utils/tests/Commons/Perl/DB "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/PyCommons \
+     $(dest_server_dir)/lib/utils/PyCommons "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_SCRIPT) $(top_srcdir)/tests/AutoTests/PerlUtils/fetch_data_from_db.pl \
+     $(dest_server_dir)/lib/utils/tests/AutoTests/PerlUtils && \
+  $(INSTALL_SCRIPT) $(top_srcdir)/tests/AutoTests/PerlUtils/db_clean.pl $(dest_server_dir)/bin && \
+  $(INSTALL_SCRIPT) $(top_srcdir)/tests/AutoTests/PerlUtils/delete_cascade.pl $(dest_server_dir)/bin && \
+  $(INSTALL_SCRIPT) $(top_srcdir)/tests/taskbot/xmlsh.pl $(dest_server_dir)/bin && \
+  $(INSTALL_DIR) $(top_srcdir)/modules $(dest_server_dir)/lib "" \
+    -name ".svn" -prune -a -false -o -true && \
+  $(INSTALL_DIR) $(top_srcdir)/ConfigSys $(dest_server_dir)/bin "" \
+    -name ".svn" -prune -a -false -o -true
+
+endef
+
+include $(osbe_builddir)/config/Direntry.post.rules
+include $(osbe_builddir)/config/Install.post.rules

@@ -1,0 +1,24 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Profiling Server Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="./ProfilingServerAppType.xsd"/>
+
+  <xsd:element name="profilingServer" type="ProfilingServerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        ProfilingServer configuration.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+
+</xsd:schema>

@@ -1,0 +1,131 @@
+use strict;
+use warnings;
+our $config;
+
+eval('require "ConnectionsPorts.pm"');
+if ($@)
+{
+  die "failed to load, because : $@";
+}
+
+sub adServerConnectionsStatesMIB
+{
+  my ($mib, $cfg) = @_;
+  my $mib_index = '.' . $cfg->{'args'}[0]->{'index'};
+  my $out = `/usr/sbin/ss -antp state connected`;
+
+  my %ref_counter;
+  foreach my $port(keys %connections::port_service)
+  {
+    my $service_name = $connections::port_service{$port};
+    foreach my $state_code(values %connections::state_codes)
+    {
+      my $ref = "$service_name.$port.$state_code";
+      $$mib{$ref . $mib_index} = 0;
+      $ref_counter{$ref} = 0;
+    }
+  }
+
+  my %port_sizes;
+  my %peer_port_sizes;
+
+  while ($out =~ /([^\n]+)\n?/g)
+  {
+    my $line = $1;
+    my ($state, $recv_q, $send_q, $local_port, $peer_port, $process) =
+      ($line =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+:(\d+)\s+\S+:(\d+)\s+(.*)/);
+    if (defined $local_port and $local_port =~ /$connections::ports/)
+    {
+      my $service_name = $connections::port_service{$local_port};
+      my $state_code = $connections::state_codes{$state};
+      my $ref = "$service_name.$local_port.$state_code";
+      ++$ref_counter{$ref};
+      if ($local_port =~ /$connections::size_scan_ports/)
+      {
+        # put recv_q, send_q to arrays to compute average and filtered max
+        push @{$port_sizes{$local_port}{'recv_q'}}, $recv_q;
+        push @{$port_sizes{$local_port}{'send_q'}}, $send_q;
+      }
+    }
+    if (defined $process and defined $peer_port and
+      $process =~ /"httpd"/ and $peer_port =~ /$connections::httpd_peer_ports/)
+    {
+      push @{$peer_port_sizes{$peer_port}{'recv_q'}}, $recv_q;
+      push @{$peer_port_sizes{$peer_port}{'send_q'}}, $send_q;
+    }
+  }
+  # calculate averages
+  foreach my $local_port( keys %port_sizes)
+  {
+    my $service_name = $connections::port_service{$local_port};
+
+    @{$port_sizes{$local_port}{'recv_q'}}
+      = sort { $a <=> $b } @{$port_sizes{$local_port}{'recv_q'}};
+    @{$port_sizes{$local_port}{'send_q'}}
+      = sort { $a <=> $b } @{$port_sizes{$local_port}{'send_q'}};
+    my $sum = 0;
+    $sum += $_ for @{$port_sizes{$local_port}{'recv_q'}};
+    $sum /= $#{$port_sizes{$local_port}{'recv_q'}} + 1;
+    ## export Average Recv_q for $local_port
+    $$mib{$service_name . "AvgRecv" . $mib_index} = $sum;
+
+    my $removal = int(($#{$port_sizes{$local_port}{'recv_q'}} + 1) * .9);
+    splice @{$port_sizes{$local_port}{'recv_q'}}, 0, $removal;
+    $sum = 0;
+    $sum += $_ for @{$port_sizes{$local_port}{'recv_q'}};
+    $sum /= $#{$port_sizes{$local_port}{'recv_q'}} + 1;
+    # export filtered MAX average Recv_q for $local_port
+    $$mib{$service_name . "AvgMaxRecv" . $mib_index} = $sum;
+
+    $sum = 0;
+    $sum += $_ for @{$port_sizes{$local_port}{'send_q'}};
+    $sum /= $#{$port_sizes{$local_port}{'send_q'}} + 1;
+    $$mib{$service_name . "AvgSend" . $mib_index} = $sum;
+
+    $removal = int(($#{$port_sizes{$local_port}{'send_q'}} + 1) * .9);
+    splice @{$port_sizes{$local_port}{'send_q'}}, 0, $removal;
+    $sum = 0;
+    $sum += $_ for @{$port_sizes{$local_port}{'send_q'}};
+    $sum /= $#{$port_sizes{$local_port}{'send_q'}} + 1;
+    $$mib{$service_name . "AvgMaxSend" . $mib_index} = $sum;
+  }
+
+  foreach my $local_port( keys %peer_port_sizes)
+  {
+    my $service_name = $connections::port_service{$local_port};
+
+    @{$peer_port_sizes{$local_port}{'recv_q'}}
+      = sort { $a <=> $b } @{$peer_port_sizes{$local_port}{'recv_q'}};
+    @{$peer_port_sizes{$local_port}{'send_q'}}
+      = sort { $a <=> $b } @{$peer_port_sizes{$local_port}{'send_q'}};
+    my $sum = 0;
+    $sum += $_ for @{$peer_port_sizes{$local_port}{'recv_q'}};
+    $sum /= $#{$peer_port_sizes{$local_port}{'recv_q'}} + 1;
+    $$mib{"fe" . ucfirst($service_name) . "AvgRecv" . $mib_index} = $sum;
+
+    my $removal = int(($#{$peer_port_sizes{$local_port}{'recv_q'}} + 1) * .9);
+    splice @{$peer_port_sizes{$local_port}{'recv_q'}}, 0, $removal;
+    $sum = 0;
+    $sum += $_ for @{$peer_port_sizes{$local_port}{'recv_q'}};
+    $sum /= $#{$peer_port_sizes{$local_port}{'recv_q'}} + 1;
+    $$mib{"fe" . ucfirst($service_name) . "AvgMaxRecv" . $mib_index} = $sum;
+
+    $sum = 0;
+    $sum += $_ for @{$peer_port_sizes{$local_port}{'send_q'}};
+    $sum /= $#{$peer_port_sizes{$local_port}{'send_q'}} + 1;
+    $$mib{"fe" . ucfirst($service_name) . "AvgSend" . $mib_index} = $sum;
+
+    $removal = int(($#{$peer_port_sizes{$local_port}{'send_q'}} + 1) * .9);
+    splice @{$peer_port_sizes{$local_port}{'send_q'}}, 0, $removal;
+    $sum = 0;
+    $sum += $_ for @{$peer_port_sizes{$local_port}{'send_q'}};
+    $sum /= $#{$peer_port_sizes{$local_port}{'send_q'}} + 1;
+    $$mib{"fe" . ucfirst($service_name) . "AvgMaxSend" . $mib_index} = $sum;
+  }
+  foreach my $ref(keys %ref_counter)
+  {
+    $$mib{$ref . $mib_index} = $ref_counter{$ref};
+  }
+}
+
+return 1;

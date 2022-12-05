@@ -1,0 +1,5 @@
+name="UserInfoExchangerSkels"
+so_files=UserInfoExchangerSkels
+
+osbe_cxx_dep UserInfoExchangerStubs
+osbe_cxx_feature_dep CORBA

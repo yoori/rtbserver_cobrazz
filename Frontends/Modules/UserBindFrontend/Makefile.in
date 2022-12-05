@@ -1,0 +1,8 @@
+@userbindfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := UserBindFrontend.cpp \
+  RequestInfoFiller.cpp
+
+@userbindfrontend_post@

@@ -1,0 +1,5 @@
+name="ResearchWebStat"
+so_files=ResearchWebStat
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons
+osbe_cxx_dep LogCommons

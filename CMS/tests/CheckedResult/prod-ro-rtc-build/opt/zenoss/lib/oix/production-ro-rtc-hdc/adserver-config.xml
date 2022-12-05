@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/production-ro-rtc-hdc/mibs:/opt/zenoss/lib/oix/production-ro-rtc-hdc/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/production-ro-rtc-hdc/mibs/Controlling"/>
+  <hosts>
+    <host name="rtc00proadbe00" monitor="localhost" group="OIX/Server" location="" system="production_ro_rtc_hdc/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+      <service name="OixServerCommons" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

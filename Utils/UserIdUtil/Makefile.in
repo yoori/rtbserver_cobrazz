@@ -1,0 +1,6 @@
+@useridutilexe_deps@
+
+sources := Application.cpp
+target := UserIdUtil
+
+@useridutilexe_post@

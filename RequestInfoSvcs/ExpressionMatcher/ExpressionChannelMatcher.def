@@ -1,0 +1,8 @@
+name="ExpressionChannelMatcher"
+so_files=ExpressionChannelMatcher
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep Commons
+osbe_cxx_dep ExpressionChannelIndex

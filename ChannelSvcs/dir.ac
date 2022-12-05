@@ -1,0 +1,9 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([ChannelCommons])
+OSBE_CONFIG_SUBDIR([ChannelServer])
+OSBE_CONFIG_SUBDIR([ChannelAdmin])
+OSBE_CONFIG_SUBDIR([ChannelProxy])
+OSBE_CONFIG_SUBDIR([ChannelManagerController])
+OSBE_CONFIG_SUBDIR([DictionaryProvider])
+OSBE_CONFIG_SUBDIR([TriggerFilter])

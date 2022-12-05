@@ -1,0 +1,7 @@
+@filereceiverexe_deps@
+
+sources := FileReceiverTest.cpp
+
+target := FileReceiverTest
+
+include $(top_srcdir)/tests/Test.post.rules

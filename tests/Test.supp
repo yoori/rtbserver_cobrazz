@@ -1,0 +1,308 @@
+{
+   TAO make_TSS_TYPE
+   Memcheck:Leak
+   fun:*nothrow_t*
+   fun:*make_TSS_TYPE*
+   fun:*ts_get*
+}
+
+{
+   SSL_read returns uninitialized
+   Memcheck:Value4
+   fun:*ACE_SSL_SOCK_Stream*recv*
+}
+
+{
+   SSL_pending returns uninitialized
+   Memcheck:Cond
+   fun:*TAO*SSLIOP*Connection_Handler*pos_io_hook*
+}
+
+{
+   Crypto
+   Memcheck:Cond
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Value4
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Param
+   write(buf)
+   obj:/lib/libc-2.5.so
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Addr4
+   fun:*AES_cbc_encrypt*
+}
+
+{
+   Crypto
+   Memcheck:Cond
+   fun:memset
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   Crypto
+   Memcheck:Value4
+   fun:memset
+   obj:/lib/libcrypto.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Cond
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Value4
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Cond
+   fun:memcpy
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   SSL
+   Memcheck:Value4
+   fun:memcpy
+   obj:/lib/libssl.so.0.9.8b
+}
+
+{
+   Invalid free()/delete/delete[] after linkage with Oracle libraries.
+   Memcheck:Free
+   fun:free
+   obj:/lib/libc-2.5.so
+   obj:/lib/libc-2.5.so
+   fun:_vgnU_freeres
+   fun:_Exit
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:*
+   fun:slpmloc
+   fun:lpmloadpkg
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:*
+   fun:ztcedgks
+   fun:ztcedi
+   fun:ztcebi
+   fun:ztcei
+   fun:ztceenc
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztcedecb
+   fun:ztcedencbk
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztceaencbk
+   obj:/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztvo5ke
+   obj:/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:CMP_OctetStringToCMPInt
+   fun:Alg_ComputeModQ_GHash
+}
+
+{
+  Oracle
+  Memcheck:Cond
+  fun:nlepepe
+  fun:nlpagbp
+  obj:*/lib/libclntsh.so.10.1
+}
+
+{
+  Oracle
+  Memcheck:Leak
+  fun:slzsetevar
+  obj:/lib/libclntsh.so.10.1
+}
+
+{
+  Oracle
+  Memcheck:Leak
+  fun:malloc
+  fun:nlpains
+  fun:nlstdipi
+  fun:nlstdggo
+  fun:nlstdgg
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:CMP_Compare
+   fun:CMP_ModularReduce
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:CMP_BitLengthOfCMPInt
+   fun:CMP_CMPIntToFixedLenOctetStr
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:CMP_CMPIntToOctetString
+   fun:CMP_CMPIntToFixedLenOctetStr
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:CMP_SubtractInPlace
+   fun:CMP_ModularReduce
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:kzsrepw
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:ztvo5ke
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:*
+   fun:ztcebf
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:_intel_fast_memcmp
+}
+
+{
+   Oracle
+   Memcheck:Overlap
+   fun:_intel_fast_memcpy
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Cond
+   fun:nassky
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztceaencbk
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztceadecbk
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztucbtx
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Value4
+   fun:ztceai
+   obj:*/lib/libclntsh.so.10.1
+}
+
+{
+   Oracle
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN6oracle4occi14ConnectionImplD0Ev
+   fun:_ZN6oracle4occi15EnvironmentImpl19terminateConnectionEPNS0_10ConnectionE
+}
+
+{
+   Apache Portable Runtime
+   Memcheck:Leak
+   fun:malloc
+   fun:apr_palloc
+}
+
+{
+   Apache Portable Runtime
+   Memcheck:Leak
+   fun:malloc
+   fun:apr_pool_create_ex
+}
+
+{
+   Apache Portable Runtime
+   Memcheck:Leak
+   fun:malloc
+   fun:apr_allocator_create
+}
+
+{
+   TAO ACE Frontends
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_signal_error
+   fun:_dl_signal_cerror
+   fun:_dl_lookup_symbol_x
+   fun:do_sym
+   fun:dlsym_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlsym
+}

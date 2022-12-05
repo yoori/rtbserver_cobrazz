@@ -1,0 +1,10 @@
+name="RequestLogLoader"
+so_files=RequestLogLoader
+
+osbe_cxx_dep LogCommons
+osbe_cxx_dep Request
+osbe_cxx_dep AdRequestLogger
+osbe_cxx_dep TagRequest
+osbe_cxx_dep FileReceiver
+osbe_cxx_dep PlainStorage3
+osbe_cxx_dep RequestInfoManagerCompatibility

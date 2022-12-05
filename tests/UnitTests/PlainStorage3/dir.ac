@@ -1,0 +1,4 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([FileWriterTestExe], [FileWriterTest.mk])
+OSBE_CXX_DEF([LevelMapThreadsTestExe], [LevelMapThreadsTest.mk])

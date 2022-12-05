@@ -1,0 +1,82 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Benchmark Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+  <xsd:include schemaLocation="./TestCommons.xsd"/>
+
+  <xsd:complexType name="BenchmarkTestConfigType">
+    <xsd:sequence>
+      <xsd:element name="test" type="TestType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="frontend_host" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Tested frontend host.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>    
+    <xsd:attribute name="frontend_port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Tested frontend port.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>    
+  </xsd:complexType>
+
+  <xsd:complexType name="TestType">
+    <xsd:sequence>
+      <xsd:choice> 
+        <xsd:sequence>
+          <xsd:element name="campaigns" type="CampaignsType" minOccurs="1" maxOccurs="1">
+             <xsd:unique name="unique-campaign-type">
+               <xsd:selector xpath="ptest:campaign" />
+               <xsd:field xpath="type" />
+             </xsd:unique>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:sequence>
+          <xsd:element name="campaignsCount" type="EntityCountType" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+      </xsd:choice> 
+      <xsd:choice> 
+        <xsd:sequence>
+          <xsd:element name="channels" type="ChannelsType" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+        <xsd:sequence>
+          <xsd:element name="channelsCount" type="EntityCountType" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+      </xsd:choice> 
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:ID" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Test identificator using for DB entities, config files, etc.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="benchmark_size" type="xsd:positiveInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Count of requests in each benchmark case</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Count of benchmark threads</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="free_tags_size" type="xsd:positiveInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Count of free tags for benchmark tests</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+
+</xsd:schema>

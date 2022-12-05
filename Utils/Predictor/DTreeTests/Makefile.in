@@ -1,0 +1,7 @@
+@dtreeutilstestexe_deps@
+
+sources := DTreeUtilsTest.cpp
+
+target := DTreeUtilsTest
+
+@dtreeutilstestexe_post@

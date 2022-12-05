@@ -1,0 +1,45 @@
+ExpressionMatcher-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Counter64 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  requestInfoSvcs FROM AdServer-MIB;
+
+expressionMatcher OBJECT IDENTIFIER ::= { requestInfoSvcs 1 }
+
+index OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Index value used by the process"
+  ::= { expressionMatcher 1 }
+
+processedMatches-OptInUser-Count OBJECT-TYPE
+  SYNTAX Counter64
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The number of processed RequestBasicChannels records (from service start moment) with defined persistent uid"
+  ::= { expressionMatcher 100 }
+
+processedMatches-temporaryUser-Count OBJECT-TYPE
+  SYNTAX Counter64
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The number of processed RequestBasicChannels records with defined temporary uid and undefined persistent uid"
+  ::= { expressionMatcher 101 }
+
+processedMatches-nonOptInUser-Count OBJECT-TYPE
+  SYNTAX Counter64
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The number of processed RequestBasicChannels records where undefined both uid's persistent and temporary"
+  ::= { expressionMatcher 102 }
+
+processedRequestBasicChannelsTimestamp OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The timestamp of last processed RequestBasicChannels file."
+  ::= { expressionMatcher 103 }
+
+END

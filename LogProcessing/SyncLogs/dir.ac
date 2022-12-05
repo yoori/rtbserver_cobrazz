@@ -1,0 +1,6 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([SyncLogs], [SyncLogs.mk])
+OSBE_CXX_DEF([SyncLogsExe], [SyncLogsExe.mk])
+OSBE_CXX_DEF([SyncLogsErrorPool], [SyncLogsErrorPool.mk])

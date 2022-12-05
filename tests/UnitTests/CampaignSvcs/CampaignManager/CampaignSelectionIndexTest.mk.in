@@ -1,0 +1,6 @@
+@campaignselectionindextestexe_deps@
+
+sources := CampaignSelectionIndexTest.cpp
+target := CampaignSelectionIndexTest
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="moscow-test-remote1-prof"
+  description="Moscow Remote Test Prof"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="vnode-p0" hostName="vnode-p0"/>
+  <host name="vnode-p1" hostName="vnode-p1"/>
+  <host name="vnode-p2" hostName="vnode-p2"/>
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+    <configuration>
+      <environment xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+        <forosZoneManagement>
+          <private_key>-----BEGIN RSA PRIVATE KEY-----
+MIICWwIBAAKBgQDQNIRHWBKTRsd6NdFcIc5SdZeV7Tz2xtLzTSk5JuXEcek12Epu
+U77ROGfV7U2KE0kzGLwksi6K9DP57IDarSmNSQf+2phfaDIiclnpN8UVozqBBhyd
+IVcZ2/Wszq3AL67MxyJcB2jw2eZxgtQFxN6maD0ZeHwN2I8mPcqqg5l97QIBIwKB
+gQCsg0kH6eOBV+ccHfacy42yCal8OZjpuq7Jl7RxLtuixMiLszZbafXgjdJgy+/K
+LTymrhg7qZRHP15EG7s42J7EBiE2i6hTbbp8NeHxud0mfxnOvWnNNpu8PgQABs+v
+d30i7QhJ6MaV6r9buNUi0T6BYjNI3BiQEBQ+8Lv2ntR57wJBAPelXAttViCwUTcX
+nyJLotGxGzbrTsEJjPJyzbfOI6WQEprx3bsTmcHZFXQZpIeu+fKpUbGBuPw4lJnw
+kdEHkk8CQQDXOo0dydC6P6VA2VJ7xtGZPhzY72hcMH2V1lHQ3CELkIcxbRxFDWRd
+1vYvp33WuBkiXrZ2uWBfAFdVLDWsQgkDAkEAhm+1n82jyJo6t4HaC02hh8aLHdAy
+EQUvQclLGqMaqlWGcV66MlsY9DQEVPf6Owc3OpZuLSkp6AF1PZ/aIQQcOQJAGJj6
+L0pDvYOd24aNFXXOz69TwQVrAzi95T0QqifJQyZ12cNTsB7JpFMU0j8HETmcePTh
+pysg9OoYnAUNcsW34wJAA/QcRkJ41N0Bk+UZ3a6+n7TRA4jcQeATpuj9pmjBJ5RQ
+1RXmEhyZjmEbXrpUzs1Q4/9LiwfRYx2gjYYvYchtYw==
+-----END RSA PRIVATE KEY-----</private_key>
+        </forosZoneManagement>
+      </environment>
+    </configuration>
+    <serviceGroup descriptor="AdProfilingCluster" name="AdProfilingCluster">
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" enable_search_term_stats="true">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <secureParams ca="ca.pem"/>
+          <coloParams
+            colo_id="58926"
+            segmentor="Polyglot"
+            enabled_countries="gb,us,ad,cn,ru">
+            <virtualServer>
+              <profilingDomain name="a.prof.foros-rubytest.net"/>
+            </virtualServer>
+          </coloParams>
+          <remote connect_timeout="900">
+            <campaignServerRef host="vnode0" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <campaignServerRef host="vnode3" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <channelProxyRef host="vnode0" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <channelProxyRef host="vnode3" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+          </remote>
+        </cluster>
+      </configuration>
+      <serviceGroup
+        descriptor="AdProfilingCluster/BackendSubCluster"
+        name="BackendSubCluster">
+        <serviceGroup
+          descriptor="AdProfilingCluster/BackendSubCluster/LocalProxy"
+          name="LocalProxy">
+          <service
+            descriptor="AdProfilingCluster/BackendSubCluster/LocalProxy/ChannelProxy"
+            name="ChannelProxyDevel"
+            host="vnode-p0"/>
+        </serviceGroup>
+        <service
+          descriptor="AdProfilingCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServer"
+          host="vnode-p0"/>
+        <service
+          descriptor="AdProfilingCluster/BackendSubCluster/DictionaryProvider"
+          name="DictionaryProvider"
+          host="vnode-p0"/>
+      </serviceGroup>
+      <serviceGroup
+        descriptor="AdProfilingCluster/FrontendSubCluster"
+        name="FrontendSubCluster #1">
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer #1"
+          host="vnode-p0 vnode-p1"/>
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/Frontend"
+          name="Frontend #1"
+          host="vnode-p0 vnode-p1">
+          <configuration>
+            <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <debugInfo use_acl="false" acl="" colocations="" show_history_profile="true"/>
+              <profilingModule zmq_socket_count="10">
+                <logging log_level="9"/>
+                <profilingInfoSocket hwm="1"/>
+                <anonymousStatsSocket hwm="1"/>
+              </profilingModule>
+            </frontend>
+          </configuration>
+        </service>
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/ChannelController"
+          name="ChannelController #1"
+          host="vnode-p0"/>
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/ZmqProfilingGateway"
+          name="ZmqProfilingGateway #1"
+          host="vnode-p0">
+          <configuration>
+            <zmqProfilingGateway xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
+              <logging log_level="8" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+              <profilingInfoConnectSocket hwm="100">
+                <address domain="vnode1" port="10188"/>
+                <address domain="vnode2" port="10188"/>
+              </profilingInfoConnectSocket>
+              <anonymousStatsConnectSocket hwm="100">
+                <address domain="vnode1" port="10189"/>
+                <address domain="vnode2" port="10189"/>
+              </anonymousStatsConnectSocket>
+            </zmqProfilingGateway>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/CampaignManager"
+          name="CampaignManager"
+          host="vnode-p0 vnode-p1">
+
+          <configuration>
+            <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <updateParams
+                update_period="20"
+                ecpm_update_period="10"
+                campaign_types="all"/>
+              <statLogging flush_period="10"/>
+            </campaignManager>
+          </configuration>
+        </service>
+      </serviceGroup>
+      <serviceGroup
+        descriptor="AdProfilingCluster/FrontendSubCluster"
+        name="FrontendSubCluster #2">
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer #2"
+          host="vnode-p2"/>
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/Frontend"
+          name="Frontend #2"
+          host="vnode-p2">
+          <configuration>
+            <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <debugInfo use_acl="false" acl="" colocations="" show_history_profile="true"/>
+              <profilingModule zmq_socket_count="10">
+                <logging log_level="9"/>
+                <profilingInfoSocket hwm="1"/>
+                <anonymousStatsSocket hwm="1"/>
+              </profilingModule>
+            </frontend>
+          </configuration>
+        </service>
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/ChannelController"
+          name="ChannelController #2"
+          host="vnode-p2"/>
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/ZmqProfilingGateway"
+          name="ZmqProfilingGateway #2"
+          host="vnode-p2">
+          <configuration>
+            <zmqProfilingGateway xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
+              <logging log_level="8" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+              <profilingInfoConnectSocket hwm="100">
+                <address domain="vnode1" port="10188"/>
+                <address domain="vnode2" port="10188"/>
+              </profilingInfoConnectSocket>
+              <anonymousStatsConnectSocket hwm="100">
+                <address domain="vnode1" port="10189"/>
+                <address domain="vnode2" port="10189"/>
+              </anonymousStatsConnectSocket>
+            </zmqProfilingGateway>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdProfilingCluster/FrontendSubCluster/CampaignManager"
+          name="CampaignManager"
+          host="vnode-p2">
+
+          <configuration>
+            <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <updateParams
+                update_period="20"
+                ecpm_update_period="10"
+                campaign_types="all"/>
+              <statLogging flush_period="10"/>
+            </campaignManager>
+          </configuration>
+        </service>
+      </serviceGroup>
+    </serviceGroup>
+  </application>
+</colo:colocation>

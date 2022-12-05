@@ -1,0 +1,18 @@
+@autotestsuserprofilingunits_deps@
+
+sources := \
+  Common.cpp \
+  ProfilesExpirationTest.cpp \
+  HistorySessionTargettingTest.cpp \
+  MergingStatusTest.cpp \
+  UserProfileMergingTest.cpp \
+  SessionSyncTest.cpp \
+  SpecificProfilesAbsent.cpp \
+  NonGMTColoHistoryTargeting.cpp \
+  AdRequestsProfiling.cpp \
+  SessionExpiration.cpp \
+  ProfilesContentCleanupTest.cpp \
+  LocalAudienceChannelsTest.cpp \
+
+includes := .
+@autotestsuserprofilingunits_post@

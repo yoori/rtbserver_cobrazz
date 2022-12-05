@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'http://a.webwise.net',
+            'ps_host' => 'http://a.webwise.net',
+            'toolbar_base' => 'http://http://b.webwise.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'http://http://b.webwise.net/tag/1.js',
+            'adimage_server' => 'http://c.webwise.net',
+          );
+        
+
+    1;
+

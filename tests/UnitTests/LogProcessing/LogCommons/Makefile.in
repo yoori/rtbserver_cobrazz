@@ -1,0 +1,12 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  OptionalValueIOTest.mk \
+  RoundedTimeIOTest.mk \
+  SearchFilesTest.mk \
+  StringIOTest.mk \
+  FileReceiver.mk \
+  LogCommonsTest.mk \
+  FileReceiverFacadeTest.mk \
+
+include $(osbe_builddir)/config/Makentry.post.rules

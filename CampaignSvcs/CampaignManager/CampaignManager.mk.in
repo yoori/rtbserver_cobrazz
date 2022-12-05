@@ -1,0 +1,19 @@
+@campaignmanagerexe_deps@
+corba_skeleton_idls := CampaignManager.idl
+corba_includes := .
+corba_idl_includes := .
+
+sources := \
+  CampaignManagerImpl.cpp \
+  CampaignManagerMain.cpp \
+  InstantiateCreative.cpp \
+  CreativeTextGenerator.cpp \
+  CampaignConfigSource.cpp \
+  ConfigManips.cpp \
+  SelectCreative.cpp \
+  CampaignSelector.cpp \
+  BillingStateContainer.cpp
+
+target := CampaignManager
+
+@campaignmanagerexe_post@

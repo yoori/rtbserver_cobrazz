@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+  <creative>
+    <token name="test" value="TEST"/>
+    <token name="test" value="TEST2"/>
+  </creative>

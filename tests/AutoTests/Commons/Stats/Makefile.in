@@ -1,0 +1,50 @@
+@autotestscommonsstats_deps@
+
+sources := \
+  ORMStats.cpp \
+  CMPRequestStats.cpp \
+  ChannelTriggerStats.cpp  \
+  ChannelInventoryStats.cpp \
+  ChannelOverlapUserStats.cpp \
+  ChannelImpInventory.cpp \
+  ActionStats.cpp \
+  AdvertiserUserStats.cpp \
+  CampaignUserStats.cpp \
+  CCGUserStats.cpp \
+  CCUserStats.cpp \
+  HourlyStats.cpp \
+  PageLoadsDaily.cpp \
+  UserPropertiesStats.cpp \
+  PublisherInventory.cpp \
+  SiteUserStats.cpp \
+  ColoUserStats.cpp \
+  CreatedUserStats.cpp \
+  GlobalColoUserStats.cpp \
+  ExpressionPerformanceStats.cpp \
+  ChannelInventoryEstimStats.cpp \
+  WebStats.cpp \
+  OptOutStats.cpp \
+  ChannelInventoryByCPMStats.cpp \
+  PassbackStats.cpp \
+  ChannelPerformance.cpp \
+  CCGKeywordStatsDaily.cpp \
+  CCGKeywordStatsHourly.cpp \
+  CCGKeywordStatsToW.cpp \
+  CCGKeywordStatsTotal.cpp \
+  ChannelIdBasedStats.cpp \
+  ColoIdBasedStats.cpp \
+  TagIdBasedStats.cpp \
+  SiteIdBasedStats.cpp \
+  ChannelUsageStats.cpp \
+  ChannelCountStats.cpp \
+  AdvertiserStatsDaily.cpp \
+  PublisherStatsDaily.cpp \
+  ActionRequests.cpp \
+  SiteChannelStats.cpp \
+  CcgAuctionStatsDaily.cpp
+
+includes := .
+@autotestscommonsstats_post@
+
+
+

@@ -1,0 +1,20 @@
+osbe_cxx_dep http
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+
+osbe_cxx_dep Polyglot
+
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep Postgres
+osbe_cxx_dep ChannelServerConfig
+osbe_cxx_dep ChannelCommons
+
+osbe_cxx_dep ChannelServerSkel
+osbe_cxx_dep ChannelServerStubs
+osbe_cxx_dep ChannelControllerStubs
+osbe_cxx_dep ChannelContainer
+osbe_cxx_dep ChannelSessionFactory
+
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep ColoUpdateStat

@@ -1,0 +1,28 @@
+namespace AdServer
+{
+  namespace UserInfoSvcs_v25
+  {
+    /* channel match operation */
+    struct UserMatchOperationDescriptor
+    {
+      uint operation_type;
+      uint version;
+      
+      string user_id;
+      uint temporary;
+      uint time;
+      int request_colo_id;
+      int last_colo_id;
+      int placement_colo_id;
+      list<uint> page_channels;
+      list<uint> search_channels;
+      list<uint> url_channels;
+      list<uint> persistent_channels;
+      char ad_request;
+      char change_last_request;
+    };
+
+    autoreader UserMatchOperationReader<UserMatchOperationDescriptor>;
+
+  }
+}

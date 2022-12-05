@@ -1,0 +1,17 @@
+#ifndef _COMMONS_COOKIE_INFO_PACK_IDL_
+#define _COMMONS_COOKIE_INFO_PACK_IDL_
+
+module AdServer
+{
+  module Commons
+  {
+    /** session_info */
+    struct SessionInfoCookie
+    {
+      unsigned long last_request;
+      unsigned long session_start;
+    };
+  }; // module Commons
+}; // module AdServer
+
+#endif // _COMMONS_COOKIE_INFO_PACK_IDL_

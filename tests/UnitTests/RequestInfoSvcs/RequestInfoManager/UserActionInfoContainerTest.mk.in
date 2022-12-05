@@ -1,0 +1,9 @@
+@useractioninfocontainertestexe_deps@
+
+sources := UserActionInfoContainerTest.cpp \
+  UserActionInfoContainerMTTest.cpp
+
+target := UserActionInfoContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,11 @@
+@userhistoryprofileadapter_deps@
+
+sources := UserHistoryProfileAdapter.cpp
+
+plain_sources := \
+  UserChannelHistoryProfile_v1.pst \
+  UserChannelHistoryProfile_v320.pst
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@userhistoryprofileadapter_post@

@@ -1,0 +1,8 @@
+@useroperationprofiles_deps@
+
+plain_sources := \
+  UserOperationProfiles.pst
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@useroperationprofiles_post@

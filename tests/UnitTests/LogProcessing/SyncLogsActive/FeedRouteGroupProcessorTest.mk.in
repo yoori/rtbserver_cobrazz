@@ -1,0 +1,6 @@
+@feedroutegroupprocessortest_deps@
+
+sources := FeedRouteGroupProcessorTest.cpp
+target := FeedRouteGroupProcessorTest
+
+include $(top_srcdir)/tests/Test.post.rules

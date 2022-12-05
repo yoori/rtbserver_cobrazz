@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:cms="http://foros.com/cms/commonTypes"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common for services XML Schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import schemaLocation="../cms-commons.xsd" namespace="http://foros.com/cms/commonTypes"/>
+
+  <xsd:simpleType name="NoLeadingSpaces">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="\S.*"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NoTrailingSpaces">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value=".*\S"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NoLeadingTrailingSpaces">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="\S.*\S"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NoLeadingTrailingSpacesOrEmpty">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="(\S.*\S)?"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="LanguageCodeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[a-z]{2}"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="IntegerListType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="(\d+,)*\d+|\d*"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="DataSourceRefType">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source host.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="8873">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source port (that listen rsync deamon).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="path" type="NoLeadingTrailingSpaces" default="filesender">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source path.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="StatFilesReceiverType">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target host.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="10873">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SimpleCorbaRef">
+    <xsd:sequence>
+      <xsd:element name="secureParams" type="SecureSimpleCorbaRefParams" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA secure reference.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Host of service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Port of service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SecureSimpleCorbaRefParams">
+    <xsd:attribute name="key" type="NoLeadingTrailingSpaces" default="skey.pem">
+      <xsd:annotation>
+        <xsd:documentation>
+          Secure key for connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="certificate" type="NoLeadingTrailingSpaces" default="scert.pem">
+      <xsd:annotation>
+        <xsd:documentation>
+          Secure certificate for connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="password" type="NoLeadingTrailingSpaces" default="adserver">
+      <xsd:annotation>
+        <xsd:documentation>
+          Password.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExternalNetworkParamsType">
+    <xsd:attribute name="secure" type="xsd:boolean" default="true"/>
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="optional" default="pbe">
+      <xsd:annotation>
+        <xsd:documentation>host.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="EnvironmentType">
+    <xsd:attribute name="workspace_root" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to temporary server information and logs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SNMPStatsConfigType">
+    <xsd:attribute name="enable" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SNMP stats config type
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="monitoring_tag_id" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Monitoring request tag id
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="monitoring_country" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Monitoring country, override cluster country usage
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+   <xsd:attribute name="monitoring_site_id" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Site id for rtb monitoring request
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="monitoring_ip" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          IP address (device.ip) for rtb monitoring request
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="oid_suffix" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Allow separate collocations use the same host
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+
+  <xsd:complexType name="SecureCertificateAuthority">
+    <xsd:attribute name="ca" type="NoLeadingTrailingSpaces" default="ca.pem">
+      <xsd:annotation>
+        <xsd:documentation>
+          Secure Authority certificate.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="DBConnectionType">
+    <xsd:attribute name="db" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+        Connect identifier for the database connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database access username.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="password" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database access password.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="schema" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Database schema.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="statement_timeout" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Max execution time for each statement(SQL, PLSQL) in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="PGConnectionType">
+    <xsd:attribute name="connection_string" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Connection string to PG database</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="LoggingParamsType">
+    <xsd:attribute name="log_level" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Sets logging level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="sys_log" type="xsd:boolean" use="optional" default="true">
+      <xsd:annotation>
+        <xsd:documentation>Enable logging into local syslog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="sys_log_level" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Log level for local syslog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="rotate_size" type="xsd:positiveInteger" use="optional" default="100">
+      <xsd:annotation>
+        <xsd:documentation>Defines size policy for log rotation (MBytes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="rotate_time" type="xsd:positiveInteger" use="optional" default="1440">
+      <xsd:annotation>
+        <xsd:documentation>Defines time policy for log rotation (minutes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="error_size_cleanup" type="xsd:nonNegativeInteger" use="optional" default='104857600'>
+      <xsd:annotation>
+        <xsd:documentation>The maximum size of the archived log files with errors (bytes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="error_time_cleanup" type="xsd:nonNegativeInteger" use="optional" default='86400'>
+      <xsd:annotation>
+        <xsd:documentation>The maximum time to keep archived log files with errors (minutes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="trace_size_cleanup" type="xsd:nonNegativeInteger" use="optional" default='104857600'>
+      <xsd:annotation>
+        <xsd:documentation>The maximum size of the archived log files with trace messages (bytes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="trace_time_cleanup" type="xsd:nonNegativeInteger" use="optional" default='14400'>
+      <xsd:annotation>
+        <xsd:documentation>The maximum time to keep archived trace log files (minutes).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdContentFrontendCacheConfigType">
+    <xsd:attribute name="size" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum memory cache size in bytes.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="timeout" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Minimal time of storing element in the memory.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqAddressType">
+    <xsd:attribute name="domain" type="xsd:string" use="optional"/>
+    <xsd:attribute name="port" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqServerSecurity">
+    <xsd:attribute name="server_secret" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Server side secret key, base64 encoded</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqClientSecurity">
+    <xsd:attribute name="server_public" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Server side secret key, base64 encoded</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="client_secret" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Server side secret key, base64 encoded</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="client_public" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Server side secret key, base64 encoded</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqBindSocketType">
+    <xsd:sequence>
+      <xsd:element name="serverSecurity" type="ZmqServerSecurity" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="address" type="ZmqAddressType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="hwm" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>A hard limit on the maximum number of outstanding messages 0MQ shall queue in memory</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="linger" type="xsd:integer" default="0">
+      <xsd:annotation>
+        <xsd:documentation>How long pending messages which have yet to be sent to a peer shall linger in memory after a socket is closed (milliseconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="reconnect_interval" type="xsd:nonNegativeInteger" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ZmqConnectSocketType">
+    <xsd:sequence>
+      <xsd:element name="clientSecurity" type="ZmqClientSecurity" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="address" type="ZmqAddressType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="hwm" type="xsd:nonNegativeInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>A hard limit on the maximum number of outstanding messages 0MQ shall queue in memory</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="linger" type="xsd:integer" default="0">
+      <xsd:annotation>
+        <xsd:documentation>How long pending messages which have yet to be sent to a peer shall linger in memory after a socket is closed (milliseconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="reconnect_interval" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="non_block" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingZmqSecurityType">
+    <xsd:sequence>
+      <xsd:element name="clientSecurity" type="ZmqClientSecurity" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="serverSecurity" type="ZmqServerSecurity" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="StorageType">
+    <xsd:attribute name="min_free_space" type="xsd:nonNegativeInteger" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="NoticeInstantiateType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="disabled"/>
+      <xsd:enumeration value="nurl"/>
+      <xsd:enumeration value="burl"/>
+      <xsd:enumeration value="nurl and burl"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="BidInstantiateType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="url"/>
+      <xsd:enumeration value="nonsecure url"/>
+      <xsd:enumeration value="url in body"/>
+      <xsd:enumeration value="video url"/>
+      <xsd:enumeration value="nonsecure video url"/>
+      <xsd:enumeration value="video url in body"/>
+      <xsd:enumeration value="body"/>
+      <xsd:enumeration value="script with url"/>
+      <xsd:enumeration value="iframe with url"/>
+      <xsd:enumeration value="url parameters"/>
+      <xsd:enumeration value="encoded url parameters"/>
+      <xsd:enumeration value="data parameter value"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NativeInstantiateType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="none"/>
+      <xsd:enumeration value="ext"/>
+      <xsd:enumeration value="adm"/>
+      <xsd:enumeration value="adm_native"/>
+      <xsd:enumeration value="escape_slash_adm"/>
+
+      <xsd:enumeration value="native_as_element-1.2"/>
+      <xsd:enumeration value="adm-1.2"/>
+      <xsd:enumeration value="adm_native-1.2"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="NativeImpressionTrackerType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="imp"/>
+      <xsd:enumeration value="js"/>
+      <xsd:enumeration value="resources"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="BidRequestType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="openrtb"/>
+      <xsd:enumeration value="openrtb with click url"/>
+      <xsd:enumeration value="openx"/>
+      <xsd:enumeration value="liverail"/>
+      <xsd:enumeration value="adriver"/>
+      <xsd:enumeration value="appnexus"/>
+      <xsd:enumeration value="yandex"/>
+      <xsd:enumeration value="google"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+
+  <xsd:complexType name="RTBSourceConfigType">
+    <!-- userbind settings -->
+    <xsd:sequence>
+      <xsd:element name="userBind" type="UserBindFrontendSourceType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="id" type="xsd:string" use="required"/>
+    <xsd:attribute name="default_account_id" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="max_bid_time" type="xsd:positiveInteger" use="optional"/>
+
+    <xsd:attribute name="instantiate_type" type="BidInstantiateType" default="body"/>
+    <xsd:attribute name="request_type" type="BidRequestType"/>
+    <xsd:attribute name="notice" type="NoticeInstantiateType" default="disabled"/>
+
+    <xsd:attribute name="vast_instantiate_type" type="BidInstantiateType" use="optional"/>
+    <xsd:attribute name="vast_notice" type="NoticeInstantiateType" use="optional"/>
+
+    <xsd:attribute name="native_instantiate_type" type="NativeInstantiateType" use="optional"/>
+    <xsd:attribute name="native_notice" type="NoticeInstantiateType" use="optional"/>
+    <xsd:attribute name="native_impression_tracker_type"
+      type="NativeImpressionTrackerType" use="optional"/>
+
+    <xsd:attribute name="skip_ext_category" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="notice_url" type="xsd:string"/>
+
+    <xsd:attribute name="truncate_domain" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="seat" type="xsd:string" use="optional"/>
+    <xsd:attribute name="appnexus_member_id" type="xsd:nonNegativeInteger" use="optional"/>
+    <xsd:attribute name="fill_adid" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="ipw_extension" type="xsd:boolean" use="optional"/>
+
+    <xsd:attribute name="custom_click" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="preclick" type="xsd:string"/>
+    <xsd:attribute name="mime_encoded_preclick" type="xsd:string"/>
+    <xsd:attribute name="vast_preclick" type="xsd:string"/>
+    <xsd:attribute name="mime_encoded_vast_preclick" type="xsd:string"/>
+    <xsd:attribute name="click_prefix" type="xsd:string"/>
+    <xsd:attribute name="mime_encoded_click_prefix" type="xsd:string"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindFrontendSourceType">
+    <xsd:sequence>
+      <xsd:element name="keywordRedirect" type="UserBindFrontendSourceKeywordRedirectType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="passback" type="xsd:boolean" default="true"/>
+    <xsd:attribute name="redirect" type="xsd:string" use="optional"/>
+    <xsd:attribute name="weight" type="xsd:positiveInteger" default="1"/>
+    <xsd:attribute name="location" type="xsd:string" use="optional"/>
+    <xsd:attribute name="redirect_empty_uid" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindFrontendSourceKeywordRedirectType">
+    <xsd:attribute name="keywords" type="cms:Text" use="required"/>
+    <xsd:attribute name="passback" type="xsd:boolean" default="true"/>
+    <xsd:attribute name="redirect" type="xsd:string" use="required"/>
+    <xsd:attribute name="redirect_empty_uid" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="BackupLogType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="disable"/>
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="exclude RequestBasicChannels"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="KafkaBrokerType">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="9092"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="KafkaTopic">
+    <xsd:attribute name="topic" type="xsd:string" use="optional"/>
+    <xsd:attribute name="threads" type="xsd:nonNegativeInteger" use="optional" default="20"/>
+    <xsd:attribute name="message_queue_size" type="xsd:nonNegativeInteger" use="optional" default="100000"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="DistributeStrategyType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="both"/>
+      <xsd:enumeration value="first"/>
+      <xsd:enumeration value="second"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+</xsd:schema>

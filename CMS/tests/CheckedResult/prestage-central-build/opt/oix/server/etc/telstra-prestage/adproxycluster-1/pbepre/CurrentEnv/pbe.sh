@@ -1,0 +1,18 @@
+user_info_exchanger_port=10160
+export user_info_exchanger_port
+
+campaign_server_port=10156
+export campaign_server_port
+
+news_item_server_port=10174
+export news_item_server_port
+
+news_query_proxy_port=10177
+export news_query_proxy_port
+
+channel_proxy_port=10155
+export channel_proxy_port
+
+sync_logs_port=10162
+export sync_logs_port
+

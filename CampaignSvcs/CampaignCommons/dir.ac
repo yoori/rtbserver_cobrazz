@@ -1,0 +1,6 @@
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CXX_DEF([CampaignCommonsStubs], [CampaignCommonsStubs.mk])
+OSBE_CXX_DEF([ExpressionChannel], [ExpressionChannel.mk])
+OSBE_CXX_DEF([ExpressionChannelIndex], [ExpressionChannelIndex.mk])
+OSBE_CXX_DEF([CampaignTypes], [CampaignTypes.mk])

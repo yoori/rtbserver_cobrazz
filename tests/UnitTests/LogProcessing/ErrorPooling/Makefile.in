@@ -1,0 +1,6 @@
+@errorpoolingtestexe_deps@
+
+sources := Main.cpp
+target := ErrorPoolingTest
+
+include $(top_srcdir)/tests/Test.post.rules

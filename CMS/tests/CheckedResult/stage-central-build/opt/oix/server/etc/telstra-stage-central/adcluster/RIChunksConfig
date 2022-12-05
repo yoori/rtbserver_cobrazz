@@ -1,0 +1,24 @@
+
+
+  @colocation_hosts = (
+    'adsrv.stage', 'pbe.stage', 
+  );
+
+  %ri_chunks = (
+    host =>
+      
+        [ 'adsrv.stage', ],
+        
+    chunks => {
+                'user_action_chunks' => [
+                  'UserAction_',
+                  '/opt/foros/server/var/cache/UserActions/', ],
+                'user_campaign_reach_chunks' => [
+                  'UserCampaignReach_',
+                  '/opt/foros/server/var/cache/UserCampaignReach/', ],
+                'request_chunks' => [
+                  'Request_',
+                  '/opt/foros/server/var/cache/Requests/', ],
+              },
+  );
+

@@ -1,0 +1,5 @@
+name="CampaignManagerStubs"
+so_files=CampaignManagerStubs
+
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep CampaignCommonsStubs

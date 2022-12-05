@@ -1,0 +1,9 @@
+@convserverconfig_deps@
+
+sources := 
+includes := .
+xsd_files := ConvServerConfig.xsd
+
+xsd_includes := .
+
+@convserverconfig_post@

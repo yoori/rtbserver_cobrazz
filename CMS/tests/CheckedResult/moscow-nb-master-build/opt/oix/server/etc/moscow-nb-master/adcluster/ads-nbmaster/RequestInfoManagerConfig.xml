@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/RequestInfoSvcs/RequestInfoManagerConfig.xsd">
+  <cfg:RequestInfoManagerConfig inventory_users_percentage="100" action_ignore_time="30" distrib_count="4">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10116">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="RequestInfoManager" name="RequestInfoManager"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/RequestInfoManager/RequestInfoManager">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:UserActionChunksConfig chunks_prefix="UserAction_" chunks_root="/opt/foros/server/var/cache/UserActions/"/>
+    <cfg:UserCampaignReachChunksConfig chunks_prefix="UserCampaignReach_" chunks_root="/opt/foros/server/var/cache/UserCampaignReach/"/>
+    <cfg:UserFraudProtectionChunksConfig chunks_prefix="UserFraudProtection_" chunks_root="/opt/foros/server/var/cache/UserFraudProtection/"/>
+    <cfg:PassbackChunksConfig chunks_prefix="Passback_" chunks_root="/opt/foros/server/var/cache/Passback/"/>
+    <cfg:UserSiteReachChunksConfig chunks_prefix="UserSiteReach_" chunks_root="/opt/foros/server/var/cache/UserSiteReach/"/>
+    <cfg:TagRequestGroupingConfig merge_time_bound="1" chunks_prefix="UserTagRequestGroup_" chunks_root="/opt/foros/server/var/cache/UserTagRequestGroup/"/>
+    <cfg:ChunksConfig chunks_prefix="Request_" chunks_root="/opt/foros/server/var/cache/Requests/" expire_time="604800"/>
+    <cfg:LogProcessing>
+      <cfg:InLogs log_root="/opt/foros/server/var/log/RequestInfoManager/In/" check_logs_period="10">
+        <cfg:Request/>
+        <cfg:Impression/>
+        <cfg:Click/>
+        <cfg:AdvertiserAction/>
+        <cfg:PassbackOpportunity/>
+        <cfg:PassbackImpression/>
+        <cfg:TagRequest/>
+      </cfg:InLogs>
+      <cfg:OutLogs log_root="/opt/foros/server/var/log/RequestInfoManager/Out/">
+        <cfg:CreativeStat period="30"/>
+        <cfg:UserProperties period="30"/>
+        <cfg:ChannelPerformance period="30"/>
+        <cfg:SiteChannelStat period="30"/>
+        <cfg:ExpressionPerformance period="30"/>
+        <cfg:CcgKeywordStat period="30"/>
+        <cfg:CmpStat period="30"/>
+        <cfg:ActionStat period="30"/>
+        <cfg:ChannelImpInventory period="30"/>
+        <cfg:CcgStat period="30"/>
+        <cfg:CcStat period="30"/>
+        <cfg:CampaignStat period="30"/>
+        <cfg:AdvertiserUserStat period="30"/>
+        <cfg:PassbackStat period="30"/>
+        <cfg:SiteStat period="30"/>
+        <cfg:SiteReferrerStat period="30"/>
+        <cfg:PageLoadsDailyStat period="30"/>
+      </cfg:OutLogs>
+    </cfg:LogProcessing>
+    <cfg:ExpressionMatcherRefs name="ExpressionMatcher">
+      <cfg:Ref ref="corbaloc:iiop:ads-nbmaster:10113/ExpressionMatcher"/>
+    </cfg:ExpressionMatcherRefs>
+    <cfg:CampaignServerRef name="CampaignServer" ref="corbaloc:iiop:ads-nbmaster:10106/CampaignServer_v24"/>
+    <cfg:UserInfoManagerControllerRef name="UserInfoManagerController" ref="corbaloc:iiop:ads-nbmaster:10102/UserInfoManagerController"/>
+    <cfg:KeywordMatcherRef name="KeywordMatcher" ref="corbaloc:iiop:ads-nbmaster:10108/KeywordMatcher"/>
+  </cfg:RequestInfoManagerConfig>
+</cfg:AdConfiguration>

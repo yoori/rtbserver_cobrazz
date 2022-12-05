@@ -1,0 +1,8 @@
+@campaignserverstubs_deps@
+sources := 
+includes := .
+
+corba_stub_idls := StatInfo.idl BillStatInfo.idl CampaignServer.idl
+corba_includes := .
+corba_idl_includes := .
+@campaignserverstubs_post@

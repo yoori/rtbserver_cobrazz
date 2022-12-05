@@ -1,0 +1,9 @@
+@expireprofilemapthreadstestexe_deps@
+
+sources := ExpireProfileMapThreadsTest.cpp
+target := ExpireProfileMapThreadsTest
+
+test_arguments := -p $$TEST_TMP_DIR -t10
+vg_test_arguments := -p $$TEST_TMP_DIR -t1
+
+include $(top_srcdir)/tests/Test.post.rules

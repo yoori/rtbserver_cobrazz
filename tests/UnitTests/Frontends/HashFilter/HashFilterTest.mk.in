@@ -1,0 +1,8 @@
+@hashfiltertestexe_deps@
+
+sources := HashFilterTest.cpp
+includes := .
+target := HashFilterTest
+
+@hashfiltertestexe_post@
+

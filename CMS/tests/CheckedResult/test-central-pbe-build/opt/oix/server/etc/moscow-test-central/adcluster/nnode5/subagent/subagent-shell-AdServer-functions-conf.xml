@@ -1,0 +1,32 @@
+
+          
+              
+              
+                
+                
+              
+              
+                
+              
+              
+                
+              
+              
+                
+              
+              
+              
+                
+              
+              
+              
+                
+              
+              
+              
+            
+        <config>
+  <function id="adServerApacheStatusMIB">
+    <args index="0" url="localhost:10180/server-status?auto"/>
+  </function>
+</config>

@@ -1,0 +1,8 @@
+name="LogGeneralizer"
+so_files=LogGeneralizer
+
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep Commons

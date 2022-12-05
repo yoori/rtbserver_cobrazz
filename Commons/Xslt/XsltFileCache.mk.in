@@ -1,0 +1,6 @@
+@xsltfilecache_deps@
+
+sources := XsltFileCache.cpp
+includes := .
+
+@xsltfilecache_post@

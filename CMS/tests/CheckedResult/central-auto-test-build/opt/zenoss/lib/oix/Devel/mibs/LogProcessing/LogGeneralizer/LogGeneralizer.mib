@@ -1,0 +1,19 @@
+
+LogGeneralizer-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  logProcessing FROM AdServer-MIB;
+
+logGeneralizer OBJECT IDENTIFIER ::= { logProcessing 1 }
+
+index OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Index value used by the process"
+  ::= { logGeneralizer 1 }
+
+END
+

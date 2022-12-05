@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/DiscoverSvcs/NewsItemServerConfig.xsd">
+  <cfg:NewsItemServerConfig config_update_period="900" log_root="/opt/foros/server/var/log/NewsItemServer/Out" deactivated_cleanup_time="86400">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10124">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer_v24"/>
+        <cfg:Object servant="NewsItemServer_v6" name="NewsItemServer_v6"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/NewsItemServer/NewsItemServer">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:SNMPConfig mib_dirs="/usr/share/snmp/mibs:/opt/foros/server/share/snmp/mibs:/opt/oix/server/mibs:/opt/oix/server/mibs/DiscoverSvcs" index="0"/>
+    <cfg:CampaignServerCorbaRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:www.pakobuha.net:10106/CampaignServer_v24"/>
+    </cfg:CampaignServerCorbaRef>
+    <cfg:ProxyMode portions_number="50">
+      <cfg:NewsItemServerCorbaRef name="NewsItemServer">
+        <cfg:Ref ref="corbaloc:ssliop:vnode0:10224/NewsItemServer_v24">
+          <cfg:Secure key="/opt/foros/server/etc/pakobuha/adcluster/www.pakobuha.net/cert/skey.pem" certificate="/opt/oix/server/etc/pakobuha/adcluster/www.pakobuha.net/cert/scert.pem" certificate_authority="/opt/oix/server/etc/pakobuha/adcluster/www.pakobuha.net/cert/ca.pem" key-word="adserver"/>
+        </cfg:Ref>
+      </cfg:NewsItemServerCorbaRef>
+    </cfg:ProxyMode>
+    <cfg:WebwiseDiscoverItemStatLogger period="10"/>
+    <cfg:WebwiseDiscoverTagStatLogger period="10"/>
+    <cfg:WebwiseDiscoverItemsLogger period="10"/>
+  </cfg:NewsItemServerConfig>
+</cfg:AdConfiguration>

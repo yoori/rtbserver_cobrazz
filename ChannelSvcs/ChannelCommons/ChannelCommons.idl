@@ -1,0 +1,42 @@
+#ifndef AD_SERVER_CHANNEL_COMMONS_IDL_ 
+#define AD_SERVER_CHANNEL_COMMONS_IDL_
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+    typedef CORBACommons::IdSeq ChunkKeySeq;
+    typedef CORBACommons::IdSeq ChannelIdSeq;
+    typedef CORBACommons::IdSeq CcgIdSeq;
+
+    typedef CORBACommons::TimestampInfo TimeStamp;
+
+    const unsigned long COUNT_SPECIAL = 4;
+    const unsigned long CT_URL = 0;
+    const unsigned long CT_PAGE = CT_URL + 1;//1
+    const unsigned long CT_SEARCH = CT_PAGE + 1;//2
+    const unsigned long CT_URL_KEYWORDS = CT_SEARCH + 1;//3
+    const unsigned long CT_MAX = CT_URL_KEYWORDS + 1;//4
+
+    exception NotConfigured
+    {
+      string description;
+    };
+
+    exception ImplementationException
+    {
+      string description;
+    };
+
+    exception NotReady
+    {
+      string description;
+    };
+
+  };
+
+};
+
+#endif //AD_SERVER_CHANNEL_COMMONS_IDL_

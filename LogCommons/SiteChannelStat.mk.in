@@ -1,0 +1,6 @@
+@sitechannelstat_deps@
+sources := SiteChannelStat.cpp
+
+includes := .
+@sitechannelstat_post@
+

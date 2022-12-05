@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="default-values-colo"
+  description="UnitTest: all values has default"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+
+  <host name="host1" hostName="HostName1"/>
+  <host name="host2" hostName="HostName2"/>
+  <host name="host3" hostName="HostName3"/>
+  <host name="host4" hostName="HostName4"/>
+  <host name="host5" hostName="HostName5"/>
+  <host name="host6" hostName="HostName6"/>
+  <host name="host7" hostName="HostName7"/>
+  <host name="host8" hostName="HostName8"/>
+  <host name="host9" hostName="HostName9"/>
+  <host name="host10" hostName="HostName10"/>
+  <host name="host11" hostName="HostName11"/>
+  <host name="host12" hostName="HostName12"/>
+  <host name="host13" hostName="HostName13"/>
+  <host name="host14" hostName="HostName14"/>
+  <host name="host15" hostName="HostName15"/>
+  <host name="host16" hostName="HostName16"/>
+  <host name="host17" hostName="HostName17"/>
+  <host name="host18" hostName="HostName18"/>
+  <host name="host19" hostName="HostName19"/>
+  <host name="host20" hostName="HostName20"/>
+  <host name="host21" hostName="HostName21"/>
+  <host name="host22" hostName="HostName22"/>
+  <host name="host23" hostName="HostName23"/>
+  <host name="host24" hostName="HostName24"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <coloParams colo_id="1">
+            <virtualServer>
+            <adservingDomain/>
+            <thirdPartyContentDomain/>
+            </virtualServer>
+          </coloParams>
+          <central>
+            <pgConnection connection_string="host=stat-test.ocslab.com port=5432 dbname=ads_dev user=ro password=adserver"/>
+            <pgConnectionForLogProcessing connection_string="host=stat-test.ocslab.com port=5432 dbname=ads_dev user=ads password=adserver"/>
+
+            <statFilesReceiverRef host="stat-test"/>
+            <dataSourceRef host="vforos0"/>
+          </central>
+        </cluster>
+      </configuration>
+
+      <!-- lp, ui, be -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubCluster">
+
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessing"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcher"
+          host="host4"/>
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizer"
+          host="host5"/>
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManager"
+          host="host6"/>
+        <service
+          descriptor="AdCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServer"
+          host="host7"/>
+      </serviceGroup>
+
+      <!-- fe -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster">
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManager"
+          host="host1"/>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerController"
+          host="host2"/>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer"
+          host="host10"/>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelController"
+          name="ChannelController"
+          host="host11"/>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
+          name="ChannelSearchService"
+          host="host12"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="Frontend"
+          host="host13 host14"/>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/BillingServer"
+          name="BillingServerDevel"
+          host="host13 host14"/>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+          name="CampaignManager"
+          host="host13 host14"/>
+      </serviceGroup>
+    </serviceGroup>
+
+    <serviceGroup descriptor="AdProxyCluster" name="AdProxyCluster">
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <syncLogs xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <fileTransferring>
+              <logMove host="source-host"/>
+              <dataSourceRef host="source-host"/>
+            </fileTransferring>
+          </syncLogs>
+        </cluster>
+      </configuration>
+
+      <service descriptor="AdProxyCluster/UserInfoExchanger"
+        host="host15">
+        <configuration>
+          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10205" host="extHost16"/>
+          </userInfoExchanger>
+        </configuration>
+      </service>
+      <service descriptor="AdProxyCluster/ChannelProxy"
+        host="host16">
+        <configuration>
+          <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10205" host="extHost16"/>
+          </channelProxy>
+        </configuration>
+      </service>
+      <service descriptor="AdProxyCluster/CampaignServer"
+        host="host17">
+        <configuration>
+          <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10206" host="extHost17"/>
+          </campaignServer>
+        </configuration>
+      </service>
+      <service
+        descriptor="AdProxyCluster/STunnelServer"
+        host="host19"/>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

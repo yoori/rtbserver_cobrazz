@@ -1,0 +1,11 @@
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep XMLUtility
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep ChannelManagerControllerConfig
+osbe_cxx_dep Commons
+osbe_cxx_dep ChannelServerStubs
+osbe_cxx_dep ChannelControllerStubs
+osbe_cxx_dep ClusterControl
+osbe_cxx_dep ChannelSessionFactory

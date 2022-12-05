@@ -1,0 +1,249 @@
+#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_IDL_
+#define _USER_INFO_SVCS_USER_INFO_MANAGER_IDL_
+
+#include <Commons/CampaignFreq.idl>
+#include <Commons/CorbaTypes.idl>
+#include <Commons/FreqCapInfo.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    typedef sequence<unsigned long> ChannelIdSeq;
+    typedef sequence<unsigned long> FreqCapIdSeq;
+    typedef sequence<unsigned long> ExcludePubPixelAccountsSeq;
+    typedef sequence<unsigned long> CampaignIdSeq;
+
+    struct ProfilesRequestInfo
+    {
+      boolean base_profile;
+      boolean add_profile;
+      boolean history_profile;
+      boolean freq_cap_profile;
+      boolean pref_profile;
+    };
+
+    struct UserProfiles
+    {
+      CORBACommons::OctSeq base_user_profile;
+      CORBACommons::OctSeq add_user_profile;
+      CORBACommons::OctSeq history_user_profile;
+      CORBACommons::OctSeq freq_cap;
+      CORBACommons::OctSeq pref_profile;
+    };
+    
+    struct UserInfo
+    {
+      CORBACommons::UserIdInfo user_id;
+      CORBACommons::UserIdInfo huser_id;
+      
+      unsigned long time;
+      long last_colo_id; // last placement colo
+      long current_colo_id; // current placement colo
+      long request_colo_id; // colo id defined in request
+      boolean temporary;
+    };
+    
+    typedef sequence<string> StringSeq;
+    typedef sequence<unsigned long> IdSeq;
+
+    struct GeoData
+    {
+      CORBACommons::DecimalInfo latitude;
+      CORBACommons::DecimalInfo longitude;
+      CORBACommons::DecimalInfo accuracy;
+    };
+    typedef sequence<GeoData> GeoDataSeq;
+
+    /**
+     *  UserInfoMatcher
+     */
+    abstract interface UserInfoMatcher
+    {
+      struct ChannelTriggerMatch
+      {
+        unsigned long channel_id;
+        unsigned long channel_trigger_id;
+      };
+      typedef sequence<ChannelTriggerMatch> ChannelMatchSeq;
+      
+      struct MatchParams
+      {
+        ChannelIdSeq persistent_channel_ids;
+        ChannelMatchSeq search_channel_ids;
+        ChannelMatchSeq page_channel_ids;
+        ChannelMatchSeq url_channel_ids;
+        ChannelMatchSeq url_keyword_channel_ids;
+
+        CORBACommons::TimestampInfo publishers_optin_timeout;
+        
+        boolean use_empty_profile;
+        boolean silent_match;
+        boolean no_match;
+        boolean no_result;
+
+        boolean ret_freq_caps;
+
+        boolean provide_channel_count;
+        boolean provide_persistent_channels;
+
+        boolean change_last_request;
+
+        string cohort;
+        string cohort2;
+
+        boolean filter_contextual_triggers;
+
+        GeoDataSeq geo_data_seq; // max length is equal to 1!
+      };
+
+      typedef CORBACommons::PartlyMatchResult PartlyMatchResult;
+      typedef sequence<PartlyMatchResult> PartlyMatchResultSeq;
+
+      struct ChannelWeight
+      {
+        unsigned long channel_id;
+        unsigned long weight;
+      };
+
+      typedef sequence<ChannelWeight> ChannelWeightSeq;
+      
+      struct SeqOrderInfo
+      {
+        unsigned long ccg_id;
+        unsigned long set_id;
+        unsigned long imps;
+      };
+
+      typedef sequence<SeqOrderInfo> SeqOrderSeq;
+
+      struct MatchResult
+      {
+        boolean times_inited;
+        CORBACommons::TimestampInfo last_request_time;
+        CORBACommons::TimestampInfo create_time;
+        CORBACommons::TimestampInfo session_start;
+
+        long colo_id;
+
+        ChannelWeightSeq channels;
+        ChannelWeightSeq hid_channels;
+
+        FreqCapIdSeq full_freq_caps;
+        FreqCapIdSeq full_virtual_freq_caps;
+        SeqOrderSeq seq_orders;
+        Commons::CampaignFreqSeq campaign_freqs;
+
+        boolean fraud_request;
+        CORBACommons::TimestampInfo process_time;
+
+        long adv_channel_count;
+        long discover_channel_count;
+
+        string cohort;
+        string cohort2;
+
+        ExcludePubPixelAccountsSeq exclude_pubpixel_accounts;
+        GeoDataSeq geo_data_seq;
+      };
+
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      exception NotReady
+      {
+        string description;
+      };
+
+      exception ChunkNotFound
+      {
+        string description;
+      };
+
+      void
+      get_master_stamp(
+        out CORBACommons::TimestampInfo master_stamp)
+        raises(NotReady, ImplementationException);
+
+      boolean
+      get_user_profile(
+        in CORBACommons::UserIdInfo user_info,
+        in boolean temporary,
+        in ProfilesRequestInfo profile_request,
+        out UserProfiles user_profile)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      boolean
+      match(
+        in UserInfo user_info,
+        in MatchParams match_params,
+        out MatchResult match_result)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      void 
+      update_user_freq_caps(
+        in CORBACommons::UserIdInfo user_id,
+        in CORBACommons::TimestampInfo time,
+        in CORBACommons::RequestIdInfo request_id,
+        in FreqCapIdSeq freq_caps,
+        in FreqCapIdSeq uc_freq_caps,
+        in FreqCapIdSeq virtual_freq_caps,
+        in SeqOrderSeq seq_orders,
+        in CampaignIdSeq campaign_ids,
+        in CampaignIdSeq uc_campaign_ids)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      void confirm_user_freq_caps(
+        in CORBACommons::UserIdInfo user_id,
+        in CORBACommons::TimestampInfo time,
+        in CORBACommons::RequestIdInfo request_id,
+        in CORBACommons::IdSeq exclude_pubpixel_accounts)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      boolean fraud_user(
+        in CORBACommons::UserIdInfo user_id,
+        in CORBACommons::TimestampInfo time)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      boolean remove_user_profile(
+        in CORBACommons::UserIdInfo user_info)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      boolean merge(
+        in UserInfo user_info,
+        in MatchParams match_params,
+        in UserProfiles merge_user_profile,
+        out boolean merge_success,
+        out CORBACommons::TimestampInfo last_request)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      void consider_publishers_optin(
+        in CORBACommons::UserIdInfo user_id,
+        in CORBACommons::IdSeq exclude_pubpixel_accounts,
+        in CORBACommons::TimestampInfo now)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      /* util methods */
+      boolean uim_ready();
+
+      string get_progress();
+
+      void clear_expired(
+        in boolean sync,
+        in CORBACommons::TimestampInfo cleanup_time,
+        in long portion)
+        raises(ImplementationException);
+    };
+
+    /**
+     *  UserInfoManager
+     */
+    interface UserInfoManager : UserInfoMatcher
+    {
+    };
+  }; // module UserInfoSvcs
+}; // module AdServer
+
+#endif // _USER_INFO_SVCS_USER_INFO_MANAGER_IDL_

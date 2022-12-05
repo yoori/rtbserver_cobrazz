@@ -1,0 +1,63 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs
+{
+  /* item appear list for specific date interval */                                                                                        
+  struct IdAppearanceDescriptor
+  {
+    uint id;
+    uint last_appearance_date;
+    uint64 prev_appearances_mask;
+  };
+
+  autoreader IdAppearanceReader<IdAppearanceDescriptor>;
+
+  autowriter IdAppearanceWriter<IdAppearanceDescriptor>;
+
+  /* reach profile */
+  struct UserCampaignReachProfileDescriptor
+  {
+    uint version;
+
+    list<IdAppearanceDescriptor> campaign_appears;
+    list<IdAppearanceDescriptor> ccg_appears;
+    list<IdAppearanceDescriptor> cc_appears;
+    list<IdAppearanceDescriptor> adv_appears;
+    list<IdAppearanceDescriptor> adv_display_appears;
+    list<IdAppearanceDescriptor> adv_text_appears;
+  };
+
+  reader UserCampaignReachProfileReader<UserCampaignReachProfileDescriptor>
+  {
+    version;
+    
+    list<IdAppearanceReader> campaign_appears;
+    list<IdAppearanceReader> ccg_appears;
+    list<IdAppearanceReader> cc_appears;
+    list<IdAppearanceReader> adv_appears;
+    list<IdAppearanceReader> adv_display_appears;
+    list<IdAppearanceReader> adv_text_appears;
+  };
+  
+  writer UserCampaignReachProfileWriter<UserCampaignReachProfileDescriptor>
+  {
+    version;
+
+    list<IdAppearanceWriter> campaign_appears;
+    list<IdAppearanceWriter> ccg_appears;
+    list<IdAppearanceWriter> cc_appears;
+    list<IdAppearanceWriter> adv_appears;
+    list<IdAppearanceWriter> adv_display_appears;
+    list<IdAppearanceWriter> adv_text_appears;
+  };
+
+  struct UserCampaignReachProfileVersionDescriptor
+  {
+    uint version;
+  };
+  
+  autoreader UserCampaignReachProfileVersionReader<
+    UserCampaignReachProfileVersionDescriptor>;
+}
+}
+

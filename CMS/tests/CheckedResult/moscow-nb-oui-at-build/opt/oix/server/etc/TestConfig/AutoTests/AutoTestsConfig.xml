@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GeneralParams xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/tests/AutoTests/AutoTests.xsd" discover_body_xsd="/opt/oix/server/xsd/DiscoverSvcs/DiscoverBody.xsd" userpref_body_xsd="/opt/oix/server/xsd/Frontends/UserPrefBody.xsd">
+  <TimeOuts frontend_timeout="15" logging_timeout="300" conf_update_timeout="300"/>
+  <Cluster name="central">
+    <Service name="AdFrontend" address="http://a.foros-nbouiat.net:10180"/>
+    <Service name="NewsGate" address="http://:"/>
+    <Service name="ChannelServer" address="ads-nbouiat:10103"/>
+    <Service name="ChannelController" address="ads-nbouiat:10104"/>
+    <Service name="ChannelSearchServer" address="ads-nbouiat:10115"/>
+    <Service name="CampaignManager" address="ads-nbouiat:10107"/>
+    <Service name="CampaignServer" address="ads-nbouiat:10106"/>
+    <Service name="ExpressionMatcher" address="ads-nbouiat:10113"/>
+    <Service name="RequestInfoManager" address="ads-nbouiat:10116"/>
+    <Service name="NewsItemServer" address="ads-nbouiat:"/>
+    <Service name="NewsCacheController" address="ads-nbouiat:"/>
+    <Service name="UserInfoManager" address="ads-nbouiat:10101"/>
+    <Service name="UserInfoManagerController" address="ads-nbouiat:10102"/>
+  </Cluster>
+  <LoggerGroup path="/opt/foros/server/var/log/Tests/AutoTests">
+    <LogFile level_to="4" extension="err"/>
+    <LogFile level_to="17" extension="out"/>
+  </LoggerGroup>
+  <ThreadsNum value="10"/>
+  <DBConnection db="//ora-nb/addbnb.ocslab.com" user="BS_NIGHTLY_BUILDS_OIX_AUTO" password="adserver"/>
+</GeneralParams>

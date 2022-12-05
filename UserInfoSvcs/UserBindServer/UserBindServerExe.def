@@ -1,0 +1,15 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep ProfileMap
+osbe_cxx_dep MessageSaver
+osbe_cxx_dep LogCommons
+osbe_cxx_dep FileReceiver
+
+osbe_cxx_dep UserBindServerConfig
+osbe_cxx_dep UserBindContainer
+osbe_cxx_dep UserBindServerStubs

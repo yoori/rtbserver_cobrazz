@@ -1,0 +1,8 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([ExpireProfileMapThreadsTestExe], [ExpireProfileMapThreadsTest.mk])
+OSBE_CXX_DEF([ExpireProfileMapSerializeTestExe], [ExpireProfileMapSerializeTest.mk])
+OSBE_CXX_DEF([TransactionMapTestExe], [TransactionMapTest.mk])
+OSBE_CXX_DEF([TransactionExpireProfileMapTestExe], [TransactionExpireProfileMapTest.mk])
+
+#OSBE_CXX_DEF([ArrayIndexTestExe], [ArrayIndexTest.mk])

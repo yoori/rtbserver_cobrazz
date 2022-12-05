@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([UserInfoExchangerStubs], [UserInfoExchangerStubs.mk])
+OSBE_CXX_DEF([UserInfoExchangerSkels], [UserInfoExchangerSkels.mk])
+OSBE_CXX_DEF([UserInfoExchangerExe], [UserInfoExchanger.mk])

@@ -1,0 +1,42 @@
+AdServerDbForRead =
+    (DESCRIPTION =
+      (ENABLE=BROKEN)
+      (FAILOVER=on)
+      (ADDRESS = (PROTOCOL = TCP)(HOST = ora.stage)(
+        PORT = 1521))
+      (CONNECT_DATA =
+        (SERVICE_NAME = addbprod.foros.com)
+        (FAILOVER_MODE=
+          (TYPE=select)
+          (METHOD=basic)
+          (RETRIES=10)
+          (DELAY=1))))
+
+AdServerDbForLogProcessing =
+    (DESCRIPTION =
+      (ENABLE=BROKEN)
+      (FAILOVER=on)
+      (ADDRESS = (PROTOCOL = TCP)(HOST = ora.stage)(
+        PORT = 1521))
+      (CONNECT_DATA =
+        (SERVICE_NAME = addbprod.foros.com)
+        (FAILOVER_MODE=
+          (TYPE=select)
+          (METHOD=basic)
+          (RETRIES=10)
+          (DELAY=1))))
+
+AdServerDbForAutoChannel =
+    (DESCRIPTION =
+      (ENABLE=BROKEN)
+      (FAILOVER=on)
+      (ADDRESS = (PROTOCOL = TCP)(HOST = ora.stage)(
+        PORT = 1521))
+      (CONNECT_DATA =
+        (SERVICE_NAME = addbprod.foros.com)
+        (FAILOVER_MODE=
+          (TYPE=select)
+          (METHOD=basic)
+          (RETRIES=10)
+          (DELAY=1))))
+

@@ -1,0 +1,10 @@
+include Common.pre.rules
+
+target_directory_list := \
+  Declaration \
+  Code \
+  Cpp \
+  Parsing \
+  Compiler
+
+include $(osbe_builddir)/config/Direntry.post.rules

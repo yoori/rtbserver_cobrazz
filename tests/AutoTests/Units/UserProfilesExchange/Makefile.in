@@ -1,0 +1,11 @@
+@autotestsuserprofilesexchangeunits_deps@
+
+sources := \
+  UserProfilesExchangeCommon.cpp \
+  UserInfoExchangerFunctionalityTest.cpp \
+  AbsentProfileTest.cpp \
+  DiffColoTZTest.cpp \
+  TempProfileMergingTest.cpp \
+
+includes := .
+@autotestsuserprofilesexchangeunits_post@

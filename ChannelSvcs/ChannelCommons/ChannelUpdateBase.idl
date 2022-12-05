@@ -1,0 +1,147 @@
+#ifndef AD_SERVER_CHANNEL_UPDATE_BASE_IDL
+#define AD_SERVER_CHANNEL_UPDATE_BASE_IDL
+
+#include <ChannelSvcs/ChannelCommons/ChannelCommons.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+    abstract interface ChannelUpdateBase_v33 //3.3.0
+    {
+      typedef AdServer::ChannelSvcs::TimeStamp TimeStamp;
+
+      struct TriggerInfo
+      {
+        unsigned long channel_trigger_id;
+        CORBACommons::OctSeq trigger;
+      };
+
+      typedef sequence<TriggerInfo> TriggerInfoSeq;
+
+      struct ChannelById
+      {
+        unsigned long channel_id;
+        TriggerInfoSeq words;
+        TimeStamp stamp;
+      };
+
+      struct CCGKeyword
+      {
+        unsigned long ccg_keyword_id;
+        unsigned long ccg_id;
+        unsigned long channel_id;
+        CORBACommons::DecimalInfo max_cpc;
+        CORBACommons::DecimalInfo ctr;
+        string click_url;
+        string original_keyword;
+      };
+
+      struct TriggerVersion
+      {
+        unsigned long id;
+        TimeStamp stamp;
+      };
+
+      struct ChannelVersion
+      {
+        unsigned long id;
+        unsigned long size;
+        TimeStamp stamp;
+      };
+
+      typedef sequence<ChannelById> ChannelByIdSeq;
+
+      typedef sequence<CCGKeyword> CCGKeywordSeq;
+
+      typedef sequence<TriggerVersion> TriggerVersionSeq;
+
+      typedef sequence<ChannelVersion> ChannelVersionSeq;
+
+      struct CCGQuery
+      {
+        TimeStamp master_stamp;
+        unsigned long start;
+        unsigned long limit;
+        ChannelIdSeq channel_ids;
+        boolean use_only_list;
+      };
+
+      struct PosCCGResult
+      {
+        unsigned long start_id;
+        CCGKeywordSeq keywords;
+        TriggerVersionSeq deleted;
+        long source_id;
+      };
+
+      struct CheckQuery
+      {
+        unsigned long colo_id;
+        string version;
+        TimeStamp master_stamp;
+        ChannelIdSeq new_ids;
+        boolean use_only_list;
+      };
+
+      struct CheckData
+      {
+        TimeStamp first_stamp;
+        TimeStamp master_stamp;
+        ChannelVersionSeq versions;
+        boolean special_track;
+        boolean special_adv;
+        long source_id;
+        TimeStamp max_time;
+      };
+
+      struct UpdateData
+      {
+        long source_id;
+        ChannelByIdSeq channels;
+      };
+
+      void check(
+        in CheckQuery query,
+        out CheckData data)
+        raises(ImplementationException, NotConfigured);
+
+      void update_triggers(
+        in ChannelIdSeq ids,
+        out UpdateData result)
+        raises(ImplementationException, NotConfigured);
+
+      void update_all_ccg(
+        in CCGQuery query,
+        out PosCCGResult result)
+        raises(ImplementationException, NotConfigured);
+
+      unsigned long get_count_chunks()
+        raises (ImplementationException);
+    };
+
+    struct ChannelLoadDescription
+    {
+      ChannelUpdateBase_v33 load_server;
+      ChunkKeySeq chunks;
+      unsigned long count_chunks;
+    };
+    typedef sequence<ChannelLoadDescription> ChannelLoadDescriptionSeq;
+
+    typedef sequence<ChannelLoadDescriptionSeq> GroupLoadDescriptionSeq;
+
+    interface ChannelUpdate_v33 : ChannelUpdateBase_v33
+    {
+    };
+
+    /** ChannelLoadSession */
+    valuetype ChannelLoadSession supports ChannelUpdateBase_v33
+    {
+      private GroupLoadDescriptionSeq load_servers;
+      private long source_id;
+    };
+
+  };
+};
+
+#endif //AD_SERVER_CHANNEL_UPDATE_BASE_IDL

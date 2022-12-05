@@ -1,0 +1,15 @@
+include Common.pre.rules
+
+target_directory_list := \
+  TextTemplateCache \
+  DecodeTanxPrice \
+  RequestMatchers \
+  BiddingFrontend \
+  HashFilter \
+  GasonTest
+
+#  OptOutManipTest
+#  AdFrontend
+#  FrontendCommons
+
+include $(osbe_builddir)/config/Direntry.post.rules

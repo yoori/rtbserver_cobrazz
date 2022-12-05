@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.121media.com/xsd/tests/AutoTests" 
+            xmlns="http://www.121media.com/xsd/tests/AutoTests" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+  
+  <xsd:annotation>
+    <xsd:documentation>AutoTests Local Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+  
+  <xsd:element name="LocalParams" type="LocalParamsType"/>
+  
+  <xsd:complexType name="LocalParamsType">
+    <xsd:sequence>
+        <xsd:element name="UnitLocalData" type="UnitLocalDataType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>    
+  </xsd:complexType>  
+
+  <xsd:complexType name="UnitLocalDataElemType">
+    <xsd:sequence>
+      <xsd:element name="Name" type="xsd:string"/>      
+      <xsd:element name="Value" type="ValueType"/>
+      <xsd:element name="Description" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <xsd:complexType name="UnitLocalDataType">
+    <xsd:sequence>
+      <xsd:element name="DataElem" type="UnitLocalDataElemType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="UnitName" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ValueType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string">
+        <xsd:attribute name="base64" type="xsd:boolean" use="optional" default="false"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+ 
+
+</xsd:schema>

@@ -1,0 +1,4 @@
+name="BillingServerConfig"
+so_files=BillingServerConfig
+osbe_cxx_feature_dep XSDTree
+osbe_cxx_dep AdServerCommons

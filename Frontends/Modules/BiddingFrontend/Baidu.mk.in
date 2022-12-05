@@ -1,0 +1,6 @@
+@baidu_deps@
+
+protobuf_sources := \
+  baidu-bidding.proto
+
+@baidu_post@

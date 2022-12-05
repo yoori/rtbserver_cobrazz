@@ -1,0 +1,4 @@
+name="UIDGeneratorProtocol"
+so_files=UIDGeneratorProtocol
+
+osbe_cxx_feature_dep ProtoBuf

@@ -1,0 +1,56 @@
+namespace AdServer
+{
+  namespace UserInfoSvcs_v1
+  {
+    struct DaysVisits
+    {
+      uint days;
+      uint visits;
+    };
+
+    autoreader DaysVisitsReader<DaysVisits>;
+
+    struct HistoryChannelInfo
+    {
+      uint channel_id;
+      list<DaysVisits> days_visits;
+    };
+
+    reader HistoryChannelInfoReader<HistoryChannelInfo>
+    {
+      channel_id;
+      list<DaysVisitsReader> days_visits;
+    };        
+
+    struct HistoryUserProfileVersion
+    {
+      uint minor_version;
+      uint major_version;
+    };
+
+    autoreader HistoryUserProfileVersionReader<HistoryUserProfileVersion>;
+
+    struct HistoryUserProfile
+    {
+      uint minor_version;
+      uint major_version;
+
+      list<HistoryChannelInfo> context_channels;
+      list<HistoryChannelInfo> page_channels;
+      list<HistoryChannelInfo> search_channels;
+      list<HistoryChannelInfo> url_channels;
+    };
+
+    reader HistoryUserProfileReader<HistoryUserProfile>
+    {
+      minor_version;
+      major_version;
+
+      list<HistoryChannelInfoReader> context_channels;
+      list<HistoryChannelInfoReader> page_channels;
+      list<HistoryChannelInfoReader> search_channels;
+      list<HistoryChannelInfoReader> url_channels;
+    };
+
+  }
+}

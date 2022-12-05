@@ -1,0 +1,10 @@
+@userinfoexchangerexe_deps@
+
+sources := \
+  UserInfoExchangerMain.cpp \
+  UserInfoExchangerImpl.cpp \
+  UserInfoExchangePool.cpp
+
+target := UserInfoExchanger
+
+@userinfoexchangerexe_post@

@@ -1,0 +1,47 @@
+@autotestscommonsadmins_deps@
+
+sources := \
+  Admins.cpp \
+  Command.cpp \
+  SimpleAdmins.cpp \
+  CampaignAdmin.cpp \
+  ActionAdmin.cpp \
+  ChannelCategoryAdmin.cpp \
+  ColocationAdmin.cpp \
+  CreativeAdmin.cpp \
+  CreativeCategoryAdmin.cpp \
+  CreativeTemplatesAdmin.cpp \
+  ExpressionChannelAdmin.cpp \
+  FreqCapAdmin.cpp \
+  GlobalsAdmin.cpp \
+  MarginAdmin.cpp \
+  SearchEngineAdmin.cpp \
+  SimpleChannelAdmin.cpp \
+  SiteAdmin.cpp \
+  CampaignAdminStatCcg.cpp \
+  TagAdmin.cpp \
+  ChannelCheckAdmin.cpp \
+  CCGKeywordAdmin.cpp \
+  ChannelSearchAdmin.cpp \
+  TriggerAdmin.cpp \
+  ActionProfileAdmin.cpp \
+  RequestTriggerMatchProfileAdmin.cpp \
+  AdditionalProfileAdmin.cpp \
+  BaseProfileAdmin.cpp \
+  FreqCapProfileAdmin.cpp \
+  HistoryProfileAdmin.cpp \
+  UserTriggerMatchProfileAdmin.cpp \
+  InventoryProfileAdmin.cpp \
+  ReachProfileAdmin.cpp \
+  UserKeywordProfileAdmin.cpp \
+  RequestProfileAdmin.cpp \
+  FraudProfileAdmin.cpp \
+  PassbackProfileAdmin.cpp \
+  RequestKeywordProfileAdmin.cpp \
+  SiteReachProfileAdmin.cpp \
+  TagRequestGroupProfileAdmin.cpp \
+  AccountAdmin.cpp \
+  StatAccountAdmin.cpp \
+
+includes := .
+@autotestscommonsadmins_post@

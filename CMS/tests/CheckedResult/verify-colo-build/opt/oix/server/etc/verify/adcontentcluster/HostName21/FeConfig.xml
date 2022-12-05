@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:FeConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/Frontends/FeConfig.xsd">
+  <cfg:NullAdFeConfiguration log_level="7" local_passback_prefix="http://ssp.bak.rubytag.net/tags/">
+    <cfg:UriList>
+      <cfg:Uri path="/services/nslookup"/>
+    </cfg:UriList>
+    <cfg:CampaignServerRefs>
+      <cfg:Ref ref="corbaloc:iiop:HostName23:10106/CampaignServer_v24"/>
+    </cfg:CampaignServerRefs>
+  </cfg:NullAdFeConfiguration>
+</cfg:FeConfiguration>

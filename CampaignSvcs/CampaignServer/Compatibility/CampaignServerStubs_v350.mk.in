@@ -1,0 +1,7 @@
+@campaignserverstubs_v350_deps@
+
+corba_stub_idls := CampaignCommons_v350.idl BillStatInfo_v350.idl CampaignServer_v350.idl
+corba_includes := .
+corba_idl_includes := .
+
+@campaignserverstubs_v350_post@

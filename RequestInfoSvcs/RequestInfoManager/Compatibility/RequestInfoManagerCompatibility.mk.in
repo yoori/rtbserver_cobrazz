@@ -1,0 +1,24 @@
+@requestinfomanagercompatibility_deps@
+
+sources := \
+  UserCampaignReachProfileAdapter.cpp \
+  RequestProfileAdapter.cpp \
+  PassbackProfileAdapter.cpp \
+  UserActionProfileAdapter.cpp \
+  UserSiteReachProfileAdapter.cpp \
+  RequestOperationImpressionProfileAdapter.cpp
+
+plain_sources := \
+  UserCampaignReachProfile_v24.pst \
+  RequestProfile_v351.pst \
+  RequestProfile_v356.pst \
+  RequestProfile_v360.pst \
+  RequestProfile_v361.pst \
+  PassbackProfile_v32.pst \
+  UserActionProfile_v321.pst \
+  UserSiteReachProfile_v24.pst \
+  RequestOperationImpressionProfile_v0.pst
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@requestinfomanagercompatibility_post@

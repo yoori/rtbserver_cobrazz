@@ -1,0 +1,20 @@
+OSBE_CONFIG_SUBDIR([Compatibility])
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([Compatibility.mk])
+
+OSBE_CXX_DEF([RequestLogLoader], [RequestLogLoader.mk])
+OSBE_CXX_DEF([RequestOutLogger], [RequestOutLogger.mk])
+
+OSBE_CXX_DEF([RequestInfoContainer], [RequestInfoContainer.mk])
+OSBE_CXX_DEF([UserCampaignReachContainer], [UserCampaignReachContainer.mk])
+OSBE_CXX_DEF([UserActionInfoContainer], [UserActionInfoContainer.mk])
+OSBE_CXX_DEF([PassbackContainer], [PassbackContainer.mk])
+OSBE_CXX_DEF([UserFraudProtectionContainer], [UserFraudProtectionContainer.mk])
+OSBE_CXX_DEF([UserSiteReachContainer], [UserSiteReachContainer.mk])
+OSBE_CXX_DEF([UserTagRequestMergeContainer], [UserTagRequestMergeContainer.mk])
+OSBE_CXX_DEF([TagRequestProfiler], [TagRequestProfiler.mk])
+OSBE_CXX_DEF([BillingProcessor], [BillingProcessor.mk])
+OSBE_CXX_DEF([RequestOperationSaver], [RequestOperationSaver.mk])
+OSBE_CXX_DEF([RequestInfoManagerStubs], [RequestInfoManagerStubs.mk])
+OSBE_CXX_DEF([RequestInfoManagerExe], [RequestInfoManager.mk])

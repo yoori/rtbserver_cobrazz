@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/CampaignSvcs/CampaignServerConfig.xsd">
+  <cfg:CampaignServer log_root="/opt/foros/server/var/log/CampaignServer/Out" config_update_period="30" ecpm_update_period="30" colo_id="1" version="2.0.0.0">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10106">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="CampaignServer_v8" name="CampaignServer_v8"/>
+        <cfg:Object servant="CampaignServer_v9" name="CampaignServer_v9"/>
+        <cfg:Object servant="CampaignServer_v10" name="CampaignServer_v10"/>
+        <cfg:Object servant="CampaignServer_v23" name="CampaignServer_v23"/>
+        <cfg:Object servant="CampaignServer_v24" name="CampaignServer_v24"/>
+        <cfg:Object servant="CampaignServer_v24" name="CampaignServer"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/CampaignServer/CampaignServer">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+    <cfg:Logging>
+      <cfg:ColoUpdateStat flush_period="30"/>
+    </cfg:Logging>
+    <cfg:ServerMode server_id="1" stat_stamp_sync_period="3600">
+      <cfg:DBConnection db="AdServerDbForRead" user="BS_NIGHTLY_BUILDS" password="adserver" statement_timeout="600"/>
+      <cfg:LogGeneralizerCorbaRef>
+        <cfg:Ref ref="corbaloc:iiop:ads-nbmaster:10111/LogGeneralizer"/>
+      </cfg:LogGeneralizerCorbaRef>
+    </cfg:ServerMode>
+  </cfg:CampaignServer>
+</cfg:AdConfiguration>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>186</ttl>
+<reqDate since_epoch="1239865970">Thu, 16 Apr 2009 07:12:50 GMT</reqDate>
+<total>1</total>
+<items>
+<item>
+  <title><![CDATA[Call to make bank stress tests public]]></title>
+  <description><![CDATA[Stress tests on the largest US banks due to be completed within days should be made public, according to Barney Frank, chairman of the House financial services committee]]></description>
+  <pubDate>Wed, 15 Apr 2009 18:18:10 GMT</pubDate>
+  <link><![CDATA[http://traxfer.ft.com/cms/s/0/31dc4a9a-29e5-11de-9e56-00144feabdc0.html?o=%2Frss%2Fhome%2Fus]]></link>
+  <guid>10459277311403074949</guid>
+    <language><![CDATA[eng]]></language>
+  <event>
+    <id>8775633029536993532</id>
+    <capacity>1</capacity>
+  </event>
+  <source>
+    <title><![CDATA[Financial Times - US homepage]]></title>
+    <link><![CDATA[http://www.ft.com/rss/home/us]]></link>
+    <country><![CDATA[GBR]]></country>
+  </source>
+</item>
+</items>
+</result>

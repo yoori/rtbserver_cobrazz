@@ -1,0 +1,83 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Frontend Sub Cluster Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+  <xsd:include schemaLocation="./AdClusterAppType.xsd"/>
+  <xsd:include schemaLocation="./ChannelServing/ChannelServerAppType.xsd"/>
+  <xsd:include schemaLocation="./ChannelServing/ChannelControllerAppType.xsd"/>
+  <xsd:include schemaLocation="./ChannelServing/ChannelSearchServiceAppType.xsd"/>
+
+  <xsd:complexType name="FrontendClusterConfigType">
+    <xsd:sequence>
+      <xsd:element name="startParams" type="StartParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Parameters for running Frontends.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="DACS" type="DACSConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Settings of Distributed Application Control System, the system responsible for
+            correctly starting and stopping Advertising Server
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="environment" type="ClusterEnvironmentType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define environment params: pathes and account for server processes up.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="channelServing" type="ChannelServingConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Parameters for channel serving
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="channelServer" type="ChannelServerConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Parameters for channel servers
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="StartParamsType">
+    <xsd:attribute name="wait_loading" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Wait when all required for show ad instances will be loaded
+          (zero downtime restart requirement).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="timeout" type="xsd:positiveInteger" default="600">
+      <xsd:annotation>
+        <xsd:documentation>
+          Timeout for starting prestart service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="DACSConfigType">
+    <xsd:attribute name="script" type="NoLeadingTrailingSpaces"/>
+  </xsd:complexType>
+
+</xsd:schema>

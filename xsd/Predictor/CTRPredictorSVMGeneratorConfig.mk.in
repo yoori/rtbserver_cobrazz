@@ -1,0 +1,7 @@
+@ctrpredictorsvmgeneratorconfig_deps@
+sources := 
+includes := .
+xsd_files := CTRPredictorSVMGeneratorConfig.xsd
+xsd_includes := xsd
+
+@ctrpredictorsvmgeneratorconfig_post@

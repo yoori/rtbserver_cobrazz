@@ -1,0 +1,8 @@
+@autotestscommonscheckers_deps@
+
+sources := \
+	CommonCheckers.cpp \
+	CompositeCheckers.cpp
+
+includes := .
+@autotestscommonscheckers_post@

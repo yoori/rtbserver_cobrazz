@@ -1,0 +1,12 @@
+@userfreqcapprofile_deps@
+
+plain_sources := \
+ UserFreqCapProfileDescription.pst
+
+sources  := UserFreqCapProfile.cpp
+includes := src
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@userfreqcapprofile_post@
+

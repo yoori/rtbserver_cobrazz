@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/UserInfoSvcs/UserInfoExchangerConfig.xsd">
+  <cfg:UserInfoExchangerConfig>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10160">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="UserInfoExchanger" name="UserInfoExchanger"/>
+      </cfg:Endpoint>
+      <cfg:Endpoint host="vnode3" port="10210">
+        <cfg:Secure key="/opt/foros/server/etc/moscow-test-central/adproxycluster-2/vnode3/cert/skey.pem" certificate="/opt/oix/server/etc/moscow-test-central/adproxycluster-2/vnode3/cert/scert.pem" certificate_authority="/opt/oix/server/etc/moscow-test-central/adproxycluster-2/vnode3/cert/ca.pem" key-word="adserver"/>
+        <cfg:Object servant="UserInfoExchanger" name="UserInfoExchanger"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/UserInfoExchanger/UserInfoExchanger">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+    <cfg:RepositoryPlace path="/opt/foros/server/var/cache/UsersExchange"/>
+  </cfg:UserInfoExchangerConfig>
+</cfg:AdConfiguration>

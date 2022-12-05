@@ -1,0 +1,6 @@
+@xsltransformer_deps@
+sources := LibxsltTransformer.cpp \
+  XslTransformer.cpp
+
+includes := .
+@xsltransformer_post@

@@ -1,0 +1,109 @@
+#ifndef CAMPAIGNSVCS_BILLINGSERVER_IDL
+#define CAMPAIGNSVCS_BILLINGSERVER_IDL
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module CampaignSvcs
+  {
+    interface BillingServer
+    {
+      exception NotReady
+      {
+        string description;
+      };
+
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      struct CheckBidInfo
+      {
+        CORBACommons::TimestampInfo time;
+        unsigned long account_id; // bill account (target for amount)
+        // advertiser id (can be zero), check that it is active
+        unsigned long advertiser_id;
+        unsigned long campaign_id;
+        unsigned long ccg_id;
+
+        CORBACommons::DecimalInfo ctr;
+        boolean optimize_campaign_ctr;
+      };
+
+      struct ConfirmBidInfo
+      {
+        CORBACommons::TimestampInfo time;
+        unsigned long account_id;
+        unsigned long advertiser_id;
+        unsigned long campaign_id;
+        unsigned long ccg_id;
+        CORBACommons::DecimalInfo ctr;
+
+        // different spent budget calculation for account and campaigns
+        CORBACommons::DecimalInfo account_spent_budget;
+        CORBACommons::DecimalInfo spent_budget;
+        CORBACommons::DecimalInfo reserved_budget;
+        CORBACommons::DecimalInfo imps;
+        CORBACommons::DecimalInfo clicks;
+
+        // forced: confirm without limit checking
+        boolean forced;
+      };
+
+      typedef sequence<ConfirmBidInfo> ConfirmBidSeq;
+
+      struct ConfirmBidRefInfo
+      {
+        unsigned long index;
+        ConfirmBidInfo confirm_bid;
+      };
+
+      typedef sequence<ConfirmBidRefInfo> ConfirmBidRefSeq;
+
+      struct ReserveBidInfo
+      {
+        CORBACommons::TimestampInfo time;
+        unsigned long account_id;
+        unsigned long advertiser_id;
+        unsigned long campaign_id;
+        unsigned long ccg_id;
+        CORBACommons::DecimalInfo reserve_budget;
+      };
+
+      struct BidResultInfo
+      {
+        boolean available;
+        CORBACommons::DecimalInfo goal_ctr;
+      };
+
+      // check that bid possible by delivery limitations
+      BidResultInfo
+      check_available_bid(in CheckBidInfo request_info)
+        raises(NotReady, ImplementationException);
+
+      // reserve bid
+      boolean
+      reserve_bid(in ReserveBidInfo request_info)
+        raises(NotReady, ImplementationException);
+
+      // confirm bid
+      // save amount if forced is true or if limitations isn't reached
+      // return false if limitations reached, true otherwise
+      BidResultInfo
+      confirm_bid(inout ConfirmBidInfo request_info)
+        raises(NotReady, ImplementationException);
+
+      // add amount
+      // partial allow to add amount for some requests and return other
+      void
+      add_amount(
+        out ConfirmBidRefSeq remainder_request_seq,
+        in ConfirmBidSeq request_seq)
+        raises(NotReady, ImplementationException);
+    };
+  }; // module CampaignSvcs
+}; // module AdServer
+
+#endif // CAMPAIGNSVCS_BILLINGSERVER_IDL

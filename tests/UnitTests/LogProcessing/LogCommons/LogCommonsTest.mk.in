@@ -1,0 +1,6 @@
+@logcommonstest_deps@
+
+sources := LogCommonsTest.cpp
+target := LogCommonsTest
+
+include $(top_srcdir)/tests/Test.post.rules

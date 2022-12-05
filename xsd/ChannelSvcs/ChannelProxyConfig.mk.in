@@ -1,0 +1,8 @@
+@channelproxyconfig_deps@
+sources :=
+includes := 
+xsd_files := ChannelProxyConfig.xsd
+xsd_includes := . 
+
+@channelproxyconfig_post@
+

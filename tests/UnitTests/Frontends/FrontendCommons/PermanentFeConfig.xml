@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:PermanentFeConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration
+    ./../../../../xsd/Frontends/PermanentFeConfig.xsd">
+  <cfg:SearchersConfig>
+    <cfg:SearchMatcher host_postfix="kr.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;]fr=kr-front[-_]sb.*[\&amp;]p=([^\&amp;]+)).*" explanation="kr.yahoo.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="kr.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;]p=([^\&amp;]*).*[\?|\&amp;]fr=kr-front[-_]sb).*" explanation="kr.yahoo.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="kr.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;]p=([^\&amp;]*).*[\?|\&amp;]).*" explanation="kr.yahoo.com"/>
+    <cfg:SearchMatcher host_postfix="br.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;](?:vc=&amp;amp;)?p=([^\&amp;]+)).*" explanation="br.yahoo.com"/>
+    <cfg:SearchMatcher host_postfix="kr.altavista.com" regexp="(?:\w+)+\/(?:results|.+)(?:[?|&amp;].*?)q=([^&amp;]+).*" explanation="kr.altavista.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="us.yhs4.search.yahoo.com" regexp="yhs/search(?:.*?)cs=iso88591(?:.*?)(?:\?|&amp;)q=([^&amp;]+).*" explanation="alltheweb.com" charset="iso8859-1"/>
+    <cfg:SearchMatcher host_postfix="us.yhs4.search.yahoo.com" regexp="yhs/search(?:.*?)(?:\?|&amp;)q=([^&amp;]+).*" explanation="altavista"/>
+  </cfg:SearchersConfig>
+  <cfg:OsConfig>
+  </cfg:OsConfig>
+  <cfg:BrowserConfig>
+  </cfg:BrowserConfig>
+  <cfg:UserAgentMatcherConfig filter_path="user_agent_filter.txt"/>
+</cfg:PermanentFeConfiguration>

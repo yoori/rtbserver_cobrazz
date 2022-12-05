@@ -1,0 +1,6 @@
+@hashfilter_deps@
+
+sources := HashFilter.cpp
+includes := .
+
+@hashfilter_post@

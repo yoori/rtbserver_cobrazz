@@ -1,0 +1,68 @@
+
+SubAgent-Shell-AdServer-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  TimeStamp FROM SNMPv2-TC
+  monitoring FROM AdServer-MIB;
+
+adsPollerInfo OBJECT IDENTIFIER ::= { monitoring 1 }
+
+adRequestExecTime OBJECT-TYPE
+  SYNTAX OCTET STRING
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Time of monitoring request processing in mseconds"
+  ::= { monitoring 100 }
+
+adRequestExecStatus OBJECT-TYPE
+  SYNTAX INTEGER
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Monitoring request processing status"
+  ::= { monitoring 101 }
+
+apacheStatusEntry OBJECT IDENTIFIER ::= { monitoring 102 }
+
+adsFunctionsCount  OBJECT-TYPE
+  SYNTAX      INTEGER
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION
+  "Number of executed functions"
+  ::= { adsPollerInfo 1 }
+
+adsFunctionsSuccessCount  OBJECT-TYPE
+  SYNTAX      INTEGER
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION
+  "Number of successfully executed functions"
+  ::= { adsPollerInfo 2 }
+
+adsFunctionsFailedCount  OBJECT-TYPE
+  SYNTAX      INTEGER
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION
+  "Number of failed functions"
+  ::= { adsPollerInfo 3 }
+
+adsTimeStamp  OBJECT-TYPE
+  SYNTAX      OCTET STRING
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION
+  "Timestamp of last execution"
+  ::= { adsPollerInfo 4 }
+ 
+adsTotalExecTime  OBJECT-TYPE
+  SYNTAX      OCTET STRING
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION
+  "Total execution time"
+  ::= { adsPollerInfo 5 }
+
+END
+

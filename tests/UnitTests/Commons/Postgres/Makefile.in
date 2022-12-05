@@ -1,0 +1,6 @@
+@postgrestestexe_deps@
+
+sources := PostgresTest.cpp StreamObject.cpp
+target := PostgresTest
+
+include $(top_srcdir)/tests/Test.post.rules

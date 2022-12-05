@@ -1,0 +1,20 @@
+name="UserInfoContainer"
+so_files=UserInfoContainer
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep PrivacyFilter
+
+osbe_cxx_dep Commons
+osbe_cxx_dep Allocator
+osbe_cxx_dep PlainStorage2
+osbe_cxx_dep PlainStorage3
+
+osbe_cxx_dep ChannelMatcher
+osbe_cxx_dep LogCommons
+osbe_cxx_dep FileReceiver
+osbe_cxx_dep UserFreqCapProfile
+osbe_cxx_dep UserBaseProfileAdapter
+osbe_cxx_dep UserHistoryProfileAdapter
+osbe_cxx_dep UserOperationProfilesAdapter
+osbe_cxx_dep UserFreqCapProfileAdapter

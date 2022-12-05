@@ -1,0 +1,10 @@
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep XMLUtility
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep CTRPredictorSVMGeneratorConfig
+osbe_cxx_dep CTRGeneratorLib

@@ -1,0 +1,10 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep UserOperationGeneratorConfig
+osbe_cxx_dep UserInfoContainer
+osbe_cxx_dep UserOperationProfiles
+osbe_cxx_dep XMLUtility
+
+osbe_cxx_dep UidChannelSnapshot

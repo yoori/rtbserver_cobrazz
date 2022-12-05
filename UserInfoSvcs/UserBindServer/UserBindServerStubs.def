@@ -1,0 +1,5 @@
+name="UserBindServerStubs"
+so_files=UserBindServerStubs
+
+osbe_cxx_feature_dep CORBA
+osbe_cxx_dep CORBACommons

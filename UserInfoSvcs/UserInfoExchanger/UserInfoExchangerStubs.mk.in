@@ -1,0 +1,10 @@
+@userinfoexchangerstubs_deps@
+
+sources := 
+includes := .
+
+corba_stub_idls := UserInfoExchanger.idl
+corba_includes := .
+corba_idl_includes := .
+
+@userinfoexchangerstubs_post@

@@ -1,0 +1,19 @@
+@userbaseprofileadapter_deps@
+
+sources := UserBaseProfileAdapter.cpp
+
+plain_sources := \
+  UserChannelBaseProfile_v1.pst \
+  UserChannelBaseProfile_v2.pst \
+  UserChannelBaseProfile_v3.pst \
+  UserChannelBaseProfile_v4.pst \
+  UserChannelBaseProfile_v5.pst \
+  UserChannelBaseProfile_v26.pst \
+  UserChannelBaseProfile_v290.pst \
+  UserChannelBaseProfile_v300.pst \
+  UserChannelBaseProfile_v301.pst \
+  UserChannelBaseProfile_v320.pst
+  
+include $(top_builddir)/Plain/Plain.post.rules
+
+@userbaseprofileadapter_post@

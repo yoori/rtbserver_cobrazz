@@ -1,0 +1,10 @@
+@adrequestlogger_deps@
+
+sources := \
+  AdRequestLogger.cpp \
+  HistoryMatch.cpp \
+  ConvLogger.cpp
+
+includes := .
+@adrequestlogger_post@
+

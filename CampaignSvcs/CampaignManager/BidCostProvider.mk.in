@@ -1,0 +1,6 @@
+@bidcostprovider_deps@
+
+sources := BidCostProvider.cpp
+target := BidCostProvider
+
+@bidcostprovider_post@

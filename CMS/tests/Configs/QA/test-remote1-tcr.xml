@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="moscow-test-2-remote1"
+  description="Moscow Remote Test2 #1"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="vtcr1" hostName="vtcr1"/>
+  <host name="vtcr2" hostName="vtcr2"/>
+  <host name="tcrback2" hostName="tcrback2"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <configuration>
+      <environment xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+        <forosZoneManagement>
+          <private_key>-----BEGIN RSA PRIVATE KEY-----
+MIICWwIBAAKBgQDQNIRHWBKTRsd6NdFcIc5SdZeV7Tz2xtLzTSk5JuXEcek12Epu
+U77ROGfV7U2KE0kzGLwksi6K9DP57IDarSmNSQf+2phfaDIiclnpN8UVozqBBhyd
+IVcZ2/Wszq3AL67MxyJcB2jw2eZxgtQFxN6maD0ZeHwN2I8mPcqqg5l97QIBIwKB
+gQCsg0kH6eOBV+ccHfacy42yCal8OZjpuq7Jl7RxLtuixMiLszZbafXgjdJgy+/K
+LTymrhg7qZRHP15EG7s42J7EBiE2i6hTbbp8NeHxud0mfxnOvWnNNpu8PgQABs+v
+d30i7QhJ6MaV6r9buNUi0T6BYjNI3BiQEBQ+8Lv2ntR57wJBAPelXAttViCwUTcX
+nyJLotGxGzbrTsEJjPJyzbfOI6WQEprx3bsTmcHZFXQZpIeu+fKpUbGBuPw4lJnw
+kdEHkk8CQQDXOo0dydC6P6VA2VJ7xtGZPhzY72hcMH2V1lHQ3CELkIcxbRxFDWRd
+1vYvp33WuBkiXrZ2uWBfAFdVLDWsQgkDAkEAhm+1n82jyJo6t4HaC02hh8aLHdAy
+EQUvQclLGqMaqlWGcV66MlsY9DQEVPf6Owc3OpZuLSkp6AF1PZ/aIQQcOQJAGJj6
+L0pDvYOd24aNFXXOz69TwQVrAzi95T0QqifJQyZ12cNTsB7JpFMU0j8HETmcePTh
+pysg9OoYnAUNcsW34wJAA/QcRkJ41N0Bk+UZ3a6+n7TRA4jcQeATpuj9pmjBJ5RQ
+1RXmEhyZjmEbXrpUzs1Q4/9LiwfRYx2gjYYvYchtYw==
+-----END RSA PRIVATE KEY-----</private_key>
+        </forosZoneManagement>
+        <ispZoneManagement
+          separate_isp_zone="true"
+          public_key="ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEApkRqPzpzY2OTWq6cNt7kwdCOd7T49NzL1SMHKzm9RLV+3ZHW1zs2sKLJEjyag57PpoSgJZZAvOJmA3iWIk2x7f/KfuGLT6e1Qqa8YQvNauS3HylDqnwkOhbz1vrVEa50OpgZ1tlr1HbQGnmWyK7aulB5qd8GXa9CAIWqFZNnr6CBFPjxkWONnFA0fb7Nw9kM7ABpbUOt3FqwSyVW1QyWPXbnNudw982vnz65ZBLjsiQjOZZxpJhWRIOmjIgJs06yJ4SE1CXOmwVn3hKUEzpfT+IM29+7r3L4Z1RCZXQ1MrNsG0Cm9e7EaUE9nzeFsDbBxWUL25XplVEU72HqIlMeuw== andrey_azeev@vauto"
+          ssh_key="/home/aduser/.ssh/adkey.isp">
+        </ispZoneManagement>
+      </environment>
+    </configuration>
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" enable_search_term_stats="true"
+          referrer_logging_site_referrer_stats="domain" referrer_logging_action_stats="disabled">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <secureParams ca="ca.pem"/>
+          <coloParams
+            colo_id="6"
+            enabled_countries="gb"
+            ad_request_profiling="ad-request profiling disabled, stats collection enabled"
+            set_uid="parameter"
+            probe_uid="true">
+            <virtualServer>
+            <httpsParams>
+              <cert>
+                <content>
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 16 (0x10)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=RU, ST=Moscow, O=Phorm Inc, OU=Phorm Moscow, CN=Phorm Moscow CA/emailAddress=adm@ocslab.com
+        Validity
+            Not Before: Mar 15 12:33:36 2010 GMT
+            Not After : Mar 12 12:33:36 2020 GMT
+        Subject: C=RU, ST=Moscow, L=Moscow, O=Phorm Inc, OU=Phorm Moscow, CN=*.foros-rubytest2.net
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:f2:17:06:15:76:4f:96:71:5b:48:b1:d2:73:f1:
+                    04:6c:9b:df:a6:c3:d1:38:09:94:79:9c:dc:87:7a:
+                    73:64:88:59:d7:a4:f7:a6:dc:1a:33:27:12:59:3a:
+                    54:f9:6c:56:ee:7e:2a:0d:99:d0:81:09:40:fd:5e:
+                    1c:1d:df:82:39:c8:2b:b2:18:e3:d5:bb:f1:18:b2:
+                    f3:a9:79:6b:0b:e2:9f:cb:09:d6:ae:f2:dc:65:15:
+                    6e:15:55:6b:d1:9b:22:63:2f:02:57:55:b2:5a:3c:
+                    ed:61:8c:4e:7d:33:6d:7b:6d:46:f0:89:7d:cc:39:
+                    d5:26:e5:32:eb:e4:b8:27:8b
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints:
+                CA:FALSE
+            Netscape Comment:
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier:
+                54:AF:20:4A:FD:7D:53:3D:4A:58:12:B0:99:4E:A3:8F:44:9E:B4:ED
+            X509v3 Authority Key Identifier:
+                keyid:FD:FE:7E:27:30:13:8C:A8:1C:3D:32:02:C4:2D:0B:60:3F:87:E1:F2
+
+    Signature Algorithm: sha1WithRSAEncryption
+        8a:41:8e:99:4a:88:cb:38:fb:47:7a:cb:0e:2d:83:d7:9f:6d:
+        f8:d3:38:f5:22:92:e1:cc:8e:d1:02:8a:51:91:fb:db:c6:70:
+        e9:f1:bf:06:7d:0e:e3:b0:6d:56:a2:d2:b1:7c:3a:75:e0:85:
+        ff:ca:49:aa:39:d4:29:b4:76:50:07:c3:3d:05:1b:ef:b2:9b:
+        b9:6a:72:32:4d:19:67:e7:0e:02:8e:1f:89:35:f2:80:c6:5a:
+        be:06:9d:28:35:34:d2:aa:34:07:fc:bd:74:c5:0c:a6:5e:3a:
+        2c:71:74:0e:f5:a3:2e:58:c2:c1:bb:bb:75:43:8c:9d:b0:ac:
+        17:aa
+-----BEGIN CERTIFICATE-----
+MIIC6zCCAlSgAwIBAgIBEDANBgkqhkiG9w0BAQUFADCBgjELMAkGA1UEBhMCUlUx
+DzANBgNVBAgTBk1vc2NvdzESMBAGA1UEChMJUGhvcm0gSW5jMRUwEwYDVQQLEwxQ
+aG9ybSBNb3Njb3cxGDAWBgNVBAMTD1Bob3JtIE1vc2NvdyBDQTEdMBsGCSqGSIb3
+DQEJARYOYWRtQG9jc2xhYi5jb20wHhcNMTAwMzE1MTIzMzM2WhcNMjAwMzEyMTIz
+MzM2WjB3MQswCQYDVQQGEwJSVTEPMA0GA1UECBMGTW9zY293MQ8wDQYDVQQHEwZN
+b3Njb3cxEjAQBgNVBAoTCVBob3JtIEluYzEVMBMGA1UECxMMUGhvcm0gTW9zY293
+MRswGQYDVQQDDBIqLm9peC1ydWJ5dGVzdC5uZXQwgZ8wDQYJKoZIhvcNAQEBBQAD
+gY0AMIGJAoGBAPIXBhV2T5ZxW0ix0nPxBGyb36bD0TgJlHmc3Id6c2SIWdek96bc
+GjMnElk6VPlsVu5+Kg2Z0IEJQP1eHB3fgjnIK7IY49W78Riy86l5awvin8sJ1q7y
+3GUVbhVVa9GbImMvAldVslo87WGMTn0zbXttRvCJfcw51SblMuvkuCeLAgMBAAGj
+ezB5MAkGA1UdEwQCMAAwLAYJYIZIAYb4QgENBB8WHU9wZW5TU0wgR2VuZXJhdGVk
+IENlcnRpZmljYXRlMB0GA1UdDgQWBBRUryBK/X1TPUpYErCZTqOPRJ607TAfBgNV
+HSMEGDAWgBT9/n4nMBOMqBw9MgLELQtgP4fh8jANBgkqhkiG9w0BAQUFAAOBgQCK
+QY6ZSojLOPtHessOLYPXn2340zj1IpLhzI7RAopRkfvbxnDp8b8GfQ7jsG1WotKx
+fDp14IX/ykmqOdQptHZQB8M9BRvvspu5anIyTRln5w4Cjh+JNfKAxlq+Bp0oNTTS
+qjQH/L10xQymXjoscXQO9aMuWMLBu7t1Q4ydsKwXqg==
+-----END CERTIFICATE-----
+                </content>
+              </cert>
+              <key>
+                <content>
+-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDyFwYVdk+WcVtIsdJz8QRsm9+mw9E4CZR5nNyHenNkiFnXpPem
+3BozJxJZOlT5bFbufioNmdCBCUD9Xhwd34I5yCuyGOPVu/EYsvOpeWsL4p/LCdau
+8txlFW4VVWvRmyJjLwJXVbJaPO1hjE59M217bUbwiX3MOdUm5TLr5LgniwIDAQAB
+AoGAJLP46CgXyOdGv662CX3w/cZkEhR+E9DgAdAWXzPhasyBUoBgS5vzHO4/ieee
+GnKie2YFWiqHwgh1IfSyrpTEWVLRkz5ViauUatLW3DgGMP9+NHZBJZDAja7zkdWR
+vhMeA0+1qz2M328q5XQFZS9PVPqLm1VETRtJ6Wp+CjdQGYECQQD8OQ3XARsWrXx7
+dNVLUUz2gdDONFBEQ9bg/r+wkpusI33gcvphQQ0Qq536zi4SdD9dF6KHZLIy1QXR
+qiAWeXyvAkEA9bcfhNqwuRnPJbnNnO46cob/EJ3xY9K4rZnGXJ1XnKYZTr2p9eHr
+kwzg3XxcnIdYqljKEcXEtF88K6oQ7HwR5QJBAL86IpwYYolXD0Iq2mw4P7nFwqIU
+V6bqKEh93Kfq/8wLPKynf92sjFNPSn+VQqkLKd9SxA8S8WhIyhike5+OjFECQBwM
+WEu5Dv1CJfQ/fmoQg5l5MXp7HQfxEOW4LP17dHnMOA1V9yW7MUHq8Ww2+vdfN87S
+LdbThX21dU/irOXhz8UCQQDFQlsuH4PDCD7hYSGjjcRChDakvI3FN4aDuTfDdK4E
+bRnpwRnDiLc4fUN8ZaaqpOLlm7+otsd9CWrMvj/oXvDX
+-----END RSA PRIVATE KEY-----
+                </content>
+              </key>
+              <ca>
+                <content>
+-----BEGIN CERTIFICATE-----
+MIIC+jCCAmOgAwIBAgIBADANBgkqhkiG9w0BAQUFADCBgjELMAkGA1UEBhMCUlUx
+DzANBgNVBAgTBk1vc2NvdzESMBAGA1UEChMJUGhvcm0gSW5jMRUwEwYDVQQLEwxQ
+aG9ybSBNb3Njb3cxGDAWBgNVBAMTD1Bob3JtIE1vc2NvdyBDQTEdMBsGCSqGSIb3
+DQEJARYOYWRtQG9jc2xhYi5jb20wHhcNMDgwNzA3MTM0MzQ0WhcNMjgwNzAyMTM0
+MzQ0WjCBgjELMAkGA1UEBhMCUlUxDzANBgNVBAgTBk1vc2NvdzESMBAGA1UEChMJ
+UGhvcm0gSW5jMRUwEwYDVQQLEwxQaG9ybSBNb3Njb3cxGDAWBgNVBAMTD1Bob3Jt
+IE1vc2NvdyBDQTEdMBsGCSqGSIb3DQEJARYOYWRtQG9jc2xhYi5jb20wgZ8wDQYJ
+KoZIhvcNAQEBBQADgY0AMIGJAoGBALBmr2AsJLoH92WeHVUPhZNUDTwP2EDG4G3c
+7GHgFtICbQykTfeSPD+qhokUOJussctiYoBuuzuXTQJ5pOd4aueA2mTVyMnhE9yd
+oKe3AEjwRGTLBwcFX9OV/oFDAB5Uu2+9vCYlFS+FxYCigswU/Cq58/L2Q64Bck1R
+RlrrJGZlAgMBAAGjfjB8MAwGA1UdEwQFMAMBAf8wLAYJYIZIAYb4QgENBB8WHU9w
+ZW5TU0wgR2VuZXJhdGVkIENlcnRpZmljYXRlMB0GA1UdDgQWBBT9/n4nMBOMqBw9
+MgLELQtgP4fh8jAfBgNVHSMEGDAWgBT9/n4nMBOMqBw9MgLELQtgP4fh8jANBgkq
+hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
++Ubf38kzg5rfCc1gXtec4NHlW2EQfiRYDQownBqTuclAKk06cSeBsP6Y7x2vAjcL
+3y4/Q8U4lRCjqHDyerc/V/TL1QoqSOG6CZBCI/lqcSzvsYdS40L9TAiB9K7nKQ==
+-----END CERTIFICATE-----
+                </content>
+              </ca>
+            </httpsParams>
+            <adservingDomain name="a.foros-rubytest2.net"/>
+            <adservingDomain name="b.foros-rubytest2.net"/>
+            <thirdPartyContentDomain name="forosssp-rubytest2.net"/>
+            <thirdPartyContentDomain name="foroscrv-rubytest2.net"/>
+            </virtualServer>
+            <virtualServer internal_https_port="10144">
+            <httpsParams>
+              <cert>
+                <content>
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 43 (0x2b)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=RU, ST=Moscow, O=Phorm Inc, OU=Phorm Moscow, CN=Phorm Moscow CA/emailAddress=adm@ocslab.com
+        Validity
+            Not Before: Aug  6 08:44:41 2013 GMT
+            Not After : Aug  4 08:44:41 2023 GMT
+        Subject: C=RU, ST=Moscow, L=Moscow, O=Phorm Inc, OU=Phorm Moscow, CN=*.foros-rubytest-old.net/emailAddress=adm@ocslab.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:a3:82:ed:7e:33:04:34:20:83:57:53:01:8e:f7:
+                    ee:29:8e:e5:e3:d3:ab:a7:e1:4b:fa:60:c6:2e:af:
+                    f2:b0:4c:cb:6c:1c:d0:9a:4a:ec:2a:a1:f8:d9:fc:
+                    80:ad:2c:a8:e2:5f:b9:47:86:41:a8:db:ed:dc:46:
+                    9e:22:f8:31:ff:e0:c9:c5:03:7c:0b:a6:5c:8e:98:
+                    8a:97:b2:90:3b:9a:cd:7b:7b:49:43:ce:02:17:c3:
+                    84:51:5f:10:ab:b0:83:1d:d3:09:0e:ec:f9:8c:20:
+                    c0:d1:52:28:d4:53:36:a0:96:82:21:d6:bf:87:01:
+                    39:63:f7:ac:cd:62:8c:bd:e1
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                26:1E:67:47:32:73:D2:1A:AA:83:5A:BD:1D:E1:6D:DE:25:A5:95:B1
+            X509v3 Authority Key Identifier: 
+                keyid:FD:FE:7E:27:30:13:8C:A8:1C:3D:32:02:C4:2D:0B:60:3F:87:E1:F2
+
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation, Key Encipherment
+    Signature Algorithm: sha1WithRSAEncryption
+        18:f4:2a:29:9e:46:b5:91:cf:ce:17:86:aa:3f:07:c2:4c:4b:
+        5f:6e:64:fb:39:e6:15:79:d2:96:b2:19:0d:1e:99:06:de:ff:
+        e3:01:0a:9a:db:90:47:08:d5:fb:dc:1f:8f:ec:60:94:66:1c:
+        47:cc:8f:0f:e9:19:47:23:9f:65:9d:78:d1:49:29:80:1c:48:
+        f3:2a:19:b4:00:61:69:2c:c8:2f:2c:59:78:55:bc:00:d7:46:
+        93:db:39:66:bb:63:65:2a:94:d0:6f:2e:f4:64:5e:5c:9e:c2:
+        5e:46:76:bc:9e:20:8f:ee:89:3c:30:5c:69:47:dd:f9:25:0a:
+        44:27
+-----BEGIN CERTIFICATE-----
+MIIDHjCCAoegAwIBAgIBKzANBgkqhkiG9w0BAQUFADCBgjELMAkGA1UEBhMCUlUx
+DzANBgNVBAgTBk1vc2NvdzESMBAGA1UEChMJUGhvcm0gSW5jMRUwEwYDVQQLEwxQ
+aG9ybSBNb3Njb3cxGDAWBgNVBAMTD1Bob3JtIE1vc2NvdyBDQTEdMBsGCSqGSIb3
+DQEJARYOYWRtQG9jc2xhYi5jb20wHhcNMTMwODA2MDg0NDQxWhcNMjMwODA0MDg0
+NDQxWjCBmjELMAkGA1UEBhMCUlUxDzANBgNVBAgTBk1vc2NvdzEPMA0GA1UEBxMG
+TW9zY293MRIwEAYDVQQKEwlQaG9ybSBJbmMxFTATBgNVBAsTDFBob3JtIE1vc2Nv
+dzEfMB0GA1UEAwwWKi5vaXgtcnVieXRlc3Qtb2xkLm5ldDEdMBsGCSqGSIb3DQEJ
+ARYOYWRtQG9jc2xhYi5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKOC
+7X4zBDQgg1dTAY737imO5ePTq6fhS/pgxi6v8rBMy2wc0JpK7Cqh+Nn8gK0sqOJf
+uUeGQajb7dxGniL4Mf/gycUDfAumXI6YipeykDuazXt7SUPOAhfDhFFfEKuwgx3T
+CQ7s+YwgwNFSKNRTNqCWgiHWv4cBOWP3rM1ijL3hAgMBAAGjgYkwgYYwCQYDVR0T
+BAIwADAsBglghkgBhvhCAQ0EHxYdT3BlblNTTCBHZW5lcmF0ZWQgQ2VydGlmaWNh
+dGUwHQYDVR0OBBYEFCYeZ0cyc9IaqoNavR3hbd4lpZWxMB8GA1UdIwQYMBaAFP3+
+ficwE4yoHD0yAsQtC2A/h+HyMAsGA1UdDwQEAwIF4DANBgkqhkiG9w0BAQUFAAOB
+gQAY9Copnka1kc/OF4aqPwfCTEtfbmT7OeYVedKWshkNHpkG3v/jAQqa25BHCNX7
+3B+P7GCUZhxHzI8P6RlHI59lnXjRSSmAHEjzKhm0AGFpLMgvLFl4VbwA10aT2zlm
+u2NlKpTQby70ZF5cnsJeRna8niCP7ok8MFxpR935JQpEJw==
+-----END CERTIFICATE-----
+                </content>
+              </cert>
+              <key>
+                <content>
+     -----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQCjgu1+MwQ0IINXUwGO9+4pjuXj06un4Uv6YMYur/KwTMtsHNCa
+SuwqofjZ/ICtLKjiX7lHhkGo2+3cRp4i+DH/4MnFA3wLplyOmIqXspA7ms17e0lD
+zgIXw4RRXxCrsIMd0wkO7PmMIMDRUijUUzagloIh1r+HATlj96zNYoy94QIDAQAB
+AoGAMugscMIJaQFGYwWg0pY2PBIVWN0p8FaghQ9kJFz7PhBqtPozqBXzeUJ8a8HF
+fiUNX41V7gLKpnvyjkYeLd0AE56Q3uxyAgp+3EKtY7Dyj3c0ykLArI9Tt/vRvSyT
+fxLHPcCUL7M7YDPoVYGcFrMi+3dEQx0hCMi7cLdtpEDyEBECQQDZn9o727Xn8K1S
+bgBrCGyf4anbDCsst0dyBdRhSCv/Ikd6DboPljBh4DLo+2LCgDKdDG2QLpaN4rXT
+cQKTQRxjAkEAwFhFP8KuaqY2RSMvkLlWT258Q88Yuvvt+/SDiWSVGAfABFfr7sOf
+Z9kF3tgfhT/BtQJYqxZcR1KL+pl+catF6wJAdIEkZvk3iCUL1N448RQAexNnSHJa
+RsUTxZIjYbUugJbMZyYkHqYL3soU1y+FbpUNA5CcsxyN0wW0y65rb4Pi+wJBALtr
+h5aYaYGsEceOgIOhxJNDkjw0qOFSKFPQrvcKlijDLHxO+6s83K/BDXJV32jkdiid
+b67N6/7nVVRLiqTSAh8CQD+t49und+5gaqhnL524Gg7KO64Byr2aum7OZ49bK1Ou
+X/WpvlcI1AEEOmD309iy5yBJGKn9veRgOGBRHSycIes=
+-----END RSA PRIVATE KEY-----
+           </content>
+              </key>
+              <ca>
+                <content>
+-----BEGIN CERTIFICATE-----
+MIIDHjCCAoegAwIBAgIBKzANBgkqhkiG9w0BAQUFADCBgjELMAkGA1UEBhMCUlUx
+DzANBgNVBAgTBk1vc2NvdzESMBAGA1UEChMJUGhvcm0gSW5jMRUwEwYDVQQLEwxQ
+aG9ybSBNb3Njb3cxGDAWBgNVBAMTD1Bob3JtIE1vc2NvdyBDQTEdMBsGCSqGSIb3
+DQEJARYOYWRtQG9jc2xhYi5jb20wHhcNMTMwODA2MDg0NDQxWhcNMjMwODA0MDg0
+NDQxWjCBmjELMAkGA1UEBhMCUlUxDzANBgNVBAgTBk1vc2NvdzEPMA0GA1UEBxMG
+TW9zY293MRIwEAYDVQQKEwlQaG9ybSBJbmMxFTATBgNVBAsTDFBob3JtIE1vc2Nv
+dzEfMB0GA1UEAwwWKi5vaXgtcnVieXRlc3Qtb2xkLm5ldDEdMBsGCSqGSIb3DQEJ
+ARYOYWRtQG9jc2xhYi5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKOC
+7X4zBDQgg1dTAY737imO5ePTq6fhS/pgxi6v8rBMy2wc0JpK7Cqh+Nn8gK0sqOJf
+uUeGQajb7dxGniL4Mf/gycUDfAumXI6YipeykDuazXt7SUPOAhfDhFFfEKuwgx3T
+CQ7s+YwgwNFSKNRTNqCWgiHWv4cBOWP3rM1ijL3hAgMBAAGjgYkwgYYwCQYDVR0T
+BAIwADAsBglghkgBhvhCAQ0EHxYdT3BlblNTTCBHZW5lcmF0ZWQgQ2VydGlmaWNh
+dGUwHQYDVR0OBBYEFCYeZ0cyc9IaqoNavR3hbd4lpZWxMB8GA1UdIwQYMBaAFP3+
+ficwE4yoHD0yAsQtC2A/h+HyMAsGA1UdDwQEAwIF4DANBgkqhkiG9w0BAQUFAAOB
+gQAY9Copnka1kc/OF4aqPwfCTEtfbmT7OeYVedKWshkNHpkG3v/jAQqa25BHCNX7
+3B+P7GCUZhxHzI8P6RlHI59lnXjRSSmAHEjzKhm0AGFpLMgvLFl4VbwA10aT2zlm
+u2NlKpTQby70ZF5cnsJeRna8niCP7ok8MFxpR935JQpEJw==
+-----END CERTIFICATE-----
+                </content>
+              </ca>
+            </httpsParams>
+            <redirectDomain name="a.foros-rubytest2-old.net" target_domain="a.oix-rubytest2.net"/>
+            <redirectDomain name="b.foros-rubytest2-old.net" target_domain="b.oix-rubytest2.net"/>
+            </virtualServer>
+            <uid_key>-----BEGIN RSA PRIVATE KEY-----
+MIGrAgEAAiEA2fwQ8IopPMAyLnwiZeXTCA5tfSFutzbvkHgV/8/HnLcCAwEAAQIh
+AKxu6u98OzalSozfAU7dyFpHFLAD7W9uaQnyxVYjEn5BAhEA9fyJGIsAQrMYVr7Z
+JtynZwIRAOLbuBLRWSGa36xAj0u2njECEBa6EVSSKyD+eQYytc9wXYsCEA3ezz9f
+S2rRlFFs1RYVAVECEQDTaWcCyMagjj2P1gscquOC
+-----END RSA PRIVATE KEY-----</uid_key>
+            <temporary_uid_key>-----BEGIN RSA PRIVATE KEY-----
+MIGqAgEAAiEA5xCJbjYA0L25raRHQ00gSO6ab/viQdf3bNoDR1DHc70CAwEAAQIg
+XyCSw9ndyhJh8Bfy8sU85aFu7vz+raM8sdoJvyEtNkECEQD4mK4psrPT5hbsaoSm
+z48NAhEA7fIxSeHNgu5EPqX8PSLLcQIQDZNw92/96BWJrPGIOv/cxQIQDplehs7w
+4gimbUWX3VRmMQIRAKDy/lVdcZ8BF2dpZ0bv4Pg=
+-----END RSA PRIVATE KEY-----</temporary_uid_key>
+          </coloParams>
+          <Cookies
+            domain=".foros-rubytest2.net"
+            path="/"/>
+          <inventoryStats simplifying="100"/>
+          <snmpStats enable="true" monitoring_tag_id="2157"/>
+          <userProfiling>
+            <userInfoExchangerRef host="vtcr0" port="10210">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </userInfoExchangerRef>
+          </userProfiling>
+          <IPMapping>
+            <colo ip_range="2.216.1.1/32" cohorts="" colo_id="58365"/>
+            <colo ip_range="5.10.16.0/20" cohorts="" colo_id="58386"/>
+            <colo ip_range="2.216.1.2/32" cohorts="8-34-0" colo_id="58387"/>
+            <colo ip_range="2.216.1.3/32" cohorts="8-34-1&#10;8-34-2" colo_id="58388"/>
+            <colo ip_range="5.10.16.0/20&#10;5.10.144.0/20" cohorts="" colo_id="58389"/>
+            <colo ip_range="5.53.64.0/19&#10;5.57.80.0/20&#10;5.10.144.0/20" cohorts="8-34-1" colo_id="58390"/>
+            <colo ip_range="5.61.32.0/19&#10;5.64.0.0/13" cohorts="8-34-1&#10;8-34-2" colo_id="58391"/>
+            <colo ip_range="" cohorts="8-34-3" colo_id="58392"/>
+            <colo ip_range="0.0.0.0/0" cohorts="8-34-4" colo_id="58393"/>
+            <colo ip_range="2.216.2.1/20" cohorts="" colo_id="58066"/>
+            <colo ip_range="5.10.16.0/20" cohorts="" colo_id="58394"/>
+            <colo ip_range="5.10.16.0/20" cohorts="8-34-11" colo_id="58395"/>
+          </IPMapping>
+          <remote connect_timeout="900">
+            <campaignServerRef host="vtcr0" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <campaignServerRef host="vtcr3" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <channelProxyRef host="vtcr0" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <channelProxyRef host="vtcr3" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <sTunnelRef host="vtcr0" port="10200"/>
+            <sTunnelRef host="vtcr3" port="10200"/>
+          </remote>
+        </cluster>
+      </configuration>
+
+      <!-- lp, ui, be -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubCluster">
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessing">
+          <configuration>
+            <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <syncLogs>
+                <logging log_level="7"/>
+                <fileTransferring file_check_period="10" host_check_period="10" logs_backup="false"/>
+              </syncLogs>
+
+              <syncLogsServer>
+                <networkParams port="10114"/>
+                <logging log_level="1" sys_log="false"/>
+              </syncLogsServer>
+            </logProcessing>
+          </configuration>
+        </serviceGroup>
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="LocalProxyDevel">
+
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/ChannelProxy"
+            name="ChannelProxyDevel"
+            host="vtcr1">
+            <configuration>
+              <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              </channelProxy>
+            </configuration>
+          </service>
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/STunnelClient"
+            name="STunnelClientDevel"
+            host="vtcr1">
+            <configuration>
+              <sTunnelClient xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              </sTunnelClient>
+            </configuration>
+          </service>
+        </serviceGroup>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcher"
+          host="vtcr1">
+          <configuration>
+            <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+              enable_channel_overlap_stats="false">
+              <updateParams period="30"/>
+              <statLogging file_check_period="10" flush_period="10" activity_flush_period="3600"/>
+              <profilesCleanupParams inventory_days_to_keep="5"/>
+            </expressionMatcher>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizer"
+          host="vtcr1 vtcr2">
+          <configuration>
+            <logGeneralizer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <statLogging 
+                file_check_period="10"
+                flush_period="10"
+                flush_size="10000"
+                search_term_count_threshold="12"/>
+            </logGeneralizer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManager"
+          host="vtcr1">
+          <configuration>
+            <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <statLogging file_check_period="10" flush_period="30"/>
+            </requestInfoManager>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServer"
+          host="vtcr1 vtcr2">
+          <configuration>
+            <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <updateParams update_period="30" ecpm_update_period="30"/>
+            </campaignServer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/StatsCollector"
+          name="StatsCollectorDevel"
+          host="vtcr1">
+            <configuration>
+            <statsCollector xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </statsCollector>
+            </configuration>
+        </service>
+        <service
+          descriptor="AdCluster/BackendSubCluster/DictionaryProvider"
+          name="DictionaryProvider"
+          host="vtcr1">
+        </service>
+        <!--
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="">
+        </serviceGroup>
+        -->
+      </serviceGroup>
+
+      <!-- fe -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster">
+<!--
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <DACS script="fe"/>
+          </frontendCluster>
+        </configuration>
+-->
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <channelServing>
+              <scaleParams chunks_count="10"/>
+            </channelServing>
+          </frontendCluster>
+        </configuration>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManager"
+          host="vtcr1 vtcr2"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerController"
+          host="vtcr1 vtcr2"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer"
+          host="vtcr1 vtcr2">
+            <configuration>
+              <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <updateParams period="30" chunks_count="32"/>
+              </channelServer>
+            </configuration>
+         </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelController"
+           host="vtcr1">
+          <configuration>
+            <channelController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </channelController>
+          </configuration>
+         </service>
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
+           name="ChannelSearchService"
+           host="vtcr1">
+          <configuration>
+            <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </channelSearchService>
+          </configuration>
+         </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelController"
+           host="vtcr2"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="Frontend"
+          host="vtcr1 vtcr2">
+            <configuration>
+              <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <webServerParams
+                  timeout="300"
+                  keep_alive="true"
+                  max_clients="100"
+                  min_spare_threads="50"
+                  max_spare_threads="50"
+                  threads_per_process="100"/>
+                <debugInfo use_acl="false" show_history_profile="true"/>
+                <requestModule>
+                  <logging log_level="7"/>
+                  <session timeout="30"/>
+                </requestModule>
+                <impressionModule>
+                  <logging log_level="7"/>
+                </impressionModule>
+                <clickModule>
+                  <logging log_level="7"/>
+                </clickModule>
+                <actionModule>
+                  <logging log_level="7"/>
+                </actionModule>
+                <optoutModule>
+                  <logging log_level="7" log_ip="true"/>
+                </optoutModule>
+                <pageSenseModule/>
+                <pubTagModule/>
+                <statusModule/>
+              </frontend>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/BillingServer"
+            name="BillingServer"
+            host="vtcr1 vtcr2"/>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+            name="CampaignManager"
+            host="vtcr1 vtcr2">
+
+            <configuration>
+              <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <updateParams
+                  update_period="20"
+                  ecpm_update_period="10"
+                  campaign_types="all"/>
+                <statLogging flush_period="10"/>
+              </campaignManager>
+            </configuration>
+
+          </service>
+      </serviceGroup>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

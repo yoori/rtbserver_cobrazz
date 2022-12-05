@@ -1,0 +1,11 @@
+@profilingserverexe_deps@
+
+sources := \
+  DMPKafkaStreamer.cpp \
+  ProfilingServerStats.cpp \
+  ProfilingServer.cpp \
+  RequestInfoFiller.cpp
+
+target := ProfilingServer
+
+@profilingserverexe_post@

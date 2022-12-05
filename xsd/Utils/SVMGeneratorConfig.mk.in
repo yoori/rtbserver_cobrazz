@@ -1,0 +1,8 @@
+@svmgeneratorconfig_deps@
+sources := 
+includes := .
+xsd_files := SVMGeneratorConfig.xsd
+
+xsd_includes := .
+
+@svmgeneratorconfig_post@

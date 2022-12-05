@@ -1,0 +1,6 @@
+@ccguserstat_deps@
+sources := CcgUserStat.cpp
+
+includes := .
+@ccguserstat_post@
+

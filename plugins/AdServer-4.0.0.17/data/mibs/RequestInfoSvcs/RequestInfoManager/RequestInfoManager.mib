@@ -1,0 +1,128 @@
+RequestInfoManager-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, Counter64 FROM SNMPv2-SMI
+  requestInfoSvcs FROM AdServer-MIB
+  TEXTUAL-CONVENTION, DisplayString FROM SNMPv2-TC
+  OBJECT-GROUP  FROM SNMPv2-CONF;
+
+requestInfoManagerMIB MODULE-IDENTITY
+  LAST-UPDATED "201312200000Z"  -- December 20, 2013
+  ORGANIZATION "Phorm, Inc."
+  CONTACT-INFO "admin@foros.com"
+  DESCRIPTION "The MIB module to describe generic objects for
+              Request Info Manager."
+  REVISION     "201312200000Z"
+  DESCRIPTION "First revision"
+  ::= { requestInfoSvcs 1 }
+
+requestInfoManager OBJECT IDENTIFIER ::= { requestInfoSvcs 2 }
+
+logStatsTable OBJECT-TYPE
+  SYNTAX     SEQUENCE OF LogStatsEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION "Statistics for a collection of logs.
+              There will be one row in this table for each
+              log type in the Request Info Manager."
+  ::= { requestInfoManager 1 }
+
+logStatsEntry OBJECT-TYPE
+  SYNTAX     LogStatsEntry
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION "Statistics for a particular input logs type."
+  INDEX      { logStatsIndex, processIndex  }
+  ::= { logStatsTable 1 }
+
+LogName ::= TEXTUAL-CONVENTION
+  STATUS  current
+  DESCRIPTION "The name of input logs processed by Request Info Manager"
+  SYNTAX       INTEGER {
+                     advertiserAction(0),
+                     click(1),
+                     impression(2),
+                     passbackImpression(3),
+                     request(4),
+                     tagRequest(5)
+                 }
+
+LogStatsEntry ::= SEQUENCE
+  {
+    logStatsIndex               LogName,
+    processIndex                Unsigned32,
+
+    loadAbsTime                 DisplayString,
+    processAbsTime              DisplayString,
+    processCount                Counter64,
+    fileCount                   Unsigned32,
+    lastProcessedFileTimestamp  DisplayString
+  }
+
+logStatsIndex OBJECT-TYPE
+  SYNTAX      LogName
+  MAX-ACCESS  not-accessible
+  STATUS      current
+  DESCRIPTION
+    "An arbitrary token to identify this log stats entry"
+  ::= { logStatsEntry 1 }
+
+processIndex OBJECT-TYPE
+  SYNTAX Unsigned32 (0..32768)
+  MAX-ACCESS not-accessible
+  STATUS     current
+  DESCRIPTION
+    "Suffix for RIM process from configuration or RIM process ID"
+  ::= { logStatsEntry 2 }
+
+loadAbsTime OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The total time spent to load files."
+  ::= { logStatsEntry 3 }
+
+processAbsTime OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The total time spent to process files."
+  ::= { logStatsEntry 4 }
+
+processCount OBJECT-TYPE
+  SYNTAX Counter64
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The number of processed records in loaded files"
+  ::= { logStatsEntry 5 }
+
+fileCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The number of processed files"
+  ::= { logStatsEntry 6 }
+
+lastProcessedFileTimestamp OBJECT-TYPE
+  SYNTAX DisplayString (SIZE(0..32))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "The timestamp of last processed log file."
+  ::= { logStatsEntry 7 }
+
+requestInfoManagerGroup OBJECT-GROUP
+  OBJECTS
+  {
+    loadAbsTime,
+    processAbsTime,
+    processCount,
+    fileCount,
+    lastProcessedFileTimestamp
+  }
+  STATUS      current
+  DESCRIPTION "A collection of objects providing information
+              about the logs loading activity."
+
+  ::= { requestInfoSvcs 3 }
+
+END

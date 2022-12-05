@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:xse="http://www.codesynthesis.com/xmlns/xml-schema-extension"
+            xmlns:lib="http://www.codesynthesis.com/xmlns/library"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+
+<xsd:annotation>
+  <xsd:documentation>AutoTests Global Configuration File XML Schema
+  </xsd:documentation>
+</xsd:annotation>
+
+<xsd:element name="GeneralParams" type="GeneralParamsType">
+   <xsd:unique name="unique-cluster">
+      <xsd:selector xpath="Cluster"/>
+      <xsd:field xpath="@name"/>
+   </xsd:unique>
+</xsd:element>
+
+<xsd:complexType name="GeneralParamsType">
+  <xsd:sequence>
+     <xsd:element name="TimeOuts" type="TimeOutsType"/>
+     <xsd:element name="Cluster" type="ClusterType" minOccurs="0" maxOccurs="unbounded"/>
+     <xsd:element name="LoggerGroup" type="LoggerGroupType"/>
+     <xsd:element name="ThreadsNum" type="ThreadsNumType"/>
+     <xsd:element name="CustomCacheCheck" type="CustomCacheCheckType" minOccurs="0" maxOccurs="1"/>
+     <xsd:element name="PGDBConnection" type="PGDBConnectionType"/>
+     <xsd:element name="Copy" type="CommandType" minOccurs="0" maxOccurs="1"/>
+     <xsd:element name="Move" type="CommandType" minOccurs="0" maxOccurs="1"/>
+     <xsd:element name="LogGeneralizerIn" type="PathType" minOccurs="0" maxOccurs="1"/>
+     <xsd:element name="UserOpGeneratorIn" type="RemotePathType" minOccurs="0" maxOccurs="1"/>
+     <xsd:element name="TemplatesIn" type="PathType" minOccurs="0" maxOccurs="1"/>
+     <xsd:element name="ClusterConfigPath" type="PathType" minOccurs="0" maxOccurs="1"/>
+  </xsd:sequence>
+</xsd:complexType>
+
+<!-- Types definition -->
+
+<xsd:complexType name="ClusterType">
+  <xsd:sequence>
+    <xsd:element name="Service" type="ServiceType" minOccurs="1" maxOccurs="unbounded"/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="ClusterEnum" use="required"/>
+</xsd:complexType>
+
+<xsd:complexType name="ServiceType">
+  <xsd:attribute name="name" type="ServiceEnum" use="required"/>
+  <xsd:attribute name="address" type="xsd:string" use="required"/>
+</xsd:complexType>
+
+<xsd:simpleType name="ClusterEnum">
+  <xsd:restriction base="xsd:string">
+    <xsd:enumeration value="central"/>
+    <xsd:enumeration value="remote#1"/>
+    <xsd:enumeration value="remote#2"/>
+    <xsd:enumeration value="profiling"/>
+  </xsd:restriction>
+</xsd:simpleType>
+
+<xsd:simpleType name="ServiceEnum">
+  <xsd:restriction base="xsd:string">
+    <xsd:enumeration value="AdFrontend"/>
+    <xsd:enumeration value="ChannelServer"/>
+    <xsd:enumeration value="ChannelController"/>
+    <xsd:enumeration value="ChannelSearchServer"/>
+    <xsd:enumeration value="CampaignManager"/>
+    <xsd:enumeration value="CampaignServer"/>
+    <xsd:enumeration value="ExpressionMatcher"/>
+    <xsd:enumeration value="RequestInfoManager"/>
+    <xsd:enumeration value="UserInfoManager"/>
+    <xsd:enumeration value="UserInfoManagerController"/>
+    <xsd:enumeration value="UserInfoExchanger"/>
+  </xsd:restriction>
+</xsd:simpleType>
+
+
+<xsd:complexType name="PathType">
+  <xsd:attribute name="path" type="xsd:string"
+                 use="required"/>
+</xsd:complexType>
+
+<xsd:complexType name="RemotePathType">
+  <xsd:attribute name="host" type="xsd:string"
+    use="optional" default="localhost"/>
+  <xsd:attribute name="path" type="xsd:string" use="required"/>
+</xsd:complexType>
+
+<xsd:complexType name="CommandType">
+  <xsd:attribute name="command" type="xsd:string"
+                 use="required"/>
+</xsd:complexType>
+
+<xsd:complexType name="LoggerGroupType">
+  <xsd:sequence>
+    <xsd:element name="LogFile" type="LogFileType"
+                 minOccurs="1" maxOccurs="unbounded"/>
+  </xsd:sequence>
+  <xsd:attribute name="path" type="xsd:string" use="optional" default="." />
+</xsd:complexType>
+
+<xsd:complexType name="LogFileType">
+  <xsd:attribute name="level_from" type="xsd:nonNegativeInteger"
+                 use="optional" default="0"/>
+  <xsd:attribute name="level_to" type="xsd:nonNegativeInteger"
+                 use="required"/>
+  <xsd:attribute name="extension" type="xsd:string"
+                 use="optional" default="" />
+</xsd:complexType>
+
+<xsd:complexType name="ThreadsNumType">
+  <xsd:attribute name="value" type="xsd:positiveInteger" use="required"/>
+</xsd:complexType>
+
+<xsd:complexType name="CustomCacheCheckType">
+  <xsd:attribute name="size" type="xsd:positiveInteger" use="optional" default="100000"/>
+  <xsd:attribute name="custom_cache_timeout" type="xsd:positiveInteger" use="optional" default="300"/>
+</xsd:complexType>
+
+<xsd:complexType name="TimeOutsType">
+  <xsd:attribute name="frontend_timeout" type="xsd:positiveInteger"
+                 use="optional" default="5"/>
+  <xsd:attribute name="wait_timeout" type="xsd:positiveInteger"
+                 use="optional" default="300"/>
+  <xsd:attribute name="ad_logs_delivery_timeout" type="xsd:positiveInteger"
+                 use="optional" default="20"/>
+</xsd:complexType>
+
+<!-- PGDBConnection -->
+<xsd:complexType name="PGDBConnectionType">
+  <xsd:attribute name="user" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Database access username.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="password" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Database access password.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="host" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Database access host.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="db" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Database name.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+<!-- PGDBConnection ends -->
+
+</xsd:schema>

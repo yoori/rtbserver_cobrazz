@@ -1,0 +1,52 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+  elementFormDefault="qualified" 
+  xml:lang="en" 
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      STunnelServer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:element name="statReceiver" type="StatReceiverConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        StatReceiver configuration.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+
+  <!-- types -->
+  <xsd:complexType name="StatReceiverConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="StatReceiverNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="StatReceiverNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10115">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,18 @@
+@userbindserverexe_deps@
+
+plain_sources := \
+  UserBindOperationProfile.pst
+
+sources := UserBindServerMain.cpp \
+  UserBindServerImpl.cpp \
+  UserBindOperationSaver.cpp \
+  UserBindOperationLoader.cpp
+
+corba_skeleton_idls := UserBindServer.idl
+corba_idl_includes := .
+
+target := UserBindServer
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@userbindserverexe_post@

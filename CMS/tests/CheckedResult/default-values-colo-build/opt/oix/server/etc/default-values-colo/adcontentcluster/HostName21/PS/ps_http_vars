@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'http://a.bak.rubylan.net',
+            'ps_host' => 'http://a.bak.rubylan.net',
+            'toolbar_base' => 'http://a.bak.rubylan.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'http://a.bak.rubylan.net/tag/1.js',
+            'adimage_server' => 'http://c.bak.rubylan.net',
+          );
+        
+
+    1;
+

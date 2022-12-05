@@ -1,0 +1,15 @@
+@ctrpredictorsvmgenerator_deps@
+
+sources := \
+  FileGuard.cpp \
+  Utils.cpp \
+  CampaignFolder.cpp \
+  FeatureContainer.cpp \
+  OutputLibSvmStream.cpp \
+  InputCsvStream.cpp \
+  CTRPredictorSVMGeneratorImpl.cpp \
+  CTRPredictorSVMGeneratorMain.cpp
+
+target := CTRPredictorSVMGenerator
+
+@ctrpredictorsvmgenerator_post@

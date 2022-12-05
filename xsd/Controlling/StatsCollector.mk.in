@@ -1,0 +1,8 @@
+@statscollectorconfig_deps@
+sources := 
+includes := .
+xsd_files := StatsCollectorConfig.xsd
+
+xsd_includes := .
+
+@statscollectorconfig_post@

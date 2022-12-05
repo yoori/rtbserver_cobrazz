@@ -1,0 +1,8 @@
+@channelproxy_deps@
+sources := 
+includes := .
+
+corba_stub_idls := ChannelProxy.idl ChannelProxy_v28.idl ChannelUpdate_v28.idl
+corba_includes := .
+corba_idl_includes := .
+@channelproxy_post@

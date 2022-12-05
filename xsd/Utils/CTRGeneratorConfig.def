@@ -1,0 +1,4 @@
+name="CTRGeneratorConfig"
+so_files=CTRGeneratorConfig
+osbe_cxx_feature_dep XSDTree
+osbe_cxx_dep AdServerCommons

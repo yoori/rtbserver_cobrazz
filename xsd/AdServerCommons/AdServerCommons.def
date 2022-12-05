@@ -1,0 +1,3 @@
+name="AdServerCommons"
+so_files=AdServerCommons
+osbe_cxx_feature_dep XSDTree

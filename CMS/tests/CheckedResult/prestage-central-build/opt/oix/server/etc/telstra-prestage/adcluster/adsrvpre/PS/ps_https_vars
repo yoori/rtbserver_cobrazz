@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'https://a.prestaging.forosdev.com',
+            'ps_host' => 'https://a.prestaging.forosdev.com',
+            'toolbar_base' => 'https://http://b.prestaging.forosdev.com/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'https://http://b.prestaging.forosdev.com/tag/1.js',
+            'adimage_server' => 'https://c.prestaging.forosdev.com',
+          );
+        
+
+    1;
+

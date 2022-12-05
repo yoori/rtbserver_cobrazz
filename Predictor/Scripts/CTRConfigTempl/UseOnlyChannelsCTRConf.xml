@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:CTRGenerator xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation"
+  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/Utils/CTRGeneratorConfig.xsd">
+  <cfg:Model features_dimension="24">
+
+  <cfg:Feature>
+    <cfg:BasicFeature name="userch"/>      
+  </cfg:Feature>
+
+  </cfg:Model>
+
+</cfg:CTRGenerator>

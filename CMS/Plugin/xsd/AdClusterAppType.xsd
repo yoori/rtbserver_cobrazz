@@ -1,0 +1,1463 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns:cms="http://foros.com/cms/commonTypes"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Frontend Sub Cluster Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import schemaLocation="./cms-commons.xsd" namespace="http://foros.com/cms/commonTypes"/>
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="AdClusterConfigType">
+    <xsd:sequence>
+      <xsd:element name="environment" type="ClusterEnvironmentType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define environment params: pathes and account for server processes up.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="secureParams" type="SecureCertificateAuthority" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Secure connections parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="coloParams" type="ColoParamsType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Options specific to a particular collocation.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Cookies" type="CookiesType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Options for cookies. By default if domain isn't defined will be used:
+              Root domain of Ad domain for OPTED_OUT cookie, and Ad domain for other.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="inventoryStats" type="InventoryStatsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Parameters collection of statistics Inventory
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="channelTriggerImpStats" type="ChannelTriggerImpStatsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Channel Trigger Imp statistics controlling
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="tagGroupStats" type="TagGroupStatsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Tag Group statistics controlling
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="freqCaps" type="FreqCapsConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            frequency caps manipulation config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="snmpStats" type="SNMPStatsConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP stats config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="userProfiling" type="UserProfilingConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            User profiling config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="IPMapping" type="IPMappingConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Describe IP mapping to colo identifiers
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="WebIndex" type="WebIndexType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Describe WebIndex profiling
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="predictorConfig" type="PredictorConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Predictor configuration
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="audienceChannelConfig" type="AudienceChannelConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Audience channels source configuration
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:choice>
+        <xsd:element name="central" type="AdClusterCentralConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Central is type of the cluster when the cluster is connected to the database.
+          </xsd:documentation>
+        </xsd:annotation>
+        </xsd:element>
+          <xsd:element name="remote" type="AdClusterRemoteConfigType">
+          <xsd:annotation>
+            <xsd:documentation>
+              Remote is type of the cluster when the cluster is connected to the another cluster.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      </xsd:choice>
+
+      <xsd:element name="profilingZmqSecure" type="ProfilingZmqSecurityType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Config for creation secure zmq connection for profiling cluster
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="enable_search_term_stats" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable SearchTermStats collection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="referrer_logging_action_stats" type="RefererLoggingType" default="disabled">
+      <xsd:annotation>
+        <xsd:documentation>
+          Referrer logging in ActionStats tables.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="referrer_logging_site_referrer_stats" type="RefererLoggingType" default="disabled">
+      <xsd:annotation>
+        <xsd:documentation>
+          Referrer logging in SitesReferrerStats tables.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="PredictorConfigType">
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <xsd:element name="ref" type="EndpointType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Link to rsync deamon to interact with predictor services
+            (CTR config distributor, research logs collector)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="auxiliaryRef" type="EndpointType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Link to auxiliary rsync deamon for backup research stat files
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="researchStat" type="ResearchStatType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Research logs collector config.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="CTRConfig" type="CTRConfigType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+             CTR config distributor config.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ResearchStatType">
+    <xsd:attribute name="ip_salt" type="xsd:string" default="">
+      <xsd:annotation>
+        <xsd:documentation>
+          Salt that will be used for hash client ip address
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ip_logging_enabled" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable/disable ip hash logging
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="profiling_log_sampling" type="xsd:nonNegativeInteger"
+     default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Sampling rate to be applied to profiling log. value from range [0, 100]
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="enable_bids" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable Bid logging
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="log_path" type="NoLeadingTrailingSpaces" default="logs">
+      <xsd:annotation>
+        <xsd:documentation>
+          Destination path for research logs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CTRConfigType">
+    <xsd:attribute name="expire_timeout" type="xsd:positiveInteger" default="86400">
+      <xsd:annotation>
+        <xsd:documentation>
+          Algorithms expiry: maximum delay of no new algorithms appearing after
+          which AdServer will fall back to default CTR algorithm for all bids
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ctr_path" type="NoLeadingTrailingSpaces" default="ctr">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source path for CTR configs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="conv_path" type="NoLeadingTrailingSpaces" default="conv">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source path for Conversion configs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="bid_cost_path" type="NoLeadingTrailingSpaces" default="bid_cost">
+      <xsd:annotation>
+        <xsd:documentation>
+          Source path for Bid Cost configs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AudienceChannelConfigType">
+    <xsd:sequence>
+      <xsd:element name="sourceRef" type="RSyncLinkSourceRefType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Link to rsync deamon for get audience channel files
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointType">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target host.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="10000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RSyncLinkSourceRefType">
+    <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target host.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="10000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdClusterCentralConfigType">
+    <xsd:sequence>
+      <xsd:element name="pgConnection" type="PGConnectionType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Settings determine access to the PG database.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="pgConnectionForLogProcessing" type="PGConnectionType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Settings determine access to the PG database for stats uploading.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="statFilesReceiverRef" type="StatFilesReceiverType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Link to rsync deamon for collect CSV stat files (Postgres)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="dataSourceRef" type="DataSourceRefType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Settings that locate the source of public data (host + path).
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="segmentorMapping" type="SegmentorMappingConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Mapping segmentor on language, it is used for channel triggers
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="campaign_statuses" type="CampaignStatusLoadType" default="all">
+      <xsd:annotation>
+        <xsd:documentation>
+          Load campaign statuses.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_statuses" type="ChannelStatusLoadType" default="all">
+      <xsd:annotation>
+        <xsd:documentation>
+          Load channel statuses.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="WebIndexType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="WebIndexEndpointType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Describe WebIndex endpoint's.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="enable_rtb_request_profiling" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable / disable WebIndex profiling on RTB requests.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="enable_direct_request_profiling" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable / disable WebIndex profiling on direct (nslookup) requests.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="WebIndexEndpointType">
+    <xsd:attribute name="url" type="NoLeadingTrailingSpaces">
+      <xsd:annotation>
+        <xsd:documentation>
+          WebIndex zmq endpoint url.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="FreqCapsConfigType">
+    <xsd:attribute name="confirm_timeout" type="xsd:positiveInteger" default="60">
+      <xsd:annotation>
+        <xsd:documentation>
+          unconfirmed frequency caps (impression tracking) will be cleared after this timeout
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="IPMappingConfigType">
+    <xsd:sequence>
+      <xsd:element name="colo" type="IPMappingRuleConfigType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:simpleType name="SegmentorsType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="Polyglot"/>
+      <xsd:enumeration value="Nlpir"/>
+      <xsd:enumeration value="None"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="SegmentorMappingConfigType">
+    <xsd:sequence>
+      <xsd:element name="country" type="SegmentorMappingRuleConfigType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="SegmentorMappingRuleConfigType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpacesOrEmpty" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Country code, empty means all countries
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="segmentor" type="SegmentorsType" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          segmentor name
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="IPMappingRuleConfigType">
+    <xsd:attribute name="ip_range" type="cms:Text" default="0.0.0.0/0" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          list of network masks (one mask per string) for matching colo.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="cohorts" type="cms:Text" default="" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          List of cohorts (one per line)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Colocation identifier.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="webindex_profile" type="xsd:boolean" use="optional" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Profile RTB requests for this colo with using WebIndex.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserProfilingConfigType">
+    <xsd:sequence>
+      <xsd:element name="userInfoExchangerRef" type="SimpleCorbaRef" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to UserInfoExchanger service.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="chunks_count" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Chunks count
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="bind_chunks_count" type="xsd:positiveInteger" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Chunks count for user bind functionality
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="repeat_trigger_timeout" type="xsd:nonNegativeInteger" default="60">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user_bind_keep_mode" type="UserBindKeepModeType" default="keep slave">
+      <xsd:annotation>
+        <xsd:documentation>
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdClusterRemoteConfigType">
+    <xsd:sequence>
+      <xsd:element name="campaignServerRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to CampaignServer.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="channelProxyRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to ChannelProxy.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="sTunnelRef" type="SimpleCorbaRef" minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to sTunnel.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="connect_timeout" type="xsd:nonNegativeInteger" default="86400">
+      <xsd:annotation>
+        <xsd:documentation>
+          AdServer  will stop  campaign  serving if  can't connect  to
+          central colo during this value (in seconds).
+          0 means don't stop serving. Default value 86400 seconds.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="campaign_statuses" type="CampaignStatusLoadType" default="virtual">
+      <xsd:annotation>
+        <xsd:documentation>
+          Load campaign statuses.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_statuses" type="ChannelStatusLoadType" default="active">
+      <xsd:annotation>
+        <xsd:documentation>
+          Load channel statuses.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ColoParamsType">
+    <xsd:sequence>
+      <xsd:element name="virtualServer" type="VirtualServerType"
+        minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Virtual server.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="secureVirtualServer" type="SecureVirtualServerType"
+        minOccurs="1" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Virtual server.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="uid_key" type="cms:Text" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>The private key used to UID signing.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="temporary_uid_key" type="cms:Text" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>The private key used to temporary UID signing.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="securityToken" type="SecurityTokenType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configuration and keys for generation of the security token.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <!-- TODO: move RTBAccount, RTBSite into RTB -->
+      <xsd:element name="RTBAccount"
+        type="RTBAccountType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="RTBSite"
+        type="RTBSiteType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="RTB"
+        type="RTBType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="bindUrl" type="BindUrlType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <!-- Kafka storage configuration -->
+      <xsd:element name="kafkaStorage" type="KafkaStorageType" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="backup_operations" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Backup user profile operations
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="CDN_domain"
+      type="NoLeadingTrailingSpacesOrEmpty" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          In ISPs same as third party content domain,
+          in Central may point to a CDN (e.g. Amazon Cloudfront).
+          Used in ADIMAGE-SERVER token.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="https_CDN_domain"
+      type="NoLeadingTrailingSpacesOrEmpty" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          CDN domain for HTTPS connections.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="enabled_countries" type="xsd:string" default="">
+      <xsd:annotation>
+        <xsd:documentation>
+          Comma separated list of country codes(ISO 3166) that the platform needs to handle.
+          Used for load Campaigns, Accounts and Channels (in remote).
+          All other countries will be ignored and passed back (no UID generation, no profiling or channel matching, no RTB user binding).
+          Leave empty to enable from all.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="segmentor" type="SegmentorsType" use="optional" default="None">
+      <xsd:annotation>
+        <xsd:documentation>
+          Segmentor witch will be used for segment request keywords
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Collocation identifier. Not zero.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ad_request_profiling"
+      type="AdRequestProfilingModeType"
+      use="optional"
+      default="ad-request profiling disabled, stats collection enabled">
+      <xsd:annotation>
+        <xsd:documentation>
+          Do channels profiling at ad requests - save into user profile ad requests channels matching result.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="min_RTB_user_age"
+      type="xsd:nonNegativeInteger" default="14400">
+      <xsd:annotation>
+        <xsd:documentation>
+          Minimum age (in seconds) of unmapped RTB User when it can considered as having "unknown" or "opt in" status.
+          Users before this age are considered "opted out".
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="RTB_offline_UID_generation"
+      type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Check to enable offline generation of UIDs on RTB requests and their mapping to XIDs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_bad_SSPID_events"
+      type="xsd:nonNegativeInteger" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum number of bad events on SSP ID when operations for it start to ignore;
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ip_key" type="NoLeadingTrailingSpaces"
+      default="MFBOeuplH3LlQqfGSvNiew..">
+      <xsd:annotation>
+        <xsd:documentation>
+          Key for encrypt user ip. AES key base64 encoded.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ssp_uid_key" type="xsd:string" default="">
+      <xsd:annotation>
+        <xsd:documentation>The key used to encrypt SSPUID.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="intervalsBlacklist" type="cms:Text" default="">
+      <xsd:annotation>
+        <xsd:documentation>
+          Time intervals in server local time that are not blacklisted for bidding (bidder returns 'no bid' response). Format: one interval per line, e.g. 12:55-13:05
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="skip_external_ids" type="cms:Text" default="" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Skip list of external ids (one per line)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="BindUrlType">
+    <xsd:attribute name="template" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Template of bind url that will be passed into tracking html as BINDURL&lt;index&gt;.
+          Supported next tokens inside: DNSUIDS.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keywords" type="cms:Text" default="">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="use_keywords" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation></xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="EncryptionKeysType">
+    <xsd:attribute name="openx_encryption_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          openx encription key in hex format
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="openx_integrity_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          openx integrity key in hex format
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_encryption_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          google encription key in hex format
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_integrity_key"
+      type="xsd:string"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          google integrity key in hex format
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_display_billing_id"
+      type="xsd:positiveInteger"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          fill it by Pretargeting section on DoubleClick workspace: pretargeting for format Display
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="google_video_billing_id"
+      type="xsd:positiveInteger"
+      use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          fill it by Pretargeting section on DoubleClick workspace: pretargeting for format Video
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RTBSiteType">
+    <xsd:complexContent>
+      <xsd:extension base="EncryptionKeysType">
+        <xsd:attribute name="site_id"
+          type="xsd:positiveInteger"
+          use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="RTBType">
+    <xsd:sequence>
+      <xsd:element name="source" type="RTBSourceConfigType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="allowedPassback" type="UserBindFrontendAllowedPassbackType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="yandex_key" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindFrontendAllowedPassbackType">
+    <xsd:attribute name="domain" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="CPMValueType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[0-9]*(\.[0-9]{0,6})?"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="RTBAccountType">
+    <xsd:complexContent>
+      <xsd:extension base="EncryptionKeysType">
+        <xsd:attribute name="account_id"
+          type="xsd:positiveInteger"
+          use="required"/>
+        <xsd:attribute name="max_cpm_value"
+          type="CPMValueType"
+          use="optional"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdservingDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" default="a.foros.net">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name for tags and core adserver services.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="BiddingDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" default="rtb.foros.net">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name for bidding adserver services.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="VideoDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" default="v.a.foros.net">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name for video adserver services.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ClickDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" default="a.foros.net">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name for click frontend module.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilingDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" default="a.foros.net">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name for profiling adserver service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ThirdPartyContentDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" default="forosssp.net">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name for all static content (e.g. static creatives and passback code) and
+          for all dynamic content services that must run in a 3d party domain (due to unsafe content),
+          including dynamic creatives, publisher pixels and publisher passbacks.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RedirectDomainType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name that will be redirected to other domain with keeping request parameters
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="target_domain" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Target domain
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="expiration" type="xsd:nonNegativeInteger" use="optional" default="900">
+      <xsd:annotation>
+        <xsd:documentation>
+          Redirect expiration time (in seconds)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="VirtualServerType">
+    <xsd:sequence>
+      <xsd:element name="adservingDomain"
+        type="AdservingDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain for tags and core adserver services.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="thirdPartyContentDomain"
+        type="ThirdPartyContentDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Domain for all static content (e.g. static creatives and passback code) and
+            for all dynamic content services that must run in a 3d party domain (due to unsafe content),
+            including dynamic creatives, publisher pixels and publisher passbacks.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="redirectDomain"
+        type="RedirectDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Domain that must be redirected to other.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="biddingDomain"
+        type="BiddingDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for bidding adserver services.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="videoDomain"
+        type="VideoDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for video adserver services.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="clickDomain"
+        type="ClickDomainType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for click frontend module.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="profilingDomain"
+        type="ProfilingDomainType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for profiling frontend module.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="80">
+      <xsd:annotation>
+        <xsd:documentation>
+          External HTTP listen port for domain. Usually, load balancer listen port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="internal_port" type="xsd:positiveInteger" default="10180">
+      <xsd:annotation>
+        <xsd:documentation>
+          External HTTP listen port for domain. Usually, load balancer listen port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Additional port that will be listen with default protocol.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_alive" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable persistent HTTP connections.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_alive_timeout" type="xsd:positiveInteger" default="5">
+      <xsd:annotation>
+        <xsd:documentation>
+          Amount of time the server will wait for subsequent requests on a persistent connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_keep_alive_requests" type="xsd:nonNegativeInteger" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of requests allowed on a persistent HTTP connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="proxy_protocol" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable PROXY protocol on endpoint.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="nginx_index" type="xsd:positiveInteger" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Index of http server that process virtual server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SecureVirtualServerType">
+    <xsd:sequence>
+      <xsd:element name="cert" type="TextContentTypeCert" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Frontend SSL Certificate.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="key" type="TextContentTypeCertKey" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Frontend SSL Certificate Key.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ca" type="TextContentTypeCertAuth" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Frontend SSL Certificate Authority Certificate.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="adservingDomain"
+        type="AdservingDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain for tags and core adserver services.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="thirdPartyContentDomain"
+        type="ThirdPartyContentDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Domain for all static content (e.g. static creatives and passback code) and
+            for all dynamic content services that must run in a 3d party domain (due to unsafe content),
+            including dynamic creatives, publisher pixels and publisher passbacks.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="redirectDomain"
+        type="RedirectDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Domain that must be redirected to other.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="biddingDomain"
+        type="BiddingDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for bidding adserver services.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="videoDomain"
+        type="VideoDomainType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for video adserver services.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="clickDomain"
+        type="ClickDomainType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for click frontend module.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="profilingDomain"
+        type="ProfilingDomainType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Domain name for profiling frontend module.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="port" type="xsd:positiveInteger" default="443">
+      <xsd:annotation>
+        <xsd:documentation>
+          External HTTP listen port for domain. Usually, load balancer listen port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="internal_port" type="xsd:positiveInteger" default="10143">
+      <xsd:annotation>
+        <xsd:documentation>
+          External HTTP listen port for domain. Usually, load balancer listen port.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Additional port that will be listen with default protocol.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_alive" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable persistent HTTP connections.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_alive_timeout" type="xsd:positiveInteger" default="5">
+      <xsd:annotation>
+        <xsd:documentation>
+          Amount of time the server will wait for subsequent requests on a persistent connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_keep_alive_requests" type="xsd:nonNegativeInteger" default="100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of requests allowed on a persistent HTTP connection.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="enable" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable the virtual server settings.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="proxy_protocol" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable PROXY protocol on endpoint.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="nginx_index" type="xsd:positiveInteger" default="1">
+      <xsd:annotation>
+        <xsd:documentation>
+          Index of http server that process virtual server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="DomainAliasType">
+    <xsd:attribute name="name" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Domain name that is alias to parent domain
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="TextContentTypeCert">
+    <xsd:sequence>
+      <xsd:element name="content" type="cms:Text" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Frontend SSL Certificate.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="TextContentTypeCertKey">
+    <xsd:sequence>
+      <xsd:element name="content" type="cms:Text" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Frontend SSL Certificate Key.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="TextContentTypeCertAuth">
+    <xsd:sequence>
+      <xsd:element name="content" type="cms:Text" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Frontend SSL Certificate Authority Certificate.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelTriggerImpStatsType">
+    <xsd:attribute name="enable" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable Or Disable Channel Trigger Impressions Statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="TagGroupStatsType">
+    <xsd:attribute name="enable" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Enable Or Disable Tag Group Stats Statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="InventoryStatsType">
+    <xsd:attribute name="simplifying" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Percent of users, which is used for calculating Inventory Statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="distrib_count" type="xsd:nonNegativeInteger" use="optional" default="4">
+      <xsd:annotation>
+        <xsd:documentation>Development option.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="UserBindKeepModeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="keep slave"/>
+      <xsd:enumeration value="keep only master"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="RefererLoggingType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="domain and path"/>
+      <xsd:enumeration value="domain"/>
+      <xsd:enumeration value="disabled"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="AdRequestProfilingModeType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="ad-request profiling and stats collection enabled"/>
+      <xsd:enumeration value="ad-request profiling disabled, stats collection enabled"/>
+      <xsd:enumeration value="ad-request profiling and stats collection disabled"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="ClusterEnvironmentType">
+    <xsd:attribute name="workspace_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to logs and other server runtime files.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Root path of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="cache_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to cache chunks, runtime persistent files shared between server runs.
+          Usually "cache" folder dispose into "var" folder.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="data_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to data needs for the functioning of the server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="config_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to configuration of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unixcommons_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to unix commons library.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unixcommons_bin_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to binary files of unix commons library.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_bin_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to binary files of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mib_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to mib files of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CookiesType">
+    <xsd:sequence>
+      <xsd:element name="Cookie"
+        type="CookieParamsType"
+        minOccurs="0"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="domain" type="xsd:string" use="optional"/>
+    <xsd:attribute name="path" type="xsd:string" use="optional"/>
+    <xsd:attribute name="expires" type="xsd:positiveInteger" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CookieParamsType">
+    <xsd:annotation>
+      <xsd:documentation>
+        One Cookie configuration
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          cookie name
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="domain" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          cookie setup domain
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="path" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          cookie setup path
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="expires" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          cookie expiration time (in seconds)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="SecurityTokenType">
+    <xsd:attribute name="key0" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="key1" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="key2" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="key3" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="key4" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="key5" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="key6" type="NoLeadingTrailingSpaces" use="required"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="CampaignStatusLoadType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="virtual"/>
+      <xsd:enumeration value="active"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ChannelStatusLoadType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="all"/>
+      <xsd:enumeration value="active"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="KafkaStorageType">
+    <xsd:sequence>
+      <xsd:element name="broker" type="KafkaBrokerType" minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="uidgenerator" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="clickstream" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="geo" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="adsSpaces" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="match" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>

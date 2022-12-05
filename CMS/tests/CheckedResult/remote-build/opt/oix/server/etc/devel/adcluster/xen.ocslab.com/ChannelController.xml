@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/jurij_kuznecov/projects/foros/server/trunk/xsd/ChannelSvcs/ChannelManagerControllerConfig.xsd">
+  <cfg:ChannelControllerConfig count_chunks="10" source_id="1">
+    <cfg:Primary host="xen.ocslab.com"/>
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="12404">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelManagerController" name="ChannelManagerController"/>
+        <cfg:Object servant="ChannelClusterControl" name="ChannelClusterControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:ColoSettings colo="1" version="2.0.0.0"/>
+    <cfg:ChannelSource>
+      <cfg:ProxySource>
+        <cfg:CampaignRefs name="CampaignServer">
+          <cfg:Ref ref="corbaloc:iiop:xen.ocslab.com:12406/CampaignServer_v24"/>
+        </cfg:CampaignRefs>
+        <cfg:ProxyConnectionRef name="ChannelProxy" ref="corbaloc:iiop:xen.ocslab.com:12420/ChannelProxy_v06"/>
+      </cfg:ProxySource>
+    </cfg:ChannelSource>
+    <cfg:ControlGroup>
+      <cfg:ChannelHost>
+        <cfg:ChannelServerControlRef name="ChannelServerControl" ref="corbaloc:iiop:xen.ocslab.com:12403/ChannelServerControl"/>
+        <cfg:ChannelServerProcRef name="ChannelServerProc" ref="corbaloc:iiop:xen.ocslab.com:12403/ProcessControl"/>
+        <cfg:ChannelServerRef name="ChannelServer" ref="corbaloc:iiop:xen.ocslab.com:12403/ChannelServer"/>
+        <cfg:ChannelUpdateRef name="ChannelUpdate" ref="corbaloc:iiop:xen.ocslab.com:12403/ChannelUpdate"/>
+        <cfg:ChannelStatRef name="ProcessStatsControl" ref="corbaloc:iiop:xen.ocslab.com:12403/ProcessStatsControl"/>
+      </cfg:ChannelHost>
+    </cfg:ControlGroup>
+    <cfg:Logger filename="/home/jurij_kuznecov/projects/foros/run/trunk/remote-var/log/ChannelController/ChannelController">
+      <cfg:SysLog log_level="12"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="12" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+  </cfg:ChannelControllerConfig>
+</cfg:AdConfiguration>

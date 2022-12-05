@@ -1,0 +1,8 @@
+@requestlogloadertestexe_deps@
+
+sources := RequestLogLoaderTest.cpp
+
+target := RequestLogLoaderTest
+test_arguments := -p $$TEST_TMP_DIR/RequestLogLoaderTestFolder
+
+include $(top_srcdir)/tests/Test.post.rules

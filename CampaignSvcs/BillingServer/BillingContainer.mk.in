@@ -1,0 +1,8 @@
+@billingcontainer_deps@
+
+sources := BillingContainer.cpp \
+  BillingContainerState.cpp
+
+target := BillingContainer
+
+@billingcontainer_post@

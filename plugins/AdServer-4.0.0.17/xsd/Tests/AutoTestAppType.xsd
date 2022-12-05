@@ -1,0 +1,127 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Auto Test Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="AutoTestConfigType">
+    <xsd:sequence>
+      <xsd:element name="pgConnection" type="PGConnectionType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Settings determine access to the database.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="StoppedServices" type="AdServiceListType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Services which must be stopped for testing fault tolerance.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Groups" type="GroupListType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Enabled autotests groups.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Categories" type="CategoryListType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Enabled autotests categories.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Tests" type="TestListType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Enabled autotests.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ExcludedTests" type="TestListType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Disabled autotests.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="zero-downtime" type="xsd:boolean" use="optional" default="false"/>
+    <xsd:attribute name="server-start-prefix" type="NoLeadingTrailingSpaces" use="optional" default="true"/>
+    <xsd:attribute name="nodb" type="xsd:boolean" use="optional" default="false"/>
+  </xsd:complexType>
+
+<xsd:complexType name="AdServiceListType">
+  <xsd:sequence>      
+    <xsd:element name="AdService" type="ServiceType" minOccurs="0" maxOccurs="unbounded">
+      <xsd:annotation>
+        <xsd:documentation>
+          Adserver service
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:element>
+  </xsd:sequence>
+</xsd:complexType>
+
+<xsd:complexType name="GroupListType">
+  <xsd:sequence>      
+    <xsd:element name="Group" type="GroupEnumType" minOccurs="1" maxOccurs="3">
+      <xsd:annotation>
+        <xsd:documentation>
+          Autotest's groups sequence
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:element>
+  </xsd:sequence>
+ </xsd:complexType>
+
+<xsd:complexType name="CategoryListType">
+  <xsd:sequence>      
+    <xsd:element name="Category" type="NoLeadingTrailingSpaces" minOccurs="1" maxOccurs="unbounded">
+      <xsd:annotation>
+        <xsd:documentation>
+          Autotest's groups sequence
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:element>
+  </xsd:sequence>
+ </xsd:complexType>
+
+<xsd:complexType name="TestListType">
+  <xsd:sequence>      
+    <xsd:element name="Test" type="NoLeadingTrailingSpaces" minOccurs="1" maxOccurs="unbounded">
+      <xsd:annotation>
+        <xsd:documentation>
+          Autotest's groups sequence
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:element>
+  </xsd:sequence>
+ </xsd:complexType>
+
+<xsd:complexType name="ServiceType">
+  <xsd:attribute name="name" type="NoLeadingTrailingSpaces" use="required" />
+  <xsd:attribute name="host" type="NoLeadingTrailingSpaces" use="required" />
+</xsd:complexType>
+
+<xsd:simpleType name="GroupEnumType">
+  <xsd:restriction base="xsd:string">
+    <xsd:enumeration value="fast"/>
+    <xsd:enumeration value="quiet"/>
+    <xsd:enumeration value="slow"/>
+  </xsd:restriction>
+</xsd:simpleType>
+
+</xsd:schema>

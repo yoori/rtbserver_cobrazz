@@ -1,0 +1,10 @@
+@userbindserverstubs_deps@
+
+sources := 
+includes := .
+
+corba_stub_idls := UserBindServer.idl
+corba_includes := .
+corba_idl_includes := .
+
+@userbindserverstubs_post@

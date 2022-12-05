@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      UserBindController Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UserBindControllerConfig" 
+        type="UserBindControllerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindControllerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for UserInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserBindServerHost"
+        type="UserBindServerHostType"
+        minOccurs="1"
+        maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+          UIS references
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="status_check_period" 
+      type="xsd:positiveInteger"
+      use="required">
+      <xsd:annotation>
+        <xsd:documentation>period in seconds of checking UserBindServer hosts.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindServerHostType">
+    <xsd:sequence>
+      <xsd:element name="UserBindServerRef"
+        type="CorbaObjectRefType"
+        minOccurs="1"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            UserBindServer reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="UserBindServerControlRef"
+        type="CorbaObjectRefType"
+        minOccurs="1"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            UserBindServerControl reference (ProcessControl)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>

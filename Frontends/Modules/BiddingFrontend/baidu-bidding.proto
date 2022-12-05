@@ -1,0 +1,318 @@
+// google trasnlated.
+
+// Copyright 2014 Baidu Inc. All Rights Reserved.
+//
+// File contents: baidu exchange service real-time bidding protocol file
+//
+
+// Original name: baidu_realtime_bidding-0730.proto
+package Baidu;
+
+message BidRequest {
+  // Request ID, uniquely identifies this request, the plaintext string
+  required string id = 1;
+
+  // **** User Information ****
+  // User IP address, in dotted decimal string
+  optional string ip = 2;
+  // User-Agent
+  optional string user_agent = 3;
+  // User ID
+  optional string baidu_user_id = 4;
+  // User ID version
+  optional int32 baidu_user_id_version = 5;
+  // User classification
+  repeated int64 user_category = 6;
+  // Gender
+  enum Gender {
+    UNKNOWN = 0;
+    MALE = 1;
+    FEMALE = 2;
+  }
+  optional Gender gender = 7;
+  // Page language
+  optional string detected_language = 9;
+  // Flash version
+  optional string flash_version = 10;
+
+  // **** Location information ****
+  message Geo {
+    // Latitude and longitude information
+    message Coordinate {
+        // Latitude and longitude coordinates standards
+        enum Standard {
+            // Standard Baidu map latitude and longitude coordinates
+            BD_09 = 0;
+            // Latitude and longitude coordinates standards established by national measure Bureau
+            GCJ_02 = 1;
+            // Latitude and longitude coordinates international standards
+            WGS_84 = 2;
+        }
+        // Map coordinates standards
+        optional Standard standard = 1;
+        // Latitude
+        optional float latitude = 2;
+        // Longitude
+        optional float longitude = 3;
+    }
+    repeated Coordinate user_coordinate = 1;
+
+    //  User location information 
+    message UserLocation {
+        // Provinces
+        optional string province = 1;
+        // City
+        optional string city = 2;
+        // Distict (Country?)
+        optional string district = 3;
+        // Street
+        optional string street = 4;
+    }
+    optional UserLocation user_location = 2;
+  }  
+  optional Geo user_geo_info = 28;
+
+  // **** Page information ****
+  // The current page URL
+  optional string url = 11;
+  // Request referer
+  optional string referer = 12;
+  // Category
+  optional int32 site_category = 13;
+  // Site quality type 
+  optional int32 site_quality = 14;
+  // Page type 
+  optional int32 page_type = 15;
+  // Page Keywords
+  repeated string page_keyword = 17;
+  // Page content quality
+  optional int32 page_quality = 18;
+  // Page classification 
+  optional int32 page_vertical = 21;
+  // Publishers do not allow advertising industry
+  repeated int32 excluded_product_category = 19 [packed=true];
+
+  // **** Mobile device information ****
+  message Mobile {
+    // Baidu uniquely identifies the number of mobile devices
+    optional string device_id = 1;      
+    // Device Type Definition
+    enum MobileDeviceType {
+        UNKNOWN_DEVICE = 0;
+        HIGHEND_PHONE = 1;
+        TABLET = 2;
+    }
+    // Device Type
+    optional MobileDeviceType device_type = 2;
+    // Mobile platform name, such as android, iphone, etc.
+    enum OS {
+        UNKNOWN_OS = 0;
+        IOS = 1;
+        ANDROID = 2;
+        WINDOWS_PHONE = 3;
+    }
+    optional OS platform = 3 [default = UNKNOWN_OS];
+    // Mobile operating system version number 
+    // Example Android 2.1, major, micro namely 2,1
+    // Example Iphone 4.2.1, major, minor, micro namely 4,2,1
+    message DeviceOsVersion {
+        optional int32 os_version_major = 1;
+        optional int32 os_version_minor = 2;
+        optional int32 os_version_micro = 3;
+    };
+    optional DeviceOsVersion os_version = 4;
+    // Equipment brands
+    optional string brand = 5;
+    // Equipment models
+    optional string model = 6;
+    // Device screen width
+    optional int32 screen_width = 7;
+    // Device screen height
+    optional int32 screen_height = 8;
+    // Operator ID (MCC + MNC number)
+    // For example, China Mobile 46000
+    // The top three is Mobile Country Code
+    // After two Mobile Network Code
+    optional int64 carrier_id = 9;
+    // Wireless Network Type 
+    enum WirelessNetworkType {
+        UNKNOWN_NETWORK = 0;
+        WIFI = 1;
+        MOBILE_2G = 2;
+        MOBILE_3G = 3;
+        MOBILE_4G = 4;
+    }
+    optional WirelessNetworkType wireless_network_type = 10;
+
+    // Advertising on mobile devices for the control provided ID
+    optional string for_advertising_id = 11;
+
+    // **** Mobile application information ****
+    message MobileApp {
+        // App id Baidu Mobile Alliance allocated for App 
+        optional string app_id = 1;
+        // If you come from the Apple store, it is app-store id directly
+        // If you come from Android devices, it is the package's full name
+        optional string app_bundle_id = 2;
+        // App Categories
+        optional int32 app_category = 3;
+        // App Developer ID
+        optional int32 app_publisher_id = 4;
+        // App allows interaction type definition
+        // Phone, download
+        enum AppInteractionType {
+            TELEPHONE = 0;
+            DOWNLOAD = 1;
+        }
+        // App allows interaction type
+        repeated AppInteractionType app_interaction_type = 5;
+    }
+    // Mobile application information, when the flow from the App of the field is not empty
+    optional MobileApp mobile_app = 12;
+  }
+  // Mobile device information, when traffic from mobile devices this field is not empty
+  optional Mobile mobile = 29;
+
+  // Video media information flow
+  message Video {
+    // Video title
+    optional string title = 1;
+    // Video tag
+    repeated string tags  = 2;
+    // Video playback length
+    optional int32  content_length = 3;
+  }
+  optional Video video = 30;
+
+  // **** Advertising information **** 
+  message AdSlot {
+    // Ad-bit ID, globally unique id
+    optional uint64 ad_block_key = 1;
+    // Current page advertising order id, the same page from a start
+    optional int32 sequence_id = 2;
+    // Display Type
+    optional int32 adslot_type = 3;
+    // Width
+    optional int32 width = 4;
+    // Height
+    optional int32 height = 5;
+    // Placement
+    optional int32 slot_visibility = 6;
+    // Publishers allow creative types
+    repeated int32 creative_type = 7 [packed=true];
+    // Publishers allowed landing page url
+    repeated string excluded_landing_page_url = 8;
+    // Publishers set the reserve price, the unit divided
+    optional int32 minimum_cpm = 9;
+    // The maximum length of video ads
+    optional int32 max_video_duration = 10;
+    // The most hour-long video ads (Minimum video length?)
+    optional int32 min_video_duration = 11;
+    // Video advertising broadcast delay, 0 and a positive integer posted before,
+    // -1 means the stickers, -2, said after the paste
+    optional int32 video_start_delay = 12;
+  }
+  // Default each request an advertising
+  repeated AdSlot adslot = 20;
+
+  // **** System ****
+  optional bool is_test = 26 [default=false];
+  optional bool is_ping = 27 [default=false];
+}
+
+message BidResponse {
+    // Return ID, the request id assigned to return id, to facilitate the session trace
+    required string id = 1;
+
+    // **** Auction advertising information ****
+    message Ad {
+        // Ad-bit ID
+        optional int32 sequence_id = 1;
+        // For static creative (dsp returns metadata, BES advertising assembled), creative_id
+        // As a creative ID, uniquely identifies each metadata creative (currently only supports one idea).
+        //
+        // For dynamic and creative, creative_id uniquely identifies the html snippet.
+        //   BES requirements for dynamic creation
+        // Italian materials and win notice url, etc. for review. Creative same same buyer's id 
+        // Only be audited once, after the adoption of no audit.
+        //   buyer should ensure that contain the same ideas and materials 
+        // The html_snippet the same snippet id, to avoid duplication of audits.
+        optional int64 creative_id = 2;
+        // Highest bid UNITS
+        optional int32 max_cpm = 3;
+        // Extended parameters
+        // Creative needs to be filled only static
+        optional string extdata = 5;
+        // Whether the cookie mapping
+        // Creative needs to be filled only static
+        optional bool is_cookie_matching = 6;
+        // Html_snippet field is used only when returning dynamic creativity. buyer will be assembled to complete
+        // Creative and materials assembled into html, and returned to the BES.
+        // BES after judge that * response has html_snippet fields * are dynamic and creative,
+        // And obtain the necessary material information through such fields. Corresponding data such as missing fields,
+        // BES can not guarantee their participation in the auction.
+        //
+        // How do I know click information:
+        // Html snippet of code. Position needs to be filled click url should fill in this field
+        // Wang %% CLICK_URL_ {N} %% (where {N} starting at 0, should be used instead of a specific number,
+        // And consistent with target_url in order), and click url to fill
+        // Target_url field. BES according to buyer's target_url 
+        // After building the ultimate click url, replace the macro with it.
+        // Follows html contains two ideas, you need to register two macros %% CLICK_URL_0 %% and
+        // %% CLICK_URL_1 %%. And sequential assignment target_url field.
+        // std::string html("<BODY>...<a href="%%CLICK_URL_0%%"/>.."
+        //  "<a href="%%CLICK_URL_1%%"/>...</BODY>"
+        // ad.set_html_snippet(html);
+        // ad.add_target_url("http://click.buyer.com?idea=ad1...");
+        // ad.add_target_url("http://click.buyer.com?idea=ad2...");
+        // Macro errors (such as order, omissions, etc.) or the wrong assignment target_url 
+        // Error will lead to BES for target_url filling error.
+        //
+        // How do I know after the auction pricing information:
+        // After the auction if buyer needs to know the success of creative cpm, can expect monitor_url
+        // Field specific location add macros %% PRICE %%. BES cpm replaced by replacing the use of the macro.
+        // Example:
+        // http://wins.buyer.com?key1=val1&&cpm=%%PRICE%%...
+        // Dynamic creative needs to be filled only
+        optional string html_snippet = 7;
+        // Advertisers id. Only dynamic and creative needs to be filled
+        // Dynamic creativity requires an html snippet of all the ads belong to the same advertisers.
+        // Dynamic creative needs to be filled only
+        optional uint64 advertiser_id = 8;
+        // Material dimensions - width. To be consistent with the size of the request
+        // Dynamic creative needs to be filled only
+        optional int32  width = 9;
+        // Material dimensions - height. To be consistent with the size of the request
+        // Dynamic creative needs to be filled only
+        optional int32  height = 10;
+        // Creative Industry sectors id. The significance of this field is creative in static storage materials required
+        // Same industry id.
+        // Dynamic creative needs to be filled only
+        optional int32  category = 11;
+        // Creative material type
+        // Dynamic creative needs to be filled only
+        optional int32  type = 12;
+        // Creative landing page. Requires that all creative landing page have the same domain,
+        // While landing page should be the last time target_url jump.
+        // Note: This is only filled landing page's domain information can be. Such as:
+        // http://landing_page.advertiser.com/example.php?param1=...
+        // Url above the landing page should be filled landing_page.advertiser.com.
+        // Dynamic creative needs to be filled only
+        optional string landing_page = 13;
+        // Creative click url. When the response contains multiple ideas, creativity of each click
+        // Url order should be consistent with the idea of order in the html snippet. BES will be the order of
+        // Replace click url's.
+        // If the order is not correct, click on the statistics will lead to bias.
+        // Dynamic creative needs to be filled only
+        repeated string target_url = 14;
+    }
+    // Auction ads currently only supports a return
+    repeated Ad ad = 2;
+
+    // **** System ****
+    // Debug interface
+    optional string debug_string = 3;
+    // DSP processing time
+    optional int32 processing_time_ms = 4;
+
+}

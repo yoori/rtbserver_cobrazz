@@ -1,0 +1,4 @@
+name="SecToken"
+so_files=SecToken
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons

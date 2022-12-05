@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/ChannelSvcs/ChannelProxyConfig.xsd">
+  <cfg:ChannelProxyConfig log_root="/opt/foros/server/var/log/ChannelProxy/Out">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10155">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ChannelProxy_v07" name="ChannelProxy_v07"/>
+        <cfg:Object servant="ChannelProxy_v06" name="ChannelProxy_v06"/>
+        <cfg:Object servant="ChannelProxy_v05" name="ChannelProxy_v05"/>
+      </cfg:Endpoint>
+      <cfg:Endpoint host="extHost16" port="10205">
+        <cfg:Secure key="/opt/foros/server/etc/default-values-colo/adproxycluster-1/HostName16/cert/skey.pem" certificate="/opt/oix/server/etc/default-values-colo/adproxycluster-1/HostName16/cert/scert.pem" certificate_authority="/opt/oix/server/etc/default-values-colo/adproxycluster-1/HostName16/cert/ca.pem" key-word="adserver"/>
+        <cfg:Object servant="ChannelProxy_v07" name="ChannelProxy_v07"/>
+        <cfg:Object servant="ChannelProxy_v06" name="ChannelProxy_v06"/>
+        <cfg:Object servant="ChannelProxy_v05" name="ChannelProxy_v05"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:ControllerCorbaRefs name="ChannelController">
+      <cfg:Ref ref="corbaloc:iiop:HostName11:10104/ChannelManagerController"/>
+    </cfg:ControllerCorbaRefs>
+    <cfg:Logger filename="/opt/foros/server/var/log/ChannelProxy/ChannelProxy">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:UpdateStatLogger size="3" period="30" path="ColoUpdateStat"/>
+  </cfg:ChannelProxyConfig>
+</cfg:AdConfiguration>

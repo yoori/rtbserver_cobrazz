@@ -1,0 +1,9 @@
+@oracleexecutetestexe_deps@
+
+sources := ExecuteTest.cpp
+includes := .
+target := OracleExecuteTest
+
+vg_test_arguments := -nh
+
+include $(top_srcdir)/tests/Test.post.rules

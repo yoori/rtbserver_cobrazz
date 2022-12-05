@@ -1,0 +1,43 @@
+@plainparser_deps@
+
+sources := \
+  Processor.cpp \
+  YYParser.yy.cpp \
+  YYScanner.ll.cpp \
+  Parser.cpp
+
+includes := Plain
+
+CPP_FLAGS := $(CPP_FLAGS)  -Wno-parentheses -I../
+
+@CD_TB@YYParser.yy.cpp@CD_TE@ : YYParser.yy
+	@CD_CB@
+	@CD_LB@bison -d --report=state -o $@ $<@CD_LE@
+	@CD_CE@
+
+YYParser.yy.hpp position.hh stack.hh location.hh : YYParser.yy.cpp ;
+
+@CD_TB@YYScanner.ll.cpp@CD_TE@ : YYScanner.ll
+	@CD_CB@
+	@CD_LB@flex -+ -o$@ $<@CD_LE@
+	@CD_CE@
+
+_deps_prerequisites += YYParser.yy.cpp YYScanner.ll.cpp
+
+.PHONY : clean_parser
+
+clean : clean_parser
+
+_parser_files := \
+  YYParser.yy.output \
+  YYParser.yy.hpp \
+  YYParser.yy.cpp \
+  position.hh \
+  stack.hh \
+  location.hh \
+  YYScanner.ll.cpp
+
+clean_parser :
+	-$(RM) -$(RM_FLAGS) $(_parser_files)
+
+@plainparser_post@

@@ -1,0 +1,10 @@
+@statscollectorexe_deps@
+
+sources  := StatsCollectorImpl.cpp  \
+            StatsCollectorMain.cpp  \
+            StatsCollectorAgent.cpp
+
+target   := StatsCollector
+
+@statscollectorexe_post@
+

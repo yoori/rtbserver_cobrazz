@@ -1,0 +1,72 @@
+namespace AdServer
+{
+  namespace UserInfoSvcs
+  {
+    struct DaysVisits
+    {
+      uint days;
+      uint visits;
+    };
+
+    autoreader DaysVisitsReader<DaysVisits>;
+    autowriter DaysVisitsWriter<DaysVisits>;
+
+    struct HistoryChannelInfo
+    {
+      uint channel_id;
+      list<DaysVisits> days_visits;
+    };
+
+    reader HistoryChannelInfoReader<HistoryChannelInfo>
+    {
+      channel_id;
+      list<DaysVisitsReader> days_visits;
+    };        
+
+    writer HistoryChannelInfoWriter<HistoryChannelInfo>
+    {
+      channel_id;
+      list<DaysVisitsWriter>(cpp_vector) days_visits;
+    };
+
+    struct HistoryUserProfileVersion
+    {
+      uint minor_version;
+      uint major_version;
+    };
+
+    autoreader HistoryUserProfileVersionReader<HistoryUserProfileVersion>;
+    autowriter HistoryUserProfileVersionWriter<HistoryUserProfileVersion>;
+
+    struct HistoryUserProfile
+    {
+      uint minor_version;
+      uint major_version;
+      list<HistoryChannelInfo> page_channels;
+      list<HistoryChannelInfo> search_channels;
+      list<HistoryChannelInfo> url_channels;
+      list<HistoryChannelInfo> url_keyword_channels;
+    };
+
+    reader HistoryUserProfileReader<HistoryUserProfile>
+    {
+      minor_version;
+      major_version;
+      list<HistoryChannelInfoReader> page_channels;
+      list<HistoryChannelInfoReader> search_channels;
+      list<HistoryChannelInfoReader> url_channels;
+      list<HistoryChannelInfoReader> url_keyword_channels;
+    };
+
+    writer HistoryUserProfileWriter<HistoryUserProfile>
+    {
+      minor_version;
+      major_version;
+      list<HistoryChannelInfoWriter>(cpp_vector) page_channels;
+      list<HistoryChannelInfoWriter>(cpp_vector) search_channels;
+      list<HistoryChannelInfoWriter>(cpp_vector) url_channels;
+      list<HistoryChannelInfoWriter>(cpp_vector) url_keyword_channels;
+    };
+
+  }
+}

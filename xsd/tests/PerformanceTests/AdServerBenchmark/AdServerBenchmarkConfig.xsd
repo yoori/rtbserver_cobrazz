@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.peopleonpage.com/xsd/tests/PerformanceTests"
+  xmlns="http://www.peopleonpage.com/xsd/tests/PerformanceTests"
+  elementFormDefault="qualified" xml:lang="en" version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>AdServer benchmark test configuration</xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerTestCommonConfig.xsd"/>
+
+  <xsd:element name="Test" type="AdServerBenchmarkType" />
+
+  <xsd:complexType name="AdServerBenchmarkType">
+    <xsd:annotation>
+      <xsd:documentation>Test description</xsd:documentation>
+    </xsd:annotation>
+      <xsd:sequence>
+        <xsd:element name="GlobalSettings" type="GlobalSettingsType"/>
+        <xsd:element name="Benchmarks" type="BenchmarksType"/>
+      </xsd:sequence>
+  </xsd:complexType>
+
+    <xsd:complexType name="GlobalSettingsType">
+    <xsd:annotation>
+      <xsd:documentation>Global test settings</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="ThreadsNumber" type="xsd:positiveInteger">
+        <xsd:annotation>
+          <xsd:documentation>Sets the number of threads in the HTTP pool</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="URLsFile" type="xsd:string" minOccurs="0" maxOccurs="1">
+         <xsd:annotation>
+           <xsd:documentation>Specifies the file with URLs to use in referer parameters.</xsd:documentation>
+         </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="RefererKWsFile" type="xsd:string" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Specifies the file with keywords to use in referer-kw parameters.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ftPath" type="xsd:string" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Specifies the full texts folder.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ServerURL" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>Setver base adresses (HTTP prefix for requests)</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Set" type="setType" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>Specify named set to use in HTTP headers, cookies and parameters</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="BenchmarksType">
+    <xsd:annotation>
+      <xsd:documentation>Linked benchmarks.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="Benchmark" type="BenchmarkType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="BenchmarkType">
+    <xsd:annotation>
+      <xsd:documentation>Benchmark description</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="request" type="RequestType"/>
+    </xsd:sequence>
+    <xsd:attribute name="size" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+  <xsd:documentation>Count of requests sending during benchmark test</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="frontend" type="FrontendType" use="required">
+      <xsd:annotation>
+  <xsd:documentation>Frontend type for request</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="type" type="ClientType" use="optional" default="optin">
+      <xsd:annotation>
+  <xsd:documentation>Is requests opted out</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="initial" type="xsd:boolean" use="optional" default="false">
+      <xsd:annotation>
+  <xsd:documentation>Create user for each requests, if true.
+                           Or use previously created users.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="description" type="xsd:string" use="required">
+      <xsd:annotation>
+  <xsd:documentation>Benchmark description.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_url" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="FrontendType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="nslookup"/>
+       <xsd:enumeration value="optout"/>
+       <xsd:enumeration value="passback"/>
+       <xsd:enumeration value="click"/>
+       <xsd:enumeration value="action"/>
+       <xsd:enumeration value="userbind"/>
+       <xsd:enumeration value="openrtb"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ClientType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="optin"/>
+       <xsd:enumeration value="optout"/>
+       <xsd:enumeration value="openrtb"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+</xsd:schema>

@@ -1,0 +1,7 @@
+@processcontrolvars_deps@
+
+sources := \
+  ProcessControlVarsImpl.cpp
+
+includes := .
+@processcontrolvars_post@

@@ -1,0 +1,228 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Expression Matcher Configuration File XML Schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="ExpressionMatcherNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10113">
+      <xsd:annotation>
+        <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherThreadParamsType">
+    <xsd:attribute name="min" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>CORBA thread pool.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherProcessingParamsType">
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="optional" default="20">
+      <xsd:annotation>
+        <xsd:documentation>Sets threads number for log processing.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="cache_blocks" type="xsd:nonNegativeInteger" default="1000">
+      <xsd:annotation>
+        <xsd:documentation>
+          Block size is 64 Kb
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherConfigType">
+    <xsd:sequence>
+      <xsd:element name="networkParams" type="ExpressionMatcherNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadParams" type="ExpressionMatcherThreadParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA thread pool.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element> 
+      <xsd:element name="updateParams" type="ExpressionMatcherUpdateParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Fetching new data and data changes.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="statLogging" type="ExpressionMatcherStatLoggingType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Statistics logging.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="profilesCleanupParams" type="ProfilesCleanupParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define stat user profiles clean up process.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="processing" type="ExpressionMatcherProcessingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Define log processing parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="storage" type="ExpressionMatcherStorageType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            storage usage configuration
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="enable_channel_overlap_stats" type="xsd:boolean" use="optional" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Possibility to disable ChannelOverLap Statistics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="positive_triggers_group_size" type="xsd:nonNegativeInteger" use="optional" default="5">
+      <xsd:annotation>
+        <xsd:documentation>
+          The size of positive triggers group.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="negative_triggers_group_size" type="xsd:nonNegativeInteger" use="optional" default="5">
+      <xsd:annotation>
+        <xsd:documentation>
+          The size of negative triggers group.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_trigger_visits" type="xsd:nonNegativeInteger" use="optional" default="0">
+      <xsd:annotation>
+        <xsd:documentation>
+          Maximum number of visits that will be stored for each channel for link imps/clicks
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_match_cache_size" type="xsd:nonNegativeInteger" use="optional" default="4294967296">
+      <xsd:annotation>
+        <xsd:documentation>
+          Size of cache for ChannelMatcher component.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherStatLoggingType">
+    <xsd:attribute name="file_check_period" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of checking files.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" use="optional" default="10">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of dumping logs to disk.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="activity_flush_period" type="xsd:positiveInteger" use="optional" default="3600">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of dumping activity logs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="inventory_ecpm_flush_period" type="xsd:positiveInteger" use="optional" default="3600">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of dumping intventory of ecpm logs.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProfilesCleanupParamsType">
+    <xsd:attribute name="inventory_days_to_keep" type="xsd:positiveInteger" default="4">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of days for keep in inventory profiles
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="trigger_match_life_time" type="xsd:positiveInteger" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Life time of trigger match profile for one user in days
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="temp_trigger_match_life_time" type="xsd:positiveInteger" default="60">
+      <xsd:annotation>
+        <xsd:documentation>
+          Life time of trigger match temporary profile for one user in minutes
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherUpdateParamsType">
+    <xsd:attribute name="period" type="xsd:positiveInteger" use="optional" default="30">
+      <xsd:annotation>
+        <xsd:documentation>
+          Period of updating expression matcher.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ExpressionMatcherStorageType">
+    <xsd:complexContent>
+      <xsd:extension base="StorageType">
+        <xsd:attribute name="max_inventory_undumped_size" type="xsd:positiveInteger" default="5000">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by Inventory storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="max_user_trigger_undumped_size" type="xsd:positiveInteger" default="5000">
+          <xsd:annotation>
+            <xsd:documentation>RAM usage by User Trigger storage (Mb)</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+</xsd:schema>

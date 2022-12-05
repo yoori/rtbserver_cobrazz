@@ -1,0 +1,5 @@
+name="RequestInfoCommons"
+so_files=RequestInfoCommons
+
+osbe_cxx_dep ReferenceCounting
+osbe_cxx_dep ExceptionHandling

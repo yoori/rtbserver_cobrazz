@@ -1,0 +1,4 @@
+@usercoloreachcontainer_deps@
+sources := UserColoReachContainer.cpp
+
+@usercoloreachcontainer_post@

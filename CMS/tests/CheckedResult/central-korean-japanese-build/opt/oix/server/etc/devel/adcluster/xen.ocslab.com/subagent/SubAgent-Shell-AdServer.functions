@@ -1,0 +1,111 @@
+my $adserver_monitoring_requests_number = 0;
+use constant ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER => 20;
+
+sub adServerMonitoringRequestMIB
+{
+  my ($mib, $cfg) = @_;
+
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $mon_host_name = $cfg->{'args'}[0]->{'host_name'};
+  my $mon_tag_id = $cfg->{'args'}[0]->{'tag_id'};
+  my $mon_country = $cfg->{'args'}[0]->{'country'};
+  $mib_index = ".$mib_index";
+
+  my $start_time = gettimeofday();
+
+  my $url = "http://$mon_host_name/services/nslookup?" .
+    "glbfcap=0&prck=0&referer=channel.server${adserver_monitoring_requests_number}.com/check/me/please&" .
+    "referer-kw=Channel!+Server!+Monitoring!&" .
+    "uid=VunhOXI3QamlRShTI0BimA09_u-bMbfQzDJr_BoEut42INCuUWs6vUQkt2kuPESs8&" .
+    "tid=$mon_tag_id&" .
+    "country=$mon_country";
+
+  my $out = `curl -s -m $config->{'cmd_timeout'} '$url'`;
+  my $r = $? >> 8;
+  if($r == 0)
+  {
+    $adserver_monitoring_requests_number =
+      ++$adserver_monitoring_requests_number % ADSERVER_MONITORING_CHANNEL_TRIGGERS_NUMBER;
+  }
+
+  my $status = ($r != 0 || $out !~ m/Channel Server is running/ ? 1 : 0);
+
+  $$mib{'adRequestExecTime' . $mib_index} = sprintf(
+    '%.3f', scalar(gettimeofday()) - $start_time);
+  $$mib{'adRequestExecStatus' . $mib_index} = $status;
+
+  return $status;
+}
+
+sub adServerApacheStatusMIB
+{
+  my ($o, $cfg) = @_;
+  # get function parameters
+  my $mib_index = $cfg->{'args'}[0]->{'index'};
+  my $url = $cfg->{'args'}[0]->{'url'};
+
+  $mib_index = ".$mib_index";
+  my $cmd = "curl -s -m $config->{'cmd_timeout'} ";
+  my $r = 0;
+
+  my $start_time = gettimeofday();
+# print "$cmd $url\n";
+
+  foreach (`$cmd $url`)
+  {
+    chomp;
+    my $s = $_;
+    if ( /Scoreboard/ )
+    {
+      $$o{'apsWaitingForConnection' . $mib_index} = ($s =~ tr/_/_/);
+      $$o{'apsSendingReply' . $mib_index} = ($s =~ tr/W/W/);
+      $$o{'apsReadingRequest' . $mib_index} = ($s =~ tr/R/R/);
+      $$o{'apsKeepAlive' . $mib_index} = ($s =~ tr/K/K/);
+      $$o{'apsDNSLookup' . $mib_index} = ($s =~ tr/D/D/);
+    }
+    elsif ( /^Total Accesses/ )
+    {
+      $$o{'apsTotalAccesses' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^CPULoad/ )
+    {
+      $$o{'apsCpuLoad' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^Uptime/ )
+    {
+      $$o{'apsUptime' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^BusyWorkers/ )
+    {
+      $$o{'apsBusyWorkers' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^IdleWorkers/ )
+    {
+      $$o{'apsIdleWorkers' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^ReqPerSec/ )
+    {
+      $$o{'apsReqPersSec' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^BytesPerSec/ )
+    {
+      $$o{'apsBytesPerSec' . $mib_index} = ( split /: /, $s )[1];
+    }
+    elsif ( /^BytesPerReq/ )
+    {
+      $$o{'apsBytesPerReq' . $mib_index} = ( split /: /, $s )[1];
+    }
+  }
+
+  my $cmd_r = $? >> 8;
+  $$o{'apsCmdExecTime' . $mib_index} = sprintf('%.3f',scalar gettimeofday() - $start_time);
+  $$o{'apsCmdExecStatus' . $mib_index} = $cmd_r;
+  $$o{'apsUrl' . $mib_index} = $url;
+
+  $r = $cmd_r if $cmd_r;
+
+  return  $r;
+}
+
+return 1;

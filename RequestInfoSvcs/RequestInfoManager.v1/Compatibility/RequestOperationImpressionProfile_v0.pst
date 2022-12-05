@@ -1,0 +1,26 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v0
+{
+  struct RequestOperationImpressionVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader RequestOperationImpressionVersionReader<
+    RequestOperationImpressionVersionDescriptor>;
+
+  struct RequestOperationImpressionDescriptor
+  {
+    uint version;
+    uint time;
+    string request_id;
+    uint verify_impression;
+    string pub_revenue;
+    string pub_sys_revenue;
+    uint pub_revenue_type;
+  };
+
+  autoreader RequestOperationImpressionReader<RequestOperationImpressionDescriptor>;
+}
+}

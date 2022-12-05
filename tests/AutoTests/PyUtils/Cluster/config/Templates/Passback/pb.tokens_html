@@ -1,0 +1,36 @@
+</head>
+<body>
+<h4>Passback specific</h4>
+<p>PASSBACK_TYPE = ##PASSBACK_TYPE=##</p>
+<p>PASSBACK_CODE = ##PASSBACK_CODE=##</p>
+<p>PASSBACK_URL = ##PASSBACK_URL=##</p>
+<p>PASSBACK_PIXEL = ##PASSBACK_PIXEL=##</p>
+<h4>System</h4>
+<p>TAGWIDTH = ##TAGWIDTH=##</p>
+<p>TAGHEIGHT = ##TAGHEIGHT=##</p>
+<p>TAGSIZE = ##TAGSIZE=##</p>
+<p>TAGID = ##TAGID=##</p>
+<p>RANDOM = ##RANDOM=##</p>
+<p>ADSERVER = ##ADSERVER=##</p>
+<p>ADIMAGE-SERVER = ##ADIMAGE-SERVER=##</p>
+<p>REFERER = ##REFERER=##</p>
+<p>UID = ##UID=##</p>
+<p>COHORT = ##COHORT=##</p>
+<p>APP_FORMAT = ##APP_FORMAT=##</p>
+<p>COLOID = ##COLOID=##</p>
+<p>TESTREQUEST = ##TESTREQUEST=##</p>
+<p>USERSTATUS = ##USERSTATUS=##</p>
+<p>PUBPIXELS = ##PUBPIXELS=##</p>
+<p>PUBPIXELSOPTIN = ##PUBPIXELSOPTIN=##</p>
+<p>PUBPIXELSOPTOUT = ##PUBPIXELSOPTOUT=##</p>
+<h4>Hidden</h4>
+<p>ADSC_HIDDEN_PB_1 = ##ADSC_HIDDEN_PB_1=##</p>
+<p>ADSC_HIDDEN_PB_2 = ##ADSC_HIDDEN_PB_2=##</p>
+<h4>Tag specific</h4>
+<p>PUBL_TAG_TRACK_PIXEL = ##PUBL_TAG_TRACK_PIXEL=##</p>
+<p>AD_FOOTER_ENABLED = ##AD_FOOTER_ENABLED=##</p>
+<p>MAX_ADS_PER_TAG = ##MAX_ADS_PER_TAG=##</p>
+<h4>Tag-template specific</h4>
+<p>DESCRIPTION_COLOR = ##DESCRIPTION_COLOR=##</p>
+</body>
+</html>

@@ -1,0 +1,6 @@
+@ahocorasicktestexe_deps@
+
+target := AhoCorasickTest
+sources := AhoCorasickTest.cpp
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,6 @@
+@plstseqtestexe_deps@
+
+sources  := SeqTest.cpp
+target   := PlStSeqTest
+
+include $(top_srcdir)/tests/Test.post.rules

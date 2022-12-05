@@ -1,0 +1,6 @@
+@uidchannelsnapshottest_deps@
+
+sources := UidChannelSnapshotTest.cpp
+target := UidChannelSnapshotTest
+
+include $(top_srcdir)/tests/Test.post.rules

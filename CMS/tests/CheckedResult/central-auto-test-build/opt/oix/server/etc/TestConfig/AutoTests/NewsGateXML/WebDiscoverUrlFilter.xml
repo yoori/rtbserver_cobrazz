@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>93</ttl>
+<reqDate since_epoch="1239866087">Thu, 16 Apr 2009 07:14:47 GMT</reqDate>
+<total>2</total>
+<items>
+
+<!-- News1 -->
+<item>
+<title>92BA56CECA3F40D7A7296422C1FDEEB9</title>
+<link><![CDATA[http://www.WebDiscoverUrlFilter1.com/news1.html]]></link>
+<description><![CDATA[It is a fake news1 for WebDiscoverUrlFilter.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[eng]]></language>
+<guid>92BA56CECA3F40D7A7296422C1FDEEB9</guid>
+<event>
+<categories>
+<category><![CDATA[/WebDiscoverUrlFilter1/]]></category>
+</categories>
+<id></id>
+<capacity>2</capacity>
+</event>
+<source>
+<title>92BA56CECA3F40D7A7296422C1FDEEB9</title>
+<link><![CDATA[http://www.WebDiscoverUrlFilter1.com/news1/rss1.xml]]></link>
+<country><![CDATA[GBR]]></country>
+</source>
+</item>
+
+<!-- News2  -->
+
+<item>
+<title>DE3CBB90831D4653BCE7D215AFE9C782</title>
+<link><![CDATA[http://www.WebDiscoverUrlFilter2.com/news2.html]]></link>
+<description><![CDATA[It is a fake news2 for WebDiscoverUrlFilter.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[rus]]></language>
+<guid>DE3CBB90831D4653BCE7D215AFE9C782</guid>
+<event>
+<categories>
+<category><![CDATA[/WebDiscoverUrlFilter2/]]></category>
+</categories>
+<id></id>
+<capacity>3</capacity>
+</event>
+<source>
+<title>DE3CBB90831D4653BCE7D215AFE9C782</title>
+<link><![CDATA[http://www.WebDiscoverUrlFilter2.com/news2/rss2.xml]]></link>
+<country><![CDATA[GBR]]></country>
+</source>
+</item>
+</items>
+</result>

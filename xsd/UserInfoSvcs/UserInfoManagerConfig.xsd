@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      UserInfoServer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <!-- UserUnfoManagerLoggingType -->
+  <xsd:complexType name="UserInfoManagerLoggingType">
+    <xsd:sequence>
+      <xsd:element name="ChannelCountStat" type="UserInfoManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ColoUpdateStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <!-- UserInfoManagerLoggerType -->
+  <xsd:complexType name="UserInfoManagerLoggerType">
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines size policy for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines time policy in seconds for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UserInfoManagerConfig" type="UserInfoManagerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoManagerConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CorbaConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP support config for UserInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Error logger for UserInfoManager
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logging" type="UserInfoManagerLoggingType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="Storage" type="UserInfoManagerStorageType"/>
+
+      <xsd:element name="CampaignServerCorbaRef"
+        type="MultiCorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CampaignServer reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="StatsDumper"
+        type="StatsDumperType"
+        minOccurs="0"
+        maxOccurs="1"/>
+
+      <xsd:element name="UserProfilesCleanup"
+        type="UserProfilesCleanupType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            user operations backup parameters
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserInfoExchangerParameters"
+        type="UserInfoExchangerParametersType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            UserInfoExchanger reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserOperationsBackup"
+        type="UserOperationsBackupType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            user operations backup parameters
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserOperationsLoad"
+        type="UserOperationsLoadType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            user operations uploading parameters
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ExternalUserOperationsLoad"
+        type="UserOperationsLoadType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            external user operations uploading parameters
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="FreqCaps" type="FreqCapsConfigType">
+        <xsd:annotation>
+          <xsd:documentation>Frequency caps config</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ReadWriteStats" 
+        type="ReadWriteStatsType"
+        minOccurs="0"
+        maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Collect disk read/write statistics</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="channels_update_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="session_timeout" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_base_profile_waiters" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_temp_profile_waiters" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="max_freqcap_profile_waiters" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="repeat_trigger_timeout" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="history_optimization_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="root_dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="service_index" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChunksConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of user info chunks (file pathes, file attributes)
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="rw_buffer_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="rwlevel_max_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_undumped_size" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_levels0" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoManagerStorageType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of user info chunks (file pathes, file attributes)
+        Contains parameters that must be common for all chunk types
+        Other parameters defined inside concrete chunks config
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:complexContent>
+      <xsd:extension base="StorageConfigType">
+        <xsd:sequence>
+          <xsd:element name="AddChunksConfig" type="ChunksConfigType"/>
+          <xsd:element name="TempChunksConfig" type="ChunksConfigType"/>
+          <xsd:element name="HistoryChunksConfig" type="ChunksConfigType"/>
+          <xsd:element name="BaseChunksConfig" type="ChunksConfigType"/>
+          <xsd:element name="FreqCapChunksConfig" type="ChunksConfigType"/>
+        </xsd:sequence>
+
+        <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>
+        <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="FreqCapsConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Frequency caps manipualtion config
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="confirm_timeout" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoExchangerParametersType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of UserInfoExchanger parameters
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="UserInfoExchangerRef" type="CorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Description of UserInfoExchanger reference
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+
+    <xsd:attribute name="set_get_profiles_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="colo_request_timeout" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="customer_id" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserOperationsBackupType">
+    <xsd:attribute name="dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="file_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="rotate_period" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserOperationsLoadType">
+    <xsd:attribute name="dir" type="xsd:string" use="required"/>
+    <xsd:attribute name="file_prefix" type="xsd:string" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="check_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="unprocessed_dir" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserProfilesCleanupType">
+    <xsd:attribute name="start_time" type="ShortenedTime" use="required"/>
+    <xsd:attribute name="content_cleanup_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="process_portion" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ReadWriteStatsType">
+    <xsd:attribute name="interval" type="xsd:positiveInteger" default="10"/>
+    <xsd:attribute name="times" type="xsd:positiveInteger" default="10"/>
+  </xsd:complexType>
+
+</xsd:schema>

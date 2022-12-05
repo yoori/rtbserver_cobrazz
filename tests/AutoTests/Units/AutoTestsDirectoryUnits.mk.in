@@ -1,0 +1,19 @@
+
+# Temporary stub for make sub folder tests
+# required while exists top level tests (unsorted)
+#
+include Common.pre.rules
+
+target_directory_list := \
+  Frontend \
+  GranularUpdate \
+  NoDBUpdate \
+  UserProfilesExchange \
+  TriggerMatching \
+  UserProfiling \
+  CreativeSelection \
+  CreativeInstantiation \
+  Statistics \
+  Zerodowntime
+
+include $(osbe_builddir)/config/Direntry.post.rules

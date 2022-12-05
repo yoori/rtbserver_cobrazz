@@ -1,0 +1,7 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([ChannelMatcher], [ChannelMatcher.mk])
+OSBE_CXX_DEF([UserFreqCapProfile], [UserFreqCapProfile.mk])
+OSBE_CXX_DEF([UserOperationProfiles], [UserOperationProfiles.mk])
+
+OSBE_CXX_DEF([Allocator], [Allocator.mk])

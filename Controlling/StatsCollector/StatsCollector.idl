@@ -1,0 +1,22 @@
+#ifndef CONTROLLING_PROCESSSTATSCONTROL_IDL_
+#define CONTROLLING_PROCESSSTATSCONTROL_IDL_
+
+#include <CORBACommons/Stats.idl>
+
+module AdServer
+{
+  module Controlling
+  {
+    typedef CORBACommons::StatsValueSeq StatsValueSeq;
+
+    interface StatsCollector : CORBACommons::ProcessStatsControl
+    {
+      void add_stats(
+        in string host_name,
+        in StatsValueSeq stats) raises(ImplementationException);
+    };
+
+  };
+};
+#endif
+

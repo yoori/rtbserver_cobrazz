@@ -1,0 +1,6 @@
+@extractdecimalexe_deps@
+
+sources := ExtractDecimal.cpp
+target := ExtractDecimal
+
+include $(top_srcdir)/tests/Test.post.rules

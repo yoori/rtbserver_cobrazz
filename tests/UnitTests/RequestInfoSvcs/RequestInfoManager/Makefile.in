@@ -1,0 +1,18 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  RequestOutLoggerTest.mk \
+  RequestInfoMapTest.mk \
+  RequestInfoContainerTest.mk \
+  RequestLogLoaderTest.mk \
+  RequestOperationLoaderTest.mk \
+  UserCampaignReachContainerTest.mk \
+  UserSiteReachContainerTest.mk \
+  UserActionInfoContainerTest.mk \
+  UserFraudProtectionContainerTest.mk \
+  RequestInfoManagerStormTest.mk \
+  PassbackContainerTest.mk \
+  UserTagRequestMergeContainerTest.mk \
+  BillingProcessorTest.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

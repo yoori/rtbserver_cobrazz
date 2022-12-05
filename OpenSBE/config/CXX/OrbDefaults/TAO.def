@@ -1,0 +1,398 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : TAO.def
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+case $host_os in
+  cygwin*)
+    TAO_cxx_corba_orb_defs__lib_prefix=
+    TAO_cxx_corba_orb_defs__lib_suffix=.lib
+    TAO_cxx_corba_orb_defs__lib_debug_suffix=d.lib
+    TAO_cxx_corba_orb_defs__exe_suffix=.exe
+    ;;
+  *)
+    TAO_cxx_corba_orb_defs__lib_prefix=lib
+    TAO_cxx_corba_orb_defs__lib_suffix=.so
+    TAO_cxx_corba_orb_defs__lib_debug_suffix=d.so
+    TAO_cxx_corba_orb_defs__exe_suffix=
+    ;;
+esac
+
+cxx_corba_orb_identifier="TAO"
+cxx_corba_orb_known_name="TAO"
+cxx_corba_orb_platforms='cygwin% solaris% linux% freebsd%'
+cxx_corba_orb_default_for_platforms=''
+cxx_corba_orb_location_search_hint=\
+"ace/OS.h tao/corba.h tao_idl$TAO_cxx_corba_orb_defs__exe_suffix"
+cxx_corba_orb_location_search_opt_func="TAO_cxx_search_opt_func"
+cxx_corba_orb_location_search_acknowledge_func=\
+"TAO_cxx_search_acknowledge_func"
+
+TAO_cxx_corba_orb_defs()
+{
+  if test "$osbe_enable_guess_location" -eq "0" -o \
+     "`osbe_var_undefined CXX_CORBA_IDL`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_CPPFLAGS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "0" -a \
+     "`osbe_var_undefined CXX_CORBA_IDLPPFLAGS`" -eq "0"; then
+    TAO_cxx_corba_orb_defs__no_guess_location="1"
+  else
+    TAO_cxx_corba_orb_defs__no_guess_location="0"
+  fi
+
+  TAO_cxx_corba_orb_defs__libs="TAO TAO_AnyTypeCode TAO_CodecFactory \
+    TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny \
+    TAO_EndpointPolicy TAO_FaultTolerance TAO_FT_ClientORB \
+    TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable \
+    TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup \
+    TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP \
+    TAO_Valuetype ACE ACE_SSL"
+
+  TAO_cxx_corba_orb_defs__release="1"
+
+  if test -n "$cxx_corba_orb_dir"; then
+
+    _cxx_corba_orb_tao_ace_binpath="${cxx_corba_orb_dir}/bin"
+
+#
+# If there is a root dir defined will provide directory defaults and
+# check if release or debug version exist
+#
+    if test "$osbe_enable_guess_location" -eq "0" -o \
+       "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "0" -a \
+       "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "0"; then
+
+#
+# If not allowed to guess, will just assign most probable lib paths
+#
+      TAO_cxx_corba_orb_defs__lib_path="${cxx_corba_orb_dir}/lib"
+
+    else
+
+#
+# If allowed to guess, will detect lib paths
+#
+      TAO_cxx_corba_orb_defs__lib_names=\
+`osbe_wrap_words "$TAO_cxx_corba_orb_defs__lib_prefix" \
+"$TAO_cxx_corba_orb_defs__lib_suffix" "$TAO_cxx_corba_orb_defs__libs"`
+
+      osbe_guess_each_location "$cxx_corba_orb_dir" \
+                               "$TAO_cxx_corba_orb_defs__lib_names" \
+                               "TAO libraries" \
+                               TAO_cxx_corba_orb_defs__lib_path \
+                               "TAO_cxx_search_opt_func"
+
+      if test -z "$TAO_cxx_corba_orb_defs__lib_path"; then
+
+        TAO_cxx_corba_orb_defs__lib_names=\
+`osbe_wrap_words "$TAO_cxx_corba_orb_defs__lib_prefix" \
+"$TAO_cxx_corba_orb_defs__lib_debug_suffix" "$TAO_cxx_corba_orb_defs__libs"`
+
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "$TAO_cxx_corba_orb_defs__lib_names" \
+                                 "TAO debug libraries" \
+                                 TAO_cxx_corba_orb_defs__lib_path \
+                                 "TAO_cxx_search_opt_func"
+
+        if test -n "$TAO_cxx_corba_orb_defs__lib_path"; then
+          TAO_cxx_corba_orb_defs__release="0"
+        fi
+
+      fi
+
+    fi
+
+    case $host_os in
+      cygwin*)
+        TAO_cxx_corba_orb_defs__lib_path=\
+"$TAO_cxx_corba_orb_defs__lib_path $_cxx_corba_orb_tao_ace_binpath"
+        ;;
+    esac
+
+#
+# Detecting CXX_CORBA_IDL
+#
+    if test "`osbe_var_undefined CXX_CORBA_IDL`" -eq "1"; then
+      TAO_cxx_corba_orb_defs__idl_compiler=\
+"tao_idl$TAO_cxx_corba_orb_defs__exe_suffix"
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect idl compiler path
+#
+        TAO_cxx_corba_orb_defs__idl_compiler_path=\
+`osbe_guess_location "TAO IDL compiler" \
+                     "$cxx_corba_orb_dir" \
+                     "$TAO_cxx_corba_orb_defs__idl_compiler" \
+                     "TAO_cxx_search_opt_func"`
+
+        if test -n "$TAO_cxx_corba_orb_defs__idl_compiler_path"; then
+          CXX_CORBA_IDL=\
+`osbe_suffix_words "/$TAO_cxx_corba_orb_defs__idl_compiler" \
+                   "$TAO_cxx_corba_orb_defs__idl_compiler_path"`
+        fi
+
+      else
+#
+# If not allowed to guess, will just assign most probable idl compiler path
+#
+        CXX_CORBA_IDL=\
+"${cxx_corba_orb_dir}/bin/tao_idl$TAO_cxx_corba_orb_defs__exe_suffix"
+      fi
+
+    fi
+
+#
+# Detecting CXX_CORBA_CPPFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_CPPFLAGS`" -eq "1"; then
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect C++ include paths
+#
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "ace/OS.h tao/corba.h" \
+                                 "TAO headers" \
+                                 TAO_cxx_corba_orb_defs__include_path \
+                                 "TAO_cxx_search_opt_func" \
+                                 "TAO_cxx_search_acknowledge_func"
+      else
+
+#
+# If not allowed to guess, will just assign most probable C++ include paths
+#
+        TAO_cxx_corba_orb_defs__include_path=\
+"${cxx_corba_orb_dir} ${cxx_corba_orb_dir}/TAO ${cxx_corba_orb_dir}/TAO/tao"
+
+      fi
+
+      if test -n "$TAO_cxx_corba_orb_defs__include_path"; then
+        CXX_CORBA_CPPFLAGS=\
+`osbe_prefix_words "-I" "$TAO_cxx_corba_orb_defs__include_path"`
+      fi
+
+      case $host_os in
+        cygwin*)
+          CXX_CORBA_CPPFLAGS="-DWIN32 $CXX_CORBA_CPPFLAGS"
+          ;;
+      esac
+
+    fi
+
+#
+# Detecting CXX_CORBA_IDLPPFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_IDLPPFLAGS`" -eq "1"; then
+
+      if test "$osbe_enable_guess_location" -eq "1"; then
+#
+# If allowed to guess, will detect IDL include paths
+#
+        osbe_guess_each_location "$cxx_corba_orb_dir" \
+                                 "tao/orb.idl" \
+                                 "TAO IDL headers" \
+                                 TAO_cxx_corba_orb_defs__include_path \
+                                 "TAO_cxx_search_opt_func"
+      else
+#
+# If not allowed to guess, will just assign most probable IDL include paths
+#
+        TAO_cxx_corba_orb_defs__include_path=\
+"$cxx_corba_orb_dir/TAO/tao $cxx_corba_orb_dir/TAO"
+
+      fi
+
+      if test -n "$TAO_cxx_corba_orb_defs__include_path"; then
+        CXX_CORBA_IDLPPFLAGS=\
+`osbe_prefix_words "-I" "$TAO_cxx_corba_orb_defs__include_path"`
+      fi
+
+    fi
+
+#    $echo "CXX_CORBA_IDLPPFLAGS: $CXX_CORBA_IDLPPFLAGS"
+
+#
+# Detecting CXX_CORBA_LDFLAGS
+#
+    if test "`osbe_var_undefined CXX_CORBA_LDFLAGS`" -eq "1"; then
+
+      CXX_CORBA_LDFLAGS=\
+`osbe_prefix_words "-L" "$TAO_cxx_corba_orb_defs__lib_path"`
+
+    fi
+
+  fi
+
+  CXX_CORBA_SKELSUFFIX=${CXX_CORBA_SKELSUFFIX-"_s"}
+  CXX_CORBA_STUBSUFFIX=${CXX_CORBA_STUBSUFFIX-""}
+
+  CXX_CORBA_EXTRA_IDLFLAGS=${CXX_CORBA_EXTRA_IDLFLAGS-""}
+
+  if test "`osbe_var_undefined CXX_CORBA_LIBS`" -eq "1"; then
+
+    if test "$TAO_cxx_corba_orb_defs__release" = "1"; then
+      CXX_CORBA_LIBS=`osbe_prefix_words "-l" "$TAO_cxx_corba_orb_defs__libs"`
+    else
+      CXX_CORBA_LIBS=`osbe_wrap_words "-l" "d" "$TAO_cxx_corba_orb_defs__libs"`
+    fi
+
+  fi
+
+  if test "`osbe_var_undefined CXX_CORBA_CXXFLAGS`" -eq "1"; then
+    case $host_os in
+      cygwin*)
+        if test "$TAO_cxx_corba_orb_defs__release" = "1"; then
+          CXX_CORBA_CXXFLAGS="-MD"
+        else
+          CXX_CORBA_CXXFLAGS="-MDd"
+        fi
+        ;;
+      *)
+        CXX_CORBA_CXXFLAGS=""
+        ;;
+    esac
+  fi
+}
+
+TAO_cxx_corba_orb_postconfig()
+{
+  CXX_CORBA_OUTPUTDIRFLAG="-o"
+
+  CXX_CORBA_IDLFLAGS=\
+"${CXX_CORBA_EXTRA_IDLFLAGS}\
+ -Sp\
+ -in\
+ -ci ${CXX_CORBA_STUBSUFFIX}.ipp\
+ -cs ${CXX_CORBA_STUBSUFFIX}.cpp\
+ -hc ${CXX_CORBA_STUBSUFFIX}.hpp\
+ -hs ${CXX_CORBA_SKELSUFFIX}.hpp\
+ -ss ${CXX_CORBA_SKELSUFFIX}.cpp"
+
+  if test -n "$cxx_corba_orb_dir"; then
+
+    case $host_os in
+      cygwin*)
+        _cxx_corba_orb_tao_idl_libpath="${cxx_corba_orb_dir}/bin"
+        ;;
+      *)
+        _cxx_corba_orb_tao_idl_libpath="${cxx_corba_orb_dir}/lib"
+        ;;
+    esac
+
+    _cxx_corba_orb_tao_ace_root="${cxx_corba_orb_dir}"
+    _cxx_corba_orb_tao_tao_root="${cxx_corba_orb_dir}"
+
+  fi
+
+  osbe_ask_for_pe_string \
+    "Please enter library path(s) for TAO IDL compiler" \
+    "Library path(s) for TAO IDL compiler" \
+    _cxx_corba_orb_tao_idl_libpath \
+    "cxx.corba.orb.tao.idl.libpath" \
+    "1"
+
+  for _osbe_corba_orb_tao_path in $_cxx_corba_orb_tao_idl_libpath; do
+    _cxx_corba_orb_tao_idl_libpath_list=\
+"${_cxx_corba_orb_tao_idl_libpath_list}:${_osbe_corba_orb_tao_path}"
+  done
+
+  osbe_ask_for_pe_string \
+    "Please enter ACE binaries directory path(s)" \
+    "ACE binaries directory path(s)" \
+    _cxx_corba_orb_tao_ace_binpath \
+    "cxx.corba.orb.tao.ace_binpath" \
+    "1"
+
+  for _osbe_corba_orb_tao_path in $_cxx_corba_orb_tao_ace_binpath; do
+    _cxx_corba_orb_tao_ace_binpath_list=\
+"${_cxx_corba_orb_tao_ace_binpath_list}:${_osbe_corba_orb_tao_path}"
+  done
+
+  case $host_os in
+    cygwin*)
+      CXX_CORBA_ORB_PRE_RULES=\
+"export PATH :=\$(PATH)${_cxx_corba_orb_tao_ace_binpath_list}\
+${_cxx_corba_orb_tao_idl_libpath_list}"
+      ;;
+    *)
+      CXX_CORBA_ORB_PRE_RULES=\
+"export LD_LIBRARY_PATH := \$(LD_LIBRARY_PATH)\
+${_cxx_corba_orb_tao_idl_libpath_list}
+export PATH := \$(PATH)${_cxx_corba_orb_tao_ace_binpath_list}"
+      ;;
+  esac
+
+  CXX_CORBA_ORB_PRE_RULES=\
+"export LD_LIBRARY_PATH :=\$(LD_LIBRARY_PATH)\
+${_cxx_corba_orb_tao_idl_libpath_list}
+export PATH :=\$(PATH)${_cxx_corba_orb_tao_ace_binpath_list}"
+
+CXX_CORBA_ORB_POST_RULES=\
+'.PHONY: _cleanall_corba_tao
+
+cleanall: _cleanall_corba_tao
+
+_all_stubs_skels_ipp := $(patsubst %.cpp,%.ipp,$(_all_stubs_skels_cpp))
+
+corba_headers += $(patsubst %.cpp,%.ipp,$(_corba_stubs))
+
+_cleanall_corba_tao:
+	-$(RM) $(RM_FLAGS) $(_all_stubs_skels_ipp)
+'
+
+  osbe_cxx_use_lib "tao_openssl" \
+                   "OpenSSL for TAO" \
+                   "" \
+                   "" \
+                   "ssl crypto" \
+                   "" \
+                   "External/TAO_OpenSSL.pre.rules" \
+                   "openssl/ssl.h \
+${TAO_cxx_corba_orb_defs__lib_prefix}ssl$TAO_cxx_corba_orb_defs__lib_suffix \
+${TAO_cxx_corba_orb_defs__lib_prefix}crypto$TAO_cxx_corba_orb_defs__lib_suffix"
+
+  CXX_CORBA_ORB_LIBRARIES=\
+"include \$(osbe_builddir)/config/CXX/External/TAO_OpenSSL.pre.rules"
+}
+
+TAO_cxx_search_opt_func()
+{
+  $echo "-type f -o -type l"
+}
+
+TAO_cxx_search_acknowledge_func()
+{
+  case "$1" in
+    *.h)
+      TAO_cxx_search_acknowledge_func__signature=`cat "$1"|grep "Douglas "`
+      ;;
+    *)
+      TAO_cxx_search_acknowledge_func__signature="1"
+      ;;
+  esac
+
+  if test -z "$TAO_cxx_search_acknowledge_func__signature"; then
+    $echo "0"
+  else
+    $echo "1"
+  fi
+}

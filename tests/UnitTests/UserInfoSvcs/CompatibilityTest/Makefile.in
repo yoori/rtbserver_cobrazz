@@ -1,0 +1,6 @@
+@userinfomanagercompatibilitytest_deps@
+
+sources := UserInfoManagerCompatibilityTest.cpp
+target := UserInfoManagerCompatibilityTest
+
+include $(top_srcdir)/tests/Test.post.rules

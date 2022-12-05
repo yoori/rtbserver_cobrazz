@@ -1,0 +1,114 @@
+#ifndef USERINFOSVCS_USERBINDSERVER_IDL
+#define USERINFOSVCS_USERBINDSERVER_IDL
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    abstract interface UserBindMapper
+    {
+      exception NotReady
+      {
+        string description;
+      };
+
+      exception ChunkNotFound
+      {
+        string description;
+      };
+
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      struct UserInfo
+      {
+        CORBACommons::UserIdInfo user_id;
+        CORBACommons::UserIdInfo prev_user_id;
+        boolean min_age_reached;
+        boolean created;
+      };
+
+      struct BindRequestInfo
+      {
+        CORBACommons::StringSeq bind_user_ids;
+      };
+
+      struct GetUserRequestInfo
+      {
+        string id;
+        CORBACommons::TimestampInfo timestamp;
+        boolean silent; // disable mapping creation (seen/bound)
+        boolean generate_user_id; // generate user id if no mapping
+        boolean for_set_cookie; // change set cookie flag and check bad event count
+        CORBACommons::TimestampInfo create_timestamp;
+        CORBACommons::UserIdInfo current_user_id;
+      };
+
+      struct GetUserResponseInfo
+      {
+        CORBACommons::UserIdInfo user_id;
+        boolean min_age_reached;
+        boolean created;
+        boolean invalid_operation;
+        boolean user_found;
+      };
+
+      struct AddUserRequestInfo
+      {
+        string id;
+        CORBACommons::TimestampInfo timestamp;
+        CORBACommons::UserIdInfo user_id;
+      };
+
+      struct AddUserResponseInfo
+      {
+        CORBACommons::UserIdInfo merge_user_id;
+        boolean invalid_operation;
+      };
+
+      BindRequestInfo
+      get_bind_request(
+        in string request_id,
+        in CORBACommons::TimestampInfo timestamp)
+        raises(NotReady, ChunkNotFound, ImplementationException);
+
+      void
+      add_bind_request(
+        in string request_id,
+        in BindRequestInfo bind_request,
+        in CORBACommons::TimestampInfo timestamp)
+        raises(NotReady, ChunkNotFound, ImplementationException);
+
+      GetUserResponseInfo
+      get_user_id(in GetUserRequestInfo request_info)
+        raises(NotReady, ChunkNotFound, ImplementationException);
+
+      AddUserResponseInfo
+      add_user_id(in AddUserRequestInfo request_info)
+        raises(NotReady, ChunkNotFound, ImplementationException);
+    };
+
+    /**
+     *  UserBindServer
+     */
+    interface UserBindServer: UserBindMapper
+    {
+      typedef sequence<unsigned long> ChunkIdSeq;
+
+      struct Source
+      {
+        ChunkIdSeq chunks;
+        unsigned long chunks_number;
+      };
+
+      Source
+      get_source() raises(NotReady);
+    };
+  }; // module UserInfoSvcs
+}; // module AdServer
+
+#endif // USERINFOSVCS_USERBINDSERVER_IDL

@@ -1,0 +1,14 @@
+
+@adservertestcommonlib_deps@
+
+sources := Request.cpp \
+           HttpPoolPolicies.cpp \
+           ListSelectorPolicy.cpp \
+           ConfigCommons.cpp \
+           ReportCommons.cpp \
+           StatCommons.cpp \
+           Constraint.cpp \
+
+includes := .
+
+@adservertestcommonlib_post@

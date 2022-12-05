@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/CampaignSvcs/CampaignServerConfig.xsd">
+  <cfg:CampaignServer log_root="/opt/foros/server/var/log/CampaignServer/Out" config_update_period="30" ecpm_update_period="30" colo_id="6" version="2.0.0.0">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10106">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="CampaignServer_v8" name="CampaignServer_v8"/>
+        <cfg:Object servant="CampaignServer_v9" name="CampaignServer_v9"/>
+        <cfg:Object servant="CampaignServer_v10" name="CampaignServer_v10"/>
+        <cfg:Object servant="CampaignServer_v23" name="CampaignServer_v23"/>
+        <cfg:Object servant="CampaignServer_v24" name="CampaignServer_v24"/>
+        <cfg:Object servant="CampaignServer_v25" name="CampaignServer_v25"/>
+        <cfg:Object servant="CampaignServer_v25" name="CampaignServer"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:SNMPConfig mib_dirs="/usr/share/snmp/mibs:/opt/foros/server/mibs:/opt/oix/server/mibs/CampaignSvcs/CampaignServer" index="0"/>
+    <cfg:Logger filename="/opt/foros/server/var/log/CampaignServer/CampaignServer">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+    </cfg:Logger>
+    <cfg:Logging>
+      <cfg:ColoUpdateStat flush_period="30"/>
+    </cfg:Logging>
+    <cfg:ProxyMode campaigns_type="virtual" load_country="gb">
+      <cfg:CampaignServerCorbaRef name="CampaignServer">
+        <cfg:Ref ref="corbaloc:ssliop:vnode0:10206/CampaignServer_v25">
+          <cfg:Secure key="/opt/foros/server/etc/moscow-test-remote1/adcluster/vnode2/cert/skey.pem" certificate="/opt/oix/server/etc/moscow-test-remote1/adcluster/vnode2/cert/scert.pem" certificate_authority="/opt/oix/server/etc/moscow-test-remote1/adcluster/vnode2/cert/ca.pem" key-word="adserver"/>
+        </cfg:Ref>
+        <cfg:Ref ref="corbaloc:ssliop:vnode3:10206/CampaignServer_v25">
+          <cfg:Secure key="/opt/foros/server/etc/moscow-test-remote1/adcluster/vnode2/cert/skey.pem" certificate="/opt/oix/server/etc/moscow-test-remote1/adcluster/vnode2/cert/scert.pem" certificate_authority="/opt/oix/server/etc/moscow-test-remote1/adcluster/vnode2/cert/ca.pem" key-word="adserver"/>
+        </cfg:Ref>
+      </cfg:CampaignServerCorbaRef>
+    </cfg:ProxyMode>
+  </cfg:CampaignServer>
+</cfg:AdConfiguration>

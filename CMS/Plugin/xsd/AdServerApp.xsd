@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Channel Serving Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:element name="configuration">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="commonConfig" type="CommonConfigType">
+          <xsd:annotation>
+            <xsd:documentation>
+              AdServer common configuration.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:choice>
+          <xsd:element name="proxyConfig" type="ProxyConfigType">
+            <xsd:annotation>
+              <xsd:documentation>
+                AdServer proxy configuration.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="remoteConfig" type="RemoteConfigType">
+            <xsd:annotation>
+              <xsd:documentation>
+                AdServer remote configuration.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  
+  <xsd:complexType name="CommonConfigType">
+    <xsd:sequence>
+      <xsd:element name="languageSupport" type="LanguageSupportType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Support of language features.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="RemoteConfigType">
+    <xsd:sequence>
+      <xsd:element name="channelProxyRef" type="CorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to ChannelProxy.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="campaignServerRef" type="CorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to CampaignServer.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProxyConfigType">
+    <xsd:sequence>
+      <xsd:element name="channelControllerRef" type="CorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to ChannelController.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="campaignServerRef" type="CorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA reference to CampaignServer.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="LanguageSupportType">
+    <xsd:attribute name="korean" type="xsd:boolean"/>
+    <xsd:attribute name="japanese" type="xsd:boolean"/>
+  </xsd:complexType>
+
+</xsd:schema>

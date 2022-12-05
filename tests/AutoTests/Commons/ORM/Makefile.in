@@ -1,0 +1,10 @@
+@autotestscommonsorm_deps@
+
+sources := \
+	ORM.cpp \
+	ORMLogic.cpp \
+	Utils.cpp \
+	PQORMObjects.cpp \
+
+includes := .
+@autotestscommonsorm_post@

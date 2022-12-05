@@ -1,0 +1,14 @@
+@fcgiserver_deps@
+
+includes := Frontends/Modules
+
+sources := FCGIServer.cpp \
+  Acceptor.cpp \
+  FrontendsPool.cpp \
+  WorkerStatsObject.cpp \
+  AcceptorBoostAsio.cpp \
+  BoostAsioContextRunActiveObject.cpp
+
+target := FCGIServer
+
+@fcgiserver_post@

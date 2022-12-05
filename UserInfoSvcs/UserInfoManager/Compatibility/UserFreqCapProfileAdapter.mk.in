@@ -1,0 +1,12 @@
+@userfreqcapprofileadapter_deps@
+
+sources := UserFreqCapProfileAdapter.cpp
+
+plain_sources := \
+  UserFreqCapProfile_v290.pst \
+  UserFreqCapProfile_v330.pst \
+  UserFreqCapProfile_v340.pst
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@userfreqcapprofileadapter_post@

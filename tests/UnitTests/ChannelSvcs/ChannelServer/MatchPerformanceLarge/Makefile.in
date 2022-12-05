@@ -1,0 +1,6 @@
+@matchperformancelargetestexe_deps@
+
+sources := MatchPerformanceLargeTest.cpp
+target := MatchPerformanceLargeTest
+
+include $(top_srcdir)/tests/Test.post.rules

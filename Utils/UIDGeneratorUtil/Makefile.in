@@ -1,0 +1,6 @@
+@uidgeneratorutilexe_deps@
+
+sources := Application.cpp
+target := UIDGeneratorUtil
+
+@uidgeneratorutilexe_post@

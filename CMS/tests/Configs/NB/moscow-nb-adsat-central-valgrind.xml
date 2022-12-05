@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="moscow-nb-adsat-central-valgrind"
+  description="Moscow NB Central (valgrind)"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="adsc-nbadsat0" hostName="adsc-nbadsat0"/>
+  <host name="adsc-nbadsat1" hostName="adsc-nbadsat1"/>
+
+  <host name="adsp-nbadsat0" hostName="adsp-nbadsat0"/>
+  <host name="adsp-nbadsat1" hostName="adsp-nbadsat1"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+    <configuration>
+      <environment xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+        <develParams valgrind="true" suppression-file="/opt/foros/server/data/oix-server.supp"/>
+      </environment>
+    </configuration>
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            unixcommons_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <coloParams colo_id="1">
+            <virtualServer>
+              <adservingDomain name="a.foros-nbadsat.net"/>
+              <adservingDomain name="b.foros-nbadsat.net"/>
+              <thirdPartyContentDomain name="foroscrv-nbadsat.net"/>
+            </virtualServer>
+          </coloParams>
+          <inventoryStats simplifying="100"/>
+          <central>
+            <pgConnection connection_string="host=stat-nbmaster.ocslab.com port=5432 dbname=nb_trunk_manual user=ro password=adserver"/>
+            <pgConnectionForLogProcessing connection_string="host=stat-nbmaster.ocslab.com port=5432 dbname=nb_trunk_manual user=ads password=adserver"/>
+
+            <statFilesReceiverRef host="stat-nbouiat" port="12873"/>
+            <dataSourceRef host="oui-nbouiat0" path="filesender"/>
+          </central>
+        </cluster>
+      </configuration>
+
+      <!-- ui -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubClusterDevel">
+
+
+        <!-- lp -->
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessingDevel">
+          <configuration>
+            <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+             <syncLogs>
+                <networkParams port="10112"/>
+                <logging log_level="7" sys_log="false"/>
+                <fileTransferring file_check_period="10" host_check_period="10"/>
+              </syncLogs>
+
+              <syncLogsServer>
+                <networkParams port="10114"/>
+                <logging log_level="1" sys_log="false"/>
+              </syncLogsServer>
+            </logProcessing>
+          </configuration>
+       </serviceGroup>
+
+        <!-- be -->
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcherDevel"
+          host="adsc-nbadsat1">
+          <configuration>
+            <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10113"/>
+              <logging log_level="7"/>
+              <updateParams period="30"/>
+              <statLogging file_check_period="10" flush_period="10" activity_flush_period="3600"/>
+            </expressionMatcher>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizerDevel"
+          host="adsc-nbadsat1">
+          <configuration>
+            <logGeneralizer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10111"/>
+              <logging log_level="7"/>
+              <statLogging file_check_period="10" flush_period="10" flush_size="10000"/>
+            </logGeneralizer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManagerDevel"
+          host="adsc-nbadsat1">
+          <configuration>
+            <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10120"/>
+              <logging log_level="7"/>
+              <statLogging file_check_period="10" flush_period="30"/>
+            </requestInfoManager>
+          </configuration>
+        </service>
+
+       <service
+          descriptor="AdCluster/BackendSubCluster/CampaignServer"
+          name="CampaignServerDevel"
+          host="adsc-nbadsat0">
+          <configuration>
+            <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10106"/>
+              <logging log_level="4"/>
+              <updateParams update_period="30" ecpm_update_period="30"/>
+            </campaignServer>
+          </configuration>
+        </service>
+
+      </serviceGroup>
+
+      <!-- fe1 -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster-1">
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <startParams timeout="6000"/>
+          </frontendCluster>
+          <channelServing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <channelServing>
+              <scaleParams chunks_count="10"/>
+            </channelServing>
+          </channelServing>
+        </configuration>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManagerDevel"
+          host="adsc-nbadsat1">
+          <configuration>
+            <userInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10101"/>
+              <logging log_level="7"/>
+              <updateParams update_period="30"/>
+              <profilesCleanupParams life_time="3600" clean_time="00:01"/>
+            </userInfoManager>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerControllerDevel"
+          host="adsc-nbadsat1">
+          <configuration>
+            <userInfoManagerController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10102"/>
+              <logging log_level="7"/>
+              <controlParams status_check_period="10"/>
+            </userInfoManagerController>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServerDevel"
+          host="adsc-nbadsat1">
+            <configuration>
+              <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10103"/>
+                <logging log_level="7"/>
+                <updateParams period="30" chunks_count="32"/>
+              </channelServer>
+            </configuration>
+        </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelControllerDevel"
+           host="adsc-nbadsat1">
+          <configuration>
+            <channelController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10104"/>
+              <logging log_level="7"/>
+            </channelController>
+          </configuration>
+        </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
+           name="ChannelSearchServiceDevel"
+           host="adsc-nbadsat1">
+          <configuration>
+            <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10009"/>
+              <logging log_level="7"/>
+            </channelSearchService>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="FrontendDevel"
+          host="adsc-nbadsat1">
+            <configuration>
+              <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <webServerParams
+                  timeout="300"
+                  keep_alive="true"
+                  max_clients="100"
+                  min_spare_threads="10"
+                  max_spare_threads="100"
+                  threads_per_process="10"/>
+                <debugInfo use_acl="false" show_history_profile="true"/>
+                <requestModule>
+                  <logging log_level="7"/>
+                  <session timeout="30"/>
+                </requestModule>
+                <impressionModule>
+                  <logging log_level="7"/>
+                </impressionModule>
+                <clickModule>
+                  <logging log_level="7"/>
+                </clickModule>
+                <actionModule>
+                  <logging log_level="7"/>
+                </actionModule>
+                <optoutModule>
+                  <logging log_level="7" log_ip="true"/>
+                </optoutModule>
+                <pageSenseModule/>
+                <pubTagModule/>
+              </frontend>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/BillingServer"
+            name="BillingServerDevel"
+            host="adsc-nbadsat1">
+            <configuration>
+              <billingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10131"/>
+                <logging log_level="7" sys_log="false"/>
+              </billingServer>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+            name="CampaignManagerDevel"
+            host="adsc-nbadsat1">
+            <configuration>
+              <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10107"/>
+                <logging log_level="7"/>
+                <updateParams
+                  update_period="20"
+                  ecpm_update_period="7"
+                  campaign_types="all"/>
+                <statLogging flush_period="10"/>
+              </campaignManager>
+            </configuration>
+          </service>
+      </serviceGroup>
+
+    </serviceGroup>
+
+    <!-- PBE#1 configuration -->
+    <serviceGroup descriptor="AdProxyCluster" name="AdProxyCluster#1">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            server_root="/opt/foros/server"/>
+          <secureParams ca="ca.pem"/>
+          <syncLogs xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <logging log_level="4" sys_log="false"/>
+            <fileTransferring file_check_period="10" host_check_period="10">
+              <logMove host="adsc-nbadsat1"/>
+              <dataSourceRef host="oui-nbouiat0" path="filesender"/>
+            </fileTransferring>
+          </syncLogs>
+        </cluster>
+      </configuration>
+
+      <service
+        descriptor="AdProxyCluster/UserInfoExchanger"
+        host="adsp-nbadsat0">
+        <configuration>
+          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10210" host="adsp-nbadsat0"/>
+            <logging log_level="4"/>
+          </userInfoExchanger>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/ChannelProxy"
+        host="adsp-nbadsat0">
+        <configuration>
+          <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10205" host="adsp-nbadsat0"/>
+            <logging log_level="4"/>
+          </channelProxy>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/CampaignServer"
+        host="adsp-nbadsat0">
+        <configuration>
+          <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10206" host="adsp-nbadsat0"/>
+            <logging log_level="4"/>
+            <updateParams update_period="30" ecpm_update_period="30"/>
+          </campaignServer>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/STunnelServer"
+        host="adsp-nbadsat0">
+        <configuration>
+          <sTunnelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10200" internal_port="10122"/>
+          </sTunnelServer>
+        </configuration>
+      </service>
+    </serviceGroup>
+
+    <!-- PBE#2 configuration -->
+    <serviceGroup descriptor="AdProxyCluster" name="AdProxyCluster#2">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            server_root="/opt/foros/server"/>
+          <secureParams ca="ca.pem"/>
+          <syncLogs xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <logging log_level="4" sys_log="false"/>
+            <fileTransferring file_check_period="10" host_check_period="10">
+              <logMove host="adsc-nbadsat1"/>
+              <dataSourceRef host="oui-nbouiat0" path="filesender"/>
+            </fileTransferring>
+          </syncLogs>
+        </cluster>
+      </configuration>
+
+      <service
+        descriptor="AdProxyCluster/UserInfoExchanger"
+        host="adsp-nbadsat1">
+        <configuration>
+          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10210" host="adsp-nbadsat1"/>
+            <logging log_level="4"/>
+          </userInfoExchanger>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/ChannelProxy"
+        host="adsp-nbadsat1">
+        <configuration>
+          <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10205" host="adsp-nbadsat1"/>
+            <logging log_level="4"/>
+          </channelProxy>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/CampaignServer"
+        host="adsp-nbadsat1">
+        <configuration>
+          <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <externalNetworkParams port="10206" host="adsp-nbadsat1"/>
+            <logging log_level="4"/>
+            <updateParams update_period="30" ecpm_update_period="30"/>
+          </campaignServer>
+        </configuration>
+      </service>
+
+      <service
+        descriptor="AdProxyCluster/STunnelServer"
+        host="adsp-nbadsat1">
+        <configuration>
+          <sTunnelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="10200" internal_port="10122"/>
+          </sTunnelServer>
+        </configuration>
+      </service>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

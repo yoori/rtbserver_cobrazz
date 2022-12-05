@@ -1,0 +1,16 @@
+@synclogs_deps@
+
+sources  := \
+  Utils.cpp \
+  FileRouter.cpp \
+  RSyncFileRouter.cpp \
+  RouteHelpers.cpp \
+  FeedRouteMover.cpp \
+  FeedRouteProcessor.cpp \
+  FeedRouteGroupProcessor.cpp \
+  FetchRouteProcessor.cpp
+
+target   := SyncLogs
+includes := .
+
+@synclogs_post@

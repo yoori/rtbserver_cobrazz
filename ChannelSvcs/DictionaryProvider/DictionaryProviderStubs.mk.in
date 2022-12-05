@@ -1,0 +1,8 @@
+@dictionaryprovider_deps@
+sources := 
+includes := .
+
+corba_stub_idls := DictionaryProvider.idl
+corba_includes := .
+corba_idl_includes := .
+@dictionaryprovider_post@

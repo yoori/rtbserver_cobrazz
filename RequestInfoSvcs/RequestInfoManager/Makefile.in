@@ -1,0 +1,27 @@
+include Common.pre.rules
+
+target_makefile_list :=	\
+  RequestLogLoader.mk \
+  RequestOutLogger.mk \
+  RequestInfoContainer.mk \
+  UserCampaignReachContainer.mk \
+  UserActionInfoContainer.mk \
+  PassbackContainer.mk \
+  UserFraudProtectionContainer.mk \
+  UserSiteReachContainer.mk \
+  UserTagRequestMergeContainer.mk \
+  TagRequestProfiler.mk \
+  BillingProcessor.mk \
+  RequestOperationSaver.mk \
+  RequestInfoManagerStubs.mk \
+  RequestInfoManager.mk \
+  Compatibility.mk
+
+UserCampaignReachContainer.mk : Compatibility.mk
+PassbackContainer.mk : Compatibility.mk
+RequestInfoContainer.mk : Compatibility.mk
+UserActionInfoContainer.mk : Compatibility.mk
+UserSiteReachContainer.mk : Compatibility.mk
+RequestLogLoader.mk : Compatibility.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

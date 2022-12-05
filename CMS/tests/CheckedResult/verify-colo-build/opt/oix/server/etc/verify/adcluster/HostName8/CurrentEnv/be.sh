@@ -1,0 +1,9 @@
+news_item_server_port=10124
+export news_item_server_port
+
+news_query_server_port=10125
+export news_query_server_port
+
+news_cache_controller_port=10126
+export news_cache_controller_port
+

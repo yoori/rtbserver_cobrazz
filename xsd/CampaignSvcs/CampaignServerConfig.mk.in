@@ -1,0 +1,8 @@
+@campaignserverconfig_deps@
+sources := 
+includes := .
+xsd_files := CampaignServerConfig.xsd
+xsd_includes := xsd
+
+@campaignserverconfig_post@
+

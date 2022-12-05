@@ -1,0 +1,11 @@
+name="AutoTestsCommonsRequest"
+so_files=AutoTestsCommonsRequest
+
+osbe_cxx_dep String
+osbe_cxx_dep Generics
+osbe_cxx_dep http
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Tanx
+osbe_cxx_dep Baidu
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons

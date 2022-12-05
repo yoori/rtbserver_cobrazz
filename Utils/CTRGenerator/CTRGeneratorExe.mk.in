@@ -1,0 +1,6 @@
+@ctrgeneratorexe_deps@
+
+sources := Application.cpp
+target := CTRGenerator
+
+@ctrgeneratorexe_post@

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>12</ttl>
+<reqDate since_epoch="1239866065">Thu, 16 Apr 2009 07:14:25 GMT</reqDate>
+<total>1</total>
+<items>
+<item>
+  <title><![CDATA[Hundreds more UK jobs to go as UBS cuts]]></title>
+  <description><![CDATA[Several hundred more British banking jobs will be lost in the coming months after UBS the troubled Swiss financial group revealed plans to slash its global workforce by another 8700 by the end of next year.]]></description>
+  <pubDate>Thu, 16 Apr 2009 04:38:48 GMT</pubDate>
+  <link><![CDATA[http://www.telegraph.co.uk/finance/newsbysector/banksandfinance/5159873/Hundreds-more-UK-jobs-to-go-as-UBS-cuts.html]]></link>
+  <guid>11786582046328561900</guid>
+    <language><![CDATA[eng]]></language>
+  <event>
+    <id>10798226199780295549</id>
+    <capacity>24</capacity>
+  </event>
+  <source>
+    <title><![CDATA[Telegraph Finance]]></title>
+    <link><![CDATA[http://www.telegraph.co.uk/finance/rss]]></link>
+    <country><![CDATA[GBR]]></country>
+  </source>
+</item>
+</items>
+</result>

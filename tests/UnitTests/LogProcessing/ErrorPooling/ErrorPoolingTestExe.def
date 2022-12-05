@@ -1,0 +1,4 @@
+osbe_cxx_dep Commons
+osbe_cxx_dep Logger
+osbe_cxx_dep SyncLogsErrorPool
+osbe_cxx_dep BiddingFrontendGroupLogger

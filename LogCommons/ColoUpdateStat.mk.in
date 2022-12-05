@@ -1,0 +1,6 @@
+@coloupdatestat_deps@
+sources := ColoUpdateStat.cpp
+
+includes := .
+@coloupdatestat_post@
+

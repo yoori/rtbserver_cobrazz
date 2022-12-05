@@ -1,0 +1,6 @@
+@cmpstat_deps@
+sources := CmpStat.cpp
+
+includes := .
+@cmpstat_post@
+

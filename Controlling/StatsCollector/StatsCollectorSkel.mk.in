@@ -1,0 +1,6 @@
+@statscollectorskel_deps@
+
+corba_skeleton_idls := StatsCollector.idl
+corba_idl_includes := . 
+@statscollectorskel_post@
+

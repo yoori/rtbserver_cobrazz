@@ -1,0 +1,4 @@
+@userfraudprotectioncontainer_deps@
+sources := UserFraudProtectionContainer.cpp
+
+@userfraudprotectioncontainer_post@

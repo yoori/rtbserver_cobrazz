@@ -1,0 +1,23 @@
+@biddingfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := \
+  RequestInfoFiller.cpp \
+  AdXmlRequestInfoFiller.cpp \
+  BiddingFrontend.cpp \
+  BiddingFrontendStat.cpp \
+  PlannerPool.cpp \
+  BidRequestTask.cpp \
+  OpenRtbBidRequestTask.cpp \
+  GoogleBidRequestTask.cpp \
+  AppNexusBidRequestTask.cpp \
+  AdXmlBidRequestTask.cpp \
+  AdJsonBidRequestTask.cpp \
+  ClickStarBidRequestTask.cpp \
+  DAOBidRequestTask.cpp \
+  KeywordFormatter.cpp
+
+# AdFoxBidRequestTask.cpp \
+
+@biddingfrontend_post@

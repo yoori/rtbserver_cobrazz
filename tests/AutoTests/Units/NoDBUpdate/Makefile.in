@@ -1,0 +1,17 @@
+@autotestsnodbupdateunits_deps@
+
+sources := \
+	SpentBudgetChecker.cpp \
+  ApplyDeliveryThresholdTest.cpp \
+  BudgetOverrunsTest.cpp \
+  CGEndDateTest.cpp \
+  ChangingCreativeWeightsTest.cpp \
+  InactiveCCGTest.cpp \
+  MaxPublisherShareTest.cpp \
+  CampaignBudgetTest.cpp \
+  CCGBudgetTest.cpp \
+  AccountBudgetTest.cpp \
+  TestRequestNoDBModeTest.cpp
+
+includes := .
+@autotestsnodbupdateunits_post@

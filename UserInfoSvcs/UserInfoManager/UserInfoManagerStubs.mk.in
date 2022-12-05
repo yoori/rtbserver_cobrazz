@@ -1,0 +1,10 @@
+@userinfomanagerstubs_deps@
+
+sources := 
+includes := .
+
+corba_stub_idls := UserInfoManager.idl
+corba_includes := .
+corba_idl_includes := .
+
+@userinfomanagerstubs_post@

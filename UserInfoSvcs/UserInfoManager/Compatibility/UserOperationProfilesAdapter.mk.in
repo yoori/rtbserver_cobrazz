@@ -1,0 +1,18 @@
+@useroperationprofilesadapter_deps@
+
+sources := UserOperationProfilesAdapter.cpp
+
+plain_sources := \
+  UserOperationProfiles_v24.pst \
+  UserOperationProfiles_v25.pst \
+  UserOperationProfiles_v26.pst \
+  UserOperationProfiles_v290.pst \
+  UserOperationProfiles_v300.pst \
+  UserOperationProfiles_v301.pst \
+  UserOperationProfiles_v310.pst \
+  UserOperationProfiles_v320.pst \
+  UserOperationProfiles_v340.pst
+  
+include $(top_builddir)/Plain/Plain.post.rules
+
+@useroperationprofilesadapter_post@

@@ -1,0 +1,6 @@
+@userextractutil_deps@
+
+sources := UserExtractUtil.cpp
+target := UserExtractUtil
+
+@userextractutil_post@

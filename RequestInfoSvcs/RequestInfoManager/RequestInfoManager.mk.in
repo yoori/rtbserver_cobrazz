@@ -1,0 +1,15 @@
+@requestinfomanagerexe_deps@
+
+sources := RequestInfoManagerMain.cpp \
+  RequestInfoManagerImpl.cpp \
+  RequestOutLogger.cpp \
+  RequestLogLoader.cpp \
+  RequestOperationDistributor.cpp \
+  ExpressionMatcherNotifier.cpp
+
+corba_skeleton_idls := RequestInfoManager.idl
+corba_idl_includes := .
+
+target := RequestInfoManager
+
+@requestinfomanagerexe_post@

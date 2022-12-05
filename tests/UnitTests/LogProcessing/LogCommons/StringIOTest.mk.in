@@ -1,0 +1,6 @@
+@stringiotestexe_deps@
+
+sources := StringIOTest.cpp
+target := StringIOTest
+
+include $(top_srcdir)/tests/Test.post.rules

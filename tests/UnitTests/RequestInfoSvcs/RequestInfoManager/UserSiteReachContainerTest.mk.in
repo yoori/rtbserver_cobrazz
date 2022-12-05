@@ -1,0 +1,8 @@
+@usersitereachcontainertestexe_deps@
+
+sources := UserSiteReachContainerTest.cpp
+
+target := UserSiteReachContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

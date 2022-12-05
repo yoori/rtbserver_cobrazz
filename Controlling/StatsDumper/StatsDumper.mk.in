@@ -1,0 +1,6 @@
+@statsdumper_deps@
+
+sources  := StatsDumper.cpp
+
+@statsdumper_post@
+

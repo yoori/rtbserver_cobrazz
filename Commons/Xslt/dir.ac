@@ -1,0 +1,6 @@
+# @file   dir.ac
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CXX_DEF([XslTransformer], [XslTransformer.mk])
+OSBE_CXX_DEF([XslTransformAdminExe], [XslTransformAdmin.mk])
+OSBE_CXX_DEF([XsltFileCache], [XsltFileCache.mk])

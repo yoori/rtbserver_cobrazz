@@ -1,0 +1,74 @@
+NewsItemServer-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, Unsigned32 FROM SNMPv2-SMI
+  DisplayString FROM SNMPv2-TC
+  discoverSvcs FROM AdServer-MIB;
+
+newsItemServer OBJECT IDENTIFIER ::= { discoverSvcs 1 }
+
+index OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Index value used by the process"
+  ::= { newsItemServer 1 }
+
+updatedNewsItems OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of updated news items"
+  ::= { newsItemServer 100 }
+
+updatedNewsEvents OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of updated news events"
+  ::= { newsItemServer 101 }
+
+itemRequests OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of requests for news items"
+  ::= { newsItemServer 102 }
+
+eventRequests OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of requests for news events"
+  ::= { newsItemServer 103 }
+
+repeatItemRequests OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of repeat requests for news items to master xsearch server"
+  ::= { newsItemServer 104 }
+
+repeatEventRequests OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of repeat requests for news events to master xsearch server"
+  ::= { newsItemServer 105 }
+
+repeatItemNonEmptyRequests OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of repeat requests for news items to master xsearch server with non empty result"
+  ::= { newsItemServer 106 }
+
+repeatEventNonEmptyRequests OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION "Number of repeat requests for news events to master xsearch server with non empty result"
+  ::= { newsItemServer 107 }
+
+END
+

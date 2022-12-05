@@ -1,0 +1,8 @@
+@useridcontroller_deps@
+
+sources := UserIdController.cpp
+
+includes :=
+
+@useridcontroller_post@
+

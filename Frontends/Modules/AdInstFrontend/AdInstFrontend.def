@@ -1,0 +1,15 @@
+name="AdInstFrontend"
+so_files=AdInstFrontend
+
+osbe_cxx_dep Stream
+osbe_cxx_dep http
+osbe_cxx_dep IPMap
+osbe_cxx_dep CORBACommons
+
+osbe_cxx_dep Commons
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep CookieManager
+
+osbe_cxx_dep FeConfig
+osbe_cxx_dep CommonModule

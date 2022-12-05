@@ -1,0 +1,6 @@
+user_info_manager_port=10101
+export user_info_manager_port
+
+sync_logs_port=10112
+export sync_logs_port
+

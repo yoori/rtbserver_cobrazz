@@ -1,0 +1,62 @@
+#ifndef CAMPAIGNSVCS_CAMPAIGNSERVER_BILLSTATINFO_V350_IDL
+#define CAMPAIGNSVCS_CAMPAIGNSERVER_BILLSTATINFO_V350_IDL
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+module CampaignSvcs_v350
+{
+  struct DayAmount
+  {
+    CORBACommons::TimestampInfo day;
+    CORBACommons::DecimalInfo amount;
+  };
+
+  typedef sequence<DayAmount> DayAmountSeq;
+
+  struct AmountDistributionInfo
+  {
+    DayAmount prev_days_amount; // .amount = sum amount at interval (-inf, .day]
+    DayAmountSeq day_amounts;
+  };
+
+  typedef sequence<AmountDistributionInfo> AmountDistributionSeq;
+
+  struct AccountAmountDistributionInfo
+  {
+    unsigned long account_id;
+    AmountDistributionInfo amount_distribution;
+  };
+
+  typedef sequence<AccountAmountDistributionInfo>
+    AccountAmountDistributionSeq;
+
+  struct CampaignAmountDistributionInfo
+  {
+    unsigned long campaign_id;
+    AmountDistributionInfo amount_distribution;
+  };
+
+  typedef sequence<CampaignAmountDistributionInfo>
+    CampaignAmountDistributionSeq;
+
+  struct CCGAmountDistributionInfo
+  {
+    unsigned long ccg_id;
+    AmountDistributionInfo amount_distribution;
+  };
+
+  typedef sequence<CCGAmountDistributionInfo>
+    CCGAmountDistributionSeq;
+
+  struct BillStatInfo
+  {
+    AccountAmountDistributionSeq accounts;
+    CampaignAmountDistributionSeq campaigns;
+    CCGAmountDistributionSeq ccgs;
+  };
+};
+};
+
+#endif /*CAMPAIGNSVCS_CAMPAIGNSERVER_BILLSTATINFO_IDL*/

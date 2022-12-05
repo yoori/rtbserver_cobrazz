@@ -1,0 +1,5 @@
+name="SiteReferrerStat"
+so_files=SiteReferrerStat
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons
+osbe_cxx_dep LogCommons

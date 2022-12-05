@@ -1,0 +1,6 @@
+@sectokentest_deps@
+
+sources := SecTokenTest.cpp
+target := SecTokenTest
+
+include $(top_srcdir)/tests/Test.post.rules

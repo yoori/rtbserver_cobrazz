@@ -1,0 +1,12 @@
+@dictionaryproviderexe_deps@
+sources := DictionaryProviderMain.cpp DictionaryProviderImpl.cpp DictionaryContainer.cpp 
+
+corba_skeleton_idls := \
+  DictionaryProvider.idl \
+
+corba_idl_includes := .
+
+target := DictionaryProvider
+
+@dictionaryproviderexe_post@
+

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/channel-groups/mibs:/opt/zenoss/lib/oix/channel-groups/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/channel-groups/mibs/Controlling"/>
+  <hosts>
+    <host name="uk00labadsrv00" monitor="localhost" group="OIX/Server" location="" system="channel_groups/AdServer" community="public">
+      <service name="OixServerCommons" suffix="0" comment=""/>
+    </host>
+    <host name="uk00labadsrv01" monitor="localhost" group="OIX/Server" location="" system="channel_groups/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

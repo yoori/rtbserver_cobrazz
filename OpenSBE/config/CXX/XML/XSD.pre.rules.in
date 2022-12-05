@@ -1,0 +1,57 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : XSD.pre.rules.in
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+ifndef _CXX_XML_XSD_PRE_RULES_
+define _CXX_XML_XSD_PRE_RULES_
+1
+endef
+
+ifeq ($(origin rg_first_level), undefined)
+  rg_first_level:=yes
+endif
+
+ifeq ($(rg_first_level), yes)
+  rg_first_level:=no
+@CXX_XML_XSD_TRANSLATOR_LIBRARIES@
+  rg_first_level:=yes
+  rg_rules_dep_from += $$(osbe_builddir)/config/CXX/XML/XSD.pre.rules
+else
+@CXX_XML_XSD_TRANSLATOR_LIBRARIES@
+endif
+
+
+
+CPP_FLAGS := $(CPP_FLAGS) @CXX_XML_XSD_CPPFLAGS@
+CXX_FLAGS := $(CXX_FLAGS) @CXX_XML_XSD_CXXFLAGS@
+LD_FLAGS  := $(LD_FLAGS) @CXX_XML_XSD_LDFLAGS@
+LIBS      := @CXX_XML_XSD_LIBS@ $(LIBS)
+
+CXX_XML_XSD_TRANSLATOR_ID := @CXX_XML_XSD_TRANSLATOR_ID@
+CXX_XML_XSD_TRANSLATOR := @CXX_XML_XSD_TRANSLATOR@
+CXX_XML_XSD_TRANSLATOR_OUTPUTDIRFLAG := @CXX_XML_XSD_TRANSLATOR_OUTPUTDIRFLAG@
+CXX_XML_XSD_TRANSLATOR_COMMON_FLAGS := @CXX_XML_XSD_TRANSLATOR_COMMON_FLAGS@
+CXX_XML_XSD_TRANSLATOR_TREE_FLAGS := @CXX_XML_XSD_TRANSLATOR_TREE_FLAGS@
+CXX_XML_XSD_TRANSLATOR_PARSER_FLAGS := @CXX_XML_XSD_TRANSLATOR_PARSER_FLAGS@
+
+@CXX_XML_XSD_TRANSLATOR_PRE_RULES@
+
+endif #_CXX_XML_XSD_PRE_RULES_

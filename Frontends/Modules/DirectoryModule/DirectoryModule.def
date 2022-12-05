@@ -1,0 +1,9 @@
+name="DirectoryModule"
+so_files=DirectoryModule
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep Stream
+osbe_cxx_dep BoundedCache
+osbe_cxx_dep Commons
+osbe_cxx_dep FeConfig

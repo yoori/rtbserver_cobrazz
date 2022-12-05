@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:xse="http://www.codesynthesis.com/xmlns/xml-schema-extension"
+            xmlns:lib="http://www.codesynthesis.com/xmlns/library"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+<xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+<xsd:include schemaLocation="../Utils/CTRGeneratorConfig.xsd"/>
+
+<xsd:annotation>
+  <xsd:documentation>
+    Predictor libsvm generator XML configuration file
+  </xsd:documentation>
+</xsd:annotation>
+
+<xsd:element name="SVMGeneratorConfiguration" type="SVMGeneratorConfigurationType"/>
+
+<xsd:complexType name="SVMGeneratorConfigurationType">
+  <xsd:sequence>
+    <xsd:element name="Logger" type="ErrorLoggerType" minOccurs="1" maxOccurs="1"/>
+    <xsd:element name="CorbaConfig" type="CorbaConfigType" minOccurs="1" maxOccurs="1"/>
+    <xsd:element name="Model" type="ModelType" minOccurs="1" maxOccurs="1"/>
+  </xsd:sequence>
+  <xsd:attribute name="input_path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Input path for PRImpression files.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="output_path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Output path for libSVM files.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="log_days_to_keep" type="xsd:nonNegativeInteger" use="optional" default="90">
+    <xsd:annotation>
+      <xsd:documentation>Number of days to keep PRImpression files.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+</xsd:schema>

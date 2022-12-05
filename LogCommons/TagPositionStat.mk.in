@@ -1,0 +1,6 @@
+@tagpositionstat_deps@
+sources := TagPositionStat.cpp
+
+includes := .
+@tagpositionstat_post@
+

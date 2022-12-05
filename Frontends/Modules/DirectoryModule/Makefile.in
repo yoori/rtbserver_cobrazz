@@ -1,0 +1,7 @@
+@directorymodule_deps@
+
+includes := Frontends/Modules
+
+sources := DirectoryModule.cpp
+
+@directorymodule_post@

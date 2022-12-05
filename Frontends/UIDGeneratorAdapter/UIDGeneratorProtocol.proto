@@ -1,0 +1,202 @@
+package ru.madnet.enrichment.protocol;
+
+message DmpRequest {
+    optional string id = 1; // if you set this field you'll get the same id in response later (can be helpful for matching a response to a requsest)
+    optional string source = 2; // used as default Identifier.source value (if you has several different sources - use Identifier.source field that overrides this one)
+    repeated Identifier ids = 3;
+    optional Options options = 4;
+    optional Data data = 5;
+    optional string dc_id = 6; // datacenter 1 - DE, 2 - US
+}
+
+message Identifier {
+    optional string value = 1;
+
+    /*
+        examples for `type` values:
+
+        exchange_uid
+        dmp_id
+        didsha1
+        didmd5
+        dpidsha1
+        dpidmd5
+        macsha1
+        macmd5
+        ifa
+        ifasha1
+        ifamd5
+        androidid
+        imei
+        msisdn
+
+        vkontakte
+        facebook
+        googleplus
+        twitter
+        odnoklassniki
+    */
+    optional string type = 2;
+
+    optional string source = 3; // madnet, google, adfox etc
+}
+
+
+// Instructions for enrichment
+message Options {
+    // priority of aerospike requests (if ones are going to happen).
+    // recommendations:
+    // - HIGH for "online" requests (suitable for local DSP, SYNC)
+    // - MEDIUM - for performance dependent requests (suitable for AnalyticEngine)
+    // - LOW - for "offline" requests (suitable for remote DSP, adserver, DMP loaders)
+    optional Priority priority = 1 [default = LOW];
+
+    // set "false" if you're going to ignore the response, it allows enrichment to answer faster
+    optional bool need_response = 2 [default = false];
+
+    // set "false" if you need only dmp_id field in response (and don't need "data" field, i.e. need only dmp_id field)
+    optional bool need_response_data = 3 [default = false];
+
+    // set "true" to get device data
+    optional bool need_device_data = 4 [default = false];
+
+    // set "true" when your request may create new links or a new profile
+    optional bool create_data = 5 [default = false];
+
+    // set "true" when your request may modify existing links or profiles
+    optional bool update_data = 6 [default = false];
+
+    // set "true" to indicate activity of a user
+    optional bool update_ttl = 7 [default = false];
+
+    // set "true" to replace existing buckets list with the one provided in the Data object (use empty data.buckets to clear existing list)
+    // set "false" to merge the lists
+    optional bool replace_buckets = 8 [default = false];
+
+    // set "true" to replace existing obuckets list with the one provided in the Data object (use empty data.buckets to clear existing list)
+    // set "false" to merge the lists
+    optional bool replace_obuckets = 9 [default = false];
+
+    // set "true" to replace existing apps list with the one provided in the Data object (use empty data.buckets to clear existing list)
+    // set "false" to merge the lists
+    optional bool replace_apps = 10 [default = false];
+
+    // the following list of buckets will be excluded from profile's list no matter what bucket.expiration value is
+    // (exclusion is performed after applying "merge" or "replace" operation - see replace_buckets flag)
+    repeated string exclude_buckets = 11;
+
+    // the following list of obuckets will be excluded from profile's list no matter what obucket.expiration value is
+    // (exclusion is performed after applying "merge" or "replace" operation - see replace_obuckets flag)
+    repeated string exclude_obuckets = 12;
+
+    // set "true" to replace existing places list with the one provided in the Data object (use empty data.places to clear existing list)
+    // set "false" to merge the lists
+    optional bool replace_places = 13 [default = false];
+}
+
+enum Priority {
+    LOW = 0;
+    MEDIUM = 1;
+    HIGH = 2;
+}
+
+// used in both ways: 1. to store data into aerospike and 2. to get that data back from there
+message Data {
+    optional int32 yob = 1; // year of birth
+    optional string gender = 2; // M, F or O
+    repeated string categories = 3;
+    repeated Bucket obuckets = 4; // when using in DmpRequest: merge with existing obuckets when rewrite_obuckets=false or replace existing obuckets when rewrite_obuckets=true
+    repeated Bucket buckets = 5; // when using in DmpRequest: merge with existing buckets when rewrite_buckets=false or replace existing buckets when rewrite_buckets=true
+    repeated string apps = 6; // when using in DmpReuest: merge with existing apps when rewrite_apps=false or replace existing apps when rewrite_apps=true
+    repeated UserEvent impressions = 7; // only 200 entries will be stored in the database
+    repeated UserEvent clicks = 8; // only 200 entries will be stored in the database
+    repeated UserEvent conversions = 9; // only 200 entries will be stored in the database
+    optional DeviceData device_data = 10; // set DmpRequest.options.get_device_data=true to get device_data
+    optional int64 pixel_id = 11; // for DSP adserver
+    optional string pixel_goal = 12; // for DSP adserver
+    optional string ua = 13; // user agent (DmpRequest.Data only)
+    repeated string keywords = 15; // not supported yet
+    optional Geo geo = 16; // the last known geo coordinates
+    repeated string msisdn = 17; // when using in DmpRequest: merge with existing msisdn list
+    repeated Place places = 18; // list of ~geo-buckets
+}
+
+message Bucket {
+    optional string name = 1;
+    optional string source = 2; // madnet, google, adfox etc
+    optional int64 expiration = 3; // the date (in unixtime, seconds) when the bucket expires
+}
+
+message UserEvent {
+    optional int64 campaign_id = 1;
+    optional int64 line_item_id = 2;
+    optional int64 creative_id = 3;
+    optional int64 timestamp_ms = 4; // can be omitted for DmpRequest (enrichment sets current time by default)
+}
+
+message DeviceData {
+    optional DeviceType type = 1;
+    optional string vendor = 2;
+    optional string model = 3;
+    optional string browser = 4;
+    optional string browser_version = 5;
+    optional string os = 6;
+    optional string os_version = 7;
+}
+
+enum DeviceType {
+    PHONE = 0;
+    TABLET = 1;
+    DESKTOP = 2;
+    CAMERA = 3;
+    CONSOLE = 4;
+    GLASS = 5;
+    NETBOOK = 6;
+    SETTOPBOX = 7;
+    TV = 8;
+    BOT = 9;
+}
+
+/*
+    Used to store the last known geo coordinates.
+    It's recommended to set 'geo.timestamp_ms'
+    to be able to determine the coordinates relevance in future requests.
+*/
+message Geo {
+    optional double lat = 1;
+    optional double lon = 2;
+    optional int64 timestamp_ms = 3; // timestamp the coordinates was detected
+}
+
+/*
+    Used as geo-buckets.
+*/
+message Place {
+    optional double lat = 1;
+    optional double lon = 2;
+}
+
+
+
+
+message DmpResponse {
+    optional string id = 1; // matches DmpRequest.id
+
+    /*
+        Response codes:
+        0   success
+        201 parsing error
+        202 request is too large
+        301 invalid or empty list of ids
+        302 profile is not found
+        401 server error (enrichment internal exception)
+        402 queue is full, no new requests will be accepted
+        403 timeout
+    */
+    optional int32 code = 2;
+
+
+    // only when code=0 (success):
+    optional string dmp_id = 3;
+    optional Data data = 4; // set DmpRequest.options.need_response_data=true to get this data
+}

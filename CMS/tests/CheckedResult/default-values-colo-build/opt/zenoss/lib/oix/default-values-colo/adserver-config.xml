@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/default-values-colo/mibs:/opt/zenoss/lib/oix/default-values-colo/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/default-values-colo/mibs/Controlling"/>
+  <hosts>
+    <host name="HostName5" monitor="localhost" group="OIX/Server" location="" system="default_values_colo/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

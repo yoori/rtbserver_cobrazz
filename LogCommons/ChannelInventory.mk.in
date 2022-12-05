@@ -1,0 +1,6 @@
+@channelinventory_deps@
+sources := ChannelInventory.cpp
+
+includes := .
+@channelinventory_post@
+

@@ -1,0 +1,125 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns:ptest="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Test common types.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="ChannelsType">
+    <xsd:sequence>
+      <xsd:element name="channel" type="ChannelType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="EntityCountType">
+    <xsd:attribute name="count" type="xsd:nonNegativeInteger" use="required">
+       <xsd:annotation>
+         <xsd:documentation>Count of entities.</xsd:documentation>
+       </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelType">
+    <xsd:attribute name="time_from" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Channel table time_from field.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="time_to" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Channel table time_to field.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="minimum_visits" type="xsd:nonNegativeInteger" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Minimum visits for channel.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="count" type="xsd:nonNegativeInteger" use="required">
+     <xsd:annotation>
+        <xsd:documentation>Channels count.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_type" type="ChannelTypeType" use="optional">
+     <xsd:annotation>
+        <xsd:documentation>Channels count.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignsType">
+    <xsd:sequence>
+      <xsd:element name="campaign" type="CampaignType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+   <xsd:complexType name="CampaignType">
+    <xsd:sequence>
+      <xsd:element name="type" type="CampaignEnumType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="count" type="xsd:nonNegativeInteger" use="required">
+     <xsd:annotation>
+        <xsd:documentation>Campaigns count.</xsd:documentation>
+     </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="PercentageType">
+    <xsd:restriction base="xsd:nonNegativeInteger">
+      <xsd:minInclusive value="0"/>
+      <xsd:maxInclusive value="100"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="PercentageDecimalType">
+    <xsd:restriction base="xsd:decimal">
+      <xsd:fractionDigits value="2"/>
+      <xsd:minInclusive value="0.00"/>                                  
+      <xsd:maxInclusive value="100.00"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="CampaignEnumType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="FreqCapsCampaign"/>
+       <xsd:enumeration value="FreqCapsCreative"/>
+       <xsd:enumeration value="FreqCapsCCG"/>
+       <xsd:enumeration value="CampaignSpecificSites"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="HttpMethodEnumType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="get"/>
+       <xsd:enumeration value="post"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ChannelTypeType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="D"/>
+       <xsd:enumeration value="C"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="RefererFuncEnumType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="random"/>
+       <xsd:enumeration value="sequence"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="XSLTType">
+    <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="debug"/>
+       <xsd:enumeration value="alt/main.xsl"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>

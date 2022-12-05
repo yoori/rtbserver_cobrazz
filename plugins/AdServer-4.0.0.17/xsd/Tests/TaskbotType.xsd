@@ -1,0 +1,22 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Taskbot Configuration for processing test results
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="TaskbotType">
+    <xsd:attribute name="root-path" type="NoLeadingTrailingSpaces" use="required"/>
+    <xsd:attribute name="db-host" type="NoLeadingTrailingSpaces" use="optional" default="taskbot.ocslab.com"/>
+    <xsd:attribute name="db-name" type="NoLeadingTrailingSpaces" use="optional" default="taskbot"/>
+    <xsd:attribute name="db-user" type="NoLeadingTrailingSpaces" use="optional" default="taskbot"/>
+    <xsd:attribute name="db-password" type="NoLeadingTrailingSpaces" use="optional" default="taskbot"/>
+  </xsd:complexType>
+
+</xsd:schema>

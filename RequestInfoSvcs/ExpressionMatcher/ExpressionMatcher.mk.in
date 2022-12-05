@@ -1,0 +1,16 @@
+@expressionmatcherexe_deps@
+sources  :=  \
+  ExpressionMatcherLogLoader.cpp \
+  ExpressionMatcherImpl.cpp \
+  ExpressionMatcherMain.cpp \
+  ExpressionMatcherOutLogger.cpp \
+  ExpressionMatcherStats.cpp \
+  UserTriggerMatchProfileProviderImpl.cpp \
+  ConversionProcessor.cpp
+
+corba_skeleton_idls := ExpressionMatcher.idl
+corba_idl_includes := .
+
+target := ExpressionMatcher
+
+@expressionmatcherexe_post@

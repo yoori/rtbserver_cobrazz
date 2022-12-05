@@ -1,0 +1,7 @@
+@dmpprofilinginfotestexe_deps@
+
+sources := DMPProfilingInfoTest.cpp
+target := DMPProfilingInfoTest
+vg_test_arguments :=
+
+include $(top_srcdir)/tests/Test.post.rules

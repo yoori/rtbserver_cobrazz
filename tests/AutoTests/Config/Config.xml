@@ -1,0 +1,48 @@
+<GeneralParams  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                xmlns:xi="http://www.w3.org/2001/XInclude" 
+                xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration ../../../xsd/tests/AutoTests/AutoTests.xsd">
+
+  <TimeOuts frontend_timeout="15" wait_timeout="300"/>
+
+  <Cluster name="central">
+    <Service address="http://srv-dev2.ocslab.com:12080" name="AdFrontend"/>
+    <Service address="http://srv-dev2.ocslab.com:12080" name="AdFrontend"/>
+    <Service address="srv-dev2.ocslab.com:12003" name="ChannelServer"/>
+    <Service address="srv-dev2.ocslab.com:12004" name="ChannelController"/>
+    <Service address="srv-dev2.ocslab.com:12009" name="ChannelSearchServer"/>
+    <Service address="srv-dev2.ocslab.com:12007" name="CampaignManager"/>
+    <Service address="srv-dev2.ocslab.com:12006" name="CampaignServer"/>
+    <Service address="srv-dev2.ocslab.com:12013" name="ExpressionMatcher"/>
+    <Service address="srv-dev2.ocslab.com:12020" name="RequestInfoManager"/>
+    <Service address="xen.ocslab.com:27001" name="UserInfoManager"/>
+    <Service address="xen.ocslab.com:27002" name="UserInfoManagerController"/>
+  </Cluster>
+
+  <LoggerGroup path="logs">
+    <LogFile level_to="4" extension="err" />
+    <LogFile level_to="17" extension="out" />
+  </LoggerGroup>
+
+  <ThreadsNum value="100"/>
+
+  <CustomCacheCheck custom_cache_timeout="420"/>
+
+  <PGDBConnection
+    host="stat-dev1"
+    db="ads_taskbot_slow"
+    user="adserver"
+    password="adserver"
+  />
+
+  <!-- -t -z - - timeout=55 - - log-format=%%f - - ignore-existing -->
+  <Copy command="/usr/bin/rsync"/>
+  <Move command="/usr/bin/rsync --remove-source-files"/>
+  <LogGeneralizerIn path="../../../../../run/trunk/var/log/LogGeneralizer/In/"/>
+  <UserOpGeneratorIn
+      path="../../../../../run/trunk/var/log/UserOperationGenerator/In/Snapshot"/>
+  <TemplatesIn path="../../../../../run/trunk/var/www/Templates/"/>
+
+</GeneralParams>
+
+

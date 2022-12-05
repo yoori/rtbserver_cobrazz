@@ -1,0 +1,8 @@
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+
+osbe_cxx_dep Commons
+osbe_cxx_dep ProfileMap
+osbe_cxx_dep PlainStorage3
+osbe_cxx_dep ChannelInventory
+osbe_cxx_dep ExpressionMatcherCompatibility

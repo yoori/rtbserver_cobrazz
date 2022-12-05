@@ -1,0 +1,10 @@
+include Common.pre.rules
+
+test_directory_list := \
+  ExpressionMatcher \
+  RequestInfoManager
+
+target_directory_list := \
+  $(test_directory_list) \
+
+include $(osbe_builddir)/config/Direntry.post.rules

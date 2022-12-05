@@ -1,0 +1,3 @@
+channel_search_service_port=10115
+export channel_search_service_port
+

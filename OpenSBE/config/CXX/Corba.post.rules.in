@@ -1,0 +1,121 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : Corba.post.rules.in
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+ifndef _CORBA_POST_RULES_
+define _CORBA_POST_RULES_
+1
+endef
+
+_corba_stub_rule = $(addsuffix $(CXX_CORBA_STUBSUFFIX).cpp,$(basename $1))
+_corba_skeleton_rule = $(addsuffix $(CXX_CORBA_SKELSUFFIX).cpp,$(basename $1))
+_corba_rule = $(_corba_stub_rule) $(_corba_skeleton_rule)
+_corba_stubs := $(foreach _idl,$(corba_stub_idls),$(call _corba_stub_rule,$(_idl)))
+_corba_skeletons := $(foreach _idl,$(corba_skeleton_idls),$(call _corba_skeleton_rule,$(_idl)))
+
+#$(warning "_corba_stubs: $(_corba_stubs)")
+#$(warning "_corba_skeletons: $(_corba_skeletons)")
+
+corba_sources := $(_corba_stubs) $(_corba_skeletons)
+corba_headers := $(patsubst %.cpp,%.hpp,$(corba_sources))
+
+sources := $(sources) $(corba_sources)
+
+_corba_includes := $(foreach _path,$(corba_includes),-I$(top_builddir)/$(_path))
+_corba_idl_includes := $(foreach _path,$(call _suppress_dup,,$(corba_idl_includes)),-I$(CXX_CORBA_IDLINCLUDEBASE)/$(_path))
+
+CPP_FLAGS := $(call _suppress_dup,-I,$(_corba_includes) $(CPP_FLAGS))
+CXX_CORBA_IDLPPFLAGS := $(call _suppress_dup,-I,$(_corba_idl_includes) $(CXX_CORBA_IDLPPFLAGS))
+
+_idls := $(call _suppress_dup,,$(corba_stub_idls) $(corba_skeleton_idls))
+
+#$(warning "_idls: $(_idls)")
+
+_corba_deps_rule = $(addsuffix .corba$(DEP_EXT),$(basename $1))
+_corba_deps := $(foreach _idl,$(_idls),$(call _corba_deps_rule,$(_idl)))
+
+_deps_prerequisites := $(_corba_deps) $(_deps_prerequisites)
+
+_all_stubs_skels_cpp := $(foreach _idl,$(_idls),$(call _corba_rule,$(_idl)))
+#$(warning "_all_stubs_skels_cpp: $(_all_stubs_skels_cpp)")
+
+_all_stubs_skels_hpp := $(patsubst %.cpp,%.hpp,$(_all_stubs_skels_cpp))
+#$(warning "_all_stubs_skels_hpp: $(_all_stubs_skels_hpp)")
+
+.PHONY: clean_corba cleanall_corba
+
+clean: clean_corba
+
+clean_corba:
+	-$(RM) $(RM_FLAGS) $(_all_stubs_skels_cpp) $(_corba_deps)
+
+cleanall: cleanall_corba
+
+cleanall_corba:
+	-$(RM) $(RM_FLAGS) $(_all_stubs_skels_hpp)
+
+define _corba_rules
+$(call _corba_deps_rule,$(1)) : $(1)
+
+$(call _corba_skeleton_rule,$(1)) : $(call _corba_stub_rule,$(1))
+
+$(call _corba_stub_rule,$(1)) : $(1) $(call _corba_deps_rule,$(1))
+
+endef
+
+$(foreach _idl,$(_idls),$(eval $(call _corba_rules,$(_idl))))
+
+@CD_TB@$(_corba_deps)@CD_TE@ :
+	@CD_CB@
+	@CD_LB@$(CXX_DEP) $@ $(CXX_CORBA_IDLPPFLAGS) $<@CD_LE@
+	@CD_CE@
+
+@CD_TB@$(foreach _idl,$(_idls),$(call _corba_stub_rule,$(_idl)))@CD_TE@ :
+	@CD_CB@
+	@CD_LB@$(CXX_CORBA_IDL) $(CXX_CORBA_OUTPUTDIRFLAG) $(@D) $(CXX_CORBA_IDLPPFLAGS) $(CXX_CORBA_IDLFLAGS) $<@CD_LE@
+	@CD_LB@@CXX_CORBA_POST_IDL@@CD_LE@
+	@CD_CE@
+
+define corba_rules_post_config
+CPP_FLAGS := $(foreach _path,$(corba_includes),-I$$(top_builddir)/$(_path)) \
+             $$(CPP_FLAGS)
+
+CXX_CORBA_IDLPPFLAGS := \
+  $(foreach _path,$(corba_idl_includes),-I$$(CXX_CORBA_IDLINCLUDEBASE)/$(_path)) \
+  $$(CXX_CORBA_IDLPPFLAGS)
+
+endef
+
+rules_post_config := $(rules_post_config)$(corba_rules_post_config)
+
+# idl compiler should always run before dep-files produced from $(sources)
+_deps_prerequisites := $(_corba_stubs) $(_corba_skeletons) $(_deps_prerequisites)
+
+@CXX_CORBA_ORB_POST_RULES@
+
+ifndef OSBE_MAKE_CLEAN_GOAL
+$(foreach _dep,$(wildcard $(_corba_deps)),$(eval include $(_dep)))
+endif
+
+# to be able to run IDL producing tools BEFORE IDL dep-files generation
+$(_corba_deps) : | $(_corba_deps_prerequisites)
+
+endif #_CORBA_POST_RULES_

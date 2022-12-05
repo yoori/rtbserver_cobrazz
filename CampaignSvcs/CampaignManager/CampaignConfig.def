@@ -1,0 +1,10 @@
+name="CampaignConfig"
+so_files=CampaignConfig
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep http
+osbe_cxx_dep XslTransformer
+
+osbe_cxx_dep ExpressionChannel
+osbe_cxx_dep Vanga

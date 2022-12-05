@@ -1,0 +1,7 @@
+@loggeneralizerconfig_deps@
+sources :=
+includes :=
+xsd_files := LogGeneralizerConfig.xsd
+xsd_includes := .
+
+@loggeneralizerconfig_post@

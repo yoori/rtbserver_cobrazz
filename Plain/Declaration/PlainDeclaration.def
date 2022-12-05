@@ -1,0 +1,5 @@
+name="Plain Declaration"
+so_files=PlainDeclaration
+
+osbe_cxx_dep Generics
+osbe_cxx_dep ReferenceCounting

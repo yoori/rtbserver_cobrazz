@@ -1,0 +1,6 @@
+@gasontest_deps@
+
+sources := GasonTest.cpp
+target := GasonTest
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,119 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v321
+{
+  struct ActionMarkerDescriptor
+  {
+    uint ccg_id;
+    uint cc_id;
+    uint time;
+    string request_id;
+  };
+
+  autoreader ActionMarkerReader<ActionMarkerDescriptor>;
+
+  autowriter ActionMarkerWriter<ActionMarkerDescriptor>;
+
+  struct WaitActionDescriptor
+  {
+    uint ccg_id;
+    uint time;
+    uint count;
+  };
+
+  autoreader WaitActionReader<WaitActionDescriptor>;
+
+  autowriter WaitActionWriter<WaitActionDescriptor>;
+
+  /* AT 2
+   * DoneImpression
+   */
+  struct DoneImpressionDescriptor
+  {
+    uint ccg_id;
+    uint time;
+    string request_id;
+  };
+
+  autoreader DoneImpressionReader<DoneImpressionDescriptor>;
+
+  autowriter DoneImpressionWriter<DoneImpressionDescriptor>;
+
+  struct CustomActionMarkerDescriptor
+  {
+    uint ccg_id;
+    uint time;
+    uint action_id;
+    string action_request_id;
+    string referer;
+    string order_id;
+    string action_value;
+  };
+
+  autoreader CustomActionMarkerReader<CustomActionMarkerDescriptor>;
+
+  autowriter CustomActionMarkerWriter<CustomActionMarkerDescriptor>;
+
+  /*
+   * DoneActionMarkerDescriptor
+   * describe table of done actions
+   */
+  struct DoneActionDescriptor
+  {
+    uint action_id;
+    uint time;
+  };
+
+  autoreader DoneActionReader<DoneActionDescriptor>;
+
+  autowriter DoneActionWriter<DoneActionDescriptor>;
+
+  struct UserActionProfileDescriptor
+  {
+    uint version;
+
+    // action tracking I
+    // clicked requests put marker here
+    list<ActionMarkerDescriptor> action_markers;
+    list<WaitActionDescriptor> wait_actions;
+
+    // action tracking II
+    // impressed requests put marker here
+    list<DoneImpressionDescriptor> done_impressions;
+    list<CustomActionMarkerDescriptor> custom_action_markers;
+    list<DoneActionDescriptor> custom_done_actions;
+  };
+
+  reader UserActionProfileReader<UserActionProfileDescriptor>
+  {
+    version;
+
+    list<ActionMarkerReader> action_markers;
+    list<WaitActionReader> wait_actions;
+
+    list<DoneImpressionReader> done_impressions;
+    list<CustomActionMarkerReader> custom_action_markers;
+    list<DoneActionReader> custom_done_actions;
+  };
+
+  writer UserActionProfileWriter<UserActionProfileDescriptor>
+  {
+    version;
+
+    list<ActionMarkerWriter> action_markers;
+    list<WaitActionWriter> wait_actions;
+
+    list<DoneImpressionWriter> done_impressions;
+    list<CustomActionMarkerWriter> custom_action_markers;
+    list<DoneActionWriter> custom_done_actions;
+  };
+
+  struct UserActionProfileVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader UserActionProfileVersionReader<UserActionProfileVersionDescriptor>;
+}
+}
+

@@ -1,0 +1,10 @@
+@channelserverstubs_deps@
+
+sources :=
+includes := .
+
+corba_stub_idls := ChannelServer.idl ChannelUpdateBase.idl
+corba_includes := .
+corba_idl_includes := .
+
+@channelserverstubs_post@

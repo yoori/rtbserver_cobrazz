@@ -1,0 +1,9 @@
+include Common.pre.rules
+
+description := CleanupLogsTest
+
+export PERL5LIB := $(top_srcdir)/CMS/Plugin/lib:$(PERL5LIB)
+
+test_command := $(srcdir)/CleanupLogsTest.pl $(srcdir)
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,18 @@
+#ifndef _CAMPAIGN_FREQ_IDL_
+#define _CAMPAIGN_FREQ_IDL_
+
+module AdServer
+{
+  module Commons
+  {
+    struct CampaignFreq
+    {
+      unsigned long campaign_id;
+      unsigned long imps;
+    };
+
+    typedef sequence<CampaignFreq> CampaignFreqSeq;
+  };
+};
+
+#endif // _CAMPAIGN_FREQ_IDL_

@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<colo:colocation
+  name="moscow-test-remote2"
+  description="Moscow Remote Test #2"
+  xmlns:colo="http://www.foros.com/cms/colocation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
+  <host name="vnode4" hostName="vnode4"/>
+
+  <application descriptor="AdServer-3.5.6.274" description="Managed by svn">
+
+    <configuration>
+      <environment xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+        <forosZoneManagement public_key="ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA0DSER1gSk0bHejXRXCHOUnWXle089sbS800pOSblxHHpNdhKblO+0Thn1e1NihNJMxi8JLIuivQz+eyA2q0pjUkH/tqYX2gyInJZ6TfFFaM6gQYcnSFXGdv1rM6twC+uzMciXAdo8NnmcYLUBcTepmg9GXh8DdiPJj3KqoOZfe0=">
+        </forosZoneManagement>
+        <ispZoneManagement>
+        </ispZoneManagement>
+      </environment>
+    </configuration>
+
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+
+      <configuration>
+        <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" enable_search_term_stats="false"
+          referrer_logging_action_stats="domain and path" referrer_logging_site_referrer_stats="domain and path">
+          <environment
+            workspace_root="/opt/foros/server/var"
+            config_root="/opt/foros/server/etc"
+            cache_root="/opt/foros/server/var/cache"
+            server_root="/opt/foros/server"
+            data_root="/opt/foros/server/var/www"/>
+          <secureParams ca="ca.pem"/>
+          <coloParams
+            colo_id="8"
+            RTB_offline_UID_generation="false"
+            ad_request_profiling="ad-request profiling disabled, stats collection enabled"
+            enabled_countries="gb, ad, us, cn, tr, tn, tv, gp, ru, es, ma"
+            segmentor='Nlpir'
+            ip_key="4qyPXxtWCA3I1yBWpzl6Nw.."
+            CDN_domain="f.foroscrv-rubytest.net"
+            set_uid="never"
+            probe_uid="false">
+            <virtualServer>
+            <adservingDomain name="a.foros-rubytest.net"/>
+            <adservingDomain name="b.foros-rubytest.net"/>
+            <thirdPartyContentDomain name="forosssp-rubytest.net"/>
+            <thirdPartyContentDomain name="foroscrv-rubytest.net"/>
+            <thirdPartyContentDomain name="f.foroscrv-rubytest.net"/>
+            <thirdPartyContentDomain name="v.f.foroscrv-rubytest.net"/>
+            <redirectDomain name="a.foros-rubytest-old.net" expiration="0" target_domain="a.oix-rubytest.net"/>
+            <biddingDomain name="a.foros-rubytest.net"/>
+            </virtualServer>
+            <temporary_uid_key>-----BEGIN RSA PRIVATE KEY-----
+MIGqAgEAAiEA5xCJbjYA0L25raRHQ00gSO6ab/viQdf3bNoDR1DHc70CAwEAAQIg
+XyCSw9ndyhJh8Bfy8sU85aFu7vz+raM8sdoJvyEtNkECEQD4mK4psrPT5hbsaoSm
+z48NAhEA7fIxSeHNgu5EPqX8PSLLcQIQDZNw92/96BWJrPGIOv/cxQIQDplehs7w
+4gimbUWX3VRmMQIRAKDy/lVdcZ8BF2dpZ0bv4Pg=
+-----END RSA PRIVATE KEY-----</temporary_uid_key>
+            <securityToken
+              key0="MFBOeuplH3LlQqfGSvNiew=="
+              key1="gYi+K845gfiUkvx7Se1zKA=="
+              key2="mVa0GF8y1uvou3mktkNxqw=="
+              key3="mCFIshSwVu4VxRTi73Rf+Q=="
+              key4="fCW/qXof04/U/qRTggbJLw=="
+              key5="K2UPkfYBFNA+MxHKkV5OUA=="
+              key6="emcqWycuiztgJVng4az0Xw=="/>
+            <RTBAccount account_id="347120"
+              tanx_encryption_key="5117962f876a70e1478e99fef41e71d6"/>
+            <RTBAccount account_id="347304"
+              openx_encryption_key="b08c70cfbcb0eb6cab7e82c6b75da52072ae62b2bf4b990bb80a48d8141eec07"
+              openx_integrity_key="bf77ec55c30130c1d8cd1862ed2a4cd2c76ac33bc0c4ce8a3d3bbd3ad5687792"/>
+            <RTBAccount account_id="347306"
+              openx_encryption_key="C9DCA41807724CA4B6AEC421FF74C749A123772EB24148928804207981D083CC"
+              openx_integrity_key="E199E923167547AC815BEA83E2862A08E4D4DB167CE94D248090A16C713D6498"/>
+            <RTBAccount account_id="347563"
+              baidu_encryption_key="005e38cb01abc22fd5acd77001abc22fd5acfe8001abc22fd5ad06509b1bb875"
+              baidu_integrity_key="005e38cb01abc22fd5ad6be001abc22fd5ad73b001abc22fd5ad7b802e88c532"/>
+            <RTBAccount account_id="348080" max_cpm_value="500.01"/>
+            <RTBAccount account_id="348613"
+              tanx_encryption_key="b0036ce2a7edb02c06fab9cac2bee333"
+              openx_encryption_key="b08c70cfbcb0eb6cab7e82c6b75da52072ae62b2bf4b990bb80a48d8141eec07"
+              openx_integrity_key="bf77ec55c30130c1d8cd1862ed2a4cd2c76ac33bc0c4ce8a3d3bbd3ad5687792"/>
+            <RTBAccount account_id="348614"
+              openx_encryption_key="b08c70cfbcb0eb6cab7e82c6b75da52072ae62b2bf4b990bb80a48d8141eec07"
+              openx_integrity_key="bf77ec55c30130c1d8cd1862ed2a4cd2c76ac33bc0c4ce8a3d3bbd3ad5687792"/>
+            <RTBAccount account_id="348615"
+              tanx_encryption_key="b0036ce2a7edb02c06fab9cac2bee333"/>
+            <RTBSite site_id="139594" 
+              tanx_encryption_key="5117962f876a70e1478e99fef41e71d6"
+              openx_encryption_key="C9DCA41807724CA4B6AEC421FF74C749A123772EB24148928804207981D083CC"
+              openx_integrity_key="E199E923167547AC815BEA83E2862A08E4D4DB167CE94D248090A16C713D6498"/>
+            <RTBSite site_id="139595" 
+              openx_encryption_key="C9DCA41807724CA4B6AEC421FF74C749A123772EB24148928804207981D083CC"
+              openx_integrity_key="E199E923167547AC815BEA83E2862A08E4D4DB167CE94D248090A16C713D6498"/>
+            <RTBSite site_id="139596" 
+              tanx_encryption_key="5117962f876a70e1478e99fef41e71d6"/>
+            <RTBSite site_id="139598" 
+              tanx_encryption_key="5117962f876a70e1478e99fef41e71d6"/>
+            <RTBSite site_id="139599" 
+              openx_encryption_key="C9DCA41807724CA4B6AEC421FF74C749A123772EB24148928804207981D083CC"
+              openx_integrity_key="E199E923167547AC815BEA83E2862A08E4D4DB167CE94D248090A16C713D6498"/>
+            <RTBSite site_id="139600" 
+              tanx_encryption_key="5117962f876a70e1478e99fef41e71d6"
+              openx_encryption_key="C9DCA41807724CA4B6AEC421FF74C749A123772EB24148928804207981D083CC"
+              openx_integrity_key="E199E923167547AC815BEA83E2862A08E4D4DB167CE94D248090A16C713D6498"/>
+          </coloParams>
+          <Cookies
+            domain=".foros-rubytest.net"
+            path="/"/>
+          <inventoryStats simplifying="100"/>
+          <snmpStats enable="true" monitoring_tag_id="2157" monitoring_country="gb"/>
+          <userProfiling>
+            <userInfoExchangerRef host="vnode0" port="10210">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </userInfoExchangerRef>
+          </userProfiling>
+          <IPMapping>
+            <colo ip_range="2.216.1.1/32" cohorts="" colo_id="58365" webindex_profile="false"/>
+            <colo ip_range="5.10.16.0/20" cohorts="" colo_id="58386"/>
+            <colo ip_range="2.216.1.2/32" cohorts="8-34-0" colo_id="58387"/>
+            <colo ip_range="2.216.1.3/32" cohorts="8-34-1&#10;8-34-2" colo_id="58388"/>
+            <colo ip_range="5.10.16.0/20&#10;5.10.144.0/20" cohorts="" colo_id="58389"/>
+            <colo ip_range="5.53.64.0/19&#10;5.57.80.0/20&#10;5.10.144.0/20" cohorts="8-34-1" colo_id="58390"/>
+            <colo ip_range="5.61.32.0/19&#10;5.64.0.0/13" cohorts="8-34-1&#10;8-34-2" colo_id="58391"/>
+            <colo ip_range="" cohorts="8-34-3" colo_id="58392"/>
+            <colo ip_range="0.0.0.0/0" cohorts="8-34-4" colo_id="58393"/>
+            <colo ip_range="2.216.2.1/20" cohorts="" colo_id="58066"/>
+            <colo ip_range="5.10.16.0/20" cohorts="" colo_id="58394"/>
+            <colo ip_range="5.10.16.0/20" cohorts="8-34-11" colo_id="58395" webindex_profile="false"/>
+            <colo ip_range="2.216.3.1/32" cohorts="" colo_id="58645" webindex_profile="true"/>
+            <colo ip_range="2.24.0.1/32" cohorts="" colo_id="58969" webindex_profile="true"/>
+            <colo ip_range="77.242.192.0/32" cohorts="" colo_id="59045" webindex_profile="false"/>
+            <colo ip_range="77.244.128.0/32" cohorts="" colo_id="59046" webindex_profile="false"/>
+            <colo ip_range="77.246.16.0/32" cohorts="" colo_id="59047" webindex_profile="false"/>
+            <colo ip_range="2.24.0.2/32" cohorts="" colo_id="59005" webindex_profile="false"/>
+            <colo ip_range="2.24.0.3/32" cohorts="" colo_id="59145" webindex_profile="false"/>
+            <colo ip_range="2.24.0.4/32" cohorts="" colo_id="59146" webindex_profile="false"/>
+            <colo ip_range="2.24.0.5/32" cohorts="" colo_id="59147" webindex_profile="false"/>
+          </IPMapping>
+          <CTRConfig expire_timeout="3600">
+            <sourceRef host="vauto" port="10004"/>
+          </CTRConfig>
+          <remote>
+            <campaignServerRef host="vnode0" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <campaignServerRef host="vnode3" port="10206">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </campaignServerRef>
+            <channelProxyRef host="vnode0" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <channelProxyRef host="vnode3" port="10205">
+              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
+            </channelProxyRef>
+            <sTunnelRef host="vnode0" port="10200"/>
+            <sTunnelRef host="vnode3" port="10200"/>
+          </remote>
+        </cluster>
+      </configuration>
+
+      <!-- lp, ui, be -->
+      <serviceGroup
+        descriptor="AdCluster/BackendSubCluster"
+        name="BackendSubCluster">
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LogProcessing"
+          name="LogProcessing">
+          <configuration>
+            <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <syncLogs>
+                <networkParams port="10112"/>
+                <logging log_level="7"/>
+                <fileTransferring
+                  file_check_period="10"
+                  host_check_period="10"
+                  logs_backup="false"
+                  content_check_period="15"
+                  internal_content_check_period="20"/>
+              </syncLogs>
+
+              <syncLogsServer>
+                <networkParams port="10114"/>
+                <logging log_level="1" sys_log="false"/>
+              </syncLogsServer>
+            </logProcessing>
+          </configuration>
+        </serviceGroup>
+
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="LocalProxyDevel">
+
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/ChannelProxy"
+            name="ChannelProxyDevel"
+            host="vnode4">
+            <configuration>
+              <channelProxy xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10120"/>
+              </channelProxy>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/BackendSubCluster/LocalProxy/STunnelClient"
+            name="STunnelClientDevel"
+            host="vnode4">
+            <configuration>
+              <sTunnelClient xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10121"/>
+              </sTunnelClient>
+            </configuration>
+          </service>
+        </serviceGroup>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
+          name="ExpressionMatcher"
+          host="vnode4">
+          <configuration>
+            <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10113"/>
+              <updateParams period="30"/>
+              <statLogging file_check_period="10" flush_period="10" activity_flush_period="3600" inventory_ecpm_flush_period="10"/>
+            </expressionMatcher>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/StatReceiver"
+          name="StatReceiver"
+          host="vnode4"/>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
+          name="LogGeneralizer"
+          host="vnode4">
+          <configuration>
+            <logGeneralizer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10111"/>
+              <statLogging file_check_period="10" flush_period="10" flush_size="10100"/>
+            </logGeneralizer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
+          name="RequestInfoManager"
+          host="vnode4">
+          <configuration>
+            <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10116"/>
+              <statLogging file_check_period="10" flush_period="30"/>
+              <requestProcessing expire_time="345600"/>
+              <passbackProcessing expire_time="7200"/>
+            </requestInfoManager>
+          </configuration>
+        </service>
+
+       <service
+         descriptor="AdCluster/BackendSubCluster/CampaignServer"
+         name="CampaignServer"
+         host="vnode4">
+          <configuration>
+            <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10106"/>
+              <updateParams update_period="30" ecpm_update_period="30"/>
+            </campaignServer>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/BackendSubCluster/StatsCollector"
+          name="StatsCollectorDevel"
+          host="vnode4">
+            <configuration>
+            <statsCollector xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </statsCollector>
+            </configuration>
+        </service>
+        <service
+          descriptor="AdCluster/BackendSubCluster/DictionaryProvider"
+          name="DictionaryProvider"
+          host="vnode4">
+        </service>
+        <!--
+        <serviceGroup
+          descriptor="AdCluster/BackendSubCluster/LocalProxy"
+          name="">
+        </serviceGroup>
+        -->
+      </serviceGroup>
+
+      <!-- fe -->
+      <serviceGroup
+        descriptor="AdCluster/FrontendSubCluster"
+        name="FrontendSubCluster">
+<!--
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <DACS script="fe"/>
+          </frontendCluster>
+        </configuration>
+-->
+        <configuration>
+          <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <channelServing>
+              <scaleParams chunks_count="10"/>
+            </channelServing>
+
+
+          </frontendCluster>
+        </configuration>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
+          name="UserInfoManager"
+          host="vnode4">
+          <configuration>
+            <userInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <matchParams repeat_trigger_timeout="0"/>
+            </userInfoManager>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
+          name="UserInfoManagerController"
+          host="vnode4"/>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/ChannelServer"
+          name="ChannelServer"
+          host="vnode4">
+          <configuration>
+            <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10103"/>
+              <updateParams period="30" chunks_count="32"/>
+            </channelServer>
+          </configuration>
+        </service>
+
+        <service
+           descriptor="AdCluster/FrontendSubCluster/ChannelController"
+           name="ChannelController"
+           host="vnode4">
+          <configuration>
+            <channelController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+              <networkParams port="10104"/>
+            </channelController>
+          </configuration>
+        </service>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserBindServer"
+          name="UserBindServer"
+          host="vnode4">
+          <configuration>
+          </configuration>
+        </service>
+        <service
+          descriptor="AdCluster/FrontendSubCluster/UserBindController"
+          name="UserBindController"
+          host="vnode4">
+          <configuration>
+            <userBindController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            </userBindController>
+          </configuration>
+        </service>
+
+        <service
+          descriptor="AdCluster/FrontendSubCluster/Frontend"
+          name="Frontend"
+          host="vnode4">
+            <configuration>
+              <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <webServerParams
+                  timeout="300"
+                  keep_alive="true"
+                  max_clients="100"
+                  min_spare_threads="50"
+                  max_spare_threads="50"
+                  threads_per_process="100"/>
+                <debugInfo use_acl="false" show_history_profile="true"/>
+                <requestModule>
+                  <logging log_level="7"/>
+                  <session timeout="30"/>
+                </requestModule>
+                <impressionModule>
+                  <logging log_level="7"/>
+                </impressionModule>
+                <clickModule>
+                  <logging log_level="7"/>
+                </clickModule>
+                <actionModule>
+                  <logging log_level="7"/>
+                </actionModule>
+                <optoutModule>
+                  <logging log_level="7" log_ip="true"/>
+                </optoutModule>
+                <pageSenseModule/>
+                <pubTagModule/>
+                <statusModule/>
+                <adInstModule>
+                  <logging log_level="8"/>
+                </adInstModule>
+                <biddingModule max_bid_time="1000">
+                  <logging log_level="8"/>
+                  <source id="url" instantiate_type="url" request_type="openrtb with click url" default_account_id="346537"/>
+                  <source id="script-url" instantiate_type="script with url" request_type="openrtb with click url"/>
+                  <source id="body" instantiate_type="body" request_type="openrtb with click url"/>
+                  <source id="url-no-click" instantiate_type="url" request_type="openrtb"/>
+                  <source id="body-no-click" instantiate_type="body" request_type="openrtb"/>
+                  <source id="iframe-url" instantiate_type="iframe with url" request_type="openrtb"/>
+                  <source id="iframe-url-no-click" instantiate_type="iframe with url" request_type="openrtb"/>
+                  <source id="body-tanx" instantiate_type="body" request_type="tanx" default_account_id="346322"/>
+                  <source id="script-tanx" instantiate_type="script with url" request_type="tanx"/>
+                  <source id="body-openx" instantiate_type="body" request_type="openx"/>
+                  <source id="iframe-url-openx" instantiate_type="iframe with url" request_type="openx"/>
+                  <source id="body-liverail" instantiate_type="body" request_type="liverail"/>
+                  <source id="url-liverail" instantiate_type="url" request_type="liverail"/>
+                  <source id="body-blank" instantiate_type="body"/>
+                  <source id="body-allyes" instantiate_type="body" request_type="allyes" enable_notice="true"/>
+                  <source id="iframe-url-allyes" instantiate_type="iframe with url" request_type="allyes" enable_notice="true"/>
+                  <source id="iframe-url-adriver" instantiate_type="iframe with url" request_type="adriver" enable_notice="true"/>
+                  <source id="body-adriver" instantiate_type="body" request_type="adriver" enable_notice="true"/>
+                  <source id="body-openrtb-notice" instantiate_type="body" request_type="openrtb with click url" enable_notice="true"/>
+                  <source id="body-baidu" instantiate_type="body" request_type="baidu" enable_notice="false" truncate_domain="false" default_account_id="346322"/>
+                  <source id="script-baidu" instantiate_type="script with url" request_type="baidu" enable_notice="false" truncate_domain="false"/>
+                  <source id="body-baidu-static" instantiate_type="body" request_type="baidu(static)" enable_notice="false" truncate_domain="false"/>
+                  <source id="urlp-appnexus" instantiate_type="url parameters" request_type="appnexus"
+                    enable_notice="false" truncate_domain="false" default_account_id="346537" appnexus_member_id="4737"/>
+                  <source id="urlp-enc-appnexus" instantiate_type="encoded url parameters" request_type="appnexus" enable_notice="false" truncate_domain="false"/>
+                  <source id="yandex" instantiate_type="data parameter value" request_type="yandex" enable_notice="false" truncate_domain="false"/>
+                  <source id="yandex2" instantiate_type="data parameter value" request_type="yandex" enable_notice="false" truncate_domain="false"/>
+                  <source id="vast-video-notice" instantiate_type="url" request_type="openrtb" enable_notice="false" truncate_domain="false" vast_instantiate_type="video url" vast_enable_notice="true"/>
+                  <source id="vast-video" instantiate_type="body" request_type="openrtb" enable_notice="true" truncate_domain="false" vast_instantiate_type="video url" vast_enable_notice="false" ipw_extension="true"/>
+                  <source id="vast-url" instantiate_type="body" request_type="openrtb" enable_notice="true" truncate_domain="false" vast_instantiate_type="url" vast_enable_notice="false"/>
+                  <source id="vast-body" instantiate_type="url" request_type="openrtb" enable_notice="false" truncate_domain="false" vast_instantiate_type="body" vast_enable_notice="true"/>
+                  <source id="vast-none" instantiate_type="body" request_type="openrtb" enable_notice="false" truncate_domain="false" vast_enable_notice="true"/>
+                  <source id="vast-video-body" instantiate_type="body" request_type="openrtb" enable_notice="true" truncate_domain="false" vast_instantiate_type="video url in body" vast_enable_notice="true"/>
+                  <source id="ipw" instantiate_type="body" request_type="openrtb" ipw_extension="true"/>
+                </biddingModule>
+                <userBindModule set_uid="false" create_profile="false">
+                  <source id="url" redirect="http://cs.ocslab.com/cgi-bin/rtb-bind.cgi?ssp=1&amp;uid=##SSPUID##&amp;ssp_id=##EXTERNALID##"/>
+                  <source id="body" redirect="http://aa.zz.rubypub.net/cgi-bin/rtb-bind.cgi?uid=##SSPUID##&amp;ssp_id=##EXTERNALID##&amp;ssp=2"/>
+                  <source id="ssp-bind-ssl" redirect="https://cs.ocslab.com/cgi-bin/rtb-bind.cgi?uid=##SSPUID##&amp;ssp_id=##EXTERNALID##&amp;ssp=3"/>
+                  <source id="ssp-bind-schemeless" redirect="//cs.ocslab.com/cgi-bin/rtb-bind.cgi?uid=##SSPUID##&amp;ssp_id=##EXTERNALID##&amp;ssp=4"/>
+                  <source id="yandex" redirect="http://cs.ocslab.com/cgi-bin/rtb-bind.cgi?uid=##SSPUID##&amp;uid_unsigned=##UNSIGNEDSSPUID##&amp;ysign=##YANDEXSIGN##&amp;ssp=5"/>
+                </userBindModule>
+              </frontend>
+            </configuration>
+          </service>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/BillingServer"
+            name="BillingServer"
+            host="vnode4"/>
+
+          <service
+            descriptor="AdCluster/FrontendSubCluster/CampaignManager"
+            name="CampaignManager"
+            host="vnode4">
+            <configuration>
+              <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+                <networkParams port="10107"/>
+                <updateParams
+                  update_period="20"
+                  ecpm_update_period="10"
+                  campaign_types="all"/>
+                <statLogging flush_period="10"/>
+              </campaignManager>
+            </configuration>
+
+          </service>
+
+      </serviceGroup>
+    </serviceGroup>
+
+  </application>
+
+</colo:colocation>

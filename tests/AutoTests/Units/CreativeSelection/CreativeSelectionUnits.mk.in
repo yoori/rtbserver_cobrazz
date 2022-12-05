@@ -1,0 +1,37 @@
+@autotestscreativeselectionunits_deps@
+
+sources := \
+  DailyRunTest.cpp \
+  SpecificSitesTagsTest.cpp \
+  WalledGardenTest.cpp \
+  CountryTest.cpp \
+  FreqCapMergingTest.cpp \
+  FrequencyCapsTest.cpp \
+  OptOutFreqCapTest.cpp \
+  TagsTest.cpp \
+  CreativeExclusionTest.cpp \
+  SessSiteTimeoutsTest.cpp \
+  CombinedChannelsMatchingTest.cpp \
+  TextAdAutoCategories.cpp \
+  OIXTestModeTest.cpp \
+  DisplayAdNetAndGrossTest.cpp \
+  OptoutAdvertising.cpp \
+  GEOCreativeSelection.cpp \
+  CountryTargeting.cpp \
+  PublisherInventoryRequestTest.cpp \
+  VISParamTest.cpp \
+  DisputingInvoice.cpp \
+  MinUidAge.cpp \
+  ISPColocationTargeting.cpp \
+  TanxTest.cpp \
+  BaiduTest.cpp \
+  OpenRTBTest.cpp \
+  RTBCategoriesMappingTest.cpp \
+  SiteCreativeApprovalTest.cpp \
+  TagsAndCreativesSizeMatching.cpp \
+  RandomAuctionTest.cpp \
+	OpenRTBExtensionsTest.cpp \
+	RTBWinPriceNotificationTest.cpp \
+
+includes := .
+@autotestscreativeselectionunits_post@

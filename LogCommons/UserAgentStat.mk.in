@@ -1,0 +1,6 @@
+@useragentstat_deps@
+sources := UserAgentStat.cpp
+
+includes := .
+@useragentstat_post@
+

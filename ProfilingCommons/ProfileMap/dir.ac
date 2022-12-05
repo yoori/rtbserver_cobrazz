@@ -1,0 +1,2 @@
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CXX_DEF([ProfileMap], [ProfileMap.mk])

@@ -1,0 +1,58 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v310
+{
+  /* freq caps update operation */
+  struct SeqOrderDescriptor
+  {
+    uint ccg_id;
+    uint set_id;
+    uint imps;
+  };
+
+  autoreader SeqOrderDescriptorReader<SeqOrderDescriptor>;
+  autowriter SeqOrderDescriptorWriter<SeqOrderDescriptor>;
+
+  struct UserFreqCapUpdateOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint time;
+    string request_id;
+    list<uint> freq_caps;
+    list<uint> uc_freq_caps;
+    list<uint> virtual_freq_caps;
+    array<SeqOrderDescriptor> seq_orders;
+  };
+
+  reader UserFreqCapUpdateOperationReader<UserFreqCapUpdateOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    request_id;
+    freq_caps;
+    uc_freq_caps;
+    virtual_freq_caps;
+    array<SeqOrderDescriptorReader> seq_orders;
+  };
+  
+  writer UserFreqCapUpdateOperationWriter<UserFreqCapUpdateOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    time;
+    request_id;
+    freq_caps;
+    uc_freq_caps;
+    virtual_freq_caps;
+    array<SeqOrderDescriptorWriter> seq_orders;
+  };
+}
+}

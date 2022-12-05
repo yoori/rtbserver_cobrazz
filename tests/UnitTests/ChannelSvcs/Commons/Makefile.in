@@ -1,0 +1,5 @@
+@channelservertestcommons_deps@
+
+sources  := ChannelServerTestCommons.cpp 
+
+@channelservertestcommons_post@

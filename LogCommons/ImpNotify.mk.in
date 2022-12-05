@@ -1,0 +1,6 @@
+@impnotify_deps@
+sources := ImpNotify.cpp
+
+includes := .
+@impnotify_post@
+

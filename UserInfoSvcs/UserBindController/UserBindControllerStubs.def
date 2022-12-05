@@ -1,0 +1,6 @@
+name="UserBindControllerStubs"
+so_files=UserBindControllerStubs
+
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep UserBindServerStubs

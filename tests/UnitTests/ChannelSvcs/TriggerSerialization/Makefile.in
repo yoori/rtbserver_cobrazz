@@ -1,0 +1,6 @@
+@triggerserializationexe_deps@
+
+sources := TriggerSerialization.cpp
+target := TriggerSerializationTest
+
+include $(top_srcdir)/tests/Test.post.rules

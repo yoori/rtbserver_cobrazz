@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:xse="http://www.codesynthesis.com/xmlns/xml-schema-extension"
+  xmlns:lib="http://www.codesynthesis.com/xmlns/library"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+<xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+<xsd:annotation>
+  <xsd:documentation>
+    BidCost predictor merger XML configuration file
+  </xsd:documentation>
+</xsd:annotation>
+
+<xsd:element name="BidCostPredictorMergerConfiguration" type="BidCostPredictorMergerConfigurationType"/>
+
+<xsd:complexType name="BidCostPredictorMergerConfigurationType">
+  <xsd:sequence>
+    <xsd:element name="Logger" type="ErrorLoggerType"/>
+    <xsd:element name="BidCost" type="BidCostConfigType"/>
+  </xsd:sequence>
+</xsd:complexType>
+
+
+<xsd:complexType name="BidCostConfigType">
+  <xsd:attribute name="path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Log path.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="cache" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Aggregate log path.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="model_path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Model path.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="tmp_model_path" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>Temp model path.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+
+  <xsd:attribute name="aggregate_period" type="xsd:integer" use="optional" default="3600">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="model_period" type="xsd:integer" use="optional" default="3600">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+  <xsd:attribute name="analyze_days" type="xsd:integer" use="optional" default="86400">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+</xsd:schema>
+

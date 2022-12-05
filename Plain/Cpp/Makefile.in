@@ -1,0 +1,12 @@
+@plaincpp_deps@
+
+sources := DescriptorGenerator.cpp \
+  ReaderGenerator.cpp \
+  WriterGenerator.cpp \
+  Generator.cpp
+
+includes := Plain
+
+target := PlainCpp
+
+@plaincpp_post@

@@ -1,0 +1,8 @@
+@billingserverconfig_deps@
+sources := 
+includes := .
+xsd_files := BillingServerConfig.xsd
+xsd_includes := xsd
+
+@billingserverconfig_post@
+

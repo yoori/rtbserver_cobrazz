@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/DiscoverSvcs/NewsItemServerConfig.xsd">
+  <cfg:NewsItemServerConfig config_update_period="30" log_root="/opt/foros/server/var/log/NewsItemServer/Out" deactivated_cleanup_time="86400">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10124">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer"/>
+        <cfg:Object servant="NewsItemServer_v24" name="NewsItemServer_v24"/>
+        <cfg:Object servant="NewsItemServer_v6" name="NewsItemServer_v6"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/NewsItemServer/NewsItemServer">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:SNMPConfig mib_dirs="/usr/share/snmp/mibs:/opt/foros/server/mibs:/opt/oix/server/mibs/DiscoverSvcs" index="0"/>
+    <cfg:CampaignServerCorbaRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:uk00labadsrv01:10106/CampaignServer_v25"/>
+    </cfg:CampaignServerCorbaRef>
+    <cfg:CustomCache/>
+    <cfg:ServerMode query_news_count="20">
+      <cfg:DBConnection db="AdServerDbForRead" user="BS_NIGHTLY_BUILDS_ADS_AUTO" password="adserver"/>
+      <cfg:NewsServer ref="http://uk00labwdlb00/psp/eng/search" request_params="t=x&amp;o=1.3&amp;z=acfrgtplidsneo&amp;l=2" request_count_params="t=x&amp;o=1.3&amp;z=a" rss_schema="/opt/foros/server/xsd/DiscoverSvcs/XSearch.xsd" monitoring_ref="http://uk00labwdlb00/sysmon"/>
+    </cfg:ServerMode>
+    <cfg:WebwiseDiscoverItemStatLogger period="10"/>
+    <cfg:WebwiseDiscoverTagStatLogger period="10"/>
+    <cfg:WebwiseDiscoverItemsLogger period="10"/>
+  </cfg:NewsItemServerConfig>
+</cfg:AdConfiguration>

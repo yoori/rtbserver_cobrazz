@@ -1,0 +1,60 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v330
+{
+  struct TriggerMatchCounterDescriptor
+  {
+    uint channel_trigger_id;
+    string counter;
+  };
+
+  autoreader TriggerMatchCounterReader<TriggerMatchCounterDescriptor>;
+
+  autowriter TriggerMatchCounterWriter<TriggerMatchCounterDescriptor>;
+
+  struct RequestTriggerMatchProfileDescriptor
+  {
+    uint version;
+    uint time;
+    array<uint> channels;
+    array<TriggerMatchCounterDescriptor> page_match_counters;
+    array<TriggerMatchCounterDescriptor> search_match_counters;
+    array<TriggerMatchCounterDescriptor> url_match_counters;
+    array<TriggerMatchCounterDescriptor> url_keyword_match_counters;
+    uint click_done;
+    uint impression_done;
+  };
+
+  reader RequestTriggerMatchReader<RequestTriggerMatchProfileDescriptor>
+  {
+    time;
+    channels;
+    array<TriggerMatchCounterReader> page_match_counters;
+    array<TriggerMatchCounterReader> search_match_counters;
+    array<TriggerMatchCounterReader> url_match_counters;
+    array<TriggerMatchCounterReader> url_keyword_match_counters;
+    click_done;
+    impression_done;
+  };
+
+  writer RequestTriggerMatchWriter<RequestTriggerMatchProfileDescriptor>
+  {
+    version;
+    time;
+    (cpp_vector) channels;
+    array<TriggerMatchCounterWriter> page_match_counters;
+    array<TriggerMatchCounterWriter> search_match_counters;
+    array<TriggerMatchCounterWriter> url_match_counters;
+    array<TriggerMatchCounterWriter> url_keyword_match_counters;
+    click_done;
+    impression_done;
+  };
+
+  struct RequestTriggerMatchVersionDescriptor
+  {
+    uint version;
+  };
+
+  autoreader RequestTriggerMatchVersionReader<RequestTriggerMatchVersionDescriptor>;
+}
+}

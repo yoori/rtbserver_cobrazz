@@ -1,0 +1,6 @@
+@plstdiagnosistestexe_deps@
+
+sources := Main.cpp
+target := PlStDiagnosisTest
+
+@plstdiagnosistestexe_post@

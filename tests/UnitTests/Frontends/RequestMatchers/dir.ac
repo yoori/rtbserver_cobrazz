@@ -1,0 +1,6 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([UrlMatcherTestExe], [UrlMatcherTest.mk])
+OSBE_CXX_DEF([RequestMatcherTestExe], [RequestMatcherTest.mk])
+OSBE_CXX_DEF([AhoCorasickTestExe], [AhoCorasickTest.mk])
+OSBE_CXX_DEF([IPMatcherTestExe], [IPMatcherTest.mk])

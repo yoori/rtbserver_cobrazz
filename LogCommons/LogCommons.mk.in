@@ -1,0 +1,6 @@
+@logcommons_deps@
+sources := LogCommons.cpp
+
+includes := .
+@logcommons_post@
+

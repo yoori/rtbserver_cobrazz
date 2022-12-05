@@ -1,0 +1,7 @@
+@dmpprofilinginfo_deps@
+
+plain_sources := DMPProfilingInfo.pst
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@dmpprofilinginfo_post@

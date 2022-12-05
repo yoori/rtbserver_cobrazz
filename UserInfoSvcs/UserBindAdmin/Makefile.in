@@ -1,0 +1,5 @@
+@userbindadminexe_deps@
+sources := Application.cpp 
+
+target := UserBindAdmin
+@userbindadminexe_post@

@@ -1,0 +1,78 @@
+body {
+	margin: 10px;
+}
+
+th, td {
+	font-family: verdana,arial,'Bitstream Vera Sans',helvetica,sans-serif;
+	font-size: 13px;
+	font-size-adjust: none;
+	font-stretch: normal;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: normal;
+	line-height: normal;
+}
+
+table {
+	border-bottom: 1px solid #d7d7d7;
+	border-collapse: collapse;
+	border-spacing: 0px;
+}
+
+thead {
+	background: #f7f7f0;
+}
+
+tbody tr {
+	background-color: #fcfcfc;
+}
+
+tr.even {
+	background-color: #fcfcfc;
+}
+
+tr.odd {
+	background-color: #f7f7f7;
+}
+
+tr.failed-even, tr.exception {
+	background-color: #f7f7f7;
+}	
+
+tr.failed-odd, tr.failed {
+	background-color: #fff0f0;
+}	
+
+tr.success {
+	background-color: #f0fff0;
+}	
+
+td {
+	border: 1px dotted #dddddd;
+}
+
+th {
+	border: 1px solid;
+	border-color: #d7d7d7 #d7d7d7 #999999 #d7d7d7;
+	font-weight: bold;
+	font-size: 11px;
+}
+
+td, th {
+	padding: 0.33em 0.5em
+}
+
+*:link, *:visited {
+	color: #bb0000;
+	text-decoration: none;
+}
+
+
+table.traceback {
+	width: 100%;
+	margin-top: 30px;
+}
+
+.code {
+	font-family: monospace;
+}

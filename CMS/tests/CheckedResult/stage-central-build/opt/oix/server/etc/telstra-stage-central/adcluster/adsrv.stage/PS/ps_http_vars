@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'http://a.staging.forosdev.com',
+            'ps_host' => 'http://a.staging.forosdev.com',
+            'toolbar_base' => 'http://http://b.staging.forosdev.com/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'http://http://b.staging.forosdev.com/tag/1.js',
+            'adimage_server' => 'http://c.staging.forosdev.com',
+          );
+        
+
+    1;
+

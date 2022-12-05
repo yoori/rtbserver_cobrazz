@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server//xsd/UserInfoSvcs/UserInfoManagerConfig.xsd">
+  <cfg:UserInfoManagerConfig channels_update_period="30" profile_lifetime="180" temp_profile_lifetime="30" profiles_cleanup_time="00:01" clean_user_profiles="false" session_timeout="30" history_optimization_period="3600" root_dir="/opt/foros/server/var/log/UserInfoManager/Out/" colo_id="1">
+    <cfg:CorbaConfig threading-pool="40">
+      <cfg:Endpoint host="*" port="10101">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="UserInfoManager" name="UserInfoManager"/>
+        <cfg:Object servant="UserInfoManagerControl" name="UserInfoManagerControl"/>
+        <cfg:Object servant="UserInfoManagerStats" name="UserInfoManagerStats"/>
+        <cfg:Object servant="UserInfoManager" name="UserInfoManager_v24"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/UserInfoManager/UserInfoManager">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:Logging>
+      <cfg:ChannelCountStat flush_period="30"/>
+    </cfg:Logging>
+    <cfg:ChunksConfig common_chunks_number="10" chunks_root="/opt/foros/server/var/cache/Users2/"/>
+    <cfg:CampaignServerRef name="CampaignServer">
+      <cfg:Ref ref="corbaloc:iiop:nnode0:10106/CampaignServer_v25"/>
+      <cfg:Ref ref="corbaloc:iiop:nnode1:10106/CampaignServer_v25"/>
+    </cfg:CampaignServerRef>
+    <cfg:StatsDumper period="60" provide_channel_counters="true">
+      <cfg:StatsDumperRef name="StatsDumperRef" ref="corbaloc:iiop:nnode0:10118/StatsCollector"/>
+    </cfg:StatsDumper>
+    <cfg:UserOperationsBackup file_prefix="UserOp" rotate_period="60" dir="/opt/foros/server/var/log/UserInfoManager/Out/UserOp_1"/>
+    <cfg:UserOperationsLoad file_prefix="UserOp" check_period="60" dir="/opt/foros/server/var/log/UserInfoManager/In/UserOp_2" unprocessed_dir="/opt/oix/server/var/log/UserInfoManager/Out/UserOp_2"/>
+    <cfg:FreqCaps confirm_timeout="60"/>
+  </cfg:UserInfoManagerConfig>
+</cfg:AdConfiguration>

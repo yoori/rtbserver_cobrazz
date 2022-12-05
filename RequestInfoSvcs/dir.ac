@@ -1,0 +1,7 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([RequestInfoCommons])
+OSBE_CONFIG_SUBDIR([RequestInfoManager])
+OSBE_CONFIG_SUBDIR([RequestInfoAdmin])
+OSBE_CONFIG_SUBDIR([ExpressionMatcher])
+OSBE_CONFIG_SUBDIR([ExpressionMatcherAdmin])

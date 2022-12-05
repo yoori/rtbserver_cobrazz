@@ -1,0 +1,9 @@
+# -*- sh -*-
+
+set +o errexit -o nounset -o noclobber
+
+for test in *.t; do
+    echo -n $test...
+    "$TASKBOT" --description "$test" "$TASKBOT_CONFIG" "$test"
+    echo done
+done

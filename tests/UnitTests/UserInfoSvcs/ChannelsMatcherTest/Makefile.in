@@ -1,0 +1,6 @@
+@channelsmatchertestexe_deps@
+
+sources := ChannelsMatcherTest.cpp
+target := ChannelsMatcherTest
+
+include $(top_srcdir)/tests/Test.post.rules

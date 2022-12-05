@@ -1,0 +1,9 @@
+
+@adserverbenchmarkconfig_deps@
+
+sources := 
+includes := .
+xsd_files := AdServerBenchmarkConfig.xsd
+xsd_includes := xsd
+
+@adserverbenchmarkconfig_post@

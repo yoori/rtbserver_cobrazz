@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- It's news korean discover channel -->
+<result xmlns="http://www.newsgate.com/XSearch/1.0" version="1.0">
+<ttl>93</ttl>
+<reqDate since_epoch="1239866087">Thu, 16 Apr 2009 07:14:47 GMT</reqDate>
+<total>3</total>
+<items>
+
+<!-- News1 english -->
+<item>
+<title>4FCF5440F825413E8F924C109B2832E5</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest3.com/news1.html]]></link>
+<description><![CDATA[It is a fake news1 for discover channel 3 of WebwiseDiscoverCategoriesTest.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[eng]]></language>
+<guid>4FCF5440F825413E8F924C109B2832E5</guid>
+<event>
+<categories>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest3/]]></category>
+</categories>
+<id></id>
+<capacity>2</capacity>
+</event>
+<source>
+<title>4FCF5440F825413E8F924C109B2832E5</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest3.com/news1/rss1.xml]]></link>
+<country><![CDATA[GBR]]></country>
+</source>
+</item>
+
+<!-- News2 russian -->
+
+<item>
+<title>002DC401393944daBCDEB6D4AEE0216F</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest3.com/news2.html]]></link>
+<description><![CDATA[It is a fake news2 for discover channel 3 of WebwiseDiscoverCategoriesTest.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[rus]]></language>
+<guid>002DC401393944daBCDEB6D4AEE0216F</guid>
+<event>
+<categories>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest3/]]></category>
+</categories>
+<id></id>
+<capacity>3</capacity>
+</event>
+<source>
+<title>002DC401393944daBCDEB6D4AEE0216F</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest3.com/news2/rss2.xml]]></link>
+<country><![CDATA[RUS]]></country>
+</source>
+</item>
+
+<!-- News3 korean -->
+<item>
+<title>16A7951AB6044F0B826669DF1EE3CBEF</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest3.com/news3.html]]></link>
+<description><![CDATA[It is a fake news3 for discover channel 3 of WebwiseDiscoverCategoriesTest.]]></description>
+<pubDate>Thu, 02 Apr 2009 23:00:00 GMT</pubDate>
+<language><![CDATA[kor]]></language>
+<guid>16A7951AB6044F0B826669DF1EE3CBEF</guid>
+<event>
+<categories>
+<category><![CDATA[/WebwiseDiscoverCategoriesTest3/]]></category>
+</categories>
+<id></id>
+<capacity>4</capacity>
+</event>
+<source>
+<title>16A7951AB6044F0B826669DF1EE3CBEF</title>
+<link><![CDATA[http://www.WebwiseDiscoverCategoriesTest3.com/news3/rss3.xml]]></link>
+<country><![CDATA[KOR]]></country>
+</source>
+</item>
+
+</items>
+</result>

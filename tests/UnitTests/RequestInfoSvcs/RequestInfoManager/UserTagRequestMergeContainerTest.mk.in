@@ -1,0 +1,8 @@
+@usertagrequestmergecontainertestexe_deps@
+
+sources := UserTagRequestMergeContainerTest.cpp
+
+target := UserTagRequestMergeContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

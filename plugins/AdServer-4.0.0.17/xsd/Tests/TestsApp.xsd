@@ -1,0 +1,36 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Tests Common Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+  <xsd:include schemaLocation="./TestResultProcessingType.xsd"/>
+  <xsd:include schemaLocation="./TaskbotType.xsd"/>
+
+  <xsd:element name="testsCommon">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="pgConnection" type="PGConnectionType" minOccurs="1" maxOccurs="1">
+          <xsd:annotation>
+            <xsd:documentation>
+              Settings determine access to the database.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      <xsd:choice  minOccurs="0" maxOccurs="1">
+        <xsd:element name="testResultProcessing" type="TestResultProcessingType"/>
+        <xsd:element name="taskbot" type="TaskbotType"/>
+      </xsd:choice>
+    </xsd:sequence>
+  </xsd:complexType>
+ </xsd:element>
+
+</xsd:schema>

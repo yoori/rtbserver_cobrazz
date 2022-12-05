@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/moscow-test-central/mibs:/opt/zenoss/lib/oix/moscow-test-central/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/moscow-test-central/mibs/Controlling"/>
+  <hosts>
+    <host name="nnode0" monitor="localhost" group="OIX/Server" location="" system="moscow_test_central/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+      <service name="OixServerCommons" suffix="0" comment=""/>
+    </host>
+    <host name="nnode3" monitor="localhost" group="OIX/Server" location="" system="moscow_test_central/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

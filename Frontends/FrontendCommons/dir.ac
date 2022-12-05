@@ -1,0 +1,9 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([CookieManager], [CookieManager.mk])
+OSBE_CXX_DEF([RequestMatchers], [RequestMatchers.mk])
+OSBE_CXX_DEF([BoundedCache], [BoundedCache.mk])
+OSBE_CXX_DEF([FrontendStatistic], [FrontendStatistic.mk])
+OSBE_CXX_DEF([ProcessingTemplates], [ProcessingTemplates.mk])
+OSBE_CXX_DEF([FCGI], [FCGI.mk])
+OSBE_CXX_DEF([UserIdController], [UserIdController.mk])

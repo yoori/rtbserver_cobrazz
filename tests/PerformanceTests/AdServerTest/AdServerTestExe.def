@@ -1,0 +1,4 @@
+osbe_cxx_dep AdServerTestCommonLib
+
+osbe_cxx_dep AdServerTestCommonConfig
+osbe_cxx_dep AdServerTestConfig

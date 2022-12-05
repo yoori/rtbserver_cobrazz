@@ -1,0 +1,6 @@
+@sequencepackertestexe_deps@
+
+sources := SequencePackerTest.cpp
+target := SequencePackerTest
+
+include $(top_srcdir)/tests/Test.post.rules

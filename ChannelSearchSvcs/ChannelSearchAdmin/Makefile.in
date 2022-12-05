@@ -1,0 +1,4 @@
+@channelsearchadminexe_deps@
+sources := Application.cpp
+target := ChannelSearchAdmin
+@channelsearchadminexe_post@

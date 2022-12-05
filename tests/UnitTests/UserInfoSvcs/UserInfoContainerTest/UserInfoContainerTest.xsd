@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" 
+            elementFormDefault="qualified" 
+            xml:lang="en" 
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      UserInfoContainerTest Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../../../../xsd/AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="TestConfiguration" type="TestConfigurationType"/>
+
+  <xsd:complexType name="TestConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="UserInfoContainerTestConfig" type="UserInfoContainerTestConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserInfoContainerTestConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:sequence>
+      <xsd:element name="ChunksConfig" type="ChunksConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Chunks Config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logger for UserInfoContainerTest
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChannelRules" 
+                   type="ChannelRulesType" 
+                   minOccurs="0" 
+                   maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Channel rules
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element> 
+      
+      <xsd:element name="MatchConfig" 
+                   type="MatchConfigType"
+                   minOccurs="0"
+                   maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            Match configuration
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="MatchConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Match configuration
+      </xsd:documentation> 
+    </xsd:annotation>
+    <xsd:attribute name="user_id" type="xsd:string" use="required"/>
+    <xsd:attribute name="matches_number" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="channels" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChunksConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Channel description
+      </xsd:documentation> 
+    </xsd:annotation>
+    <xsd:attribute name="chunks_path" type="xsd:string" use="required"/>
+    <xsd:attribute name="base_chunk_file" type="xsd:string" use="required"/>
+    <xsd:attribute name="additional_chunk_file" type="xsd:string" use="required"/>
+    <xsd:attribute name="history_chunk_file" type="xsd:string" use="required"/>
+    <xsd:attribute name="activity_chunk_file" type="xsd:string" use="required"/>
+    <xsd:attribute name="pref_file" type="xsd:string" use="required"/>
+    <xsd:attribute name="wd_imps_file" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelRulesType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Channel description
+      </xsd:documentation> 
+    </xsd:annotation>
+    <xsd:attribute name="channel_id" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="time_from" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="time_to" type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="minimum_visits" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+</xsd:schema>

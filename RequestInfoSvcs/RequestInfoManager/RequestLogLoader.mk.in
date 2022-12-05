@@ -1,0 +1,7 @@
+@requestlogloader_deps@
+
+sources := RequestLogLoader.cpp \
+  RequestOperationLoader.cpp \
+  RequestInfoManagerStats.cpp
+
+@requestlogloader_post@

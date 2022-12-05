@@ -1,0 +1,6 @@
+@processcontrolvarstestexe_deps@
+
+sources := ProcessControlVarsTest.cpp
+target := ProcessControlVarsTest
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,8 @@
+@ctrgeneratorconfig_deps@
+sources := 
+includes := .
+xsd_files := CTRGeneratorConfig.xsd
+
+xsd_includes := .
+
+@ctrgeneratorconfig_post@

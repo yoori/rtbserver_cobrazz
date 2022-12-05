@@ -1,0 +1,8 @@
+@requestinfomanagerstormtestexe_deps@
+
+sources := RequestInfoManagerStormTest.cpp
+target := RequestInfoManagerStormTest
+test_arguments := -p $$TEST_TMP_DIR -i 1000 -u 1000
+vg_test_arguments := -p $$TEST_TMP_DIR -i 10 -u 10
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,6 @@
+@matchingcheckexe_deps@
+
+sources := MatchingCheck.cpp
+target := MatchingCheck
+
+include $(top_srcdir)/tests/Test.post.rules

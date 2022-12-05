@@ -1,0 +1,7 @@
+@expressionmatcherconfig_deps@
+sources := 
+includes := .
+xsd_files := ExpressionMatcherConfig.xsd
+xsd_includes := xsd
+
+@expressionmatcherconfig_post@

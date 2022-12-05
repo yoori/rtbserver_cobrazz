@@ -1,0 +1,16 @@
+@loggeneralizerexe_deps@
+
+sources := LogGeneralizerMain.cpp  \
+           LogGeneralizerImplInit.cpp  \
+           LogGeneralizerImplInit2.cpp \
+           LogGeneralizerImpl.cpp  \
+           LogDbSaverImpl.cpp      \
+           DbConnectionFactory.cpp \
+           ProcessingContexts.cpp
+
+corba_skeleton_idls := LogGeneralizer.idl
+corba_idl_includes := .
+
+target := LogGeneralizer
+
+@loggeneralizerexe_post@

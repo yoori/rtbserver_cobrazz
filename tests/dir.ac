@@ -1,0 +1,8 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([PerformanceTests])
+OSBE_CONFIG_SUBDIR([LogProcessing])
+OSBE_CONFIG_SUBDIR([UnitTests])
+OSBE_CONFIG_SUBDIR([AutoTests])
+OSBE_CONFIG_SUBDIR([Modeling])
+OSBE_CONFIG_SUBDIR([Utils])

@@ -1,0 +1,8 @@
+@userinfocontainertestexe_deps@
+sources := Application.cpp 
+target := UserInfoContainerTest
+
+xsd_files := UserInfoContainerTest.xsd
+xsd_includes := xsd
+
+@userinfocontainertestexe_post@

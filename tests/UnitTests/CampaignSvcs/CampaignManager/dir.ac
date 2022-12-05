@@ -1,0 +1,8 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([CreativeTemplateArgsTestExe], [CreativeTemplateArgsTest.mk])
+OSBE_CXX_DEF([SequencePackerTestExe], [SequencePackerTest.mk])
+OSBE_CXX_DEF([DomainManipTestExe], [DomainManipTest.mk])
+OSBE_CXX_DEF([CampaignSelectionIndexTestExe], [CampaignSelectionIndexTest.mk])
+OSBE_CXX_DEF([SecTokenTest], [SecTokenTest.mk])
+OSBE_CXX_DEF([CTRProviderTestExe], [CTRProviderTest.mk])

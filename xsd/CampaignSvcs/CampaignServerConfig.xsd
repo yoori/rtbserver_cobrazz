@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      CampaignServer Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="CampaignServer" type="CampaignServerType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:group name="PrimaryConnections">
+    <xsd:sequence>
+      <xsd:element name="PGConnection" type="PGConnectionType" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Defines Postgress connection string for accessing to AdServer database.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:group>
+
+  <xsd:complexType name="CampaignServerModeType">
+    <xsd:annotation>
+      <xsd:documentation>Sets Server mode options</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:choice>
+        <xsd:group ref="PrimaryConnections"/>
+        <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType" maxOccurs="1">
+          <xsd:annotation>
+            <xsd:documentation>Defines refs to primary CampaignServer's </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      </xsd:choice>
+
+      <xsd:element name="LogGeneralizerCorbaRef" type="MultiCorbaObjectRefType" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Defines corba refs to LogGeneralizers</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="stat_stamp_sync_period" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Period of synchronization statistics with DB in seconds</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="pending_expire_time" type="xsd:positiveInteger" default="604800">
+      <xsd:annotation>
+        <xsd:documentation>Pending expiration (7 days by default)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="audience_expiration_time" type="xsd:positiveInteger" default="691200"/>
+    <xsd:attribute name="enable_delivery_thresholds" type="xsd:boolean" default="true"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignProxyModeType">
+    <xsd:annotation>
+      <xsd:documentation>Sets Proxy mode options</xsd:documentation>
+    </xsd:annotation>
+    <xsd:all>
+      <xsd:element name="CampaignServerCorbaRef" type="MultiCorbaObjectRefType">
+        <xsd:annotation>
+          <xsd:documentation>Defines refs to corba object CampaignServer</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:all>
+    <xsd:attribute name="only_tags" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>Load only tags if true.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="load_country" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Load Campaigns and Channel only for this country.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="CampaignServerType">
+    <xsd:annotation>
+      <xsd:documentation>Campaign Server process runtime parameters.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType">
+        <xsd:annotation>
+          <xsd:documentation>Corba config.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP support config for CampaignServer
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logger" type="ErrorLoggerType">
+        <xsd:annotation>
+          <xsd:documentation>Sets logger options, such as log file name.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="Logging" type="CampaignServerLoggingType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:choice>
+        <xsd:element name="ProxyMode" type="CampaignProxyModeType"/>
+        <xsd:element name="ServerMode" type="CampaignServerModeType"/>
+      </xsd:choice>
+    </xsd:sequence>
+
+    <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+    <xsd:attribute name="config_update_period"
+      type="xsd:positiveInteger"
+      use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets config update period (seconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ecpm_update_period"
+      type="xsd:positiveInteger"
+      use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets ecpm update period (seconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="bill_stat_update_period"
+      type="xsd:nonNegativeInteger"
+       use="required">
+      <xsd:annotation>
+        <xsd:documentation>Sets bill stat update period (seconds).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="colo_id" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>Colocation Identifier.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="version" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>AdServer version.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_id" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>CampaignServer unique identifier for this cluster.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="campaign_statuses" type="CampaignFilterType">
+      <xsd:annotation>
+        <xsd:documentation>Campaign statuses.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="channel_statuses" type="ChannelFilterType">
+      <xsd:annotation>
+        <xsd:documentation>Channel statuses.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <!-- CampaignServerLoggingType -->
+  <xsd:complexType name="CampaignServerLoggingType">
+    <xsd:sequence>
+      <xsd:element name="ColoUpdateStat" type="CampaignServerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>ColoUpdateStat logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <!-- CampaignServerLoggerType -->
+  <xsd:complexType name="CampaignServerLoggerType">
+    <xsd:attribute name="max_size" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines size policy for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="flush_period" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines time policy in seconds for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

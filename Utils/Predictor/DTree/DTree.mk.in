@@ -1,0 +1,10 @@
+@dtree_deps@
+
+sources := \
+  Utils.cpp \
+  Predictor.cpp \
+  SVM.cpp \
+  DTree.cpp \
+  TreeLearner.cpp
+
+@dtree_post@

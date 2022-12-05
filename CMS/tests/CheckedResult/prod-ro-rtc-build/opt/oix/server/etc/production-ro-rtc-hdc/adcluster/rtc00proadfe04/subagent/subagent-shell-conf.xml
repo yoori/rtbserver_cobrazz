@@ -1,0 +1,23 @@
+<?xml version='1.0'?>
+<!--
+  poller_cycle: time in seconds
+  stale_time: data stale time in seconds, agent will return NaN if poll time stamp is older
+  log_to_console="1": dump messages to stderr, useful for debugging
+  cmd_timeout: commands execution timeout
+  log_level: log messages of the level and higher, default LOG_INFO
+  shm_size: shared memory size
+  timeStamp: timestamp of functions call cycle
+  totalExecTime: total time elapsed to call all functions
+-->
+<config poller_cycle="300"
+        stale_time="600"
+        cmd_timeout="10"
+        log_level="6"
+        shm_size="16195"
+        rootMIB="monitoring"
+        functionsCount="adsFunctionsCount"
+        functionsSuccessCount="adsFunctionsSuccessCount"
+        functionsFailedCount="adsFunctionsFailedCount"
+        timeStamp="adsTimeStamp"
+        totalExecTime="adsTotalExecTime"
+/>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/LogProcessing/SyncLogsConfig.xsd">
+  <cfg:SyncLogsConfig log_root="/opt/foros/server/var/log/SyncLogs" check_logs_period="10" host_check_period="10">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="12212">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/SyncLogs/SyncLogs">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:ClusterConfig root_logs_dir="/opt/foros/server/var/log">
+      <cfg:FeedRouteGroup local_copy_command="/bin/echo" local_copy_command_type="generic" remote_copy_command_type="rsync" tries_per_file="2" parse_source="false" unlink_source="false" interruptible="true" remote_copy_command="/usr/bin/rsync --partial -avz -t --timeout=55 --log-format=%f --delete-after rsync://##DST_HOST##:8873/filesender##SRC_PATH## ##DST_PATH##">
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="/tags/" destination="/opt/foros/server/var/www/tags/"/>
+          <cfg:files source="/Creatives/" destination="/opt/foros/server/var/www/Creatives/"/>
+          <cfg:files source="/Templates/" destination="/opt/foros/server/var/www/Templates/"/>
+          <cfg:files source="/WebwiseDiscover/" destination="/opt/foros/server/var/www/WebwiseDiscover/"/>
+          <cfg:hosts source="xen.ocslab.com" destination="vforos0"/>
+        </cfg:Route>
+      </cfg:FeedRouteGroup>
+    </cfg:ClusterConfig>
+  </cfg:SyncLogsConfig>
+</cfg:AdConfiguration>

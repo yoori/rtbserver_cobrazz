@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:PermanentFeConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration ./../../../../xsd/Frontends/PermanentFeConfig.xsd">
+  <cfg:SearchersConfig>
+    <cfg:SearchMatcher host_postfix="websearch.rakuten.co.jp" regexp="Web.*[\?|\&amp;]qt=([^&amp;]+).*" explanation="japan.infoseek.com" charset="euc-jp"/>
+    <cfg:SearchMatcher host_postfix="amazon.co.jp" regexp=".*[\?|\&amp;](?:field-)?keywords=([^&amp;]+).*" explanation="amazon" charset="shift_jis"/>
+    <cfg:SearchMatcher host_postfix="cgi.search.biglobe.ne.jp" regexp="cgi-bin\/search.*[\?|\&amp;]q=([^&amp;]+).*" explanation="biglobe.jp" charset="shift_jis"/>
+    <cfg:SearchMatcher host_postfix="ebay.co.jp" regexp="(?:.*)(?:\?|&amp;)(?:q=)([^&amp;]+).*" explanation="ebay.co.jp"/>
+    <cfg:SearchMatcher host_postfix="ocnsearch.goo.ne.jp" regexp="ocn\.jsp.*[\?|\&amp;][Ii][Ee]=sjis.*&amp;MT=([^&amp;]+).*" explanation="ocnsearch" charset="shift_jis"/>
+    <cfg:SearchMatcher host_postfix="ocnsearch.goo.ne.jp" regexp="ocn\.jsp.*[\?|\&amp;]MT=([^&amp;]+).*" explanation="ocnsearch" charset="euc-jp"/>
+    <cfg:SearchMatcher host_postfix="search.goo.ne.jp" regexp="web\.jsp.*[\?|\&amp;]IE=sjis&amp;MT=([^&amp;]+).*" explanation="goo" charset="shift_jis"/>
+    <cfg:SearchMatcher host_postfix="search.goo.ne.jp" regexp="web\.jsp.*MT=([^&amp;]+).*" explanation="goo" charset="euc-jp"/>
+    <cfg:SearchMatcher host_postfix="excite.co.jp" regexp="search\.gw.*[\?|\&amp;]search=([^&amp;]+).*" explanation="excite.com" charset="shift_jis"/>
+    <cfg:SearchMatcher host_postfix="naver.com" regexp="(?:.*)(?:[\?|&amp;])(?:query=)([^&amp;]+).*" explanation="naver.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="search.nate.com" regexp="search\/(?:.*)(?:[\?|&amp;])(?:q=)([^&amp;]+).*" explanation="nate.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="kr.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;]fr=kr-front[-_]sb.*[\&amp;]p=([^\&amp;]+)).*" explanation="kr.yahoo.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="kr.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;]p=([^\&amp;]*).*[\?|\&amp;]fr=kr-front[-_]sb).*" explanation="kr.yahoo.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="kr.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;]p=([^\&amp;]*).*[\?|\&amp;]).*" explanation="kr.yahoo.com"/>
+    <cfg:SearchMatcher host_postfix="br.search.yahoo.com" regexp="[^\?\&amp;]*(?:[\?|\&amp;](?:vc=&amp;amp;)?p=([^\&amp;]+)).*" explanation="br.yahoo.com"/>
+    <cfg:SearchMatcher host_postfix="google.co.kr" regexp="search(?:.*)(?:[\?|&amp;])q=([^&amp;]+).*" explanation="google.co.kr"/>
+    <cfg:SearchMatcher host_postfix="daum.net" regexp="(?:.*)(?:[\?|&amp;])(?:q=)([^&amp;]+).*" explanation="daum.net" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="lycos.co.kr" regexp="(?:.*)(?:[\?|&amp;])(?:q=)([^&amp;]+).*" explanation="lycos.co.kr" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="kr.msn.com" regexp="(?:\.\w+)+\/(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="kr.msn.com"/>
+    <cfg:SearchMatcher host_postfix="korea.com" regexp="(?:.*)(?:\?|&amp;)(?:s=)([^&amp;]+).*" explanation="en.korea.com"/>
+    <cfg:SearchMatcher host_postfix="korea.com" regexp="(?:.*)(?:\?|&amp;)(?:query=)([^&amp;]+).*" explanation="korea.com" charset="euc-kr" decoding_depth="2"/>
+    <cfg:SearchMatcher host_postfix="kr.altavista.com" regexp="(?:\w+)+\/(?:results|.+)(?:[?|&amp;].*?)q=([^&amp;]+).*" explanation="kr.altavista.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="mannam.com" regexp="(?:.*)(?:\?|&amp;)(?:query=)([^&amp;]+).*" explanation="mannam.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="chol.com" regexp="(?:.*)(?:\?|&amp;)(?:q=)([^&amp;]+).*" explanation="chol.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="paran.com" regexp="(?:.*\?)(?:.*[&amp;])*?(?:Query=|q=)([^&amp;]+).*" explanation="paran.com" charset="euc-kr"/>
+    <cfg:SearchMatcher host_postfix="ebay.co.kr" regexp="(?:.*)(?:\?|&amp;)(?:searchText=)([^&amp;]+).*" explanation="ebay.co.kr"/>
+    <cfg:SearchMatcher host_postfix="br.altavista.com" regexp="(?:results|.+)(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="br.altavista" charset="latin1"/>
+    <cfg:SearchMatcher host_postfix="amazon.*" regexp=".*[\?|\&amp;](?:field-)?keywords=([^&amp;]+).*" explanation="amazon"/>
+    <cfg:SearchMatcher host_postfix="amazon.*.*" regexp=".*[\?|\&amp;](?:field-)?keywords=([^&amp;]+).*" explanation="amazon"/>
+    <cfg:SearchMatcher host_postfix="kr.dmoz.org" regexp="(?:\.\w+)+\/(?:.*)(?:\?|&amp;)search=([^&amp;]+).*" explanation="kr.dmoz.org"/>
+    <cfg:SearchMatcher host_postfix="daum.net" regexp="(?:.*)(?:&amp;enc=utf8)(?:.*)(?:&amp;q=)([^&amp;]+).*" explanation="daum.net"/>
+    <cfg:SearchMatcher host_postfix="google.*" regexp="(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="google"/>
+    <cfg:SearchMatcher host_postfix="google.*.*" regexp="(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="google"/>
+    <cfg:SearchMatcher host_postfix="yahoo.*" regexp="(?:.*)(?:\?|&amp;)(?:\bp=|\bstx=)([^&amp;]+).*" explanation="yahoo"/>
+    <cfg:SearchMatcher host_postfix="yahoo.*.*" regexp="(?:.*)(?:\?|&amp;)(?:\bp=|\bstx=)([^&amp;]+).*" explanation="yahoo"/>
+    <cfg:SearchMatcher host_postfix="ebay.*" regexp="(?:.*)(?:\?|&amp;)(?:satitle=|_nkw=)([^&amp;]+).*" explanation="ebay.com"/>
+    <cfg:SearchMatcher host_postfix="ebay.*.*" regexp="(?:.*)(?:\?|&amp;)(?:satitle=|_nkw=)([^&amp;]+).*" explanation="ebay.com"/>
+    <cfg:SearchMatcher host_postfix="bing.com" regexp="search(?:.*)(?:\?|&amp;)(?:q=)([^&amp;]+).*" explanation="bing"/>
+    <cfg:SearchMatcher host_postfix="rambler.ru" regexp="(?:.*)(?:\?|&amp;)(?:words=|searchstring=|query=)([^&amp;]+).*" explanation="rambler.ru"/>
+    <cfg:SearchMatcher host_postfix="yandex.ru" regexp="(?:.*)(?:\?|&amp;)text=([^&amp;]+).*" explanation="yandex.ru"/>
+    <cfg:SearchMatcher host_postfix="aport.ru" regexp="(?:.*)(?:\?|&amp;)r=([^&amp;]+).*" explanation="aport.ru"/>
+    <cfg:SearchMatcher host_postfix="lycos.*" regexp="(?:.*)(?:\?|&amp;)(?:query=|,keyword--)([^&amp;^,]+).*" explanation="lycos.com"/>
+    <cfg:SearchMatcher host_postfix="lycos.*.*" regexp="(?:.*)(?:\?|&amp;)(?:query=|,keyword--)([^&amp;^,]+).*" explanation="lycos.com"/>
+    <cfg:SearchMatcher host_postfix="us.yhs4.search.yahoo.com" regexp="yhs/search(?:.*?)cs=iso88591(?:.*?)(?:\?|&amp;)q=([^&amp;]+).*" explanation="alltheweb.com" charset="iso8859-1"/>
+    <cfg:SearchMatcher host_postfix="us.yhs4.search.yahoo.com" regexp="yhs/search(?:.*?)(?:\?|&amp;)q=([^&amp;]+).*" explanation="altavista"/>
+    <cfg:SearchMatcher host_postfix="dmoz.org" regexp="(?:.*)(?:\?|&amp;)(?:search|q)=([^&amp;]+).*" explanation="dmoz.org"/>
+    <cfg:SearchMatcher host_postfix="hotbot.*" regexp="(?:.*)(?:\?|&amp;)(?:query=|qu=)([^&amp;]+).*" explanation="hotbot.com"/>
+    <cfg:SearchMatcher host_postfix="hotbot.*.*" regexp="(?:.*)(?:\?|&amp;)(?:query=|qu=)([^&amp;]+).*" explanation="hotbot.com"/>
+    <cfg:SearchMatcher host_postfix="search.com" regexp="(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="search.com"/>
+    <cfg:SearchMatcher host_postfix="msn.*" regexp="(?:.*)(?:\?|&amp;)(?:q=|searchText=|siteSearchQuery=)([^&amp;]+).*" explanation="msn.com"/>
+    <cfg:SearchMatcher host_postfix="msn.*.*" regexp="(?:.*)(?:\?|&amp;)(?:q=|searchText=|siteSearchQuery=)([^&amp;]+).*" explanation="msn.com"/>
+    <cfg:SearchMatcher host_postfix="live.*" regexp="(?:.*)(?:\?|&amp;)(?:q=|searchText=|siteSearchQuery=)([^&amp;]+).*" explanation="live.com"/>
+    <cfg:SearchMatcher host_postfix="live.*.*" regexp="(?:.*)(?:\?|&amp;)(?:q=|searchText=|siteSearchQuery=)([^&amp;]+).*" explanation="live.com"/>
+    <cfg:SearchMatcher host_postfix="looksmart.com" regexp="(?:.*)(?:\?|&amp;)(?:key=)([^&amp;]+).*" explanation="looksmart.com"/>
+    <cfg:SearchMatcher host_postfix="searchhippo.com" regexp="(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="searchhippo.com"/>
+    <cfg:SearchMatcher host_postfix="pricegrabber.com" regexp="(?:.*)(?:\?|&amp;|\/)(?:ogkw=|form_keyword=|search=)([^(&amp;|\/)]+).*" explanation="pricegrabber.com"/>
+    <cfg:SearchMatcher host_postfix="ask.com" regexp="(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="ask.com"/>
+    <cfg:SearchMatcher host_postfix="a9.com" regexp="([^\/]+)" explanation="a9.com"/>
+    <cfg:SearchMatcher host_postfix="kanoodle.com" regexp="(?:.*)(?:\?|&amp;)(?:query=)([^&amp;]+).*" explanation="kanoodle.com"/>
+    <cfg:SearchMatcher host_postfix="aol.com" regexp="aol\/search(?:.*)(?:\?|&amp;)q=([^&amp;]+).*" explanation="aol.com"/>
+    <cfg:SearchMatcher host_postfix="scrubtheweb.com" regexp="(?:.*)(?:\?|&amp;)(?:keyword=|q=)([^&amp;]+).*" explanation="scrubtheweb"/>
+    <cfg:SearchMatcher host_postfix="metacrawler.com" regexp="(?:.*)(?:search\/web\/|results\/Web\/|\/\/)([^\/]+).*" explanation="metacrawler.com" decoding_depth="4"/>
+    <cfg:SearchMatcher host_postfix="excite.com" regexp="(?:.*)(?:search\/web\/|results\/Web\/|\/\/)([^\/]+).*" explanation="excite.com" decoding_depth="3"/>
+    <cfg:SearchMatcher host_postfix="dogpile.com" regexp="(?:.*)(?:\/Web\/|\/\/)([^\/]+).*" explanation="dogpile.com" decoding_depth="4"/>
+  </cfg:SearchersConfig>
+  <cfg:OsConfig>
+  </cfg:OsConfig>
+  <cfg:BrowserConfig>
+  </cfg:BrowserConfig>
+  <cfg:UserAgentMatcherConfig filter_path="user_agent_filter.txt"/>
+</cfg:PermanentFeConfiguration>

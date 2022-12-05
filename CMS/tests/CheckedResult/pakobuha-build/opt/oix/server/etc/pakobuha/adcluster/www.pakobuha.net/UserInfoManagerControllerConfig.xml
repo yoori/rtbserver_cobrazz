@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/UserInfoSvcs/UserInfoManagerControllerConfig.xsd">
+  <cfg:UserInfoManagerControllerConfig colo_id="4" status_check_period="10">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10102">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+        <cfg:Object servant="UserInfoManagerController" name="UserInfoManagerController"/>
+        <cfg:Object servant="UserInfoClusterControl" name="UserInfoClusterControl"/>
+        <cfg:Object servant="UserInfoClusterStats" name="UserInfoClusterStats"/>
+        <cfg:Object servant="UserInfoManagerController" name="UserInfoManagerController_v24"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/UserInfoManagerController/UserInfoManagerController">
+      <cfg:SysLog log_level="7"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:UserInfoManagerHost>
+      <cfg:UserInfoManagerRef name="UserInfoManager" ref="corbaloc:iiop:www.pakobuha.net:10101/UserInfoManager_v24"/>
+      <cfg:UserInfoManagerControlRef name="UserInfoManagerControl" ref="corbaloc:iiop:www.pakobuha.net:10101/UserInfoManagerControl"/>
+      <cfg:UserInfoManagerStatsRef name="UserInfoManagerStats" ref="corbaloc:iiop:www.pakobuha.net:10101/UserInfoManagerStats"/>
+    </cfg:UserInfoManagerHost>
+  </cfg:UserInfoManagerControllerConfig>
+</cfg:AdConfiguration>

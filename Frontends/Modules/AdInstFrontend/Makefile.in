@@ -1,0 +1,8 @@
+@adinstfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := RequestInfoFiller.cpp \
+  AdInstFrontend.cpp
+
+@adinstfrontend_post@

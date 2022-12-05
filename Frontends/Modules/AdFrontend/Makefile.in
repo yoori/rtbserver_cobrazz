@@ -1,0 +1,10 @@
+@adfrontend_deps@
+
+includes := Frontends/Modules
+
+sources := RequestInfoFiller.cpp \
+  AdFrontend.cpp \
+  AdFrontendStat.cpp \
+  DebugSink.cpp 
+
+@adfrontend_post@

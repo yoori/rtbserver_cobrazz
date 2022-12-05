@@ -1,0 +1,16 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([RequestInfoMapTestExe], [RequestInfoMapTest.mk])
+OSBE_CXX_DEF([RequestInfoContainerTestExe], [RequestInfoContainerTest.mk])
+OSBE_CXX_DEF([PassbackContainerTestExe], [PassbackContainerTest.mk])
+OSBE_CXX_DEF([UserCampaignReachContainerTestExe], [UserCampaignReachContainerTest.mk])
+OSBE_CXX_DEF([UserSiteReachContainerTestExe], [UserSiteReachContainerTest.mk])
+OSBE_CXX_DEF([UserActionInfoContainerTestExe], [UserActionInfoContainerTest.mk])
+OSBE_CXX_DEF([UserFraudProtectionContainerTestExe], [UserFraudProtectionContainerTest.mk])
+OSBE_CXX_DEF([UserTagRequestMergeContainerTestExe], [UserTagRequestMergeContainerTest.mk])
+OSBE_CXX_DEF([BillingProcessorTestExe], [BillingProcessorTest.mk])
+
+OSBE_CXX_DEF([RequestOutLoggerTestExe], [RequestOutLoggerTest.mk])
+OSBE_CXX_DEF([RequestLogLoaderTestExe], [RequestLogLoaderTest.mk])
+OSBE_CXX_DEF([RequestOperationLoaderTestExe], [RequestOperationLoaderTest.mk])
+OSBE_CXX_DEF([RequestInfoManagerStormTestExe], [RequestInfoManagerStormTest.mk])

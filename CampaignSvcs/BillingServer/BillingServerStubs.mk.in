@@ -1,0 +1,10 @@
+@billingserverstubs_deps@
+
+sources := 
+includes := .
+
+corba_stub_idls := BillingServer.idl
+corba_includes := .
+corba_idl_includes := .
+
+@billingserverstubs_post@

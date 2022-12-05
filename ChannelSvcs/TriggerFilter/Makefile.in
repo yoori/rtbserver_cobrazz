@@ -1,0 +1,4 @@
+@triggerfilterexe_deps@
+sources := Application.cpp
+target := TriggerFilter
+@triggerfilterexe_post@

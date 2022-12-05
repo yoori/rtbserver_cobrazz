@@ -1,0 +1,10 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  Tanx.mk \
+  Baidu.mk \
+  Google.mk \
+  BiddingFrontend.mk \
+  BiddingFrontendGroupLogger.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

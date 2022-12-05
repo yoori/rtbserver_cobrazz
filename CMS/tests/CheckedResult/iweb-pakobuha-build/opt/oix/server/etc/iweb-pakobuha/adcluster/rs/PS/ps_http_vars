@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'http://a.pakobuha.net',
+            'ps_host' => 'http://a.pakobuha.net',
+            'toolbar_base' => 'http://http://b.pakobuha.net/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'http://http://b.pakobuha.net/tag/1.js',
+            'adimage_server' => 'http://c.pakobuha.net',
+          );
+        
+
+    1;
+

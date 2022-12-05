@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfg:AdConfiguration xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/LogProcessing/SyncLogsConfig.xsd">
+  <cfg:SyncLogsConfig log_root="/opt/foros/server/var/log/SyncLogs" check_logs_period="10" host_check_period="10">
+    <cfg:CorbaConfig threading-pool="10">
+      <cfg:Endpoint host="*" port="10112">
+        <cfg:Object servant="ProcessControl" name="ProcessControl"/>
+      </cfg:Endpoint>
+    </cfg:CorbaConfig>
+    <cfg:Logger filename="/opt/foros/server/var/log/SyncLogs/SyncLogs">
+      <cfg:SysLog log_level="4"/>
+      <cfg:Suffix time_span="86400" size_span="104857600" max_log_level="4" name=".error"/>
+      <cfg:Suffix min_log_level="5" max_log_level="7" time_span="86400" size_span="104857600" name=".trace"/>
+    </cfg:Logger>
+    <cfg:ClusterConfig root_logs_dir="/opt/foros/server/var/log" definite_hash_schema="/opt/oix/server/xsd/AdServerCommons/HostDistributionFile.xsd">
+      <cfg:FeedRouteGroup local_copy_command_type="rsync" remote_copy_command_type="rsync" tries_per_file="2" local_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## /opt/foros/server/var/log##DST_PATH##" remote_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f ##SRC_PATH## rsync://##DST_HOST##:10114/ad-logs##DST_PATH##">
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="CampaignManager/Out/CreativeStat/CreativeStat.log_*" destination="/LogGeneralizer/In/CreativeStat"/>
+          <cfg:files source="CampaignManager/Out/OptOutStat/OptOutStat.log_*" destination="/LogGeneralizer/In/OptOutStat"/>
+          <cfg:files source="CampaignManager/Out/WebStat/WebStat.log_*" destination="/LogGeneralizer/In/WebStat"/>
+          <cfg:files source="CampaignManager/Out/ChannelTriggerStat/ChannelTriggerStat.log_*" destination="/LogGeneralizer/In/ChannelTriggerStat"/>
+          <cfg:files source="CampaignManager/Out/ChannelHitStat/ChannelHitStat.log_*" destination="/LogGeneralizer/In/ChannelHitStat"/>
+          <cfg:files source="CampaignManager/Out/ActionRequest/ActionRequest.log_*" destination="/LogGeneralizer/In/ActionRequest"/>
+          <cfg:files source="CampaignManager/Out/RequestTriggerStat/RequestTriggerStat.log_*" destination="/LogGeneralizer/In/RequestTriggerStat"/>
+          <cfg:files source="CampaignManager/Out/RequestTriggerChannelStat/RequestTriggerChannelStat.log_*" destination="/LogGeneralizer/In/RequestTriggerChannelStat"/>
+          <cfg:files source="CampaignManager/Out/MarginRuleStat/MarginRuleStat.log_*" destination="/LogGeneralizer/In/MarginRuleStat"/>
+          <cfg:files source="CampaignManager/Out/PublisherInventory/PublisherInventory.log_*" destination="/LogGeneralizer/In/PublisherInventory"/>
+          <cfg:files source="CampaignManager/Out/UserProperties/UserProperties.log_*" destination="/LogGeneralizer/In/UserProperties"/>
+          <cfg:files source="CampaignManager/Out/CCGStat/CCGStat.log_*" destination="/LogGeneralizer/In/CCGStat"/>
+          <cfg:files source="CampaignManager/Out/CCStat/CCStat.log_*" destination="/LogGeneralizer/In/CCStat"/>
+          <cfg:files source="CampaignManager/Out/TagAuctionStat/TagAuctionStat.log_*" destination="/LogGeneralizer/In/TagAuctionStat"/>
+          <cfg:files source="CampaignManager/Out/PassbackStat/PassbackStat.log_*" destination="/LogGeneralizer/In/PassbackStat"/>
+          <cfg:files source="CampaignManager/Out/UserAgentStat/UserAgentStat.log_*" destination="/LogGeneralizer/In/UserAgentStat"/>
+          <cfg:files source="CampaignManager/Out/ColoUsers/ColoUsers.log_*" destination="/LogGeneralizer/In/ColoUsers"/>
+          <cfg:files source="CampaignManager/Out/SiteReferrerStat/SiteReferrerStat.log_*" destination="/LogGeneralizer/In/SiteReferrerStat"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,rtc00proadfe05" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="NewsItemServer/Out/WebwiseDiscoverItemStat/WebwiseDiscoverItemStat.log_*" destination="/LogGeneralizer/In/WebwiseDiscoverItemStat"/>
+          <cfg:files source="NewsItemServer/Out/WebwiseDiscoverTagStat/WebwiseDiscoverTagStat.log_*" destination="/LogGeneralizer/In/WebwiseDiscoverTagStat"/>
+          <cfg:files source="NewsItemServer/Out/WebwiseDiscoverItems/WebwiseDiscoverItems.log_*" destination="/LogGeneralizer/In/WebwiseDiscoverItems"/>
+          <cfg:hosts source="rtc00proadbe02" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="NewsQueryServer/Out/DiscoverChannelState/DiscoverChannelState.log_*" destination="/LogGeneralizer/In/DiscoverChannelState"/>
+          <cfg:files source="NewsQueryServer/Out/DiscoverFeedState/DiscoverFeedState.log_*" destination="/LogGeneralizer/In/DiscoverFeedState"/>
+          <cfg:hosts source="rtc00proadbe02,rtc00proadbe03,rtc00proadbe04" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="CampaignServer/Out/ColoUpdateStat/ColoUpdateStat.log_*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
+          <cfg:hosts source="rtc00proadbe00,rtc00proadbe01" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="Hash">
+          <cfg:files source="CampaignManager/Out/Request/Request.log_##HASH##.*" destination="/RequestInfoManager/In/Request"/>
+          <cfg:files source="CampaignManager/Out/Impression/Impression.log_##HASH##.*" destination="/RequestInfoManager/In/Impression"/>
+          <cfg:files source="CampaignManager/Out/Click/Click.log_##HASH##.*" destination="/RequestInfoManager/In/Click"/>
+          <cfg:files source="CampaignManager/Out/AdvertiserAction/AdvertiserAction.log_##HASH##.*" destination="/RequestInfoManager/In/AdvertiserAction"/>
+          <cfg:files source="CampaignManager/Out/PassbackOpportunity/PassbackOpportunity.log_##HASH##.*" destination="/RequestInfoManager/In/PassbackOpportunity"/>
+          <cfg:files source="CampaignManager/Out/PassbackImpression/PassbackImpression.log_##HASH##.*" destination="/RequestInfoManager/In/PassbackImpression"/>
+          <cfg:files source="CampaignManager/Out/TagRequest/TagRequest.log_##HASH##.*" destination="/RequestInfoManager/In/TagRequest"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,rtc00proadfe05" destination="rtc00proadbe02,rtc00proadbe03,rtc00proadbe04"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="RequestInfoManager/Out/CreativeStat/CreativeStat.log_*" destination="/LogGeneralizer/In/CreativeStat"/>
+          <cfg:files source="RequestInfoManager/Out/UserProperties/UserProperties.log_*" destination="/LogGeneralizer/In/UserProperties"/>
+          <cfg:files source="RequestInfoManager/Out/ChannelPerformance/ChannelPerformance.log_*" destination="/LogGeneralizer/In/ChannelPerformance"/>
+          <cfg:files source="RequestInfoManager/Out/ExpressionPerformance/ExpressionPerformance.log_*" destination="/LogGeneralizer/In/ExpressionPerformance"/>
+          <cfg:files source="RequestInfoManager/Out/CCGKeywordStat/CCGKeywordStat.log_*" destination="/LogGeneralizer/In/CCGKeywordStat"/>
+          <cfg:files source="RequestInfoManager/Out/SiteChannelStat/SiteChannelStat.log_*" destination="/LogGeneralizer/In/SiteChannelStat"/>
+          <cfg:files source="RequestInfoManager/Out/AdvertiserUserStat/AdvertiserUserStat.log_*" destination="/LogGeneralizer/In/AdvertiserUserStat"/>
+          <cfg:files source="RequestInfoManager/Out/ActionStat/ActionStat.log_*" destination="/LogGeneralizer/In/ActionStat"/>
+          <cfg:files source="RequestInfoManager/Out/CMPStat/CMPStat.log_*" destination="/LogGeneralizer/In/CMPStat"/>
+          <cfg:files source="RequestInfoManager/Out/PassbackStat/PassbackStat.log_*" destination="/LogGeneralizer/In/PassbackStat"/>
+          <cfg:files source="RequestInfoManager/Out/ChannelImpInventory/ChannelImpInventory.log_*" destination="/LogGeneralizer/In/ChannelImpInventory"/>
+          <cfg:files source="RequestInfoManager/Out/SiteUserStat/SiteUserStat.log_*" destination="/LogGeneralizer/In/SiteUserStat"/>
+          <cfg:files source="RequestInfoManager/Out/SiteReferrerStat/SiteReferrerStat.log_*" destination="/LogGeneralizer/In/SiteReferrerStat"/>
+          <cfg:files source="RequestInfoManager/Out/PageLoadsDailyStat/PageLoadsDailyStat.log_*" destination="/LogGeneralizer/In/PageLoadsDailyStat"/>
+          <cfg:files source="RequestInfoManager/Out/CCGUserStat/CCGUserStat.log_*" destination="/LogGeneralizer/In/CCGUserStat"/>
+          <cfg:files source="RequestInfoManager/Out/CCUserStat/CCUserStat.log_*" destination="/LogGeneralizer/In/CCUserStat"/>
+          <cfg:files source="RequestInfoManager/Out/CampaignUserStat/CampaignUserStat.log_*" destination="/LogGeneralizer/In/CampaignUserStat"/>
+          <cfg:files source="RequestInfoManager/Out/SiteStat/SiteStat.log_*" destination="/LogGeneralizer/In/SiteStat"/>
+          <cfg:files source="RequestInfoManager/Out/CCGStat/CCGStat.log_*" destination="/LogGeneralizer/In/CCGStat"/>
+          <cfg:files source="RequestInfoManager/Out/CCStat/CCStat.log_*" destination="/LogGeneralizer/In/CCStat"/>
+          <cfg:files source="RequestInfoManager/Out/CampaignStat/CampaignStat.log_*" destination="/LogGeneralizer/In/CampaignStat"/>
+          <cfg:hosts source="rtc00proadbe02,rtc00proadbe03,rtc00proadbe04" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="KeywordMatcher/Out/KeywordInventory/KeywordInventory.log_*" destination="/LogGeneralizer/In/KeywordInventory"/>
+          <cfg:hosts source="rtc00proadbe03" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="ChannelServer/Out/ColoUpdateStat/ColoUpdateStat.log_*" destination="/LogGeneralizer/In/ColoUpdateStat"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe09,rtc00proadfe08,rtc00proadfe07,rtc00proadfe06" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="Hash">
+          <cfg:files source="CampaignManager/Out/RequestBasicChannels/RequestBasicChannels.log_##HASH##.*" destination="/ExpressionMatcher/In/RequestBasicChannels"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,rtc00proadfe05" destination="rtc00proadbe01"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="CampaignManager/Out/ChannelMatchRequest/ChannelMatchRequest.log_*" destination="/KeywordMatcher/In/ChannelMatchRequest"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,rtc00proadfe05" destination="rtc00proadbe03"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="ExpressionMatcher/Out/ChannelImpInventory/ChannelImpInventory.log_*" destination="/LogGeneralizer/In/ChannelImpInventory"/>
+          <cfg:files source="ExpressionMatcher/Out/ChannelInventory/ChannelInventory.log_*" destination="/LogGeneralizer/In/ChannelInventory"/>
+          <cfg:files source="ExpressionMatcher/Out/ChannelPriceRange/ChannelPriceRange.log_*" destination="/LogGeneralizer/In/ChannelPriceRange"/>
+          <cfg:files source="ExpressionMatcher/Out/ChannelInventoryEstimationStat/ChannelInventoryEstimationStat.log_*" destination="/LogGeneralizer/In/ChannelInventoryEstimationStat"/>
+          <cfg:files source="ExpressionMatcher/Out/ChannelPerformance/ChannelPerformance.log_*" destination="/LogGeneralizer/In/ChannelPerformance"/>
+          <cfg:files source="ExpressionMatcher/Out/ChannelTriggerImpStat/ChannelTriggerImpStat.log_*" destination="/LogGeneralizer/In/ChannelTriggerImpStat"/>
+          <cfg:files source="ExpressionMatcher/Out/GlobalColoUserStat/GlobalColoUserStat.log_*" destination="/LogGeneralizer/In/GlobalColoUserStat"/>
+          <cfg:files source="ExpressionMatcher/Out/ColoUserStat/ColoUserStat.log_*" destination="/LogGeneralizer/In/ColoUserStat"/>
+          <cfg:hosts source="rtc00proadbe01" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="UserInfoManager/Out/ChannelCountStat/ChannelCountStat.log_*" destination="/LogGeneralizer/In/ChannelCountStat"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09" destination="rtc00proadbe00"/>
+        </cfg:Route>
+        <!--
+          user operations exchange (internal cluster)
+        -->
+        <cfg:Route type="DefiniteHash">
+          <cfg:files source="UserInfoManager/Out/UserOp_1/UserOp.log_##HASH##.*" destination="/UserInfoManager/In/UserOp_1/"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09" destination="/opt/foros/server/var/run/UserInfoDistribution.1.xml"/>
+        </cfg:Route>
+        <cfg:Route type="DefiniteHash">
+          <cfg:files source="UserInfoManager/Out/UserOp_2/UserOp.log_##HASH##.*" destination="/UserInfoManager/In/UserOp_2/"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09" destination="/opt/foros/server/var/run/UserInfoDistribution.2.xml"/>
+        </cfg:Route>
+      </cfg:FeedRouteGroup>
+      <cfg:FeedRouteGroup check_logs_period="60" local_copy_command_type="rsync" remote_copy_command_type="rsync" tries_per_file="2" parse_source="false" unlink_source="false" interruptible="true" remote_copy_command="/usr/bin/rsync --partial -avz -t --timeout=55 --log-format=%f --delete-after rsync://##DST_HOST##:10114/ad-content/##SRC_PATH## ##DST_PATH##" local_copy_command="/usr/bin/rsync --partial -avz -t --timeout=55 --log-format=%f --delete-after rsync://##DST_HOST##:10114/ad-content/##SRC_PATH## ##DST_PATH##">
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="/tags/" destination="/opt/foros/server/var/www/tags/"/>
+          <cfg:files source="/Creatives/" destination="/opt/foros/server/var/www/Creatives/"/>
+          <cfg:files source="/Templates/" destination="/opt/foros/server/var/www/Templates/"/>
+          <cfg:files source="/WebwiseDiscover/common/" destination="/opt/foros/server/var/www/WebwiseDiscover/common/"/>
+          <cfg:files source="/WebwiseDiscover/templates/" destination="/opt/foros/server/var/www/WebwiseDiscover/templates/"/>
+          <cfg:files source="/Publ/" destination="/opt/foros/server/var/www/Publ/"/>
+          <cfg:hosts source="rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,rtc00proadfe05" destination="rtc00proadbe00"/>
+        </cfg:Route>
+      </cfg:FeedRouteGroup>
+      <cfg:FeedRouteGroup local_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## ##DST_PATH##" local_copy_command_type="rsync" remote_copy_command_type="rsync" tries_per_file="2" remote_copy_command="/usr/bin/rsync -t -z --timeout=55 --log-format=%f --ignore-existing ##SRC_PATH## rsync://rtc00proadbe00:10121/ad-logs##DST_PATH##">
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="LogGeneralizer/Out/CreativeStat/CreativeStat.log_*" destination="/LogProxy/CreativeStat"/>
+          <cfg:files source="LogGeneralizer/Out/UserProperties/UserProperties.log_*" destination="/LogProxy/UserProperties"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelPerformance/ChannelPerformance.log_*" destination="/LogProxy/ChannelPerformance"/>
+          <cfg:files source="LogGeneralizer/Out/ExpressionPerformance/ExpressionPerformance.log_*" destination="/LogProxy/ExpressionPerformance"/>
+          <cfg:files source="LogGeneralizer/Out/OptOutStat/OptOutStat.log_*" destination="/LogProxy/OptOutStat"/>
+          <cfg:files source="LogGeneralizer/Out/WebStat/WebStat.log_*" destination="/LogProxy/WebStat"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelTriggerStat/ChannelTriggerStat.log_*" destination="/LogProxy/ChannelTriggerStat"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelTriggerImpStat/ChannelTriggerImpStat.log_*" destination="/LogProxy/ChannelTriggerImpStat"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelHitStat/ChannelHitStat.log_*" destination="/LogProxy/ChannelHitStat"/>
+          <cfg:files source="LogGeneralizer/Out/ColoUsers/ColoUsers.log_*" destination="/LogProxy/ColoUsers"/>
+          <cfg:files source="LogGeneralizer/Out/AdvertiserUserStat/AdvertiserUserStat.log_*" destination="/LogProxy/AdvertiserUserStat"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelInventory/ChannelInventory.log_*" destination="/LogProxy/ChannelInventory"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelPriceRange/ChannelPriceRange.log_*" destination="/LogProxy/ChannelPriceRange"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelInventoryEstimationStat/ChannelInventoryEstimationStat.log_*" destination="/LogProxy/ChannelInventoryEstimationStat"/>
+          <cfg:files source="LogGeneralizer/Out/CCGKeywordStat/CCGKeywordStat.log_*" destination="/LogProxy/CCGKeywordStat"/>
+          <cfg:files source="LogGeneralizer/Out/SiteChannelStat/SiteChannelStat.log_*" destination="/LogProxy/SiteChannelStat"/>
+          <cfg:files source="LogGeneralizer/Out/SiteReferrerStat/SiteReferrerStat.log_*" destination="/LogProxy/SiteReferrerStat"/>
+          <cfg:files source="LogGeneralizer/Out/ActionStat/ActionStat.log_*" destination="/LogProxy/ActionStat"/>
+          <cfg:files source="LogGeneralizer/Out/PassbackStat/PassbackStat.log_*" destination="/LogProxy/PassbackStat"/>
+          <cfg:files source="LogGeneralizer/Out/UserAgentStat/UserAgentStat.log_*" destination="/LogProxy/UserAgentStat"/>
+          <cfg:files source="LogGeneralizer/Out/CMPStat/CMPStat.log_*" destination="/LogProxy/CMPStat"/>
+          <cfg:files source="LogGeneralizer/Out/ActionRequest/ActionRequest.log_*" destination="/LogProxy/ActionRequest"/>
+          <cfg:files source="LogGeneralizer/Out/WebwiseDiscoverItemStat/WebwiseDiscoverItemStat.log_*" destination="/LogProxy/WebwiseDiscoverItemStat"/>
+          <cfg:files source="LogGeneralizer/Out/WebwiseDiscoverTagStat/WebwiseDiscoverTagStat.log_*" destination="/LogProxy/WebwiseDiscoverTagStat"/>
+          <cfg:files source="LogGeneralizer/Out/WebwiseDiscoverItems/WebwiseDiscoverItems.log_*" destination="/LogProxy/WebwiseDiscoverItems"/>
+          <cfg:files source="LogGeneralizer/Out/RequestTriggerStat/RequestTriggerStat.log_*" destination="/LogProxy/RequestTriggerStat"/>
+          <cfg:files source="LogGeneralizer/Out/RequestTriggerChannelStat/RequestTriggerChannelStat.log_*" destination="/LogProxy/RequestTriggerChannelStat"/>
+          <cfg:files source="LogGeneralizer/Out/MarginRuleStat/MarginRuleStat.log_*" destination="/LogProxy/MarginRuleStat"/>
+          <cfg:files source="LogGeneralizer/Out/PublisherInventory/PublisherInventory.log_*" destination="/LogProxy/PublisherInventory"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelImpInventory/ChannelImpInventory.log_*" destination="/LogProxy/ChannelImpInventory"/>
+          <cfg:files source="LogGeneralizer/Out/SiteUserStat/SiteUserStat.log_*" destination="/LogProxy/SiteUserStat"/>
+          <cfg:files source="LogGeneralizer/Out/KeywordInventory/KeywordInventory.log_*" destination="/LogProxy/KeywordInventory"/>
+          <cfg:files source="LogGeneralizer/Out/PageLoadsDailyStat/PageLoadsDailyStat.log_*" destination="/LogProxy/PageLoadsDailyStat"/>
+          <cfg:files source="LogGeneralizer/Out/ChannelCountStat/ChannelCountStat.log_*" destination="/LogProxy/ChannelCountStat"/>
+          <cfg:files source="LogGeneralizer/Out/TagAuctionStat/TagAuctionStat.log_*" destination="/LogProxy/TagAuctionStat"/>
+          <cfg:files source="LogGeneralizer/Out/CCGUserStat/CCGUserStat.log_*" destination="/LogProxy/CCGUserStat"/>
+          <cfg:files source="LogGeneralizer/Out/CCUserStat/CCUserStat.log_*" destination="/LogProxy/CCUserStat"/>
+          <cfg:files source="LogGeneralizer/Out/CampaignUserStat/CampaignUserStat.log_*" destination="/LogProxy/CampaignUserStat"/>
+          <cfg:files source="LogGeneralizer/Out/SiteStat/SiteStat.log_*" destination="/LogProxy/SiteStat"/>
+          <cfg:files source="LogGeneralizer/Out/CCGStat/CCGStat.log_*" destination="/LogProxy/CCGStat"/>
+          <cfg:files source="LogGeneralizer/Out/CCStat/CCStat.log_*" destination="/LogProxy/CCStat"/>
+          <cfg:files source="LogGeneralizer/Out/CampaignStat/CampaignStat.log_*" destination="/LogProxy/CampaignStat"/>
+          <cfg:hosts destination="-non-used-hostname" source="rtc00proadbe00"/>
+        </cfg:Route>
+      </cfg:FeedRouteGroup>
+      <cfg:FeedRouteGroup check_logs_period="60" local_copy_command="/bin/echo" local_copy_command_type="rsync" remote_copy_command_type="rsync" tries_per_file="2" parse_source="false" unlink_source="false" interruptible="true" pool_threads="50" remote_copy_command="/usr/bin/rsync --partial -avz -t --timeout=55 --log-format=%f --delete-after rsync://rtc00proadbe00:10121/ad-content##SRC_PATH## ##DST_PATH##">
+        <cfg:Route type="RoundRobin">
+          <cfg:files source="/tags/" destination="/opt/foros/server/var/www/tags/"/>
+          <cfg:files source="/Creatives/" destination="/opt/foros/server/var/www/Creatives/"/>
+          <cfg:files source="/Templates/" destination="/opt/foros/server/var/www/Templates/"/>
+          <cfg:files source="/WebwiseDiscover/common/" destination="/opt/foros/server/var/www/WebwiseDiscover/common/"/>
+          <cfg:files source="/WebwiseDiscover/templates/" destination="/opt/foros/server/var/www/WebwiseDiscover/templates/"/>
+          <cfg:files source="/Publ/" destination="/opt/foros/server/var/www/Publ/"/>
+          <cfg:hosts destination="-non-used-hostname" source="rtc00proadbe00"/>
+        </cfg:Route>
+      </cfg:FeedRouteGroup>
+    </cfg:ClusterConfig>
+  </cfg:SyncLogsConfig>
+</cfg:AdConfiguration>

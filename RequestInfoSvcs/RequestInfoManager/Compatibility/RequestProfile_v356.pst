@@ -1,0 +1,407 @@
+namespace AdServer
+{
+namespace RequestInfoSvcs_v356
+{
+  struct RequestInfoRevenueDescriptor
+  {
+    uint rate_id;
+    string impression;
+    string click;
+    string action;
+  };
+
+  autoreader RequestInfoRevenueReader<RequestInfoRevenueDescriptor>;
+  autowriter RequestInfoRevenueWriter<RequestInfoRevenueDescriptor>;
+
+  struct ChannelRevenueDescriptor
+  {
+    uint channel_id;
+    uint channel_rate_id;
+    string impression;
+    string sys_impression;
+    string adv_impression;
+    string click;
+    string sys_click;
+    string adv_click;
+  };
+
+  autoreader ChannelRevenueReader<ChannelRevenueDescriptor>;
+  autowriter ChannelRevenueWriter<ChannelRevenueDescriptor>;
+
+  struct NonconsideredCustomActionDescriptor
+  {
+    uint action_id;
+    string action_request_id;
+    uint time;
+    string referer;
+    string order_id;
+    string action_value;
+  };
+
+  autoreader NonconsideredCustomActionReader<NonconsideredCustomActionDescriptor>;
+  autowriter NonconsideredCustomActionWriter<NonconsideredCustomActionDescriptor>;
+
+  struct RequestInfoProfileVersionDescriptor
+  {
+    uint version;
+  };
+  
+  autoreader RequestInfoProfileVersionReader<RequestInfoProfileVersionDescriptor>;
+
+  struct RequestInfoProfileDescriptor
+  {
+    uint version;
+    uint request_done;
+
+    uint time;
+    uint isp_time;
+    uint pub_time;
+    uint adv_time;
+    string user_id;
+    string household_id;
+    char user_status;
+    uint test_request;
+    uint walled_garden;
+    uint hid_profile;
+    uint disable_fraud_detection;
+    uint adv_account_id;
+    uint advertiser_id;
+    uint campaign_id;
+    uint ccg_id;
+    uint ctr_reset_id;
+    uint cc_id;
+    uint has_custom_actions;
+    uint publisher_account_id;
+    uint site_id;
+    uint tag_id;
+    uint size_id;
+    string ext_tag_id;
+    uint colo_id;
+    uint currency_exchange_id;
+    string tag_delivery_threshold;
+    int tag_visibility; // -1 : undefined
+    int tag_top_offset; // -1 : undefined
+    int tag_left_offset; // -1 : undefined
+
+    uint ccg_keyword_id;
+    uint keyword_id;
+
+    uint num_shown;
+    uint position;
+
+    uint text_campaign;
+
+    string tag_size;
+
+    RequestInfoRevenueDescriptor adv_revenue;
+    RequestInfoRevenueDescriptor adv_comm_revenue;
+    RequestInfoRevenueDescriptor adv_payable_comm_amount;
+    RequestInfoRevenueDescriptor pub_revenue;
+    string pub_bid_cost;
+    string pub_floor_cost;
+    RequestInfoRevenueDescriptor pub_comm_revenue;
+    string pub_commission;
+    RequestInfoRevenueDescriptor isp_revenue;
+    string isp_revenue_share;
+    string adv_currency_rate;
+    string pub_currency_rate;
+    string isp_currency_rate;
+
+    array<uint> channels;
+    uint geo_channel_id;
+    uint device_channel_id;
+    string expression;
+
+    string client_app;
+    string client_app_version;
+    string browser_version;
+    string os_version;
+    string country;
+    string referer;
+
+    uint enabled_notice;
+    uint enabled_impression_tracking;
+    uint enabled_action_tracking;
+
+    uint notice_received;
+    uint notice_non_considered;
+    uint notice_pub_revenue_type;
+
+    uint impression_time;
+    uint impression_verified;
+    uint impression_non_considered;
+    uint impression_pub_revenue_type;
+
+    uint click_time;
+    uint click_done;
+    uint click_non_considered;
+
+    uint action_time;
+    uint actions_done;
+    uint actions_non_considered;
+
+    uint fraud_time;
+    uint fraud;
+
+    array<NonconsideredCustomActionDescriptor> custom_actions_imp_non_considered_;
+    array<NonconsideredCustomActionDescriptor> custom_actions_click_non_considered_;
+    array<ChannelRevenueDescriptor> cmp_channels;
+
+    uint auction_type;
+
+    string ctr;
+
+    array<string> post_impression_actions;
+
+    uint campaign_freq;
+    uint url_hash;
+    array<uint> geo_channels;
+    array<uint> user_channels;
+    string url;
+    string ip_address;
+
+    string ctr_algorithm_id;
+    array<string> model_ctrs;
+
+    string conv_rate_algorithm_id;
+    string conv_rate;
+    array<string> model_conv_rates;
+  };
+
+  reader RequestInfoProfileReader<RequestInfoProfileDescriptor>
+  {
+    version;
+    request_done;
+
+    time;
+    isp_time;
+    pub_time;
+    adv_time;
+    user_id;
+    household_id;
+    user_status;
+    test_request;
+    walled_garden;
+    hid_profile;
+    disable_fraud_detection;
+    adv_account_id;
+    advertiser_id;
+    campaign_id;
+    ccg_id;
+    ctr_reset_id;
+    cc_id;
+    has_custom_actions;
+    publisher_account_id;
+    site_id;
+    tag_id;
+    size_id;
+    ext_tag_id;
+    colo_id;
+    currency_exchange_id;
+    tag_delivery_threshold;
+    tag_visibility;
+    tag_top_offset;
+    tag_left_offset;
+
+    ccg_keyword_id;
+    keyword_id;
+    
+    num_shown;
+    position;
+
+    text_campaign;
+    tag_size;
+
+    RequestInfoRevenueReader adv_revenue;
+    RequestInfoRevenueReader adv_comm_revenue;
+    RequestInfoRevenueReader adv_payable_comm_amount;
+    RequestInfoRevenueReader pub_revenue;
+    pub_bid_cost;
+    pub_floor_cost;
+    RequestInfoRevenueReader pub_comm_revenue;
+    pub_commission;
+    RequestInfoRevenueReader isp_revenue;
+    isp_revenue_share;
+    adv_currency_rate;
+    pub_currency_rate;
+    isp_currency_rate;
+
+    channels;
+    geo_channel_id;
+    device_channel_id;
+    expression;
+
+    client_app;
+    client_app_version;
+    browser_version;
+    os_version;
+    country;
+    referer;
+
+    enabled_notice;
+    enabled_impression_tracking;
+    enabled_action_tracking;
+
+    notice_received;
+    notice_non_considered;
+    notice_pub_revenue_type;
+
+    impression_time;
+    impression_verified;
+    impression_non_considered;
+    impression_pub_revenue_type;
+
+    click_time;
+    click_done;
+    click_non_considered;
+
+    action_time;
+    actions_done;
+    actions_non_considered;
+
+    fraud_time;
+    fraud;
+
+    array<NonconsideredCustomActionReader> custom_actions_imp_non_considered_;
+    array<NonconsideredCustomActionReader> custom_actions_click_non_considered_;
+    array<ChannelRevenueReader> cmp_channels;
+    
+    auction_type;
+
+    ctr;
+    post_impression_actions;
+
+    campaign_freq;
+    url_hash;
+    geo_channels;
+    user_channels;
+    url;
+    ip_address;
+
+    ctr_algorithm_id;
+    model_ctrs;
+
+    conv_rate_algorithm_id;
+    conv_rate;
+    model_conv_rates;
+  };
+
+  writer RequestInfoProfileWriter<RequestInfoProfileDescriptor>
+  {
+    version;
+    request_done;
+
+    time;
+    isp_time;
+    pub_time;
+    adv_time;
+    user_id;
+    household_id;
+    user_status;
+    test_request;
+    walled_garden;
+    hid_profile;
+    disable_fraud_detection;
+    adv_account_id;
+    advertiser_id;
+    campaign_id;
+    ccg_id;
+    ctr_reset_id;
+    cc_id;
+    has_custom_actions;
+    publisher_account_id;
+    site_id;
+    tag_id;
+    size_id;
+    ext_tag_id;
+    colo_id;
+    currency_exchange_id;
+    tag_delivery_threshold;
+    tag_visibility;
+    tag_top_offset;
+    tag_left_offset;
+
+    ccg_keyword_id;
+    keyword_id;
+
+    num_shown;
+    position;
+
+    text_campaign;
+    tag_size;
+
+    RequestInfoRevenueWriter adv_revenue;
+    RequestInfoRevenueWriter adv_comm_revenue;
+    RequestInfoRevenueWriter adv_payable_comm_amount;
+    RequestInfoRevenueWriter pub_revenue;
+    pub_bid_cost;
+    pub_floor_cost;
+    RequestInfoRevenueWriter pub_comm_revenue;
+    pub_commission;
+    RequestInfoRevenueWriter isp_revenue;
+    isp_revenue_share;
+    adv_currency_rate;
+    pub_currency_rate;
+    isp_currency_rate;
+
+    channels;
+    geo_channel_id;
+    device_channel_id;
+    expression;
+
+    client_app;
+    client_app_version;
+    browser_version;
+    os_version;
+    country;
+    referer;
+
+    enabled_notice;
+    enabled_impression_tracking;
+    enabled_action_tracking;
+
+    notice_received;
+    notice_non_considered;
+    notice_pub_revenue_type;
+
+    impression_time;
+    impression_verified;
+    impression_non_considered;
+    impression_pub_revenue_type;
+
+    click_time;
+    click_done;
+    click_non_considered;
+
+    action_time;
+    actions_done;
+    actions_non_considered;
+
+    fraud_time;
+    fraud;
+
+    array<NonconsideredCustomActionWriter> custom_actions_imp_non_considered_;
+    array<NonconsideredCustomActionWriter> custom_actions_click_non_considered_;
+    array<ChannelRevenueWriter> cmp_channels;
+    
+    auction_type;
+
+    ctr;
+    post_impression_actions;
+
+    campaign_freq;
+    url_hash;
+    (cpp_vector) geo_channels;
+    (cpp_vector) user_channels;
+    url;
+    ip_address;
+
+    ctr_algorithm_id;
+    (cpp_vector) model_ctrs;
+
+    conv_rate_algorithm_id;
+    conv_rate;
+    (cpp_vector) model_conv_rates;
+  };
+}
+}

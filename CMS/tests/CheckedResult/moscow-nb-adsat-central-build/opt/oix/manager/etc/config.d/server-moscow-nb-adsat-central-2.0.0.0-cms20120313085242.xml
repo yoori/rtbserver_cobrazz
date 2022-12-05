@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AdServer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:str="http://exslt.org/strings" sms-version="3" init="%%SUDO%%" transport="ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot;. /opt/foros/server/etc/moscow-nb-adsat-central/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;" env="" brief="version 2.0.0.0 configuration for moscow-nb-adsat-central colocation released at 2012-07-03 15:26:59" user="aduser" state_dir="/opt/oix/manager/var/state/server-moscow-nb-adsat-central" transport_local="/bin/sh -c &quot;. /opt/oix/server/etc/moscow-nb-adsat-central/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;">
+  <BatchCommands>
+    <BatchCommand name="keyscan">
+      <Command command="start">
+        <Group>keyscan</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="redistribute-fe1">
+      <Command command="stop">
+        <Group>ui1</Group>
+      </Command>
+      <Command command="start">
+        <Group>ui1-distribution</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="troubleshoot">
+      <Command command="start">
+        <Group>troubleshoot</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="clear-stat-backup">
+      <Command command="start">
+        <Group>clear-stat-backup</Group>
+      </Command>
+    </BatchCommand>
+  </BatchCommands>
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adcluster">
+    <Service name="lp-LogGeneralizer" type="AdServer::LogProcessing::LogGeneralizer" host="adsc-nbadsat1"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="adsc-nbadsat1"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="adsc-nbadsat1"/>
+    <Service name="lp-ExpressionMatcher" type="AdServer::LogProcessing::ExpressionMatcher" host="adsc-nbadsat1"/>
+    <Service name="lp-KeywordMatcher" type="AdServer::RequestInfoSvcs::KeywordMatcher" host="adsc-nbadsat1"/>
+    <Service name="lp-RequestInfoManager" type="AdServer::RequestInfoSvcs::RequestInfoManager" host="adsc-nbadsat1"/>
+    <Service name="be-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="adsc-nbadsat0"/>
+    <Service name="be-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="adsc-nbadsat1"/>
+    <Service name="be-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="adsc-nbadsat0"/>
+    <Service name="be-NewsQueryServer" type="AdServer::DiscoverSvcs::NewsQueryServer" host="adsc-nbadsat0"/>
+    <Service name="be-NewsQueryServer" type="AdServer::DiscoverSvcs::NewsQueryServer" host="adsc-nbadsat1"/>
+    <Service name="be-NewsCacheController" type="AdServer::DiscoverSvcs::NewsCacheController" host="adsc-nbadsat0"/>
+    <Service name="fe1-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="adsc-nbadsat1"/>
+    <Service name="fe1-UserInfoManagerController" type="AdServer::UserInfoSvcs::UserInfoManagerController" host="adsc-nbadsat1"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="adsc-nbadsat1"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="adsc-nbadsat1"/>
+    <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="adsc-nbadsat1"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="adsc-nbadsat1"/>
+    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="adsc-nbadsat1"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="adsc-nbadsat1"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="adsc-nbadsat1"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="adsc-nbadsat0"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adcluster" timeout="6000">
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="adsc-nbadsat1"/></Services>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" env="adcluster"><Service name="keyscan-Scanner" host="localhost" start="%%START_NOLOOP_DONE%%" start_cmd="%%SMS_KEYSCAN%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" keyscan_hosts=" adsc-nbadsat1 adsc-nbadsat0"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="adsc-nbadsat0"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="adsc-nbadsat1"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="adsc-nbadsat1"/></Services>
+  <Services transport="/bin/sh -c &quot;$SMS_TEXT&quot;" start="%%START_NOLOOP_DONE%%" force="0" check-hosts="">
+    <Service type="AdServer::UserInfoSvcs::UserInfoChecker" host="localhost" name="fe1-UserInfoChecker" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/moscow-nb-adsat-central-2.0.0.0-cms20120703112640/lib ; /opt/oix/server/manager/moscow-nb-adsat-central-2.0.0.0-cms20120703112640/bin/ConfigureUserChunks.pl check --chunks-count=10 --target-hosts='adsc-nbadsat1,' --chunks-root='/opt/oix/server/var/cache/Users1/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='adsc-nbadsat1,' --xml-out=/tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%%  &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% adsc-nbadsat1:/opt/oix/server/var/run/UserInfoDistribution.1.xml || ( EX=$? ; if [ $EX -eq 1 ] ; then eval 'echo -e %%SMS_COLOR_ERROR%%redistribution required%%SMS_COLOR_PLAIN%%' &amp;&amp; exit 1 ; else exit -1 ; fi ; )"/>
+    <Service type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" name="fe1-UserInfoDistributor" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/moscow-nb-adsat-central-2.0.0.0-cms20120703112640/lib ; /opt/oix/server/manager/moscow-nb-adsat-central-2.0.0.0-cms20120703112640/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='adsc-nbadsat1,' --chunks-root='/opt/oix/server/var/cache/Users1/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='adsc-nbadsat1,' --force=%%force%% --check-hosts=%%check-hosts%%"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
+    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="adsp-nbadsat0"/>
+    <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="adsp-nbadsat0"/>
+    <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="adsp-nbadsat0"/>
+    <Service name="pbe1-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="adsp-nbadsat0"/>
+    <Service name="pbe1-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="adsp-nbadsat0"/>
+    <Service name="pbe1-NewsQueryProxy" type="AdServer::DiscoverSvcs::NewsQueryProxy" host="adsp-nbadsat0"/>
+    <Service name="pbe1-STunnelServer" type="AdServer::LogProcessing::STunnelServer" host="adsp-nbadsat0"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="adsp-nbadsat0"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adproxycluster-1" timeout="600"/>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" env="adproxycluster-1"><Service name="keyscan-Scanner" host="localhost" start="%%START_NOLOOP_DONE%%" start_cmd="%%SMS_KEYSCAN%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" keyscan_hosts=" adsp-nbadsat0"/>
+    <Service name="pbe1-LogProxyConfigurator" type="AdServer::LogProcessing::LogProxyConfigurator" host="adsp-nbadsat0"/></Services>
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-2">
+    <Service name="pbe2-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="adsp-nbadsat1"/>
+    <Service name="pbe2-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="adsp-nbadsat1"/>
+    <Service name="pbe2-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="adsp-nbadsat1"/>
+    <Service name="pbe2-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="adsp-nbadsat1"/>
+    <Service name="pbe2-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="adsp-nbadsat1"/>
+    <Service name="pbe2-NewsQueryProxy" type="AdServer::DiscoverSvcs::NewsQueryProxy" host="adsp-nbadsat1"/>
+    <Service name="pbe2-STunnelServer" type="AdServer::LogProcessing::STunnelServer" host="adsp-nbadsat1"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="adsp-nbadsat1"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adproxycluster-2" timeout="600"/>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" env="adproxycluster-2"><Service name="keyscan-Scanner" host="localhost" start="%%START_NOLOOP_DONE%%" start_cmd="%%SMS_KEYSCAN%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" keyscan_hosts=" adsp-nbadsat1"/>
+    <Service name="pbe2-LogProxyConfigurator" type="AdServer::LogProcessing::LogProxyConfigurator" host="adsp-nbadsat1"/></Services>
+  <Services start="%%START_NOLOOP_DONE%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" report_dir="/opt/foros/manager/var/server-moscow-nb-adsat-central" cmd="REPORTFILE=%%report%%; treport_dir=`dirname $REPORTFILE`; ERROR_LOG=$treport_dir/error_description_%%SMS_UNIQUE%%; ">
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="adsc-nbadsat0" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m moscow-nb-adsat-central -o /opt/oix/server/var/tr_report_adsc-nbadsat0_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host adsc-nbadsat0. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="adsc-nbadsat0" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_adsc-nbadsat0_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from adsc-nbadsat0. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="adsc-nbadsat0" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="adsc-nbadsat0" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="adsc-nbadsat1" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m moscow-nb-adsat-central -o /opt/oix/server/var/tr_report_adsc-nbadsat1_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host adsc-nbadsat1. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="adsc-nbadsat1" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_adsc-nbadsat1_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from adsc-nbadsat1. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="adsc-nbadsat1" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="adsc-nbadsat1" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="adsp-nbadsat0" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m moscow-nb-adsat-central -o /opt/oix/server/var/tr_report_adsp-nbadsat0_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host adsp-nbadsat0. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="adsp-nbadsat0" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_adsp-nbadsat0_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from adsp-nbadsat0. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="adsp-nbadsat0" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="adsp-nbadsat0" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="adsp-nbadsat1" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m moscow-nb-adsat-central -o /opt/oix/server/var/tr_report_adsp-nbadsat1_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host adsp-nbadsat1. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="adsp-nbadsat1" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_adsp-nbadsat1_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from adsp-nbadsat1. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="adsp-nbadsat1" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="adsp-nbadsat1" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="localhost" start_cmd="%%cmd%% rm -f $ERROR_LOG"/>
+    <Service name="troubleshoot-Printer" type="AdServer::TReportPrinter" host="localhost" start_cmd="%%SMS_TR_PRINT%%"/>
+    <Service name="troubleshoot-Checker" type="AdServer::TReportChecker" host="localhost" start_cmd="%%SMS_TR_CHECK%%"/>
+    <Service name="troubleshoot-Collector" type="AdServer::TReportCollector" host="localhost" start_cmd="%%cmd%% tar --ignore-failed-read -cf $REPORTFILE --remove-files -C $treport_dir tr_report_adsc-nbadsat0_%%SMS_UNIQUE%%.tar.gz tr_report_adsc-nbadsat1_%%SMS_UNIQUE%%.tar.gz tr_report_adsp-nbadsat0_%%SMS_UNIQUE%%.tar.gz tr_report_adsp-nbadsat1_%%SMS_UNIQUE%%.tar.gz error_description_%%SMS_UNIQUE%%; return 0"/>
+  </Services>
+  <Groups>
+    <Group name="be">
+      <Mask>be-*,*</Mask>
+    </Group>
+    <Group name="dbaccess">
+      <Mask>dbaccess-*,*</Mask>
+    </Group>
+    <Group name="lp">
+      <Mask>lp-*,*</Mask>
+    </Group>
+    <Group name="ui1">
+      <Mask>*:fe1-UserInfoManager</Mask>
+      <Mask>*:fe1-UserInfoManagerController</Mask>
+    </Group>
+    <Group name="ui1-distribution">
+      <Mask>*:fe1-UserInfoDistributor</Mask>
+    </Group>
+    <Group name="fe1">
+      <Mask>fe1-*,*</Mask>
+      <Group type="exclude">ui1-distribution</Group>
+    </Group>
+    <Group name="pbe1">
+      <Mask>pbe1-*,*</Mask>
+    </Group>
+    <Group name="pbe2">
+      <Mask>pbe2-*,*</Mask>
+    </Group>
+    <Group name="troubleshoot">
+      <Mask>troubleshoot-*,*</Mask>
+    </Group>
+    <Group name="clear-stat-backup">
+      <Mask>clear-stat-backup-*,*</Mask>
+    </Group>
+    <Group name="keyscan">
+      <Mask>keyscan-*,*</Mask>
+    </Group>
+    <Group name="adsc-nbadsat0">
+      <Mask>*,adsc-nbadsat0</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="adsc-nbadsat1">
+      <Mask>*,adsc-nbadsat1</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="adsp-nbadsat0">
+      <Mask>*,adsp-nbadsat0</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="adsp-nbadsat1">
+      <Mask>*,adsp-nbadsat1</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="all">
+      <Mask>*,*</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+      <Group type="exclude">ui1-distribution</Group>
+    </Group>
+  </Groups>
+  <Dependences>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSearchSvcs::ChannelSearchService</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::LogGeneralizer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DBAccess</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+        <Type>AdServer::LogProcessing::LogGeneralizer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoChecker</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManagerController</Type>
+        <Type>AdServer::PreStart</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+        <Type>AdServer::RequestInfoSvcs::RequestInfoManager</Type>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoManagerController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::RequestInfoSvcs::RequestInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+        <Type>AdServer::RequestInfoSvcs::KeywordMatcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+        <Type>AdServer::PreStart</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::PSConfigurator</Type>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+        <Type>AdServer::PreStart</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::SyncLogs</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::SyncLogsServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::LogProxyConfigurator</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::STunnelServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsQueryProxy</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCollector</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportFetcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportFetcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReport</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCleaner</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportPrinter</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCleaner</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReport</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportChecker</Type>
+      </Master>
+    </Dependence>
+  </Dependences>
+</AdServer>

@@ -1,0 +1,6 @@
+@sitestat_deps@
+sources := SiteStat.cpp
+
+includes := .
+@sitestat_post@
+

@@ -1,0 +1,7 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([MatchPerformance])
+OSBE_CONFIG_SUBDIR([MatchPerformanceLarge])
+OSBE_CONFIG_SUBDIR([DummyChannelServer])
+OSBE_CONFIG_SUBDIR([UpdateImitator])
+

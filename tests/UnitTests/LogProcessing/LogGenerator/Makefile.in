@@ -1,0 +1,9 @@
+@loggeneratorexe_deps@
+
+sources := LogGeneratorMain.cpp
+target := LogGenerator
+test_arguments := $$TEST_TMP_DIR/LogGeneratorDir
+test_command := $(srcdir)/performance_test.sh $(test_arguments)
+vg_test_command = $(test_command) 10 '$(vg_prefix) --quiet'
+
+include $(top_srcdir)/tests/Test.post.rules

@@ -1,0 +1,8 @@
+name="AutoTestsGranularUpdateUnits"
+so_files=AutoTestsGranularUpdateUnits
+
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+osbe_cxx_dep Commons
+osbe_cxx_dep AutoTestsCommons
+osbe_cxx_dep AdServerCommons

@@ -1,0 +1,162 @@
+#ifndef AD_SERVER_CHANNEL_SERVER_IDL_
+#define AD_SERVER_CHANNEL_SERVER_IDL_
+
+#include <CORBACommons/CorbaObjectRef.idl>
+#include <Commons/CorbaTypes.idl>
+#include <CampaignSvcs/CampaignServer/CampaignServer.idl>
+#include <ChannelSvcs/ChannelCommons/ChannelCommons.idl>
+#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.idl>
+
+module AdServer
+{
+  module ChannelSvcs
+  {
+
+    abstract interface ChannelServerBase
+    {
+      struct ChannelAtom
+      {
+        unsigned long id;
+        unsigned long trigger_channel_id;
+      };
+
+      typedef sequence<ChannelAtom> ChannelAtomSeq;
+
+      struct TriggerMatchResult
+      {
+        ChannelAtomSeq page_channels;
+        ChannelAtomSeq search_channels;
+        ChannelAtomSeq url_channels;
+        ChannelAtomSeq url_keyword_channels;
+        ChannelIdSeq uid_channels;
+      };
+
+      struct ContentChannelAtom
+      {
+        unsigned long id;
+        unsigned long weight;
+      };
+
+      typedef sequence<ContentChannelAtom> ContentChannelAtomSeq;
+
+      struct CCGKeyword
+      {
+        unsigned long ccg_keyword_id;
+        unsigned long ccg_id;
+        unsigned long channel_id;
+        CORBACommons::DecimalInfo max_cpc;
+        CORBACommons::DecimalInfo ctr;
+        string click_url;
+        string original_keyword;
+      };
+
+      typedef sequence<CCGKeyword> CCGKeywordSeq;
+
+      typedef sequence<TimeStamp> TimeStampSeq;
+
+      struct MatchResult
+      {
+        TriggerMatchResult matched_channels;
+        ContentChannelAtomSeq content_channels;
+        boolean no_adv;
+        boolean no_track;
+        TimeStampSeq match_time;
+      };
+
+      typedef char StatusType[2];
+
+      struct MatchQuery
+      {
+        string request_id;
+        string first_url;
+        string first_url_words;
+        string urls;
+        string urls_words;
+        string pwords;
+        string swords;
+        CORBACommons::UserIdInfo uid;
+        StatusType statuses;
+        boolean non_strict_word_match;
+        boolean non_strict_url_match;
+        boolean return_negative;
+        boolean simplify_page;
+        boolean fill_content;
+      };
+
+      void match(
+        in MatchQuery query,
+        out MatchResult result)
+        raises (ImplementationException, NotConfigured);
+
+      CCGKeywordSeq get_ccg_traits(in ChannelIdSeq ids)
+        raises (ImplementationException, NotConfigured);
+
+    };
+
+    interface ChannelServer
+    {
+      struct MatchResult
+      {
+        ChannelServerBase::TriggerMatchResult matched_channels;
+        ChannelServerBase::ContentChannelAtomSeq content_channels;
+        boolean no_adv;
+        boolean no_track;
+        TimeStamp match_time;
+      };
+
+      struct TraitsResult
+      {
+        ChannelServerBase::CCGKeywordSeq  ccg_keywords;
+        ChannelSvcs::CcgIdSeq neg_ccg;
+      };
+
+      void match(
+        in ChannelServerBase::MatchQuery query,
+        out MatchResult result)
+        raises (ImplementationException, NotConfigured);
+
+      void get_ccg_traits(in ChannelIdSeq ids, out TraitsResult result)
+        raises (ImplementationException, NotConfigured);
+
+
+    };
+
+    interface ChannelServerControl
+    {
+      typedef sequence<CORBACommons::CorbaObjectRefDef> CorbaObjectRefDefSeq;
+
+      struct DBSourceInfo
+      {
+        string pg_connection;
+
+        CorbaObjectRefDefSeq campaign_refs;
+        unsigned long count_chunks;
+        unsigned long colo;
+        unsigned long check_sum;
+        string version;
+      };
+
+      struct ProxySourceInfo
+      {
+        GroupLoadDescriptionSeq local_descriptor;
+        CorbaObjectRefDefSeq proxy_refs;
+        CorbaObjectRefDefSeq campaign_refs;
+        unsigned long count_chunks;
+        unsigned long colo;
+        unsigned long check_sum;
+        string version;
+      };
+
+      void set_sources(in DBSourceInfo db_info, in ChunkKeySeq sources)
+        raises (ImplementationException);
+
+      void set_proxy_sources(in ProxySourceInfo proxy_info, in ChunkKeySeq sources)
+        raises (ImplementationException);
+
+      unsigned long check_configuration();
+    };
+  };
+};
+
+#endif //AD_SERVER_CHANNEL_SERVER_IDL_
+

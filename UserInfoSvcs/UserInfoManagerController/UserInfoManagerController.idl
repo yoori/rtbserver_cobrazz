@@ -1,0 +1,55 @@
+#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROLLER_IDL_
+#define _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROLLER_IDL_
+
+#include <UserInfoSvcs/UserInfoManager/UserInfoManager.idl>
+#include <UserInfoSvcs/UserInfoManager/UserInfoManagerControl.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    struct UserInfoManagerDescription
+    {
+      UserInfoManager user_info_manager;
+      ChunkIdSeq chunk_ids;
+    };
+    
+    typedef
+      sequence<UserInfoManagerDescription>
+      UserInfoManagerDescriptionSeq;
+
+    /**
+     *  UserInfoManagerSession
+     *  interface for matching user id
+     */
+    valuetype UserInfoManagerSession supports UserInfoMatcher
+    {
+      private UserInfoManagerDescriptionSeq user_info_managers;
+    };
+
+    /**
+     *  UserInfoManagerController
+     */
+    interface UserInfoManagerController
+    {
+      exception NotReady {};
+      
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      UserInfoManagerSession get_session()
+        raises(ImplementationException, NotReady);
+
+      void get_session_description(
+        out UserInfoManagerDescriptionSeq session_description)
+        raises(ImplementationException, NotReady);
+      
+    };
+
+  }; // module UserInfoSvcs
+  
+}; // module AdServer
+
+#endif // _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROLLER_IDL_

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.peopleonpage.com/xsd/tests/PerformanceTests"
+  xmlns="http://www.peopleonpage.com/xsd/tests/PerformanceTests"
+  elementFormDefault="qualified" xml:lang="en" version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>AdServer QoS Testing Configuration File, XML Schema</xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerTestCommonConfig.xsd"/>
+
+  <xsd:element name="testParams" type="testParamsType" />
+
+  <xsd:complexType name="testParamsType">
+    <xsd:annotation>
+      <xsd:documentation>Document element that contains global test definitions and
+  behaviour characteristics for test clients.</xsd:documentation>
+    </xsd:annotation>
+      <xsd:sequence>
+  <xsd:element name="description" type="xsd:string"/>
+  <xsd:element name="global" type="GlobalTestingOptions"/>
+  <xsd:element name="adClient" type="AdClientType"/>
+      </xsd:sequence>
+  </xsd:complexType>
+
+
+  <xsd:complexType name="GlobalTestingOptions">
+    <xsd:annotation>
+      <xsd:documentation>Global test parameters.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="executionTime" type="xsd:positiveInteger">
+  <xsd:annotation>
+    <xsd:documentation>Sets total execution time for the test, in seconds. To run the test for an
+      hour, specify 3600.</xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="threadsNumber" type="xsd:positiveInteger">
+  <xsd:annotation>
+    <xsd:documentation>Sets the number of threads the testing application uses to create and
+      manage client entities participating in the test.
+    </xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="serverStartTime" type="xsd:nonNegativeInteger">
+  <xsd:annotation>
+    <xsd:documentation>Sets a time interval during which request constraints do not apply. The time interval is measured
+    relative to the moment when the test starts.</xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="maxTaskExecutionDelay">
+  <xsd:annotation>
+    <xsd:documentation>Sets the maximum delay for the test tasks. Every task
+      in the test has a timestamp specifying when the task should be executed, so when the
+      testing application is ready to execute some task it calculates the difference between the
+      current time and the timestamp. If the difference exceeds maxTaskExecutionDelay, the
+      test application itself (not the server it is testing) is considered overloaded and
+      terminates immediately. The delay is specified in seconds.</xsd:documentation>
+  </xsd:annotation>
+  <xsd:complexType>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:nonNegativeInteger">
+        <xsd:attribute name="statisticsIntervalDump" type="xsd:positiveInteger" use="optional" default="1">
+    <xsd:annotation>
+      <xsd:documentation>If present, specifies how often a statistics dump.
+                                     Dump interval setting in seconds.
+                  </xsd:documentation>
+    </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:simpleContent>
+         </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="urlsListFile" type="xsd:string">
+  <xsd:annotation>
+    <xsd:documentation>Specifies the file storing URL identifiers that serve as part of the
+      test data.</xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="RefererKWsListFile" type="xsd:string">
+  <xsd:annotation>
+    <xsd:documentation>Specifies the file storing referer keywords.</xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ftPath" type="xsd:string" minOccurs="0" maxOccurs="1">
+  <xsd:annotation>
+    <xsd:documentation>Specifies the full texts folder.</xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="serverBase" type="serverBaseType">
+  <xsd:annotation>
+    <xsd:documentation>
+      Specifies server base addresses. Must contain at least one url element.
+      Each URL specifies a server base address that can be used to construct
+      requests.</xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="set" type="setType" minOccurs="0" maxOccurs="unbounded">
+  <xsd:annotation>
+    <xsd:documentation>
+      Specifies text items named set. Can contain arbitrary number of textual items.
+      Can be refererenced from other elements.
+          </xsd:documentation>
+  </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="requestConstraints" minOccurs="0">
+  <xsd:annotation>
+    <xsd:documentation>Wrapper element for
+      for any number of requestConstraint's. Within requestConstraints, each
+      requestConstraint element defines a number of constraining parameters that together
+      constitute the quality of service (QoS) as interpreted in this testing application.
+    </xsd:documentation>
+  </xsd:annotation>
+  <xsd:complexType>
+    <xsd:sequence>
+      <xsd:element name="requestConstraint" type="requestConstraintType" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="requestAggregatedStatistics" minOccurs="0">
+  <xsd:annotation>
+    <xsd:documentation>Instructs the testing application to dump aggregated statistics at
+      certain intervals.</xsd:documentation>
+  </xsd:annotation>
+  <xsd:complexType>
+    <xsd:attribute name="statisticsIntervalDump" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Indicates the intervals to dump aggregated statistics at. Measured in
+    seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="confluenceReportPath" type="xsd:string" use="optional">
+      <xsd:annotation>
+  <xsd:documentation>Specifies path to storing report in confluence format.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AdClientType">
+    <xsd:sequence>
+      <xsd:element name="NSLookup" type="ClientRequestType" minOccurs="0"/>
+      <xsd:element name="Click" type="GeneratedRequestType" minOccurs="0"/>
+      <xsd:element name="ActionTracking" type="GeneratedRequestType" minOccurs="0"/>
+      <xsd:element name="OptOut" type="OptOutType" minOccurs="0"/>
+      <xsd:element name="Passback" type="GeneratedRequestType" minOccurs="0"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="count" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+  <xsd:documentation>Specifies the total number of clients
+    the testing application should emulate.
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="lifetime" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+  <xsd:documentation>Specifies the life time (in seconds) of a client.
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="click_rate" type="PercentageType">
+      <xsd:annotation>
+  <xsd:documentation>Specifies the Click Through Rate.
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="action_rate" type="PercentageType">
+      <xsd:annotation>
+  <xsd:documentation>Specifies the Action Rate.
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="passback_rate" type="PercentageType">
+      <xsd:annotation>
+  <xsd:documentation>Specifies the Passback Rate.
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="optout_rate" type="xsd:nonNegativeInteger">
+      <xsd:annotation>
+  <xsd:documentation>Specifies percentage of optout requests (without cookies).
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="ad_all_optouts" type="xsd:boolean">
+      <xsd:annotation>
+  <xsd:documentation>Always send nslookup tid parameter for optouts user.
+  </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="incr_count_step" type="xsd:nonNegativeInteger" use="optional" default="1">
+      <xsd:annotation>
+  <xsd:documentation>Sets requests count increment.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="step_interval" type="xsd:nonNegativeInteger" use="optional" default="0">
+      <xsd:annotation>
+  <xsd:documentation>Sets requests increment interval in seconds.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+  </xsd:complexType>
+
+
+</xsd:schema>

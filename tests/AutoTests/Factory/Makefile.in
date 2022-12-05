@@ -1,0 +1,8 @@
+@autotestsexe_deps@
+sources := Main.cpp \
+	TestFactory.cpp \
+	UnitManager.cpp 
+
+target := AutoTests
+
+@autotestsexe_post@

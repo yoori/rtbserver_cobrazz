@@ -1,0 +1,16 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([DomainParser], [DomainParser.mk])
+OSBE_CXX_DEF([CreativeTemplateArgs], [CreativeTemplateArgs.mk])
+OSBE_CXX_DEF([PassbackTemplate], [PassbackTemplate.mk])
+OSBE_CXX_DEF([CampaignConfig], [CampaignConfig.mk])
+OSBE_CXX_DEF([CampaignConfigSource], [CampaignConfigSource.mk])
+OSBE_CXX_DEF([CampaignIndex], [CampaignIndex.mk])
+OSBE_CXX_DEF([CTRProvider], [CTRProvider.mk])
+OSBE_CXX_DEF([BidCostProvider], [BidCostProvider.mk])
+OSBE_CXX_DEF([CampaignManagerLogger], [CampaignManagerLogger.mk])
+OSBE_CXX_DEF([SecToken], [SecToken.mk])
+
+OSBE_CXX_DEF([CampaignManagerExe], [CampaignManager.mk])
+OSBE_CXX_DEF([CampaignManagerStubs], [CampaignManagerStubs.mk])

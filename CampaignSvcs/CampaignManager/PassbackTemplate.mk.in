@@ -1,0 +1,6 @@
+@passbacktemplate_deps@
+
+sources := PassbackTemplate.cpp
+target := PassbackTemplate
+
+@passbacktemplate_post@

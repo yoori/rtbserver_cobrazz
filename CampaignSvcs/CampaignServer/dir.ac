@@ -1,0 +1,11 @@
+
+OSBE_CONFIG_SUBDIR([Compatibility])
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([Compatibility.mk])
+
+OSBE_CXX_DEF([CampaignConfigModifier], [CampaignConfigModifier.mk])
+OSBE_CXX_DEF([CampaignServerStubs], [CampaignServerStubs.mk])
+OSBE_CXX_DEF([CampaignServerSkels], [CampaignServerSkels.mk])
+OSBE_CXX_DEF([CampaignServerExe], [CampaignServer.mk])
+OSBE_CXX_DEF([BillStatServerSource], [BillStatServerSource.mk])

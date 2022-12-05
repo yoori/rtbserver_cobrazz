@@ -1,0 +1,4 @@
+name="DomainParser"
+so_files=DomainParser
+osbe_cxx_dep String
+osbe_cxx_dep DomainConfig

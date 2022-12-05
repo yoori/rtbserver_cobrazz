@@ -1,0 +1,1072 @@
+<zendmd>
+  <templates>
+    <template name="OixServerMonitoringRequest" prefix="SubAgent-Shell-AdServer-MIB">
+      <oids>
+        <oid name="adRequestExecTime" type="GAUGE"/>
+        <oid name="adRequestExecStatus" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="Monitoring Ad Request Critical Execution Time"
+          oid="adRequestExecTime"
+          min="0" max="2" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Monitoring Ad Request Execution Time"
+          oid="adRequestExecTime"
+          min="0" max="1" evclass="/FOROS/AdServer" severity="4"/>
+        <threshold name="Monitoring Ad Request Execution Status"
+          oid="adRequestExecStatus"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+      </thresholds>
+      <graphs>
+        <graph name="OixServer Monitoring Request Processing" units="seconds">
+          <oid name="adRequestExecTime" type="AREA"/>
+        </graph>
+      </graphs>
+    </template>
+
+    <template name="OixServerApache" prefix="SubAgent-Shell-AdServer-Apache-MIB">
+      <oids>
+        <oid name="apsTotalAccesses" type="DERIVE"/>
+
+        <oid name="apsWaitingForConnection" type="GAUGE"/>
+        <oid name="apsKeepAlive" type="GAUGE"/>
+        <oid name="apsReadingRequest" type="GAUGE"/>
+        <oid name="apsSendingReply" type="GAUGE"/>
+      </oids>
+      <graphs>
+        <graph name="OixServer HTTP Requests" units="requests">
+          <oid name="apsTotalAccesses" type="AREA" rename="Req per sec"/>
+        </graph>
+        <graph name="OixServer Apache Workers State" units="workers">
+          <oid name="apsOpenSlots" type="AREA" rename="open"/>
+          <oid name="apsOtherSlots" type="AREA" rename="other" stacked="True"/>
+          <oid name="apsDNSLookup" type="AREA" rename="resolving" stacked="True"/>
+          <oid name="apsKeepAlive" type="AREA" rename="keepalive" stacked="True"/>
+          <oid name="apsWaitingForConnection" type="AREA" rename="waiting" stacked="True"/>
+          <oid name="apsReadingRequest" type="AREA" rename="reading" stacked="True"/>
+          <oid name="apsSendingReply" type="AREA" rename="sending" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+
+    <template name="OixServerExpressionMatcher" prefix="SubAgent-Shell-LogFiles-MIB">
+      <oids>
+        <oid name="emRequestBasicChannelsIn" type="GAUGE"/>
+        <oid name="emRequestBasicChannelsError" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="RequestBasicChannels too many files in processing queue"
+          oid="emRequestBasicChannelsIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="RequestBasicChannels error files after processing"
+          oid="emRequestBasicChannelsError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+      </thresholds>
+    </template>
+
+    <template name="OixServerRequestInfoManager" prefix="SubAgent-Shell-LogFiles-MIB">
+      <oids>
+        <oid name="rimRequestIn" type="GAUGE"/>
+        <oid name="rimPassbackImpressionIn" type="GAUGE"/>
+        <oid name="rimTagRequestIn" type="GAUGE"/>
+        <oid name="rimImpressionIn" type="GAUGE"/>
+        <oid name="rimPassbackOpportunityIn" type="GAUGE"/>
+        <oid name="rimClickIn" type="GAUGE"/>
+        <oid name="rimAdvertiserActionIn" type="GAUGE"/>
+
+        <oid name="rimRequestError" type="GAUGE"/>
+        <oid name="rimPassbackImpressionError" type="GAUGE"/>
+        <oid name="rimTagRequestError" type="GAUGE"/>
+        <oid name="rimImpressionError" type="GAUGE"/>
+        <oid name="rimPassbackOpportunityError" type="GAUGE"/>
+        <oid name="rimClickError" type="GAUGE"/>
+        <oid name="rimAdvertiserActionError" type="GAUGE"/>
+
+        <oid name="rimTotalIn" type="GAUGE"/>
+        <oid name="rimTotalIntermediate" type="GAUGE"/>
+        <oid name="rimTotalError" type="GAUGE"/>
+        <oid name="rimTotalOut" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="Request too many files in processing queue"
+          oid="rimRequestIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="PassbackImpression too many files in processing queue"
+          oid="rimPassbackImpressionIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="TagRequest too many files in processing queue"
+          oid="rimTagRequestIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Impression too many files in processing queue"
+          oid="rimImpressionIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="PassbackOpportunity too many files in processing queue"
+          oid="rimPassbackOpportunityIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Click too many files in processing queue"
+          oid="rimClickIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="AdvertiserAction too many files in processing queue"
+          oid="rimAdvertiserActionIn"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+
+        <threshold name="Request error files after processing"
+          oid="rimRequestError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="PassbackImpression error files after processing"
+          oid="rimPassbackImpressionError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="TagRequest error files after processing"
+          oid="rimTagRequestError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Impression error files after processing"
+          oid="rimImpressionError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="PassbackOpportunity error files after processing"
+          oid="rimPassbackOpportunityError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Click error files after processing"
+          oid="rimClickError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="AdvertiserAction error files after processing"
+          oid="rimAdvertiserActionError"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+      </thresholds>
+    </template>
+
+    <template name="OixServerUserInfoManager" prefix="SubAgent-Shell-LogFiles-MIB">
+      <oids>
+        <oid name="uimUserOp2In" type="GAUGE"/>
+        <oid name="uimUserOp1In" type="GAUGE"/>
+
+        <oid name="uimUserOp2Error" type="GAUGE"/>
+        <oid name="uimUserOp1Error" type="GAUGE"/>
+
+        <oid name="uimTotalIn" type="GAUGE"/>
+        <oid name="uimTotalIntermediate" type="GAUGE"/>
+        <oid name="uimTotalError" type="GAUGE"/>
+        <oid name="uimTotalOut" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="UserOp1 too many files in processing queue"
+          oid="uimUserOp1In"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="UserOp2 too many files in processing queue"
+          oid="uimUserOp2In"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+
+        <threshold name="UserOp1 error files after processing"
+          oid="uimUserOp1Error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="UserOp2 error files after processing"
+          oid="uimUserOp2Error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+      </thresholds>
+    </template>
+
+    <template name="OixServerLogGeneralizer" prefix="SubAgent-Shell-LogFiles-MIB">
+      <oids>
+        <oid prefix="ActionRequest-MIB" name="actionRequest.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ActionStat-MIB" name="actionStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CCGKeywordStat-MIB" name="ccgKeywordStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CCGStat-MIB" name="ccgStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CCStat-MIB" name="ccStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelHitStat-MIB" name="channelHitStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelInventory-MIB" name="channelInventory.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelInventoryEstimationStat-MIB" name="channelInventoryEstimationStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelPerformance-MIB" name="channelPerformance.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelPriceRange-MIB" name="channelPriceRange.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ChannelTriggerStat-MIB" name="channelTriggerStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ColoUsers-MIB" name="coloUsers.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="CreativeStat-MIB" name="creativeStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="ExpressionPerformance-MIB" name="expressionPerformance.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="OptOutStat-MIB" name="optOutStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="PassbackStat-MIB" name="passbackStat.outputRecordsAvg" type="GAUGE"/>
+        <oid prefix="TagPositionStat-MIB" name="tagPositionStat.outputRecordsAvg" type="GAUGE"/>
+        <oid name="lgActionRequestIn" type="GAUGE"/>
+        <oid name="lgActionStatIn" type="GAUGE"/>
+        <oid name="lgAdvertiserUserStatIn" type="GAUGE"/>
+        <oid name="lgCampaignStatIn" type="GAUGE"/>
+        <oid name="lgCampaignUserStatIn" type="GAUGE"/>
+        <oid name="lgCCGKeywordStatIn" type="GAUGE"/>
+        <oid name="lgCCGSelectionFailureStatIn" type="GAUGE"/>
+        <oid name="lgCCGStatIn" type="GAUGE"/>
+        <oid name="lgCCGUserStatIn" type="GAUGE"/>
+        <oid name="lgCCStatIn" type="GAUGE"/>
+        <oid name="lgCCUserStatIn" type="GAUGE"/>
+        <oid name="lgChannelCountStatIn" type="GAUGE"/>
+        <oid name="lgChannelHitStatIn" type="GAUGE"/>
+        <oid name="lgChannelImpInventoryIn" type="GAUGE"/>
+        <oid name="lgChannelInventoryIn" type="GAUGE"/>
+        <oid name="lgChannelInventoryEstimationStatIn" type="GAUGE"/>
+        <oid name="lgChannelOverlapUserStatIn" type="GAUGE"/>
+        <oid name="lgChannelPerformanceIn" type="GAUGE"/>
+        <oid name="lgChannelPriceRangeIn" type="GAUGE"/>
+        <oid name="lgChannelTriggerImpStatIn" type="GAUGE"/>
+        <oid name="lgChannelTriggerStatIn" type="GAUGE"/>
+        <oid name="lgCMPStatIn" type="GAUGE"/>
+        <oid name="lgColoUpdateStatIn" type="GAUGE"/>
+        <oid name="lgColoUsersIn" type="GAUGE"/>
+        <oid name="lgColoUserStatIn" type="GAUGE"/>
+        <oid name="lgCreativeStatIn" type="GAUGE"/>
+        <oid name="lgDeviceChannelCountStatIn" type="GAUGE"/>
+        <oid name="lgExpressionPerformanceIn" type="GAUGE"/>
+        <oid name="lgGlobalColoUserStatIn" type="GAUGE"/>
+        <oid name="lgOptOutStatIn" type="GAUGE"/>
+        <oid name="lgPageLoadsDailyStatIn" type="GAUGE"/>
+        <oid name="lgPassbackStatIn" type="GAUGE"/>
+        <oid name="lgPublisherInventoryIn" type="GAUGE"/>
+        <oid name="lgSearchEngineStatIn" type="GAUGE"/>
+        <oid name="lgSearchTermStatIn" type="GAUGE"/>
+        <oid name="lgSiteChannelStatIn" type="GAUGE"/>
+        <oid name="lgSiteReferrerStatIn" type="GAUGE"/>
+        <oid name="lgSiteStatIn" type="GAUGE"/>
+        <oid name="lgSiteUserStatIn" type="GAUGE"/>
+        <oid name="lgTagAuctionStatIn" type="GAUGE"/>
+        <oid name="lgTagPositionStatIn" type="GAUGE"/>
+        <oid name="lgUserAgentStatIn" type="GAUGE"/>
+        <oid name="lgUserPropertiesIn" type="GAUGE"/>
+        <oid name="lgWebStatIn" type="GAUGE"/>
+
+        <oid name="lgActionRequest.gap" type="GAUGE"/>
+        <oid name="lgActionStat.gap" type="GAUGE"/>
+        <oid name="lgAdvertiserUserStat.gap" type="GAUGE"/>
+        <oid name="lgCampaignStat.gap" type="GAUGE"/>
+        <oid name="lgCampaignUserStat.gap" type="GAUGE"/>
+        <oid name="lgCCGKeywordStat.gap" type="GAUGE"/>
+        <oid name="lgCCGSelectionFailureStat.gap" type="GAUGE"/>
+        <oid name="lgCCGStat.gap" type="GAUGE"/>
+        <oid name="lgCCGUserStat.gap" type="GAUGE"/>
+        <oid name="lgCCStat.gap" type="GAUGE"/>
+        <oid name="lgCCUserStat.gap" type="GAUGE"/>
+        <oid name="lgChannelCountStat.gap" type="GAUGE"/>
+        <oid name="lgChannelHitStat.gap" type="GAUGE"/>
+        <oid name="lgChannelImpInventory.gap" type="GAUGE"/>
+        <oid name="lgChannelInventory.gap" type="GAUGE"/>
+        <oid name="lgChannelInventoryEstimationStat.gap" type="GAUGE"/>
+        <oid name="lgChannelOverlapUserStat.gap" type="GAUGE"/>
+        <oid name="lgChannelPerformance.gap" type="GAUGE"/>
+        <oid name="lgChannelPriceRange.gap" type="GAUGE"/>
+        <oid name="lgChannelTriggerImpStat.gap" type="GAUGE"/>
+        <oid name="lgChannelTriggerStat.gap" type="GAUGE"/>
+        <oid name="lgCMPStat.gap" type="GAUGE"/>
+        <oid name="lgColoUpdateStat.gap" type="GAUGE"/>
+        <oid name="lgColoUsers.gap" type="GAUGE"/>
+        <oid name="lgColoUserStat.gap" type="GAUGE"/>
+        <oid name="lgCreativeStat.gap" type="GAUGE"/>
+        <oid name="lgDeviceChannelCountStat.gap" type="GAUGE"/>
+        <oid name="lgExpressionPerformance.gap" type="GAUGE"/>
+        <oid name="lgGlobalColoUserStat.gap" type="GAUGE"/>
+        <oid name="lgOptOutStat.gap" type="GAUGE"/>
+        <oid name="lgPageLoadsDailyStat.gap" type="GAUGE"/>
+        <oid name="lgPassbackStat.gap" type="GAUGE"/>
+        <oid name="lgPublisherInventory.gap" type="GAUGE"/>
+        <oid name="lgSearchEngineStat.gap" type="GAUGE"/>
+        <oid name="lgSearchTermStat.gap" type="GAUGE"/>
+        <oid name="lgSiteChannelStat.gap" type="GAUGE"/>
+        <oid name="lgSiteReferrerStat.gap" type="GAUGE"/>
+        <oid name="lgSiteStat.gap" type="GAUGE"/>
+        <oid name="lgSiteUserStat.gap" type="GAUGE"/>
+        <oid name="lgTagAuctionStat.gap" type="GAUGE"/>
+        <oid name="lgTagPositionStat.gap" type="GAUGE"/>
+        <oid name="lgUserAgentStat.gap" type="GAUGE"/>
+        <oid name="lgUserProperties.gap" type="GAUGE"/>
+        <oid name="lgWebStat.gap" type="GAUGE"/>
+
+        <oid name="lgActionRequest.error" type="GAUGE"/>
+        <oid name="lgActionStat.error" type="GAUGE"/>
+        <oid name="lgAdvertiserUserStat.error" type="GAUGE"/>
+        <oid name="lgCampaignStat.error" type="GAUGE"/>
+        <oid name="lgCampaignUserStat.error" type="GAUGE"/>
+        <oid name="lgCCGKeywordStat.error" type="GAUGE"/>
+        <oid name="lgCCGSelectionFailureStat.error" type="GAUGE"/>
+        <oid name="lgCCGStat.error" type="GAUGE"/>
+        <oid name="lgCCGUserStat.error" type="GAUGE"/>
+        <oid name="lgCCStat.error" type="GAUGE"/>
+        <oid name="lgCCUserStat.error" type="GAUGE"/>
+        <oid name="lgChannelCountStat.error" type="GAUGE"/>
+        <oid name="lgChannelHitStat.error" type="GAUGE"/>
+        <oid name="lgChannelImpInventory.error" type="GAUGE"/>
+        <oid name="lgChannelInventory.error" type="GAUGE"/>
+        <oid name="lgChannelInventoryEstimationStat.error" type="GAUGE"/>
+        <oid name="lgChannelOverlapUserStat.error" type="GAUGE"/>
+        <oid name="lgChannelPerformance.error" type="GAUGE"/>
+        <oid name="lgChannelPriceRange.error" type="GAUGE"/>
+        <oid name="lgChannelTriggerImpStat.error" type="GAUGE"/>
+        <oid name="lgChannelTriggerStat.error" type="GAUGE"/>
+        <oid name="lgCMPStat.error" type="GAUGE"/>
+        <oid name="lgColoUpdateStat.error" type="GAUGE"/>
+        <oid name="lgColoUsers.error" type="GAUGE"/>
+        <oid name="lgColoUserStat.error" type="GAUGE"/>
+        <oid name="lgCreativeStat.error" type="GAUGE"/>
+        <oid name="lgDeviceChannelCountStat.error" type="GAUGE"/>
+        <oid name="lgExpressionPerformance.error" type="GAUGE"/>
+        <oid name="lgGlobalColoUserStat.error" type="GAUGE"/>
+        <oid name="lgOptOutStat.error" type="GAUGE"/>
+        <oid name="lgPageLoadsDailyStat.error" type="GAUGE"/>
+        <oid name="lgPassbackStat.error" type="GAUGE"/>
+        <oid name="lgPublisherInventory.error" type="GAUGE"/>
+        <oid name="lgSearchEngineStat.error" type="GAUGE"/>
+        <oid name="lgSearchTermStat.error" type="GAUGE"/>
+        <oid name="lgSiteChannelStat.error" type="GAUGE"/>
+        <oid name="lgSiteReferrerStat.error" type="GAUGE"/>
+        <oid name="lgSiteStat.error" type="GAUGE"/>
+        <oid name="lgSiteUserStat.error" type="GAUGE"/>
+        <oid name="lgTagAuctionStat.error" type="GAUGE"/>
+        <oid name="lgTagPositionStat.error" type="GAUGE"/>
+        <oid name="lgUserAgentStat.error" type="GAUGE"/>
+        <oid name="lgUserProperties.error" type="GAUGE"/>
+        <oid name="lgWebStat.error" type="GAUGE"/>
+
+        <oid name="lgActionRequest.out" type="GAUGE"/>
+        <oid name="lgActionStat.out" type="GAUGE"/>
+        <oid name="lgAdvertiserUserStat.out" type="GAUGE"/>
+        <oid name="lgCampaignStat.out" type="GAUGE"/>
+        <oid name="lgCampaignUserStat.out" type="GAUGE"/>
+        <oid name="lgCCGKeywordStat.out" type="GAUGE"/>
+        <oid name="lgCCGSelectionFailureStat.out" type="GAUGE"/>
+        <oid name="lgCCGStat.out" type="GAUGE"/>
+        <oid name="lgCCGUserStat.out" type="GAUGE"/>
+        <oid name="lgCCStat.out" type="GAUGE"/>
+        <oid name="lgCCUserStat.out" type="GAUGE"/>
+        <oid name="lgChannelCountStat.out" type="GAUGE"/>
+        <oid name="lgChannelHitStat.out" type="GAUGE"/>
+        <oid name="lgChannelImpInventory.out" type="GAUGE"/>
+        <oid name="lgChannelInventory.out" type="GAUGE"/>
+        <oid name="lgChannelInventoryEstimationStat.out" type="GAUGE"/>
+        <oid name="lgChannelOverlapUserStat.out" type="GAUGE"/>
+        <oid name="lgChannelPerformance.out" type="GAUGE"/>
+        <oid name="lgChannelPriceRange.out" type="GAUGE"/>
+        <oid name="lgChannelTriggerImpStat.out" type="GAUGE"/>
+        <oid name="lgChannelTriggerStat.out" type="GAUGE"/>
+        <oid name="lgCMPStat.out" type="GAUGE"/>
+        <oid name="lgColoUpdateStat.out" type="GAUGE"/>
+        <oid name="lgColoUsers.out" type="GAUGE"/>
+        <oid name="lgColoUserStat.out" type="GAUGE"/>
+        <oid name="lgCreativeStat.out" type="GAUGE"/>
+        <oid name="lgDeviceChannelCountStat.out" type="GAUGE"/>
+        <oid name="lgExpressionPerformance.out" type="GAUGE"/>
+        <!--oid name="lgExtStat.out" type="GAUGE"/-->
+        <oid name="lgGlobalColoUserStat.out" type="GAUGE"/>
+        <oid name="lgOptOutStat.out" type="GAUGE"/>
+        <oid name="lgPageLoadsDailyStat.out" type="GAUGE"/>
+        <oid name="lgPassbackStat.out" type="GAUGE"/>
+        <oid name="lgPublisherInventory.out" type="GAUGE"/>
+        <oid name="lgSearchEngineStat.out" type="GAUGE"/>
+        <oid name="lgSearchTermStat.out" type="GAUGE"/>
+        <oid name="lgSiteChannelStat.out" type="GAUGE"/>
+        <oid name="lgSiteReferrerStat.out" type="GAUGE"/>
+        <oid name="lgSiteStat.out" type="GAUGE"/>
+        <oid name="lgSiteUserStat.out" type="GAUGE"/>
+        <oid name="lgTagAuctionStat.out" type="GAUGE"/>
+        <oid name="lgTagPositionStat.out" type="GAUGE"/>
+        <oid name="lgUserAgentStat.out" type="GAUGE"/>
+        <oid name="lgUserProperties.out" type="GAUGE"/>
+        <oid name="lgWebStat.out" type="GAUGE"/>
+      </oids>
+      <thresholds>
+        <threshold name="LG too many ActionRequest files in processing queue"
+          oid="lgActionRequest.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ActionStat files in processing queue"
+          oid="lgActionStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many AdvertiserUserStat files in processing queue"
+          oid="lgAdvertiserUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CampaignStat files in processing queue"
+          oid="lgCampaignStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CampaignUserStat files in processing queue"
+          oid="lgCampaignUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGKeywordStat files in processing queue"
+          oid="lgCCGKeywordStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGSelectionFailureStat files in processing queue"
+          oid="lgCCGSelectionFailureStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGStat files in processing queue"
+          oid="lgCCGStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGUserStat files in processing queue"
+          oid="lgCCGUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCStat files in processing queue"
+          oid="lgCCStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCUserStat files in processing queue"
+          oid="lgCCUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelCountStat files in processing queue"
+          oid="lgChannelCountStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelHitStat files in processing queue"
+          oid="lgChannelHitStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelImpInventory files in processing queue"
+          oid="lgChannelImpInventory.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelInventory files in processing queue"
+          oid="lgChannelInventory.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelInventoryEstimationStat files in processing queue"
+          oid="lgChannelInventoryEstimationStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelOverlapUserStat files in processing queue"
+          oid="lgChannelOverlapUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelPerformance files in processing queue"
+          oid="lgChannelPerformance.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelPriceRange files in processing queue"
+          oid="lgChannelPriceRange.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelTriggerImpStat files in processing queue"
+          oid="lgChannelTriggerImpStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelTriggerStat files in processing queue"
+          oid="lgChannelTriggerStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CMPStat files in processing queue"
+          oid="lgCMPStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ColoUpdateStat files in processing queue"
+          oid="lgColoUpdateStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ColoUsers files in processing queue"
+          oid="lgColoUsers.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ColoUserStat files in processing queue"
+          oid="lgColoUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CreativeStat files in processing queue"
+          oid="lgCreativeStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many DeviceChannelCountStat files in processing queue"
+          oid="lgDeviceChannelCountStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ExpressionPerformance files in processing queue"
+          oid="lgExpressionPerformance.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many GlobalColoUserStat files in processing queue"
+          oid="lgGlobalColoUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many OptOutStat files in processing queue"
+          oid="lgOptOutStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many PageLoadsDailyStat files in processing queue"
+          oid="lgPageLoadsDailyStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many PassbackStat files in processing queue"
+          oid="lgPassbackStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many PublisherInventory files in processing queue"
+          oid="lgPublisherInventory.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SearchEngineStat files in processing queue"
+          oid="lgSearchEngineStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SearchTermStat files in processing queue"
+          oid="lgSearchTermStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteChannelStat files in processing queue"
+          oid="lgSiteChannelStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteReferrerStat files in processing queue"
+          oid="lgSiteReferrerStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteStat files in processing queue"
+          oid="lgSiteStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteUserStat files in processing queue"
+          oid="lgSiteUserStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many TagAuctionStat files in processing queue"
+          oid="lgTagAuctionStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many TagPositionStat files in processing queue"
+          oid="lgTagPositionStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many UserAgentStat files in processing queue"
+          oid="lgUserAgentStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many UserProperties files in processing queue"
+          oid="lgUserProperties.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many WebStat files in processing queue"
+          oid="lgWebStat.gap"
+          min="0" max="7200" evclass="/FOROS/AdServer" severity="5"/>
+
+        <threshold name="LG too many ActionRequest_Error files in processing queue"
+          oid="lgActionRequest.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ActionStat_Error files in processing queue"
+          oid="lgActionStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many AdvertiserUserStat_Error files in processing queue"
+          oid="lgAdvertiserUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CampaignStat_Error files in processing queue"
+          oid="lgCampaignStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CampaignUserStat_Error files in processing queue"
+          oid="lgCampaignUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGKeywordStat_Error files in processing queue"
+          oid="lgCCGKeywordStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGSelectionFailureStat_Error files in processing queue"
+          oid="lgCCGSelectionFailureStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGStat_Error files in processing queue"
+          oid="lgCCGStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCGUserStat_Error files in processing queue"
+          oid="lgCCGUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCStat_Error files in processing queue"
+          oid="lgCCStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CCUserStat_Error files in processing queue"
+          oid="lgCCUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelCountStat_Error files in processing queue"
+          oid="lgChannelCountStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelHitStat_Error files in processing queue"
+          oid="lgChannelHitStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelImpInventory_Error files in processing queue"
+          oid="lgChannelImpInventory.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelInventory_Error files in processing queue"
+          oid="lgChannelInventory.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelInventoryEstimationStat_Error files in processing queue"
+          oid="lgChannelInventoryEstimationStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelOverlapUserStat_Error files in processing queue"
+          oid="lgChannelOverlapUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelPerformance_Error files in processing queue"
+          oid="lgChannelPerformance.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelPriceRange_Error files in processing queue"
+          oid="lgChannelPriceRange.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelTriggerImpStat_Error files in processing queue"
+          oid="lgChannelTriggerImpStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ChannelTriggerStat_Error files in processing queue"
+          oid="lgChannelTriggerStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CMPStat_Error files in processing queue"
+          oid="lgCMPStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ColoUpdateStat_Error files in processing queue"
+          oid="lgColoUpdateStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ColoUsers_Error files in processing queue"
+          oid="lgColoUsers.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ColoUserStat_Error files in processing queue"
+          oid="lgColoUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many CreativeStat_Error files in processing queue"
+          oid="lgCreativeStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many DeviceChannelCountStat_Error files in processing queue"
+          oid="lgDeviceChannelCountStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many ExpressionPerformance_Error files in processing queue"
+          oid="lgExpressionPerformance.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many GlobalColoUserStat_Error files in processing queue"
+          oid="lgGlobalColoUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many OptOutStat_Error files in processing queue"
+          oid="lgOptOutStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many PageLoadsDailyStat_Error files in processing queue"
+          oid="lgPageLoadsDailyStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many PassbackStat_Error files in processing queue"
+          oid="lgPassbackStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many PublisherInventory_Error files in processing queue"
+          oid="lgPublisherInventory.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SearchEngineStat_Error files in processing queue"
+          oid="lgSearchEngineStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SearchTermStat_Error files in processing queue"
+          oid="lgSearchTermStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteChannelStat_Error files in processing queue"
+          oid="lgSiteChannelStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteReferrerStat_Error files in processing queue"
+          oid="lgSiteReferrerStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteStat_Error files in processing queue"
+          oid="lgSiteStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many SiteUserStat_Error files in processing queue"
+          oid="lgSiteUserStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many TagAuctionStat_Error files in processing queue"
+          oid="lgTagAuctionStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many TagPositionStat_Error files in processing queue"
+          oid="lgTagPositionStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many UserAgentStat_Error files in processing queue"
+          oid="lgUserAgentStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many UserProperties_Error files in processing queue"
+          oid="lgUserProperties.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="LG too many WebStat_Error files in processing queue"
+          oid="lgWebStat.error"
+          min="0" max="0" evclass="/FOROS/AdServer" severity="5"/>
+
+        <threshold name="LG too many ActionRequest_Out files in processing queue"
+          oid="lgActionRequest.out"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgActionStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgAdvertiserUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCampaignStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCampaignUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGKeywordStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGSelectionFailureStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelCountStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelHitStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelImpInventoryError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelInventoryError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelInventoryEstimationStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelOverlapUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelPerformanceError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelPriceRangeError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelTriggerImpStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelTriggerStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCMPStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgColoUpdateStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgColoUsersError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgColoUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCreativeStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgDeviceChannelCountStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgOptOutStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgPageLoadsDailyStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgPassbackStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgPublisherInventoryError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSearchEngineStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSearchTermStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteChannelStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteReferrerStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteUserStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgTagAuctionStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgTagPositionStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgUserAgentStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgUserPropertiesError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgWebStatError"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+
+        <threshold name="Too many files in processing queue"
+          oid="lgActionRequestOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgActionStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgAdvertiserUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCampaignStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCampaignUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGKeywordStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGSelectionFailureStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCGUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCCUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelCountStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelHitStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelImpInventoryOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelInventoryOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelInventoryEstimationStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelOverlapUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelPerformanceOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelPriceRangeOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelTriggerImpStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgChannelTriggerStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCMPStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgColoUpdateStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgColoUsersOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgColoUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgCreativeStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgDeviceChannelCountStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgExpressionPerformanceOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgExtStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgGlobalColoUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgOptOutStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgPageLoadsDailyStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgPassbackStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgPublisherInventoryOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSearchEngineStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSearchTermStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteChannelStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteReferrerStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgSiteUserStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgTagAuctionStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgTagPositionStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgUserAgentStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgUserPropertiesOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+        <threshold name="Too many files in processing queue"
+          oid="lgWebStatOut"
+          min="0" max="1000" evclass="/FOROS/AdServer" severity="5"/>
+      </thresholds>
+      <graphs>
+        <graph name="OixServer LogGeneralizer Main stats" units="Records per operation">
+          <oid name="coloUsers.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="creativeStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="optOutStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="passbackStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="tagPositionStat.outputRecordsAvg" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="OixServer LogGeneralizer Channel stats" units="Records per operation">
+          <oid name="channelHitStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelInventory.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelInventoryEstimationStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelPerformance.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelPriceRange.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="channelTriggerStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="expressionPerformance.outputRecordsAvg" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="OixServer LogGeneralizer Action stats" units="Records per operation">
+          <oid name="actionRequest.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="actionStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="ccgKeywordStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="ccgStat.outputRecordsAvg" type="AREA" stacked="True"/>
+          <oid name="ccStat.outputRecordsAvg" type="AREA" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+
+    __CLUSTER_CONNECTIONS_TEMPLATE__
+
+    <template name="frontendConnectionsSizes" prefix="SubAgent-Shell-Connections-MIB">
+      <oids>
+        <oid name="feUserInfoManagerAvgRecv" type="GAUGE"/>
+        <oid name="feUserInfoManagerAvgSend" type="GAUGE"/>
+        <oid name="feUserInfoManagerAvgMaxRecv" type="GAUGE"/>
+        <oid name="feUserInfoManagerAvgMaxSend" type="GAUGE"/>
+
+        <oid name="feChannelServerAvgRecv" type="GAUGE"/>
+        <oid name="feChannelServerAvgSend" type="GAUGE"/>
+        <oid name="feChannelServerAvgMaxRecv" type="GAUGE"/>
+        <oid name="feChannelServerAvgMaxSend" type="GAUGE"/>
+
+        <oid name="feUserBindServerAvgRecv" type="GAUGE"/>
+        <oid name="feUserBindServerAvgSend" type="GAUGE"/>
+        <oid name="feUserBindServerAvgMaxRecv" type="GAUGE"/>
+        <oid name="feUserBindServerAvgMaxSend" type="GAUGE"/>
+
+        <oid name="feCampaignManagerAvgRecv" type="GAUGE"/>
+        <oid name="feCampaignManagerAvgSend" type="GAUGE"/>
+        <oid name="feCampaignManagerAvgMaxRecv" type="GAUGE"/>
+        <oid name="feCampaignManagerAvgMaxSend" type="GAUGE"/>
+      </oids>
+      <graphs>
+        <graph name="Frontend connections IO sizes stats" units="Averages for sent, received bytes">
+          <oid name="feUserInfoManagerAvgRecv" type="AREA" stacked="True"/>
+          <oid name="feUserInfoManagerAvgSend" type="AREA" stacked="True"/>
+          <oid name="feUserInfoManagerAvgMaxRecv" type="AREA" stacked="True"/>
+          <oid name="feUserInfoManagerAvgMaxSend" type="AREA" stacked="True"/>
+
+          <oid name="feChannelServerAvgRecv" type="AREA" stacked="True"/>
+          <oid name="feChannelServerAvgSend" type="AREA" stacked="True"/>
+          <oid name="feChannelServerAvgMaxRecv" type="AREA" stacked="True"/>
+          <oid name="feChannelServerAvgMaxSend" type="AREA" stacked="True"/>
+
+          <oid name="feUserBindServerAvgRecv" type="AREA" stacked="True"/>
+          <oid name="feUserBindServerAvgSend" type="AREA" stacked="True"/>
+          <oid name="feUserBindServerAvgMaxRecv" type="AREA" stacked="True"/>
+          <oid name="feUserBindServerAvgMaxSend" type="AREA" stacked="True"/>
+
+          <oid name="feCampaignManagerAvgRecv" type="AREA" stacked="True"/>
+          <oid name="feCampaignManagerAvgSend" type="AREA" stacked="True"/>
+          <oid name="feCampaignManagerAvgMaxRecv" type="AREA" stacked="True"/>
+          <oid name="feCampaignManagerAvgMaxSend" type="AREA" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+
+    <template name="OixServerCommons" prefix="StatsCollector-MIB">
+      <oids>
+        <!-- Development vars -->
+        <!-- 1. User Frontend Profiles Space -->
+        <oid name="userFreqCapProfiles-AreaSize.0" type="GAUGE"/>
+        <oid name="userHistoryProfiles-AreaSize.0" type="GAUGE"/>
+        <oid name="userWDProfiles-AreaSize.0" type="GAUGE"/>
+        <oid name="userTempProfiles-AreaSize.0" type="GAUGE"/>
+        <oid name="userBaseProfiles-AreaSize.0" type="GAUGE"/>
+        <oid name="userAdditionalProfiles-AreaSize.0" type="GAUGE"/>
+        <!-- Common vars-->
+        <oid name="userProfiles-AreaSize.0" type="GAUGE"/>
+        <!-- 2. User Frontend Profiles Channels -->
+        <oid name="userProfiles-AdChannels-Avg.0" type="GAUGE"/>
+        <!-- 3. Ad Requests -->
+        <oid name="adRequestWithImpression-OptInUser-Count.0" type="DERIVE"/>
+        <oid name="adRequestWithImpression-nonOptInUser-Count.0" type="DERIVE"/>
+        <oid name="adRequest-Count.0" type="DERIVE"/>
+        <oid name="profilingRequest-Count.0" type="DERIVE"/>
+        <!-- 4. RTB Requests -->
+        <oid name="rtbRequestCount.0" type="COUNTER"/>
+        <oid name="rtbRequestBidCount.0" type="COUNTER"/>
+        <oid name="rtbRequestTanxCount.0" type="COUNTER"/>
+        <oid name="rtbRequestTanxBidCount.0" type="COUNTER"/>
+        <oid name="rtbRequestBaiduCount.0" type="COUNTER"/>
+        <oid name="rtbRequestBaiduBidCount.0" type="COUNTER"/>
+        <oid name="rtbRequestOpenRTBCount.0" type="COUNTER"/>
+        <oid name="rtbRequestOpenRTBBidCount.0" type="COUNTER"/>
+        <oid name="rtbRequestOtherCount.0" type="COUNTER"/>
+        <oid name="rtbRequestOtherBidCount.0" type="COUNTER"/>
+
+        <oid name="rtbRequestSkipCount.0" type="COUNTER"/>
+        <oid name="rtbRequestTimeoutCount.0" type="COUNTER"/>
+        <oid name="rtbRequestTimeCounter.0" type="COUNTER"/>
+
+        __FRONTEND_HOSTS_OIDS__
+
+        <!-- Campaign server vars -->
+        <oid prefix="CampaignServer-MIB" name="behavChannelCount" type="GAUGE"/>
+        <oid prefix="CampaignServer-MIB" name="expressionChannelCount" type="GAUGE"/>
+        <!-- RequestInfoSvcs vars -->
+        <oid prefix="ExpressionMatcher-MIB" name="processedMatches-OptInUser-Count" type="DERIVE"/>
+        <oid prefix="ExpressionMatcher-MIB" name="processedMatches-temporaryUser-Count" type="DERIVE"/>
+        <oid prefix="ExpressionMatcher-MIB" name="processedMatches-nonOptInUser-Count" type="DERIVE"/>
+      </oids>
+      <graphs>
+        <graph name="User Frontend Profiles Space" units="bytes">
+          <oid name="userFreqCapProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userHistoryProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userWDProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userTempProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userBaseProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userAdditionalProfiles-AreaSize.0" stacked="True"/>
+          <oid name="userProfiles-AreaSize.0"/>
+        </graph>
+        <graph name="User Frontend Profiles Channels" units="quantity">
+          <oid name="userProfiles-AdChannels-Avg.0" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="Ad Requests" units="quantity">
+          <oid name="adRequestWithImpression-OptInUser-Count.0" type="AREA" stacked="True"/>
+          <oid name="adRequestWithImpression-nonOptInUser-Count.0" type="AREA" stacked="True"/>
+          <oid name="adRequest-Count.0"/>
+          <oid name="profilingRequest-Count.0"/>
+        </graph>
+        <graph name="RTB Requests" units="quantity">
+          <oid name="rtbRequestTanxCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestTanxBidCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestBaiduCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestBaiduBidCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestOpenRTBCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestOpenRTBBidCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestOtherCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestOtherBidCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestCount.0"/>
+          <oid name="rtbRequestBidCount.0"/>
+        </graph>
+        <graph name="RTB requests timeouts" units="quantity">
+          <oid name="rtbRequestSkipCount.0" type="AREA" stacked="True"/>
+          <oid name="rtbRequestTimeoutCount.0" type="AREA" stacked="True"/>
+        </graph>
+
+        <graph name="RTB cluster latency" log="False" units="microseconds"
+          custom="CDEF:oidtmp=rtbRequestTimeCounter_0_%ID-raw,rtbRequestCount_0_%ID-raw,/&#10;LINE2:oidtmp#ff00ff:Cluster latency in millisec&#10;GPRINT:oidtmp:LAST:cur\:%5.2lf%s&#10;GPRINT:oidtmp:AVERAGE:avg\:%5.2lf%s&#10;GPRINT:oidtmp:MAX:max\:%5.2lf%s\j">
+          <oid name="rtbRequestCount.0" type="DONTDRAW"/>
+          <oid name="rtbRequestTimeCounter.0" type="DONTDRAW"/>
+        </graph>
+        __FRONTEND_HOSTS_GRAPHS__
+
+        <graph name="Loaded Channels" units="quantity">
+          <oid name="behavChannelCount" type="AREA" stacked="True"/>
+          <oid name="expressionChannelCount" type="AREA" stacked="True"/>
+        </graph>
+        <graph name="Expression matcher working" units="quantity">
+          <oid name="processedMatches-OptInUser-Count" type="AREA" stacked="True"/>
+          <oid name="processedMatches-temporaryUser-Count" type="AREA" stacked="True"/>
+          <oid name="processedMatches-nonOptInUser-Count" type="AREA" stacked="True"/>
+        </graph>
+      </graphs>
+    </template>
+  </templates>
+</zendmd>

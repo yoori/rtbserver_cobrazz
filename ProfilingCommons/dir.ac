@@ -1,0 +1,10 @@
+OSBE_CONFIG_SUBDIR([PlainStorage])
+OSBE_CONFIG_SUBDIR([PlainStorage3])
+OSBE_CONFIG_SUBDIR([ProfileMap])
+OSBE_CONFIG_SUBDIR([PlainStorageUtil])
+
+OSBE_CONFIG_FILE([Makefile])
+OSBE_CONFIG_FILE([PlainStorageDir.mk])
+
+OSBE_CXX_DEF([MessageSaver], [MessageSaver.mk])
+OSBE_CXX_DEF([ProfilingCommons], [ProfilingCommons.mk])

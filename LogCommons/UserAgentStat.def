@@ -1,0 +1,6 @@
+name="UserAgentStat"
+so_files=UserAgentStat
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Commons
+osbe_cxx_dep LogCommons

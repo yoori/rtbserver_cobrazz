@@ -1,0 +1,124 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Proxy Cluster Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
+  <xsd:include schemaLocation="./AdClusterAppType.xsd"/>
+  <xsd:include schemaLocation="./LogProcessing/ProxySyncLogsAppType.xsd"/>
+
+  <xsd:complexType name="ProxyClusterConfigType">
+    <xsd:sequence>
+      <xsd:element name="environment" type="ProxyClusterEnvironmentType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Environment parameters: pathes and account for server processes up.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="secureParams" type="SecureCertificateAuthority" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Secure connections parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="campaignServerRef" type="SimpleCorbaRef" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA references.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="channelControllerRef" type="SimpleCorbaRef" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            CORBA references.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="syncLogs" type="ProxySyncLogsConfigType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            AdProxy SyncLogs configuration.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="snmpStats" type="SNMPStatsConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            SNMP stats config
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ProxyClusterEnvironmentType">
+    <xsd:attribute name="workspace_root" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to logs and other generating server files.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="config_root" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to configuration of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_root" type="NoLeadingTrailingSpaces" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Root path to server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="server_bin_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to binary files of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="data_root" type="NoLeadingTrailingSpaces" default="/opt/foros/server/var/www">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to server data: templates and other data, necessary for properly server work.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="cache_root" type="NoLeadingTrailingSpaces" default="/opt/foros/server/var/cache">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to cache chunks. Usually "cache" folder dispose into "var" folder.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unixcommons_root" type="NoLeadingTrailingSpaces" default="/opt/foros/server">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to unix commons library.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mib_root" type="NoLeadingTrailingSpaces" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to mib files of server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -1,0 +1,563 @@
+// Tanx <-> DSP Interface
+// Field details, see the API documentation
+
+// automate translate with using google
+// http://code.taobao.org/p/adx_guide/src/trunk/docs/API/tanx-bidding.proto
+
+
+package Tanx;
+
+message BidRequest {
+
+  // Protocol ------------------------------------------- Basic Information
+
+  // The current protocol version number, currently 3
+  required int32 version = 1;
+
+  // Tanx generated unique auction ID, 32-byte string
+  required string bid = 2;
+
+  // If not 0, then this is a test request.
+  // DSP need to return to a normal response to fill
+  // Tanx not be presented to the user, and not the Charging Request
+  optional uint32 is_test = 11 [default = 0];
+
+  // If not 0, then this is a ping request
+  // DSP need to return an empty response
+  optional uint32 is_ping = 12 [default = 0];
+
+  // ------------------------------------------- Viewer information
+
+  // User identity
+  // If cookie hosting and hosted_match_data exist, the value is not set
+  optional string tid = 3;
+
+  // User's IP address, ipv4
+  // For example: 192.168.1.1
+  optional string ip = 4;
+
+  // User's browser type, the HTTP request header User-Agent
+  optional string user_agent = 5;
+
+  // Minute offset time zone the user is located
+  // For example: if the East eight districts, the timezone_offset = 60 * 8 = 480.
+  optional int32 timezone_offset = 13;
+
+  // User vertical categories
+  // Reserved field, no actual value
+  repeated int32 user_vertical = 14;
+
+  // The version number tid field
+  optional uint32 tid_version = 19;
+
+  // ------------------------------------------- Page information Target
+
+  // Jump url media ban
+  // All entries no longer than 200 characters
+  // The field may not be the whole amount of data,
+  // Recommends using offline data acquisition provided the total amount of data media
+  repeated string excluded_click_through_url = 6;
+
+  // Promotion place where the page url
+  optional string url = 7;
+
+  // Categories
+  // promotion place where the website
+  // See data dictionary Tanx-dict-site-category.txt
+  optional uint32 category = 8;
+
+  // To your traffic sources, reserved field, currently 0
+  // Adx type 0 indicates SSP traffic, 1 google Flow
+  optional uint32 adx_type = 9 [default = 0];
+
+  // Reserved field, no actual value
+  optional string anonymous_id = 15;
+
+  // Reserved field, no actual value
+  optional string detected_language = 16;
+
+  // Category field version number, currently 1
+  optional int32 category_version = 18;
+
+  // ------------------------------------------- Promotion bit basic information
+  message AdzInfo {
+    // Promotion bit number, currently fixed at 0
+    required uint32 id = 1;
+
+    // Promotion-bit unique identification
+    required string pid = 2;
+    
+    // Uniquely identifies the media, and creativity with the use of audit status query api
+    optional string publisher_id = 11;
+
+    // Promotion bit Dimensions: W x H
+    // For example: 300x250
+    optional string size = 3;
+
+    // Promotion bit want to get the number from a single DSP auction ads
+    // DSP can provide a value less than or equal to this number of ads (only have one ad to win)
+    // Value of more than AdzInfo.ad_bid_count advertising, will be truncated and not participate in the auction
+    optional uint32 ad_bid_count = 4 [default = 2];
+
+    // Show the form of promotion bits
+    // See data dictionary Tanx-dict-view-type.txt
+    repeated uint32 view_type = 5;
+
+    // Creative type media ban
+    // See data dictionary Tanx-dict-creative-type.txt
+    // The field may not be the whole amount of data,
+    // Recommends using offline data acquisition provided the total amount of data media
+    repeated uint32 excluded_filter = 6;
+
+    // Minimum bid price, currency Renminbi, meaning value for the sub / thousand show
+    optional uint32 min_cpm_price = 7;
+
+    // Deprecated, please ignore
+    enum Location {
+        NA = 0;
+        FIRST_VIEW = 1;
+        OTHER_VIEW = 2;
+    }
+    optional Location adz_location = 8 [default = NA];
+
+    // The promotion of bits in several screen pages where
+    // 0: No identification; 1-5: 1-5 screen; 6: Sixth screen and outside
+    enum ViewScreen {
+      SCREEN_NA = 0;
+      SCREEN_FIRST = 1;
+      SCREEN_SECOND = 2;
+      SCREEN_THIRD = 3;
+      SCREEN_FOURTH = 4;
+      SCREEN_FIFTH = 5;
+      SCREEN_OTHER = 6;
+    }
+    optional ViewScreen view_screen = 9 [default = SCREEN_NA];
+
+    // The promotion of bits in order to render the entire page, increments from 0
+    optional uint32 page_session_ad_idx = 10;
+
+    // Promotion bit support apiFramework
+    // 1 VPAID 1.0; 2 VPAID 2.0; 3 MRAID-1; 4 ORMMA; 5 MRAID-2
+    repeated uint32 api = 12;
+  }
+  repeated AdzInfo adzinfo = 10;
+
+  // Media ban sensitive category
+  // See data dictionary Tanx-dict-sensitive-category.txt
+  // The field may not be the whole amount of data,
+  // Recommends using offline data acquisition provided the total amount of data media
+  repeated int32 excluded_sensitive_category = 17;
+
+  // Media ban advertising industry category
+  // See data dictionary Tanx-dict-ad-category-version-2.xlsx
+  // The field may not be the whole amount of data,
+  // Recommends using offline data acquisition provided the total amount of data media
+  repeated int32 excluded_ad_category = 20;
+
+  // DSP conduct Cookie hosted user ID id
+  // Cookie mapping corresponds to the input parameters in the tanx_hm
+  // If hosted_match_data exist not set tid
+  optional string hosted_match_data = 21;
+
+  // DSP conduct Cookie hosted user attributes
+  // Cookie mapping in the corresponding parameters of tanx_ua
+  message UserAttribute {
+    // User attributes id DSP be hosted Cookie
+    required uint32 id = 1;
+
+    // DSP conduct Cookie hosted the corresponding user id attribute timestamp
+    optional uint32 timestamp = 2;
+  }
+  repeated UserAttribute user_attribute = 22;
+
+  // Identifies a page pv
+  // For the same page of single PV, Tanx will generate an identical and only page_session_id
+  optional string page_session_id = 23;
+
+  // Reserved field, no actual value
+  message PrivateInfo {
+      optional string tanx_cnaui = 1;
+      optional string risk_control = 2;
+      optional string nick_name = 3; // unicode value of utf-8
+  }
+  repeated PrivateInfo private_info = 24;
+
+  // ------------------------------------------- Wireless promotion Bit Further information
+  message Mobile {
+    // Identify the second ad request is from the APP
+    optional bool is_app = 1;
+
+    // We need to show a number of ideas
+    // Only when AdzInfo.view_type for wireless wall, this field is valid
+    optional uint32 ad_num = 2;
+
+    // Keywords, reserved field, no actual value
+    repeated string ad_keyword = 3;
+
+    // Promotion place fullscreen display
+    optional bool is_fullscreen = 4;
+
+    // Application package name position where Promotion
+    // For example: com.moji.MojiWeather
+    optional string package_name = 5;
+
+    message Device {
+      // Device platform (lowercase)
+      // For example: android, iphone, ipad
+      optional string platform = 1;
+
+      // Equipment brands (lowercase)
+      // For example: nokia, samsung.
+      optional string brand = 2;
+
+      // Device model (lowercase)
+      // For example: n70, galaxy.
+      optional string model = 3;
+
+      // Operating system (lowercase)
+      // For example: android, ios
+      optional string os = 4;
+
+      // Operating system version
+      // For example: 7.0.2
+      optional string os_version = 5;
+
+      // Device, a network environment
+      // 0- unrecognized, 1-wifi, 2-2g, 3-3g, 4-4g
+      optional uint32 network = 6;
+
+      // Network operators equipment
+      // 0- unknown, 1 Mobile, China Unicom 2-, 3- Telecom
+      optional int32 operator = 7;
+
+      // Longitude geographic location of the device (decimal format)
+      // For example: 116.41667
+      optional string longitude = 8;
+
+      // Geographic location of the device Latitude (decimal format)
+      // For example: 39.91667
+      optional string latitude = 9;
+
+      // Device screen resolution
+      // For example: 1024x768
+      optional string device_size = 10;
+
+      // Device ID
+      // For IOS (6.0 and above) devices, which is a value idfa be encrypted
+      // For IOS (6.0 or less) device, which is a value encrypted mac
+      // For android device, which is a value imei be encrypted
+      // Encryption rules and key contact person Tanx Interface
+      optional string device_id = 11;
+      
+      // Device pixel ratio
+      // Size scaling for advertising, micrometer bits, default 1000
+      optional int32 device_pixel_ratio = 12 [default = 1000];
+    }
+    optional Device device = 6;
+
+    // See the documentation native-template.pdf
+    repeated string native_template_id = 7;
+
+    // Optional advertising promotion bits Open
+    // See data dictionary Tanx-dict-landing-type.txt
+    repeated int32 landing_type = 8;
+  }
+  // If this field is set, then this request from the mobile device.
+  optional Mobile mobile = 25;
+
+  // The promotion of digital content on the page where classified information
+  message ContentCategory {
+    // The promotion of digital content on the page where the Web category ID
+    // See data dictionary Tanx-dict-content-category.xlsx
+    required int32 id = 1;
+
+    // Web category ID corresponding to a confidence score. In the range [0,1000]
+    required int32 confidence_level = 2;
+  }
+  repeated ContentCategory content_categories = 26;
+  
+  message Video {
+    // Reserved field, ignore
+    enum VideoFormat {
+      // HTML5 VAST creative media including mp4 and webm
+      VIDEO_FLASH = 0;
+      VIDEO_HTML5 = 1;
+    }
+    repeated VideoFormat video_format = 1;
+
+    // Video where the page description information
+    // Unified string utf-8
+    message Content {
+      // Video Title
+      optional string title = 1;
+      // Video length in seconds
+      optional int32 duration = 2;
+      // Video tag
+      repeated string keywords = 3;
+    }
+    optional Content content = 2;
+
+    // Placement relative to the location of video start time, 0 pre-roll, post-roll -1 indicates a value greater than 0 indicates the plug
+    optional int32 videoad_start_delay = 3;
+
+    // The location may contain more than one patch, this patch in the above collection represents the relative starting position, in milliseconds
+    optional int32 videoad_section_start_delay = 4;
+
+    // Minimum length patch playing time, video creative in playing time than this value, in milliseconds
+    optional int32 min_ad_duration = 5;
+
+    // Patch length maximum playback time, in milliseconds
+    optional int32 max_ad_duration = 6;
+
+    // VAST protocol version.
+    // Use the current version 3.0, backward compatible
+    optional string protocol = 7;
+  }
+  // Video parameters
+  optional Video video = 27;
+
+  // Ali cross-screen id
+  optional string aid = 28;
+  
+  // Transaction is defined as a priority the transaction, one of the two private bids
+  message Deal {
+    // Prior transactions
+    message PreferredDeal {
+      required uint32 dealid = 1;
+      // Allow advertisers whitelist, not all of which are allowed to set the default
+      repeated uint32 advertiser_ids = 2;
+      // Priority fixed price transactions
+      optional uint32 fix_cpm_price = 3;
+    }
+    optional PreferredDeal prefer_deal = 1;
+
+    // Private auction
+    message PrivateAuction {
+      required uint32 dealid = 1;
+      // Rules buy
+      message BuyerRule {
+        // Allow advertisers whitelist, not all of which are allowed to set the default
+        repeated uint32 advertiser_ids = 1;
+    
+        // Private auction reserve price
+        optional uint32 min_cpm_price = 2;
+      }
+      repeated BuyerRule buyer_rules = 2;
+    }
+    optional PrivateAuction priv_auc = 2;
+  }
+  // Dsp involved in all of the transactions
+  repeated Deal deals = 29;
+
+  // Crowd Category Properties
+  // See the Data Dictionary
+  message CrowdCategory {
+    // Crowd Category ID
+    // See the Data Dictionary
+    required int32 id = 1;
+
+    // The corresponding population category ID confidence scores. In the range [0,1000]
+    optional uint32 confidence_level = 2;
+  }
+  repeated CrowdCategory crowd_category = 30;
+}
+
+message BidResponse {
+
+    // Protocol ------------------------------------------- Basic Information
+
+    // The current protocol version number, currently 3
+    required int32 version = 1;
+
+    // Populate BidRequest the bid, 32-byte string
+    required string bid = 2;
+
+    // ------------------------------------------- Advertising Information
+
+    // Definition of advertising
+    // If the DSP does not offer this request, you do not set this field
+    message Ads {
+        // Mark the ad to promote the position of the numbers currently populate 0
+        required uint32 adzinfo_id = 1;
+
+        // Ad bids (RMB), in minutes / thousand show
+        // The field value is not allowed 0
+        // And can not be less than the minimum bid price promotion place (BidRequest.min_cpm_price)
+        required uint32 max_cpm_price = 2;
+
+        // Current ad index value in the corresponding position on the promotion of
+        // Increment the value from 0 to strict and must be less than BidRequest.AdzInfo.ad_bid_count
+        optional uint32 ad_bid_count_idx = 3;
+
+        // Ad code snippet
+        // See the API documentation detailed usage
+        optional string html_snippet = 4;
+
+        // Ad click Address
+        // Need http: // or https: // at the beginning
+        repeated string click_through_url = 5;
+
+        // Advertising industry categories and sensitive category DSP Statements This ad belongs
+        // See data dictionary Tanx-dict-ad-category.txt and Tanx-dict-sensitive-category.txt
+        repeated int32 category = 6;
+
+        // Creative type DSP declaration
+        // See data dictionary Tanx-dict-creative-type.txt
+        repeated int32 creative_type = 7;
+
+        // DSP custom data
+        // The field is about to waste
+        // Only contain [_0-9a-zA-Z], the length does not exceed 128
+        optional string network_guid = 8;
+
+        // This field is deprecated
+        optional string extend_data = 9;
+
+        // The ultimate goal of ad page address jump
+        // Must http:// or https:// at the beginning.
+        repeated string destination_url = 10;
+
+        // Creative ID
+        // No longer than 64 bytes, and can not contain spaces / carriage return / line and other invisible characters
+        // For video patch, put creative id hosted here, can not be empty
+        optional string creative_id = 11;
+
+        // Material resources address
+        // This field applies only to bid on the mobile device native flow request
+        optional string resource_address = 12;
+
+        // Feedback Address ad time
+        // This field applies only to bid on a mobile device app requests traffic
+        optional string feedback_address = 13;
+        
+        // Video Creative snippets
+        // See the API documentation detailed usage
+        optional string video_snippet = 14;
+
+        // Material resources
+        // If you do not provide resource_address, can be used directly in this field returns material
+        // The interface is only available on the mobile device native traffic bid request
+        optional MobileCreative mobile_creative = 15;
+        
+        // Participate PMP auction id, and the request to Deal consistent definition dealid
+        // If you do not set the indicator to participate in public bidding
+        optional uint32 dealid = 16;
+
+        // The return of brand advertisers Primary ID, or
+        // Empty identity is no way to identify
+        repeated uint32 advertiser_ids = 17;
+
+        // Android platform app download is complete feedback address
+        optional string download_complete = 18;
+    }
+    repeated Ads ads = 3;
+
+    // Cookie under DSP memory mapping table, the required feedback is stored
+    //   in the corresponding BidRequest tid mapping,
+    //   mapping settings have been true, not false map settings
+    // Under Tanx managed storage cookie map case, DSP need to set this field
+    optional bool is_recognized_user = 4 [default = false];
+}
+
+// BidResult message has been discarded, please ignore
+message BidResult {
+
+    // Protocol ------------------------------------------- Basic Information
+
+    // The current protocol version number, currently 3
+    required int32 version = 1;
+
+    // Corresponds BidRequest.bid field
+    required string bid = 2;
+
+    // ------------------------------------------- Auction result information
+
+    message Res {
+        // Bid successful advertising digit number that corresponds to the promotion, currently 0
+        required uint32 adzinfo_id = 1;
+
+        // Bid successful ad index value at the corresponding position on the promotion of
+        optional uint32 ad_bid_count_idx = 2;
+
+        // This field is deprecated
+        optional int32 result_code = 3 [default = 0];
+
+        // Bid successful advertising settlement price
+        optional uint32 result_price = 4;
+
+        // DSP custom data
+        // The corresponding BidResponse message Ads.extend_data field values
+        optional string extend_data = 5;
+    }
+    repeated Res res = 3;
+}
+
+// The interface is only available on mobile devices is a wireless wall view_type bid request
+message MobileCreative {
+    // The current protocol version number, currently 3
+    required int32 version = 1;
+
+    // Bidding process generated unique auction ID
+    required string bid = 2;
+
+    // Reserved field, please ignore
+    optional uint32 view_type = 3;
+
+    message Creative {
+        // Image address, does not support gif
+        optional string img_url = 1;
+
+        // Image size, format: width x height
+        // For example: 320x50
+        optional string img_size = 2;
+
+        // Creative Specifications
+        // Utf-8 encoding, encoding no more than 50 characters in length
+        optional string title = 3;
+
+        // Click Address
+        optional string click_url = 4;
+
+        // Creative final destination
+        // Must http: // or https: // at the beginning
+        optional string destination_url = 5;
+
+        // Property (Description) Information
+        message Attr {
+            // Attribute name
+            // See the documentation native-template.pdf
+            required string name = 1;
+
+            // Property value
+            required string value = 2;
+        }
+        repeated Attr attr = 6;
+        
+        // Set by the DSP creative ID
+        // Length not more than 64
+        // And can not contain spaces / carriage return / line feed and other invisible characters
+        optional string creative_id = 7;
+
+        // Reserved field, please ignore
+        repeated int32 category = 8;
+
+        // In-app advertising Event Tracking
+        // Event information for feedback advertisement
+        message TrackingEvents {
+            // Show the feedback address
+            repeated string impression_event = 1;
+
+            // Click feedback address
+            repeated string click_event = 2;
+
+            // App download is complete feedback address
+            repeated string download_complete_event = 3;
+        }
+        optional TrackingEvents tracking_events = 9;
+    }
+    repeated Creative creatives = 4;
+
+    // Dsp return advertising template number, must be filled
+    // See the documentation native-template.pdf
+    optional string native_template_id = 5;
+}

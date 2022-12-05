@@ -1,0 +1,81 @@
+#ifndef _USER_INFO_SVCS_USER_INFO_EXCHANGER_IDL_
+#define _USER_INFO_SVCS_USER_INFO_EXCHANGER_IDL_
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module UserInfoSvcs
+  {
+    typedef sequence<string> UserIdSeq;
+    
+    struct ColoUsersRequest
+    {
+      unsigned long colo_id;
+      UserIdSeq users;
+    };
+    
+    typedef sequence<ColoUsersRequest> ColoUsersRequestSeq;
+     
+    struct UserProfile
+    {
+      string user_id;
+      unsigned long colo_id;
+      CORBACommons::OctSeq plain_profile;
+      CORBACommons::OctSeq plain_history_profile;
+    };
+    
+    typedef sequence<UserProfile> UserProfileSeq;
+
+    typedef sequence<unsigned long> ReceiveChunkIdSeq;
+
+    struct ReceiveCriteria
+    {
+      ReceiveChunkIdSeq chunk_ids;
+      unsigned long common_chunks_number;
+      unsigned long max_response_plain_size;
+    };
+    
+    /**
+     *  UserInfoExchanger
+     */
+    interface UserInfoExchanger
+    {
+      exception NotReady {};
+      
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      /* receive interface part */
+      void 
+      register_users_request(
+        in string customer_id, in ColoUsersRequestSeq users)
+        raises(NotReady, ImplementationException);
+      
+      void
+      receive_users(
+        in string customer_id, 
+	out UserProfileSeq user_profiles,
+        in ReceiveCriteria receive_criteria)
+	raises(NotReady, ImplementationException);  
+      
+      /* send interface part */
+      void 
+      get_users_requests(in string provider_id, out UserIdSeq users)
+        raises(NotReady, ImplementationException);
+	
+      void
+      send_users(
+        in string provider_id,
+	in UserProfileSeq user_profiles)
+	raises(NotReady, ImplementationException);        	
+      
+    };
+
+  }; // module UserInfoSvcs
+  
+}; // module AdServer
+
+#endif // _USER_INFO_SVCS_USER_INFO_EXCHANGER_IDL_

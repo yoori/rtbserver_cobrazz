@@ -1,0 +1,21 @@
+osbe_cxx_feature_dep CORBA
+
+osbe_cxx_dep CORBACommons
+osbe_cxx_dep LogCommons
+osbe_cxx_dep ProcessControlVars
+osbe_cxx_dep Commons
+osbe_cxx_dep AdServerCommons
+osbe_cxx_dep PlainStorage2
+osbe_cxx_dep PrivacyFilter
+osbe_cxx_dep ProfileMap
+
+osbe_cxx_dep UserInfoManagerConfig
+osbe_cxx_dep UserInfoExchangerStubs
+osbe_cxx_dep UserInfoManagerStubs
+osbe_cxx_dep UserInfoManagerControlStubs
+osbe_cxx_dep CampaignServerStubs
+osbe_cxx_dep ChannelCountStat
+
+osbe_cxx_dep UserInfoContainer
+osbe_cxx_dep StatsDumper
+osbe_cxx_dep UserOperationProfiles

@@ -1,0 +1,64 @@
+namespace AdServer
+{
+namespace UserInfoSvcs_v320
+{
+  /* match operation */
+
+  struct ChannelTriggerMatch
+  {
+    uint channel_id;
+    uint channel_trigger_id;
+  };
+
+  autoreader ChannelTriggerMatchReader<ChannelTriggerMatch>;
+
+  struct UserMatchOperationDescriptor
+  {
+    uint operation_type;
+    uint version;
+
+    string user_id;
+    uint temporary;
+    uint time;
+    int request_colo_id;
+    int last_colo_id;
+    int placement_colo_id;
+    array<ChannelTriggerMatch> page_channels;
+    array<ChannelTriggerMatch> search_channels;
+    array<ChannelTriggerMatch> url_channels;
+    array<ChannelTriggerMatch> url_keyword_channels;
+    list<uint> persistent_channels;
+    char change_last_request;
+    uint household;
+    string cohort;
+
+    uint repeat_trigger_timeout;
+    char filter_contextual_triggers;
+  };
+
+  reader UserMatchOperationReader<UserMatchOperationDescriptor>
+  {
+    operation_type;
+    version;
+
+    user_id;
+    temporary;
+    time;
+    request_colo_id;
+    last_colo_id;
+    placement_colo_id;
+    array<ChannelTriggerMatchReader> page_channels;
+    array<ChannelTriggerMatchReader> search_channels;
+    array<ChannelTriggerMatchReader> url_channels;
+    array<ChannelTriggerMatchReader> url_keyword_channels;
+    persistent_channels;
+    change_last_request;
+    household;
+    cohort;
+
+    repeat_trigger_timeout;
+    filter_contextual_triggers;
+  };
+  
+}
+}

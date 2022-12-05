@@ -1,0 +1,6 @@
+@kafkaproducertestexe_deps@
+
+sources := KafkaProducerTest.cpp
+target := KafkaProducerTest
+
+@kafkaproducertestexe_post@

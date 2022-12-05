@@ -1,0 +1,61 @@
+
+include Common.pre.rules
+
+target_makefile_list :=             \
+  LogCommons.mk                     \
+  Compatibility.mk                  \
+  Request.mk                        \
+  ActionRequest.mk                  \
+  ActionStat.mk                     \
+  AdRequestLogger.mk                \
+  CampaignUserStat.mk               \
+  CcUserStat.mk                     \
+  CcgKeywordStat.mk                 \
+  CcgSelectionFailureStat.mk        \
+  CcgStat.mk                        \
+  CcgUserStat.mk                    \
+  ChannelCountStat.mk               \
+  ChannelHitStat.mk                 \
+  ChannelImpInventory.mk            \
+  ChannelInventory.mk               \
+  ChannelInventoryEstimationStat.mk \
+  ChannelOverlapUserStat.mk         \
+  ChannelPerformance.mk             \
+  ChannelPriceRange.mk              \
+  ChannelTriggerImpStat.mk          \
+  ChannelTriggerStat.mk             \
+  CmpStat.mk                        \
+  ColoUpdateStat.mk                 \
+  ColoUserStat.mk                   \
+  ColoUsers.mk                      \
+  CreativeStat.mk                   \
+  DeviceChannelCountStat.mk         \
+  ExpressionPerformance.mk          \
+  FileReceiver.mk                   \
+  ImpNotify.mk                      \
+  PassbackStat.mk                   \
+  RequestBasicChannels.mk           \
+  SearchEngineStat.mk               \
+  SearchTermStat.mk                 \
+  SiteReferrerStat.mk               \
+  SiteStat.mk                       \
+  SiteUserStat.mk                   \
+  PageLoadsDailyStat.mk             \
+  TagAuctionStat.mk                 \
+  TagPositionStat.mk                \
+  TagRequest.mk                     \
+  UserProperties.mk                 \
+  UserAgentStat.mk                  \
+  ResearchWebStat.mk                \
+  ResearchProfStat.mk               \
+  WebStat.mk \
+  CampaignReferrerStat.mk \
+  KeywordHitStat.mk \
+  ResearchLogs.mk \
+  BidCostStat.mk
+
+Compatibility.mk : LogCommons.mk
+Request.mk : Compatibility.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules
+

@@ -1,0 +1,8 @@
+@fcgiserverconfig_deps@
+sources := 
+includes := .
+xsd_files := FCGIServerConfig.xsd
+
+xsd_includes := .
+
+@fcgiserverconfig_post@

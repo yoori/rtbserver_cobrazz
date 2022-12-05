@@ -1,0 +1,79 @@
+#!/usr/bin/perl -w
+
+use Data::Dumper;
+use Getopt::Long;
+use Time::HiRes qw( gettimeofday );
+use strict;
+
+sub usage()
+{
+  print "Usage:\nSubAgent-Shell-AdServer.functions.test --index <index> --host_name <host:port> ".
+    "--tag_id <tag_id> --country <country> --function <adServerMonitoringProfilingRequestMIB|adServerMonitoringAdRequestMIB> [--debug]\n";
+}
+
+do "$ENV{server_root}/CMS/Plugin/data/SubAgentShell/SignedUids.pm";
+do "$ENV{server_root}/CMS/Plugin/data/SubAgentShell/SubAgent-Shell-AdCluster.functions";
+
+our $config;
+$config = {
+  'cmd_timeout' => 10
+};
+
+my $index = 0;
+my $host_name;
+my $tag_id;
+my $country;
+my $function;
+my $debug = 0;
+
+my $result = GetOptions (
+  "index=i" => \$index,
+  "host_name=s" => \$host_name,
+  "tag_id=s" => \$tag_id,
+  "country=s" => \$country,
+  "function=s" => \$function,
+  "debug" => \$debug);
+
+if (!defined $host_name || !defined $tag_id || !defined $country || !defined $function)
+{
+  warn "required parameters aren't set";
+  usage();
+  exit 1;
+}
+
+my $mib = {};
+my $cfg =
+{
+  'args' =>
+  [
+    {
+      'index' => $index,
+      'host_name' => $host_name,
+      'tag_id' => $tag_id,
+      'country' => $country
+    }
+  ]
+};
+
+print Dumper $cfg if $debug;
+
+if ($function eq "adServerMonitoringProfilingRequestMIB")
+{
+  print "call adServerMonitoringProfilingRequestMIB\n";
+  my $rc = adServerMonitoringProfilingRequestMIB($mib, $cfg);
+  print Dumper $mib if $debug;
+  print "rc = $rc\n";
+  exit $rc;
+}
+elsif ($function eq "adServerMonitoringAdRequestMIB")
+{
+  print "call adServerMonitoringAdRequestMIB\n";
+  my $rc = adServerMonitoringAdRequestMIB($mib, $cfg);
+  print Dumper $mib if $debug;
+  print "rc = $rc\n";
+  exit $rc;
+}
+
+warn "invalid function name\n";
+usage();
+exit 1;

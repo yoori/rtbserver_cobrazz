@@ -1,0 +1,8 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([FeConfig], [FeConfig.mk])
+OSBE_CXX_DEF([ProfilingServerConfig], [ProfilingServerConfig.mk])
+OSBE_CXX_DEF([ConvServerConfig], [ConvServerConfig.mk])
+OSBE_CXX_DEF([FCGIServerConfig], [FCGIServerConfig.mk])
+OSBE_CXX_DEF([UIDGeneratorAdapterConfig], [UIDGeneratorAdapterConfig.mk])
+OSBE_CXX_DEF([ZmqBalancerConfig], [ZmqBalancerConfig.mk])

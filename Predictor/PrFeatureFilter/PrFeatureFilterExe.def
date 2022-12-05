@@ -1,0 +1,6 @@
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+
+osbe_cxx_dep Commons
+osbe_cxx_dep Vanga
+

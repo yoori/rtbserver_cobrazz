@@ -1,0 +1,42 @@
+namespace AdServer
+{
+  namespace UserInfoSvcs_v24
+  {
+    /* channel match operation */
+    struct UserMatchOperationDescriptor
+    {
+      uint operation_type;
+      uint version;
+      
+      string user_id;
+      uint temporary;
+      uint time;
+      int request_colo_id;
+      int last_colo_id;
+      int placement_colo_id;
+      list<uint> page_channels;
+      list<uint> search_channels;
+      list<uint> url_channels;
+      char ad_request;
+    };
+
+    autoreader UserMatchOperationReader<UserMatchOperationDescriptor>;
+
+    /* profiles merge operation */
+    struct UserMergeOperationDescriptor
+    {
+      uint operation_type;
+      uint version;
+      
+      string user_id;
+      uint time;
+      uint exchange_merge;
+      bytes merge_base_profile;
+      bytes merge_add_profile;
+      bytes merge_history_profile;
+    };
+    
+    autoreader UserMergeOperationReader<UserMergeOperationDescriptor>;
+
+  }
+}

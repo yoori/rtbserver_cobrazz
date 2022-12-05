@@ -1,0 +1,58 @@
+#ifndef _LOG_PROCESSING_EXPRESSION_MATCHER_IDL_
+#define _LOG_PROCESSING_EXPRESSION_MATCHER_IDL_
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module RequestInfoSvcs
+  {
+    typedef CORBACommons::OctSeq UserInventoryProfile;
+    typedef CORBACommons::OctSeq UserEstimationProfile;
+    typedef CORBACommons::OctSeq UserTriggerMatchProfile;
+    typedef CORBACommons::OctSeq RequestTriggerMatchProfile;
+    typedef CORBACommons::OctSeq HouseholdColoReachProfile;
+
+    /**
+     *  ExpressionMatcher
+     */
+    interface ExpressionMatcher
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      exception NotReady
+      {
+        string description;
+      };
+
+      boolean get_inventory_profile(
+        in string user_id,
+        out UserInventoryProfile request_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_user_trigger_match_profile(
+        in string user_id,
+        in boolean temporary_user,
+        out UserTriggerMatchProfile profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_request_trigger_match_profile(
+        in string request_id,
+        out RequestTriggerMatchProfile profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_household_colo_reach_profile(
+        in string user_id,
+        out HouseholdColoReachProfile profile)
+        raises(NotReady, ImplementationException);
+
+      void run_daily_processing(in boolean sync)
+        raises(NotReady, ImplementationException);
+    };
+  }; // module LogProcessing
+}; // module AdServer
+
+#endif // _LOG_PROCESSING_EXPRESSION_MATCHER_IDL_

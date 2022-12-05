@@ -1,0 +1,6 @@
+@channelinventoryestimationstat_deps@
+sources := ChannelInventoryEstimationStat.cpp
+
+includes := .
+@channelinventoryestimationstat_post@
+

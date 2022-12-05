@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GeneralParams xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/jurij_kuznecov/projects/foros/server/trunk/xsd/tests/AutoTests/AutoTests.xsd" discover_body_xsd="/home/jurij_kuznecov/projects/oix/server/trunk/xsd/DiscoverSvcs/DiscoverBody.xsd" userpref_body_xsd="/home/jurij_kuznecov/projects/oix/server/trunk/xsd/Frontends/UserPrefBody.xsd">
+  <TimeOuts frontend_timeout="15" logging_timeout="300" conf_update_timeout="300"/>
+  <Cluster name="central">
+    <Service name="AdFrontend" address="http://xen.ocslab.com:12080"/>
+    <Service name="NewsGate" address="http://:"/>
+    <Service name="ChannelServer" address="xen.ocslab.com:12103"/>
+    <Service name="ChannelController" address="xen.ocslab.com:12104"/>
+    <Service name="ChannelSearchServer" address="xen.ocslab.com:12115"/>
+    <Service name="CampaignManager" address="xen.ocslab.com:12107"/>
+    <Service name="CampaignServer" address="xen.ocslab.com:12106"/>
+    <Service name="ExpressionMatcher" address="xen.ocslab.com:12113"/>
+    <Service name="RequestInfoManager" address="xen.ocslab.com:12116"/>
+    <Service name="NewsItemServer" address="xen.ocslab.com:"/>
+    <Service name="NewsCacheController" address="xen.ocslab.com:"/>
+    <Service name="UserInfoManager" address="xen.ocslab.com:12101"/>
+    <Service name="UserInfoManagerController" address="xen.ocslab.com:12102"/>
+  </Cluster>
+  <LoggerGroup path="/home/jurij_kuznecov/projects/foros/run/trunk/var/log/Tests/AutoTests">
+    <LogFile level_to="4" extension="err"/>
+    <LogFile level_to="17" extension="out"/>
+  </LoggerGroup>
+  <ThreadsNum value="10"/>
+  <DBConnection db="//oracle/addbpt.ocslab.com" user="BS_ADS_DEV" password="adserver"/>
+</GeneralParams>

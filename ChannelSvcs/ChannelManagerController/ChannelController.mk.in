@@ -1,0 +1,10 @@
+@channelcontrollerexe_deps@
+sources := ChannelControllerMain.cpp ChannelControllerImpl.cpp
+
+corba_skeleton_idls := ChannelManagerController.idl ChannelClusterControl.idl
+corba_idl_includes := .
+
+target := ChannelController
+
+@channelcontrollerexe_post@
+

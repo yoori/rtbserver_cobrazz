@@ -1,0 +1,6 @@
+@texttemplatecachetestexe_deps@
+
+sources := TextTemplateCacheTest.cpp
+target := TextTemplateCacheTest
+
+include $(top_srcdir)/tests/Test.post.rules

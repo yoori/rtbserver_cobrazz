@@ -1,0 +1,48 @@
+<TestConfiguration
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /home/alexey_tsurikov/projects/Ad/Server3/tests/UserInfoContainerTest/UserInfoContainerTest.xsd">
+  
+  <UserInfoContainerTestConfig>
+  
+    <ChunksConfig
+      chunks_path="/home/alexey_tsurikov/tests/UserInfoContainerTest/"
+      base_chunk_file="base_chunk"
+      additional_chunk_file="add_chunk"
+      history_chunk_file="history_chunk"
+      inventory_chunk_file="inventory_chunk"
+      stats_chunk_file="stats_chunk"/>      
+    
+    <Logger 
+      filename="UserInfoContainerTest_.log"
+      log_level="15"/>
+
+    <ChannelRules
+      channel_id="10"
+      time_from="0"
+      time_to="86400"
+      minimum_visits="3"/>
+    <ChannelRules
+      channel_id="12"
+      time_from="0"
+      time_to="400"
+      minimum_visits="5"/>
+    <ChannelRules
+      channel_id="6"
+      time_from="86400"
+      time_to="286400"
+      minimum_visits="4"/>
+
+    <MatchConfig
+      user_id="1234567890123456789010||"
+      matches_number="300"
+      channels="15, 10, 12"/>
+    <MatchConfig
+      user_id="1234567890123456789011||"
+      matches_number="300"
+      channels="6, 10"/>
+      
+    
+  </UserInfoContainerTestConfig>
+
+</TestConfiguration>

@@ -1,0 +1,207 @@
+#!/usr/bin/perl
+# AutoTests report
+
+# -*- cperl -*-
+use warnings;
+use strict;
+
+use File::Spec;
+
+my $MAX_SIZE = 3000000; # 3M
+
+
+sub get_last_commit {
+  my ($report, $repo) = @_;
+  my @tasks = ($report->last_task_id_by_dsc("Fast run (AdServer)"));
+  my ($commit_task) = $report->find_task("Update repos > % > Remember revisions > $repo > %", @tasks);
+  my $revision = $report->get_stdout($commit_task);
+  chomp $revision;
+  return $revision;
+}
+
+sub report {
+
+  my ($report) = @_;
+
+  my $tests_path = File::Spec->join($ENV{test_log_path}, "AutoTests");
+  
+  opendir(DIR, $tests_path);
+  my @all = grep(/\.out$/,readdir(DIR));
+  closedir(DIR);
+
+  opendir(DIR, $tests_path);
+  my @err = grep(/\.err$/,readdir(DIR));
+  closedir(DIR);
+
+  my %tests;
+  my %failed;
+  
+  my $pass_count = 0;
+  my $fail_count = 0;
+
+  foreach my $fname (@err)
+  {
+    my ($name) = $fname =~ /^(.+)\.[^.]+$/;
+    my $error    = File::Spec->join($tests_path, $fname);
+    if ( -e $error && (-s $error ne 0)) 
+    {
+      my $report_id = $report->add_report(cmd_stdout($name, $error, 1));
+      $failed{$name} = $report_id;
+      $fail_count++;
+    }
+  }
+
+  
+  foreach my $fname (@all)
+  {
+    my ($name) = $fname =~ /^(.+)\.[^.]+$/;
+    my $err = exists $failed{$name};
+    my $out = File::Spec->join($tests_path, $fname);
+    my $report_id = $report->add_report(cmd_stdout($name, $out, $err));
+    $tests{$name} = $report_id;
+    $pass_count++;
+  }
+  
+  
+
+  my $details = "<h1>auto tests (PASS/FAIL: $pass_count/$fail_count)</h1>";
+  $details .= "<br><table>";
+  
+  my @background = ("#f0f0f0", "#ffffff");
+  my $i = 0;
+  
+  foreach my $name (sort keys (%tests))
+  {
+    my $test = $tests{$name};
+    my $err = $failed{$name} if exists $failed{$name};
+    my ($color, $status);
+    my $pass_state = (((defined $err) << 1));
+    if ($pass_state == 0x0) {
+      $color = "GREEN";
+      $status = "PASSED";
+    } 
+    else {
+      $color = "ORANGE";
+      $status = "FAILED";
+    }
+    
+    my $debug = $report->report_href($test);
+    my $error = $report->report_href($err) if defined $err;
+    my $bg = $background[$i++ % @background];
+    my $data = '';
+    my ($category, $test_name) = split '\.', $name;
+    if ($test_name) {  
+      $name = "$category.<a href=\""
+          . $report->test_doc_href($test_name, get_last_commit($report, "foros/server"))
+          . "\">$test_name</a>";
+      $data = <<"EOF;";
+<a href="@{[ $report->db_dump_href($test_name) ]}">data</a>
+EOF;
+    }
+    $details .= <<"EOF;";
+<tr><td bgcolor=$bg>$name</td><td bgcolor="$color">$status</td>
+<td bgcolor=$bg>$data</td>
+<td bgcolor=$bg><a href="$debug">debug</a></td>
+@{[ $error
+? "<td bgcolor=$bg><a href=\"$error\">error</a></td>"
+: "<td bgcolor=$bg />" ]}</tr>
+EOF;
+  }
+    
+  $details .= <<"EOF;";
+</table>
+<hr size="1">
+<nobr>
+<a href="/docs/AutoTest/Commons/docs.cgi">AdServer AutoTest Commons documentation.</a>
+<font size="2" face="cursive">Send your questions and suggestions to 
+<a href="mailto:artem_nikitin\@ocslab.com">Artem Nikitin</a> or
+<a href="mailto:denis_verevkin\@ocslab.com">Denis Verevkin</a>
+</font><img hspace=10 src="/docs/AutoTest/Commons/foros-logo.png"></nobr>
+EOF;
+
+    
+  my $report_id = $report->add_report($details);
+
+
+  if ( defined $ENV{TASKBOT_USER} && length($ENV{TASKBOT_USER}) != 0)
+  {
+    my $user_email = "$ENV{TASKBOT_USER}\@ocslab.com";
+    send_email($report_id, $user_email, "Test result");
+  }
+  
+  print "Test report: http://$ENV{TASKBOT_HOST}/taskbot/browse.cgi?report=$report_id\n";
+   
+}
+
+sub send_email {
+    my ($report, $to, $subject) = @_;
+
+    my $message = <<"EOF;";
+From: taskbot <artem_nikitin\@ocslab.com>
+To: $to
+CC: $to
+Subject: [taskbot] $subject
+Reply-To: $to
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+
+
+Your test result:
+
+  http://$ENV{TASKBOT_HOST}/taskbot/browse.cgi?report=$report
+
+--
+  taskbot
+EOF;
+
+
+    my @cmd = ('/usr/sbin/sendmail', '-t');
+    open(my $fh, '|-', @cmd)
+      or warn "open(|- @cmd): $!";
+    if ($fh) {
+        print $fh $message;
+        close($fh)
+            or warn "close(@cmd): $!";
+    }
+}
+
+sub cmd_stdout {
+  my ($test, $filename, $is_error) = @_;
+  my $cmd = "tail -c$MAX_SIZE \"$filename\"";
+  my @lines = `$cmd`;
+  my $buf = "<h1>$test</h1><br><br>";
+  my $rowsize = @lines;
+  if ($rowsize > 20)
+  {
+    $rowsize = 20;
+  }
+  my $color = "GREEN";
+  my $status = "PASSED";
+  if ( $is_error )
+  {
+    $color = "ORANGE";
+    $status = "FAILED";
+  }
+  $buf .= "<table border=\"0\">".
+      "<tr valign=\"top\"><td>Command: </pre></td>".
+      "<td bgcolor=\"LIGHTGREY\"><pre>$cmd</pre></td></tr>" .
+      "<tr valign=\"top\"><td><NOBR>Source file: </NOBR></td>".
+      "<td><pre>$filename</pre></td></tr>" . 
+      "<tr valign=\"top\"><td><NOBR>Test status: </NOBR></td>".
+      "<td bgcolor=\"$color\">$status</td></tr>" . 
+      "<tr valign=\"top\"><td valign=\"top\" align=\"right\"><i>stdout:</i></td>" .
+      "<td><textarea name=\"\"  rows=\"$rowsize\" cols=\"160\" readonly=\"1\">";
+
+  foreach my $line (@lines)
+  {
+      $buf .= "$line";
+  }
+
+  $buf .= "</textarea></td></tr></table>";
+  return $buf;
+}
+
+
+
+1;

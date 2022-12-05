@@ -1,0 +1,8 @@
+@feconfig_deps@
+sources := 
+includes := .
+xsd_files := FeConfig.xsd
+
+xsd_includes := .
+
+@feconfig_post@

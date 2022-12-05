@@ -1,0 +1,7 @@
+@usertriggermatchcontainertestexe_deps@
+
+sources := UserTriggerMatchContainerTest.cpp
+target := UserTriggerMatchContainerTest
+test_arguments := -p $$TEST_TMP_DIR
+
+include $(top_srcdir)/tests/Test.post.rules

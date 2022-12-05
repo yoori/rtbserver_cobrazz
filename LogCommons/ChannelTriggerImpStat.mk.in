@@ -1,0 +1,6 @@
+@channeltriggerimpstat_deps@
+sources := ChannelTriggerImpStat.cpp
+
+includes := .
+@channeltriggerimpstat_post@
+

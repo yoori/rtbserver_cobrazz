@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([LocalParamsConfig], [LocalParamsConfig.mk])
+OSBE_CXX_DEF([AutoTestsConfig], [AutoTestsConfig.mk])
+

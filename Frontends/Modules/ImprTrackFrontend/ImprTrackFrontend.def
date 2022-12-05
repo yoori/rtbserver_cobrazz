@@ -1,0 +1,14 @@
+name="ImprTrackFrontend"
+so_files=ImprTrackFrontend
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep Generics
+
+osbe_cxx_dep Commons
+osbe_cxx_dep FeConfig
+osbe_cxx_dep CookieManager
+osbe_cxx_dep RequestMatchers
+
+osbe_cxx_dep CampaignManagerStubs
+osbe_cxx_dep UserInfoManagerControllerStubs
+osbe_cxx_dep UserBindServerStubs
+osbe_cxx_dep CommonModule

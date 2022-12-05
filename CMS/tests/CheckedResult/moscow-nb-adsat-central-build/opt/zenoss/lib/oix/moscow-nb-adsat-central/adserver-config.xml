@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zendmd>
+  <config mibpath="/opt/zenoss/lib/foros/moscow-nb-adsat-central/mibs:/opt/zenoss/lib/oix/moscow-nb-adsat-central/mibs/LogProcessing/LogGeneralizer:/opt/zenoss/lib/oix/moscow-nb-adsat-central/mibs/Controlling"/>
+  <hosts>
+    <host name="adsc-nbadsat1" monitor="localhost" group="OIX/Server" location="" system="moscow_nb_adsat_central/AdServer" community="public">
+      <service name="OixServerLogGeneralizer" suffix="0" comment=""/>
+    </host>
+  </hosts>
+</zendmd>

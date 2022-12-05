@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([ExpressionMatcherConfig], [ExpressionMatcherConfig.mk])
+OSBE_CXX_DEF([SyncLogsConfig], [SyncLogs.mk])
+OSBE_CXX_DEF([LogGeneralizerConfig], [LogGeneralizerConfig.mk])

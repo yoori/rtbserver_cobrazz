@@ -1,0 +1,4 @@
+name="ProfilingServerConfig"
+so_files=ProfilingServerConfig
+osbe_cxx_feature_dep XSDTree
+osbe_cxx_dep AdServerCommons

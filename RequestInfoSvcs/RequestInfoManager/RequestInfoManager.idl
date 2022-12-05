@@ -1,0 +1,69 @@
+#ifndef REQUESTINFOSVCS_REQUESTINFOMANAGER_REQUESTINFOMANAGER_IDL
+#define REQUESTINFOSVCS_REQUESTINFOMANAGER_REQUESTINFOMANAGER_IDL
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module RequestInfoSvcs
+  {
+    typedef CORBACommons::OctSeq RequestProfile;
+    typedef CORBACommons::OctSeq UserProfile;
+    typedef CORBACommons::OctSeq PassbackProfile;
+
+    /**
+     *  RequestInfoManager
+     */
+    interface RequestInfoManager
+    {
+      exception ImplementationException
+      {
+        string description;
+      };
+
+      exception NotReady
+      {
+        string description;
+      };
+
+      boolean get_profile(
+        in string request_id,
+        out RequestProfile request_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_passback_profile(
+        in string request_id,
+        out PassbackProfile passback_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_user_campaign_reach_profile(
+        in string user_id,
+        out UserProfile user_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_user_action_profile(
+        in string user_id,
+        out UserProfile user_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_user_fraud_protection_profile(
+        in string user_id,
+        out UserProfile user_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_user_site_reach_profile(
+        in string user_id,
+        out UserProfile user_profile)
+        raises(NotReady, ImplementationException);
+
+      boolean get_user_tag_request_group_profile(
+        in string user_id,
+        out UserProfile user_profile)
+        raises(NotReady, ImplementationException);
+
+      void clear_expired(in boolean synch);
+    };
+  }; // module RequestInfoSvcs
+}; // module AdServer
+
+#endif // REQUESTINFOSVCS_REQUESTINFOMANAGER_REQUESTINFOMANAGER_IDL

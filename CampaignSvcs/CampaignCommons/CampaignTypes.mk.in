@@ -1,0 +1,6 @@
+@campaigntypes_deps@
+
+sources := CampaignTypes.cpp
+includes := .
+
+@campaigntypes_post@

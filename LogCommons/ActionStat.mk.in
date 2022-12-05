@@ -1,0 +1,6 @@
+@actionstat_deps@
+sources := ActionStat.cpp
+
+includes := .
+@actionstat_post@
+

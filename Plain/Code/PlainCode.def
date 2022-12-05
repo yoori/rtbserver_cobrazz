@@ -1,0 +1,5 @@
+name="Plain Code"
+so_files=PlainCode
+
+osbe_cxx_dep ReferenceCounting
+osbe_cxx_dep PlainDeclaration

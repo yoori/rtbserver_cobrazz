@@ -1,0 +1,5 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([AdServerTestCommonLib], [AdServerTestCommonLib.mk])
+OSBE_CXX_DEF([AdServerTestConstraintTestExe], [ConstraintTest.mk])

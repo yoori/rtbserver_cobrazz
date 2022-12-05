@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GeneralParams xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xsi:schemaLocation="http://www.adintelligence.net/xsd/AdServer/Configuration /opt/foros/server/xsd/tests/AutoTests/AutoTests.xsd" discover_body_xsd="/opt/oix/server/xsd/DiscoverSvcs/DiscoverBody.xsd" userpref_body_xsd="/opt/oix/server/xsd/Frontends/UserPrefBody.xsd">
+  <TimeOuts frontend_timeout="15" logging_timeout="300" conf_update_timeout="300"/>
+  <Cluster name="central">
+    <Service name="AdFrontend" address="http://adsr-nbadsat0.ocslab.com:10180"/>
+    <Service name="NewsGate" address="http://xnb.ocslab.com:10080"/>
+    <Service name="ChannelServer" address="adsr-nbadsat0:10103"/>
+    <Service name="ChannelController" address="adsr-nbadsat0:10104"/>
+    <Service name="ChannelSearchServer" address="adsr-nbadsat0:10115"/>
+    <Service name="CampaignManager" address="adsr-nbadsat0:10107"/>
+    <Service name="CampaignServer" address="adsr-nbadsat0:10106"/>
+    <Service name="ExpressionMatcher" address="adsr-nbadsat0:10113"/>
+    <Service name="RequestInfoManager" address="adsr-nbadsat0:10116"/>
+    <Service name="NewsItemServer" address="adsr-nbadsat0:"/>
+    <Service name="NewsCacheController" address="adsr-nbadsat0:"/>
+    <Service name="UserInfoManager" address="adsr-nbadsat0:10101"/>
+    <Service name="UserInfoManagerController" address="adsr-nbadsat0:10102"/>
+  </Cluster>
+  <LoggerGroup path="/opt/foros/server/var/log/Tests/AutoTests">
+    <LogFile level_to="4" extension="err"/>
+    <LogFile level_to="17" extension="out"/>
+  </LoggerGroup>
+  <ThreadsNum value="10"/>
+  <DBConnection db="//ora-nb/addbnb.ocslab.com" user="BS_NIGHTLY_BUILDS_ADS_AUTO" password="adserver"/>
+</GeneralParams>

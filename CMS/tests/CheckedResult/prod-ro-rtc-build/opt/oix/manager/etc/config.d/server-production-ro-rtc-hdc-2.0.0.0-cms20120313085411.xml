@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AdServer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:str="http://exslt.org/strings" sms-version="3" init="%%SUDO%%" transport="ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot;. /opt/foros/server/etc/production-ro-rtc-hdc/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;" env="" brief="version 2.0.0.0 configuration for production-ro-rtc-hdc colocation released at 2012-07-02 17:46:51" user="aduser" state_dir="/opt/oix/manager/var/state/server-production-ro-rtc-hdc" transport_local="/bin/sh -c &quot;. /opt/oix/server/etc/production-ro-rtc-hdc/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;">
+  <BatchCommands>
+    <BatchCommand name="keyscan">
+      <Command command="start">
+        <Group>keyscan</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="redistribute-fe1">
+      <Command command="stop">
+        <Group>ui1</Group>
+      </Command>
+      <Command command="start">
+        <Group>ui1-distribution</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="redistribute-fe2">
+      <Command command="stop">
+        <Group>ui2</Group>
+      </Command>
+      <Command command="start">
+        <Group>ui2-distribution</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="troubleshoot">
+      <Command command="start">
+        <Group>troubleshoot</Group>
+      </Command>
+    </BatchCommand>
+    <BatchCommand name="clear-stat-backup">
+      <Command command="start">
+        <Group>clear-stat-backup</Group>
+      </Command>
+    </BatchCommand>
+  </BatchCommands>
+  <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adcluster">
+    <Service name="lp-LogGeneralizer" type="AdServer::LogProcessing::LogGeneralizer" host="rtc00proadbe00"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadbe04"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe04"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe02"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe08"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe03"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadbe00"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe01"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe06"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe07"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadbe02"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe00"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadbe03"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadbe01"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe09"/>
+    <Service name="lp-SyncLogsServer" type="AdServer::LogProcessing::SyncLogsServer" host="rtc00proadfe05"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadbe04"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe04"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe02"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe08"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe03"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadbe00"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe01"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe06"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe07"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadbe02"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe00"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadbe03"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadbe01"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe09"/>
+    <Service name="lp-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="rtc00proadfe05"/>
+    <Service name="lp-ExpressionMatcher" type="AdServer::LogProcessing::ExpressionMatcher" host="rtc00proadbe01"/>
+    <Service name="lp-KeywordMatcher" type="AdServer::RequestInfoSvcs::KeywordMatcher" host="rtc00proadbe03"/>
+    <Service name="lp-RequestInfoManager" type="AdServer::RequestInfoSvcs::RequestInfoManager" host="rtc00proadbe02"/>
+    <Service name="lp-RequestInfoManager" type="AdServer::RequestInfoSvcs::RequestInfoManager" host="rtc00proadbe03"/>
+    <Service name="lp-RequestInfoManager" type="AdServer::RequestInfoSvcs::RequestInfoManager" host="rtc00proadbe04"/>
+    <Service name="be-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="rtc00proadbe00"/>
+    <Service name="be-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="rtc00proadbe01"/>
+    <Service name="be-NewsItemServer" type="AdServer::DiscoverSvcs::NewsItemServer" host="rtc00proadbe02"/>
+    <Service name="be-NewsQueryServer" type="AdServer::DiscoverSvcs::NewsQueryServer" host="rtc00proadbe02"/>
+    <Service name="be-NewsQueryServer" type="AdServer::DiscoverSvcs::NewsQueryServer" host="rtc00proadbe03"/>
+    <Service name="be-NewsQueryServer" type="AdServer::DiscoverSvcs::NewsQueryServer" host="rtc00proadbe04"/>
+    <Service name="be-NewsCacheController" type="AdServer::DiscoverSvcs::NewsCacheController" host="rtc00proadbe04"/>
+    <Service name="be-StatsCollector" type="AdServer::Controlling::StatsCollector" host="rtc00proadbe00"/>
+    <Service name="localproxy-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="rtc00proadbe00"/>
+    <Service name="localproxy-NewsQueryProxy" type="AdServer::DiscoverSvcs::NewsQueryProxy" host="rtc00proadbe00"/>
+    <Service name="localproxy-STunnel" type="AdServer::LogProcessing::STunnel" host="rtc00proadbe00"/>
+    <Service name="fe1-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe00"/>
+    <Service name="fe1-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe01"/>
+    <Service name="fe1-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe02"/>
+    <Service name="fe1-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe03"/>
+    <Service name="fe1-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe04"/>
+    <Service name="fe1-UserInfoManagerController" type="AdServer::UserInfoSvcs::UserInfoManagerController" host="rtc00proadfe00"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe00"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe01"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe02"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe03"/>
+    <Service name="fe1-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe04"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe00"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe01"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe02"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe03"/>
+    <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe04"/>
+    <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="rtc00proadfe00"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe00"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe01"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe02"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe03"/>
+    <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe04"/>
+    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe00"/>
+    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe01"/>
+    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe02"/>
+    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe03"/>
+    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe04"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe00"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe01"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe02"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe03"/>
+    <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe04"/>
+    <Service name="fe2-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe05"/>
+    <Service name="fe2-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe06"/>
+    <Service name="fe2-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe07"/>
+    <Service name="fe2-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe08"/>
+    <Service name="fe2-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="rtc00proadfe09"/>
+    <Service name="fe2-UserInfoManagerController" type="AdServer::UserInfoSvcs::UserInfoManagerController" host="rtc00proadfe05"/>
+    <Service name="fe2-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe05"/>
+    <Service name="fe2-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe09"/>
+    <Service name="fe2-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe08"/>
+    <Service name="fe2-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe07"/>
+    <Service name="fe2-ChannelServer" type="AdServer::ChannelSvcs::ChannelServer" host="rtc00proadfe06"/>
+    <Service name="fe2-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe05"/>
+    <Service name="fe2-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe06"/>
+    <Service name="fe2-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe07"/>
+    <Service name="fe2-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe08"/>
+    <Service name="fe2-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="rtc00proadfe09"/>
+    <Service name="fe2-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="rtc00proadfe05"/>
+    <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe06"/>
+    <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe07"/>
+    <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe08"/>
+    <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe09"/>
+    <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe05"/>
+    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe05"/>
+    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe09"/>
+    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe08"/>
+    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe07"/>
+    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe06"/>
+    <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe05"/>
+    <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe09"/>
+    <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe08"/>
+    <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe07"/>
+    <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe06"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadbe00"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadbe04"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe04"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe02"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe08"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe03"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe01"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe06"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe07"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadbe02"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe00"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadbe03"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadbe01"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe09"/>
+    <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="rtc00proadfe05"/>
+  </Services>
+  <Services start="%%START_LOOP_PRINT%%" status="%%STATUS_PRINT%%" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" status_cmd="%%cmd%% is_alive" env="adcluster" timeout="600">
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="rtc00proadfe00"/>
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="rtc00proadfe01"/>
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="rtc00proadfe02"/>
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="rtc00proadfe03"/>
+    <Service name="fe1-PreStart" type="AdServer::PreStart" host="rtc00proadfe04"/>
+    <Service name="fe2-PreStart" type="AdServer::PreStart" host="rtc00proadfe05"/>
+    <Service name="fe2-PreStart" type="AdServer::PreStart" host="rtc00proadfe09"/>
+    <Service name="fe2-PreStart" type="AdServer::PreStart" host="rtc00proadfe08"/>
+    <Service name="fe2-PreStart" type="AdServer::PreStart" host="rtc00proadfe07"/>
+    <Service name="fe2-PreStart" type="AdServer::PreStart" host="rtc00proadfe06"/></Services>
+  <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" env="adcluster"><Service name="keyscan-Scanner" host="localhost" start="%%START_NOLOOP_DONE%%" start_cmd="%%SMS_KEYSCAN%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" keyscan_hosts=" rtc00proadfe00 rtc00proadfe01 rtc00proadfe02 rtc00proadfe03 rtc00proadfe04 rtc00proadfe05 rtc00proadfe06 rtc00proadfe07 rtc00proadfe08 rtc00proadfe09 rtc00proadbe00 rtc00proadbe01 rtc00proadbe02 rtc00proadbe03 rtc00proadbe04"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe04"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe02"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe08"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe03"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadbe00"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe01"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe06"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe07"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadbe02"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe00"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadbe01"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe09"/><Service name="dbaccess-DBAccess" type="AdServer::DBAccess" stop_cmd="%%cmd%% stop" stop="%%STOP_NOLOOP_PRINT%%" host="rtc00proadfe05"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe00"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe01"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe02"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe03"/>
+    <Service name="fe1-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe04"/>
+    <Service name="fe2-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe05"/>
+    <Service name="fe2-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe09"/>
+    <Service name="fe2-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe08"/>
+    <Service name="fe2-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe07"/>
+    <Service name="fe2-PSConfigurator" type="AdServer::PSConfigurator" host="rtc00proadfe06"/></Services>
+  <Services transport="/bin/sh -c &quot;$SMS_TEXT&quot;" start="%%START_NOLOOP_DONE%%" force="0" check-hosts="">
+    <Service type="AdServer::UserInfoSvcs::UserInfoChecker" host="localhost" name="fe1-UserInfoChecker" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/lib ; /opt/oix/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/bin/ConfigureUserChunks.pl check --chunks-count=10 --target-hosts='rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,' --chunks-root='/opt/oix/server/var/cache/Users1/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,' --xml-out=/tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%%  &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe00:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe01:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe02:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe03:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe04:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe05:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe06:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe07:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe08:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadfe09:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadbe00:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadbe01:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadbe02:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadbe03:/opt/oix/server/var/run/UserInfoDistribution.1.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.1.xml.%%SMS_UNIQUE%% rtc00proadbe04:/opt/oix/server/var/run/UserInfoDistribution.1.xml || ( EX=$? ; if [ $EX -eq 1 ] ; then eval 'echo -e %%SMS_COLOR_ERROR%%redistribution required%%SMS_COLOR_PLAIN%%' &amp;&amp; exit 1 ; else exit -1 ; fi ; )"/>
+    <Service type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" name="fe1-UserInfoDistributor" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/lib ; /opt/oix/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,' --chunks-root='/opt/oix/server/var/cache/Users1/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,' --force=%%force%% --check-hosts=%%check-hosts%%"/>
+  </Services>
+  <Services transport="/bin/sh -c &quot;$SMS_TEXT&quot;" start="%%START_NOLOOP_DONE%%" force="0" check-hosts="">
+    <Service type="AdServer::UserInfoSvcs::UserInfoChecker" host="localhost" name="fe2-UserInfoChecker" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/lib ; /opt/oix/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/bin/ConfigureUserChunks.pl check --chunks-count=10 --target-hosts='rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,' --chunks-root='/opt/oix/server/var/cache/Users2/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,' --xml-out=/tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%%  &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe00:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe01:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe02:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe03:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe04:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe05:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe06:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe07:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe08:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadfe09:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadbe00:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadbe01:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadbe02:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadbe03:/opt/oix/server/var/run/UserInfoDistribution.2.xml &amp;&amp; rsync -e 'ssh -i /home/aduser/.ssh/adkey' /tmp/UserInfoDistribution.2.xml.%%SMS_UNIQUE%% rtc00proadbe04:/opt/oix/server/var/run/UserInfoDistribution.2.xml || ( EX=$? ; if [ $EX -eq 1 ] ; then eval 'echo -e %%SMS_COLOR_ERROR%%redistribution required%%SMS_COLOR_PLAIN%%' &amp;&amp; exit 1 ; else exit -1 ; fi ; )"/>
+    <Service type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" name="fe2-UserInfoDistributor" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/lib ; /opt/oix/server/manager/production-ro-rtc-hdc-2.0.0.0-cms20120702134627/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,' --chunks-root='/opt/oix/server/var/cache/Users2/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='rtc00proadfe00,rtc00proadfe01,rtc00proadfe02,rtc00proadfe03,rtc00proadfe04,rtc00proadfe05,rtc00proadfe06,rtc00proadfe07,rtc00proadfe08,rtc00proadfe09,' --force=%%force%% --check-hosts=%%check-hosts%%"/>
+  </Services>
+  <Services start="%%START_NOLOOP_DONE%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" report_dir="/opt/foros/manager/var/server-production-ro-rtc-hdc" cmd="REPORTFILE=%%report%%; treport_dir=`dirname $REPORTFILE`; ERROR_LOG=$treport_dir/error_description_%%SMS_UNIQUE%%; ">
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadbe04" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadbe04_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadbe04. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadbe04" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadbe04_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadbe04. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadbe04" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadbe04" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe04" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe04_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe04. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe04" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe04_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe04. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe04" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe04" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe02" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe02_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe02. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe02" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe02_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe02. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe02" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe02" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe08" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe08_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe08. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe08" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe08_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe08. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe08" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe08" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe03" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe03_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe03. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe03" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe03_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe03. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe03" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe03" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadbe00" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadbe00_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadbe00. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadbe00" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadbe00_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadbe00. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadbe00" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadbe00" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe01" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe01_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe01. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe01" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe01_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe01. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe01" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe01" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe06" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe06_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe06. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe06" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe06_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe06. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe06" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe06" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe07" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe07_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe07. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe07" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe07_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe07. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe07" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe07" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadbe02" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadbe02_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadbe02. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadbe02" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadbe02_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadbe02. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadbe02" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadbe02" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe00" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe00_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe00. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe00" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe00_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe00. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe00" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe00" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadbe03" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadbe03_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadbe03. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadbe03" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadbe03_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadbe03. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadbe03" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadbe03" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadbe01" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadbe01_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadbe01. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadbe01" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadbe01_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadbe01. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadbe01" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadbe01" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe09" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe09_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe09. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe09" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe09_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe09. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe09" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe09" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-TReport" type="AdServer::TReport" host="rtc00proadfe05" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% &quot; PATH=$PATH:/opt/foros/server/bin; ERROR_LOG=$ERROR_LOG; /opt/oix/server/bin/TReport.pl -w /opt/oix/server/var -c /opt/oix/server/etc -b /opt/oix/server -m production-ro-rtc-hdc -o /opt/oix/server/var/tr_report_rtc00proadfe05_%%SMS_UNIQUE%%.tar.gz&quot; 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on generating report for host rtc00proadfe05. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Fetcher" type="AdServer::TReportFetcher" host="rtc00proadfe05" start_cmd="%%cmd%% scp -q -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%%:/opt/foros/server/var/tr_report_rtc00proadfe05_%%SMS_UNIQUE%%.tar.gz $treport_dir 2&gt;&gt;$ERROR_LOG || echo &quot;Error occured on getting report from rtc00proadfe05. Exit status = $?.&quot; &gt;&gt;$ERROR_LOG"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="rtc00proadfe05" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% rm -f /opt/foros/server/var/tr_report_%%SMS_UNIQUE%%.tar.gz 2&gt;/dev/null;  return 0"/>
+    <Service name="clear-stat-backup-ClearLogBackup" type="AdServer::ClearLogBackup" host="rtc00proadfe05" start_cmd="%%cmd%% ssh -o &quot;BatchMode yes&quot; -i /home/aduser/.ssh/adkey %%HOST%% find /opt/foros/server/var/log -wholename &quot;*/*/Out/*_/*.*&quot; -exec &quot;rm '{}' \;&quot;"/>
+    <Service name="troubleshoot-Cleaner" type="AdServer::TReportCleaner" host="localhost" start_cmd="%%cmd%% rm -f $ERROR_LOG"/>
+    <Service name="troubleshoot-Printer" type="AdServer::TReportPrinter" host="localhost" start_cmd="%%SMS_TR_PRINT%%"/>
+    <Service name="troubleshoot-Checker" type="AdServer::TReportChecker" host="localhost" start_cmd="%%SMS_TR_CHECK%%"/>
+    <Service name="troubleshoot-Collector" type="AdServer::TReportCollector" host="localhost" start_cmd="%%cmd%% tar --ignore-failed-read -cf $REPORTFILE --remove-files -C $treport_dir tr_report_rtc00proadbe04_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe04_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe02_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe08_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe03_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadbe00_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe01_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe06_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe07_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadbe02_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe00_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadbe03_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadbe01_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe09_%%SMS_UNIQUE%%.tar.gz tr_report_rtc00proadfe05_%%SMS_UNIQUE%%.tar.gz error_description_%%SMS_UNIQUE%%; return 0"/>
+  </Services>
+  <Groups>
+    <Group name="be">
+      <Mask>be-*,*</Mask>
+    </Group>
+    <Group name="dbaccess">
+      <Mask>dbaccess-*,*</Mask>
+    </Group>
+    <Group name="lp">
+      <Mask>lp-*,*</Mask>
+    </Group>
+    <Group name="localproxy">
+      <Mask>localproxy-*,*</Mask>
+    </Group>
+    <Group name="ui1">
+      <Mask>*:fe1-UserInfoManager</Mask>
+      <Mask>*:fe1-UserInfoManagerController</Mask>
+    </Group>
+    <Group name="ui1-distribution">
+      <Mask>*:fe1-UserInfoDistributor</Mask>
+    </Group>
+    <Group name="fe1">
+      <Mask>fe1-*,*</Mask>
+      <Group type="exclude">ui1-distribution</Group>
+    </Group>
+    <Group name="ui2">
+      <Mask>*:fe2-UserInfoManager</Mask>
+      <Mask>*:fe2-UserInfoManagerController</Mask>
+    </Group>
+    <Group name="ui2-distribution">
+      <Mask>*:fe2-UserInfoDistributor</Mask>
+    </Group>
+    <Group name="fe2">
+      <Mask>fe2-*,*</Mask>
+      <Group type="exclude">ui2-distribution</Group>
+    </Group>
+    <Group name="troubleshoot">
+      <Mask>troubleshoot-*,*</Mask>
+    </Group>
+    <Group name="clear-stat-backup">
+      <Mask>clear-stat-backup-*,*</Mask>
+    </Group>
+    <Group name="keyscan">
+      <Mask>keyscan-*,*</Mask>
+    </Group>
+    <Group name="rtc00proadbe04">
+      <Mask>*,rtc00proadbe04</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe04">
+      <Mask>*,rtc00proadfe04</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe02">
+      <Mask>*,rtc00proadfe02</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe08">
+      <Mask>*,rtc00proadfe08</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe03">
+      <Mask>*,rtc00proadfe03</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadbe00">
+      <Mask>*,rtc00proadbe00</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe01">
+      <Mask>*,rtc00proadfe01</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe06">
+      <Mask>*,rtc00proadfe06</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe07">
+      <Mask>*,rtc00proadfe07</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadbe02">
+      <Mask>*,rtc00proadbe02</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe00">
+      <Mask>*,rtc00proadfe00</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadbe03">
+      <Mask>*,rtc00proadbe03</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadbe01">
+      <Mask>*,rtc00proadbe01</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe09">
+      <Mask>*,rtc00proadfe09</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="rtc00proadfe05">
+      <Mask>*,rtc00proadfe05</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+    </Group>
+    <Group name="all">
+      <Mask>*,*</Mask>
+      <Group type="exclude">troubleshoot</Group>
+      <Group type="exclude">dbaccess</Group>
+      <Group type="exclude">clear-stat-backup</Group>
+      <Group type="exclude">keyscan</Group>
+      <Group type="exclude">ui1-distribution</Group>
+      <Group type="exclude">ui2-distribution</Group>
+    </Group>
+  </Groups>
+  <Dependences>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSearchSvcs::ChannelSearchService</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::LogGeneralizer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsQueryProxy</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::ChannelSvcs::ChannelProxy</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsQueryServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::DBAccess</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::DiscoverSvcs::NewsItemServer</Type>
+        <Type>AdServer::ChannelSvcs::ChannelServer</Type>
+        <Type>AdServer::CampaignSvcs::CampaignServer</Type>
+        <Type>AdServer::LogProcessing::LogGeneralizer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoChecker</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::Controlling::StatsCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::UserInfoSvcs::UserInfoManagerController</Type>
+        <Type>AdServer::PreStart</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoManager</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+        <Type>AdServer::RequestInfoSvcs::RequestInfoManager</Type>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::UserInfoSvcs::UserInfoManagerController</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::RequestInfoSvcs::RequestInfoManager</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::ExpressionMatcher</Type>
+        <Type>AdServer::RequestInfoSvcs::KeywordMatcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+        <Type>AdServer::PreStart</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::ChannelSvcs::ChannelController</Type>
+        <Type>AdServer::CampaignSvcs::CampaignManager</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::Controlling::StatsCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::AdFrontend</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::PSConfigurator</Type>
+        <Type>AdServer::DiscoverSvcs::NewsCacheController</Type>
+        <Type>AdServer::PreStart</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::LogProcessing::SyncLogs</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::LogProcessing::SyncLogsServer</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCollector</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportFetcher</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportFetcher</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReport</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportCleaner</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCollector</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReportPrinter</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportCleaner</Type>
+      </Master>
+    </Dependence>
+    <Dependence>
+      <Slave>
+        <Type>AdServer::TReport</Type>
+      </Slave>
+      <Master>
+        <Type>AdServer::TReportChecker</Type>
+      </Master>
+    </Dependence>
+  </Dependences>
+</AdServer>

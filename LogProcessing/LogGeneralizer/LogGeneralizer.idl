@@ -1,0 +1,101 @@
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer {
+module LogProcessing {
+
+struct CreativeStatInfo
+{
+  unsigned long cc_id;
+  long requests;
+  long impressions;
+  long clicks;
+  long actions;
+};
+
+typedef sequence<CreativeStatInfo> CreativeStatSeq;
+
+struct PublisherAmountInfo
+{
+  unsigned long publisher_account_id;
+  CORBACommons::DecimalInfo adv_amount;
+};
+
+typedef sequence<PublisherAmountInfo> PublisherAmountSeq;
+
+struct TagAmountInfo
+{
+  unsigned long tag_id;
+  CORBACommons::DecimalInfo pub_isp_amount;
+  CORBACommons::DecimalInfo adv_amount;
+  CORBACommons::DecimalInfo adv_comm_amount;
+};
+
+typedef sequence<TagAmountInfo> TagAmountSeq;
+
+struct CtrResetStatInfo
+{
+  unsigned long ctr_reset_id;
+  unsigned long impressions;
+};
+
+typedef sequence<CtrResetStatInfo> CtrResetStatSeq;
+
+struct CampaignStatInfo
+{
+  CORBACommons::TimestampInfo sdate;
+  CORBACommons::TimestampInfo adv_sdate;
+  unsigned long adv_account_id;
+  unsigned long campaign_id;
+  unsigned long ccg_id;
+
+  CORBACommons::DecimalInfo adv_account_amount;
+  CORBACommons::DecimalInfo adv_amount;
+  CORBACommons::DecimalInfo adv_comm_amount;
+  CORBACommons::DecimalInfo adv_payable_comm_amount;
+  CreativeStatSeq creative_stats;
+  PublisherAmountSeq publisher_amounts;
+  TagAmountSeq tag_amounts;
+  CtrResetStatSeq ctr_reset_stats;
+};
+
+typedef sequence<CampaignStatInfo> CampaignStatSeq;
+
+struct StatInfo
+{
+  CampaignStatSeq campaign_stats;
+};
+
+interface LogGeneralizer
+{
+  exception ImplementationException
+  {
+    string description;
+  };
+
+  exception NotSupported
+  {
+    string description;
+  };
+
+  exception CollectionNotStarted
+  {
+    string description;
+  };
+
+  void
+  stop_stat_upload(in unsigned long client_id)
+    raises(NotSupported, ImplementationException);
+
+  void
+  start_stat_upload(in unsigned long client_id, in boolean clear)
+    raises(NotSupported, ImplementationException, CollectionNotStarted);
+
+  StatInfo
+  get_stat_info(in unsigned long client_id, in boolean clear)
+    raises(NotSupported, ImplementationException, CollectionNotStarted);
+};
+
+}; // module LogProcessing
+}; // module AdServer
+

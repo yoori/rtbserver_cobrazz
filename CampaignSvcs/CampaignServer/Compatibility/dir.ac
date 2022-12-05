@@ -1,0 +1,5 @@
+OSBE_CONFIG_FILE([Makefile])
+
+# 3.5.0
+OSBE_CXX_DEF([CampaignServer_v350], [CampaignServer_v350.mk])
+OSBE_CXX_DEF([CampaignServerStubs_v350], [CampaignServerStubs_v350.mk])

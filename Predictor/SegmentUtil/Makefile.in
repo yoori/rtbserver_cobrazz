@@ -1,0 +1,10 @@
+@segmentutilexe_deps@
+
+plain_sources := SegmentProfile.pst
+
+sources := Application.cpp
+target := SegmentUtil
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@segmentutilexe_post@

@@ -1,0 +1,9 @@
+name="AutoTestsCommonsCheckers"
+so_files=AutoTestsCommonsCheckers
+
+osbe_cxx_dep AutoTestsCommonsStats
+osbe_cxx_dep Generics
+osbe_cxx_dep ExceptionHandling
+osbe_cxx_dep AutoTestsCommonsAdmins
+osbe_cxx_dep AutoTestsCommonsGeneratedAdminsCheckers
+osbe_cxx_dep AutoTestsCommonsServerResponseCheckers

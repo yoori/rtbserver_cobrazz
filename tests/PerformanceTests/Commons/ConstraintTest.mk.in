@@ -1,0 +1,6 @@
+@adservertestconstrainttestexe_deps@
+sources := tests/ConstraintTest.cpp \
+           Constraint.cpp \
+
+target := AdServerTestConstraintTest
+@adservertestconstrainttestexe_post@

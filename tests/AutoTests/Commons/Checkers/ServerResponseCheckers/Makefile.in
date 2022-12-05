@@ -1,0 +1,13 @@
+@autotestscommonsserverresponsecheckers_deps@
+
+sources := \
+	ClickResponseChecker.cpp \
+	RedirectChecker.cpp \
+	TanxResponseChecker.cpp \
+	BaiduResponseChecker.cpp \
+	DebugInfoCheckers.cpp \
+	OpenRTBResponseChecker.cpp \
+	TagPassbackChecker.cpp
+
+includes := .
+@autotestscommonsserverresponsecheckers_post@

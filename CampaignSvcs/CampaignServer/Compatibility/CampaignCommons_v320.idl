@@ -1,0 +1,850 @@
+#ifndef CAMPAIGNSVCS_CAMPAIGNCOMMONS_CAMPAIGNCOMMONS_V320_IDL
+#define CAMPAIGNSVCS_CAMPAIGNCOMMONS_CAMPAIGNCOMMONS_V320_IDL
+
+#include <Commons/CorbaTypes.idl>
+
+module AdServer
+{
+  module CampaignSvcs_v320
+  {
+    typedef CORBACommons::TimestampInfo TimestampInfo;
+
+    module AccountFlags
+    {
+      const unsigned long TEST = 0x01;
+    };
+
+    module AccountTypeFlags
+    {
+      const unsigned long USE_SELF_BUDGET = 0x02;
+      const unsigned long GROSS = 0x10;
+      const unsigned long INVOICE_COMMISION = 0x1000;
+    };
+
+    module ChannelFlags
+    {
+      const unsigned long HIDDEN = 0x04;
+    };
+
+    typedef CORBACommons::StringSeq StringSeq;
+
+    struct AppFormatInfo
+    {
+      string app_format;
+      string mime_format;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<AppFormatInfo> AppFormatSeq;
+
+    struct CreativeOptionInfo
+    {
+      long option_id;
+      string token;
+      char type;
+      StringSeq token_relations;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<CreativeOptionInfo> CreativeOptionSeq;
+
+    /**
+     * Incapsulates information on a token.
+     */
+    struct OptionValueInfo
+    {
+      long option_id;
+      string value;
+    };
+
+    typedef sequence<OptionValueInfo> OptionValueSeq;
+    typedef sequence<unsigned long> CreativeCategoryIdSeq;
+
+    /** CreativeCategoryInfo */
+    struct ExternalCategoryInfo
+    {
+      unsigned long ad_request_type;
+      CORBACommons::StringSeq names;
+    };
+
+    typedef sequence<ExternalCategoryInfo> ExternalCategorySeq;
+
+    struct CreativeCategoryInfo
+    {
+      unsigned long creative_category_id;
+      unsigned long cct_id;
+      string name;
+      ExternalCategorySeq external_categories;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<CreativeCategoryInfo> CreativeCategorySeq;
+
+    /**
+     * Incapsulates information on a creative.
+     */
+    struct CreativeInfo
+    {
+      unsigned long ccid;      /**< Campaign creative identifier */
+      unsigned long fc_id;     /**< Frequency cap id for this creative */
+      unsigned long weight;    /**< Weight of the creative */
+      string size_name;        /**< Creative size name */
+      string creative_format;  /**< Creative format*/
+      OptionValueInfo click_url;        /**< Creative click url */
+      OptionValueInfo html_url;
+      unsigned long order_set_id;
+
+      unsigned long up_expand_space;
+      unsigned long right_expand_space;
+      unsigned long down_expand_space;
+      unsigned long left_expand_space;
+
+      CreativeCategoryIdSeq categories;
+      OptionValueSeq tokens;         /** Creative tokens */
+      char status; /* creative status */
+      string version_id;
+    };
+
+    typedef sequence<unsigned long> ChannelIdSeq;
+
+    struct ChannelWeight
+    {
+      unsigned long channel_id;
+      unsigned long weight;
+    };
+
+    typedef sequence<ChannelWeight> ChannelWeightSeq;
+
+    struct DeletedIdInfo
+    {
+      unsigned long id;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<DeletedIdInfo> DeletedIdSeq;
+
+    struct DeletedStringIdInfo
+    {
+      string id;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<DeletedStringIdInfo> DeletedStringIdSeq;
+
+    struct CampaignEcpmInfo
+    {
+      unsigned long ccg_id;
+      CORBACommons::DecimalInfo ecpm;
+      CORBACommons::DecimalInfo ctr;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<CampaignEcpmInfo> EcpmSeq;
+    typedef sequence<unsigned long> ChannelCategorySeq;
+
+    struct ExpressionInfo;
+    typedef sequence<ExpressionInfo> ExpressionSeq;
+
+    struct ExpressionInfo
+    {
+      char operation; // == S for simple channel
+      unsigned long channel_id;
+      ExpressionSeq sub_channels;
+    };
+
+    struct ExpressionChannelInfo
+    {
+      // channel params
+      unsigned long channel_id;
+      string name;
+      unsigned long account_id;
+      string country_code;
+      unsigned long flags;
+      char status;
+      char type;
+      boolean is_public;
+      string language;
+      unsigned long freq_cap_id;
+      unsigned long parent_channel_id;
+      TimestampInfo timestamp;
+
+      // discover channel params
+      string discover_query;
+      string discover_annotation;
+
+      // CMP channel params
+      unsigned long channel_rate_id;
+      CORBACommons::DecimalInfo imp_revenue;
+      CORBACommons::DecimalInfo click_revenue;
+
+      ExpressionInfo expression;
+      unsigned long threshold;
+    };
+
+    typedef sequence<ExpressionChannelInfo> ExpressionChannelSeq;
+
+    struct BehavioralParameterInfo
+    {
+      unsigned long behav_params_id;
+      unsigned long minimum_visits;
+      unsigned long time_from;
+      unsigned long time_to;
+      char trigger_type;
+      unsigned long weight;
+    };
+
+    typedef sequence<BehavioralParameterInfo> BehavioralParameterSeq;
+
+    struct WeeklyRunInterval
+    {
+      unsigned long min;
+      unsigned long max;
+    };
+
+    typedef sequence<CreativeInfo> CreativeSeq;
+    typedef sequence<WeeklyRunInterval> WeeklyRunIntervalSeq;
+    typedef sequence<unsigned long> ColoIdSeq;
+    typedef sequence<unsigned long> AccountIdSeq;
+    typedef sequence<unsigned long> TagIdSeq;
+
+    enum CreativeTemplateType
+    {
+      CTT_NONE,
+      CTT_TEXT,
+      CTT_XSLT
+    };
+
+    module CampaignFlags
+    {
+      /* mask's for campaign field flags */
+      const unsigned long EXTERNAL = 0x01; // external campaigns support removed
+      const unsigned long TRACK_ACTIONS = 0x10;
+      const unsigned long INCLUDE_SPECIFIC_SITES = 0x200;
+
+      const unsigned long US_OPTIN = 0x1000;
+      const unsigned long US_OPTOUT = 0x2000;
+      const unsigned long US_UNDEFINED = 0x4000;
+      const unsigned long US_NONE = 0x8000;
+    };
+
+    struct CampaignDeliveryLimitsInfo
+    {
+      TimestampInfo date_start;
+      TimestampInfo date_end;
+
+      CORBACommons::OptionalDecimalInfo budget;
+      CORBACommons::OptionalDecimalInfo daily_budget;
+
+      char delivery_pacing;
+    };
+
+    struct TagDeliveryInfo
+    {
+      unsigned long tag_id;
+      unsigned long delivery_value;
+    };
+
+    typedef sequence<TagDeliveryInfo> TagDeliverySeq;
+    typedef sequence<unsigned long> UserGroupIdSeq;
+    typedef sequence<unsigned long> ULongSeq;
+
+    /**
+     * Holds information on particular campaign.
+     */
+    struct CampaignInfo
+    {
+      unsigned long campaign_id; /**< Campaign identifier */
+      unsigned long campaign_group_id; /**< Campaign group identifier */
+
+      unsigned long ccg_rate_id;
+      char ccg_rate_type; // M, C, A
+
+      unsigned long fc_id; /**< Campaign's frequency cap id */
+      unsigned long group_fc_id; /**< Campaign group's freq cap id */
+      unsigned long priority; /**< Campaign priority (0 -lowest) */
+
+      unsigned long flags;
+      char marketplace;
+
+      ExpressionInfo expression;
+      ExpressionInfo stat_expression;
+
+      string country;
+      ULongSeq sites; /**< Comma separated partner code list */
+      char status; /**< Character representing campaign status, one of A,I,V */
+      char eval_status;
+
+      WeeklyRunIntervalSeq weekly_run_intervals;
+      CreativeSeq creatives; /**< Campaign creatives */
+
+      unsigned long account_id;
+      unsigned long advertiser_id;
+
+      AccountIdSeq exclude_pub_accounts;
+      TagDeliverySeq exclude_tags;
+
+      CORBACommons::DecimalInfo imp_revenue;
+      CORBACommons::DecimalInfo click_revenue;
+      CORBACommons::DecimalInfo action_revenue;
+      CORBACommons::DecimalInfo commision;
+
+      char ccg_type;
+      char target_type;
+
+      CampaignDeliveryLimitsInfo campaign_delivery_limits;
+      CampaignDeliveryLimitsInfo ccg_delivery_limits;
+      unsigned long start_user_group_id;
+      unsigned long end_user_group_id;
+
+      CORBACommons::DecimalInfo max_pub_share;
+
+      unsigned long ctr_reset_id;
+      unsigned long random_imps;
+      unsigned long mode;
+      unsigned long seq_set_rotate_imps;
+      TimestampInfo min_uid_age;
+      ULongSeq colocations;
+
+      TimestampInfo timestamp;
+    };
+
+    /**
+     * Tag information
+     */
+    struct TagPricingInfo
+    {
+      string country_code;
+      char ccg_type;
+      char ccg_rate_type;
+
+      unsigned long site_rate_id;
+      CORBACommons::DecimalInfo imp_revenue;
+      CORBACommons::DecimalInfo revenue_share;
+    };
+
+    typedef sequence<TagPricingInfo> TagPricingInfoSeq;
+
+    struct TemplateOptionsInfo
+    {
+      string template_name;
+      OptionValueSeq tokens;
+    };
+
+    typedef sequence<TemplateOptionsInfo> TemplateOptionsSeq;
+
+    struct TagInfo
+    {
+      unsigned long tag_id;
+      unsigned long site_id;
+      char status;
+
+      string size;
+      unsigned long max_text_creatives;
+      unsigned long width;
+      unsigned long height;
+
+      string imp_track_pixel;
+      /// Tag passback URL
+      string passback;
+      string passback_type;
+      unsigned long flags;
+      char marketplace;
+      CORBACommons::DecimalInfo adjustment;
+
+      TagPricingInfoSeq tag_pricings;
+      CreativeCategoryIdSeq accepted_categories;
+      CreativeCategoryIdSeq rejected_categories;
+      boolean allow_expandable;
+
+      OptionValueSeq tokens;
+      OptionValueSeq hidden_tokens;
+      OptionValueSeq passback_tokens;
+      TemplateOptionsSeq template_tokens;
+
+      // auction settings
+      CORBACommons::DecimalInfo auction_max_ecpm_share;
+      CORBACommons::DecimalInfo auction_prop_probability_share;
+      CORBACommons::DecimalInfo auction_random_share;
+
+      TimestampInfo tag_pricings_timestamp;
+      TimestampInfo timestamp;
+    };
+
+    /**
+     * Site information
+     */
+    typedef sequence<unsigned long> CampaignIdSeq;
+    typedef sequence<unsigned long> CCIdSeq;
+
+    struct SiteInfo
+    {
+      unsigned long site_id;
+
+      char status;
+      unsigned long freq_cap_id;
+      unsigned long noads_timeout;
+
+      CreativeCategoryIdSeq approved_creative_categories;
+      CreativeCategoryIdSeq rejected_creative_categories;
+      CampaignIdSeq approved_campaigns;
+      CCIdSeq approved_creatives;
+
+      unsigned long flags;
+      unsigned long account_id;
+
+      TimestampInfo timestamp;
+    };
+
+    struct ColocationInfo
+    {
+      unsigned long colo_id;
+      string colo_name;
+      unsigned long colo_rate_id;
+      unsigned long at_flags;
+      unsigned long ad_serving;
+      boolean hid_profile;
+      unsigned long account_id;
+      CORBACommons::DecimalInfo revenue_share;
+      OptionValueSeq tokens;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<ColocationInfo> ColocationSeq;
+
+    struct ColocationFlags
+    {
+      unsigned long colo_id;
+      unsigned long flags;
+      boolean hid_profile;
+    };
+
+    typedef sequence<ColocationFlags> ColocationFlagsSeq;
+
+    /**
+     * Holds frequency cap data. Frequency caps associated with creatives
+     * or campaigns are globally identified by fc_id.
+     */
+    struct FreqCapInfo
+    {
+      unsigned long fc_id; /**< Identifier */
+      unsigned long lifelimit; /**< Total number of impressions per user */
+      unsigned long period; /**< Timeout in seconds between 2 impressions */
+      unsigned long window_limit; /**< Max number of impressions within windowtime */
+      unsigned long window_time; /**< Window length in seconds */
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<FreqCapInfo> FreqCapSeq;
+
+    /**
+     * Holds data for client creative templates.
+     */
+    struct CreativeTemplateFileInfo
+    {
+      string creative_format; /**< Template name */
+      string creative_size; /**< Creative size */
+      string app_format; /**< resulting data type (HTML, JS) */
+      string mime_format;
+
+      boolean track_impr; /**< flag, if true - track impressions */
+      CreativeTemplateType type;
+
+      string template_file; /**< Path to the template file for this template */
+    };
+
+    typedef sequence<CreativeTemplateFileInfo> CreativeTemplateFileInfoSeq;
+
+    struct CreativeTemplateInfo
+    {
+      unsigned long id;
+      TimestampInfo timestamp;
+      CreativeTemplateFileInfoSeq files;
+      OptionValueSeq tokens;
+      OptionValueSeq hidden_tokens;
+    };
+
+    struct CurrencyInfo
+    {
+      CORBACommons::DecimalInfo rate;
+      unsigned long currency_id;
+      unsigned long currency_exchange_id;
+      unsigned long effective_date;
+      unsigned long fraction_digits;
+      string currency_code;
+      TimestampInfo timestamp;
+    };
+
+    struct CampaignKeywordInfo
+    {
+      unsigned long ccg_keyword_id;
+      string original_keyword;
+      string click_url;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<CampaignKeywordInfo> CampaignKeywordSeq;
+
+    typedef sequence<unsigned long> CCGIdSeq;
+
+    struct AdvActionInfo
+    {
+      unsigned long action_id;
+      TimestampInfo timestamp;
+      CCGIdSeq ccg_ids;
+    };
+
+    typedef sequence<AdvActionInfo> AdvActionInfoSeq;
+
+    struct AccountInfo
+    {
+      unsigned long account_id;
+      unsigned long agency_account_id;
+      unsigned long internal_account_id;
+      unsigned long role_id;
+      unsigned long flags;
+      unsigned long at_flags;
+      char text_adserving;
+      unsigned long currency_id;
+      string country;
+      TimestampInfo time_offset;
+      CORBACommons::DecimalInfo commision;
+      CORBACommons::DecimalInfo budget;
+      CORBACommons::DecimalInfo paid_amount;
+      AccountIdSeq walled_garden_accounts;
+      unsigned long auction_rate;
+      boolean use_pub_pixels;
+      string pub_pixel_optin;
+      string pub_pixel_optout;
+      char status;
+      char eval_status;
+
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<AccountInfo> AccountInfoSeq;
+
+    struct CategoryChannelLocalizationInfo
+    {
+      string language;
+      string name;
+    };
+
+    typedef sequence<CategoryChannelLocalizationInfo>
+      CategoryChannelLocalizationSeq;
+
+    struct CategoryChannelInfo
+    {
+      unsigned long channel_id;
+      string name;
+      string newsgate_name;
+      CategoryChannelLocalizationSeq localizations;
+      unsigned long parent_channel_id;
+      unsigned long flags;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<CategoryChannelInfo> CategoryChannelSeq;
+
+    struct PriceRange
+    {
+      unsigned long min;
+      unsigned long max;
+    };
+
+    typedef sequence<PriceRange> PriceRangeSeq;
+
+    struct BehavParameter
+    {
+      unsigned long min_visits;
+      unsigned long time_from;
+      unsigned long time_to;
+      unsigned long weight;
+      char trigger_type;
+    };
+
+    typedef sequence<BehavParameter> BehavParameterSeq;
+
+    struct BehavParamInfo
+    {
+      unsigned long id;
+      unsigned long threshold;
+      TimestampInfo timestamp;
+      BehavParameterSeq bp_seq;
+    };
+
+    typedef sequence<BehavParamInfo> BehavParamInfoSeq;
+
+    struct KeyBehavParamInfo
+    {
+      string id;
+      unsigned long threshold;
+      TimestampInfo timestamp;
+      BehavParameterSeq bp_seq;
+    };
+
+    typedef sequence<KeyBehavParamInfo> KeyBehavParamInfoSeq;
+
+    struct BriefBehavParamInfo
+    {
+      unsigned long id;
+      unsigned long threshold;
+      CORBACommons::FixedTimestampInfo timestamp;
+      BehavParameterSeq bp_seq;
+    };
+
+    typedef sequence<BriefBehavParamInfo> BriefBehavParamInfoSeq;
+
+    struct BriefKeyBehavParamInfo
+    {
+      string id;
+      unsigned long threshold;
+      CORBACommons::FixedTimestampInfo timestamp;
+      BehavParameterSeq bp_seq;
+    };
+
+    typedef sequence<BriefKeyBehavParamInfo> BriefKeyBehavParamInfoSeq;    
+
+    typedef sequence<unsigned long> ChannelTriggerIdSeq;
+
+    struct SimpleChannelKey
+    {
+      unsigned long channel_id;
+      string country_code;
+      string language;
+      char status;
+      unsigned long behav_param_list_id;
+      string str_behav_param_list_id;
+      ChannelCategorySeq categories;
+      unsigned long threshold;
+      boolean discover;
+      ChannelTriggerIdSeq page_triggers;
+      ChannelTriggerIdSeq search_triggers;
+      ChannelTriggerIdSeq url_triggers;
+
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<SimpleChannelKey> SimpleChannelKeySeq;
+
+    struct BriefSimpleChannelKey
+    {
+      unsigned long channel_id;
+      unsigned long behav_param_list_id;
+      string str_behav_param_list_id;
+      ChannelCategorySeq categories;
+      unsigned long threshold;
+      boolean discover;
+    };
+    
+    typedef sequence<BriefSimpleChannelKey> BriefSimpleChannelKeySeq;
+    
+    struct GeoIPRegionCityInfo
+    {
+      string region;
+      string city;
+    };
+
+    typedef sequence<GeoIPRegionCityInfo> GeoIPRegionCitySeq;
+
+    struct GeoChannelInfo
+    {
+      unsigned long channel_id;
+      string country;
+      GeoIPRegionCitySeq geoip_targets;
+      CORBACommons::TimestampInfo timestamp;
+    };
+
+    typedef sequence<GeoChannelInfo> GeoChannelSeq;
+
+    struct FraudConditionInfo
+    {
+      unsigned long id;
+      char type;
+      unsigned long limit;
+      TimestampInfo period;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<FraudConditionInfo> FraudConditionSeq;
+
+    struct SearchEngineRegExpInfo
+    {
+      string host_postfix;
+      string regexp;
+      string encoding;
+      string post_encoding;
+      unsigned long decoding_depth;
+    };
+
+    typedef sequence<SearchEngineRegExpInfo> SearchEngineRegExpSeq;
+
+    struct SearchEngineInfo
+    {
+      unsigned long id;
+      string name;
+      SearchEngineRegExpSeq regexps;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<SearchEngineInfo> SearchEngineSeq;
+
+    struct WebBrowserDetectorInfo
+    {
+      string marker;
+      string regexp;
+      boolean regexp_required;
+      unsigned long priority;
+    };
+
+    typedef sequence<WebBrowserDetectorInfo> WebBrowserDetectorSeq;
+
+    struct WebBrowserInfo
+    {
+      string name;
+      WebBrowserDetectorSeq detectors;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<WebBrowserInfo> WebBrowserSeq;
+
+    struct PlatformDetectorInfo
+    {
+      string use_name;
+      string marker;
+      string match_regexp;
+      string output_regexp;
+      unsigned long priority;
+    };
+
+    typedef sequence<PlatformDetectorInfo> PlatformDetectorSeq;
+
+    struct PlatformInfo
+    {
+      unsigned long platform_id;
+      string name;
+      string type;
+      PlatformDetectorSeq detectors;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<PlatformInfo> PlatformSeq;
+
+    struct WebOperationInfo
+    {
+      unsigned long id;
+      string app;
+      string source;
+      string operation;
+      unsigned long flags;
+      TimestampInfo timestamp;
+    };
+
+    typedef sequence<WebOperationInfo> WebOperationSeq;
+
+    typedef sequence<CampaignInfo> CampaignInfoSeq; /**< Current campaigns */
+    typedef sequence<SiteInfo> SiteInfoSeq; /**< Current sites */
+    typedef sequence<TagInfo> TagInfoSeq; /**< Current tags */
+    typedef sequence<ColocationInfo> ColocationInfoSeq;
+    typedef sequence<CreativeTemplateInfo> CreativeTemplateInfoSeq;
+    typedef sequence<CurrencyInfo> CurrencyInfoSeq;
+
+    /**
+     * CampaignConfigUpdateInfo incapsulates static configuration
+     * data that is requested by CampaignManager.
+     */
+    struct CampaignConfigUpdateInfo
+    {
+      unsigned long server_id;
+      TimestampInfo master_stamp; /**< Timestamp of the current configuration */
+      TimestampInfo first_load_stamp;
+      TimestampInfo finish_load_stamp;
+      TimestampInfo current_time;
+
+      unsigned long global_freq_cap_id;
+      unsigned long currency_exchange_id;
+      unsigned long max_keyword_ecpm;
+      unsigned long tanx_publisher_account_id;
+      unsigned long google_publisher_account_id;
+      TimestampInfo fraud_user_deactivate_period;
+      CORBACommons::DecimalInfo cost_limit;
+      TimestampInfo global_params_timestamp;
+
+      AppFormatSeq app_formats;
+      DeletedStringIdSeq delete_app_formats;
+
+      AccountInfoSeq accounts;
+      DeletedIdSeq deleted_accounts;
+
+      CreativeOptionSeq activate_creative_options;
+      DeletedIdSeq delete_creative_options;
+
+      CampaignInfoSeq campaigns; /**< Current campaigns */
+      DeletedIdSeq deleted_campaigns;
+
+      EcpmSeq ecpms;
+      DeletedIdSeq deleted_ecpms;
+
+      SiteInfoSeq sites; /**< Current sites */
+      DeletedIdSeq deleted_sites;
+
+      TagInfoSeq tags; /**< Current tags */
+      DeletedIdSeq deleted_tags;
+
+      FreqCapSeq frequency_caps; /**< Frequency caps */
+      DeletedIdSeq deleted_freq_caps;
+
+      SimpleChannelKeySeq simple_channels;
+      DeletedIdSeq deleted_simple_channels;
+
+      CORBACommons::TimestampInfo geo_channels_timestamp;
+      GeoChannelSeq activate_geo_channels;
+      DeletedIdSeq delete_geo_channels;
+
+      ColocationInfoSeq colocations;
+      DeletedIdSeq deleted_colocations;
+
+      CreativeTemplateInfoSeq creative_templates;
+      DeletedIdSeq deleted_templates;
+
+      CurrencyInfoSeq currencies;
+
+      ExpressionChannelSeq expression_channels;
+      DeletedIdSeq deleted_expression_channels;
+
+      CampaignKeywordSeq campaign_keywords;
+      DeletedIdSeq deleted_keywords;
+
+      CreativeCategorySeq creative_categories;
+      DeletedIdSeq deleted_creative_categories;
+
+      AdvActionInfoSeq adv_actions;
+      DeletedIdSeq deleted_adv_actions;
+
+      CategoryChannelSeq category_channels;
+      DeletedIdSeq deleted_category_channels;
+
+      BehavParamInfoSeq behav_params;
+      DeletedIdSeq deleted_behav_params;
+
+      KeyBehavParamInfoSeq key_behav_params;
+      DeletedStringIdSeq deleted_key_behav_params;
+
+      FraudConditionSeq fraud_conditions;
+      DeletedIdSeq deleted_fraud_conditions;
+
+      SearchEngineSeq search_engines;
+      DeletedIdSeq deleted_search_engines;
+
+      WebBrowserSeq web_browsers;
+      DeletedStringIdSeq deleted_web_browsers;
+
+      PlatformSeq platforms;
+      DeletedIdSeq deleted_platforms;
+
+      WebOperationSeq web_operations;
+      DeletedIdSeq delete_web_operations;
+    };
+  }; // module CampaignSvcs
+}; // module AdServer
+
+#endif // CAMPAIGNSVCS_CAMPAIGNCOMMONS_CAMPAIGNCOMMONS_V320_IDL

@@ -1,0 +1,6 @@
+
+include Common.pre.rules
+
+target_makefile_list := GasonTest.mk
+
+include $(osbe_builddir)/config/Makentry.post.rules

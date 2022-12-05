@@ -1,0 +1,8 @@
+include Common.pre.rules
+
+description := OracleCampaignSelectTest
+
+test_command := $(srcdir)/Test.sh 200 20
+vg_test_command = $(srcdir)/Test.sh 2 20 '$(vg_prefix) --quiet'
+
+include $(top_srcdir)/tests/Test.post.rules

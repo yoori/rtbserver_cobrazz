@@ -1,0 +1,9 @@
+include Common.pre.rules
+
+target_makefile_list := \
+  ChannelServerConfig.mk \
+  ChannelManagerControllerConfig.mk \
+  ChannelProxyConfig.mk \
+  DictionaryProviderConfig.mk \
+
+include $(osbe_builddir)/config/Makentry.post.rules

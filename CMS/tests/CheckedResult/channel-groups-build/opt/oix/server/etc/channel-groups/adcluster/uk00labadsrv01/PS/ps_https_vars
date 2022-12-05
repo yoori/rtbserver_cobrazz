@@ -1,0 +1,12 @@
+
+          %CONFIG = (%CONFIG,
+            'adsrv_host_name' => 'https://a.foroslabs.com',
+            'ps_host' => 'https://a.foroslabs.com',
+            'toolbar_base' => 'https://http://b.foroslabs.com/toolbar/PS.TEST.TB/',
+            'toolbar_tag_url' => 'https://http://b.foroslabs.com/tag/1.js',
+            'adimage_server' => 'https://foroscrv-lab.net',
+          );
+        
+
+    1;
+

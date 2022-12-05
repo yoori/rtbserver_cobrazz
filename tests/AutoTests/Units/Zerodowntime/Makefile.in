@@ -1,0 +1,7 @@
+@autotestszerodowntimeunits_deps@
+
+sources := \
+  ZerodowntimeTest.cpp
+
+includes := .
+@autotestszerodowntimeunits_post@

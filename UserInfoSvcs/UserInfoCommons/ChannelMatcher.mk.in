@@ -1,0 +1,11 @@
+@channelmatcher_deps@
+
+plain_sources := \
+  UserChannelBaseProfile.pst \
+  UserChannelHistoryProfile.pst
+
+sources := ChannelMatcher.cpp
+
+include $(top_builddir)/Plain/Plain.post.rules
+
+@channelmatcher_post@

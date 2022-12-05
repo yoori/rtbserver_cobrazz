@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns="http://foros.com/cms/commonTypes"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+  targetNamespace="http://foros.com/cms/commonTypes"
+  elementFormDefault="qualified">
+
+  <xsd:complexType name="Binary">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:hexBinary">
+        <xsd:attribute name="fileName" type="xsd:string" />
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:simpleType name="Text">
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
+</xsd:schema>

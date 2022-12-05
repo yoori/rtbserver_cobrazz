@@ -1,0 +1,55 @@
+# Open Software Building Environment (OpenSBE, OSBE)
+# Copyright (C) 2001-2002 Boris Kolpackov
+# Copyright (C) 2001-2004 Pavel Gubin, Karen Arutyunov
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+# File   : Check.post.rules.in
+# Author : Karen Arutyunov <karen@ipmce.ru>
+
+ifndef _CHECK_POST_RULES_
+define _CHECK_POST_RULES_
+1
+endef
+
+.PHONY: _osbe_check_target
+
+check: _osbe_check_target
+
+LD_LIBRARY_PATH_NAME := LD_LIBRARY_PATH
+PATH_NAME := PATH
+
+ifeq "$(patsubst cygwin%,cygwin,$(host_os))" "cygwin"
+  LD_LIBRARY_PATH_NAME := PATH
+  PATH_NAME := PATH
+endif
+
+ifeq "$(patsubst darwin%,darwin,$(host_os))" "darwin"
+  LD_LIBRARY_PATH_NAME := DYLD_LIBRARY_PATH
+  PATH_NAME := PATH
+endif
+
+define check_commands_environment
+  $(LD_LIBRARY_PATH_NAME)=$(top_builddir)/lib:$(LIBRARY_PATHS):$$$(LD_LIBRARY_PATH_NAME); \
+  export $(LD_LIBRARY_PATH_NAME); \
+  $(PATH_NAME)=$(top_builddir)/bin:$$$(PATH_NAME); \
+  export $(PATH_NAME);
+endef
+
+_osbe_check_target:
+	@$(check_commands_environment)$(check_commands)
+
+endif #_CHECK_POST_RULES_

@@ -1,0 +1,11 @@
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CONFIG_SUBDIR([FrontendCommons])
+OSBE_CONFIG_SUBDIR([CommonModule])
+
+OSBE_CONFIG_SUBDIR([Modules])
+OSBE_CONFIG_SUBDIR([FCGIServer])
+OSBE_CONFIG_SUBDIR([ProfilingServer])
+#OSBE_CONFIG_SUBDIR([ConvServer])
+OSBE_CONFIG_SUBDIR([UIDGeneratorAdapter])
+OSBE_CONFIG_SUBDIR([ZmqBalancer])

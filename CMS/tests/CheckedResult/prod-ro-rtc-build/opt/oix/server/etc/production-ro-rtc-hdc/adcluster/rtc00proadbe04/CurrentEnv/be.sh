@@ -1,0 +1,12 @@
+news_query_server_port=10125
+export news_query_server_port
+
+news_cache_controller_port=10126
+export news_cache_controller_port
+
+request_info_manager_port=10116
+export request_info_manager_port
+
+sync_logs_port=10112
+export sync_logs_port
+

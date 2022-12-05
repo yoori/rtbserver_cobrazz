@@ -1,0 +1,8 @@
+@adservercommons_deps@
+
+sources := 
+includes := .
+xsd_files := AdServerCommons.xsd HostDistributionFile.xsd
+xsd_includes := xsd .
+
+@adservercommons_post@

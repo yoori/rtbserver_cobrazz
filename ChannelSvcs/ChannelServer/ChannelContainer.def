@@ -1,0 +1,5 @@
+name="ChannelContainer"
+so_files=ChannelContainer
+osbe_cxx_dep Commons
+osbe_cxx_dep ChannelCommons
+osbe_cxx_dep DictionaryProvider

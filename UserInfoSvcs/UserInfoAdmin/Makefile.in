@@ -1,0 +1,5 @@
+@userinfoadminexe_deps@
+sources := Application.cpp 
+
+target := UserInfoAdmin
+@userinfoadminexe_post@

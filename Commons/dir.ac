@@ -1,0 +1,20 @@
+
+OSBE_CONFIG_FILE([Makefile])
+
+OSBE_CXX_DEF([Commons], [Commons.mk])
+OSBE_CXX_DEF([ProcessControlVars], [ProcessControlVars.mk])
+#OSBE_CXX_DEF([HeapController], [HeapController.mk])
+OSBE_CONFIG_FILE([Xslt.mk])
+OSBE_CONFIG_SUBDIR([Xslt])
+
+#OSBE_CONFIG_FILE([Oracle.mk])
+#OSBE_CONFIG_SUBDIR([Oracle])
+
+OSBE_CONFIG_FILE([Postgres.mk])
+OSBE_CONFIG_SUBDIR([Postgres])
+
+OSBE_CXX_DEF([Gason], [Gason.mk])
+
+OSBE_CONFIG_FILE([Kafka.mk])
+OSBE_CONFIG_SUBDIR([Kafka])
+

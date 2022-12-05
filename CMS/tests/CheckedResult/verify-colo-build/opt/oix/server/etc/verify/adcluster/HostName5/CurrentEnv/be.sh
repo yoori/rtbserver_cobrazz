@@ -1,0 +1,6 @@
+log_generalizer_port=10111
+export log_generalizer_port
+
+sync_logs_port=10112
+export sync_logs_port
+
