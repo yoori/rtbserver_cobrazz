@@ -224,8 +224,8 @@ then
   $EXEC/ServiceConf.sh \
     --services-xpath "$PREDICTOR_XPATH" \
     --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Predictor/BidCostPredictorMerger.xsl \
-    --out-file BidCostPredictorMergerConfig.xml \
+    --xsl $XSLT_ROOT/Predictor/BidCostPredictor.xsl \
+    --out-file BidCostPredictorConfig.json \
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"

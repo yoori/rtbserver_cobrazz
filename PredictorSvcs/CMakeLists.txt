@@ -4,3 +4,4 @@ include_directories(
 )
 
 ADD_SUBDIRECTORY(CTRPredictorSVMGenerator)
+ADD_SUBDIRECTORY(BidCostPredictor)

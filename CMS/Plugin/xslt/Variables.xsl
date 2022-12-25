@@ -434,11 +434,30 @@
 <xsl:variable name="predictor-merger-log-path" select="'/log/Predictor/Merger'"/>
 <xsl:variable name="def-predictor-merger-sleep_timeout" select="300"/>
 
-<!-- BidCost predictor merger defaults -->
-<xsl:variable name="bidcost-predictor-merger-log-path" select="'/log/Predictor/BidCostPredictorMerger/BidCostPredictorMerger'"/>
-<xsl:variable name="def-bidcost-predictor-merger-aggregate-period" select="3600"/>
-<xsl:variable name="def-bidcost-predictor-merger-analyze-days" select="180"/>
-<xsl:variable name="def-bidcost-predictor-merger-generate-model-period" select="86400"/>
+<!-- BidCost predictor -->
+<xsl:variable name="bidcost-predictor-version" select="'1.0'"/>
+<xsl:variable name="bidcost-predictor-description" select="'Bid cost predictor'"/>
+<xsl:variable name="bidcost-predictor-log-path" select="'/log/Predictor/BidCostPredictor/bid_cost_predictor.log'"/>
+<xsl:variable name="bidcost-predictor-pid-path" select="'/run/bid_cost_predictor.pid'"/>
+<xsl:variable name="bidcost-predictor-model-input-path" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
+<xsl:variable name="bidcost-predictor-model-period" select="43200"/>
+<xsl:variable name="bidcost-predictor-model-bid-cost-file-name" select="'bid_cost.csv'"/>
+<xsl:variable name="bidcost-predictor-model-bid-cost-output-directory" select="'/log/Predictor/BidCostConfig'"/>
+<xsl:variable name="bidcost-predictor-model-bid-cost-temp-directory" select="'/log/Predictor/BidCostConfigTmp'"/>
+<xsl:variable name="bidcost-predictor-model-ctr-file-name" select="'trivial_ctr.csv'"/>
+<xsl:variable name="bidcost-predictor-model-ctr-output-directory" select="'/log/Predictor/CTRTrivialConfig'"/>
+<xsl:variable name="bidcost-predictor-model-ctr-temp-directory" select="'/log/Predictor/CTRTrivialConfigTmp'"/>
+<xsl:variable name="bidcost-predictor-model-ctr-max-imps" select="100000"/>
+<xsl:variable name="bidcost-predictor-model-ctr-tag-imps" select="100"/>
+<xsl:variable name="bidcost-predictor-model-ctr-trust-imps" select="10000"/>
+<xsl:variable name="bidcost-predictor-aggregator-input-directory" select="'/log/Predictor/ResearchLogs/BidCostStat'"/>
+<xsl:variable name="bidcost-predictor-aggregator-output-directory" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
+<xsl:variable name="bidcost-predictor-aggregator-period" select="3600"/>
+<xsl:variable name="bidcost-predictor-aggregator-dump-max-size" select="100000"/>
+<xsl:variable name="bidcost-predictor-aggregator-max-process-files" select="10000"/>
+<xsl:variable name="bidcost-predictor-reaggregator-input-directory" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
+<xsl:variable name="bidcost-predictor-reaggregator-output-directory" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
+<xsl:variable name="bidcost-predictor-reaggregator-period" select="3600"/>
 
 <!-- Predictor SVM generator defaults -->
 <xsl:variable name="def-svm-generator-port" select="concat($def-range-start, '69')"/>
