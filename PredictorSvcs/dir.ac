@@ -1,3 +1,4 @@
 OSBE_CONFIG_FILE([Makefile])
 
+OSBE_CONFIG_SUBDIR([BidCostPredictor])
 OSBE_CONFIG_SUBDIR([CTRPredictorSVMGenerator])

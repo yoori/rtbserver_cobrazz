@@ -1,0 +1,17 @@
+@bidcostpredictor_deps@
+
+sources := \
+  Application.cpp \
+  Aggregator.cpp \
+  AggregatorMultyThread.cpp \
+  LogHelper.cpp \
+  Main.cpp \
+  Regenerator.cpp \
+  Reaggregator.cpp \
+  ReaggregatorMultyThread.cpp \
+  Test.cpp \
+  Utils.cpp
+
+target := BidCostPredictor
+
+@bidcostpredictor_post@
