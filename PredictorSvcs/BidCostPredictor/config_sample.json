@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "description": "Bid cost predictor",
+  "config" : {
+    "log_path": "/home/artem_bogdanov/bid_cost_predictor.log",
+    "pid_path": "/home/artem_bogdanov/daemon.pid",
+    "model" : {
+      "period": 300,
+      "input_directory": "/home/artem_bogdanov/BidCostStatAgg",
+      "bid_cost" : {
+        "output_directory": "/home/artem_bogdanov/model",
+        "temp_directory": "/home/artem_bogdanov/temp/model",
+        "file_name": "bid_cost.csv"
+      },
+      "ctr" : {
+        "output_directory": "/home/artem_bogdanov/model_ctr",
+        "temp_directory": "/home/artem_bogdanov/temp/model_ctr",
+        "file_name": "trivial_ctr.csv",
+        "max_imps": 100000,
+        "trust_imps": 10000,
+        "tag_imps": 100
+      }
+    },
+    "aggregator" : {
+      "max_process_files": 10000,
+      "dump_max_size": 100000,
+      "input_directory": "/home/artem_bogdanov/BidCostStat",
+      "output_directory": "/home/artem_bogdanov/BidCostStatAgg",
+      "period": 120
+    },
+    "reaggregator" : {
+      "input_directory": "/home/artem_bogdanov/BidCostStatAgg",
+      "output_directory": "/home/artem_bogdanov/BidCostStatAgg",
+      "period": 120
+    }
+  }
+}

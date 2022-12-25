@@ -58,7 +58,7 @@ operator>>(FixedBufStream<TabCategory>& is, BidCostStatInnerData& data)
   /*throw(eh::Exception)*/
 {
   TokenizerInputArchive<Aux_::NoInvariants> ia(is);
-  is >> data;
+  ia >> data;
   return is;
 }
 
