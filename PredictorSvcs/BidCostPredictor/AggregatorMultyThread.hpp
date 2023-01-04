@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_AGGREGATORMULTYTHREAD_HPP
-#define RTBSERVER_COBRAZZ_AGGREGATORMULTYTHREAD_HPP
+#ifndef AGGREGATORMULTYTHREAD_HPP
+#define AGGREGATORMULTYTHREAD_HPP
 
 // STD
 #include <deque>
@@ -15,7 +15,9 @@
 #include <Generics/Time.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
+#include "ActiveObjectObserver.hpp"
 #include "LogHelper.hpp"
+#include "Persantage.hpp"
 #include "PoolCollector.hpp"
 #include "Processor.hpp"
 #include "ShutdownManager.hpp"
@@ -36,7 +38,7 @@ namespace LogProcessing = AdServer::LogProcessing;
 class AggregatorMultyThread final :
         public Processor,
         public virtual ReferenceCounting::AtomicImpl,
-        public Generics::ActiveObjectCallback
+        private ActiveObjectDelegate
 {
   using Path = Utils::Path;
   using InputFiles = std::list<Path>;
@@ -75,16 +77,6 @@ class AggregatorMultyThread final :
     Read = 0,
     Calculate,
     Write
-  };
-
-  struct PersantageInfo
-  {
-    PersantageInfo() = default;
-    ~PersantageInfo() = default;
-
-    std::size_t total_files_number = 0;
-    std::size_t current_file_number = 0;
-    std::size_t counter_percentage = 0;
   };
 
 public:
@@ -160,13 +152,13 @@ private:
     }
     catch (const eh::Exception& exc)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Can't enqueue_task"
-           << " Reason: "
-           << exc.what();
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << ": Can't enqueue_task"
+             << " Reason: "
+             << exc.what();
       logger_->critical(
-              ostr.str(),
+              stream.str(),
               Aspect::AGGREGATOR);
       shutdown_manager_.stop();
       return false;
@@ -190,9 +182,11 @@ private:
 
   Logging::Logger_var logger_;
 
+  ActiveObjectObserver_var observer_;
+
   std::vector<Generics::TaskRunner_var> task_runners_;
   // Read thread
-  PersantageInfo persantage_info_;
+  Persantage persantage_;
   // Read thread
   std::size_t count_process_file_ = 0;
   // Read thread
@@ -218,4 +212,4 @@ private:
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_AGGREGATORMULTYTHREAD_HPP
+#endif //AGGREGATORMULTYTHREAD_HPP

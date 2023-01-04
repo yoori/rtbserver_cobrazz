@@ -8,9 +8,7 @@ int main(int argc, char** argv)
 {
   try
   {
-    const int exit_code
-        = PredictorSvcs::BidCostPredictor::Application().run(argc, argv);
-    return exit_code;
+    return PredictorSvcs::BidCostPredictor::Application().run(argc, argv);
   }
   catch (const eh::Exception& exc)
   {

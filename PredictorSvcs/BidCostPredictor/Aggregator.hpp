@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_AGGREGATOR_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_AGGREGATOR_HPP
+#ifndef BIDCOSTPREDICTOR_AGGREGATOR_HPP
+#define BIDCOSTPREDICTOR_AGGREGATOR_HPP
 
 // STD
 #include <list>
@@ -14,6 +14,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
 #include "LogHelper.hpp"
+#include "Persantage.hpp"
 #include "Processor.hpp"
 #include "Utils.hpp"
 
@@ -101,14 +102,10 @@ private:
 
   Logging::Logger_var logger_;
 
-  std::size_t total_file_number_ = 0;
-
-  std::size_t current_file_number_ = 0;
-
-  std::size_t counter_percentage_ = 0;
+  Persantage persantage_;
 };
 
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_AGGREGATOR_HPP
+#endif //BIDCOSTPREDICTOR_AGGREGATOR_HPP

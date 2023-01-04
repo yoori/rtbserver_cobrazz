@@ -6,6 +6,7 @@
 #include <Logger/Logger.hpp>
 #include <Logger/StreamLogger.hpp>
 #include "LogHelper.hpp"
+#include "Persantage.hpp"
 #include "Regenerator.hpp"
 #include "Utils.hpp"
 
@@ -88,7 +89,6 @@ void Regenerator::start()
     ostr << __PRETTY_FUNCTION__
          << ": [Fatal error]: Regenerator is failed:"
          << ex.what();
-
     throw Exception(ostr);
   }
 }
@@ -121,26 +121,14 @@ void Regenerator::regenerate(
         const std::string& output_dir,
         const std::string& prefix)
 {
-  const std::size_t total_file_number = process_files.size();
-  std::size_t current_file_number = 0;
-  std::size_t counter_percentage = 0;
+  Persantage persantage(logger_, Aspect::REGENERATOR, 5);
+  persantage.setTotalNumber(process_files.size());
 
   Collector collector;
   for (const auto& file_info : process_files)
   {
     collector.clear();
-
-    const std::size_t percentage
-            = (current_file_number * 100) / total_file_number;
-   if (percentage >= counter_percentage * 5)
-    {
-      counter_percentage += 1;
-      logger_->info(
-              "Percentage of processed files = "
-              + std::to_string(percentage),
-              Aspect::REGENERATOR);
-    }
-    current_file_number += 1;
+    persantage.increase();
 
     const auto& date = file_info.first;
     const auto& path = file_info.second;
@@ -150,12 +138,12 @@ void Regenerator::regenerate(
     std::ifstream fstream(path);
     if (!fstream.is_open())
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Can't open file="
-           << path;
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << ": Can't open file="
+             << path;
       logger_->error(
-              ostr.str(),
+              stream.str(),
               Aspect::REGENERATOR);
       continue;
     }
@@ -172,48 +160,54 @@ void Regenerator::regenerate(
         LogProcessing::read_until_eol(fstream, line, false);
         if (fstream.eof())
         {
-          Stream::Error es;
-          es << __PRETTY_FUNCTION__
-             << ": Malformed file (file must end with an end-of-line character), line "
-             << line_num;
-          throw Exception(es);
+          std::stringstream stream;
+          stream << __PRETTY_FUNCTION__
+                 << ": Malformed file (file must end with an end-of-line character), line "
+                 << line_num;
+          logger_->error(stream.str(), Aspect::REGENERATOR);
+          break;
         }
 
         if (!fstream.good())
         {
-          Stream::Error es;
-          es << __PRETTY_FUNCTION__
-             << ": Error occure, line "
-             << line_num;
-          throw Exception(es);
+          std::stringstream stream;
+          stream << __PRETTY_FUNCTION__
+                 << ": Error occure, line "
+                 << line_num;
+          logger_->error(stream.str(), Aspect::REGENERATOR);
+          break;
         }
 
         const auto pos = line.find('\t');
         if (pos == std::string::npos)
         {
-          Stream::Error es;
-          es << __PRETTY_FUNCTION__
-             << ": Bad file=" << path;
-          throw Exception(es);
+          std::stringstream stream;
+          stream << __PRETTY_FUNCTION__
+                 << ": Bad file=" << path;
+          logger_->error(stream.str(), Aspect::REGENERATOR);
+          break;
         }
         line.insert(pos + 1, "-\t");
 
         LogProcessing::FixedBufStream<LogProcessing::TabCategory> fbs(line);
         if (!(fbs >> const_cast<Key&>(static_cast<const Key&>(value.first))))
         {
-          Stream::Error es;
-          es << __PRETTY_FUNCTION__
-             << ": Failed to read key from istream (line number = " << line_num
-             << ")";
-          throw Exception(es);
+          std::stringstream stream;
+          stream << __PRETTY_FUNCTION__
+                 << ": Failed to read key from istream (line number = "
+                 << line_num
+                 << ")";
+          logger_->error(stream.str(), Aspect::REGENERATOR);
+          break;
         }
         if (!(fbs >> static_cast<Data&>(value.second)))
         {
-          Stream::Error es;
-          es << __PRETTY_FUNCTION__
-             << ": Failed to read data from istream (line number = " << line_num
-             << ")";
-          throw Exception(es);
+          std::stringstream stream;
+          stream << __PRETTY_FUNCTION__
+                 << ": Failed to read data from istream (line number = " << line_num
+                 << ")";
+          logger_->error(stream.str(), Aspect::REGENERATOR);
+          break;
         }
         fbs.transfer_state(fstream);
 
@@ -262,7 +256,7 @@ void Regenerator::regenerate(
                << temp_path
                << ", to="
                << result_path;
-          throw Exception(ostr.str());
+          throw Exception(ostr);
         }
       }
 
@@ -277,13 +271,13 @@ void Regenerator::regenerate(
     }
     catch (const eh::Exception& exc)
     {
-      Stream::Error ostr;
-      ostr << "Can't modificate file="
-           << path
-           << ", Reason: "
-           << exc.what()
-           << "\n";
-      logger_->error(ostr.str(),Aspect::REGENERATOR);
+      std::stringstream stream;
+      stream << "Can't modificate file="
+             << path
+             << ", Reason: "
+             << exc.what()
+             << "\n";
+      logger_->error(stream.str(),Aspect::REGENERATOR);
 
       removeProcessedFiles(processed_files);
     }

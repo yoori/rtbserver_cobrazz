@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_TEST_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_TEST_HPP
+#ifndef BIDCOSTPREDICTOR_TEST_HPP
+#define BIDCOSTPREDICTOR_TEST_HPP
 
 // STD
 #include <list>
@@ -39,7 +39,7 @@ class Test : private Generics::Uncopyable
   using DayTimestamp = LogProcessing::DayTimestamp;
   using FixedNumber = LogProcessing::FixedNumber;
 
-  using Processors = std::list<ProcessorPtr>;
+  using Processors = std::list<Processor_var>;
 public:
   Test(const std::string& directory,
        const std::size_t number_dates_per_file = 5,
@@ -50,7 +50,7 @@ public:
 
   bool run() noexcept;
 
-  void addProcessor(ProcessorPtr&& processor);
+  void addProcessor(Processor_var&& processor);
 
 private:
   void copyFile(
@@ -79,4 +79,4 @@ private:
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_TEST_HPP
+#endif //BIDCOSTPREDICTOR_TEST_HPP

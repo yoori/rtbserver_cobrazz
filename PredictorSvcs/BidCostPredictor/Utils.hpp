@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_UTILS_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_UTILS_HPP
+#ifndef BIDCOSTPREDICTOR_UTILS_HPP
+#define BIDCOSTPREDICTOR_UTILS_HPP
 
 // STD
 #include <cstdio>
@@ -40,12 +40,19 @@ using Path = std::string;
 using Files = std::list<Path>;
 using GeneratedPath = std::pair<Path, Path>;
 
+enum class DirInfo
+{
+  RegularFile,
+  Directory
+};
+
 bool ExistDirectory(
         const std::string& path_directory) noexcept;
 
 Files GetDirectoryFiles(
         const Path& path_dir,
-        const std::string& prefix = std::string());
+        const std::string& prefix = std::string(),
+        const DirInfo dir_info = DirInfo::RegularFile);
 
 GeneratedPath GenerateFilePath(
         const Path& output_dir,
@@ -56,4 +63,4 @@ GeneratedPath GenerateFilePath(
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_UTILS_HPP
+#endif //BIDCOSTPREDICTOR_UTILS_HPP

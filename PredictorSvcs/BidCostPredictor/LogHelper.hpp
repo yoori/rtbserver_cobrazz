@@ -1,13 +1,13 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_LOGHELPER_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_LOGHELPER_HPP
+#ifndef BIDCOSTPREDICTOR_LOGHELPER_HPP
+#define BIDCOSTPREDICTOR_LOGHELPER_HPP
 
 // STD
 #include <fstream>
 
 // THIS
 #include <eh/Exception.hpp>
-#include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/BidCostStat.hpp>
+#include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/LogCommons.hpp>
 
 namespace AdServer
@@ -23,6 +23,22 @@ namespace PredictorSvcs
 namespace BidCostPredictor
 {
 
+namespace detail
+{
+template<class, class = void>
+struct is_collector : std::false_type
+{
+};
+
+template<class T>
+struct is_collector<T, std::void_t<typename T::CollectorTag>> : std::true_type
+{
+};
+
+template<class T>
+constexpr bool is_collector_v = is_collector<T>::value;
+} // namespace detail
+
 namespace LogProcessing = AdServer::LogProcessing;
 
 template<class LogTraits>
@@ -30,12 +46,9 @@ struct LogHelper
 {
   using BaseTraits = typename LogTraits::BaseTraits;
   using Collector = typename BaseTraits::CollectorType;
+  using DataT = typename Collector::DataT;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-  static_assert(std::is_same_v<Collector, LogProcessing::BidCostStatCollector>
-             || std::is_same_v<Collector, LogProcessing::BidCostStatInnerCollector>,
-                "Type must be BidCostStatCollector or BidCostStatInnerCollector");
 
   static void load(const std::string& file_path, Collector& collector)
   {
@@ -97,11 +110,12 @@ struct LogHelper
       Stream::Error stream;
       stream << __PRETTY_FUNCTION__
              << ": Failed to write log header [file="
-             << path << "]";
+             << path
+             << "]";
       throw Exception(stream);
     }
 
-    if constexpr (std::is_same_v<Collector, LogProcessing::BidCostStatCollector>)
+    if constexpr (detail::is_collector_v<DataT>)
     {
       LogProcessing::PackedSaveStrategy<LogTraits>().save(fstream, collector);
     }
@@ -115,4 +129,4 @@ struct LogHelper
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_LOGHELPER_HPP
+#endif //BIDCOSTPREDICTOR_LOGHELPER_HPP

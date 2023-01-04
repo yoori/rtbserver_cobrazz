@@ -30,7 +30,8 @@ Aggregator::Aggregator(
           output_dir_(output_dir),
           prefix_stat_(LogTraits::B::log_base_name()),
           prefix_agg_(LogInnerTraits::B::log_base_name()),
-          logger_(logger)
+          logger_(logger),
+          persantage_(logger_, Aspect::AGGREGATOR, 5)
 {
 }
 
@@ -68,11 +69,11 @@ void Aggregator::start()
   }
   catch(const eh::Exception& ex)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": [Fatal error]: Aggregate is failed: "
-         << ex.what();
-    logger_->critical(ostr.str(), Aspect::AGGREGATOR);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": [Fatal error]: Aggregate is failed: "
+           << ex.what();
+    logger_->critical(stream.str(), Aspect::AGGREGATOR);
   }
 }
 
@@ -81,7 +82,7 @@ void Aggregator::aggregate()
   auto input_files = Utils::GetDirectoryFiles(
           input_dir_,
           prefix_stat_);
-  total_file_number_ = input_files.size();
+  persantage_.setTotalNumber(input_files.size());
 
   while(!input_files.empty())
   {
@@ -149,30 +150,20 @@ void Aggregator::processFiles(const ProcessFiles& files)
   Collector temp_collector;
   for (const auto& file_path : files)
   {
-    const std::size_t percentage
-            = (current_file_number_ * 100) / total_file_number_;
-    if (percentage >= counter_percentage_ * 5)
-    {
-      counter_percentage_ += 1;
-      logger_->info(
-              "Percentage of processed files = " + std::to_string(percentage),
-              Aspect::AGGREGATOR);
-    }
-    current_file_number_ += 1;
-
+    persantage_.increase();
     try
     {
         LogHelper<LogTraits>::load(file_path, temp_collector);
     }
     catch (const eh::Exception &exc)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Can't process file="
-           << file_path
-           << ". Reason: "
-           << exc.what();
-      logger_->error(ostr.str(), Aspect::AGGREGATOR);
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << ": Can't process file="
+             << file_path
+             << ". Reason: "
+             << exc.what();
+      logger_->error(stream.str(), Aspect::AGGREGATOR);
       continue;
     }
 
@@ -187,10 +178,7 @@ void Aggregator::processFiles(const ProcessFiles& files)
     while (record_count >= dump_max_size_)
     {
       if (collector.empty())
-      {
-        std::cout << record_count << std::endl;
         throw Exception("Logic error. Collector is empty");
-      }
 
       if (priority_queue.empty())
         throw Exception("Logic error. Priority_queue is empty");

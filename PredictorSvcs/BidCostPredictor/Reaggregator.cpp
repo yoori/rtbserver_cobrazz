@@ -25,7 +25,8 @@ Reaggregator::Reaggregator(
         : input_dir_(input_dir),
           output_dir_(output_dir),
           prefix_(LogTraits::B::log_base_name()),
-          logger_(logger)
+          logger_(logger),
+          persantage_(logger_, Aspect::REAGGREGATOR, 5)
 {
 }
 
@@ -45,12 +46,12 @@ void Reaggregator::start()
   }
   catch (const eh::Exception& ex)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": [Fatal error]: Reaggregate is failed:"
-         << ex.what();
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": [Fatal error]: Reaggregate is failed:"
+           << ex.what();
 
-    logger_->error(ostr.str(), Aspect::REAGGREGATOR);
+    logger_->error(stream.str(), Aspect::REAGGREGATOR);
   }
 }
 
@@ -107,7 +108,7 @@ void Reaggregator::reaggregate(
   Collector collector;
   collector.prepare_adding(1000000);
 
-  total_file_count_ = aggregated_files.size();
+  persantage_.setTotalNumber(aggregated_files.size());
   logger_->info("Total file needed to process = "
                 + std::to_string(aggregated_files.size()),
                 Aspect::REAGGREGATOR);
@@ -147,7 +148,7 @@ void Reaggregator::reaggregate(
                << temp_file_path
                << ", to="
                << result_file_path;
-          throw Exception(ostr.str());
+          throw Exception(ostr);
         }
       }
       std::for_each(std::begin(processed_files),
@@ -158,14 +159,14 @@ void Reaggregator::reaggregate(
     }
     catch (const eh::Exception& exc)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Reason:"
-           << "[date="
-           << date
-           << "] "
-           << exc.what();
-      logger_->error(ostr.str(), Aspect::REAGGREGATOR);
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << ": Reason:"
+             << "[date="
+             << date
+             << "] "
+             << exc.what();
+      logger_->error(stream.str(), Aspect::REAGGREGATOR);
 
       const auto& [temp_file_path, result_file_path] = result_file;
       std::remove(temp_file_path.c_str());
@@ -184,17 +185,7 @@ void Reaggregator::processDate(
           = aggregated_files.equal_range(date);
   for (auto it = it_begin; it != it_end; ++it)
   {
-    const std::size_t percentage
-            = (current_file_number_ * 100) / total_file_count_;
-    if (percentage >= counter_percentage_ * 5)
-    {
-      counter_percentage_ += 1;
-      logger_->info(
-              "Percentage of processed files = "
-              + std::to_string(percentage),
-              Aspect::REAGGREGATOR);
-    }
-    current_file_number_ += 1;
+    persantage_.increase();
 
     const auto& file_path = it->second;
     try

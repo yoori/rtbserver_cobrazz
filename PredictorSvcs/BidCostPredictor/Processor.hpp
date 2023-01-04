@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_PROCESSOR_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_PROCESSOR_HPP
+#ifndef BIDCOSTPREDICTOR_PROCESSOR_HPP
+#define BIDCOSTPREDICTOR_PROCESSOR_HPP
 
 // THIS
 #include <ReferenceCounting/Interface.hpp>
@@ -27,9 +27,9 @@ protected:
   virtual ~Processor() = default;
 };
 
-using ProcessorPtr = ReferenceCounting::SmartPtr<Processor>;
+using Processor_var = ReferenceCounting::SmartPtr<Processor>;
 
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_PROCESSOR_HPP
+#endif //BIDCOSTPREDICTOR_PROCESSOR_HPP

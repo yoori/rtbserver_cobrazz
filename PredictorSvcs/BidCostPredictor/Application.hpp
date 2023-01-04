@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_APPLICATION_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_APPLICATION_HPP
+#ifndef BIDCOSTPREDICTOR_APPLICATION_HPP
+#define BIDCOSTPREDICTOR_APPLICATION_HPP
 
 // THIS
 #include <eh/Exception.hpp>
@@ -12,8 +12,8 @@ namespace BidCostPredictor
 
 class Application final : private Generics::Uncopyable
 {
-public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+public:
 
   Application() noexcept = default;
 
@@ -25,4 +25,4 @@ public:
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_APPLICATION_HPP
+#endif //BIDCOSTPREDICTOR_APPLICATION_HPP

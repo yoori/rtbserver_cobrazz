@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_REMOVER_HPP
-#define RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_REMOVER_HPP
+#ifndef BIDCOSTPREDICTOR_REMOVER_HPP
+#define BIDCOSTPREDICTOR_REMOVER_HPP
 
 namespace PredictorSvcs
 {
@@ -21,11 +21,11 @@ struct Remover final
       container.erase(it);
   }
 
-  Container &container;
+  Container& container;
   It it;
 };
 
 } // namespace PredictorSvcs
 } // namespace BidCostPredictor
 
-#endif //RTBSERVER_COBRAZZ_BIDCOSTPREDICTOR_REMOVER_HPP
+#endif //BIDCOSTPREDICTOR_REMOVER_HPP

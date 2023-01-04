@@ -1,9 +1,12 @@
-#ifndef RTBSERVER_COBRAZZ_POOLCOLLECTOR_HPP
-#define RTBSERVER_COBRAZZ_POOLCOLLECTOR_HPP
+#ifndef BIDCOSTPREDICTOR_POOLCOLLECTOR_HPP
+#define BIDCOSTPREDICTOR_POOLCOLLECTOR_HPP
 
 // STD
 #include <list>
 #include <mutex>
+
+// THIS
+#include "Generics/Uncopyable.hpp"
 
 namespace PredictorSvcs
 {
@@ -11,15 +14,10 @@ namespace BidCostPredictor
 {
 
 template<class Collector, std::size_t init_size = 500000>
-class PoolCollector final
+class PoolCollector final : private Generics::Uncopyable
 {
 public:
   PoolCollector() = default;
-
-  PoolCollector(const PoolCollector&) = delete;
-  PoolCollector(PoolCollector&&) = delete;
-  PoolCollector& operator=(const PoolCollector&) = delete;
-  PoolCollector& operator=(PoolCollector&&) = delete;
 
   Collector getCollector()
   {
@@ -56,4 +54,4 @@ private:
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_POOLCOLLECTOR_HPP
+#endif //BIDCOSTPREDICTOR_POOLCOLLECTOR_HPP

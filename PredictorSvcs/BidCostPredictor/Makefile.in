@@ -4,13 +4,25 @@ sources := \
   Application.cpp \
   Aggregator.cpp \
   AggregatorMultyThread.cpp \
+  ContainerImpl.cpp \
+  CtrCollector.cpp \
+  DataModelProviderImpl.cpp \
+  Daemon.cpp \
+  DaemonImpl.cpp \
   LogHelper.cpp \
   Main.cpp \
+  ModelCtrImpl.cpp \
+  ModelEvaluatorCtr.cpp \
+  ModelEvaluatorBidCost.cpp \
+  ModelBidCostImpl.cpp \
+  ModelProcessor.cpp \
   Regenerator.cpp \
   Reaggregator.cpp \
   ReaggregatorMultyThread.cpp \
-  Test.cpp \
-  Utils.cpp
+  Storage.cpp \
+  BidCostCollector.cpp \
+  Utils.cpp \
+  Test.cpp
 
 target := BidCostPredictor
 

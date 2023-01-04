@@ -65,7 +65,8 @@ bool ExistDirectory(
 
 Files GetDirectoryFiles(
         const Path& path_dir,
-        const std::string& prefix)
+        const std::string& prefix,
+        const DirInfo dir_info)
 {
   Files files;
 
@@ -89,10 +90,19 @@ Files GetDirectoryFiles(
   {
     const Path result_path = path_dir + '/' + ent->d_name;
     struct stat st;
-    if (ent->d_name[0] != '.' && stat(result_path.c_str(), &st) == 0)
+    if (ent->d_name[0] != '.'
+     && stat(result_path.c_str(), &st) == 0)
     {
-      if (!S_ISREG(st.st_mode))
-        continue;
+      if (dir_info == DirInfo::RegularFile)
+      {
+        if (!S_ISREG(st.st_mode))
+          continue;
+      }
+      else if (dir_info == DirInfo::Directory)
+      {
+        if (!S_ISDIR(st.st_mode))
+          continue;
+      }
 
       const std::string_view file_name(ent->d_name);
       if (file_name.size() < prefix.size())

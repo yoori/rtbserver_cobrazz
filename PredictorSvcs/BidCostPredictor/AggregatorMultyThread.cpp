@@ -35,16 +35,20 @@ AggregatorMultyThread::AggregatorMultyThread(
           prefix_stat_(LogTraits::B::log_base_name()),
           prefix_agg_(LogInnerTraits::B::log_base_name()),
           logger_(logger),
+          observer_(new ActiveObjectObserver(this)),
+          persantage_(logger_, Aspect::AGGREGATOR, 5),
           processed_files_(std::make_shared<ProcessedFiles>())
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
   {
-    task_runners_.emplace_back(new Generics::TaskRunner(this, 1));
+    task_runners_.emplace_back(new Generics::TaskRunner(observer_, 1));
   }
 }
 
 AggregatorMultyThread::~AggregatorMultyThread()
 {
+  shutdown_manager_.stop();
+  observer_->clearDelegate();
   wait();
 }
 
@@ -96,11 +100,11 @@ void AggregatorMultyThread::start()
   }
   catch (const eh::Exception& ex)
   {
+    shutdown_manager_.stop();
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__
          << ": Can't init task runner : "
          << ex.what();
-    shutdown_manager_.stop();
     throw Exception(ostr);
   }
 
@@ -128,6 +132,7 @@ void AggregatorMultyThread::wait() noexcept
     try
     {
       task_runner->deactivate_object();
+      task_runner->wait_object();
     }
     catch (...)
     {}
@@ -165,7 +170,7 @@ void AggregatorMultyThread::aggregate()
           input_dir_,
           prefix_stat_);
 
-  persantage_info_.total_files_number = input_files_.size();
+  persantage_.setTotalNumber(input_files_.size());
 
   for (int i = 1; i <= 3; ++i)
   {
@@ -208,17 +213,7 @@ void AggregatorMultyThread::doRead() noexcept
     count_process_file_ = 0;
   }
 
-  const std::size_t percentage
-        = (persantage_info_.current_file_number * 100) / persantage_info_.total_files_number;
-  if (percentage >= persantage_info_.counter_percentage * 5)
-  {
-    persantage_info_.counter_percentage += 1;
-    logger_->info(
-            "Percentage of processed files = "
-            + std::to_string(percentage),
-            Aspect::AGGREGATOR);
-  }
-  persantage_info_.current_file_number += 1;
+  persantage_.increase();
 
   const auto it = input_files_.begin();
   Remover remover(input_files_, it);
@@ -239,13 +234,13 @@ void AggregatorMultyThread::doRead() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Can't process file="
-         << file_path
-         << " Reason: "
-         << exc.what();
-    logger_->error(ostr.str(), Aspect::AGGREGATOR);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Can't process file="
+           << file_path
+           << " Reason: "
+           << exc.what();
+    logger_->error(stream.str(), Aspect::AGGREGATOR);
     postTask(
             ThreadID::Read,
             &AggregatorMultyThread::doRead);
@@ -385,11 +380,11 @@ void AggregatorMultyThread::doMerge(
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Critical error: "
-         << exc.what();
-    logger_->critical(ostr.str(), Aspect::AGGREGATOR);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Critical error: "
+           << exc.what();
+    logger_->critical(stream.str(), Aspect::AGGREGATOR);
     shutdown_manager_.stop();
   }
 }
@@ -403,9 +398,8 @@ void AggregatorMultyThread::doWrite(
     return;
 
   if (need_add_read)
-    postTask(
-            ThreadID::Read,
-            &AggregatorMultyThread::doRead);
+    postTask(ThreadID::Read,
+             &AggregatorMultyThread::doRead);
 
 
   if (collector.empty())
@@ -425,12 +419,12 @@ void AggregatorMultyThread::doWrite(
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Critical error: "
-         << exc.what();
-    logger_->critical(ostr.str(), Aspect::AGGREGATOR);
     shutdown_manager_.stop();
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Critical error: "
+           << exc.what();
+    logger_->critical(stream.str(), Aspect::AGGREGATOR);
   }
 }
 
@@ -503,12 +497,12 @@ void AggregatorMultyThread::report_error(
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Aggregator stopped due to incorrect operation of queues."
-         << " Reason: "
-         << description;
-    logger_->critical(ostr.str(), Aspect::AGGREGATOR, error_code);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << " : Aggregator stopped due to incorrect operation of queues."
+           << " Reason: "
+           << description;
+    logger_->critical(stream.str(), Aspect::AGGREGATOR, error_code);
     shutdown_manager_.stop();
   }
 }

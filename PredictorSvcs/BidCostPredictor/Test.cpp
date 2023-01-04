@@ -41,7 +41,7 @@ void testSuit(const std::string& directory)
     throw  Exception(ostr);
   }
 
-  ProcessorPtr aggregator_processor(
+  Processor_var aggregator_processor(
           new Aggregator(
                   max_process_files,
                   dump_max_size,
@@ -49,7 +49,7 @@ void testSuit(const std::string& directory)
                   directory,
                   logger));
 
-  ProcessorPtr aggregator_multy_processor(
+  Processor_var aggregator_multy_processor(
           new AggregatorMultyThread(
                   max_process_files,
                   dump_max_size,
@@ -57,13 +57,13 @@ void testSuit(const std::string& directory)
                   directory,
                   logger));
 
-  ProcessorPtr reaggregator_processor(
+  Processor_var reaggregator_processor(
           new Reaggregator(
                   directory,
                   directory,
                   logger));
 
-  ProcessorPtr reaggregator_multy_processor(
+  Processor_var reaggregator_multy_processor(
           new Reaggregator(
                   directory,
                   directory,
@@ -106,7 +106,7 @@ Test::Test(
 {
 }
 
-void Test::addProcessor(ProcessorPtr&& processor)
+void Test::addProcessor(Processor_var&& processor)
 {
   if (!processor)
     throw Exception("processor is null");

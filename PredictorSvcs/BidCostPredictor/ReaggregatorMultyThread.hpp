@@ -1,5 +1,5 @@
-#ifndef RTBSERVER_COBRAZZ_REAGGREGATORMULTYTHREAD_HPP
-#define RTBSERVER_COBRAZZ_REAGGREGATORMULTYTHREAD_HPP
+#ifndef BIDCOSTPREDICTOR_REAGGREGATORMULTYTHREAD_HPP
+#define BIDCOSTPREDICTOR_REAGGREGATORMULTYTHREAD_HPP
 
 // STD
 #include <list>
@@ -11,7 +11,9 @@
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <LogCommons/BidCostStat.hpp>
+#include "ActiveObjectObserver.hpp"
 #include "LogHelper.hpp"
+#include "Persantage.hpp"
 #include "PoolCollector.hpp"
 #include "Processor.hpp"
 #include "ShutdownManager.hpp"
@@ -32,7 +34,7 @@ namespace LogProcessing = AdServer::LogProcessing;
 class ReaggregatorMultyThread final :
         public Processor,
         public virtual ReferenceCounting::AtomicImpl,
-        public Generics::ActiveObjectCallback
+        private ActiveObjectDelegate
 {
   using DayTimestamp = LogProcessing::DayTimestamp;
 
@@ -41,8 +43,8 @@ class ReaggregatorMultyThread final :
   using ProcessedFiles = std::list<Path>;
   using ResultFile = Utils::GeneratedPath;
 
-  using Collector = AdServer::LogProcessing::BidCostStatInnerCollector;
-  using LogTraits = AdServer::LogProcessing::BidCostStatInnerTraits;
+  using Collector = LogProcessing::BidCostStatInnerCollector;
+  using LogTraits = LogProcessing::BidCostStatInnerTraits;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -66,16 +68,6 @@ class ReaggregatorMultyThread final :
     Calculate,
     Write,
     Clean
-  };
-
-  struct PersantageInfo
-  {
-    PersantageInfo() = default;
-    ~PersantageInfo() = default;
-
-    std::size_t total_file_count = 0;
-    std::size_t current_file_number = 0;
-    std::size_t counter_percentage = 0;
   };
 
 public:
@@ -155,15 +147,16 @@ private:
     }
     catch (const eh::Exception& exc)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Can't enqueue_task"
-           << " Reason: "
-           << exc.what();
-      logger_->critical(
-              ostr.str(),
-              Aspect::REAGGREGATOR);
       shutdown_manager_.stop();
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << ": Can't enqueue_task"
+             << " Reason: "
+             << exc.what();
+      logger_->critical(
+              stream.str(),
+              Aspect::REAGGREGATOR);
+
       return false;
     }
   }
@@ -176,6 +169,8 @@ private:
   const std::string prefix_;
 
   Logging::Logger_var logger_;
+
+  ActiveObjectObserver_var observer_;
 
   std::vector<Generics::TaskRunner_var> task_runners_;
 
@@ -191,7 +186,7 @@ private:
   // Read thread
   DayTimestamp current_date_;
   // Read thread
-  PersantageInfo persantage_info_;
+  Persantage persantage_;
   // Read thread
   bool is_read_stoped_ = false;
 
@@ -203,4 +198,4 @@ private:
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs
 
-#endif //RTBSERVER_COBRAZZ_REAGGREGATORMULTYTHREAD_HPP
+#endif //BIDCOSTPREDICTOR_REAGGREGATORMULTYTHREAD_HPP

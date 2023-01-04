@@ -25,11 +25,13 @@ ReaggregatorMultyThread::ReaggregatorMultyThread(
         : input_dir_(input_dir),
           output_dir_(output_dir),
           prefix_(LogTraits::B::log_base_name()),
-          logger_(logger)
+          logger_(logger),
+          observer_(new ActiveObjectObserver(this)),
+          persantage_(logger_, Aspect::REAGGREGATOR, 5)
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
   {
-    task_runners_.emplace_back(new Generics::TaskRunner(this, 1));
+    task_runners_.emplace_back(new Generics::TaskRunner(observer_, 1));
   }
 
   collector_ = pool_collector_.getCollector();
@@ -37,6 +39,8 @@ ReaggregatorMultyThread::ReaggregatorMultyThread(
 
 ReaggregatorMultyThread::~ReaggregatorMultyThread()
 {
+  shutdown_manager_.stop();
+  observer_->clearDelegate();
   wait();
 }
 
@@ -80,11 +84,11 @@ void ReaggregatorMultyThread::start()
   }
   catch(const eh::Exception& ex)
   {
+    shutdown_manager_.stop();
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__
          << ": Can't init task runner : "
          << ex.what();
-    shutdown_manager_.stop();
     throw Exception(ostr);
   }
 
@@ -112,6 +116,7 @@ void ReaggregatorMultyThread::wait() noexcept
     try
     {
       task_runner->deactivate_object();
+      task_runner->wait_object();
     }
     catch (...)
     {}
@@ -175,7 +180,7 @@ void ReaggregatorMultyThread::reaggregate()
     return;
   }
 
-  persantage_info_.total_file_count = aggregated_files_.size();
+  persantage_.setTotalNumber(aggregated_files_.size());
 
   logger_->info("Total file needed to process = "
                 + std::to_string(aggregated_files_.size()),
@@ -236,6 +241,9 @@ void ReaggregatorMultyThread::doClean(
         Collector& collector,
         const PoolType poolType)
 {
+  if (shutdown_manager_.isStoped())
+    return;
+
   if (poolType == PoolType::Merge)
   {
     pool_collector_.addCollector(std::move(collector));
@@ -251,6 +259,9 @@ void ReaggregatorMultyThread::doWrite(
         Collector& collector,
         const LogProcessing::DayTimestamp& date) noexcept
 {
+  if (shutdown_manager_.isStoped())
+    return;
+
   postTask(
           ThreadID::Read,
           &ReaggregatorMultyThread::doRead);
@@ -297,14 +308,14 @@ void ReaggregatorMultyThread::doWrite(
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Reason:"
-         << "[date="
-         << date
-         << "] "
-         << exc.what();
-    logger_->error(ostr.str(), Aspect::REAGGREGATOR);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Reason:"
+           << "[date="
+           << date
+           << "] "
+           << exc.what();
+    logger_->error(stream.str(), Aspect::REAGGREGATOR);
 
     const auto& [temp_path, result_path] = result_file;
     std::remove(temp_path.c_str());
@@ -314,6 +325,9 @@ void ReaggregatorMultyThread::doWrite(
 
 void ReaggregatorMultyThread::doRead() noexcept
 {
+  if (shutdown_manager_.isStoped())
+    return;
+
   if (aggregated_files_.empty())
   {
     if (!is_read_stoped_)
@@ -323,7 +337,8 @@ void ReaggregatorMultyThread::doRead() noexcept
               &ReaggregatorMultyThread::doFlush,
               current_date_);
 
-      postTask(ThreadID::Calculate,
+      postTask(
+              ThreadID::Calculate,
               &ReaggregatorMultyThread::doStop,
               Addressee::Calculator);
     }
@@ -332,16 +347,7 @@ void ReaggregatorMultyThread::doRead() noexcept
     return;
   }
 
-  const std::size_t percentage
-        = (persantage_info_.current_file_number * 100) / persantage_info_.total_file_count;
-  if (percentage >= persantage_info_.counter_percentage * 5)
-  {
-    persantage_info_.counter_percentage += 1;
-    logger_->info("Percentage of processed files = "
-                  + std::to_string(percentage),
-                  Aspect::REAGGREGATOR);
-  }
-  persantage_info_.current_file_number += 1;
+  persantage_.increase();
 
   const auto it = aggregated_files_.begin();
   const auto date = it->first;
@@ -355,13 +361,13 @@ void ReaggregatorMultyThread::doRead() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Can't add file="
-         << file_path
-         << " to collector. Reason: "
-         << exc.what();
-    logger_->error(ostr.str(), Aspect::REAGGREGATOR);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Can't add file="
+           << file_path
+           << " to collector. Reason: "
+           << exc.what();
+    logger_->error(stream.str(), Aspect::REAGGREGATOR);
 
     postTask(
             ThreadID::Read,
@@ -396,6 +402,9 @@ void ReaggregatorMultyThread::doRead() noexcept
 void ReaggregatorMultyThread::doFlush(
         const LogProcessing::DayTimestamp& date) noexcept
 {
+  if (shutdown_manager_.isStoped())
+    return;
+
   try
   {
     Collector save_collector(std::move(collector_));
@@ -412,19 +421,19 @@ void ReaggregatorMultyThread::doFlush(
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Can't Flush="
-         << " to collector. Reason: "
-         << exc.what() << "\n";
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Can't Flush="
+           << " to collector. Reason: "
+           << exc.what() << "\n";
 
     for (const auto& path_file : processed_files_)
     {
-      ostr << "File="
-           << path_file
-           << " not reaggregated";
+      stream << "File="
+             << path_file
+             << " not reaggregated";
     }
-    logger_->error(ostr.str(), Aspect::REAGGREGATOR);
+    logger_->error(stream.str(), Aspect::REAGGREGATOR);
   }
 }
 
@@ -432,6 +441,9 @@ void ReaggregatorMultyThread::doMerge(
         Collector& temp_collector,
         const std::string& file_path) noexcept
 {
+  if (shutdown_manager_.isStoped())
+    return;
+
   try
   {
     collector_ += temp_collector;
@@ -445,21 +457,24 @@ void ReaggregatorMultyThread::doMerge(
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Can't add file="
-         << file_path
-         << " to collector. Reason: "
-         << exc.what() << "\n"
-         << "File=" << file_path
-         <<  " not aggreagted";
-    logger_->error(ostr.str(), Aspect::REAGGREGATOR);
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Can't add file="
+           << file_path
+           << " to collector. Reason: "
+           << exc.what() << "\n"
+           << "File=" << file_path
+           <<  " not aggreagted";
+    logger_->error(stream.str(), Aspect::REAGGREGATOR);
   }
 }
 
 void ReaggregatorMultyThread::doStop(
         const Addressee addresee) noexcept
 {
+  if (shutdown_manager_.isStoped())
+    return;
+
   if (addresee == Addressee::Calculator)
   {
     postTask(
@@ -499,16 +514,16 @@ void ReaggregatorMultyThread::report_error(
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Aggregator stopped due to incorrect operation of queues."
-         << " Reason: "
-         << description;
+    shutdown_manager_.stop();
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << " : Aggregator stopped due to incorrect operation of queues."
+           << " Reason: "
+           << description;
     logger_->critical(
-            ostr.str(),
+            stream.str(),
             Aspect::REAGGREGATOR,
             error_code);
-    shutdown_manager_.stop();
   }
 }
 
