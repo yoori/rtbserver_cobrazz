@@ -4,6 +4,7 @@ sources := \
   Application.cpp \
   Aggregator.cpp \
   AggregatorMultyThread.cpp \
+  Configuration.cpp \
   ContainerImpl.cpp \
   CtrCollector.cpp \
   DataModelProviderImpl.cpp \

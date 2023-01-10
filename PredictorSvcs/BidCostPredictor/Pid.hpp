@@ -36,7 +36,6 @@ public:
     unlock();
     if (fd_ >= 0)
     {
-      ftruncate(fd_, 0);
       close(fd_);
     }
   }
@@ -100,6 +99,7 @@ private:
       return;
 
     is_lock_ = false;
+    ftruncate(fd_, 0);
     unlockFile(fd_);
   }
 

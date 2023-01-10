@@ -8,6 +8,7 @@
 #include "Application.hpp"
 #include "Aggregator.hpp"
 #include "AggregatorMultyThread.hpp"
+#include "Configuration.h"
 #include "DaemonImpl.hpp"
 #include "Pid.hpp"
 #include "Processor.hpp"
@@ -26,11 +27,17 @@ namespace
 const char USAGE[] =
         "Usage: BitCostPredictor <COMMAND> [OPTIONS]\n"
         "Commands:\n"
+        "  service start <PATH CONFIG>\n"
+        "  service stop <PATH CONFIG>\n"
+        "  service status\n"
         "  regenerate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
         "  aggregate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
         "  reaggregate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
-        "  test <TEST DIRECTORY>"
+        "  test <TEST DIRECTORY>\n\n"
         "Sample:\n"
+        "  service start /home/user/config.json\n"
+        "  service stop /home/user/config.json\n"
+        "  service status\n"
         "  test /tmp/test_bid_cost_predictor\n"
         "  regenerate /tmp/original /tmp/destination\n"
         "  aggregate /tmp/original /tmp/destination\n"
@@ -138,50 +145,93 @@ int Application::run(int argc, char **argv)
       processor->wait();
     }
   }
-  else if (command == "daemon")
+  else if (command == "service")
   {
     ++it;
     if (it == commands.end())
     {
-      std::cerr << "daemon: daemon option not defined";
+      std::cerr << "daemon: daemon path_config not defined";
       return EXIT_FAILURE;
     }
     const std::string& daemon_option = *it;
 
-    const std::string pid_path = "/home/artem_bogdanov/model/daemon.pid";
-
     if (daemon_option == "start")
     {
-      const std::string model_dir = "/home/artem_bogdanov/model";
-      const std::string model_file_name = "bid_cost.csv";
-      const std::string model_temp_dir = "/home/artem_bogdanov/temp/model";
-      const std::string ctr_model_dir = "/home/artem_bogdanov/model_ctr";
-      const std::string ctr_model_file_name = "trivial_ctr.csv";
-      const std::string ctr_model_temp_dir = "/home/artem_bogdanov/temp/model_ctr";
-      const std::string model_agg_dir = "/home/artem_bogdanov/BidCostStatAgg2";
-      const std::size_t model_period = 300;
-      const std::size_t agg_max_process_files = 10000;
-      const std::size_t agg_dump_max_size = 100000;
-      const std::string agg_input_dir = "/home/artem_bogdanov/BidCostStatAgg";
-      const std::string agg_output_dir = "/home/artem_bogdanov/BidCostStatAgg";
-      const std::size_t agg_period = 120;
-      const std::string reagg_input_dir = "/home/artem_bogdanov/BidCostStatAgg2";
-      const std::string reagg_output_dir = "/home/artem_bogdanov/BidCostStatAgg2";
-      const std::size_t reagg_period = 120;
-      const std::string path_log_file = "/home/artem_bogdanov/model/daemon_log.txt";
+      ++it;
+      if (it == commands.end())
+      {
+        std::cerr << "daemon: path_config not defined";
+        return EXIT_FAILURE;
+      }
+      const std::string& path_config = *it;
 
-      std::ofstream ostream(path_log_file, std::ios::app);
+      const Configuration configuration(path_config);
+      const std::string version =
+              configuration.get("version");
+      const std::string description =
+              configuration.get("description");
+      const std::string log_path =
+              configuration.get("config.log_path");
+      const std::string pid_path =
+              configuration.get("config.pid_path");
+
+      const Configuration config_model =
+              configuration.getConfig("config.model");
+      const std::string model_agg_dir =
+              config_model.get("input_directory");
+      const std::size_t model_period =
+              config_model.get<std::size_t>("period");
+      const std::string model_dir =
+              config_model.get("bid_cost.output_directory");
+      const std::string model_temp_dir =
+              config_model.get("bid_cost.temp_directory");
+      const std::string model_file_name =
+              config_model.get("bid_cost.file_name");
+      const std::string ctr_model_dir =
+              config_model.get("ctr.output_directory");
+      const std::string ctr_model_temp_dir=
+              config_model.get("ctr.temp_directory");
+      const std::string ctr_model_file_name =
+              config_model.get("ctr.file_name");
+
+      const Configuration config_aggregator =
+              configuration.getConfig("config.aggregator");
+      const std::size_t agg_max_process_files =
+              config_aggregator.get<std::size_t>("max_process_files");
+      const std::size_t agg_dump_max_size =
+              config_aggregator.get<std::size_t>("dump_max_size");
+      const std::string agg_input_dir =
+              config_aggregator.get("input_directory");
+      const std::string agg_output_dir =
+              config_aggregator.get("output_directory");
+      const std::size_t agg_period =
+              config_aggregator.get<std::size_t>("period");
+
+      const Configuration config_reaggregator =
+              configuration.getConfig("config.reaggregator");
+      const std::string reagg_input_dir =
+              config_reaggregator.get("input_directory");
+      const std::string reagg_output_dir =
+              config_reaggregator.get("output_directory");
+      const std::size_t reagg_period =
+              config_reaggregator.get<std::size_t>("period");
+
+      std::ofstream ostream(log_path, std::ios::app);
       if (!ostream.is_open())
       {
         Stream::Error ostr;
         ostr << __PRETTY_FUNCTION__
              << "Can't open file="
-             << path_log_file;
+             << log_path;
         throw Exception(ostr);
       }
       Logging::Logger_var logger(
               new Logging::OStream::Logger(
-                      Logging::OStream::Config(ostream)));
+                      Logging::OStream::Config(
+                              ostream,
+                              Logging::Logger::INFO)));
+      logger->info("Config version=" + version, Aspect::APPLICATION);
+      logger->info("Config description=" + description, Aspect::APPLICATION);
 
       Daemon_var daemon(
               new DaemonImpl(
@@ -219,8 +269,20 @@ int Application::run(int argc, char **argv)
     }
     else if (daemon_option == "stop")
     {
+      ++it;
+      if (it == commands.end())
+      {
+        std::cerr << "daemon: path_config not defined";
+        return EXIT_FAILURE;
+      }
+      const std::string& path_config = *it;
+
       try
       {
+        Configuration configuration(path_config);
+        const std::string pid_path =
+                configuration.get("config.pid_path");
+
         PidGetter getter(pid_path);
         const auto pid = getter.get();
         if (pid)
@@ -241,7 +303,8 @@ int Application::run(int argc, char **argv)
         stream << __PRETTY_FUNCTION__
                << " : Reason: "
                << exc.what();
-        std::cerr << stream.str();
+        std::cerr << stream.str()
+                  << std::endl;
       }
     }
   }
@@ -249,7 +312,7 @@ int Application::run(int argc, char **argv)
   {
     std::cerr << "Unknown command '"
               << command << "'\n"
-              << "See help for more information.";
+              << "See help for more information.\n";
     return EXIT_FAILURE;
   }
 

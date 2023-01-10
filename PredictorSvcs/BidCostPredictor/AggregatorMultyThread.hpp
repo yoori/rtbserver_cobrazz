@@ -207,6 +207,8 @@ private:
   bool is_running_ = false;
 
   ShutdownManager shutdown_manager_;
+
+  bool is_success_completed_ = false;
 };
 
 } // namespace BidCostPredictor

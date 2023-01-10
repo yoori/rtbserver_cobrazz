@@ -133,6 +133,23 @@ void ReaggregatorMultyThread::wait() noexcept
   }
 
   task_runners_.clear();
+
+  if (!is_success_completed_)
+  {
+    try
+    {
+        auto need_remove_files =
+                Utils::GetDirectoryFiles(
+                        output_dir_,
+                        "~");
+        for (const auto& path : need_remove_files)
+        {
+          std::remove(path.c_str());
+        }
+    }
+    catch (...)
+    {}
+  }
 }
 
 void ReaggregatorMultyThread::stop() noexcept
@@ -484,6 +501,7 @@ void ReaggregatorMultyThread::doStop(
   }
   else if (addresee == Addressee::Writer)
   {
+    is_success_completed_ = true;
     shutdown_manager_.stop();
     logger_->info(
             std::string("Reaggregator completed successfully"),

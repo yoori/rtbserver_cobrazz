@@ -75,7 +75,7 @@ private:
            const std::size_t count_sec,
            Args&& ...args) noexcept
   {
-    if (!planner_)
+    if (!planner_ || !task_runner_)
       return false;
 
     try

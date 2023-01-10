@@ -59,6 +59,8 @@ GeneratedPath GenerateFilePath(
         const std::string& prefix,
         const LogProcessing::DayTimestamp& date);
 
+std::pair<double, double> memoryProcessUsage();
+
 } // namespace Utils
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs

@@ -135,6 +135,49 @@ GeneratedPath GenerateFilePath(
   return {temp_file_path, result_file_path};
 }
 
+std::pair<double, double> memoryProcessUsage()
+{
+  const std::string path_to_stat = "/proc/self/stat";
+  std::ifstream stat_stream(
+          path_to_stat,
+          std::ios_base::in);
+  if (!stat_stream.is_open())
+  {
+    Stream::Error stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Can't open file=" << path_to_stat;
+    throw Exception(stream);
+  }
+
+  std::string pid, comm, state, ppid, pgrp, session, tty_nr;
+  std::string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+  std::string utime, stime, cutime, cstime, priority, nice;
+  std::string O, itrealvalue, starttime;
+
+  unsigned long vsize = 0;
+  long rss = 0;
+
+  stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+              >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+              >> utime >> stime >> cutime >> cstime >> priority >> nice
+              >> O >> itrealvalue >> starttime >> vsize >> rss;
+  if (stat_stream.bad() || stat_stream.fail())
+  {
+    Stream::Error stream;
+    stream << __PRETTY_FUNCTION__
+           << ": Error reading data";
+    throw Exception(stream);
+  }
+  stat_stream.close();
+
+  const long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
+
+  const double vm_usage = vsize / (1024.0 * 1024.0 * 1024.0);
+  const double resident_set = rss * page_size_kb / (1024.0 * 1024.0);
+
+  return {vm_usage, resident_set};
+}
+
 } // namespace Utils
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs

@@ -13,7 +13,8 @@ namespace PredictorSvcs
 namespace BidCostPredictor
 {
 
-template<class Collector, std::size_t init_size = 500000>
+template<class Collector,
+        std::size_t init_size = 500000>
 class PoolCollector final : private Generics::Uncopyable
 {
 public:

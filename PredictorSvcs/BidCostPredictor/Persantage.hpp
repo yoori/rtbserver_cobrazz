@@ -7,6 +7,7 @@
 // THIS
 #include "Generics/Uncopyable.hpp"
 #include "Logger/Logger.hpp"
+#include "Utils.hpp"
 
 namespace PredictorSvcs
 {
@@ -19,11 +20,13 @@ public:
   Persantage(const Logging::Logger_var& logger,
              const char* aspect,
              const std::size_t diff = 5,
-             const std::size_t total_number = 0)
+             const std::size_t total_number = 0,
+             const bool need_print_memory = true)
              : logger_(logger),
                aspect_(aspect),
                diff_(diff),
-               total_number_(total_number)
+               total_number_(total_number),
+               need_print_memory_(need_print_memory)
   {
   }
 
@@ -51,6 +54,19 @@ public:
               "Percentage of processed data = " +
               std::to_string(percentage),
               aspect_);
+
+      if (need_print_memory_)
+      {
+        try
+        {
+          const auto memory = Utils::memoryProcessUsage();
+          std::stringstream stream;
+          stream << "Ram[Gb]=" << memory.second;
+          logger_->info(stream.str(), aspect_);
+        }
+        catch (...)
+        {}
+      }
     }
     current_number_ += 1;
   }
@@ -67,6 +83,8 @@ private:
   std::size_t current_number_ = 0;
 
   std::size_t counter_ = 0;
+
+  bool need_print_memory_ = false;
 };
 
 } // namespace BidCostPredictor
