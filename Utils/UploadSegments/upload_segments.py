@@ -4,6 +4,7 @@ import asyncio
 import aiohttp
 import psycopg2
 import signal
+import subprocess
 import time
 
 
@@ -62,6 +63,7 @@ class Application:
         parser.add_argument("-verbosity", type=int, default=1, help="Level of console information.")
         parser.add_argument("-print-line", type=int, default=0, help="Print line index despite verbosity.")
         parser.add_argument("--pid-file", required=False, help="File with process ID.")
+        parser.add_argument("-private-key-file", help="Private .der key for signing uids.")
 
         args = parser.parse_args()
         self.upload_url = args.upload_url
@@ -81,6 +83,7 @@ class Application:
         self.print_line = args.print_line
         self.line_index = 0
         self.pid_file = args.pid_file
+        self.private_key_file = args.private_key_file
         if self.pid_file is not None:
             with open(self.pid_file, "w") as f:
                 f.write(str(os.getpid()))
@@ -123,10 +126,11 @@ class Application:
                 if self.verbosity >= 1:
                     print("Reg file:", file)
                 file_basename, file_ext = os.path.splitext(file)
-                keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())
+                keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())    
                 self.cursor.execute(
                     SQL_QUERY,
-                    (self.channel_prefix, self.account_id, keyword, keyword, keyword, keyword, keyword))
+                    (self.channel_prefix + file_basename.upper(), self.account_id, keyword, keyword, keyword, keyword, keyword))
+                self.cursor.execute("COMMIT;");
                 reg_file_path = os.path.join(self.markers_dir, reg_file)
                 with open(reg_file_path, "w"):
                     pass
@@ -148,9 +152,19 @@ class Application:
                     keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())
                     is_stable = (file_ext == ".stable")
                     self.line_index = 0
-                    with open(file_path, "r") as f:
+
+                    async def run_lines(f):
                         await asyncio.gather(
                             *tuple(self.on_line(f, is_stable, keyword) for i in range(self.upload_threads)))
+
+                    if file_ext in ("", ".txt", ".uids"):
+                        with subprocess.Popen(
+                            ['sh', '-c', f'cat "{file_path}" | sed -r "s/([^.])$/\\1../" | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"'],
+                            stdout=subprocess.PIPE) as shp:
+                            await run_lines(shp.stdout)
+                    else:
+                        with open(file_path, "rb") as f:
+                            await run_lines(f)
                     if not self.running:
                         return
                     with open(upload_file_path, "w") as f:
@@ -168,7 +182,7 @@ class Application:
         while True:
             if not self.running:
                 break
-            line = f.readline()
+            line = f.readline().decode("utf-8")
             if not line:
                 break
             if line.endswith("\n"):
