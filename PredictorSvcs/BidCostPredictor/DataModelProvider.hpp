@@ -11,7 +11,7 @@ namespace BidCostPredictor
 {
 
 class DataModelProvider :
-        public virtual ReferenceCounting::Interface
+  public virtual ReferenceCounting::Interface
 {
 public:
   DataModelProvider() = default;

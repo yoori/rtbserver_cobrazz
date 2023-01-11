@@ -21,13 +21,13 @@ namespace BidCostPredictor
 {
 
 Regenerator::Regenerator(
-        const std::string& input_dir,
-        const std::string& output_dir,
-        const Logging::Logger_var& logger)
-        : input_dir_(input_dir),
-          output_dir_(output_dir),
-          prefix_(LogTraits::B::log_base_name()),
-          logger_(logger)
+  const std::string& input_dir,
+  const std::string& output_dir,
+  Logging::Logger* logger)
+  : input_dir_(input_dir),
+    output_dir_(output_dir),
+    prefix_(LogTraits::B::log_base_name()),
+    logger_(ReferenceCounting::add_ref(logger))
 {
 }
 
@@ -35,7 +35,7 @@ void Regenerator::start()
 {
   try
   {
-    if (!Utils::ExistDirectory(input_dir_))
+    if (!Utils::exist_directory(input_dir_))
     {
       Stream::Error ostr;
       ostr << "Not exist directory="
@@ -43,7 +43,7 @@ void Regenerator::start()
       throw Exception(ostr);
     }
 
-    if (!Utils::ExistDirectory(output_dir_))
+    if (!Utils::exist_directory(output_dir_))
     {
       Stream::Error ostr;
       ostr << "Not exist directory="
@@ -52,12 +52,13 @@ void Regenerator::start()
     }
 
     logger_->info(
-            std::string("Regenerator: started"),
-            Aspect::REGENERATOR);
+      std::string("Regenerator: started"),
+      Aspect::REGENERATOR);
 
-    auto input_files = Utils::GetDirectoryFiles(
-            input_dir_,
-            prefix_);
+    auto input_files =
+      Utils::get_directory_files(
+        input_dir_,
+        prefix_);
     ProcessFiles process_files;
 
     const std::regex date_regex("\\d{4}-\\d{2}-\\d{2}");
@@ -65,7 +66,7 @@ void Regenerator::start()
     {
       std::smatch date_match;
       if(std::regex_search(file_path, date_match, date_regex)
-         && !date_match.empty())
+        && !date_match.empty())
       {
         std::stringstream stream;
         stream << date_match[0];
@@ -80,8 +81,8 @@ void Regenerator::start()
     regenerate(process_files, output_dir_, prefix_);
 
     logger_->info(
-            std::string("Regenerator: finished"),
-            Aspect::REGENERATOR);
+      std::string("Regenerator: finished"),
+      Aspect::REGENERATOR);
   }
   catch (const eh::Exception& ex)
   {
@@ -106,8 +107,8 @@ const char* Regenerator::name() noexcept
   return "AggregatorSingleThread";
 }
 
-void Regenerator::removeProcessedFiles(
-        const ProcessedFiles& processed_files) noexcept
+void Regenerator::remove_processed_files(
+  const ProcessedFiles& processed_files) noexcept
 {
   for (const auto& [temp_file_path, result_file_path]: processed_files)
   {
@@ -117,12 +118,12 @@ void Regenerator::removeProcessedFiles(
 }
 
 void Regenerator::regenerate(
-        const ProcessFiles& process_files,
-        const std::string& output_dir,
-        const std::string& prefix)
+  const ProcessFiles& process_files,
+  const std::string& output_dir,
+  const std::string& prefix)
 {
   Persantage persantage(logger_, Aspect::REGENERATOR, 5);
-  persantage.setTotalNumber(process_files.size());
+  persantage.set_total_number(process_files.size());
 
   Collector collector;
   for (const auto& file_info : process_files)
@@ -143,8 +144,8 @@ void Regenerator::regenerate(
              << ": Can't open file="
              << path;
       logger_->error(
-              stream.str(),
-              Aspect::REGENERATOR);
+        stream.str(),
+        Aspect::REGENERATOR);
       continue;
     }
 
@@ -220,12 +221,12 @@ void Regenerator::regenerate(
         }
         else
         {
-          saveFile(
-                  output_dir,
-                  prefix,
-                  date,
-                  collector,
-                  processed_files);
+          save_file(
+            output_dir,
+            prefix,
+            date,
+            collector,
+            processed_files);
           collector.clear();
           collector.add(k, v);
         }
@@ -239,11 +240,11 @@ void Regenerator::regenerate(
 
       if (!collector.empty())
       {
-        saveFile(
-                output_dir,
-                prefix, date,
-                collector,
-                processed_files);
+        save_file(
+          output_dir,
+          prefix, date,
+          collector,
+          processed_files);
       }
 
       for (const auto& [temp_path, result_path]: processed_files)
@@ -279,22 +280,22 @@ void Regenerator::regenerate(
              << "\n";
       logger_->error(stream.str(),Aspect::REGENERATOR);
 
-      removeProcessedFiles(processed_files);
+      remove_processed_files(processed_files);
     }
   }
 }
 
-void Regenerator::saveFile(
-        const std::string& output_dir,
-        const std::string& prefix,
-        const DayTimestamp& date,
-        Collector& collector,
-        ProcessedFiles& processed_files)
+void Regenerator::save_file(
+  const std::string& output_dir,
+  const std::string& prefix,
+  const DayTimestamp& date,
+  Collector& collector,
+  ProcessedFiles& processed_files)
 {
   const auto generated_path =
-          Utils::GenerateFilePath(output_dir, prefix, date);
+    Utils::generate_file_path(output_dir, prefix, date);
   const auto& temp_file_path =
-          generated_path.first;
+    generated_path.first;
   LogHelper<LogTraits>::save(temp_file_path, collector);
   processed_files.emplace_back(generated_path);
 }

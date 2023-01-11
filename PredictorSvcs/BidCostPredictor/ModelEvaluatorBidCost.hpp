@@ -30,9 +30,9 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class ModelEvaluatorBidCostImpl final:
-        public ModelEvaluatorBidCost,
-        public virtual ReferenceCounting::AtomicImpl,
-        private ActiveObjectDelegate
+  public ModelEvaluatorBidCost,
+  public virtual ReferenceCounting::AtomicImpl,
+  private ActiveObjectDelegate
 {
   using FixedNumber = LogProcessing::FixedNumber;
   using Point = FixedNumber;
@@ -53,10 +53,10 @@ class ModelEvaluatorBidCostImpl final:
 
 public:
   explicit ModelEvaluatorBidCostImpl(
-          const Points& points,
-          const DataModelProvider_var& data_provider,
-          const ModelBidCostFactory_var& model_factory,
-          const Logging::Logger_var& logger);
+    const Points& points,
+    DataModelProvider* data_provider,
+    ModelBidCostFactory* model_factory,
+    Logging::Logger* logger);
 
   ~ModelEvaluatorBidCostImpl() override;
 
@@ -69,34 +69,35 @@ private:
 
   void wait() noexcept;
 
-  void doInit() noexcept;
+  void do_init() noexcept;
 
-  void doCalculate(const Iterator it) noexcept;
+  void do_calculate(const Iterator it) noexcept;
 
-  void doCalculateHelper(const Iterator it);
+  void do_calculate_helper(const Iterator it);
 
-  void doSave(
-          const TagId& tag_id,
-          const Url_var& url,
-          const Point& point,
-          const Cost& target_cost,
-          const Cost& max_cost) noexcept;
+  void do_save(
+    const TagId& tag_id,
+    const Url_var& url,
+    const Point& point,
+    const Cost& target_cost,
+    const Cost& max_cost) noexcept;
 
-  void doNextTask() noexcept;
+  void do_next_task() noexcept;
 
   void report_error(
-          Severity severity,
-          const String::SubString& description,
-          const char* error_code = 0) noexcept override;
+    Severity severity,
+    const String::SubString& description,
+    const char* error_code = 0) noexcept override;
 
   template<class MemPtr,
           class ...Args>
   std::enable_if_t<
-          std::is_member_function_pointer_v<MemPtr>,
-          bool>
-  postTask(const TaskRunnerID id,
-           MemPtr mem_ptr,
-           Args&& ...args) noexcept
+    std::is_member_function_pointer_v<MemPtr>,
+    bool>
+  post_task(
+    const TaskRunnerID id,
+    MemPtr mem_ptr,
+    Args&& ...args) noexcept
   {
     try
     {
@@ -110,10 +111,10 @@ private:
         task_runner = task_runner_pool_;
       }
       task_runner->enqueue_task(
-              AdServer::Commons::make_delegate_task(
-                      std::bind(mem_ptr,
-                                this,
-                                std::forward<Args>(args)...)));
+        AdServer::Commons::make_delegate_task(
+          std::bind(mem_ptr,
+                    this,
+                    std::forward<Args>(args)...)));
       return true;
     }
     catch (const eh::Exception& exc)
@@ -125,8 +126,8 @@ private:
              << " Reason: "
              << exc.what();
       logger_->critical(
-              stream.str(),
-              Aspect::MODEL_EVALUATOR_BID_COST);
+        stream.str(),
+        Aspect::MODEL_EVALUATOR_BID_COST);
       return false;
     }
   }

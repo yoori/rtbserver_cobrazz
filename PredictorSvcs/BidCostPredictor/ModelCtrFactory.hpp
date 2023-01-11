@@ -11,12 +11,12 @@ namespace BidCostPredictor
 {
 
 class ModelCtrFactoryImpl :
-        public ModelCtrFactory,
-        public virtual ReferenceCounting::AtomicImpl
+  public ModelCtrFactory,
+  public virtual ReferenceCounting::AtomicImpl
 {
 public:
-  ModelCtrFactoryImpl(Logging::Logger_var& logger)
-                     : logger_(logger)
+  ModelCtrFactoryImpl(Logging::Logger* logger)
+  : logger_(ReferenceCounting::add_ref(logger))
   {
   }
 
@@ -28,7 +28,7 @@ public:
   ~ModelCtrFactoryImpl() override = default;
 
 private:
-  Logging::Logger_var& logger_;
+  Logging::Logger_var logger_;
 };
 
 } // namespace BidCostPredictor

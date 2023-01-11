@@ -1,5 +1,6 @@
 // STD
 #include <iostream>
+#include <sstream>
 
 // THIS
 #include "Daemon.hpp"
@@ -19,44 +20,11 @@ namespace PredictorSvcs
 namespace BidCostPredictor
 {
 
-class ShutdownManagerDaemon : private Generics::Uncopyable
-{
-public:
-  static ShutdownManagerDaemon& getInstance()
-  {
-    static ShutdownManagerDaemon shutdownManager;
-    return shutdownManager;
-  }
-
-  void stop() noexcept
-  {
-    shutdown_manager_.stop();
-  }
-
-  void wait() noexcept
-  {
-    shutdown_manager_.wait();
-  }
-
-private:
-  ShutdownManagerDaemon() = default;
-
-  ~ShutdownManagerDaemon() = default;
-
-private:
-  ShutdownManager shutdown_manager_;
-};
-
-void handleSignal(int)
-{
-  ShutdownManagerDaemon::getInstance().stop();
-}
-
 Daemon::Daemon(
-        const std::string& pid_path,
-        const Logging::Logger_var& logger)
-        : pid_path_(pid_path),
-          logger_(logger)
+  const std::string& pid_path,
+  Logging::Logger* logger)
+  : pid_path_(pid_path),
+    logger_(ReferenceCounting::add_ref(logger))
 {
 }
 
@@ -153,13 +121,9 @@ void Daemon::start()
       throw Exception("Daemon already running");
     }
 
-    signal(SIGINT, handleSignal);
-    signal(SIGQUIT, handleSignal);
-    signal(SIGTERM, handleSignal);
-
     is_running_ = true;
 
-    startLogic();
+    start_logic();
   }
   catch (const eh::Exception& exc)
   {
@@ -174,11 +138,17 @@ void Daemon::start()
 
 void Daemon::stop() noexcept
 {
-  auto& shutdown_manager = ShutdownManagerDaemon::getInstance();
-  shutdown_manager.stop();
+  const auto pid = ::getpid();
+  if (kill(pid, SIGINT) == -1)
+  {
+    std::stringstream stream;
+    stream << __PRETTY_FUNCTION__
+           << " function kill is failed";
+    logger_->critical(stream.str(), Aspect::DAEMON);
+  }
 
   if (is_running_)
-    stopLogic();
+    stop_logic();
 }
 
 void Daemon::wait() noexcept
@@ -187,11 +157,51 @@ void Daemon::wait() noexcept
     return;
   is_running_ = false;
 
-  auto& shutdown_manager = ShutdownManagerDaemon::getInstance();
-  shutdown_manager.wait();
+  try
+  {
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGQUIT);
+    sigaddset(&mask, SIGTERM);
+    sigprocmask(SIG_BLOCK, &mask, nullptr);
 
-  stopLogic();
-  waitLogic();
+    int signo = 0;
+    if (sigwait(&mask, &signo) != 0)
+    {
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << " : sigwait is failed";
+      logger_->critical(stream.str(), Aspect::DAEMON);
+    }
+    else
+    {
+      std::stringstream stream;
+      stream << "Signal=";
+      switch (signo)
+      {
+      case SIGINT:
+        stream << "SIGINT";
+        break;
+      case SIGQUIT:
+        stream << "SIGQUIT";
+        break;
+      case SIGTERM:
+        stream << "SIGTERM";
+        break;
+      default:
+        stream << "Unexpected signal";
+      }
+      stream << " interrupted service";
+      logger_->info(stream.str(), Aspect::DAEMON);
+    }
+
+    stop_logic();
+    wait_logic();
+  }
+  catch (...)
+  {
+  }
 }
 
 const char* Daemon::name() noexcept

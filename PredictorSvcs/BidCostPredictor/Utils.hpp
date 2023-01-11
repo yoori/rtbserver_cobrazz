@@ -17,7 +17,9 @@ namespace AdServer
 namespace LogProcessing
 {
 
-inline bool operator>(const DayTimestamp& date1, const DayTimestamp& date2)
+inline bool operator>(
+  const DayTimestamp& date1,
+  const DayTimestamp& date2)
 {
   return date1.time() > date2.time();
 }
@@ -46,20 +48,20 @@ enum class DirInfo
   Directory
 };
 
-bool ExistDirectory(
-        const std::string& path_directory) noexcept;
+bool exist_directory(
+  const std::string& path_directory) noexcept;
 
-Files GetDirectoryFiles(
-        const Path& path_dir,
-        const std::string& prefix = std::string(),
-        const DirInfo dir_info = DirInfo::RegularFile);
+Files get_directory_files(
+  const Path& path_dir,
+  const std::string& prefix = std::string(),
+  const DirInfo dir_info = DirInfo::RegularFile);
 
-GeneratedPath GenerateFilePath(
-        const Path& output_dir,
-        const std::string& prefix,
-        const LogProcessing::DayTimestamp& date);
+GeneratedPath generate_file_path(
+  const Path& output_dir,
+  const std::string& prefix,
+  const LogProcessing::DayTimestamp& date);
 
-std::pair<double, double> memoryProcessUsage();
+std::pair<double, double> memory_process_usage();
 
 } // namespace Utils
 } // namespace BidCostPredictor

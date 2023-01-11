@@ -15,36 +15,38 @@ namespace BidCostPredictor
 {
 
 ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
-        const Points& points,
-        const DataModelProvider_var& data_provider,
-        const ModelBidCostFactory_var& model_factory,
-        const Logging::Logger_var& logger)
-        : points_(points),
-          data_provider_(data_provider),
-          model_factory_(model_factory),
-          logger_(logger),
-          observer_(new ActiveObjectObserver(this)),
-          persantage_(logger_, Aspect::MODEL_EVALUATOR_BID_COST, 5),
-          task_runner_(new Generics::TaskRunner(observer_, 1))
+  const Points& points,
+  DataModelProvider* data_provider,
+  ModelBidCostFactory* model_factory,
+  Logging::Logger* logger)
+  : points_(points),
+    data_provider_(ReferenceCounting::add_ref(data_provider)),
+    model_factory_(ReferenceCounting::add_ref(model_factory)),
+    logger_(ReferenceCounting::add_ref(logger)),
+    observer_(new ActiveObjectObserver(this)),
+    persantage_(logger_, Aspect::MODEL_EVALUATOR_BID_COST, 5),
+    task_runner_(new Generics::TaskRunner(observer_, 1))
 {
   threads_number_ = std::max(8u, std::thread::hardware_concurrency());
   threads_number_ = std::min(36u, threads_number_);
   task_runner_pool_ = TaskRunner_var(
-          new Generics::TaskRunner(
-                  observer_,
-                  threads_number_));
+    new Generics::TaskRunner(
+      observer_,
+      threads_number_));
+
   std::sort(
-          std::begin(points_),
-          std::end(points_),
-          [] (const auto& d1, const auto& d2) {
-            return d1 > d2;
-          });
+    std::begin(points_),
+    std::end(points_),
+    [] (const auto& d1, const auto& d2) {
+      return d1 > d2;
+    });
+
   collector_.prepare_adding(100000000);
 }
 
 ModelBidCost_var ModelEvaluatorBidCostImpl::evaluate() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
   {
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
@@ -167,7 +169,7 @@ void ModelEvaluatorBidCostImpl::wait() noexcept
 ModelEvaluatorBidCostImpl::~ModelEvaluatorBidCostImpl()
 {
   shutdown_manager_.stop();
-  observer_->clearDelegate();
+  observer_->clear_delegate();
   wait();
 }
 
@@ -182,49 +184,50 @@ void ModelEvaluatorBidCostImpl::start()
   task_runner_pool_->activate_object();
   task_runner_->activate_object();
 
-  if (!postTask(TaskRunnerID::Single,
-                &ModelEvaluatorBidCostImpl::doInit))
+  if (!post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorBidCostImpl::do_init))
   {
-    throw Exception("Initial postTask is failed");
+    throw Exception("Initial post_task is failed");
   }
 }
 
 void ModelEvaluatorBidCostImpl::stop() noexcept
 {
   logger_->info(
-          std::string("ModelEvaluatorWBidCost was interrupted"),
-          Aspect::MODEL_EVALUATOR_BID_COST);
+    std::string("ModelEvaluatorWBidCost was interrupted"),
+    Aspect::MODEL_EVALUATOR_BID_COST);
   shutdown_manager_.stop();
 }
 
-void ModelEvaluatorBidCostImpl::doInit() noexcept
+void ModelEvaluatorBidCostImpl::do_init() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   remaining_iterations_ = collector_.size();
-  persantage_.setTotalNumber(remaining_iterations_);
+  persantage_.set_total_number(remaining_iterations_);
   iterator_ = std::begin(collector_);
   const std::size_t count =
-          std::min(static_cast<std::size_t>(threads_number_ * 3), remaining_iterations_);
+    std::min(static_cast<std::size_t>(threads_number_ * 3), remaining_iterations_);
   for (std::size_t i = 1; i <= count; ++i)
   {
-    postTask(
-            TaskRunnerID::Pool,
-            &ModelEvaluatorBidCostImpl::doCalculate,
-            iterator_);
+    post_task(
+      TaskRunnerID::Pool,
+      &ModelEvaluatorBidCostImpl::do_calculate,
+      iterator_);
     ++iterator_;
   }
 }
 
-void ModelEvaluatorBidCostImpl::doCalculate(const Iterator it) noexcept
+void ModelEvaluatorBidCostImpl::do_calculate(const Iterator it) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
-    doCalculateHelper(it);
+    do_calculate_helper(it);
   }
   catch (const eh::Exception& exc)
   {
@@ -237,14 +240,14 @@ void ModelEvaluatorBidCostImpl::doCalculate(const Iterator it) noexcept
   }
 }
 
-void ModelEvaluatorBidCostImpl::doCalculateHelper(const Iterator it)
+void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
-  postTask(
-          TaskRunnerID::Single,
-          &ModelEvaluatorBidCostImpl::doNextTask);
+  post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorBidCostImpl::do_next_task);
 
   const auto& top_key = it->first;
   const auto& cost_dict = it->second;
@@ -260,8 +263,8 @@ void ModelEvaluatorBidCostImpl::doCalculateHelper(const Iterator it)
   if constexpr(!is_help_collector_map)
   {
     std::sort(
-            std::begin(all_costs),
-            std::end(all_costs));
+      std::begin(all_costs),
+      std::end(all_costs));
   }
 
   long unverified_imps = 0;
@@ -301,10 +304,10 @@ void ModelEvaluatorBidCostImpl::doCalculateHelper(const Iterator it)
     for (const auto& point : points_)
     {
       const auto check_win_rate =
-              FixedNumber::mul(
-                      *top_level_win_rate,
-                      point,
-                      Generics::DMR_FLOOR);
+        FixedNumber::mul(
+          *top_level_win_rate,
+          point,
+          Generics::DMR_FLOOR);
       const auto& max_cost = all_costs.back();
 
       std::optional<FixedNumber> target_cost;
@@ -317,7 +320,7 @@ void ModelEvaluatorBidCostImpl::doCalculateHelper(const Iterator it)
         {
           const HelpInnerKey key_inner(all_costs[cost_i]);
           if (auto it = cost_dict.find(key_inner);
-              it != cost_dict.end())
+            it != cost_dict.end())
           {
             const auto& cost_dats = it->second;
             unverified_imps += cost_dats.unverified_imps();
@@ -349,35 +352,35 @@ void ModelEvaluatorBidCostImpl::doCalculateHelper(const Iterator it)
 
       if (target_cost)
       {
-        const auto& tag_id = top_key.tagId();
-        const auto& url = top_key.urlVar();
+        const auto& tag_id = top_key.tag_id();
+        const auto& url = top_key.url_var();
 
-        postTask(
-                TaskRunnerID::Single,
-                &ModelEvaluatorBidCostImpl::doSave,
-                tag_id,
-                url,
-                point,
-                *target_cost,
-                max_cost);
+        post_task(
+          TaskRunnerID::Single,
+          &ModelEvaluatorBidCostImpl::do_save,
+          tag_id,
+          url,
+          point,
+          *target_cost,
+          max_cost);
       }
     }
   }
 }
 
-void ModelEvaluatorBidCostImpl::doSave(
-        const TagId& tag_id,
-        const Url_var& url,
-        const FixedNumber& point,
-        const FixedNumber& target_cost,
-        const FixedNumber& max_cost) noexcept
+void ModelEvaluatorBidCostImpl::do_save(
+  const TagId& tag_id,
+  const Url_var& url,
+  const FixedNumber& point,
+  const FixedNumber& target_cost,
+  const FixedNumber& max_cost) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
-    model_->setCost(tag_id, url, point, target_cost, max_cost);
+    model_->set_cost(tag_id, url, point, target_cost, max_cost);
   }
   catch (const eh::Exception& exc)
   {
@@ -387,23 +390,23 @@ void ModelEvaluatorBidCostImpl::doSave(
            << " : Reason: "
            << exc.what();
     logger_->critical(
-            stream.str(),
-            Aspect::MODEL_EVALUATOR_BID_COST);
+      stream.str(),
+      Aspect::MODEL_EVALUATOR_BID_COST);
     return;
   }
 }
 
-void ModelEvaluatorBidCostImpl::doNextTask() noexcept
+void ModelEvaluatorBidCostImpl::do_next_task() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (iterator_ != std::end(collector_))
   {
-    postTask(
-            TaskRunnerID::Pool,
-            &ModelEvaluatorBidCostImpl::doCalculate,
-            iterator_);
+    post_task(
+      TaskRunnerID::Pool,
+      &ModelEvaluatorBidCostImpl::do_calculate,
+      iterator_);
     ++iterator_;
   }
 
@@ -418,9 +421,9 @@ void ModelEvaluatorBidCostImpl::doNextTask() noexcept
 }
 
 void ModelEvaluatorBidCostImpl::report_error(
-        Severity severity,
-        const String::SubString& description,
-        const char* error_code) noexcept
+  Severity severity,
+  const String::SubString& description,
+  const char* error_code) noexcept
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {
@@ -431,9 +434,9 @@ void ModelEvaluatorBidCostImpl::report_error(
            << " Reason: "
            << description;
     logger_->critical(
-            stream.str(),
-            Aspect::MODEL_EVALUATOR_BID_COST,
-            error_code);
+      stream.str(),
+      Aspect::MODEL_EVALUATOR_BID_COST,
+      error_code);
   }
 }
 

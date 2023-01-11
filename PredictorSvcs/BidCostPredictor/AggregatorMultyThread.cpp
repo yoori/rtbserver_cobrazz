@@ -23,21 +23,21 @@ namespace BidCostPredictor
 {
 
 AggregatorMultyThread::AggregatorMultyThread(
-        const std::size_t max_process_files,
-        const std::size_t dump_max_size,
-        const std::string& input_dir,
-        const std::string& output_dir,
-        const Logging::Logger_var& logger)
-        : max_process_files_(max_process_files),
-          dump_max_size_(dump_max_size),
-          input_dir_(input_dir),
-          output_dir_(output_dir),
-          prefix_stat_(LogTraits::B::log_base_name()),
-          prefix_agg_(LogInnerTraits::B::log_base_name()),
-          logger_(logger),
-          observer_(new ActiveObjectObserver(this)),
-          persantage_(logger_, Aspect::AGGREGATOR, 5),
-          processed_files_(std::make_shared<ProcessedFiles>())
+  const std::size_t max_process_files,
+  const std::size_t dump_max_size,
+  const std::string& input_dir,
+  const std::string& output_dir,
+  Logging::Logger* logger)
+  : max_process_files_(max_process_files),
+    dump_max_size_(dump_max_size),
+    input_dir_(input_dir),
+    output_dir_(output_dir),
+    prefix_stat_(LogTraits::B::log_base_name()),
+    prefix_agg_(LogInnerTraits::B::log_base_name()),
+    logger_(ReferenceCounting::add_ref(logger)),
+    observer_(new ActiveObjectObserver(this)),
+    persantage_(logger_, Aspect::AGGREGATOR, 5),
+    processed_files_(std::make_shared<ProcessedFiles>())
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
   {
@@ -48,17 +48,17 @@ AggregatorMultyThread::AggregatorMultyThread(
 AggregatorMultyThread::~AggregatorMultyThread()
 {
   shutdown_manager_.stop();
-  observer_->clearDelegate();
+  observer_->clear_delegate();
   wait();
 }
 
 void AggregatorMultyThread::start()
 {
   logger_->info(
-          std::string("Aggregate: started"),
-          Aspect::AGGREGATOR);
+    std::string("Aggregate: started"),
+    Aspect::AGGREGATOR);
 
-  if (!Utils::ExistDirectory(input_dir_))
+  if (!Utils::exist_directory(input_dir_))
   {
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__
@@ -67,7 +67,7 @@ void AggregatorMultyThread::start()
     throw Exception(ostr);
   }
 
-  if (!Utils::ExistDirectory(output_dir_))
+  if (!Utils::exist_directory(output_dir_))
   {
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__
@@ -155,9 +155,9 @@ void AggregatorMultyThread::wait() noexcept
     try
     {
       auto need_remove_files =
-              Utils::GetDirectoryFiles(
-                      output_dir_,
-                      "~");
+        Utils::get_directory_files(
+          output_dir_,
+          "~");
       for (const auto& path : need_remove_files)
       {
         std::remove(path.c_str());
@@ -176,46 +176,47 @@ const char* AggregatorMultyThread::name() noexcept
 void AggregatorMultyThread::stop() noexcept
 {
   logger_->critical(
-          std::string("Aggregator was abborted..."),
-          Aspect::AGGREGATOR);
+    std::string("Aggregator was abborted..."),
+    Aspect::AGGREGATOR);
   shutdown_manager_.stop();
 }
 
 void AggregatorMultyThread::aggregate()
 {
-  input_files_ = Utils::GetDirectoryFiles(
-          input_dir_,
-          prefix_stat_);
+  input_files_ = Utils::get_directory_files(
+    input_dir_,
+    prefix_stat_);
 
-  persantage_.setTotalNumber(input_files_.size());
+  persantage_.set_total_number(input_files_.size());
 
   for (int i = 1; i <= 3; ++i)
   {
-    if (!postTask(
-            ThreadID::Read,
-            &AggregatorMultyThread::doRead))
+    if (!post_task(
+      ThreadID::Read,
+      &AggregatorMultyThread::do_read))
       throw Exception("Fatal error: inital read is failed");
   }
 }
 
-void AggregatorMultyThread::doRead() noexcept
+void AggregatorMultyThread::do_read() noexcept
 {
   using FlushPointer = void(AggregatorMultyThread::*)();
 
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (input_files_.empty())
   {
     if (!is_read_stoped_)
     {
-      postTask(
-              ThreadID::Calculate,
-              static_cast<FlushPointer>(&AggregatorMultyThread::doFlush));
-      postTask(
-              ThreadID::Calculate,
-              &AggregatorMultyThread::doStop,
-              Addressee::Calculator);
+      post_task(
+        ThreadID::Calculate,
+        static_cast<FlushPointer>(&AggregatorMultyThread::do_flush));
+
+      post_task(
+        ThreadID::Calculate,
+        &AggregatorMultyThread::do_stop,
+        Addressee::Calculator);
     }
 
     is_read_stoped_ = true;
@@ -224,9 +225,9 @@ void AggregatorMultyThread::doRead() noexcept
 
   if (count_process_file_ == max_process_files_)
   {
-    postTask(
-            ThreadID::Calculate,
-            static_cast<FlushPointer>(&AggregatorMultyThread::doFlush));
+    post_task(
+      ThreadID::Calculate,
+      static_cast<FlushPointer>(&AggregatorMultyThread::do_flush));
     count_process_file_ = 0;
   }
 
@@ -240,13 +241,13 @@ void AggregatorMultyThread::doRead() noexcept
   {
     Collector temp_collector;
     LogHelper<LogTraits>::load(
-            file_path,
-            temp_collector);
-    postTask(
-            ThreadID::Calculate,
-            &AggregatorMultyThread::doMerge,
-            std::move(temp_collector),
-            std::move(file_path));
+      file_path,
+      temp_collector);
+    post_task(
+      ThreadID::Calculate,
+      &AggregatorMultyThread::do_merge,
+      std::move(temp_collector),
+      std::move(file_path));
     count_process_file_ += 1;
   }
   catch (const eh::Exception& exc)
@@ -258,33 +259,34 @@ void AggregatorMultyThread::doRead() noexcept
            << " Reason: "
            << exc.what();
     logger_->error(stream.str(), Aspect::AGGREGATOR);
-    postTask(
-            ThreadID::Read,
-            &AggregatorMultyThread::doRead);
+    post_task(
+      ThreadID::Read,
+      &AggregatorMultyThread::do_read);
     return;
   }
 }
 
-void AggregatorMultyThread::doFlush() noexcept
+void AggregatorMultyThread::do_flush() noexcept
 {
   using FlushPointer = void(AggregatorMultyThread::*)(const ProcessedFiles_var&);
 
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   for (auto& [key, inner_collector] : agg_collector_)
   {
-    postTask(
-            ThreadID::Write,
-            &AggregatorMultyThread::doWrite,
-            std::move(inner_collector),
-            key.adv_sdate(),
-            false);
+    post_task(
+      ThreadID::Write,
+      &AggregatorMultyThread::do_write,
+      std::move(inner_collector),
+      key.adv_sdate(),
+      false);
   }
 
-  postTask(ThreadID::Write,
-           static_cast<FlushPointer>(&AggregatorMultyThread::doFlush),
-           std::move(processed_files_));
+  post_task(
+    ThreadID::Write,
+    static_cast<FlushPointer>(&AggregatorMultyThread::do_flush),
+    std::move(processed_files_));
 
   processed_files_ = std::make_shared<ProcessedFiles>();
   agg_collector_.clear();
@@ -294,10 +296,10 @@ void AggregatorMultyThread::doFlush() noexcept
   }
 }
 
-void AggregatorMultyThread::doFlush(
-        const ProcessedFiles_var& processed_files) noexcept
+void AggregatorMultyThread::do_flush(
+  const ProcessedFiles_var& processed_files) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
@@ -321,7 +323,7 @@ void AggregatorMultyThread::doFlush(
       std::remove(original_file.c_str());
     }
 
-    file_cleaner.clearTemp();
+    file_cleaner.clear_temp();
   }
   catch (const eh::Exception& exc)
   {
@@ -339,27 +341,27 @@ void AggregatorMultyThread::doFlush(
   result_files_.clear();
 }
 
-void AggregatorMultyThread::doMerge(
-        const Collector& temp_collector,
-        const Path& original_file) noexcept
+void AggregatorMultyThread::do_merge(
+  const Collector& temp_collector,
+  const Path& original_file) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
     const auto count_added = merge(
-            temp_collector,
-            agg_collector_,
-            priority_queue_);
+      temp_collector,
+      agg_collector_,
+      priority_queue_);
     record_count += count_added;
     processed_files_->emplace_back(original_file);
 
     if (record_count < dump_max_size_)
     {
-      postTask(
-              ThreadID::Read,
-              &AggregatorMultyThread::doRead);
+      post_task(
+        ThreadID::Read,
+        &AggregatorMultyThread::do_read);
     }
 
     bool need_add_read = true;
@@ -386,12 +388,12 @@ void AggregatorMultyThread::doMerge(
 
       record_count -= it->second.size();
 
-      postTask(
-              ThreadID::Write,
-              &AggregatorMultyThread::doWrite,
-              std::move(it->second),
-              date,
-              need_add_read);
+      post_task(
+        ThreadID::Write,
+        &AggregatorMultyThread::do_write,
+        std::move(it->second),
+        date,
+        need_add_read);
       need_add_read = false;
     }
   }
@@ -406,17 +408,18 @@ void AggregatorMultyThread::doMerge(
   }
 }
 
-void AggregatorMultyThread::doWrite(
-        const CollectorInner& collector,
-        const DayTimestamp& date,
-        const bool need_add_read) noexcept
+void AggregatorMultyThread::do_write(
+  const CollectorInner& collector,
+  const DayTimestamp& date,
+  const bool need_add_read) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (need_add_read)
-    postTask(ThreadID::Read,
-             &AggregatorMultyThread::doRead);
+    post_task(
+      ThreadID::Read,
+      &AggregatorMultyThread::do_read);
 
 
   if (collector.empty())
@@ -425,10 +428,10 @@ void AggregatorMultyThread::doWrite(
   try
   {
     const auto generated_path =
-            Utils::GenerateFilePath(
-                    output_dir_,
-                    prefix_agg_,
-                    date);
+      Utils::generate_file_path(
+        output_dir_,
+        prefix_agg_,
+        date);
     const auto& temp_path = generated_path.first;
 
     LogHelper<LogInnerTraits>::save(temp_path, collector);
@@ -445,33 +448,33 @@ void AggregatorMultyThread::doWrite(
   }
 }
 
-void AggregatorMultyThread::doStop(
-        const Addressee addresee) noexcept
+void AggregatorMultyThread::do_stop(
+  const Addressee addresee) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (addresee == Addressee::Calculator)
   {
-    postTask(
-            ThreadID::Write,
-            &AggregatorMultyThread::doStop,
-            Addressee::Writer);
+    post_task(
+      ThreadID::Write,
+      &AggregatorMultyThread::do_stop,
+      Addressee::Writer);
   }
   else if (addresee == Addressee::Writer)
   {
     is_success_completed_ = true;
     shutdown_manager_.stop();
     logger_->info(
-            std::string("Aggregator completed successfully"),
-            Aspect::AGGREGATOR);
+      std::string("Aggregator completed successfully"),
+      Aspect::AGGREGATOR);
   }
 }
 
 std::size_t AggregatorMultyThread::merge(
-        const Collector& temp_collector,
-        Collector& collector,
-        PriorityQueue& priority_queue)
+  const Collector& temp_collector,
+  Collector& collector,
+  PriorityQueue& priority_queue)
 {
   std::size_t count_added = 0;
   for (auto& [temp_key, temp_inner_collector] : temp_collector)
@@ -487,10 +490,10 @@ std::size_t AggregatorMultyThread::merge(
     auto& inner_collector = collector.find_or_insert(temp_key);
     for (const auto& [k, v]: temp_inner_collector) {
       KeyCollectorInner new_k(
-              k.tag_id(),
-              std::string(),
-              k.url(),
-              k.cost());
+        k.tag_id(),
+        std::string(),
+        k.url(),
+        k.cost());
 
       if (auto it = inner_collector.find(new_k);
           it == inner_collector.end())
@@ -509,9 +512,9 @@ std::size_t AggregatorMultyThread::merge(
 }
 
 void AggregatorMultyThread::report_error(
-        Severity severity,
-        const String::SubString& description,
-        const char* error_code) noexcept
+  Severity severity,
+  const String::SubString& description,
+  const char* error_code) noexcept
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {
@@ -526,7 +529,7 @@ void AggregatorMultyThread::report_error(
 }
 
 Generics::TaskRunner&
-AggregatorMultyThread::getTaskRunner(const ThreadID id) noexcept
+AggregatorMultyThread::get_task_runner(const ThreadID id) noexcept
 {
   return *task_runners_[static_cast<std::size_t>(id)];
 }

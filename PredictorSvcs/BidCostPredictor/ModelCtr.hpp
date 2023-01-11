@@ -18,8 +18,8 @@ namespace BidCostPredictor
 namespace Predictor = PredictorSvcs::BidCostPredictor;
 
 class ModelCtr :
-        public virtual ModelManager,
-        public virtual ReferenceCounting::Interface
+  public virtual ModelManager,
+  public virtual ReferenceCounting::Interface
 {
 public:
   using TagId = typename Predictor::HelpKey::TagId;
@@ -32,15 +32,15 @@ public:
 public:
   ModelCtr() = default;
 
-  virtual Data getCtr(
-          const TagId& tag_id,
-          const Url& url) const = 0;
+  virtual Data get_ctr(
+    const TagId& tag_id,
+    const Url& url) const = 0;
 
-  virtual void setCtr(
-          const TagId& tag_id,
-          const Url_var& url,
-          const Clicks& clicks,
-          const Imps& imps) = 0;
+  virtual void set_ctr(
+    const TagId& tag_id,
+    const Url_var& url,
+    const Clicks& clicks,
+    const Imps& imps) = 0;
 
   virtual void clear() noexcept = 0;
 

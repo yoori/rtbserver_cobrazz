@@ -21,8 +21,8 @@ namespace LogProcessing = AdServer::LogProcessing;
 namespace Predictor = PredictorSvcs::BidCostPredictor;
 
 class ModelBidCost :
-        public virtual ModelManager,
-        public virtual ReferenceCounting::Interface
+  public virtual ModelManager,
+  public virtual ReferenceCounting::Interface
 {
 public:
   using TagId = typename Predictor::HelpKey::TagId;
@@ -35,18 +35,18 @@ public:
 public:
   ModelBidCost() = default;
 
-  virtual Cost getCost(
-          const TagId& tag_id,
-          const Url& url,
-          const WinRate& win_rate,
-          const Cost& current_cost) const = 0;
+  virtual Cost get_cost(
+    const TagId& tag_id,
+    const Url& url,
+    const WinRate& win_rate,
+    const Cost& current_cost) const = 0;
 
-  virtual void setCost(
-          const TagId& tag_id,
-          const Url_var& url,
-          const WinRate& win_rate,
-          const Cost& cost,
-          const Cost& max_cost) = 0;
+  virtual void set_cost(
+    const TagId& tag_id,
+    const Url_var& url,
+    const WinRate& win_rate,
+    const Cost& cost,
+    const Cost& max_cost) = 0;
 
   virtual void clear() noexcept = 0;
 

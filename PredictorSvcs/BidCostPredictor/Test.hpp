@@ -22,9 +22,9 @@ namespace LogProcessing = AdServer::LogProcessing;
 
 DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-void testSuit(const std::string& directory);
+void test_suit(const std::string& directory);
 
-class Test : private Generics::Uncopyable
+class Test final : private Generics::Uncopyable
 {
   using Collector = LogProcessing::BidCostStatCollector;
   using Key = typename Collector::KeyT;
@@ -40,24 +40,26 @@ class Test : private Generics::Uncopyable
   using FixedNumber = LogProcessing::FixedNumber;
 
   using Processors = std::list<Processor_var>;
+
 public:
-  Test(const std::string& directory,
-       const std::size_t number_dates_per_file = 5,
-       const std::size_t number_record_per_date = 1000,
-       const std::size_t number_files = 150);
+  Test(
+    const std::string& directory,
+    const std::size_t number_dates_per_file = 5,
+    const std::size_t number_record_per_date = 1000,
+    const std::size_t number_files = 150);
 
   ~Test() = default;
 
   bool run() noexcept;
 
-  void addProcessor(Processor_var&& processor);
+  void add_processor(Processor_var&& processor);
 
 private:
-  void copyFile(
-          const std::string& path_file,
-          const std::string& pah_out_file);
+  void copy_file(
+    const std::string& path_file,
+    const std::string& pah_out_file);
 
-  bool runHelper();
+  bool run_helper();
 
 private:
   const std::string directory_;

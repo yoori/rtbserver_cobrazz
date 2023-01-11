@@ -26,8 +26,8 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class Aggregator final :
-        public Processor,
-        public virtual ReferenceCounting::AtomicImpl
+  public Processor,
+  public virtual ReferenceCounting::AtomicImpl
 {
   using Path = Utils::Path;
   using ProcessFiles = std::list<Path>;
@@ -43,22 +43,22 @@ class Aggregator final :
   using KeyCollectorInner = LogProcessing::BidCostStatInnerKey;
 
   using DayTimestamp = LogProcessing::DayTimestamp;
-  using PriorityQueue
-          = std::priority_queue<
-                  DayTimestamp,
-                  std::vector<DayTimestamp>,
-                  std::greater<DayTimestamp>
-                  >;
+  using PriorityQueue =
+    std::priority_queue<
+      DayTimestamp,
+      std::vector<DayTimestamp>,
+      std::greater<DayTimestamp>
+    >;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
   explicit Aggregator(
-          const std::size_t max_process_files,
-          const std::size_t dump_max_size,
-          const std::string& input_dir,
-          const std::string& output_dir,
-          const Logging::Logger_var& logger);
+    const std::size_t max_process_files,
+    const std::size_t dump_max_size,
+    const std::string& input_dir,
+    const std::string& output_dir,
+    Logging::Logger* logger);
 
   ~Aggregator() override = default;
 
@@ -73,19 +73,19 @@ public:
 private:
   void aggregate();
 
-  void processFiles(const ProcessFiles& files);
+  void process_files(const ProcessFiles& files);
 
-  void dumpFile(
-          const Path& output_dir,
-          const std::string& prefix,
-          const DayTimestamp& date,
-          const CollectorInner& collector,
-          ResultFiles& resultFiles);
+  void dump_file(
+    const Path& output_dir,
+    const std::string& prefix,
+    const DayTimestamp& date,
+    const CollectorInner& collector,
+    ResultFiles& resultFiles);
 
   std::size_t merge(
-          Collector& collector,
-          Collector& temp_collector,
-          PriorityQueue& priority_queue);
+    Collector& collector,
+    Collector& temp_collector,
+    PriorityQueue& priority_queue);
 
 private:
   const std::size_t max_process_files_;

@@ -22,8 +22,8 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class Reaggregator final :
-        public Processor,
-        public virtual ReferenceCounting::AtomicImpl
+  public Processor,
+  public virtual ReferenceCounting::AtomicImpl
 {
   using DayTimestamp = LogProcessing::DayTimestamp;
 
@@ -39,9 +39,9 @@ class Reaggregator final :
 
 public:
   explicit Reaggregator(
-          const std::string& input_dir,
-          const std::string& output_dir,
-          const Logging::Logger_var& logger);
+    const std::string& input_dir,
+    const std::string& output_dir,
+    Logging::Logger* logger);
 
   ~Reaggregator() = default;
 
@@ -55,24 +55,24 @@ public:
 
 private:
   void reaggregate(
-          const std::string& input_dir,
-          const std::string& output_dir,
-          const std::string& prefix);
+    const std::string& input_dir,
+    const std::string& output_dir,
+    const std::string& prefix);
 
-  void removeUnique(AggregatedFiles& files);
+  void remove_unique(AggregatedFiles& files);
 
-  void processDate(
-          const DayTimestamp& date,
-          AggregatedFiles& aggregated_files,
-          Collector& collector,
-          ProcessedFiles& processed_files) noexcept;
+  void process_date(
+    const DayTimestamp& date,
+    AggregatedFiles& aggregated_files,
+    Collector& collector,
+    ProcessedFiles& processed_files) noexcept;
 
-  void dumpFile(
-          const Path& output_dir,
-          const std::string& prefix,
-          const DayTimestamp& date,
-          Collector& collector,
-          ResultFile& result_file);
+  void dump_file(
+    const Path& output_dir,
+    const std::string& prefix,
+    const DayTimestamp& date,
+    Collector& collector,
+    ResultFile& result_file);
 
 private:
   const std::string input_dir_;

@@ -26,29 +26,30 @@ namespace BidCostPredictor
 {
 
 class Storage :
-        public Container,
-        public Processor,
-        private ActiveObjectDelegate,
-        public virtual ReferenceCounting::AtomicImpl
+  public Container,
+  public Processor,
+  private ActiveObjectDelegate,
+  public virtual ReferenceCounting::AtomicImpl
 {
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
-  Storage(const Logging::Logger_var& logger,
-          const std::string& model_dir,
-          const std::string& ctr_model_dir,
-          const std::size_t update_period);
+  Storage(
+    Logging::Logger* logger,
+    const std::string& model_dir,
+    const std::string& ctr_model_dir,
+    const std::size_t update_period);
 
   ~Storage() override;
 
-  Cost getCost(
-          const TagId& tag_id,
-          const Url& url,
-          const WinRate& win_rate,
-          const Cost& current_cost) const override;
+  Cost get_cost(
+    const TagId& tag_id,
+    const Url& url,
+    const WinRate& win_rate,
+    const Cost& current_cost) const override;
 
-  Data getCtr(
-          const TagId& tag_id,
-          const Url& url) const override;
+  Data get_ctr(
+    const TagId& tag_id,
+    const Url& url) const override;
 
   void start() override;
 
@@ -60,20 +61,21 @@ public:
 
 private:
   void report_error(
-          Severity severity,
-          const String::SubString& description,
-          const char* error_code) noexcept;
+    Severity severity,
+    const String::SubString& description,
+    const char* error_code) noexcept;
 
-  void doUpdate() noexcept;
+  void do_update() noexcept;
 
   template<class MemPtr,
           class ...Args>
   std::enable_if_t<
-          std::is_member_function_pointer_v<MemPtr>,
-          bool>
-  postTask(MemPtr mem_ptr,
-           const std::size_t count_sec,
-           Args&& ...args) noexcept
+    std::is_member_function_pointer_v<MemPtr>,
+    bool>
+  post_task(
+    MemPtr mem_ptr,
+    const std::size_t count_sec,
+    Args&& ...args) noexcept
   {
     if (!planner_ || !task_runner_)
       return false;
@@ -81,16 +83,16 @@ private:
     try
     {
       const auto time =
-              Generics::Time::get_time_of_day() +
-              Generics::Time::ONE_SECOND * count_sec;
+        Generics::Time::get_time_of_day() +
+        Generics::Time::ONE_SECOND * count_sec;
       planner_->schedule(
-              AdServer::Commons::make_delegate_goal_task(
-                      std::bind(
-                              mem_ptr,
-                              this,
-                              std::forward<Args>(args)...),
-                      task_runner_),
-              time);
+        AdServer::Commons::make_delegate_goal_task(
+          std::bind(
+              mem_ptr,
+              this,
+              std::forward<Args>(args)...),
+              task_runner_),
+          time);
       return true;
     }
     catch (const eh::Exception& exc)

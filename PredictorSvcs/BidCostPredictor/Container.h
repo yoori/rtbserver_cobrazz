@@ -24,15 +24,15 @@ public:
 public:
   Container() = default;
 
-  virtual Cost getCost(
-          const TagId& tag_id,
-          const Url& url,
-          const WinRate& win_rate,
-          const Cost& current_cost) const = 0;
+  virtual Cost get_cost(
+    const TagId& tag_id,
+    const Url& url,
+    const WinRate& win_rate,
+    const Cost& current_cost) const = 0;
 
-  virtual Data getCtr(
-          const TagId& tag_id,
-          const Url& url) const = 0;
+  virtual Data get_ctr(
+    const TagId& tag_id,
+    const Url& url) const = 0;
 
 protected:
     virtual ~Container() = default;

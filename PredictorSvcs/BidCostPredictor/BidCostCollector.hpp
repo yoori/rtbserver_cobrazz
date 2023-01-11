@@ -22,32 +22,32 @@ public:
 
 public:
   explicit BidCostKey()
-                      : tag_id_(0),
-                        url_(std::make_shared<Url>()),
-                        win_rate_(FixedNumber::ZERO)
+  : tag_id_(0),
+    url_(std::make_shared<Url>()),
+    win_rate_(FixedNumber::ZERO)
   {
   }
 
   explicit BidCostKey(
-          const TagId& tag_id,
-          const Url& url,
-          const WinRate& win_rate)
-          : tag_id_(tag_id),
-            url_(std::make_shared<Url>(url)),
-            win_rate_(win_rate)
+    const TagId& tag_id,
+    const Url& url,
+    const WinRate& win_rate)
+    : tag_id_(tag_id),
+      url_(std::make_shared<Url>(url)),
+      win_rate_(win_rate)
   {
-    calcHash();
+    calc_hash();
   }
 
   explicit BidCostKey(
-          const TagId& tag_id,
-          const Url_var& url,
-          const WinRate& win_rate)
-          : tag_id_(tag_id),
-            url_(url),
-            win_rate_(win_rate)
+    const TagId& tag_id,
+    const Url_var& url,
+    const WinRate& win_rate)
+    : tag_id_(tag_id),
+      url_(url),
+      win_rate_(win_rate)
   {
-    calcHash();
+    calc_hash();
   }
 
   BidCostKey(const BidCostKey&) = default;
@@ -61,11 +61,11 @@ public:
       return true;
 
     return tag_id_ == rht.tag_id_
-        && *url_ == *rht.url_
-        && win_rate_ == rht.win_rate_;
+      && *url_ == *rht.url_
+      && win_rate_ == rht.win_rate_;
   }
 
-  TagId tagId() const noexcept
+  TagId tag_id() const noexcept
   {
     return tag_id_;
   }
@@ -75,12 +75,12 @@ public:
     return *url_;
   }
 
-  const Url_var& urlVar() const noexcept
+  const Url_var& url_var() const noexcept
   {
     return url_;
   }
 
-  const WinRate& winRate() const noexcept
+  const WinRate& win_rate() const noexcept
   {
     return win_rate_;
   }
@@ -104,15 +104,15 @@ public:
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
-          FixedBufStream<TabCategory>& is,
-          BidCostKey& key);
+    FixedBufStream<TabCategory>& is,
+    BidCostKey& key);
 
   friend std::ostream& operator<<(
-         std::ostream& os,
-         const BidCostKey& key);
+    std::ostream& os,
+    const BidCostKey& key);
 
 private:
-  void calcHash()
+  void calc_hash()
   {
     Generics::Murmur64Hash hasher(hash_);
     Generics::hash_add(hasher, tag_id_);
@@ -135,16 +135,16 @@ class BidCostData final
   using Cost = FixedNumber;
 public:
   explicit BidCostData()
-                      : cost_(Cost::ZERO),
-                        max_cost_(Cost::ZERO)
+  : cost_(Cost::ZERO),
+    max_cost_(Cost::ZERO)
   {
   }
 
   explicit BidCostData(
-          const Cost& cost,
-          const Cost& max_cost)
-          : cost_(cost),
-            max_cost_(max_cost)
+    const Cost& cost,
+    const Cost& max_cost)
+    : cost_(cost),
+      max_cost_(max_cost)
   {
   }
 
@@ -184,12 +184,12 @@ public:
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
-          FixedBufStream<TabCategory>& is,
-          BidCostData& data);
+    FixedBufStream<TabCategory>& is,
+    BidCostData& data);
 
   friend std::ostream& operator<<(
-          std::ostream& os,
-          const BidCostData& data);
+    std::ostream& os,
+    const BidCostData& data);
 
 private:
   Cost cost_;

@@ -46,7 +46,7 @@ public:
   Regenerator(
           const std::string& input_dir,
           const std::string& output_dir,
-          const Logging::Logger_var& logger);
+          Logging::Logger* logger);
 
   ~Regenerator() override = default;
 
@@ -60,20 +60,19 @@ public:
 
 private:
   void regenerate(
-          const ProcessFiles& process_files,
-          const std::string& output_dir,
-          const std::string& prefix);
+    const ProcessFiles& process_files,
+    const std::string& output_dir,
+    const std::string& prefix);
 
-  void saveFile(
-          const std::string& output_dir,
-          const std::string& prefix,
-          const LogProcessing::DayTimestamp& date,
-          Collector& collector,
-          ProcessedFiles& processed_files);
+  void save_file(
+    const std::string& output_dir,
+    const std::string& prefix,
+    const LogProcessing::DayTimestamp& date,
+    Collector& collector,
+    ProcessedFiles& processed_files);
 
-  void removeProcessedFiles(
-          const ProcessedFiles& processed_files) noexcept;
-
+  void remove_processed_files(
+    const ProcessedFiles& processed_files) noexcept;
 
 private:
   const std::string input_dir_;

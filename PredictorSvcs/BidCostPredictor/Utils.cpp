@@ -26,7 +26,7 @@ namespace
 class GeneratorNumber
 {
 public:
-  static GeneratorNumber& Inctance()
+  static GeneratorNumber& inctance()
   {
     static GeneratorNumber generator;
     return generator;
@@ -39,7 +39,7 @@ public:
 
 private:
   GeneratorNumber()
-                  : distribution_(0, 99999999)
+    : distribution_(0, 99999999)
   {
     std::array<int, std::mt19937::state_size> seed_data;
     std::generate(seed_data.begin(), seed_data.end(), std::ref(device_));
@@ -56,17 +56,17 @@ private:
 };
 } // namespace
 
-bool ExistDirectory(
-        const std::string& path_directory) noexcept
+bool exist_directory(
+  const std::string& path_directory) noexcept
 {
   struct stat sb;
   return stat(path_directory.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode);
 }
 
-Files GetDirectoryFiles(
-        const Path& path_dir,
-        const std::string& prefix,
-        const DirInfo dir_info)
+Files get_directory_files(
+  const Path& path_dir,
+  const std::string& prefix,
+  const DirInfo dir_info)
 {
   Files files;
 
@@ -75,13 +75,16 @@ Files GetDirectoryFiles(
       closedir(dir);
   };
 
-  std::unique_ptr<DIR, decltype(deleter)> dir(opendir(path_dir.c_str()),
-                                              deleter);
+  std::unique_ptr<DIR, decltype(deleter)> dir(
+    opendir(path_dir.c_str()),
+    deleter);
 
   if (!dir)
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__ << ": Can't open directory" << path_dir;
+    stream << __PRETTY_FUNCTION__
+           << ": Can't open directory"
+           << path_dir;
     throw Exception(stream);
   }
 
@@ -117,25 +120,27 @@ Files GetDirectoryFiles(
   return files;
 }
 
-GeneratedPath GenerateFilePath(
-        const Path& output_dir,
-        const std::string& prefix,
-        const LogProcessing::DayTimestamp& date)
+GeneratedPath generate_file_path(
+  const Path& output_dir,
+  const std::string& prefix,
+  const LogProcessing::DayTimestamp& date)
 {
   std::stringstream stream;
   stream << prefix
          << "."
          << date
          << "."
-         << GeneratorNumber::Inctance().generate();
+         << GeneratorNumber::inctance().generate();
 
-  const Path temp_file_path = output_dir + "/~" + stream.str();
-  const Path result_file_path = output_dir + "/" + stream.str();
+  const Path temp_file_path =
+    output_dir + "/~" + stream.str();
+  const Path result_file_path =
+    output_dir + "/" + stream.str();
 
   return {temp_file_path, result_file_path};
 }
 
-std::pair<double, double> memoryProcessUsage()
+std::pair<double, double> memory_process_usage()
 {
   const std::string path_to_stat = "/proc/self/stat";
   std::ifstream stat_stream(

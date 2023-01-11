@@ -12,32 +12,32 @@ namespace BidCostPredictor
 {
 
 class ContainerImpl :
-        public Container,
-        public virtual ReferenceCounting::AtomicImpl
+  public Container,
+  public virtual ReferenceCounting::AtomicImpl
 {
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
   ContainerImpl(
-          const Logging::Logger_var& logger,
-          const std::string& model_dir,
-          const std::string& ctr_model_dir);
+    Logging::Logger* logger,
+    const std::string& model_dir,
+    const std::string& ctr_model_dir);
 
   ~ContainerImpl() = default;
 
-  Cost getCost(
-          const TagId& tag_id,
-          const Url& url,
-          const WinRate& win_rate,
-          const Cost& current_cost) const override;
+  Cost get_cost(
+    const TagId& tag_id,
+    const Url& url,
+    const WinRate& win_rate,
+    const Cost& current_cost) const override;
 
-  Data getCtr(
-          const TagId& tag_id,
-          const Url& url) const override;
+  Data get_ctr(
+    const TagId& tag_id,
+    const Url& url) const override;
 
 private:
   void initialize();
 
-  std::string getLastFile(const std::string& path_dir);
+  std::string get_last_file(const std::string& path_dir);
 
 private:
   Logging::Logger_var logger_;

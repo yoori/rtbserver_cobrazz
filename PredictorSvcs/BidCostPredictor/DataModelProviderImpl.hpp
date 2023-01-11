@@ -30,9 +30,9 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class DataModelProviderImpl final :
-        public DataModelProvider,
-        public virtual ReferenceCounting::AtomicImpl,
-        private ActiveObjectDelegate
+  public DataModelProvider,
+  public virtual ReferenceCounting::AtomicImpl,
+  private ActiveObjectDelegate
 {
   using DayTimestamp = LogProcessing::DayTimestamp;
 
@@ -59,8 +59,8 @@ class DataModelProviderImpl final :
 
 public:
   DataModelProviderImpl(
-          const std::string& input_dir,
-          const Logging::Logger_var& logger);
+    const std::string& input_dir,
+    Logging::Logger* logger);
 
   ~DataModelProviderImpl() override;
 
@@ -73,27 +73,28 @@ private:
 
   void wait() noexcept;
 
-  void doRead() noexcept;
+  void do_read() noexcept;
 
-  void doCalculate(Collector& temp_collector) noexcept;
+  void do_calculate(Collector& temp_collector) noexcept;
 
-  void doStop() noexcept;
+  void do_stop() noexcept;
 
-  void doClean(Collector& collector) noexcept;
+  void do_clean(Collector& collector) noexcept;
 
   void report_error(
-          Severity severity,
-          const String::SubString& description,
-          const char* error_code = 0) noexcept override;
+    Severity severity,
+    const String::SubString& description,
+    const char* error_code = 0) noexcept override;
 
   template<class MemPtr,
           class ...Args>
   std::enable_if_t<
-          std::is_member_function_pointer_v<MemPtr>,
-          bool>
-  postTask(const ThreadID id,
-           MemPtr mem_ptr,
-           Args&& ...args) noexcept
+    std::is_member_function_pointer_v<MemPtr>,
+    bool>
+  post_task(
+    const ThreadID id,
+    MemPtr mem_ptr,
+    Args&& ...args) noexcept
   {
     if (task_runners_.size() <= static_cast<std::size_t>(id))
     {
@@ -104,10 +105,11 @@ private:
     try
     {
       task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
-              AdServer::Commons::make_delegate_task(
-                      std::bind(mem_ptr,
-                                this,
-                                std::forward<Args>(args)...)));
+        AdServer::Commons::make_delegate_task(
+          std::bind(
+            mem_ptr,
+            this,
+            std::forward<Args>(args)...)));
       return true;
     }
     catch (const eh::Exception& exc)

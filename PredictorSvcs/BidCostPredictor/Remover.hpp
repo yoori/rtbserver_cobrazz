@@ -9,7 +9,7 @@ namespace BidCostPredictor
 template<class Container, class It>
 struct Remover final
 {
-  Remover(Container &container, It it)
+  Remover(Container& container, It it)
           : container(container),
             it(it)
   {

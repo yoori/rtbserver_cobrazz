@@ -18,33 +18,35 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class ModelBidCostImpl :
-        public ModelBidCost,
-        public virtual ReferenceCounting::AtomicImpl
+  public ModelBidCost,
+  public virtual ReferenceCounting::AtomicImpl
 {
 public:
   using TagId = typename ModelBidCost::TagId;
   using Url = typename ModelBidCost::Url;
   using WinRate = typename ModelBidCost::WinRate;
   using Cost = typename ModelBidCost::Cost;
-  using WinRates = std::set<std::tuple<std::string_view, TagId, WinRate>>;
+  using WinRates = std::map<
+    std::tuple<std::string_view, TagId, WinRate>,
+    LogProcessing::BidCostData>;
 
 public:
-  ModelBidCostImpl(Logging::Logger_var& logger);
+  ModelBidCostImpl(Logging::Logger* logger);
 
   ~ModelBidCostImpl() override = default;
 
-  FixedNumber getCost(
-          const TagId& tag_id,
-          const Url& url,
-          const WinRate& win_rate,
-          const Cost& cur_cost) const override;
+  FixedNumber get_cost(
+    const TagId& tag_id,
+    const Url& url,
+    const WinRate& win_rate,
+    const Cost& cur_cost) const override;
 
-  void setCost(
-          const TagId& tag_id,
-          const Url_var& url,
-          const WinRate& win_rate,
-          const Cost& cost,
-          const Cost& max_cost) override;
+  void set_cost(
+    const TagId& tag_id,
+    const Url_var& url,
+    const WinRate& win_rate,
+    const Cost& cost,
+    const Cost& max_cost) override;
 
   void clear() noexcept override;
 
@@ -53,7 +55,7 @@ public:
   void load(const std::string& path) override;
 
 private:
-  Logging::Logger_var& logger_;
+  Logging::Logger_var logger_;
 
   WinRates win_rates_;
 

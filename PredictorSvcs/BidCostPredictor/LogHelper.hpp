@@ -86,8 +86,9 @@ struct LogHelper
     LogProcessing::LogIoProxy<LogTraits>::load(collector, fstream);
   }
 
-  static void save(const std::string& path,
-                   const Collector& collector)
+  static void save(
+    const std::string& path,
+    const Collector& collector)
   {
     if (collector.empty())
       return;

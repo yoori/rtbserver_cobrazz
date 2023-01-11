@@ -12,8 +12,9 @@ template<template<class> class Container = std::list>
 class FileCleaner
 {
 public:
-  FileCleaner(Container<Utils::GeneratedPath>& files)
-              : files_(files)
+  FileCleaner(
+    Container<Utils::GeneratedPath>& files)
+    : files_(files)
   {
   }
 
@@ -29,7 +30,7 @@ public:
     }
   }
 
-  void clearTemp()
+  void clear_temp()
   {
     need_clear_ = false;
     for (const auto& [temp_path, result_path] : files_)

@@ -29,10 +29,10 @@ public:
 
 public:
   explicit Configuration(
-          const std::string& path_json_config);
+    const std::string& path_json_config);
 
   explicit Configuration(
-          const boost::property_tree::ptree& ptree);
+    const boost::property_tree::ptree& ptree);
 
   ~Configuration() = default;
 
@@ -42,16 +42,17 @@ public:
   T get(const std::string& path) const;
 
   template<class T>
-  T get(const std::string& path,
-        const T& default_value) const;
+  T get(
+    const std::string& path,
+    const T& default_value) const;
 
   std::string get(const std::string& path) const;
 
-  std::list<Configuration> getListOf(
-          const std::string& path) const;
+  std::list<Configuration> get_list_of(
+    const std::string& path) const;
 
-  Configuration getConfig(
-          const std::string& path) const;
+  Configuration get_config(
+    const std::string& path) const;
 
 private:
   boost::property_tree::ptree ptree_;
@@ -84,8 +85,8 @@ T Configuration::get(const std::string& path) const
 
 template<class T>
 T Configuration::get(
-        const std::string& path,
-        const T& default_value) const
+  const std::string& path,
+  const T& default_value) const
 {
   const auto value = ptree_.get_optional<T>(path);
   if (value)

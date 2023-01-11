@@ -6,14 +6,14 @@
 
 int main(int argc, char** argv)
 {
+  using namespace PredictorSvcs::BidCostPredictor;
   try
   {
-    return PredictorSvcs::BidCostPredictor::Application().run(argc, argv);
+    return Application().run(argc, argv);
   }
   catch (const eh::Exception& exc)
   {
-    std::cerr << exc.what()
-              << "\n";
+    std::cerr << exc.what() << "\n";
     return EXIT_FAILURE;
   }
 }

@@ -32,9 +32,9 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class ReaggregatorMultyThread final :
-        public Processor,
-        public virtual ReferenceCounting::AtomicImpl,
-        private ActiveObjectDelegate
+  public Processor,
+  public virtual ReferenceCounting::AtomicImpl,
+  private ActiveObjectDelegate
 {
   using DayTimestamp = LogProcessing::DayTimestamp;
 
@@ -74,7 +74,7 @@ public:
   explicit ReaggregatorMultyThread(
           const std::string& input_dir,
           const std::string& output_dir,
-          const Logging::Logger_var& logger);
+          Logging::Logger* logger);
 
   ~ReaggregatorMultyThread() override;
 
@@ -89,49 +89,50 @@ public:
 private:
   void reaggregate();
 
-  void removeUnique(AggregatedFiles& files);
+  void remove_unique(AggregatedFiles& files);
 
-  void doRead() noexcept;
+  void do_read() noexcept;
 
-  void doFlush(
-          const LogProcessing::DayTimestamp& date) noexcept;
+  void do_flush(
+    const LogProcessing::DayTimestamp& date) noexcept;
 
-  void doMerge(
-          Collector& temp_collector,
-          const std::string& file_path) noexcept;
+  void do_merge(
+    Collector& temp_collector,
+    const std::string& file_path) noexcept;
 
-  void doWrite(
-          const ProcessedFiles& processed_files,
-          Collector& collector,
-          const LogProcessing::DayTimestamp& date) noexcept;
+  void do_write(
+    const ProcessedFiles& processed_files,
+    Collector& collector,
+    const LogProcessing::DayTimestamp& date) noexcept;
 
-  void doStop(
-          const Addressee addresee) noexcept;
+  void do_stop(
+    const Addressee addresee) noexcept;
 
-  void dumpFile(
-          const Path& output_dir,
-          const std::string& prefix,
-          const DayTimestamp& date,
-          Collector& collector,
-          ResultFile& result_file);
+  void do_clean(
+    Collector& collector,
+    const PoolType poolType) noexcept;
 
-  void doClean(
-          Collector& collector,
-          const PoolType poolType);
+  void dump_file(
+    const Path& output_dir,
+    const std::string& prefix,
+    const DayTimestamp& date,
+    Collector& collector,
+    ResultFile& result_file);
 
   void report_error(
-          Severity severity,
-          const String::SubString& description,
-          const char* error_code = 0) noexcept override;
+    Severity severity,
+    const String::SubString& description,
+    const char* error_code = 0) noexcept override;
 
   template<class MemPtr,
            class ...Args>
   std::enable_if_t<
-      std::is_member_function_pointer_v<MemPtr>,
-      bool>
-  postTask(const ThreadID id,
-          MemPtr mem_ptr,
-          Args&& ...args) noexcept
+    std::is_member_function_pointer_v<MemPtr>,
+    bool>
+  post_task(
+    const ThreadID id,
+    MemPtr mem_ptr,
+    Args&& ...args) noexcept
   {
     if (task_runners_.size() <= static_cast<std::size_t>(id))
       return false;
@@ -139,10 +140,11 @@ private:
     try
     {
       task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
-              AdServer::Commons::make_delegate_task(
-                      std::bind(mem_ptr,
-                                this,
-                                std::forward<Args>(args)...)));
+        AdServer::Commons::make_delegate_task(
+          std::bind(
+            mem_ptr,
+            this,
+            std::forward<Args>(args)...)));
       return true;
     }
     catch (const eh::Exception& exc)
@@ -154,8 +156,8 @@ private:
              << " Reason: "
              << exc.what();
       logger_->critical(
-              stream.str(),
-              Aspect::REAGGREGATOR);
+        stream.str(),
+        Aspect::REAGGREGATOR);
 
       return false;
     }

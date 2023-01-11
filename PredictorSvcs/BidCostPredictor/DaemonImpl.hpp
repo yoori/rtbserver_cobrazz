@@ -26,58 +26,60 @@ namespace BidCostPredictor
 {
 
 class DaemonImpl final :
-        public Daemon,
-        public virtual ReferenceCounting::AtomicImpl,
-        private ActiveObjectDelegate
+  public Daemon,
+  public virtual ReferenceCounting::AtomicImpl,
+  private ActiveObjectDelegate
 {
 public:
-  DaemonImpl(const std::string& pid_path,
-             const std::string& model_dir,
-             const std::string& model_file_name,
-             const std::string& model_temp_dir,
-             const std::string& ctr_model_dir,
-             const std::string& ctr_model_file_name,
-             const std::string& ctr_model_temp_dir,
-             const std::string& model_agg_dir,
-             const std::size_t model_period,
-             const std::size_t agg_max_process_files,
-             const std::size_t agg_dump_max_size,
-             const std::string& agg_input_dir,
-             const std::string& agg_output_dir,
-             const std::size_t agg_period,
-             const std::string& reagg_input_dir,
-             const std::string& reagg_output_dir,
-             const std::size_t reagg_period,
-             const Logging::Logger_var& logger);
+  DaemonImpl(
+    const std::string& pid_path,
+    const std::string& model_dir,
+    const std::string& model_file_name,
+    const std::string& model_temp_dir,
+    const std::string& ctr_model_dir,
+    const std::string& ctr_model_file_name,
+    const std::string& ctr_model_temp_dir,
+    const std::string& model_agg_dir,
+    const std::size_t model_period,
+    const std::size_t agg_max_process_files,
+    const std::size_t agg_dump_max_size,
+    const std::string& agg_input_dir,
+    const std::string& agg_output_dir,
+    const std::size_t agg_period,
+    const std::string& reagg_input_dir,
+    const std::string& reagg_output_dir,
+    const std::size_t reagg_period,
+    Logging::Logger* logger);
 
   ~DaemonImpl() override;
 
 private:
-  void startLogic() override;
+  void start_logic() override;
 
-  void stopLogic() noexcept override;
+  void stop_logic() noexcept override;
 
-  void waitLogic() noexcept override;
+  void wait_logic() noexcept override;
 
-  void doTaskModel() noexcept;
+  void do_task_model() noexcept;
 
-  void doTaskAgg() noexcept;
+  void do_task_agg() noexcept;
 
-  void doTaskReagg() noexcept;
+  void do_task_reagg() noexcept;
 
   void report_error(
-          Severity severity,
-          const String::SubString& description,
-          const char* error_code) noexcept;
+    Severity severity,
+    const String::SubString& description,
+    const char* error_code) noexcept;
 
   template<class MemPtr,
           class ...Args>
   std::enable_if_t<
           std::is_member_function_pointer_v<MemPtr>,
           bool>
-  postTask(MemPtr mem_ptr,
-           const std::size_t count_sec,
-           Args&& ...args) noexcept
+  post_task(
+    MemPtr mem_ptr,
+    const std::size_t count_sec,
+    Args&& ...args) noexcept
   {
     if (!planner_)
       return false;
@@ -85,29 +87,29 @@ private:
     try
     {
       const auto time =
-              Generics::Time::get_time_of_day() +
-              Generics::Time::ONE_SECOND * count_sec;
+        Generics::Time::get_time_of_day() +
+        Generics::Time::ONE_SECOND * count_sec;
       planner_->schedule(
-              AdServer::Commons::make_delegate_goal_task(
-                      std::bind(
-                              mem_ptr,
-                              this,
-                              std::forward<Args>(args)...),
-                              task_runner_),
-                              time);
+        AdServer::Commons::make_delegate_goal_task(
+          std::bind(
+            mem_ptr,
+            this,
+            std::forward<Args>(args)...),
+          task_runner_),
+        time);
       return true;
     }
     catch (const eh::Exception& exc)
     {
+      stop();
       std::stringstream stream;
       stream << __PRETTY_FUNCTION__
              << ": Can't schedule task"
              << " Reason: "
              << exc.what();
       logger_->critical(
-              stream.str(),
-              Aspect::DAEMON_IMPL);
-      stop();
+        stream.str(),
+        Aspect::DAEMON_IMPL);
       return false;
     }
   }

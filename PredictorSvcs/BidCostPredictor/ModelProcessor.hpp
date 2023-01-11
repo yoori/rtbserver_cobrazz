@@ -21,8 +21,8 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class ModelProcessor :
-        public Processor,
-        public virtual ReferenceCounting::AtomicImpl
+  public Processor,
+  public virtual ReferenceCounting::AtomicImpl
 {
   using FixedNumber = LogProcessing::FixedNumber;
   using Points = std::vector<FixedNumber>;
@@ -31,14 +31,14 @@ class ModelProcessor :
 
 public:
   ModelProcessor(
-          const std::string& model_dir,
-          const std::string& model_file_name,
-          const std::string& temp_dir,
-          const std::string& ctr_model_dir,
-          const std::string& ctr_model_file_name,
-          const std::string& ctr_temp_dir,
-          const std::string& agg_dir,
-          const Logging::Logger_var& logger);
+    const std::string& model_dir,
+    const std::string& model_file_name,
+    const std::string& temp_dir,
+    const std::string& ctr_model_dir,
+    const std::string& ctr_model_file_name,
+    const std::string& ctr_temp_dir,
+    const std::string& agg_dir,
+    Logging::Logger* logger);
 
   ~ModelProcessor() override;
 
@@ -51,15 +51,15 @@ public:
   const char* name() noexcept override;
 
 private:
-  bool saveModel(
-          const ModelManager& model,
-          const std::string& model_dir,
-          const std::string& temp_model_dir,
-          const std::string& file_name) noexcept;
+  bool save_model(
+    const ModelManager& model,
+    const std::string& model_dir,
+    const std::string& temp_model_dir,
+    const std::string& file_name) noexcept;
 
-  std::string serializeTimePoint(
-          const std::chrono::system_clock::time_point& time,
-          const std::string& format);
+  std::string serialize_time_point(
+    const std::chrono::system_clock::time_point& time,
+    const std::string& format);
 
 private:
   const std::string model_dir_;

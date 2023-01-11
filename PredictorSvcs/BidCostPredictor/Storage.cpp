@@ -13,31 +13,33 @@ namespace BidCostPredictor
 {
 
 Storage::Storage(
-        const Logging::Logger_var& logger,
-        const std::string& model_dir,
-        const std::string& ctr_model_dir,
-        const std::size_t update_period)
-        : logger_(logger),
-          model_dir_(model_dir),
-          ctr_model_dir_(ctr_model_dir),
-          update_period_(update_period),
-          container_(new ContainerImpl(logger_, model_dir, ctr_model_dir)),
-          observer_(new ActiveObjectObserver(this))
+  Logging::Logger* logger,
+  const std::string& model_dir,
+  const std::string& ctr_model_dir,
+  const std::size_t update_period)
+  : logger_(ReferenceCounting::add_ref(logger)),
+    model_dir_(model_dir),
+    ctr_model_dir_(ctr_model_dir),
+    update_period_(update_period),
+    container_(
+      new ContainerImpl(
+        logger_, model_dir, ctr_model_dir)),
+    observer_(new ActiveObjectObserver(this))
 {
 }
 
 Storage::~Storage()
 {
-  observer_->clearDelegate();
+  observer_->clear_delegate();
   shutdown_manager_.stop();
   wait();
 }
 
-Storage::Cost Storage::getCost(
-        const TagId& tag_id,
-        const Url& url,
-        const WinRate& win_rate,
-        const Cost& current_cost) const
+Storage::Cost Storage::get_cost(
+  const TagId& tag_id,
+  const Url& url,
+  const WinRate& win_rate,
+  const Cost& current_cost) const
 {
   if (!container_)
     throw Exception("Contianer is null");
@@ -46,16 +48,16 @@ Storage::Cost Storage::getCost(
   Container_var container = container_;
   lock.unlock();
 
-  return container->getCost(
-          tag_id,
-          url,
-          win_rate,
-          current_cost);
+  return container->get_cost(
+    tag_id,
+    url,
+    win_rate,
+    current_cost);
 }
 
-Storage::Data Storage::getCtr(
-        const TagId& tag_id,
-        const Url& url) const
+Storage::Data Storage::get_ctr(
+  const TagId& tag_id,
+  const Url& url) const
 {
   if (!container_)
     throw Exception("Contianer is null");
@@ -64,7 +66,7 @@ Storage::Data Storage::getCtr(
   Container_var container = container_;
   lock.unlock();
 
-  return container->getCtr(tag_id, url);
+  return container->get_ctr(tag_id, url);
 }
 
 void Storage::start()
@@ -72,15 +74,17 @@ void Storage::start()
   is_running_ = true;
 
   task_runner_ = Generics::TaskRunner_var(
-          new Generics::TaskRunner(
-                  observer_,
-                  1));
-  planner_ = Generics::Planner_var(new Generics::Planner(observer_));
+    new Generics::TaskRunner(
+      observer_,
+      1));
+  planner_ = Generics::Planner_var(
+    new Generics::Planner(
+      observer_));
 
   task_runner_->activate_object();
   planner_->activate_object();
 
-  postTask(&Storage::doUpdate, update_period_);
+  post_task(&Storage::do_update, update_period_);
 
   logger_->info(std::string("Storage is started"), Aspect::STORAGE);
 }
@@ -89,15 +93,14 @@ void Storage::stop() noexcept
 {
   shutdown_manager_.stop();
   logger_->info(
-          std::string("Storage was interrupted"),
-          Aspect::STORAGE);
+    std::string("Storage was interrupted"),
+    Aspect::STORAGE);
 }
 
 void Storage::wait() noexcept
 {
   if (!is_running_)
     return;
-
   is_running_ = false;
 
   shutdown_manager_.wait();
@@ -145,30 +148,30 @@ const char* Storage::name() noexcept
   return "Storage";
 }
 
-void Storage::doUpdate() noexcept
+void Storage::do_update() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
     logger_->info(
-            std::string("Start updating container"),
-            Aspect::STORAGE);
+      std::string("Start updating container"),
+      Aspect::STORAGE);
 
     Container_var temp_container(
-            new ContainerImpl(
-                    logger_,
-                    model_dir_,
-                    ctr_model_dir_));
+      new ContainerImpl(
+        logger_,
+        model_dir_,
+        ctr_model_dir_));
 
     std::unique_lock lock(shared_mutex_);
     container_.swap(temp_container);
     lock.unlock();
 
     logger_->info(
-            std::string("Container is updated"),
-            Aspect::STORAGE);
+      std::string("Container is updated"),
+      Aspect::STORAGE);
   }
   catch (const Exception& exc)
   {
@@ -179,13 +182,13 @@ void Storage::doUpdate() noexcept
     logger_->error(stream.str(), Aspect::STORAGE);
   }
 
-  postTask(&Storage::doUpdate, update_period_);
+  post_task(&Storage::do_update, update_period_);
 }
 
 void Storage::report_error(
-        Severity severity,
-        const String::SubString& description,
-        const char* error_code) noexcept
+  Severity severity,
+  const String::SubString& description,
+  const char* error_code) noexcept
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {

@@ -19,38 +19,38 @@ namespace BidCostPredictor
 {
 
 ReaggregatorMultyThread::ReaggregatorMultyThread(
-        const std::string& input_dir,
-        const std::string& output_dir,
-        const Logging::Logger_var& logger)
-        : input_dir_(input_dir),
-          output_dir_(output_dir),
-          prefix_(LogTraits::B::log_base_name()),
-          logger_(logger),
-          observer_(new ActiveObjectObserver(this)),
-          persantage_(logger_, Aspect::REAGGREGATOR, 5)
+  const std::string& input_dir,
+  const std::string& output_dir,
+  Logging::Logger* logger)
+  : input_dir_(input_dir),
+    output_dir_(output_dir),
+    prefix_(LogTraits::B::log_base_name()),
+    logger_(ReferenceCounting::add_ref(logger)),
+    observer_(new ActiveObjectObserver(this)),
+    persantage_(logger_, Aspect::REAGGREGATOR, 5)
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
   {
     task_runners_.emplace_back(new Generics::TaskRunner(observer_, 1));
   }
 
-  collector_ = pool_collector_.getCollector();
+  collector_ = pool_collector_.get_collector();
 }
 
 ReaggregatorMultyThread::~ReaggregatorMultyThread()
 {
   shutdown_manager_.stop();
-  observer_->clearDelegate();
+  observer_->clear_delegate();
   wait();
 }
 
 void ReaggregatorMultyThread::start()
 {
   logger_->info(
-          std::string("Reaggregator: started"),
-          Aspect::REAGGREGATOR);
+    std::string("Reaggregator: started"),
+    Aspect::REAGGREGATOR);
 
-  if (!Utils::ExistDirectory(input_dir_))
+  if (!Utils::exist_directory(input_dir_))
   {
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__
@@ -59,7 +59,7 @@ void ReaggregatorMultyThread::start()
     throw Exception(ostr);
   }
 
-  if (!Utils::ExistDirectory(output_dir_))
+  if (!Utils::exist_directory(output_dir_))
   {
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__
@@ -139,7 +139,7 @@ void ReaggregatorMultyThread::wait() noexcept
     try
     {
         auto need_remove_files =
-                Utils::GetDirectoryFiles(
+                Utils::get_directory_files(
                         output_dir_,
                         "~");
         for (const auto& path : need_remove_files)
@@ -154,7 +154,9 @@ void ReaggregatorMultyThread::wait() noexcept
 
 void ReaggregatorMultyThread::stop() noexcept
 {
-  logger_->info(std::string("Reaggregator was abborted..."));
+  logger_->info(
+    std::string("Reaggregator was abborted..."),
+    Aspect::REAGGREGATOR);
   shutdown_manager_.stop();
 }
 
@@ -166,8 +168,9 @@ const char* ReaggregatorMultyThread::name() noexcept
 void ReaggregatorMultyThread::reaggregate()
 {
   auto input_files =
-          Utils::GetDirectoryFiles(input_dir_,
-                                   prefix_);
+    Utils::get_directory_files(
+      input_dir_,
+      prefix_);
 
   const std::regex date_regex("\\d{4}-\\d{2}-\\d{2}");
   for (const auto& file_path : input_files)
@@ -186,30 +189,31 @@ void ReaggregatorMultyThread::reaggregate()
     }
   }
 
-  removeUnique(aggregated_files_);
+  remove_unique(aggregated_files_);
 
   if (aggregated_files_.empty())
   {
     shutdown_manager_.stop();
     logger_->info(
-            std::string("Everything is already aggregated"),
-            Aspect::REAGGREGATOR);
+      std::string("Everything is already aggregated"),
+      Aspect::REAGGREGATOR);
     return;
   }
 
-  persantage_.setTotalNumber(aggregated_files_.size());
+  persantage_.set_total_number(aggregated_files_.size());
 
-  logger_->info("Total file needed to process = "
-                + std::to_string(aggregated_files_.size()),
-                Aspect::REAGGREGATOR);
+  logger_->info(
+    "Total file needed to process = "
+    + std::to_string(aggregated_files_.size()),
+    Aspect::REAGGREGATOR);
 
   current_date_ = aggregated_files_.begin()->first;
 
   for (int i = 1; i <= 2; ++i)
   {
-    if (!postTask(
-            ThreadID::Read,
-            &ReaggregatorMultyThread::doRead))
+    if (!post_task(
+      ThreadID::Read,
+      &ReaggregatorMultyThread::do_read))
     {
       Stream::Error ostr;
       ostr << __PRETTY_FUNCTION__
@@ -219,7 +223,8 @@ void ReaggregatorMultyThread::reaggregate()
   }
 }
 
-void ReaggregatorMultyThread::removeUnique(AggregatedFiles& files)
+void ReaggregatorMultyThread::remove_unique(
+  AggregatedFiles& files)
 {
   if (files.empty())
     return;
@@ -254,34 +259,39 @@ void ReaggregatorMultyThread::removeUnique(AggregatedFiles& files)
   }
 }
 
-void ReaggregatorMultyThread::doClean(
-        Collector& collector,
-        const PoolType poolType)
+void ReaggregatorMultyThread::do_clean(
+  Collector& collector,
+  const PoolType poolType) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
-  if (poolType == PoolType::Merge)
+  try
   {
-    pool_collector_.addCollector(std::move(collector));
+    if (poolType == PoolType::Merge)
+    {
+      pool_collector_.add_collector(std::move(collector));
+    }
+    else if (poolType == PoolType::Temp)
+    {
+      pool_temp_collector_.add_collector(std::move(collector));
+    }
   }
-  else if (poolType == PoolType::Temp)
-  {
-    pool_temp_collector_.addCollector(std::move(collector));
-  }
+  catch (...)
+  {}
 }
 
-void ReaggregatorMultyThread::doWrite(
-        const ProcessedFiles& processed_files,
-        Collector& collector,
-        const LogProcessing::DayTimestamp& date) noexcept
+void ReaggregatorMultyThread::do_write(
+  const ProcessedFiles& processed_files,
+  Collector& collector,
+  const LogProcessing::DayTimestamp& date) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
-  postTask(
-          ThreadID::Read,
-          &ReaggregatorMultyThread::doRead);
+  post_task(
+    ThreadID::Read,
+    &ReaggregatorMultyThread::do_read);
 
   if (collector.empty())
     return;
@@ -290,23 +300,23 @@ void ReaggregatorMultyThread::doWrite(
 
   try
   {
-    dumpFile(
-            output_dir_,
-            prefix_,
-            date,
-            collector,
-            result_file);
+    dump_file(
+      output_dir_,
+      prefix_,
+      date,
+      collector,
+      result_file);
 
-    postTask(
-            ThreadID::Clean,
-            &ReaggregatorMultyThread::doClean,
-            std::move(collector),
-            PoolType::Merge);
+    post_task(
+      ThreadID::Clean,
+      &ReaggregatorMultyThread::do_clean,
+      std::move(collector),
+      PoolType::Merge);
 
     const auto& [temp_path, result_path] = result_file;
     if (std::rename(
-            temp_path.c_str(),
-            result_path.c_str())) {
+      temp_path.c_str(),
+      result_path.c_str())) {
       Stream::Error ostr;
       ostr << __PRETTY_FUNCTION__
            << ": Can't rename from="
@@ -316,12 +326,12 @@ void ReaggregatorMultyThread::doWrite(
       throw Exception(ostr.str());
     }
 
-    std::for_each(std::begin(processed_files),
-                  std::end(processed_files),
-                  [](const auto &path)
-                  {
-                    std::remove(path.c_str());
-                  });
+    std::for_each(
+      std::begin(processed_files),
+      std::end(processed_files),
+      [](const auto &path) {
+        std::remove(path.c_str());
+      });
   }
   catch (const eh::Exception& exc)
   {
@@ -340,24 +350,24 @@ void ReaggregatorMultyThread::doWrite(
   }
 }
 
-void ReaggregatorMultyThread::doRead() noexcept
+void ReaggregatorMultyThread::do_read() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (aggregated_files_.empty())
   {
     if (!is_read_stoped_)
     {
-      postTask(
-              ThreadID::Calculate,
-              &ReaggregatorMultyThread::doFlush,
-              current_date_);
+      post_task(
+        ThreadID::Calculate,
+        &ReaggregatorMultyThread::do_flush,
+        current_date_);
 
-      postTask(
-              ThreadID::Calculate,
-              &ReaggregatorMultyThread::doStop,
-              Addressee::Calculator);
+      post_task(
+        ThreadID::Calculate,
+        &ReaggregatorMultyThread::do_stop,
+        Addressee::Calculator);
     }
 
     is_read_stoped_ = true;
@@ -371,7 +381,7 @@ void ReaggregatorMultyThread::doRead() noexcept
   const auto file_path = it->second;
   aggregated_files_.erase(it);
 
-  auto temp_collector = pool_temp_collector_.getCollector();
+  auto temp_collector = pool_temp_collector_.get_collector();
   try
   {
     LogHelper<LogTraits>::load(file_path, temp_collector);
@@ -386,53 +396,54 @@ void ReaggregatorMultyThread::doRead() noexcept
            << exc.what();
     logger_->error(stream.str(), Aspect::REAGGREGATOR);
 
-    postTask(
-            ThreadID::Read,
-            &ReaggregatorMultyThread::doRead);
+    post_task(
+      ThreadID::Read,
+      &ReaggregatorMultyThread::do_read);
     return;
   }
 
   const bool need_flush = (date != current_date_);
   if (need_flush)
   {
-    if (!postTask(
-            ThreadID::Calculate,
-            &ReaggregatorMultyThread::doFlush,
-            current_date_))
+    if (!post_task(
+      ThreadID::Calculate,
+      &ReaggregatorMultyThread::do_flush,
+      current_date_))
       return;
 
     current_date_ = date;
   }
   else
   {
-    postTask(ThreadID::Read,
-             &ReaggregatorMultyThread::doRead);
+    post_task(
+      ThreadID::Read,
+      &ReaggregatorMultyThread::do_read);
   }
 
-  postTask(
-          ThreadID::Calculate,
-          &ReaggregatorMultyThread::doMerge,
-          std::move(temp_collector),
-          file_path);
+  post_task(
+    ThreadID::Calculate,
+    &ReaggregatorMultyThread::do_merge,
+    std::move(temp_collector),
+    file_path);
 }
 
-void ReaggregatorMultyThread::doFlush(
-        const LogProcessing::DayTimestamp& date) noexcept
+void ReaggregatorMultyThread::do_flush(
+  const LogProcessing::DayTimestamp& date) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
     Collector save_collector(std::move(collector_));
-    collector_ = pool_collector_.getCollector();
+    collector_ = pool_collector_.get_collector();
 
-    postTask(
-            ThreadID::Write,
-            &ReaggregatorMultyThread::doWrite,
-            std::move(processed_files_),
-            std::move(save_collector),
-            date);
+    post_task(
+      ThreadID::Write,
+      &ReaggregatorMultyThread::do_write,
+      std::move(processed_files_),
+      std::move(save_collector),
+      date);
 
     processed_files_ = ProcessedFiles();
   }
@@ -454,11 +465,11 @@ void ReaggregatorMultyThread::doFlush(
   }
 }
 
-void ReaggregatorMultyThread::doMerge(
-        Collector& temp_collector,
-        const std::string& file_path) noexcept
+void ReaggregatorMultyThread::do_merge(
+  Collector& temp_collector,
+  const std::string& file_path) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
@@ -466,11 +477,11 @@ void ReaggregatorMultyThread::doMerge(
     collector_ += temp_collector;
     processed_files_.emplace_back(file_path);
 
-    postTask(
-            ThreadID::Clean,
-            &ReaggregatorMultyThread::doClean,
-            std::move(temp_collector),
-            PoolType::Temp);
+    post_task(
+      ThreadID::Clean,
+      &ReaggregatorMultyThread::do_clean,
+      std::move(temp_collector),
+      PoolType::Temp);
   }
   catch (const eh::Exception& exc)
   {
@@ -486,49 +497,49 @@ void ReaggregatorMultyThread::doMerge(
   }
 }
 
-void ReaggregatorMultyThread::doStop(
-        const Addressee addresee) noexcept
+void ReaggregatorMultyThread::do_stop(
+  const Addressee addresee) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (addresee == Addressee::Calculator)
   {
-    postTask(
-            ThreadID::Write,
-            &ReaggregatorMultyThread::doStop,
-            Addressee::Writer);
+    post_task(
+      ThreadID::Write,
+      &ReaggregatorMultyThread::do_stop,
+      Addressee::Writer);
   }
   else if (addresee == Addressee::Writer)
   {
     is_success_completed_ = true;
     shutdown_manager_.stop();
     logger_->info(
-            std::string("Reaggregator completed successfully"),
-            Aspect::REAGGREGATOR);
+      std::string("Reaggregator completed successfully"),
+      Aspect::REAGGREGATOR);
   }
 }
 
-void ReaggregatorMultyThread::dumpFile(
-        const Path& output_dir,
-        const std::string& prefix,
-        const DayTimestamp& date,
-        Collector& collector,
-        ResultFile& result_file)
+void ReaggregatorMultyThread::dump_file(
+  const Path& output_dir,
+  const std::string& prefix,
+  const DayTimestamp& date,
+  Collector& collector,
+  ResultFile& result_file)
 {
   auto generated_path =
-          Utils::GenerateFilePath(output_dir, prefix, date);
+    Utils::generate_file_path(output_dir, prefix, date);
   const auto& temp_file_path =
-          generated_path.first;
+    generated_path.first;
 
   LogHelper<LogTraits>::save(temp_file_path, collector);
   result_file = std::move(generated_path);
 }
 
 void ReaggregatorMultyThread::report_error(
-        Severity severity,
-        const String::SubString& description,
-        const char* error_code) noexcept
+  Severity severity,
+  const String::SubString& description,
+  const char* error_code) noexcept
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {
@@ -539,9 +550,9 @@ void ReaggregatorMultyThread::report_error(
            << " Reason: "
            << description;
     logger_->critical(
-            stream.str(),
-            Aspect::REAGGREGATOR,
-            error_code);
+      stream.str(),
+      Aspect::REAGGREGATOR,
+      error_code);
   }
 }
 

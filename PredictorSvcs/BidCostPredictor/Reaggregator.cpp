@@ -19,14 +19,14 @@ namespace BidCostPredictor
 {
 
 Reaggregator::Reaggregator(
-        const std::string& input_dir,
-        const std::string& output_dir,
-        const Logging::Logger_var& logger)
-        : input_dir_(input_dir),
-          output_dir_(output_dir),
-          prefix_(LogTraits::B::log_base_name()),
-          logger_(logger),
-          persantage_(logger_, Aspect::REAGGREGATOR, 5)
+  const std::string& input_dir,
+  const std::string& output_dir,
+  Logging::Logger* logger)
+  : input_dir_(input_dir),
+    output_dir_(output_dir),
+    prefix_(LogTraits::B::log_base_name()),
+    logger_(ReferenceCounting::add_ref(logger)),
+    persantage_(logger_, Aspect::REAGGREGATOR, 5)
 {
 }
 
@@ -35,14 +35,14 @@ void Reaggregator::start()
   try
   {
     logger_->info(
-            std::string("Reaggregator: started"),
-            Aspect::REAGGREGATOR);
+      std::string("Reaggregator: started"),
+      Aspect::REAGGREGATOR);
 
     reaggregate(input_dir_, output_dir_, prefix_);
 
     logger_->info(
-            std::string("Reaggregator: finished"),
-            Aspect::REAGGREGATOR);
+      std::string("Reaggregator: finished"),
+      Aspect::REAGGREGATOR);
   }
   catch (const eh::Exception& ex)
   {
@@ -69,13 +69,14 @@ return "ReaggregatorSingleThread";
 }
 
 void Reaggregator::reaggregate(
-        const std::string& input_dir,
-        const std::string& output_dir,
-        const std::string& prefix)
+  const std::string& input_dir,
+  const std::string& output_dir,
+  const std::string& prefix)
 {
-  auto input_files
-      = Utils::GetDirectoryFiles(
-              input_dir, prefix);
+  auto input_files =
+    Utils::get_directory_files(
+      input_dir,
+      prefix);
 
   AggregatedFiles aggregated_files;
 
@@ -96,22 +97,22 @@ void Reaggregator::reaggregate(
     }
   }
 
-  removeUnique(aggregated_files);
+  remove_unique(aggregated_files);
   if (aggregated_files.empty())
   {
     logger_->info(
-            std::string("Everything is already aggregated"),
-            Aspect::REAGGREGATOR);
+      std::string("Everything is already aggregated"),
+      Aspect::REAGGREGATOR);
     return;
   }
 
   Collector collector;
   collector.prepare_adding(1000000);
 
-  persantage_.setTotalNumber(aggregated_files.size());
+  persantage_.set_total_number(aggregated_files.size());
   logger_->info("Total file needed to process = "
-                + std::to_string(aggregated_files.size()),
-                Aspect::REAGGREGATOR);
+    + std::to_string(aggregated_files.size()),
+    Aspect::REAGGREGATOR);
 
   while (!aggregated_files.empty())
   {
@@ -119,28 +120,28 @@ void Reaggregator::reaggregate(
     const auto& date = aggregated_files.begin()->first;
 
     ProcessedFiles processed_files;
-    processDate(
-            date,
-            aggregated_files,
-            collector,
-            processed_files);
+    process_date(
+      date,
+      aggregated_files,
+      collector,
+      processed_files);
 
     ResultFile result_file;
     try
     {
       if (!collector.empty())
       {
-        dumpFile(
-                output_dir,
-                prefix,
-                date,
-                collector,
-                result_file);
+        dump_file(
+          output_dir,
+          prefix,
+          date,
+          collector,
+          result_file);
 
         const auto& [temp_file_path, result_file_path] = result_file;
         if (std::rename(
-                temp_file_path.c_str(),
-                result_file_path.c_str()))
+          temp_file_path.c_str(),
+          result_file_path.c_str()))
         {
           Stream::Error ostr;
           ostr << __PRETTY_FUNCTION__
@@ -175,14 +176,14 @@ void Reaggregator::reaggregate(
   }
 }
 
-void Reaggregator::processDate(
-        const DayTimestamp& date,
-        AggregatedFiles& aggregated_files,
-        Collector& collector,
-        ProcessedFiles& processed_files) noexcept
+void Reaggregator::process_date(
+  const DayTimestamp& date,
+  AggregatedFiles& aggregated_files,
+  Collector& collector,
+  ProcessedFiles& processed_files) noexcept
 {
-  const auto [it_begin, it_end]
-          = aggregated_files.equal_range(date);
+  const auto [it_begin, it_end] =
+    aggregated_files.equal_range(date);
   for (auto it = it_begin; it != it_end; ++it)
   {
     persantage_.increase();
@@ -211,7 +212,7 @@ void Reaggregator::processDate(
   aggregated_files.erase(it_begin, it_end);
 }
 
-void Reaggregator::removeUnique(AggregatedFiles& files)
+void Reaggregator::remove_unique(AggregatedFiles& files)
 {
   if (files.empty())
     return;
@@ -246,17 +247,17 @@ void Reaggregator::removeUnique(AggregatedFiles& files)
   }
 }
 
-void Reaggregator::dumpFile(
-        const Path& output_dir,
-        const std::string& prefix,
-        const DayTimestamp& date,
-        Collector& collector,
-        ResultFile& result_file)
+void Reaggregator::dump_file(
+  const Path& output_dir,
+  const std::string& prefix,
+  const DayTimestamp& date,
+  Collector& collector,
+  ResultFile& result_file)
 {
   auto generated_path =
-          Utils::GenerateFilePath(output_dir, prefix, date);
+    Utils::generate_file_path(output_dir, prefix, date);
   const auto& temp_file_path =
-          generated_path.first;
+    generated_path.first;
 
   LogHelper<LogTraits>::save(temp_file_path, collector);
   result_file = std::move(generated_path);

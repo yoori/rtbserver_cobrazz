@@ -36,9 +36,9 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class AggregatorMultyThread final :
-        public Processor,
-        public virtual ReferenceCounting::AtomicImpl,
-        private ActiveObjectDelegate
+  public Processor,
+  public virtual ReferenceCounting::AtomicImpl,
+  private ActiveObjectDelegate
 {
   using Path = Utils::Path;
   using InputFiles = std::list<Path>;
@@ -57,10 +57,10 @@ class AggregatorMultyThread final :
   using DayTimestamp = LogProcessing::DayTimestamp;
   using PriorityQueue
       = std::priority_queue<
-              DayTimestamp,
-              std::deque<DayTimestamp>,
-              std::greater<DayTimestamp>
-              >;
+          DayTimestamp,
+          std::deque<DayTimestamp>,
+          std::greater<DayTimestamp>
+        >;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -81,11 +81,11 @@ class AggregatorMultyThread final :
 
 public:
   explicit AggregatorMultyThread(
-          const std::size_t max_process_files,
-          const std::size_t dump_max_size,
-          const std::string& input_dir,
-          const std::string& output_dir,
-          const Logging::Logger_var& logger);
+    const std::size_t max_process_files,
+    const std::size_t dump_max_size,
+    const std::string& input_dir,
+    const std::string& output_dir,
+    Logging::Logger* logger);
 
   ~AggregatorMultyThread() override;
 
@@ -105,23 +105,23 @@ private:
           Collector& collector,
           PriorityQueue& priority_queue);
 
-  void doRead() noexcept;
+  void do_read() noexcept;
 
-  void doWrite(
+  void do_write(
           const CollectorInner& collector,
           const DayTimestamp& date,
           const bool need_add_read) noexcept;
   // Calculate thread
-  void doFlush() noexcept;
+  void do_flush() noexcept;
   // Write thread
-  void doFlush(
+  void do_flush(
           const ProcessedFiles_var& processed_files) noexcept;
 
-  void doMerge(
+  void do_merge(
           const Collector& collector,
           const Path& original_file) noexcept;
 
-  void doStop(
+  void do_stop(
           const Addressee addresee) noexcept;
 
   void report_error(
@@ -132,11 +132,12 @@ private:
   template<class MemPtr,
           class ...Args>
   std::enable_if_t<
-          std::is_member_function_pointer_v<MemPtr>,
-          bool>
-  postTask(const ThreadID id,
-           MemPtr mem_ptr,
-           Args&& ...args) noexcept
+    std::is_member_function_pointer_v<MemPtr>,
+    bool>
+  post_task(
+    const ThreadID id,
+    MemPtr mem_ptr,
+    Args&& ...args) noexcept
   {
     if (task_runners_.size() <= static_cast<std::size_t>(id))
       return false;
@@ -144,28 +145,29 @@ private:
     try
     {
       task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
-              AdServer::Commons::make_delegate_task(
-                      std::bind(mem_ptr,
-                                this,
-                                std::forward<Args>(args)...)));
+        AdServer::Commons::make_delegate_task(
+          std::bind(
+            mem_ptr,
+            this,
+            std::forward<Args>(args)...)));
       return true;
     }
     catch (const eh::Exception& exc)
     {
+      shutdown_manager_.stop();
       std::stringstream stream;
       stream << __PRETTY_FUNCTION__
              << ": Can't enqueue_task"
              << " Reason: "
              << exc.what();
       logger_->critical(
-              stream.str(),
-              Aspect::AGGREGATOR);
-      shutdown_manager_.stop();
+        stream.str(),
+        Aspect::AGGREGATOR);
       return false;
     }
   }
 
-  Generics::TaskRunner& getTaskRunner(const ThreadID id) noexcept;
+  Generics::TaskRunner& get_task_runner(const ThreadID id) noexcept;
 
 private:
   const std::size_t max_process_files_;

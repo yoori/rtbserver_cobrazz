@@ -21,8 +21,9 @@ class Daemon : public virtual ReferenceCounting::Interface
 {
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
-  Daemon(const std::string& pid_path,
-         const Logging::Logger_var& logger);
+  Daemon(
+    const std::string& pid_path,
+    Logging::Logger* logger);
 
   virtual ~Daemon();
 
@@ -31,11 +32,11 @@ public:
   void stop() noexcept;
 
 protected:
-  virtual void startLogic() = 0;
+  virtual void start_logic() = 0;
 
-  virtual void stopLogic() noexcept = 0;
+  virtual void stop_logic() noexcept = 0;
 
-  virtual void waitLogic() noexcept = 0;
+  virtual void wait_logic() noexcept = 0;
 
 private:
   void start();

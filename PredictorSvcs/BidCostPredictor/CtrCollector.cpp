@@ -12,22 +12,22 @@ template<> const char *CtrTraits::B::signature_ = "CtrStat";
 template<> const char *CtrTraits::B::current_version_ = "2.5";
 
 FixedBufStream<TabCategory>& operator>>(
-        FixedBufStream<TabCategory>& is,
-        CtrKey& key)
+  FixedBufStream<TabCategory>& is,
+  CtrKey& key)
 {
   TokenizerInputArchive<> ia(is);
   ia >> key;
   if (is)
   {
     key.invariant();
-    key.calcHash();
+    key.calc_hash();
   }
   return is;
 }
 
 std::ostream& operator<<(
-        std::ostream& os,
-        const CtrKey& key)
+  std::ostream& os,
+  const CtrKey& key)
 {
   TabOutputArchive oa(os);
   oa << key;
@@ -35,8 +35,8 @@ std::ostream& operator<<(
 }
 
 FixedBufStream<TabCategory>& operator>>(
-        FixedBufStream<TabCategory>& is,
-        CtrData& data)
+  FixedBufStream<TabCategory>& is,
+  CtrData& data)
 {
   using NoInvariants = Aux_::NoInvariants;
   TokenizerInputArchive<NoInvariants> ia(is);
@@ -45,8 +45,8 @@ FixedBufStream<TabCategory>& operator>>(
 }
 
 std::ostream& operator<<(
-        std::ostream& os,
-        const CtrData& data)
+  std::ostream& os,
+  const CtrData& data)
 {
   SimpleTabOutputArchive oa(os);
   oa << data;

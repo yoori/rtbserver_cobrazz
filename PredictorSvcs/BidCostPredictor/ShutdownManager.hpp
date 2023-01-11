@@ -35,7 +35,7 @@ public:
     {}
   }
 
-  bool isStoped() noexcept
+  bool is_stoped() noexcept
   {
     std::unique_lock lock(mutex_);
     return is_stoped_;

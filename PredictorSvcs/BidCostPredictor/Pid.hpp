@@ -27,7 +27,7 @@ class PidSetter : private Generics::Uncopyable
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
   PidSetter(const std::string& file_path)
-           : file_path_(file_path)
+    : file_path_(file_path)
   {
   }
 
@@ -43,9 +43,9 @@ public:
   bool set()
   {
     fd_ = open(
-            file_path_.c_str(),
-            O_RDWR|O_CREAT,
-            S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+      file_path_.c_str(),
+      O_RDWR|O_CREAT,
+      S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
     if (fd_ < 0)
     {
       Stream::Error stream;
@@ -55,7 +55,7 @@ public:
       throw Exception(stream);
     }
 
-    if (lockFile(fd_))
+    if (lock_file(fd_))
     {
       is_lock_ = true;
     }
@@ -100,10 +100,10 @@ private:
 
     is_lock_ = false;
     ftruncate(fd_, 0);
-    unlockFile(fd_);
+    unlock_file(fd_);
   }
 
-  bool lockFile(const int fd) noexcept
+  bool lock_file(const int fd) noexcept
   {
     struct flock fl;
     fl.l_type = F_WRLCK;
@@ -120,7 +120,7 @@ private:
     }
   }
 
-  bool unlockFile(const int fd) noexcept
+  bool unlock_file(const int fd) noexcept
   {
     struct flock fl;
     fl.l_type = F_UNLCK;
@@ -150,7 +150,7 @@ class PidGetter : private Generics::Uncopyable
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
   PidGetter(const std::string& file_path)
-           : file_path_(file_path)
+  : file_path_(file_path)
   {
   }
 
@@ -166,8 +166,9 @@ public:
       throw Exception(ostr);
     }
 
-    const std::string data{std::istreambuf_iterator<char>(fstream),
-                           std::istreambuf_iterator<char>()};
+    const std::string data{
+      std::istreambuf_iterator<char>(fstream),
+      std::istreambuf_iterator<char>()};
     if (data.empty())
       return {};
 

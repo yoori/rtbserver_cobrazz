@@ -27,27 +27,27 @@ public:
 
 public:
   explicit CtrKey()
-                 : tag_id_(0),
-                   url_(std::make_shared<Url>())
+  : tag_id_(0),
+    url_(std::make_shared<Url>())
   {
   }
 
   explicit CtrKey(
-          const TagId& tag_id,
-          const Url& url)
-          : tag_id_(tag_id),
-            url_(std::make_shared<Url>(url))
+    const TagId& tag_id,
+    const Url& url)
+    : tag_id_(tag_id),
+      url_(std::make_shared<Url>(url))
   {
-    calcHash();
+    calc_hash();
   }
 
   explicit CtrKey(
-          const TagId& tag_id,
-          const Url_var& url)
-          : tag_id_(tag_id),
-            url_(url)
+    const TagId& tag_id,
+    const Url_var& url)
+    : tag_id_(tag_id),
+      url_(url)
   {
-    calcHash();
+    calc_hash();
   }
 
   CtrKey(const CtrKey&) = default;
@@ -61,10 +61,10 @@ public:
       return true;
 
     return tag_id_ == rht.tag_id_
-        && *url_ == *rht.url_;
+      && *url_ == *rht.url_;
   }
 
-  TagId tagId() const noexcept
+  TagId tag_id() const noexcept
   {
     return tag_id_;
   }
@@ -74,7 +74,7 @@ public:
     return *url_;
   }
 
-  const Url_var& urlVar() const noexcept
+  const Url_var& url_var() const noexcept
   {
     return url_;
   }
@@ -97,15 +97,15 @@ public:
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
-          FixedBufStream<TabCategory>& is,
-          CtrKey& key);
+    FixedBufStream<TabCategory>& is,
+    CtrKey& key);
 
   friend std::ostream& operator<<(
-          std::ostream& os,
-          const CtrKey& key);
+    std::ostream& os,
+    const CtrKey& key);
 
 private:
-  void calcHash()
+  void calc_hash()
   {
     Generics::Murmur64Hash hasher(hash_);
     Generics::hash_add(hasher, tag_id_);
@@ -130,10 +130,10 @@ public:
   CtrData() = default;
 
   explicit CtrData(
-          const Imps& imps,
-          const Clicks& clicks)
-          : imps_(imps),
-            clicks_(clicks)
+    const Imps& imps,
+    const Clicks& clicks)
+    : imps_(imps),
+      clicks_(clicks)
   {
   }
 
@@ -175,12 +175,12 @@ public:
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
-          FixedBufStream<TabCategory>& is,
-          CtrData& data);
+    FixedBufStream<TabCategory>& is,
+    CtrData& data);
 
   friend std::ostream& operator<<(
-          std::ostream& os,
-          const CtrData& data);
+    std::ostream& os,
+    const CtrData& data);
 
 private:
   Imps imps_ = 0;

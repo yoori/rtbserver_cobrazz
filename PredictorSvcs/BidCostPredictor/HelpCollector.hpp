@@ -24,14 +24,14 @@ class HelpInnerKey final
 
 public:
   explicit HelpInnerKey()
-                       : cost_(FixedNumber::ZERO)
+    : cost_(FixedNumber::ZERO)
   {
   }
 
   explicit HelpInnerKey(const Cost& cost)
-                       : cost_(cost)
+    : cost_(cost)
   {
-    calcHash();
+    calc_hash();
   }
 
   HelpInnerKey(const HelpInnerKey&) = default;
@@ -63,7 +63,7 @@ public:
   };
 
 private:
-  void calcHash()
+  void calc_hash()
   {
     Generics::Murmur64Hash hasher(hash_);
     Generics::hash_add(hasher, cost_);
@@ -87,27 +87,27 @@ public:
 
 public:
   explicit HelpKey()
-                   : tag_id_(0),
-                     url_(std::make_shared<std::string>())
+    : tag_id_(0),
+      url_(std::make_shared<std::string>())
   {
   }
 
   explicit HelpKey(
-          const TagId& tag_id,
-          const Url& url)
-          : tag_id_(tag_id),
-            url_(std::make_shared<std::string>(url))
+    const TagId& tag_id,
+    const Url& url)
+    : tag_id_(tag_id),
+      url_(std::make_shared<std::string>(url))
   {
-    calcHash();
+    calc_hash();
   }
 
   explicit HelpKey(
-          const TagId& tag_id,
-          const Url_var& url)
-          : tag_id_(tag_id),
-            url_(url)
+    const TagId& tag_id,
+    const Url_var& url)
+    : tag_id_(tag_id),
+      url_(url)
   {
-    calcHash();
+    calc_hash();
   }
 
   HelpKey(const HelpKey&) = default;
@@ -124,7 +124,7 @@ public:
         && *url_ == *rht.url_;
   }
 
-  TagId tagId() const noexcept
+  TagId tag_id() const noexcept
   {
     return tag_id_;
   }
@@ -134,7 +134,7 @@ public:
     return *url_;
   }
 
-  const Url_var& urlVar() const noexcept
+  const Url_var& url_var() const noexcept
   {
     return url_;
   }
@@ -145,7 +145,7 @@ public:
   }
 
 private:
-  void calcHash()
+  void calc_hash()
   {
     Generics::Murmur64Hash hasher(hash_);
     Generics::hash_add(hasher, tag_id_);
@@ -162,8 +162,8 @@ private:
 
 constexpr bool is_help_collector_map = false;
 
-using HelpInnerCollector
-    = LogProcessing::StatCollector<HelpInnerKey, HelpInnerData, true, true, true, is_help_collector_map>;
+using HelpInnerCollector =
+  LogProcessing::StatCollector<HelpInnerKey, HelpInnerData, true, true, true, is_help_collector_map>;
 
 using HelpData = HelpInnerCollector;
 

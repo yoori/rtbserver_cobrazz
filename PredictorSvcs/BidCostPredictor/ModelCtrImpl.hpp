@@ -14,8 +14,8 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class ModelCtrImpl :
-        public ModelCtr,
-        public virtual ReferenceCounting::AtomicImpl
+  public ModelCtr,
+  public virtual ReferenceCounting::AtomicImpl
 {
 public:
   using TagId = typename ModelCtr::TagId;
@@ -25,19 +25,19 @@ public:
   using Imps = typename ModelCtr::Imps;
   using Data = typename ModelCtr::Data;
 
-  ModelCtrImpl(Logging::Logger_var& logger);
+  ModelCtrImpl(Logging::Logger* logger);
 
   ~ModelCtrImpl() override = default;
 
-  Data getCtr(
-          const TagId& tag_id,
-          const Url& url) const;
+  Data get_ctr(
+    const TagId& tag_id,
+    const Url& url) const override;
 
-  void setCtr(
-          const TagId& tag_id,
-          const Url_var& url,
-          const Clicks& clicks,
-          const Imps& imps);
+  void set_ctr(
+    const TagId& tag_id,
+    const Url_var& url,
+    const Clicks& clicks,
+    const Imps& imps) override;
 
   void clear() noexcept;
 
@@ -46,7 +46,7 @@ public:
   void save(const std::string& path) const;
 
 private:
-  Logging::Logger_var& logger_;
+  Logging::Logger_var logger_;
 
   LogProcessing::CtrCollector collector_;
 };

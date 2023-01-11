@@ -10,7 +10,7 @@ namespace BidCostPredictor
 {
 
 Configuration::Configuration(
-        const std::string& path_json_config)
+  const std::string& path_json_config)
 {
   try
   {
@@ -25,8 +25,8 @@ Configuration::Configuration(
     }
 
     boost::property_tree::read_json(
-            file,
-            ptree_);
+      file,
+      ptree_);
   }
   catch(const boost::exception& exc)
   {
@@ -45,8 +45,8 @@ Configuration::Configuration(
 }
 
 Configuration::Configuration(
-        const boost::property_tree::ptree& ptree)
-        : ptree_(ptree)
+  const boost::property_tree::ptree& ptree)
+  : ptree_(ptree)
 {
 }
 
@@ -59,11 +59,12 @@ bool Configuration::exists(const std::string& path) const
   {
     std::vector<std::string> subpaths;
     subpaths.reserve(5);
-    boost::split(subpaths,
-                 path,
-                 [] (const char data) {
-                   return data == '.';
-                 });
+    boost::split(
+      subpaths,
+      path,
+      [] (const char data) {
+        return data == '.';
+      });
 
     auto* pointer = &ptree_;
     for (const auto& subpath : subpaths) {
@@ -90,13 +91,14 @@ bool Configuration::exists(const std::string& path) const
   }
 }
 
-std::string Configuration::get(const std::string& path) const
+std::string Configuration::get(
+  const std::string& path) const
 {
   return get<std::string>(path);
 }
 
-std::list<Configuration> Configuration::getListOf(
-        const std::string& path) const
+std::list<Configuration> Configuration::get_list_of(
+  const std::string& path) const
 {
   if (!exists(path))
   {
@@ -128,10 +130,10 @@ std::list<Configuration> Configuration::getListOf(
   return configurations;
 }
 
-Configuration Configuration::getConfig(
-        const std::string& path) const
+Configuration Configuration::get_config(
+  const std::string& path) const
 {
-  const auto configs = getListOf(path);
+  const auto configs = get_list_of(path);
   if (configs.size() != 1)
   {
     Stream::Error stream;

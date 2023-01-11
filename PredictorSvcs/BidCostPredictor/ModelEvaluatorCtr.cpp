@@ -15,30 +15,31 @@ namespace BidCostPredictor
 {
 
 ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
-        const DataModelProvider_var& data_provider,
-        const ModelCtrFactory_var& model_factory,
-        const Logging::Logger_var& logger)
-        : data_provider_(data_provider),
-          model_factory_(model_factory),
-          logger_(logger),
-          observer_(new ActiveObjectObserver(this)),
-          persantage_(logger_, Aspect::MODEL_EVALUATOR_CTR, 5),
-          task_runner_(new Generics::TaskRunner(
-                  observer_,
-                  1))
+  DataModelProvider* data_provider,
+  ModelCtrFactory* model_factory,
+  Logging::Logger* logger)
+  : data_provider_(ReferenceCounting::add_ref(data_provider)),
+    model_factory_(ReferenceCounting::add_ref(model_factory)),
+    logger_(ReferenceCounting::add_ref(logger)),
+    observer_(new ActiveObjectObserver(this)),
+    persantage_(logger_, Aspect::MODEL_EVALUATOR_CTR, 5),
+    task_runner_(
+      new Generics::TaskRunner(
+        observer_,
+        1))
 {
   threads_number_ = std::max(8u, std::thread::hardware_concurrency());
   threads_number_ = std::min(36u, threads_number_);
   task_runner_pool_ = TaskRunner_var(
-          new Generics::TaskRunner(
-                  observer_,
-                  threads_number_));
+    new Generics::TaskRunner(
+      observer_,
+      threads_number_));
   collector_.prepare_adding(50000000);
 }
 
 ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
   {
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
@@ -166,64 +167,65 @@ void ModelEvaluatorCtrImpl::wait() noexcept
 ModelEvaluatorCtrImpl::~ModelEvaluatorCtrImpl()
 {
   shutdown_manager_.stop();
-  observer_->clearDelegate();
+  observer_->clear_delegate();
   wait();
 }
 
 void ModelEvaluatorCtrImpl::start()
 {
   logger_->info(
-          std::string("ModelEvaluatorCtr started"),
-          Aspect::MODEL_EVALUATOR_CTR);
+    std::string("ModelEvaluatorCtr started"),
+    Aspect::MODEL_EVALUATOR_CTR);
 
   is_running_ = true;
 
   task_runner_pool_->activate_object();
   task_runner_->activate_object();
 
-  if (!postTask(TaskRunnerID::Single,
-                &ModelEvaluatorCtrImpl::doInit))
+  if (!post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorCtrImpl::do_init))
   {
-    throw Exception("Initial postTask is failed");
+    throw Exception("Initial post_task is failed");
   }
 }
 
 void ModelEvaluatorCtrImpl::stop() noexcept
 {
   logger_->info(
-          std::string("ModelEvaluatorCtr was interrupted"),
-          Aspect::MODEL_EVALUATOR_CTR);
+    std::string("ModelEvaluatorCtr was interrupted"),
+    Aspect::MODEL_EVALUATOR_CTR);
   shutdown_manager_.stop();
 }
 
-void ModelEvaluatorCtrImpl::doInit() noexcept
+void ModelEvaluatorCtrImpl::do_init() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
-  persantage_.setTotalNumber(collector_.size());
+  persantage_.set_total_number(collector_.size());
   remaining_iterations_ = collector_.size();
   iterator_ = std::begin(collector_);
   const std::size_t count =
-          std::min(static_cast<std::size_t>(threads_number_ * 3), remaining_iterations_);
+    std::min(static_cast<std::size_t>(threads_number_ * 3), remaining_iterations_);
   for (std::size_t i = 1; i <= count; ++i)
   {
-    postTask(
-            TaskRunnerID::Pool,
-            &ModelEvaluatorCtrImpl::doCalculate,
-            iterator_);
+    post_task(
+      TaskRunnerID::Pool,
+      &ModelEvaluatorCtrImpl::do_calculate,
+      iterator_);
     ++iterator_;
   }
 }
 
-void ModelEvaluatorCtrImpl::doCalculate(const Iterator it) noexcept
+void ModelEvaluatorCtrImpl::do_calculate(const Iterator it) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
-    doCalculateHelper(it);
+    do_calculate_helper(it);
   }
   catch (const eh::Exception& exc)
   {
@@ -236,14 +238,14 @@ void ModelEvaluatorCtrImpl::doCalculate(const Iterator it) noexcept
   }
 }
 
-void ModelEvaluatorCtrImpl::doCalculateHelper(const Iterator it)
+void ModelEvaluatorCtrImpl::do_calculate_helper(const Iterator it)
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
-  postTask(
-          TaskRunnerID::Single,
-          &ModelEvaluatorCtrImpl::doNextTask);
+  post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorCtrImpl::do_next_task);
 
   const auto& top_key = it->first;
   const auto& cost_dict = it->second;
@@ -257,30 +259,30 @@ void ModelEvaluatorCtrImpl::doCalculateHelper(const Iterator it)
     all_clicks += data.clicks();
   }
 
-  const auto& tag_id = top_key.tagId();
-  const auto& url = top_key.urlVar();
+  const auto& tag_id = top_key.tag_id();
+  const auto& url = top_key.url_var();
 
-  postTask(
-          TaskRunnerID::Single,
-          &ModelEvaluatorCtrImpl::doSave,
-          tag_id,
-          url,
-          all_clicks,
-          all_imps);
+  post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorCtrImpl::do_save,
+    tag_id,
+    url,
+    all_clicks,
+    all_imps);
 }
 
-void ModelEvaluatorCtrImpl::doSave(
-        const TagId& tag_id,
-        const Url_var& url,
-        const Clicks& all_clicks,
-        const Imps& all_imps) noexcept
+void ModelEvaluatorCtrImpl::do_save(
+  const TagId& tag_id,
+  const Url_var& url,
+  const Clicks& all_clicks,
+  const Imps& all_imps) noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   try
   {
-    model_->setCtr(tag_id, url, all_clicks, all_imps);
+    model_->set_ctr(tag_id, url, all_clicks, all_imps);
   }
   catch (const eh::Exception& exc)
   {
@@ -289,24 +291,24 @@ void ModelEvaluatorCtrImpl::doSave(
          << " : Reason: "
          << exc.what();
     logger_->critical(
-            ostr.str(),
-            Aspect::MODEL_EVALUATOR_CTR);
+      ostr.str(),
+      Aspect::MODEL_EVALUATOR_CTR);
     shutdown_manager_.stop();
     return;
   }
 }
 
-void ModelEvaluatorCtrImpl::doNextTask() noexcept
+void ModelEvaluatorCtrImpl::do_next_task() noexcept
 {
-  if (shutdown_manager_.isStoped())
+  if (shutdown_manager_.is_stoped())
     return;
 
   if (iterator_ != std::end(collector_))
   {
-    postTask(
-            TaskRunnerID::Pool,
-            &ModelEvaluatorCtrImpl::doCalculate,
-            iterator_);
+    post_task(
+      TaskRunnerID::Pool,
+      &ModelEvaluatorCtrImpl::do_calculate,
+      iterator_);
     ++iterator_;
   }
 
@@ -321,9 +323,9 @@ void ModelEvaluatorCtrImpl::doNextTask() noexcept
 }
 
 void ModelEvaluatorCtrImpl::report_error(
-        Severity severity,
-        const String::SubString& description,
-        const char* error_code) noexcept
+  Severity severity,
+  const String::SubString& description,
+  const char* error_code) noexcept
 {
   if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
   {
@@ -334,9 +336,9 @@ void ModelEvaluatorCtrImpl::report_error(
            << " Reason: "
            << description;
     logger_->critical(
-            stream.str(),
-            Aspect::MODEL_EVALUATOR_CTR,
-            error_code);
+      stream.str(),
+      Aspect::MODEL_EVALUATOR_CTR,
+      error_code);
   }
 }
 

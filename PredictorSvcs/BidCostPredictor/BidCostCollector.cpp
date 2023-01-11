@@ -12,22 +12,22 @@ template<> const char *BidCostTraits::B::signature_ = "BidCost";
 template<> const char *BidCostTraits::B::current_version_ = "2.5";
 
 FixedBufStream<TabCategory>& operator>>(
-        FixedBufStream<TabCategory>& is,
-        BidCostKey& key)
+  FixedBufStream<TabCategory>& is,
+  BidCostKey& key)
 {
   TokenizerInputArchive<> ia(is);
   ia >> key;
   if (is)
   {
     key.invariant();
-    key.calcHash();
+    key.calc_hash();
   }
   return is;
 }
 
 std::ostream& operator<<(
-        std::ostream& os,
-        const BidCostKey& key)
+  std::ostream& os,
+  const BidCostKey& key)
 {
   TabOutputArchive oa(os);
   oa << key;
@@ -35,8 +35,8 @@ std::ostream& operator<<(
 }
 
 FixedBufStream<TabCategory>& operator>>(
-        FixedBufStream<TabCategory>& is,
-        BidCostData& data)
+  FixedBufStream<TabCategory>& is,
+  BidCostData& data)
 {
   using NoInvariants = Aux_::NoInvariants;
   TokenizerInputArchive<NoInvariants> ia(is);
@@ -45,8 +45,8 @@ FixedBufStream<TabCategory>& operator>>(
 }
 
 std::ostream& operator<<(
-        std::ostream& os,
-        const BidCostData& data)
+  std::ostream& os,
+  const BidCostData& data)
 {
   SimpleTabOutputArchive oa(os);
   oa << data;

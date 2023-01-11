@@ -20,7 +20,7 @@ class PoolCollector final : private Generics::Uncopyable
 public:
   PoolCollector() = default;
 
-  Collector getCollector()
+  Collector get_collector()
   {
     std::unique_lock lock(mutex_);
     if (collectors_.empty())
@@ -39,7 +39,7 @@ public:
     }
   }
 
-  void addCollector(Collector&& collector)
+  void add_collector(Collector&& collector)
   {
     collector.clear();
     std::lock_guard lock(mutex_);
