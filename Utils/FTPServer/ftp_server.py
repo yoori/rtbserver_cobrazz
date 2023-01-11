@@ -9,25 +9,37 @@ from pyftpdlib.servers import FTPServer
 class Application:
     def __init__(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("-user", help="FTP username.")
-        parser.add_argument("-password", help="FTP user password.")
-        parser.add_argument("-dir", help="FTP directory.")
-        parser.add_argument("-port", help="FTP port.")
-        parser.add_argument("-max-cons", type=int, default=1024, help="Maximum connections.")
-        parser.add_argument("-max-cons-per-ip", type=int, default=10,  help="Maximum connections per IP.")
+        parser.add_argument("-user", required=True, help="FTP username.")
+        parser.add_argument("-password", required=True, help="FTP user password.")
+        parser.add_argument("-dir", required=True, help="FTP directory.")
+        parser.add_argument("-tmp_dir", required=True, help="Temporary directory.")
+        parser.add_argument("-port", required=True, help="FTP port.")
+        parser.add_argument("-max-cons", required=True, type=int, default=1024, help="Maximum connections.")
+        parser.add_argument("-max-cons-per-ip", required=True, type=int, default=10,  help="Maximum connections per IP.")
         parser.add_argument("--pid-file", required=False, help="File with process ID")
         args = parser.parse_args()
         self.user = args.user
         self.password = args.password
         self.dir = args.dir
         os.makedirs(self.dir, exist_ok=True)
+        self.tmp_dir = args.tmp_dir
+        os.makedirs(self.tmp_dir, exist_ok=True)
         self.port = args.port
         self.pid_file = args.pid_file
 
         self.authorizer = DummyAuthorizer()
-        self.authorizer.add_user(self.user, self.password, self.dir, perm="elradfmwMT")
+        self.authorizer.add_user(self.user, self.password, self.tmp_dir, perm="elradfmwMT")
 
-        self.handler = FTPHandler
+        class Handler(FTPHandler):
+            
+            def on_file_received(self, file):
+                fname = os.path.split(file)[1]
+                os.rename(file, os.path.join(args.dir, fname))
+
+            def on_incomplete_file_received(self, file):
+                os.remove(file)
+
+        self.handler = Handler
         self.handler.authorizer = self.authorizer
 
         self.server = FTPServer(("0.0.0.0", self.port), self.handler)
