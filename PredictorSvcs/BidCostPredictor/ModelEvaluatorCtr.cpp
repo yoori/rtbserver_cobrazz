@@ -296,6 +296,20 @@ void ModelEvaluatorCtrImpl::do_save(
     shutdown_manager_.stop();
     return;
   }
+
+  try
+  {
+    remaining_iterations_ -= 1;
+    if (remaining_iterations_ == 0)
+    {
+      is_success_ = true;
+      shutdown_manager_.stop();
+    }
+    persantage_.increase();
+  }
+  catch (...)
+  {
+  }
 }
 
 void ModelEvaluatorCtrImpl::do_next_task() noexcept
@@ -311,15 +325,6 @@ void ModelEvaluatorCtrImpl::do_next_task() noexcept
       iterator_);
     ++iterator_;
   }
-
-  remaining_iterations_ -= 1;
-  if (remaining_iterations_ == 0)
-  {
-    is_success_ = true;
-    shutdown_manager_.stop();
-  }
-
-  persantage_.increase();
 }
 
 void ModelEvaluatorCtrImpl::report_error(

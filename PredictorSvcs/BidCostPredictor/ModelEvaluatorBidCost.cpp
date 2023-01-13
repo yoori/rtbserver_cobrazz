@@ -238,6 +238,10 @@ void ModelEvaluatorBidCostImpl::do_calculate(const Iterator it) noexcept
            << exc.what();
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
   }
+
+  post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorBidCostImpl::do_decrease);
 }
 
 void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
@@ -368,6 +372,27 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
   }
 }
 
+void ModelEvaluatorBidCostImpl::do_decrease() noexcept
+{
+  if (shutdown_manager_.is_stoped())
+    return;
+
+  try
+  {
+    remaining_iterations_ -= 1;
+    if (remaining_iterations_ == 0)
+    {
+      is_success_ = true;
+      shutdown_manager_.stop();
+    }
+
+    persantage_.increase();
+  }
+  catch (...)
+  {
+  }
+}
+
 void ModelEvaluatorBidCostImpl::do_save(
   const TagId& tag_id,
   const Url_var& url,
@@ -409,15 +434,6 @@ void ModelEvaluatorBidCostImpl::do_next_task() noexcept
       iterator_);
     ++iterator_;
   }
-
-  remaining_iterations_ -= 1;
-  if (remaining_iterations_ == 0)
-  {
-    is_success_ = true;
-    shutdown_manager_.stop();
-  }
-
-  persantage_.increase();
 }
 
 void ModelEvaluatorBidCostImpl::report_error(

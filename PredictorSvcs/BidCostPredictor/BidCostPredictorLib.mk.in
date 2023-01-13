@@ -1,0 +1,28 @@
+@bidcostpredictorlib_deps@
+
+sources := \
+  Application.cpp \
+  Aggregator.cpp \
+  AggregatorMultyThread.cpp \
+  Configuration.cpp \
+  ContainerImpl.cpp \
+  CtrCollector.cpp \
+  DataModelProviderImpl.cpp \
+  Daemon.cpp \
+  DaemonImpl.cpp \
+  LogHelper.cpp \
+  ModelCtrImpl.cpp \
+  ModelEvaluatorCtr.cpp \
+  ModelEvaluatorBidCost.cpp \
+  ModelBidCostImpl.cpp \
+  ModelProcessor.cpp \
+  Regenerator.cpp \
+  Reaggregator.cpp \
+  ReaggregatorMultyThread.cpp \
+  Storage.cpp \
+  BidCostCollector.cpp \
+  Utils.cpp
+
+includes := .
+
+@bidcostpredictorlib_post@

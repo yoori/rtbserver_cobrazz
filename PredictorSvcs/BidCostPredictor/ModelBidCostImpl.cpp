@@ -28,20 +28,20 @@ ModelBidCostImpl::FixedNumber ModelBidCostImpl::get_cost(
   Cost min_cost(false, 100000, 0);
   Cost max_cost(false, 0, 0);
 
-  const auto it =
-    win_rates_.lower_bound(std::tuple(url, tag_id, win_rate));
+  auto it =
+    win_rates_.lower_bound(std::tuple(tag_id, url, win_rate));
   const auto it_end = std::end(win_rates_);
   while (it != it_end
-    && std::get<1>(it->first) == tag_id
-    && std::get<0>(it->first) == url)
+    && std::get<0>(it->first) == tag_id
+    && std::get<1>(it->first) == url)
   {
-    const auto& win_rate_found = std::get<2>(it->first);
     const auto& data = it->second;
     const auto& cost_win = data.cost();
-    const auto& max_cost_win = data.maxCost();
+    const auto& max_cost_win = data.max_cost();
 
     min_cost = std::min(min_cost, cost_win);
-    max_cost = std::min(max_cost, max_cost_win);
+    max_cost = std::max(max_cost, max_cost_win);
+    ++it;
   }
 
   if (cur_cost >= max_cost)
@@ -69,8 +69,8 @@ void ModelBidCostImpl::set_cost(
 
   collector_.add(key, data);
   win_rates_.try_emplace({
-    *url,
     tag_id,
+    *url,
     win_rate},
     cost,
     max_cost);
@@ -118,11 +118,11 @@ void ModelBidCostImpl::load(const std::string& path)
     for (const auto& [k, d]: collector_)
     {
       win_rates_.try_emplace({
-        k.url(),
         k.tag_id(),
+        k.url(),
         k.win_rate()},
         d.cost(),
-        d.maxCost());
+        d.max_cost());
     }
     logger_->info(
       std::string("ModelBidCost load is success"),

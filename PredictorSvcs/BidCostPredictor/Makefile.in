@@ -1,30 +1,8 @@
-@bidcostpredictor_deps@
+include Common.pre.rules
 
-sources := \
-  Application.cpp \
-  Aggregator.cpp \
-  AggregatorMultyThread.cpp \
-  Configuration.cpp \
-  ContainerImpl.cpp \
-  CtrCollector.cpp \
-  DataModelProviderImpl.cpp \
-  Daemon.cpp \
-  DaemonImpl.cpp \
-  LogHelper.cpp \
-  Main.cpp \
-  ModelCtrImpl.cpp \
-  ModelEvaluatorCtr.cpp \
-  ModelEvaluatorBidCost.cpp \
-  ModelBidCostImpl.cpp \
-  ModelProcessor.cpp \
-  Regenerator.cpp \
-  Reaggregator.cpp \
-  ReaggregatorMultyThread.cpp \
-  Storage.cpp \
-  BidCostCollector.cpp \
-  Utils.cpp \
-  Test.cpp
+target_makefile_list := \
+    BidCostPredictorLib.mk \
+    BidCostPredictorExe.mk \
+    BidCostPredictorTest.mk
 
-target := BidCostPredictor
-
-@bidcostpredictor_post@
+include $(osbe_builddir)/config/Makentry.post.rules

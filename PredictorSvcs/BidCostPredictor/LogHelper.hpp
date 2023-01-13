@@ -83,6 +83,9 @@ struct LogHelper
       throw Exception(stream);
     }
 
+    if (fstream.eof() || fstream.peek() == EOF)
+      return;
+
     LogProcessing::LogIoProxy<LogTraits>::load(collector, fstream);
   }
 
@@ -90,9 +93,6 @@ struct LogHelper
     const std::string& path,
     const Collector& collector)
   {
-    if (collector.empty())
-      return;
-
     std::ofstream fstream(path);
     if (!fstream.is_open())
     {
@@ -115,6 +115,9 @@ struct LogHelper
              << "]";
       throw Exception(stream);
     }
+
+    if (collector.empty())
+      return;
 
     if constexpr (detail::is_collector_v<DataT>)
     {

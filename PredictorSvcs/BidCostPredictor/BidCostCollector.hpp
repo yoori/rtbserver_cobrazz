@@ -158,7 +158,7 @@ public:
     return cost_;
   }
 
-  const Cost& maxCost() const noexcept
+  const Cost& max_cost() const noexcept
   {
     return max_cost_;
   }

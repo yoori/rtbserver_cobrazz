@@ -15,7 +15,6 @@
 #include "Reaggregator.hpp"
 #include "ReaggregatorMultyThread.hpp"
 #include "Regenerator.hpp"
-#include "Test.hpp"
 
 namespace Aspect
 {
@@ -33,12 +32,10 @@ const char USAGE[] =
   "  regenerate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
   "  aggregate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
   "  reaggregate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
-  "  test <TEST DIRECTORY>\n\n"
   "Sample:\n"
   "  service start /home/user/config.json\n"
   "  service stop /home/user/config.json\n"
   "  service status\n"
-  "  test /tmp/test_bid_cost_predictor\n"
   "  regenerate /tmp/original /tmp/destination\n"
   "  aggregate /tmp/original /tmp/destination\n"
   "  reaggregate /tmp/original /tmp/destination\n";
@@ -75,20 +72,7 @@ int Application::run(int argc, char **argv)
 
   auto it = commands.begin();
   const std::string command = *it;
-  if (command == "test")
-  {
-    ++it;
-    if (it == commands.end())
-    {
-      std::cerr << "test: directory not defined";
-      return EXIT_FAILURE;
-    }
-
-    const std::string directory = *it;
-    Test::test_suit(directory);
-    return EXIT_SUCCESS;
-  }
-  else if (command == "regenerate"
+  if (command == "regenerate"
     || command == "aggregate"
     || command == "reaggregate")
   {

@@ -84,6 +84,8 @@ private:
 
   void do_next_task() noexcept;
 
+  void do_decrease() noexcept;
+
   void report_error(
     Severity severity,
     const String::SubString& description,
@@ -132,11 +134,12 @@ private:
     }
   }
 
-private:
+public:
   static constexpr long TOP_LEVEL_WIN_RATE_MIN_IMPS = 50;
 
   static constexpr long LEVEL_WIN_RATE_MIN_IMPS = 50;
 
+private:
   Points points_;
 
   DataModelProvider_var data_provider_;
