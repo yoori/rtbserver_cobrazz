@@ -138,6 +138,9 @@ void Daemon::start()
 
 void Daemon::stop() noexcept
 {
+  if (!is_running_)
+    return;
+
   try
   {
     const auto pid = ::getpid();
@@ -149,8 +152,7 @@ void Daemon::stop() noexcept
       logger_->critical(stream.str(), Aspect::DAEMON);
     }
 
-    if (is_running_)
-      stop_logic();
+    stop_logic();
   }
   catch(...)
   {}
