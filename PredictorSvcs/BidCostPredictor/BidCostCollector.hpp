@@ -125,7 +125,7 @@ private:
 
   Url_var url_;
 
-  FixedNumber win_rate_;
+  WinRate win_rate_;
 
   std::size_t hash_ = 0;
 };

@@ -27,6 +27,7 @@ ReaggregatorMultyThread::ReaggregatorMultyThread(
     prefix_(LogTraits::B::log_base_name()),
     logger_(ReferenceCounting::add_ref(logger)),
     observer_(new ActiveObjectObserver(this)),
+    processed_files_(std::make_shared<ProcessedFiles>()),
     persantage_(logger_, Aspect::REAGGREGATOR, 5)
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
@@ -154,10 +155,10 @@ void ReaggregatorMultyThread::wait() noexcept
 
 void ReaggregatorMultyThread::stop() noexcept
 {
+  shutdown_manager_.stop();
   logger_->info(
     std::string("Reaggregator was abborted..."),
     Aspect::REAGGREGATOR);
-  shutdown_manager_.stop();
 }
 
 const char* ReaggregatorMultyThread::name() noexcept
@@ -167,7 +168,7 @@ const char* ReaggregatorMultyThread::name() noexcept
 
 void ReaggregatorMultyThread::reaggregate()
 {
-  auto input_files =
+  const auto input_files =
     Utils::get_directory_files(
       input_dir_,
       prefix_);
@@ -282,7 +283,7 @@ void ReaggregatorMultyThread::do_clean(
 }
 
 void ReaggregatorMultyThread::do_write(
-  const ProcessedFiles& processed_files,
+  const ProcessedFiles_var& processed_files,
   Collector& collector,
   const LogProcessing::DayTimestamp& date) noexcept
 {
@@ -327,8 +328,8 @@ void ReaggregatorMultyThread::do_write(
     }
 
     std::for_each(
-      std::begin(processed_files),
-      std::end(processed_files),
+      std::begin(*processed_files),
+      std::end(*processed_files),
       [](const auto &path) {
         std::remove(path.c_str());
       });
@@ -445,7 +446,7 @@ void ReaggregatorMultyThread::do_flush(
       std::move(save_collector),
       date);
 
-    processed_files_ = ProcessedFiles();
+    processed_files_ = std::make_shared<ProcessedFiles>();
   }
   catch (const eh::Exception& exc)
   {
@@ -455,7 +456,7 @@ void ReaggregatorMultyThread::do_flush(
            << " to collector. Reason: "
            << exc.what() << "\n";
 
-    for (const auto& path_file : processed_files_)
+    for (const auto& path_file : *processed_files_)
     {
       stream << "File="
              << path_file
@@ -475,7 +476,7 @@ void ReaggregatorMultyThread::do_merge(
   try
   {
     collector_ += temp_collector;
-    processed_files_.emplace_back(file_path);
+    processed_files_->emplace_back(file_path);
 
     post_task(
       ThreadID::Clean,

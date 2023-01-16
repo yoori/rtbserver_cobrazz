@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "c++ unit test for bid cost predictor"
+#define BOOST_TEST_MODULE "c++ test for bid cost predictor"
 #include <boost/test/included/unit_test.hpp>
 
 // STD
@@ -229,8 +229,7 @@ bool TestAgg::run_helper()
 
   Collector collecor_result;
   Collector collector_file;
-  Generics::Time time =
-    Generics::Time::get_time_of_day();
+  Generics::Time time = Generics::Time::get_time_of_day();
   for (std::size_t d = 1; d <= number_dates_per_file_; ++d)
   {
     DayTimestamp date(time);
@@ -271,13 +270,13 @@ bool TestAgg::run_helper()
 
   for (auto& processor :  processors_)
   {
-    auto t_start = std::chrono::high_resolution_clock::now();
+    const auto t_start = std::chrono::high_resolution_clock::now();
 
     processor->start();
     processor->wait();
 
-    auto t_end = std::chrono::high_resolution_clock::now();
-    double elapsed_time_ms =
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    const double elapsed_time_ms =
       std::chrono::duration<double, std::milli>(t_end - t_start).count();
     std::stringstream stream;
     stream << processor->name()
@@ -596,7 +595,7 @@ public:
 
   ~DataModelProviderEmpty() override = default;
 
-  virtual bool load(HelpCollector& collector) noexcept
+  bool load(HelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
@@ -634,7 +633,7 @@ public:
     return true;
   }
 
-  virtual void stop() noexcept
+  void stop() noexcept override
   {
   }
 };
@@ -682,7 +681,7 @@ public:
 
   ~DataModelProvider1() override = default;
 
-  virtual bool load(HelpCollector& collector) noexcept
+  bool load(HelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
@@ -720,7 +719,7 @@ public:
     return true;
   }
 
-  virtual void stop() noexcept
+  void stop() noexcept override
   {
   }
 };
@@ -797,7 +796,7 @@ public:
 
   ~DataModelProvider2() override = default;
 
-  virtual bool load(HelpCollector& collector) noexcept
+  bool load(HelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
@@ -848,7 +847,7 @@ public:
     return true;
   }
 
-  virtual void stop() noexcept
+  void stop() noexcept override
   {
   }
 };
@@ -925,7 +924,7 @@ public:
 
   ~DataModelProvider3() override = default;
 
-  virtual bool load(HelpCollector& collector) noexcept
+  bool load(HelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
@@ -976,7 +975,7 @@ public:
     return true;
   }
 
-  virtual void stop() noexcept
+  void stop() noexcept override
   {
   }
 };
@@ -1057,7 +1056,7 @@ public:
 
   ~DataModelProviderCtr() override = default;
 
-  virtual bool load(HelpCollector& collector) noexcept
+  bool load(HelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
@@ -1108,7 +1107,7 @@ public:
     return true;
   }
 
-  virtual void stop() noexcept
+  void stop() noexcept override
   {
   }
 };

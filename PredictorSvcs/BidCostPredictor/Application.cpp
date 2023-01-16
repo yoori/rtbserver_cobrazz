@@ -6,13 +6,11 @@
 #include <Generics/AppUtils.hpp>
 #include <Logger/StreamLogger.hpp>
 #include "Application.hpp"
-#include "Aggregator.hpp"
 #include "AggregatorMultyThread.hpp"
 #include "Configuration.h"
 #include "DaemonImpl.hpp"
 #include "Pid.hpp"
 #include "Processor.hpp"
-#include "Reaggregator.hpp"
 #include "ReaggregatorMultyThread.hpp"
 #include "Regenerator.hpp"
 
@@ -28,14 +26,14 @@ const char USAGE[] =
   "Commands:\n"
   "  service start <PATH CONFIG>\n"
   "  service stop <PATH CONFIG>\n"
-  "  service status\n"
+  "  service status <PATH CONFIG>\n"
   "  regenerate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
   "  aggregate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
   "  reaggregate <INPUT DIRECTORY> <OUTPUT DIRECTORY>\n"
   "Sample:\n"
   "  service start /home/user/config.json\n"
   "  service stop /home/user/config.json\n"
-  "  service status\n"
+  "  service status /home/user/config.json\n"
   "  regenerate /tmp/original /tmp/destination\n"
   "  aggregate /tmp/original /tmp/destination\n"
   "  reaggregate /tmp/original /tmp/destination\n";
@@ -137,9 +135,9 @@ int Application::run(int argc, char **argv)
       std::cerr << "daemon: daemon path_config not defined";
       return EXIT_FAILURE;
     }
-    const std::string& daemon_option = *it;
+    const std::string& service_option = *it;
 
-    if (daemon_option == "start")
+    if (service_option == "start")
     {
       ++it;
       if (it == commands.end())
@@ -255,7 +253,7 @@ int Application::run(int argc, char **argv)
         return EXIT_FAILURE;
       }
     }
-    else if (daemon_option == "stop")
+    else if (service_option == "stop")
     {
       ++it;
       if (it == commands.end())

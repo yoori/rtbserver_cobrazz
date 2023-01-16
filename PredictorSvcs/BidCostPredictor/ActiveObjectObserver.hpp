@@ -65,7 +65,8 @@ private:
   std::mutex mutex_;
 };
 
-using ActiveObjectObserver_var = ReferenceCounting::SmartPtr<ActiveObjectObserver>;
+using ActiveObjectObserver_var =
+  ReferenceCounting::SmartPtr<ActiveObjectObserver>;
 
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs

@@ -28,7 +28,7 @@ class GeneratorNumber
 public:
   static GeneratorNumber& inctance()
   {
-    static GeneratorNumber generator;
+    static thread_local GeneratorNumber generator;
     return generator;
   }
 
@@ -140,17 +140,18 @@ GeneratedPath generate_file_path(
   return {temp_file_path, result_file_path};
 }
 
-std::pair<double, double> memory_process_usage()
+Memory memory_process_usage()
 {
-  const std::string path_to_stat = "/proc/self/stat";
+  static const std::string path_to_stat = "/proc/self/stat";
   std::ifstream stat_stream(
-          path_to_stat,
-          std::ios_base::in);
+    path_to_stat,
+    std::ios_base::in);
   if (!stat_stream.is_open())
   {
     Stream::Error stream;
     stream << __PRETTY_FUNCTION__
-           << ": Can't open file=" << path_to_stat;
+           << ": Can't open file="
+           << path_to_stat;
     throw Exception(stream);
   }
 
@@ -178,9 +179,9 @@ std::pair<double, double> memory_process_usage()
   const long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
 
   const double vm_usage = vsize / (1024.0 * 1024.0 * 1024.0);
-  const double resident_set = rss * page_size_kb / (1024.0 * 1024.0);
+  const double ram_usage = rss * page_size_kb / (1024.0 * 1024.0);
 
-  return {vm_usage, resident_set};
+  return {vm_usage, ram_usage};
 }
 
 } // namespace Utils

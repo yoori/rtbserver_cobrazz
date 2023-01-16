@@ -176,7 +176,7 @@ const char* AggregatorMultyThread::name() noexcept
 void AggregatorMultyThread::stop() noexcept
 {
   logger_->critical(
-    std::string("Aggregator was abborted..."),
+    std::string("Aggregator was interrupted..."),
     Aspect::AGGREGATOR);
   shutdown_manager_.stop();
 }
@@ -234,8 +234,8 @@ void AggregatorMultyThread::do_read() noexcept
   persantage_.increase();
 
   const auto it = input_files_.begin();
-  Remover remover(input_files_, it);
-  auto& file_path = *it;
+  const auto file_path = *it;
+  input_files_.erase(it);
 
   try
   {
@@ -385,13 +385,14 @@ void AggregatorMultyThread::do_merge(
         throw Exception(ostr);
       }
       Remover remover(agg_collector_, it);
+      auto& inner_collector = it->second;
 
-      record_count -= it->second.size();
+      record_count -= inner_collector.size();
 
       post_task(
         ThreadID::Write,
         &AggregatorMultyThread::do_write,
-        std::move(it->second),
+        std::move(inner_collector),
         date,
         need_add_read);
       need_add_read = false;
@@ -417,10 +418,11 @@ void AggregatorMultyThread::do_write(
     return;
 
   if (need_add_read)
+  {
     post_task(
       ThreadID::Read,
       &AggregatorMultyThread::do_read);
-
+  }
 
   if (collector.empty())
     return;
@@ -528,8 +530,8 @@ void AggregatorMultyThread::report_error(
   }
 }
 
-Generics::TaskRunner&
-AggregatorMultyThread::get_task_runner(const ThreadID id) noexcept
+Generics::TaskRunner& AggregatorMultyThread::get_task_runner(
+  const ThreadID id) noexcept
 {
   return *task_runners_[static_cast<std::size_t>(id)];
 }

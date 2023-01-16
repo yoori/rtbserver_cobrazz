@@ -25,13 +25,13 @@ public:
     const std::string& pid_path,
     Logging::Logger* logger);
 
-  virtual ~Daemon();
-
   void run();
 
   void stop() noexcept;
 
 protected:
+  virtual ~Daemon();
+
   virtual void start_logic() = 0;
 
   virtual void stop_logic() noexcept = 0;
@@ -49,8 +49,6 @@ private:
   const std::string pid_path_;
 
   Logging::Logger_var logger_;
-
-  Processor* delegate_;
 
   std::unique_ptr<PidSetter> pid_setter_;
 

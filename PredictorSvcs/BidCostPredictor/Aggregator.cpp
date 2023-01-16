@@ -79,9 +79,10 @@ void Aggregator::start()
 
 void Aggregator::aggregate()
 {
-  auto input_files = Utils::get_directory_files(
-    input_dir_,
-    prefix_stat_);
+  auto input_files =
+    Utils::get_directory_files(
+      input_dir_,
+      prefix_stat_);
   persantage_.set_total_number(input_files.size());
 
   while(!input_files.empty())
@@ -196,13 +197,14 @@ void Aggregator::process_files(const ProcessFiles& files)
       }
       Remover remover(collector, it);
 
+      const auto& collector_inner = it->second;
       dump_file(
         output_dir_,
         prefix_agg_,
         date,
-        it->second,
+        collector_inner,
         result_files);
-      record_count -= it->second.size();
+      record_count -= collector_inner.size();
     }
   }
 
@@ -247,8 +249,7 @@ void Aggregator::dump_file(
 {
   const auto generated_path =
     Utils::generate_file_path(output_dir, prefix, date);
-  const auto& temp_path =
-    generated_path.first;
+  const auto& temp_path = generated_path.first;
 
   LogHelper<LogInnerTraits>::save(temp_path, collector);
   result_files.emplace_back(std::move(generated_path));

@@ -194,10 +194,10 @@ void ModelEvaluatorBidCostImpl::start()
 
 void ModelEvaluatorBidCostImpl::stop() noexcept
 {
+  shutdown_manager_.stop();
   logger_->info(
     std::string("ModelEvaluatorWBidCost was interrupted"),
     Aspect::MODEL_EVALUATOR_BID_COST);
-  shutdown_manager_.stop();
 }
 
 void ModelEvaluatorBidCostImpl::do_init() noexcept
@@ -326,9 +326,9 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
           if (auto it = cost_dict.find(key_inner);
             it != cost_dict.end())
           {
-            const auto& cost_dats = it->second;
-            unverified_imps += cost_dats.unverified_imps();
-            imps += cost_dats.imps();
+            const auto& cost_date = it->second;
+            unverified_imps += cost_date.unverified_imps();
+            imps += cost_date.imps();
 
             if (imps >= LEVEL_WIN_RATE_MIN_IMPS)
             {

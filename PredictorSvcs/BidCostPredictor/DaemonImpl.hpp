@@ -33,9 +33,9 @@ class DaemonImpl final :
 public:
   DaemonImpl(
     const std::string& pid_path,
-    const std::string& model_dir,
-    const std::string& model_file_name,
-    const std::string& model_temp_dir,
+    const std::string& bid_cost_model_dir,
+    const std::string& bid_cost_model_file_name,
+    const std::string& bid_cost_model_temp_dir,
     const std::string& ctr_model_dir,
     const std::string& ctr_model_file_name,
     const std::string& ctr_model_temp_dir,
@@ -115,11 +115,11 @@ private:
   }
 
 private:
-  const std::string model_dir_;
+  const std::string bid_cost_model_dir_;
 
-  const std::string model_file_name_;
+  const std::string bid_cost_model_file_name_;
 
-  const std::string model_temp_dir_;
+  const std::string bid_cost_model_temp_dir_;
 
   const std::string ctr_model_dir_;
 

@@ -41,6 +41,9 @@ DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 using Path = std::string;
 using Files = std::list<Path>;
 using GeneratedPath = std::pair<Path, Path>;
+using VirtualMemory = double;
+using RamMemory = double;
+using Memory = std::pair<VirtualMemory, RamMemory>;
 
 enum class DirInfo
 {
@@ -61,7 +64,7 @@ GeneratedPath generate_file_path(
   const std::string& prefix,
   const LogProcessing::DayTimestamp& date);
 
-std::pair<double, double> memory_process_usage();
+Memory memory_process_usage();
 
 } // namespace Utils
 } // namespace BidCostPredictor

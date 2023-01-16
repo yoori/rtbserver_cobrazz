@@ -41,6 +41,7 @@ class ReaggregatorMultyThread final :
   using Path = Utils::Path;
   using AggregatedFiles = std::multimap<DayTimestamp, Path>;
   using ProcessedFiles = std::list<Path>;
+  using ProcessedFiles_var = std::shared_ptr<ProcessedFiles>;
   using ResultFile = Utils::GeneratedPath;
 
   using Collector = LogProcessing::BidCostStatInnerCollector;
@@ -72,9 +73,9 @@ class ReaggregatorMultyThread final :
 
 public:
   explicit ReaggregatorMultyThread(
-          const std::string& input_dir,
-          const std::string& output_dir,
-          Logging::Logger* logger);
+    const std::string& input_dir,
+    const std::string& output_dir,
+    Logging::Logger* logger);
 
   ~ReaggregatorMultyThread() override;
 
@@ -101,7 +102,7 @@ private:
     const std::string& file_path) noexcept;
 
   void do_write(
-    const ProcessedFiles& processed_files,
+    const ProcessedFiles_var& processed_files,
     Collector& collector,
     const LogProcessing::DayTimestamp& date) noexcept;
 
@@ -184,7 +185,7 @@ private:
   // Calculate thread
   Collector collector_;
   // Calculate thread
-  ProcessedFiles processed_files_;
+  ProcessedFiles_var processed_files_;
   // Read thread
   DayTimestamp current_date_;
   // Read thread

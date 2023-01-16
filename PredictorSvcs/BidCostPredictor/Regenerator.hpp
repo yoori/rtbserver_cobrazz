@@ -23,8 +23,8 @@ namespace BidCostPredictor
 namespace LogProcessing = AdServer::LogProcessing;
 
 class Regenerator final :
-        public Processor,
-        public virtual ReferenceCounting::AtomicImpl
+  public Processor,
+  public virtual ReferenceCounting::AtomicImpl
 {
   using DayTimestamp = LogProcessing::DayTimestamp;
 
@@ -44,9 +44,9 @@ class Regenerator final :
 
 public:
   Regenerator(
-          const std::string& input_dir,
-          const std::string& output_dir,
-          Logging::Logger* logger);
+    const std::string& input_dir,
+    const std::string& output_dir,
+    Logging::Logger* logger);
 
   ~Regenerator() override = default;
 

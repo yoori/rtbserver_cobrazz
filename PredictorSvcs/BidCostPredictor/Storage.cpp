@@ -14,16 +14,16 @@ namespace BidCostPredictor
 
 Storage::Storage(
   Logging::Logger* logger,
-  const std::string& model_dir,
+  const std::string& bid_cost_model_dir,
   const std::string& ctr_model_dir,
   const std::size_t update_period)
   : logger_(ReferenceCounting::add_ref(logger)),
-    model_dir_(model_dir),
+    bid_cost_model_dir_(bid_cost_model_dir),
     ctr_model_dir_(ctr_model_dir),
     update_period_(update_period),
     container_(
       new ContainerImpl(
-        logger_, model_dir, ctr_model_dir)),
+        logger_, bid_cost_model_dir, ctr_model_dir)),
     observer_(new ActiveObjectObserver(this))
 {
 }
@@ -162,7 +162,7 @@ void Storage::do_update() noexcept
     Container_var temp_container(
       new ContainerImpl(
         logger_,
-        model_dir_,
+        bid_cost_model_dir_,
         ctr_model_dir_));
 
     std::unique_lock lock(shared_mutex_);

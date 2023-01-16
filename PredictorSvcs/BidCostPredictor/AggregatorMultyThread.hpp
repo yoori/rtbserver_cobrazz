@@ -55,12 +55,12 @@ class AggregatorMultyThread final :
   using KeyCollectorInner = LogProcessing::BidCostStatInnerKey;
 
   using DayTimestamp = LogProcessing::DayTimestamp;
-  using PriorityQueue
-      = std::priority_queue<
-          DayTimestamp,
-          std::deque<DayTimestamp>,
-          std::greater<DayTimestamp>
-        >;
+  using PriorityQueue =
+    std::priority_queue<
+      DayTimestamp,
+      std::deque<DayTimestamp>,
+      std::greater<DayTimestamp>
+    >;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -101,33 +101,33 @@ private:
   void aggregate();
 
   std::size_t merge(
-          const Collector& temp_collector,
-          Collector& collector,
-          PriorityQueue& priority_queue);
+    const Collector& temp_collector,
+    Collector& collector,
+    PriorityQueue& priority_queue);
 
   void do_read() noexcept;
 
   void do_write(
-          const CollectorInner& collector,
-          const DayTimestamp& date,
-          const bool need_add_read) noexcept;
+    const CollectorInner& collector,
+    const DayTimestamp& date,
+    const bool need_add_read) noexcept;
   // Calculate thread
   void do_flush() noexcept;
   // Write thread
   void do_flush(
-          const ProcessedFiles_var& processed_files) noexcept;
+    const ProcessedFiles_var& processed_files) noexcept;
 
   void do_merge(
-          const Collector& collector,
-          const Path& original_file) noexcept;
+    const Collector& collector,
+    const Path& original_file) noexcept;
 
   void do_stop(
-          const Addressee addresee) noexcept;
+    const Addressee addresee) noexcept;
 
   void report_error(
-          Severity severity,
-          const String::SubString& description,
-          const char* error_code = 0) noexcept override;
+    Severity severity,
+    const String::SubString& description,
+    const char* error_code = 0) noexcept override;
 
   template<class MemPtr,
           class ...Args>

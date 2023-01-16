@@ -54,6 +54,10 @@ public:
   Configuration get_config(
     const std::string& path) const;
 
+  friend std::ostream& operator<<(
+    std::ostream&,
+    const Configuration&);
+
 private:
   boost::property_tree::ptree ptree_;
 };

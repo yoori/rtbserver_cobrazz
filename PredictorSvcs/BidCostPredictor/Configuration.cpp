@@ -110,18 +110,9 @@ std::list<Configuration> Configuration::get_list_of(
   }
 
   std::list<Configuration> configurations;
-  const auto position = path.find_last_of('.');
-  if (position == std::string::npos)
-  {
-    configurations.emplace_back(ptree_);
-    return configurations;
-  }
 
-  const auto key = path.substr(position + 1);
-  const auto subpath = path.substr(0, position);
-  const auto& sub_ptree = ptree_.get_child(subpath);
-
-  auto it_range = sub_ptree.equal_range(key);
+  const auto& sub_ptree = ptree_.get_child(path);
+  auto it_range = sub_ptree.equal_range("");
   for (auto it = it_range.first; it != it_range.second; ++it)
   {
     configurations.emplace_back(it->second);
@@ -133,16 +124,27 @@ std::list<Configuration> Configuration::get_list_of(
 Configuration Configuration::get_config(
   const std::string& path) const
 {
-  const auto configs = get_list_of(path);
-  if (configs.size() != 1)
+  if (!exists(path))
   {
     Stream::Error stream;
     stream << __PRETTY_FUNCTION__
-           << " : Reason : "
-           << " multiple values of json";
+           << " : Not existing path="
+           << path;
     throw Exception(stream);
   }
-  return configs.front();
+
+  const auto& sub_ptree = ptree_.get_child(path);
+  return Configuration(sub_ptree);
+}
+
+std::ostream& operator<<(
+  std::ostream& ostr,
+  const Configuration& configuration)
+{
+  boost::property_tree::json_parser::write_json(
+    ostr,
+    configuration.ptree_);
+  return ostr;
 }
 
 } // namespace BidCostPredictor

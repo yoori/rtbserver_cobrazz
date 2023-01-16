@@ -87,8 +87,8 @@ public:
 
 public:
   explicit HelpKey()
-    : tag_id_(0),
-      url_(std::make_shared<std::string>())
+  : tag_id_(0),
+    url_(std::make_shared<std::string>())
   {
   }
 
@@ -121,7 +121,7 @@ public:
       return true;
 
     return tag_id_ == rht.tag_id_
-        && *url_ == *rht.url_;
+      && *url_ == *rht.url_;
   }
 
   TagId tag_id() const noexcept

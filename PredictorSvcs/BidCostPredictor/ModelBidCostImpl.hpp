@@ -27,8 +27,9 @@ public:
   using WinRate = typename ModelBidCost::WinRate;
   using Cost = typename ModelBidCost::Cost;
   using WinRates = std::map<
-    std::tuple<TagId, std::string_view, WinRate>,
-    LogProcessing::BidCostData>;
+      std::tuple<TagId, std::string_view, WinRate>,
+      LogProcessing::BidCostData
+    >;
 
 public:
   ModelBidCostImpl(Logging::Logger* logger);

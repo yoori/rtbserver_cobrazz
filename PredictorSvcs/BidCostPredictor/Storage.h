@@ -35,7 +35,7 @@ class Storage :
 public:
   Storage(
     Logging::Logger* logger,
-    const std::string& model_dir,
+    const std::string& bid_cost_model_dir,
     const std::string& ctr_model_dir,
     const std::size_t update_period);
 
@@ -113,7 +113,7 @@ private:
 private:
   Logging::Logger_var logger_;
 
-  const std::string model_dir_;
+  const std::string bid_cost_model_dir_;
 
   const std::string ctr_model_dir_;
 

@@ -61,7 +61,7 @@ void Daemon::start()
       ostr << __PRETTY_FUNCTION__
            << ": Reason: "
            << "fork is failed";
-      throw Exception (ostr);
+      throw Exception(ostr);
     }
     else if (pid != 0)
     {
@@ -138,17 +138,22 @@ void Daemon::start()
 
 void Daemon::stop() noexcept
 {
-  const auto pid = ::getpid();
-  if (kill(pid, SIGINT) == -1)
+  try
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " function kill is failed";
-    logger_->critical(stream.str(), Aspect::DAEMON);
-  }
+    const auto pid = ::getpid();
+    if (kill(pid, SIGINT) == -1)
+    {
+      std::stringstream stream;
+      stream << __PRETTY_FUNCTION__
+             << " function kill is failed";
+      logger_->critical(stream.str(), Aspect::DAEMON);
+    }
 
-  if (is_running_)
-    stop_logic();
+    if (is_running_)
+      stop_logic();
+  }
+  catch(...)
+  {}
 }
 
 void Daemon::wait() noexcept

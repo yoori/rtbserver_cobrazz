@@ -16,9 +16,9 @@ namespace BidCostPredictor
 
 DaemonImpl::DaemonImpl(
   const std::string& pid_path,
-  const std::string& model_dir,
-  const std::string& model_file_name,
-  const std::string& model_temp_dir,
+  const std::string& bid_cost_model_dir,
+  const std::string& bid_cost_model_file_name,
+  const std::string& bid_cost_model_temp_dir,
   const std::string& ctr_model_dir,
   const std::string& ctr_model_file_name,
   const std::string& ctr_model_temp_dir,
@@ -34,9 +34,9 @@ DaemonImpl::DaemonImpl(
   const std::size_t reagg_period,
   Logging::Logger* logger)
   : Daemon(pid_path, logger),
-    model_dir_(model_dir),
-    model_file_name_(model_file_name),
-    model_temp_dir_(model_temp_dir),
+    bid_cost_model_dir_(bid_cost_model_dir),
+    bid_cost_model_file_name_(bid_cost_model_file_name),
+    bid_cost_model_temp_dir_(bid_cost_model_temp_dir),
     ctr_model_dir_(ctr_model_dir),
     ctr_model_file_name_(ctr_model_file_name),
     ctr_model_temp_dir_(ctr_model_temp_dir),
@@ -158,9 +158,9 @@ void DaemonImpl::do_task_model() noexcept
   {
     Processor_var processor(
       new ModelProcessor(
-        model_dir_,
-        model_file_name_,
-        model_temp_dir_,
+        bid_cost_model_dir_,
+        bid_cost_model_file_name_,
+        bid_cost_model_temp_dir_,
         ctr_model_dir_,
         ctr_model_file_name_,
         ctr_model_temp_dir_,

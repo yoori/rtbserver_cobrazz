@@ -19,10 +19,10 @@ namespace BidCostPredictor
 
 ContainerImpl::ContainerImpl(
   Logging::Logger* logger,
-  const std::string& model_dir,
+  const std::string& bid_cost_model_dir,
   const std::string& ctr_model_dir)
   : logger_(ReferenceCounting::add_ref(logger)),
-    model_dir_(model_dir),
+    bid_cost_model_dir_(bid_cost_model_dir),
     ctr_model_dir_(ctr_model_dir),
     model_bid_cost_(new ModelBidCostImpl(logger_)),
     model_ctr_(new ModelCtrImpl(logger_))
@@ -38,8 +38,8 @@ void ContainerImpl::initialize()
       std::string("Start initialize container"),
       Aspect::CONTAINER);
 
-    const auto path_model_file = get_last_file(model_dir_);
-    model_bid_cost_->load(path_model_file);
+    const auto path_bid_cost_model_file = get_last_file(bid_cost_model_dir_);
+    model_bid_cost_->load(path_bid_cost_model_file);
 
     const auto path_ctr_model_file = get_last_file(ctr_model_dir_);
     model_ctr_->load(path_ctr_model_file);

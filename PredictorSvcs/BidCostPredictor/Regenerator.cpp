@@ -294,8 +294,7 @@ void Regenerator::save_file(
 {
   const auto generated_path =
     Utils::generate_file_path(output_dir, prefix, date);
-  const auto& temp_file_path =
-    generated_path.first;
+  const auto& temp_file_path = generated_path.first;
   LogHelper<LogTraits>::save(temp_file_path, collector);
   processed_files.emplace_back(generated_path);
 }
