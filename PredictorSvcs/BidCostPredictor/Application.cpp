@@ -137,16 +137,16 @@ int Application::run(int argc, char **argv)
     }
     const std::string& service_option = *it;
 
+    ++it;
+    if (it == commands.end())
+    {
+      std::cerr << "service: path_config not defined";
+      return EXIT_FAILURE;
+    }
+    const std::string& path_config = *it;
+
     if (service_option == "start")
     {
-      ++it;
-      if (it == commands.end())
-      {
-        std::cerr << "service: path_config not defined";
-        return EXIT_FAILURE;
-      }
-      const std::string& path_config = *it;
-
       const Configuration configuration(path_config);
       const std::string version =
         configuration.get("version");
@@ -255,14 +255,6 @@ int Application::run(int argc, char **argv)
     }
     else if (service_option == "stop")
     {
-      ++it;
-      if (it == commands.end())
-      {
-        std::cerr << "daemon: path_config not defined";
-        return EXIT_FAILURE;
-      }
-      const std::string& path_config = *it;
-
       try
       {
         Configuration configuration(path_config);
@@ -291,6 +283,36 @@ int Application::run(int argc, char **argv)
                << exc.what();
         std::cerr << stream.str()
                   << std::endl;
+        return EXIT_FAILURE;
+      }
+    }
+    else if (service_option == "status")
+    {
+      try
+      {
+        Configuration configuration(path_config);
+        const std::string pid_path =
+          configuration.get("config.pid_path");
+
+        PidGetter getter(pid_path);
+        const auto pid = getter.get();
+        if (pid) {
+          std::cout << "OK" << std::endl;
+          return EXIT_SUCCESS;
+        } else {
+          std::cout << "FAILED" << std::endl;
+          return EXIT_FAILURE;
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        std::stringstream stream;
+        stream << __PRETTY_FUNCTION__
+               << " : Reason: "
+               << exc.what();
+        std::cerr << stream.str()
+                  << std::endl;
+        return EXIT_FAILURE;
       }
     }
   }
