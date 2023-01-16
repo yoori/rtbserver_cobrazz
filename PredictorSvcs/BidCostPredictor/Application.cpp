@@ -212,11 +212,12 @@ int Application::run(int argc, char **argv)
           Logging::OStream::Config(
             ostream,
             Logging::Logger::INFO)));
+
+      std::stringstream stream;
+      stream << "Configuration:\n"
+             << configuration;
       logger->info(
-        "Config version=" + version,
-        Aspect::APPLICATION);
-      logger->info(
-        "Config description=" + description,
+        stream.str(),
         Aspect::APPLICATION);
 
       Daemon_var daemon(
@@ -293,6 +294,12 @@ int Application::run(int argc, char **argv)
         Configuration configuration(path_config);
         const std::string pid_path =
           configuration.get("config.pid_path");
+
+        if (access(pid_path.c_str(), F_OK) != 0)
+        {
+          std::cout << "FAILED" << std::endl;
+          return EXIT_FAILURE;
+        }
 
         PidGetter getter(pid_path);
         const auto pid = getter.get();

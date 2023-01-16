@@ -79,8 +79,8 @@ void DaemonImpl::start_logic()
   logger_->info(std::string("DaemonImpl is started"), Aspect::DAEMON_IMPL);
 
   post_task(&DaemonImpl::do_task_agg, 0);
-  post_task(&DaemonImpl::do_task_reagg, 0);
-  post_task(&DaemonImpl::do_task_model, 0);
+  post_task(&DaemonImpl::do_task_reagg, 1);
+  post_task(&DaemonImpl::do_task_model, 2);
 }
 
 void DaemonImpl::stop_logic() noexcept

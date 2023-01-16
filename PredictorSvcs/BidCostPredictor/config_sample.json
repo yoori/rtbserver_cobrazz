@@ -5,7 +5,7 @@
     "log_path": "/home/artem_bogdanov/bid_cost_predictor.log",
     "pid_path": "/home/artem_bogdanov/daemon.pid",
     "model" : {
-      "period": 30,
+      "period": 300,
       "input_directory": "/home/artem_bogdanov/BidCostStatAgg",
       "bid_cost" : {
         "output_directory": "/home/artem_bogdanov/model",

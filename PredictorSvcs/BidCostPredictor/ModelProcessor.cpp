@@ -15,7 +15,7 @@
 
 namespace Aspect
 {
-const char* MODEL_PROCESSOR = "MODEL_PROESSOR";
+const char* MODEL_PROCESSOR = "MODEL_PROCESSOR";
 } // namespace Aspect
 
 namespace PredictorSvcs

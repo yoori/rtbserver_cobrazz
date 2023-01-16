@@ -243,10 +243,6 @@ void ModelEvaluatorCtrImpl::do_calculate_helper(const Iterator it)
   if (shutdown_manager_.is_stoped())
     return;
 
-  post_task(
-    TaskRunnerID::Single,
-    &ModelEvaluatorCtrImpl::do_next_task);
-
   const auto& top_key = it->first;
   const auto& cost_dict = it->second;
 
@@ -261,6 +257,10 @@ void ModelEvaluatorCtrImpl::do_calculate_helper(const Iterator it)
 
   const auto& tag_id = top_key.tag_id();
   const auto& url = top_key.url_var();
+
+  post_task(
+    TaskRunnerID::Single,
+    &ModelEvaluatorCtrImpl::do_next_task);
 
   post_task(
     TaskRunnerID::Single,

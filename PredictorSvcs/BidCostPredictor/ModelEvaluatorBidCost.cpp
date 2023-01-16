@@ -41,7 +41,7 @@ ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
       return d1 > d2;
     });
 
-  collector_.prepare_adding(100000000);
+  collector_.prepare_adding(50000000);
 }
 
 ModelBidCost_var ModelEvaluatorBidCostImpl::evaluate() noexcept
@@ -241,6 +241,10 @@ void ModelEvaluatorBidCostImpl::do_calculate(const Iterator it) noexcept
 
   post_task(
     TaskRunnerID::Single,
+    &ModelEvaluatorBidCostImpl::do_next_task);
+
+  post_task(
+    TaskRunnerID::Single,
     &ModelEvaluatorBidCostImpl::do_decrease);
 }
 
@@ -248,10 +252,6 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
 {
   if (shutdown_manager_.is_stoped())
     return;
-
-  post_task(
-    TaskRunnerID::Single,
-    &ModelEvaluatorBidCostImpl::do_next_task);
 
   const auto& top_key = it->first;
   const auto& cost_dict = it->second;
