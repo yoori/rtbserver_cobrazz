@@ -1,0 +1,10 @@
+include_directories(Modules .)
+
+ADD_SUBDIRECTORY(CommonModule)
+ADD_SUBDIRECTORY(FCGIServer)
+ADD_SUBDIRECTORY(FrontendCommons)
+ADD_SUBDIRECTORY(Modules)
+ADD_SUBDIRECTORY(ProfilingServer)
+ADD_SUBDIRECTORY(UIDGeneratorAdapter)
+ADD_SUBDIRECTORY(ZmqBalancer)
+

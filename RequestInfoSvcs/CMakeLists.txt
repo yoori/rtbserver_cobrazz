@@ -1,0 +1,6 @@
+ADD_SUBDIRECTORY(ExpressionMatcher)
+ADD_SUBDIRECTORY(ExpressionMatcherAdmin)
+ADD_SUBDIRECTORY(RequestInfoAdmin)
+ADD_SUBDIRECTORY(RequestInfoCommons)
+ADD_SUBDIRECTORY(RequestInfoManager)
+

@@ -1,0 +1,7 @@
+include_directories(.)
+ADD_SUBDIRECTORY(Code)
+ADD_SUBDIRECTORY(Compiler)
+ADD_SUBDIRECTORY(Cpp)
+ADD_SUBDIRECTORY(Declaration)
+ADD_SUBDIRECTORY(Parsing)
+

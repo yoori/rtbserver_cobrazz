@@ -1,0 +1,4 @@
+ADD_SUBDIRECTORY(LogGeneralizer)
+ADD_SUBDIRECTORY(LogGeneralizerAdmin)
+ADD_SUBDIRECTORY(SyncLogs)
+

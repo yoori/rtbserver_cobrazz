@@ -1,0 +1,3 @@
+ADD_SUBDIRECTORY(AutoTests)
+ADD_SUBDIRECTORY(PerformanceTests)
+

@@ -1,0 +1,3 @@
+ADD_SUBDIRECTORY(ChannelSearchAdmin)
+ADD_SUBDIRECTORY(ChannelSearchService)
+

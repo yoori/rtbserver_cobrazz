@@ -1,0 +1,3 @@
+ADD_SUBDIRECTORY(ControlAdmin)
+ADD_SUBDIRECTORY(StatsCollector)
+ADD_SUBDIRECTORY(StatsDumper)
