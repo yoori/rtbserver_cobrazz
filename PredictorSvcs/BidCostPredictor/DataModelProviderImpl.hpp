@@ -139,7 +139,7 @@ private:
 
   std::vector<Generics::TaskRunner_var> task_runners_;
 
-  PoolCollector<Collector, 1000000> pool_collector_;
+  //PoolCollector<Collector, 1000000> pool_collector_;
 
   ShutdownManager shutdown_manager_;
   // Read thread

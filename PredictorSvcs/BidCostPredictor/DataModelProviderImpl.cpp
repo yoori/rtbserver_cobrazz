@@ -230,7 +230,9 @@ void DataModelProviderImpl::do_read() noexcept
   const auto file_path = *it;
   aggregated_files_.erase(it);
 
-  auto temp_collector = pool_collector_.get_collector();
+  //auto temp_collector = pool_collector_.get_collector();
+  auto temp_collector = Collector();
+  temp_collector.prepare_adding(1000000);
   try
   {
     LogHelper<LogTraits>::load(file_path, temp_collector);
@@ -322,7 +324,8 @@ void DataModelProviderImpl::do_clean(Collector& collector) noexcept
   if (shutdown_manager_.is_stoped())
     return;
 
-  pool_collector_.add_collector(std::move(collector));
+  collector.clear();
+  //pool_collector_.add_collector(std::move(collector));
 }
 
 void DataModelProviderImpl::do_stop() noexcept
