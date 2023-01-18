@@ -23,6 +23,7 @@ ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
     logger_(ReferenceCounting::add_ref(logger)),
     observer_(new ActiveObjectObserver(this)),
     persantage_(logger_, Aspect::MODEL_EVALUATOR_CTR, 5),
+    collector_(10000000, 1),
     task_runner_(
       new Generics::TaskRunner(
         observer_,
@@ -34,7 +35,6 @@ ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
     new Generics::TaskRunner(
       observer_,
       threads_number_));
-  collector_.prepare_adding(50000000);
 }
 
 ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
@@ -249,7 +249,7 @@ void ModelEvaluatorCtrImpl::do_calculate_helper(const Iterator it)
   Imps all_imps = 0;
   Clicks all_clicks = 0;
 
-  for (const auto& [cost, data] : cost_dict)
+  for (const auto& [cost, data] : *cost_dict)
   {
     all_imps += data.imps();
     all_clicks += data.clicks();

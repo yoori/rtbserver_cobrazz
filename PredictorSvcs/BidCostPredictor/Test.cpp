@@ -18,6 +18,7 @@
 #include "AggregatorMultyThread.hpp"
 #include "BidCostCollector.hpp"
 #include "CtrCollector.hpp"
+#include "HelpCollector.hpp"
 #include "LogHelper.hpp"
 #include "ModelBidCostImpl.hpp"
 #include "ModelCtrImpl.hpp"
@@ -539,13 +540,13 @@ BOOST_AUTO_TEST_CASE(provider)
     const std::string url = url_prefix + std::to_string(url_i);
     for (std::size_t tag_id = tag_initial; tag_id <= tag_initial + number_tags_per_url; ++tag_id)
     {
-      HelpKey key(tag_id, url);
-      HelpInnerCollector collector_inner;
+      HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+      HelpCollector::InnerCollector collector_inner;
       FixedNumber cost = FixedNumber("0.01");
       for (std::size_t cost_i = 1; cost_i <= number_cost; ++cost_i)
       {
-        HelpInnerKey key_inner(cost);
-        HelpInnerData data_inner(
+        HelpCollector::InnerKey key_inner(cost);
+        HelpCollector::InnerData data_inner(
           unverified_imps * number_file,
           imps * number_file,
           clicks * number_file);
@@ -574,7 +575,7 @@ BOOST_AUTO_TEST_CASE(provider)
       logger));
   HelpCollector help_hollector_result;
   provider->load(help_hollector_result);
-
+  help_hollector_result.operator==(help_hollector_result);
   logger->info(
     std::string("Data model provider test is finished"),
     Aspect::TEST_BID_PREDICTOR);
@@ -600,20 +601,20 @@ public:
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpKey key(tag_id, url);
-    HelpInnerCollector innerCollector;
+    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    HelpCollector::InnerCollector inner_collector;
 
-    auto cost = FixedNumber("0.01");
+   auto cost = FixedNumber("0.01");
     long unverified_imps = 100;
     long imps = 40;
     long clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.015");
@@ -621,15 +622,15 @@ public:
     imps = 9;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
-    collector.add(key, innerCollector);
+    collector.add(key, inner_collector);
     return true;
   }
 
@@ -686,20 +687,20 @@ public:
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpKey key(tag_id, url);
-    HelpInnerCollector innerCollector;
+    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    HelpCollector::InnerCollector inner_collector;
 
     auto cost = FixedNumber("0.02");
     long unverified_imps = 100;
     long imps = 40;
     long clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.01");
@@ -707,15 +708,15 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
-    collector.add(key, innerCollector);
+    collector.add(key, inner_collector);
     return true;
   }
 
@@ -801,20 +802,20 @@ public:
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpKey key(tag_id, url);
-    HelpInnerCollector innerCollector;
+    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    HelpCollector::InnerCollector inner_collector;
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
     long imps = 100;
     long clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.02");
@@ -822,12 +823,12 @@ public:
     imps = 40;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.01");
@@ -835,15 +836,15 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
-    collector.add(key, innerCollector);
+    collector.add(key, inner_collector);
     return true;
   }
 
@@ -929,20 +930,20 @@ public:
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpKey key(tag_id, url);
-    HelpInnerCollector innerCollector;
+    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    HelpCollector::InnerCollector inner_collector;
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
     long imps = 100;
     long clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.02");
@@ -950,12 +951,12 @@ public:
     imps = 40;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.01");
@@ -963,15 +964,15 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
-    collector.add(key, innerCollector);
+    collector.add(key, inner_collector);
     return true;
   }
 
@@ -1061,20 +1062,20 @@ public:
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpKey key(tag_id, url);
-    HelpInnerCollector innerCollector;
+    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    HelpCollector::InnerCollector inner_collector;
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
     long imps = 100;
     long clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.02");
@@ -1082,12 +1083,12 @@ public:
     imps = 40;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
     cost = FixedNumber("0.01");
@@ -1095,15 +1096,15 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpInnerKey key_inner(cost);
-      HelpInnerData data_inner(
+      HelpCollector::InnerKey key_inner(cost);
+      HelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
-      innerCollector.add(key_inner, data_inner);
+      inner_collector.add(key_inner, data_inner);
     }
 
-    collector.add(key, innerCollector);
+    collector.add(key, inner_collector);
     return true;
   }
 

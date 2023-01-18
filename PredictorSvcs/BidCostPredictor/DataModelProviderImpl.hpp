@@ -42,7 +42,8 @@ class DataModelProviderImpl final :
   using Path = std::string;
   using AggregatedFiles = std::list<Path>;
 
-  using Url_var = typename HelpKey::Url_var;
+  using Key = typename HelpCollector::Key;
+  using Url_var = typename Key::Url_var;
   using Url = std::string_view;
   using UrlHash = std::unordered_map<Url, Url_var>;
 

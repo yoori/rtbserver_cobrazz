@@ -4,8 +4,12 @@
 // STD
 #include <memory>
 
+// BOOST
+#include <boost/container/flat_map.hpp>
+#include <boost/functional/hash.hpp>
+
 // THIS
-#include <Generics/Hash.hpp>
+#include <Generics/GnuHashTable.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
 
@@ -16,68 +20,10 @@ namespace BidCostPredictor
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class HelpInnerKey final
+namespace detail_help_collector
 {
-  using FixedNumber = LogProcessing::FixedNumber;
-  using Cost = FixedNumber;
-  using Hash = std::size_t;
 
-public:
-  explicit HelpInnerKey()
-    : cost_(FixedNumber::ZERO)
-  {
-  }
-
-  explicit HelpInnerKey(const Cost& cost)
-    : cost_(cost)
-  {
-    calc_hash();
-  }
-
-  HelpInnerKey(const HelpInnerKey&) = default;
-  HelpInnerKey(HelpInnerKey&&) = default;
-  HelpInnerKey& operator=(const HelpInnerKey&) = default;
-  HelpInnerKey& operator=(HelpInnerKey&&) = default;
-
-  bool operator==(const HelpInnerKey& rht) const
-  {
-    if (&rht == this)
-      return true;
-
-    return cost_ == rht.cost_;
-  }
-
-  bool operator<(const HelpInnerKey& rht) const
-  {
-    return cost_ < rht.cost_;
-  }
-
-  const Cost& cost() const
-  {
-    return cost_;
-  }
-
-  Hash hash() const
-  {
-    return hash_;
-  };
-
-private:
-  void calc_hash()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    Generics::hash_add(hasher, cost_);
-  }
-
-private:
-  Cost cost_;
-
-  Hash hash_ = 0;
-};
-
-using HelpInnerData = LogProcessing::BidCostStatInnerData;
-
-class HelpKey final
+class Key final
 {
 public:
   using TagId = unsigned long;
@@ -86,22 +32,7 @@ public:
   using Hash = std::size_t;
 
 public:
-  explicit HelpKey()
-  : tag_id_(0),
-    url_(std::make_shared<std::string>())
-  {
-  }
-
-  explicit HelpKey(
-    const TagId& tag_id,
-    const Url& url)
-    : tag_id_(tag_id),
-      url_(std::make_shared<std::string>(url))
-  {
-    calc_hash();
-  }
-
-  explicit HelpKey(
+  explicit Key(
     const TagId& tag_id,
     const Url_var& url)
     : tag_id_(tag_id),
@@ -110,12 +41,12 @@ public:
     calc_hash();
   }
 
-  HelpKey(const HelpKey&) = default;
-  HelpKey(HelpKey&&) = default;
-  HelpKey& operator=(const HelpKey&) = default;
-  HelpKey& operator=(HelpKey&&) = default;
+  Key(const Key&) = default;
+  Key(Key&&) = default;
+  Key& operator=(const Key&) = default;
+  Key& operator=(Key&&) = default;
 
-  bool operator==(const HelpKey& rht) const noexcept
+  bool operator==(const Key& rht) const noexcept
   {
     if (&rht == this)
       return true;
@@ -147,9 +78,8 @@ public:
 private:
   void calc_hash()
   {
-    Generics::Murmur64Hash hasher(hash_);
-    Generics::hash_add(hasher, tag_id_);
-    Generics::hash_add(hasher, *url_);
+    boost::hash_combine(hash_, tag_id_);
+    boost::hash_combine(hash_, *url_);
   }
 
 private:
@@ -160,14 +90,172 @@ private:
   Hash hash_ = 0;
 };
 
-constexpr bool is_help_collector_map = false;
+} // namespace detail_help_collector
 
-using HelpInnerCollector =
-  LogProcessing::StatCollector<HelpInnerKey, HelpInnerData, true, true, true, is_help_collector_map>;
+class HelpCollector final
+{
+public:
+  using Cost = LogProcessing::FixedNumber;
+  using InnerKey = Cost;
+  using InnerData = LogProcessing::BidCostStatInnerData;
 
-using HelpData = HelpInnerCollector;
+  class InnerCollector final
+    : public boost::container::flat_map<InnerKey, InnerData>
+  {
+  public:
+    explicit InnerCollector() = default;
 
-using HelpCollector = LogProcessing::StatCollector<HelpKey, HelpData, true, false>;
+    InnerCollector& add(
+      const InnerKey& key,
+      const InnerData& data)
+    {
+      auto result = try_emplace(key, data);
+      if (!result.second)
+      {
+        result.first->second += data;
+      }
+
+      return *this;
+    }
+
+    InnerCollector& operator+=(const InnerCollector& collector)
+    {
+      for (const auto& [key, data] : collector)
+      {
+        add(key, data);
+      }
+
+      return *this;
+    }
+  };
+
+  using Key = detail_help_collector::Key;
+  using Data = InnerCollector;
+  using Data_var = std::shared_ptr<Data>;
+  using Map =
+    std::unordered_map<
+      Key,
+      Data_var,
+      Generics::HashFunForHashAdapter<Key>
+    >;
+  using Map_var = std::shared_ptr<Map>;
+  using iterator = typename Map::iterator;
+  using const_iterator = typename Map::const_iterator;
+
+public:
+  explicit HelpCollector(
+    const std::size_t bucket_count = 1,
+    const std::size_t inner_collector_size = 1)
+    : map_(std::make_shared<Map>(bucket_count)),
+      inner_collector_size_(inner_collector_size)
+  {
+  }
+
+  ~HelpCollector() = default;
+
+  HelpCollector(const HelpCollector&) = default;
+
+  HelpCollector(HelpCollector&&) = default;
+
+  HelpCollector& operator=(const HelpCollector&) = default;
+
+  HelpCollector& operator=(HelpCollector&&) = default;
+
+  std::size_t size() const
+  {
+    return map_->size();
+  }
+
+  iterator begin() noexcept
+  {
+    return map_->begin();
+  }
+
+  const_iterator begin() const noexcept
+  {
+    return map_->cbegin();
+  }
+
+  iterator end() noexcept
+  {
+    return map_->end();
+  }
+
+  const_iterator end() const noexcept
+  {
+    return map_->cend();
+  }
+
+  iterator find(const Key& key)
+  {
+    return map_->find(key);
+  }
+
+  const_iterator find(const Key& key) const
+  {
+    return map_->find(key);
+  }
+
+  InnerCollector& find_or_insert(const Key& key)
+  {
+    auto it = map_->find(key);
+    if (it == map_->end())
+    {
+      auto inner_collector = std::make_shared<InnerCollector>();
+      inner_collector->reserve(inner_collector_size_);
+      it = map_->try_emplace(key, std::move(inner_collector)).first;
+    }
+
+    return *it->second;
+  }
+
+  void erase(iterator it)
+  {
+    map_->erase(it);
+  }
+
+  HelpCollector& add(const Key& key, const Data& data)
+  {
+    auto it = map_->find(key);
+    if (it == map_->end())
+    {
+      auto inner_collector = std::make_shared<InnerCollector>();
+      inner_collector->reserve(inner_collector_size_);
+      it = map_->try_emplace(key, std::move(inner_collector)).first;
+    }
+    *it->second += data;
+    return *this;
+  }
+
+  bool operator==(const HelpCollector& other) const
+  {
+    if (this == &other)
+      return true;
+
+    if (map_->size() != other.map_->size())
+      return false;
+
+    auto it = map_->begin();
+    auto it_end = map_->end();
+    for (; it != it_end; ++it)
+    {
+      const auto& key = it->first;
+      auto it_other = other.map_->find(key);
+      if (it_other == other.map_->end())
+        return false;
+
+      if (*it->second != *it_other->second)
+        return false;
+    }
+
+    return true;
+  }
+
+private:
+  Map_var map_;
+
+  std::size_t inner_collector_size_ = 0;
+};
 
 } // namespace BidCostPredictor
 } // namespace PredictorSvcs

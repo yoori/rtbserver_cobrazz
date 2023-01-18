@@ -22,9 +22,10 @@ class ModelCtr :
   public virtual ReferenceCounting::Interface
 {
 public:
-  using TagId = typename Predictor::HelpKey::TagId;
-  using Url = typename Predictor::HelpKey::Url;
-  using Url_var = typename Predictor::HelpKey::Url_var;
+  using Key = typename Predictor::HelpCollector::Key;
+  using TagId = typename Key::TagId;
+  using Url = typename Key::Url;
+  using Url_var = typename Key::Url_var;
   using Clicks = long;
   using Imps = long;
   using Data = std::pair<Clicks, Imps>;

@@ -22,14 +22,13 @@ DataModelProviderImpl::DataModelProviderImpl(
     logger_(ReferenceCounting::add_ref(logger)),
     observer_(new ActiveObjectObserver(this)),
     prefix_(LogTraits::B::log_base_name()),
-    persantage_(logger_, Aspect::DATA_PROVIDER, 5)
+    persantage_(logger_, Aspect::DATA_PROVIDER, 5),
+    help_collector_(1000000, 1)
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
   {
     task_runners_.emplace_back(new Generics::TaskRunner(observer_, 1));
   }
-
-  help_collector_.prepare_adding(50000000);
 }
 
 DataModelProviderImpl::~DataModelProviderImpl()
@@ -286,17 +285,16 @@ void DataModelProviderImpl::do_calculate(
         it_url_hash = url_hash_.try_emplace(*url_var, url_var).first;
       }
 
-      const HelpKey key(tag_id, it_url_hash->second);
+      const HelpCollector::Key key(tag_id, it_url_hash->second);
       auto& help_collector_inner = help_collector_.find_or_insert(key);
 
       const auto& cost = key_temp.cost();
-      const HelpInnerKey key_inner(cost);
-      auto& data_inner = help_collector_inner.find_or_insert(key_inner);
+      auto& data_inner = help_collector_inner[cost];
       data_inner += data_temp;
 
       if (data_inner.is_null())
       {
-        const auto it = help_collector_inner.find(key_inner);
+        const auto it = help_collector_inner.find(cost);
         if (it != help_collector_inner.end())
           help_collector_inner.erase(it);
       }

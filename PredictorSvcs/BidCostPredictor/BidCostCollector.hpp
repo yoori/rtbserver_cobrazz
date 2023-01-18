@@ -15,9 +15,10 @@ namespace Predictor = PredictorSvcs::BidCostPredictor;
 class BidCostKey final
 {
 public:
-  using TagId = typename Predictor::HelpKey::TagId;
-  using Url = typename Predictor::HelpKey::Url;
-  using Url_var = typename Predictor::HelpKey::Url_var;
+  using Key = typename Predictor::HelpCollector::Key;
+  using TagId = typename Key::TagId;
+  using Url = typename Key::Url;
+  using Url_var = typename Key::Url_var;
   using WinRate = FixedNumber;
 
 public:

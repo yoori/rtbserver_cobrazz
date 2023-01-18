@@ -25,6 +25,7 @@ ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
     logger_(ReferenceCounting::add_ref(logger)),
     observer_(new ActiveObjectObserver(this)),
     persantage_(logger_, Aspect::MODEL_EVALUATOR_BID_COST, 5),
+    collector_(10000000, 1),
     task_runner_(new Generics::TaskRunner(observer_, 1))
 {
   threads_number_ = std::max(8u, std::thread::hardware_concurrency());
@@ -40,8 +41,6 @@ ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
     [] (const auto& d1, const auto& d2) {
       return d1 > d2;
     });
-
-  collector_.prepare_adding(50000000);
 }
 
 ModelBidCost_var ModelEvaluatorBidCostImpl::evaluate() noexcept
@@ -254,31 +253,16 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
     return;
 
   const auto& top_key = it->first;
-  const auto& cost_dict = it->second;
-
-  std::vector<FixedNumber> all_costs;
-  all_costs.reserve(cost_dict.size());
-  for (const auto& [k, d] : cost_dict)
-  {
-    all_costs.emplace_back(k.cost());
-  }
-  const auto size_all_cost = cost_dict.size();
-
-  if constexpr(!is_help_collector_map)
-  {
-    std::sort(
-      std::begin(all_costs),
-      std::end(all_costs));
-  }
+  const auto& cost_dict = *it->second;
+  const std::size_t size_cost_dict = cost_dict.size();
 
   long unverified_imps = 0;
   long imps = 0;
-  auto it_begin = all_costs.rbegin();
-  auto it_end = all_costs.rend();
+  auto it_begin = cost_dict.rbegin();
+  auto it_end = cost_dict.rend();
   for (auto it = it_begin; it != it_end; ++it)
   {
-    const auto it_cost = cost_dict.find(HelpInnerKey(*it));
-    const auto& cost_data = it_cost->second;
+    const auto& cost_data = it->second;
     unverified_imps += cost_data.unverified_imps();
     imps += cost_data.imps();
 
@@ -312,32 +296,23 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
           *top_level_win_rate,
           point,
           Generics::DMR_FLOOR);
-      const auto& max_cost = all_costs.back();
+      const auto& max_cost = cost_dict.rbegin()->first;
 
       std::optional<FixedNumber> target_cost;
-      for (std::size_t base_cost_i = 0; base_cost_i < size_all_cost; ++base_cost_i)
+      for (std::size_t base_cost_i = 0; base_cost_i < size_cost_dict; ++base_cost_i)
       {
         long int unverified_imps = 0;
         long int imps = 0;
         std::size_t cost_i = base_cost_i;
-        for (; cost_i < size_all_cost; ++cost_i)
+        for (; cost_i < size_cost_dict; ++cost_i)
         {
-          const HelpInnerKey key_inner(all_costs[cost_i]);
-          if (auto it = cost_dict.find(key_inner);
-            it != cost_dict.end())
-          {
-            const auto& cost_date = it->second;
-            unverified_imps += cost_date.unverified_imps();
-            imps += cost_date.imps();
+          const auto& cost_data = cost_dict.nth(cost_i)->second;
+          unverified_imps += cost_data.unverified_imps();
+          imps += cost_data.imps();
 
-            if (imps >= LEVEL_WIN_RATE_MIN_IMPS)
-            {
-              break;
-            }
-          }
-          else
+          if (imps >= LEVEL_WIN_RATE_MIN_IMPS)
           {
-            throw Exception("Logic error. Not found cost");
+            break;
           }
         }
 
@@ -348,7 +323,8 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
           const auto local_win_rate = FixedNumber::div(dividend, divider);
           if (local_win_rate >= check_win_rate)
           {
-            target_cost = all_costs[std::min(cost_i, size_all_cost - 1)];
+            const auto index = std::min(cost_i, size_cost_dict - 1);
+            target_cost = cost_dict.nth(index)->first;
             break;
           }
         }

@@ -39,8 +39,8 @@ class ModelEvaluatorBidCostImpl final:
   using Points = std::vector<Point>;
   using TaskRunner_var = Generics::TaskRunner_var;
   using Iterator = typename HelpCollector::const_iterator;
-  using Url_var = typename HelpKey::Url_var;
-  using TagId = typename HelpKey::TagId;
+  using Url_var = typename HelpCollector::Key::Url_var;
+  using TagId = typename HelpCollector::Key::TagId;
   using Cost = FixedNumber;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
