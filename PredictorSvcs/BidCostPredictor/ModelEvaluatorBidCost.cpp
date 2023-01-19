@@ -236,6 +236,7 @@ void ModelEvaluatorBidCostImpl::do_calculate(const Iterator it) noexcept
            << " : Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+    return;
   }
 
   post_task(
