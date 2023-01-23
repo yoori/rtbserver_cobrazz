@@ -3,7 +3,7 @@
 
 
 add_executable(UserExtractUtil
-    UserExtractUtil
+    UserExtractUtil.cpp
  )
 target_link_libraries(UserExtractUtil
 

@@ -21,20 +21,14 @@ endif()
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
   )
 
-set(INSTALL_DIR "~/rtbserver-cobrazz-bin")
-set(INSTALL_LIB ${INSTALL_DIR}/lib)
-set(INSTALL_BIN  ${INSTALL_DIR}/bin)
+set(INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../cobrazz-bin)
+set(INSTALL_LIB ${INSTALL_DIR})
+set(INSTALL_BIN  ${INSTALL_DIR})
 
 
 find_package(ACE REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(XercesC REQUIRED)
-#find_package(BZip2 REQUIRED)
-#find_package(GeoIP REQUIRED)
-#find_package(Event REQUIRED)
-#find_package(NetSNMP REQUIRED)
-#find_package(PCRE REQUIRED)
-#find_package(EV REQUIRED)
 find_package(Threads REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(YY REQUIRED)
@@ -46,17 +40,19 @@ find_package(PST REQUIRED)
 find_package(PB REQUIRED)
 
 #find_package(OpenDDS REQUIRED)
+
+set(UNIXCOMMONS ${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz)
+
 include_directories( /usr/local/include src Commons .
-../unixcommons_cobrazz/src
-../unixcommons_cobrazz/src/CORBA
-../unixcommons_cobrazz/Build/IDL_COMMON
-.
+    ${UNIXCOMMONS}/src
+    ${UNIXCOMMONS}/src/CORBA
+    ${UNIXCOMMONS}/Build/IDL_COMMON
+
 
 )
 
-set(CORBA_INCLUDES /home/alexander_belyalov/unixcommons_cobrazz/src/CORBA)
-set(TMP_SOURCES /home/alexander_belyalov/rtbserver_cobrazz/Generate)
-#set(TMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR})
+set(CORBA_INCLUDES ${UNIXCOMMONS}/src/CORBA)
+set(TMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR})
 
 #set(INSTALL_DIR ~/rtbserver_cobrazz-bin)
 
@@ -75,6 +71,7 @@ include_directories(${PST_DIRECTORY})
 
 
 #include_directories(Utils/Predictor)
+add_subdirectory(${UNIXCOMMONS}  ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
 
 link_directories(~/unixcommons-cobrazz-bin2/lib)
 

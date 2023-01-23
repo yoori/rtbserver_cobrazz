@@ -1,4 +1,4 @@
-include_directories(/opt/foros/vanga/include . /usr/include/libxml2)
+include_directories(/opt/foros/vanga/include . ${LIBXML2_INCLUDE_DIR})
 
 add_idl(CampaignManagerIDL CampaignManager.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignManager)
 
@@ -52,6 +52,8 @@ target_link_libraries(CampaignConfig
  HTTP
  XslTransformer
  ExpressionChannel
+ CampaignManagerIDL
+ BillingServerIDL
 )
 
 add_library(CampaignConfigSource 
@@ -95,6 +97,7 @@ PassbackTemplate.cpp
 add_library( DomainParser
 DomainParser.cpp
 )
+add_dependencies(DomainParser  DomainConfigXSD)
 
 add_library(CampaignManagerLogger SHARED
 CampaignManagerLogger.cpp

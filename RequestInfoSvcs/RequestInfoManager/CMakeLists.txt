@@ -70,23 +70,13 @@ target_link_libraries(RequestInfoManager
 BillingProcessor
 PassbackContainer
 RequestInfoContainer
-# RequestInfoManagerIDL
  ExpressionMatcherIDL
  UserInfoManagerControllerIDL
  CampaignServerIDL
  LogCommons
 
-# RequestLogLoader
-# RequestOutLogger
 
  RequestInfoContainer
-# UserCampaignReachContainer
-# UserActionInfoContainer
-# UserFraudProtectionContainer
-# PassbackContainer
-# UserSiteReachContainer
-# UserTagRequestMergeContainer
-# TagRequestProfiler
 
  BillingProcessor
 MessageSaver
