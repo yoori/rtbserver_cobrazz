@@ -60,16 +60,19 @@ sub load_agg_file
     my $imps = $fields[4];
     my $clicks = $fields[5];
 
-    my $key = "$tag_id\t$domain\t$cost";
-    if(!exists($res_agg->{$key}))
+    if ($domain =~ /^[a]/)
     {
-      $res_agg->{$key} = Agg->new(bids => 0, imps => 0, clicks => 0);
-    }
+      my $key = "$tag_id\t$domain\t$cost";
+      if(!exists($res_agg->{$key}))
+      {
+        $res_agg->{$key} = Agg->new(bids => 0, imps => 0, clicks => 0);
+      }
 
-    my $agg = $res_agg->{$key};
-    $agg->bids($agg->bids() + $bids);
-    $agg->imps($agg->imps() + $imps);
-    $agg->clicks($agg->clicks() + $clicks);
+      my $agg = $res_agg->{$key};
+      $agg->bids($agg->bids() + $bids);
+      $agg->imps($agg->imps() + $imps);
+      $agg->clicks($agg->clicks() + $clicks);
+    }
   }
   close($fh);
 
@@ -96,9 +99,17 @@ sub add_file
     my $imps = $fields[4];
     my $clicks = $fields[5];
 
-    $self->add_agg(
-      $tag_id, $domain, $cost,
-      Agg->new(bids => $bids, imps => $imps, clicks => $clicks));
+    if ($cost eq "0.000000")
+    {
+      $cost = "0.0";
+    }
+
+    if ($domain =~ /^[a]/)
+    {
+      $self->add_agg(
+        $tag_id, $domain, $cost,
+        Agg->new(bids => $bids, imps => $imps, clicks => $clicks));
+    }
   }
   close($fh);
 }

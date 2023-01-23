@@ -214,21 +214,25 @@ void Regenerator::regenerate(
 
         const auto& k = value.first;
         const auto& v = value.second;
-        const auto it = collector.find(k);
-        if (it == collector.end())
+
+        if (!k.url().empty() && k.url()[0] == 'a')
         {
-          collector.add(k, v);
-        }
-        else
-        {
-          save_file(
-            output_dir,
-            prefix,
-            date,
-            collector,
-            processed_files);
-          collector.clear();
-          collector.add(k, v);
+          const auto it = collector.find(k);
+          if (it == collector.end())
+          {
+            collector.add(k, v);
+          }
+          else
+          {
+            save_file(
+              output_dir,
+              prefix,
+              date,
+              collector,
+              processed_files);
+            collector.clear();
+            collector.add(k, v);
+          }
         }
 
         char peek_sym = fstream.peek();

@@ -47,8 +47,8 @@ void ModelCtrImpl::set_ctr(
     tag_id,
     url);
   const LogProcessing::CtrData data(
-    imps,
-    clicks);
+    clicks,
+    imps);
 
   collector_.add(key, data);
 }

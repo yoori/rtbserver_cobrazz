@@ -282,7 +282,10 @@ void ModelEvaluatorCtrImpl::do_save(
 
   try
   {
-    model_->set_ctr(tag_id, url, all_clicks, all_imps);
+    if (all_clicks != 0 || all_imps != 0)
+    {
+      model_->set_ctr(tag_id, url, all_clicks, all_imps);
+    }
   }
   catch (const eh::Exception& exc)
   {

@@ -237,7 +237,7 @@ void DataModelProviderImpl::do_read() noexcept
   {
     LogHelper<LogTraits>::load(file_path, temp_collector);
   }
-  catch (const Exception& exc)
+  catch (const eh::Exception& exc)
   {
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
@@ -279,6 +279,9 @@ void DataModelProviderImpl::do_calculate(
     {
       const auto& tag_id = key_temp.tag_id();
       const auto& url = key_temp.url();
+
+      if (url.empty() || url[0] != 'a')
+        continue;
 
       auto it_url_hash = url_hash_.find(url);
       if (it_url_hash == url_hash_.end())

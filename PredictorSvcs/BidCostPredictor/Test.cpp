@@ -604,7 +604,7 @@ public:
     HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
     HelpCollector::InnerCollector inner_collector;
 
-   auto cost = FixedNumber("0.01");
+    auto cost = FixedNumber("0.01");
     long unverified_imps = 100;
     long imps = 40;
     long clicks = 5;

@@ -131,10 +131,10 @@ public:
   CtrData() = default;
 
   explicit CtrData(
-    const Imps& imps,
-    const Clicks& clicks)
-    : imps_(imps),
-      clicks_(clicks)
+    const Clicks& clicks,
+    const Imps& imps)
+    : clicks_(clicks),
+      imps_(imps)
   {
   }
 
@@ -157,8 +157,8 @@ public:
 
   CtrData& operator+=(const CtrData& rhs)
   {
-    imps_ += rhs.imps_;
     clicks_ += rhs.clicks_;
+    imps_ += rhs.imps_;
     return *this;
   }
 
@@ -171,8 +171,8 @@ public:
   void serialize(ARCHIVE_& ar)
   {
     (ar
-     & imps_)
-    ^ clicks_;
+     & clicks_)
+    ^ imps_;
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
@@ -184,9 +184,9 @@ public:
     const CtrData& data);
 
 private:
-  Imps imps_ = 0;
-
   Clicks clicks_ = 0;
+
+  Imps imps_ = 0;
 };
 
 using CtrCollector = StatCollector<CtrKey, CtrData, true, true>;
