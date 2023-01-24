@@ -42,10 +42,12 @@ find_package(PB REQUIRED)
 #find_package(OpenDDS REQUIRED)
 
 set(UNIXCOMMONS ${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz)
+set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
 
 include_directories( /usr/local/include src Commons .
     ${UNIXCOMMONS}/src
     ${UNIXCOMMONS}/src/CORBA
+    ${UNIXCOMMONS_BUILD_ROOT}/IDL_COMMON
     ${UNIXCOMMONS}/Build/IDL_COMMON
 
 
@@ -71,7 +73,7 @@ include_directories(${PST_DIRECTORY})
 
 
 #include_directories(Utils/Predictor)
-add_subdirectory(${UNIXCOMMONS}  ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
+add_subdirectory(${UNIXCOMMONS} ${UNIXCOMMONS_BUILD_ROOT})
 
 link_directories(~/unixcommons-cobrazz-bin2/lib)
 
