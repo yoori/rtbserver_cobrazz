@@ -73,9 +73,9 @@ StatSource::Stat::CCGStat zero_ccg_stat() noexcept
   res.comm_amount = RevenueDecimal::ZERO;
   res.daily_amount = RevenueDecimal::ZERO;
   res.daily_comm_amount = RevenueDecimal::ZERO;
-  res.impressions = 0;
-  res.clicks = 0;
-  res.actions = 0;
+  res.impressions = ImpRevenueDecimal::ZERO;
+  res.clicks = ImpRevenueDecimal::ZERO;
+  res.actions = ImpRevenueDecimal::ZERO;
   res.prev_hour_amount = RevenueDecimal::ZERO;
   res.cur_hour_amount = RevenueDecimal::ZERO;
   res.prev_hour_comm_amount = RevenueDecimal::ZERO;
