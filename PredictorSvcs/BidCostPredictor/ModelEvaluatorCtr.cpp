@@ -1,5 +1,6 @@
 // STD
-#include <thread>
+#include <optional>
+#include <unordered_map>
 
 // THIS
 #include "ModelEvaluatorCtr.hpp"
@@ -15,43 +16,33 @@ namespace BidCostPredictor
 {
 
 ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
+  const Imps trust_imps,
+  const Imps tag_imps,
   DataModelProvider* data_provider,
   ModelCtrFactory* model_factory,
   Logging::Logger* logger)
-  : data_provider_(ReferenceCounting::add_ref(data_provider)),
+  : trust_imps_(trust_imps),
+    tag_imps_(tag_imps),
+    data_provider_(ReferenceCounting::add_ref(data_provider)),
     model_factory_(ReferenceCounting::add_ref(model_factory)),
     logger_(ReferenceCounting::add_ref(logger)),
-    observer_(new ActiveObjectObserver(this)),
-    persantage_(logger_, Aspect::MODEL_EVALUATOR_CTR, 5),
-    collector_(10000000, 1),
-    task_runner_(
-      new Generics::TaskRunner(
-        observer_,
-        1))
+    collector_(1, 1)
 {
-  threads_number_ = std::max(8u, std::thread::hardware_concurrency());
-  threads_number_ = std::min(36u, threads_number_);
-  task_runner_pool_ = TaskRunner_var(
-    new Generics::TaskRunner(
-      observer_,
-      threads_number_));
 }
 
 ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (is_stopped_.load(std::memory_order_relaxed))
   {
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
-           << " : shutdown_manager already is stopped";
+           << " : ModelEvaluatorCtr already is stopped";
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    shutdown_manager_.stop();
     return {};
   }
 
   if (!data_provider_)
   {
-    shutdown_manager_.stop();
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
            << " : data_provider is null";
@@ -61,7 +52,6 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
 
   if (!model_factory_)
   {
-    shutdown_manager_.stop();
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
            << " : model_factory is null";
@@ -72,7 +62,6 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
   model_ = model_factory_->create();
   if (!model_)
   {
-    shutdown_manager_.stop();
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
            << " : model is null";
@@ -82,7 +71,6 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
 
   if (!data_provider_->load(collector_))
   {
-    shutdown_manager_.stop();
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
            << " : data_provider load collector is failed";
@@ -92,11 +80,20 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
 
   try
   {
-    start();
+    logger_->info(
+      std::string("ModelEvaluatorCtr started"),
+      Aspect::MODEL_EVALUATOR_CTR);
+
+    calculate();
+    is_success_ = true;
+
+    logger_->info(
+      std::string("ModelEvaluatorCtr is successfully stopped"),
+      Aspect::MODEL_EVALUATOR_CTR);
   }
   catch (const eh::Exception& exc)
   {
-    shutdown_manager_.stop();
+    is_success_ = false;
     std::stringstream stream;
     stream << __PRETTY_FUNCTION__
            << " : ModelEvaluatorCtr is failed"
@@ -105,8 +102,6 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
     return {};
   }
-
-  wait();
 
   if (is_success_)
   {
@@ -119,235 +114,160 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
   }
 }
 
-void ModelEvaluatorCtrImpl::wait() noexcept
-{
-  if (!is_running_)
-    return;
-
-  is_running_ = false;
-
-  shutdown_manager_.wait();
-
-  try
-  {
-    task_runner_pool_->wait_for_queue_exhausting();
-  }
-  catch (...)
-  {}
-
-  try
-  {
-    task_runner_pool_->deactivate_object();
-    task_runner_pool_->wait_object();
-    task_runner_pool_->clear();
-  }
-  catch (...)
-  {}
-
-  try
-  {
-    task_runner_->wait_for_queue_exhausting();
-  }
-  catch (...)
-  {}
-
-  try
-  {
-    task_runner_->deactivate_object();
-    task_runner_->wait_object();
-    task_runner_->clear();
-  }
-  catch (...)
-  {}
-
-  task_runner_pool_.reset();
-  task_runner_.reset();
-}
-
 ModelEvaluatorCtrImpl::~ModelEvaluatorCtrImpl()
 {
-  shutdown_manager_.stop();
-  observer_->clear_delegate();
-  wait();
 }
 
-void ModelEvaluatorCtrImpl::start()
+void ModelEvaluatorCtrImpl::calculate()
 {
-  logger_->info(
-    std::string("ModelEvaluatorCtr started"),
-    Aspect::MODEL_EVALUATOR_CTR);
+  using Data = std::pair<Clicks, Imps>;
+  std::unordered_map<TagId, Data> helper_tag_hash;
+  helper_tag_hash.reserve(100000);
 
-  is_running_ = true;
+  FixedNumber coef("0.5");
+  const FixedNumber one(false, 1, 0);
 
-  task_runner_pool_->activate_object();
-  task_runner_->activate_object();
+  std::size_t records_reached_1000_imps = 0;
+  std::size_t records_reached_10000_imps = 0;
+  std::size_t records_reached_100000_imps = 0;
 
-  if (!post_task(
-    TaskRunnerID::Single,
-    &ModelEvaluatorCtrImpl::do_init))
+  auto it = collector_.begin();
+  auto it_end = collector_.end();
+  for (;it != it_end; ++it)
   {
-    throw Exception("Initial post_task is failed");
+    const auto total_clicks = it->second->total_clicks();
+    const auto total_imps = it->second->total_imps();
+
+    if (total_imps >= 1000)
+    {
+      records_reached_1000_imps += 1;
+    }
+    if (records_reached_10000_imps >= 10000)
+    {
+      records_reached_10000_imps += 1;
+    }
+    if (records_reached_100000_imps >= 100000)
+    {
+      records_reached_100000_imps += 1;
+    }
+
+    std::optional<FixedNumber> ctr;
+    if (total_imps >= trust_imps_)
+    {
+      ctr = FixedNumber::div(
+        FixedNumber(false, total_clicks, 0),
+        FixedNumber(false, total_imps, 0));
+    }
+    else if (total_imps > 0)
+    {
+      const FixedNumber corr_coef = coef +
+        FixedNumber::div(
+          FixedNumber::mul(
+            one - coef,
+            FixedNumber(false, total_imps, 0),
+            Generics::DMR_CEIL),
+          FixedNumber(false, trust_imps_, 0));
+
+      const FixedNumber base_ctr = FixedNumber::div(
+        FixedNumber(false, total_clicks, 0),
+        FixedNumber(false, total_imps, 0));
+
+      ctr = FixedNumber::mul(base_ctr, corr_coef, Generics::DMR_CEIL);
+    }
+
+    const auto& tag_id = it->first.tag_id();
+    const auto& url = it->first.url_var();
+    if (total_imps > 0 && total_imps < tag_imps_)
+    {
+      auto it = helper_tag_hash.find(tag_id);
+      if (it == helper_tag_hash.end())
+      {
+        helper_tag_hash.try_emplace(tag_id, total_clicks, total_imps);
+      }
+      else
+      {
+        it->second.first += total_clicks;
+        it->second.second += total_imps;
+      }
+    }
+
+    if (ctr && !ctr->is_zero())
+    {
+      model_->set_ctr(tag_id, url, *ctr);
+    }
+  }
+
+  std::stringstream stream;
+  stream << "\n"
+         << "Records reached 1000 imps : "
+         << records_reached_1000_imps
+         << "\n"
+         << "Records reached 10000 imps : "
+         << records_reached_10000_imps
+         << "\n"
+         << "Records reached 100000 imps : "
+         << records_reached_100000_imps;
+  logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+
+  coef = FixedNumber("0.1");
+  Imps tag_sum_imps = 0;
+  Clicks tag_sum_clicks = 0;
+
+  auto it_helper = helper_tag_hash.begin();
+  auto it_helper_end = helper_tag_hash.end();
+  Url_var url_replacement(new Url("?"));
+  for (; it_helper != it_helper_end; ++it_helper)
+  {
+    const auto& tag_id = it_helper->first;
+    const auto& clicks = it_helper->second.first;
+    const auto& imps = it_helper->second.second;
+
+    if (tag_id > 0 && imps > 0)
+    {
+      const FixedNumber ctr = FixedNumber::mul(
+        FixedNumber::div(
+          FixedNumber(false, imps >= 1000 ? clicks : (
+            clicks > 0 ? clicks - 1 : 0), 0),
+          FixedNumber(false, imps, 0)),
+        coef,
+        Generics::DMR_FLOOR);
+
+      tag_sum_imps += imps;
+      tag_sum_clicks += clicks;
+
+      if (!ctr.is_zero())
+      {
+        model_->set_ctr(tag_id, url_replacement, ctr);
+      }
+    }
+  }
+
+  stream = std::stringstream();
+  stream << "Global CTR: "
+         << "imps = "
+         << tag_sum_imps
+         << ", clicks = "
+         << tag_sum_clicks;
+  logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+
+  if (tag_sum_imps)
+  {
+    const FixedNumber default_ctr = FixedNumber::mul(
+      FixedNumber::div(
+        FixedNumber(false, tag_sum_clicks, 0),
+        FixedNumber(false, tag_sum_imps, 0)),
+      FixedNumber("0.5"),
+      Generics::DMR_FLOOR);
+    model_->set_ctr(0, url_replacement, default_ctr);
   }
 }
 
 void ModelEvaluatorCtrImpl::stop() noexcept
 {
+  is_stopped_.store(true, std::memory_order_relaxed);
   logger_->info(
     std::string("ModelEvaluatorCtr was interrupted"),
     Aspect::MODEL_EVALUATOR_CTR);
-  shutdown_manager_.stop();
-}
-
-void ModelEvaluatorCtrImpl::do_init() noexcept
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  persantage_.set_total_number(collector_.size());
-  remaining_iterations_ = collector_.size();
-  iterator_ = std::begin(collector_);
-  const std::size_t count =
-    std::min(static_cast<std::size_t>(threads_number_ * 3), remaining_iterations_);
-  for (std::size_t i = 1; i <= count; ++i)
-  {
-    post_task(
-      TaskRunnerID::Pool,
-      &ModelEvaluatorCtrImpl::do_calculate,
-      iterator_);
-    ++iterator_;
-  }
-}
-
-void ModelEvaluatorCtrImpl::do_calculate(const Iterator it) noexcept
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  try
-  {
-    do_calculate_helper(it);
-  }
-  catch (const eh::Exception& exc)
-  {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Reason: "
-           << exc.what();
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-  }
-}
-
-void ModelEvaluatorCtrImpl::do_calculate_helper(const Iterator it)
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  const auto& top_key = it->first;
-  const auto& cost_dict = it->second;
-
-  Imps all_imps = 0;
-  Clicks all_clicks = 0;
-
-  for (const auto& [cost, data] : *cost_dict)
-  {
-    all_imps += data.imps();
-    all_clicks += data.clicks();
-  }
-
-  const auto& tag_id = top_key.tag_id();
-  const auto& url = top_key.url_var();
-
-  post_task(
-    TaskRunnerID::Single,
-    &ModelEvaluatorCtrImpl::do_next_task);
-
-  post_task(
-    TaskRunnerID::Single,
-    &ModelEvaluatorCtrImpl::do_save,
-    tag_id,
-    url,
-    all_clicks,
-    all_imps);
-}
-
-void ModelEvaluatorCtrImpl::do_save(
-  const TagId& tag_id,
-  const Url_var& url,
-  const Clicks& all_clicks,
-  const Imps& all_imps) noexcept
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  try
-  {
-    if (all_clicks !=0 || all_imps != 0)
-    {
-      model_->set_ctr(tag_id, url, all_clicks, all_imps);
-    }
-  }
-  catch (const eh::Exception& exc)
-  {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Reason: "
-         << exc.what();
-    logger_->critical(
-      ostr.str(),
-      Aspect::MODEL_EVALUATOR_CTR);
-    shutdown_manager_.stop();
-    return;
-  }
-
-  try
-  {
-    remaining_iterations_ -= 1;
-    if (remaining_iterations_ == 0)
-    {
-      is_success_ = true;
-      shutdown_manager_.stop();
-    }
-    persantage_.increase();
-  }
-  catch (...)
-  {
-  }
-}
-
-void ModelEvaluatorCtrImpl::do_next_task() noexcept
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  if (iterator_ != std::end(collector_))
-  {
-    post_task(
-      TaskRunnerID::Pool,
-      &ModelEvaluatorCtrImpl::do_calculate,
-      iterator_);
-    ++iterator_;
-  }
-}
-
-void ModelEvaluatorCtrImpl::report_error(
-  Severity severity,
-  const String::SubString& description,
-  const char* error_code) noexcept
-{
-  if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
-  {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelEvaluatorCtr stopped due to incorrect operation of queues."
-           << " Reason: "
-           << description;
-    logger_->critical(
-      stream.str(),
-      Aspect::MODEL_EVALUATOR_CTR,
-      error_code);
-  }
 }
 
 } // namespace BidCostPredictor

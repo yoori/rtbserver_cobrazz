@@ -36,7 +36,7 @@ public:
 
   ~ModelBidCostImpl() override = default;
 
-  FixedNumber get_cost(
+  Cost get_cost(
     const TagId& tag_id,
     const Url& url,
     const WinRate& win_rate,

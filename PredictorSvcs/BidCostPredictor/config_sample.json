@@ -15,7 +15,10 @@
       "ctr" : {
         "output_directory": "/home/artem_bogdanov/model_ctr",
         "temp_directory": "/home/artem_bogdanov/temp/model_ctr",
-        "file_name": "trivial_ctr.csv"
+        "file_name": "trivial_ctr.csv",
+        "max_imps": 100000,
+        "trust_imps": 10000,
+        "tag_imps": 100
       }
     },
     "aggregator" : {

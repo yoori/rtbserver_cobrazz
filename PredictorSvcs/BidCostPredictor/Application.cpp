@@ -243,6 +243,12 @@ int Application::run(int argc, char **argv)
       config_model.get("ctr.temp_directory");
     const std::string ctr_model_file_name =
       config_model.get("ctr.file_name");
+    const Imps ctr_model_max_imps =
+      config_model.get<Imps>("ctr.max_imps");
+    const Imps ctr_model_trust_imps =
+      config_model.get<Imps>("ctr.trust_imps");
+    const Imps ctr_model_tag_imps =
+      config_model.get<Imps>("ctr.tag_imps");
 
     const Configuration config_aggregator =
       configuration.get_config("config.aggregator");
@@ -288,6 +294,9 @@ int Application::run(int argc, char **argv)
           ctr_model_dir,
           ctr_model_file_name,
           ctr_model_temp_dir,
+          ctr_model_max_imps,
+          ctr_model_trust_imps,
+          ctr_model_tag_imps,
           model_agg_dir,
           logger));
     }

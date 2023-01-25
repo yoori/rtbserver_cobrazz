@@ -1,9 +1,0 @@
-@bidcostpredictorexe_deps@
-
-sources := \
-  Main.cpp
-
-target := BidCostPredictor
-
-@bidcostpredictorexe_post@
-

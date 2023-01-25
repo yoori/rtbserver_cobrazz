@@ -534,14 +534,14 @@ BOOST_AUTO_TEST_CASE(provider)
     }
   }
 
-  HelpCollector help_hollector_check;
+  HelpCollector help_hollector_check(100000);
   for (std::size_t url_i = 1; url_i <= number_url_per_file; ++url_i)
   {
     const std::string url = url_prefix + std::to_string(url_i);
     for (std::size_t tag_id = tag_initial; tag_id <= tag_initial + number_tags_per_url; ++tag_id)
     {
       HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-      HelpCollector::InnerCollector collector_inner;
+      HelpCollector::InnerCollector collector_inner(100000);
       FixedNumber cost = FixedNumber("0.01");
       for (std::size_t cost_i = 1; cost_i <= number_cost; ++cost_i)
       {
@@ -571,9 +571,10 @@ BOOST_AUTO_TEST_CASE(provider)
 
   DataModelProvider_var provider(
     new DataModelProviderImpl(
+      100000,
       result_directory,
       logger));
-  HelpCollector help_hollector_result;
+  HelpCollector help_hollector_result(100000);
   provider->load(help_hollector_result);
   help_hollector_result.operator==(help_hollector_result);
   logger->info(
@@ -602,7 +603,7 @@ public:
     const std::string url = "url";
 
     HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector;
+    HelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.01");
     long unverified_imps = 100;
@@ -688,7 +689,7 @@ public:
     const std::string url = "url";
 
     HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector;
+    HelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.02");
     long unverified_imps = 100;
@@ -803,7 +804,7 @@ public:
     const std::string url = "url";
 
     HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector;
+    HelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
@@ -931,7 +932,7 @@ public:
     const std::string url = "url";
 
     HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector;
+    HelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
@@ -1042,108 +1043,6 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_3)
   BOOST_CHECK_EQUAL(it4 != bid_collector.end(), true);
   BOOST_CHECK_EQUAL(it4->second.cost(), FixedNumber("0.03"));
   BOOST_CHECK_EQUAL(it4->second.max_cost(), FixedNumber("0.03"));
-}
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(ctr_model)
-
-class DataModelProviderCtr :
-  public DataModelProvider,
-  public virtual ReferenceCounting::AtomicImpl
-{
-public:
-  DataModelProviderCtr() = default;
-
-  ~DataModelProviderCtr() override = default;
-
-  bool load(HelpCollector& collector) noexcept override
-  {
-    const unsigned long tag_id = 1;
-    const std::string url = "url";
-
-    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector;
-
-    auto cost = FixedNumber("0.03");
-    long unverified_imps = 400;
-    long imps = 100;
-    long clicks = 5;
-    {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
-        unverified_imps,
-        imps,
-        clicks);
-      inner_collector.add(key_inner, data_inner);
-    }
-
-    cost = FixedNumber("0.02");
-    unverified_imps = 1000;
-    imps = 40;
-    clicks = 5;
-    {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
-        unverified_imps,
-        imps,
-        clicks);
-      inner_collector.add(key_inner, data_inner);
-    }
-
-    cost = FixedNumber("0.01");
-    unverified_imps = 1000;
-    imps = 10;
-    clicks = 5;
-    {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
-        unverified_imps,
-        imps,
-        clicks);
-      inner_collector.add(key_inner, data_inner);
-    }
-
-    collector.add(key, inner_collector);
-    return true;
-  }
-
-  void stop() noexcept override
-  {
-  }
-};
-
-BOOST_AUTO_TEST_CASE(ctr_model)
-{
-  const std::string path_file = "/tmp/model_data";
-  std::remove(path_file.c_str());
-
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(
-      Logging::OStream::Config(std::cerr)));
-
-  DataModelProvider_var data_provider(new DataModelProviderCtr);
-  ModelCtrFactory_var model_factory(new ModelCtrFactoryImpl(logger));
-
-  ModelEvaluatorCtr_var model_evaluator(
-    new ModelEvaluatorCtrImpl(
-      data_provider,
-      model_factory,
-      logger));
-
-  auto model = model_evaluator->evaluate();
-  model->save(path_file);
-
-  LogProcessing::CtrCollector ctr_collector;
-  LogHelper<LogProcessing::CtrTraits>::load(path_file, ctr_collector);
-
-  BOOST_CHECK_EQUAL(ctr_collector.size() == 1, true);
-
-  LogProcessing::CtrKey key(1, std::string("url"));
-  auto it = ctr_collector.find(key);
-  BOOST_CHECK_EQUAL(it != ctr_collector.end(), true);
-  BOOST_CHECK_EQUAL(it->second.clicks() == 15, true);
-  BOOST_CHECK_EQUAL(it->second.imps() == 150, true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -1337,41 +1236,37 @@ BOOST_AUTO_TEST_CASE(test1)
       std::make_shared<std::string>("url"));
 
     LogProcessing::CtrData data(
-      11,
-      12);
-    collector.add(key, data);
-  }
-
-  {
-    LogProcessing::CtrKey key(
-      1,
-      std::make_shared<std::string>("url"));
-
-    LogProcessing::CtrData data(
-      13,
-      15);
+      Types::FixedNumber("0.1"));
     collector.add(key, data);
   }
 
   {
     LogProcessing::CtrKey key(
       2,
-      std::make_shared<std::string>("url2"));
+      std::make_shared<std::string>("url"));
 
     LogProcessing::CtrData data(
-      21,
-      22);
+      Types::FixedNumber("0.2"));
     collector.add(key, data);
   }
 
   {
     LogProcessing::CtrKey key(
       3,
+      std::make_shared<std::string>("url2"));
+
+    LogProcessing::CtrData data(
+      Types::FixedNumber("0.3"));
+    collector.add(key, data);
+  }
+
+  {
+    LogProcessing::CtrKey key(
+      4,
       std::make_shared<std::string>("url3"));
 
     LogProcessing::CtrData data(
-      31,
-      32);
+      Types::FixedNumber("0.4"));
     collector.add(key, data);
   }
 
@@ -1386,12 +1281,52 @@ BOOST_AUTO_TEST_CASE(test1)
   ModelCtr_var model(new ModelCtrImpl(logger));
   model->load(path_file);
 
-  const auto data = model->get_ctr(1, "url");
-  const auto clicks = data.first;
-  const auto imps = data.second;
+  auto ctr = model->get_ctr(1, "url");
+  BOOST_CHECK_EQUAL(ctr == Types::FixedNumber("0.1"), true);
 
-  BOOST_CHECK_EQUAL(clicks == 24, true);
-  BOOST_CHECK_EQUAL(imps == 27, true);
+  ctr = model->get_ctr(777, "url");
+  BOOST_CHECK_EQUAL(ctr.is_zero(), true);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(help_collector)
+
+BOOST_AUTO_TEST_CASE(test1)
+{
+  HelpCollector collector(100);
+
+  HelpCollector::Key key(1, Types::Url_var(new std::string("url1")));
+  auto& inner_collecrtor = collector.find_or_insert(key);
+  BOOST_CHECK_EQUAL(inner_collecrtor.empty(), true);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 0, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 0, true);
+
+  HelpCollector::InnerKey key_inner1(Types::FixedNumber("0.1"));
+  HelpCollector::InnerData data_inner1(1000000, 10, 1);
+  inner_collecrtor.add(key_inner1, data_inner1);
+
+  auto& inner_collecrtor2 = collector.find_or_insert(key);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 10, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 1, true);
+
+  HelpCollector::InnerKey key_inner2(Types::FixedNumber("0.1"));
+  HelpCollector::InnerData data_inner2(1000000, 15, 2);
+  inner_collecrtor.add(key_inner2, data_inner2);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 25, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 3, true);
+
+  HelpCollector::InnerKey key_inner3(Types::FixedNumber("0.1"));
+  HelpCollector::InnerData data_inner3(1000000, 100, 5);
+  inner_collecrtor.add(key_inner3, data_inner3);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 125, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 8, true);
+
+  HelpCollector::InnerKey key_inner4(Types::FixedNumber("0.1"));
+  HelpCollector::InnerData data_inner4(1000000, 100, 5);
+  inner_collecrtor.add(key_inner4, data_inner4);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 125, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 8, true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

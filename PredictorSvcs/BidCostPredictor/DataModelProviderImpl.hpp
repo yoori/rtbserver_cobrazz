@@ -47,6 +47,8 @@ class DataModelProviderImpl final :
   using Url = std::string_view;
   using UrlHash = std::unordered_map<Url, Url_var>;
 
+  using Imps = typename HelpCollector::Imps;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
   static constexpr std::uint8_t COUNT_THREADS = 3;
@@ -60,6 +62,7 @@ class DataModelProviderImpl final :
 
 public:
   DataModelProviderImpl(
+    const Imps max_imps,
     const std::string& input_dir,
     Logging::Logger* logger);
 

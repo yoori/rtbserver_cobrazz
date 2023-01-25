@@ -5,6 +5,7 @@
 #include <memory>
 
 // THIS
+#include <eh/Exception.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
 #include <LogCommons/StatCollector.hpp>
@@ -124,17 +125,14 @@ private:
 class CtrData final
 {
 public:
-  using Imps = long;
-  using Clicks = long;
+  using Ctr = LogProcessing::FixedNumber;
 
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
   CtrData() = default;
 
-  explicit CtrData(
-    const Clicks& clicks,
-    const Imps& imps)
-    : clicks_(clicks),
-      imps_(imps)
+  explicit CtrData(const Ctr& ctr)
+    : ctr_(ctr)
   {
   }
 
@@ -145,34 +143,28 @@ public:
   CtrData& operator=(const CtrData&) = default;
   CtrData& operator=(CtrData&&) = default;
 
-  Imps imps() const noexcept
+  const Ctr& ctr() const noexcept
   {
-    return imps_;
-  }
-
-  Clicks clicks() const noexcept
-  {
-    return clicks_;
-  }
-
-  CtrData& operator+=(const CtrData& rhs)
-  {
-    clicks_ += rhs.clicks_;
-    imps_ += rhs.imps_;
-    return *this;
+    return ctr_;
   }
 
   bool is_null() const noexcept
   {
-    return imps_ == 0 && clicks_ == 0;
+    return ctr_.is_zero();
+  }
+
+  CtrData& operator+=(const CtrData& other)
+  {
+    Stream::Error ostr;
+    ostr << __PRETTY_FUNCTION__
+         << " : Reason: Logic error";
+    throw Exception(ostr);
   }
 
   template <class ARCHIVE_>
   void serialize(ARCHIVE_& ar)
   {
-    (ar
-     & clicks_)
-    ^ imps_;
+    ar ^ ctr_;
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
@@ -184,9 +176,7 @@ public:
     const CtrData& data);
 
 private:
-  Clicks clicks_ = 0;
-
-  Imps imps_ = 0;
+  Ctr ctr_ = Ctr::ZERO;
 };
 
 using CtrCollector = StatCollector<CtrKey, CtrData, true, true>;

@@ -16,6 +16,7 @@
 #include "ModelFactory.hpp"
 #include "Persantage.hpp"
 #include "ShutdownManager.hpp"
+#include "Types.hpp"
 
 namespace Aspect
 {
@@ -34,14 +35,15 @@ class ModelEvaluatorBidCostImpl final:
   public virtual ReferenceCounting::AtomicImpl,
   private ActiveObjectDelegate
 {
-  using FixedNumber = LogProcessing::FixedNumber;
-  using Point = FixedNumber;
+  using Point = Types::FixedNumber;
   using Points = std::vector<Point>;
   using TaskRunner_var = Generics::TaskRunner_var;
   using Iterator = typename HelpCollector::const_iterator;
   using Url_var = typename HelpCollector::Key::Url_var;
   using TagId = typename HelpCollector::Key::TagId;
-  using Cost = FixedNumber;
+  using Cost = Types::Cost;
+  using FixedNumber = Types::FixedNumber;
+  using WinRate = Types::WinRate;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 

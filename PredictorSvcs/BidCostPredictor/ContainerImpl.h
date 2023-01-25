@@ -30,7 +30,7 @@ public:
     const WinRate& win_rate,
     const Cost& current_cost) const override;
 
-  Data get_ctr(
+  Ctr get_ctr(
     const TagId& tag_id,
     const Url& url) const override;
 

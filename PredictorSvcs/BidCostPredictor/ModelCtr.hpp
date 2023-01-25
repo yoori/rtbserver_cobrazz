@@ -7,8 +7,9 @@
 // THIS
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include "HelpCollector.hpp"
+#include "CtrCollector.hpp"
 #include "ModelManager.hpp"
+#include "Types.hpp"
 
 namespace PredictorSvcs
 {
@@ -22,26 +23,22 @@ class ModelCtr :
   public virtual ReferenceCounting::Interface
 {
 public:
-  using Key = typename Predictor::HelpCollector::Key;
-  using TagId = typename Key::TagId;
-  using Url = typename Key::Url;
-  using Url_var = typename Key::Url_var;
-  using Clicks = long;
-  using Imps = long;
-  using Data = std::pair<Clicks, Imps>;
+  using TagId = Types::TagId;
+  using Url = Types::Url;
+  using Url_var = Types::Url_var;
+  using Ctr = typename LogProcessing::CtrData::Ctr;
 
 public:
   ModelCtr() = default;
 
-  virtual Data get_ctr(
+  virtual Ctr get_ctr(
     const TagId& tag_id,
     const Url& url) const = 0;
 
   virtual void set_ctr(
     const TagId& tag_id,
     const Url_var& url,
-    const Clicks& clicks,
-    const Imps& imps) = 0;
+    const Ctr& ctr) = 0;
 
   virtual void clear() noexcept = 0;
 

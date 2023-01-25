@@ -3,7 +3,7 @@
 
 // THIS
 #include <LogCommons/StatCollector.hpp>
-#include "HelpCollector.hpp"
+#include "Types.hpp"
 
 namespace AdServer
 {
@@ -15,11 +15,10 @@ namespace Predictor = PredictorSvcs::BidCostPredictor;
 class BidCostKey final
 {
 public:
-  using Key = typename Predictor::HelpCollector::Key;
-  using TagId = typename Key::TagId;
-  using Url = typename Key::Url;
-  using Url_var = typename Key::Url_var;
-  using WinRate = FixedNumber;
+  using TagId = Predictor::Types::TagId;
+  using Url = Predictor::Types::Url;
+  using Url_var = Predictor::Types::Url_var;
+  using WinRate = Predictor::Types::WinRate;
 
 public:
   explicit BidCostKey()

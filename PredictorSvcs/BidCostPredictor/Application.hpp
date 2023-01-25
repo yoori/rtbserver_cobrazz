@@ -4,6 +4,7 @@
 // THIS
 #include <eh/Exception.hpp>
 #include <Generics/Uncopyable.hpp>
+#include "Types.hpp"
 
 namespace PredictorSvcs
 {
@@ -12,6 +13,8 @@ namespace BidCostPredictor
 
 class Application final : private Generics::Uncopyable
 {
+  using Imps = Types::Imps;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
 

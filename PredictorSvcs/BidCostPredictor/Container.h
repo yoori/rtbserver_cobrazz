@@ -19,7 +19,7 @@ public:
   using Url = typename ModelBidCost::Url;
   using WinRate = typename ModelBidCost::WinRate;
   using Cost = typename ModelBidCost::Cost;
-  using Data = typename ModelCtr::Data;
+  using Ctr = typename ModelCtr::Ctr;
 
 public:
   Container() = default;
@@ -30,7 +30,7 @@ public:
     const WinRate& win_rate,
     const Cost& current_cost) const = 0;
 
-  virtual Data get_ctr(
+  virtual Ctr get_ctr(
     const TagId& tag_id,
     const Url& url) const = 0;
 

@@ -18,7 +18,7 @@ ModelCtrImpl::ModelCtrImpl(Logging::Logger* logger)
   collector_.prepare_adding(10000000);
 }
 
-ModelCtrImpl::Data ModelCtrImpl::get_ctr(
+ModelCtrImpl::Ctr ModelCtrImpl::get_ctr(
   const TagId& tag_id,
   const Url& url) const
 {
@@ -28,27 +28,25 @@ ModelCtrImpl::Data ModelCtrImpl::get_ctr(
   if (const auto it = collector_.find(key);
     it != collector_.end())
   {
-    const auto& data = it->second;
-    return {data.clicks(), data.imps()} ;
+    const auto& ctr = it->second.ctr();
+    return ctr ;
   }
   else
   {
-    return {0, 0};
+    return Ctr::ZERO;
   }
 }
 
 void ModelCtrImpl::set_ctr(
   const TagId& tag_id,
   const Url_var& url,
-  const Clicks& clicks,
-  const Imps& imps)
+  const Ctr& ctr)
 {
   const LogProcessing::CtrKey key(
     tag_id,
     url);
   const LogProcessing::CtrData data(
-    clicks,
-    imps);
+    ctr);
 
   collector_.add(key, data);
 }

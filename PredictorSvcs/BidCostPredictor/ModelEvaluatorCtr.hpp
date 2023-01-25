@@ -1,6 +1,9 @@
 #ifndef BIDCOSTPREDICTOR_MODELEVALUATORCTR_HPP
 #define BIDCOSTPREDICTOR_MODELEVALUATORCTR_HPP
 
+// STD
+#include <atomic>
+
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Generics/ActiveObject.hpp>
@@ -29,31 +32,22 @@ namespace LogProcessing = AdServer::LogProcessing;
 
 class ModelEvaluatorCtrImpl final:
   public ModelEvaluatorCtr,
-  public virtual ReferenceCounting::AtomicImpl,
-  private ActiveObjectDelegate
+  public virtual ReferenceCounting::AtomicImpl
 {
-  using TaskRunner_var = Generics::TaskRunner_var;
   using Iterator = typename HelpCollector::const_iterator;
-
-  using FixedNumber = LogProcessing::FixedNumber;
-
   using TagId = typename ModelCtr::TagId;
   using Url = typename ModelCtr::Url;
   using Url_var = typename ModelCtr::Url_var;
-  using Clicks = typename ModelCtr::Clicks;
-  using Imps = typename ModelCtr::Imps;
-  using Data = typename ModelCtr::Data;
+  using Imps = Types::Imps;
+  using Clicks = Types::Clicks;
+  using FixedNumber = Types::FixedNumber;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  enum class TaskRunnerID
-  {
-    Single,
-    Pool
-  };
-
 public:
   explicit ModelEvaluatorCtrImpl(
+    const Imps trust_imps,
+    const Imps tag_imps,
     DataModelProvider* data_provider,
     ModelCtrFactory* model_factory,
     Logging::Logger* logger);
@@ -65,102 +59,26 @@ public:
   void stop() noexcept override;
 
 private:
-  void start();
-
-  void wait() noexcept;
-
-  void do_init() noexcept;
-
-  void do_calculate(const Iterator it) noexcept;
-
-  void do_calculate_helper(const Iterator it);
-
-  void do_save(
-    const TagId& tag_id,
-    const Url_var& url,
-    const Clicks& all_clicks,
-    const Imps& all_imps) noexcept;
-
-  void do_next_task() noexcept;
-
-  void report_error(
-    Severity severity,
-    const String::SubString& description,
-    const char* error_code = 0) noexcept override;
-
-  template<class MemPtr,
-          class ...Args>
-  std::enable_if_t<
-    std::is_member_function_pointer_v<MemPtr>,
-    bool>
-  post_task(
-    const TaskRunnerID id,
-    MemPtr mem_ptr,
-    Args&& ...args) noexcept
-  {
-    try
-    {
-      TaskRunner_var task_runner;
-      if (id == TaskRunnerID::Single)
-      {
-        task_runner = task_runner_;
-      }
-      else
-      {
-        task_runner = task_runner_pool_;
-      }
-      task_runner->enqueue_task(
-        AdServer::Commons::make_delegate_task(
-          std::bind(mem_ptr,
-                    this,
-                    std::forward<Args>(args)...)));
-      return true;
-    }
-    catch (const eh::Exception& exc)
-    {
-      shutdown_manager_.stop();
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Can't enqueue_task"
-             << " Reason: "
-             << exc.what();
-      logger_->critical(
-              stream.str(),
-              Aspect::MODEL_EVALUATOR_CTR);
-      return false;
-    }
-  }
+  void calculate();
 
 private:
+  const Imps trust_imps_;
+
+  const Imps tag_imps_;
+
   DataModelProvider_var data_provider_;
 
   ModelCtrFactory_var model_factory_;
 
   Logging::Logger_var logger_;
 
-  ActiveObjectObserver_var observer_;
-
-  Persantage persantage_;
-
   HelpCollector collector_;
 
   ModelCtr_var model_;
 
-  bool is_running_ = false;
-
-  TaskRunner_var task_runner_;
-
-  unsigned int threads_number_ = 0;
-
-  TaskRunner_var task_runner_pool_;
-  // Single thread
-  std::size_t remaining_iterations_ = 0;
-  // Single thread
-  Iterator iterator_;
-
-  ShutdownManager shutdown_manager_;
-
   bool is_success_ = false;
+
+  std::atomic<bool> is_stopped_{false};
 };
 
 } // namespace BidCostPredictor

@@ -8,6 +8,7 @@
 // THIS
 #include <LogCommons/LogCommons.hpp>
 #include "DataModelProvider.hpp"
+#include "ModelCtr.hpp"
 #include "ModelEvaluator.hpp"
 #include "ModelManager.hpp"
 #include "Processor.hpp"
@@ -24,8 +25,9 @@ class ModelProcessor :
   public Processor,
   public virtual ReferenceCounting::AtomicImpl
 {
-  using FixedNumber = LogProcessing::FixedNumber;
-  using Points = std::vector<FixedNumber>;
+  using Point = Types::Point;
+  using Points = Types::Points;
+  using Imps = Types::Imps;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -37,6 +39,9 @@ public:
     const std::string& ctr_model_dir,
     const std::string& ctr_model_file_name,
     const std::string& ctr_temp_dir,
+    const Imps ctr_model_max_imps,
+    const Imps ctr_model_trust_imps,
+    const Imps ctr_model_tag_imps,
     const std::string& agg_dir,
     Logging::Logger* logger);
 

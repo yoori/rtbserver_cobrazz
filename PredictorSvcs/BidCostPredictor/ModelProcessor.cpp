@@ -30,6 +30,9 @@ ModelProcessor::ModelProcessor(
   const std::string& ctr_model_dir,
   const std::string& ctr_model_file_name,
   const std::string& ctr_temp_model_dir,
+  const Imps ctr_model_max_imps,
+  const Imps ctr_model_trust_imps,
+  const Imps ctr_model_tag_imps,
   const std::string& agg_dir,
   Logging::Logger* logger)
   : model_dir_(model_dir),
@@ -44,14 +47,15 @@ ModelProcessor::ModelProcessor(
   data_provider_ =
     DataModelProvider_var(
       new DataModelProviderImpl(
+        ctr_model_max_imps,
         agg_dir_,
         logger_));
 
   Points points {
-    FixedNumber("0.95"),
-    FixedNumber("0.75"),
-    FixedNumber("0.5"),
-    FixedNumber("0.25")
+    Point("0.95"),
+    Point("0.75"),
+    Point("0.5"),
+    Point("0.25")
   };
 
   ModelBidCostFactory_var bid_cost_model_factory(
@@ -71,6 +75,8 @@ ModelProcessor::ModelProcessor(
   model_evaluator_ctr_ =
     ModelEvaluatorCtr_var(
       new ModelEvaluatorCtrImpl(
+        ctr_model_trust_imps,
+        ctr_model_tag_imps,
         data_provider_,
         ctr_model_factory,
         logger_));

@@ -1,8 +1,0 @@
-@bidcostpredictortest_deps@
-
-sources := \
-  Test.cpp
-
-target := BidCostPredictorTest
-
-@bidcostpredictortest_post@

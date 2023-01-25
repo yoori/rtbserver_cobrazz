@@ -141,7 +141,7 @@ ContainerImpl::Cost ContainerImpl::get_cost(
   return model_bid_cost_->get_cost(tag_id, url, win_rate, current_cost);
 }
 
-ContainerImpl::Data ContainerImpl::get_ctr(
+ContainerImpl::Ctr ContainerImpl::get_ctr(
   const TagId& tag_id,
   const Url& url) const
 {

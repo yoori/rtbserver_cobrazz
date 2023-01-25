@@ -21,23 +21,20 @@ public:
   using TagId = typename ModelCtr::TagId;
   using Url = typename ModelCtr::Url;
   using Url_var = typename ModelCtr::Url_var;
-  using Clicks = typename ModelCtr::Clicks;
-  using Imps = typename ModelCtr::Imps;
-  using Data = typename ModelCtr::Data;
+  using Ctr = typename ModelCtr::Ctr;
 
   ModelCtrImpl(Logging::Logger* logger);
 
   ~ModelCtrImpl() override = default;
 
-  Data get_ctr(
+  Ctr get_ctr(
     const TagId& tag_id,
     const Url& url) const override;
 
   void set_ctr(
     const TagId& tag_id,
     const Url_var& url,
-    const Clicks& clicks,
-    const Imps& imps) override;
+    const Ctr& ctr) override;
 
   void clear() noexcept;
 

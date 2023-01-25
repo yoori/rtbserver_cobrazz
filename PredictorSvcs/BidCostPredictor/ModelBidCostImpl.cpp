@@ -19,7 +19,7 @@ ModelBidCostImpl::ModelBidCostImpl(Logging::Logger* logger)
   collector_.prepare_adding(10000000);
 }
 
-ModelBidCostImpl::FixedNumber ModelBidCostImpl::get_cost(
+ModelBidCostImpl::Cost ModelBidCostImpl::get_cost(
   const TagId& tag_id,
   const Url& url,
   const WinRate& win_rate,

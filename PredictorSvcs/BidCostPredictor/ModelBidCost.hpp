@@ -9,8 +9,8 @@
 #include <LogCommons/LogCommons.hpp>
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include "HelpCollector.hpp"
 #include "ModelManager.hpp"
+#include "Types.hpp"
 
 namespace PredictorSvcs
 {
@@ -25,13 +25,11 @@ class ModelBidCost :
   public virtual ReferenceCounting::Interface
 {
 public:
-  using Key = typename Predictor::HelpCollector::Key;
-  using TagId = typename Key::TagId;
-  using Url = typename Key::Url;
-  using Url_var = typename Key::Url_var;
-  using FixedNumber = LogProcessing::FixedNumber;
-  using WinRate = FixedNumber;
-  using Cost = FixedNumber;
+  using TagId = Types::TagId;
+  using Url = Types::Url;
+  using Url_var = Types::Url_var;
+  using WinRate = Types::WinRate;
+  using Cost = Types::Cost;
 
 public:
   ModelBidCost() = default;

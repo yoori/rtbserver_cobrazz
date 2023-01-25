@@ -12,6 +12,7 @@
 #include <Generics/GnuHashTable.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
+#include "Types.hpp"
 
 namespace PredictorSvcs
 {
@@ -26,9 +27,9 @@ namespace detail_help_collector
 class Key final
 {
 public:
-  using TagId = unsigned long;
-  using Url = std::string;
-  using Url_var = std::shared_ptr<Url>;
+  using TagId = Types::TagId;
+  using Url = Types::Url;
+  using Url_var = Types::Url_var;
   using Hash = std::size_t;
 
 public:
@@ -95,24 +96,103 @@ private:
 class HelpCollector final
 {
 public:
-  using Cost = LogProcessing::FixedNumber;
+  using Cost = Types::Cost;
   using InnerKey = Cost;
   using InnerData = LogProcessing::BidCostStatInnerData;
+  using Imps = Types::Imps;
+  using Clicks = Types::Clicks;
 
   class InnerCollector final
-    : public boost::container::flat_map<InnerKey, InnerData>
+    : protected boost::container::flat_map<InnerKey, InnerData>
   {
   public:
-    explicit InnerCollector() = default;
+    using FlatMap = boost::container::flat_map<InnerKey, InnerData>;
+    using const_iterator = typename FlatMap::const_iterator;
+    using const_reverse_iterator = typename FlatMap::const_reverse_iterator;
+    using size_type = typename FlatMap::size_type;
+    using Imps = typename HelpCollector::Imps;
+    using Clicks = typename HelpCollector::Clicks;
+
+  public:
+    explicit InnerCollector(const Imps max_imps)
+      : max_imps_(max_imps)
+    {
+    }
+
+    ~InnerCollector() = default;
+
+    InnerCollector(const InnerCollector&) = default;
+
+    InnerCollector(InnerCollector&&) = default;
+
+    InnerCollector& operator=(const InnerCollector&) = default;
+
+    InnerCollector& operator=(InnerCollector&&) = default;
+
+    Clicks total_clicks() const noexcept
+    {
+      return total_clicks_;
+    }
+
+    Imps total_imps() const noexcept
+    {
+      return total_imps_;
+    }
+
+    void reserve(const size_type cnt)
+    {
+      FlatMap::reserve(cnt);
+    }
+
+    bool empty() const noexcept
+    {
+      return FlatMap::empty();
+    }
+
+    size_type size() const noexcept
+    {
+      return FlatMap::size();
+    }
+
+    const_iterator begin() const noexcept
+    {
+      return FlatMap::begin();
+    }
+
+    const_iterator end() const noexcept
+    {
+      return FlatMap::end();
+    }
+
+    const_reverse_iterator rbegin() const noexcept
+    {
+      return FlatMap::rbegin();
+    }
+
+    const_reverse_iterator rend() const noexcept
+    {
+      return FlatMap::rend();
+    }
+
+    const_iterator nth(const size_type index) const noexcept
+    {
+      return FlatMap::nth(index);
+    }
 
     InnerCollector& add(
       const InnerKey& key,
       const InnerData& data)
     {
-      auto result = try_emplace(key, data);
+      auto result = FlatMap::try_emplace(key, data);
       if (!result.second)
       {
         result.first->second += data;
+      }
+
+      if (total_imps_ <= max_imps_)
+      {
+        total_imps_ += data.imps();
+        total_clicks_ += data.clicks();
       }
 
       return *this;
@@ -127,6 +207,23 @@ public:
 
       return *this;
     }
+
+    bool operator==(const InnerCollector& other) const
+    {
+      return static_cast<const FlatMap&>(*this) == static_cast<const FlatMap&>(other);
+    }
+
+    bool operator!=(const InnerCollector& other) const
+    {
+      return static_cast<const FlatMap&>(*this) != static_cast<const FlatMap&>(other);
+    }
+
+  private:
+    const Imps max_imps_ = 0;
+
+    Imps total_imps_ = 0;
+
+    Clicks total_clicks_ = 0;
   };
 
   using Key = detail_help_collector::Key;
@@ -144,10 +241,12 @@ public:
 
 public:
   explicit HelpCollector(
+    const Imps max_imps,
     const std::size_t bucket_count = 1,
-    const std::size_t inner_collector_size = 1)
+    const std::size_t inner_collector_capacity = 1)
     : map_(std::make_shared<Map>(bucket_count)),
-      inner_collector_size_(inner_collector_size)
+      max_imps_(max_imps),
+      inner_collector_capacity_(inner_collector_capacity)
   {
   }
 
@@ -201,8 +300,8 @@ public:
     auto it = map_->find(key);
     if (it == map_->end())
     {
-      auto inner_collector = std::make_shared<InnerCollector>();
-      inner_collector->reserve(inner_collector_size_);
+      auto inner_collector = std::make_shared<InnerCollector>(max_imps_);
+      inner_collector->reserve(inner_collector_capacity_);
       it = map_->try_emplace(key, std::move(inner_collector)).first;
     }
 
@@ -219,8 +318,8 @@ public:
     auto it = map_->find(key);
     if (it == map_->end())
     {
-      auto inner_collector = std::make_shared<InnerCollector>();
-      inner_collector->reserve(inner_collector_size_);
+      auto inner_collector = std::make_shared<InnerCollector>(max_imps_);
+      inner_collector->reserve(inner_collector_capacity_);
       it = map_->try_emplace(key, std::move(inner_collector)).first;
     }
     *it->second += data;
@@ -254,7 +353,9 @@ public:
 private:
   Map_var map_;
 
-  std::size_t inner_collector_size_ = 0;
+  Imps max_imps_ = 0;
+
+  std::size_t inner_collector_capacity_ = 0;
 };
 
 } // namespace BidCostPredictor

@@ -25,7 +25,7 @@ ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
     logger_(ReferenceCounting::add_ref(logger)),
     observer_(new ActiveObjectObserver(this)),
     persantage_(logger_, Aspect::MODEL_EVALUATOR_BID_COST, 5),
-    collector_(10000000, 1),
+    collector_(1, 1),
     task_runner_(new Generics::TaskRunner(observer_, 1))
 {
   threads_number_ = std::max(8u, std::thread::hardware_concurrency());

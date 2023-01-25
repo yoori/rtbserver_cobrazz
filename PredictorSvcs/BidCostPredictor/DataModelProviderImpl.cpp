@@ -16,6 +16,7 @@ namespace BidCostPredictor
 {
 
 DataModelProviderImpl::DataModelProviderImpl(
+  const Imps max_imps,
   const std::string& input_dir,
   Logging::Logger* logger)
   : input_dir_(input_dir),
@@ -23,7 +24,7 @@ DataModelProviderImpl::DataModelProviderImpl(
     observer_(new ActiveObjectObserver(this)),
     prefix_(LogTraits::B::log_base_name()),
     persantage_(logger_, Aspect::DATA_PROVIDER, 5),
-    help_collector_(1000000, 1)
+    help_collector_(max_imps, 1000000, 1)
 {
   for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
   {
@@ -291,14 +292,9 @@ void DataModelProviderImpl::do_calculate(
       auto& help_collector_inner = help_collector_.find_or_insert(key);
 
       const auto& cost = key_temp.cost();
-      auto& data_inner = help_collector_inner[cost];
-      data_inner += data_temp;
-
-      if (data_inner.is_null())
+      if (!data_temp.is_null())
       {
-        const auto it = help_collector_inner.find(cost);
-        if (it != help_collector_inner.end())
-          help_collector_inner.erase(it);
+        help_collector_inner.add(cost, data_temp);
       }
     }
   }

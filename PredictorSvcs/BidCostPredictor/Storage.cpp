@@ -55,7 +55,7 @@ Storage::Cost Storage::get_cost(
     current_cost);
 }
 
-Storage::Data Storage::get_ctr(
+Storage::Ctr Storage::get_ctr(
   const TagId& tag_id,
   const Url& url) const
 {
