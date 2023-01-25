@@ -352,7 +352,7 @@ Application_::generate_(
   }
 
   // save tag level ctr's
-  const RevenueDecimal COEF("0.7");
+  const RevenueDecimal COEF("0.1");
   unsigned long tag_sum_imps = 0;
   unsigned long tag_sum_clicks = 0;
 
