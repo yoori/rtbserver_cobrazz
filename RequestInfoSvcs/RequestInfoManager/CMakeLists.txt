@@ -116,6 +116,8 @@ target_link_libraries(RequestLogLoader
     LogGeneralizerIDL
     LogGeneralizer
     RequestCompatibility
+    LogGeneralizerConfigXSD
+    Postgres
 )
 
 add_library(RequestOperationSaver SHARED
