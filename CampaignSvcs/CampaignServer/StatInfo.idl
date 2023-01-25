@@ -10,9 +10,9 @@ module CampaignSvcs_v360
   struct CreativeStatInfo
   {
     unsigned long cc_id;
-    long impressions;
-    long clicks;
-    long actions;
+    CORBACommons::DecimalInfo impressions; // ImpRevenueDecimal
+    CORBACommons::DecimalInfo clicks; // ImpRevenueDecimal
+    CORBACommons::DecimalInfo actions; // ImpRevenueDecimal
   };
 
   typedef sequence<CreativeStatInfo> CreativeStatSeq;
@@ -41,7 +41,7 @@ module CampaignSvcs_v360
   struct CtrResetStatInfo
   {
     unsigned long ctr_reset_id;
-    unsigned long impressions;
+    CORBACommons::DecimalInfo impressions;
   };
 
   typedef sequence<CtrResetStatInfo> CtrResetStatSeq;
@@ -49,9 +49,9 @@ module CampaignSvcs_v360
   struct CCGStatInfo
   {
     unsigned long ccg_id;
-    long impressions;
-    long clicks;
-    long actions;
+    CORBACommons::DecimalInfo impressions; // ImpRevenueDecimal
+    CORBACommons::DecimalInfo clicks; // ImpRevenueDecimal
+    CORBACommons::DecimalInfo actions; // ImpRevenueDecimal
 
     CORBACommons::DecimalInfo amount; // adv_amount + adv_cmp_amount
     CORBACommons::DecimalInfo comm_amount;

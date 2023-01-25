@@ -177,14 +177,12 @@ namespace CampaignSvcs
     amount_count_distribution.prev_days_amount =
       CorbaAlgs::unpack_decimal<RevenueDecimal>(
         amount_count_distribution_info.prev_days_amount_count.amount);
-    amount_count_distribution.prev_days_imps = ImpRevenueDecimal::ZERO;
-    //amount_count_distribution.prev_days_imps =
-    //  CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(
-    //    amount_count_distribution_info.prev_days_amount_count.imps);
-    amount_count_distribution.prev_days_clicks = ImpRevenueDecimal::ZERO;
-    //amount_count_distribution.prev_days_clicks =
-    //  CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(
-    //    amount_count_distribution_info.prev_days_amount_count.clicks);
+    amount_count_distribution.prev_days_imps =
+      CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(
+        amount_count_distribution_info.prev_days_amount_count.imps);
+    amount_count_distribution.prev_days_clicks =
+      CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(
+        amount_count_distribution_info.prev_days_amount_count.clicks);
     amount_count_distribution.prev_day = CorbaAlgs::unpack_time(
       amount_count_distribution_info.prev_days_amount_count.day);
 
@@ -196,10 +194,8 @@ namespace CampaignSvcs
         CorbaAlgs::unpack_time(day_info.day),
         Stat::AmountCount(
           CorbaAlgs::unpack_decimal<RevenueDecimal>(day_info.amount),
-          ImpRevenueDecimal::ZERO,
-          ImpRevenueDecimal::ZERO
-          //CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.imps),
-          //CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks)
+          CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.imps),
+          CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks)
           ))
         );
     }

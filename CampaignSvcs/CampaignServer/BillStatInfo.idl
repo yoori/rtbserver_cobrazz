@@ -37,8 +37,8 @@ module CampaignSvcs_v360
   {
     CORBACommons::TimestampInfo day;
     CORBACommons::DecimalInfo amount;
-    //CORBACommons::DecimalInfo imps;
-    //CORBACommons::DecimalInfo clicks;
+    CORBACommons::DecimalInfo imps;
+    CORBACommons::DecimalInfo clicks;
   };
 
   typedef sequence<DayAmountCount> DayAmountCountSeq;

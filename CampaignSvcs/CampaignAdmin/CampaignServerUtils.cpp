@@ -21,14 +21,18 @@ namespace
   {
     Table::Column("campaign_id", Table::Column::NUMBER),
     Table::Column("day", Table::Column::TEXT),
-    Table::Column("amount", Table::Column::TEXT)
+    Table::Column("amount", Table::Column::TEXT),
+    Table::Column("imps", Table::Column::TEXT),
+    Table::Column("clicks", Table::Column::TEXT)
   };
 
   const Table::Column BILL_CCG_COLUMNS[] =
   {
     Table::Column("ccg_id", Table::Column::NUMBER),
     Table::Column("day", Table::Column::TEXT),
-    Table::Column("amount", Table::Column::TEXT)
+    Table::Column("amount", Table::Column::TEXT),
+    Table::Column("imps", Table::Column::TEXT),
+    Table::Column("clicks", Table::Column::TEXT)
   };
 
   const Table::Column SIMPLE_CHANNEL_COLUMNS[] =
@@ -162,6 +166,7 @@ namespace
   const Table::Column STAT_CCG_COLUMNS[] =
   {
     Table::Column("ccg_id", Table::Column::NUMBER),
+    Table::Column("campaign_id", Table::Column::NUMBER),
     Table::Column("impressions", Table::Column::NUMBER),
     Table::Column("clicks", Table::Column::NUMBER),
     Table::Column("actions", Table::Column::NUMBER),
@@ -274,6 +279,10 @@ void add_amount_count_distr_info_(
         amounts.prev_days_amount_count.amount).str();
     row.add_field(day_prev + " (prev)");
     row.add_field(amount_prev + " (prev)");
+    row.add_field(CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(
+      amounts.prev_days_amount_count.imps).str() + " (prev)");
+    row.add_field(CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(
+      amounts.prev_days_amount_count.clicks).str() + " (prev)");
     table->add_row(row);
   }
   for(CORBA::ULong i = 0; i < amounts.day_amount_counts.length(); ++i)
@@ -285,6 +294,10 @@ void add_amount_count_distr_info_(
       CorbaAlgs::unpack_time(day.day).get_gm_time().format(DATE_FORMAT));
     row.add_field(
       CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::RevenueDecimal>(day.amount).str());
+    row.add_field(
+      CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(day.imps).str());
+    row.add_field(
+      CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(day.clicks).str());
     table->add_row(row);
   }
 }
@@ -1082,16 +1095,22 @@ void Application::stat(bool account)
 
       for(CORBA::ULong campaign_i = 0; campaign_i < stat->campaigns.length(); ++campaign_i)
       {
-        for(CORBA::ULong i = 0; i < stat->campaigns[campaign_i].ccgs.length(); ++i)
+        const AdServer::CampaignSvcs::CampaignStatInfo& campaign_stat =
+          stat->campaigns[campaign_i];
+
+        for(CORBA::ULong i = 0; i < campaign_stat.ccgs.length(); ++i)
         {
-          const AdServer::CampaignSvcs::CCGStatInfo& ccg_stat =
-            stat->campaigns[campaign_i].ccgs[i];
+          const AdServer::CampaignSvcs::CCGStatInfo& ccg_stat = campaign_stat.ccgs[i];
 
           Table::Row row(table->columns());
           row.add_field(ccg_stat.ccg_id);
-          row.add_field(ccg_stat.impressions);
-          row.add_field(ccg_stat.clicks);
-          row.add_field(ccg_stat.actions);
+          row.add_field(campaign_stat.campaign_id);
+          row.add_field(CorbaAlgs::unpack_decimal<
+            AdServer::CampaignSvcs::ImpRevenueDecimal>(ccg_stat.impressions).str());
+          row.add_field(CorbaAlgs::unpack_decimal<
+            AdServer::CampaignSvcs::ImpRevenueDecimal>(ccg_stat.clicks).str());
+          row.add_field(CorbaAlgs::unpack_decimal<
+            AdServer::CampaignSvcs::ImpRevenueDecimal>(ccg_stat.actions).str());
           row.add_field(CorbaAlgs::unpack_decimal<
             AdServer::CampaignSvcs::RevenueDecimal>(ccg_stat.amount).str());
           row.add_field(CorbaAlgs::unpack_decimal<
@@ -1125,9 +1144,12 @@ void Application::stat(bool account)
           for(CORBA::ULong cc_i = 0; cc_i < ccg_stat.creatives.length(); ++cc_i)
           {
             creatives_ostr << "[ " << ccg_stat.creatives[cc_i].cc_id << ": " <<
-              ccg_stat.creatives[cc_i].impressions << ", " <<
-              ccg_stat.creatives[cc_i].clicks << ", " <<
-              ccg_stat.creatives[cc_i].actions << " ] ";
+              CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(
+                ccg_stat.creatives[cc_i].impressions).str() << ", " <<
+              CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(
+                ccg_stat.creatives[cc_i].clicks).str() << ", " <<
+              CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(
+                ccg_stat.creatives[cc_i].actions).str() << " ] ";
           }
           row.add_field(creatives_ostr.str());
           std::ostringstream publishers_ostr;
@@ -1165,7 +1187,8 @@ void Application::stat(bool account)
               ctr_reset_i < ccg_stat.ctr_resets.length(); ++ctr_reset_i)
           {
             ctr_resets_ostr << "[ " << ccg_stat.ctr_resets[ctr_reset_i].ctr_reset_id <<
-              ": " << ccg_stat.ctr_resets[ctr_reset_i].impressions << " ] ";
+              ": " << CorbaAlgs::unpack_decimal<AdServer::CampaignSvcs::ImpRevenueDecimal>(
+                ccg_stat.ctr_resets[ctr_reset_i].impressions).str() << " ] ";
           }
           row.add_field(ctr_resets_ostr.str());
 

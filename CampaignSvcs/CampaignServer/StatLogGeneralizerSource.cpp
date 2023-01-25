@@ -154,14 +154,14 @@ namespace CampaignSvcs
         const AdServer::LogProcessing::CreativeStatInfo& creative_stat_info =
           campaign_stat_info.creative_stats[cc_i];
 
-        ccg_stat.impressions += creative_stat_info.impressions;
-        ccg_stat.clicks += creative_stat_info.clicks;
-        ccg_stat.actions += creative_stat_info.actions;
+        ccg_stat.impressions += ImpRevenueDecimal(false, creative_stat_info.impressions, 0);
+        ccg_stat.clicks += ImpRevenueDecimal(false, creative_stat_info.clicks, 0);
+        ccg_stat.actions += ImpRevenueDecimal(false, creative_stat_info.actions, 0);
 
         Stat::CreativeStat creative_stat;
-        creative_stat.impressions = creative_stat_info.impressions;
-        creative_stat.clicks = creative_stat_info.clicks;
-        creative_stat.actions = creative_stat_info.actions;
+        creative_stat.impressions = ImpRevenueDecimal(false, creative_stat_info.impressions, 0);
+        creative_stat.clicks = ImpRevenueDecimal(false, creative_stat_info.clicks, 0);
+        creative_stat.actions = ImpRevenueDecimal(false, creative_stat_info.actions, 0);
         ccg_stat.creatives[creative_stat_info.cc_id] += creative_stat;
       }
 
@@ -228,7 +228,7 @@ namespace CampaignSvcs
             campaign_stat_info.ctr_reset_stats[ctr_reset_i];
 
           Stat::CCGStat::CtrResetStat ctr_reset_stat;
-          ctr_reset_stat.impressions = ctr_reset_stat_info.impressions;
+          ctr_reset_stat.impressions = ImpRevenueDecimal(false, ctr_reset_stat_info.impressions, 0);
           ccg_stat.ctr_reset_stats[
             ctr_reset_stat_info.ctr_reset_id] += ctr_reset_stat;
         }

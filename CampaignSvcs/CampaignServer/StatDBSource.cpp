@@ -282,9 +282,9 @@ namespace CampaignSvcs
         ccg_stat.cur_hour_comm_amount = RevenueDecimal::ZERO;
         ccg_stat.prev_hour_amount = RevenueDecimal::ZERO;
         ccg_stat.prev_hour_comm_amount = RevenueDecimal::ZERO;        
-        ccg_stat.impressions = rs->get_number<int>(POS_IMPRESSIONS);
-        ccg_stat.clicks = rs->get_number<int>(POS_CLICKS);
-        ccg_stat.actions = rs->get_number<int>(POS_ACTIONS);
+        ccg_stat.impressions = rs->get_decimal<ImpRevenueDecimal>(POS_IMPRESSIONS);
+        ccg_stat.clicks = rs->get_decimal<ImpRevenueDecimal>(POS_CLICKS);
+        ccg_stat.actions = rs->get_decimal<ImpRevenueDecimal>(POS_ACTIONS);
         ccg_stat.amount = rs->get_decimal<RevenueDecimal>(POS_ADV_AMOUNT);
         ccg_stat.comm_amount = rs->get_decimal<RevenueDecimal>(POS_ADV_COMM_AMOUNT);
         ccg_stat.daily_amount = rs->get_decimal<RevenueDecimal>(
@@ -337,9 +337,9 @@ namespace CampaignSvcs
       while(rs->next())
       {
         Stat::CreativeStat creative_stat;
-        creative_stat.impressions = rs->get_number<int>(POS_IMPRESSIONS);
-        creative_stat.clicks = rs->get_number<int>(POS_CLICKS);
-        creative_stat.actions = rs->get_number<int>(POS_ACTIONS);
+        creative_stat.impressions = rs->get_decimal<ImpRevenueDecimal>(POS_IMPRESSIONS);
+        creative_stat.clicks = rs->get_decimal<ImpRevenueDecimal>(POS_CLICKS);
+        creative_stat.actions = rs->get_decimal<ImpRevenueDecimal>(POS_ACTIONS);
 
         result->campaign_stats[
           rs->get_number<unsigned int>(POS_CAMPAIGN_ID)].ccgs[
@@ -518,7 +518,7 @@ namespace CampaignSvcs
       while(rs->next())
       {
         Stat::CCGStat::CtrResetStat ctr_reset_stat;
-        ctr_reset_stat.impressions = rs->get_number<unsigned int>(POS_IMPRESSIONS);
+        ctr_reset_stat.impressions = rs->get_decimal<ImpRevenueDecimal>(POS_IMPRESSIONS);
 
         result->campaign_stats[
           rs->get_number<unsigned int>(POS_CAMPAIGN_ID)].ccgs[

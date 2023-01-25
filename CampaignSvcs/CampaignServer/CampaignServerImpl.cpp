@@ -2247,10 +2247,10 @@ namespace AdServer
         CorbaAlgs::pack_time(amount_count_distribution.prev_day);
       amount_count_distribution_info.prev_days_amount_count.amount =
         CorbaAlgs::pack_decimal(amount_count_distribution.prev_days_amount);
-      //amount_count_distribution_info.prev_days_amount_count.imps =
-      //  CorbaAlgs::pack_decimal(amount_count_distribution.prev_days_imps);
-      //amount_count_distribution_info.prev_days_amount_count.clicks =
-      //  CorbaAlgs::pack_decimal(amount_count_distribution.prev_days_clicks);
+      amount_count_distribution_info.prev_days_amount_count.imps =
+        CorbaAlgs::pack_decimal(amount_count_distribution.prev_days_imps);
+      amount_count_distribution_info.prev_days_amount_count.clicks =
+        CorbaAlgs::pack_decimal(amount_count_distribution.prev_days_clicks);
 
       amount_count_distribution_info.day_amount_counts.length(
         amount_count_distribution.day_amount_counts.size());
@@ -2262,8 +2262,8 @@ namespace AdServer
         auto& res_day_amount = amount_count_distribution_info.day_amount_counts[day_i];
         res_day_amount.day = CorbaAlgs::pack_time(day_it->first);
         res_day_amount.amount = CorbaAlgs::pack_decimal(day_it->second.amount);
-        //res_day_amount.imps = CorbaAlgs::pack_decimal(day_it->second.imps);
-        //res_day_amount.clicks = CorbaAlgs::pack_decimal(day_it->second.clicks);
+        res_day_amount.imps = CorbaAlgs::pack_decimal(day_it->second.imps);
+        res_day_amount.clicks = CorbaAlgs::pack_decimal(day_it->second.clicks);
       }
     }
 
@@ -4256,9 +4256,9 @@ namespace AdServer
           {
             AdServer::CampaignSvcs::CCGStatInfo& ccg_stat = campaign_stat.ccgs[ccg_stat_i];
             ccg_stat.ccg_id = ccg_stat_it->first;
-            ccg_stat.impressions = ccg_stat_it->second.impressions;
-            ccg_stat.clicks = ccg_stat_it->second.clicks;
-            ccg_stat.actions = ccg_stat_it->second.actions;
+            ccg_stat.impressions = CorbaAlgs::pack_decimal(ccg_stat_it->second.impressions);
+            ccg_stat.clicks = CorbaAlgs::pack_decimal(ccg_stat_it->second.clicks);
+            ccg_stat.actions = CorbaAlgs::pack_decimal(ccg_stat_it->second.actions);
             ccg_stat.amount = CorbaAlgs::pack_decimal(ccg_stat_it->second.amount);
             ccg_stat.comm_amount = CorbaAlgs::pack_decimal(ccg_stat_it->second.comm_amount);
             ccg_stat.daily_amount = CorbaAlgs::pack_decimal(ccg_stat_it->second.daily_amount);
@@ -4284,9 +4284,9 @@ namespace AdServer
               AdServer::CampaignSvcs::CreativeStatInfo& cc_stat =
                 ccg_stat.creatives[cc_i];
               cc_stat.cc_id = cc_it->first;
-              cc_stat.impressions = cc_it->second.impressions;
-              cc_stat.clicks = cc_it->second.clicks;
-              cc_stat.actions = cc_it->second.actions;
+              cc_stat.impressions = CorbaAlgs::pack_decimal(cc_it->second.impressions);
+              cc_stat.clicks = CorbaAlgs::pack_decimal(cc_it->second.clicks);
+              cc_stat.actions = CorbaAlgs::pack_decimal(cc_it->second.actions);
             }
 
             ccg_stat.publishers.length(ccg_stat_it->second.publisher_amounts.size());
@@ -4339,7 +4339,7 @@ namespace AdServer
               AdServer::CampaignSvcs::CtrResetStatInfo& ctr_reset_stat =
                 ccg_stat.ctr_resets[ctr_reset_i];
               ctr_reset_stat.ctr_reset_id = ctr_reset_it->first;
-              ctr_reset_stat.impressions = ctr_reset_it->second.impressions;
+              ctr_reset_stat.impressions = CorbaAlgs::pack_decimal(ctr_reset_it->second.impressions);
             }
           }
         }

@@ -25,9 +25,9 @@ namespace CampaignSvcs
 
         CreativeStat& operator+=(const CreativeStat& right) noexcept;
 
-        long impressions;
-        long clicks;
-        long actions;
+        ImpRevenueDecimal impressions;
+        ImpRevenueDecimal clicks;
+        ImpRevenueDecimal actions;
       };
 
       struct AmountStat
@@ -90,7 +90,7 @@ namespace CampaignSvcs
 
           CtrResetStat& operator+=(const CtrResetStat& right) noexcept;
 
-          unsigned long impressions;
+          ImpRevenueDecimal impressions;
         };
 
         typedef std::map<unsigned long, CtrResetStat> CtrResetStatMap;
@@ -99,9 +99,9 @@ namespace CampaignSvcs
 
         CCGStat& operator+=(const CCGStat& right) noexcept;
 
-        long impressions;
-        long clicks;
-        long actions;
+        ImpRevenueDecimal impressions;
+        ImpRevenueDecimal clicks;
+        ImpRevenueDecimal actions;
 
         CreativeStatMap creatives;
         // collect only for max_pub_share campaigns, for minimize memory usage
@@ -330,9 +330,9 @@ namespace CampaignSvcs
   // StatSource::Stat::CCGStat
   inline
   StatSource::Stat::CCGStat::CCGStat() noexcept
-    : impressions(0),
-      clicks(0),
-      actions(0),
+    : impressions(ImpRevenueDecimal::ZERO),
+      clicks(ImpRevenueDecimal::ZERO),
+      actions(ImpRevenueDecimal::ZERO),
       prev_hour_amount(RevenueDecimal::ZERO),
       prev_hour_comm_amount(RevenueDecimal::ZERO),
       cur_hour_amount(RevenueDecimal::ZERO),
@@ -410,9 +410,9 @@ namespace CampaignSvcs
         cs_it != ccgs.end(); ++cs_it)
     {
       out << offset << cs_it->first <<
-        ": imps = " << cs_it->second.impressions <<
-        ", clicks = " << cs_it->second.clicks <<
-        ", actions = " << cs_it->second.actions <<
+        ": imps = " << cs_it->second.impressions.str() <<
+        ", clicks = " << cs_it->second.clicks.str() <<
+        ", actions = " << cs_it->second.actions.str() <<
         ", am = " << cs_it->second.amount <<
         ", c_am = " << cs_it->second.comm_amount <<
         ", d_am = " << cs_it->second.daily_amount <<
@@ -427,9 +427,9 @@ namespace CampaignSvcs
           cr_it != cs_it->second.creatives.end(); ++cr_it)
       {
         out << offset << "      " << cr_it->first <<
-          ": imps = " << cr_it->second.impressions <<
-          ", clicks = " << cr_it->second.clicks <<
-          ", actions = " << cr_it->second.actions << std::endl;
+          ": imps = " << cr_it->second.impressions.str() <<
+          ", clicks = " << cr_it->second.clicks.str() <<
+          ", actions = " << cr_it->second.actions.str() << std::endl;
       }
       out << offset << "    publisher_amounts:" << std::endl;
       for(CCGStat::PublisherStatMap::const_iterator p_it =

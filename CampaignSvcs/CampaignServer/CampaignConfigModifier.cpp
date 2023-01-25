@@ -1,3 +1,4 @@
+
 #include "ExecutionTimeTracer.hpp"
 #include "CampaignConfigModifier.hpp"
 
@@ -16,6 +17,8 @@ namespace CampaignSvcs
     const RevenueDecimal REVENUEDECIMAL_ONE_DAY(
       false, Generics::Time::ONE_DAY.tv_sec, 0);
     const StatSource::Stat::CCGStat::TagHourStat ZERO_TAG_HOUR_STAT;
+
+    const ImpRevenueDecimal MIN_IMP_FOR_CREATIVE_WEIGHT_CALC(false, 2000, 0);
   }
 
   // CampaignConfigModifier
@@ -730,7 +733,7 @@ namespace CampaignSvcs
     StatSource::Stat::CampaignStatMap::const_iterator cmp_stat_it =
       stat.campaign_stats.find(campaign->campaign_group_id);
 
-    unsigned long ccg_ctr_reset_imps = 0;
+    ImpRevenueDecimal ccg_ctr_reset_imps = ImpRevenueDecimal::ZERO;
 
     if(cmp_stat_it != stat.campaign_stats.end())
     {
@@ -859,9 +862,9 @@ namespace CampaignSvcs
     if(campaign->ccg_rate_type == CR_CPM ||
        campaign->ccg_rate_type == CR_MAXBID ||
        (campaign->ccg_rate_type == CR_CPC &&
-         ccg_ctr_reset_imps >= country_it->second.cpc_random_imps) ||
+        ccg_ctr_reset_imps >= ImpRevenueDecimal(false, country_it->second.cpc_random_imps, 0)) ||
        (campaign->ccg_rate_type == CR_CPA &&
-         ccg_ctr_reset_imps >= country_it->second.cpa_random_imps))
+        ccg_ctr_reset_imps >= ImpRevenueDecimal(false, country_it->second.cpa_random_imps, 0)))
     {
       campaign_mode = CM_NON_RANDOM;
     }
@@ -1016,6 +1019,7 @@ namespace CampaignSvcs
     noexcept
   {
     bool creatives_changed = false;
+    const ImpRevenueDecimal WEIGHT_BASE = ImpRevenueDecimal(false, 10000, 0);
 
     // calculate creative weights
     for(CreativeList::const_iterator cc_it = campaign->creatives.begin();
@@ -1027,11 +1031,22 @@ namespace CampaignSvcs
       {
         StatSource::Stat::CCGStat::CreativeStatMap::const_iterator cc_stat_it =
           creative_stats->find((*cc_it)->ccid);
-        new_weight = cc_stat_it == creative_stats->end() ?
-          10000 :
-          (cc_stat_it->second.impressions < 2000 ? 10000 :
-           10000 * cc_stat_it->second.clicks /
-           cc_stat_it->second.impressions);
+
+        if(cc_stat_it == creative_stats->end() ||
+          cc_stat_it->second.impressions < MIN_IMP_FOR_CREATIVE_WEIGHT_CALC)
+        {
+          new_weight = 10000;
+        }
+        else
+        {
+          const ImpRevenueDecimal new_weight_dec = ImpRevenueDecimal::div(
+            ImpRevenueDecimal::mul(
+              WEIGHT_BASE, std::max(cc_stat_it->second.clicks, ImpRevenueDecimal::ZERO), Generics::DMR_FLOOR),
+            cc_stat_it->second.impressions,
+            Generics::DDR_FLOOR).ceil(0);
+          new_weight_dec.to_integer(new_weight);
+        }
+        
         new_weight = std::max(new_weight, 1ul);
       }
 
