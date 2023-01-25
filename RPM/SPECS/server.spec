@@ -36,7 +36,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv218%{?dist}
+Release: ssv219%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -136,7 +136,7 @@ Requires: perl-MIME-Lite perl-MIME-Types perl-Module-Implementation perl-namespa
 Requires: perl-Package-Stash-XS perl-PadWalker perl-Params-ValidationCompiler perl-Proc-Daemon perl-Proc-ProcessTable perl-Ref-Util
 Requires: perl-Ref-Util-XS perl-Role-Tiny perl-Specio perl-Sub-Exporter-Progressive perl-Sub-Identify perl-Variable-Magic perl-XML-Twig
 Requires: perl-Text-CSV perl-Text-CSV_XS
-Requires: perl-Text-Template
+Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Rule
 Requires: python36
 
 #Requires: libicu = 50.2-4
