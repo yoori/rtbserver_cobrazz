@@ -210,30 +210,36 @@ cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${c
     unixcommons/default.config.t > unixcommons/%{__osbe_build_dir}/default.config
 
 if [ '%__type' == 'central' ]; then cpp_flags+='-DUSE_OCCI'; fi
+
 mkdir -p %{__product}/%{__osbe_build_dir}
-cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
-    -DUNIXCOMMONS_ROOT=%{_builddir}/foros-server-%{version}/unixcommons/%{__osbe_build_dir} \
-    -DUNIXCOMMONS_INCLUDE=src \
-    -DUNIXCOMMONS_CORBA_INCLUDE=src/CORBA \
-    -DUNIXCOMMONS_DEF=%{_builddir}/foros-server-%{version}/unixcommons/libdefs \
-    %{__product}/default.config.t > %{__product}/%{__osbe_build_dir}/default.config
+
+#cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
+#    -DUNIXCOMMONS_ROOT=%{_builddir}/foros-server-%{version}/unixcommons/%{__osbe_build_dir} \
+#    -DUNIXCOMMONS_INCLUDE=src \
+#    -DUNIXCOMMONS_CORBA_INCLUDE=src/CORBA \
+#    -DUNIXCOMMONS_DEF=%{_builddir}/foros-server-%{version}/unixcommons/libdefs \
+#    %{__product}/default.config.t > %{__product}/%{__osbe_build_dir}/default.config
 
 %build
 %ifnarch noarch
 pushd unixcommons
-osbe
+#osbe
 product_root=`pwd`
 cd %{__osbe_build_dir}
-${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
+echo "CALL UNIXCOMMONS CMAKE in $(pwd)"
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+#${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
 #scl enable devtoolset-8 -- %{__make} %{_smp_mflags}
 %{__make} %{_smp_mflags}
 popd
 
 pushd %{__product}
-osbe
+#osbe
 product_root=`pwd`
 cd %{__osbe_build_dir}
-${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
+echo "CALL RTBSERVER CMAKE in $(pwd)"
+cmake -DUNIXCOMMONS=../unixcommons -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+#${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
 #scl enable devtoolset-8 -- %{__make} %{_smp_mflags}
 %{__make} %{_smp_mflags}
 popd
@@ -252,13 +258,15 @@ mkdir -p %{buildroot}%{__inst_root}
 
 %ifnarch noarch
 #scl enable devtoolset-8 --
-make -C unixcommons/%{__osbe_build_dir} install destdir=%{buildroot}
+#make -C unixcommons/%{__osbe_build_dir} install destdir=%{buildroot}
+cmake --install unixcommons/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
 
 rm -rf %{buildroot}%{__inst_root}/include
 rm -rf `find %{buildroot}%{__inst_root}/lib -type f -name '*.a'`
 
 #scl enable devtoolset-8 --
-make -C %{__product}/%{__osbe_build_dir} install destdir=%{buildroot}
+#make -C %{__product}/%{__osbe_build_dir} install destdir=%{buildroot}
+cmake --install %{__product}/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
 
 # TODO: tests have files in xsd too
 rm -f %{__product}.list

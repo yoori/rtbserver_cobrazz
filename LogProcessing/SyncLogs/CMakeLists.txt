@@ -1,4 +1,4 @@
-add_library(SyncLogs STATIC
+add_library(SyncLogsLib STATIC
   Utils.cpp 
   FileRouter.cpp 
   RSyncFileRouter.cpp 
@@ -7,40 +7,31 @@ add_library(SyncLogs STATIC
   FeedRouteProcessor.cpp 
   FeedRouteGroupProcessor.cpp 
   FetchRouteProcessor.cpp
-
 )
 
-
-
-add_executable(SyncLogsMain
-
-    SyncLogsImpl.cpp
-    SyncLogsMain.cpp
-)
-target_link_libraries(SyncLogsMain
-    SyncLogs
-#    LogGeneralizer
-    pthread
-    Generics
-    Sync
-    pcre
-    
-#    LogGeneralizerIDL
-    Commons
-    CORBACommons
-    ProcessControlIDL
-    StatsIDL
-    Postgres
-    LogCommons
-#    LogGeneralizerConfigXSD
-    SNMPAgent
-    ProcessControlVars
-    UtilCommons
-    String
-    SyncLogsConfigXSD
-    XMLUtility
-
-
+add_executable(SyncLogs
+  SyncLogsImpl.cpp
+  SyncLogsMain.cpp
 )
 
-install(TARGETS SyncLogsMain  DESTINATION ${INSTALL_DIR})
+target_link_libraries(SyncLogs
+  SyncLogsLib
+  pthread
+  Generics
+  Sync
+  pcre
+  Commons
+  CORBACommons
+  ProcessControlIDL
+  StatsIDL
+  Postgres
+  LogCommons
+  SNMPAgent
+  ProcessControlVars
+  UtilCommons
+  String
+  SyncLogsConfigXSD
+  XMLUtility
+)
+
+install(TARGETS SyncLogs DESTINATION ${INSTALL_DIR})

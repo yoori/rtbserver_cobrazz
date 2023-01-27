@@ -494,6 +494,7 @@ namespace ImprTrack
 
       AdServer::Commons::UserId result_user_id = request_info.actual_user_id;
       ResultUserIdType result_user_id_type = RUIT_COOKIE;
+      (void)result_user_id_type;
       AdServer::CampaignSvcs::CampaignManager::ImpressionResultInfo_var
         impression_result_info;
 

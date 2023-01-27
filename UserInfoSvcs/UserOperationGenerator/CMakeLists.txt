@@ -1,6 +1,7 @@
-add_library(UidChannelSnapshot  STATIC
+add_library(UidChannelSnapshot STATIC
   UidChannelSnapshot.cpp
 )
+
 add_dependencies(UidChannelSnapshot UserChannelBaseProfilePST)
 
 add_executable(UserOperationGenerator
@@ -8,18 +9,18 @@ add_executable(UserOperationGenerator
   UserOperationGeneratorMain.cpp 
 )
 target_link_libraries(UserOperationGenerator
-UidChannelSnapshot
- Generics
- Commons
- PlainStorage3
- SyncLogs
+  UidChannelSnapshot
+  Generics
+  Commons
+  PlainStorage3
+  SyncLogsLib
   CORBACommons
- ProcessControlVars
- UserOperationGeneratorConfigXSD
- UserInfoContainer
- UserOperationProfilesPST
- XMLUtility
- UserChannelBaseProfilePST
+  ProcessControlVars
+  UserOperationGeneratorConfigXSD
+  UserInfoContainer
+  UserOperationProfilesPST
+  XMLUtility
+  UserChannelBaseProfilePST
 )
 
-install(TARGETS UserOperationGenerator  DESTINATION ${INSTALL_DIR})
+install(TARGETS UserOperationGenerator DESTINATION ${INSTALL_DIR})

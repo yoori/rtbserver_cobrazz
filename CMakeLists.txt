@@ -1,30 +1,17 @@
 cmake_minimum_required(VERSION 3.19)
 
-project (unixcommons)
+project(rtbserver)
 
-if(UNIX AND NOT APPLE)
-SET(LINUX true)
-endif()
+include(cmake/SetupEnvironment.cmake)
 
-if(LINUX)
-    set(CMAKE_PREFIX_PATH $ENV{HOME}/Qt/5.15.2/gcc_64)
-    set(CMAKE_SHARED_LINKER_FLAGS "-Xlinker --export-dynamic -Xlinker -zdefs")
-else()
-    set(CMAKE_PREFIX_PATH $ENV{HOME}/Qt/5.15.2/clang_64)
-endif()
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    include(CTest)
-endif()
- set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-  )
-
-set(INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../cobrazz-bin)
-set(INSTALL_LIB ${INSTALL_DIR})
-set(INSTALL_BIN  ${INSTALL_DIR})
-
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
+)
 
 find_package(ACE REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -41,22 +28,21 @@ find_package(PB REQUIRED)
 
 #find_package(OpenDDS REQUIRED)
 
-set(UNIXCOMMONS ${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz)
+if(NOT DEFINED UNIXCOMMONS)
+  SET(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
+endif()
+
+message(STATUS "Use unixcommons: ${UNIXCOMMONS}")
 set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
 
 include_directories( /usr/local/include src Commons .
-    ${UNIXCOMMONS}/src
-    ${UNIXCOMMONS}/src/CORBA
-    ${UNIXCOMMONS_BUILD_ROOT}/IDL_COMMON
-    ${UNIXCOMMONS}/Build/IDL_COMMON
-
-
+  ${UNIXCOMMONS}/src
+  ${UNIXCOMMONS}/src/CORBA
+  ${UNIXCOMMONS_BUILD_ROOT}/IDL_COMMON
 )
 
 set(CORBA_INCLUDES ${UNIXCOMMONS}/src/CORBA)
 set(TMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR})
-
-#set(INSTALL_DIR ~/rtbserver_cobrazz-bin)
 
 set(PB_DIRECTORY ${TMP_SOURCES}/PB_COMMON)
 include_directories(${PB_DIRECTORY})
@@ -64,24 +50,20 @@ include_directories(${PB_DIRECTORY})
 set(IDL_DIRECTORY ${TMP_SOURCES}/IDL_COMMON)
 include_directories(${IDL_DIRECTORY})
 
-
 set(XSD_DIRECTORY ${TMP_SOURCES}/XSD_COMMON)
 include_directories(${XSD_DIRECTORY} ${XSD_DIRECTORY}/xsd)
 
 set(PST_DIRECTORY ${TMP_SOURCES}/PST_COMMON)
 include_directories(${PST_DIRECTORY})
 
-
-#include_directories(Utils/Predictor)
 add_subdirectory(${UNIXCOMMONS} ${UNIXCOMMONS_BUILD_ROOT})
 
 link_directories(~/unixcommons-cobrazz-bin2/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -fPIC ")
 add_definitions( -D_USE_OCCI -DXSD_CXX11)
 
 # -D_USE_OCCI -DXSD_CXX11
-link_directories( /usr/local/lib  )
+#link_directories( /usr/local/lib  )
 
 ADD_SUBDIRECTORY(PredictorSvcs)
 ADD_SUBDIRECTORY(Predictor)
@@ -101,7 +83,3 @@ ADD_SUBDIRECTORY(Utils)
 ADD_SUBDIRECTORY(Plain)
 ADD_SUBDIRECTORY(ChannelSearchSvcs)
 ADD_SUBDIRECTORY(ChannelSvcs)
-
-
-    
-

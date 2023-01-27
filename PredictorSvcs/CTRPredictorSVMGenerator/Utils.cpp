@@ -56,7 +56,7 @@ namespace AdServer
           else
           {
             Generics::Time mod_time(fs.st_mtime);
-            Generics::Time now = Generics::Time::get_time_of_day();
+            //Generics::Time now = Generics::Time::get_time_of_day();
             
             if(logger->log_level() >= Logging::Logger::TRACE)
             {

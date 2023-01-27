@@ -1779,7 +1779,7 @@ namespace Bidding
         // MobFox & Yandex case
         JsonNativeCompositeParamProcessor_var mobfox_processor =
           new JsonNativeCompositeParamProcessor();
-        
+
         add_native_processor_(mobfox_processor);
 
         native_processor->add_processor(
@@ -4033,8 +4033,7 @@ namespace Bidding
     if(status != JSON_PARSE_OK)
     {
       Stream::Error ostr;
-      ostr << FUN << ": parsing error '" <<
-        json_parse_error(status) << "' at pos : ";
+      ostr << FUN << ": parsing error '" << json_parse_error(status) << "' at pos : ";
       if(parse_end)
       {
         ostr << std::string(parse_end, 20);

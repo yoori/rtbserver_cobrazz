@@ -18,9 +18,9 @@ namespace
 {
   const char* ASPECT  = "CampaignServer";
   const char* PROCESS_CONTROL_OBJ_KEY = "ProcessControl";
-  const char* CAMPAIGN_SERVER_V320_OBJ_KEY = "CampaignServer_v320";
-  const char* CAMPAIGN_SERVER_V330_OBJ_KEY = "CampaignServer_v330";
-  const char* CAMPAIGN_SERVER_V340_OBJ_KEY = "CampaignServer_v340";
+  //const char* CAMPAIGN_SERVER_V320_OBJ_KEY = "CampaignServer_v320";
+  //const char* CAMPAIGN_SERVER_V330_OBJ_KEY = "CampaignServer_v330";
+  //const char* CAMPAIGN_SERVER_V340_OBJ_KEY = "CampaignServer_v340";
   const char* CAMPAIGN_SERVER_V350_OBJ_KEY = "CampaignServer_v350";
 
   const char* CAMPAIGN_SERVER_OBJ_KEY = "CampaignServer_v360";
