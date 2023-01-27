@@ -8,6 +8,7 @@ target_link_libraries(BillingProcessor
   Generics
   Commons
   BillingServerIDL
+  RequestProfilePST
 )
 
 add_library(PassbackContainer SHARED
