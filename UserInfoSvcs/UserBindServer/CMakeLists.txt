@@ -4,6 +4,7 @@ target_link_libraries(UserBindServerIDL
   Commons
   CORBACommons
   CorbaTypesIDL
+  UserBindOperationProfilePST
 )
 
 add_library(UserBindContainer STATIC
