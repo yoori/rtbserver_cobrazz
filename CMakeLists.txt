@@ -29,13 +29,16 @@ find_package(PB REQUIRED)
 #find_package(OpenDDS REQUIRED)
 
 if(NOT DEFINED UNIXCOMMONS)
+  message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
   SET(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
 endif()
 
 message(STATUS "Use unixcommons: ${UNIXCOMMONS}")
 set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
 
-include_directories( /usr/local/include src Commons .
+include_directories(
+  .
+  Commons
   ${UNIXCOMMONS}/src
   ${UNIXCOMMONS}/src/CORBA
   ${UNIXCOMMONS_BUILD_ROOT}/IDL_COMMON
@@ -58,7 +61,7 @@ include_directories(${PST_DIRECTORY})
 
 add_subdirectory(${UNIXCOMMONS} ${UNIXCOMMONS_BUILD_ROOT})
 
-link_directories(~/unixcommons-cobrazz-bin2/lib)
+#link_directories(~/unixcommons-cobrazz-bin2/lib)
 
 add_definitions( -D_USE_OCCI -DXSD_CXX11)
 
