@@ -112,55 +112,63 @@ class Application:
 
     def __get_files_in_dir(self, dir_path):
         for root, dirs, files in os.walk(dir_path, True):
-            return set(files)
+            return files
         return set()
 
     async def on_period(self):
         files_in_dir = sorted(self.__get_files_in_dir(self.dir))
-        files_in_markers = self.__get_files_in_dir(self.markers_dir)
+        files_in_markers = set(self.__get_files_in_dir(self.markers_dir))
+
         for file in files_in_dir:
             if not self.running:
                 return
-            reg_file = file + ".__reg__"
-            if reg_file not in files_in_markers:
-                if self.verbosity >= 1:
-                    print("Reg file:", file)
-                file_basename, file_ext = os.path.splitext(file)
-                keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())    
-                self.cursor.execute(
-                    SQL_QUERY,
-                    (self.channel_prefix + file_basename.upper(), self.account_id, keyword, keyword, keyword, keyword, keyword))
-                self.cursor.execute("COMMIT;");
-                reg_file_path = os.path.join(self.markers_dir, reg_file)
-                with open(reg_file_path, "w"):
-                    pass
-        for file in files_in_dir:
-            if not self.running:
-                return
+
             file_path = os.path.join(self.dir, file)
             file_mtime = os.path.getmtime(file_path)
+
+            signed_uids = False
+            basename, ext = os.path.splitext(file)
+            if ext.startswith(".stamp"):
+                basename, ext = os.path.splitext(basename)
+            if ext.startswith(".signed_uids"):
+                basename, ext = os.path.splitext(basename)
+                signed_uids = True
+            name = basename + ext
+
+            reg_file = name + ".__reg__"
+            reg_file_path = os.path.join(self.markers_dir, reg_file)
+
             upload_file = file + ".__upload__"
             upload_file_path = os.path.join(self.markers_dir, upload_file)
+
+            keyword = make_keyword(self.channel_prefix.lower() + basename.lower())
+
+            if reg_file not in files_in_markers:
+                files_in_markers.add(reg_file)
+                if self.verbosity >= 1:
+                    print("Registering file:", name)
+                self.cursor.execute(
+                    SQL_QUERY,
+                    (self.channel_prefix + basename.upper(), self.account_id, keyword, keyword, keyword, keyword, keyword))
+                self.cursor.execute("COMMIT;")
+                with open(reg_file_path, "w"):
+                    pass
+
             if upload_file not in files_in_markers or file_mtime != os.path.getmtime(upload_file_path):
-                reg_file = file + ".__reg__"
-                reg_file_path = os.path.join(self.markers_dir, reg_file)
-                reg_file_mtime = os.path.getmtime(reg_file_path)
-                if reg_file_mtime + self.upload_wait_time <= time.time():
+                if os.path.getmtime(reg_file_path) + self.upload_wait_time <= time.time():
                     if self.verbosity >= 1:
-                        print("Upload file:", file)
-                    file_basename, file_ext = os.path.splitext(file)
-                    keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())
-                    is_stable = (file_ext == ".stable")
+                        print("Uploading file:", file)
+                    is_stable = (ext == ".stable")
                     self.line_index = 0
 
                     async def run_lines(f):
                         await asyncio.gather(
                             *tuple(self.on_line(f, is_stable, keyword) for i in range(self.upload_threads)))
 
-                    if file_ext in ("", ".txt", ".uids"):
+                    if not signed_uids and ext in ("", ".txt", ".uids"):
                         with subprocess.Popen(
                             ['sh', '-c', f'cat "{file_path}" | sed -r "s/([^.])$/\\1../" | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"'],
-                            stdout=subprocess.PIPE) as shp:
+                                stdout=subprocess.PIPE) as shp:
                             await run_lines(shp.stdout)
                     else:
                         with open(file_path, "rb") as f:
