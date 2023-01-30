@@ -2,9 +2,30 @@ import os
 import argparse
 import gzip
 import shutil
+import string
+import uuid
+import gzip
+from datetime import datetime
 import signal
 from time import sleep
 from minio import Minio
+
+
+VALID_FILE_CHARS = set("-_.()%s%s" % (string.ascii_letters, string.digits))
+
+
+def make_segment_filename(s, is_short_ids):
+    r = ""
+    for i in s:
+        if i == "/":
+            r += "."
+        elif i in VALID_FILE_CHARS:
+            r += i
+        else:
+            r += "x"
+    if not is_short_ids:
+        r += ".signed_uids"
+    return r
 
 
 def get_sleep_subperiods(t):
@@ -17,7 +38,7 @@ def get_sleep_subperiods(t):
 class Application:
     def __init__(self):
         self.plugins = {
-            ".gz": self.on_extract_gz
+            ".gz": gzip.open
         }
 
         self.running = True
@@ -28,7 +49,8 @@ class Application:
         parser.add_argument("-acc", help="Access key (login).")
         parser.add_argument("-secret", help="Secret key (password).")
         parser.add_argument("-bucket", help="Bucket name.")
-        parser.add_argument("-out_dir", help="Directory to download files to.")
+        parser.add_argument("-out-dir", help="Directory to download files to.")
+        parser.add_argument("-marker-dir", help="Directory to save already processed files.")
         parser.add_argument("-period", type=float, help="Period between attempts.")
         parser.add_argument("--tmp-dir", default="/tmp", help="Temp directory.")
         parser.add_argument("--pid-file", required=False, help="File with process ID.")
@@ -38,8 +60,12 @@ class Application:
         self.secret = args.secret
         self.bucket = args.bucket
         self.out_dir = args.out_dir
+        os.makedirs(self.out_dir, exist_ok=True)
+        self.marker_dir = args.marker_dir
+        os.makedirs(self.marker_dir, exist_ok=True)
         self.period = args.period
         self.tmp_dir = args.tmp_dir
+        os.makedirs(self.tmp_dir, exist_ok=True)
         self.pid_file = args.pid_file
 
     def run(self):
@@ -53,48 +79,84 @@ class Application:
             with open(self.pid_file, "w") as f:
                 f.write(str(os.getpid()))
 
-        existing_files = set()
-        if not os.path.isdir(self.out_dir):
-            os.mkdir(self.out_dir)
-        else:
-            for root, dirs, files in os.walk(self.out_dir, True):
-                existing_files.update(files)
-                break
-
         client = Minio(self.url, access_key=self.acc, secret_key=self.secret)
 
         while self.running:
+            meta = None
             objects = client.list_objects(self.bucket)
-            for obj in objects:
-                name = obj.object_name
-                plugin = None
-                for k, v in self.plugins.items():
-                    if name.endswith(k):
-                        name = name[:-len(k)]
-                        plugin = v
-                        break
-                if plugin is None:
-                    plugin = self.on_move_file
-                if name not in existing_files:
-                    print("Downloading " + obj.object_name)
-                    response = client.get_object(self.bucket, obj.object_name)
+            output_files = {}
+            markers = []
+            try:
+                for obj in objects:
+                    name = obj.object_name
+                    if name == "meta.tsv":
+                        continue
+                    marker_path = os.path.join(self.marker_dir, name)
+                    if os.path.exists(marker_path):
+                        continue
+                    markers.append(marker_path)
+                    if meta is None:
+                        meta = self.__load_meta(client)
+                    file_type = open
+                    for k, v in self.plugins.items():
+                        if name.endswith(k):
+                            file_type = v
+                            break
+                    print("Downloading " + name)
+                    response = client.get_object(self.bucket, name)
                     try:
-                        tmp_path = os.path.join(self.tmp_dir, obj.object_name)
-                        file_path = os.path.join(self.out_dir, name)
+                        tmp_path = os.path.join(self.tmp_dir, name)
                         try:
                             with open(tmp_path, "wb") as f:
                                 for batch in response.stream():
                                     f.write(batch)
-                            plugin(tmp_path, file_path)
-                        except:
-                            self.__safe_remove(file_path)
-                            raise
+                                    break
+                            with file_type(tmp_path, "r") as f:
+                                for i in range(10):
+                                    if not self.running:
+                                        break
+                                    line = f.readline().decode("utf-8")
+                                    if not line:
+                                        break
+                                    if line.endswith("\n"):
+                                        line = line[:-1]
+                                    user_id, segment_ids = line.split("\t")
+                                    is_short = len(user_id) < 32
+                                    for segment_id in segment_ids.split(","):
+                                        file_key = (segment_id, is_short)
+                                        first_line = False
+                                        try:
+                                            output_file = output_files[file_key]
+                                        except KeyError:
+                                            first_line = True
+                                            output_file = open(
+                                                os.path.join(self.tmp_dir, make_segment_filename(meta[segment_id], is_short)),
+                                                "wt")
+                                            output_files[file_key] = output_file
+                                        if not first_line:
+                                            output_file.write("\n")
+                                        output_file.write(user_id)
                         finally:
                             self.__safe_remove(tmp_path)
                     finally:
                         response.close()
                         response.release_conn()
-                    existing_files.add(name)
+            finally:
+                stamp = None
+                if self.running:
+                    stamp = ".stamp_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S_") + str(uuid.uuid4())
+                    for marker_path in markers:
+                        with open(marker_path, "w"):
+                            pass
+                for k, f in output_files.items():
+                    segment_id, is_short = k
+                    f.close()
+                    fname = make_segment_filename(meta[segment_id], is_short)
+                    tmp_path = os.path.join(self.tmp_dir, fname)
+                    if stamp is None:
+                        self.__safe_remove(tmp_path)
+                    else:
+                        shutil.move(tmp_path, os.path.join(self.out_dir, fname + stamp))
             for t in get_sleep_subperiods(self.period):
                 if not self.running:
                     return
@@ -104,18 +166,13 @@ class Application:
         if self.pid_file is not None:
             os.remove(self.pid_file)
 
-    def on_move_file(self, path_in, path_out):
-        shutil.move(path_in, path_out)
-
-    def on_extract_gz(self, path_in, path_out):
-        path_tmp = path_in + ".tml" 
-        try:
-            with gzip.open(path_in, "rb") as f_in:
-                with open(path_tmp, "wb") as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-            self.on_move_file(path_tmp, path_out)
-        finally:
-            self.__safe_remove(path_tmp)
+    def __load_meta(self, client):
+        meta = {}
+        for line in client.get_object(self.bucket, "meta.tsv").data.decode("utf-8").split("\n"):
+            if line:
+                meta_k, meta_v = line.split("\t")
+                meta[meta_k] = meta_v
+        return meta
 
     def __stop(self, signum, frame):
         print("Stop signal received");
