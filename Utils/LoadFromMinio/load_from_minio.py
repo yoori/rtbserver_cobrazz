@@ -88,6 +88,8 @@ class Application:
             markers = []
             try:
                 for obj in objects:
+                    if not self.running:
+                        break
                     name = obj.object_name
                     if name == "meta.tsv":
                         continue
@@ -109,6 +111,8 @@ class Application:
                         try:
                             with open(tmp_path, "wb") as f:
                                 for batch in response.stream():
+                                    if not self.running:
+                                        break
                                     f.write(batch)
                             with file_type(tmp_path, "r") as f:
                                 while True:
