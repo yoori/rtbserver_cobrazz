@@ -65,7 +65,7 @@ void Reaggregator::wait() noexcept
 
 const char* Reaggregator::name() noexcept
 {
-return "ReaggregatorSingleThread";
+return "Reaggregator";
 }
 
 void Reaggregator::reaggregate(

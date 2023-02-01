@@ -47,8 +47,8 @@
   <xsl:variable name="aggregator_dump_max_size" select="$bidcost-predictor-aggregator-dump-max-size"/>
   <xsl:variable name="aggregator_max_process_files" select="$bidcost-predictor-aggregator-max-process-files"/>
   <xsl:variable name="reaggregator_period" select="$bidcost-predictor-reaggregator-period"/>
-  <xsl:variable name="reaggregator_input_directory" select="$bidcost-predictor-reaggregator-input-directory"/>
-  <xsl:variable name="reaggregator_output_directory" select="$bidcost-predictor-reaggregator-output-directory"/>
+  <xsl:variable name="reaggregator_input_directory" select="concat($workspace-root, $bidcost-predictor-reaggregator-input-directory)"/>
+  <xsl:variable name="reaggregator_output_directory" select="concat($workspace-root, $bidcost-predictor-reaggregator-output-directory)"/>
 
   <xsl:text>{</xsl:text>
 
@@ -132,7 +132,7 @@
   <xsl:text>",</xsl:text>
 
   <xsl:text>
-        "tag_imps " : "</xsl:text>
+        "tag_imps" : "</xsl:text>
   <xsl:value-of select="$model_ctr_tag_imps"/>
   <xsl:text>",</xsl:text>
 

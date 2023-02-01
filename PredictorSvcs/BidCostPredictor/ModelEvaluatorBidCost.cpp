@@ -91,6 +91,14 @@ ModelBidCost_var ModelEvaluatorBidCostImpl::evaluate() noexcept
     return {};
   }
 
+  if (collector_.empty())
+  {
+    logger_->info(
+      std::string("ModelEvaluatorBidCost: Collector is empty"),
+      Aspect::MODEL_EVALUATOR_BID_COST);
+    return model_;
+  }
+
   try
   {
     start();

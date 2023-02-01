@@ -153,7 +153,7 @@ public:
     return ctr_.is_zero();
   }
 
-  CtrData& operator+=(const CtrData& other)
+  CtrData& operator+=(const CtrData& /*other*/)
   {
     Stream::Error ostr;
     ostr << __PRETTY_FUNCTION__

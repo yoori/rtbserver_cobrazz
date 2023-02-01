@@ -1307,8 +1307,8 @@ BOOST_AUTO_TEST_CASE(test1)
   inner_collecrtor.add(key_inner1, data_inner1);
 
   auto& inner_collecrtor2 = collector.find_or_insert(key);
-  BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 10, true);
-  BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 1, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor2.total_imps() == 10, true);
+  BOOST_CHECK_EQUAL(inner_collecrtor2.total_clicks() == 1, true);
 
   HelpCollector::InnerKey key_inner2(Types::FixedNumber("0.1"));
   HelpCollector::InnerData data_inner2(1000000, 15, 2);

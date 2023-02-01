@@ -265,6 +265,11 @@ public:
     return map_->size();
   }
 
+  bool empty() const noexcept
+  {
+    return map_->empty();
+  }
+
   iterator begin() noexcept
   {
     return map_->begin();

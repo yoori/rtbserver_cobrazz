@@ -437,8 +437,8 @@
 <!-- BidCost predictor -->
 <xsl:variable name="bidcost-predictor-version" select="'1.0'"/>
 <xsl:variable name="bidcost-predictor-description" select="'Bid cost predictor'"/>
-<xsl:variable name="bidcost-predictor-log-path" select="'/log/Predictor/BidCostPredictor/BidCostPredictor.log'"/>
-<xsl:variable name="bidcost-predictor-pid-path" select="'/log/Predictor/BidCostPredictor/BidCostPredictor.pid'"/>
+<xsl:variable name="bidcost-predictor-log-path" select="'/log/Predictor/BidCostPredictor/bid_cost_predictor.log'"/>
+<xsl:variable name="bidcost-predictor-pid-path" select="'/run/bid_cost_predictor.pid'"/>
 <xsl:variable name="bidcost-predictor-model-input-path" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
 <xsl:variable name="bidcost-predictor-model-period" select="43200"/>
 <xsl:variable name="bidcost-predictor-model-bid-cost-file-name" select="'bid_cost.csv'"/>

@@ -227,47 +227,6 @@ int Application::run(int argc, char **argv)
     const std::string log_path =
       configuration.get("config.log_path");
 
-    const Configuration config_model =
-      configuration.get_config("config.model");
-    const std::string model_agg_dir =
-      config_model.get("input_directory");
-    const std::string bid_cost_model_dir =
-      config_model.get("bid_cost.output_directory");
-    const std::string bid_cost_model_temp_dir =
-      config_model.get("bid_cost.temp_directory");
-    const std::string bid_cost_model_file_name =
-      config_model.get("bid_cost.file_name");
-    const std::string ctr_model_dir =
-      config_model.get("ctr.output_directory");
-    const std::string ctr_model_temp_dir =
-      config_model.get("ctr.temp_directory");
-    const std::string ctr_model_file_name =
-      config_model.get("ctr.file_name");
-    const Imps ctr_model_max_imps =
-      config_model.get<Imps>("ctr.max_imps");
-    const Imps ctr_model_trust_imps =
-      config_model.get<Imps>("ctr.trust_imps");
-    const Imps ctr_model_tag_imps =
-      config_model.get<Imps>("ctr.tag_imps");
-
-    const Configuration config_aggregator =
-      configuration.get_config("config.aggregator");
-    const std::size_t agg_max_process_files =
-      config_aggregator.get<std::size_t>("max_process_files");
-    const std::size_t agg_dump_max_size =
-      config_aggregator.get<std::size_t>("dump_max_size");
-    const std::string agg_input_dir =
-      config_aggregator.get("input_directory");
-    const std::string agg_output_dir =
-      config_aggregator.get("output_directory");
-
-    const Configuration config_reaggregator =
-      configuration.get_config("config.reaggregator");
-    const std::string reagg_input_dir =
-      config_reaggregator.get("input_directory");
-    const std::string reagg_output_dir =
-      config_reaggregator.get("output_directory");
-
     std::ofstream ostream(log_path, std::ios::app);
     if (!ostream.is_open())
     {
@@ -283,113 +242,180 @@ int Application::run(int argc, char **argv)
           ostream,
           Logging::Logger::INFO)));
 
-    Processor_var processor;
-    if (command == "model")
+    try
     {
-      processor = Processor_var(
-        new ModelProcessor(
-          bid_cost_model_dir,
-          bid_cost_model_file_name,
-          bid_cost_model_temp_dir,
-          ctr_model_dir,
-          ctr_model_file_name,
-          ctr_model_temp_dir,
-          ctr_model_max_imps,
-          ctr_model_trust_imps,
-          ctr_model_tag_imps,
-          model_agg_dir,
-          logger));
-    }
-    else if (command == "aggregate")
-    {
-      processor = Processor_var(
-        new AggregatorMultyThread(
-          agg_max_process_files,
-          agg_dump_max_size,
-          agg_input_dir,
-          agg_output_dir,
-          logger));
-    }
-    else if (command == "reaggregate")
-    {
-      processor = Processor_var(
-        new ReaggregatorMultyThread(
-          reagg_input_dir,
-          reagg_output_dir,
-          logger));
-    }
-    else
-    {
-      return EXIT_FAILURE;
-    }
+      const Configuration config_model =
+        configuration.get_config("config.model");
+      const std::string model_agg_dir =
+        config_model.get("input_directory");
+      const std::string bid_cost_model_dir =
+        config_model.get("bid_cost.output_directory");
+      const std::string bid_cost_model_temp_dir =
+        config_model.get("bid_cost.temp_directory");
+      const std::string bid_cost_model_file_name =
+        config_model.get("bid_cost.file_name");
+      const std::string ctr_model_dir =
+        config_model.get("ctr.output_directory");
+      const std::string ctr_model_temp_dir =
+        config_model.get("ctr.temp_directory");
+      const std::string ctr_model_file_name =
+        config_model.get("ctr.file_name");
+      const Imps ctr_model_max_imps =
+        config_model.get<Imps>("ctr.max_imps");
+      const Imps ctr_model_trust_imps =
+        config_model.get<Imps>("ctr.trust_imps");
+      const Imps ctr_model_tag_imps =
+        config_model.get<Imps>("ctr.tag_imps");
 
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
-    sigaddset(&mask, SIGQUIT);
-    sigaddset(&mask, SIGTERM);
-    sigaddset(&mask, SIGUSR1);
-    sigprocmask(SIG_BLOCK, &mask, nullptr);
+      const Configuration config_aggregator =
+        configuration.get_config("config.aggregator");
+      const std::size_t agg_max_process_files =
+        config_aggregator.get<std::size_t>("max_process_files");
+      const std::size_t agg_dump_max_size =
+        config_aggregator.get<std::size_t>("dump_max_size");
+      const std::string agg_input_dir =
+        config_aggregator.get("input_directory");
+      const std::string agg_output_dir =
+        config_aggregator.get("output_directory");
 
-    ThreadGuard thread([processor, logger, mask] () {
-      try
+      const Configuration config_reaggregator =
+        configuration.get_config("config.reaggregator");
+      const std::string reagg_input_dir =
+        config_reaggregator.get("input_directory");
+      const std::string reagg_output_dir =
+        config_reaggregator.get("output_directory");
+
+      Processor_var processor;
+      if (command == "model")
       {
-        int signo = 0;
-        if (sigwait(&mask, &signo) != 0)
+        processor = Processor_var(
+          new ModelProcessor(
+            bid_cost_model_dir,
+            bid_cost_model_file_name,
+            bid_cost_model_temp_dir,
+            ctr_model_dir,
+            ctr_model_file_name,
+            ctr_model_temp_dir,
+            ctr_model_max_imps,
+            ctr_model_trust_imps,
+            ctr_model_tag_imps,
+            model_agg_dir,
+            logger));
+      }
+      else if (command == "aggregate")
+      {
+        processor = Processor_var(
+          new AggregatorMultyThread(
+            agg_max_process_files,
+            agg_dump_max_size,
+            agg_input_dir,
+            agg_output_dir,
+            logger));
+      }
+      else if (command == "reaggregate")
+      {
+        processor = Processor_var(
+          new ReaggregatorMultyThread(
+            reagg_input_dir,
+            reagg_output_dir,
+            logger));
+      }
+      else
+      {
+        return EXIT_FAILURE;
+      }
+
+      sigset_t mask;
+      sigemptyset(&mask);
+      sigaddset(&mask, SIGINT);
+      sigaddset(&mask, SIGQUIT);
+      sigaddset(&mask, SIGTERM);
+      sigaddset(&mask, SIGUSR1);
+      sigprocmask(SIG_BLOCK, &mask, nullptr);
+
+      ThreadGuard thread([processor, logger, mask] () {
+        try
+        {
+          int signo = 0;
+          if (sigwait(&mask, &signo) != 0)
+          {
+            std::stringstream stream;
+            stream << __PRETTY_FUNCTION__
+                   << " : sigwait is failed";
+            logger->critical(stream.str(), Aspect::APPLICATION);
+            processor->stop();
+          }
+          else
+          {
+            std::stringstream stream;
+            stream << "Signal=";
+            switch (signo) {
+              case SIGINT:
+                stream << "SIGINT";
+                break;
+              case SIGQUIT:
+                stream << "SIGQUIT";
+                break;
+              case SIGTERM:
+                stream << "SIGTERM";
+                break;
+              default:
+                stream << "Unexpected signal";
+            }
+
+            if (signo != SIGUSR1)
+            {
+              stream << " interrupted service";
+              logger->info(stream.str(), Aspect::APPLICATION);
+              processor->stop();
+            }
+          }
+        }
+        catch (const eh::Exception &exc)
         {
           std::stringstream stream;
           stream << __PRETTY_FUNCTION__
-                 << " : sigwait is failed";
+                 << " : Reason: "
+                 << exc.what();
           logger->critical(stream.str(), Aspect::APPLICATION);
           processor->stop();
         }
-        else
-        {
-          std::stringstream stream;
-          stream << "Signal=";
-          switch (signo)
-          {
-            case SIGINT:
-              stream << "SIGINT";
-              break;
-            case SIGQUIT:
-              stream << "SIGQUIT";
-              break;
-            case SIGTERM:
-              stream << "SIGTERM";
-              break;
-            default:
-              stream << "Unexpected signal";
-          }
+      });
 
-          if (signo != SIGUSR1)
-          {
-            stream << " interrupted service";
-            logger->info(stream.str(), Aspect::APPLICATION);
-            processor->stop();
-          }
-        }
+      try
+      {
+        processor->start();
+        processor->wait();
       }
-      catch (const eh::Exception& exc)
+      catch (const eh::Exception &exc)
+      {
+        kill(::getpid(), SIGUSR1);
+        logger->critical(std::string(exc.what()), Aspect::APPLICATION);
+
+        std::stringstream stream;
+        stream << processor->name()
+               << ": is failed";
+        logger->critical(stream.str(), Aspect::APPLICATION);
+        throw;
+      }
+
+      const auto pid = ::getpid();
+      if (::kill(pid, SIGUSR1) == -1)
       {
         std::stringstream stream;
         stream << __PRETTY_FUNCTION__
-               << " : Reason: "
-               << exc.what();
-        logger->critical(stream.str(), Aspect::APPLICATION);
-        processor->stop();
+               << " : Reason: kill is failed";
+        logger->error(stream.str(), Aspect::APPLICATION);
       }
-    });
-
-    processor->start();
-    processor->wait();
-    const auto pid = ::getpid();
-    if (::kill(pid, SIGUSR1) == -1)
+    }
+    catch (const eh::Exception& exc)
     {
       std::stringstream stream;
       stream << __PRETTY_FUNCTION__
-             << " : Reason: kill is failed";
-      logger->error(stream.str(), Aspect::APPLICATION);
+             << " : Reason: "
+             << exc.what();
+      logger->critical(stream.str(), Aspect::APPLICATION);
+      throw;
     }
   }
   else if (command == "regenerate")

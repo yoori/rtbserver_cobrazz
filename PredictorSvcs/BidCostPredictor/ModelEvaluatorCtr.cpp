@@ -78,6 +78,14 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
     return {};
   }
 
+  if (collector_.empty())
+  {
+    logger_->info(
+      std::string("ModelEvaluatorCtr: Collector is empty"),
+      Aspect::MODEL_EVALUATOR_CTR);
+    return model_;
+  }
+
   try
   {
     logger_->info(

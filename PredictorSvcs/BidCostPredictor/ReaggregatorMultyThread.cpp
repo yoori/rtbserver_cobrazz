@@ -163,7 +163,7 @@ void ReaggregatorMultyThread::stop() noexcept
 
 const char* ReaggregatorMultyThread::name() noexcept
 {
-  return "ReaggregatorMultyThread";
+  return "Reaggregator";
 }
 
 void ReaggregatorMultyThread::reaggregate()
