@@ -88,18 +88,49 @@ namespace AdServer
 
       // Producer::DeliveryReportCallback
       Producer::DeliveryReportCallback::DeliveryReportCallback(
-        ProducerHandler* handler)
+        ProducerHandler* handler,
+        ProducerObserver* observer)
         noexcept :
-        handler_(handler)
+        handler_(handler),
+        observer_(observer)
       { }
 
       void
       Producer::DeliveryReportCallback::dr_cb(RdKafka::Message& message)
       {
+        const IdMessage id_message =
+          reinterpret_cast<IdMessage>(message.msg_opaque());
+
+        if (observer_)
+        {
+          const char* pointer_payload = static_cast<const char*>(message.payload());
+          const auto size_payload = message.len();
+          std::string_view payload;
+          if (pointer_payload)
+          {
+            payload = std::string_view(pointer_payload, size_payload);
+          }
+
+          std::string_view key;
+          if (message.key())
+          {
+            key = std::string_view(*message.key());
+          }
+
+          observer_->on_event(
+            message.err() == RdKafka::ERR_NO_ERROR ?
+              ProducerObserver::EventType::RECEIVE_SUCCESS :
+              ProducerObserver::EventType::RECEIVE_ERROR,
+            id_message,
+            key,
+            payload);
+        }
+
         if (message.err() != RdKafka::ERR_NO_ERROR)
         {
           handler_->resend_message(
             message.topic_name(),
+            id_message,
             message.key(),
             message.payload(),
             message.len());
@@ -113,7 +144,7 @@ namespace AdServer
       // Producer::PartitionCallback
       int32_t
       Producer::PartitionCallback::partitioner_cb(
-        const RdKafka::Topic* topic,
+        const RdKafka::Topic* /*topic*/,
         const std::string* key,
         int32_t partition_cnt,
         void*)
@@ -137,13 +168,16 @@ namespace AdServer
 
       // ProducerHandler
 
-      Producer::ProducerHandler::ProducerHandler(Producer* owner)
+      Producer::ProducerHandler::ProducerHandler(
+        Producer* owner,
+        ProducerObserver* observer)
         /*throw(ProducerError)*/
         : owner_(owner),
           event_callback_(this),
-          delivery_callback_(this),
+          delivery_callback_(this, observer),
           producer_conf_(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-          topic_conf_(RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC))
+          topic_conf_(RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC)),
+          observer_(observer)
       {
         static const char* FUN = "Kafka::Producer::ProducerHandler::ProducerHandler";
         
@@ -228,20 +262,40 @@ namespace AdServer
 
       void
       Producer::ProducerHandler::produce(
-        const ProducerPair& msg) /*throw(ProducerError)*/
+        const ProducerMessage& msg) /*throw(ProducerError)*/
       {
         RdKafka::ErrorCode code = producer_->produce(
           topic_.get(), // topic
           RdKafka::Topic::PARTITION_UA, // partition
           RdKafka::Producer::RK_MSG_COPY, // msgflags - copy payload
-          const_cast<char*>(msg.second.data()), // payload
-          msg.second.size(), // len
-          &msg.first, // key
-          NULL // msg_opaque
+          const_cast<char*>(std::get<1>(msg).data()), // payload
+          std::get<1>(msg).size(), // len
+          &std::get<0>(msg), // key
+          reinterpret_cast<void*>(std::get<2>(msg)) // msg_opaque
           );
 
-        if (code != RdKafka::ERR_NO_ERROR)
+        if (code == RdKafka::ERR_NO_ERROR)
         {
+          if (observer_)
+          {
+            observer_->on_event(
+              ProducerObserver::EventType::SEND_SUCCESS,
+              std::get<2>(msg),
+              std::get<0>(msg),
+              std::get<1>(msg));
+          }
+        }
+        else
+        {
+          if (observer_)
+          {
+            observer_->on_event(
+              ProducerObserver::EventType::SEND_ERROR,
+              std::get<2>(msg),
+              std::get<0>(msg),
+              std::get<1>(msg));
+          }
+
           Stream::Error ostr;
           ostr << "Produce message failed: '" <<
             RdKafka::err2str(code) << "'";
@@ -252,15 +306,27 @@ namespace AdServer
       void
       Producer::ProducerHandler::resend_message(
         const std::string& topic_name,
+        const IdMessage id_message,
         const std::string* key,
         void* payload,
         size_t len)
       {
         if (owner_->topic_name_.compare(topic_name) == 0)
         {
-          owner_->push_data(
-            *key,
-            std::string(static_cast<const char*>(payload), len));
+          const bool result = owner_->push_data(
+            id_message,
+            key ? *key : std::string(),
+            payload ? std::string(static_cast<const char*>(payload), len) :
+                      std::string());
+          if (!result && observer_)
+          {
+            observer_->on_event(
+              ProducerObserver::EventType::SEND_ERROR,
+              id_message,
+              key ? *key : std::string(),
+              payload ? std::string(static_cast<const char*>(payload), len) :
+                        std::string());
+          }
         }
       }
 
@@ -332,13 +398,15 @@ namespace AdServer
       Producer::Producer(
         Logging::Logger* logger,
         Generics::ActiveObjectCallback* callback,
-        const KafkaTopicConfig& config)
+        const KafkaTopicConfig& config,
+        ProducerObserver* observer)
         : Commons::DelegateActiveObject(callback, config.threads()),
           logger_(ReferenceCounting::add_ref(logger)),
           brokers_(config.brokers()),
           topic_name_(config.topic()),
           messages_(config.message_queue_size()),
-          stats_(new StatsObject(this, callback))
+          stats_(new StatsObject(this, callback)),
+          observer_(observer)
       {}
       
       Producer::Producer(
@@ -347,13 +415,15 @@ namespace AdServer
         unsigned long threads_number,
         unsigned long queue_size,
         const char* brokers,
-        const char* topic_name)
+        const char* topic_name,
+        ProducerObserver* observer)
         : Commons::DelegateActiveObject(callback, threads_number),
           logger_(ReferenceCounting::add_ref(logger)),
           brokers_(brokers),
           topic_name_(topic_name),
           messages_(queue_size),
-          stats_(new StatsObject(this, callback))
+          stats_(new StatsObject(this, callback)),
+          observer_(observer)
       {}
 
       void
@@ -374,7 +444,7 @@ namespace AdServer
           try
           {
             // (Re)create handler
-            ProducerHandler handler(this);
+            ProducerHandler handler(this, observer_);
 
             // Produce event
             while(active())
@@ -425,7 +495,7 @@ namespace AdServer
       void
       Producer::produce_(ProducerHandler& handler)
       {
-        std::list<ProducerPair> msg_array;
+        std::list<ProducerMessage> msg_array;
         messages_.pop_all(msg_array, WAIT_MSG_TIMEOUT);
 
         if (!msg_array.empty())
@@ -434,7 +504,7 @@ namespace AdServer
           for(auto msg_it = msg_array.begin(); msg_it != msg_array.end(); ++msg_it)
           {
             handler.produce(*msg_it);
-            sent_bytes += msg_it->second.size();
+            sent_bytes += std::get<1>(*msg_it).size();
           }
 
           stats_->sent_bytes += sent_bytes;
@@ -459,14 +529,33 @@ namespace AdServer
         messages_.close();
       }
 
-      void Producer::push_data(
+      std::optional<IdMessage> Producer::push_data(
         const std::string& key,
-        const std::string& data) noexcept
+        const std::string& data)
       {
-        if (!messages_.try_emplace(key, data))
+        const auto id = id_current_.fetch_add(1, std::memory_order_relaxed);
+        if (push_data(id, key, data))
+        {
+          return id;
+        }
+        else
+        {
+          return {};
+        }
+      }
+
+      bool Producer::push_data(
+        const IdMessage id_message,
+        const std::string& key,
+        const std::string& data)
+      {
+        if (!messages_.try_emplace(key, data, id_message))
         {
           stats_->error_overflow += 1;
+          return false;
         }
+
+        return true;
       }
 
       unsigned long

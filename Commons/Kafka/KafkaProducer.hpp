@@ -5,6 +5,11 @@
 */
 #pragma once
 
+// STD
+#include <atomic>
+#include <optional>
+
+// THIS
 #include <librdkafka/rdkafkacpp.h>
 #include <Commons/AtomicInt.hpp>
 #include <Commons/DelegateActiveObject.hpp>
@@ -17,6 +22,7 @@ namespace AdServer
   {
     namespace Kafka
     {
+      using IdMessage = std::uintptr_t;
       /**
        * @class StatCounter
        * @brief Simple class to store counter.
@@ -64,6 +70,30 @@ namespace AdServer
         std::ostream& os,
         const StatCounter& cnt);
 
+      class ProducerObserver
+      {
+      public:
+        enum class EventType
+        {
+          SEND_SUCCESS,
+          SEND_ERROR,
+          RECEIVE_SUCCESS,
+          RECEIVE_ERROR  // Сurrent logic resends the message automatically in this case
+        };
+
+      public:
+        virtual void on_event(
+          const EventType event,
+          const IdMessage id_message,
+          const std::string_view key,
+          const std::string_view data) noexcept = 0;
+
+      protected:
+        ProducerObserver() = default;
+
+        virtual ~ProducerObserver() = default;
+      };
+
       /**
        * @brief Producer
        * RdKafka::Producer wrapper
@@ -72,7 +102,9 @@ namespace AdServer
       {
         DECLARE_EXCEPTION(ProducerError, eh::DescriptiveException);
 
-        typedef std::pair<std::string, std::string> ProducerPair;
+        using Key = std::string;
+        using Data = std::string;
+        using ProducerMessage = std::tuple<Key, Data, IdMessage>;
 
         class ProducerHandler;
 
@@ -112,7 +144,9 @@ namespace AdServer
            * @brief Constructor
            * @param producer handler
            */
-          DeliveryReportCallback(ProducerHandler* handler)
+          DeliveryReportCallback(
+            ProducerHandler* handler,
+            ProducerObserver* observer)
             noexcept;
 
           /**
@@ -126,6 +160,7 @@ namespace AdServer
         
         protected:
           ProducerHandler* handler_;
+          ProducerObserver* observer_ = nullptr;
         };
 
         /**
@@ -228,7 +263,9 @@ namespace AdServer
            * @brief Constructor
            * @param producer object
            */
-          ProducerHandler(Producer* owner)
+          ProducerHandler(
+            Producer* owner,
+            ProducerObserver* observer = nullptr)
             /*throw(ProducerError)*/;
 
           /**
@@ -237,7 +274,7 @@ namespace AdServer
            */
           void
           produce(
-            const ProducerPair& msg)
+            const ProducerMessage& msg)
             /*throw(ProducerError)*/;
 
           /**
@@ -277,6 +314,7 @@ namespace AdServer
            */
           void resend_message(
             const std::string& topic_name,
+            const IdMessage id_message,
             const std::string* key,
             void* payload,
             size_t len);
@@ -290,6 +328,7 @@ namespace AdServer
           std::unique_ptr<RdKafka::Producer> producer_;
           std::unique_ptr<RdKafka::Conf> topic_conf_;
           std::unique_ptr<RdKafka::Topic> topic_;
+          ProducerObserver* observer_ = nullptr;
         };
 
         typedef ::xsd::AdServer::Configuration::KafkaTopic
@@ -306,7 +345,8 @@ namespace AdServer
         Producer(
           Logging::Logger* logger,
           Generics::ActiveObjectCallback* callback,
-          const KafkaTopicConfig& config);
+          const KafkaTopicConfig& config,
+          ProducerObserver* observer = nullptr);
 
         /**
          * @brief Constructor
@@ -323,16 +363,17 @@ namespace AdServer
            unsigned long threads_number,
            unsigned long queue_size,
            const char* brokers,
-           const char* topic_name);
+           const char* topic_name,
+           ProducerObserver* observer = nullptr);
 
         /**
          * @brief Push data
          * @param key
          * @param data
          */
-        void push_data(
+        std::optional<IdMessage> push_data(
           const std::string& key,
-          const std::string& data) noexcept;
+          const std::string& data);
         
         /**
          * @brief Activate objects (start threads)
@@ -360,9 +401,14 @@ namespace AdServer
         sent_bytes() const;
 
       private:
-        typedef LimitedMTQueue<ProducerPair> ProducerQueue;
+        typedef LimitedMTQueue<ProducerMessage> ProducerQueue;
 
       protected:
+        bool push_data(
+          const IdMessage id_message,
+          const std::string& key,
+          const std::string& data);
+
         /**
          * @brief Produce message from input queue
          * @param producer handler
@@ -411,6 +457,9 @@ namespace AdServer
 
         // Statistics
         StatsObject_var stats_;
+
+        ProducerObserver* observer_ = nullptr;
+        std::atomic<IdMessage> id_current_{0};
       };
 
       typedef ReferenceCounting::SmartPtr<Producer> Producer_var;
