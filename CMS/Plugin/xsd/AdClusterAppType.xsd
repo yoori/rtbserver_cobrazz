@@ -1457,6 +1457,7 @@
       <xsd:element name="geo" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="adsSpaces" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="match" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="bidRequest" type="KafkaTopic" minOccurs="0" maxOccurs="1"/>
     </xsd:sequence>
   </xsd:complexType>
 

@@ -384,6 +384,24 @@ namespace Bidding
       {
         parse_configs_();
 
+        if (config_->KafkaBidRequestStorage().present())
+        {
+          const std::size_t sample_part = config_->SamplingBidRequest().sample_part();
+          const std::size_t sample_div = config_->SamplingBidRequest().sample_div();
+
+          if (sample_part != 0 && sample_div != 0)
+          {
+            kafka_manager_ = KafkaBidRequestManager_var(
+              new KafkaBidRequestManager(
+                logger(),
+                callback(),
+                config_->KafkaBidRequestStorage().get(),
+                sample_div,
+                sample_part));
+            add_child_object(kafka_manager_);
+          }
+        }
+
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
         planner_ = new Generics::Planner(callback());
@@ -862,6 +880,31 @@ namespace Bidding
         Logging::Logger::EMERGENCY,
         Aspect::BIDDING_FRONTEND,
         "ADS-IMPL-109");
+    }
+  }
+
+  void Frontend::send_request_to_kafka(
+    const String::SubString& source,
+    const String::SubString& key,
+    const String::SubString& data) noexcept
+  {
+    static const char* FUN = "Bidding::Frontend::sand_request_to_kafka()";
+    try
+    {
+      if (kafka_manager_)
+      {
+        kafka_manager_->push_data(source, key, data);
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": eh::Exception caught: " << exc.what();
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::ERROR,
+        Aspect::BIDDING_FRONTEND,
+        "ADS-IMPL-110");
     }
   }
 

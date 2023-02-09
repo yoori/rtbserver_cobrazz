@@ -36,11 +36,17 @@ namespace Bidding
   bool
   BidRequestTask::execute_() noexcept
   {
+    static std::atomic<std::uint32_t>  counter{0};
     // fill request info by url parameters
     bid_frontend_->request_info_filler_->fill(
       request_info_,
       request_holder_->request(),
       start_processing_time_);
+
+     bid_frontend_->send_request_to_kafka(
+       request_info_.source_id,
+       std::to_string(counter.fetch_add(1, std::memory_order_relaxed)),
+       request_holder_->request().body());
 
     // fill request info & request type specific parameters
     if(!this->read_request())

@@ -35,6 +35,7 @@
 #include "GroupLogger.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
+#include "KafkaBidRequestManager.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
 #include "MetricsHTTPProvider/src/MetricsHTTPProvider.hpp"
@@ -108,6 +109,11 @@ namespace Bidding
     {
       return GroupLogger::logger();
     }
+
+    void send_request_to_kafka(
+      const String::SubString& source,
+      const String::SubString& key,
+      const String::SubString& data) noexcept;
 
   protected:
     virtual ~Frontend() noexcept;
@@ -404,6 +410,8 @@ namespace Bidding
     unsigned long reached_max_pending_tasks_;
   private:
     MetricsHTTPProvider *metricsHTTPProvider_=NULL;
+
+    KafkaBidRequestManager_var kafka_manager_;
   };
 }
 }

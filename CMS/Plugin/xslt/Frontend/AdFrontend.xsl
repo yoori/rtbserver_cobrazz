@@ -1210,6 +1210,17 @@
         <cfg:Uri path="/dao"/>
       </cfg:DAOUriList>
 
+      <cfg:SamplingBidRequest sample_div="1000" sample_part="500"/>
+
+      <xsl:variable name="kafka-config" select="$colo-config/cfg:coloParams/cfg:kafkaStorage"/>
+      <cfg:KafkaBidRequestStorage>
+        <xsl:call-template name="SaveKafkaTopic">
+          <xsl:with-param name="topic-config" select="$kafka-config/cfg:bidRequest"/>
+          <xsl:with-param name="default-topic-name" select="$default-bid-request-topic"/>
+          <xsl:with-param name="kafka-config" select="$kafka-config"/>
+        </xsl:call-template>
+      </cfg:KafkaBidRequestStorage>
+
       <xsl:call-template name="ConvertFrontendLogger">
         <xsl:with-param name="logger-node" select="$bidding-module/cfg:logging"/>
         <xsl:with-param name="default-log-level" select="$bidding-module-log-level"/>

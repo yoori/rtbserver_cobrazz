@@ -16,12 +16,13 @@ add_library(BiddingFrontend SHARED
   AdXmlBidRequestTask.cpp 
   AdJsonBidRequestTask.cpp 
   ClickStarBidRequestTask.cpp 
-  DAOBidRequestTask.cpp 
+  DAOBidRequestTask.cpp
+  KafkaBidRequestManager.cpp
   KeywordFormatter.cpp
-
 )
-target_link_libraries(BiddingFrontend 
 
+target_link_libraries(BiddingFrontend
+ KafkaProducer
  Stream
  Geoip
  CORBACommons

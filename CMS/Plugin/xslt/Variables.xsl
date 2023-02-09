@@ -111,6 +111,7 @@
 <xsl:variable name="default-geo-topic" select="'geo'"/>
 <xsl:variable name="default-ads-spaces-topic" select="'adsspaces'"/>
 <xsl:variable name="default-match-topic" select="'match'"/>
+<xsl:variable name="default-bid-request-topic" select="'bidrequest'"/>
 <xsl:variable name="default-kafka-threads" select="'20'"/>
 <xsl:variable name="default-kafka-message-queue-size" select="'1000000'"/>
 <xsl:variable name="http-frontend-descriptor" select="'AdCluster/FrontendSubCluster/HttpFrontend'"/>
