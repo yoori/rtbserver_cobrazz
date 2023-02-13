@@ -111,7 +111,7 @@ class Application:
         self.workspace_dir = get_param("workspace_dir")
         self.markers_dir = os.path.join(self.workspace_dir, "markers")
         os.makedirs(self.markers_dir, exist_ok=True)
-        self.channel_prefix = get_param("channel_prefix")
+        self.channel_prefix = get_param("channel_prefix", None)
         self.upload_threads = get_param("upload_threads")
         self.verbosity = get_param("verbosity", 1)
         ph_host = get_param("pg_host")
@@ -166,14 +166,26 @@ class Application:
         await self.on_urls()
 
     async def on_uids(self):
-        files_in_dir = sorted(self.__get_files_in_dir(self.dir))
-        files_in_markers = set(self.__get_files_in_dir(self.markers_dir))
+        if self.channel_prefix is not None:
+            await self.on_uids_dir(self.dir, self.markers_dir, self.channel_prefix)
+        for root, dirs, files in os.walk(self.dir, True):
+            for dir in dirs:
+                if not self.running:
+                    break
+                markers_dir = os.path.join(self.markers_dir, dir)
+                os.makedirs(markers_dir, exist_ok=True)
+                await self.on_uids_dir(os.path.join(self.dir, dir), markers_dir, dir)
+            break
+
+    async def on_uids_dir(self, dir, markers_dir, channel_prefix):
+        files_in_dir = sorted(self.__get_files_in_dir(dir))
+        files_in_markers = set(self.__get_files_in_dir(markers_dir))
 
         for file in files_in_dir:
             if not self.running:
                 return
 
-            file_path = os.path.join(self.dir, file)
+            file_path = os.path.join(dir, file)
             file_mtime = os.path.getmtime(file_path)
 
             signed_uids = False
@@ -186,12 +198,12 @@ class Application:
             basename, ext = os.path.splitext(basename)
 
             reg_file = basename + ".__reg__"
-            reg_file_path = os.path.join(self.markers_dir, reg_file)
+            reg_file_path = os.path.join(markers_dir, reg_file)
 
             upload_file = file + ".__upload__"
-            upload_file_path = os.path.join(self.markers_dir, upload_file)
+            upload_file_path = os.path.join(markers_dir, upload_file)
 
-            keyword = make_keyword(self.channel_prefix.lower() + basename.lower())
+            keyword = make_keyword(channel_prefix.lower() + basename.lower())
 
             if reg_file not in files_in_markers:
                 files_in_markers.add(reg_file)
