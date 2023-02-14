@@ -33,4 +33,4 @@ target_link_libraries(ChannelSearchService
 
  )
 
-install(TARGETS ChannelSearchServiceIDL ChannelSearchService DESTINATION ${INSTALL_DIR})
+#install(TARGETS ChannelSearchServiceIDL ChannelSearchService DESTINATION ${INSTALL_DIR})
