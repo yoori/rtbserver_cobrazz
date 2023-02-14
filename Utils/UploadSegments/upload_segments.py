@@ -1,5 +1,6 @@
 import os
 import argparse
+import json
 import asyncio
 import aiohttp
 import psycopg2
@@ -22,7 +23,7 @@ def make_keyword(name):
     return r
 
 
-SQL_QUERY = """DO $$DECLARE
+SQL_REG_USER = """DO $$DECLARE
   channel_id_val bigint;
   trigger_id_val bigint;
 BEGIN
@@ -39,7 +40,23 @@ BEGIN
   INSERT INTO channeltrigger(trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
   SELECT trigger_id_val, channel_id_val, 'A', 'P', 'RU', %s, 'A', false
   WHERE NOT EXISTS (SELECT * FROM channeltrigger WHERE trigger_id = trigger_id_val AND channel_id = channel_id_val AND channel_type = 'A' AND trigger_type = 'P' AND country_code = 'RU' AND original_trigger = %s);
-END$$;""";
+END$$;"""
+
+
+SQL_REG_URL = "SELECT adserver.get_taxonomy_channel(%s, 115, 'RU', 'ru');"
+
+
+SQL_UPLOAD_URL = """DO $$DECLARE
+  trigger_id_val bigint;
+BEGIN
+  SELECT trigger_id INTO trigger_id_val FROM triggers WHERE trigger_type = 'U' AND
+    normalized_trigger = %s AND channel_type = 'A' AND country_code = 'RU';
+
+  INSERT INTO channeltrigger(trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
+  SELECT trigger_id_val, %s, 'A', 'U', 'RU', %s, 'A', false
+  WHERE NOT EXISTS (SELECT * FROM channeltrigger WHERE trigger_id = trigger_id_val AND channel_id = %s AND channel_type = 'A' AND
+    trigger_type = 'U' AND country_code = 'RU' AND original_trigger = %s);
+END$$;"""
 
 
 class Application:
@@ -60,33 +77,62 @@ class Application:
         parser.add_argument("-pg-user", help="PostgreSQL user name.")
         parser.add_argument("-pg-pass", help="PostgreSQL password.")
         parser.add_argument("-account-id", type=int, help="Account ID.")
-        parser.add_argument("-verbosity", type=int, default=1, help="Level of console information.")
-        parser.add_argument("-print-line", type=int, default=0, help="Print line index despite verbosity.")
-        parser.add_argument("--pid-file", required=False, help="File with process ID.")
+        parser.add_argument("-verbosity", type=int, help="Level of console information.")
+        parser.add_argument("-print-line", type=int, help="Print line index despite verbosity.")
+        parser.add_argument("--pid-file", help="File with process ID.")
         parser.add_argument("-private-key-file", help="Private .der key for signing uids.")
+        parser.add_argument("-url-segments-dir", help="Private .der key for signing uids.")
+        parser.add_argument("-config", default=None, help="Path to JSON config.")
 
         args = parser.parse_args()
-        self.upload_url = args.upload_url
-        self.period = args.period
-        self.upload_wait_time = args.upload_wait_time
-        self.dir = args.dir
-        self.workspace_dir = args.workspace_dir
+
+        if args.config is None:
+            config = {}
+        else:
+            with open(args.config, "r") as f:
+                config = json.load(f)
+
+        def get_param(name, *default):
+            v = getattr(args, name)
+            if v is not None:
+                return v
+            v = config.get(name)
+            if v is not None:
+                return v
+            assert(0 <= len(default) <= 1)
+            if len(default) == 0:
+                raise RuntimeError(f"param '{name}' not found")
+            return default[0]
+
+        self.upload_url = get_param("upload_url")
+        self.period = get_param("period")
+        self.upload_wait_time = get_param("upload_wait_time")
+        self.dir = get_param("dir")
+        self.workspace_dir = get_param("workspace_dir")
         self.markers_dir = os.path.join(self.workspace_dir, "markers")
         os.makedirs(self.markers_dir, exist_ok=True)
-        self.channel_prefix = args.channel_prefix
-        self.upload_threads = args.upload_threads
-        self.verbosity = args.verbosity
+        self.channel_prefix = get_param("channel_prefix", None)
+        self.upload_threads = get_param("upload_threads")
+        self.verbosity = get_param("verbosity", 1)
+        ph_host = get_param("pg_host")
+        pg_db = get_param("pg_db")
+        pg_user = get_param("pg_user")
+        pg_pass = get_param("pg_pass")
         self.connection = psycopg2.connect(
-            f"host='{args.pg_host}' dbname='{args.pg_db}' user='{args.pg_user}' password='{args.pg_pass}'")
+            f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
         self.cursor = self.connection.cursor()
-        self.account_id = args.account_id
-        self.print_line = args.print_line
+        self.account_id = get_param("account_id")
+        self.print_line = get_param("print_line", 0)
         self.line_index = 0
-        self.pid_file = args.pid_file
-        self.private_key_file = args.private_key_file
+        self.pid_file = get_param("pid_file")
+        self.private_key_file = get_param("private_key_file")
         if self.pid_file is not None:
             with open(self.pid_file, "w") as f:
                 f.write(str(os.getpid()))
+        self.url_segments_dir = get_param("url_segments_dir")
+        if self.url_segments_dir is not None:
+            self.url_markers_dir = os.path.join(self.workspace_dir, "url_markers")
+            os.makedirs(self.url_markers_dir, exist_ok=True)
 
     def __stop(self, signum, frame):
         print("Stop signal")
@@ -112,55 +158,79 @@ class Application:
 
     def __get_files_in_dir(self, dir_path):
         for root, dirs, files in os.walk(dir_path, True):
-            return set(files)
-        return set()
+            return files
+        return tuple()
 
     async def on_period(self):
-        files_in_dir = sorted(self.__get_files_in_dir(self.dir))
-        files_in_markers = self.__get_files_in_dir(self.markers_dir)
+        await self.on_uids()
+        await self.on_urls()
+
+    async def on_uids(self):
+        if self.channel_prefix is not None:
+            await self.on_uids_dir(self.dir, self.markers_dir, self.channel_prefix)
+        for root, dirs, files in os.walk(self.dir, True):
+            for dir in dirs:
+                if not self.running:
+                    break
+                markers_dir = os.path.join(self.markers_dir, dir)
+                os.makedirs(markers_dir, exist_ok=True)
+                await self.on_uids_dir(os.path.join(self.dir, dir), markers_dir, dir)
+            break
+
+    async def on_uids_dir(self, dir, markers_dir, channel_prefix):
+        files_in_dir = sorted(self.__get_files_in_dir(dir))
+        files_in_markers = set(self.__get_files_in_dir(markers_dir))
+
         for file in files_in_dir:
             if not self.running:
                 return
-            reg_file = file + ".__reg__"
+
+            file_path = os.path.join(dir, file)
+            file_mtime = os.path.getmtime(file_path)
+
+            signed_uids = False
+            basename, ext = os.path.splitext(file)
+            if ext.startswith(".stamp"):
+                basename, ext = os.path.splitext(basename)
+            if ext.startswith(".signed_uids"):
+                basename, ext = os.path.splitext(basename)
+                signed_uids = True
+            basename, ext = os.path.splitext(basename)
+
+            reg_file = basename + ".__reg__"
+            reg_file_path = os.path.join(markers_dir, reg_file)
+
+            upload_file = file + ".__upload__"
+            upload_file_path = os.path.join(markers_dir, upload_file)
+
+            keyword = make_keyword(channel_prefix.lower() + basename.lower())
+
             if reg_file not in files_in_markers:
+                files_in_markers.add(reg_file)
                 if self.verbosity >= 1:
-                    print("Reg file:", file)
-                file_basename, file_ext = os.path.splitext(file)
-                keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())    
+                    print("Registering file:", basename)
                 self.cursor.execute(
-                    SQL_QUERY,
-                    (self.channel_prefix + file_basename.upper(), self.account_id, keyword, keyword, keyword, keyword, keyword))
-                self.cursor.execute("COMMIT;");
-                reg_file_path = os.path.join(self.markers_dir, reg_file)
+                    SQL_REG_USER,
+                    (self.channel_prefix + basename.upper(), self.account_id, keyword, keyword, keyword, keyword, keyword))
+                self.cursor.execute("COMMIT;")
                 with open(reg_file_path, "w"):
                     pass
-        for file in files_in_dir:
-            if not self.running:
-                return
-            file_path = os.path.join(self.dir, file)
-            file_mtime = os.path.getmtime(file_path)
-            upload_file = file + ".__upload__"
-            upload_file_path = os.path.join(self.markers_dir, upload_file)
+
             if upload_file not in files_in_markers or file_mtime != os.path.getmtime(upload_file_path):
-                reg_file = file + ".__reg__"
-                reg_file_path = os.path.join(self.markers_dir, reg_file)
-                reg_file_mtime = os.path.getmtime(reg_file_path)
-                if reg_file_mtime + self.upload_wait_time <= time.time():
+                if os.path.getmtime(reg_file_path) + self.upload_wait_time <= time.time():
                     if self.verbosity >= 1:
-                        print("Upload file:", file)
-                    file_basename, file_ext = os.path.splitext(file)
-                    keyword = make_keyword(self.channel_prefix.lower() + file_basename.lower())
-                    is_stable = (file_ext == ".stable")
+                        print("Uploading file:", file)
+                    is_stable = (ext == ".stable")
                     self.line_index = 0
 
                     async def run_lines(f):
                         await asyncio.gather(
                             *tuple(self.on_line(f, is_stable, keyword) for i in range(self.upload_threads)))
 
-                    if file_ext in ("", ".txt", ".uids"):
+                    if not signed_uids and ext in ("", ".txt", ".uids"):
                         with subprocess.Popen(
                             ['sh', '-c', f'cat "{file_path}" | sed -r "s/([^.])$/\\1../" | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"'],
-                            stdout=subprocess.PIPE) as shp:
+                                stdout=subprocess.PIPE) as shp:
                             await run_lines(shp.stdout)
                     else:
                         with open(file_path, "rb") as f:
@@ -212,6 +282,52 @@ class Application:
             async with session.get(url=url, params=params, ssl=False) as resp:
                 assert (resp.status == 204)
                 return session, resp
+
+    async def on_urls(self):
+        if self.url_segments_dir is None:
+            return
+
+        files_in_dir = sorted(self.__get_files_in_dir(self.url_segments_dir))
+        files_in_markers = set(self.__get_files_in_dir(self.url_markers_dir))
+
+        for file in files_in_dir:
+            if not self.running:
+                return
+
+            file_path = os.path.join(self.url_segments_dir, file)
+            file_mtime = os.path.getmtime(file_path)
+
+            reg_file = file + ".__reg__"
+            reg_file_path = os.path.join(self.url_markers_dir, reg_file)
+
+            if reg_file not in files_in_markers or file_mtime != os.path.getmtime(reg_file_path):
+                if self.verbosity >= 1:
+                    print("Registering URL file:", file)
+                self.cursor.execute(
+                    SQL_REG_URL,
+                    (self.channel_prefix + file.upper(),))
+                channel_id = self.cursor.fetchone()[0]
+                self.cursor.execute("COMMIT;")
+                if self.verbosity >= 1:
+                    print("Uploading URL file:", file)
+                with open(file_path, "rt") as f:
+                    while self.running:
+                        line = f.readline()
+                        if not line:
+                            break
+                        if line.endswith("\n"):
+                            line = line[:-1]
+                        if not line:
+                            continue
+                        self.cursor.execute(
+                            SQL_UPLOAD_URL,
+                            (line, channel_id, line, channel_id, line))
+                        self.cursor.execute("COMMIT;")
+                if not self.running:
+                    return
+                with open(reg_file_path, "w"):
+                    pass
+                os.utime(reg_file_path, (os.path.getatime(file_path), file_mtime))
 
 
 def main():
