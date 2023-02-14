@@ -645,6 +645,10 @@ namespace Bidding
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
 
         activate_object();
+        
+        metricsHTTPProvider_=new MetricsHTTPProvider(8081,"/sample/data");
+        metricsHTTPProvider_->activate_object();
+
       }
       catch (const eh::Exception& ex)
       {
@@ -678,6 +682,11 @@ namespace Bidding
         Aspect::BIDDING_FRONTEND);
 
       common_module_->shutdown();
+
+      metricsHTTPProvider_->deactivate_object();
+      metricsHTTPProvider_->wait_object();
+      delete metricsHTTPProvider_;
+
     }
     catch(...)
     {}

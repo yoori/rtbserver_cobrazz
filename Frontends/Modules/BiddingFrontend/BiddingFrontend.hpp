@@ -37,6 +37,8 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
+#include "MetricsHTTPProvider/src/MetricsHTTPProvider.hpp"
+
 
 namespace AdServer
 {
@@ -400,6 +402,8 @@ namespace Bidding
 
     mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
     unsigned long reached_max_pending_tasks_;
+  private:
+    MetricsHTTPProvider *metricsHTTPProvider_=NULL;
   };
 }
 }
