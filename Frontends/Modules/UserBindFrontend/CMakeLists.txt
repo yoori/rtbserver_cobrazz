@@ -40,4 +40,4 @@ FCGI
 
 )
 
-install(TARGETS UserBindFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserBindFrontend  DESTINATION ${INSTALL_DIR})

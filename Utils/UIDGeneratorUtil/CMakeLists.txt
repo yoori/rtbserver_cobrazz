@@ -23,4 +23,4 @@ UIDGeneratorProtocolPB
 
 )
 
-install(TARGETS UIDGeneratorUtil DESTINATION ${INSTALL_DIR})
+#install(TARGETS UIDGeneratorUtil DESTINATION ${INSTALL_DIR})

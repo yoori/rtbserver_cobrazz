@@ -14,4 +14,4 @@ target_link_libraries(Oracle
 )
 
 
-install(TARGETS Oracle DESTINATION ${INSTALL_DIR})
+#install(TARGETS Oracle DESTINATION ${INSTALL_DIR})

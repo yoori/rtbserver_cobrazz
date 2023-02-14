@@ -26,4 +26,4 @@ target_link_libraries(ZmqBalancer
  XMLUtility
 )
 
-install(TARGETS ZmqBalancer  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ZmqBalancer  DESTINATION ${INSTALL_DIR})

@@ -27,4 +27,4 @@ target_link_libraries(UIDGeneratorAdapter
 
 )
 
-install(TARGETS UIDGeneratorAdapter  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UIDGeneratorAdapter  DESTINATION ${INSTALL_DIR})

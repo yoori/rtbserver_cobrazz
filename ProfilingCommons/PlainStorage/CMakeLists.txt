@@ -13,4 +13,4 @@ target_link_libraries(PlainStorage2
  Commons
 )
 
-install(TARGETS PlainStorage2  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainStorage2  DESTINATION ${INSTALL_DIR})

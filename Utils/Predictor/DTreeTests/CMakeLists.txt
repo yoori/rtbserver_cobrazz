@@ -8,5 +8,5 @@ target_link_libraries(DTreeUtilsTest
     DTree
 )
 
-install(TARGETS DTreeUtilsTest DESTINATION ${INSTALL_DIR})
+#install(TARGETS DTreeUtilsTest DESTINATION ${INSTALL_DIR})
 

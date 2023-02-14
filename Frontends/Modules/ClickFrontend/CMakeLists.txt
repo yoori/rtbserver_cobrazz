@@ -41,4 +41,4 @@ FCGI
 
 )
 
-install(TARGETS ClickFrontend DESTINATION ${INSTALL_DIR})
+#install(TARGETS ClickFrontend DESTINATION ${INSTALL_DIR})

@@ -39,4 +39,4 @@ FCGI
 
 )
 
-install(TARGETS DirectoryModule  DESTINATION ${INSTALL_DIR})
+#install(TARGETS DirectoryModule  DESTINATION ${INSTALL_DIR})

@@ -8,4 +8,4 @@ target_link_libraries(KafkaProducer
  rdkafka++
 )
 
-install(TARGETS KafkaProducer DESTINATION ${INSTALL_DIR})
+#install(TARGETS KafkaProducer DESTINATION ${INSTALL_DIR})

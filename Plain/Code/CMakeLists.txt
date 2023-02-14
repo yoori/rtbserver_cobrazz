@@ -7,4 +7,4 @@ target_link_libraries( PlainCode
 PlainDeclaration
 )
 
-install(TARGETS PlainCode  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainCode  DESTINATION ${INSTALL_DIR})

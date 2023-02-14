@@ -28,4 +28,4 @@ UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControlle
 CookieManager FCGI ProcessingTemplates  RequestMatchers UserIdController
 )
 
-install(TARGETS AdInstFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS AdInstFrontend  DESTINATION ${INSTALL_DIR})

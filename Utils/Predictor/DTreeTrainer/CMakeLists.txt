@@ -7,4 +7,4 @@ target_link_libraries(DTreeTrainer
 )
 
 
-install(TARGETS DTreeTrainer  DESTINATION ${INSTALL_DIR})
+#install(TARGETS DTreeTrainer  DESTINATION ${INSTALL_DIR})

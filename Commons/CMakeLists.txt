@@ -69,4 +69,4 @@ ADD_SUBDIRECTORY(Postgres)
 ADD_SUBDIRECTORY(Xslt)
 
 
-install(TARGETS CampaignFreqIDL CookieInfoPackIDL CorbaTypesIDL FreqCapInfoIDL Commons Gason ProcessControlVars   DESTINATION ${INSTALL_DIR})
+#install(TARGETS CampaignFreqIDL CookieInfoPackIDL CorbaTypesIDL FreqCapInfoIDL Commons Gason ProcessControlVars   DESTINATION ${INSTALL_DIR})

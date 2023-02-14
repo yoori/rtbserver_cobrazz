@@ -32,4 +32,4 @@ CookieManager FCGI ProcessingTemplates  RequestMatchers UserIdController
 )
 
 
-install(TARGETS  AdFrontend DESTINATION ${INSTALL_DIR})
+#install(TARGETS  AdFrontend DESTINATION ${INSTALL_DIR})

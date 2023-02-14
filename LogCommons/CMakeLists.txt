@@ -74,7 +74,7 @@ target_link_libraries(LogCommons
  CorbaTypesIDL
 )
 
-install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
+#install(TARGETS LogCommons  DESTINATION ${INSTALL_DIR})
 
 
 

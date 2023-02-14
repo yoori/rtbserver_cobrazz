@@ -15,4 +15,4 @@ target_link_libraries(UserBindUtil
 
 )
 
-install(TARGETS UserBindUtil  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserBindUtil  DESTINATION ${INSTALL_DIR})

@@ -60,4 +60,4 @@ FCGI
 z
 )
 
-install(TARGETS BiddingFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS BiddingFrontend  DESTINATION ${INSTALL_DIR})

@@ -38,4 +38,4 @@ UserBindServerIDL UserBindContainer
  FeConfigXSD
 FCGI
 )
-install(TARGETS WebStatFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS WebStatFrontend  DESTINATION ${INSTALL_DIR})

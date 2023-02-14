@@ -11,4 +11,4 @@ target_link_libraries(ProfileMap
  rocksdb
 )
 
-install(TARGETS ProfileMap  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ProfileMap  DESTINATION ${INSTALL_DIR})
