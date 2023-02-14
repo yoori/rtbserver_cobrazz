@@ -22,4 +22,4 @@ XslTransformer
 )
 
 
-install(TARGETS CampaignAdmin DESTINATION ${INSTALL_DIR})
+#install(TARGETS CampaignAdmin DESTINATION ${INSTALL_DIR})

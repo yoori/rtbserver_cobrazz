@@ -160,4 +160,4 @@ target_link_libraries(CampaignManager
 )
 
 
-install(TARGETS CampaignManager CampaignManagerLogger CreativeTemplateArgs CampaignConfig CampaignConfig CTRProvider CampaignManagerIDL BidRateProvider  DESTINATION ${INSTALL_DIR})
+#install(TARGETS CampaignManager CampaignManagerLogger CreativeTemplateArgs CampaignConfig CampaignConfig CTRProvider CampaignManagerIDL BidRateProvider  DESTINATION ${INSTALL_DIR})

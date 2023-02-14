@@ -8,4 +8,4 @@ target_link_libraries(TriggerFilter
  ChannelContainer
 )
 
-install(TARGETS TriggerFilter  DESTINATION ${INSTALL_DIR})
+#install(TARGETS TriggerFilter  DESTINATION ${INSTALL_DIR})

@@ -100,4 +100,4 @@ target_link_libraries(CampaignServer
 
 ADD_SUBDIRECTORY(Compatibility)
 
-install(TARGETS BillStatInfoIDL StatInfoIDL CampaignServerIDL BillStatServerSource CampaignServer  DESTINATION ${INSTALL_DIR})
+#install(TARGETS BillStatInfoIDL StatInfoIDL CampaignServerIDL BillStatServerSource CampaignServer  DESTINATION ${INSTALL_DIR})

@@ -81,4 +81,4 @@ CampaignTypes
 )
 
 
-install(TARGETS ExpressionMatcher ExpressionMatcherIDL  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ExpressionMatcher ExpressionMatcherIDL  DESTINATION ${INSTALL_DIR})

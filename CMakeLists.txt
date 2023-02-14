@@ -61,9 +61,8 @@ include_directories(${PST_DIRECTORY})
 
 add_subdirectory(${UNIXCOMMONS} ${UNIXCOMMONS_BUILD_ROOT})
 
-#link_directories(~/unixcommons-cobrazz-bin2/lib)
-
-add_definitions( -D_USE_OCCI -DXSD_CXX11)
+#add_definitions( -D_USE_OCCI -DXSD_CXX11)
+add_definitions(-DXSD_CXX11)
 
 # -D_USE_OCCI -DXSD_CXX11
 #link_directories( /usr/local/lib  )
@@ -86,3 +85,6 @@ ADD_SUBDIRECTORY(Utils)
 ADD_SUBDIRECTORY(Plain)
 ADD_SUBDIRECTORY(ChannelSearchSvcs)
 ADD_SUBDIRECTORY(ChannelSvcs)
+
+install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} DESTINATION bin)
+install(DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} DESTINATION lib)

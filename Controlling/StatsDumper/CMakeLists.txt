@@ -13,4 +13,4 @@ target_link_libraries(StatsDumper
  StatsCollectorConfigXSD
 )
 
-install(TARGETS  StatsDumper DESTINATION ${INSTALL_DIR})
+#install(TARGETS  StatsDumper DESTINATION ${INSTALL_DIR})

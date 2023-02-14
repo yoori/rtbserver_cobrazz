@@ -188,4 +188,4 @@ target_link_libraries(UserTagRequestMergeContainer
   LogCommons
 )
 
-install(TARGETS BillingProcessor PassbackContainer RequestInfoContainer RequestInfoManagerIDL RequestInfoManager RequestLogLoader RequestOperationSaver  DESTINATION ${INSTALL_DIR})
+#install(TARGETS BillingProcessor PassbackContainer RequestInfoContainer RequestInfoManagerIDL RequestInfoManager RequestLogLoader RequestOperationSaver  DESTINATION ${INSTALL_DIR})

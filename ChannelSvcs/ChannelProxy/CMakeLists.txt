@@ -49,4 +49,4 @@ ChannelProxyIDL
 ChannelProxy_v28IDL
 ChannelUpdate_v28IDL
 )
-install(TARGETS ChannelProxy ChannelUpdate_v28IDL ChannelProxyIDL  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ChannelProxy ChannelUpdate_v28IDL ChannelProxyIDL  DESTINATION ${INSTALL_DIR})

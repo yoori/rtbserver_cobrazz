@@ -56,4 +56,4 @@ ChannelServerIDL ChannelUpdateBaseIDL
   GenericSegmentor
 )
 
-install(TARGETS ChannelServer ChannelContainer  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ChannelServer ChannelContainer  DESTINATION ${INSTALL_DIR})
