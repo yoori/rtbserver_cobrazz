@@ -36,7 +36,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv300%{?dist}
+Release: ssv302%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -205,9 +205,9 @@ if [ '%{?buildType}' == 'nb' ]; then cpp_flags='-DDEBUG '; fi
 mkdir -p unixcommons/%{__osbe_build_dir}
 echo "DIRECTORY"
 pwd
-cp unixcommons/default.config.t /tmp/unixcommons.default.config.t
-cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
-    unixcommons/default.config.t > unixcommons/%{__osbe_build_dir}/default.config
+#cp unixcommons/default.config.t /tmp/unixcommons.default.config.t
+#cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
+#    unixcommons/default.config.t > unixcommons/%{__osbe_build_dir}/default.config
 
 if [ '%__type' == 'central' ]; then cpp_flags+='-DUSE_OCCI'; fi
 
