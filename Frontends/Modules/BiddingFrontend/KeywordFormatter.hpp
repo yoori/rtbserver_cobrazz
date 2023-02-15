@@ -25,6 +25,7 @@ namespace Bidding
     const std::string DCL("dcl");
     const std::string NO_ID("noid");
     const std::string NATIVE_PLACEMENT("nativeplacement");
+    const std::string DEAL_ID("dealid");
 
     const std::string FULL_NOREF("poadnoref");
     const std::string FULL_IDFA("rtbidfa");
