@@ -1037,7 +1037,7 @@ namespace CampaignSvcs
         {
           new_weight = 10000;
         }
-        else
+        else if(cc_stat_it->second.clicks < cc_stat_it->second.impressions)
         {
           const ImpRevenueDecimal new_weight_dec = ImpRevenueDecimal::div(
             ImpRevenueDecimal::mul(
@@ -1046,7 +1046,11 @@ namespace CampaignSvcs
             Generics::DDR_FLOOR).ceil(0);
           new_weight_dec.to_integer(new_weight);
         }
-        
+        else
+        {
+          new_weight = 10000;
+        }
+
         new_weight = std::max(new_weight, 1ul);
       }
 

@@ -189,6 +189,8 @@ namespace
     Table::Column("comm_amount", Table::Column::TEXT),
     Table::Column("daily_amount", Table::Column::TEXT),
     Table::Column("daily_comm_amount", Table::Column::TEXT),
+    Table::Column("impressions", Table::Column::NUMBER),
+    Table::Column("clicks", Table::Column::NUMBER)
   };
 
   const Table::Column STAT_AMOUNT_COLUMNS[] =
@@ -1007,6 +1009,20 @@ Application::campaign_stat()
     {
       const AdServer::CampaignSvcs::CampaignStatInfo& stat = campaign_stats[i];
 
+      // eval sum imps, clicks
+      AdServer::CampaignSvcs::ImpRevenueDecimal sum_imps = AdServer::CampaignSvcs::ImpRevenueDecimal::ZERO;
+      AdServer::CampaignSvcs::ImpRevenueDecimal sum_clicks = AdServer::CampaignSvcs::ImpRevenueDecimal::ZERO;
+
+      for(CORBA::ULong ccg_i = 0; ccg_i < stat.ccgs.length(); ++ccg_i)
+      {
+        const AdServer::CampaignSvcs::CCGStatInfo& ccg_stat = stat.ccgs[ccg_i];
+
+        sum_imps += CorbaAlgs::unpack_decimal<
+          AdServer::CampaignSvcs::ImpRevenueDecimal>(ccg_stat.impressions);
+        sum_clicks += CorbaAlgs::unpack_decimal<
+          AdServer::CampaignSvcs::ImpRevenueDecimal>(ccg_stat.clicks);
+      }
+
       Table::Row row(table->columns());
       row.add_field(stat.campaign_id);
       row.add_field(CorbaAlgs::unpack_decimal<
@@ -1017,6 +1033,8 @@ Application::campaign_stat()
         AdServer::CampaignSvcs::RevenueDecimal>(stat.daily_amount).str());
       row.add_field(CorbaAlgs::unpack_decimal<
         AdServer::CampaignSvcs::RevenueDecimal>(stat.daily_comm_amount).str());
+      row.add_field(sum_imps.str());
+      row.add_field(sum_clicks.str());
       table->add_row(row, filters_, sorter_);
     }
 
