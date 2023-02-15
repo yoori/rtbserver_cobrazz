@@ -2190,7 +2190,7 @@ namespace Bidding
 
         JsonAdSlotParamProcessor_var deal_processor =
           new JsonPmpParamProcessor();
-        
+
         pmp_processor->add_processor(
           Request::OpenRtb::PMP_DEALS,
           JsonAdSlotParamProcessor_var(
@@ -4897,6 +4897,12 @@ namespace Bidding
         ad_slot_request.debug_ccg = 0;
 
         ad_slot_request.ext_tag_id << ext_tag_id;
+
+        // add deal id's as keywords
+        for(auto deal_it = slot_it->deals.begin(); deal_it != slot_it->deals.end(); ++deal_it)
+        {
+          kw_fmt.add_dict_keyword(MatchKeywords::DEAL_ID, norm_keyword_(deal_it->id));
+        }
 
         ++slot_i;
         ++slot_it;
