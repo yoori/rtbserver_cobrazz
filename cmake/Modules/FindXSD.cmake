@@ -14,7 +14,6 @@ function(add_xsd _target _xsdfile target_dir)
     else()
         set(MIDL_ARCH x64)
     endif()
-
     
     file(MAKE_DIRECTORY ${target_dir})
     execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${target_dir})
@@ -22,15 +21,13 @@ function(add_xsd _target _xsdfile target_dir)
     set(FINDIDL_TARGET ${_target}_gen)
     add_custom_target(${FINDIDL_TARGET} DEPENDS "${OUTPUTCPP}" )
     add_custom_command(
-       OUTPUT  ${OUTPUTCPP} ${OUTPUTHPP}
-
-       COMMAND /usr/bin/xsdcxx ARGS cxx-tree --std c++11 --hxx-suffix .hpp --ixx-suffix .ipp --cxx-suffix .cpp  --namespace-regex  "\"|^XMLSchema.xsd http://www.w3.org/2001/XMLSchema$$|xml_schema|\""   --fwd-suffix -fwd.hpp --output-dir ${target_dir}  ${SRC}
-    DEPENDS ${FINDIDL_TARGET}
+      OUTPUT  ${OUTPUTCPP} ${OUTPUTHPP}
+      COMMAND /usr/bin/xsdcxx ARGS cxx-tree --std c++11 --hxx-suffix .hpp --ixx-suffix .ipp --cxx-suffix .cpp  --namespace-regex  "\"|^XMLSchema.xsd http://www.w3.org/2001/XMLSchema$$|xml_schema|\""   --fwd-suffix -fwd.hpp --output-dir ${target_dir}  ${SRC}
+      DEPENDS ${SRC}
     )
-
  
     add_library(${_target} STATIC
-	${OUTPUTCPP}
+      ${OUTPUTCPP}
     )    
     add_dependencies(${_target} ${FINDIDL_TARGET})
     target_include_directories(${_target} INTERFACE ${MIDL_OUTPUT_PATH})
