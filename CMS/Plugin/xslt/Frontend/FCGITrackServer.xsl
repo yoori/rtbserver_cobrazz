@@ -93,6 +93,15 @@
       <xsl:with-param name="default-log-level" select="$default-fcgiserver-log-level"/>
     </xsl:call-template>
 
+    <xsl:variable name="fcgi-trackserver-mon-port">
+      <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@mon_port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@mon_port) = 0">
+        <xsl:value-of select="$def-fcgi-trackserver-mon-port"/>
+      </xsl:if>
+    </xsl:variable>
+
+    <cfg:Monitoring port="{$fcgi-trackserver-mon-port}"/>
+
     <cfg:Module name="pubpixel"/>
     <cfg:Module name="content"/>
     <cfg:Module name="directory"/>

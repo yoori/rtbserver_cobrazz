@@ -23,6 +23,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10276">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
@@ -45,6 +52,13 @@
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10277">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -73,6 +87,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10296">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
@@ -90,11 +111,18 @@
     </xsd:attribute>
   </xsd:complexType>
 
-<xsd:complexType name="TrackFCGINetworkParamsType">
+  <xsd:complexType name="TrackFCGINetworkParamsType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10195">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10295">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -123,6 +151,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10278">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
@@ -148,6 +183,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10294">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
@@ -165,11 +207,18 @@
     </xsd:attribute>
   </xsd:complexType>
 
-<xsd:complexType name="UserBindIntFCGINetworkParamsType">
+  <xsd:complexType name="UserBindIntFCGINetworkParamsType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10179">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10279">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -195,6 +244,13 @@
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10293">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

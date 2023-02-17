@@ -644,8 +644,10 @@ namespace Bidding
         control_task_runner_->enqueue_task(
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
 
+        /*
         metricsHTTPProvider_ = new UServerUtils::MetricsHTTPProvider(8081, "/sample/data");
         add_child_object(metricsHTTPProvider_);
+        */
 
         activate_object();
       }
