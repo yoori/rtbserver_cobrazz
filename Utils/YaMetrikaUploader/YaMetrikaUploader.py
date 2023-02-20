@@ -37,7 +37,7 @@ SQL_INSERT_STAT = "INSERT INTO YandexMetrikaStats VALUES (%s, %s, %s, %s, %s, %s
 class Application:
     def __init__(self):
         self.running = True
-        # signal.signal(signal.SIGUSR1, self.__stop)
+        signal.signal(signal.SIGUSR1, self.__stop)
 
         parser = argparse.ArgumentParser()
         parser.add_argument("-period", type=float, help="Period between checking files.")
