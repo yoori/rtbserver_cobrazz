@@ -58,7 +58,8 @@ protobuf
 protoc
 FCGI
 z
-MetricsHTTPProvider
+#MetricsHTTPProvider
+UServerUtils
 )
 
 install(TARGETS BiddingFrontend  DESTINATION ${INSTALL_DIR})

@@ -20,7 +20,7 @@ function(add_xsd _target _xsdfile target_dir)
     execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${target_dir})
     set (SRC ${CMAKE_CURRENT_LIST_DIR}/${_xsdfile})
     set(FINDIDL_TARGET ${_target}_gen)
-    add_custom_target(${FINDIDL_TARGET} DEPENDS "${OUTPUTCPP}" )
+    add_custom_target(${FINDIDL_TARGET} DEPENDS ${OUTPUTCPP}  ${OUTPUTHPP})
     add_custom_command(
        OUTPUT  ${OUTPUTCPP} ${OUTPUTHPP}
 
@@ -33,5 +33,7 @@ function(add_xsd _target _xsdfile target_dir)
 	${OUTPUTCPP}
     )    
     add_dependencies(${_target} ${FINDIDL_TARGET})
+#    add_dependencies(${_target} ${OUTPUTCPP})
+#    add_dependencies(${_target} ${OUTPUTHPP})
     target_include_directories(${_target} INTERFACE ${MIDL_OUTPUT_PATH})
 endfunction()

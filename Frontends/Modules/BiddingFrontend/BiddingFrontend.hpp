@@ -12,6 +12,8 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Generics/AtomicInt.hpp>
+#include "Generics/CompositeMetricsProvider.hpp"
+
 
 #include <Sync/PosixLock.hpp>
 
@@ -37,7 +39,7 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
-#include "MetricsHTTPProvider/src/MetricsHTTPProvider.hpp"
+#include "UServerUtils/MetricsHTTPProvider.hpp"
 
 
 namespace AdServer
@@ -403,7 +405,8 @@ namespace Bidding
     mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
     unsigned long reached_max_pending_tasks_;
   private:
-    MetricsHTTPProvider *metricsHTTPProvider_=NULL;
+    UServerUtils::MetricsHTTPProvider *metricsHTTPProvider_=NULL;
+    CompositeMetricsProvider *compositeMetricsProvider_=NULL;
   };
 }
 }
