@@ -40,4 +40,4 @@ FCGI
 
 )
 
-install(TARGETS PubPixelFrontend DESTINATION ${INSTALL_DIR})
+#install(TARGETS PubPixelFrontend DESTINATION ${INSTALL_DIR})

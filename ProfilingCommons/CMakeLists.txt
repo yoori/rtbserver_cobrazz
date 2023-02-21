@@ -15,6 +15,6 @@ target_link_libraries(MessageSaver
  Commons
  LogCommons
 )
-install(TARGETS MessageSaver  DESTINATION ${INSTALL_DIR})
+#install(TARGETS MessageSaver  DESTINATION ${INSTALL_DIR})
 
 

@@ -2,7 +2,6 @@ add_pb(baidu-biddingPB baidu-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/Bid
 add_pb(google-biddingPB google-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
 add_pb(tanx-biddingPB tanx-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
 
-
 add_library(BiddingFrontend SHARED
   RequestInfoFiller.cpp 
   AdXmlRequestInfoFiller.cpp 
@@ -18,48 +17,44 @@ add_library(BiddingFrontend SHARED
   ClickStarBidRequestTask.cpp 
   DAOBidRequestTask.cpp 
   KeywordFormatter.cpp
-
 )
+
 target_link_libraries(BiddingFrontend 
+  Stream
+  Geoip
+  CORBACommons
 
- Stream
- Geoip
- CORBACommons
+  Polyglot
 
- Polyglot
+  Commons
+  #ChannelControllerStubs
+  ChannelManagerControllerIDL
+  # UserInfoManagerControllerStubs
+  UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerL
 
- Commons
- #ChannelControllerStubs
- ChannelManagerControllerIDL
-# UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+  # CampaignManagerStubs
+  CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex
+  CreativeTemplateArgs SecToken CampaignManagerLogger
 
-# CampaignManagerStubs
-CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
+  DomainParser
+  # CampaignServerStubs
+  StatInfoIDL BillStatInfoIDL CampaignServerIDL
 
- DomainParser
-# CampaignServerStubs
-StatInfoIDL BillStatInfoIDL CampaignServerIDL
+  # UserBindServerStubs
+  UserBindServerIDL UserBindContainer
 
-# UserBindServerStubs
-UserBindServerIDL UserBindContainer
+  RequestMatchers
+  FrontendStatistic
+  UserIdController
+  CommonModule
 
- RequestMatchers
- FrontendStatistic
- UserIdController
- CommonModule
-
- FeConfigXSD
- baidu-biddingPB
- google-biddingPB
- tanx-biddingPB
- Gason
-protobuf
-protoc
-FCGI
-z
-#MetricsHTTPProvider
-UServerUtils
+  FeConfigXSD
+  baidu-biddingPB
+  google-biddingPB
+  tanx-biddingPB
+  Gason
+  protobuf
+  protoc
+  FCGI
+  UServerUtils
 )
-
-install(TARGETS BiddingFrontend  DESTINATION ${INSTALL_DIR})

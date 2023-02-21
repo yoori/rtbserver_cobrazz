@@ -8,5 +8,5 @@ target_link_libraries(PrFeatureFilter2
  Commons
 )
 
-install(TARGETS PrFeatureFilter2 DESTINATION ${INSTALL_DIR})
+#install(TARGETS PrFeatureFilter2 DESTINATION ${INSTALL_DIR})
 

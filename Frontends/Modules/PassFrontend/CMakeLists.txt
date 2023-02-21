@@ -42,4 +42,4 @@ FCGI
 
 )
 
-install(TARGETS PassFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PassFrontend  DESTINATION ${INSTALL_DIR})

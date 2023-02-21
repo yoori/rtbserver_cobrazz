@@ -34,4 +34,4 @@ target_link_libraries(SyncLogs
   XMLUtility
 )
 
-install(TARGETS SyncLogs DESTINATION ${INSTALL_DIR})
+#install(TARGETS SyncLogs DESTINATION ${INSTALL_DIR})

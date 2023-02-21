@@ -63,4 +63,4 @@ target_link_libraries(ChannelClusterControl
 ChannelClusterControlIDL
 )
 
-install(TARGETS ChannelClusterControl ChannelSessionFactory ChannelController ChannelClusterControlIDL ChannelManagerControllerIDL   DESTINATION ${INSTALL_DIR})
+#install(TARGETS ChannelClusterControl ChannelSessionFactory ChannelController ChannelClusterControlIDL ChannelManagerControllerIDL   DESTINATION ${INSTALL_DIR})

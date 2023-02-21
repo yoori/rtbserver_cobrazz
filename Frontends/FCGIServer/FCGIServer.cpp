@@ -118,6 +118,18 @@ namespace Frontends
         ostr << FUN << ": got LoggerConfigReader::Exception: " << ex.what();
         throw Exception(ostr);
       }
+
+      // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
+      // init metrics http provider
+      if(config_->Monitoring().present())
+      {
+	CompositeMetricsProvider_var cmp=new CompositeMetricsProvider;
+        UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
+          new UServerUtils::MetricsHTTPProvider( cmp.operator->(),
+            config_->Monitoring()->port(), "/sample/data");
+
+        add_child_object(metrics_http_provider);
+      }
     }
     catch (const Exception &ex)
     {
@@ -235,6 +247,7 @@ namespace Frontends
         }
       }
 
+      // pass CompositeMetricsProvider here
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
         config_->fe_config().data(),
         modules,

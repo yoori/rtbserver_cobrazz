@@ -94,6 +94,15 @@
       <xsl:with-param name="default-log-level" select="$default-fcgiserver-log-level"/>
     </xsl:call-template>
 
+    <xsl:variable name="fcgi-rtbserver-mon-port">
+      <xsl:value-of select="$fcgi-rtbserver-config/cfg:rtbFCGI{FCGIRTBSERVER_INDEX}NetworkParams/@mon_port"/>
+      <xsl:if test="count($fcgi-rtbserver-config/cfg:rtbFCGI{FCGIRTBSERVER_INDEX}NetworkParams/@mon_port) = 0">
+        <xsl:value-of select="$def-fcgi-rtbserver{FCGIRTBSERVER_INDEX}-mon-port"/>
+      </xsl:if>
+    </xsl:variable>
+
+    <cfg:Monitoring port="{$fcgi-rtbserver-mon-port}"/>
+
     <cfg:Module name="bidding"/>
   </cfg:FCGIServerConfig>
 

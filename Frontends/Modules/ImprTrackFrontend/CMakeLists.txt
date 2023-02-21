@@ -40,4 +40,4 @@ FCGI
 
 )
 
-install(TARGETS ImprTrackFrontend DESTINATION ${INSTALL_DIR})
+#install(TARGETS ImprTrackFrontend DESTINATION ${INSTALL_DIR})

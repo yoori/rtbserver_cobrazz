@@ -16,4 +16,4 @@ target_link_libraries(ChannelAdmin
   DictionaryProviderIDL
 )
 
-install(TARGETS ChannelAdmin DESTINATION ${INSTALL_DIR})
+#install(TARGETS ChannelAdmin DESTINATION ${INSTALL_DIR})

@@ -27,4 +27,4 @@ target_link_libraries(ExpressionChannelIndex
     ExpressionChannel
 )
 
-install(TARGETS CampaignCommonsIDL CampaignTypes ExpressionChannel ExpressionChannelIndex  DESTINATION ${INSTALL_DIR})
+#install(TARGETS CampaignCommonsIDL CampaignTypes ExpressionChannel ExpressionChannelIndex  DESTINATION ${INSTALL_DIR})

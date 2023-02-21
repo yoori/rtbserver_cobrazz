@@ -17,4 +17,4 @@ target_link_libraries(StatsCollector
  StatsCollectorConfigXSD
 )
 
-install(TARGETS StatsCollectorIDL StatsCollector  DESTINATION ${INSTALL_DIR})
+#install(TARGETS StatsCollectorIDL StatsCollector  DESTINATION ${INSTALL_DIR})

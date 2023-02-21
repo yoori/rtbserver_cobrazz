@@ -36,7 +36,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv219%{?dist}
+Release: ssv302%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -205,9 +205,9 @@ if [ '%{?buildType}' == 'nb' ]; then cpp_flags='-DDEBUG '; fi
 mkdir -p unixcommons/%{__osbe_build_dir}
 echo "DIRECTORY"
 pwd
-cp unixcommons/default.config.t /tmp/unixcommons.default.config.t
-cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
-    unixcommons/default.config.t > unixcommons/%{__osbe_build_dir}/default.config
+#cp unixcommons/default.config.t /tmp/unixcommons.default.config.t
+#cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
+#    unixcommons/default.config.t > unixcommons/%{__osbe_build_dir}/default.config
 
 if [ '%__type' == 'central' ]; then cpp_flags+='-DUSE_OCCI'; fi
 
@@ -226,11 +226,11 @@ pushd unixcommons
 #osbe
 product_root=`pwd`
 cd %{__osbe_build_dir}
-echo "CALL UNIXCOMMONS CMAKE in $(pwd)"
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+#echo "CALL UNIXCOMMONS CMAKE in $(pwd)"
+#cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+#%{__make} %{_smp_mflags}
+
 #${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
-#scl enable devtoolset-8 -- %{__make} %{_smp_mflags}
-%{__make} %{_smp_mflags}
 popd
 
 pushd %{__product}
@@ -238,10 +238,10 @@ pushd %{__product}
 product_root=`pwd`
 cd %{__osbe_build_dir}
 echo "CALL RTBSERVER CMAKE in $(pwd)"
-cmake -DUNIXCOMMONS=../unixcommons -DCMAKE_BUILD_TYPE=RelWithDebInfo .
+cmake -DUNIXCOMMONS=$(pwd)/../unixcommons -DCMAKE_BUILD_TYPE=RelWithDebInfo .
 #${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
 #scl enable devtoolset-8 -- %{__make} %{_smp_mflags}
-%{__make} %{_smp_mflags}
+%{__make} %{_smp_mflags} VERBOSE=1
 popd
 %endif
 
@@ -257,9 +257,8 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}%{__inst_root}
 
 %ifnarch noarch
-#scl enable devtoolset-8 --
 #make -C unixcommons/%{__osbe_build_dir} install destdir=%{buildroot}
-cmake --install unixcommons/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
+#cmake --install unixcommons/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
 
 rm -rf %{buildroot}%{__inst_root}/include
 rm -rf `find %{buildroot}%{__inst_root}/lib -type f -name '*.a'`

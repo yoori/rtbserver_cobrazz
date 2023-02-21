@@ -15,4 +15,4 @@ target_link_libraries(PlainDeclaration
  Generics
 )
 
-install(TARGETS PlainDeclaration DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainDeclaration DESTINATION ${INSTALL_DIR})

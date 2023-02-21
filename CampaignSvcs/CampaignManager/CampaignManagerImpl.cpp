@@ -1375,12 +1375,14 @@ namespace AdServer
               ConfirmCreativeAmount(it->creative->ccid, it->ctr));
           }
 
+          // confirm imps
           confirm_amounts_(
             campaign_config,
             time,
             confirm_creatives,
             CR_CPM);
 
+          // confirm clicks
           confirm_amounts_(
             campaign_config,
             time,

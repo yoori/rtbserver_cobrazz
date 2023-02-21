@@ -20,4 +20,4 @@ target_link_libraries(LogGeneralizerAdmin
   String
 )
 
-install(TARGETS LogGeneralizerAdmin DESTINATION ${INSTALL_DIR})
+#install(TARGETS LogGeneralizerAdmin DESTINATION ${INSTALL_DIR})

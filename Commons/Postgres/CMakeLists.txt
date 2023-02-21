@@ -13,4 +13,4 @@ target_link_libraries(Postgres
     pq
 )
 
-install(TARGETS Postgres DESTINATION ${INSTALL_DIR})
+#install(TARGETS Postgres DESTINATION ${INSTALL_DIR})

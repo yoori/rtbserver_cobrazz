@@ -24,4 +24,4 @@ target_link_libraries(UserInfoExchanger
  
 )
 
-install(TARGETS UserInfoExchangerIDL UserInfoExchanger  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserInfoExchangerIDL UserInfoExchanger  DESTINATION ${INSTALL_DIR})

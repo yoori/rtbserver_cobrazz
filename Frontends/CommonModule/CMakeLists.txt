@@ -16,4 +16,4 @@ DomainConfigXSD
 GenericSegmentor
 )
 
-install(TARGETS CommonModule DESTINATION ${INSTALL_DIR})
+#install(TARGETS CommonModule DESTINATION ${INSTALL_DIR})

@@ -12,6 +12,6 @@ target_link_libraries(PrFeatureFilter
  CTRProvider
 
 )
-install(TARGETS PrFeatureFilter  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PrFeatureFilter  DESTINATION ${INSTALL_DIR})
 
 

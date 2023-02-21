@@ -75,4 +75,4 @@ target_link_libraries(UserIdController
  Generics
  Commons
 )
-install(TARGETS UserIdController RequestMatchers ProcessingTemplates FrontendStatistic  FCGI CookieManager  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserIdController RequestMatchers ProcessingTemplates FrontendStatistic  FCGI CookieManager  DESTINATION ${INSTALL_DIR})

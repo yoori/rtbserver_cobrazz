@@ -14,6 +14,7 @@
 #include <Generics/AtomicInt.hpp>
 #include "Generics/CompositeMetricsProvider.hpp"
 
+#include <UServerUtils/MetricsHTTPProvider.hpp>
 
 #include <Sync/PosixLock.hpp>
 
@@ -404,9 +405,10 @@ namespace Bidding
 
     mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
     unsigned long reached_max_pending_tasks_;
+
   private:
-    UServerUtils::MetricsHTTPProvider *metricsHTTPProvider_=NULL;
-    CompositeMetricsProvider *compositeMetricsProvider_=NULL;
+    Generics::CompositeMetricsProvider_var compositeMetricsProvider_;
+    UServerUtils::MetricsHTTPProvider_var metricsHTTPProvider_;
   };
 }
 }

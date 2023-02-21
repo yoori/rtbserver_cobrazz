@@ -23,4 +23,4 @@ String
 pthread
 )
 
-install(TARGETS ExpressionMatcherCompatibility  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ExpressionMatcherCompatibility  DESTINATION ${INSTALL_DIR})

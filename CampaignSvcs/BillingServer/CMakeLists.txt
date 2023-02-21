@@ -47,6 +47,6 @@ target_link_libraries(BillingServer   Commons  BillStatServerSource BillingConta
     TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL 
     )
 
-install(TARGETS BillingContainer BillingServerIDL BillingServer DESTINATION ${INSTALL_DIR})
+#install(TARGETS BillingContainer BillingServerIDL BillingServer DESTINATION ${INSTALL_DIR})
 
 

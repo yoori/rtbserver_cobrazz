@@ -20,4 +20,4 @@ target_link_libraries(LevelCheckUtil
  Commons
  PlainStorage3
 )
-install(TARGETS PlainStorageUtil LevelCheckUtil  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainStorageUtil LevelCheckUtil  DESTINATION ${INSTALL_DIR})

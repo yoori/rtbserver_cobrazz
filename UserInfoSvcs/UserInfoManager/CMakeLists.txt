@@ -70,4 +70,4 @@ target_link_libraries(UserInfoManager
 
 )
 
-install(TARGETS UserInfoManager UserInfoContainer UserInfoManagerIDL UserInfoManagerControlIDL  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserInfoManager UserInfoContainer UserInfoManagerIDL UserInfoManagerControlIDL  DESTINATION ${INSTALL_DIR})

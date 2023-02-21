@@ -12,4 +12,4 @@ target_link_libraries(PlainStorage3
  Generics
  Commons
 )
-install(TARGETS PlainStorage3  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainStorage3  DESTINATION ${INSTALL_DIR})

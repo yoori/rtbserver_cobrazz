@@ -13,4 +13,4 @@ target_link_libraries(UserIdUtil
 
 )
 
-install(TARGETS UserIdUtil DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserIdUtil DESTINATION ${INSTALL_DIR})

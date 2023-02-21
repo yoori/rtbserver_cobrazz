@@ -22,7 +22,7 @@ RequestInfoManagerCompatibility
 
 
 )
-install(TARGETS RequestInfoAdmin  DESTINATION ${INSTALL_DIR})
+#install(TARGETS RequestInfoAdmin  DESTINATION ${INSTALL_DIR})
 
 
 

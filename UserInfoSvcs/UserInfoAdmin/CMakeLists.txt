@@ -17,4 +17,4 @@ target_link_libraries(UserInfoAdmin
 
 )
 
-install(TARGETS UserInfoAdmin DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserInfoAdmin DESTINATION ${INSTALL_DIR})

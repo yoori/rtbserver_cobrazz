@@ -17,4 +17,4 @@ target_link_libraries(UserExtractUtil
 
 )
 
-install(TARGETS UserExtractUtil  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserExtractUtil  DESTINATION ${INSTALL_DIR})

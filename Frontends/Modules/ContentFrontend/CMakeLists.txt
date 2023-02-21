@@ -39,4 +39,4 @@ FCGI
 
 )
 
-install(TARGETS ContentFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ContentFrontend  DESTINATION ${INSTALL_DIR})

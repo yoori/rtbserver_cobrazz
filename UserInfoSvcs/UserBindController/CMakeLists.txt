@@ -35,4 +35,4 @@ target_link_libraries(UserBindController
   ProcessControlVars
 )
 
-install(TARGETS UserBindControllerIDL UserBindControllerStubs UserBindController DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserBindControllerIDL UserBindControllerStubs UserBindController DESTINATION ${INSTALL_DIR})

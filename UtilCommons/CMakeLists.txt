@@ -8,7 +8,7 @@ Generics
 
 )
 
-install(TARGETS UtilCommons DESTINATION ${INSTALL_DIR})
+#install(TARGETS UtilCommons DESTINATION ${INSTALL_DIR})
 
 
 
