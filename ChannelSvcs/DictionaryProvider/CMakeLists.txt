@@ -33,4 +33,4 @@ target_link_libraries(DictionaryProvider
   ChannelCommons
 )
 
-install(TARGETS DictionaryProvider DictionaryProviderIDL  DESTINATION ${INSTALL_DIR})
+#install(TARGETS DictionaryProvider DictionaryProviderIDL  DESTINATION ${INSTALL_DIR})

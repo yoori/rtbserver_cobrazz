@@ -12,4 +12,4 @@ target_link_libraries(UserInfoExchangerProxy
  UserInfoExchangerIDL
 )
 
-install(TARGETS UserInfoExchangerProxy DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserInfoExchangerProxy DESTINATION ${INSTALL_DIR})

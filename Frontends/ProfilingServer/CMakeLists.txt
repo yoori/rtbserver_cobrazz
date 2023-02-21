@@ -45,4 +45,4 @@ DMPProfilingInfoPST
 
 )
 
-install(TARGETS ProfilingServer HashFilter  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ProfilingServer HashFilter  DESTINATION ${INSTALL_DIR})

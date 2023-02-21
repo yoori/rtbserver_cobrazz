@@ -11,4 +11,4 @@ target_link_libraries(RequestCompatibility
  Commons
  LogCommons
 )
-install(TARGETS RequestCompatibility  DESTINATION ${INSTALL_DIR})
+#install(TARGETS RequestCompatibility  DESTINATION ${INSTALL_DIR})

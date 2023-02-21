@@ -7,4 +7,4 @@ target_link_libraries(ControlAdmin
 )
 
 
-install(TARGETS ControlAdmin  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ControlAdmin  DESTINATION ${INSTALL_DIR})

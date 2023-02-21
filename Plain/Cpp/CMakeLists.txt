@@ -10,4 +10,4 @@ target_link_libraries(PlainCpp
  PlainDeclaration
  PlainCode
 )
-install(TARGETS PlainCpp DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainCpp DESTINATION ${INSTALL_DIR})

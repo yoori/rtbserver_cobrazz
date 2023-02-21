@@ -40,4 +40,4 @@ FCGI
 
 )
 
-install(TARGETS OptoutFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS OptoutFrontend  DESTINATION ${INSTALL_DIR})

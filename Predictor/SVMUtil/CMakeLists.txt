@@ -11,6 +11,6 @@ target_link_libraries(SVMUtil
 /opt/foros/vanga/lib/libGearsBasic.so
 /opt/foros/vanga/lib/libGearsThreading.so
 )
-install(TARGETS SVMUtil  DESTINATION ${INSTALL_DIR})
+#install(TARGETS SVMUtil  DESTINATION ${INSTALL_DIR})
 
 

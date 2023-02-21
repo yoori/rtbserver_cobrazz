@@ -645,11 +645,12 @@ namespace Bidding
         control_task_runner_->enqueue_task(
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
 
-        activate_object();
-        CompositeMetricsProvider *compositeMetricsProvider_=new CompositeMetricsProvider;
+        //CompositeMetricsProvider *
+        compositeMetricsProvider_=new CompositeMetricsProvider;
         metricsHTTPProvider_=new UServerUtils::MetricsHTTPProvider(compositeMetricsProvider_,frontend_config_->get().BidFeConfiguration()->metrics_port(),"/metrics");
-        metricsHTTPProvider_->activate_object();
+        add_child_object(metricsHTTPProvider_);
 
+        activate_object();
       }
       catch (const eh::Exception& ex)
       {

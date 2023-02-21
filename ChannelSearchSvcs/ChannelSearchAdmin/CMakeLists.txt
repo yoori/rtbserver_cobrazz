@@ -12,4 +12,4 @@ target_link_libraries(ChannelSearchAdmin
  ChannelSearchServiceIDL
  ChannelSessionFactory
 )
-install(TARGETS ChannelSearchAdmin  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ChannelSearchAdmin  DESTINATION ${INSTALL_DIR})

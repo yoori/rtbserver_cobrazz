@@ -40,4 +40,4 @@ FCGI
 
 )
 
-install(TARGETS PassPixelFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PassPixelFrontend  DESTINATION ${INSTALL_DIR})

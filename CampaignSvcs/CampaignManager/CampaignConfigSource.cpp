@@ -3089,6 +3089,7 @@ namespace CampaignSvcs
                 args.insert(size.tokens.begin(), size.tokens.end());
                 args[CreativeTokens::ADV_CLICK_URL] = cur_creative->click_url;
 
+                /*
                 {
                   Stream::Error ostr;
                   ostr << "TOKENS:" << std::endl;
@@ -3100,6 +3101,7 @@ namespace CampaignSvcs
                   logger_->log(ostr.str(), Logging::Logger::ERROR,
                     Aspect::CAMPAIGN_CONFIG_SOURCE, "ADS-?");
                 }
+                */
                 
                 try
                 {

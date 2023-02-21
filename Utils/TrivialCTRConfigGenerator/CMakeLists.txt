@@ -9,4 +9,4 @@ target_link_libraries(TrivialCTRConfigGenerator
 
 )
 
-install(TARGETS TrivialCTRConfigGenerator  DESTINATION ${INSTALL_DIR})
+#install(TARGETS TrivialCTRConfigGenerator  DESTINATION ${INSTALL_DIR})

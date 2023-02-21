@@ -39,4 +39,4 @@ target_link_libraries(FCGIServer
 
 )
 
-install(TARGETS FCGIServer  DESTINATION ${INSTALL_DIR})
+#install(TARGETS FCGIServer  DESTINATION ${INSTALL_DIR})

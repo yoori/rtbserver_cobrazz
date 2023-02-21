@@ -28,6 +28,7 @@
       <xsd:element name="BindSocket" type="BindSocketType" minOccurs="1" maxOccurs="unbounded"/>
       <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
       <xsd:element name="Logger" type="ErrorLoggerType"/>
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
     </xsd:sequence>
 
@@ -40,7 +41,12 @@
     <xsd:attribute name="accept_threads" type="xsd:positiveInteger" default="1"/>
   </xsd:complexType>
 
+  <xsd:complexType name="MonitoringType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
   <xsd:complexType name="ModuleType">
     <xsd:attribute name="name" type="xsd:string" use="required"/>
   </xsd:complexType>
+
 </xsd:schema>

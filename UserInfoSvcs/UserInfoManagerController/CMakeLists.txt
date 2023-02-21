@@ -49,4 +49,4 @@ target_link_libraries(UserInfoManagerControllerL
 UserInfoManagerControllerIDL
 Sync
 )
-install(TARGETS UserInfoManagerControllerL UserInfoManagerController UserInfoClusterControlIDL UserInfoManagerControllerIDL  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserInfoManagerControllerL UserInfoManagerController UserInfoClusterControlIDL UserInfoManagerControllerIDL  DESTINATION ${INSTALL_DIR})

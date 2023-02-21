@@ -41,4 +41,4 @@ target_link_libraries(UserFreqCapProfile
 add_pst(UserOperationProfilesPST  UserOperationProfiles.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
 
 
-install(TARGETS Allocator ChannelMatcher UserFreqCapProfile  DESTINATION ${INSTALL_DIR})
+#install(TARGETS Allocator ChannelMatcher UserFreqCapProfile  DESTINATION ${INSTALL_DIR})

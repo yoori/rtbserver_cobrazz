@@ -10,6 +10,8 @@
 #include <xsd/Frontends/FCGIServerConfig.hpp>
 
 #include <FrontendCommons/FrontendInterface.hpp>
+#include <UServerUtils/MetricsHTTPProvider.hpp>
+#include <Generics/CompositeMetricsProvider.hpp>
 
 namespace AdServer
 {
@@ -73,6 +75,7 @@ namespace Frontends
     FCGIServerConfigPtr config_;
     CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
     StatHolder_var stats_;
+    // add CompositeMetricsProvider here
 
     FrontendCommons::Frontend_var frontend_pool_;
   };

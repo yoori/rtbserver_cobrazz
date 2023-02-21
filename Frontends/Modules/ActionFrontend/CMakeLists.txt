@@ -19,4 +19,4 @@ target_link_libraries(ActionFrontend
 
 )
 
-install(TARGETS ActionFrontend  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ActionFrontend  DESTINATION ${INSTALL_DIR})

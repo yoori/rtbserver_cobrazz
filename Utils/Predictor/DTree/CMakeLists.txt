@@ -16,4 +16,4 @@ target_link_libraries(DTree
 )
 
 
-install(TARGETS DTree DESTINATION ${INSTALL_DIR})
+#install(TARGETS DTree DESTINATION ${INSTALL_DIR})

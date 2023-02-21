@@ -16,4 +16,4 @@ PlainDeclaration
 PlainCode
 )
 
-install(TARGETS PlainParser  DESTINATION ${INSTALL_DIR})
+#install(TARGETS PlainParser  DESTINATION ${INSTALL_DIR})

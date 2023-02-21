@@ -38,5 +38,5 @@ target_link_libraries(LogGeneralizer
   ProcessControlVars
 )
 
-install(TARGETS LogGeneralizerIDL LogGeneralizer DESTINATION ${INSTALL_DIR})
+#install(TARGETS LogGeneralizerIDL LogGeneralizer DESTINATION ${INSTALL_DIR})
 

@@ -2772,7 +2772,7 @@ namespace CampaignSvcs
     StateSyncPolicy::Mutex& amounts_lock)
     /*throw(Exception)*/
   {
-    static const char* FUN = "BillingContainer::save_amounts_()";
+    static const char* FUN = "BillingContainer::save_account_amounts_()";
 
     typedef std::list<typename AmountMapType::value_type> ValueList;
 
@@ -3232,26 +3232,9 @@ namespace CampaignSvcs
           throw Exception("no amount");
         }
 
-        /*
         if(amount_str.end() != &line[0] + line.size())
         {
           throw Exception("unexpected content after amount");
-        }
-        */
-
-        String::SubString imps_str;
-        String::SubString clicks_str;
-
-        if(tokenizer.get_token(imps_str))
-        {
-          if(!tokenizer.get_token(clicks_str))
-          {
-            throw Exception("no amount");
-          }
-          else if(clicks_str.end() != &line[0] + line.size())
-          {
-            throw Exception("unexpected content after amount");
-          }
         }
 
         unsigned long id;
@@ -3347,6 +3330,7 @@ namespace CampaignSvcs
 
       try
       {
+        // load: id,date,amount,imps,clicks
         AdServer::LogProcessing::read_until_eol(file, line);
         if(file.fail())
         {

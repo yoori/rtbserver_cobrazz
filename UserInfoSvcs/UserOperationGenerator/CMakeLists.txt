@@ -23,4 +23,4 @@ target_link_libraries(UserOperationGenerator
   UserChannelBaseProfilePST
 )
 
-install(TARGETS UserOperationGenerator DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserOperationGenerator DESTINATION ${INSTALL_DIR})

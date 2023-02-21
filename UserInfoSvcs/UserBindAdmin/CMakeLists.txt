@@ -11,5 +11,5 @@ target_link_libraries(UserBindAdmin
  UserBindServerIDL
  UserBindControllerIDL
 )
-install(TARGETS UserBindAdmin  DESTINATION ${INSTALL_DIR})
+#install(TARGETS UserBindAdmin  DESTINATION ${INSTALL_DIR})
 

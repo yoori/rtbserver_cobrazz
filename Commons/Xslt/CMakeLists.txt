@@ -28,4 +28,4 @@ XsltFileCache.cpp
 target_link_libraries(XsltFileCache String Generics AdServerCommonsXSD Sync XslTransformer
 )
 
-install(TARGETS XslTransformAdmin  DESTINATION ${INSTALL_DIR})
+#install(TARGETS XslTransformAdmin  DESTINATION ${INSTALL_DIR})

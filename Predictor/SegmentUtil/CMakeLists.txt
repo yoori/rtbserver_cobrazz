@@ -24,4 +24,4 @@ ProfileMap
 )
 
 
-install(TARGETS SegmentUtil  DESTINATION ${INSTALL_DIR})
+#install(TARGETS SegmentUtil  DESTINATION ${INSTALL_DIR})

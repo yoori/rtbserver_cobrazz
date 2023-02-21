@@ -12,4 +12,4 @@ Geoip
 
 
 
-install(TARGETS GeoUtil DESTINATION ${INSTALL_DIR})
+#install(TARGETS GeoUtil DESTINATION ${INSTALL_DIR})

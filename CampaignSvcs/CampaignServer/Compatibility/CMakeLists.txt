@@ -25,4 +25,4 @@ target_link_libraries(CampaignServerStubs_v350
 
 
 
-install(TARGETS BillStatInfo_v350IDL CampaignCommons_v350IDL CampaignServer_v350IDL CampaignServerStubs_v350  DESTINATION ${INSTALL_DIR})
+#install(TARGETS BillStatInfo_v350IDL CampaignCommons_v350IDL CampaignServer_v350IDL CampaignServerStubs_v350  DESTINATION ${INSTALL_DIR})

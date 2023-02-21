@@ -18,4 +18,4 @@ Allocator
 
 )
 
-install(TARGETS ProfileDump  DESTINATION ${INSTALL_DIR})
+#install(TARGETS ProfileDump  DESTINATION ${INSTALL_DIR})

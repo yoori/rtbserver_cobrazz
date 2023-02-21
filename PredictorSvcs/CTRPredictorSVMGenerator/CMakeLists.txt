@@ -25,7 +25,7 @@ target_link_libraries(CTRPredictorSVMGenerator
 
 )
 
-install(TARGETS CTRPredictorSVMGenerator  DESTINATION ${INSTALL_DIR})
+#install(TARGETS CTRPredictorSVMGenerator  DESTINATION ${INSTALL_DIR})
 
 
 

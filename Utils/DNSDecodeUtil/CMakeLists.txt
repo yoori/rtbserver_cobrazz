@@ -11,4 +11,4 @@ target_link_libraries(DNSDecodeUtil
 
 )
 
-install(TARGETS DNSDecodeUtil DESTINATION ${INSTALL_DIR})
+#install(TARGETS DNSDecodeUtil DESTINATION ${INSTALL_DIR})
