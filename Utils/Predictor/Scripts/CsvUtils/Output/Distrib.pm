@@ -1,11 +1,26 @@
 package CsvUtils::Output::Distrib;
 
+use utf8;
 use Digest::CRC qw(crc32);
 use Class::Struct;
 use Hash::MultiKey;
+use Text::CSV_XS;
 use CsvUtils::Utils;
+use FileCache;
 
 struct(Rule => [token => '$', column => '$', chunks => '$']);
+
+sub replace_substr_
+{
+  my ($str, $key, $value) = @_;
+  my $search_pos = 0;
+  while (($i = index($str, $key, $search_pos)) != -1)
+  {
+    substr($str, $i, length($key)) = $value;
+    $search_pos = $i + length($value);
+  }
+  return $str;
+}
 
 sub new
 {
@@ -19,7 +34,7 @@ sub new
   my %tokens;
   my @rules;
 
-  while($file_path_templ =~ m|{(\d+)(\%(\d+))?}|g)
+  while($file_path_templ =~ m|{(\d+)(?:\%(\d+))?}|g)
   {
     my $token = $&;
     my $column_index = $1;
@@ -27,7 +42,7 @@ sub new
     if(!exists($tokens{$token}))
     {
       $tokens{$token} = 1;
-      my $new_rule = new Rule(token => quotemeta $token, column => $column_index - 1, chunks => $chunks);
+      my $new_rule = new Rule(token => $token, column => $column_index - 1, chunks => $chunks);
       push(@rules, $new_rule);
     }
   }
@@ -40,7 +55,7 @@ sub new
   }
 
   my $fields = {
-    csv_ => Text::CSV->new({ binary => 1, eol => $/ }),
+    csv_ => Text::CSV_XS->new({ binary => 1, eol => $/ }),
     file_ => $params{file},
     files_ => \%files,
     rules_ => \@rules,
@@ -106,24 +121,24 @@ sub process
       my $value;
       if(defined($self->{single_rule_}))
       {
-        $value = quotemeta $key;
+        $value = $key;
       }
       else
       {
-        $value = quotemeta $key->[$i];
+        $value = $key->[$i];
       }
-      $file_path =~ s/$token/$value/g;
+
+      $file_path = replace_substr_($file_path, $token, $value);
     }
 
-    open(my $fh, '>>', $file_path) || die "Can't open file '$file_path'";
-    $self->{files_}->{$key} = $fh;
+    $self->{files_}->{$key} = $file_path;
   }
 
   my $res_row = CsvUtils::Utils::prepare_row($row);
 
+  my $local_fh = cacheout '>>:encoding(UTF-8)', $self->{files_}->{$key};
   $self->{csv_}->print($self->{files_}->{$key}, $res_row);
 
-  # TODO: remove oldest used file descriptors if limit reached
   return $row;
 }
 

@@ -6,6 +6,7 @@ use Class::Struct;
 use Hash::MultiKey;
 use Text::CSV_XS;
 use CsvUtils::Utils;
+use FileCache;
 
 struct(Rule => [token => '$', column => '$', chunks => '$']);
 
@@ -38,7 +39,6 @@ sub new
     my $token = $&;
     my $column_index = $1;
     my $chunks = $2;
-    #print "CHUNKS: <$chunks>\n";
     if(!exists($tokens{$token}))
     {
       $tokens{$token} = 1;
@@ -131,15 +131,14 @@ sub process
       $file_path = replace_substr_($file_path, $token, $value);
     }
 
-    open(my $fh, '>>:encoding(UTF-8)', $file_path) || die "Can't open file '$file_path'";
-    $self->{files_}->{$key} = $fh;
+    $self->{files_}->{$key} = $file_path;
   }
 
   my $res_row = CsvUtils::Utils::prepare_row($row);
 
+  my $local_fh = cacheout '>>:encoding(UTF-8)', $self->{files_}->{$key};
   $self->{csv_}->print($self->{files_}->{$key}, $res_row);
 
-  # TODO: remove oldest used file descriptors if limit reached
   return $row;
 }
 
