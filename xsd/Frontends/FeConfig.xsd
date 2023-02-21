@@ -265,6 +265,7 @@
     </xsd:annotation>
 
     <xsd:sequence>
+
       <xsd:element name="GoogleUriList" type="UriListType"/>
 
       <xsd:element name="OpenRtbUriList" type="UriListType"/>
@@ -292,6 +293,8 @@
 
       <xsd:element name="Account" type="BidAccountTraitsType" minOccurs="0" maxOccurs="unbounded"/>
     </xsd:sequence>
+
+    <xsd:attribute name="metrics_port" type="xsd:positiveInteger" use="required" />
 
     <xsd:attribute name="threads"
       type="xsd:positiveInteger"

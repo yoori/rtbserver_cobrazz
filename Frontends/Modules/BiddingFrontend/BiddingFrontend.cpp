@@ -11,6 +11,7 @@
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 #include <Generics/TaskPool.hpp>
+#include "Generics/CompositeMetricsProvider.hpp"
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
@@ -645,8 +646,8 @@ namespace Bidding
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
 
         activate_object();
-        
-        metricsHTTPProvider_=new MetricsHTTPProvider(8081,"/sample/data");
+        CompositeMetricsProvider *compositeMetricsProvider_=new CompositeMetricsProvider;
+        metricsHTTPProvider_=new UServerUtils::MetricsHTTPProvider(compositeMetricsProvider_,frontend_config_->get().BidFeConfiguration()->metrics_port(),"/metrics");
         metricsHTTPProvider_->activate_object();
 
       }
@@ -821,6 +822,7 @@ namespace Bidding
         planner_pool_->schedule(interrupt_goal, expire_time);
         task_runner_->enqueue_task(request_task);
       }
+      compositeMetricsProvider_->add_value("handled_requests",(long)1);
     }
     catch(const BidRequestTask::Invalid& e)
     {
