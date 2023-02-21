@@ -17,6 +17,7 @@ add_library(BiddingFrontend SHARED
   ClickStarBidRequestTask.cpp 
   DAOBidRequestTask.cpp 
   KeywordFormatter.cpp
+  RequestMetricsProvider.cpp
 )
 
 target_link_libraries(BiddingFrontend 

@@ -123,8 +123,9 @@ namespace Frontends
       // init metrics http provider
       if(config_->Monitoring().present())
       {
+	CompositeMetricsProvider_var cmp=new CompositeMetricsProvider;
         UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
-          new UServerUtils::MetricsHTTPProvider(
+          new UServerUtils::MetricsHTTPProvider( cmp.operator->(),
             config_->Monitoring()->port(), "/sample/data");
 
         add_child_object(metrics_http_provider);
