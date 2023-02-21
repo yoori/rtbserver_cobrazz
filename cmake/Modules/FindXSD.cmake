@@ -19,7 +19,7 @@ function(add_xsd _target _xsdfile target_dir)
     execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${target_dir})
     set (SRC ${CMAKE_CURRENT_LIST_DIR}/${_xsdfile})
     set(FINDIDL_TARGET ${_target}_gen)
-    add_custom_target(${FINDIDL_TARGET} DEPENDS "${OUTPUTCPP}" )
+    add_custom_target(${FINDIDL_TARGET} DEPENDS ${OUTPUTCPP}  ${OUTPUTHPP})
     add_custom_command(
       OUTPUT  ${OUTPUTCPP} ${OUTPUTHPP}
       COMMAND /usr/bin/xsdcxx ARGS cxx-tree --std c++11 --hxx-suffix .hpp --ixx-suffix .ipp --cxx-suffix .cpp  --namespace-regex  "\"|^XMLSchema.xsd http://www.w3.org/2001/XMLSchema$$|xml_schema|\""   --fwd-suffix -fwd.hpp --output-dir ${target_dir}  ${SRC}
@@ -30,5 +30,7 @@ function(add_xsd _target _xsdfile target_dir)
       ${OUTPUTCPP}
     )    
     add_dependencies(${_target} ${FINDIDL_TARGET})
+#    add_dependencies(${_target} ${OUTPUTCPP})
+#    add_dependencies(${_target} ${OUTPUTHPP})
     target_include_directories(${_target} INTERFACE ${MIDL_OUTPUT_PATH})
 endfunction()

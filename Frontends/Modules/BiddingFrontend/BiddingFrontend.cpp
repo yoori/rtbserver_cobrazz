@@ -11,6 +11,7 @@
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 #include <Generics/TaskPool.hpp>
+#include "Generics/CompositeMetricsProvider.hpp"
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
@@ -34,6 +35,7 @@
 #include "ClickStarBidRequestTask.hpp"
 #include "AdJsonBidRequestTask.hpp"
 #include "DAOBidRequestTask.hpp"
+#include "RequestMetricsProvider.hpp"
 
 #include "BiddingFrontend.hpp"
 
@@ -644,10 +646,17 @@ namespace Bidding
         control_task_runner_->enqueue_task(
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
 
-        /*
-        metricsHTTPProvider_ = new UServerUtils::MetricsHTTPProvider(8081, "/sample/data");
+        request_metrics_provider_ = RequestMetricsProvider_var(new RequestMetricsProvider);
+
+        compositeMetricsProvider_ = new CompositeMetricsProvider;
+        compositeMetricsProvider_->add_provider(request_metrics_provider_);
+
+        metricsHTTPProvider_ = new UServerUtils::MetricsHTTPProvider(
+          compositeMetricsProvider_,
+          frontend_config_->get().BidFeConfiguration()->metrics_port(),
+          "/metrics");
+
         add_child_object(metricsHTTPProvider_);
-        */
 
         activate_object();
       }
@@ -721,6 +730,8 @@ namespace Bidding
     noexcept
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
+
+    request_metrics_provider_->add_input_request();
 
     // create task - push it to task runner
     // and push goal for timeout control
@@ -802,6 +813,8 @@ namespace Bidding
       {
         bid_task_count_ += -1;
 
+        request_metrics_provider_->add_skip_request();
+
         {
           MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
           reached_max_pending_tasks_ = std::max(
@@ -822,6 +835,7 @@ namespace Bidding
         planner_pool_->schedule(interrupt_goal, expire_time);
         task_runner_->enqueue_task(request_task);
       }
+      compositeMetricsProvider_->add_value("handled_requests",(long)1);
     }
     catch(const BidRequestTask::Invalid& e)
     {
@@ -1743,6 +1757,8 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::trigger_match_()";
 
+    request_metrics_provider_->add_channel_server_request();
+
     if(!request_info.filter_request)
     {
       try
@@ -1925,6 +1941,8 @@ namespace Bidding
     static const char* FUN = "Bidding::Frontend::history_match_()";
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
+
+    request_metrics_provider_->add_user_info_request();
 
     Generics::Time start_process_time;
 

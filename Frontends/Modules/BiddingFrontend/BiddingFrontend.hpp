@@ -12,6 +12,8 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Generics/AtomicInt.hpp>
+#include "Generics/CompositeMetricsProvider.hpp"
+
 #include <UServerUtils/MetricsHTTPProvider.hpp>
 
 #include <Sync/PosixLock.hpp>
@@ -38,6 +40,8 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
+#include "UServerUtils/MetricsHTTPProvider.hpp"
+#include "RequestMetricsProvider.hpp"
 
 namespace AdServer
 {
@@ -403,7 +407,10 @@ namespace Bidding
     unsigned long reached_max_pending_tasks_;
 
   private:
+    Generics::CompositeMetricsProvider_var compositeMetricsProvider_;
     UServerUtils::MetricsHTTPProvider_var metricsHTTPProvider_;
+
+    RequestMetricsProvider_var request_metrics_provider_;
   };
 }
 }
