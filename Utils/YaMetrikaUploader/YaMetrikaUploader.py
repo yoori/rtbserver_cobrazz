@@ -110,6 +110,8 @@ class Application:
     def on_period(self):
         self.cursor.execute("SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
         for ymref_id, token, metrica_id in tuple(self.cursor.fetchmany()):
+            if not self.running:
+                return
             self.on_metrica(ymref_id, token, metrica_id)
             
     def on_metrica(self, ymref_id, token, metrica_id):
@@ -120,6 +122,8 @@ class Application:
         self.cursor.execute(SQL_SELECT_STATS, (ymref_id, date1, date_end))
         old_rows = {}
         for time, utm_source, utm_term, visits, bounce, avg_time in self.cursor.fetchall():
+            if not self.running:
+                return
             old_rows[(str(time), utm_source, utm_term)] = (visits, bounce, float(avg_time))
 
         api_param = {
@@ -147,6 +151,8 @@ class Application:
         result = result['data']
         metrica_printed = False
         for item in result:
+            if not self.running:
+                return
             dimensions = item["dimensions"]
             time = dimensions[0]["name"]
             utm_source = dimensions[1]["name"]
