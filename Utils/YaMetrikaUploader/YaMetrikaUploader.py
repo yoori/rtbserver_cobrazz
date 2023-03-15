@@ -18,7 +18,7 @@ def get_sleep_subperiods(t):
 
 
 SQL_SELECT_STATS = """
-SELECT time, utm_source, utm_term, visits, bounce, avg_time
+SELECT time, utm_source, utm_content, utm_term, visits, bounce, avg_time
 FROM YandexMetrikaStats
 WHERE ymref_id=%s AND time >= %s::timestamp AND time < %s::timestamp;
 """
@@ -27,11 +27,11 @@ WHERE ymref_id=%s AND time >= %s::timestamp AND time < %s::timestamp;
 SQL_UPDATE_STAT = """
 UPDATE YandexMetrikaStats
 SET visits=%s, bounce=%s, avg_time=%s
-WHERE ymref_id=%s AND time=%s::timestamp AND utm_source=%s AND utm_term=%s;
+WHERE ymref_id=%s AND time=%s::timestamp AND utm_source=%s AND utm_content=%s AND utm_term=%s;
 """
 
 
-SQL_INSERT_STAT = "INSERT INTO YandexMetrikaStats VALUES (%s, %s, %s, %s, %s, %s, %s)"
+SQL_INSERT_STAT = "INSERT INTO YandexMetrikaStats VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 
 
 class Application:
@@ -113,7 +113,7 @@ class Application:
             if not self.running:
                 return
             self.on_metrica(ymref_id, token, metrica_id)
-            
+
     def on_metrica(self, ymref_id, token, metrica_id):
         date1 = (datetime.today() + relativedelta(days=-self.days)).strftime('%Y-%m-%d')
         date2 = datetime.today().strftime('%Y-%m-%d')
@@ -121,15 +121,15 @@ class Application:
 
         self.cursor.execute(SQL_SELECT_STATS, (ymref_id, date1, date_end))
         old_rows = {}
-        for time, utm_source, utm_term, visits, bounce, avg_time in self.cursor.fetchall():
+        for time, utm_source, utm_content, utm_term, visits, bounce, avg_time in self.cursor.fetchall():
             if not self.running:
                 return
-            old_rows[(str(time), utm_source, utm_term)] = (visits, bounce, float(avg_time))
+            old_rows[(str(time), utm_source, utm_content, utm_term)] = (visits, bounce, float(avg_time))
 
         api_param = {
             "ids": metrica_id,
             "metrics": "ym:s:visits,ym:s:bounceRate,ym:s:avgVisitDurationSeconds",
-            "dimensions": "ym:s:dateTime,ym:s:<attribution>UTMSource,ym:s:<attribution>UTMTerm",
+            "dimensions": "ym:s:dateTime,ym:s:<attribution>UTMSource,ym:s:<attribution>UTMContent,ym:s:<attribution>UTMTerm",
             "date1": date1,
             "date2": date2,
             "sort": "-ym:s:visits",
@@ -158,7 +158,10 @@ class Application:
             utm_source = dimensions[1]["name"]
             if utm_source is None:
                 utm_source = ""
-            utm_term = dimensions[2]["name"]
+            utm_content = dimensions[2]["name"]
+            if utm_content is None:
+                utm_content = ""
+            utm_term = dimensions[3]["name"]
             if utm_term is None:
                 utm_term = ""
 
@@ -166,19 +169,19 @@ class Application:
             visits = int(metrics[0])
             bounce = int(metrics[1] * visits / 100.0)
             avg_time = metrics[2]
-            
+
             already_processed = False
-            row = old_rows.get((time, utm_source, utm_term))
+            row = old_rows.get((time, utm_source, utm_content, utm_term))
 
             if row is None:
                 self.cursor.execute(
                     SQL_INSERT_STAT,
-                    (ymref_id, time, utm_source, utm_term, visits, bounce, avg_time))
+                    (ymref_id, time, utm_source, utm_term, visits, bounce, avg_time, utm_content))
                 self.cursor.execute("COMMIT")
             elif visits > row[0]:
                 self.cursor.execute(
                     SQL_UPDATE_STAT,
-                    (visits, bounce, avg_time, ymref_id, time, utm_source, utm_term))
+                    (visits, bounce, avg_time, ymref_id, time, utm_source, utm_content, utm_term))
                 self.cursor.execute("COMMIT")
             else:
                 already_processed = True
@@ -187,10 +190,10 @@ class Application:
                 if self.verbosity >= 1 and not metrica_printed:
                     metrica_printed = True
                     print("Metrica ID", metrica_id)
-                self.process_new_record(time, utm_source, utm_term, visits, bounce, avg_time)
+                self.process_new_record(time, utm_source, utm_content, utm_term, visits, bounce, avg_time)
 
-    def process_new_record(self, time, utm_source, utm_term, visits, bounce, avg_time):
-        print(",".join(str(i) for i in (time, utm_source, utm_term, visits, bounce, avg_time)))
+    def process_new_record(self, time, utm_source, utm_content, utm_term, visits, bounce, avg_time):
+        print(",".join(str(i) for i in (time, utm_source, utm_content, utm_term, visits, bounce, avg_time)))
 
 
 def main():
