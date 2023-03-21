@@ -294,8 +294,6 @@
       <xsd:element name="Account" type="BidAccountTraitsType" minOccurs="0" maxOccurs="unbounded"/>
     </xsd:sequence>
 
-    <xsd:attribute name="metrics_port" type="xsd:positiveInteger" use="required" />
-
     <xsd:attribute name="threads"
       type="xsd:positiveInteger"
       use="required"/>

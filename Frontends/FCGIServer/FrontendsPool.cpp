@@ -24,11 +24,13 @@ namespace AdServer
       const char* config_path,
       const ModuleIdArray& modules,
       Logging::Logger* logger,
-      StatHolder* stats)
+      StatHolder* stats,
+      Generics::CompositeMetricsProvider* composite_metrics_provider)
       : config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
         stats_(ReferenceCounting::add_ref(stats)),
+        composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
         common_module_(new CommonModule(logger_))
     {
       frontends_.reserve(4);
@@ -85,7 +87,8 @@ namespace AdServer
     }
 
     void
-    FrontendsPool::init() /*throw(eh::Exception)*/
+    FrontendsPool::init()
+      /*throw(eh::Exception)*/
     {
       try
       {
@@ -105,7 +108,8 @@ namespace AdServer
               fe_config.BidFeConfiguration(),
               logger_,
               common_module_,
-              stats_);
+              stats_,
+              composite_metrics_provider_);
           }
           else if(*module_it == M_PUBPIXEL)
           {
