@@ -81,7 +81,8 @@ namespace Bidding
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
-      StatHolder* stats) /*throw(eh::Exception)*/;
+      StatHolder* stats,
+      CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
@@ -407,10 +408,8 @@ namespace Bidding
     unsigned long reached_max_pending_tasks_;
 
   private:
-    Generics::CompositeMetricsProvider_var compositeMetricsProvider_;
-    UServerUtils::MetricsHTTPProvider_var metricsHTTPProvider_;
-
-    RequestMetricsProvider_var request_metrics_provider_;
+    const Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+    const RequestMetricsProvider_var request_metrics_provider_;
   };
 }
 }

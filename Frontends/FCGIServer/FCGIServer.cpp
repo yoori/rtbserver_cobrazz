@@ -24,7 +24,8 @@ namespace Frontends
   FCGIServer::FCGIServer() /*throw(eh::Exception)*/
     : AdServer::Commons::ProcessControlVarsLoggerImpl(
         "FCGIServer", ASPECT),
-      stats_(new StatHolder)
+      stats_(new StatHolder()), // to remove ?
+      composite_metrics_provider_(new CompositeMetricsProvider())
   {}
 
   void
@@ -123,10 +124,11 @@ namespace Frontends
       // init metrics http provider
       if(config_->Monitoring().present())
       {
-	CompositeMetricsProvider_var cmp=new CompositeMetricsProvider;
         UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
-          new UServerUtils::MetricsHTTPProvider( cmp.operator->(),
-            config_->Monitoring()->port(), "/sample/data");
+          new UServerUtils::MetricsHTTPProvider(
+            composite_metrics_provider_,
+            config_->Monitoring()->port(),
+            "/metrics");
 
         add_child_object(metrics_http_provider);
       }
@@ -252,7 +254,8 @@ namespace Frontends
         config_->fe_config().data(),
         modules,
         logger(),
-        stats_);
+        stats_,
+        composite_metrics_provider_);
 
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)

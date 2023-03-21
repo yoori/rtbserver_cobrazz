@@ -270,7 +270,8 @@ namespace Bidding
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
-    StatHolder* stats) /*throw(eh::Exception)*/
+    StatHolder* stats,
+    CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/
     : GroupLogger(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
@@ -293,8 +294,12 @@ namespace Bidding
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
       passback_task_count_(0),
-      reached_max_pending_tasks_(0)
-  {}
+      reached_max_pending_tasks_(0),
+      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
+      request_metrics_provider_(new RequestMetricsProvider())
+  {
+    composite_metrics_provider_->add_provider(request_metrics_provider_);
+  }
 
   bool
   Frontend::will_handle(const String::SubString& uri) noexcept
@@ -646,18 +651,6 @@ namespace Bidding
         control_task_runner_->enqueue_task(
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
 
-        request_metrics_provider_ = RequestMetricsProvider_var(new RequestMetricsProvider);
-
-        compositeMetricsProvider_ = new CompositeMetricsProvider;
-        compositeMetricsProvider_->add_provider(request_metrics_provider_);
-
-        metricsHTTPProvider_ = new UServerUtils::MetricsHTTPProvider(
-          compositeMetricsProvider_,
-          frontend_config_->get().BidFeConfiguration()->metrics_port(),
-          "/metrics");
-
-        add_child_object(metricsHTTPProvider_);
-
         activate_object();
       }
       catch (const eh::Exception& ex)
@@ -692,11 +685,6 @@ namespace Bidding
         Aspect::BIDDING_FRONTEND);
 
       common_module_->shutdown();
-
-      metricsHTTPProvider_->deactivate_object();
-      metricsHTTPProvider_->wait_object();
-      delete metricsHTTPProvider_;
-
     }
     catch(...)
     {}
@@ -835,7 +823,6 @@ namespace Bidding
         planner_pool_->schedule(interrupt_goal, expire_time);
         task_runner_->enqueue_task(request_task);
       }
-      compositeMetricsProvider_->add_value("handled_requests",(long)1);
     }
     catch(const BidRequestTask::Invalid& e)
     {

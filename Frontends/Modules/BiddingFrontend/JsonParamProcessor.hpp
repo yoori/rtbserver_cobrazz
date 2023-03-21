@@ -157,7 +157,9 @@ namespace Bidding
           Asset(),
           image_type(NITE_MAIN),
           height(0),
-          width(0)
+          width(0),
+          min_height(0),
+          min_width(0)
         {}
 
         bool is_main() const
@@ -168,8 +170,13 @@ namespace Bidding
         virtual ~Image() noexcept = default;
         
         long image_type;
+
         long height;
         long width;
+
+        long min_height;
+        long min_width;
+
         StringSet mimes;
       };
 
