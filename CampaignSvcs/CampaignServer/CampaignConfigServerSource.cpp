@@ -1001,7 +1001,7 @@ namespace CampaignSvcs
     for (CORBA::ULong i = 0; i < update_info.campaigns.length(); i++)
     {
       const CampaignInfo& campaign_info = update_info.campaigns[i];
-      Campaign_var campaign(new CampaignDef);
+      Campaign_var campaign(new CampaignDef());
 
       campaign->campaign_group_id = campaign_info.campaign_group_id;
       campaign->fc_id = campaign_info.fc_id;
@@ -1112,6 +1112,22 @@ namespace CampaignSvcs
 
       unpack_non_linked_expression(campaign->expression, campaign_info.expression);
       unpack_non_linked_expression(campaign->stat_expression, campaign_info.stat_expression);
+
+      for(CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
+      {
+        const CampaignContractInfo& contract = campaign_info.contracts[contract_i];
+        CampaignContractDef_var new_contract(new CampaignContractDef());
+        new_contract->ord_contract_id = contract.ord_contract_id;
+        new_contract->ord_ado_id = contract.ord_ado_id;
+        new_contract->id = contract.id;
+        new_contract->date = contract.date;
+        new_contract->type = contract.type;
+        new_contract->client_id = contract.client_id;
+        new_contract->client_name = contract.client_name;
+        new_contract->contractor_id = contract.contractor_id;
+        new_contract->contractor_name = contract.contractor_name;
+        campaign->contracts.emplace(new_contract->id, new_contract);
+      }
 
       new_config.campaigns.activate(campaign_info.campaign_id, campaign);
     }

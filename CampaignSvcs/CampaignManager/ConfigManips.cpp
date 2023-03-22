@@ -769,6 +769,10 @@ namespace AdServer
           campaign_info.exclude_tags[res_i].tag_id = dtag_it->first;
           campaign_info.exclude_tags[res_i].delivery_value = dtag_it->second;          
         }
+
+        fill_campaign_contracts_(
+          campaign_info.contracts,
+          campaign->contracts);
       }
 
       /* fill expression channels */
@@ -1211,6 +1215,30 @@ namespace AdServer
         }
 
         campaign_config->pub_pixel_accounts.swap(pub_pixel_accounts);
+      }
+    }
+
+    void
+    CampaignManagerImpl::fill_campaign_contracts_(
+      CampaignContractSeq& contract_seq,
+      const Campaign::CampaignContractArray& contracts)
+      noexcept
+    {
+      CORBA::ULong res_contract_i = contract_seq.length();
+      contract_seq.length(contract_seq.length() + contracts.size());
+      for(auto it = contracts.begin(); it != contracts.end(); ++it, ++res_contract_i)
+      {
+        CampaignContractInfo& res_contract = contract_seq[res_contract_i];
+        const CampaignContract& contract = **it;
+        res_contract.ord_contract_id << contract.ord_contract_id;
+        res_contract.ord_ado_id << contract.ord_ado_id;
+        res_contract.id << contract.id;
+        res_contract.date << contract.date;
+        res_contract.type << contract.type;
+        res_contract.client_id << contract.client_id;
+        res_contract.client_name << contract.client_name;
+        res_contract.contractor_id << contract.contractor_id;
+        res_contract.contractor_name << contract.contractor_name;
       }
     }
   }

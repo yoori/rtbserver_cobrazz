@@ -1175,6 +1175,13 @@ namespace AdServer
         const RevenueDecimal& adsspace_system_cpm,
         const String::SubString& external_user_id);
 
+      // config manips
+      static void
+      fill_campaign_contracts_(
+        CampaignContractSeq& contract_seq,
+        const Campaign::CampaignContractArray& contracts)
+        noexcept;
+
     protected:
       CampaignManagerConfig campaign_manager_config_;
       Generics::ActiveObjectCallback_var callback_;

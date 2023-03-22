@@ -565,7 +565,8 @@ namespace
     Table::Column("delivery_coef", Table::Column::NUMBER),
     Table::Column("imp_revenue", Table::Column::TEXT),
     Table::Column("click_revenue", Table::Column::TEXT),
-    Table::Column("action_revenue", Table::Column::TEXT)
+    Table::Column("action_revenue", Table::Column::TEXT),
+    Table::Column("contracts", Table::Column::TEXT)
   };
 
   const Table::Column TAGS_TABLE_COLUMNS[] =
@@ -916,6 +917,32 @@ campaign_mode_to_string(AdServer::CampaignSvcs::CampaignMode campaign_mode)
   }
 
   return "invalid !!!";
+}
+
+std::string
+campaign_contracts_to_string(const AdServer::CampaignSvcs::CampaignContractSeq& contracts)
+{
+  using namespace AdServer::CampaignSvcs;
+
+  std::ostringstream ostr;
+  for(CORBA::ULong contract_i = 0; contract_i < contracts.length(); ++contract_i)
+  {
+    const AdServer::CampaignSvcs::CampaignContractInfo& contract = contracts[contract_i];
+
+    ostr << (contract_i != 0 ? " " : "") << "[" <<
+      "ord_contract_id = " << contract.ord_contract_id <<
+      ", ord_ado_id = " << contract.ord_ado_id <<
+      ", id = " << contract.id <<
+      ", date = " << contract.date <<
+      ", type = " << contract.type <<
+      ", client_id = " << contract.client_id <<
+      ", client_name = " << contract.client_name <<
+      ", contractor_id = " << contract.contractor_id <<
+      ", contractor_name = " << contract.contractor_name <<
+      "]";
+  }
+
+  return ostr.str();
 }
 
 template<typename IntType>
@@ -1545,7 +1572,7 @@ Application::show(int aspect)
         config->sites[i];
 
       Table::Row row(table->columns());
-     describe_site(config, row, site_info, expand);
+      describe_site(config, row, site_info, expand);
 
       table->add_row(row, filters_, sorter_);
     }
@@ -3041,6 +3068,8 @@ void Application::describe_campaign(
       AdServer::CampaignSvcs::RevenueDecimal>(campaign_info.click_revenue).str());
     row.add_field(CorbaAlgs::unpack_decimal<
       AdServer::CampaignSvcs::RevenueDecimal>(campaign_info.action_revenue).str());
+
+    row.add_field(campaign_contracts_to_string(campaign_info.contracts));
   }
 }
 

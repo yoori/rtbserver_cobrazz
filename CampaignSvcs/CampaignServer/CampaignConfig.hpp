@@ -284,6 +284,27 @@ namespace AdServer
     typedef std::set<unsigned long> UserGroupIdSet;
     typedef std::set<unsigned long> CCIdSet;
 
+    class CampaignContractDef: public ReferenceCounting::AtomicCopyImpl
+    {
+    public:
+      bool operator==(const CampaignContractDef& right) const noexcept;
+
+      std::string ord_contract_id;
+      std::string ord_ado_id;
+
+      std::string id;
+      std::string date;
+      std::string type;
+
+      std::string client_id;
+      std::string client_name;
+
+      std::string contractor_id;
+      std::string contractor_name;
+    };
+
+    typedef ReferenceCounting::SmartPtr<CampaignContractDef> CampaignContractDef_var;
+
     /**
      * Holds information on particular campaign.
      */
@@ -321,6 +342,7 @@ namespace AdServer
       }
 
       typedef std::map<std::string, std::string> OptionMap;
+      typedef std::map<std::string, CampaignContractDef_var> CampaignContractMap;
 
       unsigned long campaign_group_id; /**< Campaign group identifier */
       unsigned long ccg_rate_id;
@@ -375,6 +397,8 @@ namespace AdServer
       unsigned long seq_set_rotate_imps;
       BidStrategy bid_strategy;
       RevenueDecimal min_ctr_goal;
+
+      CampaignContractMap contracts;
 
       TimestampValue timestamp;
 
@@ -1983,6 +2007,20 @@ namespace AdServer
         std::equal(sizes.begin(), sizes.end(), right.sizes.begin(), Algs::PairEqual()) &&
         std::equal(categories.begin(), categories.end(), right.categories.begin()) &&
         std::equal(tokens.begin(), tokens.end(), right.tokens.begin(), Algs::PairEqual());
+    }
+
+    inline
+    bool CampaignContractDef::operator==(const CampaignContractDef& right) const noexcept
+    {
+      return ord_contract_id == right.ord_contract_id &&
+        ord_ado_id == right.ord_ado_id &&
+        id == right.id &&
+        date == right.date &&
+        type == right.type &&
+        client_id == right.client_id &&
+        client_name == right.client_name &&
+        contractor_id == right.contractor_id &&
+        contractor_name == right.contractor_name;
     }
 
     inline

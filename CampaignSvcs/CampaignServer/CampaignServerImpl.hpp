@@ -515,6 +515,12 @@ namespace AdServer
         const BillStatSource::Stat::AmountCountDistribution& amount_count_distribution)
         noexcept;
 
+      static void
+      fill_campaign_contracts_(
+        AdServer::CampaignSvcs::CampaignContractSeq& contract_seq,
+        const CampaignDef::CampaignContractMap& contracts)
+        noexcept;
+
       /* logging methods */
       void flush_logs_() noexcept;
 

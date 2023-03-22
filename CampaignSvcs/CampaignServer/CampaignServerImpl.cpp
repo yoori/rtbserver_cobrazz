@@ -1236,6 +1236,10 @@ namespace AdServer
           campaign.exclude_tags[res_i].tag_id = dtag_it->first;
           campaign.exclude_tags[res_i].delivery_value = dtag_it->second;
         }
+
+        fill_campaign_contracts_(
+          campaign.contracts,
+          campaign_def.contracts);
       } /* campaigns cycle */
     }
 
@@ -1406,6 +1410,30 @@ namespace AdServer
         settings);
     }
 
+    void
+    CampaignServerBaseImpl::fill_campaign_contracts_(
+      AdServer::CampaignSvcs::CampaignContractSeq& contract_seq,
+      const CampaignDef::CampaignContractMap& contracts)
+      noexcept
+    {
+      contract_seq.length(contracts.size());
+      CORBA::ULong res_contract_i = 0;
+      for(auto it = contracts.begin(); it != contracts.end(); ++it, ++res_contract_i)
+      {
+        CampaignContractInfo& res_contract = contract_seq[res_contract_i];
+        const CampaignContractDef& contract = *(it->second);
+        res_contract.ord_contract_id << contract.ord_contract_id;
+        res_contract.ord_ado_id << contract.ord_ado_id;
+        res_contract.id << contract.id;
+        res_contract.date << contract.date;
+        res_contract.type << contract.type;
+        res_contract.client_id << contract.client_id;
+        res_contract.client_name << contract.client_name;
+        res_contract.contractor_id << contract.contractor_id;
+        res_contract.contractor_name << contract.contractor_name;
+      }
+    }
+    
     void CampaignServerBaseImpl::fill_active_freq_caps_(
       FreqCapSeq& freq_cap_seq,
       const TimestampValue& request_timestamp,

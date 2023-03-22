@@ -4,7 +4,7 @@
              xmlns="http://foros.com/cms/applicationDescriptor"
              type="AdServer"
              description="Advertising Server"
-             version="4.0.0.18"
+             version="4.0.0.19"
              configSchema="xsd/AppConfig.xsd">
   <makeConfig>
     <exec executable="AdServerConf.sh">
