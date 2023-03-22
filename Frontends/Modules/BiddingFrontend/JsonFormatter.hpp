@@ -45,6 +45,9 @@ namespace Commons
     add_escaped_string(const String::SubString& name, const String::SubString& value);
 
     JsonObject&
+    add_escaped_string_if_non_empty(const String::SubString& name, const String::SubString& value);
+
+    JsonObject&
     add_opt_escaped_string(
       const String::SubString& name,
       const String::SubString& value,
@@ -305,6 +308,19 @@ namespace Commons
     comma_();
     name_(name);
     out_stream_ << "\"" << String::StringManip::json_escape(value) << "\"";
+    return *this;
+  }
+
+  inline
+  JsonObject&
+  JsonObject::add_escaped_string_if_non_empty(
+    const String::SubString& name, const String::SubString& value)
+  {
+    if(!value.empty())
+    {
+      add_escaped_string(name, value);
+    }
+
     return *this;
   }
 

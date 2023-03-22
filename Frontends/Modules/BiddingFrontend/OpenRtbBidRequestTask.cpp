@@ -94,6 +94,19 @@ namespace Bidding
         const String::SubString EVENT_EVENT("event");
         const String::SubString EVENT_METHOD("method");
         const String::SubString EVENT_URL("url");
+
+        const String::SubString BID_EXT_NROA("nroa");
+        const String::SubString NROA_ERID("erid");
+        const String::SubString NROA_CONTRACTS("contracts");
+        const String::SubString CONTRACT_ORD_ID("id");
+        const String::SubString CONTRACT_ORD_ADO_ID("ado_id");
+        const String::SubString CONTRACT_NUMBER("contract_number");
+        const String::SubString CONTRACT_DATE("contract_date");
+        const String::SubString CONTRACT_TYPE("type");
+        const String::SubString CONTRACT_CLIENT_ID("client_inn");
+        const String::SubString CONTRACT_CLIENT_NAME("client_name");
+        const String::SubString CONTRACT_CONTRACTOR_ID("contractor_inn");
+        const String::SubString CONTRACT_CONTRACTOR_NAME("contractor_name");
       }
 
       namespace OpenX
@@ -784,7 +797,9 @@ namespace Bidding
                   use_banner_format.ext_type == "20");
 
                 if(add_ext_width_height ||
-                  request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
+                  request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
+                  ad_slot_result.erid[0] ||
+                  ad_slot_result.contracts.length() > 0)
                 {
                   AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
 
@@ -807,6 +822,43 @@ namespace Bidding
                       ext_obj,
                       Response::OpenX::AD_OX_CATS,
                       ad_slot_result.external_content_categories);
+                  }
+
+                  if(ad_slot_result.erid[0] || ad_slot_result.contracts.length() > 0)
+                  {
+                    AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
+
+                    nroa_obj.add_escaped_string_if_non_empty(
+                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+
+                    if(ad_slot_result.contracts.length() > 0)
+                    {
+                      AdServer::Commons::JsonObject contracts_array(nroa_obj.add_array(Response::OpenRtb::NROA_CONTRACTS));
+
+                      for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+                      {
+                        const AdServer::CampaignSvcs::CampaignContractInfo& contract = ad_slot_result.contracts[contract_i];
+                        AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.ord_contract_id));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_ORD_ADO_ID, String::SubString(contract.ord_ado_id));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_NUMBER, String::SubString(contract.id));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_DATE, String::SubString(contract.date));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_TYPE, String::SubString(contract.type));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_CLIENT_ID, String::SubString(contract.client_id));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_CLIENT_NAME, String::SubString(contract.client_name));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_CONTRACTOR_ID, String::SubString(contract.contractor_id));
+                        contract_obj.add_escaped_string_if_non_empty(
+                          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME, String::SubString(contract.contractor_name));
+                      }
+                    }
                   }
                 }
 

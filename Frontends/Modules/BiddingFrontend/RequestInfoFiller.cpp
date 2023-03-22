@@ -2484,6 +2484,7 @@ namespace Bidding
     static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
 
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("MegafonID")), "megafon-stableid");
+    source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("quietmedia")), "megafon-stableid");
 
     if(geo_ip_path)
     {
