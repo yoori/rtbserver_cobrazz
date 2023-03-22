@@ -3529,6 +3529,8 @@ namespace CampaignSvcs
 
     try
     {
+      query_campaign_contracts_(conn, new_config, sysdate);
+
       query_campaign_expressions_(conn, new_config, sysdate);
 
       // Fetching creatives
@@ -5816,6 +5818,102 @@ namespace CampaignSvcs
           ccg_it->second = new_campaign;
         }
       }
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught eh::Exception: " << ex.what();
+      throw Exception(ostr);
+    }
+  }
+
+  void
+  CampaignConfigDBSource::query_campaign_contracts_(
+    Commons::Postgres::Connection* conn,
+    CampaignConfig* config,
+    const TimestampValue&)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "CampaignConfigDBSource::query_campaign_contracts_()";
+
+    try
+    {
+      ExecutionTimeTracer exec_tracer(FUN, Aspect::CAMPAIGN_SERVER, logger_);
+
+      enum
+      {
+        POS_CCG_ID = 1,
+        //POS_ORD_CONRACT_ID,
+        //POS_ORD_ADO_ID,
+        POS_CONTRACT_ID,
+        POS_CONTRACT_DATE,
+        //POS_CONTRACT_TYPE,
+        POS_CLIENT_ID,
+        POS_CLIENT_NAME,
+        POS_CONTRACTOR_ID,
+        POS_CONTRACTOR_NAME
+      };
+
+      Commons::Postgres::Statement_var stmt =
+        new Commons::Postgres::Statement(
+          "SELECT "
+            "ccg_id,"
+            "account.contract_number,"
+            "(case when account.contract_date IS NOT NULL then to_char(account.contract_date, 'YYYY-MM-DD') else '' end),"
+            "account.company_registration_number,"
+            "account.legal_name,"
+            "internalaccount.company_registration_number,"
+            "internalaccount.legal_name "
+          "FROM CampaignCreativeGroup JOIN Campaign USING(campaign_id) JOIN Account USING(account_id) "
+            "JOIN Account internalaccount ON(internalaccount.account_id = Account.internal_account_id) "
+          "WHERE account.contract_number <> '' "
+          "ORDER BY ccg_id, account.contract_number");
+
+      Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
+
+      CampaignDef::CampaignContractMap cur_contracts;
+      bool rs_next = rs->next();
+      unsigned long cur_ccg_id = rs_next ? rs->get_number<unsigned long>(POS_CCG_ID) : 0;
+
+      for (CampaignMap::ActiveMap::iterator ccg_it =
+             config->campaigns.active().begin();
+           ccg_it != config->campaigns.active().end(); )
+      {
+        if(!rs_next || ccg_it->first < cur_ccg_id)
+        {
+          if(cur_contracts.size() != ccg_it->second->contracts.size() ||
+             !std::equal(cur_contracts.begin(), cur_contracts.end(),
+               ccg_it->second->contracts.begin(), ccg_it->second->contracts.end()))
+          {
+            Campaign_var campaign(new CampaignDef(*(ccg_it->second)));
+            campaign->contracts.swap(cur_contracts);
+            ccg_it->second = campaign;
+          }
+
+          cur_contracts.clear();
+          ++ccg_it;
+        }
+        else
+        {
+          if(ccg_it->first == cur_ccg_id)
+          {
+            CampaignContractDef_var new_contract(new CampaignContractDef());
+            new_contract->ord_contract_id = ""; // rs->get_string(POS_ORD_CONRACT_ID);
+            new_contract->ord_ado_id = "amber"; // rs->get_string(POS_ORD_ADO_ID);
+            new_contract->id = rs->get_string(POS_CONTRACT_ID);
+            new_contract->date = rs->get_string(POS_CONTRACT_DATE);
+            new_contract->type = "contract"; // rs->get_string(POS_CONTRACT_TYPE);
+            new_contract->client_id = rs->get_string(POS_CLIENT_ID);
+            new_contract->client_name = rs->get_string(POS_CLIENT_NAME);
+            new_contract->contractor_id = rs->get_string(POS_CONTRACTOR_ID);
+            new_contract->contractor_name = rs->get_string(POS_CONTRACTOR_NAME);
+            cur_contracts.emplace(new_contract->id, new_contract);
+          }
+
+          rs_next = rs->next();
+          cur_ccg_id = rs_next ? rs->get_number<unsigned long>(POS_CCG_ID) : 0;
+        }
+      } // campaigns loop
     }
     catch(const eh::Exception& ex)
     {

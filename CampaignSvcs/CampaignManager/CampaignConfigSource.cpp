@@ -897,6 +897,18 @@ namespace CampaignSvcs
             }
 
             {
+              // fill erid
+              OptionTokenValueMap::const_iterator tok_it =
+                (*cr_it)->tokens.find(CreativeTokens::ERID);
+
+              if (tok_it != (*cr_it)->tokens.end() &&
+                  !tok_it->second.value.empty())
+              {
+                (*cr_it)->erid = tok_it->second.value;
+              }
+            }
+
+            {
               // fill video creative traits
               // fill video_duration
               OptionTokenValueMap::const_iterator video_duration_tok_it =
@@ -2276,6 +2288,7 @@ namespace CampaignSvcs
           campaign_info.exclude_tags[tag_i].delivery_value));
       }
 
+      // fill creatives
       for (CORBA::ULong j = 0; j < campaign_info.creatives.length(); j++)
       {
         const CreativeInfo& creative_info = campaign_info.creatives[j];
@@ -2323,6 +2336,23 @@ namespace CampaignSvcs
 
           continue;
         }
+      }
+
+      // fill contracts
+      for(CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
+      {
+        const CampaignContractInfo& contract = campaign_info.contracts[contract_i];
+        CampaignContract_var new_contract(new CampaignContract());
+        new_contract->ord_contract_id = contract.ord_contract_id;
+        new_contract->ord_ado_id = contract.ord_ado_id;
+        new_contract->id = contract.id;
+        new_contract->date = contract.date;
+        new_contract->type = contract.type;
+        new_contract->client_id = contract.client_id;
+        new_contract->client_name = contract.client_name;
+        new_contract->contractor_id = contract.contractor_id;
+        new_contract->contractor_name = contract.contractor_name;
+        campaign->contracts.emplace_back(new_contract);
       }
 
       new_config.campaigns.insert(

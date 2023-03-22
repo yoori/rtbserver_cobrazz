@@ -116,6 +116,8 @@ namespace AdServer
 
       const std::string SOURCE_ID("SOURCEID");
       const std::string EXTERNAL_USER_ID("EXTERNALID");
+
+      const std::string ERID("ERID");
     }
 
     class CreativeTextGenerator

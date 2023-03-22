@@ -769,6 +769,7 @@ namespace CampaignSvcs
       unsigned long video_duration;
       Commons::Optional<unsigned long> video_skip_offset;
       bool https_safe_flag;
+      std::string erid;
 
     protected:
       virtual
@@ -791,6 +792,26 @@ namespace CampaignSvcs
 
     typedef std::set<unsigned long> SiteIdSet;
 
+    class CampaignContract: public ReferenceCounting::AtomicImpl
+    {
+    public:
+      std::string ord_contract_id;
+      std::string ord_ado_id;
+
+      std::string id;
+      std::string date;
+      std::string type;
+
+      std::string client_id;
+      std::string client_name;
+
+      std::string contractor_id;
+      std::string contractor_name;
+    };
+
+    typedef ReferenceCounting::SmartPtr<CampaignContract>
+      CampaignContract_var;
+
     struct Campaign:
       public BillingStateContainer::AvailableAndMinCTRSetter,
       public virtual ReferenceCounting::AtomicImpl
@@ -798,6 +819,7 @@ namespace CampaignSvcs
     public:
       typedef std::set<unsigned long> OrderSetIdSet;
       typedef std::unordered_set<unsigned long> SizeIdSet;
+      typedef std::vector<CampaignContract_var> CampaignContractArray;
 
       Campaign() noexcept;
 
@@ -913,6 +935,7 @@ namespace CampaignSvcs
       CreativeList creatives;          /**< Campaign creatives */
       OrderSetIdSet opt_order_sets;
       RevenueDecimal base_min_ctr_goal;
+      CampaignContractArray contracts;
 
     protected:
       typedef Sync::Policy::PosixSpinThread GoalCTRSyncPolicy;

@@ -1235,7 +1235,7 @@ namespace AdServer
         CorbaAlgs::convert_sequence(
           instantiate_ad_info.pubpixel_accounts,
           inst_params.pubpixel_accounts);
-        
+
         instantiate_creative_(
           instantiate_ad_info.common_info,
           campaign_config,
@@ -1648,12 +1648,6 @@ namespace AdServer
             adsspace_system_cpm = std::min(
               adsspace_system_cpm, ad_slot_min_cpm.min_pub_ecpm_system);
           }
-
-          /*
-          std::cerr << "X ad_slot.min_ecpm = " << CorbaAlgs::unpack_decimal<RevenueDecimal>(ad_slot.min_ecpm) <<
-            ", ad_slot_min_cpm.min_pub_ecpm = " << ad_slot_min_cpm.min_pub_ecpm <<
-            std::endl;
-          */
 
           try
           {
@@ -2311,7 +2305,24 @@ namespace AdServer
           ad_selection_result.uc_freq_caps.begin(),
           ad_selection_result.uc_freq_caps.end(),
           ad_slot_result.uc_freq_caps);
-        
+
+        if(!ad_selection_result.selected_campaigns.empty())
+        {
+          ad_slot_result.erid <<
+            ad_selection_result.selected_campaigns.begin()->creative->erid;
+        }
+
+        for(auto cmp_it = ad_selection_result.selected_campaigns.begin();
+          cmp_it != ad_selection_result.selected_campaigns.end(); ++cmp_it)
+        {
+          if(cmp_it->campaign)
+          {
+            fill_campaign_contracts_(
+              ad_slot_result.contracts,
+              cmp_it->campaign->contracts);
+          }
+        }
+
         // filtering campaign/creative selection by freq caps,
         // which presents in previously processed slots
         ad_slot_context.full_freq_caps.insert(

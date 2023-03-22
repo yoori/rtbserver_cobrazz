@@ -3,28 +3,29 @@ add_idl(CampaignCommonsIDL CampaignCommons.idl ${IDL_DIRECTORY}/CampaignSvcs/Cam
 target_link_libraries(CampaignCommonsIDL CorbaTypesIDL)
 
 add_library(CampaignTypes SHARED
-CampaignTypes.cpp
-)
-
+  CampaignTypes.cpp
+  )
 
 add_library(ExpressionChannel SHARED
-ExpressionChannel.cpp
-)
+  ExpressionChannel.cpp
+  )
+
 target_link_libraries(ExpressionChannel 
- Generics
- CORBACommons
- Commons
- CampaignCommonsIDL
-)
+  Generics
+  CORBACommons
+  Commons
+  CampaignCommonsIDL
+  )
 
 
 add_library(ExpressionChannelIndex SHARED
-ExpressionChannelIndex.cpp
-)
+  ExpressionChannelIndex.cpp
+  )
+
 target_link_libraries(ExpressionChannelIndex
-    Generics
-    Commons
-    ExpressionChannel
-)
+  Generics
+  Commons
+  ExpressionChannel
+  )
 
 #install(TARGETS CampaignCommonsIDL CampaignTypes ExpressionChannel ExpressionChannelIndex  DESTINATION ${INSTALL_DIR})

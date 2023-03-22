@@ -1,4 +1,3 @@
-
 #ifndef CAMPAIGNSVCS_CAMPAIGNCAMPAIGNMANAGER_CAMPAIGNMANAGER_IDL
 #define CAMPAIGNSVCS_CAMPAIGNCAMPAIGNMANAGER_CAMPAIGNMANAGER_IDL
 
@@ -628,6 +627,7 @@ module AdServer
         boolean https_safe_flag;
         // Expanding flags
         octet expanding;
+        //TokenSeq ext_tokens;
       };
 
       typedef sequence<CreativeSelectResult> CreativeSelectResultSeq;
@@ -714,6 +714,9 @@ module AdServer
         TokenSeq native_data_tokens;
         TokenImageSeq native_image_tokens;
         string track_html_body;
+
+        string erid;
+        CampaignContractSeq contracts;
       };
 
       typedef sequence<AdSlotResult> AdSlotResultSeq;
