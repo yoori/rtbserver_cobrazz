@@ -828,8 +828,19 @@ namespace Bidding
                   {
                     AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
 
-                    nroa_obj.add_escaped_string_if_non_empty(
-                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+                    if(request_info.erid_return_type == SourceTraits::ERIDRT_SINGLE)
+                    {
+                      nroa_obj.add_escaped_string_if_non_empty(
+                        Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+                    }
+                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
+                    {
+                      AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
+                      if(ad_slot_result.erid[0])
+                      {
+                        array.add_escaped_string(String::SubString(ad_slot_result.erid));
+                      }
+                    }
 
                     if(ad_slot_result.contracts.length() > 0)
                     {

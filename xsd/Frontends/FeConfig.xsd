@@ -437,7 +437,7 @@
 
     <xsd:attribute name="native_instantiate_type" type="NativeInstantiateType" use="required"/>
     <xsd:attribute name="native_impression_tracker_type" 
-                   type="NativeImpressionTrackerType" use="optional"/>
+      type="NativeImpressionTrackerType" use="optional"/>
     <xsd:attribute name="native_notice" type="NoticeInstantiateType" use="required"/>
 
     <xsd:attribute name="truncate_domain" type="xsd:boolean" use="required"/>
@@ -447,7 +447,10 @@
     <xsd:attribute name="fill_adid" type="xsd:boolean" default="false"/>
     <xsd:attribute name="ipw_extension" type="xsd:boolean" use="required"/>
     <xsd:attribute name="max_bid_time" type="xsd:positiveInteger" use="optional"/>
-    <xsd:attribute name="skip_ext_category" type="xsd:boolean" default="false"/>
+    <xsd:attribute name="skip_ext_category" type="xsd:boolean"
+      default="false"/>
+    <xsd:attribute name="erid_return_type" type="ERIDReturnType"
+      default="single"/>
   </xsd:complexType>
 
   <xsd:complexType name="AdFeConfigurationType">
@@ -1218,6 +1221,13 @@
       <xsd:enumeration value="native_as_element-1.2"/>
       <xsd:enumeration value="adm-1.2"/>
       <xsd:enumeration value="adm_native-1.2"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ERIDReturnType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="single"/>
+      <xsd:enumeration value="array"/>
     </xsd:restriction>
   </xsd:simpleType>
 

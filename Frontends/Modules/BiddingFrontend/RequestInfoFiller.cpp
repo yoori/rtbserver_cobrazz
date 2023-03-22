@@ -3952,6 +3952,7 @@ namespace Bidding
       }
       request_info.skip_ext_category = source_it->second.skip_ext_category;
       request_info.notice_url = source_it->second.notice_url;
+      request_info.erid_return_type = source_it->second.erid_return_type;
     }
     else
     {

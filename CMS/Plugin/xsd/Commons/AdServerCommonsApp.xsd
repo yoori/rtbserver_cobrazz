@@ -479,6 +479,12 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="ERIDReturnType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="single"/>
+      <xsd:enumeration value="array"/>
+    </xsd:restriction>
+  </xsd:simpleType>
 
   <xsd:complexType name="RTBSourceConfigType">
     <!-- userbind settings -->
@@ -517,6 +523,9 @@
     <xsd:attribute name="mime_encoded_vast_preclick" type="xsd:string"/>
     <xsd:attribute name="click_prefix" type="xsd:string"/>
     <xsd:attribute name="mime_encoded_click_prefix" type="xsd:string"/>
+
+    <xsd:attribute name="erid_return_type" type="ERIDReturnType"
+      default="single"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserBindFrontendSourceType">

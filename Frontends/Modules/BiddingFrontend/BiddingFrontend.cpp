@@ -573,6 +573,9 @@ namespace Bidding
                 *it->native_impression_tracker_type());
           }
 
+          source_traits.erid_return_type = adapt_erid_return_type_(
+            it->erid_return_type());
+
           if(it->max_bid_time().present())
           {
             source_traits.max_bid_time = Generics::Time(*(it->max_bid_time()));
@@ -3763,6 +3766,24 @@ namespace Bidding
     
     Stream::Error ostr;
     ostr << "unknown native ads instantiate type '" << inst_type_str << "'";
+    throw Exception(ostr);
+  }
+
+  SourceTraits::ERIDReturnType
+  Frontend::adapt_erid_return_type_(
+    const std::string& erid_type_str)
+  {
+    if(erid_type_str == "single")
+    {
+      return SourceTraits::ERIDRT_SINGLE;
+    }
+    else if(erid_type_str == "array")
+    {
+      return SourceTraits::ERIDRT_ARRAY;
+    }
+
+    Stream::Error ostr;
+    ostr << "unknown erid return type '" << erid_type_str << "'";
     throw Exception(ostr);
   }
 
