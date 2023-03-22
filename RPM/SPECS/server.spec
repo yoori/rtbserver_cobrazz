@@ -36,7 +36,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv302%{?dist}
+Release: ssv308%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -111,6 +111,8 @@ Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
+BuildRequires: userver-devel
+
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
 Requires: rsync >= 3.0.7-3.el6
@@ -129,6 +131,7 @@ Requires: librdkafka1 = %__librdkafka_ver_req
 Requires: vanga = %__vanga_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 2.1.2
+Requires: cryptopp libatomic libev userver
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
 Requires: perl-Devel-GlobalDestruction perl-Devel-LexAlias perl-Devel-StackTrace perl-Dist-CheckConflicts perl-Email-Date-Format
 Requires: perl-Eval-Closure perl-Exception-Class perl-File-Find-Rule perl-HTML-Tree perl-libnetcfg perl-Log-Dispatch perl-Mail-Sendmail
