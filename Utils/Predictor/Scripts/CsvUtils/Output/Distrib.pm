@@ -137,7 +137,7 @@ sub process
   my $res_row = CsvUtils::Utils::prepare_row($row);
 
   my $local_fh = cacheout '>>:encoding(UTF-8)', $self->{files_}->{$key};
-  $self->{csv_}->print($self->{files_}->{$key}, $res_row);
+  $self->{csv_}->print($local_fh, $res_row);
 
   return $row;
 }
