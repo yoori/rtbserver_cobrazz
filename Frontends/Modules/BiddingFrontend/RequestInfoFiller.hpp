@@ -55,6 +55,12 @@ namespace Bidding
       NAIT_ADM_NATIVE_1_2
     };
 
+    enum ERIDReturnType
+    {
+      ERIDRT_SINGLE,
+      ERIDRT_ARRAY,
+    };
+
     AdServer::Commons::Optional<unsigned long> default_account_id;
     AdServer::Commons::Optional<AdServer::CampaignSvcs::AdRequestType> request_type;
     AdServer::CampaignSvcs::AdInstantiateType instantiate_type;
@@ -76,6 +82,7 @@ namespace Bidding
     AdServer::Commons::Optional<AdServer::CampaignSvcs::NativeAdsImpressionTrackerType>
       native_ads_impression_tracker_type;
     bool skip_ext_category;
+    ERIDReturnType erid_return_type;
   };
 
   typedef std::map<std::string, SourceTraits>
@@ -118,6 +125,7 @@ namespace Bidding
         is_app(false),
         native_ads_instantiate_type(SourceTraits::NAIT_NONE),
         native_ads_impression_tracker_type(AdServer::CampaignSvcs::NAITT_IMP),
+        erid_return_type(SourceTraits::ERIDRT_SINGLE),
         skip_ext_category(false)
     {}
 
@@ -154,6 +162,7 @@ namespace Bidding
     FrontendCommons::PlatformMatcher::PlatformNameSet platform_names;
     SourceTraits::NativeAdsInstantiateType native_ads_instantiate_type;
     AdServer::CampaignSvcs::NativeAdsImpressionTrackerType native_ads_impression_tracker_type;
+    SourceTraits::ERIDReturnType erid_return_type;
 
     bool skip_ext_category;
     std::string notice_url;

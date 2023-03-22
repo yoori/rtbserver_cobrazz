@@ -1293,6 +1293,9 @@
           <xsl:attribute name="skip_ext_category"><xsl:value-of
              select="@skip_ext_category"/><xsl:if test="count(@skip_ext_category)
              = 0">false</xsl:if></xsl:attribute>
+          <xsl:attribute name="erid_return_type"><xsl:value-of
+             select="@erid_return_type"/><xsl:if test="count(@erid_return_type)
+             = 0">single</xsl:if></xsl:attribute>
         </cfg:Source>
       </xsl:for-each>
 

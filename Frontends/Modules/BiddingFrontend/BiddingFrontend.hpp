@@ -358,6 +358,11 @@ namespace Bidding
       const std::string& imp_type_str)
       /*throw(Exception)*/;
 
+    static
+    SourceTraits::ERIDReturnType
+    adapt_erid_return_type_(
+      const std::string& inst_type_str);
+
     /*
     void
     fill_native_response_(
