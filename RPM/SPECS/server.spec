@@ -141,6 +141,8 @@ Requires: perl-Ref-Util-XS perl-Role-Tiny perl-Specio perl-Sub-Exporter-Progress
 Requires: perl-Text-CSV perl-Text-CSV_XS
 Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Rule
 Requires: python36
+Requires: python3-aiohttp python3-psycopg2
+Requires: python3-minio
 
 #Requires: libicu = 50.2-4
 #BuildRequires: libicu-devel = 50.2-4
