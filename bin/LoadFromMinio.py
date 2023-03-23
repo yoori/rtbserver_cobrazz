@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import gzip
 import shutil
 import string
 import uuid
@@ -10,6 +9,9 @@ import gzip
 from datetime import datetime
 import signal
 from time import sleep
+import logging
+
+import urllib3.exceptions
 from minio import Minio
 
 
@@ -81,13 +83,13 @@ class Application:
             with open(self.pid_file, "w") as f:
                 f.write(str(os.getpid()))
 
-        client = Minio(self.url, access_key=self.acc, secret_key=self.secret)
-
         while self.running:
             meta = None
+            client = Minio(self.url, access_key=self.acc, secret_key=self.secret)
             objects = client.list_objects(self.bucket)
             output_files = {}
             markers = []
+            is_error = True
             try:
                 for obj in objects:
                     if not self.running:
@@ -116,6 +118,7 @@ class Application:
                                     if not self.running:
                                         break
                                     f.write(batch)
+                            print("Processing " + name)
                             with file_type(tmp_path, "r") as f:
                                 while True:
                                     if not self.running:
@@ -136,8 +139,8 @@ class Application:
                                             first_line = True
                                             use_segment_id = (meta[segment_id] if segment_id in meta else str(segment_id))
                                             output_file = open(
-                                              os.path.join(self.tmp_dir, make_segment_filename(use_segment_id, is_short)),
-                                              "wt")
+                                                os.path.join(self.tmp_dir, make_segment_filename(use_segment_id, is_short)),
+                                                "wt")
                                             output_files[file_key] = output_file
                                         if not first_line:
                                             output_file.write("\n")
@@ -147,20 +150,25 @@ class Application:
                     finally:
                         response.close()
                         response.release_conn()
+            except urllib3.exceptions.MaxRetryError:
+                logging.error("Minio error")
+            else:
+                is_error = False
             finally:
                 stamp = None
                 if self.running:
                     stamp = ".stamp_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S_") + str(uuid.uuid4())
-                    for marker_path in markers:
-                        with open(marker_path, "w"):
-                            pass
+                    if not is_error:
+                        for marker_path in markers:
+                            with open(marker_path, "w"):
+                                pass
                 for k, f in output_files.items():
                     segment_id, is_short = k
                     f.close()
                     use_segment_id = (meta[segment_id] if segment_id in meta else str(segment_id))
                     fname = make_segment_filename(use_segment_id, is_short)
                     tmp_path = os.path.join(self.tmp_dir, fname)
-                    if stamp is None:
+                    if stamp is None or is_error:
                         self.__safe_remove(tmp_path)
                     else:
                         shutil.move(tmp_path, os.path.join(self.out_dir, fname + stamp))
