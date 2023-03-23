@@ -61,6 +61,20 @@ BEGIN
 END$$;"""
 
 
+class Upload:
+    def __init__(self, get_param):
+        self.account_id = get_param("account_id")
+        self.channel_prefix = get_param("channel_prefix")
+        self.dir = get_param("dir")
+        self.workspace_dir = get_param("workspace_dir")
+        self.markers_dir = os.path.join(self.workspace_dir, "markers")
+        os.makedirs(self.markers_dir, exist_ok=True)
+        self.url_segments_dir = get_param("url_segments_dir")
+        if self.url_segments_dir is not None:
+            self.url_markers_dir = os.path.join(self.workspace_dir, "url_markers")
+            os.makedirs(self.url_markers_dir, exist_ok=True)
+
+
 class Application:
     def __init__(self):
         self.running = True
@@ -70,20 +84,20 @@ class Application:
         parser.add_argument("-upload-url", help="URL of server.")
         parser.add_argument("-period", type=float, help="Period between checking files.")
         parser.add_argument("-upload-wait-time", type=float, help="Time to wait for upload.")
+        parser.add_argument("-account-id", type=int, help="Account ID.")
+        parser.add_argument("-channel-prefix", help="Filename prefix.")
         parser.add_argument("-dir", help="Folder with files.")
         parser.add_argument("-workspace-dir", help="Folder that stores the state ect.")
-        parser.add_argument("-channel-prefix", help="Filename prefix.")
+        parser.add_argument("-url-segments-dir", help="Private .der key for signing uids.")
         parser.add_argument("-upload-threads", type=int, help="Maximum count of concurrent requests to update.")
         parser.add_argument("-pg-host", help="PostgreSQL hostname.")
         parser.add_argument("-pg-db", help="PostgreSQL DB name.")
         parser.add_argument("-pg-user", help="PostgreSQL user name.")
         parser.add_argument("-pg-pass", help="PostgreSQL password.")
-        parser.add_argument("-account-id", type=int, help="Account ID.")
         parser.add_argument("-verbosity", type=int, help="Level of console information.")
         parser.add_argument("-print-line", type=int, help="Print line index despite verbosity.")
         parser.add_argument("--pid-file", help="File with process ID.")
         parser.add_argument("-private-key-file", help="Private .der key for signing uids.")
-        parser.add_argument("-url-segments-dir", help="Private .der key for signing uids.")
         parser.add_argument("-config", default=None, help="Path to JSON config.")
 
         args = parser.parse_args()
@@ -109,11 +123,13 @@ class Application:
         self.upload_url = get_param("upload_url")
         self.period = get_param("period")
         self.upload_wait_time = get_param("upload_wait_time")
-        self.dir = get_param("dir")
-        self.workspace_dir = get_param("workspace_dir")
-        self.markers_dir = os.path.join(self.workspace_dir, "markers")
-        os.makedirs(self.markers_dir, exist_ok=True)
-        self.channel_prefix = get_param("channel_prefix", None)
+
+        self.uploads = []
+        if args.account_id is not None:
+            self.uploads.append(Upload(get_param))
+        for upload in config.get("uploads", []):
+            self.uploads.append(Upload(upload.get))
+
         self.upload_threads = get_param("upload_threads")
         self.verbosity = get_param("verbosity", 1)
         ph_host = get_param("pg_host")
@@ -123,7 +139,6 @@ class Application:
         self.connection = psycopg2.connect(
             f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
         self.cursor = self.connection.cursor()
-        self.account_id = get_param("account_id")
         self.print_line = get_param("print_line", 0)
         self.line_index = 0
         self.pid_file = get_param("pid_file")
@@ -131,10 +146,6 @@ class Application:
         if self.pid_file is not None:
             with open(self.pid_file, "w") as f:
                 f.write(str(os.getpid()))
-        self.url_segments_dir = get_param("url_segments_dir")
-        if self.url_segments_dir is not None:
-            self.url_markers_dir = os.path.join(self.workspace_dir, "url_markers")
-            os.makedirs(self.url_markers_dir, exist_ok=True)
 
     def __stop(self, signum, frame):
         print("Stop signal")
@@ -164,22 +175,23 @@ class Application:
         return tuple()
 
     async def on_period(self):
-        await self.on_uids()
-        await self.on_urls()
+        for upload in self.uploads:
+            await self.on_uids(upload)
+            await self.on_urls(upload)
 
-    async def on_uids(self):
-        if self.channel_prefix is not None:
-            await self.on_uids_dir(self.dir, self.markers_dir, self.channel_prefix)
-        for root, dirs, files in os.walk(self.dir, True):
+    async def on_uids(self, upload):
+        if upload.channel_prefix is not None:
+            await self.on_uids_dir(upload.dir, upload.markers_dir, upload.channel_prefix, upload.account_id)
+        for root, dirs, files in os.walk(upload.dir, True):
             for dir in dirs:
                 if not self.running:
                     break
-                markers_dir = os.path.join(self.markers_dir, dir)
+                markers_dir = os.path.join(upload.markers_dir, dir)
                 os.makedirs(markers_dir, exist_ok=True)
-                await self.on_uids_dir(os.path.join(self.dir, dir), markers_dir, dir)
+                await self.on_uids_dir(os.path.join(upload.dir, dir), markers_dir, dir, upload.account_id)
             break
 
-    async def on_uids_dir(self, dir, markers_dir, channel_prefix):
+    async def on_uids_dir(self, dir, markers_dir, channel_prefix, account_id):
         files_in_dir = sorted(self.__get_files_in_dir(dir))
         files_in_markers = set(self.__get_files_in_dir(markers_dir))
 
@@ -197,9 +209,11 @@ class Application:
             if ext.startswith(".signed_uids"):
                 basename, ext = os.path.splitext(basename)
                 signed_uids = True
-            basename, ext = os.path.splitext(basename)
+            if ext in (".stable", ".uids", ".txt"):
+                basename, ext = os.path.splitext(basename)
+            fname = basename + ext
 
-            reg_file = basename + ".__reg__"
+            reg_file = fname + ".__reg__"
             reg_file_path = os.path.join(markers_dir, reg_file)
 
             upload_file = file + ".__upload__"
@@ -210,10 +224,10 @@ class Application:
             if reg_file not in files_in_markers:
                 files_in_markers.add(reg_file)
                 if self.verbosity >= 1:
-                    print("Registering file:", basename)
+                    print(f"Registering file: {reg_file} ({file})")
                 self.cursor.execute(
                     SQL_REG_USER,
-                    (self.channel_prefix + basename.upper(), self.account_id, keyword, keyword, keyword, keyword, keyword))
+                    (channel_prefix + basename.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
                 self.cursor.execute("COMMIT;")
                 with open(reg_file_path, "w"):
                     pass
@@ -221,7 +235,7 @@ class Application:
             if upload_file not in files_in_markers or file_mtime != os.path.getmtime(upload_file_path):
                 if os.path.getmtime(reg_file_path) + self.upload_wait_time <= time.time():
                     if self.verbosity >= 1:
-                        print("Uploading file:", file)
+                        print(f"Uploading file: {upload_file} ({file})")
                     is_stable = (ext == ".stable")
                     self.line_index = 0
 
@@ -285,29 +299,29 @@ class Application:
                 assert (resp.status == 204)
                 return session, resp
 
-    async def on_urls(self):
-        if self.url_segments_dir is None:
+    async def on_urls(self, upload):
+        if upload.url_segments_dir is None:
             return
 
-        files_in_dir = sorted(self.__get_files_in_dir(self.url_segments_dir))
-        files_in_markers = set(self.__get_files_in_dir(self.url_markers_dir))
+        files_in_dir = sorted(self.__get_files_in_dir(upload.url_segments_dir))
+        files_in_markers = set(self.__get_files_in_dir(upload.url_markers_dir))
 
         for file in files_in_dir:
             if not self.running:
                 return
 
-            file_path = os.path.join(self.url_segments_dir, file)
+            file_path = os.path.join(upload.url_segments_dir, file)
             file_mtime = os.path.getmtime(file_path)
 
             reg_file = file + ".__reg__"
-            reg_file_path = os.path.join(self.url_markers_dir, reg_file)
+            reg_file_path = os.path.join(upload.url_markers_dir, reg_file)
 
             if reg_file not in files_in_markers or file_mtime != os.path.getmtime(reg_file_path):
                 if self.verbosity >= 1:
                     print("Registering URL file:", file)
                 self.cursor.execute(
                     SQL_REG_URL,
-                    (self.channel_prefix + file.upper(),))
+                    (upload.channel_prefix + file.upper(),))
                 channel_id = self.cursor.fetchone()[0]
                 self.cursor.execute("COMMIT;")
                 if self.verbosity >= 1:
