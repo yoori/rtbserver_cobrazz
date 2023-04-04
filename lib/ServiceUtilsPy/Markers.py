@@ -33,6 +33,8 @@ class Markers:
             return True
         if mtime is None:
             return False
+        if marker.mtime == mtime:
+            return False
         marker.mtime = mtime
         marker.is_changed = True
         return True
