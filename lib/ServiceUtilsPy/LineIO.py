@@ -15,14 +15,14 @@ class LineProgress:
 
 
 class LineFile(File):
-    def __init__(self, *args, path=None, **kw):
-        super().__init__(*args, path=path, **kw)
+    def __init__(self, service, path=None, **kw):
+        super().__init__(service, path=path, **kw)
         self.progress = LineProgress(self.service, path, 2)
 
 
 class LineReader(LineFile):
-    def __init__(self, *args, **kw):
-        super().__init__(*args, mode="rt", **kw)
+    def __init__(self, service, path, **kw):
+        super().__init__(service, path, mode="rt", **kw)
 
     def read_line(self):
         self.service.verify_running()
@@ -40,8 +40,8 @@ class LineReader(LineFile):
 
 
 class LineWriter(LineFile):
-    def __init__(self, *args, **kw):
-        super().__init__(*args, mode="wt", **kw)
+    def __init__(self, service, path, **kw):
+        super().__init__(service, path, mode="wt", **kw)
         self.first = True
 
     def write_line(self, line):

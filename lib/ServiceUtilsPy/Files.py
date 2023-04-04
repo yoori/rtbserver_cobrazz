@@ -10,7 +10,7 @@ class Files:
         self.__files = []
         self.__files_by_key = {}
 
-    def __get_file(self, file_type, name, key, **kw):
+    def __get_file(self, file_type, name, key=None, **kw):
         name = name if isinstance(name, str) else name()
 
         def make_file():

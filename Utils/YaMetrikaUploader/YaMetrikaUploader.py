@@ -93,7 +93,8 @@ class Application(Service):
         self.on_geo_ip(token, metrica_id)
 
     def on_requests(self, ymref_id, token, metrica_id):
-        with Context(self) as ctx:
+        with Context(self, out_dir=self.post_click_orig_dir) as ctx_orig,\
+                Context(self, out_dir=self.post_click_dir) as ctx:
             ym_result = self.__ym_api(
                 metrica_id,
                 token,
@@ -110,7 +111,7 @@ class Application(Service):
                 self.verify_running()
                 old_rows[(str(time), utm_source, utm_content, utm_term, key_ext)] = (visits, bounce, float(avg_time))
 
-            log_fname_orig = f"YandexOrigPostClick.{ctx.fname_seed}.csv"
+            log_fname_orig = f"YandexOrigPostClick.{ctx_orig.fname_seed}.csv"
             log_fname_prefix = f"YandexPostClick.{ctx.fname_seed}.24."
             metrica_printed = False
             for api_item in data:
@@ -137,11 +138,11 @@ class Application(Service):
                     if not metrica_printed:
                         metrica_printed = True
                         self.print_(1, "Metrica ID", metrica_id)
-                    self.process_new_record(ctx, log_fname_orig, log_fname_prefix, item)
+                    self.process_new_record(ctx_orig, ctx, log_fname_orig, log_fname_prefix, item)
 
-    def process_new_record(self, ctx, log_fname_orig, log_fname_prefix, item):
-        log = ctx.files.get_line_writer(key=-1, name=log_fname_orig)
-        log.write_line(
+    def process_new_record(self, ctx_orig, ctx, log_fname_orig, log_fname_prefix, item):
+        log_orig = ctx_orig.files.get_line_writer(key=-1, name=log_fname_orig)
+        log_orig.write_line(
             f"{item.time}\t{item.utm_source}\t{item.utm_term}\t{item.visits}\t{item.bounce}\t{item.avg_time}")
 
         try:
@@ -169,7 +170,7 @@ class Application(Service):
                 return
             date_begin, date_end, data = ym_result
 
-            with ctx.files.get_line_writer(self, f"YandexOrigGeo.{ctx.fname_seed}.csv") as f:
+            with ctx.files.get_line_writer(f"YandexOrigGeo.{ctx.fname_seed}.csv") as f:
                 for api_item in data:
 
                     dimensions = api_item["dimensions"]
@@ -196,6 +197,7 @@ class Application(Service):
         offset = 1
 
         while True:
+            self.verify_running()
             api_params = {
                 "ids": metrica_id,
                 "metrics": metrics,
