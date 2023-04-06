@@ -4,7 +4,9 @@ import os
 import string
 import logging
 import urllib3.exceptions
+import requests
 from minio import Minio
+from lxml import etree
 from ServiceUtilsPy.File import File
 from ServiceUtilsPy.LineIO import LineReader
 from ServiceUtilsPy.Service import Service
@@ -64,7 +66,8 @@ class MinioSource(Source):
                     if meta is None:
                         meta = self.__load_meta(client)
                     with MinioRequest(client, self.bucket, name) as mr:
-                        with File(self.service, os.path.join(ctx.tmp_dir, name), "wb", remove_on_exit=True, use_plugins=False) as dl_writer:
+                        with File(self.service, os.path.join(ctx.tmp_dir, name), "wb",
+                                  remove_on_exit=True, use_plugins=False) as dl_writer:
                             self.service.print_(1, f"Downloading {name}")
                             for batch in mr.stream():
                                 dl_writer.write(batch)
@@ -81,7 +84,7 @@ class MinioSource(Source):
                                             name=lambda: make_segment_filename(
                                                 meta.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
                                         output_writer.write_line(user_id)
-        except urllib3.exceptions.MaxRetryError:
+        except urllib3.exceptions.HTTPError:
             logging.error("Minio error")
 
     def __load_meta(self, client):
@@ -94,17 +97,54 @@ class MinioSource(Source):
         return meta
 
 
-class FtpSource(Source):
+class HTTPSource(Source):
     def __init__(self, service, params):
         super().__init__(service, params)
-        mp = params["minio"]
-        self.url = mp["url"]
-        self.user = mp["user"]
-        self.password = mp["password"]
-        self.taxonomy_file = mp["taxonomy_file"]
+        mp = params["http"]
+        self.__url = f'https://{mp["user"]}:{mp["password"]}@{mp["url"]}'
+        self.__taxonomy = {}
+        with LineReader(self.service, mp["taxonomy_file"]) as f:
+            for line in f.read_lines():
+                if line:
+                    segment_id, segment = line.split("\t")
+                    if segment:
+                        self.__taxonomy[segment_id] = segment
 
     def process(self):
-        raise NotImplementedError
+        try:
+            with self.create_context() as ctx:
+                with requests.get(self.__url) as files_response:
+                    if files_response.status_code != 200:
+                        raise requests.exceptions.RequestException
+                    tree = etree.HTML(files_response.text)
+                    for name in tree.xpath("/html/body/pre/a/text()"):
+                        if name == "../":
+                            continue
+                        if not ctx.markers.add(name):
+                            continue
+                        with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
+                            if file_response.status_code != 200:
+                                raise requests.exceptions.RequestException
+                            with File(self.service, os.path.join(ctx.tmp_dir, name), "wb",
+                                      remove_on_exit=True, use_plugins=False) as dl_writer:
+                                self.service.print_(1, f"Downloading {name}")
+                                for chunk in file_response.iter_content(chunk_size=65536):
+                                    dl_writer.write(chunk)
+                                dl_writer.close()
+
+                                self.service.print_(1, f"Processing {name}")
+                                with LineReader(self.service, dl_writer.path) as dl_reader:
+                                    for line in dl_reader.read_lines():
+                                        user_id, segment_ids = line.split("\t")
+                                        is_short = len(user_id) < 32
+                                        for segment_id in segment_ids.split(","):
+                                            output_writer = ctx.files.get_line_writer(
+                                                key=(segment_id, is_short),
+                                                name=lambda: make_segment_filename(
+                                                    self.__taxonomy.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
+                                            output_writer.write_line(user_id)
+        except requests.exceptions.RequestException:
+            logging.error("HTTP error")
 
 
 class Application(Service):
@@ -115,7 +155,15 @@ class Application(Service):
     def on_start(self):
         super().on_start()
         for source in self.config.get("sources", tuple()):
-            self.sources.append(MinioSource(self, source) if "minio" in source else FtpSource(self, source))
+            minio = source.get("minio")
+            if minio is not None:
+                self.sources.append(MinioSource(self, source))
+                continue
+            http = source.get("http")
+            if http is not None:
+                self.sources.append(HTTPSource(self, source))
+                continue
+            raise RuntimeError("unknown source type")
 
     def on_run(self):
         for source in self.sources:
