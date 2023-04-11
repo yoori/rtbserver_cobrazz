@@ -133,7 +133,7 @@ namespace ProfilingCommons
     if(!status.ok())
     {
       Stream::Error ostr;
-      ostr << FUN << ": can't save record to DB: " << path_;
+      ostr << FUN << ": can't save record to DB '" << path_ << "': " << status.ToString();
       throw Exception(ostr.str());
     }
   }
