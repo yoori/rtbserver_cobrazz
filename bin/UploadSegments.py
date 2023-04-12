@@ -184,7 +184,7 @@ class Application(Service):
                             else:
                                 with LineReader(self, in_path) as f:
                                     await run_lines(f)
-                            
+
         except aiohttp.client_exceptions.ClientError:
             logging.error("aiohttp error")
 
@@ -200,21 +200,27 @@ class Application(Service):
             if not is_stable:
                 await get(line)
             else:
-                session, resp = await self.request(
+
+                async def visitor(session, resp):
+                    uid = resp.cookies.get("uid")
+                    if uid is not None:
+                        await get(uid.value)
+
+                await self.request(
                     path="track.gif",
                     headers={},
-                    params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."})
-                uid = resp.cookies.get("uid")
-                if uid is not None:
-                    await get(uid.value)
+                    params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
+                    visitor=visitor)
 
-    async def request(self, path, headers, params):
+    async def request(self, path, headers, params, visitor=None):
         url = f"{self.upload_url}/{path}"
         self.print_(3, "request ", "url=", url, "headers=", headers, "params=", params)
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url=url, params=params, ssl=False) as resp:
-                assert (resp.status == 204)
-                return session, resp
+                if resp.status != 204:
+                    raise aiohttp.client_exceptions.ClientResponseError
+                if visitor is not None:
+                    await visitor(session, resp)
 
     async def on_urls(self, upload):
         if upload.url_segments_dir is None:
