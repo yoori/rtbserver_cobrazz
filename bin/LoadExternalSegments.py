@@ -6,6 +6,7 @@ import logging
 import urllib3.exceptions
 import requests
 from minio import Minio
+import minio.error
 from lxml import etree
 from ServiceUtilsPy.File import File
 from ServiceUtilsPy.LineIO import LineReader
@@ -84,8 +85,10 @@ class MinioSource(Source):
                                             name=lambda: make_segment_filename(
                                                 meta.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
                                         output_writer.write_line(user_id)
-        except urllib3.exceptions.HTTPError:
+        except minio.error.MinioException:
             logging.error("Minio error")
+        except urllib3.exceptions.HTTPError:
+            logging.error("Minio HTTP error")
 
     def __load_meta(self, client):
         meta = {}
