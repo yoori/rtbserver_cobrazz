@@ -3,12 +3,15 @@
 import os
 import io
 import aiohttp
+import aiohttp.client_exceptions
 import psycopg2
 import subprocess
 import asyncio
+import logging
 from ServiceUtilsPy.Service import Service
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
+from minio.error import *
 
 
 def make_keyword(name):
@@ -59,11 +62,11 @@ class Upload:
         self.account_id = params["account_id"]
         self.channel_prefix = params["channel_prefix"]
         self.in_dir = params["in_dir"]
-        self.workspace_dir = params["workspace_dir"]
-        self.markers_dir = os.path.join(self.workspace_dir, "markers")
+        workspace_dir = params["workspace_dir"]
+        self.markers_dir = os.path.join(workspace_dir, "markers")
         self.url_segments_dir = params.get("url_segments_dir")
         if self.url_segments_dir is not None:
-            self.url_markers_dir = os.path.join(self.workspace_dir, "url_markers")
+            self.url_markers_dir = os.path.join(workspace_dir, "url_markers")
 
 
 class Application(Service):
@@ -83,6 +86,9 @@ class Application(Service):
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
         self.args_parser.add_argument("--private-key-file", help="Private .der key for signing uids.")
 
+        self.connection = None
+        self.cursor = None
+
     def on_start(self):
         super().on_start()
 
@@ -97,19 +103,26 @@ class Application(Service):
 
         self.upload_threads = self.params["upload_threads"]
 
-        ph_host = self.params["pg_host"]
-        pg_db = self.params["pg_db"]
-        pg_user = self.params["pg_user"]
-        pg_pass = self.params["pg_pass"]
-        self.connection = psycopg2.connect(f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
-        self.cursor = self.connection.cursor()
-
         self.private_key_file = self.params["private_key_file"]
 
     async def on_run_async(self):
-        for upload in self.uploads:
-            await self.on_uids(upload)
-            await self.on_urls(upload)
+        try:
+            if self.connection is None:
+                ph_host = self.params["pg_host"]
+                pg_db = self.params["pg_db"]
+                pg_user = self.params["pg_user"]
+                pg_pass = self.params["pg_pass"]
+                self.connection = psycopg2.connect(
+                    f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
+                self.cursor = self.connection.cursor()
+
+            for upload in self.uploads:
+                await self.on_uids(upload)
+                await self.on_urls(upload)
+
+        except psycopg2.Error:
+            logging.error("Postgre error")
+            self.connection = None
 
     async def on_uids(self, upload):
         if upload.channel_prefix is not None:
@@ -124,53 +137,56 @@ class Application(Service):
             break
 
     async def on_uids_dir(self, in_dir, markers_dir, channel_prefix, account_id):
-        with Context(self, in_dir=in_dir, markers_dir=markers_dir) as ctx:
-            for in_name in ctx.files.get_in_files():
-                in_path = os.path.join(in_dir, in_name)
+        try:
+            with Context(self, in_dir=in_dir, markers_dir=markers_dir) as ctx:
+                for in_name in ctx.files.get_in_files():
+                    in_path = os.path.join(in_dir, in_name)
 
-                signed_uids = False
-                basename, ext = os.path.splitext(in_name)
-                if ext.startswith(".stamp"):
-                    basename, ext = os.path.splitext(basename)
-                if ext.startswith(".signed_uids"):
-                    basename, ext = os.path.splitext(basename)
-                    signed_uids = True
-                if ext in (".stable", ".uids", ".txt"):
-                    basename, ext = os.path.splitext(basename)
-                fname = basename + ext
+                    signed_uids = False
+                    basename, ext = os.path.splitext(in_name)
+                    if ext.startswith(".stamp"):
+                        basename, ext = os.path.splitext(basename)
+                    if ext.startswith(".signed_uids"):
+                        basename, ext = os.path.splitext(basename)
+                        signed_uids = True
+                    if ext in (".stable", ".uids", ".txt"):
+                        basename, ext = os.path.splitext(basename)
+                    fname = basename + ext
 
-                reg_marker_name = fname + ".__reg__"
-                upload_marker_name = in_name + ".__upload__"
-                keyword = make_keyword(channel_prefix.lower() + basename.lower())
+                    reg_marker_name = fname + ".__reg__"
+                    upload_marker_name = in_name + ".__upload__"
+                    keyword = make_keyword(channel_prefix.lower() + basename.lower())
 
-                if ctx.markers.add(reg_marker_name):
-                    self.print_(1, f"Registering file: {reg_marker_name} ({in_name})")
-                    self.cursor.execute(
-                        SQL_REG_USER,
-                        (channel_prefix + basename.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
-                    self.cursor.execute("COMMIT;")
-                    continue
+                    if ctx.markers.add(reg_marker_name):
+                        self.print_(1, f"Registering file: {reg_marker_name} ({in_name})")
+                        self.cursor.execute(
+                            SQL_REG_USER,
+                            (channel_prefix + basename.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
+                        self.cursor.execute("COMMIT;")
+                        continue
 
-                if ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
-                    if ctx.markers.add(upload_marker_name, os.path.getmtime(in_path)):
-                        self.print_(1, f"Uploading file: {upload_marker_name} ({in_name})")
-                        is_stable = (ext == ".stable")
+                    if ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
+                        if ctx.markers.add(upload_marker_name, os.path.getmtime(in_path)):
+                            self.print_(1, f"Uploading file: {upload_marker_name} ({in_name})")
+                            is_stable = (ext == ".stable")
 
-                        async def run_lines(f):
-                            await asyncio.gather(
-                                *tuple(self.on_line(f, is_stable, keyword) for i in range(self.upload_threads)))
+                            async def run_lines(f):
+                                await asyncio.gather(
+                                    *tuple(self.on_line(f, is_stable, keyword) for i in range(self.upload_threads)))
 
-                        if not signed_uids and ext in ("", ".txt", ".uids"):
-                            with subprocess.Popen(
-                                ['sh', '-c', f'cat "{in_path}" | sed -r "s/([^.])$/\\1../" | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"'],
-                                    stdout=subprocess.PIPE) as shp:
-                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
-                                with LineReader(self, path=in_path, file=file) as f:
+                            if not signed_uids and ext in ("", ".txt", ".uids"):
+                                with subprocess.Popen(
+                                    ['sh', '-c', f'cat "{in_path}" | sed -r "s/([^.])$/\\1../" | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"'],
+                                        stdout=subprocess.PIPE) as shp:
+                                    file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
+                                    with LineReader(self, path=in_path, file=file) as f:
+                                        await run_lines(f)
+                            else:
+                                with LineReader(self, in_path, "rt") as f:
                                     await run_lines(f)
-                        else:
-                            with LineReader(self, in_path, "rt") as f:
-                                await run_lines(f)
-                        self.verify_running()
+                            self.verify_running()
+        except aiohttp.client_exceptions.ClientError:
+            logging.error("aiohttp error")
 
     async def on_line(self, f, is_stable, keyword):
 

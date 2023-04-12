@@ -1,12 +1,15 @@
 #!/usr/bin/python3
 
+import binascii
 import os
 import psycopg2
 import requests
+import requests.exceptions
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from base64 import b64decode
 from zlib import crc32
+import logging
 from ServiceUtilsPy.Service import Service
 from ServiceUtilsPy.Context import Context
 
@@ -65,16 +68,11 @@ class Application(Service):
         self.args_parser.add_argument("--pg-user", help="PostgreSQL user name.")
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
 
+        self.connection = None
+        self.cursor = None
+
     def on_start(self):
         super().on_start()
-
-        ph_host = self.params["pg_host"]
-        pg_db = self.params["pg_db"]
-        pg_user = self.params["pg_user"]
-        pg_pass = self.params["pg_pass"]
-        self.connection = psycopg2.connect(
-            f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
-        self.cursor = self.connection.cursor()
 
         self.days = self.params["days"]
 
@@ -83,14 +81,30 @@ class Application(Service):
         self.geo_ip_dir = os.path.join(self.out_dir, "YandexOrigGeo")
 
     def on_run(self):
-        self.cursor.execute("SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
-        for ymref_id, token, metrica_id in tuple(self.cursor.fetchall()):
-            self.verify_running()
-            self.on_metrica(ymref_id, token, metrica_id)
+        try:
+            if self.connection is None:
+                ph_host = self.params["pg_host"]
+                pg_db = self.params["pg_db"]
+                pg_user = self.params["pg_user"]
+                pg_pass = self.params["pg_pass"]
+                self.connection = psycopg2.connect(
+                    f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
+                self.cursor = self.connection.cursor()
+
+            self.cursor.execute("SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
+            for ymref_id, token, metrica_id in tuple(self.cursor.fetchall()):
+                self.on_metrica(ymref_id, token, metrica_id)
+
+        except psycopg2.Error:
+            logging.error("Postgre error")
+            self.connection = None
 
     def on_metrica(self, ymref_id, token, metrica_id):
-        self.on_requests(ymref_id, token, metrica_id)
-        self.on_geo_ip(token, metrica_id)
+        try:
+            self.on_requests(ymref_id, token, metrica_id)
+            self.on_geo_ip(token, metrica_id)
+        except requests.exceptions.RequestException:
+            logging.error("HTTP error")
 
     def on_requests(self, ymref_id, token, metrica_id):
         with Context(self, out_dir=self.post_click_orig_dir) as ctx_orig,\
@@ -150,13 +164,17 @@ class Application(Service):
         except ValueError:
             pass
         else:
-            chunk_number = crc32(b64decode(user_id + "==", b"-_")) % 24
-            user_id += ".."
-            request_id += ".."
-            log = ctx.files.get_line_writer(
-                key=chunk_number,
-                name=lambda: log_fname_prefix + str(chunk_number))
-            log.write_line(f"YandexPostClick\t1.0\n{item.time}\t{user_id}\t{request_id}")
+            try:
+                chunk_number = crc32(b64decode(user_id + "==", b"-_")) % 24
+            except binascii.Error:
+                pass
+            else:
+                user_id += ".."
+                request_id += ".."
+                log = ctx.files.get_line_writer(
+                    key=chunk_number,
+                    name=lambda: log_fname_prefix + str(chunk_number))
+                log.write_line(f"YandexPostClick\t1.0\n{item.time}\t{user_id}\t{request_id}")
 
     def on_geo_ip(self, token, metrica_id):
         with Context(self, out_dir=self.geo_ip_dir) as ctx:
@@ -220,7 +238,7 @@ class Application(Service):
                     "https://api-metrika.yandex.net/stat/v1/data",
                     params=api_params,
                     headers=header_params)
-            except:
+            except requests.exceptions.RequestException:
                 return None
             if response.status_code != 200:
                 return None
