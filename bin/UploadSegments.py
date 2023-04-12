@@ -182,9 +182,9 @@ class Application(Service):
                                     with LineReader(self, path=in_path, file=file) as f:
                                         await run_lines(f)
                             else:
-                                with LineReader(self, in_path, "rt") as f:
+                                with LineReader(self, in_path) as f:
                                     await run_lines(f)
-                            self.verify_running()
+                            
         except aiohttp.client_exceptions.ClientError:
             logging.error("aiohttp error")
 
