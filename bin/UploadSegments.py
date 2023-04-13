@@ -11,7 +11,6 @@ import logging
 from ServiceUtilsPy.Service import Service
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
-from minio.error import *
 
 
 def make_keyword(name):
