@@ -36,7 +36,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv308%{?dist}
+Release: ssv315%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -88,8 +88,8 @@ BuildRequires: pcre-devel >= 8.42
 BuildRequires: selinux-policy
 BuildRequires: xerces-c-devel
 BuildRequires: xsd >= 4.1.0
-BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req}
-Requires: net-snmp >= %{__net_snmp_ver_req}
+BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req} lm_sensors-libs
+Requires: net-snmp >= %{__net_snmp_ver_req} lm_sensors-libs
 #Requires: net-snmp-subagent >= 2.1.3.1
 #BuildRequires: java-1.8.0-oracle-devel >= 1.7.0.45
 BuildRequires: java-1.8.0-openjdk-devel
