@@ -542,169 +542,161 @@ namespace RequestInfoSvcs
     void operator()(
       const AdServer::LogProcessing::
       RequestTraits::CollectorType::DataT& req) const
-      noexcept
     {
-      try
+      RequestInfo request_info(req.request_id());
+
+      request_info.user_id = req.user_id();
+      request_info.household_id = req.household_id();
+      request_info.user_status = req.user_status();
+      request_info.time = req.time();
+      request_info.isp_time = req.isp_time();
+      request_info.pub_time = req.pub_time();
+      request_info.adv_time = req.adv_time();
+      request_info.test_request = req.test_request();
+      request_info.walled_garden = req.walled_garden();
+      request_info.hid_profile = req.hid_profile();
+      request_info.disable_fraud_detection = req.disable_fraud_detection();
+      request_info.fraud = RequestInfo::RS_NORMAL;
+
+      request_info.colo_id = req.colo_id();
+      request_info.publisher_account_id = req.publisher_account_id();
+      request_info.site_id = req.site_id();
+      request_info.tag_id = req.tag_id();
+      request_info.size_id = req.size_id().present() ? *req.size_id() : 0;
+      request_info.ext_tag_id = req.ext_tag_id();
+      request_info.adv_account_id = req.adv_account_id();
+      request_info.advertiser_id = req.advertiser_id();
+      request_info.campaign_id = req.cmp_id();
+      request_info.ccg_id = req.ccg_id();
+      request_info.ctr_reset_id = req.ctr_reset_id();
+      request_info.cc_id = req.cc_id();
+      request_info.has_custom_actions = req.has_custom_actions();
+      request_info.tag_delivery_threshold = req.delivery_threshold();
+
+      request_info.currency_exchange_id = req.currency_exchange_id();
+
+      fill_revenue_block(req.adv_revenue(), request_info.adv_revenue);
+      request_info.adv_revenue.currency_rate = req.adv_currency_rate();
+      fill_revenue_block(req.adv_comm_revenue(), request_info.adv_comm_revenue);
+      fill_revenue_block(req.adv_payable_comm_amount(), request_info.adv_payable_comm_amount);
+
+      fill_revenue_block(req.pub_revenue(), request_info.pub_revenue);
+      request_info.pub_revenue.currency_rate = req.pub_currency_rate();
+      request_info.pub_bid_cost = RevenueDecimal::div(
+        req.ecpm(), AdServer::CampaignSvcs::ECPM_FACTOR);
+      request_info.pub_floor_cost = req.floor_cost();
+      fill_revenue_block(req.pub_comm_revenue(), request_info.pub_comm_revenue);
+      request_info.pub_commission = req.pub_commission();
+
+      fill_revenue_block(req.isp_revenue(), request_info.isp_revenue);
+      request_info.isp_revenue.currency_rate = req.isp_currency_rate();
+      request_info.isp_revenue_share = req.isp_revenue_share();
+
+      request_info.country = req.country_code();
+      request_info.referer = req.referer();
+
+      for(AdServer::LogProcessing::UserPropertyList::const_iterator
+            it = req.user_props().begin();
+          it != req.user_props().end();
+          ++it)
       {
-        RequestInfo request_info(req.request_id());
-
-        request_info.user_id = req.user_id();
-        request_info.household_id = req.household_id();
-        request_info.user_status = req.user_status();
-        request_info.time = req.time();
-        request_info.isp_time = req.isp_time();
-        request_info.pub_time = req.pub_time();
-        request_info.adv_time = req.adv_time();
-        request_info.test_request = req.test_request();
-        request_info.walled_garden = req.walled_garden();
-        request_info.hid_profile = req.hid_profile();
-        request_info.disable_fraud_detection = req.disable_fraud_detection();
-        request_info.fraud = RequestInfo::RS_NORMAL;
-
-        request_info.colo_id = req.colo_id();
-        request_info.publisher_account_id = req.publisher_account_id();
-        request_info.site_id = req.site_id();
-        request_info.tag_id = req.tag_id();
-        request_info.size_id = req.size_id().present() ? *req.size_id() : 0;
-        request_info.ext_tag_id = req.ext_tag_id();
-        request_info.adv_account_id = req.adv_account_id();
-        request_info.advertiser_id = req.advertiser_id();
-        request_info.campaign_id = req.cmp_id();
-        request_info.ccg_id = req.ccg_id();
-        request_info.ctr_reset_id = req.ctr_reset_id();
-        request_info.cc_id = req.cc_id();
-        request_info.has_custom_actions = req.has_custom_actions();
-        request_info.tag_delivery_threshold = req.delivery_threshold();
-
-        request_info.currency_exchange_id = req.currency_exchange_id();
-
-        fill_revenue_block(req.adv_revenue(), request_info.adv_revenue);
-        request_info.adv_revenue.currency_rate = req.adv_currency_rate();
-        fill_revenue_block(req.adv_comm_revenue(), request_info.adv_comm_revenue);
-        fill_revenue_block(req.adv_payable_comm_amount(), request_info.adv_payable_comm_amount);
-
-        fill_revenue_block(req.pub_revenue(), request_info.pub_revenue);
-        request_info.pub_revenue.currency_rate = req.pub_currency_rate();
-        request_info.pub_bid_cost = RevenueDecimal::div(
-          req.ecpm(), AdServer::CampaignSvcs::ECPM_FACTOR);
-        request_info.pub_floor_cost = req.floor_cost();
-        fill_revenue_block(req.pub_comm_revenue(), request_info.pub_comm_revenue);
-        request_info.pub_commission = req.pub_commission();
-
-        fill_revenue_block(req.isp_revenue(), request_info.isp_revenue);
-        request_info.isp_revenue.currency_rate = req.isp_currency_rate();
-        request_info.isp_revenue_share = req.isp_revenue_share();
-
-        request_info.country = req.country_code();
-        request_info.referer = req.referer();
-
-        for(AdServer::LogProcessing::UserPropertyList::const_iterator
-              it = req.user_props().begin();
-            it != req.user_props().end();
-            ++it)
+        if(it->first == "ClientVersion")
         {
-          if(it->first == "ClientVersion")
-          {
-            request_info.client_app_version = it->second;
-          }
-          else if(it->first == "Client")
-          {
-            request_info.client_app = it->second;
-          }
-          else if(it->first == "BrowserVersion")
-          {
-            request_info.browser_version = it->second;
-          }
-          else if(it->first == "OsVersion")
-          {
-            request_info.os_version = it->second;
-          }
+          request_info.client_app_version = it->second;
         }
-
-        request_info.expression = req.channel_expression();
-        request_info.channels.assign(
-          req.channel_list().begin(),
-          req.channel_list().end());
-        request_info.geo_channels.assign(req.geo_channels().begin(),
-          req.geo_channels().end());
-        request_info.geo_channel_id = req.geo_channels().empty() ? 0 :
-          req.geo_channels().front();
-        request_info.device_channel_id = req.device_channel_id().present() ?
-          req.device_channel_id().get() : 0;
-
-        request_info.ccg_keyword_id = req.ccg_keyword_id();
-        request_info.keyword_id = req.keyword_id();
-        request_info.num_shown = req.num_shown();
-        request_info.position = req.position();
-        request_info.text_campaign = (req.ccg_type() == 'T');
-        request_info.tag_size = req.tag_size();
-
-        if(req.tag_visibility().present())
+        else if(it->first == "Client")
         {
-          request_info.tag_visibility = req.tag_visibility().get();
+          request_info.client_app = it->second;
         }
-
-        if(req.tag_top_offset().present())
+        else if(it->first == "BrowserVersion")
         {
-          request_info.tag_top_offset = req.tag_top_offset().get();
+          request_info.browser_version = it->second;
         }
-
-        if(req.tag_left_offset().present())
+        else if(it->first == "OsVersion")
         {
-          request_info.tag_left_offset = req.tag_left_offset().get();
+          request_info.os_version = it->second;
         }
-
-        for(LogProcessing::RequestData::CmpChannelList::const_iterator
-              cmp_ch_it = req.cmp_channel_list().begin();
-            cmp_ch_it != req.cmp_channel_list().end(); ++cmp_ch_it)
-        {
-          RequestInfo::ChannelRevenue ch_rev;
-          ch_rev.channel_id = cmp_ch_it->channel_id;
-          ch_rev.channel_rate_id = cmp_ch_it->channel_rate_id;
-          ch_rev.impression = cmp_ch_it->imp_revenue;
-          ch_rev.sys_impression = cmp_ch_it->imp_sys_revenue;
-          ch_rev.adv_impression = cmp_ch_it->adv_imp_revenue;
-          ch_rev.click = cmp_ch_it->click_revenue;
-          ch_rev.sys_click = cmp_ch_it->click_sys_revenue;
-          ch_rev.adv_click = cmp_ch_it->adv_click_revenue;
-          request_info.cmp_channels.push_back(ch_rev);
-        }
-
-        request_info.enabled_notice = req.enabled_notice();
-        request_info.disabled_pub_cost_check = req.disabled_pub_cost_check();
-        request_info.enabled_impression_tracking = req.enabled_impression_tracking();
-        request_info.enabled_action_tracking = req.enabled_action_tracking();
-
-        request_info.auction_type = req.auction_type();
-
-        //request_info.global_request_id = req.global_request_id();
-        request_info.url = req.referer();
-        request_info.ip_address = req.ip_address();
-        request_info.user_channels.assign(
-          req.history_channel_list().begin(),
-          req.history_channel_list().end());
-        request_info.ctr_algorithm_id = req.ctr_algorithm_id();
-        request_info.referer_hash = req.full_referer_hash();
-        request_info.viewability = -1; // on request viewability unknown
-        request_info.ctr = req.ctr();
-        request_info.campaign_freq = req.campaign_freq();
-        request_info.conv_rate_algorithm_id = req.conv_rate_algorithm_id();
-        request_info.conv_rate = req.conv_rate();
-        //request_info.tag_predicted_viewability = req.tag_predicted_viewability();
-
-        request_info.model_ctrs.assign(req.model_ctrs().begin(), req.model_ctrs().end());
-
-        request_info.self_service_commission = req.self_service_commission();
-        request_info.adv_commission = req.adv_commission();
-        request_info.pub_cost_coef = req.pub_cost_coef();
-        request_info.at_flags = req.at_flags();
-
-        request_processor_->process_request(request_info);
       }
-      catch(const eh::Exception& ex)
+
+      request_info.expression = req.channel_expression();
+      request_info.channels.assign(
+        req.channel_list().begin(),
+        req.channel_list().end());
+      request_info.geo_channels.assign(req.geo_channels().begin(),
+        req.geo_channels().end());
+      request_info.geo_channel_id = req.geo_channels().empty() ? 0 :
+        req.geo_channels().front();
+      request_info.device_channel_id = req.device_channel_id().present() ?
+        req.device_channel_id().get() : 0;
+
+      request_info.ccg_keyword_id = req.ccg_keyword_id();
+      request_info.keyword_id = req.keyword_id();
+      request_info.num_shown = req.num_shown();
+      request_info.position = req.position();
+      request_info.text_campaign = (req.ccg_type() == 'T');
+      request_info.tag_size = req.tag_size();
+
+      if(req.tag_visibility().present())
       {
-        callback_->error(String::SubString(ex.what()));
+        request_info.tag_visibility = req.tag_visibility().get();
       }
+
+      if(req.tag_top_offset().present())
+      {
+        request_info.tag_top_offset = req.tag_top_offset().get();
+      }
+
+      if(req.tag_left_offset().present())
+      {
+        request_info.tag_left_offset = req.tag_left_offset().get();
+      }
+
+      for(LogProcessing::RequestData::CmpChannelList::const_iterator
+            cmp_ch_it = req.cmp_channel_list().begin();
+          cmp_ch_it != req.cmp_channel_list().end(); ++cmp_ch_it)
+      {
+        RequestInfo::ChannelRevenue ch_rev;
+        ch_rev.channel_id = cmp_ch_it->channel_id;
+        ch_rev.channel_rate_id = cmp_ch_it->channel_rate_id;
+        ch_rev.impression = cmp_ch_it->imp_revenue;
+        ch_rev.sys_impression = cmp_ch_it->imp_sys_revenue;
+        ch_rev.adv_impression = cmp_ch_it->adv_imp_revenue;
+        ch_rev.click = cmp_ch_it->click_revenue;
+        ch_rev.sys_click = cmp_ch_it->click_sys_revenue;
+        ch_rev.adv_click = cmp_ch_it->adv_click_revenue;
+        request_info.cmp_channels.push_back(ch_rev);
+      }
+
+      request_info.enabled_notice = req.enabled_notice();
+      request_info.disabled_pub_cost_check = req.disabled_pub_cost_check();
+      request_info.enabled_impression_tracking = req.enabled_impression_tracking();
+      request_info.enabled_action_tracking = req.enabled_action_tracking();
+
+      request_info.auction_type = req.auction_type();
+
+      //request_info.global_request_id = req.global_request_id();
+      request_info.url = req.referer();
+      request_info.ip_address = req.ip_address();
+      request_info.user_channels.assign(
+        req.history_channel_list().begin(),
+        req.history_channel_list().end());
+      request_info.ctr_algorithm_id = req.ctr_algorithm_id();
+      request_info.referer_hash = req.full_referer_hash();
+      request_info.viewability = -1; // on request viewability unknown
+      request_info.ctr = req.ctr();
+      request_info.campaign_freq = req.campaign_freq();
+      request_info.conv_rate_algorithm_id = req.conv_rate_algorithm_id();
+      request_info.conv_rate = req.conv_rate();
+      //request_info.tag_predicted_viewability = req.tag_predicted_viewability();
+
+      request_info.model_ctrs.assign(req.model_ctrs().begin(), req.model_ctrs().end());
+
+      request_info.self_service_commission = req.self_service_commission();
+      request_info.adv_commission = req.adv_commission();
+      request_info.pub_cost_coef = req.pub_cost_coef();
+      request_info.at_flags = req.at_flags();
+
+      request_processor_->process_request(request_info);
     }
 
   private:
