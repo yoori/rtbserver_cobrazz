@@ -264,6 +264,7 @@ namespace UserInfoSvcs
   { \
     static const char* FUN = "UserBindOperationDistributor::" #CALL_NAME "()"; \
     unsigned i = 0; \
+    unsigned long chunk_index = 0; \
     for(; i < try_count_; ++i) \
     { \
       unsigned long partition_num = ( \
@@ -277,7 +278,7 @@ namespace UserInfoSvcs
           continue; \
         } \
         \
-        unsigned long chunk_index = partition->chunk_index(USER_ID); \
+        chunk_index = partition->chunk_index(USER_ID); \
         \
         auto iter = partition->chunks_ref_map.find(chunk_index); \
         if (iter == partition->chunks_ref_map.end()) \
@@ -322,8 +323,10 @@ namespace UserInfoSvcs
     } \
     THROW_COND \
     { \
-      throw AdServer::UserInfoSvcs::UserBindMapper:: \
-        ImplementationException("max tries reached"); \
+      Stream::Error ostr; \
+      ostr << "max tries reached for chunk #" << chunk_index; \
+      CORBACommons::throw_desc< \
+        AdServer::UserInfoSvcs::UserBindMapper::ImplementationException>(ostr.str()); \
     } \
   }
 
