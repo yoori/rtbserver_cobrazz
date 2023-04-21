@@ -4045,12 +4045,6 @@ namespace Bidding
         ostr << "null";
       }
       throw InvalidParamException(ostr);
-
-      std::cerr << "OpenRTB parse error" << std::endl;
-    }
-    else
-    {
-      std::cerr << "OpenRTB parse success" << std::endl;
     }
 
     JsonTag root_tag = root_value.getTag();
