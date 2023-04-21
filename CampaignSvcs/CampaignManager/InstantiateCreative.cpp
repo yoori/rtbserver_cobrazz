@@ -216,6 +216,8 @@ namespace AdServer
 
         if (creative)
         {
+          args.insert(creative->tokens.begin(), creative->tokens.end());
+
           args[CreativeTokens::CCID] = OptionValue(
             0, IntToStr(creative->ccid));
           args[CreativeTokens::ADVERTISER_ID] = OptionValue(
