@@ -3,6 +3,7 @@ import argparse
 import json
 import asyncio
 import time
+import threading
 
 
 class Params:
@@ -29,6 +30,7 @@ class StopService(Exception):
 class Service:
     def __init__(self):
         self.running = True
+        self.print_lock = threading.Lock()
 
         try:
             from signal import SIGUSR1, signal
@@ -96,7 +98,11 @@ class Service:
 
     def print_(self, verbosity, *args, **kw):
         if verbosity <= self.verbosity:
-            print(*args, **kw)
+            self.print_lock.acquire()
+            try:
+                print(*args, **kw)
+            finally:
+                self.print_lock.release()
 
     def on_run(self):
         pass
