@@ -6,13 +6,18 @@ import logging
 import urllib3.exceptions
 import requests
 from minio import Minio
-import minio.error
 from lxml import etree
 from ServiceUtilsPy.File import File
 from ServiceUtilsPy.LineIO import LineReader
 from ServiceUtilsPy.Service import Service
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.Minio import MinioRequest
+
+
+try:
+    from minio.error import MinioException
+except ImportError:
+    from minio.error import MinioError as MinioException
 
 
 VALID_FILE_CHARS = set("-_.()%s%s" % (string.ascii_letters, string.digits))
@@ -85,10 +90,12 @@ class MinioSource(Source):
                                             name=lambda: make_segment_filename(
                                                 meta.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
                                         output_writer.write_line(user_id)
-        except minio.error.MinioException:
+        except MinioException:
             logging.error("Minio error")
         except urllib3.exceptions.HTTPError:
             logging.error("Minio HTTP error")
+        except EOFError:
+            logging.error("Minio EOFError error")
 
     def __load_meta(self, client):
         meta = {}
@@ -148,6 +155,8 @@ class HTTPSource(Source):
                                             output_writer.write_line(user_id)
         except requests.exceptions.RequestException:
             logging.error("HTTP error")
+        except EOFError:
+            logging.error("HTTP EOFError error")
 
 
 class Application(Service):
