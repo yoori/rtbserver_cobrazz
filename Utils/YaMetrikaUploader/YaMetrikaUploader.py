@@ -97,7 +97,9 @@ class Application(Service):
 
         except psycopg2.Error:
             logging.error("Postgre error")
-            self.connection = None
+            if self.connection is not None:
+                self.connection.close()
+                self.connection = None
 
     def on_metrica(self, ymref_id, token, metrica_id):
         try:
