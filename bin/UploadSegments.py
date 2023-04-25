@@ -198,6 +198,8 @@ class Application(Service):
 
         except aiohttp.client_exceptions.ClientError:
             logging.error("aiohttp error")
+        except EOFError:
+            logging.error("EOFError error")
 
     async def on_line(self, f, is_stable, keyword):
 
@@ -237,27 +239,31 @@ class Application(Service):
         if upload.url_segments_dir is None:
             return
 
-        with Context(self, in_dir=upload.url_segments_dir, markers_dir=upload.url_markers_dir) as ctx:
-            for in_name in ctx.files.get_in_files():
-                in_path = os.path.join(ctx.in_dir, in_name)
-                if ctx.markers.add(in_name, os.path.getmtime(in_path)):
-                    self.print_(1, f"Registering URL file: {in_name}")
-                    cursor.execute(
-                        SQL_REG_URL,
-                        (upload.channel_prefix + in_name.upper(),))
-                    channel_id = cursor.fetchone()[0]
-                    cursor.execute("COMMIT;")
+        try:
+            with Context(self, in_dir=upload.url_segments_dir, markers_dir=upload.url_markers_dir) as ctx:
+                for in_name in ctx.files.get_in_files():
+                    in_path = os.path.join(ctx.in_dir, in_name)
+                    if ctx.markers.add(in_name, os.path.getmtime(in_path)):
+                        self.print_(1, f"Registering URL file: {in_name}")
+                        cursor.execute(
+                            SQL_REG_URL,
+                            (upload.channel_prefix + in_name.upper(),))
+                        channel_id = cursor.fetchone()[0]
+                        cursor.execute("COMMIT;")
 
-                    self.print_(1, f"Uploading URL file: {in_name}")
-                    with LineReader(self, in_path) as f:
-                        for line in f.read_lines():
-                            cursor.execute(
-                                SQL_UPLOAD_URL,
-                                (line, channel_id, line, channel_id, line))
-                            cursor.execute("COMMIT;")
+                        self.print_(1, f"Uploading URL file: {in_name}")
+                        with LineReader(self, in_path) as f:
+                            for line in f.read_lines():
+                                cursor.execute(
+                                    SQL_UPLOAD_URL,
+                                    (line, channel_id, line, channel_id, line))
+                                cursor.execute("COMMIT;")
+        except EOFError:
+            logging.error("EOFError error")
 
 
 if __name__ == "__main__":
     service = Application()
     service.run()
+
 
