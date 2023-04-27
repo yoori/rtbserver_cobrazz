@@ -94,7 +94,7 @@ class Application(Service):
         self.upload_wait_time = self.params["upload_wait_time"]
 
         self.uploads = []
-        if self.args.account_id is not None:
+        if self.params.get("account_id") is not None:
             self.uploads.append(Upload(self.params))
         for upload in self.config.get("uploads", tuple()):
             self.uploads.append(Upload(upload))
