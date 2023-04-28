@@ -36,7 +36,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv315%{?dist}
+Release: ssv322%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -125,6 +125,8 @@ Requires: perl-Proc-Daemon
 Requires: perl-Log-Dispatch
 Requires: perl-Log-Dispatch-FileRotate
 Requires: perl-Specio
+Requires: perl-Hash-MultiKey perl-Digest-CRC
+
 Requires: foros-dictionaries
 Requires: zeromq = %__zeromq_ver_req
 Requires: librdkafka1 = %__librdkafka_ver_req
@@ -272,6 +274,14 @@ rm -rf `find %{buildroot}%{__inst_root}/lib -type f -name '*.a'`
 #make -C %{__product}/%{__osbe_build_dir} install destdir=%{buildroot}
 cmake --install %{__product}/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
 
+# create so aliases for old UI
+ln -s "%{__inst_root}/lib/libHTTP.so" "%{buildroot}%{__inst_root}/lib/libhttp.so"
+ln -s "%{__inst_root}/lib/libTestCommons.so" "%{buildroot}%{__inst_root}/lib/libCheckCommons.so"
+ln -s "%{__inst_root}/lib/libSNMPAgent.so" "%{buildroot}%{__inst_root}/lib/libSNMPAgentX.so"
+ln -s "%{__inst_root}/lib/libCORBAInfResolveServerIDL.so" "%{buildroot}%{__inst_root}/lib/libInfResolveStubs.so"
+ln -s "%{__inst_root}/lib/libCORBAInfResolveClientIDL.so" "%{buildroot}%{__inst_root}/lib/libInfResolveClientStubs.so"
+ln -s "%{__inst_root}/lib/libGeoip.so" "%{buildroot}%{__inst_root}/lib/libIPMap.so"
+
 # TODO: tests have files in xsd too
 rm -f %{__product}.list
 rm -f tests.list
@@ -279,7 +289,8 @@ test_dir="unixcommons/tests %{__product}/tests"
 if [ "%{__osbe_build_dir}" != "." ]; then
   test_dir="$test_dir unixcommons/%{__osbe_build_dir}/tests %{__product}/%{__osbe_build_dir}/tests %{__product}/%{__osbe_build_dir}/utils"
 fi
-for f in `find %{buildroot}%{__inst_root} -type f`; do
+
+for f in $(find -L %{buildroot} %{buildroot}%{__inst_root} -type f) ; do
   binary=`basename $f`
   inst_name=`echo "$f" | sed -e 's#%{buildroot}##g' -e 's#\.py$#\.py*#'`
   res=`find $test_dir -type f -name $binary`
@@ -296,6 +307,12 @@ for f in `find %{buildroot}%{__inst_root} -type f`; do
       echo "$inst_name" >> %{__product}.list
     fi
 done
+
+for f in $(find %{buildroot}%{__inst_root} -type l) ; do
+  inst_name=`echo "$f" | sed -e 's#%{buildroot}##g' -e 's#\.py$#\.py*#'`
+  echo "$inst_name" >> %{__product}.list
+done
+
 %endif
 
 %ifarch noarch
