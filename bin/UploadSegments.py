@@ -2,13 +2,15 @@
 
 import os
 import io
+import asyncio
 import aiohttp
 import aiohttp.client_exceptions
 import psycopg2
 import subprocess
 import asyncio
 import logging
-from ServiceUtilsPy.Service import Service
+import threading
+from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
 
@@ -85,9 +87,6 @@ class Application(Service):
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
         self.args_parser.add_argument("--private-key-file", help="Private .der key for signing uids.")
 
-        self.connection = None
-        self.cursor = None
-
     def on_start(self):
         super().on_start()
 
@@ -95,7 +94,7 @@ class Application(Service):
         self.upload_wait_time = self.params["upload_wait_time"]
 
         self.uploads = []
-        if self.args.account_id is not None:
+        if self.params.get("account_id") is not None:
             self.uploads.append(Upload(self.params))
         for upload in self.config.get("uploads", tuple()):
             self.uploads.append(Upload(upload))
@@ -104,38 +103,51 @@ class Application(Service):
 
         self.private_key_file = self.params["private_key_file"]
 
-    async def on_run_async(self):
+    def on_run(self):
+        threads = []
+        for upload in self.uploads:
+            thread = threading.Thread(target=self.on_thread, args=(upload,))
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+    def on_thread(self, upload):
+        ph_host = self.params["pg_host"]
+        pg_db = self.params["pg_db"]
+        pg_user = self.params["pg_user"]
+        pg_pass = self.params["pg_pass"]
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        connection = None
         try:
-            if self.connection is None:
-                ph_host = self.params["pg_host"]
-                pg_db = self.params["pg_db"]
-                pg_user = self.params["pg_user"]
-                pg_pass = self.params["pg_pass"]
-                self.connection = psycopg2.connect(
-                    f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
-                self.cursor = self.connection.cursor()
-
-            for upload in self.uploads:
-                await self.on_uids(upload)
-                await self.on_urls(upload)
-
+            connection = psycopg2.connect(
+                f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
+            cursor = connection.cursor()
+            loop.run_until_complete(self.on_uids(upload, cursor))
+            loop.run_until_complete(self.on_urls(upload, cursor))
         except psycopg2.Error:
             logging.error("Postgre error")
-            self.connection = None
+        except StopService:
+            pass
+        finally:
+            if connection is not None:
+                connection.close()
 
-    async def on_uids(self, upload):
+    async def on_uids(self, upload, cursor):
         if upload.channel_prefix is not None:
-            await self.on_uids_dir(upload.in_dir, upload.markers_dir, upload.channel_prefix, upload.account_id)
+            await self.on_uids_dir(cursor, upload.in_dir, upload.markers_dir, upload.channel_prefix, upload.account_id)
         for root, dirs, files in os.walk(upload.in_dir, True):
             for subdir in dirs:
                 await self.on_uids_dir(
+                    cursor,
                     os.path.join(upload.in_dir, subdir),
                     os.path.join(upload.markers_dir, subdir),
                     subdir,
                     upload.account_id)
             break
 
-    async def on_uids_dir(self, in_dir, markers_dir, channel_prefix, account_id):
+    async def on_uids_dir(self, cursor, in_dir, markers_dir, channel_prefix, account_id):
         try:
             with Context(self, in_dir=in_dir, markers_dir=markers_dir) as ctx:
                 for in_name in ctx.files.get_in_files():
@@ -158,10 +170,10 @@ class Application(Service):
 
                     if ctx.markers.add(reg_marker_name):
                         self.print_(1, f"Registering file: {reg_marker_name} ({in_name})")
-                        self.cursor.execute(
+                        cursor.execute(
                             SQL_REG_USER,
                             (channel_prefix + basename.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
-                        self.cursor.execute("COMMIT;")
+                        cursor.execute("COMMIT;")
                         continue
 
                     if ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
@@ -186,6 +198,8 @@ class Application(Service):
 
         except aiohttp.client_exceptions.ClientError:
             logging.error("aiohttp error")
+        except EOFError:
+            logging.error("EOFError error")
 
     async def on_line(self, f, is_stable, keyword):
 
@@ -221,31 +235,35 @@ class Application(Service):
                 if visitor is not None:
                     await visitor(session, resp)
 
-    async def on_urls(self, upload):
+    async def on_urls(self, upload, cursor):
         if upload.url_segments_dir is None:
             return
 
-        with Context(self, in_dir=upload.url_segments_dir, markers_dir=upload.url_markers_dir) as ctx:
-            for in_name in ctx.files.get_in_files():
-                in_path = os.path.join(ctx.in_dir, in_name)
-                if ctx.markers.add(in_name, os.path.getmtime(in_path)):
-                    self.print_(1, f"Registering URL file: {in_name}")
-                    self.cursor.execute(
-                        SQL_REG_URL,
-                        (upload.channel_prefix + in_name.upper(),))
-                    channel_id = self.cursor.fetchone()[0]
-                    self.cursor.execute("COMMIT;")
+        try:
+            with Context(self, in_dir=upload.url_segments_dir, markers_dir=upload.url_markers_dir) as ctx:
+                for in_name in ctx.files.get_in_files():
+                    in_path = os.path.join(ctx.in_dir, in_name)
+                    if ctx.markers.add(in_name, os.path.getmtime(in_path)):
+                        self.print_(1, f"Registering URL file: {in_name}")
+                        cursor.execute(
+                            SQL_REG_URL,
+                            (upload.channel_prefix + in_name.upper(),))
+                        channel_id = cursor.fetchone()[0]
+                        cursor.execute("COMMIT;")
 
-                    self.print_(1, f"Uploading URL file: {in_name}")
-                    with LineReader(self, in_path) as f:
-                        for line in f.read_lines():
-                            self.cursor.execute(
-                                SQL_UPLOAD_URL,
-                                (line, channel_id, line, channel_id, line))
-                            self.cursor.execute("COMMIT;")
+                        self.print_(1, f"Uploading URL file: {in_name}")
+                        with LineReader(self, in_path) as f:
+                            for line in f.read_lines():
+                                cursor.execute(
+                                    SQL_UPLOAD_URL,
+                                    (line, channel_id, line, channel_id, line))
+                                cursor.execute("COMMIT;")
+        except EOFError:
+            logging.error("EOFError error")
 
 
 if __name__ == "__main__":
     service = Application()
-    service.run_async()
+    service.run()
+
 
