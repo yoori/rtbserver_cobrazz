@@ -5,6 +5,7 @@ import string
 import logging
 import urllib3.exceptions
 import requests
+import threading
 from minio import Minio
 from lxml import etree
 from ServiceUtilsPy.File import File
@@ -62,15 +63,15 @@ class MinioSource(Source):
         client = Minio(self.url, access_key=self.acc, secret_key=self.secret)
         objects = client.list_objects(self.bucket)
         try:
-            with self.create_context() as ctx:
-                for name in sorted(obj.object_name for obj in objects):
-                    self.service.verify_running()
-                    if name == "meta.tsv":
-                        continue
+            for name in sorted(obj.object_name for obj in objects):
+                self.service.verify_running()
+                if name == "meta.tsv":
+                    continue
+                if meta is None:
+                    meta = self.__load_meta(client)
+                with self.create_context() as ctx:
                     if not ctx.markers.add(name):
                         continue
-                    if meta is None:
-                        meta = self.__load_meta(client)
                     with MinioRequest(client, self.bucket, name) as mr:
                         with File(self.service, os.path.join(ctx.tmp_dir, name), "wb",
                                   remove_on_exit=True, use_plugins=False) as dl_writer:
@@ -89,13 +90,14 @@ class MinioSource(Source):
                                             key=(segment_id, is_short),
                                             name=lambda: make_segment_filename(
                                                 meta.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
+                                        output_writer.progress.verbosity = 3
                                         output_writer.write_line(user_id)
-        except MinioException:
-            logging.error("Minio error")
-        except urllib3.exceptions.HTTPError:
-            logging.error("Minio HTTP error")
-        except EOFError:
-            logging.error("Minio EOFError error")
+        except MinioException as e:
+            logging.error(e, exc_info=True)
+        except urllib3.exceptions.HTTPError as e:
+            logging.error(e, exc_info=True)
+        except EOFError as e:
+            logging.error(e, exc_info=True)
 
     def __load_meta(self, client):
         meta = {}
@@ -122,14 +124,14 @@ class HTTPSource(Source):
 
     def process(self):
         try:
-            with self.create_context() as ctx:
-                with requests.get(self.__url) as files_response:
-                    if files_response.status_code != 200:
-                        raise requests.exceptions.RequestException
-                    tree = etree.HTML(files_response.text)
-                    for name in tree.xpath("/html/body/pre/a/text()"):
-                        if name == "../":
-                            continue
+            with requests.get(self.__url) as files_response:
+                if files_response.status_code != 200:
+                    raise requests.exceptions.RequestException
+                tree = etree.HTML(files_response.text)
+                for name in tree.xpath("/html/body/pre/a/text()"):
+                    if name == "../":
+                        continue
+                    with self.create_context() as ctx:
                         if not ctx.markers.add(name):
                             continue
                         with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
@@ -152,11 +154,12 @@ class HTTPSource(Source):
                                                 key=(segment_id, is_short),
                                                 name=lambda: make_segment_filename(
                                                     self.__taxonomy.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
+                                            output_writer.progress.verbosity = 3
                                             output_writer.write_line(user_id)
-        except requests.exceptions.RequestException:
-            logging.error("HTTP error")
-        except EOFError:
-            logging.error("HTTP EOFError error")
+        except requests.exceptions.RequestException as e:
+            logging.error(e, exc_info=True)
+        except EOFError as e:
+            logging.error(e, exc_info=True)
 
 
 class Application(Service):
@@ -178,8 +181,13 @@ class Application(Service):
             raise RuntimeError("unknown source type")
 
     def on_run(self):
+        threads = []
         for source in self.sources:
-            source.process()
+            thread = threading.Thread(target=source.process)
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
 
 
 if __name__ == "__main__":
