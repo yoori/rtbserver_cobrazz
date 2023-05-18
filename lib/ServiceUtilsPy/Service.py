@@ -4,6 +4,7 @@ import json
 import asyncio
 import time
 import threading
+import datetime
 
 
 class Params:
@@ -88,7 +89,7 @@ class Service:
             os.remove(self.pid_file)
 
     def on_stop_signal(self):
-        print("Stop signal")
+        self.print_(0, "Stop signal")
         self.running = False
 
     def verify_running(self):
@@ -96,11 +97,11 @@ class Service:
             return
         raise StopService
 
-    def print_(self, verbosity, *args, **kw):
+    def print_(self, verbosity, text, flush=True):
         if verbosity <= self.verbosity:
             self.print_lock.acquire()
             try:
-                print(*args, **kw)
+                print(f"{datetime.datetime.now()} - {text}", flush=flush)
             finally:
                 self.print_lock.release()
 
