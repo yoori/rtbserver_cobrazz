@@ -23,6 +23,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
@@ -2297,10 +2298,12 @@ namespace Bidding
 
               if(creative.order_set_id)
               {
+
                 seq_orders[result_seq_order_i].ccg_id = creative.cmp_id;
                 seq_orders[result_seq_order_i].set_id = creative.order_set_id;
                 seq_orders[result_seq_order_i].imps = 1;
-
+		////qwerty
+		BidStatisticsPrometheusInc(composite_metrics_provider_,seq_orders[result_seq_order_i].ccg_id);
                 ++result_seq_order_i;
               }
 
