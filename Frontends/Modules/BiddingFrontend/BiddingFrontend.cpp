@@ -23,6 +23,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
@@ -295,10 +296,10 @@ namespace Bidding
       bid_task_count_(0),
       passback_task_count_(0),
       reached_max_pending_tasks_(0),
-      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
-      request_metrics_provider_(new RequestMetricsProvider())
+      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
+//      request_metrics_provider_(new RequestMetricsProvider())
   {
-    composite_metrics_provider_->add_provider(request_metrics_provider_);
+//    composite_metrics_provider_->add_provider(request_metrics_provider_);
   }
 
   bool
@@ -722,7 +723,8 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
 
-    request_metrics_provider_->add_input_request();
+    metrics_raii raii(composite_metrics_provider_,"input_request");
+    //request_metrics_provider_->add_input_request();
 
     // create task - push it to task runner
     // and push goal for timeout control
@@ -804,7 +806,8 @@ namespace Bidding
       {
         bid_task_count_ += -1;
 
-        request_metrics_provider_->add_skip_request();
+//        request_metrics_provider_->add_skip_request();
+        metrics_raii raii(composite_metrics_provider_,"skip_request");
 
         {
           MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
@@ -1747,7 +1750,8 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::trigger_match_()";
 
-    request_metrics_provider_->add_channel_server_request();
+//    request_metrics_provider_->add_channel_server_request();
+    metrics_raii raii(composite_metrics_provider_,"server_request");
 
     if(!request_info.filter_request)
     {
@@ -1932,7 +1936,8 @@ namespace Bidding
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
-    request_metrics_provider_->add_user_info_request();
+    metrics_raii raii(composite_metrics_provider_,"user_info_request");
+//    request_metrics_provider_->add_user_info_request();
 
     Generics::Time start_process_time;
 
@@ -2293,10 +2298,12 @@ namespace Bidding
 
               if(creative.order_set_id)
               {
+
                 seq_orders[result_seq_order_i].ccg_id = creative.cmp_id;
                 seq_orders[result_seq_order_i].set_id = creative.order_set_id;
                 seq_orders[result_seq_order_i].imps = 1;
-
+		////qwerty
+		BidStatisticsPrometheusInc(composite_metrics_provider_,seq_orders[result_seq_order_i].ccg_id);
                 ++result_seq_order_i;
               }
 
