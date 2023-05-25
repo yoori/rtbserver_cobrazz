@@ -46,6 +46,7 @@ Source0: foros-server-%{version}.tar.gz
 
 %ifnarch noarch
 
+BuildRequires: cmake3
 BuildRequires: libstdc++
 Requires: libstdc++
 #BuildRequires: glibc-devel
@@ -112,6 +113,9 @@ BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
 BuildRequires: userver-devel
+# userver-devel dependencies workaround:
+BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
+BuildRequires: c-ares-devel >= 1.18.1
 
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
@@ -125,7 +129,7 @@ Requires: perl-Proc-Daemon
 Requires: perl-Log-Dispatch
 Requires: perl-Log-Dispatch-FileRotate
 Requires: perl-Specio
-Requires: perl-Hash-MultiKey perl-Digest-CRC
+Requires: perl-Hash-MultiKey perl-Digest-CRC perl-open
 
 Requires: foros-dictionaries
 Requires: zeromq = %__zeromq_ver_req
