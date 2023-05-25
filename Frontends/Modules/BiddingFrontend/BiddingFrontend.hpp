@@ -15,6 +15,7 @@
 #include "Generics/CompositeMetricsProvider.hpp"
 
 #include <UServerUtils/MetricsHTTPProvider.hpp>
+#include <UServerUtils/metrics_raii.hpp>
 
 #include <Sync/PosixLock.hpp>
 
@@ -414,7 +415,7 @@ namespace Bidding
 
   private:
     const Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-    const RequestMetricsProvider_var request_metrics_provider_;
+//    const RequestMetricsProvider_var request_metrics_provider_;
   };
 }
 }

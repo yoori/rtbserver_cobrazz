@@ -2,7 +2,6 @@
 
 import os
 import io
-import asyncio
 import aiohttp
 import aiohttp.client_exceptions
 import psycopg2
@@ -10,6 +9,7 @@ import subprocess
 import asyncio
 import logging
 import threading
+import random
 from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
@@ -91,6 +91,8 @@ class Application(Service):
         super().on_start()
 
         self.upload_url = self.params["upload_url"]
+        if isinstance(self.upload_url, str):
+            self.upload_url = [self.upload_url]
         self.upload_wait_time = self.params["upload_wait_time"]
 
         self.uploads = []
@@ -126,8 +128,8 @@ class Application(Service):
             cursor = connection.cursor()
             loop.run_until_complete(self.on_uids(upload, cursor))
             loop.run_until_complete(self.on_urls(upload, cursor))
-        except psycopg2.Error:
-            logging.error("Postgre error")
+        except psycopg2.Error as e:
+            logging.error(e, exc_info=True)
         except StopService:
             pass
         finally:
@@ -152,6 +154,8 @@ class Application(Service):
             with Context(self, in_dir=in_dir, markers_dir=markers_dir) as ctx:
                 for in_name in ctx.files.get_in_files():
                     in_path = os.path.join(in_dir, in_name)
+                    if in_path.startswith("."):
+                        continue
 
                     signed_uids = False
                     basename, ext = os.path.splitext(in_name)
@@ -182,8 +186,9 @@ class Application(Service):
                             is_stable = (ext == ".stable")
 
                             async def run_lines(f):
-                                await asyncio.gather(
-                                    *tuple(self.on_line(f, is_stable, keyword) for i in range(self.upload_threads)))
+                                async with aiohttp.ClientSession() as session:
+                                    await asyncio.gather(
+                                        *tuple(self.on_line(f, is_stable, keyword, session) for i in range(self.upload_threads)))
 
                             if not signed_uids and ext in ("", ".txt", ".uids"):
                                 with subprocess.Popen(
@@ -196,15 +201,16 @@ class Application(Service):
                                 with LineReader(self, in_path) as f:
                                     await run_lines(f)
 
-        except aiohttp.client_exceptions.ClientError:
-            logging.error("aiohttp error")
-        except EOFError:
-            logging.error("EOFError error")
+        except aiohttp.client_exceptions.ClientError as e:
+            logging.error(e, exc_info=True)
+        except EOFError as e:
+            logging.error(e, exc_info=True)
 
-    async def on_line(self, f, is_stable, keyword):
+    async def on_line(self, f, is_stable, keyword, session):
 
         async def get(uid):
-            return await self.request(
+            await self.request(
+                session,
                 path="get",
                 headers={"Host": "ad.new-programmatic.com", "Cookie": "uid=" + uid},
                 params={"loc.name": "ru", "referer-kw": keyword})
@@ -220,20 +226,23 @@ class Application(Service):
                         await get(uid.value)
 
                 await self.request(
+                    session,
                     path="track.gif",
                     headers={},
                     params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
                     visitor=visitor)
 
-    async def request(self, path, headers, params, visitor=None):
-        url = f"{self.upload_url}/{path}"
-        self.print_(3, "request ", "url=", url, "headers=", headers, "params=", params)
-        async with aiohttp.ClientSession(headers=headers) as session:
-            async with session.get(url=url, params=params, ssl=False) as resp:
+    async def request(self, session, path, headers, params, visitor=None):
+        url = f"{random.choice(self.upload_url)}/{path}"
+        self.print_(3, f"request url={url} headers={headers} params={params}")
+        try:
+            async with session.get(url=url, params=params, headers=headers, ssl=False) as resp:
                 if resp.status != 204:
                     raise aiohttp.client_exceptions.ClientResponseError
                 if visitor is not None:
                     await visitor(session, resp)
+        except aiohttp.client_exceptions.ClientError as e:
+            logging.error(e, exc_info=True)
 
     async def on_urls(self, upload, cursor):
         if upload.url_segments_dir is None:
@@ -258,8 +267,8 @@ class Application(Service):
                                     SQL_UPLOAD_URL,
                                     (line, channel_id, line, channel_id, line))
                                 cursor.execute("COMMIT;")
-        except EOFError:
-            logging.error("EOFError error")
+        except EOFError as e:
+            logging.error(e, exc_info=True)
 
 
 if __name__ == "__main__":
