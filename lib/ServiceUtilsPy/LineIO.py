@@ -49,7 +49,7 @@ class LineWriter(LineFile):
         if self.first:
             self.first = False
         else:
-            self.file.write("\n")
-        self.file.write(line)
+            self.write("\n")
+        self.write(line)
         self.progress.next_line()
 

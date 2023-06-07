@@ -34,6 +34,7 @@ class Context:
 
     def __exit__(self, exc_type, exc_value, traceback):
         is_error = exc_type is not None
+        self.service.print_(0, f"Finalizing, error={exc_type}...")
         self.files.on_exit(is_error)
         self.markers.on_exit(is_error)
 

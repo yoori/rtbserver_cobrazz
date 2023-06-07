@@ -3,3 +3,5 @@ minio
 aiohttp
 psycopg2-binary==2.7.7
 lxml
+resource
+clickhouse-connect

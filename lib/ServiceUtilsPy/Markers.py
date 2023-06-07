@@ -30,13 +30,17 @@ class Markers:
             marker = self.__markers[name]
         except KeyError:
             self.__markers[name] = Marker(self, name, True, time.time() if mtime is None else mtime)
+            self.service.print_(0, f"Marker added {name}")
             return True
         if mtime is None:
+            self.service.print_(0, f"Marker already added {name}")
             return False
         if marker.mtime == mtime:
+            self.service.print_(0, f"Marker already added {name}")
             return False
         marker.mtime = mtime
         marker.is_changed = True
+        self.service.print_(0, f"Marker updated {name}")
         return True
 
     def get_mtime(self, name):

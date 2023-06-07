@@ -5,6 +5,8 @@ import os
 import psycopg2
 import requests
 import requests.exceptions
+import clickhouse_driver
+import clickhouse_driver.errors
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from base64 import b64decode
@@ -67,9 +69,12 @@ class Application(Service):
         self.args_parser.add_argument("--pg-db", help="PostgreSQL DB name.")
         self.args_parser.add_argument("--pg-user", help="PostgreSQL user name.")
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
+        self.args_parser.add_argument("--ch-host", help="Clickhouse hostname.")
 
         self.connection = None
         self.cursor = None
+
+        self.ch_client = None
 
     def on_start(self):
         super().on_start()
@@ -91,15 +96,24 @@ class Application(Service):
                     f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
                 self.cursor = self.connection.cursor()
 
-            self.cursor.execute("SELECT ymref_id, token, metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
+            if self.ch_client is None:
+                self.ch_client = clickhouse_driver.Client(host=self.params["ch_host"])
+
+            self.cursor.execute("SELECT ymref_id,token,metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
             for ymref_id, token, metrica_id in tuple(self.cursor.fetchall()):
                 self.on_metrica(ymref_id, token, metrica_id)
 
-        except psycopg2.Error:
-            logging.error("Postgre error")
+        except psycopg2.Error as e:
+            logging.error(e, exc_info=False)
             if self.connection is not None:
                 self.connection.close()
                 self.connection = None
+        except clickhouse_driver.errors.Error as e:
+            logging.error(e, exc_info=False)
+            if self.ch_client is not None:
+                self.ch_client.disconnect()
+                self.ch_client = None
+
 
     def on_metrica(self, ymref_id, token, metrica_id):
         try:
@@ -125,7 +139,7 @@ class Application(Service):
             self.cursor.execute(SQL_SELECT_STATS, (ymref_id, date_begin, date_end))
             for time, utm_source, utm_content, utm_term, key_ext, visits, bounce, avg_time in self.cursor.fetchall():
                 self.verify_running()
-                old_rows[(str(time), utm_source, utm_content, utm_term, key_ext)] = (visits, bounce, float(avg_time))
+                old_rows[(time.strftime('%Y-%m-%d %H:%M:%S'), utm_source, utm_content, utm_term, key_ext)] = (visits, bounce, float(avg_time))
 
             log_fname_orig = f"YandexOrigPostClick.{ctx_orig.fname_seed}.csv"
             log_fname_prefix = f"YandexPostClick.{ctx.fname_seed}.24."
@@ -153,13 +167,18 @@ class Application(Service):
                 if not already_processed:
                     if not metrica_printed:
                         metrica_printed = True
-                        self.print_(1, "Metrica ID", metrica_id)
+                        self.print_(1, f"Metrica ID {metrica_id}")
                     self.process_new_record(ctx_orig, ctx, log_fname_orig, log_fname_prefix, item)
 
     def process_new_record(self, ctx_orig, ctx, log_fname_orig, log_fname_prefix, item):
+        t = datetime.strptime(item.time, '%Y-%m-%d %H:%M:%S')
+
         log_orig = ctx_orig.files.get_line_writer(key=-1, name=log_fname_orig)
         log_orig.write_line(
             f"{item.time}\t{item.utm_source}\t{item.utm_term}\t{item.visits}\t{item.bounce}\t{item.avg_time}")
+        self.ch_client.execute(
+            'INSERT INTO YandexOrigPostClick(time,utm_source,utm_term,visits,bounce,avg_time) VALUES',
+            [[t, item.utm_source, item.utm_term, item.visits, item.bounce, item.avg_time]])
 
         try:
             user_id, request_id = item.utm_term.split(":")
@@ -177,6 +196,9 @@ class Application(Service):
                     key=chunk_number,
                     name=lambda: log_fname_prefix + str(chunk_number))
                 log.write_line(f"YandexPostClick\t1.0\n{item.time}\t{user_id}\t{request_id}")
+                self.ch_client.execute(
+                    'INSERT INTO YandexPostClick(time,user_id,request_id) VALUES',
+                    [[t, user_id, request_id]])
 
     def on_geo_ip(self, token, metrica_id):
         with Context(self, out_dir=self.geo_ip_dir) as ctx:
@@ -206,13 +228,16 @@ class Application(Service):
                     region_city = get_dimension(2)
 
                     f.write_line(f"{ip_address},{region_area}/{region_city}")
+                    self.ch_client.execute(
+                        'INSERT INTO YandexOrigGeo(ip_address,region_area,region_city) VALUES',
+                        [[ip_address, region_area, region_city]])
 
     def __ym_api(self, metrica_id, token, dimensions, metrics, sort):
         today = datetime.today()
         date1 = (today + relativedelta(days=-self.days)).strftime('%Y-%m-%d')
         date2 = today.strftime('%Y-%m-%d')
         date_end = (today + relativedelta(days=1)).strftime('%Y-%m-%d')
-    
+
         data = []
         offset = 1
 
@@ -226,6 +251,7 @@ class Application(Service):
                 "date2": date2,
                 "sort": sort,
                 "accuracy": "full",
+                "filters":"ym:s:<attribution>UTMSource=.('genius','pml','pharmatic')",
                 "offset": offset,
                 "limit": 100000
             }
@@ -241,8 +267,10 @@ class Application(Service):
                     params=api_params,
                     headers=header_params)
             except requests.exceptions.RequestException:
+                self.print_(0, "ymapi RequestException")
                 return None
             if response.status_code != 200:
+                self.print_(0, f"ymapi status code {response.status_code} != 200")
                 return None
             response_data = response.json()['data']
             if not response_data:

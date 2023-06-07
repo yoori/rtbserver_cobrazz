@@ -1,10 +1,10 @@
 import os
 import argparse
 import json
-import asyncio
 import time
 import threading
 import datetime
+from random import randint
 
 
 class Params:
@@ -50,6 +50,8 @@ class Service:
         self.args_parser.add_argument("--markers-dir", help="Directory that stores markers.")
         self.args_parser.add_argument("--tmp-dir", help="Directory that stores temp files.")
         self.args_parser.add_argument("--out-dir", help="Directory that stores output files.")
+        self.args_parser.add_argument("--log-dir", help="Directory that stores log files.")
+        self.args_parser.add_argument("--ulimit-files", help="The maximum number of open file descriptors.")
 
     def on_start(self):
         self.args = self.args_parser.parse_args()
@@ -75,6 +77,14 @@ class Service:
         self.out_dir = make_dir("out_dir")
         self.markers_dir = make_dir("markers_dir")
         self.tmp_dir = make_dir("tmp_dir")
+        self.log_dir = make_dir("log_dir")
+
+        if self.log_dir is None:
+            self.log_file = None
+        else:
+            now = datetime.datetime.now()
+            log_fname = f"{now.strftime('%Y%m%d')}.{now.strftime('%H%M%S')}.{now.strftime('%f')}.{randint(0, 99999999):08}.txt"
+            self.log_file = open(os.path.join(self.log_dir, log_fname), "w")
 
         self.pid_file = self.params.get("pid_file")
         if self.pid_file is not None:
@@ -84,9 +94,20 @@ class Service:
             with open(self.pid_file, "w") as f:
                 f.write(str(os.getpid()))
 
+        ulimit_files = self.params.get("ulimit_files")
+        if ulimit_files is not None:
+            try:
+                import resource
+                v = resource.getrlimit(resource.RLIMIT_NOFILE)
+                resource.setrlimit(resource.RLIMIT_NOFILE, (ulimit_files, v[1]))
+            except ModuleNotFoundError:
+                self.print_(0, "Can't set ulimit_files - module resource not found")
+
     def on_stop(self):
         if getattr(self, "pid_file", None) is not None:
             os.remove(self.pid_file)
+        if getattr(self, "log_file", None) is not None:
+            self.log_file.close()
 
     def on_stop_signal(self):
         self.print_(0, "Stop signal")
@@ -101,7 +122,12 @@ class Service:
         if verbosity <= self.verbosity:
             self.print_lock.acquire()
             try:
-                print(f"{datetime.datetime.now()} - {text}", flush=flush)
+                msg = f"{datetime.datetime.now()} - {text}"
+                print(msg, flush=flush)
+                if self.log_file is not None:
+                    self.log_file.write(msg + "\n")
+                    if flush:
+                        self.log_file.flush()
             finally:
                 self.print_lock.release()
 
@@ -112,30 +138,11 @@ class Service:
         try:
             self.on_start()
             while True:
+                self.print_(0, "timer")
                 self.on_run()
                 for t in self.__get_sleep_subperiods():
                     self.verify_running()
                     time.sleep(t)
-        except StopService:
-            pass
-        finally:
-            self.on_stop()
-
-    async def on_run_async(self):
-        pass
-
-    def run_async(self):
-        self.on_start()
-
-        async def f():
-            while True:
-                await self.on_run_async()
-                for t in self.__get_sleep_subperiods():
-                    self.verify_running()
-                    await asyncio.sleep(t)
-
-        try:
-            asyncio.get_event_loop().run_until_complete(f())
         except StopService:
             pass
         finally:
