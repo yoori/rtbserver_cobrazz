@@ -10,6 +10,7 @@ import asyncio
 import logging
 import threading
 import random
+import shutil
 from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
@@ -87,6 +88,9 @@ class Application(Service):
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
         self.args_parser.add_argument("--private-key-file", help="Private .der key for signing uids.")
 
+        self.__subprocesses = set()
+        self.__subprocesses_lock = threading.Lock()
+
     def on_start(self):
         super().on_start()
 
@@ -104,6 +108,18 @@ class Application(Service):
         self.upload_threads = self.params["upload_threads"]
 
         self.private_key_file = self.params["private_key_file"]
+
+        if shutil.which("UserIdUtil") is None:
+            raise RuntimeError("UserIdUtil not found")
+
+    def on_stop_signal(self):
+        with self.__subprocesses_lock:
+            for sp in self.__subprocesses:
+                try:
+                    sp.kill()
+                except:
+                    pass
+        super().on_stop_signal()
 
     def on_run(self):
         threads = []
@@ -129,7 +145,7 @@ class Application(Service):
             loop.run_until_complete(self.on_uids(upload, cursor))
             loop.run_until_complete(self.on_urls(upload, cursor))
         except psycopg2.Error as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
         except StopService:
             pass
         finally:
@@ -165,7 +181,10 @@ class Application(Service):
                         basename, ext = os.path.splitext(basename)
                         signed_uids = True
                     if ext in (".stable", ".uids", ".txt"):
+                        is_stable = (ext == ".stable")
                         basename, ext = os.path.splitext(basename)
+                    else:
+                        is_stable = False
                     fname = basename + ext
 
                     reg_marker_name = fname + ".__reg__"
@@ -176,14 +195,13 @@ class Application(Service):
                         self.print_(1, f"Registering file: {reg_marker_name} ({in_name})")
                         cursor.execute(
                             SQL_REG_USER,
-                            (channel_prefix + basename.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
+                            (channel_prefix + basename.upper() + ext.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
                         cursor.execute("COMMIT;")
                         continue
 
                     if ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
                         if ctx.markers.add(upload_marker_name, os.path.getmtime(in_path)):
                             self.print_(1, f"Uploading file: {upload_marker_name} ({in_name})")
-                            is_stable = (ext == ".stable")
 
                             async def run_lines(f):
                                 async with aiohttp.ClientSession() as session:
@@ -191,20 +209,24 @@ class Application(Service):
                                         *tuple(self.on_line(f, is_stable, keyword, session) for i in range(self.upload_threads)))
 
                             if not signed_uids and ext in ("", ".txt", ".uids"):
-                                with subprocess.Popen(
-                                    ['sh', '-c', f'cat "{in_path}" | sed -r "s/([^.])$/\\1../" | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"'],
-                                        stdout=subprocess.PIPE) as shp:
+                                cmd = ['sh', '-c', f'cat "{in_path}" | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"']
+                            else:
+                                cmd = ['sh', '-c', f'cat "{in_path}" | sort -u --parallel=4']
+                            with subprocess.Popen(cmd, stdout=subprocess.PIPE) as shp:
+                                with self.__subprocesses_lock:
+                                    self.__subprocesses.add(shp)
+                                try:
                                     file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
                                     with LineReader(self, path=in_path, file=file) as f:
                                         await run_lines(f)
-                            else:
-                                with LineReader(self, in_path) as f:
-                                    await run_lines(f)
+                                finally:
+                                    with self.__subprocesses_lock:
+                                        self.__subprocesses.remove(shp)
 
         except aiohttp.client_exceptions.ClientError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
         except EOFError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
 
     async def on_line(self, f, is_stable, keyword, session):
 
@@ -242,7 +264,7 @@ class Application(Service):
                 if visitor is not None:
                     await visitor(session, resp)
         except aiohttp.client_exceptions.ClientError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
 
     async def on_urls(self, upload, cursor):
         if upload.url_segments_dir is None:
@@ -268,11 +290,10 @@ class Application(Service):
                                     (line, channel_id, line, channel_id, line))
                                 cursor.execute("COMMIT;")
         except EOFError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
 
 
 if __name__ == "__main__":
     service = Application()
     service.run()
-
 

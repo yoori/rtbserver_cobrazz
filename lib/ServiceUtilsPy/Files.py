@@ -11,19 +11,19 @@ class Files:
         self.__files_by_key = {}
 
     def __get_file(self, file_type, name, key=None, **kw):
-        name = name if isinstance(name, str) else name()
 
-        def make_file():
-            path = os.path.join(self.context.tmp_dir, name)
+        def make_file(n):
+            n = n if isinstance(n, str) else n()
+            path = os.path.join(self.context.tmp_dir, n)
             return file_type(self.service, path, **kw)
 
         if key is None:
-            f = make_file()
+            f = make_file(name)
         else:
             try:
                 return self.__files_by_key[key]
             except KeyError:
-                f = make_file()
+                f = make_file(name)
                 self.__files_by_key[key] = f
 
         self.__files.append(f)

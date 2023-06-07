@@ -67,11 +67,11 @@ class MinioSource(Source):
                 self.service.verify_running()
                 if name == "meta.tsv":
                     continue
-                if meta is None:
-                    meta = self.__load_meta(client)
+                self.service.print_(1, f"{name}")
                 with self.create_context() as ctx:
                     if not ctx.markers.add(name):
                         continue
+                    meta = self.__load_meta(client)
                     with MinioRequest(client, self.bucket, name) as mr:
                         with File(self.service, os.path.join(ctx.tmp_dir, name), "wb",
                                   remove_on_exit=True, use_plugins=False) as dl_writer:
@@ -86,18 +86,18 @@ class MinioSource(Source):
                                     user_id, segment_ids = line.split("\t")
                                     is_short = len(user_id) < 32
                                     for segment_id in segment_ids.split(","):
+                                        segment_id = meta.get(segment_id, segment_id)
                                         output_writer = ctx.files.get_line_writer(
                                             key=(segment_id, is_short),
-                                            name=lambda: make_segment_filename(
-                                                meta.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
+                                            name=lambda: make_segment_filename(segment_id, is_short) + ctx.fname_stamp)
                                         output_writer.progress.verbosity = 3
                                         output_writer.write_line(user_id)
         except MinioException as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
         except urllib3.exceptions.HTTPError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
         except EOFError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
 
     def __load_meta(self, client):
         meta = {}
@@ -131,6 +131,7 @@ class HTTPSource(Source):
                 for name in tree.xpath("/html/body/pre/a/text()"):
                     if name == "../":
                         continue
+                    self.service.print_(1, f"{name}")
                     with self.create_context() as ctx:
                         if not ctx.markers.add(name):
                             continue
@@ -150,16 +151,16 @@ class HTTPSource(Source):
                                         user_id, segment_ids = line.split("\t")
                                         is_short = len(user_id) < 32
                                         for segment_id in segment_ids.split(","):
+                                            segment_id = self.__taxonomy.get(segment_id, segment_id)
                                             output_writer = ctx.files.get_line_writer(
                                                 key=(segment_id, is_short),
-                                                name=lambda: make_segment_filename(
-                                                    self.__taxonomy.get(segment_id, segment_id), is_short) + ctx.fname_stamp)
+                                                name=lambda: make_segment_filename(segment_id, is_short) + ctx.fname_stamp)
                                             output_writer.progress.verbosity = 3
                                             output_writer.write_line(user_id)
         except requests.exceptions.RequestException as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
         except EOFError as e:
-            logging.error(e, exc_info=True)
+            logging.error(e, exc_info=False)
 
 
 class Application(Service):
