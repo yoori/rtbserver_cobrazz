@@ -406,6 +406,25 @@ namespace CorbaAlgs
   }
 
   inline
+  void
+  conver_string(
+    CORBACommons::OctSeq& oct_seq,
+    const std::string& data)
+  {
+    try
+    {
+      oct_seq.length(data.size());
+      ::memcpy(oct_seq.get_buffer(), data.data(), data.size());
+    }
+    catch(const CORBA::SystemException& ex)
+    {
+      Stream::Error ostr;
+      ostr << "conver_string(): Caught CORBA::SystemException: " << ex;
+      throw Exception(ostr);
+    }
+  }
+
+  inline
   Generics::SmartMemBuf_var
   unpack_mem_buf(const CORBACommons::OctSeq& oct_seq) /*throw(eh::Exception)*/
   {

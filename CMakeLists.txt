@@ -60,6 +60,7 @@ set(PST_DIRECTORY ${TMP_SOURCES}/PST_COMMON)
 include_directories(${PST_DIRECTORY})
 
 add_subdirectory(${UNIXCOMMONS} ${UNIXCOMMONS_BUILD_ROOT})
+include_directories(${USERVER_INCLUDE_DIRS})
 
 #add_definitions( -D_USE_OCCI -DXSD_CXX11)
 add_definitions(-DXSD_CXX11)
