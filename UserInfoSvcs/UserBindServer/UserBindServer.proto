@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package AdServer.UserInfoSvcs;
+
+option optimize_for = SPEED;
+
+message Error
+{
+  enum Type
+  {
+    NotReady = 0;
+    ChunkNotFound = 1;
+    Implementation = 2;
+  }
+
+  Type type = 1;
+  string description = 2;
+}
+
+message GetBindRequest
+{
+  uint32 id_request_grpc = 1;
+  string request_id = 2;
+  bytes timestamp = 3;
+}
+
+message BindRequestInfo
+{
+  repeated string bind_user_ids = 1;
+}
+
+message GetBindResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    BindRequestInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message AddBindRequest
+{
+  uint32 id_request_grpc = 1;
+  string request_id = 2;
+  BindRequestInfo bind_request_info = 3;
+  bytes timestamp = 4;
+}
+
+message AddBindResponse
+{
+  uint32 id_request_grpc = 1;
+  optional Error error = 2;
+}
+
+message GetUserIdRequest
+{
+  uint32 id_request_grpc = 1;
+  string id = 2;
+  bytes timestamp = 3;
+  bool silent = 4;
+  bool generate_user_id = 5;
+  bool for_set_cookie = 6;
+  bytes create_timestamp = 7;
+  bytes current_user_id = 8;
+}
+
+message GetUserIdResponseInfo
+{
+  bytes user_id = 1;
+  bool min_age_reached = 2;
+  bool created = 3;
+  bool invalid_operation = 4;
+  bool user_found = 5;
+}
+
+message GetUserIdResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetUserIdResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message AddUserIdRequest
+{
+  uint32 id_request_grpc = 1;
+  string id = 2;
+  bytes timestamp = 3;
+  bytes user_id = 4;
+}
+
+message AddUserIdResponseInfo
+{
+  bytes merge_user_id = 1;
+  bool invalid_operation = 2;
+}
+
+message AddUserIdResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    AddUserIdResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetSourceRequest
+{
+  uint32 id_request_grpc = 1;
+}
+
+message GetSourceResponseInfo
+{
+  repeated uint64 chunks = 1;
+  uint64 chunks_number = 2;
+}
+
+message GetSourceResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetSourceResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+service UserBindService
+{
+  rpc get_bind_request(stream GetBindRequest) returns (stream GetBindResponse) {}
+  rpc add_bind_request(stream AddBindRequest) returns (stream AddBindResponse) {}
+  rpc get_user_id(stream GetUserIdRequest) returns (stream GetUserIdResponse) {}
+  rpc add_user_id(stream AddUserIdRequest) returns (stream AddUserIdResponse) {}
+  rpc get_source(stream GetSourceRequest) returns (stream GetSourceResponse) {}
+}

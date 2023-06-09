@@ -27,10 +27,19 @@ target_link_libraries(UserBindContainer
 add_pst(UserBindOperationProfilePST UserBindOperationProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer)
 
 add_executable(UserBindServer
+  GrpcService.cpp
   UserBindServerMain.cpp
   UserBindServerImpl.cpp
   UserBindOperationSaver.cpp
   UserBindOperationLoader.cpp
+)
+
+include(${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake)
+add_grpc_library(UserBindServerProto
+  PROTOS
+    UserBindServer.proto
+  SOURCE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(UserBindServer
@@ -44,6 +53,6 @@ target_link_libraries(UserBindServer
   UserBindContainer
   UserBindServerConfigXSD
   UserBindServerIDL
+  UserBindServerProto
+  UServerUtils
 )
-
-#install(TARGETS UserBindServerIDL DESTINATION ${INSTALL_DIR})

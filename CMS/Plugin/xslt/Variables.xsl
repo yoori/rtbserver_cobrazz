@@ -363,6 +363,9 @@
 <xsl:variable name="def-stats-collector-port" select="$def-range-start + 18"/>
 <xsl:variable name="def-stats-dumping-period" select="'60'"/>
 
+<!-- default ports for grpc services -->
+<xsl:variable name="def-user-bind-server-grpc-port" select="$def-range-start + 200"/>
+
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="'10156'"/>
 <xsl:variable name="def-user-info-exchanger-port" select="'10160'"/>
@@ -454,5 +457,25 @@
 <!-- Predictor SVM generator defaults -->
 <xsl:variable name="def-svm-generator-port" select="$def-range-start + 69"/>
 <xsl:variable name="predictor-svm-generator-log-path" select="'/log/Predictor/SVMGenerator'"/>
+
+<!-- Coroutine params -->
+<xsl:variable name="coro-pool-initial-size" select="10000"/>
+<xsl:variable name="coro-pool-max-size" select="500000"/>
+<xsl:variable name="coro-pool-stack-size" select="262144"/>
+<xsl:variable name="event-thread-pool-number-threads" select="15"/>
+<xsl:variable name="event-thread-pool-name" select="'event-worker'"/>
+<xsl:variable name="event-thread-pool-ev-default-loop-disabled" select="'true'"/>
+<xsl:variable name="event-thread-pool-defer-events" select="'false'"/>
+<xsl:variable name="main-task-processor-name" select="'main_task_processor'"/>
+<xsl:variable name="main-task-processor-number-threads" select="50"/>
+<xsl:variable name="main-task-processor-should-guess-cpu-limit" select="'true'"/>
+<xsl:variable name="main-task-processor-overload-action" select="'ignore'"/>
+<xsl:variable name="main-task-processor-wait-queue-length-limit" select="500000"/>
+<xsl:variable name="main-task-processor-wait-queue-time-limit" select="0"/>
+<xsl:variable name="main-task-processor-sensor-wait-queue-time-limit" select="10000"/>
+
+<!-- Grpc server params -->
+<xsl:variable name="grpc-server-ip" select="'0.0.0.0'"/>
+
 
 </xsl:stylesheet>
