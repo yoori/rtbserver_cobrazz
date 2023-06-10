@@ -508,8 +508,16 @@ namespace Bidding
         }
         AdServer::Commons::JsonObject bid_array(seatbid_obj.add_array(Response::OpenRtb::BID));
 
-        assert(campaign_match_result.ad_slots.length() ==
-          context.ad_slots.size());
+        if(campaign_match_result.ad_slots.length() != context.ad_slots.size())
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": Error on writing open rtb response(assert): "
+            "campaign_match_result.ad_slots.length() != context.ad_slots.size()";
+          bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
+
+          assert(false);
+        }
+
         JsonAdSlotProcessingContextList::const_iterator slot_it =
           context.ad_slots.begin();
 
@@ -555,6 +563,7 @@ namespace Bidding
               escaped_creative_url = String::StringManip::json_escape(
                 String::SubString(ad_slot_result.creative_url));
             }
+
             if(!slot_it->native && ad_slot_result.creative_body[0])
             {
               escaped_creative_body = String::StringManip::json_escape(
@@ -567,6 +576,7 @@ namespace Bidding
             {
               bid_object.add_as_string(Response::OpenRtb::DEAL_ID, slot_it->deal_id);
             }
+
             bid_object.add_escaped_string(Response::OpenRtb::IMPID, slot_it->id);
             bid_object.add_number(Response::OpenRtb::PRICE, openrtb_price);
 
@@ -575,7 +585,9 @@ namespace Bidding
               bid_object.add_as_string(Response::OpenRtb::ADID, ad_slot_result.selected_creatives[0].creative_id);
             }
 
-            bid_object.add_as_string(Response::OpenRtb::CRID, ad_slot_result.selected_creatives[0].creative_version_id);
+            bid_object.add_as_string(
+              Response::OpenRtb::CRID,
+              ad_slot_result.selected_creatives[0].creative_version_id);
 
             {
               AdServer::Commons::JsonObject adomain_obj(bid_object.add_array(Response::OpenRtb::ADOMAIN));
@@ -602,7 +614,7 @@ namespace Bidding
                     adomain_obj.add_escaped_string(host);
                   }
                 }
-                catch (HTTP::URLAddress::InvalidURL& ex)
+                catch (const HTTP::URLAddress::InvalidURL& ex)
                 {
                   Stream::Error ostr;
                   ostr << FUN << ": adomain extract failed from '" <<
@@ -904,7 +916,19 @@ namespace Bidding
     catch(const AdServer::Commons::JsonObject::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << " Error on formatting Json response: '" << ex.what() << "'";
+      ostr << FUN << ": Error on formatting Json response: '" << ex.what() << "'";
+      bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Error on writing open rtb response: '" << ex.what() << "'";
+      bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
+    }
+    catch(const CORBA::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Error on writing open rtb response: '" << ex << "'";
       bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
     }
   }
@@ -976,13 +1000,22 @@ namespace Bidding
       }
 
       std::string pub_currency_code;
+
       {
         AdServer::Commons::JsonObject bidset(root_json.add_array(Response::Yandex::BIDSET));
         AdServer::Commons::JsonObject bidsetobject(bidset.add_object());
         AdServer::Commons::JsonObject bidarray(bidsetobject.add_array(Response::Yandex::BID));
 
-        assert(campaign_match_result.ad_slots.length() ==
-          context.ad_slots.size());
+        if(campaign_match_result.ad_slots.length() != context.ad_slots.size())
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": Error on writing open rtb response(assert): "
+            "campaign_match_result.ad_slots.length() != context.ad_slots.size()";
+          bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
+
+          assert(false);
+        }
+
         JsonAdSlotProcessingContextList::const_iterator slot_it =
           context.ad_slots.begin();
 
@@ -1154,192 +1187,222 @@ namespace Bidding
     bool add_root_native,
     SourceTraits::NativeAdsInstantiateType instantiate_type)
   {
-    std::unique_ptr<AdServer::Commons::JsonObject> native_obj_holder;
+    static const char* FUN = "OpenRtbBidRequestTask::fill_native_response_()";
 
-    if(add_root_native)
+    try
     {
-      native_obj_holder.reset(
-        new AdServer::Commons::JsonObject(root_json->add_object(Response::OpenRtb::NATIVE)));
-    }
+      std::unique_ptr<AdServer::Commons::JsonObject> native_obj_holder;
 
-    AdServer::Commons::JsonObject& native_obj =
-      add_root_native ? *native_obj_holder : *root_json;
-
-    {
-      assert(ad_slot_result.selected_creatives.length());
-      if(instantiate_type == SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2 ||
-        instantiate_type == SourceTraits::NAIT_ADM_1_2 ||
-        instantiate_type == SourceTraits::NAIT_ADM_NATIVE_1_2)
+      if(add_root_native)
       {
-        native_obj.add_string(
-          Response::OpenRtb::NATIVE_VER,
-          Response::OpenRtb::NATIVE_VER_1_2);
-      }
-      else
-      {
-        native_obj.add_string(
-          Response::OpenRtb::NATIVE_VER,
-          Response::OpenRtb::NATIVE_VER_1_0);
-      }
-      AdServer::Commons::JsonObject link_obj(
-        native_obj.add_object(Response::OpenRtb::NATIVE_LINK));
-      link_obj.add_opt_escaped_string(
-        Response::OpenRtb::NATIVE_LINK_URL,
-        String::SubString(
-          ad_slot_result.selected_creatives[0].click_url),
-        need_escape);
-    }
-
-    if (native_context.video_assets.empty())
-    {
-      if(ad_slot_result.track_html_body[0])
-      {
-        native_obj.add_opt_escaped_string(
-          Response::OpenRtb::NATIVE_JS_TRACKER,
-          String::SubString(ad_slot_result.track_html_body),
-          need_escape);
+        native_obj_holder.reset(
+          new AdServer::Commons::JsonObject(root_json->add_object(Response::OpenRtb::NATIVE)));
       }
 
-      if(ad_slot_result.track_pixel_urls.length() > 0)
+      AdServer::Commons::JsonObject& native_obj =
+        add_root_native ? *native_obj_holder : *root_json;
+
       {
+        if(ad_slot_result.selected_creatives.length() == 0)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": Error on writing open rtb response(assert): "
+            "ad_slot_result.selected_creatives.length() == 0";
+          bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
+
+          assert(false);
+        }
+
         if(instantiate_type == SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2 ||
           instantiate_type == SourceTraits::NAIT_ADM_1_2 ||
           instantiate_type == SourceTraits::NAIT_ADM_NATIVE_1_2)
         {
-          AdServer::Commons::JsonObject event_trackers_obj(
-            native_obj.add_array(Response::OpenRtb::NATIVE_EVENT_TRACKERS));
-        
-          for(CORBA::ULong i = 0;
-            i < ad_slot_result.track_pixel_urls.length(); ++i)
-          {
-            AdServer::Commons::JsonObject event_obj(event_trackers_obj.add_object());
-            event_obj.add_number(Response::OpenRtb::EVENT_EVENT, 1);
-            event_obj.add_number(Response::OpenRtb::EVENT_METHOD, 1);
-            event_obj.add_string(
-              Response::OpenRtb::EVENT_URL,
-              String::SubString(ad_slot_result.track_pixel_urls[i]));
-          }
+          native_obj.add_string(
+            Response::OpenRtb::NATIVE_VER,
+            Response::OpenRtb::NATIVE_VER_1_2);
         }
         else
         {
-          AdServer::Commons::JsonObject imp_trackers_obj(
-            native_obj.add_array(Response::OpenRtb::NATIVE_IMP_TRACKERS));
-        
-          for(CORBA::ULong i = 0;
-            i < ad_slot_result.track_pixel_urls.length(); ++i)
+          native_obj.add_string(
+            Response::OpenRtb::NATIVE_VER,
+            Response::OpenRtb::NATIVE_VER_1_0);
+        }
+        AdServer::Commons::JsonObject link_obj(
+          native_obj.add_object(Response::OpenRtb::NATIVE_LINK));
+        link_obj.add_opt_escaped_string(
+          Response::OpenRtb::NATIVE_LINK_URL,
+          String::SubString(
+            ad_slot_result.selected_creatives[0].click_url),
+          need_escape);
+      }
+
+      if (native_context.video_assets.empty())
+      {
+        if(ad_slot_result.track_html_body[0])
+        {
+          native_obj.add_opt_escaped_string(
+            Response::OpenRtb::NATIVE_JS_TRACKER,
+            String::SubString(ad_slot_result.track_html_body),
+            need_escape);
+        }
+
+        if(ad_slot_result.track_pixel_urls.length() > 0)
+        {
+          if(instantiate_type == SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2 ||
+            instantiate_type == SourceTraits::NAIT_ADM_1_2 ||
+            instantiate_type == SourceTraits::NAIT_ADM_NATIVE_1_2)
           {
-            imp_trackers_obj.add_opt_escaped_string(
-              String::SubString(ad_slot_result.track_pixel_urls[i]),
-              need_escape);
+            AdServer::Commons::JsonObject event_trackers_obj(
+              native_obj.add_array(Response::OpenRtb::NATIVE_EVENT_TRACKERS));
+
+            for(CORBA::ULong i = 0;
+              i < ad_slot_result.track_pixel_urls.length(); ++i)
+            {
+              AdServer::Commons::JsonObject event_obj(event_trackers_obj.add_object());
+              event_obj.add_number(Response::OpenRtb::EVENT_EVENT, 1);
+              event_obj.add_number(Response::OpenRtb::EVENT_METHOD, 1);
+              event_obj.add_string(
+                Response::OpenRtb::EVENT_URL,
+                String::SubString(ad_slot_result.track_pixel_urls[i]));
+            }
+          }
+          else
+          {
+            AdServer::Commons::JsonObject imp_trackers_obj(
+              native_obj.add_array(Response::OpenRtb::NATIVE_IMP_TRACKERS));
+
+            for(CORBA::ULong i = 0;
+              i < ad_slot_result.track_pixel_urls.length(); ++i)
+            {
+              imp_trackers_obj.add_opt_escaped_string(
+                String::SubString(ad_slot_result.track_pixel_urls[i]),
+                need_escape);
+            }
           }
         }
       }
-    }
 
-    AdServer::Commons::JsonObject assets_obj(
-      native_obj.add_array(Response::OpenRtb::NATIVE_ASSETS));
+      AdServer::Commons::JsonObject assets_obj(
+        native_obj.add_array(Response::OpenRtb::NATIVE_ASSETS));
 
-    // Data assets
-    size_t data_i = 0;
-    for (auto data_it = native_context.data_assets.begin();
-      data_it != native_context.data_assets.end(); ++data_it, ++data_i)
-    {
-      const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
-        ad_slot_result.native_data_tokens[data_i];
-      if(token.value[0])
+      // Data assets
+      if(native_context.data_assets.size() != ad_slot_result.native_data_tokens.length())
       {
-        AdServer::Commons::JsonObject asset(
-          assets_obj.add_object());
-        asset.add_number(
-          Response::OpenRtb::NATIVE_ASSET_ID, data_it->id);
-        bool is_title =
-          data_it->data_type == JsonAdSlotProcessingContext::Native::NDTE_TITLE;
-
-        size_t token_len = ::strlen(token.value);
-        size_t data_len = static_cast<size_t>(data_it->len);
-
-        String::SubString res_text;
-        String::StringManip::utf8_substr(
-          String::SubString(token.value),
-          data_len && token_len > data_len ? data_len : token_len,
-          res_text);
-
-        AdServer::Commons::JsonObject data_asset(
-          asset.add_object(
-            is_title ? Response::OpenRtb::NATIVE_ASSET_TITLE :
-              Response::OpenRtb::NATIVE_ASSET_DATA));
-        data_asset.add_opt_escaped_string(
-          is_title ? Response::OpenRtb::NATIVE_ASSET_TITLE_TEXT :
-            Response::OpenRtb::NATIVE_ASSET_DATA_VALUE,
-          res_text,
-          need_escape);
+        Stream::Error ostr;
+        ostr << FUN << ": Error on writing open rtb response(assert): "
+          "native_context.data_assets.size() != ad_slot_result.native_data_tokens.length()";
+        throw Exception(ostr);
       }
-    }
 
-    // Image assets
-    if(ad_slot_result.native_image_tokens.length() > 0)
-    {
-      size_t image_i = 0;
-      for (auto image_it = native_context.image_assets.begin();
-         image_it != native_context.image_assets.end(); ++image_it, ++image_i)
+      size_t data_i = 0;
+      for (auto data_it = native_context.data_assets.begin();
+        data_it != native_context.data_assets.end(); ++data_it, ++data_i)
       {
-        const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
-          ad_slot_result.native_image_tokens[image_i];
+        const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+          ad_slot_result.native_data_tokens[data_i];
         if(token.value[0])
         {
+          AdServer::Commons::JsonObject asset(
+            assets_obj.add_object());
+          asset.add_number(
+            Response::OpenRtb::NATIVE_ASSET_ID, data_it->id);
+          bool is_title =
+            data_it->data_type == JsonAdSlotProcessingContext::Native::NDTE_TITLE;
+
+          size_t token_len = ::strlen(token.value);
+          size_t data_len = static_cast<size_t>(data_it->len);
+
+          String::SubString res_text;
+          String::StringManip::utf8_substr(
+            String::SubString(token.value),
+            data_len && token_len > data_len ? data_len : token_len,
+            res_text);
+
+          AdServer::Commons::JsonObject data_asset(
+            asset.add_object(
+              is_title ? Response::OpenRtb::NATIVE_ASSET_TITLE :
+                Response::OpenRtb::NATIVE_ASSET_DATA));
+          data_asset.add_opt_escaped_string(
+            is_title ? Response::OpenRtb::NATIVE_ASSET_TITLE_TEXT :
+              Response::OpenRtb::NATIVE_ASSET_DATA_VALUE,
+            res_text,
+            need_escape);
+        }
+      }
+
+      // Image assets
+      if(ad_slot_result.native_image_tokens.length() > 0)
+      {
+        size_t image_i = 0;
+        for (auto image_it = native_context.image_assets.begin();
+           image_it != native_context.image_assets.end(); ++image_it, ++image_i)
+        {
+          const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+            ad_slot_result.native_image_tokens[image_i];
+          if(token.value[0])
+          {
+            AdServer::Commons::JsonObject asset(assets_obj.add_object());
+            asset.add_number(
+              Response::OpenRtb::NATIVE_ASSET_ID, image_it->id);
+            if (image_it->image_type ==
+              JsonAdSlotProcessingContext::Native::NITE_MAIN)
+            {
+              asset.add_number(
+                Response::OpenRtb::NATIVE_ASSET_REQUIRED, 1);
+            }
+
+            AdServer::Commons::JsonObject image_asset(
+              asset.add_object(Response::OpenRtb::NATIVE_ASSET_IMG));
+
+            image_asset.add_number(
+              Response::OpenRtb::NATIVE_ASSET_REQUIRED, 0);
+
+            image_asset.add_opt_escaped_string(
+              Response::OpenRtb::NATIVE_ASSET_IMG_URL,
+              String::SubString(token.value),
+              need_escape);
+
+            image_asset.add_number(
+              Response::OpenRtb::NATIVE_ASSET_IMG_W,
+              token.width);
+
+            image_asset.add_number(
+              Response::OpenRtb::NATIVE_ASSET_IMG_H,
+              token.height);
+          }
+        }
+      }
+
+      // Video asset
+      if(ad_slot_result.creative_body[0])
+      {
+        if (!native_context.video_assets.empty())
+        {
+          const JsonAdSlotProcessingContext::Native::Video& video =
+            native_context.video_assets[0];
           AdServer::Commons::JsonObject asset(assets_obj.add_object());
           asset.add_number(
-            Response::OpenRtb::NATIVE_ASSET_ID, image_it->id);
-          if (image_it->image_type ==
-            JsonAdSlotProcessingContext::Native::NITE_MAIN)
-          {
-            asset.add_number(
-              Response::OpenRtb::NATIVE_ASSET_REQUIRED, 1);
-          }
+            Response::OpenRtb::NATIVE_ASSET_ID, video.id);
+          asset.add_number(
+            Response::OpenRtb::NATIVE_ASSET_REQUIRED, 1);
 
-          AdServer::Commons::JsonObject image_asset(
-            asset.add_object(Response::OpenRtb::NATIVE_ASSET_IMG));
+          AdServer::Commons::JsonObject video_asset(
+            asset.add_object(Response::OpenRtb::NATIVE_ASSET_VIDEO));
 
-          image_asset.add_number(
-            Response::OpenRtb::NATIVE_ASSET_REQUIRED, 0);
-
-          image_asset.add_opt_escaped_string(
-            Response::OpenRtb::NATIVE_ASSET_IMG_URL,
-            String::SubString(token.value),
+          video_asset.add_opt_escaped_string(
+            Response::OpenRtb::NATIVE_ASSET_VIDEO_TAG,
+            String::SubString(ad_slot_result.creative_body),
             need_escape);
-
-          image_asset.add_number(
-            Response::OpenRtb::NATIVE_ASSET_IMG_W,
-            token.width);
-
-          image_asset.add_number(
-            Response::OpenRtb::NATIVE_ASSET_IMG_H,
-            token.height);
         }
       }
     }
-
-    // Video asset
-    if(ad_slot_result.creative_body[0])
+    catch(const CORBA::Exception& ex)
     {
-      if (!native_context.video_assets.empty())
-      {
-        const JsonAdSlotProcessingContext::Native::Video& video =
-          native_context.video_assets[0];
-        AdServer::Commons::JsonObject asset(assets_obj.add_object());
-        asset.add_number(
-          Response::OpenRtb::NATIVE_ASSET_ID, video.id);
-        asset.add_number(
-          Response::OpenRtb::NATIVE_ASSET_REQUIRED, 1);
+      Stream::Error ostr;
+      ostr << FUN << ": Error on writing open rtb response: '" << ex << "'";
+      bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
 
-        AdServer::Commons::JsonObject video_asset(
-          asset.add_object(Response::OpenRtb::NATIVE_ASSET_VIDEO));
-
-        video_asset.add_opt_escaped_string(
-          Response::OpenRtb::NATIVE_ASSET_VIDEO_TAG,
-          String::SubString(ad_slot_result.creative_body),
-          need_escape);
-      }
+      throw;
     }
   }
 }
