@@ -44,6 +44,7 @@ class Files:
             for file in sorted(files):
                 self.service.verify_running()
                 yield file
+            break
 
     def on_exit(self, is_error):
         for f in self.__files:
