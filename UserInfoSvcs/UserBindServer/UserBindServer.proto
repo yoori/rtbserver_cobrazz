@@ -43,14 +43,22 @@ message AddBindRequest
 {
   uint32 id_request_grpc = 1;
   string request_id = 2;
-  BindRequestInfo bind_request_info = 3;
+  repeated string bind_user_ids = 3;
   bytes timestamp = 4;
+}
+
+message AddBindResponseInfo
+{
 }
 
 message AddBindResponse
 {
   uint32 id_request_grpc = 1;
-  optional Error error = 2;
+  oneof data
+  {
+    AddBindResponseInfo info = 2;
+    Error error = 3;
+  }
 }
 
 message GetUserIdRequest

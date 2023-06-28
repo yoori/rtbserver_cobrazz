@@ -25,9 +25,10 @@ public:
     Logger* logger,
     UserBindServerImpl* user_bind_server_impl);
 
-  ~GetBindRequestService() override = default;
-
   void handle(const Reader& reader) override;
+
+protected:
+  ~GetBindRequestService() override = default;
 
 private:
   Logger_var logger_;
@@ -52,9 +53,10 @@ public:
     Logger* logger,
     UserBindServerImpl* user_bind_server_impl);
 
-  ~AddBindRequestService() override = default;
-
   void handle(const Reader& reader) override;
+
+protected:
+  ~AddBindRequestService() override = default;
 
 private:
   Logger_var logger_;
@@ -79,9 +81,10 @@ public:
     Logger* logger,
     UserBindServerImpl* user_bind_server_impl);
 
-  ~GetUserIdService() override = default;
-
   void handle(const Reader& reader) override;
+
+protected:
+  ~GetUserIdService() override = default;
 
 private:
   Logger_var logger_;
@@ -106,9 +109,10 @@ public:
     Logger* logger,
     UserBindServerImpl* user_bind_server_impl);
 
-  ~AddUserIdService() override = default;
-
   void handle(const Reader& reader) override;
+
+protected:
+  ~AddUserIdService() override = default;
 
 private:
   Logger_var logger_;
@@ -133,9 +137,10 @@ public:
     Logger* logger,
     UserBindServerImpl* user_bind_server_impl);
 
-  ~GetSourceService() override = default;
-
   void handle(const Reader& reader) override;
+
+protected:
+  ~GetSourceService() override = default;
 
 private:
   Logger_var logger_;

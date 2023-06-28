@@ -16,7 +16,7 @@
 
 <xsl:include href="../Functions.xsl"/>
 <xsl:include href="../UserIdBlackList.xsl"/>
-  <xsl:include href="../GrpcChannelArgs.xsl"/>
+<xsl:include href="../GrpcChannelArgs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -181,7 +181,7 @@
 
     <cfg:GrpcServer ip="{$grpc-server-ip}" port="{$def-user-bind-server-grpc-port}">
       <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
-      <xsl:call-template name="GrpcChannelArgList"/>
+      <xsl:call-template name="GrpcServerChannelArgList"/>
     </cfg:GrpcServer>
 
   </cfg:UserBindServerConfig>

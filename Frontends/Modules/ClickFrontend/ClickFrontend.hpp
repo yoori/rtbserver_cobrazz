@@ -29,6 +29,9 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include <xsd/Frontends/FeConfig.hpp>
 
 #include "RequestInfoFiller.hpp"
@@ -46,6 +49,12 @@ namespace AdServer
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
+  private:
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+
   public:
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
 
@@ -191,6 +200,8 @@ namespace AdServer
 
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
+
+    ManagerCoro_var manager_coro_;
 
     Generics::TaskRunner_var task_runner_;
 

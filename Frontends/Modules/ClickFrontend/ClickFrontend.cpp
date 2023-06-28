@@ -14,6 +14,8 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 
 #include <Frontends/FrontendCommons/Cookies.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -281,6 +283,24 @@ namespace AdServer
       {
         parse_config_();
 
+        // Coroutine
+        auto task_processor_container_builder =
+          Config::create_task_processor_container_builder(
+            logger(),
+            common_config_->Coroutine());
+        auto init_func = [] (
+          TaskProcessorContainer& task_processor_container) {
+            return std::make_unique<ComponentsBuilder>();
+        };
+
+        manager_coro_ = ManagerCoro_var(
+          new ManagerCoro(
+            std::move(task_processor_container_builder),
+            std::move(init_func),
+            logger()));
+
+        add_child_object(manager_coro_);
+
         request_info_filler_.reset(
           new ClickFE::RequestInfoFiller(
             logger(),
@@ -293,11 +313,22 @@ namespace AdServer
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        user_bind_client_ = new FrontendCommons::UserBindClient(
-          common_config_->UserBindControllerGroup(),
-          corba_client_adapter_.in(),
-          logger());
-        add_child_object(user_bind_client_);
+        if(!common_config_->UserBindControllerGroup().empty())
+        {
+          const auto& config_grpc_client = common_config_->GrpcClientPool();
+          const auto config_grpc_data = Config::create_pool_client_config(
+            config_grpc_client);
+
+          user_bind_client_ = new FrontendCommons::UserBindClient(
+            common_config_->UserBindControllerGroup(),
+            corba_client_adapter_.in(),
+            logger(),
+            manager_coro_.in(),
+            config_grpc_data.first,
+            config_grpc_data.second,
+            config_grpc_client.enable());
+          add_child_object(user_bind_client_);
+        }
 
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),

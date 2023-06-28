@@ -90,6 +90,10 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
+    <xsd:attribute name="grpc_port"
+      type="xsd:positiveInteger"
+      use="required">
+    </xsd:attribute>
   </xsd:complexType>
 
 </xsd:schema>
