@@ -17,20 +17,12 @@ module AdServer
     {
       UserBindServer user_bind_server;
       UserBindServer::ChunkIdSeq chunk_ids;
+      string host;
+      unsigned long grpc_port;
     };
 
     typedef sequence<UserBindDescription>
       UserBindDescriptionSeq;
-
-    /*
-    interface _TAO_BUG
-    {
-      CORBACommons::AProcessControl::ALIVE_STATUS get_alive_type();
-
-      string
-      comment();
-    };
-    */
 
     interface UserBindClusterControl: CORBACommons::IProcessControl
     {};

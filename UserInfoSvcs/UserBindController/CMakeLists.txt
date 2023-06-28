@@ -8,15 +8,18 @@ target_link_libraries(UserBindControllerIDL
 )
 
 add_library(UserBindControllerStubs SHARED
+  GrpcUserBindOperationDistributor.cpp
   UserBindOperationDistributor.cpp
 )
 
 target_link_libraries(UserBindControllerStubs
   CORBACommons
   Commons
-  CorbaTypesIDL 
-  UserBindServerIDL 
+  CorbaTypesIDL
+  UserBindServerIDL
   UserBindControllerIDL
+  UserBindServerProto
+  UServerUtils
 )
 
 add_executable(UserBindController

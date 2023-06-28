@@ -845,8 +845,7 @@ namespace UserInfoSvcs
         throw NotReady(stream);
       }
 
-      const auto& bind_request_info = request->bind_request_info();
-      const auto& bind_user_ids = bind_request_info.bind_user_ids();
+      const auto& bind_user_ids = request->bind_user_ids();
 
       BindRequestContainer::BindRequest bind_request;
       bind_request.bind_user_ids.reserve(bind_user_ids.size());
@@ -865,6 +864,8 @@ namespace UserInfoSvcs
 
       auto response = create_grpc_response<AddBindResponse>(
         id_request_grpc);
+      response->mutable_info();
+
       return response;
     }
     catch (const NotReady& exc)

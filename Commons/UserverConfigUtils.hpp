@@ -5,6 +5,7 @@
 #include <Logger/Logger.hpp>
 #include <UServerUtils/Grpc/TaskProcessorContainerBuilder.hpp>
 #include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
+#include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 
 namespace Config
@@ -119,6 +120,36 @@ create_grpc_cobrazz_server_builder(
   return std::make_unique<GrpcCobrazzServerBuilder>(
     config,
     logger);
+}
+
+inline
+auto create_pool_client_config(
+  const xsd::AdServer::Configuration::GrpcClientPoolType& config_client)
+{
+  UServerUtils::Grpc::Core::Client::ConfigPoolCoro config;
+
+  std::stringstream stream;
+  stream << config_client.ip()
+         << ":"
+         << config_client.port();
+  config.endpoint = stream.str();
+
+  if (config.number_threads.has_value())
+  {
+    config.number_threads = config.number_threads.value();
+  }
+
+  const auto& channel_args = config_client.ChannelArgs();
+  auto& channel_arg = channel_args.ChannelArg();
+  for (auto& arg : channel_arg)
+  {
+    config.channel_args[arg.key()] = arg.value();
+  }
+
+  config.number_async_client = config_client.num_clients();
+  config.number_channels = config_client.num_channels();
+
+  return std::pair{config, config_client.timeout()};
 }
 
 } // namespace Config

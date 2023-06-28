@@ -1,42 +1,22 @@
 #ifndef USER_INFO_SVCS_USER_BIND_ADMIN_APPLICATION_HPP
 #define USER_INFO_SVCS_USER_BIND_ADMIN_APPLICATION_HPP
 
-#include <map>
-#include <set>
-#include <string>
-
-#include <ReferenceCounting/ReferenceCounting.hpp>
-
+// UNIX_COMMONS
 #include <eh/Exception.hpp>
+#include <Generics/Uncopyable.hpp>
 
-#include <Generics/Singleton.hpp>
-#include <Generics/Time.hpp>
-
-#include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
-
-using namespace AdServer::UserInfoSvcs;
-
-class Application_
+class Application final
+  : protected Generics::Uncopyable
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  Application_() noexcept;
+public:
+  Application() = default;
 
-  virtual
-  ~Application_() noexcept;
+  ~Application() = default;
 
-  void
-  main(int& argc, char** argv) /*throw(eh::Exception)*/;
-
-protected:
-  static void
-  print_bind_request_(
-    AdServer::UserInfoSvcs::UserBindMapper* user_bind_mapper,
-    const String::SubString& bind_request_id)
-    noexcept;
+  void run(int argc, char** argv);
 };
-
-typedef Generics::Singleton<Application_> Application;
 
 #endif /*USER_INFO_SVCS_USER_BIND_ADMIN_APPLICATION_HPP*/

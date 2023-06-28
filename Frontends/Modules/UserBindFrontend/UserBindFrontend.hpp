@@ -29,6 +29,9 @@
 
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include <xsd/Frontends/FeConfig.hpp>
 
 #include "RequestInfoFiller.hpp"
@@ -50,7 +53,13 @@ namespace AdServer
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+  private:
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
+
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);
 
   public:
@@ -251,6 +260,7 @@ namespace AdServer
     SourceMap sources_;
     std::unique_ptr<GeoIPMapping::IPMapCity2> ip_map_;
     std::unique_ptr<UserBind::RequestInfoFiller> request_info_filler_;
+    ManagerCoro_var manager_coro_;
 
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;

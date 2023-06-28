@@ -448,8 +448,21 @@
       <xsd:element name="ChannelArgs" type="ChannelArgsType"/>
     </xsd:sequence>
     <xsd:attribute name="ip" type="xsd:string" default="0.0.0.0"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" default ="1"/>
+    <xsd:attribute name="num_threads" type="xsd:positiveInteger" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="GrpcClientPoolType">
+    <xsd:sequence>
+      <xsd:element name="ChannelArgs" type="ChannelArgsType"/>
+    </xsd:sequence>
+    <xsd:attribute name="ip" type="xsd:string" default="0.0.0.0"/>
     <xsd:attribute name="port" type="xsd:positiveInteger" default = "1"/>
     <xsd:attribute name="num_threads" type="xsd:positiveInteger" use="optional"/>
+    <xsd:attribute name="num_channels" type="xsd:positiveInteger" default="200"/>
+    <xsd:attribute name="num_clients" type="xsd:positiveInteger" default="200"/>
+    <xsd:attribute name="timeout" type="xsd:positiveInteger" default="1500"/>
+    <xsd:attribute name="enable" type="xsd:boolean" default="false"/>
   </xsd:complexType>
 
 </xsd:schema>

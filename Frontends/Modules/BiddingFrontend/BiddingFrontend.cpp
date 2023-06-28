@@ -19,6 +19,8 @@
 #include <Commons/Algs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
@@ -452,12 +454,38 @@ namespace Bidding
           logger());
         add_child_object(user_info_client_);
 
+      // Coroutine
+      auto task_processor_container_builder =
+        Config::create_task_processor_container_builder(
+          logger(),
+          common_config_->Coroutine());
+      auto init_func = [] (
+        TaskProcessorContainer& task_processor_container) {
+          return std::make_unique<ComponentsBuilder>();
+      };
+
+      manager_coro_ = ManagerCoro_var(
+        new ManagerCoro(
+          std::move(task_processor_container_builder),
+          std::move(init_func),
+          logger()));
+
+      add_child_object(manager_coro_);
+
         if(!common_config_->UserBindControllerGroup().empty())
         {
+          const auto& config_grpc_client = common_config_->GrpcClientPool();
+          const auto config_grpc_data = Config::create_pool_client_config(
+            config_grpc_client);
+
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
-            logger());
+            logger(),
+            manager_coro_.in(),
+            config_grpc_data.first,
+            config_grpc_data.second,
+            config_grpc_client.enable());
           add_child_object(user_bind_client_);
         }
 
@@ -1480,6 +1508,11 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::resolve_user_id_()";
 
+    using GetUserIdResponsePtr =
+      FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
+    using AddUserIdResponsePtr =
+      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
+
     Generics::Time start_process_time;
 
     if(logger()->log_level() >= Logging::Logger::TRACE)
@@ -1542,6 +1575,8 @@ namespace Bidding
         {
           AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
             user_bind_client_->user_bind_mapper();
+          FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
+            user_bind_client_->grpc_distributor();
 
           auto base_ext_user_id_it = external_user_ids.begin();
 
@@ -1555,19 +1590,41 @@ namespace Bidding
             ext_user_id_it != external_user_ids.end();
             ++ext_user_id_it)
           {
-            AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-            get_request_info.id << *ext_user_id_it;
-            get_request_info.timestamp = CorbaAlgs::pack_time(request_info.current_time);
-            get_request_info.silent = false;
-            get_request_info.generate_user_id = false;
-            get_request_info.for_set_cookie = false;
-            get_request_info.create_timestamp = CorbaAlgs::pack_time(request_info.user_create_time);
-            // get_request_info.current_user_id is null
+            GetUserIdResponsePtr response;
+            if (grpc_distributor)
+            {
+              response = grpc_distributor->get_user_id(
+                *ext_user_id_it,
+                String::SubString{},
+                request_info.current_time,
+                request_info.user_create_time,
+                false,
+                false,
+                false);
+            }
 
-            user_bind_info = user_bind_mapper->get_user_id(get_request_info);
+            if (response && response->has_info())
+            {
+              const auto& info = response->info();
+              min_age_reached |= info.min_age_reached();
+              local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+            }
+            else
+            {
+              AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
+              get_request_info.id << *ext_user_id_it;
+              get_request_info.timestamp = CorbaAlgs::pack_time(request_info.current_time);
+              get_request_info.silent = false;
+              get_request_info.generate_user_id = false;
+              get_request_info.for_set_cookie = false;
+              get_request_info.create_timestamp = CorbaAlgs::pack_time(request_info.user_create_time);
+              // get_request_info.current_user_id is null
 
-            min_age_reached |= user_bind_info->min_age_reached;
-            local_match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
+              user_bind_info = user_bind_mapper->get_user_id(get_request_info);
+
+              min_age_reached |= user_bind_info->min_age_reached;
+              local_match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
+            }
 
             blacklisted |= common_module_->user_id_controller()->null_blacklisted(match_user_id);
 
@@ -1599,15 +1656,29 @@ namespace Bidding
             {
               if(ext_user_id_it != base_ext_user_id_it)
               {
-                AdServer::UserInfoSvcs::UserBindServer::AddUserRequestInfo add_user_request;
-                add_user_request.id << *ext_user_id_it;
-                add_user_request.timestamp = CorbaAlgs::pack_time(request_info.current_time);
-                add_user_request.user_id = CorbaAlgs::pack_user_id(match_user_id);
-                AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-                  prev_user_bind_info =
-                    user_bind_mapper->add_user_id(add_user_request);
+                const auto user_id = match_user_id.to_string();
 
-                (void)prev_user_bind_info;
+                AddUserIdResponsePtr response;
+                if (grpc_distributor)
+                {
+                  response = grpc_distributor->add_user_id(
+                    *ext_user_id_it,
+                    request_info.current_time,
+                    user_id);
+                }
+
+                if (!response || response->has_error())
+                {
+                  AdServer::UserInfoSvcs::UserBindServer::AddUserRequestInfo add_user_request;
+                  add_user_request.id << *ext_user_id_it;
+                  add_user_request.timestamp = CorbaAlgs::pack_time(request_info.current_time);
+                  add_user_request.user_id = CorbaAlgs::pack_user_id(match_user_id);
+                  AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+                    prev_user_bind_info =
+                      user_bind_mapper->add_user_id(add_user_request);
+
+                  (void)prev_user_bind_info;
+                }
               }
             }
 

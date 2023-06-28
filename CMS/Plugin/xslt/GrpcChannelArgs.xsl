@@ -9,9 +9,16 @@
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   exclude-result-prefixes="exsl">
 
-  <xsl:template name="GrpcChannelArgList">
+  <xsl:template name="GrpcServerChannelArgList">
     <cfg:ChannelArgs>
     <!--<cfg:ChannelArg key="key1" value="value1"/>-->
     </cfg:ChannelArgs>
   </xsl:template>
+
+  <xsl:template name="GrpcClientChannelArgList">
+    <cfg:ChannelArgs>
+      <!--<cfg:ChannelArg key="key1" value="value1"/>-->
+    </cfg:ChannelArgs>
+  </xsl:template>
+
 </xsl:stylesheet>
