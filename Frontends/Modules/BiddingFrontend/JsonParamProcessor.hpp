@@ -340,6 +340,7 @@ namespace Bidding
     std::string macsha1;
     std::string macmd5;
     std::string language;
+    std::string carrier;
 
     std::string request_id;
     StringList currencies;
