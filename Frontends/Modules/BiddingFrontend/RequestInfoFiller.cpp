@@ -171,6 +171,7 @@ namespace Request
     const String::SubString DEVICE_MACSHA1("macsha1");
     const String::SubString DEVICE_MACMD5("macmd5");
     const String::SubString DEVICE_LANGUAGE("language");
+    const String::SubString DEVICE_CARRIER("carrier");
     const String::SubString DEVICE_GEO("geo");
     const String::SubString DEVICE_GEO_COUNTRY("country");
     const String::SubString DEVICE_GEO_REGION("region");
@@ -2948,6 +2949,10 @@ namespace Bidding
         Request::OpenRtb::DEVICE_LANGUAGE,
         &JsonProcessingContext::language);
 
+      device_processor->add_processor(
+        Request::OpenRtb::DEVICE_CARRIER,
+        &JsonProcessingContext::carrier);
+
       JsonCompositeRequestParamProcessor_var device_geo_processor =
         new JsonCompositeRequestParamProcessor();
 
@@ -4129,6 +4134,11 @@ namespace Bidding
     if(!context.language.empty())
     {
       kw_fmt.add_keyword(std::string("rtblanguage") + norm_keyword_(context.language));
+    }
+
+    if(!context.carrier.empty())
+    {
+      kw_fmt.add_keyword(std::string("rtbcarrier") + norm_keyword_(context.carrier));
     }
 
     kw_fmt.add_keyword(context.site_keywords);
