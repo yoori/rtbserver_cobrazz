@@ -45,7 +45,6 @@ namespace ProfilingCommons
     const char* output_file_prefix,
     unsigned long chunks_count,
     const Generics::Time& flush_period)
-    noexcept
     : logger_(ReferenceCounting::add_ref(logger)),
       output_dir_(output_dir),
       output_file_prefix_(output_file_prefix),
