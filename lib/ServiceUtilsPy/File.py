@@ -54,8 +54,5 @@ class File:
     def move(self, path):
         self.__close()
         self.service.print_(0, f"output file {self.path}")
-        if os.path.isfile(path):
-            os.remove(path)
-            self.service.print_(0, f"output file {self.path} already exists, replacing...")
         shutil.move(self.path, path)
 
