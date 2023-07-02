@@ -4126,6 +4126,11 @@ namespace Bidding
       kw_fmt.add_cat_list(context.publisher_cat, true);
     }
 
+    if(!context.language.empty())
+    {
+      kw_fmt.add_keyword(std::string("rtblanguage") + norm_keyword_(context.language));
+    }
+
     kw_fmt.add_keyword(context.site_keywords);
     kw_fmt.add_keyword(context.app_keywords);
 
