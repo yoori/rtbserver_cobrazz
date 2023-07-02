@@ -39,8 +39,7 @@ namespace ProfilingCommons
       const char* output_dir,
       const char* file_prefix,
       unsigned long chunks_count,
-      const Generics::Time& flush_period)
-      noexcept;
+      const Generics::Time& flush_period);
 
     void
     flush(FileNameList* dumped_files = 0)
