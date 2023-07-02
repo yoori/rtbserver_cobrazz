@@ -272,7 +272,7 @@ namespace Bidding
     Logging::Logger* logger,
     CommonModule* common_module,
     StatHolder* stats,
-    CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/
+    Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/
     : GroupLogger(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(

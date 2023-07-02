@@ -83,7 +83,7 @@ namespace Bidding
       Logging::Logger* logger,
       CommonModule* common_module,
       StatHolder* stats,
-      CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/;
+      Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;

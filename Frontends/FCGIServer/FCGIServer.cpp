@@ -25,7 +25,7 @@ namespace Frontends
     : AdServer::Commons::ProcessControlVarsLoggerImpl(
         "FCGIServer", ASPECT),
       stats_(new StatHolder()), // to remove ?
-      composite_metrics_provider_(new CompositeMetricsProvider())
+      composite_metrics_provider_(new Generics::CompositeMetricsProvider())
   {}
 
   void

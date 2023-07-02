@@ -14,7 +14,7 @@ namespace AdServer
 namespace Bidding
 {
 
-class RequestMetricsProvider final : public MetricsProvider
+class RequestMetricsProvider final : public Generics::MetricsProvider
 {
   enum class RequestType
   {
