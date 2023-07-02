@@ -156,6 +156,7 @@ Application_::TrainTreeTask::execute() noexcept
       }
     }
 
+    (void)best_iter_i;
     result_ = std::make_pair(best_tree, best_tree_props);
 
     {
@@ -1096,6 +1097,8 @@ Application_::train_on_bags_(
     //std::cout << cur_dtree->to_string("", nullptr) << std::endl;
   }
 
+  (void)best_iter_i;
+
   if(print_trace)
   {
     std::cout << best_dtree->to_string("", nullptr) << std::endl;
@@ -1512,6 +1515,7 @@ Application_::train_sub_forest_(
     log_losses.push_back(best_test_logloss);
   }
 
+  (void)best_iter_i;
   res_trees = best_trees;
 }
 
