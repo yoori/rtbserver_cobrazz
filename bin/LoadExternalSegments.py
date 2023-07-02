@@ -2,7 +2,6 @@
 
 import os
 import string
-import logging
 import urllib3.exceptions
 import requests
 import threading
@@ -93,11 +92,11 @@ class MinioSource(Source):
                                         output_writer.progress.verbosity = 3
                                         output_writer.write_line(user_id)
         except MinioException as e:
-            logging.error(e, exc_info=False)
+            self.service.print_(0, e)
         except urllib3.exceptions.HTTPError as e:
-            logging.error(e, exc_info=False)
+            self.service.print_(0, e)
         except EOFError as e:
-            logging.error(e, exc_info=False)
+            self.service.print_(0, e)
 
     def __load_meta(self, client):
         meta = {}
@@ -158,9 +157,9 @@ class HTTPSource(Source):
                                             output_writer.progress.verbosity = 3
                                             output_writer.write_line(user_id)
         except requests.exceptions.RequestException as e:
-            logging.error(e, exc_info=False)
+            self.service.print_(0, e)
         except EOFError as e:
-            logging.error(e, exc_info=False)
+            self.service.print_(0, e)
 
 
 class Application(Service):

@@ -120,6 +120,8 @@ class Service:
 
     def print_(self, verbosity, text, flush=True):
         if verbosity <= self.verbosity:
+            if isinstance(text, Exception):
+                text = f"{text.__class__.__name__}:{str(text)}"
             self.print_lock.acquire()
             try:
                 msg = f"{datetime.datetime.now()} - {text}"

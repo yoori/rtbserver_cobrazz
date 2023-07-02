@@ -11,7 +11,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from base64 import b64decode
 from zlib import crc32
-import logging
 from ServiceUtilsPy.Service import Service
 from ServiceUtilsPy.Context import Context
 
@@ -104,12 +103,12 @@ class Application(Service):
                 self.on_metrica(ymref_id, token, metrica_id)
 
         except psycopg2.Error as e:
-            logging.error(e, exc_info=False)
+            self.print_(0, e)
             if self.connection is not None:
                 self.connection.close()
                 self.connection = None
         except clickhouse_driver.errors.Error as e:
-            logging.error(e, exc_info=False)
+            self.print_(0, e)
             if self.ch_client is not None:
                 self.ch_client.disconnect()
                 self.ch_client = None
@@ -119,8 +118,8 @@ class Application(Service):
         try:
             self.on_requests(ymref_id, token, metrica_id)
             self.on_geo_ip(token, metrica_id)
-        except requests.exceptions.RequestException:
-            logging.error("HTTP error")
+        except requests.exceptions.RequestException as e:
+            self.print_(0, e)
 
     def on_requests(self, ymref_id, token, metrica_id):
         with Context(self, out_dir=self.post_click_orig_dir) as ctx_orig,\
@@ -167,7 +166,7 @@ class Application(Service):
                 if not already_processed:
                     if not metrica_printed:
                         metrica_printed = True
-                        self.print_(1, f"Metrica ID {metrica_id}")
+                        self.print_(1, "Metrica ID", metrica_id)
                     self.process_new_record(ctx_orig, ctx, log_fname_orig, log_fname_prefix, item)
 
     def process_new_record(self, ctx_orig, ctx, log_fname_orig, log_fname_prefix, item):

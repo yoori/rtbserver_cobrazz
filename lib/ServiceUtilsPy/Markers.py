@@ -49,7 +49,10 @@ class Markers:
     def check_mtime_interval(self, name, interval):
         mtime = self.get_mtime(name)
         assert mtime is not None
-        return mtime + interval <= time.time()
+        if mtime + interval <= time.time():
+            return True
+        self.service.print_(0, f"Marker still waiting {name}")
+        return False
 
     def on_exit(self, is_error):
         if not is_error:
