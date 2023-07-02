@@ -33,6 +33,7 @@
 %define __open_ssl_ver_req      1.1.1k-7
 %define __vanga_ver_req         1.0.0.17
 %define __rocksdb_ver_req       6.26.1
+%define __boost_suffix          176
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
@@ -116,6 +117,7 @@ BuildRequires: userver-devel
 # userver-devel dependencies workaround:
 BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
+BuildRequires: grpc-plugins = 1.48.1-ssv2
 
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
@@ -152,9 +154,11 @@ Requires: python3-minio
 
 #Requires: libicu = 50.2-4
 #BuildRequires: libicu-devel = 50.2-4
-BuildRequires: boost-devel = 1.66.0
-Requires: boost = 1.66.0
+BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
+Requires: boost%{__boost_suffix} = 1.76.0
 BuildRequires: xgboost-devel
+Requires: gtest = 1.11.0-1
+BuildRequires: gtest-devel = 1.11.0-1
 
 Requires: glibc-all-langpacks
 Requires: foros-pagesense-programmatic
