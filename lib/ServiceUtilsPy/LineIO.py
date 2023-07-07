@@ -11,13 +11,20 @@ class LineProgress:
     def next_line(self):
         self.index += 1
         if self.service.print_line and not self.index % self.service.print_line:
-            self.service.print_(self.verbosity, f"{self.name} - {self.index:,}")
+            self.print_index()
+
+    def print_index(self):
+        self.service.print_(self.verbosity, f"Progress {self.name} - {self.index:,}")
 
 
 class LineFile(File):
     def __init__(self, service, path=None, **kw):
         super().__init__(service, path=path, **kw)
         self.progress = LineProgress(self.service, path, 2)
+
+    def close(self):
+        self.progress.print_index()
+        super().close()
 
 
 class LineReader(LineFile):
@@ -27,8 +34,9 @@ class LineReader(LineFile):
     def read_line(self):
         self.service.verify_running()
         line = self.file.readline()
-        line = line.strip("\n")
-        self.progress.next_line()
+        if line:
+            line = line.strip("\n")
+            self.progress.next_line()
         return line
 
     def read_lines(self):

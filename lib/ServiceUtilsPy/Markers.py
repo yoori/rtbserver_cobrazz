@@ -25,6 +25,9 @@ class Markers:
                         os.path.getmtime(os.path.join(self.context.markers_dir, file)))
                 break
 
+    def is_added(self, name):
+        return self.__markers.get(name, None) is not None
+
     def add(self, name, mtime=None):
         try:
             marker = self.__markers[name]

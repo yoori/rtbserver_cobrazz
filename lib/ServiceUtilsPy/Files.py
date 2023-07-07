@@ -42,6 +42,8 @@ class Files:
     def get_in_files(self):
         for root, dirs, files in os.walk(self.context.in_dir, True):
             for file in sorted(files):
+                if file.startswith("."):
+                    continue
                 self.service.verify_running()
                 yield file
             break

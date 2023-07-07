@@ -7,6 +7,8 @@ import requests
 import threading
 from minio import Minio
 from lxml import etree
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from ServiceUtilsPy.File import File
 from ServiceUtilsPy.LineIO import LineReader
 from ServiceUtilsPy.Service import Service
@@ -56,15 +58,18 @@ class MinioSource(Source):
         self.acc = mp["acc"]
         self.secret = mp["secret"]
         self.bucket = mp["bucket"]
+        self.max_days = params["max_days"]
 
     def process(self):
-        meta = None
         client = Minio(self.url, access_key=self.acc, secret_key=self.secret)
         objects = client.list_objects(self.bucket)
         try:
-            for name in sorted(obj.object_name for obj in objects):
+            for name, last_modified in sorted((obj.object_name, obj.last_modified) for obj in objects):
                 self.service.verify_running()
                 if name == "meta.tsv":
+                    continue
+                if last_modified.replace(tzinfo=None) < datetime.now() + relativedelta(days=-self.max_days):
+                    self.service.print_(1, f"Too old - {name}")
                     continue
                 self.service.print_(1, f"{name}")
                 with self.create_context() as ctx:
@@ -130,7 +135,6 @@ class HTTPSource(Source):
                 for name in tree.xpath("/html/body/pre/a/text()"):
                     if name == "../":
                         continue
-                    self.service.print_(1, f"{name}")
                     with self.create_context() as ctx:
                         if not ctx.markers.add(name):
                             continue
