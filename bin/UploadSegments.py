@@ -71,6 +71,27 @@ class Upload:
             self.url_markers_dir = os.path.join(workspace_dir, "url_markers")
 
 
+class FileInfo:
+    def __init__(self, in_name):
+        signed_uids = False
+        basename, ext = os.path.splitext(in_name)
+        if ext.startswith(".stamp"):
+            basename, ext = os.path.splitext(basename)
+        if ext.startswith(".signed_uids"):
+            basename, ext = os.path.splitext(basename)
+            signed_uids = True
+        if ext in (".stable", ".uids", ".txt"):
+            self.is_stable = (ext == ".stable")
+            basename, ext = os.path.splitext(basename)
+        else:
+            self.is_stable = False
+        self.reg_name = basename + ext
+        self.need_sign_uids = not signed_uids and ext in ("", ".txt", ".uids")
+
+    def __repr__(self):
+        return f"FileInfo(reg_name={self.reg_name}, need_sign_uids={self.need_sign_uids}, is_stable={self.is_stable})"
+
+
 class Application(Service):
     def __init__(self):
         super().__init__()
@@ -176,65 +197,116 @@ class Application(Service):
         self.print_(1, f"Markers dir {markers_dir}")
         try:
             with Context(self, in_dir=in_dir) as in_dir_ctx:
-                for in_name in in_dir_ctx.files.get_in_files():
-                    self.print_(1, f"File {in_name}")
-                    if in_name.startswith("."):
-                        continue
-                    in_path = os.path.join(in_dir, in_name)
+                with Context(self, markers_dir=markers_dir) as markers_ctx:
+                    unprocessed_count = len(tuple(in_dir_ctx.files.get_in_files()))
+                self.print_(0, f"Unprocessed files count: {unprocessed_count}")
 
+                while True:
+                    self.verify_running()
                     with Context(self, markers_dir=markers_dir) as markers_ctx:
-                        signed_uids = False
-                        basename, ext = os.path.splitext(in_name)
-                        if ext.startswith(".stamp"):
-                            basename, ext = os.path.splitext(basename)
-                        if ext.startswith(".signed_uids"):
-                            basename, ext = os.path.splitext(basename)
-                            signed_uids = True
-                        if ext in (".stable", ".uids", ".txt"):
-                            is_stable = (ext == ".stable")
-                            basename, ext = os.path.splitext(basename)
-                        else:
-                            is_stable = False
-                        fname = basename + ext
-
-                        reg_marker_name = fname + ".__reg__"
-                        upload_marker_name = in_name + ".__upload__"
-                        keyword = make_keyword(channel_prefix.lower() + basename.lower())
-
+                        in_files = tuple(in_dir_ctx.files.get_in_files())
+                        if not in_files:
+                            break
+                        file_info = FileInfo(max(
+                            in_files,
+                            key=lambda in_file_: os.path.getmtime(os.path.join(in_dir, in_file_))))
+                        reg_marker_name = file_info.reg_name + ".__reg__"
+                        keyword = make_keyword(channel_prefix.lower() + file_info.reg_name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
-                            self.print_(1, f"Registering file: {reg_marker_name} ({in_name})")
+                            channel_id = channel_prefix + file_info.reg_name.upper()
+                            self.print_(1, f"Registering file: {reg_marker_name} ({in_name}) channel_id {channel_id} account_id {account_id} keyword {keyword}")
                             cursor.execute(
                                 SQL_REG_USER,
-                                (channel_prefix + basename.upper() + ext.upper(), account_id, keyword, keyword, keyword, keyword, keyword))
+                                (channel_id, account_id, keyword, keyword, keyword, keyword, keyword))
                             cursor.execute("COMMIT;")
+
+                        if not markers_ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
                             continue
 
-                        if markers_ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
-                            if markers_ctx.markers.add(upload_marker_name, os.path.getmtime(in_path)):
-                                self.print_(1, f"Uploading file: {in_name}")
+                        in_names = []
+                        for in_file in in_files:
+                            if repr(file_info) != repr(FileInfo(in_file)):
+                                continue
+                            in_names.append(in_file)
+                        in_names.sort(
+                            key=lambda _: os.path.getmtime(os.path.join(in_dir, _)),
+                            reverse=True)
+                        in_names = in_names[:12]
 
-                                async def run_lines(f):
-                                    async with aiohttp.ClientSession() as session:
-                                        await asyncio.gather(
-                                            *tuple(self.on_line(f, is_stable, keyword, session) for i in range(self.upload_threads)))
+                        for in_name_index, in_name in enumerate(in_names):
+                            if in_name_index == 0:
+                                self.print_(1, f"Processing file group: {file_info}")
+                            self.print_(1, f" {in_name_index + 1}) File {in_name}")
 
-                                if not signed_uids and ext in ("", ".txt", ".uids"):
-                                    cmd = ['sh', '-c', f'cat "{in_path}" | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"']
-                                else:
-                                    cmd = ['sh', '-c', f'cat "{in_path}" | sort -u --parallel=4']
-                                with subprocess.Popen(cmd, stdout=subprocess.PIPE) as shp:
-                                    with self.__subprocesses_lock:
-                                        self.__subprocesses.add(shp.pid)
-                                    try:
-                                        file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
-                                        with LineReader(self, path=in_path, file=file) as f:
-                                            await run_lines(f)
-                                    finally:
-                                        with self.__subprocesses_lock:
-                                            self.__subprocesses.remove(shp.pid)
+                        if len(in_names) > 1:
+                            file_groups = {
+                                0: dict(
+                                    (in_name, open(os.path.join(in_dir, in_name), "rb"))
+                                    for in_name in in_names)
+                            }
+                            in_names.clear()
 
-                            self.print_(1, f"Removing file: {in_name}")
-                            os.remove(in_path)
+                            while file_groups:
+                                new_file_groups = {}
+                                for group_id, file_group in file_groups.items():
+                                    for in_name, f in file_group.items():
+                                        data = b"" if len(file_group) == 1 else f.read(8000)
+                                        try:
+                                            new_file_group = new_file_groups[(group_id, data)]
+                                        except KeyError:
+                                            new_file_groups[(group_id, data)] = {in_name: f}
+                                            if not data:
+                                                f.close()
+                                                in_names.append(in_name)
+                                        else:
+                                            new_file_group[in_name] = f
+                                            if not data:
+                                                f.close()
+                                                self.print_(1, f"Duplicate file: {in_name}")
+                                                os.remove(os.path.join(in_dir, in_name))
+                                file_groups.clear()
+                                new_group_ids = {}
+                                for (group_id, data), new_file_group in new_file_groups.items():
+                                    if data:
+                                        try:
+                                            new_group_id = new_group_ids[(group_id, data)]
+                                        except KeyError:
+                                            new_group_id = len(new_group_ids)
+                                            new_group_ids[(group_id, data)] = new_group_id
+                                        file_groups[new_group_id] = new_file_group
+
+                        self.print_(0, f"Unique file count: {len(in_names)}")
+
+                        async def run_lines(f):
+                            async with aiohttp.ClientSession() as session:
+                                await asyncio.gather(
+                                    *tuple(self.on_line(f, file_info.is_stable, keyword, session)
+                                        for _ in range(self.upload_threads)))
+
+                        in_paths_str = " ".join(os.path.join(in_dir, in_name) for in_name in in_names)
+
+                        if file_info.need_sign_uids:
+                            cmd = ['sh', '-c', f'cat {in_paths_str} | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"']
+                        else:
+                            cmd = ['sh', '-c', f'cat {in_paths_str} | sort -u --parallel=4']
+
+                        with subprocess.Popen(cmd, stdout=subprocess.PIPE) as shp:
+                            with self.__subprocesses_lock:
+                                self.__subprocesses.add(shp.pid)
+                            try:
+                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
+                                self.print_(0, f"Processing...")
+                                with LineReader(self, path=file_info.reg_name, file=file) as f:
+                                    await run_lines(f)
+                            finally:
+                                with self.__subprocesses_lock:
+                                    self.__subprocesses.remove(shp.pid)
+
+                        self.verify_running()
+                        if shp.returncode >= 0:
+                            for in_name in in_names:
+                                self.print_(1, f"Done file: {in_name}")
+                                os.remove(os.path.join(in_dir, in_name))
 
         except aiohttp.client_exceptions.ClientError as e:
             self.print_(0, e)
@@ -242,7 +314,6 @@ class Application(Service):
             self.print_(0, e)
 
     async def on_line(self, f, is_stable, keyword, session):
-
         async def get(uid):
             await self.request(
                 session,
@@ -250,30 +321,33 @@ class Application(Service):
                 headers={"Host": "ad.new-programmatic.com", "Cookie": "uid=" + uid},
                 params={"loc.name": "ru", "referer-kw": keyword})
 
-        for line in f.read_lines():
-            if not is_stable:
-                await get(line)
-            else:
+        try:
+            for line in f.read_lines():
+                if not is_stable:
+                    await get(line)
+                else:
 
-                async def visitor(session, resp):
-                    uid = resp.cookies.get("uid")
-                    if uid is not None:
-                        await get(uid.value)
+                    async def visitor(session, resp):
+                        uid = resp.cookies.get("uid")
+                        if uid is not None:
+                            await get(uid.value)
 
-                await self.request(
-                    session,
-                    path="track.gif",
-                    headers={},
-                    params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
-                    visitor=visitor)
+                    await self.request(
+                        session,
+                        path="track.gif",
+                        headers={},
+                        params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
+                        visitor=visitor)
+        except StopService:
+            pass
 
     async def request(self, session, path, headers, params, visitor=None):
         url = f"{random.choice(self.upload_url)}/{path}"
-        self.print_(3, f"request url={url} headers={headers} params={params}")
+        self.print_(3, f"Request url={url} headers={headers} params={params}")
         try:
             async with session.get(url=url, params=params, headers=headers, ssl=False) as resp:
                 if resp.status != 204:
-                    raise aiohttp.client_exceptions.ClientResponseError
+                    raise aiohttp.client_exceptions.ClientResponseError(resp.request_info, resp.history)
                 if visitor is not None:
                     await visitor(session, resp)
         except aiohttp.client_exceptions.ClientError as e:

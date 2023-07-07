@@ -40,12 +40,19 @@ class Service:
         else:
             signal(SIGUSR1, lambda signum, frame: self.on_stop_signal())
 
+        try:
+            from signal import SIGINT, signal
+        except ImportError:
+            pass
+        else:
+            signal(SIGINT, lambda signum, frame: self.on_stop_signal())
+
         self.args_parser = argparse.ArgumentParser()
         self.args_parser.add_argument("--period", type=float, help="Period between checking files.")
         self.args_parser.add_argument("--verbosity", type=int, help="Level of console information.")
         self.args_parser.add_argument("--pid-file", help="File with process ID.")
         self.args_parser.add_argument("--config", help="Path to JSON config.")
-        self.args_parser.add_argument("--print-line", type=int, help="Print line index despite verbosity.")
+        self.args_parser.add_argument("--print-line", type=int, help="Print each line index.")
         self.args_parser.add_argument("--in-dir", help="Directory that stores input files.")
         self.args_parser.add_argument("--markers-dir", help="Directory that stores markers.")
         self.args_parser.add_argument("--tmp-dir", help="Directory that stores temp files.")
@@ -124,9 +131,9 @@ class Service:
                 text = f"{text.__class__.__name__}:{str(text)}"
             self.print_lock.acquire()
             try:
-                msg = f"{datetime.datetime.now()} - {text}"
+                msg = f"{datetime.datetime.now()} - {threading.currentThread().name} - {text}"
                 print(msg, flush=flush)
-                if self.log_file is not None:
+                if self.log_file is not None and not self.log_file.closed:
                     self.log_file.write(msg + "\n")
                     if flush:
                         self.log_file.flush()
@@ -140,7 +147,7 @@ class Service:
         try:
             self.on_start()
             while True:
-                self.print_(0, "timer")
+                self.print_(0, "Timer")
                 self.on_run()
                 for t in self.__get_sleep_subperiods():
                     self.verify_running()
