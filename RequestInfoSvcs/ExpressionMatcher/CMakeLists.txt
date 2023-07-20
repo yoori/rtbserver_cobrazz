@@ -39,45 +39,47 @@ add_executable(ExpressionMatcher
   UserTriggerMatchProfileProviderImpl.cpp 
   ConversionProcessor.cpp
 )
+
 target_link_libraries(ExpressionMatcher
-ConsiderMessagesPST
-RequestOperationProfilePST
-ExpressionMatcherIDL
-UserColoReachContainer
-UserInventoryContainer
-UserTriggerMatchContainer
-ExpressionChannelMatcher
-CORBACommons
-ProcessControlIDL
-Logger
-String
-Generics
-Sync
-pthread
-ExpressionChannelIndex
-UserChannelInventoryProfilePST
+  ConsiderMessagesPST
+  RequestOperationProfilePST
+  ExpressionMatcherIDL
+  UserColoReachContainer
+  UserInventoryContainer
+  UserTriggerMatchContainer
+  ExpressionChannelMatcher
+  CORBACommons
+  ProcessControlIDL
+  Logger
+  String
+  Generics
+  Sync
+  pthread
+  ExpressionChannelIndex
+  UserChannelInventoryProfilePST
 
-LogCommons
- ProcessControlVars
- Commons
+  LogCommons
+  ProcessControlVars
+  Commons
 
 
- AdServerCommonsXSD
- ExpressionMatcherConfigXSD
+  AdServerCommonsXSD
+  ExpressionMatcherConfigXSD
 
-UserChannelInventoryProfilePST
-ExpressionMatcherCompatibility
-RequestTriggerMatchProfilePST
-PlainStorage3
-SNMPAgent
-UserInfoManagerControllerL
-CampaignServerIDL
-ProfileMap
-XMLUtility
-ChannelCommons
-ChannelContainer
-ChannelSessionFactory
-CampaignTypes
+  UserChannelInventoryProfilePST
+  ExpressionMatcherCompatibility
+  RequestTriggerMatchProfilePST
+  PlainStorage3
+  SNMPAgent
+  UserInfoManagerControllerL
+  CampaignServerIDL
+  ProfileMap
+  XMLUtility
+  ChannelCommons
+  ChannelContainer
+  ChannelSessionFactory
+  CampaignTypes
+  CampaignConfigSource
 )
 
 
