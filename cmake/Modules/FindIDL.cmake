@@ -26,7 +26,7 @@ function(add_idl _target _idlfile target_dir)
   add_custom_command(
     OUTPUT ${MIDL_OUTPUT} ${OUTPUTC} ${OUTPUTS}
     COMMAND tao_idl ARGS  -Sp -in -ci .ipp -cs .cpp -hc .hpp -hs _s.hpp -ss _s.cpp  -I ${PROJECT_SOURCE_DIR} -I ${CORBA_INCLUDES}  ${SRC} -o ${MIDL_OUTPUT_PATH} 
-    DEPENDS ${SRC}
+    DEPENDS ${SRC} ${FINDIDL_TARGET}
     )
 
   cmake_parse_arguments(FINDIDL "" "TLBIMP" "" ${ARGN})

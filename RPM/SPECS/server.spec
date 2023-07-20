@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv322%{?dist}
+Release: ssv324%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -157,8 +157,8 @@ Requires: python3-minio
 BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
 Requires: boost%{__boost_suffix} = 1.76.0
 BuildRequires: xgboost-devel
-Requires: gtest = 1.11.0-1
-BuildRequires: gtest-devel = 1.11.0-1
+Requires: gtest = 1.12.1
+BuildRequires: gtest-devel = 1.12.1
 
 Requires: glibc-all-langpacks
 Requires: foros-pagesense-programmatic

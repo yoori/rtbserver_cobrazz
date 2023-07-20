@@ -1,14 +1,12 @@
 
 add_library(ChannelContainer SHARED
-
-	ContainerMatchers.cpp 
-      DictionaryMatcher.cpp 
-      SoftMatcher.cpp 
-      ChannelChunk.cpp 
-      ChannelContainer.cpp 
-      UpdateContainer.cpp
+  ContainerMatchers.cpp 
+  DictionaryMatcher.cpp 
+  SoftMatcher.cpp 
+  ChannelChunk.cpp 
+  ChannelContainer.cpp 
+  UpdateContainer.cpp
 )
-
 
 target_link_libraries(ChannelContainer
   Commons
@@ -17,13 +15,12 @@ target_link_libraries(ChannelContainer
 )
 
 add_executable(ChannelServer
-ChannelServerVariant.cpp 
+  ChannelServerVariant.cpp 
   ChannelServerImpl.cpp 
   ChannelServerControlImpl.cpp 
   ChannelUpdateImpl.cpp 
   ProcessStatsControl.cpp 
   ChannelServerMain.cpp
-
 )
 
 target_link_libraries(ChannelServer
@@ -31,27 +28,25 @@ target_link_libraries(ChannelServer
   XMLUtility
   CORBACommons
   ProcessControlVars
-
-
   AdServerCommonsXSD
   Postgres
   ChannelServerConfigXSD
   ChannelCommons
-ChannelServerIDL ChannelUpdateBaseIDL
-    ChannelCommonsIDL
-    ChannelUpdateBaseIDL
-    ChannelServerIDL
+  ChannelServerIDL
+  ChannelUpdateBaseIDL
+  ChannelCommonsIDL
+  ChannelUpdateBaseIDL
+  ChannelServerIDL
   ChannelContainer
   ChannelSessionFactory
-
 #  CampaignServerStubs
-   CampaignServerStubs_v350
- CampaignServer_v350IDL
- ProcessControlIDL
- StatsIDL
- BLogic
- # ColoUpdateStat
- LogCommons
+  CampaignServerStubs_v350
+  CampaignServer_v350IDL
+  ProcessControlIDL
+  StatsIDL
+  BLogic
+  # ColoUpdateStat
+  LogCommons
   Polyglot
   GenericSegmentor
 )

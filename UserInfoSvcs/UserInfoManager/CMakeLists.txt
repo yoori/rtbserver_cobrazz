@@ -2,9 +2,11 @@ ADD_SUBDIRECTORY(Compatibility)
 
 add_idl(UserInfoManagerIDL  UserInfoManager.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManager)
 add_idl(UserInfoManagerControlIDL  UserInfoManagerControl.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManager)
+
 target_link_libraries(UserInfoManagerIDL
-CorbaTypesIDL
-CampaignFreqIDL
+  CorbaTypesIDL
+  CampaignFreqIDL
+  FreqCapInfoIDL
 )
 
 add_library(UserInfoContainer SHARED
