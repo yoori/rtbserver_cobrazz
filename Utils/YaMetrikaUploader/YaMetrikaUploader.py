@@ -243,25 +243,26 @@ class Application(Service):
                 return
             date_begin, date_end, data = ym_result
 
-            with ctx.files.get_line_writer(f"YandexOrigGeo.{ctx.fname_seed}.csv") as f:
-                for api_item in data:
+            for api_item in data:
+                dimensions = api_item["dimensions"]
 
-                    dimensions = api_item["dimensions"]
+                def get_dimension(index):
+                    r = dimensions[index]["name"]
+                    if r is None:
+                        r = ""
+                    return r
 
-                    def get_dimension(index):
-                        r = dimensions[index]["name"]
-                        if r is None:
-                            r = ""
-                        return r
+                ip_address = get_dimension(0)
+                region_area = get_dimension(1)
+                region_city = get_dimension(2)
 
-                    ip_address = get_dimension(0)
-                    region_area = get_dimension(1)
-                    region_city = get_dimension(2)
-
-                    f.write_line(f"{ip_address},{region_area}/{region_city}")
-                    self.ch_client.execute(
-                        'INSERT INTO YandexOrigGeo(ip_address,region_area,region_city) VALUES',
-                        [[ip_address, region_area, region_city]])
+                log = ctx.files.get_line_writer(
+                    key=0,
+                    name=lambda: f"YandexOrigGeo.{ctx.fname_seed}.csv")
+                log.write_line(f"{ip_address},{region_area}/{region_city}")
+                self.ch_client.execute(
+                    'INSERT INTO YandexOrigGeo(ip_address,region_area,region_city) VALUES',
+                    [[ip_address, region_area, region_city]])
 
     def __ym_api(self, metrica_id, token, dimensions, metrics, sort):
         today = datetime.today()
