@@ -32,6 +32,7 @@
 #include <LogCommons/ColoUserStat.hpp>
 #include <LogCommons/ColoUsers.hpp>
 #include <LogCommons/CreativeStat.hpp>
+#include <LogCommons/RequestStatsHourlyExtStat.hpp>
 #include <LogCommons/DeviceChannelCountStat.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
 #include <LogCommons/HistoryMatch.hpp>
@@ -2331,6 +2332,48 @@ int main(int argc, char **argv)
     data.revenue = FixedNumber("1234.1020304");
     collector.add(data);
     LogIoTester<ImpNotifyTraits>(dump_on_fail).test(collector);
+  }
+  HANDLE_EXCEPTIONS(exitcode, 1);
+
+  try
+  {
+    RequestStatsHourlyExtStatCollector collector;
+    RequestStatsHourlyExtStatCollector::KeyT key1(TEST_TIME, TEST_TIME);
+    RequestStatsHourlyExtStatCollector::KeyT key2(
+      TEST_TIME - Generics::Time::ONE_HOUR, TEST_TIME);
+    RequestStatsHourlyExtStatCollector::DataT data;
+    typedef RequestStatsHourlyExtStatCollector::DataT::DataT::FixedNum
+      FixedNum;
+    RequestStatsHourlyExtStatCollector::DataT::DataT inner_data(1, 2, 3, 4,
+      FixedNum("5.123"), FixedNum("6.123"), FixedNum("7.123"),
+        FixedNum("8.123"), FixedNum("9.123"), FixedNum("10.123"),
+          FixedNum("11.123"), FixedNum("12.123"), 13, 14, 15, 16, 17,
+            FixedNum("18.123"));
+#if LOGIOTEST_PRODUCE_LARGER_FILES
+    typedef RequestStatsHourlyExtStatCollector::DataT::KeyT KeyType;
+    for (unsigned i = 0; i < max_iterations; ++i)
+    {
+      KeyType inner_key(i, 2, 3, OptionalUlong(4), "ru", 5, 6, 7, 8, 9, 10, 11, 12,
+        RequestStatsHourlyExtInnerKey::DeliveryThresholdT("0.13"), 14, 15,
+          true, false, true, 'B',
+            RequestStatsHourlyExtInnerKey::GeoChannelIdOptional(16),
+              RequestStatsHourlyExtInnerKey::DeviceChannelIdOptional(17), 18,
+                false, 19);
+      data.add(inner_key, inner_data);
+    }
+#else
+    RequestStatsHourlyExtStatCollector::DataT::KeyT
+      inner_key(1, 2, 3, OptionalUlong(), "ru", 5, 6, 7, 8, 9, 10, 11, 12,
+        RequestStatsHourlyExtInnerKey::DeliveryThresholdT("0.13"), 14, 15,
+          true, false, true, 'B',
+            RequestStatsHourlyExtInnerKey::GeoChannelIdOptional(16),
+              RequestStatsHourlyExtInnerKey::DeviceChannelIdOptional(17), 18,
+                false, 19);
+    data.add(inner_key, inner_data);
+#endif
+    collector.add(key1, data);
+    collector.add(key2, data);
+    LogIoTester<RequestStatsHourlyExtStatTraits>(dump_on_fail).test(collector);
   }
   HANDLE_EXCEPTIONS(exitcode, 1);
 

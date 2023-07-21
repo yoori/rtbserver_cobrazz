@@ -45,6 +45,7 @@ RequestBasicChannels.cpp
 Request_Base.cpp
 #Request_v354.cpp
 #Request_v360.cpp
+RequestStatsHourlyExtStat.cpp
 ResearchLogs.cpp
 ResearchProfStat.cpp
 ResearchWebStat.cpp
