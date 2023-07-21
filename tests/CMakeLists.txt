@@ -1,2 +1,4 @@
 
+ADD_SUBDIRECTORY(LogProcessing)
 ADD_SUBDIRECTORY(Samples)
+
