@@ -10,7 +10,7 @@ template <> const char* RequestStatsHourlyExtStatTraits::B::base_name_ =
 template <> const char* RequestStatsHourlyExtStatTraits::B::signature_ =
   "RequestStatsHourlyExtStat";
 template <> const char* RequestStatsHourlyExtStatTraits::B::current_version_ =
-  "3.5";
+  "1.0";
 
 const RequestStatsHourlyExtInnerKey::DeliveryThresholdT
   RequestStatsHourlyExtInnerKey::max_delivery_threshold_value_("1.0");
