@@ -194,8 +194,6 @@ class Application(Service):
                         sort="-ym:s:visits",
                         utm_source=utm_source):
 
-                    self.verify_running()
-
                     key = RequestKeyNonAggregated(
                         time=datetime.strptime(ym_row.get_dimension(0), "%Y-%m-%d %H:%M:%S"),
                         utm_source=utm_source,
@@ -257,12 +255,11 @@ class Application(Service):
 
     def process_record(self, sql_insert, sql_update, ymref_id, old_records, key, data, process_new_record, *args):
         old_value = old_records.get(key)
-        data_tuple = (data.visits, data.bounce, data.avg_time)
         if old_value is None:
-            self.cursor.execute(sql_insert, (ymref_id,) + key + data_tuple)
+            self.cursor.execute(sql_insert, (ymref_id,) + key + (data.visits, data.bounce, data.avg_time))
             self.cursor.execute("COMMIT")
         elif data.visits > old_value.visits:
-            self.cursor.execute(sql_update, data_tuple + (ymref_id,) + key)
+            self.cursor.execute(sql_update, (data.visits, data.bounce, data.avg_time, ymref_id) + key)
             self.cursor.execute("COMMIT")
         else:
             return
@@ -370,6 +367,7 @@ class Application(Service):
             if not response_data:
                 break
             for row in response_data:
+                self.verify_running()
                 yield YaMetrikaRow(row)
             offset += 100000
 
