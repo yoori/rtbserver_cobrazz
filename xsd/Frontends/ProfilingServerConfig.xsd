@@ -87,6 +87,17 @@
 
       <xsd:element name="CampaignManagerRef"
         type="MultiCorbaObjectRefType"/>
+
+      <xsd:element name="Coroutine"
+        type="CoroutineType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
+      <xsd:element name="GrpcClientPool"
+        type="GrpcClientPoolType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
     </xsd:sequence>
 
     <xsd:attribute name="zmq_io_threads"

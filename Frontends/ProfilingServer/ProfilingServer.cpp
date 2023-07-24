@@ -5,6 +5,8 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ZmqConfig.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 #include <XMLUtility/Utility.hpp>
 #include <CORBACommons/StatsImpl.hpp>
 
@@ -402,6 +404,7 @@ namespace Profiling
           config_->debug_on()));
 
       register_vars_controller();
+      init_coroutine_();
       init_corba_();
       init_zeromq_();
       activate_object();
@@ -531,6 +534,28 @@ namespace Profiling
   }
 
   void
+  ProfilingServer::init_coroutine_()
+  {
+    // Coroutine
+    auto task_processor_container_builder =
+      Config::create_task_processor_container_builder(
+        logger(),
+        config_->Coroutine());
+    auto init_func = [] (
+      TaskProcessorContainer& task_processor_container) {
+      return std::make_unique<ComponentsBuilder>();
+    };
+
+    manager_coro_ = ManagerCoro_var(
+      new ManagerCoro(
+        std::move(task_processor_container_builder),
+        std::move(init_func),
+        logger()));
+
+    add_child_object(manager_coro_);
+  }
+
+  void
   ProfilingServer::init_corba_() /*throw(Exception)*/
   {
     typedef CORBACommons::ProcessStatsGen<ProfilingServerStats>
@@ -567,10 +592,18 @@ namespace Profiling
 
       if(!config_->UserBindControllerGroup().empty())
       {
+        const auto& config_grpc_client = config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_->GrpcClientPool());
+
         user_bind_client_ = new FrontendCommons::UserBindClient(
           config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          manager_coro_.in(),
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
 
         add_child_object(user_bind_client_);
       }

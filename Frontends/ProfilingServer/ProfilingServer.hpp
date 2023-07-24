@@ -22,6 +22,9 @@
 #include <Frontends/ProfilingServer/HashFilter.hpp>
 #include <Frontends/ProfilingServer/ProfilingServerStats.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 namespace AdServer
 {
 namespace Profiling
@@ -30,6 +33,12 @@ namespace Profiling
     public AdServer::Commons::ProcessControlVarsLoggerImpl,
     private Generics::CompositeActiveObject
   {
+  private:
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -132,6 +141,9 @@ namespace Profiling
       /*throw(Exception, eh::Exception)*/;
 
     void
+    init_coroutine_();
+
+    void
     init_corba_() /*throw(Exception)*/;
 
     void
@@ -209,6 +221,7 @@ namespace Profiling
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
     Logging::LoggerCallbackHolder logger_callback_holder_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<zmq::context_t> zmq_context_;
 

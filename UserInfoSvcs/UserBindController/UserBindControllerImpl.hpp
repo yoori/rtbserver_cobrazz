@@ -122,6 +122,7 @@ namespace UserInfoSvcs
       std::string host_name;
       ChunkIdSet chunks;
       bool ready;
+      std::size_t grpc_port = 0;
     };
 
     typedef std::vector<UserBindServerRef> UserBindServerRefArray;

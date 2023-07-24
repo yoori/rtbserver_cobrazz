@@ -16,6 +16,7 @@
 <xsl:include href="../Functions.xsl"/>
 <xsl:include href="../UserIdBlackList.xsl"/>
 <xsl:include href="../CampaignManagement/CampaignServersCorbaRefs.xsl"/>
+<xsl:include href="../GrpcChannelArgs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -867,6 +868,35 @@
       <cfg:Id value="%7Bcap1%7D"/>
       <cfg:Id><xsl:attribute name="value">{UID}</xsl:attribute></cfg:Id>
     </cfg:SkipExternalIds>
+
+    <cfg:Coroutine>
+      <cfg:CoroPool
+        initial_size="{$coro-pool-initial-size}"
+        max_size="{$coro-pool-max-size}"
+        stack_size="{$coro-pool-stack-size}"/>
+      <cfg:EventThreadPool
+        number_threads="{$event-thread-pool-number-threads}"
+        name="{$event-thread-pool-name}"
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
+        defer_events="{$event-thread-pool-defer-events}"/>
+      <cfg:MainTaskProcessor
+        name="{$main-task-processor-name}"
+        number_threads="{$main-task-processor-number-threads}"
+        should_guess_cpu_limit="{$main-task-processor-should-guess-cpu-limit}"
+        overload_action="{$main-task-processor-overload-action}"
+        wait_queue_length_limit="{$main-task-processor-wait-queue-length-limit}"
+        wait_queue_time_limit="{$main-task-processor-wait-queue-time-limit}"
+        sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
+    </cfg:Coroutine>
+
+    <cfg:GrpcClientPool
+        num_channels="{$grpc-pool-client-num-channels}"
+        num_clients="{$grpc-pool-client-num-clients}"
+        timeout="{$grpc-pool-client-timeout}"
+        enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:GrpcClientPool>
+
   </cfg:CommonFeConfiguration>
 
   <xsl:variable name="inventory-users-percentage-value"><xsl:value-of select="$colo-config/cfg:inventoryStats/@simplifying"/>

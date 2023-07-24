@@ -83,6 +83,13 @@
         </xsl:if>
       </xsl:variable>
 
+      <xsl:variable name="user-bind-server-grpc-port">
+        <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_port"/>
+        <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) = 0">
+          <xsl:value-of select="$def-user-bind-server-grpc-port"/>
+        </xsl:if>
+      </xsl:variable>
+
       <xsl:variable name="user-bind-server-hosts">
         <xsl:call-template name="GetHosts">
           <xsl:with-param name="hosts" select="@host"/>
@@ -94,6 +101,7 @@
           name="corba_ref_prefix"
           select="concat('corbaloc:iiop:', ., ':', $user-bind-server-port)"/>
         <cfg:UserBindServerHost>
+          <xsl:attribute name="grpc_port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
           <cfg:UserBindServerRef>
             <xsl:attribute name="name">
               <xsl:value-of select="."/>

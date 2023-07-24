@@ -16,6 +16,7 @@
 
 <xsl:include href="../Functions.xsl"/>
 <xsl:include href="../UserIdBlackList.xsl"/>
+<xsl:include href="../GrpcChannelArgs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -45,6 +46,13 @@
       <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@port"/>
       <xsl:if test="count($user-bind-server-config/cfg:networkParams/@port) = 0">
         <xsl:value-of select="$def-user-bind-server-port"/>
+      </xsl:if>
+    </xsl:variable>
+
+    <xsl:variable name="user-bind-server-grpc-port">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$def-user-bind-server-grpc-port"/>
       </xsl:if>
     </xsl:variable>
 
@@ -150,6 +158,32 @@
     <xsl:call-template name="FillUserIdBlackList">
       <xsl:with-param name="desc" select="$full-cluster-path/../@description"/>
     </xsl:call-template>
+
+    <cfg:Coroutine>
+      <cfg:CoroPool
+        initial_size="{$coro-pool-initial-size}"
+        max_size="{$coro-pool-max-size}"
+        stack_size="{$coro-pool-stack-size}"/>
+      <cfg:EventThreadPool
+        number_threads="{$event-thread-pool-number-threads}"
+        name="{$event-thread-pool-name}"
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
+        defer_events="{$event-thread-pool-defer-events}"/>
+      <cfg:MainTaskProcessor
+        name="{$main-task-processor-name}"
+        number_threads="{$main-task-processor-number-threads}"
+        should_guess_cpu_limit="{$main-task-processor-should-guess-cpu-limit}"
+        overload_action="{$main-task-processor-overload-action}"
+        wait_queue_length_limit="{$main-task-processor-wait-queue-length-limit}"
+        wait_queue_time_limit="{$main-task-processor-wait-queue-time-limit}"
+        sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
+    </cfg:Coroutine>
+
+    <cfg:GrpcServer ip="{$grpc-server-ip}" port="{$def-user-bind-server-grpc-port}">
+      <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
+      <xsl:call-template name="GrpcServerChannelArgList"/>
+    </cfg:GrpcServer>
+
   </cfg:UserBindServerConfig>
 
 </xsl:template>

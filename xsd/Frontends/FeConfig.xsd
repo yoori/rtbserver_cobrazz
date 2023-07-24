@@ -137,6 +137,16 @@
         minOccurs="0"
         maxOccurs="1"/>
 
+      <xsd:element name="Coroutine"
+        type="CoroutineType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
+      <xsd:element name="GrpcClientPool"
+        type="GrpcClientPoolType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
     </xsd:sequence>
 
     <xsd:attribute name="request_domain" type="xsd:string" use="required"/>

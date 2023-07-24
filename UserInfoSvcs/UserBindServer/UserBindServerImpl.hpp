@@ -29,6 +29,7 @@
 
 #include "UserBindContainer.hpp"
 #include "BindRequestContainer.hpp"
+#include "UserBindServer_service.cobrazz.pb.hpp"
 
 namespace AdServer
 {
@@ -44,9 +45,21 @@ namespace UserInfoSvcs
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(NotReady, Exception);
+    DECLARE_EXCEPTION(ChunkNotFound, Exception);
 
-    typedef xsd::AdServer::Configuration::UserBindServerConfigType
-      UserBindServerConfig;
+    using UserBindServerConfig = xsd::AdServer::Configuration::UserBindServerConfigType;
+
+    using GetBindRequestPtr = std::unique_ptr<GetBindRequest>;
+    using GetBindResponsePtr = std::unique_ptr<GetBindResponse>;
+    using AddBindRequestPtr = std::unique_ptr<AddBindRequest>;
+    using AddBindResponsePtr = std::unique_ptr<AddBindResponse>;
+    using GetUserIdRequestPtr = std::unique_ptr<GetUserIdRequest>;
+    using GetUserIdResponsePtr = std::unique_ptr<GetUserIdResponse>;
+    using AddUserIdRequestPtr = std::unique_ptr<AddUserIdRequest>;
+    using AddUserIdResponsePtr = std::unique_ptr<AddUserIdResponse>;
+    using GetSourceRequestPtr = std::unique_ptr<GetSourceRequest>;
+    using GetSourceResponsePtr = std::unique_ptr<GetSourceResponse>;
 
   public:
     UserBindServerImpl(
@@ -60,8 +73,10 @@ namespace UserInfoSvcs
     get_bind_request(
       const char* id,
       const CORBACommons::TimestampInfo& timestamp)
-      /*throw(AdServer::UserInfoSvcs::UserBindServer::NotReady,
-        AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/;
+      /*throw(NotReady, ChunkNotFound)*/;
+
+    GetBindResponsePtr
+    get_bind_request(GetBindRequestPtr&& get_bind_request);
 
     virtual
     void
@@ -72,6 +87,9 @@ namespace UserInfoSvcs
       /*throw(AdServer::UserInfoSvcs::UserBindServer::NotReady,
         AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/;
 
+    AddBindResponsePtr
+    add_bind_request(AddBindRequestPtr&& request);
+
     virtual
     AdServer::UserInfoSvcs::UserBindMapper::GetUserResponseInfo*
     get_user_id(
@@ -79,6 +97,9 @@ namespace UserInfoSvcs
         request_info)
       /*throw(AdServer::UserInfoSvcs::UserBindServer::NotReady,
         AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/;
+
+    GetUserIdResponsePtr
+    get_user_id(GetUserIdRequestPtr&& request);
 
     virtual
     AdServer::UserInfoSvcs::UserBindMapper::AddUserResponseInfo*
@@ -88,10 +109,16 @@ namespace UserInfoSvcs
       /*throw(AdServer::UserInfoSvcs::UserBindServer::NotReady,
         AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/;
 
+    AddUserIdResponsePtr
+    add_user_id(AddUserIdRequestPtr&& request);
+
     virtual
     AdServer::UserInfoSvcs::UserBindServer::Source*
     get_source()
       /*throw(AdServer::UserInfoSvcs::UserBindServer::NotReady)*/;
+
+    GetSourceResponsePtr
+    get_source(GetSourceRequestPtr&& request);
 
     Logging::Logger*
     logger() noexcept;
