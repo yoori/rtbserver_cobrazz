@@ -25,6 +25,9 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include <xsd/Frontends/FeConfig.hpp>
 
 #include "ActionFrontendStat.hpp"
@@ -45,7 +48,12 @@ namespace Action
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+  private:
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     typedef ReferenceCounting::SmartPtr<Frontend> Frontend_var;
@@ -229,6 +237,7 @@ namespace Action
       channel_servers_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     CookieManagerPtr cookie_manager_;
+    ManagerCoro_var manager_coro_;
 
     IPMapPtr ip_map_;
     FileCachePtr track_pixel_;

@@ -148,6 +148,8 @@ namespace UserInfoSvcs
         it != user_bind_server_hosts.end(); ++it)
     {
       UserBindServerRef user_bind_server_host;
+      user_bind_server_host.grpc_port = it->grpc_port();
+
       CORBACommons::CorbaObjectRef corba_object_ref;
 
       try
@@ -615,6 +617,9 @@ namespace UserInfoSvcs
           user_bind_server_ref.chunks.begin(),
           user_bind_server_ref.chunks.end(),
           user_bind_server_descr.chunk_ids);
+
+        user_bind_server_descr.host << user_bind_server_ref.host_name;
+        user_bind_server_descr.grpc_port = user_bind_server_ref.grpc_port;
       }
     }
     catch(const eh::Exception& ex)

@@ -36,6 +36,9 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include "GroupLogger.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
@@ -67,6 +70,11 @@ namespace Bidding
     friend class OpenRtbBidRequestTask;
     friend class GoogleBidRequestTask;
     friend class AppNexusBidRequestTask;
+
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
 
   public:
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -403,6 +411,8 @@ namespace Bidding
     Generics::TaskRunner_var control_task_runner_;
     PlannerPool_var planner_pool_;
     StatHolder_var stats_;
+
+    ManagerCoro_var manager_coro_;
 
     mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;
     ExtConfig_var ext_config_;

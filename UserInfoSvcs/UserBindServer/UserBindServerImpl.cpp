@@ -5,6 +5,7 @@
 #include <PrivacyFilter/Filter.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/FreqCapManip.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
@@ -24,10 +25,32 @@ namespace AdServer
 {
 namespace UserInfoSvcs
 {
+
   namespace
   {
     const Generics::Time RELOAD_PERIOD(60);
-  }
+
+    template<class Response>
+    auto create_grpc_response(const std::uint32_t id_request_grpc)
+    {
+      auto response = std::make_unique<Response>();
+      response->set_id_request_grpc(id_request_grpc);
+      return response;
+    }
+
+    template<class Response>
+    auto create_grpc_error_response(
+      const Error_Type error_type,
+      const char* detail,
+      const std::uint32_t id_request_grpc)
+    {
+      auto response = create_grpc_response<Response>(id_request_grpc);
+      auto* error = response->mutable_error();
+      error->set_type(error_type);
+      error->set_description(detail);
+      return response;
+    }
+  } // namespace
 
   // UserBindServerImpl::ClearUserBindExpiredTask
   UserBindServerImpl::ClearUserBindExpiredTask::ClearUserBindExpiredTask(
@@ -356,6 +379,149 @@ namespace UserInfoSvcs
     return 0;
   }
 
+  UserBindServerImpl::GetUserIdResponsePtr
+  UserBindServerImpl::get_user_id(GetUserIdRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      UserBindProcessorHolder::Accessor user_bind_accessor =
+        user_bind_container_->get_accessor();
+
+      if(!user_bind_accessor.get())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "accessor not ready";
+        throw NotReady(stream);
+      }
+
+      const auto& id = request->id();
+      const String::SubString external_id(
+        id.data(),
+        id.size());
+      const Commons::UserId current_user_id = GrpcAlgs::unpack_user_id(
+        request->current_user_id());
+      const Generics::Time current_time = GrpcAlgs::unpack_time(
+        request->timestamp());
+      const auto silent = request->silent();
+      const Generics::Time create_time = GrpcAlgs::unpack_time(
+        request->create_timestamp());
+      const auto for_set_cookie =  request->for_set_cookie();
+
+      UserBindContainer::UserInfo user_info =
+        user_bind_accessor->get_user_id(
+          external_id,
+          current_user_id,
+          current_time,
+          silent,
+          create_time,
+          for_set_cookie);
+
+      auto response = create_grpc_response<GetUserIdResponse>(
+        id_request_grpc);
+      auto* response_info = response->mutable_info();
+
+      if(!user_info.user_id.is_null() ||
+         !request->generate_user_id() ||
+         user_info.invalid_operation ||
+         user_info.user_found)
+      {
+        if (user_id_black_list_.is_blacklisted(user_info.user_id))
+        {
+          // generate new user id
+          AdServer::Commons::UserId new_user_id =
+            AdServer::Commons::UserId::create_random_based();
+
+          user_info = user_bind_accessor->add_user_id(
+            external_id,
+            new_user_id,
+            current_time,
+            true, // rewrite user_id
+            false // ignore_bad_event
+          );
+
+          response_info->set_user_id(new_user_id.to_string());
+          response_info->set_created(true);
+          response_info->set_min_age_reached(true);
+        }
+        else
+        {
+          response_info->set_user_id(user_info.user_id.to_string());
+          response_info->set_created(false);
+          response_info->set_min_age_reached(user_info.min_age_reached);
+        }
+
+        response_info->set_invalid_operation(
+          user_info.invalid_operation);
+        response_info->set_user_found(user_info.user_found);
+
+        return response;
+      }
+
+      // generate new user id
+      AdServer::Commons::UserId new_user_id =
+        AdServer::Commons::UserId::create_random_based();
+      user_info = user_bind_accessor->add_user_id(
+        external_id,
+        new_user_id,
+        current_time,
+        false, // don't change if exists
+        false // ignore_bad_event
+      );
+
+      response_info->set_min_age_reached(true);
+      response_info->set_user_found(user_info.user_found);
+
+      if(!user_info.user_found)
+      {
+        response_info->set_user_id(new_user_id.to_string());
+        response_info->set_invalid_operation(user_info.invalid_operation);
+        response_info->set_created(true);
+      }
+      else
+      {
+        // other thread already created user ...
+        response_info->set_user_id(user_info.user_id.to_string());
+        response_info->set_created(false);
+      }
+
+      return response;
+    }
+    catch (const NotReady& exc)
+    {
+      auto response = create_grpc_error_response<GetUserIdResponse>(
+        Error_Type::Error_Type_NotReady,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserBindProcessor::ChunkNotFound& exc)
+    {
+      auto response = create_grpc_error_response<GetUserIdResponse>(
+        Error_Type::Error_Type_ChunkNotFound,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      auto response = create_grpc_error_response<GetUserIdResponse>(
+        Error_Type::Error_Type_Implementation,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      auto response = create_grpc_error_response<GetUserIdResponse>(
+        Error_Type::Error_Type_Implementation,
+        "Unknown error",
+        id_request_grpc);
+      return response;
+    }
+  }
+
   AdServer::UserInfoSvcs::UserBindMapper::AddUserResponseInfo*
   UserBindServerImpl::add_user_id(
     const AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo&
@@ -411,6 +577,85 @@ namespace UserInfoSvcs
     return 0;
   }
 
+  UserBindServerImpl::AddUserIdResponsePtr
+  UserBindServerImpl::add_user_id(AddUserIdRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      UserBindProcessorHolder::Accessor user_bind_accessor =
+        user_bind_container_->get_accessor();
+
+      if(!user_bind_accessor.get())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "accessor not ready";
+        throw NotReady(stream);
+      }
+
+      const auto& id = request->id();
+      const String::SubString external_id(
+        id.data(),
+        id.size());
+      const auto user_id =
+        GrpcAlgs::unpack_user_id(request->user_id());
+      const auto now =
+        GrpcAlgs::unpack_time(request->timestamp());
+
+      UserBindContainer::UserInfo user_info =
+        user_bind_accessor->add_user_id(
+          external_id,
+          user_id,
+          now,
+          true, // resave if exists
+          false // ignore_bad_event
+        );
+
+      auto response = create_grpc_response<AddUserIdResponse>(
+        id_request_grpc);
+      auto* response_info = response->mutable_info();
+      response_info->set_merge_user_id(
+        user_info.user_id.to_string());
+      response_info->set_invalid_operation(
+        user_info.invalid_operation);
+
+      return response;
+    }
+    catch (const NotReady& exc)
+    {
+      auto response = create_grpc_error_response<AddUserIdResponse>(
+        Error_Type::Error_Type_NotReady,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserBindProcessor::ChunkNotFound& exc)
+    {
+      auto response = create_grpc_error_response<AddUserIdResponse>(
+        Error_Type::Error_Type_ChunkNotFound,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      auto response = create_grpc_error_response<AddUserIdResponse>(
+        Error_Type::Error_Type_Implementation,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      auto response = create_grpc_error_response<AddUserIdResponse>(
+        Error_Type::Error_Type_Implementation,
+        "Unknown error",
+        id_request_grpc);
+      return response;
+    }
+  }
+
   AdServer::UserInfoSvcs::UserBindMapper::BindRequestInfo*
   UserBindServerImpl::get_bind_request(
     const char* id,
@@ -464,6 +709,81 @@ namespace UserInfoSvcs
     return 0;
   }
 
+  UserBindServerImpl::GetBindResponsePtr
+  UserBindServerImpl::get_bind_request(
+    GetBindRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      BindRequestProcessorHolder::Accessor bind_request_accessor =
+        bind_request_container_->get_accessor();
+
+      if(!bind_request_accessor.get())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "accessor not ready";
+        throw NotReady(stream);
+      }
+
+      const Generics::Time current_time = GrpcAlgs::unpack_time(
+        request->timestamp());
+      const auto& request_id = request->request_id();
+      String::SubString external_id(
+        request_id.data(),
+        request_id.size());
+
+      BindRequestProcessor::BindRequest bind_request =
+        bind_request_accessor->get_bind_request(
+          external_id,
+          current_time);
+
+      auto response = create_grpc_response<GetBindResponse>(
+        request->id_request_grpc());
+      auto* response_info = response->mutable_info();
+      auto* bind_user_ids = response_info->mutable_bind_user_ids();
+      for (auto& id : bind_request.bind_user_ids)
+      {
+        bind_user_ids->Add(std::move(id));
+      }
+
+      return response;
+    }
+    catch (const NotReady& exc)
+    {
+      auto response = create_grpc_error_response<GetBindResponse>(
+        Error_Type::Error_Type_NotReady,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserBindProcessor::ChunkNotFound& exc)
+    {
+      auto response = create_grpc_error_response<GetBindResponse>(
+        Error_Type::Error_Type_ChunkNotFound,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      auto response = create_grpc_error_response<GetBindResponse>(
+        Error_Type::Error_Type_Implementation,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      auto response = create_grpc_error_response<GetBindResponse>(
+        Error_Type::Error_Type_Implementation,
+        "Unknown error",
+        id_request_grpc);
+      return response;
+    }
+  }
+
   void
   UserBindServerImpl::add_bind_request(
     const char* id,
@@ -507,6 +827,81 @@ namespace UserInfoSvcs
     }
   }
 
+   UserBindServerImpl::AddBindResponsePtr
+   UserBindServerImpl::add_bind_request(
+    AddBindRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      BindRequestProcessorHolder::Accessor bind_request_accessor =
+        bind_request_container_->get_accessor();
+
+      if(!bind_request_accessor.get())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "accessor not ready";
+        throw NotReady(stream);
+      }
+
+      const auto& bind_user_ids = request->bind_user_ids();
+
+      BindRequestContainer::BindRequest bind_request;
+      bind_request.bind_user_ids.reserve(bind_user_ids.size());
+      for (const auto& bind_user_id : bind_user_ids)
+      {
+        bind_request.bind_user_ids.emplace_back(bind_user_id);
+      }
+
+      const auto& request_id = request->request_id();
+      const auto now = GrpcAlgs::unpack_time(request->timestamp());
+
+      bind_request_accessor->add_bind_request(
+        String::SubString(request_id.data(), request_id.size()),
+        bind_request,
+        now);
+
+      auto response = create_grpc_response<AddBindResponse>(
+        id_request_grpc);
+      response->mutable_info();
+
+      return response;
+    }
+    catch (const NotReady& exc)
+    {
+      auto response = create_grpc_error_response<AddBindResponse>(
+        Error_Type::Error_Type_NotReady,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserBindProcessor::ChunkNotFound& exc)
+    {
+      auto response = create_grpc_error_response<AddBindResponse>(
+        Error_Type::Error_Type_ChunkNotFound,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      auto response = create_grpc_error_response<AddBindResponse>(
+        Error_Type::Error_Type_Implementation,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      auto response = create_grpc_error_response<AddBindResponse>(
+        Error_Type::Error_Type_Implementation,
+        "Unknown error",
+        id_request_grpc);
+      return response;
+    }
+  }
+
   AdServer::UserInfoSvcs::UserBindServer::Source*
   UserBindServerImpl::get_source()
     /*throw(AdServer::UserInfoSvcs::UserBindServer::NotReady)*/
@@ -525,6 +920,61 @@ namespace UserInfoSvcs
     res->chunks_number = user_bind_server_config_.Storage().common_chunks_number();
 
     return res._retn();
+  }
+
+  UserBindServerImpl::GetSourceResponsePtr
+  UserBindServerImpl::get_source(GetSourceRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      auto response = create_grpc_response<GetSourceResponse>(
+        id_request_grpc);
+      auto* response_info = response->mutable_info();
+      auto* chunks = response_info->mutable_chunks();
+
+      for (const auto &chunk: chunks_)
+      {
+        chunks->Add(chunk.first);
+      }
+      const auto chunks_number =
+        user_bind_server_config_.Storage().common_chunks_number();
+      response_info->set_chunks_number(chunks_number);
+
+      return response;
+    }
+    catch (const NotReady& exc)
+    {
+      auto response = create_grpc_error_response<GetSourceResponse>(
+        Error_Type::Error_Type_NotReady,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserBindProcessor::ChunkNotFound& exc)
+    {
+      auto response = create_grpc_error_response<GetSourceResponse>(
+        Error_Type::Error_Type_ChunkNotFound,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      auto response = create_grpc_error_response<GetSourceResponse>(
+        Error_Type::Error_Type_Implementation,
+        exc.what(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      auto response = create_grpc_error_response<GetSourceResponse>(
+        Error_Type::Error_Type_Implementation,
+        "Unknown error",
+        id_request_grpc);
+      return response;
+    }
   }
 
   void
