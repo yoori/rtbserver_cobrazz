@@ -34,6 +34,7 @@ namespace
   const unsigned long UPDATE_FRAUD_RULES_PERIOD = 60;
 
   const char CREATIVE_STAT_OUT_DIR[] = "CreativeStat";
+  const char REQUEST_STATS_HOURLY_EXT_STAT_OUT_DIR[] = "RequestStatsHourlyExtStat";
   const char USER_PROPERTIES_OUT_DIR[] = "UserProperties";
   const char CHANNEL_PERFORMANCE_OUT_DIR[] = "ChannelPerformance";
   const char SITE_CHANNEL_STAT_OUT_DIR[] = "SiteChannelStat";
@@ -344,6 +345,9 @@ namespace RequestInfoSvcs{
           read_flush_policy(
             lp_config.CreativeStat(),
             (log_root + CREATIVE_STAT_OUT_DIR).c_str()),
+          read_flush_policy(
+            lp_config.RequestStatsHourlyExtStat(),
+            (log_root + REQUEST_STATS_HOURLY_EXT_STAT_OUT_DIR).c_str()),
           read_flush_policy(
             lp_config.UserProperties(),
             (log_root + USER_PROPERTIES_OUT_DIR).c_str()),
@@ -1741,3 +1745,4 @@ namespace RequestInfoSvcs{
   }
 } /* RequestInfoSvcs */
 } /* AdServer */
+
