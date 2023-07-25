@@ -43,6 +43,7 @@ namespace AdServer
         Logging::Logger* logger,
         Generics::ActiveObjectCallback* callback,
         const LogProcessing::LogFlushTraits& creative_stat_flush,
+        const LogProcessing::LogFlushTraits& request_stats_hourly_ext_stat_flush,
         const LogProcessing::LogFlushTraits& user_properties_flush,
         const LogProcessing::LogFlushTraits& channel_performance_flush,
         const LogProcessing::LogFlushTraits& expression_performance_flush,
@@ -233,3 +234,4 @@ namespace AdServer
 }
 
 #endif /*REQUESTINFOSVCS_REQUESTOUTLOGGER_HPP*/
+

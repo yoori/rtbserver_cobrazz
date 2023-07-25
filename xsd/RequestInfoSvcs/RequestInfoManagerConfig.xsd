@@ -237,6 +237,7 @@
   <xsd:complexType name="OutLogsType">
     <xsd:sequence>
       <xsd:element name="CreativeStat" type="LogFlushPolicyType"/>
+      <xsd:element name="RequestStatsHourlyExtStat" type="LogFlushPolicyType"/>
       <xsd:element name="UserProperties" type="LogFlushPolicyType"/>
       <xsd:element name="ChannelPerformance" type="LogFlushPolicyType"/>
       <xsd:element name="SiteChannelStat" type="LogFlushPolicyType"/>
@@ -308,3 +309,4 @@
     <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 </xsd:schema>
+
