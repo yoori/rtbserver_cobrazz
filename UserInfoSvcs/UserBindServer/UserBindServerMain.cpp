@@ -23,7 +23,9 @@ namespace
 
 UserBindServerApp_::UserBindServerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "UserBindServerApp_", ASPECT)
+      "UserBindServerApp_", ASPECT),
+       composite_metrics_provider_(new Generics::CompositeMetricsProvider())
+
 {}
 
 void
