@@ -11,6 +11,9 @@
 #include <xsd/UserInfoSvcs/UserBindServerConfig.hpp>
 
 #include "UserBindServerImpl.hpp"
+#include <UServerUtils/MetricsHTTPProvider.hpp>
+#include <Generics/CompositeMetricsProvider.hpp>
+
 
 class UserBindServerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
@@ -61,6 +64,8 @@ private:
   typedef Sync::PosixGuard ShutdownGuard;
 
   ShutdownMutex shutdown_lock_;
+  Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+
 };
 
 typedef ReferenceCounting::SmartPtr<UserBindServerApp_>
