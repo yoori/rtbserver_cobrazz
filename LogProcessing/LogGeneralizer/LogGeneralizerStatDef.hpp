@@ -177,6 +177,118 @@ private:
   long actions_;
 };
 
+class RequestStatsHourlyExtStatValueDef
+{
+public:
+  RequestStatsHourlyExtStatValueDef()
+  :
+    requests_(),
+    imps_(),
+    clicks_(),
+    actions_(),
+    undup_imps_(),
+    undup_clicks_(),
+    ym_confirmed_clicks_(),
+    ym_bounced_clicks_(),
+    ym_robots_clicks_()
+  {
+  }
+
+  RequestStatsHourlyExtStatValueDef(
+    long requests,
+    long imps,
+    long clicks,
+    long actions,
+    long undup_imps,
+    long undup_clicks,
+    long ym_confirmed_clicks,
+    long ym_bounced_clicks,
+    long ym_robots_clicks
+  )
+  :
+    requests_(requests),
+    imps_(imps),
+    clicks_(clicks),
+    actions_(actions),
+    undup_imps_(undup_imps),
+    undup_clicks_(undup_clicks),
+    ym_confirmed_clicks_(ym_confirmed_clicks),
+    ym_bounced_clicks_(ym_bounced_clicks),
+    ym_robots_clicks_(ym_robots_clicks)
+  {
+  }
+
+  RequestStatsHourlyExtStatValueDef& operator+=(const RequestStatsHourlyExtStatValueDef &rhs)
+  {
+    requests_ += rhs.requests_;
+    imps_ += rhs.imps_;
+    clicks_ += rhs.clicks_;
+    actions_ += rhs.actions_;
+    undup_imps_ += rhs.undup_imps_;
+    undup_clicks_ += rhs.undup_clicks_;
+    ym_confirmed_clicks_ += rhs.ym_confirmed_clicks_;
+    ym_bounced_clicks_ += rhs.ym_bounced_clicks_;
+    ym_robots_clicks_ += rhs.ym_robots_clicks_;
+    return *this;
+  }
+
+  long requests() const
+  {
+    return requests_;
+  }
+
+  long imps() const
+  {
+    return imps_;
+  }
+
+  long clicks() const
+  {
+    return clicks_;
+  }
+
+  long actions() const
+  {
+    return actions_;
+  }
+
+  long undup_imps() const
+  {
+      return undup_imps_;
+  }
+
+  long undup_clicks() const
+  {
+      return undup_clicks_;
+  }
+
+  long ym_confirmed_clicks() const
+  {
+      return ym_confirmed_clicks_;
+  }
+
+  long ym_bounced_clicks() const
+  {
+      return ym_bounced_clicks_;
+  }
+
+  long ym_robots_clicks() const
+  {
+      return ym_robots_clicks_;
+  }
+
+private:
+  long requests_; // same as unverified_imps in RequestStatsHourlyExtStat
+  long imps_;
+  long clicks_;
+  long actions_;
+  long undup_imps_;
+  long undup_clicks_;
+  long ym_confirmed_clicks_;
+  long ym_bounced_clicks_;
+  long ym_robots_clicks_;
+};
+
 class CampaignTagStatValueDef
 {
 public:
@@ -263,6 +375,10 @@ struct CampaignStatValueDef
   typedef std::tr1::unordered_map<unsigned long, CreativeStatValueDef>
     CreativeStatMap;
 
+  // cc_id -> RequestStatsHourlyExtStatValueDef
+  typedef std::tr1::unordered_map<unsigned long, RequestStatsHourlyExtStatValueDef>
+    RequestStatsHourlyExtStatMap;
+
   // publisher_account_id -> DecimalT
   typedef std::tr1::unordered_map<unsigned long, DecimalT> PublisherAmountMap;
 
@@ -284,6 +400,11 @@ struct CampaignStatValueDef
       it != val.creative_stats.end(); ++it)
     {
       creative_stats[it->first] += it->second;
+    }
+    for (RequestStatsHourlyExtStatMap::const_iterator it = val.request_stats_hourly_ext_stats.begin();
+      it != val.request_stats_hourly_ext_stats.end(); ++it)
+    {
+      request_stats_hourly_ext_stats[it->first] += it->second;
     }
     for (PublisherAmountMap::const_iterator it = val.publisher_amounts.begin();
       it != val.publisher_amounts.end(); ++it)
@@ -308,6 +429,7 @@ struct CampaignStatValueDef
   DecimalT adv_comm_amount;
   DecimalT adv_payable_comm_amount;
   CreativeStatMap creative_stats;
+  RequestStatsHourlyExtStatMap request_stats_hourly_ext_stats;
   PublisherAmountMap publisher_amounts;
   TagAmountMap tag_amounts;
   CtrResetStatMap ctr_reset_stats;
@@ -358,4 +480,5 @@ typedef ReferenceCounting::SmartPtr<LogGeneralizerStatMapBundle>
 } // namespace AdServer
 
 #endif /* AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_STAT_DEF_HPP */
+
 
