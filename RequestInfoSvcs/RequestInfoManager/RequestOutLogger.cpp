@@ -5,6 +5,7 @@
 
 #include <LogCommons/UserProperties.hpp>
 #include <LogCommons/CreativeStat.hpp>
+#include <LogCommons/RequestStatsHourlyExtStat.hpp>
 #include <LogCommons/ChannelPerformance.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
 #include <LogCommons/CcgKeywordStat.hpp>
@@ -35,6 +36,7 @@ namespace
 {
   const char USER_PROPERTIES_LOGGER[] = "UserPropertiesLogger";
   const char CREATIVE_STAT_LOGGER[] = "CreativeStatLogger";
+  const char REQUEST_STATS_HOURLY_EXT_STAT_LOGGER[] = "RequestStatsHourlyExtStatLogger";
   const char CHANNEL_PERFORMANCE_LOGGER[] = "ChannelPerformanceLogger";
   const char EXPRESSION_PERFORMANCE_LOGGER[] = "ExpressionPerformanceLogger";
   const char CCG_KEYWORD_STAT_LOGGER[] = "CCGKeywordStatLogger";
@@ -702,6 +704,231 @@ namespace RequestInfoSvcs
 
   protected:
     virtual ~CreativeStatLogger() noexcept {}
+
+  private:
+    const CollectorT::DataT::DataT STAT_REQUEST_ONE_;
+    const CollectorT::DataT::DataT STAT_REQUEST_NEGATIVE_ONE_;
+  };
+
+  /**
+   * RequestStatsHourlyExtStatLogger
+   */
+  class RequestStatsHourlyExtStatLogger:
+    public RequestLoggerAdapter<
+      AdServer::LogProcessing::RequestStatsHourlyExtStatTraits>
+  {
+  public:
+    RequestStatsHourlyExtStatLogger(const LogProcessing::LogFlushTraits& flush_traits)
+      /*throw(eh::Exception)*/
+      : RequestLoggerAdapter<
+          AdServer::LogProcessing::RequestStatsHourlyExtStatTraits>(flush_traits),
+        STAT_REQUEST_ONE_(
+          1, 0, 0, 0,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          0, 0, 0, 0, 0,
+          CollectorT::DataT::DataT::FixedNum::ZERO),
+        STAT_REQUEST_NEGATIVE_ONE_(
+          -1, 0, 0, 0,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          CollectorT::DataT::DataT::FixedNum::ZERO,
+          0, 0, 0, 0, 0,
+          CollectorT::DataT::DataT::FixedNum::ZERO)
+    {};
+
+    virtual const char* name() noexcept
+    {
+      return REQUEST_STATS_HOURLY_EXT_STAT_LOGGER;
+    }
+
+    virtual void
+    process_request_impl(
+      const RequestInfo& ri,
+      const ProcessingState& processing_state)
+      /*throw(eh::Exception)*/
+    {
+      if(processing_state.state == RequestInfo::RS_NORMAL ||
+        processing_state.state == RequestInfo::RS_RESAVE)
+      {
+        log_record_(
+          ri,
+          STAT_REQUEST_ONE_);
+      }
+      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+        processing_state.state == RequestInfo::RS_MOVED ||
+        processing_state.state == RequestInfo::RS_ROLLBACK)
+      {
+        log_record_(
+          ri,
+          STAT_REQUEST_NEGATIVE_ONE_);
+      }
+    }
+
+    virtual void
+    process_impression_impl(
+      const RequestInfo& ri,
+      const ProcessingState& processing_state)
+      /*throw(eh::Exception)*/
+    {
+      if(processing_state.state == RequestInfo::RS_NORMAL ||
+        processing_state.state == RequestInfo::RS_RESAVE)
+      {
+        log_record_(
+          ri,
+          CollectorT::DataT::DataT(
+            0, 1, 0, 0,
+            ri.adv_revenue.impression,
+            ri.pub_revenue.impression,
+            ri.isp_revenue.impression,
+            ri.adv_comm_revenue.impression,
+            ri.pub_comm_revenue.impression,
+            ri.adv_payable_comm_amount.impression,
+            ri.pub_revenue.convert_impression(ri.adv_revenue.currency_rate),
+            ri.isp_revenue.convert_impression(ri.adv_revenue.currency_rate),
+            // TODO
+            0, 0, 0, 0, 0, CollectorT::DataT::DataT::FixedNum::ZERO));
+      }
+      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+        processing_state.state == RequestInfo::RS_MOVED ||
+        processing_state.state == RequestInfo::RS_ROLLBACK)
+      {
+        log_record_(
+          ri,
+          CollectorT::DataT::DataT(
+            0, -1, 0, 0,
+            RevenueDecimal(ri.adv_revenue.impression).negate(),
+            RevenueDecimal(ri.pub_revenue.impression).negate(),
+            RevenueDecimal(ri.isp_revenue.impression).negate(),
+            RevenueDecimal(ri.adv_comm_revenue.impression).negate(),
+            RevenueDecimal(ri.pub_comm_revenue.impression).negate(),
+            RevenueDecimal(ri.adv_payable_comm_amount.impression).negate(),
+            RevenueDecimal(ri.pub_revenue.convert_impression(ri.adv_revenue.currency_rate)).negate(),
+            RevenueDecimal(ri.isp_revenue.convert_impression(ri.adv_revenue.currency_rate)).negate(),
+            // TODO
+            0, 0, 0, 0, 0, CollectorT::DataT::DataT::FixedNum::ZERO));
+      }
+    }
+
+    virtual void
+    process_click_impl(
+      const RequestInfo& ri,
+      const ProcessingState& processing_state)
+      /*throw(eh::Exception)*/
+    {
+      if(processing_state.state == RequestInfo::RS_NORMAL ||
+        processing_state.state == RequestInfo::RS_RESAVE)
+      {
+        log_record_(
+          ri,
+          CollectorT::DataT::DataT(
+            0, 0, 1, 0,
+            ri.adv_revenue.click,
+            ri.pub_revenue.click,
+            ri.isp_revenue.click,
+            ri.adv_comm_revenue.click,
+            ri.pub_comm_revenue.click,
+            ri.adv_payable_comm_amount.click,
+            ri.pub_revenue.convert_click(ri.adv_revenue.currency_rate),
+            ri.isp_revenue.convert_click(ri.adv_revenue.currency_rate),
+            // TODO
+            0, 0, 0, 0, 0, CollectorT::DataT::DataT::FixedNum::ZERO));
+      }
+      else if(processing_state.state == RequestInfo::RS_FRAUD ||
+        processing_state.state == RequestInfo::RS_MOVED ||
+        processing_state.state == RequestInfo::RS_ROLLBACK)
+      {
+        log_record_(
+          ri,
+          CollectorT::DataT::DataT(
+            0, 0, -1, 0,
+            RevenueDecimal(ri.adv_revenue.click).negate(),
+            RevenueDecimal(ri.pub_revenue.click).negate(),
+            RevenueDecimal(ri.isp_revenue.click).negate(),
+            RevenueDecimal(ri.adv_comm_revenue.click).negate(),
+            RevenueDecimal(ri.pub_comm_revenue.click).negate(),
+            RevenueDecimal(ri.adv_payable_comm_amount.click).negate(),
+            RevenueDecimal(ri.pub_revenue.convert_click(ri.adv_revenue.currency_rate)).negate(),
+            RevenueDecimal(ri.isp_revenue.convert_click(ri.adv_revenue.currency_rate)).negate(),
+            // TODO
+            0, 0, 0, 0, 0, CollectorT::DataT::DataT::FixedNum::ZERO));
+      }
+    }
+
+    virtual void
+    process_action_impl(const RequestInfo& ri)
+      /*throw(eh::Exception)*/
+    {
+      log_record_(
+        ri,
+        CollectorT::DataT::DataT(
+          0, 0, 0, 1,
+          ri.adv_revenue.action,
+          ri.pub_revenue.action,
+          ri.isp_revenue.action,
+          ri.adv_comm_revenue.action,
+          ri.pub_comm_revenue.action,
+          ri.adv_payable_comm_amount.action,
+          ri.pub_revenue.convert_action(ri.adv_revenue.currency_rate),
+          ri.isp_revenue.convert_action(ri.adv_revenue.currency_rate),
+          // TODO
+          0, 0, 0, 0, 0, CollectorT::DataT::DataT::FixedNum::ZERO));
+    }
+
+    void log_record_(
+      const RequestInfo& ri,
+      const CollectorT::DataT::DataT& data)
+    {
+      CollectorT::KeyT key(ri.time, ri.adv_time);
+      CollectorT::DataT add_data;
+      CollectorT::DataT::KeyT inner_key(
+        ri.colo_id,
+        ri.publisher_account_id,
+        ri.tag_id,
+        ri.size_id ? LogProcessing::OptionalUlong(ri.size_id) : LogProcessing::OptionalUlong(),
+        ri.country,
+        ri.adv_account_id,
+        ri.campaign_id,
+        ri.ccg_id,
+        ri.cc_id,
+        ri.adv_revenue.rate_id,
+        ri.isp_revenue.rate_id,
+        ri.pub_revenue.rate_id,
+        ri.currency_exchange_id,
+        ri.tag_delivery_threshold,
+        ri.num_shown,
+        ri.position,
+        ri.test_request,
+        ri.fraud == RequestInfo::RS_FRAUD,
+        ri.walled_garden,
+        ri.user_status,
+        ri.geo_channel_id ?
+          LogProcessing::OptionalValue<unsigned long>(ri.geo_channel_id) :
+          LogProcessing::OptionalValue<unsigned long>(),
+        ri.device_channel_id ?
+          LogProcessing::OptionalValue<unsigned long>(ri.device_channel_id) :
+          LogProcessing::OptionalValue<unsigned long>(),
+        ri.ctr_reset_id,
+        ri.hid_profile,
+        ri.viewability);
+
+      add_data.add(inner_key, data);
+      add_record(key, add_data);
+    }
+
+  protected:
+    virtual ~RequestStatsHourlyExtStatLogger() noexcept {}
 
   private:
     const CollectorT::DataT::DataT STAT_REQUEST_ONE_;
@@ -2934,6 +3161,7 @@ namespace RequestInfoSvcs
     Logging::Logger* logger,
     Generics::ActiveObjectCallback* callback,
     const LogProcessing::LogFlushTraits& creative_stat_flush,
+    const LogProcessing::LogFlushTraits& request_stats_hourly_ext_stat_flush,
     const LogProcessing::LogFlushTraits& user_properties_flush,
     const LogProcessing::LogFlushTraits& channel_performance_flush,
     const LogProcessing::LogFlushTraits& expression_performance_flush,
@@ -2968,6 +3196,9 @@ namespace RequestInfoSvcs
 
     add_request_logger_(RequestLoggerBase_var(
       new CreativeStatLogger(creative_stat_flush)).in());
+
+    add_request_logger_(RequestLoggerBase_var(
+      new RequestStatsHourlyExtStatLogger(request_stats_hourly_ext_stat_flush)).in());
 
     add_request_logger_(RequestLoggerBase_var(
       new ChannelPerformanceLogger(channel_performance_flush)).in());
@@ -3362,3 +3593,4 @@ namespace RequestInfoSvcs
   }
 }
 }
+

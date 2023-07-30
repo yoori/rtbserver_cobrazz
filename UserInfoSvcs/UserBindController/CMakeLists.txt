@@ -11,6 +11,7 @@ add_library(UserBindControllerStubs SHARED
   GrpcUserBindOperationDistributor.cpp
   UserBindOperationDistributor.cpp
 )
+add_dependencies(UserBindControllerStubs UserBindServerProto)
 
 target_link_libraries(UserBindControllerStubs
   CORBACommons
