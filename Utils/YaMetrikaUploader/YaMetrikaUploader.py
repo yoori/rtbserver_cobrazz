@@ -83,11 +83,12 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 
-class Application(Service):
-    ADV_ACTION_PATTERN = re.compile("[a-zA-Z0-9_-]{22}[.][.]/[a-zA-Z0-9_-]{22}[.][.]")
-    ACTION_REQUEST_ID_CHARS = string.ascii_lowercase + string.ascii_uppercase + string.digits + "_-"
-    UTM_SOURCE_FILTERS = ['genius', 'pml', 'pharmatic']
+ADV_ACTION_PATTERN = re.compile("[a-zA-Z0-9_-]{22}[.][.]/[a-zA-Z0-9_-]{22}[.][.]")
+ACTION_REQUEST_ID_CHARS = string.ascii_lowercase + string.ascii_uppercase + string.digits + "_-"
+UTM_SOURCES = ['genius', 'pml', 'pharmatic']
 
+
+class Application(Service):
     def __init__(self):
         super().__init__()
 
@@ -175,7 +176,7 @@ class Application(Service):
             log_fname_orig = f"YandexOrigPostClick.{ctx_post_click_orig.fname_seed}.csv"
             log_fname_prefix = f"YandexPostClick.{ctx_post_click.fname_seed}.24."
 
-            for utm_source in self.UTM_SOURCE_FILTERS:
+            for utm_source in UTM_SOURCES:
                 old_records = {}
                 self.cursor.execute(SQL_SELECT_SNAPSHOT, (ymref_id, utm_source, self.date_begin, self.date_end))
                 for time, utm_content, utm_term, key_ext, referer, visits, bounce, avg_time in self.cursor.fetchall():
@@ -191,7 +192,6 @@ class Application(Service):
                         token,
                         dimensions="ym:s:dateTime,ym:s:<attribution>UTMContent,ym:s:<attribution>UTMTerm,ym:s:regionArea,ym:s:regionCity,ym:s:referer",
                         metrics="ym:s:visits,ym:s:bounceRate,ym:s:avgVisitDurationSeconds",
-                        sort="-ym:s:visits",
                         utm_source=utm_source):
 
                     key = RequestKeyNonAggregated(
@@ -266,7 +266,7 @@ class Application(Service):
         process_new_record(key, data, *args)
 
     def process_new_record_non_aggregated(self, key, data, action_to_ccg, ctx_adv_act, adv_act_fname_prefix):
-        if action_to_ccg and self.ADV_ACTION_PATTERN.fullmatch(key.utm_term) is not None:
+        if action_to_ccg and ADV_ACTION_PATTERN.fullmatch(key.utm_term) is not None:
             user_id, request_id = key.utm_term.split("/")
             chunk_number = crc32(b64decode(user_id[:-2] + "==", b"-_")) % 24
             log = ctx_adv_act.files.get_line_writer(
@@ -276,7 +276,7 @@ class Application(Service):
                 log.write_line("AdvertiserAction\t3.6")
             t = key.time.strftime('%Y-%m-%d_%H:%M:%S')
             for action_id, ccg_ids in action_to_ccg.items():
-                action_request_id = "".join(secrets.choice(self.ACTION_REQUEST_ID_CHARS) for _ in range(22)) + ".."
+                action_request_id = "".join(secrets.choice(ACTION_REQUEST_ID_CHARS) for _ in range(22)) + ".."
                 log.write_line(f"{t}\t{user_id}\t@{request_id}\t@{action_id}\t-\t@{action_request_id}-@{ccg_ids}\t@{key.referer}\t-\t-\t0.0")
 
     def process_new_record_aggregated(self, key, data, ctx_post_click_orig, ctx_post_click, log_fname_orig, log_fname_prefix):
@@ -314,13 +314,12 @@ class Application(Service):
     def on_geo_ip(self, token, metrica_id):
         self.print_(0, f"GeoIP metrica_id={metrica_id}")
         with Context(self, out_dir=self.geo_ip_dir) as ctx_post_click:
-            for utm_source in self.UTM_SOURCE_FILTERS:
+            for utm_source in UTM_SOURCES:
                 for ym_row in self.__ym_api(
                         metrica_id,
                         token,
                         dimensions="ym:s:ipAddress,ym:s:regionArea,ym:s:regionCity",
                         metrics="ym:s:visits",
-                        sort="-ym:s:visits",
                         utm_source=utm_source):
 
                     ip_address = ym_row.get_dimension(0)
@@ -335,7 +334,7 @@ class Application(Service):
                         'INSERT INTO YandexOrigGeo(ip_address,region_area,region_city) VALUES',
                         [[ip_address, region_area, region_city]])
 
-    def __ym_api(self, metrica_id, token, dimensions, metrics, sort, utm_source):
+    def __ym_api(self, metrica_id, token, dimensions, metrics, utm_source):
         offset = 1
         while True:
             self.verify_running()
@@ -345,7 +344,6 @@ class Application(Service):
                 "dimensions": dimensions,
                 "date1": self.date1,
                 "date2": self.date2,
-                "sort": sort,
                 "accuracy": "full",
                 "filters": f"ym:s:<attribution>UTMSource=='{utm_source}'",
                 "offset": offset,
