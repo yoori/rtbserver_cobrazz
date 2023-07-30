@@ -1,3 +1,4 @@
+#ifdef KALL
 #include "RequestMetricsProvider.hpp"
 
 namespace AdServer
@@ -80,3 +81,4 @@ void RequestMetricsProvider::add_channel_server_request() noexcept
 
 } // namespace Bidding
 } // namespace AdServer
+#endif

@@ -28,6 +28,7 @@
       </xsd:documentation>
     </xsd:annotation>
 
+
     <xsd:sequence>
       <xsd:element name="CorbaConfig" type="CorbaConfigType">
         <xsd:annotation>
@@ -36,6 +37,8 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
 
       <xsd:element name="Logger" type="ErrorLoggerType">
         <xsd:annotation>
@@ -174,6 +177,11 @@
     <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="check_period" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="unprocessed_dir" type="xsd:string" use="required"/>
+  </xsd:complexType>
+ 
+ 
+  <xsd:complexType name="MonitoringType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:simpleType name="UserBindKeepModeType">

@@ -156,6 +156,21 @@ UserBindServerApp_::main(int& argc, char** argv)
 
     add_child_object(user_bind_server_impl_);
 
+
+      // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
+      // init metrics http provider
+      if(config().Monitoring().present())
+      {
+        UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
+          new UServerUtils::MetricsHTTPProvider(
+            composite_metrics_provider_,
+            config().Monitoring()->port(),
+            "/metrics");
+
+        add_child_object(metrics_http_provider);
+      }
+
+
     // Creating coroutine manager
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
