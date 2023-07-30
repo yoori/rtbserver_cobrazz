@@ -1,3 +1,5 @@
+#ifdef KALL
+
 #ifndef BIDDINGFRONTEND_REQUESTMETRICSPROVIDER_HPP
 #define BIDDINGFRONTEND_REQUESTMETRICSPROVIDER_HPP
 
@@ -64,3 +66,4 @@ using RequestMetricsProvider_var = ReferenceCounting::SmartPtr<RequestMetricsPro
 } // namespace AdServer
 
 #endif //BIDDINGFRONTEND_REQUESTMETRICSPROVIDER_HPP
+#endif
