@@ -140,15 +140,18 @@ namespace UserInfoSvcs
   UserBindServerImpl::UserBindServerImpl(
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
-    const UserBindServerConfig& user_bind_server_config)
-    /*throw(Exception)*/
+    const UserBindServerConfig& user_bind_server_config,
+    Generics::CompositeMetricsProvider_var composite_metrics_provider)
+        /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
       scheduler_(new Generics::Planner(callback_)),
       task_runner_(new Generics::TaskRunner(callback_, 2)),
       user_bind_server_config_(user_bind_server_config),
       user_bind_container_(new UserBindProcessorHolder()),
-      bind_request_container_(new BindRequestProcessorHolder())
+      bind_request_container_(new BindRequestProcessorHolder()),
+      composite_metrics_provider_(composite_metrics_provider)
+
   {
     static const char* FUN = "UserBindServerImpl::UserBindServerImpl()";
 

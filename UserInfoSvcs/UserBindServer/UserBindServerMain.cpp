@@ -152,7 +152,9 @@ UserBindServerApp_::main(int& argc, char** argv)
       new AdServer::UserInfoSvcs::UserBindServerImpl(
         callback(),
         logger(),
-        config());
+        config(),
+        composite_metrics_provider_
+        );
 
     add_child_object(user_bind_server_impl_);
 
