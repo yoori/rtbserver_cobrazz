@@ -179,7 +179,7 @@
         sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
     </cfg:Coroutine>
 
-    <cfg:GrpcServer ip="{$grpc-server-ip}" port="{$def-user-bind-server-grpc-port}">
+    <cfg:GrpcServer ip="{$grpc-server-ip}">
       <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
       <xsl:call-template name="GrpcServerChannelArgList"/>
     </cfg:GrpcServer>

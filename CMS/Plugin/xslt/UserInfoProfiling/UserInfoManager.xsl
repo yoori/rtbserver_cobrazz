@@ -15,6 +15,7 @@
 <xsl:output method="xml" indent="yes" encoding="utf-8"/>
 
 <xsl:include href="../Functions.xsl"/>
+<xsl:include href="../GrpcChannelArgs.xsl"/>
 <xsl:include href="../CampaignManagement/CampaignServersCorbaRefs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
@@ -96,6 +97,13 @@
       <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@port"/>
       <xsl:if test="count($user-info-manager-config/cfg:networkParams/@port) = 0">
         <xsl:value-of select="$def-user-info-manager-port"/>
+      </xsl:if>
+    </xsl:variable>
+
+    <xsl:variable name="user-info-manager-grpc-port">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$def-user-info-manager-grpc-port"/>
       </xsl:if>
     </xsl:variable>
 
@@ -339,6 +347,32 @@
 
     <cfg:ReadWriteStats>
     </cfg:ReadWriteStats>
+
+    <cfg:Coroutine>
+      <cfg:CoroPool
+        initial_size="{$coro-pool-initial-size}"
+        max_size="{$coro-pool-max-size}"
+        stack_size="{$coro-pool-stack-size}"/>
+      <cfg:EventThreadPool
+        number_threads="{$event-thread-pool-number-threads}"
+        name="{$event-thread-pool-name}"
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
+        defer_events="{$event-thread-pool-defer-events}"/>
+      <cfg:MainTaskProcessor
+        name="{$main-task-processor-name}"
+        number_threads="{$main-task-processor-number-threads}"
+        should_guess_cpu_limit="{$main-task-processor-should-guess-cpu-limit}"
+        overload_action="{$main-task-processor-overload-action}"
+        wait_queue_length_limit="{$main-task-processor-wait-queue-length-limit}"
+        wait_queue_time_limit="{$main-task-processor-wait-queue-time-limit}"
+        sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
+    </cfg:Coroutine>
+
+    <cfg:GrpcServer ip="{$grpc-server-ip}">
+      <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>
+      <xsl:call-template name="GrpcServerChannelArgList"/>
+    </cfg:GrpcServer>
+
   </cfg:UserInfoManagerConfig>
 
 </xsl:template>

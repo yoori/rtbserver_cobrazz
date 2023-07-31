@@ -46,7 +46,6 @@ namespace UserInfoSvcs
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(NotReady, Exception);
-    DECLARE_EXCEPTION(ChunkNotFound, Exception);
 
     using UserBindServerConfig = xsd::AdServer::Configuration::UserBindServerConfigType;
 

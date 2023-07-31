@@ -8,6 +8,7 @@
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/FreqCapManip.hpp>
+#include <Commons/GrpcAlgs.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
 
@@ -100,7 +101,28 @@ namespace
     }
     first += second;
   }
-}
+
+  template<class Response>
+  auto create_grpc_response(const std::uint32_t id_request_grpc)
+  {
+    auto response = std::make_unique<Response>();
+    response->set_id_request_grpc(id_request_grpc);
+    return response;
+  }
+
+  template<class Response>
+  auto create_grpc_error_response(
+    const AdServer::UserInfoSvcs::Proto::Error_Type error_type,
+    const String::SubString detail,
+    const std::uint32_t id_request_grpc)
+  {
+    auto response = create_grpc_response<Response>(id_request_grpc);
+    auto* error = response->mutable_error();
+    error->set_type(error_type);
+    error->set_description(detail.data(), detail.length());
+    return response;
+  }
+} // namespace
 
 namespace AdServer
 {
@@ -116,6 +138,24 @@ namespace UserInfoSvcs
     {
       oct_seq.length(mem_buf.size());
       ::memcpy(oct_seq.get_buffer(), mem_buf.data(), mem_buf.size());
+    }
+    catch(const CORBA::SystemException& ex)
+    {
+      Stream::Error ostr;
+      ostr << "convert_mem_buf(): Caught CORBA::SystemException: " << ex;
+      throw UserInfoManagerImpl::Exception(ostr);
+    }
+  }
+
+  void
+  convert_mem_buf(
+    const Generics::MemBuf& mem_buf,
+    std::string& result)
+  {
+    try
+    {
+      result.resize(mem_buf.size());
+      ::memcpy(result.data(), mem_buf.data(), mem_buf.size());
     }
     catch(const CORBA::SystemException& ex)
     {
@@ -454,6 +494,48 @@ namespace UserInfoSvcs
       user_info_container->channels_config().in();
   }
 
+  UserInfoManagerImpl::UimReadyResponsePtr
+  UserInfoManagerImpl::uim_ready(UimReadyRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      UserInfoContainerAccessor user_info_container =
+        get_user_info_container_(false);
+      const bool result = user_info_container.get().in() &&
+        user_info_container->channels_config().in();
+
+      auto response = create_grpc_response<Proto::UimReadyResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+      info->set_return_value(result);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::UimReadyResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Unknown error";
+      auto response = create_grpc_error_response<Proto::UimReadyResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
   char*
   UserInfoManagerImpl::get_progress() noexcept
   {
@@ -470,6 +552,56 @@ namespace UserInfoSvcs
     }
 
     return CORBA::string_dup(str.str().c_str());
+  }
+
+  UserInfoManagerImpl::GetProgressResponsePtr
+  UserInfoManagerImpl::get_progress(
+    GetProgressRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      UserInfoContainerAccessor user_info_container = get_user_info_container_(false);
+
+      std::stringstream stream;
+      if (!user_info_container.get().in())
+      {
+        stream << "chunks: " << loading_progress_processor_->get_progress_in_percents();
+      }
+      else if (!user_info_container->channels_config().in())
+      {
+        stream << "channels loading...";
+      }
+
+      auto response = create_grpc_response<Proto::GetProgressResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+      info->set_return_value(stream.str());
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetProgressResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Unknown error";
+      auto response = create_grpc_error_response<Proto::GetProgressResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
   }
 
   UserInfoManagerImpl::CampaignServerPoolPtr
@@ -543,7 +675,7 @@ namespace UserInfoSvcs
       AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
       AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/
   {
-    static const char* FUN = "UserInfoManagerImpl::post_match()";
+    static const char* FUN = "UserInfoManagerImpl::update_user_freq_caps()";
 
     try
     {
@@ -613,6 +745,133 @@ namespace UserInfoSvcs
     }
   }
 
+  UserInfoManagerImpl::UpdateUserFreqCapsResponsePtr
+  UserInfoManagerImpl::update_user_freq_caps(
+    UpdateUserFreqCapsRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::update_user_freq_caps()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+
+      Generics::Time now(GrpcAlgs::unpack_time(request->time()));
+
+      UserFreqCapProfile::FreqCapIdList fcs;
+      UserFreqCapProfile::FreqCapIdList uc_fcs;
+      UserFreqCapProfile::FreqCapIdList virtual_fcs;
+      UserFreqCapProfile::SeqOrderList seq_orders;
+      UserFreqCapProfile::CampaignIds campaign_ids;
+      UserFreqCapProfile::CampaignIds uc_campaign_ids;
+
+      const auto& freq_caps = request->freq_caps();
+      std::copy(
+        std::begin(freq_caps),
+        std::end(freq_caps),
+        std::back_inserter(fcs));
+
+      const auto& uc_freq_caps = request->uc_freq_caps();
+      std::copy(
+        std::begin(uc_freq_caps),
+        std::end(uc_freq_caps),
+        std::back_inserter(uc_fcs));
+
+      const auto& virtual_freq_caps = request->virtual_freq_caps();
+      std::copy(
+        std::begin(virtual_freq_caps),
+        std::end(virtual_freq_caps),
+        std::back_inserter(virtual_fcs));
+
+      const auto& campaign_ids_seq = request->campaign_ids();
+      std::copy(
+        std::begin(campaign_ids_seq),
+        std::end(campaign_ids_seq),
+        std::back_inserter(campaign_ids));
+
+      const auto& uc_campaign_ids_seq = request->uc_campaign_ids();
+      std::copy(
+        std::begin(uc_campaign_ids_seq),
+        std::end(uc_campaign_ids_seq),
+        std::back_inserter(uc_campaign_ids));
+
+      const auto& seq_orders_seq = request->seq_orders();
+      for(int i = 0; i < seq_orders_seq.size(); ++i)
+      {
+        UserFreqCapProfile::SeqOrder seq_order;
+        seq_order.ccg_id = seq_orders_seq[i].ccg_id();
+        seq_order.set_id = seq_orders_seq[i].set_id();
+        seq_order.imps = seq_orders_seq[i].imps();
+        seq_orders.push_back(seq_order);
+      }
+
+      user_operation_processor->update_freq_caps(
+        GrpcAlgs::unpack_user_id(request->user_id()),
+        now,
+        GrpcAlgs::unpack_request_id(request->request_id()),
+        fcs,
+        uc_fcs,
+        virtual_fcs,
+        seq_orders,
+        campaign_ids,
+        uc_campaign_ids,
+        AdServer::ProfilingCommons::OP_RUNTIME);
+      auto response = create_grpc_response<Proto::UpdateUserFreqCapsResponse>(
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserOperationProcessor::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match. "
+                "Caught UserOperationProcessor::NotReady: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match. Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Unknown error: ";
+      auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
   void UserInfoManagerImpl::confirm_user_freq_caps(
     const CORBACommons::UserIdInfo& user_id_info,
     const CORBACommons::TimestampInfo& time,
@@ -666,6 +925,88 @@ namespace UserInfoSvcs
       CORBACommons::throw_desc<
         UserInfoSvcs::UserInfoManager::ImplementationException>(
           ostr.str());
+    }
+  }
+
+  UserInfoManagerImpl::ConfirmUserFreqCapsResponsePtr
+  UserInfoManagerImpl::confirm_user_freq_caps(
+    ConfirmUserFreqCapsRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::confirm_user_freq_caps()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+
+      std::set<unsigned long> exclude_pubpixel_accs;
+      const auto& exclude_pubpixel_accounts =
+        request->exclude_pubpixel_accounts();
+      for(int i = 0; i < exclude_pubpixel_accounts.size(); ++i)
+      {
+        exclude_pubpixel_accs.insert(exclude_pubpixel_accounts[i]);
+      }
+
+      user_operation_processor->confirm_freq_caps(
+        GrpcAlgs::unpack_user_id(request->user_id()),
+        GrpcAlgs::unpack_time(request->time()),
+        GrpcAlgs::unpack_request_id(request->request_id()),
+        exclude_pubpixel_accs);
+
+      auto response = create_grpc_response<Proto::ConfirmUserFreqCapsResponse>(
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't confirm_user_freq_caps. "
+                "Caught UserInfoContainer::NotReady: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConfirmUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't confirm_user_freq_caps. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConfirmUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't confirm_user_freq_caps. Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConfirmUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't confirm_user_freq_caps. Unknown error";
+      auto response = create_grpc_error_response<Proto::ConfirmUserFreqCapsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
     }
   }
 
@@ -730,6 +1071,88 @@ namespace UserInfoSvcs
     }
   }
 
+  UserInfoManagerImpl::ConsiderPublishersOptinResponsePtr
+  UserInfoManagerImpl::consider_publishers_optin(
+    ConsiderPublishersOptinRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::consider_publishers_optin()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+
+      std::set<unsigned long> exclude_pubpixel_accs;
+      const auto& exclude_pubpixel_accounts = request->exclude_pubpixel_accounts();
+      for(int i = 0; i < exclude_pubpixel_accounts.size(); ++i)
+      {
+        exclude_pubpixel_accs.insert(exclude_pubpixel_accounts[i]);
+      }
+
+      user_operation_processor->consider_publishers_optin(
+        GrpcAlgs::unpack_user_id(request->user_id()),
+        exclude_pubpixel_accs,
+        GrpcAlgs::unpack_time(request->now()),
+        AdServer::ProfilingCommons::OP_RUNTIME);
+
+      auto response = create_grpc_response<Proto::ConsiderPublishersOptinResponse>(
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserOperationProcessor::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't consider publisher. "
+                "Caught UserOperationProcessor::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConsiderPublishersOptinResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserOperationProcessor::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't consider publisher. "
+                "Caught UserInfoContainer::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConsiderPublishersOptinResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't consider publisher. "
+                "Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConsiderPublishersOptinResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't consider publisher. "
+                "Unknown error";
+      auto response = create_grpc_error_response<Proto::ConsiderPublishersOptinResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
   CORBA::Boolean
   UserInfoManagerImpl::remove_user_profile(
     const CORBACommons::UserIdInfo& user_id_info)
@@ -777,6 +1200,79 @@ namespace UserInfoSvcs
           ostr.str());
     }
     return 0; // never reach
+  }
+
+  UserInfoManagerImpl::RemoveUserProfileResponsePtr
+  UserInfoManagerImpl::remove_user_profile(
+    RemoveUserProfileRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::remove_user_profile()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+
+      const bool result = user_operation_processor->remove_user_profile(
+        GrpcAlgs::unpack_user_id(request->user_id()));
+      auto response = create_grpc_response<Proto::RemoveUserProfileResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+      info->set_return_value(result);
+      return response;
+    }
+    catch (const UserInfoContainer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't remove user profile. "
+                "Caught UserInfoContainer::NotReady: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::RemoveUserProfileResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't remove user profile. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::RemoveUserProfileResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't remove user profile. "
+              "Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::RemoveUserProfileResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't remove user profile. "
+                "Unknown error";
+      auto response = create_grpc_error_response<Proto::RemoveUserProfileResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
   }
 
   void
@@ -827,6 +1323,79 @@ namespace UserInfoSvcs
       CORBACommons::throw_desc<
         UserInfoSvcs::UserInfoManager::ImplementationException>(
           ostr.str());
+    }
+  }
+
+  UserInfoManagerImpl::GetMasterStampResponsePtr
+  UserInfoManagerImpl::get_master_stamp(
+    GetMasterStampRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManager::get_master_stamp()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserInfoContainerAccessor user_info_container = get_user_info_container_(true);
+
+      auto response = create_grpc_response<Proto::GetMasterStampResponse>(
+        id_request_grpc);
+      auto* response_info = response->mutable_info();
+      response_info->set_master_stamp(
+        GrpcAlgs::pack_time(
+          user_info_container->master_stamp()));
+
+      return response;
+    }
+    catch (const UserInfoContainer::NotReady& ex)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get config master stamp. "
+                "Caught UserInfoContainer::Exception: "
+             << ex.what();
+      auto response = create_grpc_error_response<Proto::GetMasterStampResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::Exception& ex)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get config master stamp. "
+                "Caught UserInfoContainer::Exception: "
+             << ex.what();
+      auto response = create_grpc_error_response<Proto::GetMasterStampResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& ex)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't config master stamp. "
+                "Caught eh::Exception: "
+             << ex.what();
+      auto response = create_grpc_error_response<Proto::GetMasterStampResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't config master stamp. "
+                "Unknown error";
+      auto response = create_grpc_error_response<Proto::GetMasterStampResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
     }
   }
 
@@ -942,6 +1511,146 @@ namespace UserInfoSvcs
           ostr.str());
     }
     return 0; // never reach
+  }
+
+  UserInfoManagerImpl::GetUserProfileResponsePtr
+  UserInfoManagerImpl::get_user_profile(GetUserProfileRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManager::get_user_profile()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserInfoContainerAccessor user_info_container =
+        get_user_info_container_(true);
+
+      SmartMemBuf_var mb_base_profile_out;
+      SmartMemBuf_var mb_add_profile_out;
+      SmartMemBuf_var mb_history_profile_out;
+      SmartMemBuf_var mb_fc_profile_out;
+      SmartMemBuf_var mb_pref_profile_out;
+
+      auto response = create_grpc_response<Proto::GetUserProfileResponse>(
+        id_request_grpc);
+      auto* info_proto = response->mutable_info();
+
+      const auto& profile_request = request->profile_request();
+      if(user_info_container->get_user_profile(
+        GrpcAlgs::unpack_user_id(request->user_id()),
+        request->temporary(),
+        profile_request.base_profile() ? &mb_base_profile_out : nullptr,
+        profile_request.add_profile() ? &mb_add_profile_out : nullptr,
+        profile_request.history_profile() ? &mb_history_profile_out : nullptr,
+        profile_request.freq_cap_profile() ? &mb_fc_profile_out : nullptr))
+      {
+        auto* user_profile_proto = info_proto->mutable_user_profile();
+
+        if (mb_base_profile_out.in())
+        {
+          auto* base_user_profile_proto = user_profile_proto->mutable_base_user_profile();
+          convert_mem_buf(mb_base_profile_out->membuf(),
+                          *base_user_profile_proto);
+        }
+
+        if (mb_add_profile_out.in())
+        {
+          auto* add_user_profile_proto = user_profile_proto->mutable_add_user_profile();
+          convert_mem_buf(mb_add_profile_out->membuf(),
+                          *add_user_profile_proto);
+        }
+
+        if (mb_history_profile_out.in())
+        {
+          auto* history_user_profile_proto = user_profile_proto->mutable_history_user_profile();
+          convert_mem_buf(mb_history_profile_out->membuf(),
+                          *history_user_profile_proto);
+        }
+
+        if(mb_fc_profile_out.in())
+        {
+          auto* freq_cap_proto = user_profile_proto->mutable_freq_cap();
+          convert_mem_buf(
+            mb_fc_profile_out->membuf(),
+            *freq_cap_proto);
+        }
+
+        if(mb_pref_profile_out.in())
+        {
+          auto* pref_profile_proto = user_profile_proto->mutable_pref_profile();
+          convert_mem_buf(mb_pref_profile_out->membuf(),
+                          *pref_profile_proto);
+        }
+
+        info_proto->set_return_value(true);
+        return response;
+      }
+
+      info_proto->set_return_value(false);
+      return response;
+    }
+    catch(const UserInfoContainer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get user profile. Caught UserInfoContainer::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserProfileResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get user profile. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserProfileResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserInfoContainer::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get user profile. "
+                "Caught UserInfoContainer::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserProfileResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get user profile. "
+                "Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserProfileResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't get user profile. "
+                "Unknown error";
+      auto response = create_grpc_error_response<Proto::GetUserProfileResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
   }
 
   CORBA::Boolean
@@ -1118,6 +1827,215 @@ namespace UserInfoSvcs
     return merge_success;
   }
 
+  UserInfoManagerImpl::MergeResponsePtr
+  UserInfoManagerImpl::merge(MergeRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::merge()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      bool merge_success = true;
+      Generics::Time last_request = Generics::Time::ZERO;
+
+      const auto& user_info = request->user_info();
+      UserId uid = GrpcAlgs::unpack_user_id(user_info.user_id());
+      UserId huid = GrpcAlgs::unpack_user_id(user_info.huser_id());
+
+      bool household = uid.is_null();
+      UserId user_id = household ? huid : uid;
+
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+
+      const auto& match_params = request->match_params();
+      UserInfoContainer::RequestMatchParams
+        request_params(
+          user_id,
+          Generics::Time(user_info.time()),
+          String::SubString(match_params.cohort()),
+          String::SubString(match_params.cohort2()),
+          match_params.use_empty_profile(),
+          user_info.current_colo_id(),
+          repeat_trigger_timeout_,
+          match_params.filter_contextual_triggers(),
+          user_info.temporary(),
+          match_params.silent_match(),
+          false, // no match
+          false, // no result
+          false, // provide channel count
+          false, // provide persistent channels
+          match_params.change_last_request(),
+          household,
+          nullptr);
+
+      UserInfoContainer::UserAppearance user_app;
+
+      /* merge users */
+      try
+      {
+        long placement_colo_id =
+          user_info.current_colo_id() != -1 ? user_info.current_colo_id() : placement_colo_id_;
+
+        const auto& merge_user_profile = request->merge_user_profile();
+
+        MemBuf merge_base_profile(
+          merge_user_profile.base_user_profile().data(),
+          merge_user_profile.base_user_profile().length());
+        MemBuf merge_add_profile(
+          merge_user_profile.add_user_profile().data(),
+          merge_user_profile.add_user_profile().length());
+        MemBuf merge_history_profile(
+          merge_user_profile.history_user_profile().data(),
+          merge_user_profile.history_user_profile().length());
+        MemBuf merge_freq_cap_profile(
+          merge_user_profile.freq_cap().data(),
+          merge_user_profile.freq_cap().length());
+
+        UserInfoManagerLogger::HistoryOptimizationInfo ho_info;
+
+        user_operation_processor->merge(
+          request_params,
+          merge_base_profile.membuf(),
+          merge_add_profile.membuf(),
+          merge_history_profile.membuf(),
+          merge_freq_cap_profile.membuf(),
+          user_app,
+          uie_presents_ ? user_info.last_colo_id() : placement_colo_id,
+          placement_colo_id,
+          AdServer::ProfilingCommons::OP_RUNTIME,
+          &ho_info);
+
+        if (ho_info.isp_date != Generics::Time::ZERO && !household)
+        {
+          ho_info.colo_id = placement_colo_id_;
+          user_info_manager_logger_->process_history_optimization(ho_info);
+        }
+
+        last_request = user_app.last_request;
+
+        if (!household && !huid.is_null())
+        {
+          UserInfoContainer::RequestMatchParams
+            hid_request_params(
+              huid,
+              Generics::Time(user_info.time()),
+              String::SubString(match_params.cohort()),
+              String::SubString(match_params.cohort2()),
+              match_params.use_empty_profile(),
+              user_info.current_colo_id(),
+              repeat_trigger_timeout_,
+              match_params.filter_contextual_triggers(),
+              user_info.temporary(),
+              match_params.silent_match(),
+              false, // no match
+              false, // no result
+              false, // provide channel count
+              false, // provide persistent channels
+              match_params.change_last_request(),
+              true, // household
+              nullptr);
+
+          UserInfoContainer::UserAppearance hid_user_app;
+
+          user_operation_processor->merge(
+            hid_request_params,
+            merge_base_profile.membuf(),
+            merge_add_profile.membuf(),
+            merge_history_profile.membuf(),
+            merge_freq_cap_profile.membuf(),
+            hid_user_app,
+            placement_colo_id,
+            placement_colo_id,
+            AdServer::ProfilingCommons::OP_RUNTIME);
+        }
+      }
+      catch (const UserInfoContainer::ChunkNotFound& exc)
+      {
+        throw;
+      }
+      catch(const eh::Exception& exc)
+      {
+        merge_success = false;
+
+        logger_->sstream(Logging::Logger::ERROR,
+                         Aspect::USER_INFO_MANAGER,
+                         "ADS-IMPL-50") << FUN <<
+                                        ": Can't do merging. Caught eh::Exception: " << exc.what();
+      }
+      catch(...)
+      {
+        merge_success = false;
+
+        logger_->sstream(Logging::Logger::ERROR,
+                         Aspect::USER_INFO_MANAGER,
+                         "ADS-IMPL-50") << FUN <<
+                                        ": Can't do merging. Unknown error";
+      }
+
+
+      auto response = create_grpc_response<Proto::MergeResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+      info->set_return_value(merge_success);
+      info->set_merge_success(merge_success);
+      info->set_last_request(GrpcAlgs::pack_time(last_request));
+
+      return response;
+    }
+    catch (const UserInfoContainer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can not merge users. "
+                "Caught UserInfoContainer::NotReady: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MergeResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can not merge users. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MergeResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can not merge user. "
+                "Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MergeResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can not merge user. "
+                "Unknown error";
+      auto response = create_grpc_error_response<Proto::MergeResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
   CORBA::Boolean
   UserInfoManagerImpl::fraud_user(
     const CORBACommons::UserIdInfo& user_id_info,
@@ -1167,6 +2085,78 @@ namespace UserInfoSvcs
     }
 
     return true;
+  }
+
+  UserInfoManagerImpl::FraudUserResponsePtr
+  UserInfoManagerImpl::fraud_user(FraudUserRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::fraud_user()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+
+      user_operation_processor->fraud_user(
+        GrpcAlgs::unpack_user_id(request->user_id()),
+        GrpcAlgs::unpack_time(request->time()));
+
+      auto response = create_grpc_response<Proto::FraudUserResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+      info->set_return_value(true);
+      return response;
+    }
+    catch (const UserOperationProcessor::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't update user. "
+                "Caught UserInfoContainer::NotReady: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::FraudUserResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserOperationProcessor::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't update user. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::FraudUserResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't update user. Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::FraudUserResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't update user. Unknown error";
+      auto response = create_grpc_error_response<Proto::FraudUserResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
   }
 
   CORBA::Boolean
@@ -1611,6 +2601,490 @@ namespace UserInfoSvcs
     return 0; // never reach
   }
 
+  UserInfoManagerImpl::MatchResponsePtr
+  UserInfoManagerImpl::match(MatchRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::match()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    try
+    {
+      Generics::Timer process_timer;
+      process_timer.start();
+
+      const auto& user_info = request->user_info();
+      UserId uid = GrpcAlgs::unpack_user_id(user_info.user_id());
+      UserId huid = GrpcAlgs::unpack_user_id(user_info.huser_id());
+
+      bool household = uid.is_null();
+
+      UserId user_id = household ? huid : uid;
+
+      const auto& match_params = request->match_params();
+      if(logger_->log_level() >= Logging::Logger::TRACE)
+      {
+        Stream::Error ostr;
+        ostr << "Match request: " << std::endl <<
+             "  User id: " <<
+             PrivacyFilter::filter(user_id.to_string().c_str(), "USER_ID") << std::endl <<
+             "  current colo id: " << user_info.current_colo_id() << std::endl <<
+             "  Input search channels: ";
+
+        GrpcAlgs::print_repeated_fields(
+          ostr,
+          ",",
+          ":",
+          match_params.search_channel_ids(),
+          &Proto::ChannelTriggerMatch::channel_id,
+          &Proto::ChannelTriggerMatch::channel_trigger_id);
+        ostr << std::endl << "  Input page channels: ";
+        GrpcAlgs::print_repeated_fields(
+          ostr,
+          ",",
+          ":",
+          match_params.page_channel_ids(),
+          &Proto::ChannelTriggerMatch::channel_id,
+          &Proto::ChannelTriggerMatch::channel_trigger_id);
+        ostr << std::endl << "  Input url channels: ";
+        GrpcAlgs::print_repeated_fields(
+          ostr,
+          ",",
+          ":",
+          match_params.url_channel_ids(),
+          &Proto::ChannelTriggerMatch::channel_id,
+          &Proto::ChannelTriggerMatch::channel_trigger_id);
+        ostr << std::endl << "  Input url keyword channels: ";
+        GrpcAlgs::print_repeated_fields(
+          ostr,
+          ",",
+          ":",
+          match_params.url_keyword_channel_ids(),
+          &Proto::ChannelTriggerMatch::channel_id,
+          &Proto::ChannelTriggerMatch::channel_trigger_id);
+
+        ostr << std::endl << "  Input persistent channels: ";
+        GrpcAlgs::print_repeated(ostr, ",", match_params.persistent_channel_ids());
+        ostr << std::endl;
+
+        logger_->log(
+          ostr.str(),
+          Logging::Logger::TRACE,
+          Aspect::USER_INFO_MANAGER);
+      }
+
+      UserOperationProcessorAccessor user_operation_processor =
+        get_user_operation_processor_(true);
+      UserInfoContainerAccessor user_info_container =
+        get_user_info_container_(true);
+
+      CoordData coord_data;
+      const auto& geo_data_seq = match_params.geo_data_seq();
+      if (!geo_data_seq.empty())
+      {
+        coord_data.defined = true;
+        coord_data.latitude =
+          GrpcAlgs::unpack_decimal<AdServer::CampaignSvcs::CoordDecimal>(
+            geo_data_seq[0].latitude());
+        coord_data.longitude =
+          GrpcAlgs::unpack_decimal<AdServer::CampaignSvcs::CoordDecimal>(
+            geo_data_seq[0].longitude());
+        coord_data.accuracy =
+          GrpcAlgs::unpack_decimal<AdServer::CampaignSvcs::AccuracyDecimal>(
+            geo_data_seq[0].accuracy());
+      }
+      else
+      {
+        coord_data.defined = false;
+      }
+
+      UserInfoContainer::RequestMatchParams
+        request_params(
+          user_id,
+          Generics::Time(user_info.time()),
+          String::SubString(match_params.cohort()),
+          String::SubString(match_params.cohort2()),
+          match_params.use_empty_profile(),
+          user_info.request_colo_id(),
+          repeat_trigger_timeout_,
+          match_params.filter_contextual_triggers(),
+          user_info.temporary(),
+          match_params.silent_match(),
+          match_params.no_match(),
+          match_params.no_result(),
+          !household ? match_params.provide_channel_count() : false,
+          !household ? match_params.provide_persistent_channels() : false,
+          match_params.change_last_request(),
+          household,
+          coord_data.defined ? &coord_data : nullptr);
+
+      UserInfoContainer::UserAppearance user_app;
+
+      AdServer::UserInfoSvcs::ChannelMatchMap result_channels;
+      AdServer::UserInfoSvcs::ChannelMatchPack matched_channels;
+
+      const auto& page_channel_ids = match_params.page_channel_ids();
+      matched_channels.page_channels.reserve(page_channel_ids.size());
+      for (int i = 0; i < page_channel_ids.size(); ++i)
+      {
+        matched_channels.page_channels.emplace_back(
+          page_channel_ids[i].channel_id(),
+          page_channel_ids[i].channel_trigger_id());
+      }
+
+      const auto& search_channel_ids = match_params.search_channel_ids();
+      matched_channels.search_channels.reserve(search_channel_ids.size());
+      for (int i = 0; i < search_channel_ids.size(); ++i)
+      {
+        matched_channels.search_channels.emplace_back(
+          search_channel_ids[i].channel_id(),
+          search_channel_ids[i].channel_trigger_id());
+      }
+
+      const auto& url_channel_ids = match_params.url_channel_ids();
+      matched_channels.url_channels.reserve(url_channel_ids.size());
+      for (int i = 0; i < url_channel_ids.size(); ++i)
+      {
+        matched_channels.url_channels.emplace_back(
+          url_channel_ids[i].channel_id(),
+          url_channel_ids[i].channel_trigger_id());
+      }
+
+      const auto& url_keyword_channel_ids = match_params.url_keyword_channel_ids();
+      matched_channels.url_keyword_channels.reserve(
+        url_keyword_channel_ids.size());
+      for (int i = 0; i < url_keyword_channel_ids.size(); ++i)
+      {
+        matched_channels.url_keyword_channels.emplace_back(
+          url_keyword_channel_ids[i].channel_id(),
+          url_keyword_channel_ids[i].channel_trigger_id());
+      }
+
+      const auto& persistent_channel_ids = match_params.persistent_channel_ids();
+      matched_channels.persistent_channels.reserve(persistent_channel_ids.size());
+      for (int i = 0; i < persistent_channel_ids.size(); ++i)
+      {
+        matched_channels.persistent_channels.emplace_back(persistent_channel_ids[i]);
+      }
+
+      ColoUserId colo_user_id;
+
+      long placement_colo_id =
+        user_info.current_colo_id() != -1 ? user_info.current_colo_id() : placement_colo_id_;
+
+      ProfileProperties profile_properties;
+
+      UserInfoManagerLogger::HistoryOptimizationInfo ho_info;
+      UniqueChannelsResult unique_channels_result;
+
+      user_operation_processor->match(
+        request_params,
+        uie_presents_ ? user_info.last_colo_id() : placement_colo_id,
+        placement_colo_id,
+        colo_user_id,
+        matched_channels,
+        result_channels,
+        user_app,
+        profile_properties,
+        AdServer::ProfilingCommons::OP_RUNTIME,
+        &ho_info,
+        &unique_channels_result);
+
+      auto response = create_grpc_response<Proto::MatchResponse>(
+        id_request_grpc);
+      auto* info_proto = response->mutable_info();
+      auto* match_result_proto = info_proto->mutable_match_result();
+
+      if (!household)
+      {
+        match_result_proto->set_adv_channel_count(
+          unique_channels_result.simple_channels);
+        match_result_proto->set_discover_channel_count(
+          unique_channels_result.discover_channels);
+
+        if (ho_info.isp_date != Generics::Time::ZERO)
+        {
+          ho_info.colo_id = placement_colo_id_;
+          user_info_manager_logger_->process_history_optimization(ho_info);
+        }
+
+        match_result_proto->set_colo_id(-1);
+        match_result_proto->set_times_inited(true);
+        match_result_proto->set_last_request_time(GrpcAlgs::pack_time(user_app.last_request));
+        match_result_proto->set_create_time(GrpcAlgs::pack_time(user_app.create_time));
+        match_result_proto->set_session_start(GrpcAlgs::pack_time(user_app.session_start));
+        match_result_proto->set_fraud_request(profile_properties.fraud_request);
+        match_result_proto->set_cohort(profile_properties.cohort);
+        match_result_proto->set_cohort2(profile_properties.cohort2);
+
+        auto* geo_data_seq_proto = match_result_proto->mutable_geo_data_seq();
+        for (GeoDataResultList::const_iterator it =
+          profile_properties.geo_data_list.begin();
+             it != profile_properties.geo_data_list.end(); ++it)
+        {
+          Proto::GeoData geo_data;
+          geo_data.set_latitude(
+            GrpcAlgs::pack_decimal<AdServer::CampaignSvcs::CoordDecimal>(it->latitude));
+          geo_data.set_longitude(
+            GrpcAlgs::pack_decimal<AdServer::CampaignSvcs::CoordDecimal>(it->longitude));
+          geo_data.set_accuracy(
+            GrpcAlgs::pack_decimal<AdServer::CampaignSvcs::AccuracyDecimal>(it->accuracy));
+
+          geo_data_seq_proto->Add(std::move(geo_data));
+        }
+
+        if (uie_presents_)
+        {
+          if (user_info.last_colo_id() != placement_colo_id)
+          {
+            match_result_proto->set_colo_id(placement_colo_id);
+          }
+
+          if (colo_user_id.need_profile)
+          {
+            SyncPolicy::WriteGuard guard(colo_lock_);
+
+            long sz = colo_user_id.colo_id;
+
+            if (sz >= 0)
+            {
+              if (colo_profiles_vector_.size() <= (unsigned long)sz)
+              {
+                colo_profiles_vector_.resize(sz + 1);
+              }
+
+              colo_profiles_vector_[sz].user_id.push_back(colo_user_id.user_id);
+            }
+          }
+        }
+
+        Generics::Time publisher_optin_timeout(
+          GrpcAlgs::unpack_time(match_params.publishers_optin_timeout()));
+        if (publisher_optin_timeout != Generics::Time::ZERO)
+        {
+          std::list<unsigned long> publishers;
+
+          user_info_container->get_optin_publishers(
+            GrpcAlgs::unpack_user_id(user_info.user_id()),
+            publisher_optin_timeout,
+            publishers);
+
+          auto* exclude_pubpixel_accounts_proto =
+            match_result_proto->mutable_exclude_pubpixel_accounts();
+          exclude_pubpixel_accounts_proto->Add(std::begin(publishers), std::end(publishers));
+        }
+
+        if(match_params.ret_freq_caps())
+        {
+          UserFreqCapProfile::FreqCapIdList freq_caps;
+          UserFreqCapProfile::FreqCapIdList virtual_freq_caps;
+          UserFreqCapProfile::SeqOrderList seq_orders;
+          UserFreqCapProfile::CampaignFreqs campaign_freqs;
+
+          try
+          {
+            user_info_container->get_full_freq_caps(
+              GrpcAlgs::unpack_user_id(user_info.user_id()),
+              Generics::Time(user_info.time()),
+              freq_caps,
+              virtual_freq_caps,
+              seq_orders,
+              campaign_freqs);
+
+            auto* full_freq_caps_proto =
+              match_result_proto->mutable_full_freq_caps();
+            full_freq_caps_proto->Add(std::begin(freq_caps), std::end(freq_caps));
+
+            auto* full_virtual_freq_caps_proto =
+              match_result_proto->mutable_full_virtual_freq_caps();
+            full_virtual_freq_caps_proto->Add(std::begin(virtual_freq_caps), std::end(virtual_freq_caps));
+
+            auto* seq_orders_proto = match_result_proto->mutable_seq_orders();
+            for(UserFreqCapProfile::SeqOrderList::const_iterator it =
+              seq_orders.begin();
+                it != seq_orders.end(); ++it)
+            {
+              Proto::SeqOrderInfo seq_order_info;
+              seq_order_info.set_ccg_id(it->ccg_id);
+              seq_order_info.set_set_id(it->set_id);
+              seq_order_info.set_imps(it->imps);
+
+              seq_orders_proto->Add(std::move(seq_order_info));
+            }
+
+            auto* campaign_freqs_proto = match_result_proto->mutable_campaign_freqs();
+            for(auto it = campaign_freqs.begin();
+                it != campaign_freqs.end(); ++it)
+            {
+              Proto::CampaignFreq campaign_freq;
+              campaign_freq.set_campaign_id(it->campaign_id);
+              campaign_freq.set_imps(it->imps);
+
+              campaign_freqs_proto->Add(std::move(campaign_freq));
+            }
+          }
+          catch(const UserInfoContainer::UserIsFraud& exc)
+          {
+            Stream::Error stream;
+            stream << "User '"
+                   << uid
+                   << "' is fraud: "
+                   << exc.what();
+            logger()->log(
+              stream.str(),
+              Logging::Logger::INFO,
+              Aspect::USER_INFO_MANAGER,
+              "ADS-IMPL-0000");
+
+            match_result_proto->set_fraud_request(true);
+          }
+        }
+
+        /* generate output params */
+        auto* channels_proto = match_result_proto->mutable_channels();
+        for (ChannelMatchMap::const_iterator it = result_channels.begin();
+             it != result_channels.end(); ++it)
+        {
+          Proto::ChannelWeight channel_weight;
+          channel_weight.set_channel_id(it->first);
+          channel_weight.set_weight(it->second);
+
+          channels_proto->Add(std::move(channel_weight));
+        }
+
+        if(!request_params.silent_match)
+        {
+          calc_user_daily_stat_(
+            Generics::Time::get_time_of_day(),
+            request_params.current_time,
+            user_app.last_request,
+            user_info_container->time_offset());
+        }
+      }
+      else
+      {
+        /* generate output params if household */
+        auto* hid_channels_proto = match_result_proto->mutable_hid_channels();
+        for (ChannelMatchMap::const_iterator it = result_channels.begin();
+             it != result_channels.end(); ++it)
+        {
+          Proto::ChannelWeight channel_weight;
+          channel_weight.set_channel_id(it->first);
+          channel_weight.set_weight(it->second);
+
+          hid_channels_proto->Add(std::move(channel_weight));
+        }
+      }
+
+      if (!household && !huid.is_null())
+      {
+        UserInfoContainer::RequestMatchParams
+          hid_request_params(
+            huid,
+            Generics::Time(user_info.time()),
+            String::SubString(match_params.cohort()),
+            String::SubString(match_params.cohort2()),
+            match_params.use_empty_profile(),
+            user_info.request_colo_id(),
+            repeat_trigger_timeout_,
+            match_params.filter_contextual_triggers(),
+            false,                           // temporary,
+            match_params.silent_match(),
+            match_params.no_match(),
+            match_params.no_result(),
+            false,
+            false,
+            match_params.change_last_request(),
+            true,                           // household
+            coord_data.defined ? &coord_data : nullptr);
+
+        AdServer::UserInfoSvcs::ChannelMatchMap hid_result_channels;
+
+        user_operation_processor->match(
+          hid_request_params,
+          placement_colo_id,
+          placement_colo_id,
+          colo_user_id,
+          matched_channels,
+          hid_result_channels,
+          user_app,
+          profile_properties,
+          AdServer::ProfilingCommons::OP_RUNTIME,
+          nullptr, // history optimization info
+          nullptr // unique channels result
+        );
+
+        auto* hid_channels_proto = match_result_proto->mutable_hid_channels();
+        for (ChannelMatchMap::const_iterator it = hid_result_channels.begin();
+             it != hid_result_channels.end(); ++it)
+        {
+          Proto::ChannelWeight channel_weight;
+          channel_weight.set_channel_id(it->first);
+          channel_weight.set_weight(it->second);
+
+          hid_channels_proto->Add(std::move(channel_weight));
+        }
+      }
+
+      process_timer.stop();
+      match_result_proto->set_process_time(
+        GrpcAlgs::pack_time(
+          process_timer.elapsed_time()));
+      info_proto->set_return_value(true);
+
+      return response;
+    }
+    catch(const UserOperationProcessor::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match user. "
+                "Caught UserInfoContainer::NotReady: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MatchResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match user. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MatchResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match user. "
+                "Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MatchResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FUN
+             << ": Can't match user. Unknown error";
+      auto response = create_grpc_error_response<Proto::MatchResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
   void
   UserInfoManagerImpl::get_controllable_chunks(
     UserInfoManagerImpl::ChunkIdList& chunk_ids,
@@ -1680,6 +3154,81 @@ namespace UserInfoSvcs
       delete_old_temporary_profiles_(false);
       all_users_process_step_(
         false, 0, true, CorbaAlgs::unpack_time(cleanup_time), portion);
+    }
+  }
+
+  UserInfoManagerImpl::ClearExpiredResponsePtr
+  UserInfoManagerImpl::clear_expired(ClearExpiredRequestPtr&& request)
+  {
+    static const char* FUN = "UserInfoManagerImpl::clear_expired()";
+    const auto id_request_grpc = request->id_request_grpc();
+
+    if(!request->sync())
+    {
+      try
+      {
+        Task_var delete_old_profiles_msg =
+          new DeleteOldProfilesTask(0, this, false);
+        task_runner_->enqueue_task(delete_old_profiles_msg);
+
+        Task_var delete_old_temp_profiles_msg =
+          new DeleteOldTemporaryProfilesTask(0, this, false);
+        task_runner_->enqueue_task(delete_old_temp_profiles_msg);
+
+        if(user_info_manager_config_.UserProfilesCleanup().present())
+        {
+          Task_var all_users_processing_msg =
+            new AllUsersProcessingTask(
+              0, this, false, 0, GrpcAlgs::unpack_time(request->cleanup_time()), request->portion());
+          task_runner_->enqueue_task(all_users_processing_msg);
+        }
+
+        if(logger_->log_level() >= Logging::Logger::TRACE)
+        {
+          logger_->sstream(
+            Logging::Logger::TRACE,
+            Aspect::USER_INFO_MANAGER) <<
+            "tasks for expired profiles clearing was enqueued forcibly.";
+        }
+
+        auto response = create_grpc_response<Proto::ClearExpiredResponse>(
+          id_request_grpc);
+        return response;
+      }
+      catch (const eh::Exception& exc)
+      {
+        Stream::Error stream;
+        stream << FUN
+               << ": Can't delete old user profiles. Caught eh::Exception: "
+               << exc.what();
+        auto response = create_grpc_error_response<Proto::ClearExpiredResponse>(
+          Proto::Error_Type::Error_Type_Implementation,
+          stream.str(),
+          id_request_grpc);
+        return response;
+      }
+      catch (...)
+      {
+        Stream::Error stream;
+        stream << FUN
+               << ": Can't delete old user profiles. Unknown error";
+        auto response = create_grpc_error_response<Proto::ClearExpiredResponse>(
+          Proto::Error_Type::Error_Type_Implementation,
+          stream.str(),
+          id_request_grpc);
+        return response;
+      }
+    }
+    else
+    {
+      delete_old_profiles_(false);
+      delete_old_temporary_profiles_(false);
+      all_users_process_step_(
+        false, 0, true, GrpcAlgs::unpack_time(request->cleanup_time()), request->portion());
+
+      auto response = create_grpc_response<Proto::ClearExpiredResponse>(
+        id_request_grpc);
+      return response;
     }
   }
 
