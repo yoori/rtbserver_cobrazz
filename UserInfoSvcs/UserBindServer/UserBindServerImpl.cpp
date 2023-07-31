@@ -15,6 +15,7 @@
 #include "UserBindOperationSaver.hpp"
 #include "UserBindOperationLoader.hpp"
 #include "UserBindServerImpl.hpp"
+#include <UServerUtils/metrics_raii.hpp>
 
 namespace Aspect
 {
@@ -245,6 +246,7 @@ namespace UserInfoSvcs
       "  request_info.for_set_cookie = " << request_info.for_set_cookie << std::endl <<
       std::endl;
     */
+    metrics_raii raii(composite_metrics_provider_,"get_user_id&");
 
     UserBindProcessorHolder::Accessor user_bind_accessor =
       user_bind_container_->get_accessor();
@@ -385,6 +387,8 @@ namespace UserInfoSvcs
   UserBindServerImpl::GetUserIdResponsePtr
   UserBindServerImpl::get_user_id(GetUserIdRequestPtr&& request)
   {
+     metrics_raii raii(composite_metrics_provider_,"get_user_id&&");
+
     const auto id_request_grpc = request->id_request_grpc();
     try
     {
@@ -533,6 +537,7 @@ namespace UserInfoSvcs
       AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/
   {
     static const char* FUN = "UserBindServerImpl::add_user_id()";
+    metrics_raii raii(composite_metrics_provider_,"add_user_id&");
 
     /*
     std::cerr << FUN << ": " << std::endl <<
@@ -583,6 +588,7 @@ namespace UserInfoSvcs
   UserBindServerImpl::AddUserIdResponsePtr
   UserBindServerImpl::add_user_id(AddUserIdRequestPtr&& request)
   {
+    metrics_raii raii(composite_metrics_provider_,"add_user_id&&");
     const auto id_request_grpc = request->id_request_grpc();
     try
     {
