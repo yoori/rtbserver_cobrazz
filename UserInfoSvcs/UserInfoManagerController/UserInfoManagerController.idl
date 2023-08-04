@@ -12,6 +12,8 @@ module AdServer
     {
       UserInfoManager user_info_manager;
       ChunkIdSeq chunk_ids;
+      string host;
+      unsigned long grpc_port;
     };
     
     typedef

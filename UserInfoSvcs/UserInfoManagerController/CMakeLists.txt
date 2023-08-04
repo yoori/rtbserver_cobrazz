@@ -1,52 +1,55 @@
 add_idl(UserInfoClusterControlIDL UserInfoClusterControl.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManagerController)
+
 target_link_libraries(UserInfoClusterControlIDL
- Generics
- CORBACommons
-ProcessControlIDL
-StatsIDL
-)
-add_idl(UserInfoManagerControllerIDL UserInfoManagerController.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManagerController)
-target_link_libraries(UserInfoManagerControllerIDL
-UserInfoManagerIDL
-UserInfoManagerControlIDL
-ProcessControlIDL
+  CORBACommons
+  Generics
+  ProcessControlIDL
+  StatsIDL
 )
 
+add_idl(UserInfoManagerControllerIDL UserInfoManagerController.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManagerController)
+
+target_link_libraries(UserInfoManagerControllerIDL
+  ProcessControlIDL
+  UserInfoManagerControlIDL
+  UserInfoManagerIDL
+)
 
 add_executable(UserInfoManagerController
-  UserInfoManagerControllerMain.cpp 
-  UserInfoClusterControlImpl.cpp 
+  UserInfoClusterControlImpl.cpp
   UserInfoManagerControllerImpl.cpp
+  UserInfoManagerControllerMain.cpp
 )
+
 target_link_libraries(UserInfoManagerController
- CORBACommons
- ProcessControlVars
-
- Commons
- AdServerCommonsXSD
- UserInfoManagerControllerConfigXSD
- UserInfoManagerIDL
- UserInfoManagerControlIDL
- UserInfoManagerControllerIDL
- UserInfoClusterControlIDL
+  AdServerCommonsXSD
+  CORBACommons
+  Commons
+  ProcessControlVars
+  UserInfoClusterControlIDL
+  UserInfoManagerControlIDL
+  UserInfoManagerControllerConfigXSD
+  UserInfoManagerControllerIDL
+  UserInfoManagerIDL
 )
-
 
 add_library(UserInfoManagerControllerL SHARED
-
-UserInfoManagerSessionFactory.cpp UserInfoOperationDistributor.cpp UserInfoManagerSessionImpl.cpp
-
+  GrpcUserInfoOperationDistributor.cpp
+  UserInfoManagerSessionImpl.cpp
+  UserInfoManagerSessionFactory.cpp
+  UserInfoOperationDistributor.cpp
 )
+
 target_link_libraries(UserInfoManagerControllerL
- Generics
- CORBACommons
-
- UserInfoManagerIDL
- UserInfoManagerControlIDL
- UserInfoClusterControlIDL
- pthread
- Logger
-UserInfoManagerControllerIDL
-Sync
+  CORBACommons
+  Generics
+  Logger
+  Sync
+  UserInfoClusterControlIDL
+  UserInfoManagerControlIDL
+  UserInfoManagerControllerIDL
+  UserInfoManagerIDL
+  UServerUtils
+  UserInfoManagerProto
+  pthread
 )
-#install(TARGETS UserInfoManagerControllerL UserInfoManagerController UserInfoClusterControlIDL UserInfoManagerControllerIDL  DESTINATION ${INSTALL_DIR})

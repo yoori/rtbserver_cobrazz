@@ -819,6 +819,7 @@ namespace UserInfoSvcs
         AdServer::ProfilingCommons::OP_RUNTIME);
       auto response = create_grpc_response<Proto::UpdateUserFreqCapsResponse>(
         id_request_grpc);
+      response->mutable_info();
       return response;
     }
     catch(const UserOperationProcessor::NotReady& exc)
@@ -956,6 +957,7 @@ namespace UserInfoSvcs
 
       auto response = create_grpc_response<Proto::ConfirmUserFreqCapsResponse>(
         id_request_grpc);
+      response->mutable_info();
       return response;
     }
     catch (const UserInfoContainer::NotReady& exc)
@@ -1098,6 +1100,7 @@ namespace UserInfoSvcs
 
       auto response = create_grpc_response<Proto::ConsiderPublishersOptinResponse>(
         id_request_grpc);
+      response->mutable_info();
       return response;
     }
     catch (const UserOperationProcessor::ChunkNotFound& exc)
@@ -1877,20 +1880,20 @@ namespace UserInfoSvcs
         long placement_colo_id =
           user_info.current_colo_id() != -1 ? user_info.current_colo_id() : placement_colo_id_;
 
-        const auto& merge_user_profile = request->merge_user_profile();
+        const auto& merge_user_profiles = request->merge_user_profiles();
 
         MemBuf merge_base_profile(
-          merge_user_profile.base_user_profile().data(),
-          merge_user_profile.base_user_profile().length());
+          merge_user_profiles.base_user_profile().data(),
+          merge_user_profiles.base_user_profile().length());
         MemBuf merge_add_profile(
-          merge_user_profile.add_user_profile().data(),
-          merge_user_profile.add_user_profile().length());
+          merge_user_profiles.add_user_profile().data(),
+          merge_user_profiles.add_user_profile().length());
         MemBuf merge_history_profile(
-          merge_user_profile.history_user_profile().data(),
-          merge_user_profile.history_user_profile().length());
+          merge_user_profiles.history_user_profile().data(),
+          merge_user_profiles.history_user_profile().length());
         MemBuf merge_freq_cap_profile(
-          merge_user_profile.freq_cap().data(),
-          merge_user_profile.freq_cap().length());
+          merge_user_profiles.freq_cap().data(),
+          merge_user_profiles.freq_cap().length());
 
         UserInfoManagerLogger::HistoryOptimizationInfo ho_info;
 

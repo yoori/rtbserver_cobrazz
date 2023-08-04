@@ -60,11 +60,12 @@ private:
   using PartitionPtr = std::shared_ptr<Partition>;
   using PartitionHolderPtr = std::shared_ptr<PartitionHolder>;
   using PartitionHolderArray = std::vector<PartitionHolderPtr>;
+  using CorbaClientAdapter = CORBACommons::CorbaClientAdapter;
   using CorbaClientAdapter_var = CORBACommons::CorbaClientAdapter_var;
   using FixedTaskRunner_var = Generics::FixedTaskRunner_var;
 
 public:
-  using ChunkId = unsigned int;
+  using ChunkId = unsigned long;
   using ManagerCoro = UServerUtils::Grpc::Manager;
   using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
   using Logger = Logging::Logger;
@@ -89,7 +90,7 @@ public:
     Logger* logger,
     ManagerCoro* manager_coro,
     const ControllerRefList& controller_refs,
-    const CORBACommons::CorbaClientAdapter* corba_client_adapter,
+    const CorbaClientAdapter* corba_client_adapter,
     const ConfigPoolClient& config_pool_client,
     const std::size_t grpc_client_timeout = 1500,
     const Generics::Time& pool_timeout = Generics::Time::ONE_SECOND);
@@ -132,7 +133,7 @@ private:
     const PartitionNumber partition_number) noexcept;
 
   PartitionNumber get_partition_number(
-    const String::SubString& user_id) const noexcept;
+    const String::SubString& id) const noexcept;
 
   PartitionPtr get_partition(
     const PartitionNumber partition_number) noexcept;
@@ -227,11 +228,11 @@ private:
         }
 
         const auto data_case = response->data_case();
-        if (data_case == GetBindResponse::DataCase::kInfo)
+        if (data_case == Response::DataCase::kInfo)
         {
           return response;
         }
-        else if (data_case == GetBindResponse::DataCase::kError)
+        else if (data_case == Response::DataCase::kError)
         {
           const auto& error = response->error();
           const auto error_type = error.type();
