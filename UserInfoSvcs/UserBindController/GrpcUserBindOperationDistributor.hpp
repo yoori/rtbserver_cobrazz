@@ -12,6 +12,7 @@
 #include "UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp"
 
 // UNIX_COMMONS
+#include <GrpcAlgs.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
@@ -24,19 +25,6 @@
 
 namespace AdServer::UserInfoSvcs
 {
-
-namespace Internal
-{
-
-template<class T>
-struct always_false : std::false_type
-{
-};
-
-template<class T>
-constexpr auto always_false_v = always_false<T>::value;
-
-} // namespace Internal
 
 extern const char* ASPECT_GRPC_USER_BIND_DISTRIBUTOR;
 
@@ -214,7 +202,7 @@ private:
         }
         else
         {
-          static_assert(Internal::always_false_v<Request>);
+          static_assert(GrpcAlgs::always_false_v<Request>);
         }
 
         auto response = client_container->template do_request<Client, Request, Response>(
@@ -464,7 +452,7 @@ public:
     }
     else
     {
-      static_assert(Internal::always_false_v<Client>);
+      static_assert(GrpcAlgs::always_false_v<Client>);
     }
 
     auto result = client->write(std::move(request), timeout);

@@ -398,6 +398,7 @@ namespace Bidding
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     BlacklistedTimeIntervals blacklisted_time_intervals_;
     RequestInfoFiller::AccountTraitsById account_traits_;
+    ManagerCoro_var manager_coro_;
 
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
@@ -411,8 +412,6 @@ namespace Bidding
     Generics::TaskRunner_var control_task_runner_;
     PlannerPool_var planner_pool_;
     StatHolder_var stats_;
-
-    ManagerCoro_var manager_coro_;
 
     mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;
     ExtConfig_var ext_config_;

@@ -528,13 +528,13 @@ namespace AdServer
         */
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+        const bool is_grpc_enable = config_grpc_client.enable();
+
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-          const bool is_grpc_enable = config_grpc_client.enable();
-
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
@@ -549,7 +549,11 @@ namespace AdServer
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          manager_coro_.in(),
+          config_grpc_data.first,
+          config_grpc_data.second,
+          is_grpc_enable);
         add_child_object(user_info_client_);
 
 

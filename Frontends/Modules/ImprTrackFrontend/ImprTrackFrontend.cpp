@@ -319,12 +319,12 @@ namespace ImprTrack
           callback(), config_->match_threads(), 0, config_->match_task_limit());
         add_child_object(task_runner_);
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
@@ -339,7 +339,11 @@ namespace ImprTrack
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          manager_coro_.in(),
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_server_controller_refs;

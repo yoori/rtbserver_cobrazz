@@ -22,22 +22,10 @@
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/UserInfoManip.hpp>
+#include <GrpcAlgs.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
-
-namespace Internal
-{
-
-template<class T>
-struct always_false : std::false_type
-{
-};
-
-template<class T>
-constexpr auto always_false_v = always_false<T>::value;
-
-} // namespace Internal
 
 extern const char* ASPECT_GRPC_USER_INFO_DISTRIBUTOR;
 
@@ -67,6 +55,17 @@ struct ProfilesRequestInfo final
 struct SeqOrderInfo final
 {
   SeqOrderInfo() = default;
+
+  SeqOrderInfo(
+    const std::uint32_t ccg_id,
+    const std::uint32_t set_id,
+    const std::uint32_t imps)
+    : ccg_id(ccg_id),
+      set_id(set_id),
+      imps(imps)
+  {
+  }
+
   ~SeqOrderInfo() = default;
 
   std::uint32_t ccg_id = 0;
@@ -92,6 +91,15 @@ struct UserInfo final
 struct ChannelTriggerMatch final
 {
   ChannelTriggerMatch() = default;
+
+  ChannelTriggerMatch(
+    const std::uint32_t channel_id,
+    const std::uint32_t channel_trigger_id)
+    : channel_id(channel_id),
+      channel_trigger_id(channel_trigger_id)
+  {
+  }
+
   ~ChannelTriggerMatch() = default;
 
   std::uint32_t channel_id = 0;
@@ -393,7 +401,7 @@ private:
         }
         else
         {
-          static_assert(Internal::always_false_v<Request>);
+          static_assert(GrpcAlgs::always_false_v<Request>);
         }
 
         auto response = client_container->template do_request<Client, Request, Response>(
@@ -712,7 +720,7 @@ public:
     }
     else
     {
-      static_assert(Internal::always_false_v<Client>);
+      static_assert(GrpcAlgs::always_false_v<Client>);
     }
 
     auto result = client->write(std::move(request), timeout);

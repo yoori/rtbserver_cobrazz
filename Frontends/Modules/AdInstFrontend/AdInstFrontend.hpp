@@ -33,6 +33,9 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include <xsd/Frontends/FeConfig.hpp>
 
 #include "RequestInfoFiller.hpp"
@@ -52,7 +55,12 @@ namespace Instantiate
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+  private:
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     typedef Configuration::FeConfig::CommonFeConfiguration_type
@@ -164,6 +172,7 @@ namespace Instantiate
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CookieManagerPtr cookie_manager_;

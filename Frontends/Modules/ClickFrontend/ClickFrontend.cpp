@@ -313,12 +313,12 @@ namespace AdServer
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
@@ -333,7 +333,11 @@ namespace AdServer
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          manager_coro_.in(),
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;

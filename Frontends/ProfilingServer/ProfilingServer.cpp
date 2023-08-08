@@ -590,12 +590,12 @@ namespace Profiling
             callback()));
       }
 
+      const auto& config_grpc_client = config_->GrpcClientPool();
+      const auto config_grpc_data = Config::create_pool_client_config(
+        config_->GrpcClientPool());
+
       if(!config_->UserBindControllerGroup().empty())
       {
-        const auto& config_grpc_client = config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_->GrpcClientPool());
-
         user_bind_client_ = new FrontendCommons::UserBindClient(
           config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
@@ -611,7 +611,11 @@ namespace Profiling
       user_info_client_ = new FrontendCommons::UserInfoClient(
         config_->UserInfoManagerControllerGroup(),
         corba_client_adapter_.in(),
-        logger_callback_holder_.logger());
+        logger_callback_holder_.logger(),
+        manager_coro_.in(),
+        config_grpc_data.first,
+        config_grpc_data.second,
+        config_grpc_client.enable());
       add_child_object(user_info_client_);
 
       CORBACommons::CorbaObjectRefList campaign_managers_refs;

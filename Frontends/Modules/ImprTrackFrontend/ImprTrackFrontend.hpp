@@ -184,6 +184,7 @@ namespace ImprTrack
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     std::unique_ptr<
@@ -194,8 +195,6 @@ namespace ImprTrack
 
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
-
-    ManagerCoro_var manager_coro_;
 
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;

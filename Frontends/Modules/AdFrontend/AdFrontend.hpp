@@ -287,14 +287,13 @@ namespace AdServer
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
 
     CookieManagerPtr cookie_manager_;
     std::list<std::string> remove_cookies_holder_;
     FrontendCommons::CookieNameSet remove_cookies_;
-
-    ManagerCoro_var manager_coro_;
 
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;

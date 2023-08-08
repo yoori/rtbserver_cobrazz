@@ -18,6 +18,9 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer
@@ -35,7 +38,12 @@ namespace Passback
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+  private:
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     Frontend(
@@ -106,6 +114,7 @@ namespace Passback
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;

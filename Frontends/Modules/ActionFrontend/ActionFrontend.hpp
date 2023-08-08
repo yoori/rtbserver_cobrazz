@@ -230,6 +230,7 @@ namespace Action
 
     DerivedConfig derived_config_;
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<AdServer::Action::RequestInfoFiller> request_info_filler_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
@@ -237,7 +238,6 @@ namespace Action
       channel_servers_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     CookieManagerPtr cookie_manager_;
-    ManagerCoro_var manager_coro_;
 
     IPMapPtr ip_map_;
     FileCachePtr track_pixel_;

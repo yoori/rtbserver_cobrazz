@@ -184,6 +184,7 @@ namespace AdServer
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<ClickFE::RequestInfoFiller> request_info_filler_;
 
@@ -200,8 +201,6 @@ namespace AdServer
 
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
-
-    ManagerCoro_var manager_coro_;
 
     Generics::TaskRunner_var task_runner_;
 

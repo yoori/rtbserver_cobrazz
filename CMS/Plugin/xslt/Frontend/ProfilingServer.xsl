@@ -244,10 +244,10 @@
     </cfg:Coroutine>
 
     <cfg:GrpcClientPool
-            num_channels="{$grpc-pool-client-num-channels}"
-            num_clients="{$grpc-pool-client-num-clients}"
-            timeout="{$grpc-pool-client-timeout}"
-            enable="{$grpc-pool-client-enable}">
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
       <xsl:call-template name="GrpcClientChannelArgList"/>
     </cfg:GrpcClientPool>
 

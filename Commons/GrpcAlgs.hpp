@@ -16,6 +16,14 @@ namespace GrpcAlgs
 
 DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
+template<class T>
+struct always_false : std::false_type
+{
+};
+
+template<class T>
+constexpr auto always_false_v = always_false<T>::value;
+
 inline
 std::string
 pack_time(const Generics::Time& time)
