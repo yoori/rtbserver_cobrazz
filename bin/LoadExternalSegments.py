@@ -16,12 +16,6 @@ from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.Minio import MinioRequest
 
 
-try:
-    from minio.error import MinioException
-except ImportError:
-    from minio.error import MinioError as MinioException
-
-
 VALID_FILE_CHARS = set("-_.()%s%s" % (string.ascii_letters, string.digits))
 
 
@@ -50,14 +44,14 @@ class Source:
         return Context(*args, service=self.service, markers_dir=self.markers_dir, tmp_dir=self.tmp_dir, out_dir=self.out_dir, **kw)
 
 
-class MinioSource(Source):
+class AmberSource(Source):
     def __init__(self, service, params):
         super().__init__(service, params)
-        mp = params["minio"]
-        self.url = mp["url"]
-        self.acc = mp["acc"]
-        self.secret = mp["secret"]
-        self.bucket = mp["bucket"]
+        p = params["amber"]
+        self.url = p["url"]
+        self.acc = p["acc"]
+        self.secret = p["secret"]
+        self.bucket = p["bucket"]
         self.max_days = params["max_days"]
 
     def process(self):
@@ -96,11 +90,7 @@ class MinioSource(Source):
                                             name=lambda: make_segment_filename(segment_id, is_short) + ctx.fname_stamp)
                                         output_writer.progress.verbosity = 3
                                         output_writer.write_line(user_id)
-        except MinioException as e:
-            self.service.print_(0, e)
-        except urllib3.exceptions.HTTPError as e:
-            self.service.print_(0, e)
-        except EOFError as e:
+        except Exception as e:
             self.service.print_(0, e)
 
     def __load_meta(self, client):
@@ -113,18 +103,23 @@ class MinioSource(Source):
         return meta
 
 
-class HTTPSource(Source):
-    def __init__(self, service, params):
-        super().__init__(service, params)
-        mp = params["http"]
-        self.__url = f'https://{mp["user"]}:{mp["password"]}@{mp["url"]}'
-        self.__taxonomy = {}
-        with LineReader(self.service, mp["taxonomy_file"]) as f:
+class AdriverTaxonomy(dict):
+    def __init__(self, service, path):
+        dict.__init__(self)
+        with LineReader(service, path) as f:
             for line in f.read_lines():
                 if line:
                     segment_id, segment = line.split("\t")
                     if segment:
-                        self.__taxonomy[segment_id] = segment
+                        self[segment_id] = segment
+
+
+class AdriverSource(Source):
+    def __init__(self, service, params):
+        super().__init__(service, params)
+        p = params["adriver"]
+        self.__url = f'https://{p["user"]}:{p["password"]}@{p["url"]}'
+        self.__taxonomy = AdriverTaxonomy(self.service, p["taxonomy_file"])
 
     def process(self):
         try:
@@ -160,9 +155,43 @@ class HTTPSource(Source):
                                                 name=lambda: make_segment_filename(segment_id, is_short) + ctx.fname_stamp)
                                             output_writer.progress.verbosity = 3
                                             output_writer.write_line(user_id)
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             self.service.print_(0, e)
-        except EOFError as e:
+
+
+class AdriverLocalSource(Source):
+    def __init__(self, service, params):
+        super().__init__(service, params)
+        p = params["adriver_local"]
+        self.__dir = p["dir"]
+        os.makedirs(self.__dir, exist_ok=True)
+        self.__taxonomy = AdriverTaxonomy(self.service, p["taxonomy_file"])
+
+    def process(self):
+        try:
+            for root, dirs, files in os.walk(self.__dir, True):
+                for name in sorted(files):
+                    path = os.path.join(self.__dir, name)
+                    self.service.verify_running()
+                    with self.create_context() as ctx:
+                        if ctx.markers.add(name):
+                            self.service.print_(1, f"Processing {name}")
+                            with LineReader(self.service, path) as reader:
+                                for line in reader.read_lines():
+                                    user_id, segment_ids = line.split("\t")
+                                    is_short = len(user_id) < 32
+                                    for segment_id in segment_ids.split(","):
+                                        segment_id = self.__taxonomy.get(segment_id, segment_id)
+                                        output_writer = ctx.files.get_line_writer(
+                                            key=(segment_id, is_short),
+                                            name=lambda: make_segment_filename(segment_id,
+                                                                               is_short) + ctx.fname_stamp)
+                                        output_writer.progress.verbosity = 3
+                                        output_writer.write_line(user_id)
+                    self.service.print_(1, f"Removing {path}")
+                    os.remove(path)
+                break
+        except Exception as e:
             self.service.print_(0, e)
 
 
@@ -174,13 +203,14 @@ class Application(Service):
     def on_start(self):
         super().on_start()
         for source in self.config.get("sources", tuple()):
-            minio = source.get("minio")
-            if minio is not None:
-                self.sources.append(MinioSource(self, source))
+            if source.get("amber") is not None:
+                self.sources.append(AmberSource(self, source))
                 continue
-            http = source.get("http")
-            if http is not None:
-                self.sources.append(HTTPSource(self, source))
+            if source.get("adriver") is not None:
+                self.sources.append(AdriverSource(self, source))
+                continue
+            if source.get("adriver_local") is not None:
+                self.sources.append(AdriverLocalSource(self, source))
                 continue
             raise RuntimeError("unknown source type")
 
