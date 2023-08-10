@@ -253,6 +253,7 @@ namespace AdServer
     Configuration_var frontend_config_;
 
     CommonModule_var common_module_;
+    ManagerCoro_var manager_coro_;
 
     FileCachePtr pixel_;
     std::string fe_config_path_;
@@ -260,7 +261,6 @@ namespace AdServer
     SourceMap sources_;
     std::unique_ptr<GeoIPMapping::IPMapCity2> ip_map_;
     std::unique_ptr<UserBind::RequestInfoFiller> request_info_filler_;
-    ManagerCoro_var manager_coro_;
 
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;

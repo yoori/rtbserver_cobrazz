@@ -10,6 +10,7 @@
 // UNIX_COMMONS
 #include <Generics/MemBuf.hpp>
 #include <Generics/Time.hpp>
+#include <Logger/Logger.hpp>
 
 namespace GrpcAlgs
 {
@@ -135,6 +136,96 @@ inline DecimalType unpack_decimal(const std::string& data)
   assert(DecimalType::PACK_SIZE == data.size());
   result.unpack(data.data());
   return result;
+}
+
+template<class Error>
+inline void print_grpc_error(
+  const Error& error,
+  Logging::Logger* logger,
+  const char* aspect) noexcept
+{
+  using ErrorType = typename Error::Type;
+
+  try
+  {
+    switch (error.type())
+    {
+      case ErrorType::Error_Type_ChunkNotFound:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Chunk not found.";
+        logger->error(
+          stream.str(),
+          aspect);
+        break;
+      }
+      case ErrorType::Error_Type_NotReady:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Not ready.";
+        logger->error(
+          stream.str(),
+          aspect);
+        break;
+      }
+      case ErrorType::Error_Type_Implementation:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": "
+               << error.description();
+        logger->error(
+          stream.str(),
+          aspect);
+        break;
+      }
+      default:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Unknown error type";
+        logger->error(
+          stream.str(),
+          aspect);
+      }
+    }
+  }
+  catch (...)
+  {
+  }
+}
+
+template<class ResponsePtr>
+void print_grpc_error_response(
+  const ResponsePtr& response,
+  Logging::Logger* logger,
+  const char* aspect) noexcept
+{
+  try
+  {
+    if (!response)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Internal grpc error";
+      logger->error(stream.str(), aspect);
+    }
+    else
+    {
+      if (response->has_error())
+      {
+        print_grpc_error(
+          response->error(),
+          logger,
+          aspect);
+      }
+    }
+  }
+  catch (...)
+  {
+  }
 }
 
 } // namespace GrpcAlgs

@@ -1594,10 +1594,10 @@ namespace Bidding
             ext_user_id_it != external_user_ids.end();
             ++ext_user_id_it)
           {
-            GetUserIdResponsePtr response;
+            GetUserIdResponsePtr grpc_response;
             if (grpc_distributor)
             {
-              response = grpc_distributor->get_user_id(
+              grpc_response = grpc_distributor->get_user_id(
                 *ext_user_id_it,
                 String::SubString{},
                 request_info.current_time,
@@ -1607,14 +1607,22 @@ namespace Bidding
                 false);
             }
 
-            if (response && response->has_info())
+            if (grpc_response && grpc_response->has_info())
             {
-              const auto& info = response->info();
+              const auto& info = grpc_response->info();
               min_age_reached |= info.min_age_reached();
               local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
             }
             else
             {
+              if (grpc_distributor)
+              {
+                GrpcAlgs::print_grpc_error_response(
+                  grpc_response,
+                  logger(),
+                  Aspect::BIDDING_FRONTEND);
+              }
+
               AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
               get_request_info.id << *ext_user_id_it;
               get_request_info.timestamp = CorbaAlgs::pack_time(request_info.current_time);
@@ -2008,8 +2016,6 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::history_match_()";
 
-    using MatchResponsePtr =
-      FrontendCommons::UserInfoClient::GrpcDistributor::MatchResponsePtr;
     using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
     using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
 
@@ -2034,7 +2040,7 @@ namespace Bidding
       AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
         grpc_distributor = user_info_client_->grpc_distributor();
 
-      MatchResponsePtr response;
+      bool is_grpc_success = false;
       if (grpc_distributor)
       {
         try
@@ -2134,10 +2140,18 @@ namespace Bidding
             }
           }
 
-          response = grpc_distributor->match(user_info, match_params);
+          auto response = grpc_distributor->match(user_info, match_params);
           if (response && response->has_info())
           {
             request_params.profiling_available = true;
+            is_grpc_success = true;
+          }
+          else
+          {
+             GrpcAlgs::print_grpc_error_response(
+               response,
+               logger(),
+               Aspect::BIDDING_FRONTEND);
           }
         }
         catch (const eh::Exception& exc)
@@ -2157,7 +2171,7 @@ namespace Bidding
         }
       }
 
-      if((!response || response->has_error()) && uim_session.in())
+      if(!is_grpc_success && uim_session.in())
       {
         try
         {
@@ -2535,58 +2549,13 @@ namespace Bidding
                 ad_slot_result.track_impr ? CampaignIds{} : campaign_ids,
                 ad_slot_result.track_impr ? campaign_ids : UcCampaignIds{});
 
-              if (!response)
+              if (!response || response->has_error())
               {
                 is_error = true;
-                break;
-              }
-              else if (response->has_error())
-              {
-                is_error = true;
-                const auto& error = response->error();
-                switch (error.type())
-                {
-                  case AdServer::UserInfoSvcs::Proto::Error_Type::Error_Type_ChunkNotFound:
-                  {
-                    Stream::Error stream;
-                    stream << FNS
-                           << ": Chunk not found.";
-                    logger()->error(
-                      stream.str(),
-                      Aspect::BIDDING_FRONTEND);
-                    break;
-                  }
-                  case AdServer::UserInfoSvcs::Proto::Error_Type::Error_Type_NotReady:
-                  {
-                    Stream::Error stream;
-                    stream << FNS
-                           << ": UserInfoManager not ready for post match.";
-                    logger()->error(
-                      stream.str(),
-                      Aspect::BIDDING_FRONTEND);
-                    break;
-                  }
-                  case AdServer::UserInfoSvcs::Proto::Error_Type::Error_Type_Implementation:
-                  {
-                    Stream::Error stream;
-                    stream << FNS
-                            << ": "
-                            << error.description();
-                    logger()->error(
-                      stream.str(),
-                      Aspect::BIDDING_FRONTEND);
-                    break;
-                  }
-                  default:
-                  {
-                    Stream::Error stream;
-                    stream << FNS
-                           << ": Unknown error type";
-                    logger()->error(
-                      stream.str(),
-                      Aspect::BIDDING_FRONTEND);
-                  }
-                }
+                GrpcAlgs::print_grpc_error_response(
+                  response,
+                  logger(),
+                  Aspect::BIDDING_FRONTEND);
                 break;
               }
             }
