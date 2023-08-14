@@ -803,7 +803,7 @@ namespace AdServer
           response = grpc_distributor->add_user_id(
             request_info.external_id,
             request_info.time,
-            Commons::UserId().to_string());
+            GrpcAlgs::pack_user_id(Commons::UserId{}));
         }
 
         if (!response || response->has_error())
@@ -1336,7 +1336,7 @@ namespace AdServer
               {
                 grpc_response = grpc_distributor->get_user_id(
                   cookie_external_id_str,
-                  result_user_id.to_string(),
+                  GrpcAlgs::pack_user_id(result_user_id),
                   request_info.time,
                   Generics::Time::ZERO,
                   true,
@@ -1643,7 +1643,7 @@ namespace AdServer
                     if (grpc_distributor)
                     {
                       const std::string user_id =
-                        (!opted_out ? result_user_id : Commons::UserId()).to_string();
+                        GrpcAlgs::pack_user_id(!opted_out ? result_user_id : Commons::UserId{});
                       grpc_response = grpc_distributor->add_user_id(
                         cur_external_id,
                         request_info.time,
@@ -2178,7 +2178,7 @@ namespace AdServer
             cohort.data() + cohort.length());
 
           UserInfo user_info;
-          user_info.user_id = result_user_id.to_string();
+          user_info.user_id = GrpcAlgs::pack_user_id(result_user_id);
           user_info.last_colo_id = colo_id;
           user_info.request_colo_id = colo_id;
           user_info.current_colo_id = -1;
@@ -2197,7 +2197,7 @@ namespace AdServer
             profiles_request.freq_cap_profile = true;
 
             auto get_user_profile_response = grpc_distributor->get_user_profile(
-              merge_user_id.to_string(),
+              GrpcAlgs::pack_user_id(merge_user_id),
               false, // persistent profile
               profiles_request);
             if (get_user_profile_response
@@ -2212,7 +2212,7 @@ namespace AdServer
               {
                 do_match = false;
                 auto remove_user_profile_response = grpc_distributor->remove_user_profile(
-                  merge_user_id.to_string());
+                  GrpcAlgs::pack_user_id(merge_user_id));
                 if (!remove_user_profile_response || remove_user_profile_response->has_error())
                 {
                   is_grpc_success = false;

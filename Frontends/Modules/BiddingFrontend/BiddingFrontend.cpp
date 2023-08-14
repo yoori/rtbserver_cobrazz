@@ -1668,15 +1668,13 @@ namespace Bidding
             {
               if(ext_user_id_it != base_ext_user_id_it)
               {
-                const auto user_id = match_user_id.to_string();
-
                 AddUserIdResponsePtr response;
                 if (grpc_distributor)
                 {
                   response = grpc_distributor->add_user_id(
                     *ext_user_id_it,
                     request_info.current_time,
-                    user_id);
+                    GrpcAlgs::pack_user_id(match_user_id));
                 }
 
                 if (!response || response->has_error())
@@ -2064,8 +2062,8 @@ namespace Bidding
             platform_ids.get_buffer() + platform_ids.length());
 
           UserInfo user_info;
-          user_info.user_id = user_id.to_string();
-          user_info.huser_id = AdServer::Commons::UserId().to_string();
+          user_info.user_id = GrpcAlgs::pack_user_id(user_id);
+          user_info.huser_id = GrpcAlgs::pack_user_id(AdServer::Commons::UserId{});
           user_info.last_colo_id = colo_id_;
           user_info.request_colo_id = colo_id_;
           user_info.current_colo_id = -1;
@@ -2529,17 +2527,18 @@ namespace Bidding
                 ad_slot_result.uc_freq_caps.get_buffer(),
                 ad_slot_result.uc_freq_caps.get_buffer() + ad_slot_result.uc_freq_caps.length());
 
-              const auto user_id_string = user_id.to_string();
-
               std::string request_id_string;
-              request_id_string.resize(ad_slot_result.request_id.length());
-              std::memcpy(
-                request_id_string.data(),
-                ad_slot_result.request_id.get_buffer(),
-                ad_slot_result.request_id.length());
+              if (ad_slot_result.request_id.length() != 0)
+              {
+                request_id_string.resize(ad_slot_result.request_id.length());
+                std::memcpy(
+                  request_id_string.data(),
+                  ad_slot_result.request_id.get_buffer(),
+                  ad_slot_result.request_id.length());
+              }
 
               response = grpc_distributor->update_user_freq_caps(
-                user_id_string,
+                GrpcAlgs::pack_user_id(user_id),
                 now,
                 request_id_string,
                 freq_caps,

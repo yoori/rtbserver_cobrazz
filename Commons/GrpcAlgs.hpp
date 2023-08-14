@@ -47,6 +47,16 @@ unpack_time(const std::string& data)
 }
 
 inline
+std::string
+pack_user_id(const AdServer::Commons::UserId& user_id)
+{
+  std::string result;
+  result.resize(user_id.size());
+  std::copy(user_id.begin(), user_id.end(), result.data());
+  return result;
+}
+
+inline
 AdServer::Commons::UserId
 unpack_user_id(const std::string& user_id)
 {
