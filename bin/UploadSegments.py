@@ -153,6 +153,7 @@ class Application(Service):
 
         self.__lock = threading.Lock()
         self.__subprocesses = set()
+        self.__asyncio_tasks = set()
         self.__http_thread = None
 
     def on_start(self):
@@ -195,7 +196,11 @@ class Application(Service):
 
     def on_stop_signal(self):
         with self.__lock:
-            self.print_(0, "Shutting down subprocesses")
+            self.print_(0, "Cancelling asyncio tasks...")
+            for task in tuple(self.__asyncio_tasks):
+                task.cancel()
+                self.__asyncio_tasks.remove(task)
+            self.print_(0, "Shutting down subprocesses...")
             for pid in self.__subprocesses:
                 parent = psutil.Process(pid=pid)
                 children = parent.children(recursive=True)
@@ -244,6 +249,8 @@ class Application(Service):
         finally:
             if connection is not None:
                 connection.close()
+            loop.run_until_complete(asyncio.sleep(0.250))
+            loop.close()
 
     def enum_uids(self, upload):
         if upload.channel_prefix is not None:
@@ -346,9 +353,24 @@ class Application(Service):
 
                         async def run_lines(f):
                             async with aiohttp.ClientSession() as session:
-                                await asyncio.gather(
-                                    *tuple(self.on_uids_lines(f, file_info.is_stable, keyword, session, metrics)
-                                        for _ in range(self.__upload_threads)))
+                                tasks = []
+                                loop = asyncio.get_event_loop()
+                                try:
+                                    with self.__lock:
+                                        for i in range(self.__upload_threads):
+                                            task = loop.create_task(
+                                                self.on_uids_lines(f, file_info.is_stable, keyword, session, metrics))
+                                            tasks.append(task)
+                                            self.__asyncio_tasks.add(task)
+                                    for task in tasks:
+                                        try:
+                                            await task
+                                        except asyncio.CancelledError:
+                                            pass
+                                finally:
+                                    with self.__lock:
+                                        for task in tasks:
+                                            self.__asyncio_tasks.discard(task)
 
                         in_paths_str = " ".join(os.path.join(in_dir, in_name) for in_name in in_names)
 
