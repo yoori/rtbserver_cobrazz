@@ -11,6 +11,8 @@ import asyncio
 import threading
 import random
 import shutil
+import flask
+import werkzeug
 from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
@@ -59,6 +61,12 @@ BEGIN
 END$$;"""
 
 
+class Metrics:
+    def __init__(self):
+        self.files_to_upload = 0
+        self.uploaded_users = 0
+
+
 class Upload:
     def __init__(self, params):
         self.account_id = params["account_id"]
@@ -69,6 +77,18 @@ class Upload:
         self.url_segments_dir = params.get("url_segments_dir")
         if self.url_segments_dir is not None:
             self.url_markers_dir = os.path.join(workspace_dir, "url_markers")
+        self.metrics = {}
+
+    def make_metrics(self, path):
+        try:
+            return self.metrics[path]
+        except KeyError:
+            m = Metrics()
+            for root, dirs, files in os.walk(path, True):
+                m.files_to_upload = len(files)
+                break
+            self.metrics[path] = m
+            return m
 
 
 class FileInfo:
@@ -92,12 +112,32 @@ class FileInfo:
         return f"FileInfo(reg_name={self.reg_name}, need_sign_uids={self.need_sign_uids}, is_stable={self.is_stable})"
 
 
+class HTTPThread(threading.Thread):
+
+    def __init__(self, app, host, port):
+        super().__init__()
+        try:
+            self.server = werkzeug.serving.make_server(host, port, app)
+        except SystemExit as e:
+            raise RuntimeError(f"Failed to make HTTP server: SystemExit {e}")
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        self.server.serve_forever()
+
+    def shutdown(self):
+        self.server.shutdown()
+        self.join()
+
+
 class Application(Service):
     def __init__(self):
         super().__init__()
 
         self.args_parser.add_argument("--upload-url", help="URL of server.")
         self.args_parser.add_argument("--upload-wait-time", type=float, help="Time to wait for upload.")
+        self.args_parser.add_argument("--name", help="Upload name (for metrics).")
         self.args_parser.add_argument("--account-id", type=int, help="Account ID.")
         self.args_parser.add_argument("--channel-prefix", help="Filename prefix.")
         self.args_parser.add_argument("--workspace-dir", help="Folder that stores the state ect.")
@@ -108,49 +148,75 @@ class Application(Service):
         self.args_parser.add_argument("--pg-user", help="PostgreSQL user name.")
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
         self.args_parser.add_argument("--private-key-file", help="Private .der key for signing uids.")
+        self.args_parser.add_argument("--http-host", help="HTTP endpoint host.")
+        self.args_parser.add_argument("--http-port", type=int, help="HTTP endpoint port.")
 
+        self.__lock = threading.Lock()
         self.__subprocesses = set()
-        self.__subprocesses_lock = threading.Lock()
+        self.__http_thread = None
 
     def on_start(self):
         super().on_start()
 
-        self.upload_url = self.params["upload_url"]
-        if isinstance(self.upload_url, str):
-            self.upload_url = [self.upload_url]
-        self.upload_wait_time = self.params["upload_wait_time"]
+        self.__upload_url = self.params["upload_url"]
+        if isinstance(self.__upload_url, str):
+            self.__upload_url = [self.__upload_url]
+        self.__upload_wait_time = self.params["upload_wait_time"]
 
-        self.uploads = []
+        self.__uploads = {}
+
+        def add_upload(params):
+            name = params["name"]
+            if name in self.__uploads:
+                raise RuntimeError(f"Upload name duplication: {name}")
+            self.__uploads[name] = Upload(params)
+
         if self.params.get("account_id") is not None:
-            self.uploads.append(Upload(self.params))
+            add_upload(self.params)
         for upload in self.config.get("uploads", tuple()):
-            self.uploads.append(Upload(upload))
+            add_upload(upload)
 
-        self.upload_threads = self.params["upload_threads"]
+        self.__upload_threads = self.params["upload_threads"]
 
-        self.private_key_file = self.params["private_key_file"]
+        self.__private_key_file = self.params["private_key_file"]
 
         if shutil.which("UserIdUtil") is None:
             raise RuntimeError("UserIdUtil not found")
 
+        http_host = self.params.get("http_host")
+        if http_host is not None:
+            # initialize initial metrics before HTTP start
+            for upload in self.__uploads.values():
+                for _ in self.enum_uids(upload):
+                    pass
+            self.__http_thread = HTTPThread(self.__make_http_application(), http_host, self.params["http_port"])
+            self.print_(0, "Starting HTTP server")
+            self.__http_thread.start()
+
     def on_stop_signal(self):
-        with self.__subprocesses_lock:
+        with self.__lock:
+            self.print_(0, "Shutting down subprocesses")
             for pid in self.__subprocesses:
                 parent = psutil.Process(pid=pid)
-                for child in parent.children(recursive=True):
+                children = parent.children(recursive=True)
+                children.append(parent)
+                for p in children:
                     try:
-                        child.kill()
-                    except:
+                        p.kill()
+                    except psutil.NoSuchProcess:
                         pass
-                try:
-                    parent.kill()
-                except:
-                    pass
         super().on_stop_signal()
+
+    def on_stop(self):
+        if self.__http_thread is not None:
+            self.print_(0, "Shutting down HTTP server")
+            self.__http_thread.shutdown()
+            self.__http_thread = None
+        super().on_stop()
 
     def on_run(self):
         threads = []
-        for upload in self.uploads:
+        for upload in self.__uploads.values():
             thread = threading.Thread(target=self.on_thread, args=(upload,))
             threads.append(thread)
             thread.start()
@@ -179,32 +245,33 @@ class Application(Service):
             if connection is not None:
                 connection.close()
 
-    async def on_uids(self, upload, cursor):
+    def enum_uids(self, upload):
         if upload.channel_prefix is not None:
-            await self.on_uids_dir(cursor, upload.in_dir, upload.markers_dir, upload.channel_prefix, upload.account_id)
+            with self.__lock:
+                metrics = upload.make_metrics(upload.in_dir)
+            yield upload.in_dir, upload.markers_dir, upload.channel_prefix, upload.account_id, metrics
         for root, dirs, files in os.walk(upload.in_dir, True):
             for subdir in dirs:
-                await self.on_uids_dir(
-                    cursor,
-                    os.path.join(upload.in_dir, subdir),
-                    os.path.join(upload.markers_dir, subdir),
-                    subdir,
-                    upload.account_id)
+                in_dir = os.path.join(upload.in_dir, subdir)
+                with self.__lock:
+                    metrics = upload.make_metrics(in_dir)
+                yield in_dir, os.path.join(upload.markers_dir, subdir), subdir, upload.account_id, metrics
             break
 
-    async def on_uids_dir(self, cursor, in_dir, markers_dir, channel_prefix, account_id):
+    async def on_uids(self, upload, cursor):
+        for in_dir, markers_dir, channel_prefix, account_id, metrics in self.enum_uids(upload):
+            await self.on_uids_dir(cursor, in_dir, markers_dir, channel_prefix, account_id, metrics)
+
+    async def on_uids_dir(self, cursor, in_dir, markers_dir, channel_prefix, account_id, metrics):
         self.print_(1, f"In dir {in_dir}")
         self.print_(1, f"Markers dir {markers_dir}")
         try:
             with Context(self, in_dir=in_dir) as in_dir_ctx:
-                with Context(self, markers_dir=markers_dir) as markers_ctx:
-                    unprocessed_count = len(tuple(in_dir_ctx.files.get_in_files()))
-                self.print_(0, f"Unprocessed files count: {unprocessed_count}")
-
                 while True:
                     self.verify_running()
                     with Context(self, markers_dir=markers_dir) as markers_ctx:
                         in_files = tuple(in_dir_ctx.files.get_in_files())
+                        metrics.files_to_upload = len(in_files)
                         if not in_files:
                             break
                         file_info = FileInfo(max(
@@ -220,7 +287,7 @@ class Application(Service):
                                 (channel_id, account_id, keyword, keyword, keyword, keyword, keyword))
                             cursor.execute("COMMIT;")
 
-                        if not markers_ctx.markers.check_mtime_interval(reg_marker_name, self.upload_wait_time):
+                        if not markers_ctx.markers.check_mtime_interval(reg_marker_name, self.__upload_wait_time):
                             continue
 
                         in_names = []
@@ -275,31 +342,31 @@ class Application(Service):
                                             new_group_ids[(group_id, data)] = new_group_id
                                         file_groups[new_group_id] = new_file_group
 
-                        self.print_(0, f"Unique file count: {len(in_names)}")
+                        self.print_(0, f"Unique files count: {len(in_names)}")
 
                         async def run_lines(f):
                             async with aiohttp.ClientSession() as session:
                                 await asyncio.gather(
-                                    *tuple(self.on_line(f, file_info.is_stable, keyword, session)
-                                        for _ in range(self.upload_threads)))
+                                    *tuple(self.on_uids_lines(f, file_info.is_stable, keyword, session, metrics)
+                                        for _ in range(self.__upload_threads)))
 
                         in_paths_str = " ".join(os.path.join(in_dir, in_name) for in_name in in_names)
 
                         if file_info.need_sign_uids:
-                            cmd = ['sh', '-c', f'cat {in_paths_str} | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.private_key_file}"']
+                            cmd = ['sh', '-c', f'cat {in_paths_str} | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.__private_key_file}"']
                         else:
                             cmd = ['sh', '-c', f'cat {in_paths_str} | sort -u --parallel=4']
 
                         with subprocess.Popen(cmd, stdout=subprocess.PIPE) as shp:
-                            with self.__subprocesses_lock:
+                            with self.__lock:
                                 self.__subprocesses.add(shp.pid)
                             try:
-                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
+                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=1), encoding="utf-8")
                                 self.print_(0, f"Processing...")
                                 with LineReader(self, path=file_info.reg_name, file=file) as f:
                                     await run_lines(f)
                             finally:
-                                with self.__subprocesses_lock:
+                                with self.__lock:
                                     self.__subprocesses.remove(shp.pid)
 
                         self.verify_running()
@@ -313,7 +380,8 @@ class Application(Service):
         except EOFError as e:
             self.print_(0, e)
 
-    async def on_line(self, f, is_stable, keyword, session):
+    async def on_uids_lines(self, f, is_stable, keyword, session, metrics):
+
         async def get(uid):
             await self.request(
                 session,
@@ -327,7 +395,7 @@ class Application(Service):
                     await get(line)
                 else:
 
-                    async def visitor(session, resp):
+                    async def visitor(resp):
                         uid = resp.cookies.get("uid")
                         if uid is not None:
                             await get(uid.value)
@@ -338,18 +406,19 @@ class Application(Service):
                         headers={},
                         params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
                         visitor=visitor)
+                metrics.uploaded_users += 1
         except StopService:
             pass
 
     async def request(self, session, path, headers, params, visitor=None):
-        url = f"{random.choice(self.upload_url)}/{path}"
+        url = f"{random.choice(self.__upload_url)}/{path}"
         self.print_(3, f"Request url={url} headers={headers} params={params}")
         try:
             async with session.get(url=url, params=params, headers=headers, ssl=False) as resp:
                 if resp.status != 204:
                     raise aiohttp.client_exceptions.ClientResponseError(resp.request_info, resp.history)
                 if visitor is not None:
-                    await visitor(session, resp)
+                    await visitor(resp)
         except aiohttp.client_exceptions.ClientError as e:
             self.print_(0, e)
 
@@ -363,21 +432,51 @@ class Application(Service):
                     in_path = os.path.join(ctx.in_dir, in_name)
                     if ctx.markers.add(in_name, os.path.getmtime(in_path)):
                         self.print_(1, f"Registering URL file: {in_name}")
-                        cursor.execute(
-                            SQL_REG_URL,
-                            (upload.channel_prefix + in_name.upper(),))
+                        cursor.execute(SQL_REG_URL, (upload.channel_prefix + in_name.upper(),))
                         channel_id = cursor.fetchone()[0]
                         cursor.execute("COMMIT;")
-
                         self.print_(1, f"Uploading URL file: {in_name}")
                         with LineReader(self, in_path) as f:
                             for line in f.read_lines():
-                                cursor.execute(
-                                    SQL_UPLOAD_URL,
-                                    (line, channel_id, line, channel_id, line))
+                                cursor.execute(SQL_UPLOAD_URL, (line, channel_id, line, channel_id, line))
                                 cursor.execute("COMMIT;")
         except EOFError as e:
             self.print_(0, e)
+
+    def __make_http_application(self):
+        app = flask.Flask('UploadSegmentsHTTP')
+
+        @app.route('/metrics')
+        def metrics():
+            mm = {}
+            with self.__lock:
+                for name, upload in self.__uploads.items():
+                    m = Metrics()
+                    for um in upload.metrics.values():
+                        m.files_to_upload += um.files_to_upload
+                        m.uploaded_users += um.uploaded_users
+                    mm[name] = m
+            fmt = flask.request.args.get('format')
+            if fmt is None:
+                prometheus = []
+                for name, m in mm.items():
+                    prometheus.append(('files_to_upload', name, m.files_to_upload))
+                for name, m in mm.items():
+                    prometheus.append(('uploaded_users', name, m.uploaded_users))
+                return "\n".join(
+                    '{}{{source = "{}"}} {}'.format(*p)
+                    for p in prometheus
+                )
+            if fmt == "json":
+                files_to_upload = []
+                uploaded_users = []
+                for name, m in mm.items():
+                    files_to_upload.append({"source": name, "value": m.files_to_upload})
+                    uploaded_users.append({"source": name, "value": m.uploaded_users})
+                return flask.jsonify({'files_to_upload': files_to_upload, 'uploaded_users': uploaded_users})
+            return "Unknown format", 400
+
+        return app
 
 
 if __name__ == "__main__":

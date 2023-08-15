@@ -32,20 +32,28 @@ class Service:
     def __init__(self):
         self.running = True
         self.print_lock = threading.Lock()
+        self.verbosity = 2
+        self.log_file = None
+
+        def on_stop_signal():
+            if not self.running:
+                return
+            self.print_(0, "Stop signal")
+            self.on_stop_signal()
 
         try:
             from signal import SIGUSR1, signal
         except ImportError:
             pass
         else:
-            signal(SIGUSR1, lambda signum, frame: self.on_stop_signal())
+            signal(SIGUSR1, lambda signum, frame: on_stop_signal())
 
         try:
             from signal import SIGINT, signal
         except ImportError:
             pass
         else:
-            signal(SIGINT, lambda signum, frame: self.on_stop_signal())
+            signal(SIGINT, lambda signum, frame: on_stop_signal())
 
         self.args_parser = argparse.ArgumentParser()
         self.args_parser.add_argument("--period", type=float, help="Period between checking files.")
@@ -86,9 +94,7 @@ class Service:
         self.tmp_dir = make_dir("tmp_dir")
         self.log_dir = make_dir("log_dir")
 
-        if self.log_dir is None:
-            self.log_file = None
-        else:
+        if self.log_dir is not None:
             now = datetime.datetime.now()
             log_fname = f"{now.strftime('%Y%m%d')}.{now.strftime('%H%M%S')}.{now.strftime('%f')}.{randint(0, 99999999):08}.txt"
             self.log_file = open(os.path.join(self.log_dir, log_fname), "w")
@@ -117,7 +123,6 @@ class Service:
             self.log_file.close()
 
     def on_stop_signal(self):
-        self.print_(0, "Stop signal")
         self.running = False
 
     def verify_running(self):
@@ -145,6 +150,7 @@ class Service:
 
     def run(self):
         try:
+            self.print_(0, "Start")
             self.on_start()
             while True:
                 self.print_(0, "Timer")
@@ -155,6 +161,7 @@ class Service:
         except StopService:
             pass
         finally:
+            self.print_(0, "Stop")
             self.on_stop()
 
     def __get_sleep_subperiods(self):
