@@ -1512,11 +1512,6 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::resolve_user_id_()";
 
-    using GetUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
-    using AddUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
-
     Generics::Time start_process_time;
 
     if(logger()->log_level() >= Logging::Logger::TRACE)
@@ -1594,10 +1589,12 @@ namespace Bidding
             ext_user_id_it != external_user_ids.end();
             ++ext_user_id_it)
           {
-            GetUserIdResponsePtr grpc_response;
+            bool is_grpc_success = false;
             if (grpc_distributor)
             {
-              grpc_response = grpc_distributor->get_user_id(
+              is_grpc_success = true;
+
+              auto response = grpc_distributor->get_user_id(
                 *ext_user_id_it,
                 String::SubString{},
                 request_info.current_time,
@@ -1605,24 +1602,25 @@ namespace Bidding
                 false,
                 false,
                 false);
-            }
 
-            if (grpc_response && grpc_response->has_info())
-            {
-              const auto& info = grpc_response->info();
-              min_age_reached |= info.min_age_reached();
-              local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
-            }
-            else
-            {
-              if (grpc_distributor)
+              if (response && response->has_info())
               {
+                const auto& info = response->info();
+                min_age_reached |= info.min_age_reached();
+                local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+              }
+              else
+              {
+                is_grpc_success = false;
                 GrpcAlgs::print_grpc_error_response(
-                  grpc_response,
+                  response,
                   logger(),
                   Aspect::BIDDING_FRONTEND);
               }
+            }
 
+            if (!is_grpc_success)
+            {
               AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
               get_request_info.id << *ext_user_id_it;
               get_request_info.timestamp = CorbaAlgs::pack_time(request_info.current_time);
@@ -1668,16 +1666,20 @@ namespace Bidding
             {
               if(ext_user_id_it != base_ext_user_id_it)
               {
-                AddUserIdResponsePtr response;
+                bool is_grpc_success = false;
                 if (grpc_distributor)
                 {
-                  response = grpc_distributor->add_user_id(
+                  auto response = grpc_distributor->add_user_id(
                     *ext_user_id_it,
                     request_info.current_time,
                     GrpcAlgs::pack_user_id(match_user_id));
+                  if (response && response->has_info())
+                  {
+                    is_grpc_success = true;
+                  }
                 }
 
-                if (!response || response->has_error())
+                if (!is_grpc_success)
                 {
                   AdServer::UserInfoSvcs::UserBindServer::AddUserRequestInfo add_user_request;
                   add_user_request.id << *ext_user_id_it;
@@ -2080,28 +2082,28 @@ namespace Bidding
             std::transform(
               trigger_match_result->matched_channels.page_channels.get_buffer(),
               trigger_match_result->matched_channels.page_channels.get_buffer() +
-              trigger_match_result->matched_channels.page_channels.length(),
+                trigger_match_result->matched_channels.page_channels.length(),
               std::inserter(page_channels, page_channels.end()),
               GetChannelTriggerId());
 
             std::transform(
               trigger_match_result->matched_channels.url_channels.get_buffer(),
               trigger_match_result->matched_channels.url_channels.get_buffer() +
-              trigger_match_result->matched_channels.url_channels.length(),
+                trigger_match_result->matched_channels.url_channels.length(),
               std::inserter(url_channels, url_channels.end()),
               GetChannelTriggerId());
 
             std::transform(
               trigger_match_result->matched_channels.search_channels.get_buffer(),
               trigger_match_result->matched_channels.search_channels.get_buffer() +
-              trigger_match_result->matched_channels.search_channels.length(),
+                trigger_match_result->matched_channels.search_channels.length(),
               std::inserter(search_channels, search_channels.end()),
               GetChannelTriggerId());
 
             std::transform(
               trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
               trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
-              trigger_match_result->matched_channels.url_keyword_channels.length(),
+                trigger_match_result->matched_channels.url_keyword_channels.length(),
               std::inserter(url_keyword_channels, url_keyword_channels.end()),
               GetChannelTriggerId());
 
@@ -2154,6 +2156,7 @@ namespace Bidding
         }
         catch (const eh::Exception& exc)
         {
+          is_grpc_success = false;
           Stream::Error stream;
           stream << FNS
                  << ": "
@@ -2162,6 +2165,7 @@ namespace Bidding
         }
         catch (...)
         {
+          is_grpc_success = false;
           Stream::Error stream;
           stream << FNS
                  << ": Unknown error";

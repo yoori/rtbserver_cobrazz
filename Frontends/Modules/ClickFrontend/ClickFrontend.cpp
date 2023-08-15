@@ -1114,47 +1114,46 @@ namespace AdServer
               match_params);
             if (!response || response->has_error())
             {
-              is_grpc_success = false;
               GrpcAlgs::print_grpc_error_response(
                 response,
                 logger(),
                 Aspect::CLICK_FRONTEND);
+              throw Exception("match is failed");
             }
-            else
+
+            history_match_result = new AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult;
+
+            const auto& info_proto = response->info();
+            const auto& match_result_proto = info_proto.match_result();
+            const auto& channels_proto = match_result_proto.channels();
+
+            if (!channels_proto.empty())
             {
-              history_match_result = new AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult;
-
-              const auto& info_proto = response->info();
-              const auto& match_result_proto = info_proto.match_result();
-              const auto& channels_proto = match_result_proto.channels();
-
-              if (!channels_proto.empty())
+              auto& channels_history = history_match_result->channels;
+              channels_history.length(channels_proto.size());
+              CORBA::ULong index = 0;
+              for (const auto& channel_proto : channels_proto)
               {
-                auto& channels_history = history_match_result->channels;
-                channels_history.length(channels_proto.size());
-                CORBA::ULong index = 0;
-                for (const auto& channel_proto : channels_proto)
-                {
-                  channels_history[index].channel_id = channel_proto.channel_id();
-                  channels_history[index].weight = channel_proto.weight();
-                  index += 1;
-                }
+                channels_history[index].channel_id = channel_proto.channel_id();
+                channels_history[index].weight = channel_proto.weight();
+                index += 1;
               }
             }
           }
 
-          if (is_grpc_success && user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
+          if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
           {
+            user_info.user_id = GrpcAlgs::pack_user_id(resolved_cookie_user_id);
             auto response = grpc_distributor->match(
               user_info,
               match_params);
             if (!response || response->has_error())
             {
-              is_grpc_success = false;
               GrpcAlgs::print_grpc_error_response(
                 response,
                 logger(),
                 Aspect::CLICK_FRONTEND);
+              throw Exception("match is failed");
             }
           }
         }

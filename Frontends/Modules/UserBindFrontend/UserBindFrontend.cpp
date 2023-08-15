@@ -782,31 +782,57 @@ namespace AdServer
     const UserBind::RequestInfo& request_info)
     noexcept
   {
-    using AddUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
-
     //static const char* FUN = "UserBindFrontend::handle_delete_request_()";
     int http_status = 204;
 
     if(!request_info.external_id.empty())
     {
-      try
-      {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
-        FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-          user_bind_client_->grpc_distributor();
+      AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+        user_bind_client_->user_bind_mapper();
+      FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
+        user_bind_client_->grpc_distributor();
 
-        AddUserIdResponsePtr response;
-        if (grpc_distributor)
+      bool is_grpc_success = false;
+      if (grpc_distributor)
+      {
+        try
         {
-          response = grpc_distributor->add_user_id(
+          is_grpc_success = true;
+          auto response = grpc_distributor->add_user_id(
             request_info.external_id,
             request_info.time,
             GrpcAlgs::pack_user_id(Commons::UserId{}));
+          if (!response || response->has_error())
+          {
+            is_grpc_success = false;
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::USER_BIND_FRONTEND);
+          }
         }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FNS
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FNS
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+        }
+      }
 
-        if (!response || response->has_error())
+      try
+      {
+        if (!is_grpc_success)
         {
           // reconstruct cookie
           AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
@@ -1273,11 +1299,6 @@ namespace AdServer
   {
     static const char* FUN = "UserBindFrontend::process_request_()";
 
-    using GetUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
-    using AddUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
-
     int http_status = 200; // non used on response
 
     if (request_info.delete_op)
@@ -1331,41 +1352,63 @@ namespace AdServer
               const std::string cookie_external_id_str =
                 std::string("c/") + result_user_id.to_string();
 
-              GetUserIdResponsePtr grpc_response;
-              if (grpc_distributor)
-              {
-                grpc_response = grpc_distributor->get_user_id(
-                  cookie_external_id_str,
-                  GrpcAlgs::pack_user_id(result_user_id),
-                  request_info.time,
-                  Generics::Time::ZERO,
-                  true,
-                  false,
-                  true);
-              }
-
               bool invalid_operation = true;
               Commons::UserId cresolved_user_id;
 
-              if (grpc_response && grpc_response->has_info())
+              bool is_grpc_success = false;
+              if (grpc_distributor)
               {
-                const auto& info = grpc_response->info();
-                invalid_operation = info.invalid_operation();
-                if (!invalid_operation)
+                try
                 {
-                  cresolved_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+                  is_grpc_success = true;
+                  auto response = grpc_distributor->get_user_id(
+                    cookie_external_id_str,
+                    GrpcAlgs::pack_user_id(result_user_id),
+                    request_info.time,
+                    Generics::Time::ZERO,
+                    true,
+                    false,
+                    true);
+
+                  if (response && response->has_info())
+                  {
+                    const auto& info = response->info();
+                    invalid_operation = info.invalid_operation();
+                    if (!invalid_operation)
+                    {
+                      cresolved_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+                    }
+                  }
+                  else
+                  {
+                    is_grpc_success = false;
+                    GrpcAlgs::print_grpc_error_response(
+                      response,
+                      logger(),
+                      Aspect::USER_BIND_FRONTEND);
+                  }
+                }
+                catch (const eh::Exception& exc)
+                {
+                  is_grpc_success = false;
+                  Stream::Error stream;
+                  stream << FUN
+                         << ": "
+                         << exc.what();
+                  logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+                }
+                catch (...)
+                {
+                  is_grpc_success = false;
+                  Stream::Error stream;
+                  stream << FUN
+                         << ": Unknown error";
+                  logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
                 }
               }
-              else
-              {
-                if (grpc_distributor)
-                {
-                  GrpcAlgs::print_grpc_error_response(
-                    grpc_response,
-                    logger(),
-                    Aspect::USER_BIND_FRONTEND);
-                }
 
+              if (!is_grpc_success)
+              {
                 AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
                 get_request_info.id << cookie_external_id_str;
                 get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
@@ -1466,43 +1509,65 @@ namespace AdServer
 
                     const std::string& external_id_str = cur_external_id;
 
-                    GetUserIdResponsePtr grpc_response;
-                    if (grpc_distributor)
-                    {
-                      grpc_response = grpc_distributor->get_user_id(
-                        external_id_str,
-                        String::SubString(),
-                        request_info.time,
-                        Generics::Time::ZERO,
-                        true,
-                        use_external_ids[ext_user_i].set_uid,
-                        !app_request);
-                    }
-
                     bool invalid_operation = true;
                     bool created = true;
                     AdServer::Commons::UserId resolved_user_id;
 
-                    if (grpc_response && grpc_response->has_info())
+                    bool is_grpc_success = false;
+                    if (grpc_distributor)
                     {
-                      const auto& info = grpc_response->info();
-                      invalid_operation = info.invalid_operation();
-                      if (!invalid_operation)
+                      try
                       {
-                        resolved_user_id = GrpcAlgs::unpack_user_id(info.user_id());
-                      }
-                      created = info.created();
-                    }
-                    else
-                    {
-                      if (grpc_distributor)
-                      {
-                        GrpcAlgs::print_grpc_error_response(
-                          grpc_response,
-                          logger(),
-                          Aspect::USER_BIND_FRONTEND);
-                      }
+                        is_grpc_success = true;
+                        auto response = grpc_distributor->get_user_id(
+                          external_id_str,
+                          String::SubString{},
+                          request_info.time,
+                          Generics::Time::ZERO,
+                          true,
+                          use_external_ids[ext_user_i].set_uid,
+                          !app_request);
 
+                        if (response && response->has_info())
+                        {
+                          const auto& info = response->info();
+                          invalid_operation = info.invalid_operation();
+                          if (!invalid_operation)
+                          {
+                            resolved_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+                          }
+                          created = info.created();
+                        }
+                        else
+                        {
+                          is_grpc_success = false;
+                          GrpcAlgs::print_grpc_error_response(
+                            response,
+                            logger(),
+                            Aspect::USER_BIND_FRONTEND);
+                        }
+                      }
+                      catch (const eh::Exception& exc)
+                      {
+                        is_grpc_success = false;
+                        Stream::Error stream;
+                        stream << FUN
+                               << ": "
+                               << exc.what();
+                        logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+                      }
+                      catch (...)
+                      {
+                        is_grpc_success = false;
+                        Stream::Error stream;
+                        stream << FUN
+                               << ": Unknown error";
+                        logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+                      }
+                    }
+
+                    if (!is_grpc_success)
+                    {
                       // reconstruct cookie
                       AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo
                         get_request_info;
@@ -1639,33 +1704,56 @@ namespace AdServer
                     FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
                       user_bind_client_->grpc_distributor();
 
-                    AddUserIdResponsePtr grpc_response;
+                    bool invalid_operation = true;
+
+                    bool is_grpc_success = false;
                     if (grpc_distributor)
                     {
-                      const std::string user_id =
-                        GrpcAlgs::pack_user_id(!opted_out ? result_user_id : Commons::UserId{});
-                      grpc_response = grpc_distributor->add_user_id(
-                        cur_external_id,
-                        request_info.time,
-                        user_id);
-                    }
-
-                    bool invalid_operation = true;
-                    if (grpc_response && grpc_response->has_info())
-                    {
-                      const auto& info = grpc_response->info();
-                      invalid_operation = info.invalid_operation();
-                    }
-                    else
-                    {
-                      if (grpc_distributor)
+                      try
                       {
-                        GrpcAlgs::print_grpc_error_response(
-                          grpc_response,
-                          logger(),
-                          Aspect::USER_BIND_FRONTEND);
-                      }
+                        is_grpc_success = true;
+                        const std::string user_id =
+                          GrpcAlgs::pack_user_id(!opted_out ? result_user_id : Commons::UserId{});
+                        auto response = grpc_distributor->add_user_id(
+                          cur_external_id,
+                          request_info.time,
+                          user_id);
 
+                        if (response && response->has_info())
+                        {
+                          const auto& info = response->info();
+                          invalid_operation = info.invalid_operation();
+                        }
+                        else
+                        {
+                          is_grpc_success = false;
+                          GrpcAlgs::print_grpc_error_response(
+                            response,
+                            logger(),
+                            Aspect::USER_BIND_FRONTEND);
+                        }
+                      }
+                      catch (const eh::Exception& exc)
+                      {
+                        is_grpc_success = false;
+                        Stream::Error stream;
+                        stream << FUN
+                               << ": "
+                               << exc.what();
+                        logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+                      }
+                      catch (...)
+                      {
+                        is_grpc_success = false;
+                        Stream::Error stream;
+                        stream << FUN
+                               << ": Unknown error";
+                        logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+                      }
+                    }
+
+                    if (!is_grpc_success)
+                    {
                       AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
                         add_user_request_info;
                       add_user_request_info.id << cur_external_id;
@@ -2200,44 +2288,41 @@ namespace AdServer
               GrpcAlgs::pack_user_id(merge_user_id),
               false, // persistent profile
               profiles_request);
-            if (get_user_profile_response
-             && get_user_profile_response->has_info()
-             && get_user_profile_response->info().return_value())
+            if (!get_user_profile_response || get_user_profile_response->has_error())
+            {
+              GrpcAlgs::print_grpc_error_response(
+                get_user_profile_response,
+                logger(),
+                Aspect::USER_BIND_FRONTEND);
+              throw Exception("get_user_profile is failed");
+            }
+
+            if (get_user_profile_response->info().return_value())
             {
               auto merge_response = grpc_distributor->merge(
                 user_info,
                 match_params,
                 merge_user_profiles);
-              if (merge_response && merge_response->has_info())
+              if (!merge_response || merge_response->has_error())
               {
-                do_match = false;
-                auto remove_user_profile_response = grpc_distributor->remove_user_profile(
-                  GrpcAlgs::pack_user_id(merge_user_id));
-                if (!remove_user_profile_response || remove_user_profile_response->has_error())
-                {
-                  is_grpc_success = false;
-                  GrpcAlgs::print_grpc_error_response(
-                    remove_user_profile_response,
-                    logger(),
-                    Aspect::USER_BIND_FRONTEND);
-                }
-              }
-              else
-              {
-                is_grpc_success = false;
                 GrpcAlgs::print_grpc_error_response(
                   merge_response,
                   logger(),
                   Aspect::USER_BIND_FRONTEND);
+                throw Exception("merge is failed");
               }
-            }
-            else
-            {
-              is_grpc_success = false;
-              GrpcAlgs::print_grpc_error_response(
-                get_user_profile_response,
-                logger(),
-                Aspect::USER_BIND_FRONTEND);
+
+              do_match = false;
+              auto remove_user_profile_response = grpc_distributor->remove_user_profile(
+                GrpcAlgs::pack_user_id(merge_user_id));
+              if (!remove_user_profile_response || remove_user_profile_response->has_error())
+              {
+                GrpcAlgs::print_grpc_error_response(
+                  remove_user_profile_response,
+                  logger(),
+                  Aspect::USER_BIND_FRONTEND);
+                throw Exception("remove_user_profile is failed");
+              }
             }
           }
 
@@ -2248,11 +2333,11 @@ namespace AdServer
               match_params);
             if (!match_response || match_response->has_error())
             {
-              is_grpc_success = false;
               GrpcAlgs::print_grpc_error_response(
                 match_response,
                 logger(),
                 Aspect::USER_BIND_FRONTEND);
+              throw Exception("match is failed");
             }
           }
         }

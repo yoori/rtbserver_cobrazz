@@ -73,6 +73,13 @@ unpack_user_id(const std::string& user_id)
 }
 
 inline
+std::string
+pack_request_id(const AdServer::Commons::RequestId& request_id)
+{
+  return pack_user_id(request_id);
+}
+
+inline
 AdServer::Commons::RequestId
 unpack_request_id(const std::string& request_id)
 {
