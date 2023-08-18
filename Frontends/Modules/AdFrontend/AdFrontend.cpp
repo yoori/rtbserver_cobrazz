@@ -81,7 +81,34 @@ namespace
     out.channel_trigger_id = atom.trigger_channel_id;
     return out;
   }
-}
+
+  template<class Error>
+  inline const char* get_merge_error_message(
+    const Error& error) noexcept
+  {
+    using ErrorType = typename Error::Type;
+
+    switch (error.type())
+    {
+      case ErrorType::Error_Type_ChunkNotFound:
+      {
+        return MergeMessage::SOURCE_EXCEPTION;
+      }
+      case ErrorType::Error_Type_NotReady:
+      {
+        return MergeMessage::SOURCE_NOT_READY;
+      }
+      case ErrorType::Error_Type_Implementation:
+      {
+        return MergeMessage::SOURCE_EXCEPTION;
+      }
+      default:
+      {
+        return MergeMessage::SOURCE_EXCEPTION;
+      }
+    }
+  }
+} // namespace
 
 namespace Aspect
 {
@@ -742,6 +769,211 @@ namespace AdServer
   {
     static const char* FUN = "AdFrontend::merge_users()";
 
+    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+      grpc_distributor = user_info_client_->grpc_distributor();
+
+    bool is_grpc_success = false;
+    if (grpc_distributor)
+    {
+      using ProfilesRequestInfo = AdServer::UserInfoSvcs::Types::ProfilesRequestInfo;
+      using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+      using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+      using UserProfiles = AdServer::UserInfoSvcs::Types::UserProfiles;
+
+      try
+      {
+        is_grpc_success = true;
+        merge_success = false;
+        TimeGuard user_merge_time_metering;
+
+        UserProfiles merge_user_profile;
+
+        const bool merge_temp =
+          request_info.merge_persistent_client_id.is_null();
+        const auto merged_uid_info = merge_temp ?
+          GrpcAlgs::pack_user_id(request_info.temp_client_id) :
+          GrpcAlgs::pack_user_id(request_info.merge_persistent_client_id);
+
+        if((merge_temp && request_info.temp_client_id == AdServer::Commons::PROBE_USER_ID) ||
+           request_info.merge_persistent_client_id == AdServer::Commons::PROBE_USER_ID)
+        {
+          merge_error_message = MergeMessage::SOURCE_IS_PROBE;
+          request_time_metering.merge_users_time =
+            user_merge_time_metering.consider();
+          return;
+        }
+        else
+        {
+          ProfilesRequestInfo profiles_request;
+          profiles_request.base_profile = true;
+          profiles_request.add_profile = true;
+          profiles_request.history_profile = true;
+          profiles_request.freq_cap_profile = !merge_temp;
+          profiles_request.pref_profile = false;
+
+          auto response = grpc_distributor->get_user_profile(
+            merged_uid_info,
+            merge_temp,
+            profiles_request);
+          if (!response || response->has_error())
+          {
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::AD_FRONTEND);
+
+            if (response)
+            {
+              merge_error_message = get_merge_error_message(response->error());
+            }
+            else
+            {
+              merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+            }
+
+            throw Exception("get_user_profile is failed");
+          }
+
+          const auto& info_proto = response->info();
+          if (!info_proto.return_value())
+          {
+            merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
+            request_time_metering.merge_users_time =
+              user_merge_time_metering.consider();
+            return;
+          }
+
+          const auto& user_profile_proto = info_proto.user_profile();
+          if (user_profile_proto.base_user_profile().size() == 0 &&
+              user_profile_proto.add_user_profile().size() == 0)
+          {
+            merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
+            request_time_metering.merge_users_time =
+              user_merge_time_metering.consider();
+            return;
+          }
+
+          merge_user_profile.add_user_profile = user_profile_proto.add_user_profile();
+          merge_user_profile.base_user_profile = user_profile_proto.base_user_profile();
+          merge_user_profile.freq_cap = user_profile_proto.freq_cap();
+          merge_user_profile.history_user_profile = user_profile_proto.history_user_profile();
+          merge_user_profile.pref_profile = user_profile_proto.pref_profile();
+
+          if (request_info.remove_merged_uid)
+          {
+            auto response = grpc_distributor->remove_user_profile(
+              merged_uid_info);
+            if (!response || response->has_error())
+            {
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                Aspect::AD_FRONTEND);
+
+              if (response)
+              {
+                merge_error_message = get_merge_error_message(response->error());
+              }
+              else
+              {
+                merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+              }
+
+              throw Exception("remove_user_profile is failed");
+            }
+          }
+        }
+
+        if (request_info.silent_match)
+        {
+          throw Exception("Merge operation with installed silent_match");
+        }
+
+        UserInfo user_info;
+        user_info.user_id = GrpcAlgs::pack_user_id(request_info.client_id);
+        user_info.huser_id = GrpcAlgs::pack_user_id(request_info.household_client_id);
+        user_info.last_colo_id = request_info.last_colo_id;
+        user_info.request_colo_id = request_info.colo_id;
+        user_info.current_colo_id = -1;
+        user_info.temporary =
+          request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
+        user_info.time = request_info.current_time.tv_sec;
+
+        MatchParams match_params;
+        match_params.use_empty_profile =
+          request_info.user_status != AdServer::CampaignSvcs::US_OPTIN &&
+          request_info.user_status != AdServer::CampaignSvcs::US_TEMPORARY;
+        match_params.silent_match = request_info.silent_match;
+        match_params.no_match = request_info.no_match;
+        match_params.no_result = request_info.no_result;
+        match_params.provide_persistent_channels = false;
+        match_params.change_last_request = true;
+        match_params.filter_contextual_triggers = false;
+        match_params.publishers_optin_timeout =
+          request_info.tag_id != 0 ?
+            request_info.current_time - Generics::Time::ONE_DAY * 15 :
+            Generics::Time::ZERO;
+
+        auto response = grpc_distributor->merge(
+          user_info,
+          match_params,
+          merge_user_profile);
+        if (!response || response->has_error())
+        {
+          GrpcAlgs::print_grpc_error_response(
+            response,
+            logger(),
+            Aspect::AD_FRONTEND);
+
+          if (response)
+          {
+            merge_error_message = get_merge_error_message(response->error());
+          }
+          else
+          {
+            merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+          }
+
+          throw Exception("merge is failed");
+        }
+
+        const auto& info_proto = response->info();
+
+        last_request = GrpcAlgs::unpack_time(info_proto.last_request());
+        request_time_metering.merge_users_time =
+          user_merge_time_metering.consider();
+        merge_success = info_proto.merge_success();
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        if (merge_error_message.empty())
+        {
+          merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+        }
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::AD_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        if (merge_error_message.empty())
+        {
+          merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+        }
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::AD_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+      return;
+
     merge_success = true;
 
     AdServer::UserInfoSvcs::UserProfiles_var merge_user_profile;
@@ -958,6 +1190,172 @@ namespace AdServer
     return res._retn();
   }
 
+  AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
+  AdFrontend::convertor_proto_history_matching(
+    const AdServer::UserInfoSvcs::Proto::MatchResult& match_result_proto)
+  {
+    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var result =
+      new AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult{};
+
+    result->times_inited = match_result_proto.times_inited();
+
+    const auto& last_request_time_proto = match_result_proto.last_request_time();
+    if (!last_request_time_proto.empty())
+    {
+      result->last_request_time.length(last_request_time_proto.size());
+      std::memcpy(
+        result->last_request_time.get_buffer(),
+        last_request_time_proto.data(),
+        last_request_time_proto.size());
+    }
+
+    const auto& create_time_proto = match_result_proto.create_time();
+    if (!create_time_proto.empty())
+    {
+      result->create_time.length(create_time_proto.size());
+      std::memcpy(
+        result->create_time.get_buffer(),
+        create_time_proto.data(),
+        create_time_proto.size());
+    }
+
+    const auto& session_start_proto = match_result_proto.session_start();
+    if (!session_start_proto.empty())
+    {
+      result->session_start.length(session_start_proto.size());
+      std::memcpy(
+        result->session_start.get_buffer(),
+        session_start_proto.data(),
+        session_start_proto.size());
+    }
+
+    result->colo_id = match_result_proto.colo_id();
+
+    const auto& channels_proto = match_result_proto.channels();
+    std::size_t index = 0;
+    if (!channels_proto.empty())
+    {
+      result->channels.length(channels_proto.size());
+      for (const auto& channel : channels_proto)
+      {
+        result->channels[index].channel_id = channel.channel_id();
+        result->channels[index].weight = channel.weight();
+        index += 1;
+      }
+    }
+
+    const auto& hid_channels_proto = match_result_proto.hid_channels();
+    index = 0;
+    if (!hid_channels_proto.empty())
+    {
+      result->hid_channels.length(hid_channels_proto.size());
+      for (const auto& hid_channel : hid_channels_proto)
+      {
+        result->hid_channels[index].channel_id = hid_channel.channel_id();
+        result->hid_channels[index].weight = hid_channel.weight();
+        index += 1;
+      }
+    }
+
+    const auto& full_freq_caps_proto = match_result_proto.full_freq_caps();
+    CorbaAlgs::fill_sequence(
+      std::begin(full_freq_caps_proto),
+      std::end(full_freq_caps_proto),
+      result->full_freq_caps);
+
+    const auto& full_virtual_freq_caps_proto = match_result_proto.full_virtual_freq_caps();
+    CorbaAlgs::fill_sequence(
+      std::begin(full_virtual_freq_caps_proto),
+      std::end(full_virtual_freq_caps_proto),
+      result->full_virtual_freq_caps);
+
+    const auto& seq_orders_proto = match_result_proto.seq_orders();
+    if (!seq_orders_proto.empty())
+    {
+      result->seq_orders.length(seq_orders_proto.size());
+      index = 0;
+      for (const auto& seq_order: seq_orders_proto)
+      {
+        result->seq_orders[index].ccg_id = seq_order.ccg_id();
+        result->seq_orders[index].imps = seq_order.imps();
+        result->seq_orders[index].set_id = seq_order.set_id();
+        index += 1;
+      }
+    }
+
+    const auto& campaign_freqs_proto = match_result_proto.campaign_freqs();
+    if (!campaign_freqs_proto.empty())
+    {
+      result->campaign_freqs.length(campaign_freqs_proto.size());
+      index = 0;
+      for (const auto& campaign_freq: campaign_freqs_proto)
+      {
+        result->campaign_freqs[index].imps = campaign_freq.imps();
+        result->campaign_freqs[index].campaign_id = campaign_freq.campaign_id();
+        index += 1;
+      }
+    }
+
+    result->fraud_request = match_result_proto.fraud_request();
+
+    const auto& process_time_proto = match_result_proto.process_time();
+    if (!process_time_proto.empty())
+    {
+      result->process_time.length(process_time_proto.size());
+      std::memcpy(
+        result->process_time.get_buffer(),
+        process_time_proto.data(),
+        process_time_proto.size());
+    }
+
+    result->adv_channel_count = match_result_proto.adv_channel_count();
+    result->discover_channel_count = match_result_proto.discover_channel_count();
+    result->cohort << match_result_proto.cohort();
+    result->cohort2 << match_result_proto.cohort2();
+
+    const auto& exclude_pubpixel_accounts_proto = match_result_proto.exclude_pubpixel_accounts();
+    CorbaAlgs::fill_sequence(
+      std::begin(exclude_pubpixel_accounts_proto),
+      std::end(exclude_pubpixel_accounts_proto),
+      result->exclude_pubpixel_accounts);
+
+    const auto& geo_data_seq_proto = match_result_proto.geo_data_seq();
+    if (!geo_data_seq_proto.empty())
+    {
+       result->geo_data_seq.length(geo_data_seq_proto.size());
+       index = 0;
+       for (const auto& geo_data : geo_data_seq_proto)
+       {
+         auto& geo_data_seq = result->geo_data_seq[index];
+
+         const auto& accuracy_proto = geo_data.accuracy();
+         geo_data_seq.accuracy.length(accuracy_proto.size());
+         std::memcpy(
+           geo_data_seq.accuracy.get_buffer(),
+           accuracy_proto.data(),
+           accuracy_proto.size());
+
+         const auto& latitude_proto = geo_data.latitude();
+         geo_data_seq.latitude.length(latitude_proto.size());
+         std::memcpy(
+           geo_data_seq.latitude.get_buffer(),
+           latitude_proto.data(),
+           latitude_proto.size());
+
+         const auto& longitude_proto = geo_data.longitude();
+         geo_data_seq.longitude.length(longitude_proto.size());
+         std::memcpy(
+           geo_data_seq.longitude.get_buffer(),
+           longitude_proto.data(),
+           longitude_proto.size());
+
+         index += 1;
+       }
+    }
+
+    return result._retn();
+  }
+
   AdServer::ChannelSvcs::ChannelServerBase::MatchResult*
   AdFrontend::get_empty_trigger_matching()
     /*throw(eh::Exception)*/
@@ -1027,6 +1425,8 @@ namespace AdServer
 
     AdServer::UserInfoSvcs::UserInfoMatcher_var
       uim_session = user_info_client_->user_info_session();
+    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+      grpc_distributor = user_info_client_->grpc_distributor();
 
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
 
@@ -1034,7 +1434,222 @@ namespace AdServer
       request_info.user_status == AdServer::CampaignSvcs::US_OPTIN ||
       request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
 
-    if(uim_session.in() && do_history_matching)
+    bool is_grpc_success = false;
+    if (grpc_distributor && do_history_matching)
+    {
+      using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+      using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+      using ChannelMatchSet = std::set<ChannelMatch>;
+
+      try
+      {
+        is_grpc_success = true;
+        TimeGuard history_match_time_metering;
+
+        MatchParams match_params;
+        match_params.use_empty_profile = false;
+        match_params.silent_match = request_info.silent_match;
+        match_params.no_match = request_info.no_match
+          || (trigger_matching_result && trigger_matching_result->no_track);
+        match_params.no_result = request_info.no_result;
+        match_params.ret_freq_caps = request_info.tag_id != 0;
+        match_params.provide_channel_count = false;
+        match_params.provide_persistent_channels = false;
+        match_params.change_last_request = true;
+        match_params.filter_contextual_triggers = false;
+        match_params.publishers_optin_timeout =
+          request_info.tag_id != 0 ? (request_info.current_time - Generics::Time::ONE_DAY * 15) :
+          Generics::Time::ZERO;
+
+        if (request_info.coord_location.in())
+        {
+          const auto& latitude = request_info.coord_location->latitude;
+          const auto& longitude = request_info.coord_location->longitude;
+          const auto& accuracy = request_info.coord_location->accuracy;
+
+          match_params.geo_data_seq.emplace_back(latitude, longitude, accuracy);
+        }
+
+        if(request_info.tag_id == 0 || config_->ad_request_profiling())
+        {
+          if(trigger_matching_result && !trigger_matching_result->no_track)
+          {
+            ChannelMatchSet url_channels;
+            ChannelMatchSet page_channels;
+            ChannelMatchSet search_channels;
+            ChannelMatchSet url_keyword_channels;
+
+            std::transform(
+              trigger_matching_result->matched_channels.url_channels.get_buffer(),
+              trigger_matching_result->matched_channels.url_channels.get_buffer() +
+                trigger_matching_result->matched_channels.url_channels.length(),
+              std::inserter(url_channels, url_channels.end()),
+              GetChannelTriggerId());
+
+            std::transform(
+              trigger_matching_result->matched_channels.page_channels.get_buffer(),
+              trigger_matching_result->matched_channels.page_channels.get_buffer() +
+                trigger_matching_result->matched_channels.page_channels.length(),
+              std::inserter(page_channels, page_channels.end()),
+              GetChannelTriggerId());
+
+            std::transform(
+              trigger_matching_result->matched_channels.search_channels.get_buffer(),
+              trigger_matching_result->matched_channels.search_channels.get_buffer() +
+                trigger_matching_result->matched_channels.search_channels.length(),
+              std::inserter(search_channels, search_channels.end()),
+              GetChannelTriggerId());
+
+            std::transform(
+              trigger_matching_result->matched_channels.url_keyword_channels.get_buffer(),
+              trigger_matching_result->matched_channels.url_keyword_channels.get_buffer() +
+                trigger_matching_result->matched_channels.url_keyword_channels.length(),
+              std::inserter(url_keyword_channels, url_keyword_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_channel_ids.reserve(
+              url_channels.size() + request_info.hit_channel_ids.size());
+            for (const auto& url_channel : url_channels)
+            {
+              match_params.url_channel_ids.emplace_back(
+                url_channel.channel_id,
+                url_channel.channel_trigger_id);
+            }
+
+            match_params.page_channel_ids.reserve(
+              page_channels.size() + request_info.hit_channel_ids.size());
+            for (const auto& page_channel : page_channels)
+            {
+              match_params.page_channel_ids.emplace_back(
+                page_channel.channel_id,
+                page_channel.channel_trigger_id);
+            }
+
+            match_params.search_channel_ids.reserve(
+              search_channels.size() + request_info.hit_channel_ids.size());
+            for (const auto& search_channel : search_channels)
+            {
+              match_params.search_channel_ids.emplace_back(
+                search_channel.channel_id,
+                search_channel.channel_trigger_id);
+            }
+
+            match_params.url_keyword_channel_ids.reserve(
+              url_keyword_channels.size() + request_info.hit_channel_ids.size());
+            for (const auto& url_keyword_channel : url_keyword_channels)
+            {
+              match_params.url_keyword_channel_ids.emplace_back(
+                url_keyword_channel.channel_id,
+                url_keyword_channel.channel_trigger_id);
+            }
+
+            match_params.persistent_channel_ids.reserve(
+              request_info.platform_ids.size());
+            std::copy(
+              request_info.platform_ids.begin(),
+              request_info.platform_ids.end(),
+              std::back_inserter(match_params.persistent_channel_ids));
+          }
+
+          for (const auto& hit_channel_id : request_info.hit_channel_ids)
+          {
+            match_params.url_channel_ids.emplace_back(hit_channel_id, 0);
+            match_params.url_keyword_channel_ids.emplace_back(hit_channel_id, 0);
+            match_params.page_channel_ids.emplace_back(hit_channel_id, 0);
+            match_params.search_channel_ids.emplace_back(hit_channel_id, 0);
+          }
+        }
+
+        match_params.cohort = request_info.curct;
+
+        /* process match & merge request */
+        UserInfo user_info;
+        user_info.user_id = GrpcAlgs::pack_user_id(request_info.client_id);
+        user_info.huser_id = GrpcAlgs::pack_user_id(request_info.household_client_id);
+        user_info.last_colo_id = request_info.last_colo_id;
+        user_info.request_colo_id =
+          request_info.user_status != AdServer::CampaignSvcs::US_TEMPORARY ?
+        request_info.colo_id : -1;
+        user_info.current_colo_id = -1;
+        user_info.temporary =
+          request_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
+        user_info.time = request_info.current_time.tv_sec;
+
+        auto response = grpc_distributor->match(user_info, match_params);
+        if (!response || response->has_error())
+        {
+          GrpcAlgs::print_grpc_error_response(
+            response,
+            logger(),
+            Aspect::AD_FRONTEND);
+          throw Exception("match is failed");
+        }
+
+        const auto& info_proto = response->info();
+        const auto& match_result_proto = info_proto.match_result();
+
+        request_time_metering.matched_channels =
+          match_result_proto.channels().size();
+        request_time_metering.history_match_time =
+          history_match_time_metering.consider();
+
+        request_time_metering.history_match_local_time =
+          GrpcAlgs::unpack_time(match_result_proto.process_time());
+
+        match_result = convertor_proto_history_matching(match_result_proto);
+        match_success = true;
+
+        /* log user info request */
+        if (logger()->log_level() >= TraceLevel::MIDDLE)
+        {
+          const auto& channels = match_result_proto.channels();
+
+          std::ostringstream ostream;
+          ostream << FUN
+                  << ": history matched channels for uid = '"
+                  << request_info.client_id
+                  << "': ";
+
+          if(channels.size() == 0)
+          {
+            ostream << "empty";
+          }
+          else
+          {
+            GrpcAlgs::print_repeated_fields(
+              ostream,
+              ",",
+              ":",
+              channels,
+              &AdServer::UserInfoSvcs::Proto::ChannelWeight::channel_id);
+          }
+
+          logger()->log(
+            ostream.str(),
+            TraceLevel::MIDDLE,
+            Aspect::AD_FRONTEND);
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::AD_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::AD_FRONTEND);
+      }
+    }
+
+    if(!is_grpc_success && uim_session.in() && do_history_matching)
     {
       try
       {
@@ -1260,6 +1875,122 @@ namespace AdServer
         }
       }
     }
+
+    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+      grpc_distributor = user_info_client_->grpc_distributor();
+
+    bool is_grpc_success = false;
+    if (grpc_distributor)
+    {
+      using CampaignIds = AdServer::UserInfoSvcs::Types::CampaignIds;
+      using SeqOrders = AdServer::UserInfoSvcs::Types::SeqOrders;
+      using FreqCaps = AdServer::UserInfoSvcs::Types::FreqCaps;
+
+      try
+      {
+        is_grpc_success = true;
+
+        for (CORBA::ULong ad_slot_i = 0;
+             ad_slot_i < campaign_select_result.ad_slots.length();
+             ++ad_slot_i)
+        {
+          const auto& ad_slot_result = campaign_select_result.ad_slots[ad_slot_i];
+
+          if(ad_slot_result.selected_creatives.length() > 0)
+          {
+            CampaignIds campaign_ids;
+            campaign_ids.reserve(ad_slot_result.selected_creatives.length());
+
+            SeqOrders seq_orders;
+            seq_orders.reserve(ad_slot_result.selected_creatives.length());
+
+            for(CORBA::ULong creative_i = 0;
+              creative_i < ad_slot_result.selected_creatives.length();
+              ++creative_i)
+            {
+              const auto& creative =
+                ad_slot_result.selected_creatives[creative_i];
+              if(creative.order_set_id)
+              {
+                seq_orders.emplace_back(
+                  creative.cmp_id,
+                  creative.order_set_id,
+                  1);
+              }
+
+              campaign_ids.emplace_back(creative.campaign_group_id);
+            }
+
+            FreqCaps freq_caps;
+            freq_caps.insert(
+              std::end(freq_caps),
+              ad_slot_result.freq_caps.get_buffer(),
+              ad_slot_result.freq_caps.get_buffer() + ad_slot_result.freq_caps.length());
+
+            FreqCaps uc_freq_caps;
+            uc_freq_caps.insert(
+              std::end(uc_freq_caps),
+              ad_slot_result.uc_freq_caps.get_buffer(),
+              ad_slot_result.uc_freq_caps.get_buffer() + ad_slot_result.uc_freq_caps.length());
+
+            std::string request_id;
+            if (ad_slot_result.request_id.length() != 0)
+            {
+              request_id.resize(ad_slot_result.request_id.length());
+              std::memcpy(
+                request_id.data(),
+                ad_slot_result.request_id.get_buffer(),
+                ad_slot_result.request_id.length());
+            }
+
+            auto response = grpc_distributor->update_user_freq_caps(
+              GrpcAlgs::pack_user_id(request_info.client_id),
+              request_info.current_time,
+              request_id,
+              freq_caps,
+              uc_freq_caps,
+              FreqCaps{},
+              seq_orders,
+              ad_slot_result.track_impr ? CampaignIds{} : campaign_ids,
+              ad_slot_result.track_impr ? campaign_ids : CampaignIds{});
+            if (!response || response->has_error())
+            {
+              is_grpc_success = false;
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                Aspect::AD_FRONTEND);
+            }
+          }
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::AD_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::AD_FRONTEND);
+      }
+
+      if (is_grpc_success)
+      {
+        timer.stop();
+        request_time_metering.history_post_match_time = timer.elapsed_time();
+      }
+    }
+
+    if (is_grpc_success)
+      return;
 
     try
     {

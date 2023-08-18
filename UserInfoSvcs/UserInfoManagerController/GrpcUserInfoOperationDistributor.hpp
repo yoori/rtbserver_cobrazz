@@ -109,12 +109,26 @@ using ChannelTriggerMatchArray = std::vector<ChannelTriggerMatch>;
 
 struct GeoData final
 {
+  using CoordDecimal = AdServer::CampaignSvcs::CoordDecimal;
+  using AccuracyDecimal = AdServer::CampaignSvcs::AccuracyDecimal;
+
   GeoData() = default;
+
+  GeoData(
+    const CoordDecimal& latitude,
+    const CoordDecimal& longitude,
+    const AccuracyDecimal& accuracy)
+    : latitude(latitude),
+      longitude(longitude),
+      accuracy(accuracy)
+  {
+  }
+
   ~GeoData() = default;
 
-  AdServer::CampaignSvcs::CoordDecimal latitude;
-  AdServer::CampaignSvcs::CoordDecimal longitude;
-  AdServer::CampaignSvcs::AccuracyDecimal accuracy;
+  CoordDecimal latitude;
+  CoordDecimal longitude;
+  AccuracyDecimal accuracy;
 };
 using GeoDataArray = std::vector<GeoData>;
 
