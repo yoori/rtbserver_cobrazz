@@ -63,32 +63,64 @@ END$$;"""
 
 class Metrics:
     def __init__(self):
-        self.files_to_upload = 0
         self.uploaded_users = 0
+        self.files_to_upload = 0
 
 
-class Upload:
-    def __init__(self, params):
-        self.account_id = params["account_id"]
-        self.channel_prefix = params["channel_prefix"]
-        self.in_dir = params["in_dir"]
+class UploadDir:
+    def __init__(self, in_dir, markers_dir, channel_prefix):
+        self.in_dir = in_dir
+        self.markers_dir = markers_dir
+        self.channel_prefix = channel_prefix
+        for root, dirs, files in os.walk(self.in_dir, True):
+            self.files_to_upload = len(files)
+
+
+class Upload(UploadDir):
+    def __init__(self, service, params):
         workspace_dir = params["workspace_dir"]
-        self.markers_dir = os.path.join(workspace_dir, "markers")
+        super().__init__(params["in_dir"], os.path.join(workspace_dir, "markers"), params["channel_prefix"])
+        self.service = service
+        self.account_id = params["account_id"]
         self.url_segments_dir = params.get("url_segments_dir")
         if self.url_segments_dir is not None:
             self.url_markers_dir = os.path.join(workspace_dir, "url_markers")
-        self.metrics = {}
+        self.__subdirs = {}
+        self.metrics = Metrics()
+        self.metrics_dirty = True
 
-    def make_metrics(self, path):
-        try:
-            return self.metrics[path]
-        except KeyError:
-            m = Metrics()
-            for root, dirs, files in os.walk(path, True):
-                m.files_to_upload = len(files)
+    def get_items(self):
+        with self.service.lock:
+            r = []
+            if self.channel_prefix is not None:
+                r.append(self)
+            for root, dirs, files in os.walk(self.in_dir, True):
+                dirs = set(dirs)
+                for d in dirs:
+                    try:
+                        subdir = self.__subdirs[d]
+                    except KeyError:
+                        subdir = UploadDir(
+                            os.path.join(self.in_dir, subdir),
+                            os.path.join(self.markers_dir, subdir),
+                            subdir
+                        )
+                        self.__subdirs[d] = subdir
+                for d in tuple(self.__subdirs.keys()):
+                    if d not in dirs:
+                        del self.__subdirs[d]
                 break
-            self.metrics[path] = m
-            return m
+            r.extend(self.__subdirs.values())
+            return r
+
+    def get_metrics(self):
+        with self.service.lock:
+            if self.metrics_dirty:
+                self.metrics.files_to_upload = self.files_to_upload
+                for subdir in self.__subdirs.values():
+                    self.metrics.files_to_upload += subdir.files_to_upload
+                self.metrics_dirty = False
+            return self.metrics
 
 
 class FileInfo:
@@ -113,7 +145,6 @@ class FileInfo:
 
 
 class HTTPThread(threading.Thread):
-
     def __init__(self, app, host, port):
         super().__init__()
         try:
@@ -151,7 +182,7 @@ class Application(Service):
         self.args_parser.add_argument("--http-host", help="HTTP endpoint host.")
         self.args_parser.add_argument("--http-port", type=int, help="HTTP endpoint port.")
 
-        self.__lock = threading.Lock()
+        self.lock = threading.Lock()
         self.__subprocesses = set()
         self.__asyncio_tasks = set()
         self.__http_thread = None
@@ -170,7 +201,7 @@ class Application(Service):
             name = params["name"]
             if name in self.__uploads:
                 raise RuntimeError(f"Upload name duplication: {name}")
-            self.__uploads[name] = Upload(params)
+            self.__uploads[name] = Upload(self, params)
 
         if self.params.get("account_id") is not None:
             add_upload(self.params)
@@ -186,16 +217,15 @@ class Application(Service):
 
         http_host = self.params.get("http_host")
         if http_host is not None:
-            # initialize initial metrics before HTTP start
+            # initialize metrics before HTTP start
             for upload in self.__uploads.values():
-                for _ in self.enum_uids(upload):
-                    pass
+                upload.get_items()
             self.__http_thread = HTTPThread(self.__make_http_application(), http_host, self.params["http_port"])
             self.print_(0, "Starting HTTP server")
             self.__http_thread.start()
 
     def on_stop_signal(self):
-        with self.__lock:
+        with self.lock:
             self.print_(0, "Cancelling asyncio tasks...")
             for task in tuple(self.__asyncio_tasks):
                 task.cancel()
@@ -252,46 +282,35 @@ class Application(Service):
             loop.run_until_complete(asyncio.sleep(0.250))
             loop.close()
 
-    def enum_uids(self, upload):
-        if upload.channel_prefix is not None:
-            with self.__lock:
-                metrics = upload.make_metrics(upload.in_dir)
-            yield upload.in_dir, upload.markers_dir, upload.channel_prefix, upload.account_id, metrics
-        for root, dirs, files in os.walk(upload.in_dir, True):
-            for subdir in dirs:
-                in_dir = os.path.join(upload.in_dir, subdir)
-                with self.__lock:
-                    metrics = upload.make_metrics(in_dir)
-                yield in_dir, os.path.join(upload.markers_dir, subdir), subdir, upload.account_id, metrics
-            break
-
     async def on_uids(self, upload, cursor):
-        for in_dir, markers_dir, channel_prefix, account_id, metrics in self.enum_uids(upload):
-            await self.on_uids_dir(cursor, in_dir, markers_dir, channel_prefix, account_id, metrics)
+        for item in upload.get_items():
+            await self.on_uids_dir(cursor, upload, item)
 
-    async def on_uids_dir(self, cursor, in_dir, markers_dir, channel_prefix, account_id, metrics):
-        self.print_(1, f"In dir {in_dir}")
-        self.print_(1, f"Markers dir {markers_dir}")
+    async def on_uids_dir(self, cursor, upload, item):
+        self.print_(1, f"In dir {item.in_dir}")
+        self.print_(1, f"Markers dir {item.markers_dir}")
         try:
-            with Context(self, in_dir=in_dir) as in_dir_ctx:
+            with Context(self, in_dir=item.in_dir) as in_dir_ctx:
                 while True:
                     self.verify_running()
-                    with Context(self, markers_dir=markers_dir) as markers_ctx:
+                    with Context(self, markers_dir=item.markers_dir) as markers_ctx:
                         in_files = tuple(in_dir_ctx.files.get_in_files())
-                        metrics.files_to_upload = len(in_files)
+                        with self.lock:
+                            upload.metrics_dirty = True
+                            item.files_to_upload = len(in_files)
                         if not in_files:
                             break
                         file_info = FileInfo(max(
                             in_files,
-                            key=lambda in_file_: os.path.getmtime(os.path.join(in_dir, in_file_))))
+                            key=lambda in_file_: os.path.getmtime(os.path.join(item.in_dir, in_file_))))
                         reg_marker_name = file_info.reg_name + ".__reg__"
-                        keyword = make_keyword(channel_prefix.lower() + file_info.reg_name.lower())
+                        keyword = make_keyword(item.channel_prefix.lower() + file_info.reg_name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
-                            channel_id = channel_prefix + file_info.reg_name.upper()
+                            channel_id = item.channel_prefix + file_info.reg_name.upper()
                             self.print_(1, f"Registering file: {reg_marker_name} ({in_name}) channel_id {channel_id} account_id {account_id} keyword {keyword}")
                             cursor.execute(
                                 SQL_REG_USER,
-                                (channel_id, account_id, keyword, keyword, keyword, keyword, keyword))
+                                (channel_id, item.account_id, keyword, keyword, keyword, keyword, keyword))
                             cursor.execute("COMMIT;")
 
                         if not markers_ctx.markers.check_mtime_interval(reg_marker_name, self.__upload_wait_time):
@@ -303,7 +322,7 @@ class Application(Service):
                                 continue
                             in_names.append(in_file)
                         in_names.sort(
-                            key=lambda _: os.path.getmtime(os.path.join(in_dir, _)),
+                            key=lambda _: os.path.getmtime(os.path.join(item.in_dir, _)),
                             reverse=True)
                         in_names = in_names[:12]
 
@@ -315,7 +334,7 @@ class Application(Service):
                         if len(in_names) > 1:
                             file_groups = {
                                 0: dict(
-                                    (in_name, open(os.path.join(in_dir, in_name), "rb"))
+                                    (in_name, open(os.path.join(item.in_dir, in_name), "rb"))
                                     for in_name in in_names)
                             }
                             in_names.clear()
@@ -337,7 +356,7 @@ class Application(Service):
                                             if not data:
                                                 f.close()
                                                 self.print_(1, f"Duplicate file: {in_name}")
-                                                os.remove(os.path.join(in_dir, in_name))
+                                                os.remove(os.path.join(item.in_dir, in_name))
                                 file_groups.clear()
                                 new_group_ids = {}
                                 for (group_id, data), new_file_group in new_file_groups.items():
@@ -356,10 +375,10 @@ class Application(Service):
                                 tasks = []
                                 loop = asyncio.get_event_loop()
                                 try:
-                                    with self.__lock:
+                                    with self.lock:
                                         for i in range(self.__upload_threads):
                                             task = loop.create_task(
-                                                self.on_uids_lines(f, file_info.is_stable, keyword, session, metrics))
+                                                self.on_uids_lines(f, file_info.is_stable, keyword, session, upload))
                                             tasks.append(task)
                                             self.__asyncio_tasks.add(task)
                                     for task in tasks:
@@ -368,11 +387,11 @@ class Application(Service):
                                         except asyncio.CancelledError:
                                             pass
                                 finally:
-                                    with self.__lock:
+                                    with self.lock:
                                         for task in tasks:
                                             self.__asyncio_tasks.discard(task)
 
-                        in_paths_str = " ".join(os.path.join(in_dir, in_name) for in_name in in_names)
+                        in_paths_str = " ".join(os.path.join(item.in_dir, in_name) for in_name in in_names)
 
                         if file_info.need_sign_uids:
                             cmd = ['sh', '-c', f'cat {in_paths_str} | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.__private_key_file}"']
@@ -380,7 +399,7 @@ class Application(Service):
                             cmd = ['sh', '-c', f'cat {in_paths_str} | sort -u --parallel=4']
 
                         with subprocess.Popen(cmd, stdout=subprocess.PIPE) as shp:
-                            with self.__lock:
+                            with self.lock:
                                 self.__subprocesses.add(shp.pid)
                             try:
                                 file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=1), encoding="utf-8")
@@ -388,21 +407,21 @@ class Application(Service):
                                 with LineReader(self, path=file_info.reg_name, file=file) as f:
                                     await run_lines(f)
                             finally:
-                                with self.__lock:
+                                with self.lock:
                                     self.__subprocesses.remove(shp.pid)
 
                         self.verify_running()
                         if shp.returncode >= 0:
                             for in_name in in_names:
                                 self.print_(1, f"Done file: {in_name}")
-                                os.remove(os.path.join(in_dir, in_name))
+                                os.remove(os.path.join(item.in_dir, in_name))
 
         except aiohttp.client_exceptions.ClientError as e:
             self.print_(0, e)
         except EOFError as e:
             self.print_(0, e)
 
-    async def on_uids_lines(self, f, is_stable, keyword, session, metrics):
+    async def on_uids_lines(self, f, is_stable, keyword, session, upload):
 
         async def get(uid):
             await self.request(
@@ -428,7 +447,8 @@ class Application(Service):
                         headers={},
                         params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
                         visitor=visitor)
-                metrics.uploaded_users += 1
+                with self.lock:
+                    upload.metrics.uploaded_users += 1
         except StopService:
             pass
 
@@ -470,14 +490,9 @@ class Application(Service):
 
         @app.route('/metrics')
         def metrics():
-            mm = {}
-            with self.__lock:
-                for name, upload in self.__uploads.items():
-                    m = Metrics()
-                    for um in upload.metrics.values():
-                        m.files_to_upload += um.files_to_upload
-                        m.uploaded_users += um.uploaded_users
-                    mm[name] = m
+            mm = dict(
+                (name, upload.get_metrics())
+                for name, upload in self.__uploads.items())
             fmt = flask.request.args.get('format')
             if fmt is None:
                 prometheus = []
@@ -495,7 +510,7 @@ class Application(Service):
                 for name, m in mm.items():
                     files_to_upload.append({"source": name, "value": m.files_to_upload})
                     uploaded_users.append({"source": name, "value": m.uploaded_users})
-                return flask.jsonify({'files_to_upload': files_to_upload, 'uploaded_users': uploaded_users})
+                return flask.jsonify({"files_to_upload": files_to_upload, "uploaded_users": uploaded_users})
             return "Unknown format", 400
 
         return app
