@@ -790,126 +790,246 @@ namespace Action
         trigger_match_result->matched_channels.url_channels.length() != 0 ||
         trigger_match_result->matched_channels.url_keyword_channels.length() != 0))
       {
-        AdServer::UserInfoSvcs::UserInfoMatcher_var
-          uim_session = user_info_client_->user_info_session();
+        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+          grpc_distributor = user_info_client_->grpc_distributor();
 
-        try
+        bool is_grpc_success = false;
+        if (grpc_distributor)
         {
-          // call UIM only if any channel matched
-          AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
-          match_params.use_empty_profile = false;
-          match_params.silent_match = false;
-          match_params.no_match = false;
-          match_params.no_result = true;
-          match_params.ret_freq_caps = false;
-          match_params.provide_channel_count = false;
-          match_params.provide_persistent_channels = false;
-          match_params.change_last_request = false;
-          match_params.filter_contextual_triggers = false;
-          match_params.publishers_optin_timeout =
-            CorbaAlgs::pack_time(Generics::Time::ZERO);
+          using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+          using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+          using ChannelMatchSet = std::set<ChannelMatch>;
 
-          typedef std::set<ChannelMatch> ChannelMatchSet;
-          ChannelMatchSet page_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.page_channels.get_buffer(),
-            trigger_match_result->matched_channels.page_channels.get_buffer() +
-            trigger_match_result->matched_channels.page_channels.length(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
-
-          match_params.page_channel_ids.length(page_channels.size());
-          CORBA::ULong res_ch_i = 0;
-          for (ChannelMatchSet::const_iterator ch_it = page_channels.begin();
-               ch_it != page_channels.end(); ++ch_it, ++res_ch_i)
+          try
           {
-            match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-            match_params.page_channel_ids[res_ch_i].channel_trigger_id =
-              ch_it->channel_trigger_id;
+            is_grpc_success = true;
+
+            // call UIM only if any channel matched
+            MatchParams match_params;
+            match_params.use_empty_profile = false;
+            match_params.silent_match = false;
+            match_params.no_match = false;
+            match_params.no_result = true;
+            match_params.ret_freq_caps = false;
+            match_params.provide_channel_count = false;
+            match_params.provide_persistent_channels = false;
+            match_params.change_last_request = false;
+            match_params.filter_contextual_triggers = false;
+            match_params.publishers_optin_timeout = Generics::Time::ZERO;
+
+            ChannelMatchSet page_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.page_channels.get_buffer(),
+              trigger_match_result->matched_channels.page_channels.get_buffer() +
+                trigger_match_result->matched_channels.page_channels.length(),
+              std::inserter(page_channels, page_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.page_channel_ids.reserve(page_channels.size());
+            for (const auto& page_channel : page_channels)
+            {
+              match_params.page_channel_ids.emplace_back(
+                page_channel.channel_id,
+                page_channel.channel_trigger_id);
+            }
+
+            ChannelMatchSet url_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_channels.length(),
+              std::inserter(url_channels, url_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_channel_ids.reserve(url_channels.size());
+            for (const auto& url_channel : url_channels)
+            {
+              match_params.url_channel_ids.emplace_back(
+                url_channel.channel_id,
+                url_channel.channel_trigger_id);
+            }
+
+            ChannelMatchSet url_keyword_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_keyword_channels.length(),
+              std::inserter(url_keyword_channels, url_keyword_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_keyword_channel_ids.reserve(url_keyword_channels.size());
+            for (const auto& url_keyword_channel : url_keyword_channels)
+            {
+              match_params.url_keyword_channel_ids.emplace_back(
+                url_keyword_channel.channel_id,
+                url_keyword_channel.channel_trigger_id);
+            }
+
+            UserInfo user_info;
+            user_info.user_id = GrpcAlgs::pack_user_id(user_id);
+            user_info.last_colo_id = -1;
+            user_info.request_colo_id = common_config_->colo_id();
+            user_info.current_colo_id = -1;
+            user_info.temporary = false;
+            user_info.time = now.tv_sec;
+
+            auto response = grpc_distributor->match(
+              user_info,
+              match_params);
+            if (!response || response->has_error())
+            {
+              is_grpc_success = false;
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                Aspect::ACTION_FRONTEND);
+            }
           }
-
-          ChannelMatchSet url_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.url_channels.get_buffer(),
-            trigger_match_result->matched_channels.url_channels.get_buffer() +
-            trigger_match_result->matched_channels.url_channels.length(),
-            std::inserter(url_channels, url_channels.end()),
-            GetChannelTriggerId());
-
-          match_params.url_channel_ids.length(url_channels.size());
-          res_ch_i = 0;
-          for (ChannelMatchSet::const_iterator ch_it = url_channels.begin();
-               ch_it != url_channels.end(); ++ch_it, ++res_ch_i)
+          catch (const eh::Exception& exc)
           {
-            match_params.url_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-            match_params.url_channel_ids[res_ch_i].channel_trigger_id =
-              ch_it->channel_trigger_id;
+            is_grpc_success = false;
+            Stream::Error stream;
+            stream << __func__
+                   << ": "
+                   << exc.what();
+            logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
           }
-
-          ChannelMatchSet url_keyword_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
-            trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
-            trigger_match_result->matched_channels.url_keyword_channels.length(),
-            std::inserter(url_keyword_channels, url_keyword_channels.end()),
-            GetChannelTriggerId());
-
-          match_params.url_keyword_channel_ids.length(url_keyword_channels.size());
-          res_ch_i = 0;
-          for (ChannelMatchSet::const_iterator ch_it = url_keyword_channels.begin();
-               ch_it != url_keyword_channels.end(); ++ch_it, ++res_ch_i)
+          catch (...)
           {
-            match_params.url_keyword_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-            match_params.url_keyword_channel_ids[res_ch_i].channel_trigger_id =
-              ch_it->channel_trigger_id;
+            is_grpc_success = false;
+            Stream::Error stream;
+            stream << __func__
+                   << ": Unknown error";
+            logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
           }
-
-          AdServer::UserInfoSvcs::UserInfo user_info;
-          user_info.user_id = CorbaAlgs::pack_user_id(user_id);
-          user_info.last_colo_id = -1;
-          user_info.request_colo_id = common_config_->colo_id();
-          user_info.current_colo_id = -1;
-          user_info.temporary = false;
-          user_info.time = now.tv_sec;
-
-          AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
-          uim_session->match(
-            user_info,
-            match_params,
-            match_result.out());
         }
-        catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
-        {
-          Stream::Error ostr;
-          ostr << __func__ <<
-            ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
-            e.description;
 
-          logger()->log(ostr.str(),
+        if (!is_grpc_success)
+        {
+          AdServer::UserInfoSvcs::UserInfoMatcher_var
+            uim_session = user_info_client_->user_info_session();
+
+          try
+          {
+            // call UIM only if any channel matched
+            AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
+            match_params.use_empty_profile = false;
+            match_params.silent_match = false;
+            match_params.no_match = false;
+            match_params.no_result = true;
+            match_params.ret_freq_caps = false;
+            match_params.provide_channel_count = false;
+            match_params.provide_persistent_channels = false;
+            match_params.change_last_request = false;
+            match_params.filter_contextual_triggers = false;
+            match_params.publishers_optin_timeout =
+              CorbaAlgs::pack_time(Generics::Time::ZERO);
+
+            typedef std::set<ChannelMatch> ChannelMatchSet;
+            ChannelMatchSet page_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.page_channels.get_buffer(),
+              trigger_match_result->matched_channels.page_channels.get_buffer() +
+                trigger_match_result->matched_channels.page_channels.length(),
+              std::inserter(page_channels, page_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.page_channel_ids.length(page_channels.size());
+            CORBA::ULong res_ch_i = 0;
+            for (ChannelMatchSet::const_iterator ch_it = page_channels.begin();
+                ch_it != page_channels.end(); ++ch_it, ++res_ch_i)
+            {
+              match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+              match_params.page_channel_ids[res_ch_i].channel_trigger_id =
+                ch_it->channel_trigger_id;
+            }
+
+            ChannelMatchSet url_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_channels.length(),
+              std::inserter(url_channels, url_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_channel_ids.length(url_channels.size());
+            res_ch_i = 0;
+            for (ChannelMatchSet::const_iterator ch_it = url_channels.begin();
+                 ch_it != url_channels.end(); ++ch_it, ++res_ch_i)
+            {
+              match_params.url_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+              match_params.url_channel_ids[res_ch_i].channel_trigger_id =
+                ch_it->channel_trigger_id;
+            }
+
+            ChannelMatchSet url_keyword_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_keyword_channels.length(),
+              std::inserter(url_keyword_channels, url_keyword_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_keyword_channel_ids.length(url_keyword_channels.size());
+            res_ch_i = 0;
+            for (ChannelMatchSet::const_iterator ch_it = url_keyword_channels.begin();
+                 ch_it != url_keyword_channels.end(); ++ch_it, ++res_ch_i)
+            {
+              match_params.url_keyword_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+              match_params.url_keyword_channel_ids[res_ch_i].channel_trigger_id =
+                ch_it->channel_trigger_id;
+            }
+
+            AdServer::UserInfoSvcs::UserInfo user_info;
+            user_info.user_id = CorbaAlgs::pack_user_id(user_id);
+            user_info.last_colo_id = -1;
+            user_info.request_colo_id = common_config_->colo_id();
+            user_info.current_colo_id = -1;
+            user_info.temporary = false;
+            user_info.time = now.tv_sec;
+
+            AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
+            uim_session->match(
+              user_info,
+              match_params,
+              match_result.out());
+          }
+          catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
+          {
+            Stream::Error ostr;
+            ostr << __func__ <<
+              ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
+              e.description;
+
+            logger()->log(ostr.str(),
+              Logging::Logger::EMERGENCY,
+              Aspect::ACTION_FRONTEND,
+              "ADS-IMPL-112");
+          }
+          catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
+          {
+            logger()->log(
+              String::SubString("UserInfoManager not ready for matching."),
+              TraceLevel::MIDDLE,
+              Aspect::ACTION_FRONTEND);
+          }
+          catch(const CORBA::SystemException& ex)
+          {
+            Stream::Error ostr;
+            ostr << __func__ <<
+              ": Can't match history channels: CORBA::SystemException: " << ex;
+
+            logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
-            Aspect::ACTION_FRONTEND,
-            "ADS-IMPL-112");
-        }
-        catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-        {
-          logger()->log(
-            String::SubString("UserInfoManager not ready for matching."),
-            TraceLevel::MIDDLE,
-            Aspect::ACTION_FRONTEND);
-        }
-        catch(const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << __func__ <<
-            ": Can't match history channels: CORBA::SystemException: " << ex;
-
-          logger()->log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::ACTION_FRONTEND,
-            "ADS-ICON-2");
+              Aspect::ACTION_FRONTEND,
+              "ADS-ICON-2");
+          }
         }
 
         try
