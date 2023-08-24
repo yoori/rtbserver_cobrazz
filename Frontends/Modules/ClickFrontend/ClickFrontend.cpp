@@ -298,7 +298,6 @@ namespace AdServer
             std::move(task_processor_container_builder),
             std::move(init_func),
             logger()));
-
         add_child_object(manager_coro_);
 
         request_info_filler_.reset(
@@ -986,69 +985,132 @@ namespace AdServer
 
     assert(user_bind_client_.in());
 
-    AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-      user_bind_client_->user_bind_mapper();
+    AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+      grpc_distributor = user_bind_client_->grpc_distributor();
 
-    // resolve cookie user id
-    try
+    bool is_grpc_success = false;
+    if (grpc_distributor)
     {
-      // resolve cookie user id only if user id in params not equal to cookie user id
-      if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+      // resolve cookie user id
+      try
       {
-        const std::string cookie_external_id_str =
-          std::string("c/") + cookie_user_id.to_string();
+        is_grpc_success = true;
 
-        AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-        get_request_info.id << cookie_external_id_str;
-        get_request_info.timestamp = CorbaAlgs::pack_time(now);
-        get_request_info.silent = true;
-        get_request_info.generate_user_id = false;
-        get_request_info.for_set_cookie = false;
-        get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-        get_request_info.current_user_id = CorbaAlgs::pack_user_id(cookie_user_id);
+        // resolve cookie user id only if user id in params not equal to cookie user id
+        if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+        {
+          const std::string cookie_external_id_str =
+            std::string("c/") + cookie_user_id.to_string();
 
-        AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
-          user_bind_mapper->get_user_id(get_request_info);
+          auto response = grpc_distributor->get_user_id(
+            cookie_external_id_str,
+            GrpcAlgs::pack_user_id(cookie_user_id),
+            now,
+            Generics::Time::ZERO,
+            true,
+            false,
+            false);
 
-        resolved_cookie_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+          if (response && response->has_info())
+          {
+            const auto& info_proto = response->info();
+            resolved_cookie_user_id = GrpcAlgs::unpack_user_id(info_proto.user_id());
+          }
+          else
+          {
+            is_grpc_success = false;
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::CLICK_FRONTEND);
+          }
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
       }
     }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+
+    if (!is_grpc_success)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindServer::NotReady";
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-        ex.description;
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught CORBA::SystemException: " << e;
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CLICK_FRONTEND,
-        "ADS-ICON-6");
+      AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+        user_bind_client_->user_bind_mapper();
+
+      // resolve cookie user id
+      try
+      {
+        // resolve cookie user id only if user id in params not equal to cookie user id
+        if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+        {
+          const std::string cookie_external_id_str =
+            std::string("c/") + cookie_user_id.to_string();
+
+          AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
+          get_request_info.id << cookie_external_id_str;
+          get_request_info.timestamp = CorbaAlgs::pack_time(now);
+          get_request_info.silent = true;
+          get_request_info.generate_user_id = false;
+          get_request_info.for_set_cookie = false;
+          get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
+          get_request_info.current_user_id = CorbaAlgs::pack_user_id(cookie_user_id);
+
+          AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
+            user_bind_mapper->get_user_id(get_request_info);
+
+          resolved_cookie_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+        }
+      }
+      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindServer::NotReady";
+        logger()->log(ostr.str(),
+          Logging::Logger::EMERGENCY,
+          Aspect::CLICK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+        logger()->log(ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::CLICK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+          ex.description;
+        logger()->log(ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::CLICK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+      catch(const CORBA::SystemException& e)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught CORBA::SystemException: " << e;
+        logger()->log(ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::CLICK_FRONTEND,
+          "ADS-ICON-6");
+      }
     }
 
     // do history match
