@@ -2498,6 +2498,57 @@ namespace AdServer
 
     if(!request_info.client_id.is_null() && user_bind_client_)
     {
+      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+        grpc_distributor = user_bind_client_->grpc_distributor();
+
+      if (grpc_distributor)
+      {
+        try
+        {
+          const std::string ext_user_id = std::string("c/") +
+            request_info.client_id.to_string();
+
+          auto response = grpc_distributor->get_user_id(
+            ext_user_id,
+            GrpcAlgs::pack_user_id(request_info.client_id),
+            request_info.current_time,
+            Generics::Time::ZERO,
+            true,
+            false,
+            true);
+          if (response && response->has_info())
+          {
+            const auto& info_proto = response->info();
+            resolved_user_id = GrpcAlgs::unpack_user_id(info_proto.user_id());
+            common_module_->user_id_controller()->null_blacklisted(resolved_user_id);
+
+            return !resolved_user_id.is_null();
+          }
+          else
+          {
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::AD_FRONTEND);
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::AD_FRONTEND);
+        }
+        catch (...)
+        {
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::AD_FRONTEND);
+        }
+      }
+
       try
       {
         AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
