@@ -271,7 +271,6 @@ namespace Action
             std::move(task_processor_container_builder),
             std::move(init_func),
             logger()));
-
         add_child_object(manager_coro_);
 
         if(config_->PathUriList().present())
@@ -1187,65 +1186,112 @@ namespace Action
 
         if(user_bind_client_)
         {
-          try
-          {
-            AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-              user_bind_client_->user_bind_mapper();
+          AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+            grpc_distributor = user_bind_client_->grpc_distributor();
 
-            AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-              add_user_request_info;
-            const std::string external_id_str =
-              std::string("c/") + relink_user_id.to_string();
-            add_user_request_info.id << external_id_str;
-            add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
-            add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+          bool is_grpc_success = false;
+          if (grpc_distributor)
+          {
+            try
+            {
+              is_grpc_success = true;
+              const std::string external_id_str =
+                std::string("c/") + relink_user_id.to_string();
 
-            AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-              prev_user_bind_info =
-                user_bind_mapper->add_user_id(add_user_request_info);
+              auto response = grpc_distributor->add_user_id(
+                external_id_str,
+                request_info.time,
+                GrpcAlgs::pack_user_id(link_user_id));
+              if (!response || response->has_error())
+              {
+                is_grpc_success = false;
+                GrpcAlgs::print_grpc_error_response(
+                  response,
+                  logger(),
+                  Aspect::ACTION_FRONTEND);
+              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+            }
+          }
 
-            (void)prev_user_bind_info;
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+          if (!is_grpc_success)
           {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindServer::NotReady";
-            logger()->log(ostr.str(),
-              Logging::Logger::EMERGENCY,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-              ex.description;
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const CORBA::SystemException& e)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught CORBA::SystemException: " << e;
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-ICON-6");
-          }
-          catch(...)
-          {
-            assert(0);
+            try
+            {
+              AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+                user_bind_client_->user_bind_mapper();
+
+              AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+                add_user_request_info;
+              const std::string external_id_str =
+                std::string("c/") + relink_user_id.to_string();
+              add_user_request_info.id << external_id_str;
+              add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
+              add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+
+              AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+                prev_user_bind_info =
+                  user_bind_mapper->add_user_id(add_user_request_info);
+
+              (void)prev_user_bind_info;
+            }
+            catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught UserBindServer::NotReady";
+              logger()->log(ostr.str(),
+                Logging::Logger::EMERGENCY,
+                Aspect::ACTION_FRONTEND,
+                "ADS-IMPL-109");
+            }
+            catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+              logger()->log(ostr.str(),
+                Logging::Logger::ERROR,
+                Aspect::ACTION_FRONTEND,
+                "ADS-IMPL-109");
+            }
+            catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+                ex.description;
+              logger()->log(ostr.str(),
+                Logging::Logger::ERROR,
+                Aspect::ACTION_FRONTEND,
+                "ADS-IMPL-109");
+            }
+            catch(const CORBA::SystemException& e)
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught CORBA::SystemException: " << e;
+              logger()->log(ostr.str(),
+                Logging::Logger::ERROR,
+                Aspect::ACTION_FRONTEND,
+                "ADS-ICON-6");
+            }
+            catch(...)
+            {
+              assert(0);
+            }
           }
         }
       }
@@ -1254,64 +1300,111 @@ namespace Action
     // link ifa
     if(user_bind_client_ && !request_info.ifa.empty())
     {
-      try
-      {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
+      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+        grpc_distributor = user_bind_client_->grpc_distributor();
 
-        AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-          add_user_request_info;
-        const std::string external_id_str = std::string("ifa/") + request_info.ifa;
-        add_user_request_info.id << external_id_str;
-        add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
-        add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+      bool is_grpc_success = false;
+      if (grpc_distributor)
+      {
+        try
+        {
+          is_grpc_success = true;
+          const std::string external_id_str =
+            std::string("ifa/") + request_info.ifa;
 
-        AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-          prev_user_bind_info =
-            user_bind_mapper->add_user_id(add_user_request_info);
+          auto response = grpc_distributor->add_user_id(
+            external_id_str,
+            request_info.time,
+            GrpcAlgs::pack_user_id(link_user_id));
+          if (!response || response->has_error())
+          {
+            is_grpc_success = false;
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::ACTION_FRONTEND);
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+        }
+      }
 
-        (void)prev_user_bind_info;
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      if (!is_grpc_success)
       {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindServer::NotReady";
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-          ex.description;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << e;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-ICON-6");
-      }
-      catch(...)
-      {
-        assert(0);
+        try
+        {
+          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+            user_bind_client_->user_bind_mapper();
+
+          AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+            add_user_request_info;
+          const std::string external_id_str = std::string("ifa/") + request_info.ifa;
+          add_user_request_info.id << external_id_str;
+          add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
+          add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+
+          AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+            prev_user_bind_info =
+              user_bind_mapper->add_user_id(add_user_request_info);
+
+          (void)prev_user_bind_info;
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindServer::NotReady";
+          logger()->log(ostr.str(),
+            Logging::Logger::EMERGENCY,
+            Aspect::ACTION_FRONTEND,
+            "ADS-IMPL-109");
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::ACTION_FRONTEND,
+            "ADS-IMPL-109");
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+            ex.description;
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::ACTION_FRONTEND,
+            "ADS-IMPL-109");
+        }
+        catch(const CORBA::SystemException& e)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught CORBA::SystemException: " << e;
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::ACTION_FRONTEND,
+            "ADS-ICON-6");
+        }
+        catch(...)
+        {
+          assert(0);
+        }
       }
     }    
   }
