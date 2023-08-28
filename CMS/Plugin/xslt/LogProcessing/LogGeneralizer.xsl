@@ -260,7 +260,7 @@
       </xsl:call-template>
 
       <xsl:variable name="standard-logs">
-        CampaignStat ChannelCountStat ColoUsers
+        RequestStatsHourlyExtStat CampaignStat ChannelCountStat ColoUsers
         SiteStat WebStat
         AdvertiserUserStat CCStat CCGStat CCGKeywordStat CCGUserStat CCUserStat
         CampaignUserStat ColoUserStat GlobalColoUserStat
