@@ -27,6 +27,8 @@ sub start
        "mkdir -p \${log_root}/RequestInfoManager/In/RequestOperation/Intermediate && " .
        "mkdir -p \${log_root}/RequestInfoManager/Out/CreativeStat && " .
        "mkdir -p \${log_root}/RequestInfoManager/Out/CreativeStat_ && " .
+       "mkdir -p \${log_root}/RequestInfoManager/Out/RequestStatsHourlyExtStat && " .
+       "mkdir -p \${log_root}/RequestInfoManager/Out/RequestStatsHourlyExtStat_ && " .
        "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat && " .
        "mkdir -p \${log_root}/RequestInfoManager/Out/SiteChannelStat_ && " .
        "mkdir -p \${log_root}/RequestInfoManager/Out/CCGKeywordStat && " .

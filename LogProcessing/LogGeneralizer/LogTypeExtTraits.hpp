@@ -520,6 +520,9 @@ namespace LogProcessing
   typedef Aux_::BaseLogTraitsHelper<ChannelCountStatCsvTraits>
     ChannelCountStatExtTraits;
 
+  typedef Aux_::BaseLogTraitsHelper<RequestStatsHourlyExtStatCsvTraits>
+    RequestStatsHourlyExtStatExtTraits;
+
   typedef Aux_::BaseLogTraitsHelper<WebStatCsvTraits>
     WebStatExtTraits;
 

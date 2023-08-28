@@ -74,6 +74,10 @@ struct CreativeStatProcTraits: ProcTraits<CreativeStatProcessor>
 
 /// Write CSV when db_enabled()
 typedef ProcTraits<
+  RequestStatsHourlyExtStatProcessor2, RequestStatsHourlyExtStatProcessor>
+    RequestStatsHourlyExtStatProcTraits;
+
+typedef ProcTraits<
   ChannelOverlapUserStatProcessor2, ChannelOverlapUserStatProcessor>
     ChannelOverlapUserStatProcTraits;
 
@@ -297,6 +301,9 @@ LogGeneralizerImpl::apply_log_proc_config_(
   }
 
   /// Write in CSV when db_enabled()
+  init_log_proc_info_<RequestStatsHourlyExtStatProcTraits>(
+    config.RequestStatsHourlyExtStat());
+
   init_log_proc_info_<ChannelOverlapUserStatProcTraits>(
     config.ChannelOverlapUserStat());
 
