@@ -218,10 +218,10 @@ namespace Profiling
   private:
     CORBACommons::CorbaConfig corba_config_;
     ProfilingServerConfigPtr config_;
+    ManagerCoro_var manager_coro_;
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
     Logging::LoggerCallbackHolder logger_callback_holder_;
-    ManagerCoro_var manager_coro_;
 
     std::unique_ptr<zmq::context_t> zmq_context_;
 

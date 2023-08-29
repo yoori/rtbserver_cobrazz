@@ -15,6 +15,8 @@
 #include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 
+#include <UserInfoSvcs/UserInfoManager/ProtoConvertor.hpp>
+
 #include "ProfilingServer.hpp"
 
 namespace
@@ -551,7 +553,6 @@ namespace Profiling
         std::move(task_processor_container_builder),
         std::move(init_func),
         logger()));
-
     add_child_object(manager_coro_);
   }
 
@@ -815,146 +816,274 @@ namespace Profiling
     }
     else if(user_bind_client_)
     {
-      try
+      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+        grpc_distributor = user_bind_client_->grpc_distributor();
+
+      bool is_grpc_success = false;
+      if (grpc_distributor)
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
-
-        if(!request_info.bind_request_id.empty())
+        try
         {
-          // append bind user ids got by bind_request_id
-          AdServer::UserInfoSvcs::UserBindServer::BindRequestInfo_var bind_request_info =
-            user_bind_mapper->get_bind_request(
-              request_info.bind_request_id.c_str(),
-              request_params.common_info.time);
+          is_grpc_success = true;
 
-          for(CORBA::ULong bind_user_i = 0;
-            bind_user_i < bind_request_info->bind_user_ids.length(); ++bind_user_i)
+          if(!request_info.bind_request_id.empty())
           {
-            request_info.bind_user_ids.push_back(
-              bind_request_info->bind_user_ids[bind_user_i].in());
-          }
-        }
-
-        if(!request_info.bind_user_ids.empty())
-        {
-          bool min_age_reached = false;
-
-          for(auto ext_user_id_it = request_info.bind_user_ids.begin();
-            ext_user_id_it != request_info.bind_user_ids.end(); ++ext_user_id_it)
-          {
-            const std::string& full_external_user_id = *ext_user_id_it;
-
-            if(!full_external_user_id.empty())
+            // append bind user ids got by bind_request_id
+            auto response = grpc_distributor->get_bind_request(
+              request_info.bind_request_id,
+              CorbaAlgs::unpack_time(request_params.common_info.time));
+            if (!response || response->has_error())
             {
-              const bool internal_id_rule1 = (*full_external_user_id.begin() == '/');
-              const bool internal_id_rule2 = (full_external_user_id.compare(0, 2, "c/") == 0);
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                ASPECT);
+              throw Exception("get_bind_request is failed");
+            }
 
-              if(internal_id_rule1 || internal_id_rule2)
+            const auto& info_proto = response->info();
+            const auto& bind_user_ids = info_proto.bind_user_ids();
+            request_info.bind_user_ids.reserve(bind_user_ids.size());
+            std::copy(
+              std::begin(bind_user_ids),
+              std::end(bind_user_ids),
+              std::back_inserter(request_info.bind_user_ids));
+          }
+
+          if(!request_info.bind_user_ids.empty())
+          {
+            bool min_age_reached = false;
+            const auto& bind_user_ids = request_info.bind_user_ids;
+
+            for (const auto& full_external_user_id : bind_user_ids)
+            {
+              if(!full_external_user_id.empty())
               {
-                try
+                const bool internal_id_rule1 = (*full_external_user_id.begin() == '/');
+                const bool internal_id_rule2 = (full_external_user_id.compare(0, 2, "c/") == 0);
+
+                if(internal_id_rule1 || internal_id_rule2)
                 {
-                  match_user_id = AdServer::Commons::UserId(
-                    String::SubString(full_external_user_id).substr(internal_id_rule1 ? 1 : 2));
+                  try
+                  {
+                    match_user_id = AdServer::Commons::UserId(
+                      String::SubString(full_external_user_id).substr(internal_id_rule1 ? 1 : 2));
+                    break;
+                  }
+                  catch(...)
+                  {
+                  }
+                }
+
+                auto response = grpc_distributor->get_user_id(
+                  full_external_user_id,
+                  GrpcAlgs::pack_user_id(match_user_id),
+                  CorbaAlgs::unpack_time(request_params.common_info.time),
+                  Generics::Time::ZERO,
+                  false,
+                  false,
+                  false);
+                if (!response || response->has_error())
+                {
+                  GrpcAlgs::print_grpc_error_response(
+                    response,
+                    logger(),
+                    ASPECT);
+                  throw Exception("get_user_id is failed");
+                }
+
+                const auto& info_proto = response->info();
+                min_age_reached |= info_proto.min_age_reached();
+                match_user_id = GrpcAlgs::unpack_user_id(info_proto.user_id());
+
+                if(!match_user_id.is_null())
+                {
+                  resolved_ext_user_id = full_external_user_id;
                   break;
                 }
-                catch(...)
-                {}
               }
+            }
 
-              AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-              get_request_info.id << full_external_user_id;
-              get_request_info.timestamp = request_params.common_info.time;
-              get_request_info.silent = false;
-              get_request_info.generate_user_id = false;
-              get_request_info.for_set_cookie = false;
-              get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-              get_request_info.current_user_id = CorbaAlgs::pack_user_id(match_user_id);
+            if(!match_user_id.is_null())
+            {
+              request_params.common_info.user_status = static_cast<CORBA::ULong>(
+                AdServer::CampaignSvcs::US_OPTIN);
+            }
+            else if(min_age_reached)
+            {
+              // uid generation on RTB requests disabled
+              request_params.common_info.user_status = static_cast<CORBA::ULong>(
+                AdServer::CampaignSvcs::US_UNDEFINED);
+            }
+            else
+            {
+              request_params.common_info.user_status = static_cast<CORBA::ULong>(
+                AdServer::CampaignSvcs::US_EXTERNALPROBE);
+            }
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), ASPECT);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), ASPECT);
+        }
+      }
 
-              AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var user_bind_info =
-                user_bind_mapper->get_user_id(get_request_info);
+      if (!is_grpc_success)
+      {
+        try
+        {
+          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+            user_bind_client_->user_bind_mapper();
 
-              min_age_reached |= user_bind_info->min_age_reached;
-              match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
+          if(!request_info.bind_request_id.empty())
+          {
+            // append bind user ids got by bind_request_id
+            AdServer::UserInfoSvcs::UserBindServer::BindRequestInfo_var bind_request_info =
+              user_bind_mapper->get_bind_request(
+                request_info.bind_request_id.c_str(),
+                request_params.common_info.time);
 
-              if(!match_user_id.is_null())
-              {
-                resolved_ext_user_id = full_external_user_id;
-                break;
-              }
+            for(CORBA::ULong bind_user_i = 0;
+              bind_user_i < bind_request_info->bind_user_ids.length(); ++bind_user_i)
+            {
+              request_info.bind_user_ids.push_back(
+                bind_request_info->bind_user_ids[bind_user_i].in());
             }
           }
 
-          if(!match_user_id.is_null())
+          if(!request_info.bind_user_ids.empty())
           {
-            request_params.common_info.user_status = static_cast<CORBA::ULong>(
-              AdServer::CampaignSvcs::US_OPTIN);
+            bool min_age_reached = false;
 
-            /*
-            common_info.signed_user_id <<
-              common_module_->user_id_controller()->sign(match_user_id).str();
-            */
-          }
-          else if(min_age_reached)
-          {
-            // uid generation on RTB requests disabled
-            request_params.common_info.user_status = static_cast<CORBA::ULong>(
-              AdServer::CampaignSvcs::US_UNDEFINED);
-          }
-          else
-          {
-            request_params.common_info.user_status = static_cast<CORBA::ULong>(
-              AdServer::CampaignSvcs::US_EXTERNALPROBE);
+            for(auto ext_user_id_it = request_info.bind_user_ids.begin();
+              ext_user_id_it != request_info.bind_user_ids.end(); ++ext_user_id_it)
+            {
+              const std::string& full_external_user_id = *ext_user_id_it;
+
+              if(!full_external_user_id.empty())
+              {
+                const bool internal_id_rule1 = (*full_external_user_id.begin() == '/');
+                const bool internal_id_rule2 = (full_external_user_id.compare(0, 2, "c/") == 0);
+
+                if(internal_id_rule1 || internal_id_rule2)
+                {
+                  try
+                  {
+                    match_user_id = AdServer::Commons::UserId(
+                      String::SubString(full_external_user_id).substr(internal_id_rule1 ? 1 : 2));
+                    break;
+                  }
+                  catch(...)
+                  {}
+                }
+
+                AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
+                get_request_info.id << full_external_user_id;
+                get_request_info.timestamp = request_params.common_info.time;
+                get_request_info.silent = false;
+                get_request_info.generate_user_id = false;
+                get_request_info.for_set_cookie = false;
+                get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
+                get_request_info.current_user_id = CorbaAlgs::pack_user_id(match_user_id);
+
+                AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var user_bind_info =
+                  user_bind_mapper->get_user_id(get_request_info);
+
+                min_age_reached |= user_bind_info->min_age_reached;
+                match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
+
+                if(!match_user_id.is_null())
+                {
+                  resolved_ext_user_id = full_external_user_id;
+                  break;
+                }
+              }
+            }
+
+            if(!match_user_id.is_null())
+            {
+              request_params.common_info.user_status = static_cast<CORBA::ULong>(
+                AdServer::CampaignSvcs::US_OPTIN);
+
+              /*
+              common_info.signed_user_id <<
+                common_module_->user_id_controller()->sign(match_user_id).str();
+              */
+            }
+            else if(min_age_reached)
+            {
+              // uid generation on RTB requests disabled
+              request_params.common_info.user_status = static_cast<CORBA::ULong>(
+                AdServer::CampaignSvcs::US_UNDEFINED);
+            }
+            else
+            {
+              request_params.common_info.user_status = static_cast<CORBA::ULong>(
+                AdServer::CampaignSvcs::US_EXTERNALPROBE);
+            }
           }
         }
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::NotReady";
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady& )
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::NotReady";
 
-        logger()->log(ostr.str(),
-          Logging::Logger::WARNING,
-          ASPECT,
-          "ADS-IMPL-10681");
+          logger()->log(ostr.str(),
+            Logging::Logger::WARNING,
+            ASPECT,
+            "ADS-IMPL-10681");
 
-        return false;
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+          return false;
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
 
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-IMPL-10681");
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            ASPECT,
+            "ADS-IMPL-10681");
 
-        return false;
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-          ex.description;
+          return false;
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+            ex.description;
 
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-IMPL-10681");
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            ASPECT,
+            "ADS-IMPL-10681");
 
-        return false;
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << e;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-ICON-7800");
+          return false;
+        }
+        catch(const CORBA::SystemException& e)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught CORBA::SystemException: " << e;
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            ASPECT,
+            "ADS-ICON-7800");
 
-        return false;
+          return false;
+        }
       }
     }
 
@@ -992,90 +1121,161 @@ namespace Profiling
 
     if(user_bind_client_)
     {
-      try
+      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+        grpc_distributor = user_bind_client_->grpc_distributor();
+
+      bool is_grpc_success = false;
+      if (grpc_distributor)
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
-
-        for(auto ext_user_id_it = request_info.bind_user_ids.begin();
-          ext_user_id_it != request_info.bind_user_ids.end();
-          ++ext_user_id_it)
+        try
         {
-          const std::string& full_external_user_id = *ext_user_id_it;
+          is_grpc_success = true;
+          const auto& bind_user_ids = request_info.bind_user_ids;
 
-          if(resolved_ext_user_id != full_external_user_id &&
-            !full_external_user_id.empty() &&
-            *full_external_user_id.begin() != '/')
+          for (const auto& full_external_user_id : bind_user_ids)
           {
-            Commons::Optional<AdServer::Commons::UserId> internal_user_id;
-
-            if(full_external_user_id.compare(0, 2, "c/") == 0)
+            if(resolved_ext_user_id != full_external_user_id &&
+              !full_external_user_id.empty() &&
+              *full_external_user_id.begin() != '/')
             {
-              try
+              Commons::Optional<AdServer::Commons::UserId> internal_user_id;
+
+              if(full_external_user_id.compare(0, 2, "c/") == 0)
               {
-                internal_user_id = AdServer::Commons::UserId(
-                  String::SubString(full_external_user_id).substr(2));
+                try
+                {
+                  internal_user_id = AdServer::Commons::UserId(
+                    String::SubString(full_external_user_id).substr(2));
+                }
+                catch(const eh::Exception&)
+                {
+                }
               }
-              catch(const eh::Exception&)
-              {}
-            }
 
-            if(!internal_user_id.present() || user_id != *internal_user_id)
-            {
-              AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-                add_user_request_info;
-              add_user_request_info.id << full_external_user_id;
-              add_user_request_info.user_id = CorbaAlgs::pack_user_id(user_id);
-              add_user_request_info.timestamp = CorbaAlgs::pack_time(time);
-
-              AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-                prev_user_bind_info =
-                  user_bind_mapper->add_user_id(add_user_request_info);
-
-              (void)prev_user_bind_info;
+              if(!internal_user_id.present() || user_id != *internal_user_id)
+              {
+                auto response = grpc_distributor->add_user_id(
+                  full_external_user_id,
+                  time,
+                  GrpcAlgs::pack_user_id(user_id));
+                if (!response || response->has_error())
+                {
+                  GrpcAlgs::print_grpc_error_response(
+                    response,
+                    logger(),
+                    ASPECT);
+                  throw Exception("add_user_id is failed");
+                }
+              }
             }
           }
         }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), ASPECT);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), ASPECT);
+        }
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::NotReady";
 
-        logger()->log(ostr.str(),
-          Logging::Logger::WARNING,
-          ASPECT,
-          "ADS-IMPL-10681");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+      if (!is_grpc_success)
       {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+        try
+        {
+          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+            user_bind_client_->user_bind_mapper();
 
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-IMPL-10681");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-          ex.description;
+          for(auto ext_user_id_it = request_info.bind_user_ids.begin();
+            ext_user_id_it != request_info.bind_user_ids.end();
+            ++ext_user_id_it)
+          {
+            const std::string& full_external_user_id = *ext_user_id_it;
 
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-IMPL-10681");
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << e;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          ASPECT,
-          "ADS-ICON-7800");
+            if(resolved_ext_user_id != full_external_user_id &&
+              !full_external_user_id.empty() &&
+              *full_external_user_id.begin() != '/')
+            {
+              Commons::Optional<AdServer::Commons::UserId> internal_user_id;
+
+              if(full_external_user_id.compare(0, 2, "c/") == 0)
+              {
+                try
+                {
+                  internal_user_id = AdServer::Commons::UserId(
+                    String::SubString(full_external_user_id).substr(2));
+                }
+                catch(const eh::Exception&)
+                {}
+              }
+
+              if(!internal_user_id.present() || user_id != *internal_user_id)
+              {
+                AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+                  add_user_request_info;
+                add_user_request_info.id << full_external_user_id;
+                add_user_request_info.user_id = CorbaAlgs::pack_user_id(user_id);
+                add_user_request_info.timestamp = CorbaAlgs::pack_time(time);
+
+                AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+                  prev_user_bind_info =
+                    user_bind_mapper->add_user_id(add_user_request_info);
+
+                (void)prev_user_bind_info;
+              }
+            }
+          }
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady& )
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::NotReady";
+
+          logger()->log(ostr.str(),
+            Logging::Logger::WARNING,
+            ASPECT,
+            "ADS-IMPL-10681");
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            ASPECT,
+            "ADS-IMPL-10681");
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+            ex.description;
+
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            ASPECT,
+            "ADS-IMPL-10681");
+        }
+        catch(const CORBA::SystemException& e)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught CORBA::SystemException: " << e;
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            ASPECT,
+            "ADS-ICON-7800");
+        }
       }
     }
   }
@@ -1236,18 +1436,175 @@ namespace Profiling
   {
     static const char* FUN = "ProfilingServer::history_match_()";
 
+    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
+    bool do_history_matching =
+      request_params.common_info.user_status == AdServer::CampaignSvcs::US_OPTIN ||
+      request_params.common_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
     bool match_success = false;
+
+    auto grpc_distributor = user_info_client_->grpc_distributor();
+    bool is_grpc_success = false;
+    if (grpc_distributor)
+    {
+      using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+      using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+
+      try
+      {
+        is_grpc_success = true;
+
+        MatchParams match_params;
+        match_params.use_empty_profile = false;
+        match_params.silent_match = false;
+        match_params.no_match = false;
+        match_params.no_result = false;
+        match_params.ret_freq_caps = false;
+        match_params.provide_channel_count = false;
+        match_params.provide_persistent_channels = false;
+        match_params.change_last_request = true;
+        match_params.filter_contextual_triggers = false;
+        match_params.publishers_optin_timeout = Generics::Time::ZERO;
+        match_params.cohort2 = request_info.cohort2;
+
+        if(request_info.coord_location.in())
+        {
+          auto& geo_data_seq = match_params.geo_data_seq;
+          geo_data_seq.emplace_back(
+            request_info.coord_location->latitude,
+            request_info.coord_location->longitude,
+            request_info.coord_location->accuracy);
+        }
+
+        if (trigger_matching_result)
+        {
+          using ChannelMatchSet = std::set<ChannelMatch>;
+
+          ChannelMatchSet url_channels;
+          ChannelMatchSet page_channels;
+          ChannelMatchSet search_channels;
+          ChannelMatchSet url_keyword_channels;
+
+          std::transform(
+            trigger_matching_result->matched_channels.url_channels.get_buffer(),
+            trigger_matching_result->matched_channels.url_channels.get_buffer() +
+              trigger_matching_result->matched_channels.url_channels.length(),
+            std::inserter(url_channels, url_channels.end()),
+            GetChannelTriggerId());
+
+          std::transform(
+            trigger_matching_result->matched_channels.page_channels.get_buffer(),
+            trigger_matching_result->matched_channels.page_channels.get_buffer() +
+              trigger_matching_result->matched_channels.page_channels.length(),
+            std::inserter(page_channels, page_channels.end()),
+            GetChannelTriggerId());
+
+          std::transform(
+            trigger_matching_result->matched_channels.search_channels.get_buffer(),
+            trigger_matching_result->matched_channels.search_channels.get_buffer() +
+              trigger_matching_result->matched_channels.search_channels.length(),
+            std::inserter(search_channels, search_channels.end()),
+            GetChannelTriggerId());
+
+          std::transform(
+            trigger_matching_result->matched_channels.url_keyword_channels.get_buffer(),
+            trigger_matching_result->matched_channels.url_keyword_channels.get_buffer() +
+              trigger_matching_result->matched_channels.url_keyword_channels.length(),
+            std::inserter(url_keyword_channels, url_keyword_channels.end()),
+            GetChannelTriggerId());
+
+          match_params.url_channel_ids.reserve(url_channels.size());
+          for (const auto& url_channel : url_channels)
+          {
+            match_params.url_channel_ids.emplace_back(
+              url_channel.channel_id,
+              url_channel.channel_trigger_id);
+          }
+
+          match_params.page_channel_ids.reserve(page_channels.size());
+          for (const auto& page_channel : page_channels)
+          {
+            match_params.page_channel_ids.emplace_back(
+              page_channel.channel_id,
+              page_channel.channel_trigger_id);
+          }
+
+          match_params.search_channel_ids.reserve(search_channels.size());
+          for (const auto& search_channel : search_channels)
+          {
+            match_params.search_channel_ids.emplace_back(
+              search_channel.channel_id,
+              search_channel.channel_trigger_id);
+          }
+
+          match_params.url_keyword_channel_ids.reserve(url_keyword_channels.size());
+          for (const auto& url_keyword_channel : url_keyword_channels)
+          {
+            match_params.url_keyword_channel_ids.emplace_back(
+              url_keyword_channel.channel_id,
+              url_keyword_channel.channel_trigger_id);
+          }
+        }
+
+        UserInfo user_info;
+
+        if (request_params.common_info.user_id.length() != 0)
+        {
+          user_info.user_id.resize(
+            request_params.common_info.user_id.length());
+          std::memcpy(
+            user_info.user_id.data(),
+            request_params.common_info.user_id.get_buffer(),
+            request_params.common_info.user_id.length());
+        }
+
+        user_info.last_colo_id = request_params.common_info.colo_id;
+        user_info.request_colo_id = request_params.common_info.colo_id;
+        user_info.current_colo_id = -1;
+        user_info.temporary =
+          request_params.common_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
+        user_info.time = CorbaAlgs::unpack_time(request_params.common_info.time).tv_sec;
+
+        auto response = grpc_distributor->match(
+          user_info,
+          match_params);
+        if (response && response->has_info())
+        {
+          match_result = AdServer::UserInfoSvcs::convertor_proto_match_result(
+            response->info().match_result());
+          match_success = true;
+        }
+        else
+        {
+          is_grpc_success = false;
+          GrpcAlgs::print_grpc_error_response(
+            response,
+            logger(),
+            ASPECT);
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), ASPECT);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), ASPECT);
+      }
+    }
 
     AdServer::UserInfoSvcs::UserInfoMatcher_var uim_session =
       user_info_client_->user_info_session();
 
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
-
-    bool do_history_matching =
-      request_params.common_info.user_status == AdServer::CampaignSvcs::US_OPTIN ||
-      request_params.common_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
-
-    if(uim_session.in() && do_history_matching)
+    if(!is_grpc_success && uim_session.in() && do_history_matching)
     {
       try
       {
@@ -1424,10 +1781,132 @@ namespace Profiling
 
     const bool REMOVE_SOURCE_USER_PROFILE = false;
 
+    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+      grpc_distributor = user_info_client_->grpc_distributor();
+
+    bool merge_success = false;
+    bool is_grpc_success = false;
+    if (grpc_distributor)
+    {
+      using ProfilesRequestInfo = AdServer::UserInfoSvcs::Types::ProfilesRequestInfo;
+      using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+      using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+      using UserProfiles = AdServer::UserInfoSvcs::Types::UserProfiles;
+
+      try
+      {
+        is_grpc_success = true;
+
+        const auto merged_uid_info = GrpcAlgs::pack_user_id(
+          source_user_id);
+
+        ProfilesRequestInfo profiles_request;
+        profiles_request.base_profile = true;
+        profiles_request.add_profile = true;
+        profiles_request.history_profile = true;
+        profiles_request.freq_cap_profile = true;
+        profiles_request.pref_profile = false;
+
+        auto get_user_profile_response = grpc_distributor->get_user_profile(
+          merged_uid_info,
+          source_temporary,
+          profiles_request);
+        if (!get_user_profile_response || get_user_profile_response->has_error())
+        {
+          GrpcAlgs::print_grpc_error_response(
+            get_user_profile_response,
+            logger(),
+            ASPECT);
+          throw Exception("get_user_profile is failed");
+        }
+
+        const auto& get_user_profile_response_info = get_user_profile_response->info();
+        const auto& user_profiles_proto = get_user_profile_response_info.user_profiles();
+
+        if (!get_user_profile_response_info.return_value())
+          return;
+
+        if (user_profiles_proto.base_user_profile().empty()
+         || user_profiles_proto.add_user_profile().empty())
+          return;
+
+        if (REMOVE_SOURCE_USER_PROFILE)
+        {
+          auto response = grpc_distributor->remove_user_profile(merged_uid_info);
+          if (!response || response->has_error())
+          {
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              ASPECT);
+            throw Exception("remove_user_profile is failed");
+          }
+        }
+
+        UserInfo user_info;
+        user_info.user_id = GrpcAlgs::pack_user_id(target_user_id);
+        user_info.last_colo_id = request_params.common_info.colo_id;
+        user_info.request_colo_id = request_params.common_info.colo_id;
+        user_info.current_colo_id = -1;
+        user_info.temporary = false;
+        user_info.time = CorbaAlgs::unpack_time(
+          request_params.common_info.time).tv_sec;
+
+        MatchParams match_params;
+        match_params.use_empty_profile = false;
+        match_params.silent_match = false;
+        match_params.no_match = false;
+        match_params.no_result = false;
+        match_params.provide_persistent_channels = false;
+        match_params.change_last_request = false;
+        match_params.filter_contextual_triggers = false;
+        match_params.publishers_optin_timeout = Generics::Time::ZERO;
+
+        UserProfiles merge_user_profiles;
+        merge_user_profiles.add_user_profile = user_profiles_proto.add_user_profile();
+        merge_user_profiles.base_user_profile = user_profiles_proto.base_user_profile();
+        merge_user_profiles.pref_profile = user_profiles_proto.pref_profile();
+        merge_user_profiles.history_user_profile = user_profiles_proto.history_user_profile();
+        merge_user_profiles.freq_cap = user_profiles_proto.freq_cap();
+
+        auto merge_response = grpc_distributor->merge(
+          user_info,
+          match_params,
+          merge_user_profiles);
+        if (!merge_response || merge_response->has_error())
+        {
+          GrpcAlgs::print_grpc_error_response(
+              merge_response,
+            logger(),
+            ASPECT);
+          throw Exception("merge is failed");
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+                << ": "
+                << exc.what();
+        logger()->error(stream.str(), ASPECT);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), ASPECT);
+      }
+    }
+
+    if (is_grpc_success)
+      return;
+
     AdServer::UserInfoSvcs::UserInfoMatcher_var uim_session =
       user_info_client_->user_info_session();
 
-    bool merge_success = false;
     AdServer::UserInfoSvcs::UserProfiles_var merge_user_profile;
 
     try

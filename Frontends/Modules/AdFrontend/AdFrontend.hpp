@@ -129,10 +129,6 @@ namespace AdServer
     get_empty_history_matching()
       /*throw(eh::Exception)*/;
 
-    static AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
-    convertor_proto_history_matching(
-      const AdServer::UserInfoSvcs::Proto::MatchResult& match_result_proto);
-
   protected:
     virtual ~AdFrontend() noexcept {}
 

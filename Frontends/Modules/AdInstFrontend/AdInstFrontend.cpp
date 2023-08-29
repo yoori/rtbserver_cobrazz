@@ -619,9 +619,9 @@ namespace
             return;
           }
 
-          const auto& user_profile = info_proto.user_profile();
-          if (user_profile.base_user_profile().empty()
-           && user_profile.add_user_profile().empty())
+          const auto& user_profiles = info_proto.user_profiles();
+          if (user_profiles.base_user_profile().empty()
+           && user_profiles.add_user_profile().empty())
           {
             merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
             return;

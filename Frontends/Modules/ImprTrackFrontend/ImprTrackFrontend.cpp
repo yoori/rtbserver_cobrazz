@@ -965,7 +965,6 @@ namespace ImprTrack
             try
             {
               is_grpc_success = true;
-              UserProfiles merge_user_profile;
 
               ProfilesRequestInfo profiles_request;
               profiles_request.base_profile = true;
@@ -989,7 +988,7 @@ namespace ImprTrack
 
               const auto& user_profile_response_info =
                 get_user_profile_response->info();
-              if (!user_profile_response_info.return_value())
+              if (user_profile_response_info.return_value())
               {
                 UserInfo user_info;
                 user_info.user_id = GrpcAlgs::pack_user_id(result_user_id);
@@ -1009,10 +1008,19 @@ namespace ImprTrack
                 merge_match_params.publishers_optin_timeout =
                   Generics::Time::ZERO;
 
+                const auto& user_profiles_proto = user_profile_response_info.user_profiles();
+
+                UserProfiles merge_user_profiles;
+                merge_user_profiles.add_user_profile = user_profiles_proto.add_user_profile();
+                merge_user_profiles.base_user_profile = user_profiles_proto.base_user_profile();
+                merge_user_profiles.pref_profile = user_profiles_proto.pref_profile();
+                merge_user_profiles.history_user_profile = user_profiles_proto.history_user_profile();
+                merge_user_profiles.freq_cap = user_profiles_proto.freq_cap();
+
                 auto merge_response = grpc_distributor->merge(
                   user_info,
                   merge_match_params,
-                  merge_user_profile);
+                  merge_user_profiles);
                 if (!merge_response || merge_response->has_error())
                 {
                   GrpcAlgs::print_grpc_error_response(

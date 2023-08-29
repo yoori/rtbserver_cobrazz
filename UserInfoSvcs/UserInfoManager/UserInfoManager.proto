@@ -77,7 +77,7 @@ message GetUserProfileRequest
 message GetUserProfileResponseInfo
 {
   bool return_value = 1;
-  UserProfiles user_profile = 2;
+  UserProfiles user_profiles = 2;
 }
 
 message GetUserProfileResponse
