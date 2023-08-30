@@ -630,13 +630,13 @@ namespace ImprTrack
                   std::string("c/") + result_user_id.to_string();
 
                 auto response = grpc_distributor->get_user_id(
-                    cookie_external_id_str,
-                    GrpcAlgs::pack_user_id(result_user_id),
-                    request_info.time,
-                    Generics::Time::ZERO,
-                    true,
-                    false,
-                    request_info.set_cookie);
+                  cookie_external_id_str,
+                  GrpcAlgs::pack_user_id(result_user_id),
+                  request_info.time,
+                  Generics::Time::ZERO,
+                  true,
+                  false,
+                  request_info.set_cookie);
                 if (!response || response->has_error())
                 {
                   GrpcAlgs::print_grpc_error_response(
@@ -1171,11 +1171,10 @@ namespace ImprTrack
               is_grpc_success = true;
 
               ExcludePubpixelAccounts pubpixel_accounts;
-              pubpixel_accounts.reserve(request_info.pubpixel_accounts.size());
-              std::copy(
-                request_info.pubpixel_accounts.begin(),
-                request_info.pubpixel_accounts.end(),
-                std::back_inserter(pubpixel_accounts));
+              pubpixel_accounts.insert(
+                std::end(pubpixel_accounts),
+                std::begin(request_info.pubpixel_accounts),
+                std::end(request_info.pubpixel_accounts));
 
               auto response = grpc_distributor->confirm_user_freq_caps(
                 GrpcAlgs::pack_user_id(freq_cap_user_id),

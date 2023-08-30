@@ -299,11 +299,10 @@ namespace Passback
           is_grpc_success = true;
 
           ExcludePubpixelAccounts pubpixel_accounts;
-          pubpixel_accounts.reserve(passback_info.pubpixel_accounts.size());
-          std::copy(
+          pubpixel_accounts.insert(
+            std::end(pubpixel_accounts),
             std::begin(passback_info.pubpixel_accounts),
-            std::end(passback_info.pubpixel_accounts),
-            std::back_inserter(pubpixel_accounts));
+            std::end(passback_info.pubpixel_accounts));
 
           auto response = grpc_distributor->confirm_user_freq_caps(
             GrpcAlgs::pack_user_id(passback_info.current_user_id),

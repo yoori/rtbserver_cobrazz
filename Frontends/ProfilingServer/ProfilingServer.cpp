@@ -843,11 +843,10 @@ namespace Profiling
 
             const auto& info_proto = response->info();
             const auto& bind_user_ids = info_proto.bind_user_ids();
-            request_info.bind_user_ids.reserve(bind_user_ids.size());
-            std::copy(
+            request_info.bind_user_ids.insert(
+              std::end(request_info.bind_user_ids),
               std::begin(bind_user_ids),
-              std::end(bind_user_ids),
-              std::back_inserter(request_info.bind_user_ids));
+              std::end(bind_user_ids));
           }
 
           if(!request_info.bind_user_ids.empty())

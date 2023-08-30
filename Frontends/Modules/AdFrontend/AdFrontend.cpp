@@ -1381,10 +1381,10 @@ namespace AdServer
 
             match_params.persistent_channel_ids.reserve(
               request_info.platform_ids.size());
-            std::copy(
-              request_info.platform_ids.begin(),
-              request_info.platform_ids.end(),
-              std::back_inserter(match_params.persistent_channel_ids));
+            match_params.persistent_channel_ids.insert(
+              std::end(match_params.persistent_channel_ids),
+              std::begin(request_info.platform_ids),
+              std::end(request_info.platform_ids));
           }
 
           for (const auto& hit_channel_id : request_info.hit_channel_ids)
@@ -1726,7 +1726,7 @@ namespace AdServer
       {
         is_grpc_success = true;
 
-        for (CORBA::ULong ad_slot_i = 0;
+        for(CORBA::ULong ad_slot_i = 0;
              ad_slot_i < campaign_select_result.ad_slots.length();
              ++ad_slot_i)
         {

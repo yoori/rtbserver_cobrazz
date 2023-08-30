@@ -767,34 +767,34 @@ namespace UserInfoSvcs
       UserFreqCapProfile::CampaignIds uc_campaign_ids;
 
       const auto& freq_caps = request->freq_caps();
-      std::copy(
+      fcs.insert(
+        std::end(fcs),
         std::begin(freq_caps),
-        std::end(freq_caps),
-        std::back_inserter(fcs));
+        std::end(freq_caps));
 
       const auto& uc_freq_caps = request->uc_freq_caps();
-      std::copy(
+      uc_fcs.insert(
+        std::end(uc_fcs),
         std::begin(uc_freq_caps),
-        std::end(uc_freq_caps),
-        std::back_inserter(uc_fcs));
+        std::end(uc_freq_caps));
 
       const auto& virtual_freq_caps = request->virtual_freq_caps();
-      std::copy(
+      virtual_fcs.insert(
+        std::end(virtual_fcs),
         std::begin(virtual_freq_caps),
-        std::end(virtual_freq_caps),
-        std::back_inserter(virtual_fcs));
+        std::end(virtual_freq_caps));
 
       const auto& campaign_ids_seq = request->campaign_ids();
-      std::copy(
+      campaign_ids.insert(
+        std::end(campaign_ids),
         std::begin(campaign_ids_seq),
-        std::end(campaign_ids_seq),
-        std::back_inserter(campaign_ids));
+        std::end(campaign_ids_seq));
 
       const auto& uc_campaign_ids_seq = request->uc_campaign_ids();
-      std::copy(
+      uc_campaign_ids.insert(
+        std::end(uc_campaign_ids),
         std::begin(uc_campaign_ids_seq),
-        std::end(uc_campaign_ids_seq),
-        std::back_inserter(uc_campaign_ids));
+        std::end(uc_campaign_ids_seq));
 
       const auto& seq_orders_seq = request->seq_orders();
       for(int i = 0; i < seq_orders_seq.size(); ++i)

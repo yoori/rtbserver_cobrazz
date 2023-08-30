@@ -574,6 +574,7 @@ namespace
       try
       {
         is_grpc_success = true;
+        merge_success = false;
 
         if(request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
         {
@@ -626,9 +627,11 @@ namespace
             merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
             return;
           }
+
+          merge_success = true;
         }
 
-        if(request_info.remove_merged_uid)
+        if(merge_success && request_info.remove_merged_uid)
         {
           auto response = grpc_distributor->remove_user_profile(
             GrpcAlgs::pack_user_id(request_info.temp_user_id));
@@ -679,9 +682,7 @@ namespace
     }
 
     if (is_grpc_success)
-    {
       return;
-    }
 
     try
     {

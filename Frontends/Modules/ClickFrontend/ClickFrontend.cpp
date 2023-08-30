@@ -1010,7 +1010,6 @@ namespace AdServer
             true,
             false,
             false);
-
           if (response && response->has_info())
           {
             const auto& info_proto = response->info();

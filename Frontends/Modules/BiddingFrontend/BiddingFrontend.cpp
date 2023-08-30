@@ -1590,33 +1590,53 @@ namespace Bidding
             ++ext_user_id_it)
           {
             bool is_grpc_success = false;
-            if (grpc_distributor)
+            try
             {
-              is_grpc_success = true;
-
-              auto response = grpc_distributor->get_user_id(
-                *ext_user_id_it,
-                String::SubString{},
-                request_info.current_time,
-                request_info.user_create_time,
-                false,
-                false,
-                false);
-
-              if (response && response->has_info())
+              if (grpc_distributor)
               {
-                const auto& info = response->info();
-                min_age_reached |= info.min_age_reached();
-                local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+                is_grpc_success = true;
+
+                auto response = grpc_distributor->get_user_id(
+                  *ext_user_id_it,
+                  String::SubString{},
+                  request_info.current_time,
+                  request_info.user_create_time,
+                  false,
+                  false,
+                  false);
+
+                if (response && response->has_info())
+                {
+                  const auto& info = response->info();
+                  min_age_reached |= info.min_age_reached();
+                  local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+                }
+                else
+                {
+                  is_grpc_success = false;
+                  GrpcAlgs::print_grpc_error_response(
+                    response,
+                    logger(),
+                    Aspect::BIDDING_FRONTEND);
+                }
               }
-              else
-              {
-                is_grpc_success = false;
-                GrpcAlgs::print_grpc_error_response(
-                  response,
-                  logger(),
-                  Aspect::BIDDING_FRONTEND);
-              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FNS
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::BIDDING_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FNS
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::BIDDING_FRONTEND);
             }
 
             if (!is_grpc_success)
@@ -2444,13 +2464,6 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::consider_campaign_selection_()";
 
-    using UpdateUserFreqCapsResponsePtr =
-      FrontendCommons::UserInfoClient::GrpcDistributor::UpdateUserFreqCapsResponsePtr;
-    using CampaignIds = AdServer::UserInfoSvcs::Types::CampaignIds;
-    using FreqCaps = AdServer::UserInfoSvcs::Types::FreqCaps;
-    using UcFreqCaps = AdServer::UserInfoSvcs::Types::UcFreqCaps;
-    using UcCampaignIds = AdServer::UserInfoSvcs::Types::UcCampaignIds;
-
     Generics::Time start_process_time;
 
     if(logger()->log_level() >= Logging::Logger::TRACE)
@@ -2485,14 +2498,19 @@ namespace Bidding
 
       try
       {
+        using SeqOrders = AdServer::UserInfoSvcs::Types::SeqOrders;
+        using CampaignIds = AdServer::UserInfoSvcs::Types::CampaignIds;
+        using FreqCaps = AdServer::UserInfoSvcs::Types::FreqCaps;
+        using UcFreqCaps = AdServer::UserInfoSvcs::Types::UcFreqCaps;
+        using UcCampaignIds = AdServer::UserInfoSvcs::Types::UcCampaignIds;
+
         AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
           grpc_distributor = user_info_client_->grpc_distributor();
 
         if (grpc_distributor)
         {
-          UpdateUserFreqCapsResponsePtr response;
           bool is_error = false;
-          AdServer::UserInfoSvcs::Types::SeqOrders seq_orders;
+          SeqOrders seq_orders;
           seq_orders.reserve(seq_order_len);
           for(std::size_t ad_slot_i = 0;
               ad_slot_i < campaign_match_result.ad_slots.length();
@@ -2508,15 +2526,14 @@ namespace Bidding
                    creative_i < ad_slot_result.selected_creatives.length();
                    ++creative_i)
               {
-                const auto& creative =
-                  ad_slot_result.selected_creatives[creative_i];
+                const auto& creative = ad_slot_result.selected_creatives[creative_i];
                 if (creative.order_set_id)
                 {
                   seq_orders.emplace_back(creative.cmp_id, creative.order_set_id, 1);
                   BidStatisticsPrometheusInc(composite_metrics_provider_, creative.cmp_id);
                 }
 
-                campaign_ids[creative_i] = creative.campaign_group_id;
+                campaign_ids.emplace_back(creative.campaign_group_id);
               }
 
               FreqCaps freq_caps;
@@ -2541,7 +2558,7 @@ namespace Bidding
                   ad_slot_result.request_id.length());
               }
 
-              response = grpc_distributor->update_user_freq_caps(
+              auto response = grpc_distributor->update_user_freq_caps(
                 GrpcAlgs::pack_user_id(user_id),
                 now,
                 request_id_string,
@@ -2551,7 +2568,6 @@ namespace Bidding
                 seq_orders,
                 ad_slot_result.track_impr ? CampaignIds{} : campaign_ids,
                 ad_slot_result.track_impr ? campaign_ids : UcCampaignIds{});
-
               if (!response || response->has_error())
               {
                 is_error = true;
