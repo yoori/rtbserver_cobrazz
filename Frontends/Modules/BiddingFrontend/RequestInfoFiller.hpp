@@ -59,6 +59,8 @@ namespace Bidding
     {
       ERIDRT_SINGLE,
       ERIDRT_ARRAY,
+      ERIDRT_EXT0,
+      ERIDRT_EXT_BUZSAPE
     };
 
     AdServer::Commons::Optional<unsigned long> default_account_id;

@@ -792,25 +792,36 @@ namespace CampaignSvcs
 
     typedef std::set<unsigned long> SiteIdSet;
 
-    class CampaignContract: public ReferenceCounting::AtomicImpl
+    class Contract: public ReferenceCounting::AtomicImpl
     {
     public:
-      std::string ord_contract_id;
-      std::string ord_ado_id;
+      unsigned long contract_id;
 
-      std::string id;
+      std::string number;
       std::string date;
       std::string type;
+      bool vat_included;
+
+      std::string ord_contract_id;
+      std::string ord_ado_id;
+      std::string subject_type;
+      std::string action_type;
+      bool agent_acting_for_publisher;
+      ReferenceCounting::SmartPtr<Contract> parent_contract;
 
       std::string client_id;
       std::string client_name;
+      std::string client_legal_form;
 
       std::string contractor_id;
       std::string contractor_name;
+      std::string contractor_legal_form;
+
+      Timestamp timestamp;
     };
 
-    typedef ReferenceCounting::SmartPtr<CampaignContract>
-      CampaignContract_var;
+    typedef ReferenceCounting::SmartPtr<Contract>
+      Contract_var;
 
     struct Campaign:
       public BillingStateContainer::AvailableAndMinCTRSetter,
@@ -819,7 +830,6 @@ namespace CampaignSvcs
     public:
       typedef std::set<unsigned long> OrderSetIdSet;
       typedef std::unordered_set<unsigned long> SizeIdSet;
-      typedef std::vector<CampaignContract_var> CampaignContractArray;
 
       Campaign() noexcept;
 
@@ -935,7 +945,8 @@ namespace CampaignSvcs
       CreativeList creatives;          /**< Campaign creatives */
       OrderSetIdSet opt_order_sets;
       RevenueDecimal base_min_ctr_goal;
-      CampaignContractArray contracts;
+
+      Contract_var initial_contract;
 
     protected:
       typedef Sync::Policy::PosixSpinThread GoalCTRSyncPolicy;
@@ -1226,6 +1237,7 @@ namespace CampaignSvcs
         ExternalCategoryNameMap;
       typedef std::map<AdRequestType, ExternalCategoryNameMap>
         ExternalCategoryMap;
+      typedef std::unordered_map<unsigned long, Contract_var> ContractMap;
 
     public:
       CampaignConfig() noexcept;
@@ -1298,6 +1310,7 @@ namespace CampaignSvcs
       IdTagMap site_tags;
 
       ExternalCategoryMap external_creative_categories;
+      ContractMap contracts;
 
     protected:
       virtual

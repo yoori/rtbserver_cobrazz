@@ -218,7 +218,8 @@ namespace
     "size",
     "bill_accounts",
     "bill_campaigns",
-    "bill_ccgs"
+    "bill_ccgs",
+    "contract"
   };
 
   template <class T>
@@ -566,7 +567,7 @@ namespace
     Table::Column("imp_revenue", Table::Column::TEXT),
     Table::Column("click_revenue", Table::Column::TEXT),
     Table::Column("action_revenue", Table::Column::TEXT),
-    Table::Column("contracts", Table::Column::TEXT)
+    Table::Column("initial_contract_id", Table::Column::NUMBER)
   };
 
   const Table::Column TAGS_TABLE_COLUMNS[] =
@@ -787,6 +788,27 @@ namespace
     Table::Column("height", Table::Column::NUMBER),
     Table::Column("timestamp", Table::Column::TEXT)
   };
+
+  const Table::Column CONTRACT_TABLE_COLUMNS[] =
+  {
+    Table::Column("number", Table::Column::TEXT),
+    Table::Column("date", Table::Column::TEXT),
+    Table::Column("type", Table::Column::TEXT),
+    Table::Column("vat_included", Table::Column::NUMBER),
+    Table::Column("ord_contract_id", Table::Column::TEXT),
+    Table::Column("ord_ado_id", Table::Column::TEXT),
+    Table::Column("subject_type", Table::Column::TEXT),
+    Table::Column("action_type", Table::Column::TEXT),
+    Table::Column("agent_acting_for_publisher", Table::Column::NUMBER),
+    Table::Column("parent_contract_id", Table::Column::NUMBER),
+    Table::Column("client_id", Table::Column::TEXT),
+    Table::Column("client_name", Table::Column::TEXT),
+    Table::Column("client_legal_form", Table::Column::TEXT),
+    Table::Column("contractor_id", Table::Column::TEXT),
+    Table::Column("contractor_name", Table::Column::TEXT),
+    Table::Column("contractor_legal_form", Table::Column::TEXT),
+    Table::Column("timestamp", Table::Column::TEXT)
+  };
 }
 
 ////////////////////////////////////////////////////
@@ -919,6 +941,7 @@ campaign_mode_to_string(AdServer::CampaignSvcs::CampaignMode campaign_mode)
   return "invalid !!!";
 }
 
+/*
 std::string
 campaign_contracts_to_string(const AdServer::CampaignSvcs::CampaignContractSeq& contracts)
 {
@@ -944,6 +967,7 @@ campaign_contracts_to_string(const AdServer::CampaignSvcs::CampaignContractSeq& 
 
   return ostr.str();
 }
+*/
 
 template<typename IntType>
 std::string
@@ -1028,7 +1052,7 @@ Application::parse_args_(int argc, char** argv) /*throw(InvalidArgument)*/
     for(Generics::AppUtils::Args::CommandList::const_iterator com_it =
       args.commands().begin(); com_it != args.commands().end(); ++com_it)
     {
-      const std::string& com = *com_it;;
+      const std::string& com = *com_it;
       if(c_index == command_max)
       {
         for (size_t i = 0; i < command_max; i++)
@@ -1229,6 +1253,7 @@ Application::run(int& argc, char** argv)
     case command_keyword:
     case command_account:
     case command_size:
+    case command_contract:
       return show(command_index);
       break;
     case command_fraud_condition:
@@ -1455,6 +1480,10 @@ Application::show(int aspect)
     case command_size:
       columns_ptr = SIZE_TABLE_COLUMNS;
       columns = sizeof(SIZE_TABLE_COLUMNS) / sizeof(SIZE_TABLE_COLUMNS[0]);
+      break;
+    case command_contract:
+      columns_ptr = CONTRACT_TABLE_COLUMNS;
+      columns = sizeof(CONTRACT_TABLE_COLUMNS) / sizeof(CONTRACT_TABLE_COLUMNS[0]);
       break;
   }
   assert(columns_ptr);
@@ -1905,6 +1934,33 @@ Application::show(int aspect)
       row.add_field(config->sizes[i].protocol_name);
       row.add_field(config->sizes[i].width);
       row.add_field(config->sizes[i].height);
+      row.add_field(CorbaAlgs::unpack_time(
+        config->sizes[i].timestamp).get_gm_time().format(TIME_FORMAT));
+      table->add_row(row, filters_, sorter_);
+    }
+  }
+  else if(aspect == command_contract)
+  {
+    for(CORBA::ULong i = 0; i < config->contracts.length(); ++i)
+    {
+      Table::Row row(table->columns());
+      const auto& contract = config->contracts[i];
+      row.add_field(contract.number);
+      row.add_field(contract.date);
+      row.add_field(contract.type);
+      row.add_field(contract.vat_included);
+      row.add_field(contract.ord_contract_id);
+      row.add_field(contract.ord_ado_id);
+      row.add_field(contract.subject_type);
+      row.add_field(contract.action_type);
+      row.add_field(contract.agent_acting_for_publisher);
+      row.add_field(contract.parent_contract_id);
+      row.add_field(contract.client_id);
+      row.add_field(contract.client_name);
+      row.add_field(contract.client_legal_form);
+      row.add_field(contract.contractor_id);
+      row.add_field(contract.contractor_name);
+      row.add_field(contract.contractor_legal_form);
       row.add_field(CorbaAlgs::unpack_time(
         config->sizes[i].timestamp).get_gm_time().format(TIME_FORMAT));
       table->add_row(row, filters_, sorter_);
@@ -3069,7 +3125,7 @@ void Application::describe_campaign(
     row.add_field(CorbaAlgs::unpack_decimal<
       AdServer::CampaignSvcs::RevenueDecimal>(campaign_info.action_revenue).str());
 
-    row.add_field(campaign_contracts_to_string(campaign_info.contracts));
+    row.add_field(campaign_info.initial_contract_id);
   }
 }
 

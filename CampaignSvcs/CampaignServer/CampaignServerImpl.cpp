@@ -1160,6 +1160,7 @@ namespace AdServer
         campaign.status = campaign_def.status;
         campaign.eval_status = campaign_def.eval_status;
         campaign.delivery_coef = campaign_def.delivery_coef;
+        campaign.initial_contract_id = campaign_def.initial_contract_id;
 
         campaign.timestamp = CorbaAlgs::pack_time(campaign_def.timestamp);
 
@@ -1236,10 +1237,6 @@ namespace AdServer
           campaign.exclude_tags[res_i].tag_id = dtag_it->first;
           campaign.exclude_tags[res_i].delivery_value = dtag_it->second;
         }
-
-        fill_campaign_contracts_(
-          campaign.contracts,
-          campaign_def.contracts);
       } /* campaigns cycle */
     }
 
@@ -1411,29 +1408,58 @@ namespace AdServer
     }
 
     void
-    CampaignServerBaseImpl::fill_campaign_contracts_(
-      AdServer::CampaignSvcs::CampaignContractSeq& contract_seq,
-      const CampaignDef::CampaignContractMap& contracts)
+    CampaignServerBaseImpl::fill_contracts_(
+      const TimestampValue& request_timestamp,
+      const CampaignConfig* campaign_config,
+      const CampaignGetConfigSettings& settings,
+      CampaignConfigUpdateInfo& update_info)
       noexcept
     {
-      contract_seq.length(contracts.size());
+      fill_deleted_sequence(
+        update_info.deleted_contracts,
+        request_timestamp,
+        campaign_config->contracts.inactive(),
+        settings);
+
+      update_info.contracts.length(campaign_config->contracts.active().size());
       CORBA::ULong res_contract_i = 0;
-      for(auto it = contracts.begin(); it != contracts.end(); ++it, ++res_contract_i)
+      for(auto it = campaign_config->contracts.active().begin(); it != campaign_config->contracts.active().end(); ++it)
       {
-        CampaignContractInfo& res_contract = contract_seq[res_contract_i];
-        const CampaignContractDef& contract = *(it->second);
-        res_contract.ord_contract_id << contract.ord_contract_id;
-        res_contract.ord_ado_id << contract.ord_ado_id;
-        res_contract.id << contract.id;
-        res_contract.date << contract.date;
-        res_contract.type << contract.type;
-        res_contract.client_id << contract.client_id;
-        res_contract.client_name << contract.client_name;
-        res_contract.contractor_id << contract.contractor_id;
-        res_contract.contractor_name << contract.contractor_name;
+        if(request_timestamp < it->second->timestamp &&
+           it->first % settings.portions_number == settings.portion)
+        {
+          ContractInfo& res_contract = update_info.contracts[res_contract_i];
+          const ContractDef& contract = *(it->second);
+          res_contract.contract_id = contract.contract_id;
+
+          res_contract.number << contract.number;
+          res_contract.date << contract.date;
+          res_contract.type << contract.type;
+          res_contract.vat_included = contract.vat_included;
+
+          res_contract.ord_contract_id << contract.ord_contract_id;
+          res_contract.ord_ado_id << contract.ord_ado_id;
+          res_contract.subject_type << contract.subject_type;
+          res_contract.action_type << contract.action_type;
+          res_contract.agent_acting_for_publisher = contract.agent_acting_for_publisher;
+          res_contract.parent_contract_id = contract.parent_contract_id;
+
+          res_contract.client_id << contract.client_id;
+          res_contract.client_name << contract.client_name;
+          res_contract.client_legal_form << contract.client_legal_form;
+
+          res_contract.contractor_id << contract.contractor_id;
+          res_contract.contractor_name << contract.contractor_name;
+          res_contract.contractor_legal_form << contract.contractor_legal_form;
+          res_contract.timestamp = CorbaAlgs::pack_time(contract.timestamp);
+
+          ++res_contract_i;
+        }
       }
+
+      update_info.contracts.length(res_contract_i);
     }
-    
+
     void CampaignServerBaseImpl::fill_active_freq_caps_(
       FreqCapSeq& freq_cap_seq,
       const TimestampValue& request_timestamp,
@@ -2509,6 +2535,12 @@ namespace AdServer
             settings,
             result->search_engines,
             &result->deleted_search_engines);
+
+          fill_contracts_(
+            request_timestamp,
+            config,
+            settings,
+            *result);
 
           fill_object_update_sequences_(
             result->web_browsers,
