@@ -2315,11 +2315,11 @@ namespace AdServer
         for(auto cmp_it = ad_selection_result.selected_campaigns.begin();
           cmp_it != ad_selection_result.selected_campaigns.end(); ++cmp_it)
         {
-          if(cmp_it->campaign)
+          if(cmp_it->campaign && cmp_it->campaign->initial_contract)
           {
             fill_campaign_contracts_(
               ad_slot_result.contracts,
-              cmp_it->campaign->contracts);
+              cmp_it->campaign->initial_contract);
           }
         }
 

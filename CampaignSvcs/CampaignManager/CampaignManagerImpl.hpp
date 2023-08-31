@@ -1178,8 +1178,14 @@ namespace AdServer
       // config manips
       static void
       fill_campaign_contracts_(
-        CampaignContractSeq& contract_seq,
-        const Campaign::CampaignContractArray& contracts)
+        AdServer::CampaignSvcs::CampaignManager::ExtContractInfoSeq& contract_seq,
+        const Contract* contract)
+        noexcept;
+
+      static void
+      fill_contract_(
+        ContractInfo& contract_info,
+        const Contract& contract)
         noexcept;
 
     protected:

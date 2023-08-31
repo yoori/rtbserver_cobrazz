@@ -1,4 +1,3 @@
-
 #ifndef _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_SERVER_CAMPAIGN_SERVER_IMPL_HPP_
 #define _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_SERVER_CAMPAIGN_SERVER_IMPL_HPP_
 
@@ -516,9 +515,11 @@ namespace AdServer
         noexcept;
 
       static void
-      fill_campaign_contracts_(
-        AdServer::CampaignSvcs::CampaignContractSeq& contract_seq,
-        const CampaignDef::CampaignContractMap& contracts)
+      fill_contracts_(
+        const TimestampValue& request_timestamp,
+        const CampaignConfig* campaign_config,
+        const CampaignGetConfigSettings& settings,
+        CampaignConfigUpdateInfo& update_info)
         noexcept;
 
       /* logging methods */

@@ -100,7 +100,8 @@ public:
     command_bill_accounts,
     command_bill_campaigns,
     command_bill_ccgs,
-    command_max,
+    command_contract,
+    command_max
   };
 
 

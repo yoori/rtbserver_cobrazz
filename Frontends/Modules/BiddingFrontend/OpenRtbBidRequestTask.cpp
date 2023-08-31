@@ -96,6 +96,7 @@ namespace Bidding
         const String::SubString EVENT_URL("url");
 
         const String::SubString BID_EXT_NROA("nroa");
+
         const String::SubString NROA_ERID("erid");
         const String::SubString NROA_CONTRACTS("contracts");
         const String::SubString CONTRACT_ORD_ID("id");
@@ -107,6 +108,35 @@ namespace Bidding
         const String::SubString CONTRACT_CLIENT_NAME("client_name");
         const String::SubString CONTRACT_CONTRACTOR_ID("contractor_inn");
         const String::SubString CONTRACT_CONTRACTOR_NAME("contractor_name");
+
+        // nroa attributes by buzzula+sape standard
+        namespace BuzSapeNroa
+        {
+          const String::SubString HASNROAMARKUP("has_nroa_markup");
+
+          const String::SubString CONTRACTOR("contractor");
+          const String::SubString CONTRACTOR_INN("inn");
+          const String::SubString CONTRACTOR_NAME("name");
+          const String::SubString CONTRACTOR_LEGALFORM("legal_form");
+
+          const String::SubString CLIENT("client");
+          const String::SubString CLIENT_INN("inn");
+          const String::SubString CLIENT_NAME("name");
+          const String::SubString CLIENT_LEGALFORM("legal_form");
+
+          const String::SubString INITIALCONTRACT("initial_contract");
+          const String::SubString PARENTCONTRACTS("parent_contracts");
+
+          const String::SubString CONTRACT_SIGNDATE("sign_date");
+          const String::SubString CONTRACT_NUMBER("number");
+          const String::SubString CONTRACT_TYPE("type");
+          const String::SubString CONTRACT_SUBJECTTYPE("subject_type");
+          const String::SubString CONTRACT_ACTIONTYPE("action_type");
+          const String::SubString CONTRACT_ID("id");
+          const String::SubString CONTRACT_ADOID("ado_id");
+          const String::SubString CONTRACT_VATINCLUDED("vat_included");
+          const String::SubString CONTRACT_PARENTCONTRACTID("parent_contract_id");
+        }
       }
 
       namespace OpenX
@@ -461,6 +491,144 @@ namespace Bidding
     {
       bid_object.add_escaped_string(Response::OpenRtb::NURL, url);
       bid_object.add_escaped_string(Response::OpenRtb::BURL, url);
+    }
+  }
+
+  void
+  OpenRtbBidRequestTask::fill_ext0_nroa_(
+    AdServer::Commons::JsonObject& nroa_obj,
+    const RequestInfo& request_info,
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    noexcept
+  {
+    nroa_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+
+    if(ad_slot_result.contracts.length() > 0)
+    {
+      AdServer::Commons::JsonObject contracts_array(nroa_obj.add_array(Response::OpenRtb::NROA_CONTRACTS));
+
+      for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+      {
+        const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& contract = ad_slot_result.contracts[contract_i];
+        AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.contract_info.ord_contract_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_ORD_ADO_ID, String::SubString(contract.contract_info.ord_ado_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_NUMBER, String::SubString(contract.contract_info.number));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_DATE, String::SubString(contract.contract_info.date));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_TYPE, String::SubString(contract.contract_info.type));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CLIENT_ID, String::SubString(contract.contract_info.client_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CLIENT_NAME, String::SubString(contract.contract_info.client_name));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CONTRACTOR_ID, String::SubString(contract.contract_info.contractor_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME, String::SubString(contract.contract_info.contractor_name));
+      }
+    }
+  }
+
+  void
+  OpenRtbBidRequestTask::fill_buzsape_nroa_contract_(
+    AdServer::Commons::JsonObject& contract_obj,
+    const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& ext_contract_info)
+    noexcept
+  {
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_SIGNDATE,
+      String::SubString(ext_contract_info.contract_info.date));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_NUMBER,
+      String::SubString(ext_contract_info.contract_info.number));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_TYPE,
+      String::SubString(ext_contract_info.contract_info.type));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_SUBJECTTYPE,
+      String::SubString(ext_contract_info.contract_info.subject_type));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_ACTIONTYPE,
+      String::SubString(ext_contract_info.contract_info.action_type));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_ID,
+      String::SubString(ext_contract_info.contract_info.ord_contract_id));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_ADOID,
+      String::SubString(ext_contract_info.contract_info.ord_ado_id));
+    contract_obj.add_boolean(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_VATINCLUDED,
+      ext_contract_info.contract_info.vat_included);
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_PARENTCONTRACTID,
+      String::SubString(ext_contract_info.parent_contract_id));
+  }
+
+  void
+  OpenRtbBidRequestTask::fill_buzsape_nroa_(
+    AdServer::Commons::JsonObject& nroa_obj,
+    const RequestInfo& request_info,
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    noexcept
+  {
+    nroa_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+    nroa_obj.add_number(
+      Response::OpenRtb::BuzSapeNroa::HASNROAMARKUP, 1);
+
+    if(ad_slot_result.contracts.length() > 0)
+    {
+      const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& initial_contract = ad_slot_result.contracts[0];
+      
+      // contractor
+      {
+        AdServer::Commons::JsonObject contractor_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CONTRACTOR));
+        contractor_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CONTRACTOR_INN,
+          String::SubString(initial_contract.contract_info.contractor_id));
+        contractor_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CONTRACTOR_NAME,
+          String::SubString(initial_contract.contract_info.contractor_name));
+        contractor_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CONTRACTOR_LEGALFORM,
+          String::SubString(initial_contract.contract_info.contractor_legal_form));
+      }
+      
+      // client
+      {
+        AdServer::Commons::JsonObject client_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CLIENT));
+        client_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CLIENT_INN,
+          String::SubString(initial_contract.contract_info.client_id));
+        client_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CLIENT_NAME,
+          String::SubString(initial_contract.contract_info.client_name));
+        client_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CLIENT_LEGALFORM,
+          String::SubString(initial_contract.contract_info.client_legal_form));
+      }
+
+      {
+        // initial_contract
+        AdServer::Commons::JsonObject initial_contract_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::INITIALCONTRACT));
+        fill_buzsape_nroa_contract_(initial_contract_obj, initial_contract);
+      }
+
+      // fill parent contracts
+      if(ad_slot_result.contracts.length() > 1)
+      {
+        AdServer::Commons::JsonObject parent_contracts_array(nroa_obj.add_array(Response::OpenRtb::BuzSapeNroa::PARENTCONTRACTS));
+        for(CORBA::ULong contract_i = 1; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+        {
+          AdServer::Commons::JsonObject contract_obj(parent_contracts_array.add_object());
+          fill_buzsape_nroa_contract_(contract_obj, ad_slot_result.contracts[contract_i]);
+        }
+      }
     }
   }
 
@@ -840,12 +1008,7 @@ namespace Bidding
                   {
                     AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
 
-                    if(request_info.erid_return_type == SourceTraits::ERIDRT_SINGLE)
-                    {
-                      nroa_obj.add_escaped_string_if_non_empty(
-                        Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
-                    }
-                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
+                    if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
                     {
                       AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
                       if(ad_slot_result.erid[0])
@@ -853,34 +1016,18 @@ namespace Bidding
                         array.add_escaped_string(String::SubString(ad_slot_result.erid));
                       }
                     }
-
-                    if(ad_slot_result.contracts.length() > 0)
+                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT0)
                     {
-                      AdServer::Commons::JsonObject contracts_array(nroa_obj.add_array(Response::OpenRtb::NROA_CONTRACTS));
-
-                      for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
-                      {
-                        const AdServer::CampaignSvcs::CampaignContractInfo& contract = ad_slot_result.contracts[contract_i];
-                        AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.ord_contract_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_ORD_ADO_ID, String::SubString(contract.ord_ado_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_NUMBER, String::SubString(contract.id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_DATE, String::SubString(contract.date));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_TYPE, String::SubString(contract.type));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CLIENT_ID, String::SubString(contract.client_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CLIENT_NAME, String::SubString(contract.client_name));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CONTRACTOR_ID, String::SubString(contract.contractor_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME, String::SubString(contract.contractor_name));
-                      }
+                      fill_ext0_nroa_(nroa_obj, request_info, ad_slot_result);
+                    }
+                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT_BUZSAPE)
+                    {
+                      fill_buzsape_nroa_(nroa_obj, request_info, ad_slot_result);
+                    }
+                    else // SourceTraits::ERIDRT_SINGLE
+                    {
+                      nroa_obj.add_escaped_string_if_non_empty(
+                        Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));                      
                     }
                   }
                 }

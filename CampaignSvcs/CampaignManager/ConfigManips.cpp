@@ -770,9 +770,8 @@ namespace AdServer
           campaign_info.exclude_tags[res_i].delivery_value = dtag_it->second;          
         }
 
-        fill_campaign_contracts_(
-          campaign_info.contracts,
-          campaign->contracts);
+        campaign_info.initial_contract_id = campaign->initial_contract ?
+          campaign->initial_contract->contract_id : 0;
       }
 
       /* fill expression channels */
@@ -1186,6 +1185,18 @@ namespace AdServer
         info.timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
       }
 
+      // fill contracts
+      {
+        result->contracts.length(config->contracts.size());
+
+        CORBA::ULong i = 0;
+        for(CampaignConfig::ContractMap::const_iterator it = config->contracts.begin();
+            it != config->contracts.end(); ++it, i++)
+        {
+          fill_contract_(result->contracts[i], *(it->second));
+        }
+      }
+
       return result._retn();
     }
 
@@ -1219,26 +1230,56 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_campaign_contracts_(
-      CampaignContractSeq& contract_seq,
-      const Campaign::CampaignContractArray& contracts)
+    CampaignManagerImpl::fill_contract_(
+      ContractInfo& contract_info,
+      const Contract& contract)
       noexcept
     {
-      CORBA::ULong res_contract_i = contract_seq.length();
-      contract_seq.length(contract_seq.length() + contracts.size());
-      for(auto it = contracts.begin(); it != contracts.end(); ++it, ++res_contract_i)
+      contract_info.contract_id = contract.contract_id;
+
+      contract_info.number << contract.number;
+      contract_info.date << contract.date;
+      contract_info.type << contract.type;
+      contract_info.vat_included = contract.vat_included;
+      contract_info.parent_contract_id = contract.parent_contract ?
+        contract.parent_contract->contract_id : 0;
+
+      contract_info.ord_contract_id << contract.ord_contract_id;
+      contract_info.ord_ado_id << contract.ord_ado_id;
+      contract_info.subject_type << contract.subject_type;
+      contract_info.action_type << contract.action_type;
+      contract_info.agent_acting_for_publisher = contract.agent_acting_for_publisher;
+
+      contract_info.client_id << contract.client_id;
+      contract_info.client_name << contract.client_name;
+      contract_info.client_legal_form << contract.client_legal_form;
+
+      contract_info.contractor_id << contract.contractor_id;
+      contract_info.contractor_name << contract.contractor_name;
+      contract_info.contractor_legal_form << contract.contractor_legal_form;
+      contract_info.timestamp = CorbaAlgs::pack_time(contract.timestamp);
+    }
+
+    void
+    CampaignManagerImpl::fill_campaign_contracts_(
+      AdServer::CampaignSvcs::CampaignManager::ExtContractInfoSeq& contract_seq,
+      const Contract* contract)
+      noexcept
+    {
+      unsigned long MAX_CONTRACTS = 50;
+      const Contract* cur_contract = contract;
+      while(cur_contract && contract_seq.length() < MAX_CONTRACTS)
       {
-        CampaignContractInfo& res_contract = contract_seq[res_contract_i];
-        const CampaignContract& contract = **it;
-        res_contract.ord_contract_id << contract.ord_contract_id;
-        res_contract.ord_ado_id << contract.ord_ado_id;
-        res_contract.id << contract.id;
-        res_contract.date << contract.date;
-        res_contract.type << contract.type;
-        res_contract.client_id << contract.client_id;
-        res_contract.client_name << contract.client_name;
-        res_contract.contractor_id << contract.contractor_id;
-        res_contract.contractor_name << contract.contractor_name;
+        contract_seq.length(contract_seq.length() + 1);
+        AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& res_contract =
+          contract_seq[contract_seq.length() - 1];
+        fill_contract_(res_contract.contract_info, *cur_contract);
+        if(cur_contract->parent_contract)
+        {
+          res_contract.parent_contract_id << cur_contract->parent_contract->ord_contract_id;
+        }
+
+        cur_contract = cur_contract->parent_contract;
       }
     }
   }
