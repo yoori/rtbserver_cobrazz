@@ -90,6 +90,26 @@ namespace Bidding
       const String::SubString& url,
       SourceTraits::NoticeInstantiateType notice_instantiate_type);
 
+    static void
+    fill_buzsape_nroa_contract_(
+      AdServer::Commons::JsonObject& contract_obj,
+      const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& ext_contract_info)
+      noexcept;
+
+    static void
+    fill_buzsape_nroa_(
+      AdServer::Commons::JsonObject& nroa_obj,
+      const RequestInfo& request_info,
+      const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+      noexcept;
+
+    static void
+    fill_ext0_nroa_(
+      AdServer::Commons::JsonObject& nroa_obj,
+      const RequestInfo& request_info,
+      const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+      noexcept;
+
   private:
     std::string uri_;
     JsonProcessingContext context_;

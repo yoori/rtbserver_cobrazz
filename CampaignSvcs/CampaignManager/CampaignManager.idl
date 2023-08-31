@@ -513,6 +513,13 @@ module AdServer
         CORBACommons::DecimalInfoSeq cpms;
       };
 
+      struct ExtContractInfo
+      {
+        ContractInfo contract_info;
+        string parent_contract_id;
+      };
+
+      typedef sequence<ExtContractInfo> ExtContractInfoSeq;
       typedef sequence<AdaptedCampaignInfo> AdaptedCampaignInfoSeq;
       typedef sequence<AdaptedTagInfo> AdaptedTagInfoSeq;
       typedef sequence<CreativeTemplateFileInfo> CreativeTemplateFileInfoSeq;
@@ -540,6 +547,7 @@ module AdServer
         GeoChannelSeq geo_channels;
         GeoCoordChannelSeq geo_coord_channels;
         WebOperationSeq web_operations;
+        ContractSeq contracts;
 
         unsigned long currency_exchange_id;
         TimestampInfo fraud_user_deactivate_period;
@@ -716,7 +724,7 @@ module AdServer
         string track_html_body;
 
         string erid;
-        CampaignContractSeq contracts;
+        ExtContractInfoSeq contracts;
       };
 
       typedef sequence<AdSlotResult> AdSlotResultSeq;

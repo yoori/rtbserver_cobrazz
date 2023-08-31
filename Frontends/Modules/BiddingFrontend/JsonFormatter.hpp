@@ -35,6 +35,9 @@ namespace Commons
 
     // Add attributes into JsonObject
     JsonObject&
+    add_boolean(const String::SubString& name, bool value);
+
+    JsonObject&
     add_string(const String::SubString& name, const String::SubString& value);
 
     template<typename AsStringOutType>
@@ -277,6 +280,17 @@ namespace Commons
   }
 
   // Add into object
+  inline
+  JsonObject&
+  JsonObject::add_boolean(const String::SubString& name, bool value)
+  {
+    check_(name);
+    comma_();
+    name_(name);
+    out_stream_ << (value ? "true" : "false");
+    return *this;
+  }
+
   inline
   JsonObject&
   JsonObject::add_string(const String::SubString& name, const String::SubString& value)

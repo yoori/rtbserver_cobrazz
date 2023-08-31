@@ -284,26 +284,40 @@ namespace AdServer
     typedef std::set<unsigned long> UserGroupIdSet;
     typedef std::set<unsigned long> CCIdSet;
 
-    class CampaignContractDef: public ReferenceCounting::AtomicCopyImpl
+    class ContractDef: public ReferenceCounting::AtomicCopyImpl
     {
     public:
-      bool operator==(const CampaignContractDef& right) const noexcept;
+      bool operator==(const ContractDef& right) const noexcept;
 
-      std::string ord_contract_id;
-      std::string ord_ado_id;
+      unsigned long contract_id;
 
-      std::string id;
+      // base contract fields
+      std::string number;
       std::string date;
       std::string type;
+      bool vat_included;
 
-      std::string client_id;
+      // specific contract fields
+      std::string ord_contract_id;
+      std::string ord_ado_id;
+      std::string subject_type;
+      std::string action_type;
+      bool agent_acting_for_publisher;
+      unsigned long parent_contract_id;
+
+      // contract sides
+      std::string client_id; // inn for Russia
       std::string client_name;
+      std::string client_legal_form;
 
-      std::string contractor_id;
+      std::string contractor_id; // inn for Russia
       std::string contractor_name;
+      std::string contractor_legal_form;
+
+      TimestampValue timestamp;
     };
 
-    typedef ReferenceCounting::SmartPtr<CampaignContractDef> CampaignContractDef_var;
+    typedef ReferenceCounting::SmartPtr<ContractDef> ContractDef_var;
 
     /**
      * Holds information on particular campaign.
@@ -342,7 +356,6 @@ namespace AdServer
       }
 
       typedef std::map<std::string, std::string> OptionMap;
-      typedef std::map<std::string, CampaignContractDef_var> CampaignContractMap;
 
       unsigned long campaign_group_id; /**< Campaign group identifier */
       unsigned long ccg_rate_id;
@@ -398,7 +411,7 @@ namespace AdServer
       BidStrategy bid_strategy;
       RevenueDecimal min_ctr_goal;
 
-      CampaignContractMap contracts;
+      unsigned long initial_contract_id;
 
       TimestampValue timestamp;
 
@@ -414,6 +427,10 @@ namespace AdServer
     typedef AdServer::Commons::NoCopyGranularContainer<
       unsigned long, Campaign_var>
       CampaignMap;
+
+    typedef AdServer::Commons::NoCopyGranularContainer<
+      unsigned long, ContractDef_var>
+      ContractMap;
 
     class EcpmDef: public ReferenceCounting::AtomicImpl
     {
@@ -1438,6 +1455,7 @@ namespace AdServer
       CategoryChannelMap category_channels;
       CreativeTemplateMap creative_templates;
       CampaignKeywordMap campaign_keywords;
+      ContractMap contracts;
 
       EcpmMap ecpms;
 
@@ -2010,17 +2028,25 @@ namespace AdServer
     }
 
     inline
-    bool CampaignContractDef::operator==(const CampaignContractDef& right) const noexcept
+    bool ContractDef::operator==(const ContractDef& right) const noexcept
     {
-      return ord_contract_id == right.ord_contract_id &&
-        ord_ado_id == right.ord_ado_id &&
-        id == right.id &&
+      return contract_id == right.contract_id &&
+        number == right.number &&
         date == right.date &&
         type == right.type &&
+        vat_included == right.vat_included &&
+        ord_contract_id == right.ord_contract_id &&
+        ord_ado_id == right.ord_ado_id &&
+        subject_type == right.subject_type &&
+        action_type == right.action_type &&
+        agent_acting_for_publisher == right.agent_acting_for_publisher &&
+        parent_contract_id == right.parent_contract_id &&
         client_id == right.client_id &&
         client_name == right.client_name &&
+        client_legal_form == right.client_legal_form &&
         contractor_id == right.contractor_id &&
-        contractor_name == right.contractor_name;
+        contractor_name == right.contractor_name &&
+        contractor_legal_form == right.contractor_legal_form;
     }
 
     inline
@@ -2057,6 +2083,7 @@ namespace AdServer
         delivery_coef == right.delivery_coef &&
         bid_strategy == right.bid_strategy &&
         min_ctr_goal == right.min_ctr_goal &&
+        initial_contract_id == right.initial_contract_id &&
         sites.size() == right.sites.size() &&
         creatives.size() == right.creatives.size() &&
         colocations.size() == right.colocations.size() &&

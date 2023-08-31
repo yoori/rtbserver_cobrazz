@@ -184,9 +184,10 @@ namespace AdServer
         const TimestampValue& sysdate)
         /*throw(Exception, eh::Exception)*/;
 
-      void query_campaign_contracts_(
+      void query_contracts_(
         Commons::Postgres::Connection* conn,
         CampaignConfig* config,
+        const CampaignConfig* old_config,
         const TimestampValue& sysdate)
         /*throw(Exception)*/;
 
