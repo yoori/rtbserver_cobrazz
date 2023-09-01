@@ -123,7 +123,7 @@ class Service:
             try:
                 self.log_file.flush()
             except Exception as e:
-                print(f"Can't flush log file - {e.__class__.__name__}:{str(e)}", flush=flush)
+                print(f"Can't flush log file - {e.__class__.__name__}:{str(e)}")
             self.log_file.close()
 
     def on_stop_signal(self):
