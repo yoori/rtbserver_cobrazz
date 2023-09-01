@@ -148,7 +148,7 @@ class Service:
                         if flush:
                             self.log_file.flush()
                     except Exception as e:
-                        print(f"{e.__class__.__name__}:{str(e)}", flush=flush)
+                        print(f"Can't write log file - {e.__class__.__name__}:{str(e)}", flush=flush)
             finally:
                 self.print_lock.release()
 
