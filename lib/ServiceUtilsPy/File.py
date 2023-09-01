@@ -27,7 +27,7 @@ class File:
         if self.remove_on_exit:
             self.remove()
         else:
-            self.__close()
+            self.close()
 
     def read(self, *args, **kw):
         self.service.verify_running()
@@ -37,22 +37,23 @@ class File:
         self.service.verify_running()
         return self.file.write(*args, **kw)
 
-    def __close(self):
+    def on_close(self):
+        pass
+
+    def close(self):
         if self.file is not None:
             if self.__need_close:
                 self.file.close()
             self.file = None
-
-    def close(self):
-        self.__close()
+            self.on_close()
 
     def remove(self):
-        self.__close()
+        self.close()
         if os.path.isfile(self.path):
             os.remove(self.path)
 
     def move(self, path):
         self.service.print_(0, f"Output file {os.path.join(path, os.path.split(self.path)[1])}")
-        self.__close()
+        self.close()
         shutil.move(self.path, path)
 

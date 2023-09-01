@@ -114,7 +114,7 @@ class Application(Service):
         self.adv_act_fname_dir = os.path.join(self.out_dir, "AdvertiserAction")
         self.geo_ip_dir = os.path.join(self.out_dir, "YandexOrigGeo")
 
-    def on_run(self):
+    def on_timer(self):
         try:
             if self.connection is None:
                 ph_host = self.params["pg_host"]
