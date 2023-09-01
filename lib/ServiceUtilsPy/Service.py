@@ -152,7 +152,7 @@ class Service:
             finally:
                 self.print_lock.release()
 
-    def on_run(self):
+    def on_timer(self):
         pass
 
     def run(self):
@@ -161,7 +161,7 @@ class Service:
             self.on_start()
             while True:
                 self.print_(0, "Timer")
-                self.on_run()
+                self.on_timer()
                 for t in self.__get_sleep_subperiods():
                     self.verify_running()
                     time.sleep(t)
