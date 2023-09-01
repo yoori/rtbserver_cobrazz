@@ -249,7 +249,7 @@ class Application(Service):
             self.__http_thread = None
         super().on_stop()
 
-    def on_run(self):
+    def on_timer(self):
         threads = []
         for upload in self.__uploads.values():
             thread = threading.Thread(target=self.on_thread, args=(upload,))

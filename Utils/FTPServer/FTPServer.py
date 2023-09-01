@@ -44,7 +44,7 @@ class Application(Service):
         self.server.max_cons = self.params.get("max_cons", 1024)
         self.server.max_cons_per_ip = self.params.get("max_cons_per_ip", 10)
 
-    def on_run(self):
+    def on_timer(self):
         try:
             self.server.serve_forever()
         except:

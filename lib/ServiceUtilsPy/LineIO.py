@@ -22,9 +22,9 @@ class LineFile(File):
         super().__init__(service, path=path, **kw)
         self.progress = LineProgress(self.service, path, 2)
 
-    def close(self):
+    def on_close(self):
         self.progress.print_index()
-        super().close()
+        super().on_close()
 
 
 class LineReader(LineFile):
@@ -60,4 +60,5 @@ class LineWriter(LineFile):
             self.write("\n")
         self.write(line)
         self.progress.next_line()
+
 
