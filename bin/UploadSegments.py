@@ -265,28 +265,28 @@ class Application(Service):
         pg_pass = self.params["pg_pass"]
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        connection = None
+        pg_connection = None
         try:
-            connection = psycopg2.connect(
+            pg_connection = psycopg2.connect(
                 f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
-            with connection.cursor() as cursor:
-                loop.run_until_complete(self.on_uids(upload, cursor))
-                loop.run_until_complete(self.on_urls(upload, cursor))
+            with pg_connection.cursor() as pg_cursor:
+                loop.run_until_complete(self.on_uids(upload, pg_cursor))
+                loop.run_until_complete(self.on_urls(upload, pg_cursor))
         except psycopg2.Error as e:
             self.print_(0, e)
         except StopService:
             pass
         finally:
-            if connection is not None:
-                connection.close()
+            if pg_connection is not None:
+                pg_connection.close()
             loop.run_until_complete(asyncio.sleep(0.250))
             loop.close()
 
-    async def on_uids(self, upload, cursor):
+    async def on_uids(self, upload, pg_cursor):
         for item in upload.get_items():
-            await self.on_uids_dir(cursor, upload, item)
+            await self.on_uids_dir(pg_cursor, upload, item)
 
-    async def on_uids_dir(self, cursor, upload, item):
+    async def on_uids_dir(self, pg_cursor, upload, item):
         self.print_(1, f"In dir {item.in_dir}")
         self.print_(1, f"Markers dir {item.markers_dir}")
         try:
@@ -308,10 +308,10 @@ class Application(Service):
                         if markers_ctx.markers.add(reg_marker_name):
                             channel_id = item.channel_prefix + file_info.reg_name.upper()
                             self.print_(1, f"Registering file: {reg_marker_name} ({in_name}) channel_id {channel_id} account_id {account_id} keyword {keyword}")
-                            cursor.execute(
+                            pg_cursor.execute(
                                 SQL_REG_USER,
                                 (channel_id, item.account_id, keyword, keyword, keyword, keyword, keyword))
-                            cursor.execute("COMMIT;")
+                            pg_cursor.execute("COMMIT;")
 
                         if not markers_ctx.markers.check_mtime_interval(reg_marker_name, self.__upload_wait_time):
                             continue
@@ -464,7 +464,7 @@ class Application(Service):
         except aiohttp.client_exceptions.ClientError as e:
             self.print_(0, e)
 
-    async def on_urls(self, upload, cursor):
+    async def on_urls(self, upload, pg_cursor):
         if upload.url_segments_dir is None:
             return
 
@@ -474,14 +474,14 @@ class Application(Service):
                     in_path = os.path.join(ctx.in_dir, in_name)
                     if ctx.markers.add(in_name, os.path.getmtime(in_path)):
                         self.print_(1, f"Registering URL file: {in_name}")
-                        cursor.execute(SQL_REG_URL, (upload.channel_prefix + in_name.upper(),))
-                        channel_id = cursor.fetchone()[0]
-                        cursor.execute("COMMIT;")
+                        pg_cursor.execute(SQL_REG_URL, (upload.channel_prefix + in_name.upper(),))
+                        channel_id = pg_cursor.fetchone()[0]
+                        pg_cursor.execute("COMMIT;")
                         self.print_(1, f"Uploading URL file: {in_name}")
                         with LineReader(self, in_path) as f:
                             for line in f.read_lines():
-                                cursor.execute(SQL_UPLOAD_URL, (line, channel_id, line, channel_id, line))
-                                cursor.execute("COMMIT;")
+                                pg_cursor.execute(SQL_UPLOAD_URL, (line, channel_id, line, channel_id, line))
+                                pg_cursor.execute("COMMIT;")
         except EOFError as e:
             self.print_(0, e)
 
