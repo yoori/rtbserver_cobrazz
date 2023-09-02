@@ -287,7 +287,7 @@ class Application(Service):
                 key=chunk_number,
                 name=lambda: adv_act_fname_prefix + str(chunk_number))
             if log.first:
-                log.write_line("AdvertiserAction\t3.6")
+                log.write_line("AdvertiserAction\t3.6", progress=False)
             t = key.time.strftime('%Y-%m-%d_%H:%M:%S')
             for action_id, ccg_ids in action_to_ccg.items():
                 action_request_id = "".join(secrets.choice(ACTION_REQUEST_ID_CHARS) for _ in range(22)) + ".."
@@ -319,7 +319,7 @@ class Application(Service):
                     key=chunk_number,
                     name=lambda: log_fname_prefix + str(chunk_number))
                 if log.first:
-                    log.write_line("YandexPostClick\t1.0")
+                    log.write_line("YandexPostClick\t1.0", progress=False)
                 log.write_line(f"{t}\t{user_id}\t{request_id}")
                 self.__ch_client.execute(
                     'INSERT INTO YandexPostClick(time,user_id,request_id) VALUES',
