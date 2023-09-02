@@ -269,9 +269,9 @@ class Application(Service):
         try:
             connection = psycopg2.connect(
                 f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
-            cursor = connection.cursor()
-            loop.run_until_complete(self.on_uids(upload, cursor))
-            loop.run_until_complete(self.on_urls(upload, cursor))
+            with connection.cursor() as cursor:
+                loop.run_until_complete(self.on_uids(upload, cursor))
+                loop.run_until_complete(self.on_urls(upload, cursor))
         except psycopg2.Error as e:
             self.print_(0, e)
         except StopService:
