@@ -41,6 +41,7 @@ namespace Bidding
         const String::SubString ID("id");
         const String::SubString DEAL_ID("dealid");
         const String::SubString BID("bid");
+        const String::SubString BID_EXT("ext");
         const String::SubString BIDID("bidid");
         const String::SubString CUR("cur");
         const String::SubString EXT("ext");
@@ -798,9 +799,12 @@ namespace Bidding
               }
             }
 
+            bool need_ipw_extension = request_info.ipw_extension;
+            bool video_url_in_ext = false;
+            bool native_in_ext = false;
+
             {
               bool notice_enabled = false;
-              bool need_ipw_extension = request_info.ipw_extension;
               auto notice_instantiate_type = request_info.notice_instantiate_type;
               if(slot_it->video)
               {
@@ -852,18 +856,7 @@ namespace Bidding
                 }
                 else if (request_info.native_ads_instantiate_type == SourceTraits::NAIT_EXT)
                 {
-                  AdServer::Commons::JsonObject ext_obj(
-                    bid_object.add_object(Response::OpenRtb::EXT));
-
-                  fill_native_response_(
-                    &ext_obj,
-                    *slot_it->native,
-                    ad_slot_result,
-                    true,
-                    true, // add native root
-                    request_info.native_ads_instantiate_type
-                    );
-
+                  native_in_ext = true;
                   notice_enabled = true;
                 }
                 else if(request_info.native_ads_instantiate_type == SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2)
@@ -888,32 +881,7 @@ namespace Bidding
               {
                 if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL)
                 {
-                  AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
-                  
-                  if (need_ipw_extension)
-                  {
-                    ext_obj.add_escaped_string(
-                      Response::OpenRtb::ADVERTISER_NAME,
-                      String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
-
-                    need_ipw_extension = false;
-                  }
-
-                  ext_obj.add_string(Response::OpenRtb::VAST_URL, escaped_creative_url);
-
-                  if(ad_slot_result.ext_tokens.length() > 0)
-                  {
-                    for(CORBA::ULong token_i = 0;
-                      token_i < ad_slot_result.ext_tokens.length(); ++token_i)
-                    {
-                      std::string escaped_name = String::StringManip::json_escape(
-                        String::SubString(ad_slot_result.ext_tokens[token_i].name));
-
-                      ext_obj.add_escaped_string(escaped_name,
-                        String::SubString(ad_slot_result.ext_tokens[token_i].value));
-                    }
-                  }
-
+                  video_url_in_ext = true;
                   notice_enabled = true;
                 }
                 else if(request_params.ad_instantiate_type ==
@@ -928,14 +896,6 @@ namespace Bidding
                 {
                   bid_object.add_string(Response::OpenRtb::NURL, escaped_creative_url);
                 }
-              }
-
-              if (need_ipw_extension)
-              {
-                AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
-                ext_obj.add_escaped_string(
-                  Response::OpenRtb::ADVERTISER_NAME,
-                  String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
               }
 
               if(notice_enabled)
@@ -985,9 +945,51 @@ namespace Bidding
               const bool fill_overlay_ext = (!slot_it->banners.empty() && (banner_by_size_it != slot_it->size_banner.end()));
               const bool fill_nroa = (ad_slot_result.erid[0] || ad_slot_result.contracts.length() > 0);
 
-              if(fill_overlay_ext || fill_nroa)
+              if(fill_overlay_ext || fill_nroa || need_ipw_extension || video_url_in_ext || native_in_ext)
               {
-                AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
+                AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::BID_EXT));
+
+                if(native_in_ext)
+                {
+                  fill_native_response_(
+                    &ext_obj,
+                    *slot_it->native,
+                    ad_slot_result,
+                    true,
+                    true, // add native root
+                    request_info.native_ads_instantiate_type
+                    );
+                }
+
+                if(video_url_in_ext)
+                {
+                  ext_obj.add_string(Response::OpenRtb::VAST_URL, escaped_creative_url);
+
+                  if(ad_slot_result.ext_tokens.length() > 0)
+                  {
+                    for(CORBA::ULong token_i = 0;
+                      token_i < ad_slot_result.ext_tokens.length(); ++token_i)
+                    {
+                      if(ad_slot_result.ext_tokens[token_i].name[0])
+                      {
+                        std::string escaped_name = String::StringManip::json_escape(
+                          String::SubString(ad_slot_result.ext_tokens[token_i].name));
+
+                        ext_obj.add_escaped_string(escaped_name,
+                          String::SubString(ad_slot_result.ext_tokens[token_i].value));
+                      }
+                    }
+                  }
+                }
+
+                if(need_ipw_extension)
+                {
+                  ext_obj.add_escaped_string(
+                    Response::OpenRtb::ADVERTISER_NAME,
+                    String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
+
+                  need_ipw_extension = false;
+                }
 
                 if(fill_overlay_ext)
                 {
