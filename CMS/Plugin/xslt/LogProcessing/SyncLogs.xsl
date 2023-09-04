@@ -514,6 +514,7 @@
         <xsl:variable name="request-info-manager-route2">
           <dirs>
             <dir>CreativeStat</dir>
+            <dir>RequestStatsHourlyExtStat</dir>
             <dir>UserProperties</dir>
             <dir>ChannelPerformance</dir>
             <dir>ExpressionPerformance</dir>
@@ -871,6 +872,8 @@
             <cfg:files source="LogGeneralizer/Out/CMPStat/CmpStats_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/CreativeStat/RequestStatsHourly_*"
+              destination="/csvlistener/"/>
+            <cfg:files source="LogGeneralizer/Out/RequestStatsHourlyExtStat/RequestStatsHourlyExtStat_*"
               destination="/csvlistener/"/>
             <cfg:files source="LogGeneralizer/Out/ChannelCountStat/ChannelCountStats_*"
               destination="/csvlistener/"/>

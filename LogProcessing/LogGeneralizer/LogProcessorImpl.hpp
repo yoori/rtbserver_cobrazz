@@ -88,6 +88,14 @@ typedef GenericLogProcessorImpl<ChannelCountStatExtTraits,
   LogVersionManager3<ChannelCountStatExtTraits> >
   ChannelCountStatProcessor2;
 
+typedef GenericLogProcessorImpl<RequestStatsHourlyExtStatExtTraits>
+  RequestStatsHourlyExtStatProcessor;
+
+// Outputs log data in the CSV format
+typedef GenericLogProcessorImpl<RequestStatsHourlyExtStatExtTraits,
+  LogVersionManager3<RequestStatsHourlyExtStatExtTraits> >
+  RequestStatsHourlyExtStatProcessor2;
+
 typedef GenericLogProcessorImpl<ChannelOverlapUserStatExtTraits>
   ChannelOverlapUserStatProcessor;
 

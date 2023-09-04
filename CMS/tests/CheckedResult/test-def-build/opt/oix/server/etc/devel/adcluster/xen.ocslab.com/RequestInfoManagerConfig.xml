@@ -32,8 +32,8 @@
       </cfg:InLogs>
       <cfg:OutLogs log_root="/opt/foros/server/var/log/RequestInfoManager/Out/">
         <cfg:CreativeStat period="10"/>
-	<cfg:RequestStatsHourlyExtStat period="10"/>
-	<cfg:UserProperties period="10"/>
+        <cfg:RequestStatsHourlyExtStat period="10"/>
+        <cfg:UserProperties period="10"/>
         <cfg:ChannelPerformance period="10"/>
         <cfg:SiteChannelStat period="10"/>
         <cfg:ExpressionPerformance period="10"/>

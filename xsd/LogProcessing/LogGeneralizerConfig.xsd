@@ -121,6 +121,7 @@
       <xsd:element name="SearchTermStat" type="LogProcessingParamsHFType" minOccurs="0" maxOccurs="1"/>
 
 <!-- CSV only writers -->
+      <xsd:element name="RequestStatsHourlyExtStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="CampaignStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ChannelCountStat" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="ColoUsers" type="LogProcessingParamsType" minOccurs="0" maxOccurs="1"/>

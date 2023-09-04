@@ -214,7 +214,7 @@ class Application(Service):
                 continue
             raise RuntimeError("unknown source type")
 
-    def on_run(self):
+    def on_timer(self):
         threads = []
         for source in self.sources:
             thread = threading.Thread(target=source.process)
