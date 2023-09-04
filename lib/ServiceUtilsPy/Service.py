@@ -120,6 +120,10 @@ class Service:
         if getattr(self, "pid_file", None) is not None:
             os.remove(self.pid_file)
         if getattr(self, "log_file", None) is not None:
+            try:
+                self.log_file.flush()
+            except Exception as e:
+                print(f"Can't flush log file - {e.__class__.__name__}:{str(e)}")
             self.log_file.close()
 
     def on_stop_signal(self):
@@ -139,13 +143,16 @@ class Service:
                 msg = f"{datetime.datetime.now()} - {threading.currentThread().name} - {text}"
                 print(msg, flush=flush)
                 if self.log_file is not None and not self.log_file.closed:
-                    self.log_file.write(msg + "\n")
-                    if flush:
-                        self.log_file.flush()
+                    try:
+                        self.log_file.write(msg + "\n")
+                        if flush:
+                            self.log_file.flush()
+                    except Exception as e:
+                        print(f"Can't write log file - {e.__class__.__name__}:{str(e)}", flush=flush)
             finally:
                 self.print_lock.release()
 
-    def on_run(self):
+    def on_timer(self):
         pass
 
     def run(self):
@@ -154,7 +161,7 @@ class Service:
             self.on_start()
             while True:
                 self.print_(0, "Timer")
-                self.on_run()
+                self.on_timer()
                 for t in self.__get_sleep_subperiods():
                     self.verify_running()
                     time.sleep(t)
