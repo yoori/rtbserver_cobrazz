@@ -61,7 +61,7 @@ namespace Bidding
 
     void
     fill_response_(
-      std::ostream& response_ostr,
+      std::string& response,
       const RequestInfo& request_info,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const AdServer::CampaignSvcs::CampaignManager::

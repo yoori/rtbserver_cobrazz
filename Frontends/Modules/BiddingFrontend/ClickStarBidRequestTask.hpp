@@ -59,7 +59,7 @@ namespace Bidding
 
     void
     fill_response_(
-      std::ostream& response_ostr,
+      std::string& response,
       const RequestInfo& request_info,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const AdServer::CampaignSvcs::CampaignManager::
@@ -68,7 +68,7 @@ namespace Bidding
 
     void
     fill_response_adslot_(
-      std::ostream& response_ostr,
+      AdServer::Commons::JsonFormatter* json_formatter,
       const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
       noexcept;
 

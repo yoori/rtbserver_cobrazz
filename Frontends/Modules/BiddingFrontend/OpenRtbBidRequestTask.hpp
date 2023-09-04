@@ -56,7 +56,7 @@ namespace Bidding
 
     void
     fill_openrtb_response_(
-      std::ostream& response_ostr,
+      std::string& response,
       const RequestInfo& request_info,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const JsonProcessingContext& context,
@@ -66,7 +66,7 @@ namespace Bidding
 
     void
     fill_yandex_response_(
-      std::ostream& response_ostr,
+      std::string& response,
       const RequestInfo& request_info,
       const AdServer::CampaignSvcs::CampaignManager::
         RequestParams& request_params,

@@ -360,14 +360,14 @@ namespace Bidding
     AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
       *request_params_;
 
-    std::ostringstream response_ostr;
     bool first_is_native = context_.ad_slots.empty() ? false : (context_.ad_slots.begin()->native.in() != 0);
 
+    std::string bid_response;
     if(request_params.common_info.request_type != AdServer::CampaignSvcs::AR_YANDEX || first_is_native)
     {
       // standard OpenRTB, OpenX, Yandex native
       fill_openrtb_response_(
-        response_ostr,
+        bid_response,
         request_info(),
         request_params,
         context_,
@@ -377,15 +377,12 @@ namespace Bidding
     else
     {
       fill_yandex_response_(
-        response_ostr,
+        bid_response,
         request_info(),
         request_params,
         context_,
         campaign_match_result);
     }
-
-    // write response
-    const std::string bid_response = response_ostr.str();
 
     if(!bid_response.empty())
     {
@@ -396,7 +393,6 @@ namespace Bidding
         Response::Header::OPENRTB_VERSION_VALUE);
 
       FCGI::OutputStream& output = response->get_output_stream();
-      std::string bid_response = response_ostr.str();
       output.write(bid_response.data(), bid_response.size());
 
       write_response_(200, response);
@@ -466,7 +462,7 @@ namespace Bidding
 
   void
   OpenRtbBidRequestTask::fill_openrtb_response_(
-    std::ostream& response_ostr,
+    std::string& response,
     const RequestInfo& request_info,
     const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
     const JsonProcessingContext& context,
@@ -478,7 +474,7 @@ namespace Bidding
 
     try
     {
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      AdServer::Commons::JsonFormatter root_json(response, true);
       root_json.add_escaped_string(Response::OpenRtb::ID, context.request_id);
       if(fill_yandex_attributes)
       {
@@ -651,10 +647,10 @@ namespace Bidding
                   request_info.native_ads_instantiate_type == SourceTraits::NAIT_ADM_NATIVE_1_2 ||
                   request_info.native_ads_instantiate_type == SourceTraits::NAIT_ESCAPE_SLASH_ADM)
                 {
-                  std::ostringstream native_response_ostr;
+                  std::string native_response;
 
                   {
-                    AdServer::Commons::JsonFormatter native_json(native_response_ostr);
+                    AdServer::Commons::JsonFormatter native_json(native_response, true);
                     fill_native_response_(
                       &native_json,
                       *slot_it->native,
@@ -667,7 +663,7 @@ namespace Bidding
                   }
                   
                   escaped_creative_body = String::StringManip::json_escape(
-                    String::SubString(native_response_ostr.str()));
+                    String::SubString(native_response));
 
                   if(request_info.native_ads_instantiate_type == SourceTraits::NAIT_ESCAPE_SLASH_ADM)
                   {
@@ -935,7 +931,7 @@ namespace Bidding
 
   void
   OpenRtbBidRequestTask::fill_yandex_response_(
-    std::ostream& response_ostr,
+    std::string& response,
     const RequestInfo& request_info,
     const AdServer::CampaignSvcs::CampaignManager::
       RequestParams& request_params,
@@ -951,7 +947,7 @@ namespace Bidding
       std::string escaped_request_id =
         String::StringManip::json_escape(context.request_id);
 
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      AdServer::Commons::JsonFormatter root_json(response);
       root_json.add(Response::Yandex::ID, YandexIdFormatter(escaped_request_id));
       root_json.add_number(Response::Yandex::UNITS, 2);
 
