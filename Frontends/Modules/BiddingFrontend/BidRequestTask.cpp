@@ -50,7 +50,7 @@ namespace Bidding
     }
 
     // check interrupt
-    if(check_interrupt_("request parsing"))
+    if(check_interrupt_(Stage::RequestParsing))
     {
       return false;
     }
@@ -72,7 +72,7 @@ namespace Bidding
       return false;
     }
 
-    if(check_interrupt_("campaign selection"))
+    if(check_interrupt_(Stage::CampaignSelection))
     {
       return false;
     }
@@ -88,7 +88,7 @@ namespace Bidding
         return false;
       }
 
-      if(check_interrupt_("campaign selection considering"))
+      if(check_interrupt_(Stage::CampaignSelectionConsidering))
       {
         return false;
       }
@@ -126,7 +126,7 @@ namespace Bidding
   }
 
   bool
-  BidRequestTask::check_interrupt_(const char* stage)
+  BidRequestTask::check_interrupt_(const Stage stage)
     noexcept
   {
     return bid_frontend_->check_interrupt_("", stage, this);

@@ -2471,7 +2471,7 @@ namespace Bidding
       request_params.common_info,
       request_info);
 
-    if(check_interrupt_(fn, "user resolving", request_task))
+    if(check_interrupt_(fn, Stage::UserResolving, request_task))
     {
       interrupted = true;
     }
@@ -2488,7 +2488,7 @@ namespace Bidding
         request_task->hostname(),
         keywords.c_str());
 
-      if(check_interrupt_(fn, "trigger matching", request_task))
+      if(check_interrupt_(fn, Stage::TriggerMatching, request_task))
       {
         interrupted = true;
       }
@@ -2509,7 +2509,7 @@ namespace Bidding
         request_info.current_time,
         request_task->hostname());
 
-      if(check_interrupt_(fn, "history matching", request_task))
+      if(check_interrupt_(fn, Stage::HistoryMatching, request_task))
       {
         interrupted = true;
       }
@@ -2542,7 +2542,7 @@ namespace Bidding
 
     if (!interrupted)
     {
-      if(check_interrupt_(fn, "campaign selection", request_task))
+      if(check_interrupt_(fn, Stage::CampaignSelection, request_task))
       {
         return false;
       }
@@ -3691,7 +3691,7 @@ namespace Bidding
   inline void
   Frontend::interrupt_(
     const char* fun,
-    const char* stage,
+    const Stage stage,
     const BidRequestTask* request_task)
     noexcept
   {
@@ -3717,7 +3717,7 @@ namespace Bidding
 
     std::string ostr(fun);
     ostr += ": interrupted at ";
-    ostr += stage;
+    ostr += convert_stage_to_string(stage);
     ostr += ", after";
 
     group_logger()->add_error(
@@ -3733,10 +3733,11 @@ namespace Bidding
   bool
   Frontend::check_interrupt_(
     const char* fun,
-    const char* stage,
-    const BidRequestTask* request_task)
+    const Stage stage,
+    BidRequestTask* request_task)
     noexcept
   {
+    request_task->set_current_stage(stage);
     if(request_task->interrupted())
     {
       interrupt_(fun, stage, request_task);
