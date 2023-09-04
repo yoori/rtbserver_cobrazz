@@ -127,7 +127,7 @@ namespace Bidding
         is_app(false),
         native_ads_instantiate_type(SourceTraits::NAIT_NONE),
         native_ads_impression_tracker_type(AdServer::CampaignSvcs::NAITT_IMP),
-        erid_return_type(SourceTraits::ERIDRT_SINGLE),
+        erid_return_type(SourceTraits::ERIDRT_EXT_BUZSAPE), // by default fill buz sape nroa
         skip_ext_category(false)
     {}
 
