@@ -960,88 +960,100 @@ namespace Bidding
                 ad_slot_result.external_visual_categories);
             }
 
-            if(!slot_it->banners.empty()) // fill extensions for overlay
+            if(!slot_it->banners.empty())
             {
               auto banner_by_size_it = slot_it->size_banner.find(
                 ad_slot_result.tag_size.in());
 
               if(banner_by_size_it != slot_it->size_banner.end())
               {
-                const JsonAdSlotProcessingContext::Banner& use_banner =
-                  *(banner_by_size_it->second.banner);
                 const JsonAdSlotProcessingContext::BannerFormat& use_banner_format =
                   *(banner_by_size_it->second.banner_format);
+                bid_object.add_number(
+                  Response::OpenRtb::WIDTH,
+                  use_banner_format.width);
+                bid_object.add_number(
+                  Response::OpenRtb::HEIGHT,
+                  use_banner_format.height);
+              }
+            }
 
-                bool add_ext_width_height = (
-                  ad_slot_result.selected_creatives.length() == 1 &&
-                  use_banner_format.ext_type == "20");
+            {
+              auto banner_by_size_it = slot_it->size_banner.find(
+                ad_slot_result.tag_size.in());
 
-                if(add_ext_width_height ||
-                  request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
-                  ad_slot_result.erid[0] ||
-                  ad_slot_result.contracts.length() > 0)
+              const bool fill_overlay_ext = (!slot_it->banners.empty() && (banner_by_size_it != slot_it->size_banner.end()));
+              const bool fill_nroa = (ad_slot_result.erid[0] || ad_slot_result.contracts.length() > 0);
+
+              if(fill_overlay_ext || fill_nroa)
+              {
+                AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
+
+                if(fill_overlay_ext)
                 {
-                  AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
+                  const JsonAdSlotProcessingContext::Banner& use_banner =
+                    *(banner_by_size_it->second.banner);
+                  const JsonAdSlotProcessingContext::BannerFormat& use_banner_format =
+                    *(banner_by_size_it->second.banner_format);
 
-                  if(add_ext_width_height)
-                  {
-                    ext_obj.add_as_string(Response::OpenRtb::WIDTH, ad_slot_result.overlay_width);
-                    ext_obj.add_as_string(Response::OpenRtb::HEIGHT, ad_slot_result.overlay_height);
-                  }
+                  bool add_ext_width_height = (
+                    ad_slot_result.selected_creatives.length() == 1 &&
+                    use_banner_format.ext_type == "20");
 
-                  if(request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
+                  if(add_ext_width_height ||
+                    request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
+                    ad_slot_result.erid[0] ||
+                    ad_slot_result.contracts.length() > 0)
                   {
-                    if(!use_banner.matching_ad.empty())
+                    if(add_ext_width_height)
                     {
-                      ext_obj.add_number(
-                        Response::OpenX::MATCHING_AD_ID,
-                        use_banner.matching_ad);
+                      ext_obj.add_as_string(Response::OpenRtb::WIDTH, ad_slot_result.overlay_width);
+                      ext_obj.add_as_string(Response::OpenRtb::HEIGHT, ad_slot_result.overlay_height);
                     }
 
-                    print_int_category_seq(
-                      ext_obj,
-                      Response::OpenX::AD_OX_CATS,
-                      ad_slot_result.external_content_categories);
-                  }
-
-                  if(ad_slot_result.erid[0] || ad_slot_result.contracts.length() > 0)
-                  {
-                    AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
-
-                    if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
+                    if(request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
                     {
-                      AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
-                      if(ad_slot_result.erid[0])
+                      if(!use_banner.matching_ad.empty())
                       {
-                        array.add_escaped_string(String::SubString(ad_slot_result.erid));
+                        ext_obj.add_number(
+                          Response::OpenX::MATCHING_AD_ID,
+                          use_banner.matching_ad);
                       }
-                    }
-                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT0)
-                    {
-                      fill_ext0_nroa_(nroa_obj, request_info, ad_slot_result);
-                    }
-                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT_BUZSAPE)
-                    {
-                      fill_buzsape_nroa_(nroa_obj, request_info, ad_slot_result);
-                    }
-                    else // SourceTraits::ERIDRT_SINGLE
-                    {
-                      nroa_obj.add_escaped_string_if_non_empty(
-                        Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));                      
+
+                      print_int_category_seq(
+                        ext_obj,
+                        Response::OpenX::AD_OX_CATS,
+                        ad_slot_result.external_content_categories);
                     }
                   }
-                }
+                } // fill_overlay_ext
 
-                if (!(use_banner_format.width.empty() ||
-                    use_banner_format.height.empty()))
+                if(fill_nroa)
                 {
-                  bid_object.add_number(
-                    Response::OpenRtb::WIDTH,
-                    use_banner_format.width);
-                  bid_object.add_number(
-                    Response::OpenRtb::HEIGHT,
-                    use_banner_format.height);
-                }
+                  AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
+
+                  if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
+                  {
+                    AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
+                    if(ad_slot_result.erid[0])
+                    {
+                      array.add_escaped_string(String::SubString(ad_slot_result.erid));
+                    }
+                  }
+                  else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT0)
+                  {
+                    fill_ext0_nroa_(nroa_obj, request_info, ad_slot_result);
+                  }
+                  else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT_BUZSAPE)
+                  {
+                    fill_buzsape_nroa_(nroa_obj, request_info, ad_slot_result);
+                  }
+                  else // SourceTraits::ERIDRT_SINGLE
+                  {
+                    nroa_obj.add_escaped_string_if_non_empty(
+                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));                      
+                  }
+                } // fill_nroa
               }
             }
 
