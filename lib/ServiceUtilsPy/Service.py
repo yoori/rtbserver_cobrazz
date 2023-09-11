@@ -78,7 +78,7 @@ class Service:
                 self.config = json.load(f)
 
         self.params = Params(self)
-        self.period = self.params.get("period", 0)
+        self.period = self.params.get("period", 1.0)
         self.verbosity = self.params.get("verbosity", 1)
         self.print_line = self.params.get("print_line", 10000)
 
