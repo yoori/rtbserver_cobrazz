@@ -23,6 +23,7 @@ CAMPAIGN_SERVER_DESCR=$BACKEND_CLUSTER/CampaignServer
 DICTIONARY_PROVIDER_DESCR=$BACKEND_CLUSTER/DictionaryProvider
 EXPRESSION_MATCHER_DESCR=$BACKEND_CLUSTER/ExpressionMatcher
 LOG_GENERALIZER_DESCR=$BACKEND_CLUSTER/LogGeneralizer
+STAT_UPLOADER_DESCR=$BACKEND_CLUSTER/StatUploader
 LOG_PROCESSING_DESCR=$BACKEND_CLUSTER/LogProcessing
 REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
@@ -105,6 +106,19 @@ $EXEC/CurrentEnvGen.sh \
   --services-xpath "$LOG_GENERALIZER_XPATH" \
   --out-dir $OUT_DIR \
   --out-file CurrentEnv/be.sh
+
+let "EXIT_CODE|=$?"
+
+## configure StatUploader
+STAT_UPLOADER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$STAT_UPLOADER_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$STAT_UPLOADER_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/LogProcessing/StatUploader.xsl \
+  --out-file StatUploaderConfig.json \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
 
 let "EXIT_CODE|=$?"
 

@@ -74,6 +74,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="StatUploader"
+        configSchema="xsd/LogProcessing/StatUploaderApp.xsd"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
         type="ExpressionMatcher"
         configSchema="xsd/LogProcessing/ExpressionMatcherApp.xsd"
         minOccurs="1"
