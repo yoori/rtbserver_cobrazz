@@ -10,6 +10,7 @@ sub start
   my ($host, $descr) = @_;
 
   my $command =
+    "rm -f \${workspace_root}/run/stat_uploader.pid && " .
     "{ " .
       "StatUploader.py " .
         "--config=\${config_root}/${AdServer::Path::JSON_FILE_BASE}$host/StatUploaderConfig.json " .
