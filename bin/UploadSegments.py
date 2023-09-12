@@ -402,7 +402,7 @@ class Application(Service):
                             with self.lock:
                                 self.__subprocesses.add(shp.pid)
                             try:
-                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=1), encoding="utf-8")
+                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
                                 self.print_(0, f"Processing...")
                                 with LineReader(self, path=file_info.reg_name, file=file) as f:
                                     await run_lines(f)
