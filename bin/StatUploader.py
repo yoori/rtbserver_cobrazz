@@ -65,9 +65,8 @@ class Upload:
                 self.service.print_(0, f"Processing {in_file}")
                 in_path = os.path.join(ctx.in_dir, in_file)
                 with LineReader(self.service, path=in_path) as f:
-                    column_converters = []
-                    csv_header = f.read_line(progress=False)
-                    insert_sql = f"INSERT INTO {self.__table_name}({csv_header}) VALUES"
+                    csv_column_names = f.read_line(progress=False)
+                    insert_sql = f"INSERT INTO {self.__table_name}({csv_column_names}) VALUES"
                     values = []
 
                     def flush():
@@ -75,7 +74,8 @@ class Upload:
                             self.service.ch_client.execute(insert_sql, values)
                             values.clear()
 
-                    for csv_column_name in csv_header.split(","):
+                    column_converters = []
+                    for csv_column_name in csv_column_names.split(","):
                         try:
                             ch_column_type = ch_column_types[csv_column_name]
                         except KeyError:
