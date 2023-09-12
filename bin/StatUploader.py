@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import re
 from datetime import datetime
 import clickhouse_driver
 import clickhouse_driver.errors
@@ -9,76 +10,113 @@ from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
 
 
+NULLABLE_RE = re.compile(r"Nullable\((.*)\)")
+INT_RE = re.compile(r"Int(.*)")
+UINT_RE = re.compile(r"UInt(.*)")
+FIXED_STRING_RE = re.compile(r"FixedString\((.*)\)")
+DECIMAL_RE = re.compile(r"Decimal\((.*),(.*)\)")
+
+
+def bool_to_value(s):
+    return bool(int(s))
+
+
+def date_time_to_value(s):
+    return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+
+
+def make_nullable_to_value(f):
+
+    def nullable_to_value(s):
+        return f(s) if s else None
+
+    return nullable_to_value
+
+
+def get_column_converter(column_type):
+    if column_type == "Bool":
+        return bool_to_value
+
+    if column_type == "DateTime":
+        return date_time_to_value
+
+    match = NULLABLE_RE.match(column_type)
+    if match is not None:
+        return make_nullable_to_value(get_column_converter(match.groups()[0]))
+
+    match = INT_RE.match(column_type)
+    if match is not None:
+        return int
+
+    match = UINT_RE.match(column_type)
+    if match is not None:
+        return int
+
+    match = FIXED_STRING_RE.match(column_type)
+    if match is not None:
+        return str
+
+    match = DECIMAL_RE.match(column_type)
+    if match is not None:
+        return str
+
+    return None
+
+
 class Upload:
-    def __init__(self, service, params, table_name, csv_header):
+    def __init__(self, service, params, table_name):
         self.service = service
         self.__in_dir = params["in_dir"]
         self.__batch_size = params.get("batch_size", service.batch_size)
         self.__table_name = table_name
-        self.__csv_header = csv_header
-        self.__insert_sql = f"INSERT INTO {table_name}({csv_header}) VALUES"
+        self.__describe_table_sql = f"DESCRIBE TABLE {table_name}"
 
     def process(self):
+        ch_column_types = dict(
+            (column_name, column_type)
+            for column_name, column_type, _, _, _, _, _ in self.service.ch_client.execute(self.__describe_table_sql))
         values = []
-
-        def flush():
-            if values:
-                self.service.ch_client.execute(self.__insert_sql, values)
-                values.clear()
-
         with Context(self.service, in_dir=self.__in_dir) as ctx:
             for in_file in ctx.files.get_in_files():
                 self.service.print_(0, f"Processing {in_file}")
                 in_path = os.path.join(ctx.in_dir, in_file)
                 with LineReader(self.service, path=in_path) as f:
-                    if f.read_line(progress=False) != self.__csv_header:
-                        raise RuntimeError(f"{self.__table_name} header mismatch")
+                    column_converters = []
+                    csv_header = f.read_line(progress=False)
+                    insert_sql = f"INSERT INTO {self.__table_name}({csv_header}) VALUES"
+
+                    def flush():
+                        if values:
+                            self.service.ch_client.execute(insert_sql, values)
+                            values.clear()
+
+                    for csv_column_name in csv_header.split(","):
+                        try:
+                            ch_column_type = ch_column_types[csv_column_name]
+                        except KeyError:
+                            raise RuntimeError(f"{self.__table_name} column '{csv_column_name}' not found")
+                        column_converter = get_column_converter(ch_column_type)
+                        if column_converter is None:
+                            raise RuntimeError(f"{self.__table_name} column type '{ch_column_type}' not found")
+                        column_converters.append(column_converter)
                     for line in f.read_lines():
-                        values.append(self.on_line_to_value(line))
+                        columns = line.split(",")
+                        if len(columns) != len(column_converters):
+                            raise RuntimeError(f"{self.__table_name} CSV column count mismatch")
+                        values.append(list(
+                            column_converters[i](columns[i])
+                            for i in range(len(column_converters))
+                        ))
                         if len(values) >= self.__batch_size:
                             flush()
                     flush()
                 self.service.print_(0, f"Removing {in_file}")
                 os.remove(in_path)
 
-    def on_line_to_value(self, line):
-        raise NotImplementedError
-
 
 class RequestStatsHourlyExtStatUpload(Upload):
     def __init__(self, service, params):
-        super().__init__(
-            service,
-            params,
-            "RequestStatsHourlyExtStat",
-            "sdate,adv_sdate,colo_id,publisher_account_id,tag_id,size_id,country_code,adv_account_id,campaign_id,"
-            "ccg_id,cc_id,ccg_rate_id,colo_rate_id,site_rate_id,currency_exchange_id,delivery_threshold,num_shown,"
-            "position,test,fraud,walled_garden,user_status,geo_channel_id,device_channel_id,ctr_reset_id,hid_profile,"
-            "viewability,unverified_imps,imps,clicks,actions,adv_amount,pub_amount,isp_amount,adv_comm_amount,"
-            "pub_comm_amount,adv_payable_comm_amount,pub_advcurrency_amount,isp_advcurrency_amount,undup_imps,"
-            "undup_clicks,ym_confirmed_clicks,ym_bounced_clicks,ym_robots_clicks,ym_session_time"
-        )
-
-    def on_line_to_value(self, line):
-        (sdate, adv_sdate, colo_id, publisher_account_id, tag_id, size_id, country_code, adv_account_id, campaign_id,
-         ccg_id, cc_id, ccg_rate_id, colo_rate_id, site_rate_id,  currency_exchange_id, delivery_threshold, num_shown,
-         position, test, fraud, walled_garden, user_status, geo_channel_id, device_channel_id, ctr_reset_id,
-         hid_profile, viewability, unverified_imps, imps, clicks, actions, adv_amount, pub_amount, isp_amount,
-         adv_comm_amount, pub_comm_amount, adv_payable_comm_amount, pub_advcurrency_amount, isp_advcurrency_amount,
-         undup_imps, undup_clicks, ym_confirmed_clicks, ym_bounced_clicks, ym_robots_clicks, ym_session_time
-         ) = line.split(",")
-        return [
-            datetime.strptime(sdate, "%Y-%m-%d %H:%M:%S"), datetime.strptime(adv_sdate, "%Y-%m-%d %H:%M:%S"),
-            int(colo_id), int(publisher_account_id), int(tag_id), int(size_id) if size_id else None, country_code,
-            int(adv_account_id), int(campaign_id), int(ccg_id), int(cc_id), int(ccg_rate_id), int(colo_rate_id),
-            int(site_rate_id), int(currency_exchange_id), delivery_threshold, int(num_shown), int(position),
-            bool(int(test)), bool(int(fraud)), bool(int(walled_garden)), user_status, int(geo_channel_id) if
-            geo_channel_id else None, int(device_channel_id) if device_channel_id else None, int(ctr_reset_id),
-            bool(int(hid_profile)), int(viewability), int(unverified_imps), int(imps), int(clicks), int(actions),
-            adv_amount, pub_amount, isp_amount, adv_comm_amount, pub_comm_amount, adv_payable_comm_amount,
-            pub_advcurrency_amount, isp_advcurrency_amount, int(undup_imps), int(undup_clicks),
-            int(ym_confirmed_clicks), int(ym_bounced_clicks), int(ym_robots_clicks), ym_session_time
-        ]
+        super().__init__(service, params, "RequestStatsHourlyExtStat")
 
 
 UPLOAD_TYPES = {

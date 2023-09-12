@@ -157,7 +157,7 @@ class Service:
 
     def run(self):
         try:
-            self.print_(0, "Start")
+            self.print_(0, "Starting...")
             self.on_start()
             while True:
                 self.print_(0, "Timer")
@@ -168,7 +168,7 @@ class Service:
         except StopService:
             pass
         finally:
-            self.print_(0, "Stop")
+            self.print_(0, "Stopping...")
             self.on_stop()
 
     def __get_sleep_subperiods(self):
