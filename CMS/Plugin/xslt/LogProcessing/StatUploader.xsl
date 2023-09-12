@@ -30,9 +30,6 @@
   <xsl:variable name="stat-path" select="$stat-node/*[local-name() = $head]"/>
 
     {
-      <xsl:if test="count($stat-path/@batch_size) != 0">
-      "batch_size": <xsl:value-of select="$stat-path/@batch_size"/>,
-      </xsl:if>
       "upload_type": "<xsl:value-of select="$head"/>",
       "in_dir": "<xsl:value-of select="$workspace-root"/>/log/LogGeneralizer/Out/<xsl:value-of select="$head"/>"
     }
@@ -66,10 +63,6 @@
 
   <xsl:if test="count($stat-uploader-config/cfg:logging/@verbosity) != 0">
   "verbosity": <xsl:value-of select="$stat-uploader-config/cfg:logging/@verbosity"/>,
-  </xsl:if>
-
-  <xsl:if test="count($stat-uploader-config/cfg:uploads/@batch_size) != 0">
-  "batch_size": <xsl:value-of select="$stat-uploader-config/cfg:uploads/@batch_size"/>,
   </xsl:if>
 
   "uploads": [
