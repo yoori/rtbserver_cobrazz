@@ -723,6 +723,8 @@ namespace AdServer
           creative_info.creative_format << creative->creative_format;
           creative_info.version_id << creative->version_id;
           creative_info.order_set_id = creative->order_set_id;
+          creative_info.initial_contract_id = creative->initial_contract ?
+            creative->initial_contract->contract_id : 0;
 
           creative_info.click_url.option_id = creative->click_url.option_id;
           creative_info.click_url.value << creative->click_url.value;
@@ -769,9 +771,6 @@ namespace AdServer
           campaign_info.exclude_tags[res_i].tag_id = dtag_it->first;
           campaign_info.exclude_tags[res_i].delivery_value = dtag_it->second;          
         }
-
-        campaign_info.initial_contract_id = campaign->initial_contract ?
-          campaign->initial_contract->contract_id : 0;
       }
 
       /* fill expression channels */

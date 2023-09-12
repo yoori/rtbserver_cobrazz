@@ -260,6 +260,7 @@ namespace AdServer
       std::string version_id;
       char status;
       unsigned long order_set_id;
+      unsigned long initial_contract_id;
 
       SystemOptions sys_options;
       CreativeCategorySet categories;
@@ -1708,7 +1709,8 @@ namespace AdServer
         format(format_val),
         version_id(version_id_val),
         status(status_val),
-        sys_options(sys_options_val)
+        sys_options(sys_options_val),
+        initial_contract_id(0)
     {
       for(CORBA::ULong token_i = 0; token_i < tokens_val.length(); ++token_i)
       {
@@ -2019,6 +2021,7 @@ namespace AdServer
         status == right.status &&
         order_set_id == right.order_set_id &&
         version_id == right.version_id &&
+        initial_contract_id == right.initial_contract_id &&
         sys_options == right.sys_options &&
         categories.size() == right.categories.size() &&
         tokens.size() == right.tokens.size() &&
