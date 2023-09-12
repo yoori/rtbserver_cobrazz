@@ -566,8 +566,7 @@ namespace
     Table::Column("delivery_coef", Table::Column::NUMBER),
     Table::Column("imp_revenue", Table::Column::TEXT),
     Table::Column("click_revenue", Table::Column::TEXT),
-    Table::Column("action_revenue", Table::Column::TEXT),
-    Table::Column("initial_contract_id", Table::Column::NUMBER)
+    Table::Column("action_revenue", Table::Column::TEXT)
   };
 
   const Table::Column TAGS_TABLE_COLUMNS[] =
@@ -623,6 +622,7 @@ namespace
     Table::Column("status", Table::Column::TEXT),
     Table::Column("categories", Table::Column::TEXT),
     Table::Column("order_set_id", Table::Column::NUMBER),
+    Table::Column("initial_contract_id", Table::Column::NUMBER),
     Table::Column("options", Table::Column::TEXT)
   };
 
@@ -645,6 +645,7 @@ namespace
     Table::Column("status", Table::Column::TEXT),
     Table::Column("categories", Table::Column::TEXT),
     Table::Column("order_set_id", Table::Column::NUMBER),
+    Table::Column("initial_contract_id", Table::Column::NUMBER),
 
     Table::Column("campaign_fc_id", Table::Column::NUMBER),
     Table::Column("campaign_fc_lifelimit", Table::Column::NUMBER),
@@ -3124,8 +3125,6 @@ void Application::describe_campaign(
       AdServer::CampaignSvcs::RevenueDecimal>(campaign_info.click_revenue).str());
     row.add_field(CorbaAlgs::unpack_decimal<
       AdServer::CampaignSvcs::RevenueDecimal>(campaign_info.action_revenue).str());
-
-    row.add_field(campaign_info.initial_contract_id);
   }
 }
 
@@ -3286,6 +3285,7 @@ void Application::describe_creative(
   CorbaAlgs::print_sequence(ctg_ostr, creative.categories);
   row.add_field(ctg_ostr.str());
   row.add_field(creative.order_set_id);
+  row.add_field(creative.initial_contract_id);
 
   if(expand)
   {

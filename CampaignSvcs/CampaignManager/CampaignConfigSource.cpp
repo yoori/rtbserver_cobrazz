@@ -225,6 +225,7 @@ namespace CampaignSvcs
       categories);
 
     result->status = creative_info.status;
+    result->order_set_id = creative_info.order_set_id;
 
     for(CORBA::ULong size_i = 0; size_i < creative_info.sizes.length(); ++size_i)
     {
@@ -239,7 +240,6 @@ namespace CampaignSvcs
         res_size.down_expand_space > 0 ||
         res_size.left_expand_space > 0);
     }
-    result->order_set_id = creative_info.order_set_id;
 
     return result;
   }
@@ -805,6 +805,17 @@ namespace CampaignSvcs
 
           if((*cr_it)->status == 'A' && cmp_it->second->is_active())
           {
+            // link contract to creative
+            auto creative_contract_it = config_update_links.creative_contracts.find((*cr_it)->ccid);
+            if(creative_contract_it != config_update_links.creative_contracts.end())
+            {
+              auto contract_it = new_config.contracts.find(creative_contract_it->second);
+              if(contract_it != new_config.contracts.end())
+              {
+                (*cr_it)->initial_contract = contract_it->second;
+              }
+            }
+
             // link to creative match categories (CCT_TAG)
             for(unsigned long j = 0;
                 j < sizeof(CHECK_CREATIVE_TOKENS) / sizeof(CHECK_CREATIVE_TOKENS[0]);
@@ -981,17 +992,6 @@ namespace CampaignSvcs
             {
               creative.https_safe_flag = false;
             }
-          }
-        }
-
-        // link campaign initial contract
-        auto campaign_contract_it = config_update_links.campaign_contracts.find(cmp_it->first);
-        if(campaign_contract_it != config_update_links.campaign_contracts.end())
-        {
-          auto contract_it = new_config.contracts.find(campaign_contract_it->second);
-          if(contract_it != new_config.contracts.end())
-          {
-            cmp_it->second->initial_contract = contract_it->second;
           }
         }
 
@@ -2228,12 +2228,6 @@ namespace CampaignSvcs
         std::make_pair(
           campaign_info.campaign_id, campaign_info.advertiser_id));
 
-      if(campaign_info.initial_contract_id)
-      {
-        config_update_links.campaign_contracts.emplace(
-          campaign_info.campaign_id, campaign_info.initial_contract_id);
-      }
-
       Campaign_var campaign = new Campaign();
 
       campaign->campaign_id = campaign_info.campaign_id;
@@ -2369,6 +2363,12 @@ namespace CampaignSvcs
           {
             tcr = cr;
           }
+
+          if(creative_info.initial_contract_id)
+          {
+            config_update_links.creative_contracts.emplace(
+              creative_info.ccid, creative_info.initial_contract_id);
+          }
         }
         catch(const Exception& ex)
         {
@@ -2380,25 +2380,6 @@ namespace CampaignSvcs
           continue;
         }
       }
-
-      /*
-      // fill contracts
-      for(CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
-      {
-        const CampaignContractInfo& contract = campaign_info.contracts[contract_i];
-        CampaignContract_var new_contract(new CampaignContract());
-        new_contract->ord_contract_id = contract.ord_contract_id;
-        new_contract->ord_ado_id = contract.ord_ado_id;
-        new_contract->id = contract.id;
-        new_contract->date = contract.date;
-        new_contract->type = contract.type;
-        new_contract->client_id = contract.client_id;
-        new_contract->client_name = contract.client_name;
-        new_contract->contractor_id = contract.contractor_id;
-        new_contract->contractor_name = contract.contractor_name;
-        campaign->contracts.emplace_back(new_contract);
-      }
-      */
 
       new_config.campaigns.insert(
         std::make_pair(campaign_info.campaign_id, campaign));

@@ -141,7 +141,7 @@ namespace AdServer
         ExpressionChannelHolderMap platform_channels;
         BlockChannelMap block_channels;
 
-        IdMap campaign_contracts;
+        IdMap creative_contracts;
         IdMap contract_parent_contracts;
       };
 

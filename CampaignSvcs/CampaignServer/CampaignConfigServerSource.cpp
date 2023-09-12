@@ -1078,6 +1078,8 @@ namespace CampaignSvcs
             creative_info.categories));
 
         new_creative->order_set_id = creative_info.order_set_id;
+        new_creative->initial_contract_id = creative_info.initial_contract_id;
+
         for(CORBA::ULong k = 0; k < creative_info.sizes.length(); ++k)
         {
           const CreativeSizeInfo& size_info = creative_info.sizes[k];

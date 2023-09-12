@@ -1160,7 +1160,6 @@ namespace AdServer
         campaign.status = campaign_def.status;
         campaign.eval_status = campaign_def.eval_status;
         campaign.delivery_coef = campaign_def.delivery_coef;
-        campaign.initial_contract_id = campaign_def.initial_contract_id;
 
         campaign.timestamp = CorbaAlgs::pack_time(campaign_def.timestamp);
 
@@ -1195,6 +1194,7 @@ namespace AdServer
           creative_info.html_url.value << creative.sys_options.html_url;
           creative_info.order_set_id = creative.order_set_id;
           creative_info.status = creative.status;
+          creative_info.initial_contract_id = creative.initial_contract_id;
 
           creative_info.sizes.length(creative.sizes.size());
           CORBA::ULong size_i = 0;

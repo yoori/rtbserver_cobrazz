@@ -700,6 +700,37 @@ namespace CampaignSvcs
 
     struct Campaign;
 
+    class Contract: public ReferenceCounting::AtomicImpl
+    {
+    public:
+      unsigned long contract_id;
+
+      std::string number;
+      std::string date;
+      std::string type;
+      bool vat_included;
+
+      std::string ord_contract_id;
+      std::string ord_ado_id;
+      std::string subject_type;
+      std::string action_type;
+      bool agent_acting_for_publisher;
+      ReferenceCounting::SmartPtr<Contract> parent_contract;
+
+      std::string client_id;
+      std::string client_name;
+      std::string client_legal_form;
+
+      std::string contractor_id;
+      std::string contractor_name;
+      std::string contractor_legal_form;
+
+      Timestamp timestamp;
+    };
+
+    typedef ReferenceCounting::SmartPtr<Contract>
+      Contract_var;
+
     /**
      * Encapsulates information on a creative.
      */
@@ -770,6 +801,7 @@ namespace CampaignSvcs
       Commons::Optional<unsigned long> video_skip_offset;
       bool https_safe_flag;
       std::string erid;
+      Contract_var initial_contract;
 
     protected:
       virtual
@@ -791,37 +823,6 @@ namespace CampaignSvcs
     typedef std::set<unsigned long> ColoIdSet;
 
     typedef std::set<unsigned long> SiteIdSet;
-
-    class Contract: public ReferenceCounting::AtomicImpl
-    {
-    public:
-      unsigned long contract_id;
-
-      std::string number;
-      std::string date;
-      std::string type;
-      bool vat_included;
-
-      std::string ord_contract_id;
-      std::string ord_ado_id;
-      std::string subject_type;
-      std::string action_type;
-      bool agent_acting_for_publisher;
-      ReferenceCounting::SmartPtr<Contract> parent_contract;
-
-      std::string client_id;
-      std::string client_name;
-      std::string client_legal_form;
-
-      std::string contractor_id;
-      std::string contractor_name;
-      std::string contractor_legal_form;
-
-      Timestamp timestamp;
-    };
-
-    typedef ReferenceCounting::SmartPtr<Contract>
-      Contract_var;
 
     struct Campaign:
       public BillingStateContainer::AvailableAndMinCTRSetter,
@@ -945,8 +946,6 @@ namespace CampaignSvcs
       CreativeList creatives;          /**< Campaign creatives */
       OrderSetIdSet opt_order_sets;
       RevenueDecimal base_min_ctr_goal;
-
-      Contract_var initial_contract;
 
     protected:
       typedef Sync::Policy::PosixSpinThread GoalCTRSyncPolicy;
