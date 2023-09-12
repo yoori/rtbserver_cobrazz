@@ -31,7 +31,8 @@
 
     {
       "upload_type": "<xsl:value-of select="$head"/>",
-      "in_dir": "<xsl:value-of select="$workspace-root"/>/log/LogGeneralizer/Out/<xsl:value-of select="$head"/>"
+      "in_dir": "<xsl:value-of select="$workspace-root"/>/log/LogGeneralizer/Out/<xsl:value-of select="$head"/>",
+      "failure_dir": "<xsl:value-of select="$workspace-root"/>/log/StatUploader/Failure/<xsl:value-of select="$head"/>"
     }
 
   <xsl:if test="$tail">
