@@ -10,6 +10,7 @@ sub start
   my ($host, $descr) = @_;
 
   my $command =
+    "mkdir -p \${log_root}/StatUploader/Failure/RequestStatsHourlyExtStat && " .
     "rm -f \${workspace_root}/run/stat_uploader.pid && " .
     "{ " .
       "StatUploader.py " .
