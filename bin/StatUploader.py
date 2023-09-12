@@ -36,30 +36,15 @@ def make_nullable_to_value(f):
 def get_column_converter(column_type):
     if column_type == "Bool":
         return bool_to_value
-
     if column_type == "DateTime":
         return date_time_to_value
-
     match = NULLABLE_RE.match(column_type)
     if match is not None:
         return make_nullable_to_value(get_column_converter(match.groups()[0]))
-
-    match = INT_RE.match(column_type)
-    if match is not None:
+    if INT_RE.match(column_type) or UINT_RE.match(column_type):
         return int
-
-    match = UINT_RE.match(column_type)
-    if match is not None:
-        return int
-
-    match = FIXED_STRING_RE.match(column_type)
-    if match is not None:
+    if FIXED_STRING_RE.match(column_type) or DECIMAL_RE.match(column_type):
         return str
-
-    match = DECIMAL_RE.match(column_type)
-    if match is not None:
-        return str
-
     return None
 
 
@@ -69,13 +54,12 @@ class Upload:
         self.__in_dir = params["in_dir"]
         self.__batch_size = params.get("batch_size", service.batch_size)
         self.__table_name = table_name
-        self.__describe_table_sql = f"DESCRIBE TABLE {table_name}"
+        self.__describe_sql = f"DESCRIBE TABLE {table_name}"
 
     def process(self):
         ch_column_types = dict(
             (column_name, column_type)
-            for column_name, column_type, _, _, _, _, _ in self.service.ch_client.execute(self.__describe_table_sql))
-        values = []
+            for column_name, column_type, _, _, _, _, _ in self.service.ch_client.execute(self.__describe_sql))
         with Context(self.service, in_dir=self.__in_dir) as ctx:
             for in_file in ctx.files.get_in_files():
                 self.service.print_(0, f"Processing {in_file}")
@@ -84,6 +68,7 @@ class Upload:
                     column_converters = []
                     csv_header = f.read_line(progress=False)
                     insert_sql = f"INSERT INTO {self.__table_name}({csv_header}) VALUES"
+                    values = []
 
                     def flush():
                         if values:
