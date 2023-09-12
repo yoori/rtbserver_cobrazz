@@ -78,7 +78,7 @@ class Service:
                 self.config = json.load(f)
 
         self.params = Params(self)
-        self.period = self.params.get("period", 0)
+        self.period = self.params.get("period", 1.0)
         self.verbosity = self.params.get("verbosity", 1)
         self.print_line = self.params.get("print_line", 10000)
 
@@ -157,7 +157,7 @@ class Service:
 
     def run(self):
         try:
-            self.print_(0, "Start")
+            self.print_(0, "Starting...")
             self.on_start()
             while True:
                 self.print_(0, "Timer")
@@ -168,7 +168,7 @@ class Service:
         except StopService:
             pass
         finally:
-            self.print_(0, "Stop")
+            self.print_(0, "Stopping...")
             self.on_stop()
 
     def __get_sleep_subperiods(self):
