@@ -18,23 +18,23 @@ class Upload:
 
     def process(self):
         with Context(self.service, in_dir=self.in_dir) as ctx:
-            for in_file in ctx.files.get_in_files():
-                self.service.print_(0, f"Processing {in_file}")
-                in_path = os.path.join(ctx.in_dir, in_file)
-                error = self.process_file(in_file, in_path)
+            for in_name in ctx.files.get_in_names():
+                self.service.print_(0, f"Processing {in_name}")
+                in_path = os.path.join(ctx.in_dir, in_name)
+                error = self.process_file(in_name, in_path)
                 if error is None or self.failure_dir is None:
-                    self.service.print_(0, f"Removing {in_file}")
+                    self.service.print_(0, f"Removing {in_name}")
                     os.remove(in_path)
                 else:
-                    self.service.print_(0, f"Failure in {in_file}:\n{error}")
+                    self.service.print_(0, f"Failure in {in_name}:\n{error}")
                     shutil.move(in_path, self.failure_dir)
 
-    def process_file(self, in_file, in_path):
+    def process_file(self, in_name, in_path):
         raise NotImplementedError
 
 
 class ClickhouseUpload(Upload):
-    def process_file(self, in_file, in_path):
+    def process_file(self, in_name, in_path):
         cmd = f'cat "{in_path}" | clickhouse-client -h "{self.service.ch_host}" --query="INSERT INTO {self.type_name} FORMAT CSV"'
         with subprocess.Popen(['sh', '-c', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
             stdout, stderr = proc.communicate()
