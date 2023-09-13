@@ -8,38 +8,54 @@ from ServiceUtilsPy.Context import Context
 
 
 class Upload:
-    def __init__(self, service, params, table_name):
+    def __init__(self, service, params, type_name):
         self.service = service
-        self.__in_dir = params["in_dir"]
-        self.__failure_dir = params.get("failure_dir")
-        if self.__failure_dir is not None:
-            os.makedirs(self.__failure_dir, exist_ok=True)
-        self.__table_name = table_name
+        self.in_dir = params["in_dir"]
+        self.failure_dir = params.get("failure_dir")
+        if self.failure_dir is not None:
+            os.makedirs(self.failure_dir, exist_ok=True)
+        self.type_name = type_name
 
     def process(self):
-        with Context(self.service, in_dir=self.__in_dir) as ctx:
+        with Context(self.service, in_dir=self.in_dir) as ctx:
             for in_file in ctx.files.get_in_files():
                 self.service.print_(0, f"Processing {in_file}")
                 in_path = os.path.join(ctx.in_dir, in_file)
-                cmd = f'cat "{in_path}" | clickhouse-client -h "{self.service.ch_host}" --query="INSERT INTO {self.__table_name} FORMAT CSV"'
-                with subprocess.Popen(['sh', '-c', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
-                    stdout, stderr = proc.communicate()
-                    if proc.returncode == 0 or self.__failure_dir is None:
-                        self.service.print_(0, f"Removing {in_file}")
-                        os.remove(in_path)
-                    else:
-                        self.service.print_(0, f"Failure in {in_file}:\n{stderr.decode()}")
-                        shutil.move(in_path, self.__failure_dir)
+                error = self.process_file(in_file, in_path)
+                if error is None or self.failure_dir is None:
+                    self.service.print_(0, f"Removing {in_file}")
+                    os.remove(in_path)
+                else:
+                    self.service.print_(0, f"Failure in {in_file}:\n{error}")
+                    shutil.move(in_path, self.failure_dir)
+
+    def process_file(self, in_file, in_path):
+        raise NotImplementedError
 
 
-class RequestStatsHourlyExtStatUpload(Upload):
-    def __init__(self, service, params):
-        super().__init__(service, params, "RequestStatsHourlyExtStat")
+class ClickhouseUpload(Upload):
+    def process_file(self, in_file, in_path):
+        cmd = f'cat "{in_path}" | clickhouse-client -h "{self.service.ch_host}" --query="INSERT INTO {self.type_name} FORMAT CSV"'
+        with subprocess.Popen(['sh', '-c', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+            stdout, stderr = proc.communicate()
+            return None if proc.returncode == 0 else stderr.decode()
 
 
-UPLOAD_TYPES = {
-    "RequestStatsHourlyExtStat": RequestStatsHourlyExtStatUpload
-}
+UPLOAD_TYPES = {}
+
+
+def add_upload_type(base_type, type_name):
+    if type_name in UPLOAD_TYPES:
+        raise RuntimeError(f"Upload type {type_name} already registered")
+
+    class NewUpload(base_type):
+        def __init__(self, service, params):
+            super().__init__(service, params, type_name)
+
+    UPLOAD_TYPES[type_name] = NewUpload
+
+
+add_upload_type(ClickhouseUpload, "RequestStatsHourlyExtStat")
 
 
 class Application(Service):
@@ -56,11 +72,11 @@ class Application(Service):
         self.ch_host = self.params["ch_host"]
 
         def add_upload(params):
-            upload_type_name = params["upload_type"]
+            type_name = params["upload_type"]
             try:
-                upload_type = UPLOAD_TYPES[upload_type_name]
+                upload_type = UPLOAD_TYPES[type_name]
             except KeyError:
-                raise RuntimeError(f"Upload type {upload_type_name} not found")
+                raise RuntimeError(f"Upload type {type_name} not found")
             self.__uploads.append(upload_type(self, params))
 
         if self.params.get("upload_type") is not None:
