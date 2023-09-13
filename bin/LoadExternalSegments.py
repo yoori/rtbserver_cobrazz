@@ -45,8 +45,8 @@ class Source:
 
     def process_file(self, ctx, taxonomy, in_path, name):
         self.service.print_(1, f"Processing {name}")
-        with LineReader(self.service, in_path) as dl_reader:
-            for line in dl_reader.read_lines():
+        with LineReader(self.service, in_path) as line_reader:
+            for line in line_reader.read_lines():
                 user_id, segment_ids = line.split("\t")
                 is_short = len(user_id) < 32
                 for segment_id in segment_ids.split(","):
@@ -54,7 +54,8 @@ class Source:
                     output_writer = ctx.files.get_line_writer(
                         key=(segment_id, is_short),
                         name=lambda: make_segment_filename(segment_id, is_short) + ctx.fname_stamp)
-                    output_writer.progress.verbosity = 3
+                    if output_writer.first:
+                        output_writer.progress.verbosity = 3
                     output_writer.write_line(user_id)
 
 
