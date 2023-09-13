@@ -68,7 +68,6 @@ class AmberSource(Source):
 
     def __init__(self, service, params, type_params):
         super().__init__(service, params)
-        p = params["amber"]
         self.__url = type_params["url"]
         self.__acc = type_params["acc"]
         self.__secret = type_params["secret"]
@@ -125,7 +124,6 @@ class AdriverTaxonomy(dict):
 class AdriverSource(Source):
     def __init__(self, service, params, type_params):
         super().__init__(service, params)
-        p = params["adriver"]
         self.__url = f'https://{type_params["user"]}:{type_params["password"]}@{type_params["url"]}'
         self.__taxonomy = AdriverTaxonomy(self.service, type_params["taxonomy_file"])
 
