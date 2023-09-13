@@ -21,7 +21,7 @@ class Upload:
             for in_name in ctx.files.get_in_names():
                 self.service.print_(0, f"Processing {in_name}")
                 in_path = os.path.join(ctx.in_dir, in_name)
-                error = self.process_file(in_name, in_path)
+                error = self.process_file(in_path)
                 if error is None or self.failure_dir is None:
                     self.service.print_(0, f"Removing {in_name}")
                     os.remove(in_path)
@@ -29,12 +29,12 @@ class Upload:
                     self.service.print_(0, f"Failure in {in_name}:\n{error}")
                     shutil.move(in_path, self.failure_dir)
 
-    def process_file(self, in_name, in_path):
+    def process_file(self, in_path):
         raise NotImplementedError
 
 
 class ClickhouseUpload(Upload):
-    def process_file(self, in_name, in_path):
+    def process_file(self, in_path):
         cmd = f'cat "{in_path}" | clickhouse-client -h "{self.service.ch_host}" --query="INSERT INTO {self.type_name} FORMAT CSV"'
         with subprocess.Popen(['sh', '-c', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
             stdout, stderr = proc.communicate()
