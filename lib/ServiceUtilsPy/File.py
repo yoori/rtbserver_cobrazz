@@ -53,7 +53,6 @@ class File:
             os.remove(self.path)
 
     def move(self, path):
-        self.service.print_(0, f"Output file {os.path.join(path, os.path.split(self.path)[1])}")
         self.close()
         shutil.move(self.path, path)
 

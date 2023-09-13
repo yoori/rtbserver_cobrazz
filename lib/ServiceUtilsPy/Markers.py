@@ -35,10 +35,7 @@ class Markers:
             self.__markers[name] = Marker(self, name, True, time.time() if mtime is None else mtime)
             self.service.print_(0, f"Marker added {name}")
             return True
-        if mtime is None:
-            self.service.print_(0, f"Marker already added {name}")
-            return False
-        if marker.mtime == mtime:
+        if mtime is None or marker.mtime == mtime:
             self.service.print_(0, f"Marker already added {name}")
             return False
         marker.mtime = mtime
