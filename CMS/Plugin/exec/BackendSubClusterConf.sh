@@ -1,4 +1,4 @@
-STAT_UPLOADER_DESCR=$BACKEND_CLUSTER/StatUploader#!/bin/bash
+#!/bin/bash
 
 if [ $# -lt 5 ]
 then
