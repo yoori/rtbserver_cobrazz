@@ -108,6 +108,7 @@
   export PATH
 
   PYTHONPATH=$PYTHONPATH:$server_root/lib
+  PYTHONPATH=$PYTHONPATH:$server_root/Utils/YaMetrikaUploader
   export PYTHONPATH
 
   PERL5LIB=$PERL5LIB:$server_root/bin
