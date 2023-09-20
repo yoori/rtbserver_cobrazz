@@ -100,6 +100,7 @@
   export auto_test_path
 
   PATH=$PATH:$server_root/bin
+  PATH=$PATH:$server_root/Utils/YaMetrikaUploader
   PATH=$PATH:$server_root/build/bin
   PATH=$PATH:$server_root/ConfigSys:$auto_test_path
   PATH=$PATH:$server_root/Predictor/Scripts
@@ -108,7 +109,6 @@
   export PATH
 
   PYTHONPATH=$PYTHONPATH:$server_root/lib
-  PYTHONPATH=$PYTHONPATH:$server_root/Utils/YaMetrikaUploader
   export PYTHONPATH
 
   PERL5LIB=$PERL5LIB:$server_root/bin
