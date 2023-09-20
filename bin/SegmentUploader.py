@@ -137,11 +137,11 @@ class FileInfo:
             basename, ext = os.path.splitext(basename)
         else:
             self.is_stable = False
-        self.name = basename + ext
+        self.reg_name = basename + ext
         self.need_sign_uids = not signed_uids and ext in ("", ".txt", ".uids")
 
     def __repr__(self):
-        return f"FileInfo(name={self.name}, need_sign_uids={self.need_sign_uids}, is_stable={self.is_stable})"
+        return f"FileInfo(reg_name={self.reg_name}, need_sign_uids={self.need_sign_uids}, is_stable={self.is_stable})"
 
 
 class HTTPThread(threading.Thread):
@@ -303,11 +303,11 @@ class Application(Service):
                         file_info = FileInfo(max(
                             in_names_all,
                             key=lambda in_name: os.path.getmtime(os.path.join(item.in_dir, in_name))))
-                        reg_marker_name = file_info.name + ".__reg__"
-                        keyword = make_keyword(item.channel_prefix.lower() + file_info.name.lower())
+                        reg_marker_name = file_info.reg_name + ".__reg__"
+                        keyword = make_keyword(item.channel_prefix.lower() + file_info.reg_name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
-                            channel_id = item.channel_prefix + file_info.name.upper()
-                            self.print_(1, f"Registering file: {reg_marker_name} ({file_info.name}) channel_id {channel_id} account_id {item.account_id} keyword {keyword}")
+                            channel_id = item.channel_prefix + file_info.reg_name.upper()
+                            self.print_(1, f"Registering file: {reg_marker_name} ({file_info.reg_name}) channel_id {channel_id} account_id {item.account_id} keyword {keyword}")
                             pg_cursor.execute(
                                 SQL_REG_USER,
                                 (channel_id, item.account_id, keyword, keyword, keyword, keyword, keyword))
