@@ -71,7 +71,7 @@
 
   <xsl:variable
     name="ya-metrika-uploader-config"
-    select="$ya-metrika-uploader-path/configuration/cfg:statUploader"/>
+    select="$ya-metrika-uploader-path/configuration/cfg:yaMetrikaUploader"/>
 
   <xsl:call-template name="YaMetrikaUploaderConfigGenerator">
     <xsl:with-param name="env-config" select="$env-config"/>
