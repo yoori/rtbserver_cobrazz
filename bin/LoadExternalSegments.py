@@ -61,7 +61,7 @@ class Source:
 
 class DLWriter(File):
     def __init__(self, ctx, name):
-        super().__init__(self, ctx.service, os.path.join(ctx.tmp_dir, name), "wb", remove_on_exit=True, use_plugins=False)
+        super().__init__(ctx.service, os.path.join(ctx.tmp_dir, name), "wb", remove_on_exit=True, use_plugins=False)
 
 
 class AmberSource(Source):
@@ -92,7 +92,7 @@ class AmberSource(Source):
                         continue
                     taxonomy = self.__load_taxonomy(client)
                     with MinioRequest(client, self.__bucket, name) as mr:
-                        with DLWriter(ctx.tmp_dir, name) as dl_writer:
+                        with DLWriter(ctx, name) as dl_writer:
                             self.service.print_(1, f"Downloading {name}")
                             for batch in mr.stream():
                                 dl_writer.write(batch)
@@ -143,7 +143,7 @@ class AdriverSource(Source):
                         with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
                             if file_response.status_code != 200:
                                 raise requests.exceptions.RequestException
-                            with DLWriter(ctx.tmp_dir, name) as dl_writer:
+                            with DLWriter(ctx, name) as dl_writer:
                                 self.service.print_(1, f"Downloading {name}")
                                 for chunk in file_response.iter_content(chunk_size=65536):
                                     dl_writer.write(chunk)
