@@ -36,10 +36,9 @@ class Taxonomy(dict):
     def __init__(self, lines):
         super().__init__()
         for line in lines:
-            if line:
-                segment_id, segment = line.split("\t")
-                if segment:
-                    self[segment_id] = segment
+            segment_id, segment = line.split("\t")
+            if segment:
+                self[segment_id] = segment
 
     @staticmethod
     def from_file(service, path):
