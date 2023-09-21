@@ -43,8 +43,9 @@ class LineReader(LineFile):
     def read_lines(self):
         while True:
             line = self.read_line()
-            if line:
-                yield line
+            if not line:
+                return
+            yield line
 
 
 class LineWriter(LineFile):
