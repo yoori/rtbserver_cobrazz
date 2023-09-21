@@ -486,7 +486,7 @@ class Application(Service):
             self.print_(0, e)
 
     def __make_http_application(self):
-        app = flask.Flask('UploadSegmentsHTTP')
+        app = flask.Flask('SegmentUploaderHTTP')
 
         @app.route('/metrics')
         def metrics():

@@ -17,7 +17,7 @@
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 
-<xsl:template name="UploaderConfig">
+<xsl:template name="StatUploaderUploadConfig">
   <xsl:param name="workspace-root"/>	
   <xsl:param name="list"/>
   <xsl:param name="stat-uploader-config"/>	
@@ -37,7 +37,7 @@
 
   <xsl:if test="$tail">
     ,
-    <xsl:call-template name="UploaderConfig">
+    <xsl:call-template name="StatUploaderUploadConfig">
       <xsl:with-param name="workspace-root" select="$workspace-root"/>	    
       <xsl:with-param name="list" select="$tail"/>
       <xsl:with-param name="stat-uploader-config" select="$stat-uploader-config"/>
@@ -58,9 +58,7 @@
 {
   "period": <xsl:value-of select="$stat-uploader-check-logs-period"/>,
 
-  <xsl:if test="count($stat-uploader-config/cfg:clickhouse/@host) != 0">
   "ch_host": "<xsl:value-of select="$stat-uploader-config/cfg:clickhouse/@host"/>",
-  </xsl:if>
 
   <xsl:if test="count($stat-uploader-config/cfg:logging/@verbosity) != 0">
   "verbosity": <xsl:value-of select="$stat-uploader-config/cfg:logging/@verbosity"/>,
@@ -69,7 +67,7 @@
   "uploads": [
     <xsl:variable name="uploads-config" select="$stat-uploader-config/cfg:uploads"/>
 
-    <xsl:call-template name="UploaderConfig">
+    <xsl:call-template name="StatUploaderUploadConfig">
       <xsl:with-param name="workspace-root" select="$workspace-root"/>	    
       <xsl:with-param name="list" select="'RequestStatsHourlyExtStat'"/>
       <xsl:with-param name="stat-uploader-config" select="$stat-uploader-config"/>
