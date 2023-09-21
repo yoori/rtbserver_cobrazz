@@ -35,7 +35,7 @@ class LineReader(LineFile):
         self.service.verify_running()
         line = self.file.readline()
         if line:
-            line = line.strip("\n")
+            line = line.rstrip("\n\r")
             if progress:
                 self.progress.next_line()
         return line
@@ -43,9 +43,8 @@ class LineReader(LineFile):
     def read_lines(self):
         while True:
             line = self.read_line()
-            if not line:
-                return
-            yield line
+            if line:
+                yield line
 
 
 class LineWriter(LineFile):
