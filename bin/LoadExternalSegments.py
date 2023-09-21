@@ -2,7 +2,6 @@
 
 import os
 import string
-import urllib3.exceptions
 import requests
 import threading
 from minio import Minio
@@ -31,6 +30,21 @@ def make_segment_filename(s, is_short):
     if not is_short:
         r += ".signed_uids"
     return r
+
+
+class Taxonomy(dict):
+    def __init__(self, lines):
+        super().__init__()
+        for line in lines:
+            if line:
+                segment_id, segment = line.split("\t")
+                if segment:
+                    self[segment_id] = segment
+
+    @staticmethod
+    def from_file(service, path):
+        with LineReader(service, path) as f:
+            return Taxonomy(f.read_lines())
 
 
 class Source:
@@ -90,7 +104,8 @@ class AmberSource(Source):
                 with self.create_context() as ctx:
                     if not ctx.markers.add(name):
                         continue
-                    taxonomy = self.__load_taxonomy(client)
+                    with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
+                        taxonomy = Taxonomy(mr.data.decode("utf-8").split("\n"))
                     with MinioRequest(client, self.__bucket, name) as mr:
                         with DLWriter(ctx, name) as dl_writer:
                             self.service.print_(1, f"Downloading {name}")
@@ -101,32 +116,12 @@ class AmberSource(Source):
         except Exception as e:
             self.service.print_(0, e)
 
-    def __load_taxonomy(self, client):
-        taxonomy = {}
-        with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
-            for line in mr.data.decode("utf-8").split("\n"):
-                if line:
-                    taxonomy_k, taxonomy_v = line.split("\t")
-                    taxonomy[taxonomy_k] = taxonomy_v
-        return taxonomy
-
-
-class AdriverTaxonomy(dict):
-    def __init__(self, service, path):
-        super().__init__()
-        with LineReader(service, path) as f:
-            for line in f.read_lines():
-                if line:
-                    segment_id, segment = line.split("\t")
-                    if segment:
-                        self[segment_id] = segment
-
 
 class AdriverSource(Source):
     def __init__(self, service, params, type_params):
         super().__init__(service, params)
         self.__url = f'https://{type_params["user"]}:{type_params["password"]}@{type_params["url"]}'
-        self.__taxonomy = AdriverTaxonomy(self.service, type_params["taxonomy_file"])
+        self.__taxonomy = Taxonomy.from_file(self.service, type_params["taxonomy_file"])
 
     def process(self):
         try:
@@ -158,7 +153,7 @@ class AdriverLocalSource(Source):
         super().__init__(service, params)
         self.__dir = type_params["dir"]
         os.makedirs(self.__dir, exist_ok=True)
-        self.__taxonomy = AdriverTaxonomy(self.service, type_params["taxonomy_file"])
+        self.__taxonomy = Taxonomy.from_file(self.service, type_params["taxonomy_file"])
 
     def process(self):
         try:
