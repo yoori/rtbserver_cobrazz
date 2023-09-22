@@ -76,6 +76,10 @@ class DLWriter(File):
     def __init__(self, ctx, name):
         super().__init__(ctx.service, os.path.join(ctx.tmp_dir, name), "wb", remove_on_exit=True, use_plugins=False)
 
+    def write_parts(self, parts):
+        for part in parts:
+            self.write(part)
+
 
 class AmberSource(Source):
     TAXONOMY_NAME = "meta.tsv"
@@ -101,17 +105,15 @@ class AmberSource(Source):
                     continue
                 self.service.print_(1, f"{name}")
                 with self.create_context() as ctx:
-                    if not ctx.markers.add(name):
-                        continue
-                    with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
-                        taxonomy = Taxonomy(mr.data.decode("utf-8").split("\n"))
-                    with MinioRequest(client, self.__bucket, name) as mr:
-                        with DLWriter(ctx, name) as dl_writer:
-                            self.service.print_(1, f"Downloading {name}")
-                            for batch in mr.stream():
-                                dl_writer.write(batch)
-                            dl_writer.close()
-                            self.process_file(ctx, taxonomy, dl_writer.path, name)
+                    if ctx.markers.add(name):
+                        with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
+                            taxonomy = Taxonomy(mr.data.decode("utf-8").split("\n"))
+                        with MinioRequest(client, self.__bucket, name) as mr:
+                            with DLWriter(ctx, name) as dl_writer:
+                                self.service.print_(1, f"Downloading {name}")
+                                dl_writer.write_parts(mr.stream())
+                                dl_writer.close()
+                                self.process_file(ctx, taxonomy, dl_writer.path, name)
         except Exception as e:
             self.service.print_(0, e)
 
@@ -132,17 +134,15 @@ class AdriverSource(Source):
                     if name == "../":
                         continue
                     with self.create_context() as ctx:
-                        if not ctx.markers.add(name):
-                            continue
-                        with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
-                            if file_response.status_code != 200:
-                                raise requests.exceptions.RequestException
-                            with DLWriter(ctx, name) as dl_writer:
-                                self.service.print_(1, f"Downloading {name}")
-                                for chunk in file_response.iter_content(chunk_size=65536):
-                                    dl_writer.write(chunk)
-                                dl_writer.close()
-                                self.process_file(ctx, self.__taxonomy, dl_writer.path, name)
+                        if ctx.markers.add(name):
+                            with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
+                                if file_response.status_code != 200:
+                                    raise requests.exceptions.RequestException
+                                with DLWriter(ctx, name) as dl_writer:
+                                    self.service.print_(1, f"Downloading {name}")
+                                    dl_writer.write_parts(file_response.iter_content(chunk_size=65536))
+                                    dl_writer.close()
+                                    self.process_file(ctx, self.__taxonomy, dl_writer.path, name)
         except Exception as e:
             self.service.print_(0, e)
 
