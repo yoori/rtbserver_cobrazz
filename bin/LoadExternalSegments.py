@@ -36,9 +36,10 @@ class Taxonomy(dict):
     def __init__(self, lines):
         super().__init__()
         for line in lines:
-            segment_id, segment = line.split("\t")
-            if segment:
-                self[segment_id] = segment
+            if line: # check for non LineReader
+                segment_id, segment = line.split("\t")
+                if segment:
+                    self[segment_id] = segment
 
     @staticmethod
     def from_file(service, path):
@@ -72,7 +73,7 @@ class Source:
                     output_writer.write_line(user_id)
 
 
-class DLWriter(File):
+class AutoRemovePluginlessWriter(File):
     def __init__(self, ctx, name):
         super().__init__(ctx.service, os.path.join(ctx.tmp_dir, name), "wb", remove_on_exit=True, use_plugins=False)
 
@@ -109,11 +110,11 @@ class AmberSource(Source):
                         with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
                             taxonomy = Taxonomy(mr.data.decode("utf-8").split("\n"))
                         with MinioRequest(client, self.__bucket, name) as mr:
-                            with DLWriter(ctx, name) as dl_writer:
+                            with AutoRemovePluginlessWriter(ctx, name) as w:
                                 self.service.print_(1, f"Downloading {name}")
-                                dl_writer.write_parts(mr.stream())
-                                dl_writer.close()
-                                self.process_file(ctx, taxonomy, dl_writer.path, name)
+                                w.write_parts(mr.stream())
+                                w.close()
+                                self.process_file(ctx, taxonomy, w.path, name)
         except Exception as e:
             self.service.print_(0, e)
 
@@ -138,11 +139,11 @@ class AdriverSource(Source):
                             with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
                                 if file_response.status_code != 200:
                                     raise requests.exceptions.RequestException
-                                with DLWriter(ctx, name) as dl_writer:
+                                with AutoRemovePluginlessWriter(ctx, name) as w:
                                     self.service.print_(1, f"Downloading {name}")
-                                    dl_writer.write_parts(file_response.iter_content(chunk_size=65536))
-                                    dl_writer.close()
-                                    self.process_file(ctx, self.__taxonomy, dl_writer.path, name)
+                                    w.write_parts(file_response.iter_content(chunk_size=65536))
+                                    w.close()
+                                    self.process_file(ctx, self.__taxonomy, w.path, name)
         except Exception as e:
             self.service.print_(0, e)
 
