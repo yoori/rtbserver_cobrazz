@@ -117,6 +117,23 @@
           <xsd:documentation>Kafka Match space storage</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+
+      <xsd:element name="Coroutine" type="CoroutineType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configure coroutine
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="GrpcServer" type="GrpcServerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configure grpc server
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
     </xsd:sequence>
 
     <xsd:attribute name="host" type="xsd:string" use="required"/>

@@ -1,0 +1,1565 @@
+syntax = "proto3";
+
+package AdServer.CampaignSvcs.Proto;
+
+option optimize_for = SPEED;
+
+message Error
+{
+  enum Type
+  {
+    NotReady = 0;
+    IncorrectArgument = 1;
+    Implementation = 2;
+  }
+
+  Type type = 1;
+  string description = 2;
+}
+
+message GeoInfo
+{
+  string country = 1;
+  string region = 2;
+  string city = 3;
+}
+
+message GeoCoordInfo
+{
+  bytes longitude = 1;
+  bytes latitude = 2;
+  bytes accuracy = 3;
+}
+
+message TokenInfo
+{
+  string name = 1;
+  string value = 2;
+}
+
+message SeqOrderInfo
+{
+  uint32 ccg_id = 1;
+  uint32 set_id = 2;
+  uint32 imps = 3;
+}
+
+message CampaignFreq
+{
+  uint32 campaign_id = 1;
+  uint32 imps = 2;
+}
+
+message CCGKeyword
+{
+  uint32 ccg_keyword_id = 1;
+  uint32 ccg_id = 2;
+  uint32 channel_id = 3;
+  bytes max_cpc = 4;
+  bytes ctr = 5;
+  string click_url = 6;
+  string original_keyword = 7;
+}
+
+message NativeDataToken
+{
+  string name = 1;
+  bool required = 2;
+}
+
+message NativeImageToken
+{
+  string name = 1;
+  bool required = 2;
+  uint32 width = 3;
+  uint32 height = 4;
+}
+
+message ChannelTriggerMatchInfo
+{
+  uint32 channel_trigger_id = 1;
+  uint32 channel_id = 2;
+}
+
+message TriggerMatchResult
+{
+  repeated ChannelTriggerMatchInfo url_channels = 1;
+  repeated ChannelTriggerMatchInfo pkw_channels = 2;
+  repeated ChannelTriggerMatchInfo skw_channels = 3;
+  repeated ChannelTriggerMatchInfo ukw_channels = 4;
+  repeated uint32 uid_channels = 5;
+}
+
+message AdSlotInfo
+{
+  uint32 ad_slot_id = 1;
+  string format = 2;
+  uint32 tag_id = 3;
+  repeated string sizes = 4;
+  string ext_tag_id = 5;
+  bytes min_ecpm = 6;
+  string min_ecpm_currency_code = 7;
+  repeated string currency_codes = 8;
+  bool passback = 9;
+  int32 up_expand_space = 10;
+  int32 right_expand_space = 11;
+  int32 left_expand_space = 12;
+  int32 tag_visibility = 13;
+  int32 tag_predicted_viewability = 14;
+  int32 down_expand_space = 15;
+  uint32 video_min_duration = 16;
+  int32 video_max_duration = 17;
+  int32 video_skippable_max_duration = 18;
+  int32 video_allow_skippable = 19;
+  int32 video_allow_unskippable = 20;
+  uint32 video_width = 21;
+  uint32 video_height = 22;
+  repeated string exclude_categories = 23;
+  repeated string required_categories = 24;
+  uint32 debug_ccg = 25;
+  repeated uint32 allowed_durations = 26;
+  repeated NativeDataToken native_data_tokens = 27;
+  repeated NativeImageToken native_image_tokens = 28;
+  uint32 native_ads_impression_tracker_type = 29;
+  bool fill_track_html = 30;
+}
+
+message CommonAdRequestInfo
+{
+  bytes time = 1;
+  bytes request_id = 2;
+  string creative_instantiate_type = 3;
+  uint32 request_type = 4;
+  uint32 random = 5;
+  bool test_request = 6;
+  bool log_as_test = 7;
+  uint32 colo_id = 8;
+  string external_user_id = 9;
+  string source_id = 10;
+  repeated GeoInfo location = 11;
+  repeated GeoCoordInfo coord_location = 12;
+  string full_referer = 13;
+  string referer = 14;
+  repeated string urls = 15;
+  string security_token = 16;
+  string pub_impr_track_url = 17;
+  string pub_param = 18;
+  string preclick_url = 19;
+  string click_prefix_url = 20;
+  string original_url = 21;
+  bytes track_user_id = 22;
+  bytes user_id = 23;
+  uint32 user_status = 24;
+  string signed_user_id = 25;
+  string peer_ip = 26;
+  string user_agent = 27;
+  string cohort = 28;
+  uint32 hpos = 29;
+  string ext_track_params = 30;
+  repeated TokenInfo tokens = 31;
+  bool set_cookie = 32;
+  string passback_type = 33;
+  string passback_url = 34;
+}
+
+message ContextAdRequestInfo
+{
+  bool enabled_notice = 1;
+  string client = 2;
+  string client_version = 3;
+  repeated uint32 platform_ids = 4;
+  repeated uint32 geo_channels = 5;
+  string platform = 6;
+  string full_platform = 7;
+  string web_browser = 8;
+  string ip_hash = 9;
+  bool profile_referer = 10;
+  uint32 page_load_id = 11;
+  uint32 full_referer_hash = 12;
+  uint32 short_referer_hash = 13;
+}
+
+message RequestParams
+{
+  CommonAdRequestInfo common_info = 1;
+  ContextAdRequestInfo context_info = 2;
+  uint32 publisher_site_id = 3;
+  repeated uint32 publisher_account_ids = 4;
+  bool fill_track_pixel = 5;
+  bool fill_iurl = 6;
+  uint32 ad_instantiate_type = 7;
+  bool only_display_ad = 8;
+  repeated uint32 full_freq_caps = 9;
+  repeated SeqOrderInfo seq_orders = 10;
+  repeated CampaignFreq campaign_freqs = 11;
+  bytes household_id = 12;
+  bytes merged_user_id = 13;
+  uint32 search_engine_id = 14;
+  string search_words = 15;
+  bool page_keywords_present = 16;
+  bool profiling_available = 17;
+  bool fraud = 18;
+  repeated uint32 channels = 19;
+  repeated uint32 hid_channels = 20;
+  repeated CCGKeyword ccg_keywords = 21;
+  repeated CCGKeyword hid_ccg_keywords = 22;
+  TriggerMatchResult trigger_match_result = 23;
+  bytes client_create_time = 24;
+  bytes session_start = 25;
+  repeated uint32 exclude_pubpixel_accounts = 26;
+  uint32 tag_delivery_factor = 27;
+  uint32 ccg_delivery_factor = 28;
+  uint32 preview_ccid = 29;
+  repeated AdSlotInfo ad_slots = 30;
+  bool required_passback = 31;
+  uint32 profiling_type = 32;
+  bool disable_fraud_detection = 33;
+  bool need_debug_info = 34;
+  string page_keywords = 35;
+  string url_keywords = 36;
+  string ssp_location = 37;
+}
+
+message CreativeSelectResult
+{
+  bytes request_id = 1;
+  uint32 ccid = 2;
+  uint32 cmp_id = 3;
+  uint32 campaign_group_id = 4;
+  uint32 order_set_id = 5;
+  uint32 advertiser_id = 6;
+  string advertiser_name = 7;
+  string creative_size = 8;
+  bytes revenue = 9;
+  bytes ecpm = 10;
+  bytes pub_ecpm = 11;
+  string click_url = 12;
+  string destination_url = 13;
+  string creative_version_id = 14;
+  uint32 creative_id = 15;
+  bool https_safe_flag = 16;
+  uint32 expanding = 17;
+}
+
+message CreativeSelectDebugInfo
+{
+  bytes imp_revenue = 1;
+  bytes click_revenue = 2;
+  bytes action_revenue = 3;
+  bytes ecpm_bid = 4;
+  string action_adv_url = 5;
+  string html_url = 6;
+  string triggered_expression = 7;
+  string full_expression = 8;
+}
+
+message AdSlotDebugInfo
+{
+  uint32 tag_id = 1;
+  uint32 tag_size_id = 2;
+  uint32 site_id = 3;
+  uint32 site_rate_id = 4;
+  uint32 min_no_adv_ecpm = 5;
+  uint32 min_text_ecpm = 6;
+  uint32 auction_type = 7;
+  string track_pixel_url = 8;
+  bytes cpm_threshold = 9;
+  bool walled_garden = 10;
+  repeated CreativeSelectDebugInfo selected_creatives = 11;
+  string trace_ccg = 12;
+}
+
+message TokenImageInfo
+{
+  string name = 1;
+  string value = 2;
+  uint32 width = 3;
+  uint32 height = 4;
+}
+
+message CampaignContractInfo
+{
+  string ord_contract_id = 1;
+  string ord_ado_id = 2;
+  string id = 3;
+  string date = 4;
+  string type = 5;
+  string client_id = 6;
+  string client_name = 7;
+  string contractor_id = 8;
+  string contractor_name = 9;
+}
+
+message AdSlotResult
+{
+  uint32 ad_slot_id = 1;
+  bytes request_id = 2;
+  bool passback = 3;
+  string passback_url = 4;
+  string creative_body = 5;
+  string notice_url = 6;
+  repeated string track_pixel_urls = 7;
+  string yandex_track_params = 8;
+  string creative_url = 9;
+  string track_pixel_params = 10;
+  string click_params = 11;
+  string mime_format = 12;
+  string iurl = 13;
+  bool test_request = 14;
+  repeated CreativeSelectResult selected_creatives = 15;
+  repeated string external_visual_categories = 16;
+  repeated string external_content_categories = 17;
+  string pub_currency_code = 18;
+  uint32 overlay_width = 19;
+  uint32 overlay_height = 20;
+  repeated TokenInfo tokens = 21;
+  repeated TokenInfo ext_tokens = 22;
+  bool track_impr = 23;
+  string tag_size = 24;
+  repeated uint32 freq_caps = 25;
+  repeated uint32 uc_freq_caps = 26;
+  AdSlotDebugInfo debug_info = 27;
+  repeated TokenInfo native_data_tokens = 28;
+  repeated TokenImageInfo native_image_tokens = 29;
+  string track_html_body = 30;
+  string erid = 31;
+  repeated CampaignContractInfo contracts = 32;
+}
+
+message AdRequestDebugInfo
+{
+  uint32 colo_id = 1;
+  repeated uint32 geo_channels = 2;
+  repeated uint32 platform_channels = 3;
+  uint32 last_platform_channel_id = 4;
+  uint32 user_group_id = 5;
+}
+
+message RequestCreativeResult
+{
+  repeated AdSlotResult ad_slots = 1;
+  bytes process_time = 2;
+  AdRequestDebugInfo debug_info = 3;
+}
+
+message CommonMatchRequestInfo
+{
+  repeated uint32 channels = 1;
+  repeated ChannelTriggerMatchInfo pkw_channels = 2;
+  repeated uint32 hid_channels = 3;
+  uint32 colo_id = 4;
+  repeated GeoInfo location = 5;
+  repeated GeoCoordInfo coord_location = 6;
+  string full_referer = 7;
+}
+
+message MatchRequestInfo
+{
+  bytes user_id = 1;
+  bytes household_id = 2;
+  bytes request_time = 3;
+  CommonMatchRequestInfo match_info = 4;
+  string source = 5;
+}
+
+message TrackCreativeInfo
+{
+  uint32 ccid = 1;
+  uint32 ccg_keyword_id = 2;
+  bytes request_id = 3;
+  bytes ctr = 4;
+}
+
+message UserIdHashModInfo
+{
+  bool defined = 1;
+  uint32 value = 2;
+}
+
+message InstantiateAdInfo
+{
+  CommonAdRequestInfo common_info = 1;
+  repeated ContextAdRequestInfo context_info = 2;
+  string format = 3;
+  uint32 publisher_site_id = 4;
+  uint32 publisher_account_id = 5;
+  uint32 tag_id = 6;
+  uint32 tag_size_id = 7;
+  repeated TrackCreativeInfo creatives = 8;
+  uint32 creative_id = 9;
+  UserIdHashModInfo user_id_hash_mod = 10;
+  bytes merged_user_id = 11;
+  repeated uint32 pubpixel_accounts = 12;
+  string open_price = 13;
+  string openx_price = 14;
+  string liverail_price = 15;
+  string google_price = 16;
+  string ext_tag_id = 17;
+  uint32 video_width = 18;
+  uint32 video_height = 19;
+  bool consider_request = 20;
+  bool enabled_notice = 21;
+  bool emulate_click = 22;
+  bytes pub_imp_revenue = 23;
+  bool pub_imp_revenue_defined = 24;
+}
+
+message ChannelSearchResult
+{
+  uint32 channel_id = 1;
+  uint32 use_count = 2;
+  repeated uint32 matched_simple_channels = 3;
+  repeated uint32 ccg_ids = 4;
+  string discover_query = 5;
+  string language = 6;
+}
+
+message ChannelWeight
+{
+  uint32 channel_id = 1;
+  uint32 weight = 2;
+}
+
+message DiscoverChannelResult
+{
+  uint32 channel_id = 1;
+  string name = 2;
+  string query = 3;
+  string annotation = 4;
+  uint32 weight = 5;
+  repeated uint32 categories = 6;
+  string country_code = 7;
+  string language = 8;
+}
+
+message CategoryChannelNodeInfo
+{
+  uint32 channel_id = 1;
+  string name = 2;
+  uint32 flags = 3;
+  repeated CategoryChannelNodeInfo child_category_channels = 4;
+}
+
+message PassbackInfo
+{
+  bytes request_id = 1;
+  UserIdHashModInfo user_id_hash_mod = 2;
+  string passback = 3;
+  bytes time = 4;
+}
+
+message PassbackTrackInfo
+{
+  bytes time = 1;
+  string country = 2;
+  uint32 colo_id = 3;
+  uint32 tag_id = 4;
+  uint32 user_status = 5;
+}
+
+message ClickInfo
+{
+  bytes time = 1;
+  bytes bid_time = 2;
+  uint32 colo_id = 3;
+  uint32 tag_id = 4;
+  uint32 tag_size_id = 5;
+  uint32 ccid = 6;
+  uint32 ccg_keyword_id = 7;
+  uint32 creative_id = 8;
+  bytes match_user_id = 9;
+  bytes cookie_user_id = 10;
+  bytes request_id = 11;
+  UserIdHashModInfo user_id_hash_mod = 12;
+  string relocate = 13;
+  string referer = 14;
+  bool log_click = 15;
+  bytes ctr = 16;
+  repeated TokenInfo tokens = 17;
+}
+
+message ClickResultInfo
+{
+  string url = 1;
+  uint32 campaign_id = 2;
+  uint32 advertiser_id = 3;
+}
+
+message ImpressionInfo
+{
+  bytes time = 1;
+  bytes bid_time = 2;
+  UserIdHashModInfo user_id_hash_mod = 3;
+  repeated TrackCreativeInfo creatives = 4;
+  uint32 pub_imp_revenue_type = 5;
+  bytes pub_imp_revenue = 6;
+  uint32 request_type = 7;
+  uint32 verify_type = 8;
+  bytes user_id = 9;
+  string referer = 10;
+  int32 viewability = 11;
+  string action_name = 12;
+}
+
+message TrackCreativeResultInfo
+{
+  uint32 campaign_id = 1;
+  uint32 advertiser_id = 2;
+}
+
+message ActionInfo
+{
+  bytes time = 1;
+  bool test_request = 2;
+  bool log_as_test = 3;
+  bool campaign_id_defined = 4;
+  uint32 campaign_id = 5;
+  bool action_id_defined = 6;
+  uint32 action_id = 7;
+  string order_id = 8;
+  bool action_value_defined = 9;
+  bytes action_value = 10;
+  string referer = 11;
+  uint32 user_status = 12;
+  bytes user_id = 13;
+  string ip_hash = 14;
+  repeated uint32 platform_ids = 15;
+  string peer_ip = 16;
+  repeated GeoInfo location = 17;
+}
+
+enum OptOperation
+{
+  OO_IN = 0;
+  OO_OUT = 1;
+  OO_STATUS = 2;
+  OO_FORCED_IN = 3;
+}
+
+message WebOperationInfo
+{
+  bytes time = 1;
+  uint32 colo_id = 2;
+  uint32 tag_id = 3;
+  uint32 cc_id = 4;
+  string ct = 5;
+  string curct = 6;
+  string browser = 7;
+  string os = 8;
+  string app = 9;
+  string source = 10;
+  string operation = 11;
+  string user_bind_src = 12;
+  uint32 result = 13;
+  uint32 user_status = 14;
+  bool test_request = 15;
+  repeated bytes request_ids = 16;
+  bytes global_request_id = 17;
+  string referer = 18;
+  string ip_address = 19;
+  string external_user_id = 20;
+  string user_agent = 21;
+}
+
+message WebOperationConfigInfo
+{
+  uint32 id = 1;
+  string app = 2;
+  string source = 3;
+  string operation = 4;
+  uint32 flags = 5;
+  bytes timestamp = 6;
+}
+
+message GetConfigInfo
+{
+  bool geo_channels = 1;
+}
+
+message AppFormatInfo
+{
+  string app_format = 1;
+  string mime_format = 2;
+  bytes timestamp = 3;
+}
+
+message SizeInfo
+{
+  uint32 size_id = 1;
+  string protocol_name = 2;
+  uint32 size_type_id = 3;
+  uint32 width = 4;
+  uint32 height = 5;
+  bytes timestamp = 6;
+}
+
+message AccountInfo
+{
+  uint32 account_id = 1;
+  uint32 agency_account_id = 2;
+  uint32 internal_account_id = 3;
+  uint32 role_id = 4;
+  string legal_name = 5;
+  uint32 flags = 6;
+  uint32 at_flags = 7;
+  uint32 text_adserving = 8;
+  uint32 currency_id = 9;
+  string country = 10;
+  bytes time_offset = 11;
+  bytes commision = 12;
+  bytes budget = 13;
+  bytes paid_amount = 14;
+  repeated uint32 walled_garden_accounts = 15;
+  uint32 auction_rate = 16;
+  bool use_pub_pixels = 17;
+  string pub_pixel_optin = 18;
+  string pub_pixel_optout = 19;
+  bytes self_service_commission = 20;
+  uint32 status = 21;
+  uint32 eval_status = 22;
+  bytes timestamp = 23;
+}
+
+message CreativeOptionInfo
+{
+  int32 option_id = 1;
+  string token = 2;
+  uint32 type = 3;
+  repeated string token_relations = 4;
+  bytes timestamp = 5;
+}
+
+message ExpressionInfo
+{
+  uint32 operation = 1;
+  uint32 channel_id = 2;
+  repeated ExpressionInfo sub_channels = 3;
+}
+
+message WeeklyRunInterval
+{
+  uint32 min = 1;
+  uint32 max = 2;
+}
+
+message OptionValueInfo
+{
+  int32 option_id = 1;
+  string value = 2;
+}
+
+message CreativeSizeInfo
+{
+  uint32 size_id = 1;
+  uint32 up_expand_space = 2;
+  uint32 right_expand_space = 3;
+  uint32 down_expand_space = 4;
+  uint32 left_expand_space = 5;
+  repeated OptionValueInfo tokens = 6;
+}
+
+message CreativeInfo
+{
+  uint32 ccid = 1;
+  uint32 creative_id = 2;
+  uint32 fc_id = 3;
+  uint32 weight = 4;
+  repeated CreativeSizeInfo sizes = 5;
+  string creative_format = 6;
+  OptionValueInfo click_url = 7;
+  OptionValueInfo html_url = 8;
+  uint32 order_set_id = 9;
+  repeated uint32 categories = 10;
+  repeated OptionValueInfo tokens = 11;
+  uint32 status = 12;
+  string version_id = 13;
+}
+
+message TagDeliveryInfo
+{
+  uint32 tag_id = 1;
+  uint32 delivery_value = 2;
+}
+
+message CampaignDeliveryLimitsInfo
+{
+  bytes date_start = 1;
+  bytes date_end = 2;
+  bytes budget = 3;
+  bytes daily_budget = 4;
+  bool imps_defined = 5;
+  uint32 imps = 6;
+  bool clicks_defined = 7;
+  uint32 clicks = 8;
+  uint32 delivery_pacing = 9;
+}
+
+message CampaignInfo
+{
+  uint32 campaign_id = 1;
+  uint32 campaign_group_id = 2;
+  uint32 ccg_rate_id = 3;
+  uint32 ccg_rate_type = 4;
+  uint32 fc_id = 5;
+  uint32 group_fc_id = 6;
+  uint32 priority = 7;
+  uint32 flags = 8;
+  uint32 marketplace = 9;
+  ExpressionInfo expression = 10;
+  ExpressionInfo stat_expression = 11;
+  string country = 12;
+  repeated uint32 sites = 13;
+  uint32 status = 14;
+  uint32 eval_status = 15;
+  repeated WeeklyRunInterval weekly_run_intervals = 16;
+  repeated CreativeInfo creatives = 17;
+  uint32 account_id = 18;
+  uint32 advertiser_id = 19;
+  repeated uint32 exclude_pub_accounts = 20;
+  repeated TagDeliveryInfo exclude_tags = 21;
+  uint32 delivery_coef = 22;
+  bytes imp_revenue = 23;
+  bytes click_revenue = 24;
+  bytes action_revenue = 25;
+  bytes commision = 26;
+  uint32 ccg_type = 27;
+  uint32 target_type = 28;
+  CampaignDeliveryLimitsInfo campaign_delivery_limits = 29;
+  CampaignDeliveryLimitsInfo ccg_delivery_limits = 30;
+  uint32 start_user_group_id = 31;
+  uint32 end_user_group_id = 32;
+  bytes max_pub_share = 33;
+  uint32 ctr_reset_id = 34;
+  uint32 random_imps = 35;
+  uint32 mode = 36;
+  uint32 seq_set_rotate_imps = 37;
+  bytes min_uid_age = 38;
+  repeated uint32 colocations = 39;
+  uint32 bid_strategy = 40;
+  bytes min_ctr_goal = 41;
+  repeated CampaignContractInfo contracts = 42;
+  bytes timestamp = 43;
+}
+
+message AdaptedCampaignInfo
+{
+  CampaignInfo info = 1;
+  ExpressionInfo expression = 2;
+  bytes ecpm = 3;
+  bytes ctr = 4;
+}
+
+message CampaignEcpmInfo
+{
+  uint32 ccg_id = 1;
+  bytes ecpm = 2;
+  bytes ctr = 3;
+  bytes timestamp = 4;
+}
+
+message SiteInfo
+{
+  uint32 site_id = 1;
+  uint32 status = 2;
+  uint32 freq_cap_id = 3;
+  uint32 noads_timeout = 4;
+  repeated uint32 approved_creative_categories = 5;
+  repeated uint32 rejected_creative_categories = 6;
+  repeated uint32 approved_creatives = 7;
+  repeated uint32 rejected_creatives = 8;
+  uint32 flags = 9;
+  uint32 account_id = 10;
+  bytes timestamp = 11;
+}
+
+message TagSizeInfo
+{
+  uint32 size_id = 1;
+  uint32 max_text_creatives = 2;
+  repeated OptionValueInfo tokens = 3;
+  repeated OptionValueInfo hidden_tokens = 4;
+}
+
+message TagPricingInfo
+{
+  string country_code = 1;
+  uint32 ccg_type = 2;
+  uint32 ccg_rate_type = 3;
+  uint32 site_rate_id = 4;
+  bytes imp_revenue = 5;
+  bytes revenue_share = 6;
+}
+
+message TemplateOptionsInfo
+{
+  string template_name = 1;
+  repeated OptionValueInfo tokens = 2;
+}
+
+message TagInfo
+{
+  uint32 tag_id = 1;
+  uint32 site_id = 2;
+  uint32 status = 3;
+  repeated TagSizeInfo sizes = 4;
+  string imp_track_pixel = 5;
+  string passback = 6;
+  string passback_type = 7;
+  uint32 flags = 8;
+  uint32 marketplace = 9;
+  bytes adjustment = 10;
+  repeated TagPricingInfo tag_pricings = 11;
+  repeated uint32 accepted_categories = 12;
+  repeated uint32 rejected_categories = 13;
+  bool allow_expandable = 14;
+  repeated OptionValueInfo tokens = 15;
+  repeated OptionValueInfo hidden_tokens = 16;
+  repeated OptionValueInfo passback_tokens = 17;
+  repeated TemplateOptionsInfo template_tokens = 18;
+  bytes auction_max_ecpm_share = 19;
+  bytes auction_prop_probability_share = 20;
+  bytes auction_random_share = 21;
+  bytes cost_coef = 22;
+  bytes tag_pricings_timestamp = 23;
+  bytes timestamp = 24;
+}
+
+message AdaptedTagInfo
+{
+  TagInfo info = 1;
+  repeated bytes cpms = 2;
+}
+
+message CurrencyInfo
+{
+  bytes rate = 1;
+  uint32 currency_id = 2;
+  uint32 currency_exchange_id = 3;
+  uint32 effective_date = 4;
+  uint32 fraction_digits = 5;
+  string currency_code = 6;
+  bytes timestamp = 7;
+}
+
+message ColocationInfo
+{
+  uint32 colo_id = 1;
+  string colo_name = 2;
+  uint32 colo_rate_id = 3;
+  uint32 at_flags = 4;
+  uint32 ad_serving = 5;
+  bool hid_profile = 6;
+  uint32 account_id = 7;
+  bytes revenue_share = 8;
+  repeated OptionValueInfo tokens = 9;
+  bytes timestamp = 10;
+}
+
+message CountryInfo
+{
+  string country_code = 1;
+  repeated OptionValueInfo tokens = 2;
+  bytes timestamp = 3;
+}
+
+message FreqCapInfo
+{
+  uint32 fc_id = 1;
+  uint32 lifelimit = 2;
+  uint32 period = 3;
+  uint32 window_limit = 4;
+  uint32 window_time = 5;
+  bytes timestamp = 6;
+}
+
+enum CreativeTemplateType
+{
+  CTT_NONE = 0;
+  CTT_TEXT = 1;
+  CTT_XSLT = 2;
+}
+
+message CreativeTemplateFileInfo
+{
+  string creative_format = 1;
+  string creative_size = 2;
+  string app_format = 3;
+  string mime_format = 4;
+  bool track_impr = 5;
+  CreativeTemplateType type = 6;
+  string template_file = 7;
+  string timestamp = 8;
+  repeated OptionValueInfo tokens = 9;
+  repeated OptionValueInfo hidden_tokens = 10;
+  uint32 status = 11;
+}
+
+message CampaignKeywordInfo
+{
+  uint32 ccg_keyword_id = 1;
+  string original_keyword = 2;
+  string click_url = 4;
+  bytes timestamp = 5;
+}
+
+message ExpressionChannelInfo
+{
+  uint32 channel_id = 1;
+  string name = 2;
+  uint32 account_id = 3;
+  string country_code = 4;
+  uint32 flags = 5;
+  uint32 status = 6;
+  uint32 type = 7;
+  bool is_public = 8;
+  string language = 9;
+  uint32 freq_cap_id = 10;
+  uint32 parent_channel_id = 11;
+  uint32 action_id = 12;
+  bytes timestamp = 13;
+  string discover_query = 14;
+  string discover_annotation = 15;
+  uint32 channel_rate_id = 16;
+  bytes imp_revenue = 17;
+  bytes click_revenue = 18;
+  ExpressionInfo expression = 19;
+  uint32 threshold = 20;
+}
+
+message ExternalCategoryInfo
+{
+  uint32 ad_request_type = 1;
+  repeated string names = 2;
+}
+
+message CreativeCategoryInfo
+{
+  uint32 creative_category_id = 1;
+  uint32 cct_id = 2;
+  string name = 3;
+  repeated ExternalCategoryInfo external_categories = 4;
+  bytes timestamp = 5;
+}
+
+message AdvActionInfo
+{
+  uint32 action_id = 1;
+  bytes timestamp = 2;
+  repeated uint32 ccg_ids = 3;
+}
+
+message CategoryChannelLocalizationInfo
+{
+  string language = 1;
+  string name = 2;
+}
+
+message CategoryChannelInfo
+{
+  uint32 channel_id = 1;
+  string name = 2;
+  string newsgate_name = 3;
+  repeated CategoryChannelLocalizationInfo localizations = 4;
+  uint32 parent_channel_id = 5;
+  uint32 flags = 6;
+  bytes timestamp = 7;
+}
+
+message GeoIPRegionCityInfo
+{
+  string region = 1;
+  string city = 2;
+}
+
+message GeoChannelInfo
+{
+  uint32 channel_id = 1;
+  string country = 2;
+  repeated GeoIPRegionCityInfo geoip_targets = 3;
+  bytes timestamp = 4;
+}
+
+message GeoCoordChannelInfo
+{
+  uint32 channel_id = 1;
+  bytes longitude = 2;
+  bytes latitude = 3;
+  bytes radius = 4;
+  bytes timestamp = 5;
+}
+
+message CampaignConfig
+{
+  repeated AppFormatInfo app_formats = 1;
+  repeated SizeInfo sizes = 2;
+  repeated AccountInfo accounts = 3;
+  repeated CreativeOptionInfo creative_options = 4;
+  repeated AdaptedCampaignInfo campaigns = 5;
+  repeated CampaignEcpmInfo campaign_ecpms = 6;
+  repeated SiteInfo sites = 7;
+  repeated AdaptedTagInfo tags = 8;
+  repeated CurrencyInfo currencies = 9;
+  repeated ColocationInfo colocations = 10;
+  repeated CountryInfo countries = 11;
+  repeated FreqCapInfo frequency_caps = 12;
+  repeated CreativeTemplateFileInfo creative_template_files = 13;
+  repeated CampaignKeywordInfo campaign_keywords = 14;
+  repeated ExpressionChannelInfo expression_channels = 15;
+  repeated CreativeCategoryInfo creative_categories = 16;
+  repeated AdvActionInfo adv_actions = 17;
+  repeated CategoryChannelInfo category_channels = 18;
+  repeated GeoChannelInfo geo_channels = 19;
+  repeated GeoCoordChannelInfo geo_coord_channels = 20;
+  repeated WebOperationConfigInfo web_operations = 21;
+  uint32 currency_exchange_id = 22;
+  bytes fraud_user_deactivate_period = 23;
+  bytes cost_limit = 24;
+  uint32 google_publisher_account_id = 25;
+  bytes master_stamp = 26;
+  bytes first_load_stamp = 27;
+  bytes finish_load_stamp = 28;
+  bytes global_params_timestamp = 29;
+  bytes creative_categories_timestamp = 30;
+}
+
+message VerifyOptOperationRequest
+{
+  uint32 id_request_grpc = 1;
+  uint32 time = 2;
+  int32 colo_id = 3;
+  string referer = 4;
+  OptOperation operation = 5;
+  uint32 status = 6;
+  uint32 user_status = 7;
+  bool log_as_test = 8;
+  string browser = 9;
+  string os = 10;
+  string ct = 11;
+  string curct = 12;
+  bytes user_id = 13;
+}
+
+message CreativeParams
+{
+  uint32 ccid = 1;
+  uint32 tag_id = 2;
+  string format = 3;
+  string original_url = 4;
+  string peer_ip = 5;
+}
+
+message ColocationFlags
+{
+  uint32 colo_id = 1;
+  uint32 flags = 2;
+  bool hid_profile = 3;
+}
+
+message AnonymousRequestInfo
+{
+  bytes time = 1;
+  uint32 colo_id = 2;
+  uint32 user_status = 3;
+  bool test_request = 4;
+  uint32 search_engine_id = 5;
+  string search_words = 6;
+  string client = 7;
+  string client_version = 8;
+  repeated uint32 platform_ids = 9;
+  string full_platform = 10;
+  string web_browser = 11;
+  string user_agent = 12;
+  string search_engine_host = 13;
+  string country_code = 14;
+  bool page_keywords_present = 15;
+}
+
+message GetCampaignCreativeRequest
+{
+  uint32 id_request_grpc = 1;
+  RequestParams request_params = 2;
+}
+
+message GetCampaignCreativeResponseInfo
+{
+  string hostname = 1;
+  RequestCreativeResult request_result = 2;
+}
+
+message GetCampaignCreativeResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetCampaignCreativeResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ProcessMatchRequestRequest
+{
+  uint32 id_request_grpc = 1;
+  MatchRequestInfo match_request_info = 2;
+}
+
+message ProcessMatchRequestResponseInfo
+{
+}
+
+message ProcessMatchRequestResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ProcessMatchRequestResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message MatchGeoChannelsRequest
+{
+  uint32 id_request_grpc = 1;
+  repeated GeoInfo location = 2;
+  repeated GeoCoordInfo coord_location = 3;
+}
+
+message MatchGeoChannelsResponseInfo
+{
+  repeated uint32 geo_channels = 1;
+  repeated uint32 coord_channels = 2;
+}
+
+message MatchGeoChannelsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    MatchGeoChannelsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message InstantiateAdRequest
+{
+  uint32 id_request_grpc = 1;
+  InstantiateAdInfo instantiate_ad_info = 2;
+}
+
+message InstantiateAdResponseInfo
+{
+  string creative_body = 1;
+  string mime_format = 2;
+  repeated bytes request_ids = 3;
+}
+
+message InstantiateAdResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    InstantiateAdResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetChannelLinksRequest
+{
+  uint32 id_request_grpc = 1;
+  repeated uint32 channels = 2;
+  bool match = 3;
+}
+
+message GetChannelLinksResponseInfo
+{
+  repeated ChannelSearchResult channel_search_results = 1;
+}
+
+message GetChannelLinksResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetChannelLinksResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetDiscoverChannelsRequest
+{
+  uint32 id_request_grpc = 1;
+  repeated ChannelWeight channels = 2;
+  string country = 3;
+  string language = 4;
+  bool all = 5;
+}
+
+message GetDiscoverChannelsResponseInfo
+{
+  repeated DiscoverChannelResult discover_channel_results = 1;
+}
+
+message GetDiscoverChannelsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetDiscoverChannelsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetCategoryChannelsRequest
+{
+  uint32 id_request_grpc = 1;
+  string language = 2;
+}
+
+message GetCategoryChannelsResponseInfo
+{
+  repeated CategoryChannelNodeInfo category_channel_node_info_seq = 1;
+}
+
+message GetCategoryChannelsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetCategoryChannelsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ConsiderPassbackRequest
+{
+  uint32 id_request_grpc = 1;
+  PassbackInfo pass_info = 2;
+}
+
+message ConsiderPassbackResponseInfo
+{
+}
+
+message ConsiderPassbackResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ConsiderPassbackResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ConsiderPassbackTrackRequest
+{
+  uint32 id_request_grpc = 1;
+  PassbackTrackInfo pass_info = 2;
+}
+
+message ConsiderPassbackTrackResponseInfo
+{
+}
+
+message ConsiderPassbackTrackResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ConsiderPassbackTrackResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetClickUrlRequest
+{
+  uint32 id_request_grpc = 1;
+  ClickInfo click_info = 2;
+}
+
+message GetClickUrlResponseInfo
+{
+  bool return_value = 1;
+  ClickResultInfo click_result_info = 2;
+}
+
+message GetClickUrlResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetClickUrlResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message VerifyImpressionRequest
+{
+  uint32 id_request_grpc = 1;
+  ImpressionInfo impression_info = 2;
+}
+
+message VerifyImpressionResponseInfo
+{
+  repeated TrackCreativeResultInfo creatives = 1;
+}
+
+message VerifyImpressionResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    VerifyImpressionResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ActionTakenRequest
+{
+  uint32 id_request_grpc = 1;
+  ActionInfo action_info = 2;
+}
+
+message ActionTakenResponseInfo
+{
+}
+
+message ActionTakenResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ActionTakenResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message VerifyOptOperationResponseInfo
+{
+}
+
+message VerifyOptOperationResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    VerifyOptOperationResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ConsiderWebOperationRequest
+{
+  uint32 id_request_grpc = 1;
+  WebOperationInfo web_op_info = 2;
+}
+
+message ConsiderWebOperationResponseInfo
+{
+}
+
+message ConsiderWebOperationResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ConsiderWebOperationResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetConfigRequest
+{
+  uint32 id_request_grpc = 1;
+  GetConfigInfo get_config_props = 2;
+}
+
+message GetConfigResponseInfo
+{
+  CampaignConfig campaign_config = 1;
+}
+
+message GetConfigResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetConfigResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message TraceCampaignSelectionIndexRequest
+{
+  uint32 id_request_grpc = 1;
+}
+
+message TraceCampaignSelectionIndexResponseInfo
+{
+  string trace_xml = 1;
+}
+
+message TraceCampaignSelectionIndexResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    TraceCampaignSelectionIndexResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message TraceCampaignSelectionRequest
+{
+  uint32 id_request_grpc = 1;
+  uint32 campaign_id = 2;
+  RequestParams request_params = 3;
+  AdSlotInfo ad_slot = 4;
+  uint32 auction_type = 5;
+  bool test_request = 6;
+}
+
+message TraceCampaignSelectionResponseInfo
+{
+  string trace_xml = 1;
+}
+
+message TraceCampaignSelectionResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    TraceCampaignSelectionResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetCampaignCreativeByCcidRequest
+{
+  uint32 id_request_grpc = 1;
+  CreativeParams params = 2;
+}
+
+message GetCampaignCreativeByCcidResponseInfo
+{
+  bool return_value = 1;
+  string creative_body = 2;
+}
+
+message GetCampaignCreativeByCcidResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetCampaignCreativeByCcidResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetColocationFlagsRequest
+{
+  uint32 id_request_grpc = 1;
+}
+
+message GetColocationFlagsResponseInfo
+{
+  repeated ColocationFlags colocation_flags = 1;
+}
+
+message GetColocationFlagsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetColocationFlagsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetPubPixelsRequest
+{
+  uint32 id_request_grpc = 1;
+  string country = 2;
+  uint32 user_status = 3;
+  repeated uint32 publisher_account_ids = 4;
+}
+
+message GetPubPixelsResponseInfo
+{
+  repeated string pub_pixels = 1;
+}
+
+message GetPubPixelsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetPubPixelsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ProcessAnonymousRequestRequest
+{
+  uint32 id_request_grpc = 1;
+  AnonymousRequestInfo anon_request_info = 2;
+}
+
+message ProcessAnonymousRequestResponseInfo
+{
+}
+
+message ProcessAnonymousRequestResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ProcessAnonymousRequestResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetFileRequest
+{
+  uint32 id_request_grpc = 1;
+  string file_name = 2;
+}
+
+message GetFileResponseInfo
+{
+  bytes file = 1;
+}
+
+message GetFileResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetFileResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+service CampaignManager
+{
+  rpc get_campaign_creative(stream GetCampaignCreativeRequest) returns (stream GetCampaignCreativeResponse) {}
+  rpc process_match_request(stream ProcessMatchRequestRequest) returns (stream ProcessMatchRequestResponse) {}
+  rpc match_geo_channels(stream MatchGeoChannelsRequest) returns (stream MatchGeoChannelsResponse) {}
+  rpc instantiate_ad(stream InstantiateAdRequest) returns (stream InstantiateAdResponse) {}
+  rpc get_channel_links(stream GetChannelLinksRequest) returns (stream GetChannelLinksResponse) {}
+  rpc get_discover_channels(stream GetDiscoverChannelsRequest) returns (stream GetDiscoverChannelsResponse) {}
+  rpc get_category_channels(stream GetCategoryChannelsRequest) returns (stream GetCategoryChannelsResponse) {}
+  rpc consider_passback(stream ConsiderPassbackRequest) returns (stream ConsiderPassbackResponse) {}
+  rpc consider_passback_track(stream ConsiderPassbackTrackRequest) returns (stream ConsiderPassbackTrackResponse) {}
+  rpc get_click_url(stream GetClickUrlRequest) returns (stream GetClickUrlResponse) {}
+  rpc verify_impression(stream VerifyImpressionRequest) returns (stream VerifyImpressionResponse) {}
+  rpc action_taken(stream ActionTakenRequest) returns (stream ActionTakenResponse) {}
+  rpc verify_opt_operation(stream VerifyOptOperationRequest) returns (stream VerifyOptOperationResponse) {}
+  rpc consider_web_operation(stream ConsiderWebOperationRequest) returns (stream ConsiderWebOperationResponse) {}
+  rpc get_config(stream GetConfigRequest) returns (stream GetConfigResponse) {}
+  rpc trace_campaign_selection_index(stream TraceCampaignSelectionIndexRequest) returns (stream TraceCampaignSelectionIndexResponse) {}
+  rpc trace_campaign_selection(stream TraceCampaignSelectionRequest) returns (stream TraceCampaignSelectionResponse) {}
+  rpc get_campaign_creative_by_ccid(stream GetCampaignCreativeByCcidRequest) returns (stream GetCampaignCreativeByCcidResponse) {}
+  rpc get_colocation_flags(stream GetColocationFlagsRequest) returns (stream GetColocationFlagsResponse) {}
+  rpc get_pub_pixels(stream GetPubPixelsRequest) returns (stream GetPubPixelsResponse) {}
+  rpc process_anonymous_request(stream ProcessAnonymousRequestRequest) returns (stream ProcessAnonymousRequestResponse) {}
+  rpc get_file(stream GetFileRequest) returns (stream GetFileResponse) {}
+}

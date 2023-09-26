@@ -826,8 +826,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't match. "
-                "Caught UserOperationProcessor::NotReady: "
+             << "Caught UserOperationProcessor::NotReady: "
              << exc.what();
       auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
         Proto::Error_Type::Error_Type_NotReady,
@@ -839,8 +838,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't match. "
-                "Caught UserInfoContainer::ChunkNotFound: "
+             << "Caught UserInfoContainer::ChunkNotFound: "
              << exc.what();
       auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
         Proto::Error_Type::Error_Type_ChunkNotFound,
@@ -852,7 +850,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't match. Caught eh::Exception: "
+             << ": Caught eh::Exception: "
              << exc.what();
       auto response = create_grpc_error_response<Proto::UpdateUserFreqCapsResponse>(
         Proto::Error_Type::Error_Type_Implementation,
@@ -2115,8 +2113,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't update user. "
-                "Caught UserInfoContainer::NotReady: "
+             << "Caught UserInfoContainer::NotReady: "
              << exc.what();
       auto response = create_grpc_error_response<Proto::FraudUserResponse>(
         Proto::Error_Type::Error_Type_NotReady,
@@ -2128,8 +2125,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't update user. "
-                "Caught UserInfoContainer::ChunkNotFound: "
+             << "Caught UserInfoContainer::ChunkNotFound: "
              << exc.what();
       auto response = create_grpc_error_response<Proto::FraudUserResponse>(
         Proto::Error_Type::Error_Type_ChunkNotFound,
@@ -2141,7 +2137,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't update user. Caught eh::Exception: "
+             << ": Caught eh::Exception: "
              << exc.what();
       auto response = create_grpc_error_response<Proto::FraudUserResponse>(
         Proto::Error_Type::Error_Type_Implementation,
@@ -2153,7 +2149,7 @@ namespace UserInfoSvcs
     {
       Stream::Error stream;
       stream << FUN
-             << ": Can't update user. Unknown error";
+             << ": Unknown error";
       auto response = create_grpc_error_response<Proto::FraudUserResponse>(
         Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
@@ -3202,7 +3198,7 @@ namespace UserInfoSvcs
       {
         Stream::Error stream;
         stream << FUN
-               << ": Can't delete old user profiles. Caught eh::Exception: "
+               << ": Caught eh::Exception: "
                << exc.what();
         auto response = create_grpc_error_response<Proto::ClearExpiredResponse>(
           Proto::Error_Type::Error_Type_Implementation,
@@ -3214,7 +3210,7 @@ namespace UserInfoSvcs
       {
         Stream::Error stream;
         stream << FUN
-               << ": Can't delete old user profiles. Unknown error";
+               << ": Unknown error";
         auto response = create_grpc_error_response<Proto::ClearExpiredResponse>(
           Proto::Error_Type::Error_Type_Implementation,
           stream.str(),

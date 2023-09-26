@@ -1,4 +1,3 @@
-
 #ifndef _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_IMPL_HPP_
 #define _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_IMPL_HPP_
 
@@ -20,6 +19,7 @@
 #include <CORBACommons/ServantImpl.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/IPCrypter.hpp>
 #include <Commons/SecToken.hpp>
 #include <Commons/TextTemplateCache.hpp>
@@ -41,6 +41,8 @@
 
 #include "CTRProvider.hpp"
 #include "BidCostProvider.hpp"
+
+#include "CampaignManager.pb.h"
 
 namespace AdServer
 {
@@ -64,6 +66,9 @@ namespace AdServer
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(InvalidArgument, Exception);
+      DECLARE_EXCEPTION(ImplementationException, Exception);
+      DECLARE_EXCEPTION(IncorrectArgument, Exception);
+      DECLARE_EXCEPTION(NotReady, Exception);
       DECLARE_EXCEPTION(CreativeInstantiateProblem, Exception);
       DECLARE_EXCEPTION(CreativeTemplateProblem, CreativeInstantiateProblem);
       DECLARE_EXCEPTION(CreativeOptionsProblem, CreativeInstantiateProblem);
@@ -73,8 +78,52 @@ namespace AdServer
       struct CreativeParams;
 
     public:
-      typedef xsd::AdServer::Configuration::CampaignManagerType
-        CampaignManagerConfig;
+      using CampaignManagerConfig =
+        xsd::AdServer::Configuration::CampaignManagerType;
+      using GetCampaignCreativeRequestPtr = std::unique_ptr<Proto::GetCampaignCreativeRequest>;
+      using GetCampaignCreativeResponsePtr = std::unique_ptr<Proto::GetCampaignCreativeResponse>;
+      using ProcessMatchRequestRequestPtr = std::unique_ptr<Proto::ProcessMatchRequestRequest>;
+      using ProcessMatchRequestResponsePtr = std::unique_ptr<Proto::ProcessMatchRequestResponse>;
+      using MatchGeoChannelsRequestPtr = std::unique_ptr<Proto::MatchGeoChannelsRequest>;
+      using MatchGeoChannelsResponsePtr = std::unique_ptr<Proto::MatchGeoChannelsResponse>;
+      using InstantiateAdRequestPtr = std::unique_ptr<Proto::InstantiateAdRequest>;
+      using InstantiateAdResponsePtr = std::unique_ptr<Proto::InstantiateAdResponse>;
+      using GetChannelLinksRequestPtr = std::unique_ptr<Proto::GetChannelLinksRequest>;
+      using GetChannelLinksResponsePtr = std::unique_ptr<Proto::GetChannelLinksResponse>;
+      using GetDiscoverChannelsRequestPtr = std::unique_ptr<Proto::GetDiscoverChannelsRequest>;
+      using GetDiscoverChannelsResponsePtr = std::unique_ptr<Proto::GetDiscoverChannelsResponse>;
+      using GetCategoryChannelsRequestPtr = std::unique_ptr<Proto::GetCategoryChannelsRequest>;
+      using GetCategoryChannelsResponsePtr = std::unique_ptr<Proto::GetCategoryChannelsResponse>;
+      using ConsiderPassbackRequestPtr = std::unique_ptr<Proto::ConsiderPassbackRequest>;
+      using ConsiderPassbackResponsePtr = std::unique_ptr<Proto::ConsiderPassbackResponse>;
+      using ConsiderPassbackTrackRequestPtr = std::unique_ptr<Proto::ConsiderPassbackTrackRequest>;
+      using ConsiderPassbackTrackResponsePtr = std::unique_ptr<Proto::ConsiderPassbackTrackResponse>;
+      using GetClickUrlRequestPtr = std::unique_ptr<Proto::GetClickUrlRequest>;
+      using GetClickUrlResponsePtr = std::unique_ptr<Proto::GetClickUrlResponse>;
+      using VerifyImpressionRequestPtr = std::unique_ptr<Proto::VerifyImpressionRequest>;
+      using VerifyImpressionResponsePtr = std::unique_ptr<Proto::VerifyImpressionResponse>;
+      using ActionTakenRequestPtr = std::unique_ptr<Proto::ActionTakenRequest>;
+      using ActionTakenResponsePtr = std::unique_ptr<Proto::ActionTakenResponse>;
+      using VerifyOptOperationRequestPtr = std::unique_ptr<Proto::VerifyOptOperationRequest>;
+      using VerifyOptOperationResponsePtr = std::unique_ptr<Proto::VerifyOptOperationResponse>;
+      using ConsiderWebOperationRequestPtr = std::unique_ptr<Proto::ConsiderWebOperationRequest>;
+      using ConsiderWebOperationResponsePtr = std::unique_ptr<Proto::ConsiderWebOperationResponse>;
+      using GetConfigRequestPtr = std::unique_ptr<Proto::GetConfigRequest>;
+      using GetConfigResponsePtr = std::unique_ptr<Proto::GetConfigResponse>;
+      using TraceCampaignSelectionIndexRequestPtr = std::unique_ptr<Proto::TraceCampaignSelectionIndexRequest>;
+      using TraceCampaignSelectionIndexResponsePtr = std::unique_ptr<Proto::TraceCampaignSelectionIndexResponse>;
+      using TraceCampaignSelectionRequestPtr = std::unique_ptr<Proto::TraceCampaignSelectionRequest>;
+      using TraceCampaignSelectionResponsePtr = std::unique_ptr<Proto::TraceCampaignSelectionResponse>;
+      using GetCampaignCreativeByCcidRequestPtr = std::unique_ptr<Proto::GetCampaignCreativeByCcidRequest>;
+      using GetCampaignCreativeByCcidResponsePtr = std::unique_ptr<Proto::GetCampaignCreativeByCcidResponse>;
+      using GetColocationFlagsRequestPtr = std::unique_ptr<Proto::GetColocationFlagsRequest>;
+      using GetColocationFlagsResponsePtr = std::unique_ptr<Proto::GetColocationFlagsResponse>;
+      using GetPubPixelsRequestPtr = std::unique_ptr<Proto::GetPubPixelsRequest>;
+      using GetPubPixelsResponsePtr = std::unique_ptr<Proto::GetPubPixelsResponse>;
+      using ProcessAnonymousRequestRequestPtr = std::unique_ptr<Proto::ProcessAnonymousRequestRequest>;
+      using ProcessAnonymousRequestResponsePtr = std::unique_ptr<Proto::ProcessAnonymousRequestResponse>;
+      using GetFileRequestPtr = std::unique_ptr<Proto::GetFileRequest>;
+      using GetFileResponsePtr = std::unique_ptr<Proto::GetFileResponse>;
 
       /** Parametric constructor.
        *
@@ -97,62 +146,75 @@ namespace AdServer
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_campaign_creative:1.0
       //
-      virtual void get_campaign_creative(
+      void get_campaign_creative(
         const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
         CORBA::String_out hostname,
-        AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out request_result)
+        AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out request_result) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
+
+      GetCampaignCreativeResponsePtr get_campaign_creative(
+        GetCampaignCreativeRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/match_geo_channels:1.0
       //
-      virtual
       void
       match_geo_channels(
         const AdServer::CampaignSvcs::CampaignManager::GeoInfoSeq& location,
         const AdServer::CampaignSvcs::CampaignManager::GeoCoordInfoSeq& coord_location,
         AdServer::CampaignSvcs::ChannelIdSeq_out geo_channels_result,
-        AdServer::CampaignSvcs::ChannelIdSeq_out coord_channels_result)
+        AdServer::CampaignSvcs::ChannelIdSeq_out coord_channels_result) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
+
+      MatchGeoChannelsResponsePtr match_geo_channels(
+        MatchGeoChannelsRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/process_match_request:1.0
       //
-      virtual
       void
       process_match_request(
         const AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo&
-          match_request_info)
+          match_request_info) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      virtual
+      ProcessMatchRequestResponsePtr
+      process_match_request(ProcessMatchRequestRequestPtr&& request);
+
       void
       process_anonymous_request(
         const AdServer::CampaignSvcs::CampaignManager::AnonymousRequestInfo&
-          anon_request_info)
+          anon_request_info) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      virtual
+      ProcessAnonymousRequestResponsePtr
+      process_anonymous_request(ProcessAnonymousRequestRequestPtr&& request);
+
       void
       get_file(
         const char* file_name,
-        CORBACommons::OctSeq_out file)
+        CORBACommons::OctSeq_out file) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
 
-      virtual void
+      GetFileResponsePtr get_file(GetFileRequestPtr&& request);
+
+      void
       instantiate_ad(
         const AdServer::CampaignSvcs::CampaignManager::
           InstantiateAdInfo& instantiate_ad_info,
         AdServer::CampaignSvcs::CampaignManager::
-          InstantiateAdResult_out instantiate_ad_result)
+          InstantiateAdResult_out instantiate_ad_result) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      virtual void
+      InstantiateAdResponsePtr
+      instantiate_ad(InstantiateAdRequestPtr&& request);
+
+      void
       trace_campaign_selection(
         CORBA::ULong campaign_id,
         const AdServer::CampaignSvcs::CampaignManager::RequestParams&
@@ -160,29 +222,47 @@ namespace AdServer
         const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
         CORBA::ULong auction_type,
         CORBA::Boolean test_request,
-        CORBA::String_out trace_xml)
+        CORBA::String_out trace_xml) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
 
-      virtual void trace_campaign_selection_index(
-        CORBA::String_out trace_xml)
+      TraceCampaignSelectionResponsePtr
+      trace_campaign_selection(
+        TraceCampaignSelectionRequestPtr&& request);
+
+      void trace_campaign_selection_index(
+        CORBA::String_out trace_xml) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
+
+      TraceCampaignSelectionIndexResponsePtr
+      trace_campaign_selection_index(
+        TraceCampaignSelectionIndexRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_campaign_creative_by_ccid:1.0
       //
-      virtual CORBA::Boolean get_campaign_creative_by_ccid(
+      CORBA::Boolean get_campaign_creative_by_ccid(
         const ::AdServer::CampaignSvcs::CampaignManager::CreativeParams& params,
-        CORBA::String_out creative_body)
+        CORBA::String_out creative_body) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
 
-      virtual void consider_passback(
-        const AdServer::CampaignSvcs::CampaignManager::PassbackInfo& in)
+      GetCampaignCreativeByCcidResponsePtr
+      get_campaign_creative_by_ccid(
+        GetCampaignCreativeByCcidRequestPtr&& request);
+
+      void consider_passback(
+        const AdServer::CampaignSvcs::CampaignManager::PassbackInfo& in) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
 
-      virtual void consider_passback_track(
-        const AdServer::CampaignSvcs::CampaignManager::PassbackTrackInfo& in)
+      ConsiderPassbackResponsePtr consider_passback(
+        ConsiderPassbackRequestPtr&& request);
+
+      void consider_passback_track(
+        const AdServer::CampaignSvcs::CampaignManager::PassbackTrackInfo& in) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
+
+      ConsiderPassbackTrackResponsePtr consider_passback_track(
+        ConsiderPassbackTrackRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_click_url:1.0
@@ -194,63 +274,84 @@ namespace AdServer
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
+      GetClickUrlResponsePtr get_click_url(
+        GetClickUrlRequestPtr&& request);
+
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/verify_impression:1.0
       //
-      virtual void verify_impression(
+      void verify_impression(
         const AdServer::CampaignSvcs::CampaignManager::ImpressionInfo& impression_info,
-        ::AdServer::CampaignSvcs::CampaignManager::ImpressionResultInfo_out impression_result_info)
+        ::AdServer::CampaignSvcs::CampaignManager::ImpressionResultInfo_out impression_result_info) override
         /*throw(
           AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
+
+      VerifyImpressionResponsePtr verify_impression(
+        VerifyImpressionRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/action_taken:1.0
       //
-      virtual void action_taken(
-        const AdServer::CampaignSvcs::CampaignManager::ActionInfo& action_info)
+      void action_taken(
+        const AdServer::CampaignSvcs::CampaignManager::ActionInfo& action_info) override
         /*throw(
           AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
+      ActionTakenResponsePtr action_taken(
+        ActionTakenRequestPtr&& request);
+
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_channel_links:1.0
       //
-      virtual AdServer::CampaignSvcs::CampaignManager::ChannelSearchResultSeq*
+      AdServer::CampaignSvcs::CampaignManager::ChannelSearchResultSeq*
       get_channel_links(
         const AdServer::CampaignSvcs::ChannelIdSeq& channels,
-        bool match)
+        bool match) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
+
+      GetChannelLinksResponsePtr
+      get_channel_links(GetChannelLinksRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_discover_channels:1.0
       //
-      virtual AdServer::CampaignSvcs::CampaignManager::DiscoverChannelResultSeq*
+      AdServer::CampaignSvcs::CampaignManager::DiscoverChannelResultSeq*
       get_discover_channels(
         const AdServer::CampaignSvcs::ChannelWeightSeq& channels,
         const char* country,
         const char* language,
-        bool all)
+        bool all) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      virtual AdServer::CampaignSvcs::CampaignManager::CategoryChannelNodeSeq*
-      get_category_channels(const char* language)
+      GetDiscoverChannelsResponsePtr
+      get_discover_channels(GetDiscoverChannelsRequestPtr&& request);
+
+      AdServer::CampaignSvcs::CampaignManager::CategoryChannelNodeSeq*
+      get_category_channels(const char* language) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
+
+      GetCategoryChannelsResponsePtr get_category_channels(
+        GetCategoryChannelsRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/get_config:1.0
       //
-      virtual ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig*
+      ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig*
       get_config(const AdServer::CampaignSvcs::
-        CampaignManager::GetConfigInfo& get_config_props)
+        CampaignManager::GetConfigInfo& get_config_props) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
+
+      GetConfigResponsePtr
+      get_config(GetConfigRequestPtr&& request);
 
       //
       // IDL:AdServer/CampaignSvcs/CampaignManager/verify_opt_operation:1.0
       //
-      virtual void
+      void
       verify_opt_operation(
         ::CORBA::ULong time,
         ::CORBA::Long colo_id,
@@ -263,29 +364,41 @@ namespace AdServer
         const char* os,
         const char* ct,
         const char* curct,
-        const CORBACommons::UserIdInfo& user_id)
+        const CORBACommons::UserIdInfo& user_id) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
+      VerifyOptOperationResponsePtr verify_opt_operation(
+        VerifyOptOperationRequestPtr&& request);
+
       
-      virtual void
+      void
       consider_web_operation(
-        const AdServer::CampaignSvcs::CampaignManager::WebOperationInfo& web_op_info)
+        const AdServer::CampaignSvcs::CampaignManager::WebOperationInfo& web_op_info) override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::IncorrectArgument,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      virtual ColocationFlagsSeq*
-      get_colocation_flags()
+      ConsiderWebOperationResponsePtr consider_web_operation(
+        ConsiderWebOperationRequestPtr&& request);
+
+      ColocationFlagsSeq*
+      get_colocation_flags() override
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      virtual AdServer::CampaignSvcs::StringSeq*
+      GetColocationFlagsResponsePtr get_colocation_flags(
+        GetColocationFlagsRequestPtr&& request);
+
+      AdServer::CampaignSvcs::StringSeq*
       get_pub_pixels(
         const char* country,
         CORBA::ULong user_status,
-        const AdServer::CampaignSvcs::PublisherAccountIdSeq& publisher_account_ids)
+        const AdServer::CampaignSvcs::PublisherAccountIdSeq& publisher_account_ids) override;
         /*throw(AdServer::CampaignSvcs::CampaignManager::NotReady,
           AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
+
+      GetPubPixelsResponsePtr
+      get_pub_pixels(GetPubPixelsRequestPtr&& request);
 
       void
       progress_comment(std::string& res) /*throw(eh::Exception)*/;
@@ -503,6 +616,26 @@ namespace AdServer
           }
         }
 
+        InstantiateParams(
+          const std::string& user_id_val,
+          bool enabled_notice_val)
+          : generate_pubpixel_accounts(false),
+            enabled_notice(enabled_notice_val),
+            video_width(0),
+            video_height(0),
+            publisher_site_id(0),
+            publisher_account_id(0),
+            init_source_macroses(true)
+        {
+          AdServer::Commons::UserId user_id =
+            GrpcAlgs::unpack_user_id(user_id_val);
+          if(!user_id.is_null())
+          {
+            user_id_hash_mod =
+              AdServer::LogProcessing::user_id_distribution_hash(user_id);
+          }
+        }
+
         AdServer::Commons::Optional<unsigned long> user_id_hash_mod;
         std::string open_price;
         std::string openx_price;
@@ -560,6 +693,15 @@ namespace AdServer
 
     private:
       void
+      trace_campaign_selection_(
+        std::uint32_t campaign_id,
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        std::uint32_t auction_type,
+        bool test_request,
+        std::string& trace_xml);
+
+      void
       get_campaign_creative_(
         const AdServer::CampaignSvcs::CampaignManager::RequestParams&
           request_params,
@@ -576,6 +718,21 @@ namespace AdServer
         const ChannelIdHashSet& matched_channels)
         /*throw(eh::Exception)*/;
 
+      void
+      get_campaign_creative_(
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        AdSlotContext& ad_slot_context,
+        const AdSlotMinCpm& ad_slot_min_cpm,
+        const Generics::Time& session_start,
+        Proto::AdSlotResult& ad_slot_result,
+        const Tag* tag,
+        const Colocation* colocation,
+        bool passback,
+        Proto::AdRequestDebugInfo* ad_request_debug_info,
+        Proto::AdSlotDebugInfo* ad_slot_debug_info,
+        const ChannelIdHashSet& matched_channels);
+
       const Tag*
       resolve_tag(
         std::string* tag_size,
@@ -584,6 +741,14 @@ namespace AdServer
         const CampaignConfig& campaign_config,
         const CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot)
         const noexcept;
+
+      const Tag*
+      resolve_tag(
+        std::string* tag_size,
+        unsigned long* selected_publisher_account_id,
+        const Proto::RequestParams& request_params,
+        const CampaignConfig& campaign_config,
+        const Proto::AdSlotInfo& ad_slot) const noexcept;
 
       void
       verify_vast_operation_(
@@ -611,6 +776,23 @@ namespace AdServer
         const ChannelIdHashSet& matched_channels,
         unsigned long& request_tag_id)
         noexcept;
+
+      void
+      get_adslot_campaign_creative_(
+        const CampaignConfig* campaign_config,
+        Proto::RequestCreativeResult& ad_request_result,
+        Proto::AdSlotResult& ad_slot_result,
+        AdServer::CampaignSvcs::RevenueDecimal& adsspace_system_cpm,
+        const Proto::RequestParams& request_params,
+        const Generics::Time& session_start,
+        const Colocation* colocation,
+        const Proto::AdSlotInfo& ad_slot,
+        const CreativeInstantiateRule& creative_instantiate_rule,
+        Proto::AdRequestDebugInfo* debug_info,
+        Proto::AdSlotDebugInfo* adslot_debug_info,
+        AdSlotContext& ad_slot_context,
+        const ChannelIdHashSet& matched_channels,
+        unsigned long& request_tag_id) noexcept;
 
       CORBA::Boolean
       get_campaign_creative_by_ccid_impl(
@@ -643,10 +825,38 @@ namespace AdServer
         /*throw(eh::Exception)*/;
 
       void
+      get_site_creative_(
+        CampaignIndex* config_index,
+        const Colocation* colocation,
+        const Tag* requested_tag,
+        const Tag::SizeMap& tag_sizes,
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        AdSlotContext& ad_slot_context,
+        const AdSlotMinCpm& ad_slot_min_cpm,
+        const FreqCapIdSet& full_freq_caps,
+        const SeqOrderMap& seq_orders,
+        RequestResultParams& request_result_params,
+        AdSelectionResult& select_result,
+        std::string& creative_body,
+        std::string& creative_url,
+        Proto::AdRequestDebugInfo* ad_request_debug_info,
+        Proto::AdSlotDebugInfo* ad_slot_debug_info);
+
+      void
       get_bid_costs_(
         RevenueDecimal& low_predicted_pub_ecpm_system,
         RevenueDecimal& top_predicted_pub_ecpm_system,
         const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+        const Tag* tag,
+        const RevenueDecimal& min_pub_ecpm_system,
+        const CampaignSelectionDataList& selected_campaigns);
+
+      void
+      get_bid_costs_(
+        RevenueDecimal& low_predicted_pub_ecpm_system,
+        RevenueDecimal& top_predicted_pub_ecpm_system,
+        const Proto::RequestParams& request_params,
         const Tag* tag,
         const RevenueDecimal& min_pub_ecpm_system,
         const CampaignSelectionDataList& selected_campaigns);
@@ -668,6 +878,21 @@ namespace AdServer
         /*throw(eh::Exception)*/;
 
       bool
+      instantiate_text_creatives(
+        const CampaignConfig* config,
+        const Colocation* const colocation,
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        const CampaignSelector::WeightedCampaignKeywordList& campaign_keywords,
+        AdSelectionResult& ad_selection_result,
+        RequestResultParams& request_result_params,
+        CreativeParamsList& creative_params_list,
+        Proto::AdSlotDebugInfo* ad_slot_debug_info,
+        std::string& creative_body,
+        std::string& creative_url,
+        AdSlotContext& ad_slot_context);
+
+      bool
       instantiate_display_creative(
         const CampaignConfig* config,
         const Colocation* colocation,
@@ -684,6 +909,21 @@ namespace AdServer
         /*throw(eh::Exception)*/;
 
       bool
+      instantiate_display_creative(
+        const CampaignConfig* config,
+        const Colocation* colocation,
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        const CampaignSelector::WeightedCampaign& weighted_campaign,
+        AdSelectionResult& ad_selection_result,
+        RequestResultParams& request_result_params,
+        CreativeParams& creative_params,
+        Proto::AdSlotDebugInfo* debug_info,
+        std::string& creative_body,
+        std::string& creative_url,
+        AdSlotContext& ad_slot_context);
+
+      bool
       instantiate_passback(
         CORBA::String_out mime_format,
         CORBA::String_out passback_body,
@@ -695,6 +935,18 @@ namespace AdServer
         const AdSlotContext& ad_slot_context,
         const String::SubString& ext_tag_id)
         /*throw(eh::Exception)*/;
+
+      bool
+      instantiate_passback(
+        std::string& mime_format,
+        std::string& passback_body,
+        const CampaignConfig* const campaign_config,
+        const Colocation* colocation,
+        const Tag* tag,
+        const char* app_format,
+        const Proto::RequestParams& request_params,
+        const AdSlotContext& ad_slot_context,
+        const String::SubString& ext_tag_id);
 
       void
       fill_instantiate_request_params_(
@@ -716,6 +968,22 @@ namespace AdServer
         /*throw(eh::Exception)*/;
 
       void
+      fill_instantiate_request_params_(
+        TokenValueMap& request_args,
+        AccountIdList* consider_pub_pixel_accounts, // result pub pixel accounts that instantiated
+        const CampaignConfig* const campaign_config,
+        const Colocation* colocation,
+        const Tag* tag,
+        const Tag::Size* tag_size,
+        const char* app_format,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AccountIdList* pubpixel_accounts, // use predefined pub pixel accounts
+        const google::protobuf::RepeatedField<std::uint32_t>* exclude_pubpixel_accounts,
+        const CreativeInstantiateRule& instantiate_info,
+        const AdSlotContext& ad_slot_context,
+        const String::SubString& ext_tag_id);
+
+      void
       fill_instantiate_passback_params_(
         TokenValueMap& request_args,
         const CampaignConfig* const campaign_config,
@@ -726,6 +994,17 @@ namespace AdServer
         const AdSlotContext& ad_slot_context,
         const AccountIdList* consider_pub_pixel_accounts)
         /*throw(eh::Exception)*/;
+
+      void
+      fill_instantiate_passback_params_(
+        TokenValueMap& request_args,
+        const CampaignConfig* const campaign_config,
+        const Tag* tag,
+        const InstantiateParams& inst_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        const CreativeInstantiateRule& instantiate_info,
+        const AdSlotContext& ad_slot_context,
+        const AccountIdList* consider_pub_pixel_accounts);
 
       void
       fill_instantiate_params_(
@@ -747,6 +1026,24 @@ namespace AdServer
           PublisherAccountIdSeq* exclude_pubpixel_accounts)
         /*throw(eh::Exception)*/;
 
+      void
+      fill_instantiate_params_(
+        const Proto::CommonAdRequestInfo& request_params,
+        const CampaignConfig* const campaign_config,
+        const Colocation* const colocation,
+        const CreativeTemplate& template_descr,
+        const Template* creative_template,
+        const InstantiateParams& inst_params,
+        const CreativeInstantiateRule& instantiate_info,
+        const char* app_format,
+        AdSelectionResult& ad_selection_result,
+        RequestResultParams& request_result_params,
+        CreativeParamsList& creative_params_list,
+        TemplateParams_var& request_template_params,
+        TemplateParamsList& creative_template_params,
+        const AdSlotContext& ad_slot_context,
+        const google::protobuf::RepeatedField<std::uint32_t>* exclude_pubpixel_accounts);
+
       static void
       fill_iurl_(
         std::string& iurl,
@@ -756,6 +1053,15 @@ namespace AdServer
         const Creative* creative,
         const Size* size)
         noexcept;
+
+      static void
+      fill_iurl_(
+        std::string& iurl,
+        const CampaignConfig* const campaign_config,
+        const CreativeInstantiateRule& instantiate_info,
+        const Proto::CommonAdRequestInfo& request_params,
+        const Creative* creative,
+        const Size* size) noexcept;
 
       void
       fill_track_urls_(
@@ -767,6 +1073,16 @@ namespace AdServer
         const CreativeInstantiateRule& instantiate_info,
         const AccountIdList* consider_pub_pixel_accounts)
         noexcept;
+
+      void
+      fill_track_urls_(
+        const AdSelectionResult& ad_selection_result,
+        RequestResultParams& request_result_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        bool track_impressions,
+        const InstantiateParams& inst_params,
+        const CreativeInstantiateRule& instantiate_info,
+        const AccountIdList* consider_pub_pixel_accounts) noexcept;
 
       void
       instantiate_click_url(
@@ -798,6 +1114,20 @@ namespace AdServer
         /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
       void
+      instantiate_creative_(
+        const Proto::CommonAdRequestInfo& request_params,
+        const CampaignConfig* const campaign_config,
+        const Colocation* const colocation,
+        const InstantiateParams& inst_params,
+        const char* format,
+        AdSelectionResult& ad_selection_result,
+        RequestResultParams& request_result_params,
+        CreativeParamsList& creative_instantiate_info,
+        std::string& creative_body,
+        const AdSlotContext& ad_slot_context,
+        const google::protobuf::RepeatedField<std::uint32_t>* exclude_pubpixel_accounts);
+
+      void
       instantiate_creative_body_(
         const AdInstantiateType ad_instantiate_type,
         const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
@@ -815,6 +1145,22 @@ namespace AdServer
         /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
       void
+      instantiate_creative_body_(
+        const AdInstantiateType ad_instantiate_type,
+        const Proto::RequestParams& request_params,
+        const CampaignConfig* config,
+        const Colocation* const colocation,
+        const char* cr_size,
+        const Proto::AdSlotInfo& ad_slot,
+        AdSelectionResult& ad_selection_result,
+        RequestResultParams& request_result_params,
+        CreativeParamsList& creative_params_list,
+        std::string& creative_body,
+        std::string& creative_url,
+        const AdSlotContext& ad_slot_context,
+        const String::SubString& ext_tag_id);
+
+      void
       instantiate_url_creative_(
         CORBA::String_out creative_body,
         RequestResultParams& request_result_params,
@@ -822,6 +1168,14 @@ namespace AdServer
         const String::SubString& instantiate_url,
         AdInstantiateType ad_instantiate_type)
         /*throw(CreativeTemplateProblem)*/;
+
+      void
+      instantiate_url_creative_(
+        std::string& creative_body,
+        RequestResultParams& request_result_params,
+        const AdSelectionResult& ad_selection_result,
+        const String::SubString& instantiate_url,
+        AdInstantiateType ad_instantiate_type);
       
       void
       fill_instantiate_url_(
@@ -839,6 +1193,22 @@ namespace AdServer
         bool fill_auction_price,
         bool fill_creative_params)
         /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
+
+      void
+      fill_instantiate_url_(
+        std::string& instantiate_url,
+        AdInstantiateType ad_instantiate_type,
+        CreativeParamsList& creative_params_list,
+        const RequestResultParams& request_result_params,
+        const InstantiateParams& inst_params,
+        const CreativeInstantiateRule& instantiate_info,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AdSelectionResult& ad_selection_result,
+        const AdSlotContext& ad_slot_context,
+        const char* app_format,
+        const AccountIdList& pub_pixel_accounts,
+        bool fill_auction_price,
+        bool fill_creative_params);
 
       void
       init_instantiate_url_(
@@ -860,6 +1230,23 @@ namespace AdServer
         /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/;
 
       void
+      init_instantiate_url_(
+        std::string& instantiate_url,
+        AdInstantiateType ad_instantiate_type,
+        CreativeParamsList& creative_params_list,
+        RequestResultParams& request_result_params,
+        const CampaignConfig* const campaign_config,
+        const Tag* tag,
+        const InstantiateParams& inst_params,
+        const CreativeInstantiateRule& instantiate_info,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AdSelectionResult& ad_selection_result,
+        const AdSlotContext& ad_slot_context,
+        const char* app_format,
+        const google::protobuf::RepeatedField<std::uint32_t>& exclude_pubpixel_accounts,
+        bool fill_auction_price = true);
+
+      void
       init_yandex_tokens_(
         const CampaignConfig* campaign_config,
         const CreativeInstantiateRule& instantiate_info,
@@ -871,11 +1258,31 @@ namespace AdServer
         /*throw(CreativeInstantiateProblem)*/;
 
       void
+      init_yandex_tokens_(
+        const CampaignConfig* campaign_config,
+        const CreativeInstantiateRule& instantiate_info,
+        RequestResultParams& request_result_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AdSlotContext& ad_slot_context,
+        const Creative* creative)
+      /*throw(CreativeInstantiateProblem)*/;
+
+      void
       init_track_pixels_(
         const CampaignConfig* campaign_config,
         RequestResultParams& request_result_params,
         const AdServer::CampaignSvcs::CampaignManager::
           CommonAdRequestInfo& request_params,
+        const AdSlotContext& ad_slot_context,
+        const Creative* creative,
+        const CreativeInstantiateRule& instantiate_info,
+        bool need_absolute_urls);
+
+      void
+      init_track_pixels_(
+        const CampaignConfig* campaign_config,
+        RequestResultParams& request_result_params,
+        const Proto::CommonAdRequestInfo& request_params,
         const AdSlotContext& ad_slot_context,
         const Creative* creative,
         const CreativeInstantiateRule& instantiate_info,
@@ -895,12 +1302,29 @@ namespace AdServer
         /*throw(CreativeInstantiateProblem)*/;
 
       void
+      init_native_tokens_(
+        const CampaignConfig* campaign_config,
+        const CreativeInstantiateRule& instantiate_info,
+        RequestResultParams& request_result_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        const AdSlotContext& ad_slot_context,
+        const Creative* creative);
+
+      void
       fill_yandex_track_params_(
         std::string& yandex_track_params,
         const AdServer::CampaignSvcs::CampaignManager::
           CommonAdRequestInfo& request_params,
         const AdSlotContext& ad_slot_context)
         noexcept;
+
+      void
+      fill_yandex_track_params_(
+        std::string& yandex_track_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AdSlotContext& ad_slot_context)
+      noexcept;
 
       void
       init_vast_tokens_(
@@ -927,6 +1351,15 @@ namespace AdServer
         CORBA::String_out creative_body)
         /*throw(CORBA::SystemException, eh::Exception)*/;
 
+      bool instantiate_creative_preview(
+        const Proto::CreativeParams& params,
+        const CampaignConfig* const campaign_config,
+        const Campaign* campaign,
+        const Creative* creative,
+        const Tag* tag,
+        const Tag::Size& tag_size,
+        std::string& creative_body);
+
       /*partly init click params*/
       std::string
       init_click_params0_(
@@ -942,6 +1375,20 @@ namespace AdServer
         const AdSlotContext& ad_slot_context)
         noexcept;
 
+      std::string
+      init_click_params0_(
+        const AdServer::Commons::RequestId& request_id,
+        const Colocation* colocation,
+        const Creative* creative,
+        const Tag* tag,
+        const Tag::Size* tag_size,
+        const CampaignKeyword* campaign_keyword,
+        const RevenueDecimal& ctr,
+        const InstantiateParams& inst_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AdSlotContext& ad_slot_context)
+      noexcept;
+
       void
       init_click_url_(
         ClickParams& click_params,
@@ -954,16 +1401,37 @@ namespace AdServer
         const CampaignSelectionData& select_params,
         const std::string& base_click_url);
 
+      void
+      init_click_url_(
+        ClickParams& click_params,
+        const Colocation* colocation,
+        const Tag* tag,
+        const Tag::Size* tag_size,
+        const InstantiateParams& inst_params,
+        const Proto::CommonAdRequestInfo& request_params,
+        const AdSlotContext& ad_slot_context,
+        const CampaignSelectionData& select_params,
+        const std::string& base_click_url);
+
       bool check_request_constraints(
         const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
         std::string& referer_str,
         std::string& original_url_str)
         /*throw(eh::Exception)*/;
 
+      bool check_request_constraints(
+        const Proto::RequestParams& request_params,
+        std::string& referer_str,
+        std::string& original_url_str);
+
       void log_incoming_request(
         const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
         const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot)
         /*throw(eh::Exception)*/;
+
+      void log_incoming_request(
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot);
 
       CampaignConfig_var
       configuration(bool required = false) const
@@ -1007,12 +1475,30 @@ namespace AdServer
         noexcept;
 
       void
+      convert_ccg_keywords_(
+        const CampaignConfig* campaign_config,
+        const Tag* tag,
+        CampaignKeywordMap& result_keywords,
+        const google::protobuf::RepeatedPtrField<Proto::CCGKeyword>& keywords,
+        bool profiling_available,
+        const FreqCapIdSet& full_freq_caps)
+      noexcept;
+
+      void
       convert_external_categories_(
         CreativeCategoryIdSet& exclude_categories,
         const CampaignConfig& config,
         const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
         const AdServer::CampaignSvcs::CampaignManager::ExternalCreativeCategoryIdSeq& category_seq)
         noexcept;
+
+      void
+      convert_external_categories_(
+        CreativeCategoryIdSet& exclude_categories,
+        const CampaignConfig& config,
+        const Proto::RequestParams& request_params,
+        const google::protobuf::RepeatedPtrField<std::string>& category_seq)
+      noexcept;
 
       static void
       fill_triggered_channels_(
@@ -1030,12 +1516,25 @@ namespace AdServer
           debug_info)
         /*throw(eh::Exception)*/;
 
+      void
+      get_channel_targeting_info_(
+        CampaignSelectionData& select_params,
+        const Proto::RequestParams& request_params,
+        const Campaign* campaign_candidate,
+        const CampaignKeyword* campaign_keyword,
+        Proto::CreativeSelectDebugInfo* debug_info);
+
       bool
       fill_category_channel_node_(
         AdServer::CampaignSvcs::CampaignManager::CategoryChannelNodeInfo& res,
         const CategoryChannelNode* node,
         const char* language)
         noexcept;
+
+      bool fill_category_channel_node_(
+        Proto::CategoryChannelNodeInfo& res,
+        const CategoryChannelNode* node,
+        const std::string& language) noexcept;
 
       bool
       fill_ad_slot_min_cpm_(
@@ -1061,6 +1560,18 @@ namespace AdServer
         /*throw(eh::Exception)*/;
 
       bool
+      preview_ccid_(
+        const CampaignConfig* config,
+        const Colocation* colocation,
+        const Tag* tag,
+        const Proto::RequestParams& request_params,
+        const Proto::AdSlotInfo& ad_slot,
+        AdSlotContext& ad_slot_context,
+        RequestResultParams& request_result_params,
+        AdSelectionResult& select_result,
+        std::string& creative_body);
+
+      bool
       match_geo_channels_(
         const AdServer::CampaignSvcs::CampaignManager::GeoInfoSeq& location,
         const AdServer::CampaignSvcs::CampaignManager::GeoCoordInfoSeq& coord_location,
@@ -1068,6 +1579,13 @@ namespace AdServer
         ChannelIdSet& coord_channels)
         /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException,
           AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
+
+      bool
+      match_geo_channels_(
+        const google::protobuf::RepeatedPtrField<Proto::GeoInfo>& location,
+        const google::protobuf::RepeatedPtrField<Proto::GeoCoordInfo>& coord_location,
+        ChannelIdList& geo_channels,
+        ChannelIdSet& coord_channels);
 
       static
       const Tag::Size*
@@ -1096,6 +1614,14 @@ namespace AdServer
         const AdServer::CampaignSvcs::
           PublisherAccountIdSeq& exclude_pubpixel_accounts)
         noexcept;
+
+      void
+      get_inst_optin_pub_pixel_account_ids_(
+        AccountIdList& result_account_ids,
+        const CampaignConfig* campaign_config,
+        const Tag* tag,
+        const Proto::CommonAdRequestInfo& request_params,
+        const google::protobuf::RepeatedField<std::uint32_t>& exclude_pubpixel_accounts) noexcept;
 
       static bool
       size_blacklisted_(
@@ -1153,13 +1679,26 @@ namespace AdServer
         const RevenueDecimal& adsspace_system_cpm);
 
       void
+      produce_ads_space_(
+        const Proto::RequestParams& request_params,
+        unsigned long request_tag_id,
+        const RevenueDecimal& adsspace_system_cpm);
+
+      void
       produce_match_(
         const AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo&
           request_params);
 
       void
+      produce_match_(const Proto::MatchRequestInfo& request_params);
+
+      void
       produce_action_message_(
         const AdServer::CampaignSvcs::CampaignManager::ActionInfo& action_info);
+
+      void
+      produce_action_message_(
+        const Proto::ActionInfo& action_info);
 
       void
       produce_ads_space_message_impl_(
@@ -1175,12 +1714,32 @@ namespace AdServer
         const RevenueDecimal& adsspace_system_cpm,
         const String::SubString& external_user_id);
 
+      void
+      produce_ads_space_message_impl_(
+        const Generics::Time& request_time,
+        const AdServer::Commons::UserId& user_id,
+        unsigned long request_tag_id,
+        const String::SubString& referer,
+        const google::protobuf::RepeatedPtrField<Proto::AdSlotInfo>* ad_slots,
+        const google::protobuf::RepeatedField<std::uint32_t>* publisher_account_ids,
+        const String::SubString& peer_ip,
+        const google::protobuf::RepeatedPtrField<Proto::GeoInfo>& location,
+        const String::SubString& ssp_location,
+        const RevenueDecimal& adsspace_system_cpm,
+        const String::SubString& external_user_id);
+
       // config manips
       static void
       fill_campaign_contracts_(
         CampaignContractSeq& contract_seq,
         const Campaign::CampaignContractArray& contracts)
         noexcept;
+
+      static void
+      fill_campaign_contracts_(
+        google::protobuf::RepeatedPtrField<Proto::CampaignContractInfo>& contract_seq,
+        const Campaign::CampaignContractArray& contracts)
+      noexcept;
 
     protected:
       CampaignManagerConfig campaign_manager_config_;
@@ -1228,6 +1787,27 @@ namespace AdServer
 {
 namespace CampaignSvcs
 {
+  template<class Response>
+  inline auto create_grpc_response(const std::uint32_t id_request_grpc)
+  {
+    auto response = std::make_unique<Response>();
+    response->set_id_request_grpc(id_request_grpc);
+    return response;
+  }
+
+  template<class Response>
+  inline auto create_grpc_error_response(
+    const Proto::Error_Type error_type,
+    const String::SubString detail,
+    const std::uint32_t id_request_grpc)
+  {
+    auto response = create_grpc_response<Response>(id_request_grpc);
+    auto* error = response->mutable_error();
+    error->set_type(error_type);
+    error->set_description(detail.data(), detail.length());
+    return response;
+  }
+
   inline
   CampaignConfig_var
   CampaignManagerImpl::configuration(bool required) const

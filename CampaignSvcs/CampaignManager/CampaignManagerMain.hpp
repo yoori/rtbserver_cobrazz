@@ -1,20 +1,22 @@
-
 #ifndef _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_MAIN_HPP_
 #define _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_MAIN_HPP_
 
 #include <eh/Exception.hpp>
-
 #include <Generics/Singleton.hpp>
-
 #include <Logger/ActiveObjectCallback.hpp>
-
 #include <LogCommons/LogHolder.hpp>
-
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <CampaignSvcs/DomainConfig.hpp>
+#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
+#include <UServerUtils/Grpc/Config.hpp>
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Grpc/Core/Server/Config.hpp>
 
+#include "GrpcService.hpp"
 #include "CampaignManagerImpl.hpp"
 
 /**

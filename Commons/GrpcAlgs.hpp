@@ -4,7 +4,12 @@
 // STD
 #include <cassert>
 
+// PROTOBUF
+#include <google/protobuf/repeated_field.h>
+#include <google/protobuf/repeated_ptr_field.h>
+
 // THIS
+#include <Commons/Containers.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 // UNIX_COMMONS
@@ -138,6 +143,19 @@ inline void print_repeated(
 }
 
 template<class DecimalType>
+inline std::string pack_optional_decimal(
+  const AdServer::Commons::Optional<DecimalType>& data)
+{
+  std::string result;
+  if (data.present())
+  {
+    result.resize(DecimalType::PACK_SIZE);
+    data->pack(result.data());
+  }
+  return result;
+}
+
+template<class DecimalType>
 inline std::string pack_decimal(const DecimalType& data)
 {
   std::string result;
@@ -154,6 +172,23 @@ inline DecimalType unpack_decimal(const std::string& data)
   result.unpack(data.data());
   return result;
 }
+
+template<class DecimalType>
+inline DecimalType unpack_optional_decimal(const std::string& data)
+{
+  if (data.empty())
+  {
+    return AdServer::Commons::Optional<DecimalType>();
+  }
+  else
+  {
+    DecimalType result;
+    assert(DecimalType::PACK_SIZE == data.size());
+    result.unpack(data.data());
+    return result;
+  }
+}
+
 
 template<class Error>
 inline void print_grpc_error(
@@ -243,6 +278,37 @@ void print_grpc_error_response(
   catch (...)
   {
   }
+}
+
+template<class It, class Type>
+void fill_repeated_field(
+  const It& begin,
+  const It& end,
+  google::protobuf::RepeatedField<Type>& result)
+{
+  const auto dist = std::distance(begin, end);
+  result.Reserve(dist);
+  for (It it = begin; it != end; ++it)
+  {
+    result.Add(*it);
+  }
+}
+
+template<class T, class DecimalType>
+void pack_decimal_into_repeated_field(
+  google::protobuf::RepeatedField<T>& seq,
+  const DecimalType& value)
+{
+  const int EL_NUMBER = DecimalType::PACK_SIZE / 4 +
+    (DecimalType::PACK_SIZE % 4 ? 1 : 0);
+  uint32_t buf[EL_NUMBER];
+  ::memset(buf, 0, EL_NUMBER * 4);
+  value.pack(buf);
+
+  auto pos = seq.size();
+  seq.Reserve(pos + EL_NUMBER + 1);
+  seq.Add(0);
+  seq.Add(buf, buf + EL_NUMBER);
 }
 
 } // namespace GrpcAlgs
