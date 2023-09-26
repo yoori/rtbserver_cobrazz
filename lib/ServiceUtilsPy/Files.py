@@ -40,7 +40,7 @@ class Files:
         return self.__get_file(LineWriter, *args, **kw)
 
     def get_in_names(self):
-        for root, dirs, files in os.walk(self.context.in_dir, True):
+        for _, _, files in os.walk(self.context.in_dir, True):
             for file in sorted(files):
                 if file.startswith("."):
                     continue

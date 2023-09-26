@@ -16,8 +16,8 @@ class Markers:
         self.context = context
         self.__markers = {}
         if self.context.markers_dir is not None:
-            for root, dirs, __files in os.walk(self.context.markers_dir, True):
-                for file in __files:
+            for _, _, files in os.walk(self.context.markers_dir, True):
+                for file in files:
                     self.__markers[file] = Marker(
                         self,
                         file,

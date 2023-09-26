@@ -12,7 +12,6 @@ from ServiceUtilsPy.File import File
 from ServiceUtilsPy.LineIO import LineReader
 from ServiceUtilsPy.Service import Service
 from ServiceUtilsPy.Context import Context
-from ServiceUtilsPy.Minio import MinioRequest
 
 
 VALID_FILE_CHARS = set("-_.()%s%s" % (string.ascii_letters, string.digits))
@@ -32,11 +31,32 @@ def make_segment_filename(s, is_short):
     return r
 
 
+class MinioRequest:
+    def __init__(self, client, bucket, name):
+        self.__response = client.get_object(bucket, name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__response.close()
+        self.__response.release_conn()
+        self.__response = None
+
+    def stream(self):
+        return self.__response.stream()
+
+    @property
+    def data(self):
+        return self.__response.data
+
+
+# TODO: lazy, cache, ...
 class Taxonomy(dict):
     def __init__(self, lines):
         super().__init__()
         for line in lines:
-            if line: # check for non LineReader
+            if line:  # check for non LineReader
                 segment_id, segment = line.split("\t")
                 if segment:
                     self[segment_id] = segment
@@ -54,10 +74,19 @@ class Source:
         self.tmp_dir = params["tmp_dir"]
         self.out_dir = params["out_dir"]
 
-    def create_context(self, *args, **kw):
+    def process(self):
+        try:
+            self.on_process()
+        except Exception as e:
+            self.service.print_(0, e)
+
+    def on_process(self):
+        raise NotImplementedError
+
+    def on_create_context(self, *args, **kw):
         return Context(*args, service=self.service, markers_dir=self.markers_dir, tmp_dir=self.tmp_dir, out_dir=self.out_dir, **kw)
 
-    def process_file(self, ctx, taxonomy, in_path, name):
+    def on_process_file(self, ctx, taxonomy, in_path, name):
         self.service.print_(1, f"Processing {name}")
         with LineReader(self.service, in_path) as line_reader:
             for line in line_reader.read_lines():
@@ -93,30 +122,27 @@ class AmberSource(Source):
         self.__bucket = type_params["bucket"]
         self.__max_days = params["max_days"]
 
-    def process(self):
+    def on_process(self):
         client = Minio(self.__url, access_key=self.__acc, secret_key=self.__secret)
         objects = client.list_objects(self.__bucket)
-        try:
-            for name, last_modified in sorted((obj.object_name, obj.last_modified) for obj in objects):
-                self.service.verify_running()
-                if name == self.TAXONOMY_NAME:
-                    continue
-                if last_modified.replace(tzinfo=None) < datetime.now() + relativedelta(days=-self.__max_days):
-                    self.service.print_(1, f"Too old - {name}")
-                    continue
-                self.service.print_(1, f"{name}")
-                with self.create_context() as ctx:
-                    if ctx.markers.add(name):
-                        with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
-                            taxonomy = Taxonomy(mr.data.decode("utf-8").split("\n"))
-                        with MinioRequest(client, self.__bucket, name) as mr:
-                            with AutoRemovePluginlessWriter(ctx, name) as w:
-                                self.service.print_(1, f"Downloading {name}")
-                                w.write_parts(mr.stream())
-                                w.close()
-                                self.process_file(ctx, taxonomy, w.path, name)
-        except Exception as e:
-            self.service.print_(0, e)
+        for name, last_modified in sorted((obj.object_name, obj.last_modified) for obj in objects):
+            self.service.verify_running()
+            if name == self.TAXONOMY_NAME:
+                continue
+            if last_modified.replace(tzinfo=None) < datetime.now() + relativedelta(days=-self.__max_days):
+                self.service.print_(1, f"Too old - {name}")
+                continue
+            self.service.print_(1, f"{name}")
+            with self.on_create_context() as ctx:
+                if ctx.markers.add(name):
+                    with MinioRequest(client, self.__bucket, self.TAXONOMY_NAME) as mr:
+                        taxonomy = Taxonomy(mr.data.decode("utf-8").split("\n"))
+                    with MinioRequest(client, self.__bucket, name) as mr:
+                        with AutoRemovePluginlessWriter(ctx, name) as w:
+                            self.service.print_(1, f"Downloading {name}")
+                            w.write_parts(mr.stream())
+                            w.close()
+                            self.on_process_file(ctx, taxonomy, w.path, name)
 
 
 class AdriverSource(Source):
@@ -125,27 +151,24 @@ class AdriverSource(Source):
         self.__url = f'https://{type_params["user"]}:{type_params["password"]}@{type_params["url"]}'
         self.__taxonomy = Taxonomy.from_file(self.service, type_params["taxonomy_file"])
 
-    def process(self):
-        try:
-            with requests.get(self.__url) as files_response:
-                if files_response.status_code != 200:
-                    raise requests.exceptions.RequestException
-                tree = etree.HTML(files_response.text)
-                for name in tree.xpath("/html/body/pre/a/text()"):
-                    if name == "../":
-                        continue
-                    with self.create_context() as ctx:
-                        if ctx.markers.add(name):
-                            with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
-                                if file_response.status_code != 200:
-                                    raise requests.exceptions.RequestException
-                                with AutoRemovePluginlessWriter(ctx, name) as w:
-                                    self.service.print_(1, f"Downloading {name}")
-                                    w.write_parts(file_response.iter_content(chunk_size=65536))
-                                    w.close()
-                                    self.process_file(ctx, self.__taxonomy, w.path, name)
-        except Exception as e:
-            self.service.print_(0, e)
+    def on_process(self):
+        with requests.get(self.__url) as files_response:
+            if files_response.status_code != 200:
+                raise requests.exceptions.RequestException
+            tree = etree.HTML(files_response.text)
+            for name in tree.xpath("/html/body/pre/a/text()"):
+                if name == "../":
+                    continue
+                with self.on_create_context() as ctx:
+                    if ctx.markers.add(name):
+                        with requests.get(f"{self.__url}/{name}", stream=True) as file_response:
+                            if file_response.status_code != 200:
+                                raise requests.exceptions.RequestException
+                            with AutoRemovePluginlessWriter(ctx, name) as w:
+                                self.service.print_(1, f"Downloading {name}")
+                                w.write_parts(file_response.iter_content(chunk_size=65536))
+                                w.close()
+                                self.on_process_file(ctx, self.__taxonomy, w.path, name)
 
 
 class AdriverLocalSource(Source):
@@ -155,20 +178,17 @@ class AdriverLocalSource(Source):
         os.makedirs(self.__dir, exist_ok=True)
         self.__taxonomy = Taxonomy.from_file(self.service, type_params["taxonomy_file"])
 
-    def process(self):
-        try:
-            for root, dirs, files in os.walk(self.__dir, True):
-                for name in sorted(files):
-                    path = os.path.join(self.__dir, name)
-                    self.service.verify_running()
-                    with self.create_context() as ctx:
-                        if ctx.markers.add(name):
-                            self.process_file(ctx, self.__taxonomy, path, name)
-                    self.service.print_(1, f"Removing {path}")
-                    os.remove(path)
-                break
-        except Exception as e:
-            self.service.print_(0, e)
+    def on_process(self):
+        for _, _, files in os.walk(self.__dir, True):
+            for name in sorted(files):
+                path = os.path.join(self.__dir, name)
+                self.service.verify_running()
+                with self.on_create_context() as ctx:
+                    if ctx.markers.add(name):
+                        self.on_process_file(ctx, self.__taxonomy, path, name)
+                self.service.print_(1, f"Removing {path}")
+                os.remove(path)
+            break
 
 
 SOURCE_TYPES = {

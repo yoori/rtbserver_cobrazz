@@ -280,7 +280,7 @@ class Application(Service):
         process_new_record(key, data, *args)
 
     def process_new_record_non_aggregated(self, key, data, action_to_ccg, ctx_adv_act, adv_act_fname_prefix):
-        if action_to_ccg and ADV_ACTION_PATTERN.fullmatch(key.utm_term) is not None:
+        if action_to_ccg and ADV_ACTION_PATTERN.fullmatch(key.utm_term):
             user_id, request_id = key.utm_term.split("/")
             chunk_number = crc32(b64decode(user_id[:-2] + "==", b"-_")) % 24
             log = ctx_adv_act.files.get_line_writer(
