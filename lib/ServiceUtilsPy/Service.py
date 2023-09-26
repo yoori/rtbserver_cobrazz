@@ -5,6 +5,7 @@ import time
 import threading
 import datetime
 from random import randint
+import signal
 
 
 class Params:
@@ -32,7 +33,7 @@ class Service:
     def __init__(self):
         self.running = True
         self.print_lock = threading.Lock()
-        self.verbosity = 2
+        self.verbosity = 1
         self.log_file = None
 
         def on_stop_signal():
@@ -41,19 +42,16 @@ class Service:
             self.print_(0, "Stop signal")
             self.on_stop_signal()
 
-        try:
-            from signal import SIGUSR1, signal
-        except ImportError:
-            pass
-        else:
-            signal(SIGUSR1, lambda signum, frame: on_stop_signal())
+        def add_stop_signal(name):
+            try:
+                s = getattr(signal, name)
+            except AttributeError:
+                pass
+            else:
+                signal.signal(s, lambda signum, frame: on_stop_signal())
 
-        try:
-            from signal import SIGINT, signal
-        except ImportError:
-            pass
-        else:
-            signal(SIGINT, lambda signum, frame: on_stop_signal())
+        add_stop_signal("SIGTERM")
+        add_stop_signal("SIGINT")
 
         self.args_parser = argparse.ArgumentParser()
         self.args_parser.add_argument("--period", type=float, help="Period between checking files.")
