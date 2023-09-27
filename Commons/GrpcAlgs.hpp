@@ -286,12 +286,7 @@ void fill_repeated_field(
   const It& end,
   google::protobuf::RepeatedField<Type>& result)
 {
-  const auto dist = std::distance(begin, end);
-  result.Reserve(dist);
-  for (It it = begin; it != end; ++it)
-  {
-    result.Add(*it);
-  }
+  result.Add(begin, end);
 }
 
 template<class T, class DecimalType>

@@ -650,18 +650,16 @@ namespace AdServer
 
         if(!geo_channels.empty())
         {
-          GrpcAlgs::fill_repeated_field(
+          geo_channels_response->Add(
             std::begin(geo_channels),
-            std::end(geo_channels),
-            *geo_channels_response);
+            std::end(geo_channels));
         }
 
         if(!coord_channels.empty())
         {
-          GrpcAlgs::fill_repeated_field(
+          coord_channels_response->Add(
             std::begin(coord_channels),
-            std::end(coord_channels),
-            *coord_channels_response);
+            std::end(coord_channels));
         }
 
         return response;
@@ -2673,7 +2671,7 @@ namespace AdServer
 
         return (tag_it != campaign_config.tags.end()) ?
           tag_it->second.in() :
-          0;
+          nullptr;
       }
 
       if(request_params.publisher_site_id())
@@ -2732,10 +2730,9 @@ namespace AdServer
         {
           for(const auto& size_ad_slot : ad_slot.sizes())
           {
-            const CampaignConfig::IdTagMap::const_iterator acc_tag_it =
-              campaign_config.account_tags.find(IdTagKey(
-                res_publisher_account_id,
-                size_ad_slot.c_str()));
+            const auto acc_tag_it = campaign_config.account_tags.find(IdTagKey(
+              res_publisher_account_id,
+              size_ad_slot.c_str()));
 
             if(acc_tag_it != campaign_config.account_tags.end())
             {
@@ -3739,7 +3736,7 @@ namespace AdServer
       try
       {
         CampaignIndex_var config_index = configuration_index();
-        if (config_index.in() == 0)
+        if (!config_index)
         {
           Stream::Error stream;
           stream << FNS
@@ -3749,7 +3746,7 @@ namespace AdServer
                        Logging::Logger::EMERGENCY,
                        Aspect::CAMPAIGN_MANAGER,
                        "ADS-IMPL-176");
-          throw Exception(stream.str());
+          throw ImplementationException(stream.str());
         }
 
         auto response = create_grpc_response<Proto::TraceCampaignSelectionIndexResponse>(
@@ -5940,8 +5937,8 @@ namespace AdServer
 
         if(redirect.empty())
         {
-          CCGKeywordPostClickInfoMap::const_iterator kw_it =
-            config->ccg_keyword_click_info_map.find(click_info.ccg_keyword_id());
+          const auto kw_it = config->ccg_keyword_click_info_map.find(
+            click_info.ccg_keyword_id());
 
           if(kw_it != config->ccg_keyword_click_info_map.end())
           {
@@ -5950,14 +5947,14 @@ namespace AdServer
           }
         }
 
-        const Colocation* colocation = 0;
-        const Tag* tag = 0;
+        const Colocation* colocation = nullptr;
+        const Tag* tag = nullptr;
         Tag::ConstSize_var tag_size;
-        const Creative* creative = 0;
+        const Creative* creative = nullptr;
 
         {
-          CampaignConfig::ColocationMap::const_iterator colo_it =
-            config->colocations.find(click_info.colo_id());
+          const auto colo_it = config->colocations.find(
+            click_info.colo_id());
           if(colo_it != config->colocations.end())
           {
             colocation = colo_it->second;
@@ -5965,12 +5962,12 @@ namespace AdServer
         }
 
         {
-          TagMap::const_iterator tag_it = config->tags.find(click_info.tag_id());
+          const auto tag_it = config->tags.find(click_info.tag_id());
           if(tag_it != config->tags.end())
           {
             tag = tag_it->second.in();
-            Tag::SizeMap::const_iterator tag_size_it =
-              tag->sizes.find(click_info.tag_size_id());
+            const auto tag_size_it = tag->sizes.find(
+              click_info.tag_size_id());
             if(tag_size_it != tag->sizes.end())
             {
               tag_size = tag_size_it->second;
@@ -5982,8 +5979,8 @@ namespace AdServer
 
         if (click_info.ccid())
         {
-          const CcidMap::const_iterator creative_it =
-            config->campaign_creatives.find(click_info.ccid());
+          const auto creative_it = config->campaign_creatives.find(
+            click_info.ccid());
 
           if(creative_it != config->campaign_creatives.end())
           {
@@ -5993,9 +5990,8 @@ namespace AdServer
         else if (click_info.creative_id())
         {
           // Get creative by click_info.creative_id if click_info.ccid not defined.
-          const CreativeMap::const_iterator creative_it =
-            config->creatives.find(click_info.creative_id());
-
+          const auto creative_it = config->creatives.find(
+            click_info.creative_id());
           if(creative_it != config->creatives.end())
           {
             creative = creative_it->second.in();
@@ -6015,11 +6011,13 @@ namespace AdServer
           }
 
           // campaign_group_id is campaign_id in OIX terms
-          click_result_info_response->set_campaign_id(creative->campaign->campaign_group_id);
+          click_result_info_response->set_campaign_id(
+            creative->campaign->campaign_group_id);
 
           if (creative->campaign->advertiser)
           {
-            click_result_info_response->set_advertiser_id(creative->campaign->advertiser->account_id);
+            click_result_info_response->set_advertiser_id(
+              creative->campaign->advertiser->account_id);
           }
         }
         else
@@ -6035,10 +6033,9 @@ namespace AdServer
             {
               TokenValueMap tokens;
               const auto& click_info_tokens = click_info.tokens();
-              for(int tok_i = 0; tok_i < click_info_tokens.size(); ++tok_i)
+              for(const auto& click_info_token : click_info_tokens)
               {
-                tokens[click_info_tokens[tok_i].name()] =
-                  click_info_tokens[tok_i].value();
+                tokens[click_info_token.name()] = click_info_token.value();
               }
 
               instantiate_click_url(
@@ -6096,7 +6093,7 @@ namespace AdServer
 
         auto request_id = GrpcAlgs::unpack_request_id(click_info.request_id());
 
-        if(!request_id.is_null()  && click_info.log_click())
+        if(!request_id.is_null() && click_info.log_click())
         {
           try
           {
@@ -6390,9 +6387,8 @@ namespace AdServer
       AdSelectionResult& select_result,
       std::string& creative_body)
     {
-      const CcidMap::const_iterator ccid_it =
-        config->campaign_creatives.find(request_params.preview_ccid());
-
+      const auto ccid_it = config->campaign_creatives.find(
+        request_params.preview_ccid());
       if(ccid_it == config->campaign_creatives.end())
       {
         return false;
@@ -6400,14 +6396,12 @@ namespace AdServer
 
       const Tag::Size* tag_size = match_creative_by_size_(
         tag, ccid_it->second);
-
       if(!tag_size)
       {
         return false;
       }
 
       const Creative* creative = ccid_it->second;
-
       if (!creative->campaign->advertiser)
       {
         return false;
@@ -7107,18 +7101,18 @@ namespace AdServer
         campaign_select_params.random = request_params.common_info().random();
         campaign_select_params.random2 = Generics::safe_rand(RANDOM_PARAM_MAX);
         campaign_select_params.up_expand_space = ad_slot.up_expand_space() >= 0 ?
-                                                 static_cast<unsigned long>(ad_slot.up_expand_space()) : 0;
+          static_cast<unsigned long>(ad_slot.up_expand_space()) : 0;
         campaign_select_params.right_expand_space = ad_slot.right_expand_space() >= 0 ?
-                                                    static_cast<unsigned long>(ad_slot.right_expand_space()) : 0;
+          static_cast<unsigned long>(ad_slot.right_expand_space()) : 0;
         campaign_select_params.down_expand_space = ad_slot.down_expand_space() >= 0 ?
-                                                   static_cast<unsigned long>(ad_slot.down_expand_space()) : 0;
+          static_cast<unsigned long>(ad_slot.down_expand_space()) : 0;
         campaign_select_params.left_expand_space = ad_slot.left_expand_space() >= 0 ?
-                                                   static_cast<unsigned long>(ad_slot.left_expand_space()) : 0;
+          static_cast<unsigned long>(ad_slot.left_expand_space()) : 0;
         campaign_select_params.video_min_duration = ad_slot.video_min_duration();
         campaign_select_params.video_max_duration =
           ad_slot.video_max_duration() >= 0 ?
-          AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration()) :
-          AdServer::Commons::Optional<unsigned long>();
+            AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration()) :
+            AdServer::Commons::Optional<unsigned long>();
         campaign_select_params.video_skippable_max_duration =
           ad_slot.video_skippable_max_duration() >= 0 ?
           AdServer::Commons::Optional<unsigned long>(ad_slot.video_skippable_max_duration()) :
@@ -7160,8 +7154,8 @@ namespace AdServer
         campaign_select_params.last_platform_channel_id = 0;
         campaign_select_params.time_hour = campaign_select_params.time.get_gm_time().tm_hour;
         campaign_select_params.time_week_day = ((
-                                                  campaign_select_params.time /
-                                                  Generics::Time::ONE_DAY.tv_sec).tv_sec + 3) % 7;
+          campaign_select_params.time /
+          Generics::Time::ONE_DAY.tv_sec).tv_sec + 3) % 7;
 
         campaign_select_params.geo_channels.insert(
           std::begin(request_params.context_info().geo_channels()),
@@ -7259,10 +7253,10 @@ namespace AdServer
                   (tag->auction_max_ecpm_share +
                    tag->auction_prop_probability_share);
                 if(RevenueDecimal::div(RevenueDecimal::mul(
-                                         auction_offset,
-                                         tag->auction_prop_probability_share +
-                                         tag->auction_max_ecpm_share, Generics::DMR_ROUND),
-                                       tag->auction_random_share) >=
+                        auction_offset,
+                        tag->auction_prop_probability_share +
+                        tag->auction_max_ecpm_share, Generics::DMR_ROUND),
+                      tag->auction_random_share) >=
                    tag->auction_max_ecpm_share)
                 {
                   second_auction_type = AT_PROPORTIONAL_PROBABILITY;
@@ -7297,9 +7291,9 @@ namespace AdServer
           // clear weighted_campaign_keywords if showing not allowed
           bool available = true;
 
-          for(CampaignSelector::WeightedCampaignKeywordList::const_iterator cmp_it =
-            weighted_campaign_keywords->begin();
-              cmp_it != weighted_campaign_keywords->end(); ++cmp_it)
+          for(auto cmp_it = weighted_campaign_keywords->begin();
+              cmp_it != weighted_campaign_keywords->end();
+              ++cmp_it)
           {
             const BillingStateContainer::BidCheckResult check_result =
               check_billing_state_container_->check_available_bid(
@@ -7422,9 +7416,9 @@ namespace AdServer
 
       ConfirmCreativeAmountArray confirm_creatives;
 
-      for(CampaignSelectionDataList::iterator cs_it =
-        select_result.selected_campaigns.begin();
-          cs_it != select_result.selected_campaigns.end(); ++cs_it)
+      for(auto cs_it = select_result.selected_campaigns.begin();
+          cs_it != select_result.selected_campaigns.end();
+          ++cs_it)
       {
         const CampaignSelectionData& select_params = *cs_it;
 
@@ -7440,8 +7434,8 @@ namespace AdServer
 
         // fill imp
         {
-          CampaignSelectParams::CampaignImpsMap::const_iterator cmp_it =
-            campaign_select_params.campaign_imps.find(campaign->campaign_group_id);
+          auto cmp_it = campaign_select_params.campaign_imps.find(
+            campaign->campaign_group_id);
           cs_it->campaign_imps = (
             cmp_it != campaign_select_params.campaign_imps.end() ?
             cmp_it->second : 0);
@@ -7469,8 +7463,8 @@ namespace AdServer
 
         if(cs_it->campaign_keyword.in())
         {
-          CampaignConfig::ChannelMap::const_iterator ch_it =
-            config->expression_channels.find(cs_it->campaign_keyword->channel_id);
+          const auto ch_it = config->expression_channels.find(
+            cs_it->campaign_keyword->channel_id);
           if(ch_it != config->expression_channels.end() &&
              ch_it->second->params().common_params.in() &&
              ch_it->second->params().common_params->freq_cap_id)
@@ -7684,7 +7678,7 @@ namespace AdServer
       try
       {
         ConstCampaignConfig_var config = configuration(false);
-        if(!config.in())
+        if(!config)
         {
           throw NotReady("Can't receive configuration.");
         }
@@ -7699,24 +7693,24 @@ namespace AdServer
         ChannelUseCountMap uc_tbl;
 
         /* expression channel cycle */
-        for(const auto& [_, data] : config->expression_channels)
+        for(const auto& [_, info] : config->expression_channels)
         {
           if(match)
           {
-            data->triggered(&used_simple_channels, 0, "A", &uc_tbl);
+            info->triggered(&used_simple_channels, 0, "A", &uc_tbl);
           }
           else
           {
-            data->use(uc_tbl, used_simple_channels, "AI");
+            info->use(uc_tbl, used_simple_channels, "AI");
           }
         }
 
-        for(const auto& [key, data] : config->campaigns)
+        for(const auto& [key, info] : config->campaigns)
         {
-          if(data->channel.in() && data->channel->has_params())
+          if(info->channel.in() && info->channel->has_params())
           {
             auto uc_it = uc_tbl.find(
-              data->channel->params().channel_id);
+              info->channel->params().channel_id);
             if(uc_it != uc_tbl.end())
             {
               uc_it->second.ccg_ids.insert(key);
@@ -7731,11 +7725,11 @@ namespace AdServer
           info_response->mutable_channel_search_results();
 
         channel_search_results_response->Reserve(uc_tbl.size());
-        for (const auto& [key, data] : uc_tbl)
+        for (const auto& [key, info] : uc_tbl)
         {
           auto* result = channel_search_results_response->Add();
           result->set_channel_id(key.value());
-          result->set_use_count(data.count);
+          result->set_use_count(info.count);
 
           const auto discover_it = config->discover_channels.find(key.value());
           if(discover_it != config->discover_channels.end())
@@ -7751,16 +7745,14 @@ namespace AdServer
           }
 
           auto* ccg_ids = result->mutable_ccg_ids();
-          GrpcAlgs::fill_repeated_field(
-            std::begin(data.ccg_ids),
-            std::end(data.ccg_ids),
-            *ccg_ids);
+          ccg_ids->Add(
+            std::begin(info.ccg_ids),
+            std::end(info.ccg_ids));
 
           auto* channel_ids = result->mutable_matched_simple_channels();
-          GrpcAlgs::fill_repeated_field(
-            std::begin(data.channel_ids),
-            std::end(data.channel_ids),
-            *channel_ids);
+          channel_ids->Add(
+            std::begin(info.channel_ids),
+            std::end(info.channel_ids));
         }
 
         return response;
@@ -7968,9 +7960,9 @@ namespace AdServer
             channel.weight());
         }
 
-        for(CampaignConfig::ChannelMap::const_iterator ch_it =
-              config->discover_channels.begin();
-            ch_it != config->discover_channels.end(); ++ch_it)
+        for(auto ch_it = config->discover_channels.begin();
+            ch_it != config->discover_channels.end();
+            ++ch_it)
         {
           unsigned long weight;
 
@@ -8956,9 +8948,8 @@ namespace AdServer
         const auto& curct = request->curct();
         const auto& user_id = request->user_id();
 
-        CampaignConfig::ColocationMap::const_iterator colo_it =
-          colo_id <= 0 ? config->colocations.end() :
-          config->colocations.find(colo_id);
+        auto colo_it = colo_id <= 0 ?
+          config->colocations.end() : config->colocations.find(colo_id);
 
         if (colo_it == config->colocations.end())
         {
@@ -9041,7 +9032,6 @@ namespace AdServer
         auto response = create_grpc_response<Proto::VerifyOptOperationResponse>(
           id_request_grpc);
         response->mutable_info();
-
         return response;
       }
       catch (const NotReady& exc)
@@ -9489,7 +9479,6 @@ namespace AdServer
 
         auto* child_category_channels = res.mutable_child_category_channels();
         child_category_channels->Reserve(node->child_category_channels.size());
-
         for(const auto& [_, value] : node->child_category_channels)
         {
           auto* category_channel_node_info= child_category_channels->Add();
@@ -9640,9 +9629,8 @@ namespace AdServer
       AdRequestType request_type = reduce_request_type_(
         request_params.common_info().request_type());
 
-      CampaignConfig::ExternalCategoryMap::const_iterator req_ext_cat_it =
-        config.external_creative_categories.find(request_type);
-
+      const auto req_ext_cat_it = config.external_creative_categories.find(
+        request_type);
       if(req_ext_cat_it != config.external_creative_categories.end())
       {
         const CampaignConfig::ExternalCategoryNameMap& ext_categories =
@@ -9650,8 +9638,7 @@ namespace AdServer
 
         for(const auto& category : category_seq)
         {
-          CampaignConfig::ExternalCategoryNameMap::const_iterator ext_cat_it =
-            ext_categories.find(category);
+          const auto ext_cat_it = ext_categories.find(category);
           if(ext_cat_it != ext_categories.end())
           {
             std::copy(ext_cat_it->second.begin(),
