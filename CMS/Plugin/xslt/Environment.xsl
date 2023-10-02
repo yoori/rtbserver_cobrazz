@@ -100,6 +100,7 @@
   export auto_test_path
 
   PATH=$PATH:$server_root/bin
+  PATH=$PATH:$server_root/Utils/YaMetrikaUploader
   PATH=$PATH:$server_root/build/bin
   PATH=$PATH:$server_root/ConfigSys:$auto_test_path
   PATH=$PATH:$server_root/Predictor/Scripts

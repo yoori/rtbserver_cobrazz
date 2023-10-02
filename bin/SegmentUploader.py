@@ -2,6 +2,8 @@
 
 import os
 import io
+import time
+import collections
 import aiohttp
 import aiohttp.client_exceptions
 import psycopg2
@@ -16,13 +18,6 @@ import werkzeug
 from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
-
-
-def make_keyword(name):
-    r = str()
-    for c in name:
-        r += c if (('a' <= c <= 'z') or ('0' <= c <= '9')) else 'x'
-    return r
 
 
 SQL_REG_USER = """DO $$DECLARE
@@ -61,6 +56,13 @@ BEGIN
 END$$;"""
 
 
+def make_keyword(name):
+    r = str()
+    for c in name:
+        r += c if (('a' <= c <= 'z') or ('0' <= c <= '9')) else 'x'
+    return r
+
+
 class Metrics:
     def __init__(self):
         self.uploaded_users = 0
@@ -72,7 +74,7 @@ class UploadDir:
         self.in_dir = in_dir
         self.markers_dir = markers_dir
         self.channel_prefix = channel_prefix
-        for root, dirs, files in os.walk(self.in_dir, True):
+        for _, _, files in os.walk(self.in_dir, True):
             self.files_to_upload = len(files)
 
 
@@ -94,7 +96,7 @@ class Upload(UploadDir):
             r = []
             if self.channel_prefix is not None:
                 r.append(self)
-            for root, dirs, files in os.walk(self.in_dir, True):
+            for _, dirs, _ in os.walk(self.in_dir, True):
                 dirs = set(dirs)
                 for d in dirs:
                     try:
@@ -123,25 +125,23 @@ class Upload(UploadDir):
             return self.metrics
 
 
-class FileInfo:
-    def __init__(self, in_name):
-        signed_uids = False
-        basename, ext = os.path.splitext(in_name)
-        if ext.startswith(".stamp"):
-            basename, ext = os.path.splitext(basename)
-        if ext.startswith(".signed_uids"):
-            basename, ext = os.path.splitext(basename)
-            signed_uids = True
-        if ext in (".stable", ".uids", ".txt"):
-            self.is_stable = (ext == ".stable")
-            basename, ext = os.path.splitext(basename)
-        else:
-            self.is_stable = False
-        self.reg_name = basename + ext
-        self.need_sign_uids = not signed_uids and ext in ("", ".txt", ".uids")
+UIDFileGroupInfo = collections.namedtuple("UIDFileGroupInfo", "name need_sign_uids is_stable")
 
-    def __repr__(self):
-        return f"FileInfo(reg_name={self.reg_name}, need_sign_uids={self.need_sign_uids}, is_stable={self.is_stable})"
+
+def make_uid_file_group_info(in_name):
+    basename, ext = os.path.splitext(in_name)
+    if ext.startswith(".stamp"):
+        basename, ext = os.path.splitext(basename)
+    signed_uids = ext == ".signed_uids"
+    if signed_uids:
+        basename, ext = os.path.splitext(basename)
+    try:
+        is_stable = (".stable", ".uids", ".txt").index(ext) == 0
+    except ValueError:
+        is_stable = False
+    else:
+        basename, ext = os.path.splitext(basename)
+    return UIDFileGroupInfo(basename + ext, not signed_uids and ext in ("", ".txt", ".uids"), is_stable)
 
 
 class HTTPThread(threading.Thread):
@@ -294,20 +294,22 @@ class Application(Service):
                 while True:
                     self.verify_running()
                     with Context(self, markers_dir=item.markers_dir) as markers_ctx:
-                        in_files = tuple(in_dir_ctx.files.get_in_files())
+                        in_names_all = tuple(in_dir_ctx.files.get_in_names())
                         with self.lock:
                             upload.metrics_dirty = True
-                            item.files_to_upload = len(in_files)
-                        if not in_files:
+                            item.files_to_upload = len(in_names_all)
+                        if not in_names_all:
+                            # TODO: fix infinite loop (sleep, possibly os.walk sort by time[not supported by file system], limit by mask)
+                            time.sleep(0.1)
                             break
-                        file_info = FileInfo(max(
-                            in_files,
-                            key=lambda in_file_: os.path.getmtime(os.path.join(item.in_dir, in_file_))))
-                        reg_marker_name = file_info.reg_name + ".__reg__"
-                        keyword = make_keyword(item.channel_prefix.lower() + file_info.reg_name.lower())
+                        group_info = make_uid_file_group_info(max(
+                            in_names_all,
+                            key=lambda in_name: os.path.getmtime(os.path.join(item.in_dir, in_name))))
+                        reg_marker_name = group_info.name + ".__reg__"
+                        keyword = make_keyword(item.channel_prefix.lower() + group_info.name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
-                            channel_id = item.channel_prefix + file_info.reg_name.upper()
-                            self.print_(1, f"Registering file: {reg_marker_name} ({in_name}) channel_id {channel_id} account_id {account_id} keyword {keyword}")
+                            channel_id = item.channel_prefix + group_info.name.upper()
+                            self.print_(1, f"Registering file group: {reg_marker_name} ({group_info.name}) channel_id {channel_id} account_id {item.account_id} keyword {keyword}")
                             pg_cursor.execute(
                                 SQL_REG_USER,
                                 (channel_id, item.account_id, keyword, keyword, keyword, keyword, keyword))
@@ -317,10 +319,10 @@ class Application(Service):
                             continue
 
                         in_names = []
-                        for in_file in in_files:
-                            if repr(file_info) != repr(FileInfo(in_file)):
+                        for in_name in in_names_all:
+                            if group_info != make_uid_file_group_info(in_name):
                                 continue
-                            in_names.append(in_file)
+                            in_names.append(in_name)
                         in_names.sort(
                             key=lambda _: os.path.getmtime(os.path.join(item.in_dir, _)),
                             reverse=True)
@@ -328,7 +330,7 @@ class Application(Service):
 
                         for in_name_index, in_name in enumerate(in_names):
                             if in_name_index == 0:
-                                self.print_(1, f"Processing file group: {file_info}")
+                                self.print_(1, f"Processing file group: {group_info}")
                             self.print_(1, f" {in_name_index + 1}) File {in_name}")
 
                         if len(in_names) > 1:
@@ -378,7 +380,7 @@ class Application(Service):
                                     with self.lock:
                                         for i in range(self.__upload_threads):
                                             task = loop.create_task(
-                                                self.on_uids_lines(f, file_info.is_stable, keyword, session, upload))
+                                                self.on_uids_lines(f, group_info.is_stable, keyword, session, upload))
                                             tasks.append(task)
                                             self.__asyncio_tasks.add(task)
                                     for task in tasks:
@@ -393,7 +395,7 @@ class Application(Service):
 
                         in_paths_str = " ".join(os.path.join(item.in_dir, in_name) for in_name in in_names)
 
-                        if file_info.need_sign_uids:
+                        if group_info.need_sign_uids:
                             cmd = ['sh', '-c', f'cat {in_paths_str} | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.__private_key_file}"']
                         else:
                             cmd = ['sh', '-c', f'cat {in_paths_str} | sort -u --parallel=4']
@@ -402,9 +404,9 @@ class Application(Service):
                             with self.lock:
                                 self.__subprocesses.add(shp.pid)
                             try:
-                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=1), encoding="utf-8")
+                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
                                 self.print_(0, f"Processing...")
-                                with LineReader(self, path=file_info.reg_name, file=file) as f:
+                                with LineReader(self, path=group_info.name, file=file) as f:
                                     await run_lines(f)
                             finally:
                                 with self.lock:
@@ -470,7 +472,7 @@ class Application(Service):
 
         try:
             with Context(self, in_dir=upload.url_segments_dir, markers_dir=upload.url_markers_dir) as ctx:
-                for in_name in ctx.files.get_in_files():
+                for in_name in ctx.files.get_in_names():
                     in_path = os.path.join(ctx.in_dir, in_name)
                     if ctx.markers.add(in_name, os.path.getmtime(in_path)):
                         self.print_(1, f"Registering URL file: {in_name}")
@@ -486,7 +488,7 @@ class Application(Service):
             self.print_(0, e)
 
     def __make_http_application(self):
-        app = flask.Flask('UploadSegmentsHTTP')
+        app = flask.Flask('SegmentUploaderHTTP')
 
         @app.route('/metrics')
         def metrics():
@@ -500,10 +502,7 @@ class Application(Service):
                     prometheus.append(('files_to_upload', name, m.files_to_upload))
                 for name, m in mm.items():
                     prometheus.append(('uploaded_users', name, m.uploaded_users))
-                return "\n".join(
-                    '{}{{source = "{}"}} {}'.format(*p)
-                    for p in prometheus
-                )
+                return "\n".join('{}{{source = "{}"}} {}'.format(*p) for p in prometheus)
             if fmt == "json":
                 files_to_upload = []
                 uploaded_users = []

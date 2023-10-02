@@ -3,18 +3,33 @@ import gzip
 import shutil
 
 
+PLUGINS = {}
+
+
+def add_plugin(plugin_ext, plugin_open):
+    if plugin_ext in PLUGINS:
+        raise RuntimeError(f"File plugin {plugin_ext} already added")
+    PLUGINS[plugin_ext] = plugin_open
+
+
+add_plugin(".gz", gzip.open)
+
+
 class File:
     def __init__(self, service, path, mode=None, file=None, remove_on_exit=False, use_plugins=True):
         self.service = service
         self.path = path
         self.remove_on_exit = remove_on_exit
         if file is None:
-            assert mode is not None
-            if use_plugins and self.path.endswith(".gz"):
-                file_type = gzip.open
-            else:
-                file_type = open
-            self.file = file_type(path, mode)
+            if mode is None:
+                raise RuntimeError("File mode is None")
+            file_open = open
+            if use_plugins:
+                for plugin_ext, plugin_open in PLUGINS.items():
+                    if self.path.endswith(plugin_ext):
+                        file_open = plugin_open
+                        break
+            self.file = file_open(path, mode)
             self.__need_close = True
         else:
             self.file = file
@@ -53,7 +68,6 @@ class File:
             os.remove(self.path)
 
     def move(self, path):
-        self.service.print_(0, f"Output file {os.path.join(path, os.path.split(self.path)[1])}")
         self.close()
         shutil.move(self.path, path)
 

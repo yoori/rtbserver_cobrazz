@@ -34,8 +34,9 @@ class LineReader(LineFile):
     def read_line(self, progress=True):
         self.service.verify_running()
         line = self.file.readline()
+        # TODO: return None if empty to allow empty lines in read_lines?
         if line:
-            line = line.strip("\n")
+            line = line.rstrip("\n\r")
             if progress:
                 self.progress.next_line()
         return line
