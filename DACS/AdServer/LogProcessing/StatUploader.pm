@@ -27,7 +27,7 @@ sub stop
 
   my $command =
     "test \${workspace_root}/run/stat_uploader.pid || exit 0 && " .
-    "kill -USR1 `cat \${workspace_root}/run/stat_uploader.pid`";
+    "kill -TERM `cat \${workspace_root}/run/stat_uploader.pid`";
 
   return AdServer::Functions::execute_command($host, $descr, $command);
 }
