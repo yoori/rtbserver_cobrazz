@@ -1113,6 +1113,7 @@ namespace CampaignSvcs
       unpack_non_linked_expression(campaign->expression, campaign_info.expression);
       unpack_non_linked_expression(campaign->stat_expression, campaign_info.stat_expression);
 
+      /*
       for(CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
       {
         const CampaignContractInfo& contract = campaign_info.contracts[contract_i];
@@ -1128,6 +1129,7 @@ namespace CampaignSvcs
         new_contract->contractor_name = contract.contractor_name;
         campaign->contracts.emplace(new_contract->id, new_contract);
       }
+      */
 
       new_config.campaigns.activate(campaign_info.campaign_id, campaign);
     }

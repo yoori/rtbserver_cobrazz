@@ -41,6 +41,7 @@ namespace Bidding
         const String::SubString ID("id");
         const String::SubString DEAL_ID("dealid");
         const String::SubString BID("bid");
+        const String::SubString BID_EXT("ext");
         const String::SubString BIDID("bidid");
         const String::SubString CUR("cur");
         const String::SubString EXT("ext");
@@ -96,6 +97,7 @@ namespace Bidding
         const String::SubString EVENT_URL("url");
 
         const String::SubString BID_EXT_NROA("nroa");
+
         const String::SubString NROA_ERID("erid");
         const String::SubString NROA_CONTRACTS("contracts");
         const String::SubString CONTRACT_ORD_ID("id");
@@ -107,6 +109,35 @@ namespace Bidding
         const String::SubString CONTRACT_CLIENT_NAME("client_name");
         const String::SubString CONTRACT_CONTRACTOR_ID("contractor_inn");
         const String::SubString CONTRACT_CONTRACTOR_NAME("contractor_name");
+
+        // nroa attributes by buzzula+sape standard
+        namespace BuzSapeNroa
+        {
+          const String::SubString HASNROAMARKUP("has_nroa_markup");
+
+          const String::SubString CONTRACTOR("contractor");
+          const String::SubString CONTRACTOR_INN("inn");
+          const String::SubString CONTRACTOR_NAME("name");
+          const String::SubString CONTRACTOR_LEGALFORM("legal_form");
+
+          const String::SubString CLIENT("client");
+          const String::SubString CLIENT_INN("inn");
+          const String::SubString CLIENT_NAME("name");
+          const String::SubString CLIENT_LEGALFORM("legal_form");
+
+          const String::SubString INITIALCONTRACT("initial_contract");
+          const String::SubString PARENTCONTRACTS("parent_contracts");
+
+          const String::SubString CONTRACT_SIGNDATE("sign_date");
+          const String::SubString CONTRACT_NUMBER("number");
+          const String::SubString CONTRACT_TYPE("type");
+          const String::SubString CONTRACT_SUBJECTTYPE("subject_type");
+          const String::SubString CONTRACT_ACTIONTYPE("action_type");
+          const String::SubString CONTRACT_ID("id");
+          const String::SubString CONTRACT_ADOID("ado_id");
+          const String::SubString CONTRACT_VATINCLUDED("vat_included");
+          const String::SubString CONTRACT_PARENTCONTRACTID("parent_contract_id");
+        }
       }
 
       namespace OpenX
@@ -465,6 +496,144 @@ namespace Bidding
   }
 
   void
+  OpenRtbBidRequestTask::fill_ext0_nroa_(
+    AdServer::Commons::JsonObject& nroa_obj,
+    const RequestInfo& request_info,
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    noexcept
+  {
+    nroa_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+
+    if(ad_slot_result.contracts.length() > 0)
+    {
+      AdServer::Commons::JsonObject contracts_array(nroa_obj.add_array(Response::OpenRtb::NROA_CONTRACTS));
+
+      for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+      {
+        const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& contract = ad_slot_result.contracts[contract_i];
+        AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.contract_info.ord_contract_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_ORD_ADO_ID, String::SubString(contract.contract_info.ord_ado_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_NUMBER, String::SubString(contract.contract_info.number));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_DATE, String::SubString(contract.contract_info.date));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_TYPE, String::SubString(contract.contract_info.type));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CLIENT_ID, String::SubString(contract.contract_info.client_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CLIENT_NAME, String::SubString(contract.contract_info.client_name));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CONTRACTOR_ID, String::SubString(contract.contract_info.contractor_id));
+        contract_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME, String::SubString(contract.contract_info.contractor_name));
+      }
+    }
+  }
+
+  void
+  OpenRtbBidRequestTask::fill_buzsape_nroa_contract_(
+    AdServer::Commons::JsonObject& contract_obj,
+    const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& ext_contract_info)
+    noexcept
+  {
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_SIGNDATE,
+      String::SubString(ext_contract_info.contract_info.date));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_NUMBER,
+      String::SubString(ext_contract_info.contract_info.number));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_TYPE,
+      String::SubString(ext_contract_info.contract_info.type));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_SUBJECTTYPE,
+      String::SubString(ext_contract_info.contract_info.subject_type));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_ACTIONTYPE,
+      String::SubString(ext_contract_info.contract_info.action_type));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_ID,
+      String::SubString(ext_contract_info.contract_info.ord_contract_id));
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_ADOID,
+      String::SubString(ext_contract_info.contract_info.ord_ado_id));
+    contract_obj.add_boolean(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_VATINCLUDED,
+      ext_contract_info.contract_info.vat_included);
+    contract_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::BuzSapeNroa::CONTRACT_PARENTCONTRACTID,
+      String::SubString(ext_contract_info.parent_contract_id));
+  }
+
+  void
+  OpenRtbBidRequestTask::fill_buzsape_nroa_(
+    AdServer::Commons::JsonObject& nroa_obj,
+    const RequestInfo& request_info,
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    noexcept
+  {
+    nroa_obj.add_escaped_string_if_non_empty(
+      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
+    nroa_obj.add_number(
+      Response::OpenRtb::BuzSapeNroa::HASNROAMARKUP, 1);
+
+    if(ad_slot_result.contracts.length() > 0)
+    {
+      const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& initial_contract = ad_slot_result.contracts[0];
+      
+      // contractor
+      {
+        AdServer::Commons::JsonObject contractor_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CONTRACTOR));
+        contractor_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CONTRACTOR_INN,
+          String::SubString(initial_contract.contract_info.contractor_id));
+        contractor_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CONTRACTOR_NAME,
+          String::SubString(initial_contract.contract_info.contractor_name));
+        contractor_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CONTRACTOR_LEGALFORM,
+          String::SubString(initial_contract.contract_info.contractor_legal_form));
+      }
+      
+      // client
+      {
+        AdServer::Commons::JsonObject client_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CLIENT));
+        client_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CLIENT_INN,
+          String::SubString(initial_contract.contract_info.client_id));
+        client_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CLIENT_NAME,
+          String::SubString(initial_contract.contract_info.client_name));
+        client_obj.add_escaped_string_if_non_empty(
+          Response::OpenRtb::BuzSapeNroa::CLIENT_LEGALFORM,
+          String::SubString(initial_contract.contract_info.client_legal_form));
+      }
+
+      {
+        // initial_contract
+        AdServer::Commons::JsonObject initial_contract_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::INITIALCONTRACT));
+        fill_buzsape_nroa_contract_(initial_contract_obj, initial_contract);
+      }
+
+      // fill parent contracts
+      if(ad_slot_result.contracts.length() > 1)
+      {
+        AdServer::Commons::JsonObject parent_contracts_array(nroa_obj.add_array(Response::OpenRtb::BuzSapeNroa::PARENTCONTRACTS));
+        for(CORBA::ULong contract_i = 1; contract_i < ad_slot_result.contracts.length(); ++contract_i)
+        {
+          AdServer::Commons::JsonObject contract_obj(parent_contracts_array.add_object());
+          fill_buzsape_nroa_contract_(contract_obj, ad_slot_result.contracts[contract_i]);
+        }
+      }
+    }
+  }
+
+  void
   OpenRtbBidRequestTask::fill_openrtb_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
@@ -630,9 +799,12 @@ namespace Bidding
               }
             }
 
+            bool need_ipw_extension = request_info.ipw_extension;
+            bool video_url_in_ext = false;
+            bool native_in_ext = false;
+
             {
               bool notice_enabled = false;
-              bool need_ipw_extension = request_info.ipw_extension;
               auto notice_instantiate_type = request_info.notice_instantiate_type;
               if(slot_it->video)
               {
@@ -684,18 +856,7 @@ namespace Bidding
                 }
                 else if (request_info.native_ads_instantiate_type == SourceTraits::NAIT_EXT)
                 {
-                  AdServer::Commons::JsonObject ext_obj(
-                    bid_object.add_object(Response::OpenRtb::EXT));
-
-                  fill_native_response_(
-                    &ext_obj,
-                    *slot_it->native,
-                    ad_slot_result,
-                    true,
-                    true, // add native root
-                    request_info.native_ads_instantiate_type
-                    );
-
+                  native_in_ext = true;
                   notice_enabled = true;
                 }
                 else if(request_info.native_ads_instantiate_type == SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2)
@@ -720,32 +881,7 @@ namespace Bidding
               {
                 if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL)
                 {
-                  AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
-                  
-                  if (need_ipw_extension)
-                  {
-                    ext_obj.add_escaped_string(
-                      Response::OpenRtb::ADVERTISER_NAME,
-                      String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
-
-                    need_ipw_extension = false;
-                  }
-
-                  ext_obj.add_string(Response::OpenRtb::VAST_URL, escaped_creative_url);
-
-                  if(ad_slot_result.ext_tokens.length() > 0)
-                  {
-                    for(CORBA::ULong token_i = 0;
-                      token_i < ad_slot_result.ext_tokens.length(); ++token_i)
-                    {
-                      std::string escaped_name = String::StringManip::json_escape(
-                        String::SubString(ad_slot_result.ext_tokens[token_i].name));
-
-                      ext_obj.add_escaped_string(escaped_name,
-                        String::SubString(ad_slot_result.ext_tokens[token_i].value));
-                    }
-                  }
-
+                  video_url_in_ext = true;
                   notice_enabled = true;
                 }
                 else if(request_params.ad_instantiate_type ==
@@ -760,14 +896,6 @@ namespace Bidding
                 {
                   bid_object.add_string(Response::OpenRtb::NURL, escaped_creative_url);
                 }
-              }
-
-              if (need_ipw_extension)
-              {
-                AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
-                ext_obj.add_escaped_string(
-                  Response::OpenRtb::ADVERTISER_NAME,
-                  String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
               }
 
               if(notice_enabled)
@@ -792,109 +920,142 @@ namespace Bidding
                 ad_slot_result.external_visual_categories);
             }
 
-            if(!slot_it->banners.empty()) // fill extensions for overlay
+            if(!slot_it->banners.empty())
             {
               auto banner_by_size_it = slot_it->size_banner.find(
                 ad_slot_result.tag_size.in());
 
               if(banner_by_size_it != slot_it->size_banner.end())
               {
-                const JsonAdSlotProcessingContext::Banner& use_banner =
-                  *(banner_by_size_it->second.banner);
                 const JsonAdSlotProcessingContext::BannerFormat& use_banner_format =
                   *(banner_by_size_it->second.banner_format);
+                bid_object.add_number(
+                  Response::OpenRtb::WIDTH,
+                  use_banner_format.width);
+                bid_object.add_number(
+                  Response::OpenRtb::HEIGHT,
+                  use_banner_format.height);
+              }
+            }
 
-                bool add_ext_width_height = (
-                  ad_slot_result.selected_creatives.length() == 1 &&
-                  use_banner_format.ext_type == "20");
+            {
+              auto banner_by_size_it = slot_it->size_banner.find(
+                ad_slot_result.tag_size.in());
 
-                if(add_ext_width_height ||
-                  request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
-                  ad_slot_result.erid[0] ||
-                  ad_slot_result.contracts.length() > 0)
+              const bool fill_overlay_ext = (!slot_it->banners.empty() && (banner_by_size_it != slot_it->size_banner.end()));
+              const bool fill_nroa = (ad_slot_result.erid[0] || ad_slot_result.contracts.length() > 0);
+
+              if(fill_overlay_ext || fill_nroa || need_ipw_extension || video_url_in_ext || native_in_ext)
+              {
+                AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::BID_EXT));
+
+                if(native_in_ext)
                 {
-                  AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
+                  fill_native_response_(
+                    &ext_obj,
+                    *slot_it->native,
+                    ad_slot_result,
+                    true,
+                    true, // add native root
+                    request_info.native_ads_instantiate_type
+                    );
+                }
 
-                  if(add_ext_width_height)
+                if(video_url_in_ext)
+                {
+                  ext_obj.add_string(Response::OpenRtb::VAST_URL, escaped_creative_url);
+
+                  if(ad_slot_result.ext_tokens.length() > 0)
                   {
-                    ext_obj.add_as_string(Response::OpenRtb::WIDTH, ad_slot_result.overlay_width);
-                    ext_obj.add_as_string(Response::OpenRtb::HEIGHT, ad_slot_result.overlay_height);
-                  }
-
-                  if(request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
-                  {
-                    if(!use_banner.matching_ad.empty())
+                    for(CORBA::ULong token_i = 0;
+                      token_i < ad_slot_result.ext_tokens.length(); ++token_i)
                     {
-                      ext_obj.add_number(
-                        Response::OpenX::MATCHING_AD_ID,
-                        use_banner.matching_ad);
-                    }
-
-                    print_int_category_seq(
-                      ext_obj,
-                      Response::OpenX::AD_OX_CATS,
-                      ad_slot_result.external_content_categories);
-                  }
-
-                  if(ad_slot_result.erid[0] || ad_slot_result.contracts.length() > 0)
-                  {
-                    AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
-
-                    if(request_info.erid_return_type == SourceTraits::ERIDRT_SINGLE)
-                    {
-                      nroa_obj.add_escaped_string_if_non_empty(
-                        Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
-                    }
-                    else if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
-                    {
-                      AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
-                      if(ad_slot_result.erid[0])
+                      if(ad_slot_result.ext_tokens[token_i].name[0])
                       {
-                        array.add_escaped_string(String::SubString(ad_slot_result.erid));
-                      }
-                    }
+                        std::string escaped_name = String::StringManip::json_escape(
+                          String::SubString(ad_slot_result.ext_tokens[token_i].name));
 
-                    if(ad_slot_result.contracts.length() > 0)
-                    {
-                      AdServer::Commons::JsonObject contracts_array(nroa_obj.add_array(Response::OpenRtb::NROA_CONTRACTS));
-
-                      for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
-                      {
-                        const AdServer::CampaignSvcs::CampaignContractInfo& contract = ad_slot_result.contracts[contract_i];
-                        AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.ord_contract_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_ORD_ADO_ID, String::SubString(contract.ord_ado_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_NUMBER, String::SubString(contract.id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_DATE, String::SubString(contract.date));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_TYPE, String::SubString(contract.type));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CLIENT_ID, String::SubString(contract.client_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CLIENT_NAME, String::SubString(contract.client_name));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CONTRACTOR_ID, String::SubString(contract.contractor_id));
-                        contract_obj.add_escaped_string_if_non_empty(
-                          Response::OpenRtb::CONTRACT_CONTRACTOR_NAME, String::SubString(contract.contractor_name));
+                        ext_obj.add_escaped_string(escaped_name,
+                          String::SubString(ad_slot_result.ext_tokens[token_i].value));
                       }
                     }
                   }
                 }
 
-                if (!(use_banner_format.width.empty() ||
-                    use_banner_format.height.empty()))
+                if(need_ipw_extension)
                 {
-                  bid_object.add_number(
-                    Response::OpenRtb::WIDTH,
-                    use_banner_format.width);
-                  bid_object.add_number(
-                    Response::OpenRtb::HEIGHT,
-                    use_banner_format.height);
+                  ext_obj.add_escaped_string(
+                    Response::OpenRtb::ADVERTISER_NAME,
+                    String::SubString(ad_slot_result.selected_creatives[0].advertiser_name));
+
+                  need_ipw_extension = false;
                 }
+
+                if(fill_overlay_ext)
+                {
+                  const JsonAdSlotProcessingContext::Banner& use_banner =
+                    *(banner_by_size_it->second.banner);
+                  const JsonAdSlotProcessingContext::BannerFormat& use_banner_format =
+                    *(banner_by_size_it->second.banner_format);
+
+                  bool add_ext_width_height = (
+                    ad_slot_result.selected_creatives.length() == 1 &&
+                    use_banner_format.ext_type == "20");
+
+                  if(add_ext_width_height ||
+                    request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX ||
+                    ad_slot_result.erid[0] ||
+                    ad_slot_result.contracts.length() > 0)
+                  {
+                    if(add_ext_width_height)
+                    {
+                      ext_obj.add_as_string(Response::OpenRtb::WIDTH, ad_slot_result.overlay_width);
+                      ext_obj.add_as_string(Response::OpenRtb::HEIGHT, ad_slot_result.overlay_height);
+                    }
+
+                    if(request_params.common_info.request_type == AdServer::CampaignSvcs::AR_OPENX)
+                    {
+                      if(!use_banner.matching_ad.empty())
+                      {
+                        ext_obj.add_number(
+                          Response::OpenX::MATCHING_AD_ID,
+                          use_banner.matching_ad);
+                      }
+
+                      print_int_category_seq(
+                        ext_obj,
+                        Response::OpenX::AD_OX_CATS,
+                        ad_slot_result.external_content_categories);
+                    }
+                  }
+                } // fill_overlay_ext
+
+                if(fill_nroa)
+                {
+                  AdServer::Commons::JsonObject nroa_obj(ext_obj.add_object(Response::OpenRtb::BID_EXT_NROA));
+
+                  if(request_info.erid_return_type == SourceTraits::ERIDRT_ARRAY)
+                  {
+                    AdServer::Commons::JsonObject array(nroa_obj.add_array(Response::OpenRtb::NROA_ERID));
+                    if(ad_slot_result.erid[0])
+                    {
+                      array.add_escaped_string(String::SubString(ad_slot_result.erid));
+                    }
+                  }
+                  else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT0)
+                  {
+                    fill_ext0_nroa_(nroa_obj, request_info, ad_slot_result);
+                  }
+                  else if(request_info.erid_return_type == SourceTraits::ERIDRT_EXT_BUZSAPE)
+                  {
+                    fill_buzsape_nroa_(nroa_obj, request_info, ad_slot_result);
+                  }
+                  else // SourceTraits::ERIDRT_SINGLE
+                  {
+                    nroa_obj.add_escaped_string_if_non_empty(
+                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));                      
+                  }
+                } // fill_nroa
               }
             }
 

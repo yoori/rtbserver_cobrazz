@@ -5,6 +5,7 @@ import time
 import threading
 import datetime
 from random import randint
+import signal
 
 
 class Params:
@@ -32,20 +33,25 @@ class Service:
     def __init__(self):
         self.running = True
         self.print_lock = threading.Lock()
+        self.verbosity = 1
+        self.log_file = None
 
-        try:
-            from signal import SIGUSR1, signal
-        except ImportError:
-            pass
-        else:
-            signal(SIGUSR1, lambda signum, frame: self.on_stop_signal())
+        def on_stop_signal():
+            if not self.running:
+                return
+            self.print_(0, "Stop signal")
+            self.on_stop_signal()
 
-        try:
-            from signal import SIGINT, signal
-        except ImportError:
-            pass
-        else:
-            signal(SIGINT, lambda signum, frame: self.on_stop_signal())
+        def add_stop_signal(name):
+            try:
+                s = getattr(signal, name)
+            except AttributeError:
+                pass
+            else:
+                signal.signal(s, lambda signum, frame: on_stop_signal())
+
+        add_stop_signal("SIGTERM")
+        add_stop_signal("SIGINT")
 
         self.args_parser = argparse.ArgumentParser()
         self.args_parser.add_argument("--period", type=float, help="Period between checking files.")
@@ -70,7 +76,7 @@ class Service:
                 self.config = json.load(f)
 
         self.params = Params(self)
-        self.period = self.params.get("period", 0)
+        self.period = self.params.get("period", 1.0)
         self.verbosity = self.params.get("verbosity", 1)
         self.print_line = self.params.get("print_line", 10000)
 
@@ -86,9 +92,7 @@ class Service:
         self.tmp_dir = make_dir("tmp_dir")
         self.log_dir = make_dir("log_dir")
 
-        if self.log_dir is None:
-            self.log_file = None
-        else:
+        if self.log_dir is not None:
             now = datetime.datetime.now()
             log_fname = f"{now.strftime('%Y%m%d')}.{now.strftime('%H%M%S')}.{now.strftime('%f')}.{randint(0, 99999999):08}.txt"
             self.log_file = open(os.path.join(self.log_dir, log_fname), "w")
@@ -114,10 +118,13 @@ class Service:
         if getattr(self, "pid_file", None) is not None:
             os.remove(self.pid_file)
         if getattr(self, "log_file", None) is not None:
+            try:
+                self.log_file.flush()
+            except Exception as e:
+                print(f"Can't flush log file - {e.__class__.__name__}:{str(e)}")
             self.log_file.close()
 
     def on_stop_signal(self):
-        self.print_(0, "Stop signal")
         self.running = False
 
     def verify_running(self):
@@ -134,27 +141,32 @@ class Service:
                 msg = f"{datetime.datetime.now()} - {threading.currentThread().name} - {text}"
                 print(msg, flush=flush)
                 if self.log_file is not None and not self.log_file.closed:
-                    self.log_file.write(msg + "\n")
-                    if flush:
-                        self.log_file.flush()
+                    try:
+                        self.log_file.write(msg + "\n")
+                        if flush:
+                            self.log_file.flush()
+                    except Exception as e:
+                        print(f"Can't write log file - {e.__class__.__name__}:{str(e)}", flush=flush)
             finally:
                 self.print_lock.release()
 
-    def on_run(self):
+    def on_timer(self):
         pass
 
     def run(self):
         try:
+            self.print_(0, "Starting...")
             self.on_start()
             while True:
                 self.print_(0, "Timer")
-                self.on_run()
+                self.on_timer()
                 for t in self.__get_sleep_subperiods():
                     self.verify_running()
                     time.sleep(t)
         except StopService:
             pass
         finally:
+            self.print_(0, "Stopping...")
             self.on_stop()
 
     def __get_sleep_subperiods(self):

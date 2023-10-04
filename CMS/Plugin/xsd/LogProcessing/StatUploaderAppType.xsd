@@ -1,0 +1,78 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Stat Uploader Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="StatUploaderClickhouseType">
+    <xsd:attribute name="host" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Hostname.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="StatUploaderLoggingType">
+    <xsd:attribute name="verbosity" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Verbosity level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="StatUploaderUploadType">
+  </xsd:complexType>
+
+  <xsd:complexType name="StatUploaderUploadsType">
+    <xsd:complexContent>
+      <xsd:extension base="StatUploaderUploadType">
+        <xsd:sequence>
+          <xsd:element name="RequestStatsHourlyExtStat" type="StatUploaderUploadType" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+              <xsd:documentation>
+                Upload parameters for RequestStatsHourlyExt.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="StatUploaderConfigType">
+    <xsd:sequence>
+      <xsd:element name="clickhouse" type="StatUploaderClickhouseType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Clickhouse parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="StatUploaderLoggingType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="uploads" type="StatUploaderUploadsType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Uploads parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>
+

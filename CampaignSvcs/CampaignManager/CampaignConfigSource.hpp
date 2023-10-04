@@ -140,6 +140,9 @@ namespace AdServer
 
         ExpressionChannelHolderMap platform_channels;
         BlockChannelMap block_channels;
+
+        IdMap campaign_contracts;
+        IdMap contract_parent_contracts;
       };
 
     private:
@@ -297,6 +300,12 @@ namespace AdServer
         const CampaignConfigUpdateInfo& update_info)
         noexcept;
 
+      void apply_contract_update_(
+        CampaignConfig& new_config,
+        const CampaignConfigUpdateInfo& update_info,
+        ConfigUpdateLinks& config_update_links)
+        noexcept;
+
       void
       apply_block_channel_update_(
         const CampaignConfigUpdateInfo& update_info,
@@ -369,6 +378,12 @@ namespace AdServer
         const CampaignConfig& new_config,
         unsigned long tag_id,
         const ConfigUpdateLinks::IdTagSizeOptionValueMap& tag_size_option_values)
+        noexcept;
+
+      static void
+      link_contract_update_(
+        CampaignConfig& new_config,
+        const ConfigUpdateLinks& config_update_links)
         noexcept;
 
       /* dynamic changes */

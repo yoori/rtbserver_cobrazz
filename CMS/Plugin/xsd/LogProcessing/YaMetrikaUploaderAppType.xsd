@@ -1,0 +1,97 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Ya Metrika Uploader Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:complexType name="YaMetrikaUploaderClickhouseType">
+    <xsd:attribute name="host" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Hostname.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="YaMetrikaUploaderPostgresType">
+    <xsd:attribute name="host" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Hostname.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="db" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Username.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="pass" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Password.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="YaMetrikaUploaderLoggingType">
+    <xsd:attribute name="verbosity" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Verbosity level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="YaMetrikaUploaderParamsType">
+    <xsd:attribute name="days" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Maximum last days count.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="YaMetrikaUploaderConfigType">
+    <xsd:sequence>
+      <xsd:element name="clickhouse" type="YaMetrikaUploaderClickhouseType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Clickhouse parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="postgres" type="YaMetrikaUploaderPostgresType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Postgres parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="logging" type="YaMetrikaUploaderLoggingType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="params" type="YaMetrikaUploaderParamsType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Service parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>
+

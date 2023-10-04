@@ -1325,7 +1325,7 @@
              = 0">false</xsl:if></xsl:attribute>
           <xsl:attribute name="erid_return_type"><xsl:value-of
              select="@erid_return_type"/><xsl:if test="count(@erid_return_type)
-             = 0">single</xsl:if></xsl:attribute>
+             = 0">buzsape</xsl:if></xsl:attribute>
         </cfg:Source>
       </xsl:for-each>
 

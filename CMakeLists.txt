@@ -13,21 +13,6 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
 )
 
-find_package(ACE REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(XercesC REQUIRED)
-find_package(Threads REQUIRED)
-find_package(LibXml2 REQUIRED)
-find_package(YY REQUIRED)
-find_package(LL REQUIRED)
-
-find_package(IDL REQUIRED)
-find_package(XSD REQUIRED)
-find_package(PST REQUIRED)
-find_package(PB REQUIRED)
-
-#find_package(OpenDDS REQUIRED)
-
 if(NOT DEFINED UNIXCOMMONS)
   message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
   SET(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
@@ -45,6 +30,30 @@ include_directories(
 )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  ${UNIXCOMMONS}/cmake/Modules/)
+
+set(Boost_NO_WARN_NEW_VERSIONS ON)
+find_package(Boost REQUIRED)
+find_package(ACE REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(XercesC REQUIRED)
+find_package(Threads REQUIRED)
+find_package(LibXml2 REQUIRED)
+find_package(YY REQUIRED)
+find_package(LL REQUIRED)
+
+find_package(IDL REQUIRED)
+#add_definitions(-DXSD_CXX11)
+find_package(XSD REQUIRED)
+find_package(PST REQUIRED)
+find_package(PB REQUIRED)
+find_package(Protobuf REQUIRED)
+find_package(gRPC REQUIRED)
+find_package(Nghttp2 REQUIRED) # include Nghttp2 local cmake for correct userver linkage
+find_package(userver REQUIRED)
+
 set(CORBA_INCLUDES ${UNIXCOMMONS}/src/CORBA)
 set(TMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -61,10 +70,10 @@ set(PST_DIRECTORY ${TMP_SOURCES}/PST_COMMON)
 include_directories(${PST_DIRECTORY})
 
 add_subdirectory(${UNIXCOMMONS} ${UNIXCOMMONS_BUILD_ROOT})
-include_directories(${USERVER_INCLUDE_DIRS})
+
+#include_directories(${USERVER_INCLUDE_DIRS})
 
 #add_definitions( -D_USE_OCCI -DXSD_CXX11)
-add_definitions(-DXSD_CXX11)
 
 # -D_USE_OCCI -DXSD_CXX11
 #link_directories( /usr/local/lib  )
@@ -90,13 +99,18 @@ ADD_SUBDIRECTORY(ChannelSvcs)
 ADD_SUBDIRECTORY(tests)
 
 install(DIRECTORY bin/ DESTINATION bin USE_SOURCE_PERMISSIONS)
+install(DIRECTORY lib/ DESTINATION lib USE_SOURCE_PERMISSIONS)
 install(DIRECTORY ConfigSys/ DESTINATION bin USE_SOURCE_PERMISSIONS)
-
 install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} DESTINATION bin USE_SOURCE_PERMISSIONS)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/Predictor/Scripts/" DESTINATION bin
+  FILES_MATCHING PATTERN "*.pl" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+
 install(DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} DESTINATION lib
   FILES_MATCHING PATTERN "*.so" EXCLUDE)
 install(DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} DESTINATION lib
   FILES_MATCHING PATTERN "*.so" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/modules/" DESTINATION lib USE_SOURCE_PERMISSIONS)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/PyCommons/" DESTINATION lib/PyCommons USE_SOURCE_PERMISSIONS)
 
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/DACS" DESTINATION . USE_SOURCE_PERMISSIONS)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/CMS/Plugin/data/mibs" DESTINATION . USE_SOURCE_PERMISSIONS)

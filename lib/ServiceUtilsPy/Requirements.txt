@@ -6,3 +6,5 @@ lxml
 resource
 clickhouse-connect
 python-dateutil
+werkzeug
+flask

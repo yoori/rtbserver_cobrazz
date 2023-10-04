@@ -329,6 +329,7 @@
           select="$full-cluster-path//service[@descriptor = $predictor-descriptor]"/>
 
         <cfg:CreativeStat period="{$flush-logs-period}"/>
+        <cfg:RequestStatsHourlyExtStat period="{$flush-logs-period}"/>
         <cfg:UserProperties period="{$flush-logs-period}"/>
         <cfg:ChannelPerformance period="{$flush-logs-period}"/>
         <cfg:SiteChannelStat period="{$flush-logs-period}"/>

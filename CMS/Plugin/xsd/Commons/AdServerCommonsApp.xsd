@@ -488,6 +488,8 @@
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="single"/>
       <xsd:enumeration value="array"/>
+      <xsd:enumeration value="ext0"/>
+      <xsd:enumeration value="buzsape"/>
     </xsd:restriction>
   </xsd:simpleType>
 
@@ -530,7 +532,7 @@
     <xsd:attribute name="mime_encoded_click_prefix" type="xsd:string"/>
 
     <xsd:attribute name="erid_return_type" type="ERIDReturnType"
-      default="single"/>
+      default="buzsape"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserBindFrontendSourceType">

@@ -15,6 +15,22 @@ struct CreativeStatInfo
 
 typedef sequence<CreativeStatInfo> CreativeStatSeq;
 
+struct RequestStatsHourlyExtStatInfo
+{
+  unsigned long cc_id;
+  long requests;
+  long impressions;
+  long clicks;
+  long actions;
+  long undup_imps;
+  long undup_clicks;
+  long ym_confirmed_clicks;
+  long ym_bounced_clicks;
+  long ym_robots_clicks;
+};
+
+typedef sequence<RequestStatsHourlyExtStatInfo> RequestStatsHourlyExtStatSeq;
+
 struct PublisherAmountInfo
 {
   unsigned long publisher_account_id;
@@ -54,6 +70,7 @@ struct CampaignStatInfo
   CORBACommons::DecimalInfo adv_comm_amount;
   CORBACommons::DecimalInfo adv_payable_comm_amount;
   CreativeStatSeq creative_stats;
+  RequestStatsHourlyExtStatSeq request_stats_hourly_ext_stats;
   PublisherAmountSeq publisher_amounts;
   TagAmountSeq tag_amounts;
   CtrResetStatSeq ctr_reset_stats;
@@ -98,4 +115,5 @@ interface LogGeneralizer
 
 }; // module LogProcessing
 }; // module AdServer
+
 
