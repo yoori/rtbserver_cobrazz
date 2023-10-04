@@ -275,6 +275,30 @@ our %CLEANUP_CONFIG = (
       'size' => <xsl:value-of select="$log-params/@trace_size_cleanup |
         $trace-size-cleanup"/>
     },
+
+    <xsl:variable name="frontend-dirs">
+      <dirs>
+        <dir>FCGIRtbServer1</dir>
+        <dir>FCGIRtbServer2</dir>
+        <dir>FCGIAdServer</dir>
+        <dir>FCGITrackServer</dir>
+      </dirs>
+    </xsl:variable>
+
+    <xsl:for-each select="exsl:node-set($frontend-dirs)//dir">
+      <xsl:variable name="dir" select="text()"/>
+
+    '<xsl:value-of select="concat($workspace-root, '/log/', $dir, '/', $dir,'.error')"/>' =>
+      {
+        'time' => 86400,
+        'size' => 104857600
+      },
+    '<xsl:value-of select="concat($workspace-root, '/log/', $dir, '/', $dir, '.trace')"/>' =>
+      {
+        'time' => 14400,
+        'size' => 104857600
+        },
+    </xsl:for-each>
   </xsl:if>
 );
 

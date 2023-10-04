@@ -91,6 +91,8 @@
   select="'AdCluster/FrontendSubCluster/BillingServer'"/>
 
 <xsl:variable name="log-generalizer-descriptor" select="'AdCluster/BackendSubCluster/LogGeneralizer'"/>
+<xsl:variable name="stat-uploader-descriptor" select="'AdCluster/BackendSubCluster/StatUploader'"/>
+<xsl:variable name="ya-metrika-uploader-descriptor" select="'AdCluster/BackendSubCluster/YaMetrikaUploader'"/>
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
@@ -266,6 +268,8 @@
 <xsl:variable name="log-generalizer-flush-logs-size" select="'50000'"/>
 <xsl:variable name="log-generalizer-search-term-count-threshold" select="'10'"/>
 <xsl:variable name="log-generalizer-upload-tasks" select="'2'"/>
+<xsl:variable name="stat-uploader-check-logs-period" select="'10'"/>
+<xsl:variable name="ya-metrika-uploader-check-logs-period" select="'10'"/>
 <xsl:variable name="request-info-manager-check-logs-period" select="'10'"/>
 <xsl:variable name="request-info-manager-flush-logs-period" select="'10'"/>
 <xsl:variable name="def-sync-log-content-check-period"

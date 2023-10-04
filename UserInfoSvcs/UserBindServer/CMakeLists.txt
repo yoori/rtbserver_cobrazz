@@ -34,7 +34,9 @@ add_executable(UserBindServer
   UserBindOperationLoader.cpp
 )
 
+message(STATUS "Use GrpcTargets.cmake: ${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake")
 include(${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake)
+
 add_grpc_library(UserBindServerProto
   PROTOS
     UserBindServer.proto

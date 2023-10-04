@@ -288,23 +288,34 @@ module AdServer
     typedef sequence<unsigned long> UserGroupIdSeq;
     typedef sequence<unsigned long> ULongSeq;
 
-    struct CampaignContractInfo
+    struct ContractInfo
     {
-      string ord_contract_id;
-      string ord_ado_id;
+      unsigned long contract_id;
 
-      string id; // contract id on paper
+      string number; // contract id on paper
       string date; // contract date on paper
       string type;
+      boolean vat_included;
+
+      string ord_contract_id;
+      string ord_ado_id;
+      string subject_type;
+      string action_type;
+      boolean agent_acting_for_publisher;
+      unsigned long parent_contract_id;
 
       string client_id; // client_inn
       string client_name; // client_name
+      string client_legal_form;
 
       string contractor_id; // us inn
       string contractor_name; // us name
+      string contractor_legal_form;
+
+      TimestampInfo timestamp;
     };
 
-    typedef sequence<CampaignContractInfo> CampaignContractSeq;
+    typedef sequence<ContractInfo> ContractSeq;
 
     /**
      * Holds information on particular campaign.
@@ -365,7 +376,7 @@ module AdServer
       ULongSeq colocations;
       unsigned long bid_strategy;
       CORBACommons::DecimalInfo min_ctr_goal;
-      CampaignContractSeq contracts;
+      unsigned long initial_contract_id;
 
       TimestampInfo timestamp;
     };
@@ -947,6 +958,9 @@ module AdServer
 
       WebOperationSeq web_operations;
       DeletedIdSeq delete_web_operations;
+
+      ContractSeq contracts;
+      DeletedIdSeq deleted_contracts;
     };
   }; // module CampaignSvcs
 }; // module AdServer

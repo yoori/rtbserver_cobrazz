@@ -527,6 +527,26 @@ LogGeneralizerImpl::get_stat_info(
       crtv_stats[j].actions = crtv_it->second.actions();
     }
 
+    RequestStatsHourlyExtStatSeq &rshe_stats = cmp_stat_info.request_stats_hourly_ext_stats;
+    rshe_stats.length(cmp_map_it->second.request_stats_hourly_ext_stats.size());
+    typedef CampaignStatValueDef::RequestStatsHourlyExtStatMap RequestStatsHourlyExtStatMapT;
+    const RequestStatsHourlyExtStatMapT &rshe_map = cmp_map_it->second.request_stats_hourly_ext_stats;
+    unsigned m = 0;
+    for (RequestStatsHourlyExtStatMapT::const_iterator rshe_it = rshe_map.begin();
+      rshe_it != rshe_map.end(); ++rshe_it, ++m)
+    {
+      rshe_stats[m].cc_id = rshe_it->first;
+      rshe_stats[m].requests = rshe_it->second.requests();
+      rshe_stats[m].impressions = rshe_it->second.imps();
+      rshe_stats[m].clicks = rshe_it->second.clicks();
+      rshe_stats[m].actions = rshe_it->second.actions();
+      rshe_stats[m].undup_imps = rshe_it->second.undup_imps();
+      rshe_stats[m].undup_clicks = rshe_it->second.undup_clicks();
+      rshe_stats[m].ym_confirmed_clicks = rshe_it->second.ym_confirmed_clicks();
+      rshe_stats[m].ym_bounced_clicks = rshe_it->second.ym_bounced_clicks();
+      rshe_stats[m].ym_robots_clicks = rshe_it->second.ym_robots_clicks();
+    }
+
     PublisherAmountSeq &pub_amounts = cmp_stat_info.publisher_amounts;
     pub_amounts.length(cmp_map_it->second.publisher_amounts.size());
     typedef CampaignStatValueDef::PublisherAmountMap
@@ -609,3 +629,4 @@ LogGeneralizerImpl::MoveLogsTask::execute() noexcept
 
 } // namespace LogProcessing
 } // namespace AdServer
+

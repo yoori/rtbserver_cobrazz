@@ -531,6 +531,7 @@ namespace CampaignSvcs
     apply_platform_update_(new_config, update_info);
     apply_web_app_update_(new_config, update_info);
     apply_block_channel_update_(update_info, config_update_links);
+    apply_contract_update_(new_config, update_info, config_update_links);
   }
 
   void CampaignConfigSource::link_account_update_(
@@ -631,6 +632,29 @@ namespace CampaignSvcs
         *(it->second.hidden_tokens_ref),
         new_config,
         it->second.unlinked_hidden_tokens);
+    }
+  }
+
+  void CampaignConfigSource::link_contract_update_(
+    CampaignConfig& new_config,
+    const ConfigUpdateLinks& config_update_links)
+    noexcept
+  {
+    //static const char* FUN = "CampaignConfigSource::link_contract_update_()";
+
+    for (CampaignConfig::ContractMap::iterator contract_it = new_config.contracts.begin();
+       contract_it != new_config.contracts.end(); ++contract_it)
+    {
+      // link parent contract to contract
+      auto parent_contract_link_it = config_update_links.contract_parent_contracts.find(contract_it->first);
+      if(parent_contract_link_it != config_update_links.contract_parent_contracts.end())
+      {
+        auto parent_contract_it = new_config.contracts.find(parent_contract_link_it->second);
+        if(parent_contract_it != new_config.contracts.end())
+        {
+          contract_it->second->parent_contract = parent_contract_it->second;
+        }
+      }
     }
   }
 
@@ -957,6 +981,17 @@ namespace CampaignSvcs
             {
               creative.https_safe_flag = false;
             }
+          }
+        }
+
+        // link campaign initial contract
+        auto campaign_contract_it = config_update_links.campaign_contracts.find(cmp_it->first);
+        if(campaign_contract_it != config_update_links.campaign_contracts.end())
+        {
+          auto contract_it = new_config.contracts.find(campaign_contract_it->second);
+          if(contract_it != new_config.contracts.end())
+          {
+            cmp_it->second->initial_contract = contract_it->second;
           }
         }
 
@@ -1775,6 +1810,8 @@ namespace CampaignSvcs
         it->second->fast_channel = new FastExpressionChannel(it->second->channel);
       }
     }
+
+    link_contract_update_(new_config, config_update_links);
   }
 
   void
@@ -2191,6 +2228,12 @@ namespace CampaignSvcs
         std::make_pair(
           campaign_info.campaign_id, campaign_info.advertiser_id));
 
+      if(campaign_info.initial_contract_id)
+      {
+        config_update_links.campaign_contracts.emplace(
+          campaign_info.campaign_id, campaign_info.initial_contract_id);
+      }
+
       Campaign_var campaign = new Campaign();
 
       campaign->campaign_id = campaign_info.campaign_id;
@@ -2338,6 +2381,7 @@ namespace CampaignSvcs
         }
       }
 
+      /*
       // fill contracts
       for(CORBA::ULong contract_i = 0; contract_i < campaign_info.contracts.length(); ++contract_i)
       {
@@ -2354,9 +2398,51 @@ namespace CampaignSvcs
         new_contract->contractor_name = contract.contractor_name;
         campaign->contracts.emplace_back(new_contract);
       }
+      */
 
       new_config.campaigns.insert(
         std::make_pair(campaign_info.campaign_id, campaign));
+    }
+  }
+
+  void CampaignConfigSource::apply_contract_update_(
+    CampaignConfig& new_config,
+    const CampaignConfigUpdateInfo& update_info,
+    ConfigUpdateLinks& config_update_links)
+    noexcept
+  {
+    for (CORBA::ULong i = 0; i < update_info.contracts.length(); i++)
+    {
+      const ContractInfo& contract_info = update_info.contracts[i];
+      Contract_var contract(new Contract());
+      contract->contract_id = contract_info.contract_id;
+
+      contract->number = contract_info.number;
+      contract->date = contract_info.date;
+      contract->type = contract_info.type;
+      contract->vat_included = contract_info.vat_included;
+
+      contract->ord_contract_id = contract_info.ord_contract_id;
+      contract->ord_ado_id = contract_info.ord_ado_id;
+      contract->subject_type = contract_info.subject_type;
+      contract->action_type = contract_info.action_type;
+      contract->agent_acting_for_publisher = contract_info.agent_acting_for_publisher;
+
+      contract->client_id = contract_info.client_id;
+      contract->client_name = contract_info.client_name;
+      contract->client_legal_form = contract_info.client_legal_form;
+
+      contract->contractor_id = contract_info.contractor_id;
+      contract->contractor_name = contract_info.contractor_name;
+      contract->contractor_legal_form = contract_info.contractor_legal_form;
+
+      new_config.contracts.emplace(contract_info.contract_id, contract);
+
+      if(contract_info.parent_contract_id)
+      {
+        config_update_links.contract_parent_contracts.emplace(
+          contract_info.contract_id, contract_info.parent_contract_id);
+      }
     }
   }
 

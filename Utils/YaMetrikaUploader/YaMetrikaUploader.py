@@ -99,10 +99,10 @@ class Application(Service):
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
         self.args_parser.add_argument("--ch-host", help="Clickhouse hostname.")
 
-        self.connection = None
-        self.cursor = None
+        self.__pg_connection = None
+        self.__pg_cursor = None
 
-        self.ch_client = None
+        self.__ch_client = None
 
     def on_start(self):
         super().on_start()
@@ -114,28 +114,33 @@ class Application(Service):
         self.adv_act_fname_dir = os.path.join(self.out_dir, "AdvertiserAction")
         self.geo_ip_dir = os.path.join(self.out_dir, "YandexOrigGeo")
 
-    def on_run(self):
+    def on_stop(self):
+        self.__close_ch_client()
+        self.__close_pg_connection()
+        super().on_stop()
+
+    def on_timer(self):
         try:
-            if self.connection is None:
+            if self.__pg_connection is None:
                 ph_host = self.params["pg_host"]
                 pg_db = self.params["pg_db"]
                 pg_user = self.params["pg_user"]
                 pg_pass = self.params["pg_pass"]
-                self.connection = psycopg2.connect(
+                self.__pg_connection = psycopg2.connect(
                     f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
-                self.cursor = self.connection.cursor()
+                self.__pg_cursor = self.__pg_connection.cursor()
 
-            if self.ch_client is None:
-                self.ch_client = clickhouse_driver.Client(host=self.params["ch_host"])
+            if self.__ch_client is None:
+                self.__ch_client = clickhouse_driver.Client(host=self.params["ch_host"])
 
-            self.cursor.execute("SELECT ymref_id,token,metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
-            for ymref_id, token, metrica_id in tuple(self.cursor.fetchall()):
-                self.cursor.execute(f"SELECT action_id FROM yandexmetrikaaction WHERE ymref_id='{ymref_id}';")
+            self.__pg_cursor.execute("SELECT ymref_id,token,metrika_id FROM YandexMetrikaRef WHERE status = 'A';")
+            for ymref_id, token, metrica_id in tuple(self.__pg_cursor.fetchall()):
+                self.__pg_cursor.execute(f"SELECT action_id FROM yandexmetrikaaction WHERE ymref_id='{ymref_id}';")
                 action_to_ccg = {}
-                for (action_id,) in tuple(self.cursor.fetchall()):
+                for (action_id,) in tuple(self.__pg_cursor.fetchall()):
                     ccg_ids = []
-                    self.cursor.execute(f"SELECT ccg_id FROM CCGAction WHERE action_id='{action_id}';")
-                    for (ccg_id,) in tuple(self.cursor.fetchall()):
+                    self.__pg_cursor.execute(f"SELECT ccg_id FROM CCGAction WHERE action_id='{action_id}';")
+                    for (ccg_id,) in tuple(self.__pg_cursor.fetchall()):
                         ccg_ids.append(ccg_id)
                     if ccg_ids:
                         action_to_ccg[action_id] = ",".join(str(ccg_id) for ccg_id in ccg_ids)
@@ -143,14 +148,23 @@ class Application(Service):
 
         except psycopg2.Error as e:
             self.print_(0, e)
-            if self.connection is not None:
-                self.connection.close()
-                self.connection = None
+            self.__close_pg_connection()
         except clickhouse_driver.errors.Error as e:
             self.print_(0, e)
-            if self.ch_client is not None:
-                self.ch_client.disconnect()
-                self.ch_client = None
+            self.__close_ch_client()
+
+    def __close_pg_connection(self):
+        if self.__pg_cursor is not None:
+            self.__pg_cursor.close()
+            self.__pg_cursor = None
+        if self.__pg_connection is not None:
+            self.__pg_connection.close()
+            self.__pg_connection = None
+
+    def __close_ch_client(self):
+        if self.__ch_client is not None:
+            self.__ch_client.disconnect()
+            self.__ch_client = None
 
     def on_metrica(self, ymref_id, token, metrica_id, action_to_ccg):
         today = datetime.today()
@@ -178,8 +192,8 @@ class Application(Service):
 
             for utm_source in UTM_SOURCES:
                 old_records = {}
-                self.cursor.execute(SQL_SELECT_SNAPSHOT, (ymref_id, utm_source, self.date_begin, self.date_end))
-                for time, utm_content, utm_term, key_ext, referer, visits, bounce, avg_time in self.cursor.fetchall():
+                self.__pg_cursor.execute(SQL_SELECT_SNAPSHOT, (ymref_id, utm_source, self.date_begin, self.date_end))
+                for time, utm_content, utm_term, key_ext, referer, visits, bounce, avg_time in self.__pg_cursor.fetchall():
                     self.verify_running()
                     key = RequestKeyNonAggregated(time, utm_source, utm_content, utm_term, key_ext, referer)
                     data = RequestData(visits, bounce, avg_time)
@@ -232,8 +246,8 @@ class Application(Service):
                         aggr_value.visits = new_visits
 
                 old_records.clear()
-                self.cursor.execute(SQL_SELECT_STAT, (ymref_id, utm_source, self.date_begin, self.date_end))
-                for time, utm_content, utm_term, key_ext, visits, bounce, avg_time in self.cursor.fetchall():
+                self.__pg_cursor.execute(SQL_SELECT_STAT, (ymref_id, utm_source, self.date_begin, self.date_end))
+                for time, utm_content, utm_term, key_ext, visits, bounce, avg_time in self.__pg_cursor.fetchall():
                     self.verify_running()
                     key = RequestKeyAggregated(time, utm_source, utm_content, utm_term, key_ext)
                     data = RequestData(visits, bounce, avg_time)
@@ -256,24 +270,24 @@ class Application(Service):
     def process_record(self, sql_insert, sql_update, ymref_id, old_records, key, data, process_new_record, *args):
         old_value = old_records.get(key)
         if old_value is None:
-            self.cursor.execute(sql_insert, (ymref_id,) + key + (data.visits, data.bounce, data.avg_time))
-            self.cursor.execute("COMMIT")
+            self.__pg_cursor.execute(sql_insert, (ymref_id,) + key + (data.visits, data.bounce, data.avg_time))
+            self.__pg_cursor.execute("COMMIT")
         elif data.visits > old_value.visits:
-            self.cursor.execute(sql_update, (data.visits, data.bounce, data.avg_time, ymref_id) + key)
-            self.cursor.execute("COMMIT")
+            self.__pg_cursor.execute(sql_update, (data.visits, data.bounce, data.avg_time, ymref_id) + key)
+            self.__pg_cursor.execute("COMMIT")
         else:
             return
         process_new_record(key, data, *args)
 
     def process_new_record_non_aggregated(self, key, data, action_to_ccg, ctx_adv_act, adv_act_fname_prefix):
-        if action_to_ccg and ADV_ACTION_PATTERN.fullmatch(key.utm_term) is not None:
+        if action_to_ccg and ADV_ACTION_PATTERN.fullmatch(key.utm_term):
             user_id, request_id = key.utm_term.split("/")
             chunk_number = crc32(b64decode(user_id[:-2] + "==", b"-_")) % 24
             log = ctx_adv_act.files.get_line_writer(
                 key=chunk_number,
                 name=lambda: adv_act_fname_prefix + str(chunk_number))
             if log.first:
-                log.write_line("AdvertiserAction\t3.6")
+                log.write_line("AdvertiserAction\t3.6", progress=False)
             t = key.time.strftime('%Y-%m-%d_%H:%M:%S')
             for action_id, ccg_ids in action_to_ccg.items():
                 action_request_id = "".join(secrets.choice(ACTION_REQUEST_ID_CHARS) for _ in range(22)) + ".."
@@ -285,7 +299,7 @@ class Application(Service):
         log_orig = ctx_post_click_orig.files.get_line_writer(key=0, name=log_fname_orig)
         log_orig.write_line(
             f"{t}\t{key.utm_source}\t{key.utm_term}\t{data.visits}\t{data.bounce}\t{data.avg_time}")
-        self.ch_client.execute(
+        self.__ch_client.execute(
             'INSERT INTO YandexOrigPostClick(time,utm_source,utm_term,visits,bounce,avg_time) VALUES',
             [[key.time, key.utm_source, key.utm_term, data.visits, data.bounce, data.avg_time]])
 
@@ -305,9 +319,9 @@ class Application(Service):
                     key=chunk_number,
                     name=lambda: log_fname_prefix + str(chunk_number))
                 if log.first:
-                    log.write_line("YandexPostClick\t1.0")
+                    log.write_line("YandexPostClick\t1.0", progress=False)
                 log.write_line(f"{t}\t{user_id}\t{request_id}")
-                self.ch_client.execute(
+                self.__ch_client.execute(
                     'INSERT INTO YandexPostClick(time,user_id,request_id) VALUES',
                     [[key.time, user_id, request_id]])
 
@@ -330,7 +344,7 @@ class Application(Service):
                         key=0,
                         name=lambda: f"YandexOrigGeo.{ctx_post_click.fname_seed}.csv")
                     log.write_line(f"{ip_address},{region_area}/{region_city}")
-                    self.ch_client.execute(
+                    self.__ch_client.execute(
                         'INSERT INTO YandexOrigGeo(ip_address,region_area,region_city) VALUES',
                         [[ip_address, region_area, region_city]])
 

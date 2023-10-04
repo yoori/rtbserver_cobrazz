@@ -2858,7 +2858,9 @@ namespace CampaignSvcs
         QC_CMP_IMP_TOTAL_LIMIT,
         QC_CMP_IMP_DAILY_LIMIT,
         QC_CMP_CLICK_TOTAL_LIMIT,
-        QC_CMP_CLICK_DAILY_LIMIT
+        QC_CMP_CLICK_DAILY_LIMIT,
+
+        QC_INITIAL_CONTRACT_ID
       };
 
       Commons::Postgres::Statement_var stmt =
@@ -2916,7 +2918,8 @@ namespace CampaignSvcs
             "flightcmp.impressions_total_limit, "
             "flightcmp.impressions_daily_limit, "
             "flightcmp.clicks_total_limit, "
-            "flightcmp.clicks_daily_limit "
+            "flightcmp.clicks_daily_limit, "
+            "contract.id "
           "FROM "
             "adserver.get_campaign_ctr($1) cmp "
             "join Campaign campaign using(campaign_id) "
@@ -2928,7 +2931,9 @@ namespace CampaignSvcs
                 "select max(effective_date) from CurrencyExchange where effective_date <= now()))) "
             "left join flightccg on(cmp.ccg_id = flightccg.ccg_id) "
             "left join flight using(flight_id) "
-            "left join flight flightcmp on(flightcmp.flight_id = flight.parent_id)"
+            "left join flight flightcmp on(flightcmp.flight_id = flight.parent_id) "
+            "LEFT JOIN contract ON (contract.account_id = acc.account_id AND "
+              "contract.id NOT IN (SELECT parent_contract_id FROM contract WHERE parent_contract_id IS NOT NULL))"
           );
 
       stmt->set_timestamp(1, sysdate - pending_expire_time_);
@@ -3182,7 +3187,11 @@ namespace CampaignSvcs
                 rs->get_number<unsigned long>(QC_START_USER_GROUP_ID);
               campaign->end_user_group_id =
                 rs->get_number<unsigned long>(QC_END_USER_GROUP_ID);
- 
+
+              campaign->initial_contract_id = !rs->is_null(QC_INITIAL_CONTRACT_ID) ?
+                rs->get_number<unsigned long>(QC_INITIAL_CONTRACT_ID) :
+                0;
+
               RevenueDecimal orig_ecpm = rs->get_decimal<RevenueDecimal>(QC_ECPM);
               RevenueDecimal ecpm_for_maxbid = rs->get_decimal<RevenueDecimal>(QC_ECPM_FOR_MAXBID);
               RevenueDecimal ecpm = campaign->ccg_rate_type == 'A' ? ecpm_for_maxbid : orig_ecpm;
@@ -3529,7 +3538,7 @@ namespace CampaignSvcs
 
     try
     {
-      query_campaign_contracts_(conn, new_config, sysdate);
+      query_contracts_(conn, new_config, old_config, sysdate);
 
       query_campaign_expressions_(conn, new_config, sysdate);
 
@@ -5828,13 +5837,14 @@ namespace CampaignSvcs
   }
 
   void
-  CampaignConfigDBSource::query_campaign_contracts_(
+  CampaignConfigDBSource::query_contracts_(
     Commons::Postgres::Connection* conn,
     CampaignConfig* config,
-    const TimestampValue&)
+    const CampaignConfig* old_config,
+    const TimestampValue& sysdate)
     /*throw(Exception)*/
   {
-    static const char* FUN = "CampaignConfigDBSource::query_campaign_contracts_()";
+    static const char* FUN = "CampaignConfigDBSource::query_contracts_()";
 
     try
     {
@@ -5842,78 +5852,87 @@ namespace CampaignSvcs
 
       enum
       {
-        POS_CCG_ID = 1,
-        //POS_ORD_CONRACT_ID,
-        //POS_ORD_ADO_ID,
-        POS_CONTRACT_ID,
+        POS_CONTRACT_ID = 1,
         POS_CONTRACT_DATE,
-        //POS_CONTRACT_TYPE,
+        POS_CONTRACT_NUMBER,
+        POS_CONTRACT_TYPE,
+        POS_ORD_CONRACT_ID,
+        POS_ORD_ADO_ID,
+        POS_VAT_INCLUDED,
+        POS_SUBJECT_TYPE,
+        POS_ACTION_TYPE,
+        POS_AGENT_ACTING_FOR_PUBLISHER,
+        POS_PARENT_CONTRACT_ID,
+        POS_CONTRACTOR_ID,
+        POS_CONTRACTOR_NAME,
+        POS_CONTRACTOR_LEGAL_FORM,
         POS_CLIENT_ID,
         POS_CLIENT_NAME,
-        POS_CONTRACTOR_ID,
-        POS_CONTRACTOR_NAME
+        POS_CLIENT_LEGAL_FORM
       };
 
       Commons::Postgres::Statement_var stmt =
         new Commons::Postgres::Statement(
           "SELECT "
-            "ccg_id,"
-            "account.contract_number,"
-            "(case when account.contract_date IS NOT NULL then to_char(account.contract_date, 'YYYY-MM-DD') else '' end),"
-            "account.company_registration_number,"
-            "account.legal_name,"
-            "internalaccount.company_registration_number,"
-            "internalaccount.legal_name "
-          "FROM CampaignCreativeGroup JOIN Campaign USING(campaign_id) JOIN Account USING(account_id) "
-            "JOIN Account internalaccount ON(internalaccount.account_id = Account.internal_account_id) "
-          "WHERE account.contract_number <> '' "
-          "ORDER BY ccg_id, account.contract_number");
+            "contract.id,"
+            "to_char(contract.date, 'YYYY-MM-DD'),"
+            "contract.number,"
+            "contract.contract_type,"
+            "contract.contract_id_ord::text as ord_contract_id,"
+            "lower(contract.integration_system_name) AS ado_id,"
+            "(case when contract.is_vat then 1 else 0 end) as vat_included,"
+            "contract.subject as subject_type,"
+            "contract.action as action_type,"
+            "(case when contract.is_agent then 1 else 0 end) as agent_acting_for_publisher,"
+            "contract.parent_contract_id AS parent_contract_id,"
+            "contractor.inn,"
+            "contractor.name,"
+            "contractor.type as contractor_legal_form,"
+            "client.inn,"
+            "client.name,"
+            "client.type as client_legal_form "
+          "FROM contract "
+            "JOIN organization AS client ON(client.id = contract.client_organization_id) "
+            "JOIN organization AS contractor ON(contractor.id = contract.contractor_organization_id)"
+          );
 
       Commons::Postgres::ResultSet_var rs = conn->execute_statement(stmt);
 
-      CampaignDef::CampaignContractMap cur_contracts;
-      bool rs_next = rs->next();
-      unsigned long cur_ccg_id = rs_next ? rs->get_number<unsigned long>(POS_CCG_ID) : 0;
-
-      for (CampaignMap::ActiveMap::iterator ccg_it =
-             config->campaigns.active().begin();
-           ccg_it != config->campaigns.active().end(); )
+      while (rs->next())
       {
-        if(!rs_next || ccg_it->first < cur_ccg_id)
-        {
-          if(cur_contracts.size() != ccg_it->second->contracts.size() ||
-             !std::equal(cur_contracts.begin(), cur_contracts.end(),
-               ccg_it->second->contracts.begin(), ccg_it->second->contracts.end()))
-          {
-            Campaign_var campaign(new CampaignDef(*(ccg_it->second)));
-            campaign->contracts.swap(cur_contracts);
-            ccg_it->second = campaign;
-          }
+        ContractDef_var contract(new ContractDef());
+        const unsigned long contract_id = rs->get_number<unsigned long>(POS_CONTRACT_ID);
+        contract->contract_id = contract_id;
 
-          cur_contracts.clear();
-          ++ccg_it;
-        }
-        else
-        {
-          if(ccg_it->first == cur_ccg_id)
-          {
-            CampaignContractDef_var new_contract(new CampaignContractDef());
-            new_contract->ord_contract_id = ""; // rs->get_string(POS_ORD_CONRACT_ID);
-            new_contract->ord_ado_id = "amber"; // rs->get_string(POS_ORD_ADO_ID);
-            new_contract->id = rs->get_string(POS_CONTRACT_ID);
-            new_contract->date = rs->get_string(POS_CONTRACT_DATE);
-            new_contract->type = "contract"; // rs->get_string(POS_CONTRACT_TYPE);
-            new_contract->client_id = rs->get_string(POS_CLIENT_ID);
-            new_contract->client_name = rs->get_string(POS_CLIENT_NAME);
-            new_contract->contractor_id = rs->get_string(POS_CONTRACTOR_ID);
-            new_contract->contractor_name = rs->get_string(POS_CONTRACTOR_NAME);
-            cur_contracts.emplace(new_contract->id, new_contract);
-          }
+        contract->number = rs->get_string(POS_CONTRACT_NUMBER);
+        contract->date = rs->get_string(POS_CONTRACT_DATE);
+        contract->type = rs->get_string(POS_CONTRACT_TYPE);
+        contract->vat_included = (
+          !rs->is_null(POS_VAT_INCLUDED) ? (rs->get_number<unsigned int>(POS_VAT_INCLUDED) != 0) :
+          false);
 
-          rs_next = rs->next();
-          cur_ccg_id = rs_next ? rs->get_number<unsigned long>(POS_CCG_ID) : 0;
-        }
-      } // campaigns loop
+        contract->ord_contract_id = rs->get_string(POS_ORD_CONRACT_ID);
+        contract->ord_ado_id = rs->get_string(POS_ORD_ADO_ID);
+        contract->subject_type = rs->get_string(POS_SUBJECT_TYPE);
+        contract->action_type = rs->get_string(POS_ACTION_TYPE);
+        contract->agent_acting_for_publisher = rs->get_number<unsigned long>(POS_AGENT_ACTING_FOR_PUBLISHER);
+        contract->parent_contract_id = (!rs->is_null(POS_PARENT_CONTRACT_ID) ?
+          rs->get_number<unsigned long>(POS_PARENT_CONTRACT_ID) : 0);
+
+        contract->client_id = rs->get_string(POS_CLIENT_ID);
+        contract->client_name = rs->get_string(POS_CLIENT_NAME);
+        contract->client_legal_form = rs->get_string(POS_CLIENT_LEGAL_FORM);
+
+        contract->contractor_id = rs->get_string(POS_CONTRACTOR_ID);
+        contract->contractor_name = rs->get_string(POS_CONTRACTOR_NAME);
+        contract->contractor_legal_form = rs->get_string(POS_CONTRACTOR_LEGAL_FORM);
+
+        config->contracts.activate(
+          contract_id,
+          contract,
+          sysdate,
+          old_config ? &old_config->contracts : 0);
+      }
     }
     catch(const eh::Exception& ex)
     {

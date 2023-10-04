@@ -3859,6 +3859,14 @@ namespace Bidding
     {
       return SourceTraits::ERIDRT_ARRAY;
     }
+    else if(erid_type_str == "ext0")
+    {
+      return SourceTraits::ERIDRT_EXT0;
+    }
+    else if(erid_type_str == "buzsape")
+    {
+      return SourceTraits::ERIDRT_EXT_BUZSAPE;
+    }
 
     Stream::Error ostr;
     ostr << "unknown erid return type '" << erid_type_str << "'";

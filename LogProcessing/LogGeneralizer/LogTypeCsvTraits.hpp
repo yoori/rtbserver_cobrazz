@@ -28,6 +28,7 @@
 #include <LogCommons/ColoUserStat.hpp>
 #include <LogCommons/CmpStat.hpp>
 #include <LogCommons/CreativeStat.hpp>
+#include <LogCommons/RequestStatsHourlyExtStat.hpp>
 #include <LogCommons/DeviceChannelCountStat.hpp>
 #include <LogCommons/ExpressionPerformance.hpp>
 #include <LogCommons/PageLoadsDailyStat.hpp>
@@ -626,6 +627,106 @@ namespace LogProcessing
       const BaseTraits::CollectorType::DataT::DataT &data)
     {
       return os << data.users_count();
+    }
+  };
+
+  struct RequestStatsHourlyExtStatCsvTraits: RequestStatsHourlyExtStatTraits
+  {
+    static const char* csv_base_name() { return "RequestStatsHourlyExt"; }
+
+    static const char* csv_header()
+    {
+      return "sdate,adv_sdate,colo_id,publisher_account_id,tag_id,size_id,"
+        "country_code,adv_account_id,campaign_id,ccg_id,cc_id,ccg_rate_id,"
+        "colo_rate_id,site_rate_id,currency_exchange_id,delivery_threshold,"
+	"num_shown,position,test,fraud,walled_garden,user_status,"
+	"geo_channel_id,device_channel_id,ctr_reset_id,hid_profile,"
+	"viewability,unverified_imps,imps,clicks,actions,adv_amount,"
+	"pub_amount,isp_amount,adv_comm_amount,pub_comm_amount,"
+	"adv_payable_comm_amount,pub_advcurrency_amount,"
+	"isp_advcurrency_amount,undup_imps,undup_clicks,ym_confirmed_clicks,"
+	"ym_bounced_clicks,ym_robots_clicks,ym_session_time";
+    }
+
+    static std::ostream&
+    write_as_csv(
+      std::ostream &os,
+      const BaseTraits::CollectorType::KeyT& key,
+      const BaseTraits::CollectorType::DataT::KeyT& inner_key,
+      const BaseTraits::CollectorType::DataT::DataT& data)
+    {
+      write_key_as_csv(os, key) << ',';
+      write_inner_key_as_csv(os, inner_key) << ',';
+      return write_inner_data_as_csv(os, data);
+    }
+
+  private:
+    static std::ostream&
+    write_key_as_csv(
+      std::ostream &os,
+      const BaseTraits::CollectorType::KeyT &key)
+    {
+      write_date_as_csv(os, key.sdate()) << ',';
+      return write_date_as_csv(os, key.adv_sdate());
+    }
+
+    static std::ostream&
+    write_inner_key_as_csv(
+      std::ostream &os,
+      const BaseTraits::CollectorType::DataT::KeyT &key)
+    {
+      os << key.colo_id() << ',';
+      os << key.publisher_account_id() << ',';
+      os << key.tag_id() << ',';
+      write_optional_value_as_csv(os, key.size_id()) << ',';
+      write_string_as_csv(os, ToUpper()(key.country_code())) << ',';
+      os << key.adv_account_id() << ',';
+      os << key.campaign_id() << ',';
+      os << key.ccg_id() << ',';
+      os << key.cc_id() << ',';
+      os << key.ccg_rate_id() << ',';
+      os << key.colo_rate_id() << ',';
+      os << key.site_rate_id() << ',';
+      os << key.currency_exchange_id() << ',';
+      os << key.delivery_threshold() << ',';
+      os << key.num_shown() << ',';
+      os << key.position() << ',';
+      os << key.test() << ',';
+      os << key.fraud() << ',';
+      os << key.walled_garden() << ',';
+      os << key.user_status() << ',';
+      write_optional_value_as_csv(os, key.geo_channel_id()) << ',';
+      write_optional_value_as_csv(os, key.device_channel_id()) << ',';
+      os << key.ctr_reset_id() << ',';
+      os << key.hid_profile() << ',';
+      os << key.viewability();
+      return os;
+    }
+
+    static std::ostream&
+    write_inner_data_as_csv(
+      std::ostream &os,
+      const BaseTraits::CollectorType::DataT::DataT &data)
+    {
+      return os <<
+        data.unverified_imps() << ',' <<
+        data.imps() << ',' <<
+        data.clicks() << ',' <<
+        data.actions() << ',' <<
+        data.adv_amount() << ',' <<
+        data.pub_amount() << ',' <<
+        data.isp_amount() << ',' <<
+        data.adv_comm_amount() << ',' <<
+        data.pub_comm_amount() << ',' <<
+        data.adv_payable_comm_amount() << ',' <<
+        data.pub_advcurrency_amount() << ',' <<
+        data.isp_advcurrency_amount() << ',' <<
+        data.undup_imps() << ',' <<
+        data.undup_clicks() << ',' <<
+        data.ym_confirmed_clicks() << ',' <<
+        data.ym_bounced_clicks() << ',' <<
+        data.ym_robots_clicks() << ',' <<
+        data.ym_session_time();
     }
   };
 
