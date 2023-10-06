@@ -236,6 +236,7 @@
 
   <xsd:complexType name="OutLogsType">
     <xsd:sequence>
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="CreativeStat" type="LogFlushPolicyType"/>
       <xsd:element name="RequestStatsHourlyExtStat" type="LogFlushPolicyType"/>
       <xsd:element name="UserProperties" type="LogFlushPolicyType"/>
@@ -288,6 +289,10 @@
 
   <xsd:complexType name="ProfilingEndpointType">
     <xsd:attribute name="url" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="MonitoringType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="RequestOperationFlushPolicyType">
