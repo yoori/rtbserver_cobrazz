@@ -53,6 +53,8 @@ namespace RequestInfoSvcs
     TagRequestProcessor_var add_processor(
       ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
+//    cmprim->set_child_processors(child_processors_.size());
+
   }
 
   inline

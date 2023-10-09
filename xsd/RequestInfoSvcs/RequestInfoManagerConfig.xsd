@@ -29,6 +29,8 @@
     </xsd:annotation>
 
     <xsd:sequence>
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
+
       <xsd:element name="CorbaConfig" type="CorbaConfigType">
         <xsd:annotation>
           <xsd:documentation>
@@ -236,7 +238,6 @@
 
   <xsd:complexType name="OutLogsType">
     <xsd:sequence>
-      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="CreativeStat" type="LogFlushPolicyType"/>
       <xsd:element name="RequestStatsHourlyExtStat" type="LogFlushPolicyType"/>
       <xsd:element name="UserProperties" type="LogFlushPolicyType"/>

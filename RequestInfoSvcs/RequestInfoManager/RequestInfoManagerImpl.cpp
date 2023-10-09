@@ -147,7 +147,8 @@ namespace RequestInfoSvcs{
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
-    const RequestInfoManagerStatsImpl_var& rim_stats_impl)
+    const RequestInfoManagerStatsImpl_var& rim_stats_impl,
+    Generics::CompositeMetricsProvider_var composite_metrics_provider)
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -166,7 +167,10 @@ namespace RequestInfoSvcs{
         ProfilingCommons::ProfileMapFactory::Cache_var(
           new ProfilingCommons::ProfileMapFactory::Cache(
             request_info_manager_config.LogProcessing().cache_blocks())) :
-        ProfilingCommons::ProfileMapFactory::Cache_var())
+        ProfilingCommons::ProfileMapFactory::Cache_var()
+       
+	),
+	composite_metrics_provider_(composite_metrics_provider)
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 

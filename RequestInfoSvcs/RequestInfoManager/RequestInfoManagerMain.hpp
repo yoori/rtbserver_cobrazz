@@ -13,8 +13,12 @@
 #include "RequestInfoManager.hpp"
 #include "RequestInfoManagerImpl.hpp"
 
+#include <UServerUtils/MetricsHTTPProvider.hpp>
+#include <Generics/CompositeMetricsProvider.hpp>
+
 class RequestInfoManagerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl
+  : public AdServer::Commons::ProcessControlVarsLoggerImpl,
+  public Generics::CompositeActiveObject
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -56,6 +60,9 @@ private:
   typedef Sync::PosixGuard ShutdownGuard;
 
   ShutdownMutex shutdown_lock_;
+  
+  Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+
 };
 
 typedef ReferenceCounting::SmartPtr<RequestInfoManagerApp_>

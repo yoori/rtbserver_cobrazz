@@ -23,7 +23,8 @@ namespace
 
 RequestInfoManagerApp_::RequestInfoManagerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "RequestInfoManagerApp_", ASPECT)
+      "RequestInfoManagerApp_", ASPECT),
+      composite_metrics_provider_(new Generics::CompositeMetricsProvider())
 {
 }
 
@@ -178,6 +179,16 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
           ASPECT) << ": Can't init SNMP stats provider: " << ex.what();
       }
     }
+    if(config().Monitoring().present())
+    {
+        UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
+          new UServerUtils::MetricsHTTPProvider(
+            composite_metrics_provider_,
+            config().Monitoring()->port(),
+            "/metrics");
+
+        add_child_object(metrics_http_provider);
+    }
 
     // Creating user info manager servant
     request_info_manager_impl_ =
@@ -185,7 +196,11 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
         callback(),
         logger(),
         config(),
-        rim_stats_impl);
+        rim_stats_impl,composite_metrics_provider_);
+        
+      // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
+      // init metrics http provider
+        
 
     typedef CORBACommons::ProcessStatsGen<
       AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl>
