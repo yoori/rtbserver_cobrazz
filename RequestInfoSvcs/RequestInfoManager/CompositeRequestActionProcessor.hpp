@@ -4,6 +4,7 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "RequestActionProcessor.hpp"
+#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
@@ -22,7 +23,7 @@ namespace AdServer
 
     public:
       CompositeRequestActionProcessor(
-        RequestActionProcessor* child_processor = nullptr)
+        RequestActionProcessor* child_processor , CompositeMetricsProviderRIM_var cmprim)
         noexcept;
 
       void
@@ -63,11 +64,14 @@ namespace AdServer
         /*throw(RequestActionProcessor::Exception)*/;
 
     protected:
-      virtual ~CompositeRequestActionProcessor() noexcept {}
+      virtual ~CompositeRequestActionProcessor() noexcept {
+          cmprim_->sub_container(typeid (child_processors_).name(),"child_processors_", child_processors_.size());
+      }
 
     private:
       typedef std::list<RequestActionProcessor_var> RequestActionProcessorList;
       RequestActionProcessorList child_processors_;
+      CompositeMetricsProviderRIM_var cmprim_;
     };
 
     typedef ReferenceCounting::SmartPtr<CompositeRequestActionProcessor>
@@ -134,14 +138,14 @@ namespace RequestInfoSvcs
 {
   // CompositeRequestActionProcessor
   inline
-  CompositeRequestActionProcessor::CompositeRequestActionProcessor(
-    RequestActionProcessor* child_processor)
-    noexcept
+  CompositeRequestActionProcessor::CompositeRequestActionProcessor(RequestActionProcessor* child_processor, CompositeMetricsProviderRIM_var cmprim)
+    noexcept :cmprim_(cmprim)
   {
     if(child_processor)
     {
       add_child_processor(child_processor);
     }
+
   }
 
   inline
@@ -153,7 +157,7 @@ namespace RequestInfoSvcs
     RequestActionProcessor_var add_processor(
       ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
-    //cmprim->set_child_processors(child_processors_.size());
+    cmprim_->add_container(typeid(child_processors_).name(),"child_processors_",1);
 
   }
 
