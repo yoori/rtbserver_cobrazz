@@ -24,7 +24,7 @@ namespace
 RequestInfoManagerApp_::RequestInfoManagerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
       "RequestInfoManagerApp_", ASPECT),
-      composite_metrics_provider_(new Generics::CompositeMetricsProvider())
+      cmprim_(new CompositeMetricsProviderRIM())
 {
 }
 
@@ -183,7 +183,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     {
         UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
           new UServerUtils::MetricsHTTPProvider(
-            composite_metrics_provider_,
+            cmprim_.operator->(),
             config().Monitoring()->port(),
             "/metrics");
 
@@ -196,7 +196,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
         callback(),
         logger(),
         config(),
-        rim_stats_impl,composite_metrics_provider_);
+        rim_stats_impl,cmprim_);
         
       // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
       // init metrics http provider
