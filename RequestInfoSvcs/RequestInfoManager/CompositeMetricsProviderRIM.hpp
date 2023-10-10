@@ -29,6 +29,13 @@ public:
 
       add_value_prometheus(containerName,m, sz);
     }
+    void sub_container(const std::string &className,const std::string &containerName, size_t sz)
+    {
+      std::map<std::string,std::string> m;
+      m["class"]=className;
+
+      add_value_prometheus(containerName,m, - sz);
+    }
 
 };
 typedef ReferenceCounting::SmartPtr<CompositeMetricsProviderRIM> CompositeMetricsProviderRIM_var;
