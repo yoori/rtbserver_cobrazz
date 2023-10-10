@@ -148,7 +148,7 @@ namespace RequestInfoSvcs{
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
     const RequestInfoManagerStatsImpl_var& rim_stats_impl,
-    Generics::CompositeMetricsProvider_var composite_metrics_provider)
+    CompositeMetricsProviderRIM_var cmprim)
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -170,7 +170,7 @@ namespace RequestInfoSvcs{
         ProfilingCommons::ProfileMapFactory::Cache_var()
        
 	),
-	composite_metrics_provider_(composite_metrics_provider)
+	cmprim_(cmprim)
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 
@@ -781,7 +781,7 @@ namespace RequestInfoSvcs{
       }
 
       CompositeAdvActionProcessor_var adv_action_processor =
-        new CompositeAdvActionProcessor();
+        new CompositeAdvActionProcessor(cmprim_);
 
       adv_action_processor->add_child_processor(
         user_action_info_container_.get());

@@ -99,7 +99,7 @@ namespace AdServer
         Logging::Logger* logger,
         const RequestInfoManagerConfig& request_info_manager_config,
         const RequestInfoManagerStatsImpl_var& rim_stats_impl,
-        Generics::CompositeMetricsProvider_var composite_metrics_provider)
+        CompositeMetricsProviderRIM_var cmprim)
         /*throw(Exception)*/;
 
       virtual CORBA::Boolean get_profile(
@@ -165,7 +165,7 @@ namespace AdServer
       typedef Generics::TaskGoal TaskBase;
       typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
 
-      Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+      CompositeMetricsProviderRIM_var cmprim_;
 
       struct LoadDataState: public ReferenceCounting::AtomicImpl
       {
