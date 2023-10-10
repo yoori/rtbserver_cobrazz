@@ -37,7 +37,7 @@ namespace AdServer
 
     protected:
       virtual ~CompositeAdvActionProcessor() noexcept {
-          cmprim_->add_container(typeid(child_processors_).name(),"child_processors_", - child_processors_.size());
+          cmprim_->sub_container(typeid(child_processors_).name(),"child_processors_", child_processors_.size());
       }
 
     private:

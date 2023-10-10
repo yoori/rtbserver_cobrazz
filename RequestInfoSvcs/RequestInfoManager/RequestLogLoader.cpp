@@ -665,6 +665,8 @@ namespace RequestInfoSvcs
         ch_rev.sys_click = cmp_ch_it->click_sys_revenue;
         ch_rev.adv_click = cmp_ch_it->adv_click_revenue;
         request_info.cmp_channels.push_back(ch_rev);
+        request_info.cmprim_->add_container(typeid (request_info.cmp_channels).name(),"cmp_channels",1);
+
       }
 
       request_info.enabled_notice = req.enabled_notice();
