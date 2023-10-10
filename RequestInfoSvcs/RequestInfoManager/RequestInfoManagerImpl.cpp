@@ -737,7 +737,7 @@ namespace RequestInfoSvcs{
         request_info_container_.get()->proxy());
 
       CompositeTagRequestProcessor_var tag_request_processor =
-        new CompositeTagRequestProcessor();
+        new CompositeTagRequestProcessor(cmprim_);
 
       tag_request_processor->add_child_processor(
         user_site_reach_container_.get());
@@ -789,7 +789,7 @@ namespace RequestInfoSvcs{
         request_out_logger_);
 
       CompositeRequestContainerProcessor_var request_container_processor =
-        new CompositeRequestContainerProcessor();
+        new CompositeRequestContainerProcessor(cmprim_);
 
       request_container_processor->add_child_processor(
         request_info_container_.get());
