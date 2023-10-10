@@ -13,6 +13,7 @@
 
 #include <Commons/Containers.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
+#include "CompositeMetricsProviderRIM.hpp"
 
 /**
  * RequestInfo
@@ -41,6 +42,12 @@ namespace AdServer
       /*
        * Revenue in custom currency
        */
+      RequestInfo(CompositeMetricsProviderRIM_var cmprim):cmprim_(cmprim){}
+      ~RequestInfo()
+      {
+        cmprim_->sub_container(typeid(cmp_channels).name(),"cmp_channels",cmp_channels.size());
+      }
+      CompositeMetricsProviderRIM_var cmprim_;
       struct Revenue
       {
         Revenue() noexcept
@@ -356,6 +363,7 @@ namespace AdServer
       unsigned long device_channel_id;
       std::string expression;
       ChannelRevenueList cmp_channels;
+
 
       bool text_campaign;
       unsigned long ccg_keyword_id;
