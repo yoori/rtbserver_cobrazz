@@ -15,7 +15,7 @@
 
 #include <UServerUtils/MetricsHTTPProvider.hpp>
 #include <Generics/CompositeMetricsProvider.hpp>
-
+#include "CompositeMetricsProviderRIM.hpp"
 class RequestInfoManagerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
   public Generics::CompositeActiveObject
@@ -61,7 +61,7 @@ private:
 
   ShutdownMutex shutdown_lock_;
   
-  Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+  CompositeMetricsProviderRIM_var cmprim_;
 
 };
 

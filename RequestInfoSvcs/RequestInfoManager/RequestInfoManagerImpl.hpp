@@ -42,6 +42,7 @@
 #include "ExpressionMatcherNotifier.hpp"
 #include "RequestOperationDistributor.hpp"
 #include <Generics/CompositeMetricsProvider.hpp>
+#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
