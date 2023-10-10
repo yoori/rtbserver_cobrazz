@@ -239,7 +239,7 @@ namespace RequestInfoSvcs{
 
     try
     {
-      processing_distributor_ = new CompositeRequestActionProcessor();
+      processing_distributor_ = new CompositeRequestActionProcessor(nullptr,cmprim_);
     }
     catch(const eh::Exception& ex)
     {
