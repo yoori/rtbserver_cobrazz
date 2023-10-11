@@ -62,7 +62,6 @@ target_link_libraries(RequestInfoManager
   SNMPAgent
   RequestInfoManagerIDL
   Commons
-  
 
   RequestInfoManagerConfigXSD
 
@@ -93,7 +92,6 @@ target_link_libraries(RequestInfoManager
   PlainStorage2
   UserCampaignReachProfilePST
   UserInfoManagerControllerL
-  UServerUtils
 )
 
 add_library(RequestLogLoader SHARED

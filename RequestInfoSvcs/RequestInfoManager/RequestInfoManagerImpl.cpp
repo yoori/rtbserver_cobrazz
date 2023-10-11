@@ -147,8 +147,7 @@ namespace RequestInfoSvcs{
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
-    const RequestInfoManagerStatsImpl_var& rim_stats_impl,
-    CompositeMetricsProviderRIM_var cmprim)
+    const RequestInfoManagerStatsImpl_var& rim_stats_impl)
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -167,10 +166,7 @@ namespace RequestInfoSvcs{
         ProfilingCommons::ProfileMapFactory::Cache_var(
           new ProfilingCommons::ProfileMapFactory::Cache(
             request_info_manager_config.LogProcessing().cache_blocks())) :
-        ProfilingCommons::ProfileMapFactory::Cache_var()
-       
-	),
-	cmprim_(cmprim)
+        ProfilingCommons::ProfileMapFactory::Cache_var())
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 
@@ -239,7 +235,7 @@ namespace RequestInfoSvcs{
 
     try
     {
-      processing_distributor_ = new CompositeRequestActionProcessor(nullptr,cmprim_);
+      processing_distributor_ = new CompositeRequestActionProcessor();
     }
     catch(const eh::Exception& ex)
     {
@@ -737,7 +733,7 @@ namespace RequestInfoSvcs{
         request_info_container_.get()->proxy());
 
       CompositeTagRequestProcessor_var tag_request_processor =
-        new CompositeTagRequestProcessor(cmprim_);
+        new CompositeTagRequestProcessor();
 
       tag_request_processor->add_child_processor(
         user_site_reach_container_.get());
@@ -781,7 +777,7 @@ namespace RequestInfoSvcs{
       }
 
       CompositeAdvActionProcessor_var adv_action_processor =
-        new CompositeAdvActionProcessor(cmprim_);
+        new CompositeAdvActionProcessor();
 
       adv_action_processor->add_child_processor(
         user_action_info_container_.get());
@@ -789,7 +785,7 @@ namespace RequestInfoSvcs{
         request_out_logger_);
 
       CompositeRequestContainerProcessor_var request_container_processor =
-        new CompositeRequestContainerProcessor(cmprim_);
+        new CompositeRequestContainerProcessor();
 
       request_container_processor->add_child_processor(
         request_info_container_.get());

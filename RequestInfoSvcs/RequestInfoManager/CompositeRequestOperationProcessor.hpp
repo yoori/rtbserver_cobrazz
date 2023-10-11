@@ -4,7 +4,6 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "RequestOperationProcessor.hpp"
-#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
@@ -21,7 +20,6 @@ namespace RequestInfoSvcs
   public:
     DECLARE_EXCEPTION(Exception, RequestOperationProcessor::Exception);
 
-    CompositeRequestOperationProcessor(CompositeMetricsProviderRIM_var cmprim): cmprim_(cmprim){}
     void add_child_processor(RequestOperationProcessor* child_processor)
       /*throw(Exception)*/;
 
@@ -53,15 +51,11 @@ namespace RequestInfoSvcs
       /*throw(Exception)*/;
 
   protected:
-    virtual ~CompositeRequestOperationProcessor() noexcept
-    {
-        cmprim_->sub_container(typeid (child_processors_).name(),"child_processors_",child_processors_.size());
-    }
+    virtual ~CompositeRequestOperationProcessor() noexcept {}
 
   private:
     typedef std::list<RequestOperationProcessor_var> RequestOperationProcessorList;
     RequestOperationProcessorList child_processors_;
-    CompositeMetricsProviderRIM_var cmprim_;
   };
 
   typedef
@@ -83,8 +77,6 @@ namespace RequestInfoSvcs
     RequestOperationProcessor_var add_processor(
       ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
-    cmprim_->add_container(typeid(child_processors_).name(),"child_processors_",1);
-
   }
 
   void
