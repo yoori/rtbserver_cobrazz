@@ -4,7 +4,6 @@
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "TagRequestProcessor.hpp"
-#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
@@ -21,7 +20,6 @@ namespace RequestInfoSvcs
   public:
     DECLARE_EXCEPTION(Exception, TagRequestProcessor::Exception);
 
-    CompositeTagRequestProcessor(CompositeMetricsProviderRIM_var cmprim):cmprim_(cmprim){}
     void add_child_processor(TagRequestProcessor* child_processor)
       /*throw(Exception)*/;
 
@@ -29,14 +27,11 @@ namespace RequestInfoSvcs
       /*throw(TagRequestProcessor::Exception)*/;
 
   protected:
-    virtual ~CompositeTagRequestProcessor() noexcept {
-        cmprim_->sub_container(typeid (child_processors_).name(),"child_processors_",child_processors_.size());
-    }
+    virtual ~CompositeTagRequestProcessor() noexcept {}
 
   private:
     typedef std::list<TagRequestProcessor_var> TagRequestProcessorList;
     TagRequestProcessorList child_processors_;
-    CompositeMetricsProviderRIM_var cmprim_;
   };
 
   typedef
@@ -58,8 +53,6 @@ namespace RequestInfoSvcs
     TagRequestProcessor_var add_processor(
       ReferenceCounting::add_ref(child_processor));
     child_processors_.push_back(add_processor);
-    cmprim_->add_container(typeid (child_processors_).name(),"child_processors_", 1);
-
   }
 
   inline
