@@ -12,7 +12,7 @@
 #include "RequestInfoManagerMain.hpp"
 #include "RequestInfoManagerStats.hpp"
 #include "RequestInfoManagerStatsAgent.hpp"
-
+#include "UServerUtils/MetricsHTTPProvider.hpp"
 namespace
 {
   const char ASPECT[] = "RequestInfoManager";
@@ -24,7 +24,7 @@ namespace
 RequestInfoManagerApp_::RequestInfoManagerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
       "RequestInfoManagerApp_", ASPECT),
-      cmprim_(new CompositeMetricsProviderRIM()
+      cmprim_(new CompositeMetricsProviderRIM())
 {
 }
 
