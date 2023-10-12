@@ -184,7 +184,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     {
         UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
           new UServerUtils::MetricsHTTPProvider(
-            cmprim_.operator->(),
+            cmprim_,
             config().Monitoring()->port(),
             "/metrics");
 
