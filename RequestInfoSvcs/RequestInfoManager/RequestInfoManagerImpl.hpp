@@ -41,6 +41,7 @@
 #include "RequestOutLogger.hpp"
 #include "ExpressionMatcherNotifier.hpp"
 #include "RequestOperationDistributor.hpp"
+#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
@@ -96,7 +97,8 @@ namespace AdServer
         Generics::ActiveObjectCallback* callback,
         Logging::Logger* logger,
         const RequestInfoManagerConfig& request_info_manager_config,
-        const RequestInfoManagerStatsImpl_var& rim_stats_impl)
+        const RequestInfoManagerStatsImpl_var& rim_stats_impl,
+              CompositeMetricsProviderRIM * cmprim)
         /*throw(Exception)*/;
 
       virtual CORBA::Boolean get_profile(
@@ -161,6 +163,8 @@ namespace AdServer
     private:
       typedef Generics::TaskGoal TaskBase;
       typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
+
+      CompositeMetricsProviderRIM_var cmprim_;
 
       struct LoadDataState: public ReferenceCounting::AtomicImpl
       {
