@@ -10,7 +10,7 @@
 #include <LogCommons/Request.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/TagRequest.hpp>
-
+#include "CompositeMetricsProviderRIM.hpp"
 /*
  * LogFetcherBase - base class for process one type logs
  * LogRecordFetcher - LogFetcherBase implementation
@@ -59,7 +59,7 @@ namespace RequestInfoSvcs
     check_files() noexcept;
 
     virtual void
-    process(LogProcessing::FileReceiver::FileGuard* file_ptr) noexcept;
+    process(LogProcessing::FileReceiver::FileGuard* file_ptr, CompositeMetricsProviderRIM* cmprim) noexcept;
 
   protected:
     virtual
@@ -241,7 +241,7 @@ namespace RequestInfoSvcs
   {}
 
   void
-  LogRecordFetcherBase::process(LogProcessing::FileReceiver::FileGuard* file_ptr)
+  LogRecordFetcherBase::process(LogProcessing::FileReceiver::FileGuard* file_ptr, CompositeMetricsProviderRIM *cmprim)
     noexcept
   {
     static const char* FUN = "LogRecordFetcherBase::process()";
@@ -273,6 +273,17 @@ namespace RequestInfoSvcs
           ostr << FUN << ": Can't delete file '" << file->full_path() << "'";
           log_errors_->report_error(
             Generics::ActiveObjectCallback::ERROR, ostr.str());
+        }
+        auto fn=file->file_name();
+        auto pz=fn.rfind('.');
+        if(pz!=std::string::npos)
+        {
+            auto ext=fn.substr(pz,fn.size()-pz);
+            std::map<std::string,std::string> m;
+            m["ext"]=ext;
+            cmprim->add_value_prometheus("processedFilesByExt",m,1);
+            cmprim->add_value_prometheus("processedLineCountByext",m,name_info.processed_lines_count);
+
         }
       }
     }
