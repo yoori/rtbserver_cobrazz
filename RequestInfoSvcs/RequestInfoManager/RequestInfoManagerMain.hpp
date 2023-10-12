@@ -12,9 +12,11 @@
 
 #include "RequestInfoManager.hpp"
 #include "RequestInfoManagerImpl.hpp"
+#include "CompositeMetricsProviderRIM.hpp"
 
 class RequestInfoManagerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl
+  : public AdServer::Commons::ProcessControlVarsLoggerImpl,
+    public Generics::CompositeActiveObject
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -56,6 +58,8 @@ private:
   typedef Sync::PosixGuard ShutdownGuard;
 
   ShutdownMutex shutdown_lock_;
+  CompositeMetricsProviderRIM_var cmprim_;
+
 };
 
 typedef ReferenceCounting::SmartPtr<RequestInfoManagerApp_>
