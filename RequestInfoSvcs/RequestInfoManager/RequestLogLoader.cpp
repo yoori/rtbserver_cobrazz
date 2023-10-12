@@ -59,7 +59,7 @@ namespace RequestInfoSvcs
     check_files() noexcept;
 
     virtual void
-    process(LogProcessing::FileReceiver::FileGuard* file_ptr, CompositeMetricsProviderRIM* cmprim) noexcept;
+    process(LogProcessing::FileReceiver::FileGuard* file_ptr) noexcept;
 
   protected:
     virtual
@@ -241,7 +241,7 @@ namespace RequestInfoSvcs
   {}
 
   void
-  LogRecordFetcherBase::process(LogProcessing::FileReceiver::FileGuard* file_ptr, CompositeMetricsProviderRIM *cmprim)
+  LogRecordFetcherBase::process(LogProcessing::FileReceiver::FileGuard* file_ptr)
     noexcept
   {
     static const char* FUN = "LogRecordFetcherBase::process()";
@@ -274,6 +274,7 @@ namespace RequestInfoSvcs
           log_errors_->report_error(
             Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
+        #ifdef KALL
         auto fn=file->file_name();
         auto pz=fn.rfind('.');
         if(pz!=std::string::npos)
@@ -285,6 +286,7 @@ namespace RequestInfoSvcs
             cmprim->add_value_prometheus("processedLineCountByext",m,name_info.processed_lines_count);
 
         }
+        #endif
       }
     }
     catch (const eh::Exception& ex)
