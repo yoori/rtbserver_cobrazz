@@ -813,7 +813,7 @@ namespace RequestInfoSvcs{
           InLogs().check_logs_period()),
         Generics::Time(1),
         lp_config.threads(),
-        rim_stats_impl_);
+        rim_stats_impl_,cmprim_);
     }
     catch(const eh::Exception& ex)
     {
