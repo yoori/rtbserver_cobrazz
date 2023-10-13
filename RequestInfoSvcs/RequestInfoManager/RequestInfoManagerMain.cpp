@@ -197,7 +197,8 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
         callback(),
         logger(),
         config(),
-        rim_stats_impl,cmprim_);
+        rim_stats_impl,
+        cmprim_);
 
     typedef CORBACommons::ProcessStatsGen<
       AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl>

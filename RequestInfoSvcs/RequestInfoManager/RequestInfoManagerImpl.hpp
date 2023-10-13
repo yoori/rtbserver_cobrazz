@@ -98,7 +98,7 @@ namespace AdServer
         Logging::Logger* logger,
         const RequestInfoManagerConfig& request_info_manager_config,
         const RequestInfoManagerStatsImpl_var& rim_stats_impl,
-              CompositeMetricsProviderRIM * cmprim)
+        CompositeMetricsProviderRIM * cmprim)
         /*throw(Exception)*/;
 
       virtual CORBA::Boolean get_profile(
