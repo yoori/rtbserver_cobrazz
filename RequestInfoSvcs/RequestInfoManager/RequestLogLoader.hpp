@@ -64,7 +64,8 @@ namespace AdServer
     public:
       LogFetcherBase(
         unsigned int priority,
-        LogProcessing::FileReceiver* file_receiver, CompositeMetricsProviderRIM* cmprim)
+        LogProcessing::FileReceiver* file_receiver,
+        CompositeMetricsProviderRIM* cmprim)
         noexcept;
 
       virtual

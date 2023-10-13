@@ -51,7 +51,8 @@ namespace RequestInfoSvcs
       const char* folder,
       unsigned int priority,
       const Generics::Time& check_period,
-      RequestInfoManagerStatsImpl* proc_stat_impl, CompositeMetricsProviderRIM* cmprim)
+      RequestInfoManagerStatsImpl* proc_stat_impl,
+      CompositeMetricsProviderRIM* cmprim)
       noexcept;
 
     virtual
@@ -148,7 +149,8 @@ namespace RequestInfoSvcs
       unsigned int priority,
       const Generics::Time& check_period,
       RequestOperationProcessor* request_operation_processor,
-      RequestInfoManagerStatsImpl* proc_stat_impl,CompositeMetricsProviderRIM* cmprim)
+      RequestInfoManagerStatsImpl* proc_stat_impl,
+      CompositeMetricsProviderRIM* cmprim)
       noexcept;
 
   protected:
@@ -201,8 +203,11 @@ namespace RequestInfoSvcs
   /** LogFetcherBase */
   LogFetcherBase::LogFetcherBase(
     unsigned int priority,
-    LogProcessing::FileReceiver* file_receiver, CompositeMetricsProviderRIM* cmprim) noexcept
-    : priority_(priority), file_receiver_(ReferenceCounting::add_ref(file_receiver)), cmprim_(ReferenceCounting::add_ref(cmprim))
+    LogProcessing::FileReceiver* file_receiver,
+    CompositeMetricsProviderRIM* cmprim) noexcept
+    : priority_(priority), 
+      file_receiver_(ReferenceCounting::add_ref(file_receiver)), 
+      cmprim_(ReferenceCounting::add_ref(cmprim))
   {}
 
   unsigned int
@@ -224,7 +229,8 @@ namespace RequestInfoSvcs
     const char* folder,
     unsigned int priority,
     const Generics::Time& check_period,
-    RequestInfoManagerStatsImpl* proc_stat_impl,CompositeMetricsProviderRIM* cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl,
+    CompositeMetricsProviderRIM* cmprim)
     noexcept
     : LogFetcherBase(
         priority,
@@ -233,13 +239,13 @@ namespace RequestInfoSvcs
             (std::string(folder) + "/Intermediate").c_str(),
             FETCH_FILES_LIMIT,
             processing_state->interrupter,
-            nullptr)),cmprim),
+            nullptr)),
+        cmprim),
       log_errors_(ReferenceCounting::add_ref(callback)),
       processing_state_(ReferenceCounting::add_ref(processing_state)),
       DIR_(folder),
       check_period_(check_period),
       proc_stat_impl_(ReferenceCounting::add_ref(proc_stat_impl))
-
   {}
 
   void
@@ -276,7 +282,6 @@ namespace RequestInfoSvcs
           log_errors_->report_error(
             Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
-//        #ifdef KALL
         auto fn=file->file_name();
         auto pz=fn.rfind('.');
         if(pz!=std::string::npos)
@@ -286,9 +291,7 @@ namespace RequestInfoSvcs
             m["ext"]=ext;
             cmprim_->add_value_prometheus("processedFilesByExt",m,1);
             cmprim_->add_value_prometheus("processedLineCountByext",m,name_info.processed_lines_count);
-
         }
-//        #endif
       }
     }
     catch (const eh::Exception& ex)
@@ -399,7 +402,8 @@ namespace RequestInfoSvcs
     unsigned int priority,
     const Generics::Time& check_period,
     const ProcessFun& process_fun,
-    RequestInfoManagerStatsImpl* proc_stat_impl,CompositeMetricsProviderRIM* cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl,
+    CompositeMetricsProviderRIM* cmprim)
     noexcept
     : LogRecordFetcherBase(
         callback,
@@ -407,7 +411,8 @@ namespace RequestInfoSvcs
         folder,
         priority,
         check_period,
-        proc_stat_impl,cmprim),
+        proc_stat_impl,
+        cmprim),
       process_fun_(process_fun)
   {
     if (proc_stat_impl_)
@@ -495,7 +500,8 @@ namespace RequestInfoSvcs
     unsigned int priority,
     const Generics::Time& check_period,
     RequestOperationProcessor* request_operation_processor,
-    RequestInfoManagerStatsImpl* proc_stat_impl, CompositeMetricsProviderRIM *cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl,
+    CompositeMetricsProviderRIM *cmprim)
     noexcept
     : LogRecordFetcherBase(
         callback,
@@ -503,7 +509,8 @@ namespace RequestInfoSvcs
         folder,
         priority,
         check_period,
-        proc_stat_impl,cmprim),
+        proc_stat_impl,
+        cmprim),
       request_operation_loader_(
         new RequestOperationLoader(request_operation_processor))
 
@@ -980,10 +987,12 @@ namespace RequestInfoSvcs
     const Generics::Time& check_period,
     const Generics::Time&,
     std::size_t threads_count,
-    RequestInfoManagerStatsImpl* proc_stat_impl, CompositeMetricsProviderRIM *cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl,
+    CompositeMetricsProviderRIM *cmprim)
     /*throw(Exception)*/
     : log_errors_callback_(ReferenceCounting::add_ref(callback)),
-      processing_state_(new LogProcessingState()),cmprim_(ReferenceCounting::add_ref(cmprim))
+      processing_state_(new LogProcessingState()),
+      cmprim_(ReferenceCounting::add_ref(cmprim))
   {
     using namespace AdServer::LogProcessing;
 
@@ -1054,7 +1063,8 @@ namespace RequestInfoSvcs
       in_logs.request_operation.priority,
       check_period,
       request_operation_processor,
-      proc_stat_impl,cmprim_));
+      proc_stat_impl,
+      cmprim_));
 
     add_child_object(processing_state_->interrupter);
 

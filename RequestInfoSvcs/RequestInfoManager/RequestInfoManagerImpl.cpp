@@ -148,7 +148,7 @@ namespace RequestInfoSvcs{
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
     const RequestInfoManagerStatsImpl_var& rim_stats_impl,
-          CompositeMetricsProviderRIM * cmprim)
+    CompositeMetricsProviderRIM * cmprim)
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -813,7 +813,8 @@ namespace RequestInfoSvcs{
           InLogs().check_logs_period()),
         Generics::Time(1),
         lp_config.threads(),
-        rim_stats_impl_,cmprim_);
+        rim_stats_impl_,
+        cmprim_);
     }
     catch(const eh::Exception& ex)
     {
