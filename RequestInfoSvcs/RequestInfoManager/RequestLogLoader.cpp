@@ -283,17 +283,10 @@ namespace RequestInfoSvcs
           log_errors_->report_error(
             Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
-           std::regex r(".([0-9A-Za-z]+).[0-9a-z]+$");
-           std::smatch m;
-           std::regex_search(file->file_name(), m, r);
-            if(m.size()==2)
-            {
-                auto ext = m[1].str();
-                std::map<std::string, std::string> m;
-                m["ext"] = ext;
-                cmprim_->add_value_prometheus("processedFilesByExt",m,1);
-                cmprim_->add_value_prometheus("processedLineCountByext",m,name_info.processed_lines_count);
-            }
+            std::map<std::string, std::string> m;
+            m["type"] = name_info.base_name;
+            cmprim_->add_value_prometheus("processedFilesByType",m,1);
+            cmprim_->add_value_prometheus("processedRecordCountByType",m,name_info.processed_lines_count);
       }
     }
     catch (const eh::Exception& ex)
