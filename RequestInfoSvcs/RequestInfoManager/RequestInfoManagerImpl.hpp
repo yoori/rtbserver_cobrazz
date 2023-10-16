@@ -97,7 +97,7 @@ namespace AdServer
         Generics::ActiveObjectCallback* callback,
         Logging::Logger* logger,
         const RequestInfoManagerConfig& request_info_manager_config,
-        const RequestInfoManagerStatsImpl_var& rim_stats_impl,
+        const RequestInfoManagerStatsImpl*  rim_stats_impl,
         CompositeMetricsProviderRIM * cmprim)
         /*throw(Exception)*/;
 
@@ -164,7 +164,6 @@ namespace AdServer
       typedef Generics::TaskGoal TaskBase;
       typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
 
-      CompositeMetricsProviderRIM_var cmprim_;
 
       struct LoadDataState: public ReferenceCounting::AtomicImpl
       {
@@ -378,6 +377,8 @@ namespace AdServer
 
       RequestOperationDistributor_var request_operation_distributor_;
       RequestLogLoader_var request_log_loader_;
+      CompositeMetricsProviderRIM_var cmprim_;
+
     };
 
     typedef

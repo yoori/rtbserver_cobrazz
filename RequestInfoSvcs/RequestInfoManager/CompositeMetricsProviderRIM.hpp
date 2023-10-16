@@ -5,8 +5,6 @@
 
 class CompositeMetricsProviderRIM: public Generics::CompositeMetricsProvider
 {
-
-
 };
 typedef ReferenceCounting::SmartPtr<CompositeMetricsProviderRIM> CompositeMetricsProviderRIM_var;
 
