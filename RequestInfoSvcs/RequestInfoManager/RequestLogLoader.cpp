@@ -11,6 +11,7 @@
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/TagRequest.hpp>
 #include "CompositeMetricsProviderRIM.hpp"
+#include <regex>
 /*
  * LogFetcherBase - base class for process one type logs
  * LogRecordFetcher - LogFetcherBase implementation
@@ -282,16 +283,17 @@ namespace RequestInfoSvcs
           log_errors_->report_error(
             Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
-        auto fn=file->file_name();
-        auto pz=fn.rfind('.');
-        if(pz!=std::string::npos)
-        {
-            auto ext=fn.substr(pz,fn.size()-pz);
-            std::map<std::string,std::string> m;
-            m["ext"]=ext;
-            cmprim_->add_value_prometheus("processedFilesByExt",m,1);
-            cmprim_->add_value_prometheus("processedLineCountByext",m,name_info.processed_lines_count);
-        }
+           std::regex r(".([0-9A-Za-z]+).[0-9a-z]+$");
+           std::smatch m;
+           std::regex_search(file->file_name(), m, r);
+            if(m.size()==2)
+            {
+                auto ext = m[1].str();
+                std::map<std::string, std::string> m;
+                m["ext"] = ext;
+                cmprim_->add_value_prometheus("processedFilesByExt",m,1);
+                cmprim_->add_value_prometheus("processedLineCountByext",m,name_info.processed_lines_count);
+            }
       }
     }
     catch (const eh::Exception& ex)
@@ -967,7 +969,8 @@ namespace RequestInfoSvcs
       in_log.priority,
       check_period,
       process_fun,
-      proc_stat_impl,cmprim);
+      proc_stat_impl,
+      cmprim);
   }
 
   /** InLog */
