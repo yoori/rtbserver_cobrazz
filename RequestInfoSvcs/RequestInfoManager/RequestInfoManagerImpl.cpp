@@ -147,7 +147,7 @@ namespace RequestInfoSvcs{
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
-    const RequestInfoManagerStatsImpl* rim_stats_impl,
+    RequestInfoManagerStatsImpl* rim_stats_impl,
     CompositeMetricsProviderRIM * cmprim)
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
