@@ -164,7 +164,6 @@ namespace AdServer
       typedef Generics::TaskGoal TaskBase;
       typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;
 
-
       struct LoadDataState: public ReferenceCounting::AtomicImpl
       {
       public:

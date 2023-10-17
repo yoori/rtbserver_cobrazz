@@ -59,7 +59,6 @@ private:
 
   ShutdownMutex shutdown_lock_;
   CompositeMetricsProviderRIM_var cmprim_;
-
 };
 
 typedef ReferenceCounting::SmartPtr<RequestInfoManagerApp_>
