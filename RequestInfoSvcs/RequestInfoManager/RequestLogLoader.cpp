@@ -970,7 +970,8 @@ namespace RequestInfoSvcs
   {}
 
   /** RequestLogLoader */
-  RequestLogLoader::RequestLogLoader(Generics::ActiveObjectCallback* callback,
+  RequestLogLoader::RequestLogLoader(
+    Generics::ActiveObjectCallback* callback,
     const InLogs& in_logs,
     UnmergedClickProcessor* unmerged_click_processor,
     RequestContainerProcessor* request_container_processor,
