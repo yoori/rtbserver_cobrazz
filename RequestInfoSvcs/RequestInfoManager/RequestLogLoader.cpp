@@ -508,7 +508,6 @@ namespace RequestInfoSvcs
         cmprim),
       request_operation_loader_(
         new RequestOperationLoader(request_operation_processor))
-
   {}
 
   bool
