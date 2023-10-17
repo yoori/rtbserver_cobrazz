@@ -11,7 +11,6 @@
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/TagRequest.hpp>
 #include "CompositeMetricsProviderRIM.hpp"
-#include <regex>
 /*
  * LogFetcherBase - base class for process one type logs
  * LogRecordFetcher - LogFetcherBase implementation
