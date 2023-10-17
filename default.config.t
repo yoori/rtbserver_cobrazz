@@ -37,15 +37,15 @@
 #endif
 
 #ifndef UNIXCOMMONS_CORBA_INCLUDE
-#define UNIXCOMMONS_CORBA_INCLUDE include/CORBA
+#define UNIXCOMMONS_CORBA_INCLUDE src/CORBA build/src/CORBA
 #endif
 
 #ifndef UNIXCOMMONS_LIB
-#define UNIXCOMMONS_LIB lib
+#define UNIXCOMMONS_LIB build/lib
 #endif
 
 #ifndef UNIXCOMMONS_DEF
-#define UNIXCOMMONS_DEF UNIXCOMMONS_ROOT/share/OpenSBE/defs
+#define UNIXCOMMONS_DEF UNIXCOMMONS_ROOT/build/libdefs
 #endif
 
 #endif
