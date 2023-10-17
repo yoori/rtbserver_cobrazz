@@ -244,9 +244,10 @@ Application_::generate_(
       String::SubString clicks_str;
       String::SubString nop;
       splitter.get_token(tag_id_str);
+      splitter.get_token(nop); // ext tag id
       splitter.get_token(domain);
-      splitter.get_token(nop);
-      splitter.get_token(nop);
+      splitter.get_token(nop); // revenue
+      splitter.get_token(nop); // bids
       splitter.get_token(imps_str);
       splitter.get_token(clicks_str);
 
