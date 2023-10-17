@@ -488,7 +488,8 @@ namespace RequestInfoSvcs
   }
 
   // RequestOperationFetcher implementation
-  RequestOperationFetcher::RequestOperationFetcher(Generics::ActiveObjectCallback* callback,
+  RequestOperationFetcher::RequestOperationFetcher(
+    Generics::ActiveObjectCallback* callback,
     LogProcessingState* processing_state,
     const char* folder,
     unsigned int priority,
