@@ -470,8 +470,8 @@
           <xsl:call-template name="AddOneOnHostService">
             <xsl:with-param name="serv-path"
               select="$be-cluster-path/service[@descriptor = $predictor-descriptor]"/>
-            <xsl:with-param name="service-name" select="'be-BidCost-Predictor-Merger'"/>
-            <xsl:with-param name="service-type" select="'AdServer::Predictor::BidCostPredictorMerger'"/>
+            <xsl:with-param name="service-name" select="'be-BidCost-Predictor'"/>
+            <xsl:with-param name="service-type" select="'AdServer::Predictor::BidCostPredictor'"/>
           </xsl:call-template>
         </xsl:if>
       </xsl:if>
