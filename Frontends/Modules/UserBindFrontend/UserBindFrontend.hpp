@@ -34,6 +34,8 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
+#include <Generics/CompositeMetricsProvider.hpp>
+
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer
@@ -73,7 +75,8 @@ namespace AdServer
     UserBindFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      Generics::CompositeMetricsProvider* composite_metrics_provider)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -279,6 +282,7 @@ namespace AdServer
 
     Algs::AtomicInt bind_task_count_;
     Algs::AtomicInt match_task_count_;
+    Generics::CompositeMetricsProvider_var composite_metrics_provider_;
   };
 }
 
