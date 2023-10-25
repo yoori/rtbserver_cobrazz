@@ -147,7 +147,8 @@ namespace RequestInfoSvcs{
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
-    const RequestInfoManagerStatsImpl_var& rim_stats_impl)
+    RequestInfoManagerStatsImpl* rim_stats_impl,
+    CompositeMetricsProviderRIM * cmprim)
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -160,13 +161,14 @@ namespace RequestInfoSvcs{
       scheduler_(new Generics::Planner(callback_)),
       task_runner_(new Generics::TaskRunner(callback_, 7)),
       request_info_manager_config_(request_info_manager_config),
-      rim_stats_impl_(rim_stats_impl),
+      rim_stats_impl_(ReferenceCounting::add_ref(rim_stats_impl)),
       profile_cache_(
         request_info_manager_config.LogProcessing().cache_blocks() > 0 ?
         ProfilingCommons::ProfileMapFactory::Cache_var(
           new ProfilingCommons::ProfileMapFactory::Cache(
             request_info_manager_config.LogProcessing().cache_blocks())) :
-        ProfilingCommons::ProfileMapFactory::Cache_var())
+        ProfilingCommons::ProfileMapFactory::Cache_var()),
+      cmprim_(ReferenceCounting::add_ref(cmprim))
   {
     static const char* FUN = "RequestInfoManagerImpl::RequestInfoManagerImpl()";
 
@@ -811,7 +813,8 @@ namespace RequestInfoSvcs{
           InLogs().check_logs_period()),
         Generics::Time(1),
         lp_config.threads(),
-        rim_stats_impl_);
+        rim_stats_impl_,
+        cmprim_);
     }
     catch(const eh::Exception& ex)
     {
