@@ -171,7 +171,8 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       new AdServer::UserInfoSvcs::UserInfoManagerImpl(
         callback(),
         logger(),
-        config());
+        config(),
+        composite_metrics_provider_);
 
     add_child_object(user_info_manager_impl_);
 
@@ -226,12 +227,12 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
     shutdowner_ = corba_server_adapter_->shutdowner();
 
-    if(config()->Monitoring().present())
+    if(config().Monitoring().present())
     {
       UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
         new UServerUtils::MetricsHTTPProvider(
           composite_metrics_provider_,
-          config()->Monitoring()->port(),
+          config().Monitoring()->port(),
           "/metrics");
 
       add_child_object(metrics_http_provider);
