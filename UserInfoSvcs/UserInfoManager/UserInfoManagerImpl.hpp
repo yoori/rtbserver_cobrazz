@@ -476,7 +476,7 @@ namespace AdServer
 
       LoadingProgressProcessor_var loading_progress_processor_;
       ReferenceCounting::SmartPtr<FileRWStats> file_rw_stats_;
-      Generics::CompositeActiveObject_var composite_metrics_provider_;
+      Generics::CompositeMetricsProvider_var composite_metrics_provider_;
     };
 
     typedef ReferenceCounting::SmartPtr<UserInfoManagerImpl>

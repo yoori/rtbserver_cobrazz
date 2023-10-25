@@ -62,6 +62,8 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
+
       <xsd:element name="SNMPConfig" type="SNMPConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
@@ -272,6 +274,10 @@
   <xsd:complexType name="ReadWriteStatsType">
     <xsd:attribute name="interval" type="xsd:positiveInteger" default="10"/>
     <xsd:attribute name="times" type="xsd:positiveInteger" default="10"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="MonitoringType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
 </xsd:schema>
