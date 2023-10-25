@@ -37,6 +37,7 @@
 #include "UserInfoContainer.hpp"
 #include "UserOperationLoader.hpp"
 #include "UserOperationSaver.hpp"
+#include "Generics/CompositeMetricsProvider.hpp"
 
 namespace AdServer
 {
@@ -64,7 +65,8 @@ namespace AdServer
       UserInfoManagerImpl(
         Generics::ActiveObjectCallback* callback,
         Logging::Logger* logger,
-        const UserInfoManagerConfig& user_info_manager_config)
+        const UserInfoManagerConfig& user_info_manager_config,
+        Generics::CompositeMetricsProvider* cmp)
         /*throw(Exception)*/;
 
       // ActiveObject interface
@@ -474,6 +476,7 @@ namespace AdServer
 
       LoadingProgressProcessor_var loading_progress_processor_;
       ReferenceCounting::SmartPtr<FileRWStats> file_rw_stats_;
+      Generics::CompositeActiveObject_var composite_metrics_provider_;
     };
 
     typedef ReferenceCounting::SmartPtr<UserInfoManagerImpl>
