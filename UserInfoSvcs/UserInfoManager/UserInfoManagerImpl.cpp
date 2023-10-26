@@ -13,7 +13,7 @@
 
 #include "UserInfoContainer.hpp"
 #include "UserInfoManagerImpl.hpp"
-#include "UServerUtils/metrics_raii.hpp"
+#include "UServerUtils/MetricsRAII.hpp"
 
 namespace Aspect
 {
