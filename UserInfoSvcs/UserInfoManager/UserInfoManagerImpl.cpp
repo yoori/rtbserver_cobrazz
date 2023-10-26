@@ -846,7 +846,7 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "UserInfoManager::get_user_profile()";
 
-    metrics_raii raii_tmp(composite_metrics_provider_,(std::string)"UserInfoManagerImpl::get_user_profile");
+    metrics_raii raii_tmp(composite_metrics_provider_, "UserInfoManagerImpl::get_user_profile");
     try
     {
       UserInfoContainerAccessor user_info_container = get_user_info_container_();
@@ -1185,7 +1185,7 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "UserInfoManagerImpl::match()";
 
-    metrics_raii ___tmp(composite_metrics_provider_,(std::string)"UserInfoManagerImpl::match");
+    metrics_raii raii_tmp(composite_metrics_provider_, "UserInfoManagerImpl::match");
     try
     {
       Generics::Timer process_timer;
