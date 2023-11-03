@@ -148,7 +148,8 @@ namespace AdServer
             init_frontend<UserBindFrontend>(
               fe_config.UserBindFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              composite_metrics_provider_);
           }
           else if(*module_it == M_PASSBACK)
           {
