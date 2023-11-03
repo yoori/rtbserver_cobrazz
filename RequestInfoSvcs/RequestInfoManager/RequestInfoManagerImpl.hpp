@@ -41,6 +41,7 @@
 #include "RequestOutLogger.hpp"
 #include "ExpressionMatcherNotifier.hpp"
 #include "RequestOperationDistributor.hpp"
+#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
@@ -96,7 +97,8 @@ namespace AdServer
         Generics::ActiveObjectCallback* callback,
         Logging::Logger* logger,
         const RequestInfoManagerConfig& request_info_manager_config,
-        const RequestInfoManagerStatsImpl_var& rim_stats_impl)
+        RequestInfoManagerStatsImpl*  rim_stats_impl,
+        CompositeMetricsProviderRIM * cmprim)
         /*throw(Exception)*/;
 
       virtual CORBA::Boolean get_profile(
@@ -374,6 +376,8 @@ namespace AdServer
 
       RequestOperationDistributor_var request_operation_distributor_;
       RequestLogLoader_var request_log_loader_;
+      CompositeMetricsProviderRIM_var cmprim_;
+
     };
 
     typedef
