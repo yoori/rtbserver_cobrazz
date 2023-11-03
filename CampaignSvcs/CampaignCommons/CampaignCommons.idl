@@ -126,6 +126,7 @@ module AdServer
       OptionValueInfo click_url;        /**< Creative click url */
       OptionValueInfo html_url;
       unsigned long order_set_id;
+      unsigned long initial_contract_id;
 
       CreativeCategoryIdSeq categories;
       OptionValueSeq tokens;         /** Creative tokens */
@@ -376,7 +377,6 @@ module AdServer
       ULongSeq colocations;
       unsigned long bid_strategy;
       CORBACommons::DecimalInfo min_ctr_goal;
-      unsigned long initial_contract_id;
 
       TimestampInfo timestamp;
     };

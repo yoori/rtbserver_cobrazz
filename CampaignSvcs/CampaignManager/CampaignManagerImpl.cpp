@@ -2308,18 +2308,15 @@ namespace AdServer
 
         if(!ad_selection_result.selected_campaigns.empty())
         {
-          ad_slot_result.erid <<
-            ad_selection_result.selected_campaigns.begin()->creative->erid;
-        }
+          const Creative* creative =
+            ad_selection_result.selected_campaigns.begin()->creative;
 
-        for(auto cmp_it = ad_selection_result.selected_campaigns.begin();
-          cmp_it != ad_selection_result.selected_campaigns.end(); ++cmp_it)
-        {
-          if(cmp_it->campaign && cmp_it->campaign->initial_contract)
+          ad_slot_result.erid << creative->erid;
+
+          if(creative->initial_contract)
           {
-            fill_campaign_contracts_(
-              ad_slot_result.contracts,
-              cmp_it->campaign->initial_contract);
+            fill_campaign_contracts_(ad_slot_result.contracts,
+              creative->initial_contract);
           }
         }
 
