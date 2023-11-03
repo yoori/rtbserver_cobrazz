@@ -130,7 +130,8 @@ sub process_template_files
 #   OUTPUT_PATH => "$destination"
   };
 
-  my $template = Text::Template->new(TYPE => 'STRING', SOURCE => $template_config);
+  #my $template = Text::Template->new(TYPE => 'STRING', SOURCE => $template_config);
+  my $template = Text::Template->new(TYPE => 'FILE', SOURCE => abs_path($source));
 
   if(! -d $source)
   {
@@ -143,13 +144,14 @@ sub process_template_files
       $tfile = $destination . '/' . $tfile;
     }
 
-    $template->process(
-      abs_path($source),
-      $vars,
-      abs_path($tfile))
+    my $res = $template->fill_in(HASH => $vars)
       or warning(
         "Warning: while processing the '$source into '$destination': ".
         $template->error(). "\n");
+
+    open(my $fh, '>', abs_path($tfile)) or die "Can't open target file '" + abs_path($tfile) + "' $!";
+    print $fh $res;
+    close $fh;
   }
   else
   {
