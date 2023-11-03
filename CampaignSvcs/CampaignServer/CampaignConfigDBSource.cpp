@@ -2858,9 +2858,7 @@ namespace CampaignSvcs
         QC_CMP_IMP_TOTAL_LIMIT,
         QC_CMP_IMP_DAILY_LIMIT,
         QC_CMP_CLICK_TOTAL_LIMIT,
-        QC_CMP_CLICK_DAILY_LIMIT,
-
-        QC_INITIAL_CONTRACT_ID
+        QC_CMP_CLICK_DAILY_LIMIT
       };
 
       Commons::Postgres::Statement_var stmt =
@@ -2918,8 +2916,7 @@ namespace CampaignSvcs
             "flightcmp.impressions_total_limit, "
             "flightcmp.impressions_daily_limit, "
             "flightcmp.clicks_total_limit, "
-            "flightcmp.clicks_daily_limit, "
-            "contract.id "
+            "flightcmp.clicks_daily_limit "
           "FROM "
             "adserver.get_campaign_ctr($1) cmp "
             "join Campaign campaign using(campaign_id) "
@@ -2931,9 +2928,7 @@ namespace CampaignSvcs
                 "select max(effective_date) from CurrencyExchange where effective_date <= now()))) "
             "left join flightccg on(cmp.ccg_id = flightccg.ccg_id) "
             "left join flight using(flight_id) "
-            "left join flight flightcmp on(flightcmp.flight_id = flight.parent_id) "
-            "LEFT JOIN contract ON (contract.account_id = acc.account_id AND "
-              "contract.id NOT IN (SELECT parent_contract_id FROM contract WHERE parent_contract_id IS NOT NULL))"
+            "left join flight flightcmp on(flightcmp.flight_id = flight.parent_id)"
           );
 
       stmt->set_timestamp(1, sysdate - pending_expire_time_);
@@ -3187,10 +3182,6 @@ namespace CampaignSvcs
                 rs->get_number<unsigned long>(QC_START_USER_GROUP_ID);
               campaign->end_user_group_id =
                 rs->get_number<unsigned long>(QC_END_USER_GROUP_ID);
-
-              campaign->initial_contract_id = !rs->is_null(QC_INITIAL_CONTRACT_ID) ?
-                rs->get_number<unsigned long>(QC_INITIAL_CONTRACT_ID) :
-                0;
 
               RevenueDecimal orig_ecpm = rs->get_decimal<RevenueDecimal>(QC_ECPM);
               RevenueDecimal ecpm_for_maxbid = rs->get_decimal<RevenueDecimal>(QC_ECPM_FOR_MAXBID);
@@ -5884,7 +5875,7 @@ namespace CampaignSvcs
             "contract.subject as subject_type,"
             "contract.action as action_type,"
             "(case when contract.is_agent then 1 else 0 end) as agent_acting_for_publisher,"
-            "contract.parent_contract_id AS parent_contract_id,"
+            "contract.ord_parent_contract_id AS parent_contract_id,"
             "contractor.inn,"
             "contractor.name,"
             "contractor.type as contractor_legal_form,"
@@ -5964,23 +5955,26 @@ namespace CampaignSvcs
         POS_WEIGHT,
         POS_SEQ_SET_ID,
         POS_VERSION_ID,
-        POS_STATUS
+        POS_STATUS,
+        POS_INITIAL_CONTRACT_ID
       };
 
       Commons::Postgres::Statement_var stmt =
         new Commons::Postgres::Statement(
         "SELECT "
-          "ccg_id, "
-          "cc_id, "
-          "creative_id, "
-          "fc_id, "
-          "crformat, "
-          "weight, "
-          "set_number, "
-          "version_id, "
-          "status "
+          "c.ccg_id, "
+          "c.cc_id, "
+          "c.creative_id, "
+          "c.fc_id, "
+          "c.crformat, "
+          "c.weight, "
+          "c.set_number, "
+          "c.version_id, "
+          "c.status, "
+          "cai.contract_id "
         "FROM "
-          "adserver.query_campaign_creatives(NULL, 'all', $1)");
+          "adserver.query_campaign_creatives(NULL, 'all', $1) AS c "
+          "LEFT JOIN creative_additional_info cai ON(cai.creative_id = c.creative_id)");
 
       stmt->set_timestamp(1, sysdate - pending_expire_time_);
 
@@ -6026,6 +6020,7 @@ namespace CampaignSvcs
                 (*left_cr_it)->format == (*right_cr_it)->format &&
                 (*left_cr_it)->status == (*right_cr_it)->status &&
                 (*left_cr_it)->order_set_id == (*right_cr_it)->order_set_id &&
+                (*left_cr_it)->initial_contract_id == (*right_cr_it)->initial_contract_id &&
                 (*left_cr_it)->version_id == (*right_cr_it)->version_id && (
                   ccg_it->second->creative_optimization() ||
                   (*left_cr_it)->weight == (*right_cr_it)->weight))
@@ -6104,6 +6099,8 @@ namespace CampaignSvcs
                     ));
 
                 new_creative->order_set_id = rs->get_number<unsigned long>(POS_SEQ_SET_ID);
+                new_creative->initial_contract_id = (!rs->is_null(POS_INITIAL_CONTRACT_ID) ?
+                  rs->get_number<unsigned long>(POS_INITIAL_CONTRACT_ID) : 0);
 
                 cur_creatives.push_back(new_creative);
               }
