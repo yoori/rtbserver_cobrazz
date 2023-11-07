@@ -1,4 +1,6 @@
+#include <istream>
 #include <cstring>
+
 #include"DictionaryContainer.hpp"
 #include <String/Tokenizer.hpp>
 
