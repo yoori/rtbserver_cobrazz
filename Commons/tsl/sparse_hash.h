@@ -554,11 +554,11 @@ public:
 private:
     template<typename... Args>
     static void construct_value(allocator_type& alloc, value_type* value, Args&&... value_args) {
-        alloc.construct(value, std::forward<Args>(value_args)...);
+        std::allocator_traits<allocator_type>::construct(alloc, value, std::forward<Args>(value_args)...);
     }
     
     static void destroy_value(allocator_type& alloc, value_type* value) throw() {
-        alloc.destroy(value);
+        std::allocator_traits<allocator_type>::destroy(alloc, value);
     }
     
     static void destroy_and_deallocate_values(allocator_type& alloc, value_type* values, 
