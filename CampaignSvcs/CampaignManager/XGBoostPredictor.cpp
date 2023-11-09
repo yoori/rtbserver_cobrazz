@@ -1,5 +1,7 @@
 #define DISABLE_OPENMP
 
+#include <CampaignSvcs/CampaignManager/Utils.hpp>
+
 #include <fstream>
 #include <rabit/internal/rabit-inl.h>
 #include <xgboost/predictor.h>
