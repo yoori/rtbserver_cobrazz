@@ -430,6 +430,7 @@
 <xsl:variable name="def-fcgi-userbindaddserver-mon-port" select="$def-range-start + 193"/>
 <xsl:variable name="def-fcgi-trackserver-port" select="$def-range-start + 95"/>
 <xsl:variable name="def-fcgi-trackserver-mon-port" select="$def-range-start + 195"/>
+<xsl:variable name="def-fcgi-userinfomanager-mon-port" select="$def-range-start + 196"/>
 
 <xsl:variable name="def-storage-rw-buffer-size" select="10485760"/>
 <xsl:variable name="def-storage-rwlevel-max-size" select="104857600"/>
