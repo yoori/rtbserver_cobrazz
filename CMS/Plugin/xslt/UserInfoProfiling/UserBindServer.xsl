@@ -184,6 +184,7 @@
       <xsl:call-template name="GrpcServerChannelArgList"/>
     </cfg:GrpcServer>
 
+    <cfg:Monitoring port="{$def-fcgi-userbindserver-mon-port}"/>
   </cfg:UserBindServerConfig>
 
 </xsl:template>

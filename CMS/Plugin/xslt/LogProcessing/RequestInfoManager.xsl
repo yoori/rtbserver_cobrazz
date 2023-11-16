@@ -376,6 +376,7 @@
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
     </xsl:call-template>
 
+    <cfg:Monitoring port="{$def-fcgi-requestinfomanager-mon-port}"/>
   </cfg:RequestInfoManagerConfig>
 
 </xsl:template>
