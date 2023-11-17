@@ -15,7 +15,7 @@
 #include "UserBindOperationSaver.hpp"
 #include "UserBindOperationLoader.hpp"
 #include "UserBindServerImpl.hpp"
-#include <UServerUtils/metrics_raii.hpp>
+#include <UServerUtils/MetricsRAII.hpp>
 
 namespace Aspect
 {

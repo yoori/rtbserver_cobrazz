@@ -78,6 +78,7 @@
     max_freqcap_profile_waiters="8"
     service_index="{$SERVICE_ID}">
 
+
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
     <xsl:variable name="cache-root"><xsl:value-of select="$env-config/@cache_root[1]"/>
@@ -339,6 +340,8 @@
 
     <cfg:ReadWriteStats>
     </cfg:ReadWriteStats>
+    <cfg:Monitoring port="{$def-fcgi-userinfomanager-mon-port}"/>
+
   </cfg:UserInfoManagerConfig>
 
 </xsl:template>
