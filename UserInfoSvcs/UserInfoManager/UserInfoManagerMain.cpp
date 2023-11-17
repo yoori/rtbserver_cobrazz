@@ -8,6 +8,7 @@
 
 #include "UserInfoManagerMain.hpp"
 #include "UserInfoManagerStat.hpp"
+#include "UServerUtils/MetricsHTTPProvider.hpp"
 
 namespace
 {
@@ -20,7 +21,8 @@ namespace
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "UserInfoManagerApp_", ASPECT)
+      "UserInfoManagerApp_", ASPECT),
+    composite_metrics_provider_(new Generics::CompositeMetricsProvider)
 {}
 
 void
@@ -169,7 +171,8 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       new AdServer::UserInfoSvcs::UserInfoManagerImpl(
         callback(),
         logger(),
-        config());
+        config(),
+        composite_metrics_provider_);
 
     add_child_object(user_info_manager_impl_);
 
@@ -223,6 +226,17 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       PROCESS_CONTROL_OBJ_KEY, this);
 
     shutdowner_ = corba_server_adapter_->shutdowner();
+
+    if(config().Monitoring().present())
+    {
+      UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
+        new UServerUtils::MetricsHTTPProvider(
+          composite_metrics_provider_,
+          config().Monitoring()->port(),
+          "/metrics");
+
+      add_child_object(metrics_http_provider);
+    }
 
     activate_object();
 

@@ -23,11 +23,13 @@ fi
 
 mkdir -p $config_root/
 
-ptempl.pl -i $COLOCATION -o $COLOCATION_OUT -p devvars
+ptempl.pl -i $COLOCATION -o $COLOCATION_OUT -p ./devvars
 
 EXIT_CODE=$?
 
 PREFIX=build/colo_null/app_null
+echo "$config_root/$PREFIX/"
+
 cp -r $config_root/$PREFIX/BackendSubCluster/opt/oix/server/etc/* $config_root/ 2>/dev/null
 cp -r $config_root/$PREFIX/FrontendSubCluster/opt/oix/server/etc/* $config_root/ 2>/dev/null
 cp -r $config_root/$PREFIX/AdCluster/opt/oix/server/etc/* $config_root/ 2>/dev/null

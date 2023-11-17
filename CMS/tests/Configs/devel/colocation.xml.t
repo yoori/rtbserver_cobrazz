@@ -6,55 +6,55 @@
   xmlns:colo="http://www.foros.com/cms/colocation"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.foros.com/cms/colocation platform:/resource/coloModel/src/main/model/colocation.xsd">
-  <host name="$HOST" hostName="$HOST"/>
+  <host name="{$HOST}" hostName="{$HOST}"/>
 
-  <application descriptor="AdServer-$VERSION">
+  <application descriptor="AdServer-{$VERSION}">
     <configuration>
       <environment xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
         autorestart="0">
         <forosZoneManagement
-          user_name="$USER"
-          user_group="$USERGROUP"
-          ssh_key="$HOME/.ssh/adkey"/>
-          <ispZoneManagement separate_isp_zone="true"
-            user_name="$USER"
-            user_group="$USERGROUP"
-            ssh_key="$HOME/.ssh/adkey"/>
+          user_name="{$USER}"
+          user_group="{$USERGROUP}"
+          ssh_key="{$HOME}/.ssh/adkey"/>
+          <ispZoneManagement
+            user_name="{$USER}"
+            user_group="{$USERGROUP}"
+            ssh_key="{$HOME}/.ssh/adkey"/>
         <develParams
-          management_lib_root="$SERVER_ROOT/CMS/Plugin/lib"
-          management_bin_root="$SERVER_ROOT/CMS/Plugin/exec/bin"
-          autorestart_state_root="$WORKSPACE_ROOT/state"/>
+          management_lib_root="{$SERVER_ROOT}/CMS/Plugin/lib"
+          management_bin_root="{$SERVER_ROOT}/CMS/Plugin/exec/bin"
+          autorestart_state_root="{$WORKSPACE_ROOT}/state"/>
       </environment>
     </configuration>
 
-  <serviceGroup descriptor="AdCluster" name="AdCluster$NAME_POSTFIX">
+  <serviceGroup descriptor="AdCluster" name="AdCluster{$NAME_POSTFIX}">
 
     <configuration>
       <cluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
         <environment
-          workspace_root="$WORKSPACE_ROOT"
-          config_root="$CONFIG_ROOT"
-          cache_root="$WORKSPACE_ROOT/cache"
-          server_root="$SERVER_ROOT"
-          unixcommons_root="$UNIXCOMMONS_ROOT"
-          data_root="$WORKSPACE_ROOT/www"
-          server_bin_root="$SERVER_ROOT/build"
-          mib_root="$SERVER_ROOT/CMS/Plugin/data/mibs"
-          unixcommons_bin_root="$UNIXCOMMONS_ROOT/build"/>
+          workspace_root="{$WORKSPACE_ROOT}"
+          config_root="{$CONFIG_ROOT}"
+          cache_root="{$WORKSPACE_ROOT}/cache"
+          server_root="{$SERVER_ROOT}"
+          unixcommons_root="{$UNIXCOMMONS_ROOT}"
+          data_root="{$WORKSPACE_ROOT}/www"
+          server_bin_root="{$SERVER_ROOT}/build"
+          mib_root="{$SERVER_ROOT}/CMS/Plugin/data/mibs"
+          unixcommons_bin_root="{$UNIXCOMMONS_ROOT}/build"/>
         <coloParams
           colo_id="1"
           segmentor="Polyglot"
           ad_request_profiling="ad-request profiling and stats collection enabled">
           <virtualServer
-            port="[% PORT_BASE + 80 %]"
-            internal_port="[% PORT_BASE + 80 %]">
-            <adservingDomain name="$HOST"/>
-            <thirdPartyContentDomain name="$HOST"/>
-            <biddingDomain  name="$HOST"/>
+            port="{ $PORT_BASE + 80 }"
+            internal_port="{ $PORT_BASE + 80 }">
+            <adservingDomain name="{$HOST}"/>
+            <thirdPartyContentDomain name="{$HOST}"/>
+            <biddingDomain  name="{$HOST}"/>
           </virtualServer>
           <secureVirtualServer
-            port="[% PORT_BASE + 83 %]"
-            internal_port="[% PORT_BASE + 83 %]">
+            port="{ $PORT_BASE + 83 }"
+            internal_port="{ $PORT_BASE + 83 }">
             <cert>
               <content>
 Certificate:
@@ -206,42 +206,42 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 -----END CERTIFICATE-----
               </content>
             </ca>
-            <adservingDomain name="$HOST"/>
-            <thirdPartyContentDomain name="$HOST"/>
-            <biddingDomain name="$HOST"/>
+            <adservingDomain name="{$HOST}"/>
+            <thirdPartyContentDomain name="{$HOST}"/>
+            <biddingDomain name="{$HOST}"/>
           </secureVirtualServer>
           <RTB yandex_key="04bb79a7741de975e1800764b30c41ef">
-            <source id="url" instantiate_type="url" request_type="openrtb with click url" enable_notice="false"/>
-            <source id="script-url" instantiate_type="script with url" request_type="openrtb with click url" enable_notice="false"/>
-            <source id="body" instantiate_type="body" request_type="openrtb with click url" enable_notice="false"/>
-            <source id="url-no-click" instantiate_type="url" request_type="openrtb" enable_notice="false"/>
-            <source id="body-no-click" instantiate_type="body" request_type="openrtb" enable_notice="false"/>
-            <source id="iframe-url" instantiate_type="iframe with url" request_type="openrtb" enable_notice="false"/>
-            <source id="iframe-url-no-click" instantiate_type="iframe with url" request_type="openrtb" enable_notice="false"/>
-            <source id="body-openx" instantiate_type="body" request_type="openx" enable_notice="false"/>
-            <source id="iframe-url-openx" instantiate_type="iframe with url" request_type="openx" enable_notice="false"/>
-            <source id="body-liverail" instantiate_type="body" request_type="liverail" enable_notice="false"/>
-            <source id="url-liverail" instantiate_type="url" request_type="liverail" enable_notice="false"/>
-            <source id="body-blank" instantiate_type="body" enable_notice="false"/>
-            <source id="body-openrtb-notice" instantiate_type="body" request_type="openrtb with click url" enable_notice="true"/>
-            <source id="iframe-url-adriver" instantiate_type="iframe with url" request_type="adriver" enable_notice="true"/>
-            <source id="anx" instantiate_type="url parameters"  request_type="appnexus" enable_notice="false" appnexus_member_id="1"/>
+            <source id="url" instantiate_type="url" request_type="openrtb with click url" notice="disabled"/>
+            <source id="script-url" instantiate_type="script with url" request_type="openrtb with click url" notice="disabled"/>
+            <source id="body" instantiate_type="body" request_type="openrtb with click url" notice="disabled"/>
+            <source id="url-no-click" instantiate_type="url" request_type="openrtb" notice="disabled"/>
+            <source id="body-no-click" instantiate_type="body" request_type="openrtb" notice="disabled"/>
+            <source id="iframe-url" instantiate_type="iframe with url" request_type="openrtb" notice="disabled"/>
+            <source id="iframe-url-no-click" instantiate_type="iframe with url" request_type="openrtb" notice="disabled"/>
+            <source id="body-openx" instantiate_type="body" request_type="openx" notice="disabled"/>
+            <source id="iframe-url-openx" instantiate_type="iframe with url" request_type="openx" notice="disabled"/>
+            <source id="body-liverail" instantiate_type="body" request_type="liverail" notice="disabled"/>
+            <source id="url-liverail" instantiate_type="url" request_type="liverail" notice="disabled"/>
+            <source id="body-blank" instantiate_type="body" notice="disabled"/>
+            <source id="body-openrtb-notice" instantiate_type="body" request_type="openrtb with click url" notice="nurl"/>
+            <source id="iframe-url-adriver" instantiate_type="iframe with url" request_type="adriver" notice="nurl"/>
+            <source id="anx" instantiate_type="url parameters"  request_type="appnexus" notice="disabled" appnexus_member_id="1"/>
             <source id="ipw" 
                     instantiate_type="body" 
                     request_type="openrtb" 
-                    seat="94" 
-                    enable_notice="true" 
+                    seat="94"
+                    notice="nurl" 
                     vast_instantiate_type="video url" 
-                    vast_enable_notice="false" 
+                    vast_notice="disabled" 
                     ipw_extension="true"/>
-            <source id="google" instantiate_type="iframe with url" request_type="google" vast_instantiate_type="video url" vast_enable_notice="false"/>
+            <source id="google" instantiate_type="iframe with url" request_type="google" vast_instantiate_type="video url" vast_notice="disabled"/>
             <source id="yandex" 
                     instantiate_type="data parameter value" 
                     request_type="yandex" 
-                    enable_notice="false" 
+                    notice="disabled" 
                     truncate_domain="false" 
                     vast_instantiate_type="data parameter value" 
-                    vast_enable_notice="false" 
+                    vast_notice="disabled" 
                     ipw_extension="false">
                <userBind redirect="//an.yandex.ru/setud/imarker2/##UNSIGNEDSSPUID=##?sign=##YANDEXSIGN##"  
                          passback="true"/>
@@ -249,7 +249,7 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
             <source id="native_js" 
                     instantiate_type="body" 
                     request_type="openrtb with click url" 
-                    enable_notice="false" 
+                    notice="disabled" 
                     fill_adid="true"
                     native_instantiate_type="adm"
                     native_impression_tracker_type="js"/>
@@ -260,8 +260,8 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
         <userProfiling chunks_count="4" repeat_trigger_timeout="0"/>
 
         <central>
-          <pgConnection connection_string="host=stat-dev1.ocslab.com port=5432 dbname=ads_dev user=ro password=adserver"/>
-          <pgConnectionForLogProcessing connection_string="host=stat-dev1.ocslab.com port=5432 dbname=ads_dev user=ads password=adserver"/>
+          <pgConnection connection_string="host=postdb00 port=5432 dbname=stat user=ro password=Q1oL6mm5hPTjnDQ"/>
+          <pgConnectionForLogProcessing connection_string="host=postdb00 port=5432 dbname=stat user=ads password=3Azb0uDoR33tPpI"/>
           <statFilesReceiverRef host="stat-dev1" port="10873"/>
           <dataSourceRef host="taskbot64" port="8873"/>
           <segmentorMapping>
@@ -275,22 +275,22 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
     <!-- lp, ui, be -->
     <serviceGroup
       descriptor="AdCluster/BackendSubCluster"
-      name="BackendSubCluster$NAME_POSTFIX">
+      name="BackendSubCluster{$NAME_POSTFIX}">
 
       <serviceGroup
         descriptor="AdCluster/BackendSubCluster/LogProcessing"
-        name="LogProcessing$NAME_POSTFIX">
+        name="LogProcessing{$NAME_POSTFIX}">
         <configuration>
           <logProcessing xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <syncLogs>
-              <networkParams port="[% PORT_BASE + 12 %]"/>
-              <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+              <networkParams port="{ $PORT_BASE + 12 }"/>
+              <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
               <fileTransferring file_check_period="10" host_check_period="10" logs_backup="all"/>
             </syncLogs>
 
             <syncLogsServer>
-              <networkParams port="[% PORT_BASE + 14 %]"/>
-              <logging log_level="$LOG_LEVEL" sys_log="false"/>
+              <networkParams port="{ $PORT_BASE + 14 }"/>
+              <logging log_level="{$LOG_LEVEL}" sys_log="false"/>
             </syncLogsServer>
           </logProcessing>
         </configuration>
@@ -298,12 +298,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/BackendSubCluster/CampaignServer"
-        name="CampaignServer$NAME_POSTFIX"
-        host="$HOST">
+        name="CampaignServer{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <campaignServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 6 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 6 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams update_period="10" ecpm_update_period="10"/>
           </campaignServer>
         </configuration>
@@ -311,12 +311,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/BackendSubCluster/LogGeneralizer"
-        name="LogGeneralizer$NAME_POSTFIX"
-        host="$HOST">
+        name="LogGeneralizer{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <logGeneralizer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 11 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 11 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <statLogging file_check_period="10" flush_period="10" flush_size="10000"/>
           </logGeneralizer>
         </configuration>
@@ -324,12 +324,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/BackendSubCluster/ExpressionMatcher"
-        name="ExpressionMatcher$NAME_POSTFIX"
-        host="$HOST">
+        name="ExpressionMatcher{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 13 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 13 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams period="10"/>
             <statLogging file_check_period="10" flush_period="10" activity_flush_period="10" inventory_ecpm_flush_period="10"/>
           </expressionMatcher>
@@ -338,24 +338,24 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/BackendSubCluster/StatsCollector"
-        name="StatsCollector$NAME_POSTFIX"
-        host="$HOST">
+        name="StatsCollector{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <statsCollector xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" period="3">
-            <networkParams port="[% PORT_BASE + 18 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 18 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </statsCollector>
         </configuration>
       </service>
 
       <service
         descriptor="AdCluster/BackendSubCluster/RequestInfoManager"
-        name="RequestInfoManager$NAME_POSTFIX"
-        host="$HOST">
+        name="RequestInfoManager{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 20 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 20 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <statLogging file_check_period="10" flush_period="30"/>
           </requestInfoManager>
         </configuration>
@@ -363,12 +363,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/BackendSubCluster/DictionaryProvider"
-        name="DictionaryProvider$NAME_POSTFIX"
-        host="$HOST">
+        name="DictionaryProvider{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <dictionaryProvider xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 10 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 10 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </dictionaryProvider>
         </configuration>
       </service>
@@ -376,11 +376,11 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       <service
         descriptor="AdCluster/BackendSubCluster/UserOperationGenerator"
         name="UserOperationGeneratorDevel"
-        host="$HOST">
+        host="{$HOST}">
         <configuration>
           <userOperationGenerator xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 30 %]"/>
-            <logging log_level="7" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 30 }"/>
+            <logging log_level="7" sys_log="{$SYS_LOG}"/>
           </userOperationGenerator>
         </configuration>
       </service>
@@ -388,7 +388,7 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       <service
         descriptor="AdCluster/BackendSubCluster/Predictor"
         name="Predictor"
-        host="$HOST">
+        host="{$HOST}">
         <configuration>
           <predictor xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <logging log_level="7" sys_log="false"/>
@@ -406,7 +406,7 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
     <!-- fe -->
     <serviceGroup
       descriptor="AdCluster/FrontendSubCluster"
-      name="FrontendSubCluster$NAME_POSTFIX">
+      name="FrontendSubCluster{$NAME_POSTFIX}">
       <configuration>
         <frontendCluster xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
           <channelServing>
@@ -417,12 +417,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/FrontendSubCluster/UserInfoManager"
-        name="UserInfoManager$NAME_POSTFIX"
-        host="$HOST">
+        name="UserInfoManager{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <userInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 1 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 1 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams update_period="10"/>
             <profilesCleanupParams life_time="3600" clean_time="00:01"/>
             <matchParams repeat_trigger_timeout="0"/>
@@ -432,12 +432,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController"
-        name="UserInfoManagerController$NAME_POSTFIX"
-        host="$HOST">
+        name="UserInfoManagerController{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <userInfoManagerController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 2 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 2 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <controlParams status_check_period="10"/>
           </userInfoManagerController>
         </configuration>
@@ -445,12 +445,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/FrontendSubCluster/ChannelServer"
-        name="ChannelServer$NAME_POSTFIX"
-        host="$HOST">
+        name="ChannelServer{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 3 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 3 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams period="30"/>
           </channelServer>
         </configuration>
@@ -458,75 +458,75 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/FrontendSubCluster/ChannelController"
-        name="ChannelController$NAME_POSTFIX"
-        host="$HOST">
+        name="ChannelController{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <channelController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 4 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 4 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </channelController>
         </configuration>
       </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/ChannelSearchService"
-        name="ChannelSearchService$NAME_POSTFIX"
-        host="$HOST">
+        name="ChannelSearchService{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <channelSearchService xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 9 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 9 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </channelSearchService>
         </configuration>
       </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/UserBindServer"
-        name="UserBindServer$NAME_POSTFIX"
-        host="$HOST">
+        name="UserBindServer{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <userBindServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 28 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 28 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </userBindServer>
         </configuration>
       </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/UserBindController"
-        name="UserBindController$NAME_POSTFIX"
-        host="$HOST">
+        name="UserBindController{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <userBindController xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 29 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 29 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </userBindController>
         </configuration>
       </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/HttpFrontend"
-        name="Frontend$NAME_POSTFIX"
-        host="$HOST">
+        name="Frontend{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <webServerParams max_clients="1000"/>
             <debugInfo use_acl="false" show_history_profile="true"/>
             <requestModule>
-              <logging log_level="$LOG_LEVEL"/>
+              <logging log_level="{$LOG_LEVEL}"/>
               <session timeout="30"/>
             </requestModule>
             <impressionModule>
-              <logging log_level="$LOG_LEVEL"/>
+              <logging log_level="{$LOG_LEVEL}"/>
             </impressionModule>
             <clickModule>
-              <logging log_level="$LOG_LEVEL"/>
+              <logging log_level="{$LOG_LEVEL}"/>
             </clickModule>
             <actionModule>
-              <logging log_level="$LOG_LEVEL"/>
+              <logging log_level="{$LOG_LEVEL}"/>
             </actionModule>
             <optoutModule>
-              <logging log_level="$LOG_LEVEL" log_ip="true"/>
+              <logging log_level="{$LOG_LEVEL}" log_ip="true"/>
             </optoutModule>
             <biddingModule max_bid_time="50"/>
             <userBindModule/>
@@ -537,11 +537,11 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/FrontendSubCluster/BillingServer"
-        name="BillingServer$NAME_POSTFIX"
-        host="$HOST">
+        name="BillingServer{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <billingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 31 %]"/>
+            <networkParams port="{ $PORT_BASE + 31 }"/>
             <logging log_level="7" sys_log="false"/>
           </billingServer>
         </configuration>
@@ -549,12 +549,12 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
 
       <service
         descriptor="AdCluster/FrontendSubCluster/CampaignManager"
-        name="CampaignManager$NAME_POSTFIX"
-        host="$HOST">
+        name="CampaignManager{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 7 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 7 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams
               update_period="10"
               ecpm_update_period="10"
@@ -568,19 +568,19 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       <service
         descriptor="AdCluster/FrontendSubCluster/ZmqProfilingBalancer"
         name="ZmqProfilingBalancer #1"
-        host="$HOST">
+        host="{$HOST}">
         <configuration>
           <zmqProfilingBalancer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
-            <networkParams port="[% PORT_BASE + 74 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+            <networkParams port="{ $PORT_BASE + 74 }"/>
+            <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <profilingInfoBindSocket hwm="1">
-              <address port="[% PORT_BASE + 88 %]"/>
+              <address port="{ $PORT_BASE + 88 }"/>
             </profilingInfoBindSocket>
             <anonymousStatsBindSocket hwm="1">
-              <address port="[% PORT_BASE + 89 %]"/>
+              <address port="{ $PORT_BASE + 89 }"/>
             </anonymousStatsBindSocket>
             <dmpProfilingInfoBindSocket hwm="1">
-              <address port="[% PORT_BASE + 91 %]"/>
+              <address port="{ $PORT_BASE + 91 }"/>
             </dmpProfilingInfoBindSocket>
           </zmqProfilingBalancer>
         </configuration>
@@ -589,11 +589,11 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       <service
         descriptor="AdCluster/FrontendSubCluster/ProfilingServer"
         name="ProfilingServer"
-        host="$HOST">
+        host="{$HOST}">
       <configuration>
         <profilingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" work_threads="5">
-          <networkParams port="[% PORT_BASE + 75 %]" profiling_info_port="[% PORT_BASE + 86 %]" anonymous_stats_port="[% PORT_BASE + 87 %]"/>
-          <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
+          <networkParams port="{ $PORT_BASE + 75 }" profiling_info_port="{ $PORT_BASE + 86 }" anonymous_stats_port="{ $PORT_BASE + 87 }"/>
+          <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
         </profilingServer>
       </configuration>
     </service>
@@ -610,13 +610,13 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
           <!-- UNCOMMENT THIS TO PROCESS RESULT TO TASKBOT -->
           <!-- ATTENTION! taskbot source required -->
           <!-- svn+ssh://svn.ocslab.com/home/svnroot/foros/taskbot/trunk -->
-          <!-- <taskbot root-path="$HOME/projects/foros/taskbot/trunk/"/> -->
+          <!-- <taskbot root-path="{$HOME}/projects/foros/taskbot/trunk/"/> -->
         </testsCommon>
       </configuration>
       <service
         descriptor="AdCluster/Tests/AutoTest"
-        name="AutoTest$NAME_POSTFIX"
-        host="$HOST">
+        name="AutoTest{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <autoTest xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
                     nodb="true">
@@ -654,8 +654,8 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
       </service>
       <service
         descriptor="AdCluster/Tests/BenchmarkTest"
-        name="BenchmarkTest$NAME_POSTFIX"
-        host="$HOST">
+        name="BenchmarkTest{$NAME_POSTFIX}"
+        host="{$HOST}">
         <configuration>
           <benchmarkTest xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <test name="simple"
