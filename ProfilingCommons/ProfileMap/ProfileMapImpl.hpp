@@ -14,7 +14,7 @@
 // THIS
 #include "ProfileMap.hpp"
 
-namespace AdServer::ProfilingCommons
+namespace AdServer::ProfilingCommons::IoUring
 {
 
 namespace Internal
@@ -109,6 +109,7 @@ public:
     std::optional<std::int32_t> ttl = {},
     std::optional<std::string> column_family_name = {})
     : impl_(
+        logger,
         memtable_memory_budget_mb,
         block_сache_size_mb,
         db_path,
@@ -161,6 +162,6 @@ private:
   Internal::ProfileMapImpl impl_;
 };
 
-} // namespace AdServer::ProfilingCommons
+} // namespace AdServer::ProfilingCommons::IoUring
 
 #endif //PROFILEMAPIMPL_HPP_

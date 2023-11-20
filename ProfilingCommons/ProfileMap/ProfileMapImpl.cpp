@@ -4,7 +4,7 @@
 // THIS
 #include "ProfileMapImpl.hpp"
 
-namespace AdServer::ProfilingCommons
+namespace AdServer::ProfilingCommons::IoUring
 {
 
 namespace Internal
@@ -31,16 +31,17 @@ ProfileMapImpl::ProfileMapImpl(
   db_options.create_if_missing = true;
 
   rocksdb::ColumnFamilyOptions column_family_options;
-  column_family_options.OptimizeLevelStyleCompaction(
-    memtable_memory_budget_mb);
+   /*column_family_options.OptimizeLevelStyleCompaction(
+   memtable_memory_budget_mb * 1024 * 1024);*/
   column_family_options.OptimizeForPointLookup(
-    block_сache_size_mb);
+  block_сache_size_mb * 1024 * 1024);
   column_family_options.target_file_size_multiplier = 2;
 
   if (!column_family_name.has_value())
   {
     column_family_name = rocksdb::kDefaultColumnFamilyName;
   }
+
 
   std::optional<std::vector <std::int32_t>> ttls;
   if (ttl.has_value())
@@ -66,10 +67,13 @@ ProfileMapImpl::ProfileMapImpl(
   config.event_queue_max_size = 1000000;
   config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
   config.io_uring_size = 6400;
-  config.number_io_urings = number_threads;
+  config.number_io_urings = 1.5 * number_threads;
   db_manager_pool_ = std::make_unique<DataBaseManagerPool>(
     config,
     logger_.in());
+
+  write_options_.disableWAL = true;
+  write_options_.sync = false;
 }
 
 ProfileMapImpl::ConstSmartMemBuf_var
