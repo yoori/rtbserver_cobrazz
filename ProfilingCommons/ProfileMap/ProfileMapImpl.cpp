@@ -12,7 +12,6 @@ namespace Internal
 
 ProfileMapImpl::ProfileMapImpl(
   Logger* logger,
-  const std::uint64_t memtable_memory_budget_mb,
   const std::uint64_t block_сache_size_mb,
   const std::string& db_path,
   std::optional<std::int32_t> ttl,
@@ -31,19 +30,14 @@ ProfileMapImpl::ProfileMapImpl(
   db_options.create_if_missing = true;
 
   rocksdb::ColumnFamilyOptions column_family_options;
-   /*column_family_options.OptimizeLevelStyleCompaction(
-   memtable_memory_budget_mb * 1024 * 1024);*/
-  column_family_options.OptimizeForPointLookup(
-  block_сache_size_mb * 1024 * 1024);
-  column_family_options.target_file_size_multiplier = 2;
+  column_family_options.OptimizeForPointLookup(block_сache_size_mb);
 
   if (!column_family_name.has_value())
   {
     column_family_name = rocksdb::kDefaultColumnFamilyName;
   }
 
-
-  std::optional<std::vector <std::int32_t>> ttls;
+  std::optional<std::vector<std::int32_t>> ttls;
   if (ttl.has_value())
   {
     ttls = std::vector<std::int32_t>{*ttl};
@@ -143,15 +137,36 @@ void ProfileMapImpl::save_profile(
   const std::string_view key,
   const Generics::ConstSmartMemBuf* profile)
 {
+
+  /**
+   * The write operation with parameters disableWAL = true,
+   * sync = false; is itself asynchronous, so let’s replace
+   * it with the original one.
+   **/
+
+  /*const auto& membuf = profile->membuf();
   const std::string_view value(
-    static_cast<const char*>(profile->membuf().data()),
-    profile->membuf().size());
+    static_cast<const char*>(membuf.data()),
+    membuf.size());
   const auto status = db_manager_pool_->put(
     data_base_,
     *column_family_handle_,
     write_options_,
     key,
-    value);
+    value);*/
+
+  rocksdb::Slice key_slice(
+    key.data(),
+    key.size());
+  const auto& membuf = profile->membuf();
+  rocksdb::Slice value_slice(
+    static_cast<const char*>(membuf.data()),
+    membuf.size());
+  const auto status = data_base_->get().Put(
+    write_options_,
+    column_family_handle_,
+    key_slice,
+    value_slice);
   if (!status.ok())
   {
     Stream::Error stream;
