@@ -2,6 +2,7 @@
 #include <PrivacyFilter/Filter.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/ProfileMapImpl.hpp>
 
 #include "Compatibility/RequestProfileAdapter.hpp"
 
@@ -1540,6 +1541,10 @@ namespace RequestInfoSvcs {
       request_processor_(ReferenceCounting::add_ref(request_processor)),
       request_operation_processor_(ReferenceCounting::add_ref(request_operation_processor))
   {
+    using ProfileMap = AdServer::ProfilingCommons::IoUring::ProfileMapImpl<
+      AdServer::Commons::RequestId,
+      UuidToString>;
+
     static const char* FUN = "RequestInfoContainer::RequestInfoContainer()";
 
     Generics::Time extend_time_period_val(extend_time_period);
@@ -1573,14 +1578,14 @@ namespace RequestInfoSvcs {
     {
       try
       {
-        ReferenceCounting::SmartPtr<
-          AdServer::ProfilingCommons::RocksDBProfileMap<
-          AdServer::Commons::RequestId, UuidToString> >
-          bid_map_impl(
-            new AdServer::ProfilingCommons::RocksDBProfileMap<
-            AdServer::Commons::RequestId, UuidToString>(
-              bidfile_base_path,
-              expire_time_));
+        const std::uint64_t block_сache_size_mb = 1024;
+        ReferenceCounting::SmartPtr<ProfileMap> bid_map_impl =
+          new ProfileMap(
+            logger_.in(),
+            block_сache_size_mb,
+            bidfile_base_path.str(),
+            expire_time_.microseconds() / 1000000,
+            rocksdb::kDefaultColumnFamilyName);
 
         bid_profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<
           AdServer::Commons::RequestId>(bid_map_impl);

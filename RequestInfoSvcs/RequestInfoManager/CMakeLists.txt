@@ -1,5 +1,9 @@
 ADD_SUBDIRECTORY(Compatibility)
 
+include_directories (
+  ${rocksdb_SOURCE_DIR}/include
+)
+
 add_library(BillingProcessor SHARED
   BillingProcessor.cpp
 )

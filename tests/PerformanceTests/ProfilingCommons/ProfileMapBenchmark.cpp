@@ -175,13 +175,11 @@ private:
 public:
   explicit ProfileMapIoUringRocksDBFactory(
     Logger* logger,
-    const std::uint64_t memtable_memory_budget_mb,
     const std::uint64_t block_сache_size_mb,
     const std::string& path_db,
     const Generics::Time& expire_time,
     const std::optional<std::string> column_family_name)
     : logger_(ReferenceCounting::add_ref(logger)),
-      memtable_memory_budget_mb_(memtable_memory_budget_mb),
       block_сache_size_mb_(block_сache_size_mb),
       path_db_(path_db),
       expire_time_(expire_time),
@@ -199,7 +197,6 @@ public:
           Logging::OStream::Config(
             std::cerr,
             Logging::Logger::ERROR)),
-        memtable_memory_budget_mb_,
         block_сache_size_mb_,
         path_db_,
         expire_time_.microseconds() / 1000,
@@ -208,8 +205,6 @@ public:
 
 private:
   const Logger_var logger_;
-
-  const std::uint64_t memtable_memory_budget_mb_;
 
   const std::uint64_t block_сache_size_mb_;
 
@@ -555,7 +550,6 @@ public:
     const std::uint64_t db_size_mb,
     const std::string& key,
     const std::string& value,
-    const std::uint64_t memtable_memory_budget_mb,
     const std::uint64_t block_сache_size_mb,
     const std::string& path_db,
     const Generics::Time& expire_time,
@@ -563,12 +557,11 @@ public:
     : Benchmark(
         logger,
         std::make_unique<ProfileMapIoUringRocksDBFactory>(
-        logger,
-        memtable_memory_budget_mb,
-        block_сache_size_mb,
-        path_db,
-        expire_time,
-        "column"),
+          logger,
+          block_сache_size_mb,
+          path_db,
+          expire_time,
+          rocksdb::kDefaultColumnFamilyName),
       write_statistics,
       read_statistics,
       db_size_mb,
@@ -731,7 +724,6 @@ public:
     const std::string& path_db,
     const Generics::Time expire_time,
     const std::size_t number_threads,
-    const std::uint32_t memtable_memory_budget_mb,
     const std::uint32_t block_сache_size_mb,
     const std::size_t number_coroutines)
     : test_type_(test_type),
@@ -759,8 +751,6 @@ public:
     {
       stream << "\nNumber coroutines="
              << number_coroutines
-             << "\nMemtable memory budget[mb]="
-             << memtable_memory_budget_mb
              << "\nBlock сache size[mb]="
              << block_сache_size_mb;
     }
@@ -776,7 +766,6 @@ public:
         db_size_mb,
         key,
         value,
-        memtable_memory_budget_mb,
         block_сache_size_mb,
         path_db,
         expire_time,
@@ -808,8 +797,8 @@ public:
           Logging::Logger::ERROR)));
 
       CoroPoolConfig coro_pool_config;
-      coro_pool_config.initial_size = 10000;
-      coro_pool_config.max_size = 100000;
+      coro_pool_config.initial_size = 100000;
+      coro_pool_config.max_size = 1000000;
 
       EventThreadPoolConfig event_thread_pool_config;
       event_thread_pool_config.threads = 4;
@@ -878,11 +867,11 @@ int main(int /*argc*/, char** /*argv*/)
 {
   try
   {
-    TestType type = TestType::IoUringRocksDb;
+    const TestType type = TestType::IoUringRocksDb;
     const std::size_t time_interval = 5;
     const std::string key = "key";
     const std::string value = "value";
-    const std::uint32_t db_size_mb = 1024;
+    const std::uint32_t db_size_mb = 100;
     const std::string path_db = "/u03/test/profile_map_test";
     const Generics::Time expire_time(1000);
 
@@ -890,9 +879,8 @@ int main(int /*argc*/, char** /*argv*/)
     const std::size_t number_threads = 300;
 
     // TestType::IoUringRocksDb
-    const std::uint32_t memtable_memory_budget_mb = 1024;
     const std::uint32_t block_сache_size_mb = 1024;
-    const std::size_t number_coroutines = 10000;
+    const std::size_t number_coroutines = 1000;
 
     ReferenceCounting::SmartPtr<Application> application =
       new Application(
@@ -904,7 +892,6 @@ int main(int /*argc*/, char** /*argv*/)
         path_db,
         expire_time,
         number_threads,
-        memtable_memory_budget_mb,
         block_сache_size_mb,
         number_coroutines);
     application->run();

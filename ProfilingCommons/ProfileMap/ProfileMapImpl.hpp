@@ -43,7 +43,6 @@ private:
 public:
   explicit ProfileMapImpl(
     Logger* logger,
-    const std::uint64_t memtable_memory_budget_mb,
     const std::uint64_t block_сache_size_mb,
     const std::string& db_path,
     std::optional<std::int32_t> ttl = {},
@@ -68,15 +67,15 @@ private:
 
   const std::string db_path_;
 
-  DataBasePtr data_base_;
-
-  DataBaseManagerPoolPtr db_manager_pool_;
-
   ColumnFamilyHandle* column_family_handle_ = nullptr;
 
   ReadOptions read_options_;
 
   WriteOptions write_options_;
+
+  DataBasePtr data_base_;
+
+  DataBaseManagerPoolPtr db_manager_pool_;
 };
 
 } // namespace Internal
@@ -103,14 +102,12 @@ public:
 public:
   explicit ProfileMapImpl(
     Logger* logger,
-    const std::uint64_t memtable_memory_budget_mb,
     const std::uint64_t block_сache_size_mb,
     const std::string& db_path,
     std::optional<std::int32_t> ttl = {},
     std::optional<std::string> column_family_name = {})
     : impl_(
         logger,
-        memtable_memory_budget_mb,
         block_сache_size_mb,
         db_path,
         ttl,
