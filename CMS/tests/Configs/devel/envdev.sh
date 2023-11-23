@@ -1,7 +1,10 @@
-export server_root=$HOME/projects/oix/server/trunk
-export config_root=$HOME/projects/oix/run/trunk/etc
-export workspace_root=$HOME/projects/oix/run/trunk/var
-export unixcommons_root=$HOME/projects/unixcommons/trunk
+# source rtbserver directory
+#export server_root=$HOME/projects/oix/server/trunk
+export server_root=$HOME/yoori/rtbserver_cobrazz
+
+export config_root=$HOME/yoori/run/config
+export workspace_root=$HOME/yoori/run/workspace
+export unixcommons_root=$HOME/yoori/unixcommons_cobrazz
 
 export PATH=$PATH:$server_root/bin
 export PATH=$PATH:$server_root/ConfigSys
