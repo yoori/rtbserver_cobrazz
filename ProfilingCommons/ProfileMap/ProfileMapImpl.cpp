@@ -31,6 +31,11 @@ ProfileMapImpl::ProfileMapImpl(
 
   rocksdb::ColumnFamilyOptions column_family_options;
   column_family_options.OptimizeForPointLookup(block_сache_size_mb);
+  column_family_options.compaction_style = rocksdb::kCompactionStyleLevel;
+  if (ttl)
+  {
+    column_family_options.ttl = *ttl;
+  }
 
   if (!column_family_name.has_value())
   {
