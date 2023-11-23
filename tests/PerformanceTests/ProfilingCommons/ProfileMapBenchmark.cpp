@@ -199,7 +199,7 @@ public:
             Logging::Logger::ERROR)),
         block_сache_size_mb_,
         path_db_,
-        expire_time_.microseconds() / 1000,
+        expire_time_.microseconds() / 1000000,
         column_family_name_));
   }
 
@@ -871,7 +871,7 @@ int main(int /*argc*/, char** /*argv*/)
     const std::size_t time_interval = 5;
     const std::string key = "key";
     const std::string value = "value";
-    const std::uint32_t db_size_mb = 100;
+    const std::uint32_t db_size_mb = 1024;
     const std::string path_db = "/u03/test/profile_map_test";
     const Generics::Time expire_time(1000);
 
