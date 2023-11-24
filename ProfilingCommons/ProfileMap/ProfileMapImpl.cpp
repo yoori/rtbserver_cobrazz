@@ -142,7 +142,6 @@ void ProfileMapImpl::save_profile(
   const std::string_view key,
   const Generics::ConstSmartMemBuf* profile)
 {
-
   /**
    * The write operation with parameters disableWAL = true,
    * sync = false; is itself asynchronous, so let’s replace
@@ -187,11 +186,24 @@ void ProfileMapImpl::save_profile(
 bool ProfileMapImpl::remove_profile(
   const std::string_view key)
 {
-  const auto status = db_manager_pool_->erase(
+  /**
+   * Since delete is implemented via write,
+   * replace the asynchronous version with a synchronous one.
+   **/
+
+  /*const auto status = db_manager_pool_->erase(
     data_base_,
     *column_family_handle_,
     write_options_,
-    key);
+    key);*/
+
+  rocksdb::Slice key_slice(
+    key.data(),
+    key.size());
+  const auto status = data_base_->get().Delete(
+    write_options_,
+    column_family_handle_,
+    key_slice);
  if (status.ok() || status.IsNotFound())
   {
     return true;
