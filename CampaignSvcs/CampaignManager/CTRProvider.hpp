@@ -725,6 +725,7 @@ namespace CampaignSvcs
     const CTR::HashArray empty_hash_array_;
     const Generics::Time config_timestamp_;
     Generics::TaskRunner_var task_runner_;
+    Logging::Logger_var logger_;
 
     std::unique_ptr<CTR::HashMap> hash_mapping_;
 
