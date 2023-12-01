@@ -19,6 +19,7 @@
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
+#include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
 #include <ProfilingCommons/PlainStorage3/LoadingProgressCallback.hpp>
 
@@ -60,10 +61,13 @@ namespace AdServer
       public virtual ReferenceCounting::AtomicImpl
     {
     public:
-      typedef UserOperationProcessor::Exception Exception;
-      DECLARE_EXCEPTION(UserIsFraud, Exception);
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+      using Exception = UserOperationProcessor::Exception;
+      using UserIdList = std::list<UserId>;
 
-      typedef std::list<UserId> UserIdList;
+      DECLARE_EXCEPTION(UserIsFraud, Exception);
 
       struct AllUsersProcessingState: public ReferenceCounting::AtomicImpl
       {
@@ -89,19 +93,25 @@ namespace AdServer
         virtual ~AllUsersProcessingState() noexcept {}
       };
 
-      typedef ReferenceCounting::SmartPtr<AllUsersProcessingState>
-        AllUsersProcessingState_var;
+      using AllUsersProcessingState_var = ReferenceCounting::SmartPtr<AllUsersProcessingState>;
 
     public:
       UserInfoContainer(
         Logging::Logger* logger,
         unsigned long common_chunks_number,
         const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
+        const bool is_level_enable,
         const AdServer::ProfilingCommons::LevelMapTraits& add_level_map_traits,
         const AdServer::ProfilingCommons::LevelMapTraits& temp_level_map_traits,
         const AdServer::ProfilingCommons::LevelMapTraits& history_level_map_traits,
         const AdServer::ProfilingCommons::LevelMapTraits& base_level_map_traits,
         const AdServer::ProfilingCommons::LevelMapTraits& freq_cap_level_map_traits,
+        const bool is_rocksdb_enable,
+        const RocksDBParams& add_rocksdb_params,
+        const RocksDBParams& temp_rocksdb_params,
+        const RocksDBParams& history_rocksdb_params,
+        const RocksDBParams& base_rocksdb_params,
+        const RocksDBParams& freq_cap_rocksdb_params,
         unsigned long colo_id,
         const Generics::Time& profile_request_timeout,
         const Generics::Time& history_optimization_period,
@@ -264,20 +274,17 @@ namespace AdServer
         /*throw(NotReady, Exception)*/;
 
     protected:
-      typedef AdServer::ProfilingCommons::
-        TransactionProfileMap<UserId>::MaxWaitersReached
-        MaxWaitersReached;
+      using MaxWaitersReached = AdServer::ProfilingCommons::
+        TransactionProfileMap<UserId>::MaxWaitersReached;
 
-      typedef AdServer::ProfilingCommons::ChunkedProfileMap<
+      using UserProfileMap = AdServer::ProfilingCommons::ChunkedProfileMap<
         UserId,
         AdServer::ProfilingCommons::TransactionProfileMap<UserId>,
-        unsigned long (*)(const Generics::Uuid& uuid) >
-        UserProfileMap;
+        unsigned long (*)(const Generics::Uuid& uuid)>;
 
-      typedef ReferenceCounting::SmartPtr<UserProfileMap>
-        UserProfileMap_var;
+      using UserProfileMap_var = ReferenceCounting::SmartPtr<UserProfileMap>;
 
-      typedef Sync::Policy::PosixThread SyncPolicy;
+      using SyncPolicy = Sync::Policy::PosixThread;
 
     protected:
       virtual ~UserInfoContainer() noexcept {};
@@ -321,6 +328,24 @@ namespace AdServer
         const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits,
         unsigned long max_waiters = 0)
         /*throw(Exception)*/;
+
+      template<
+        typename ProfileMap,
+        typename Key,
+        typename KeyAdapter,
+        typename AdapterOptional>
+      ReferenceCounting::SmartPtr<ProfileMap> open_chunked_map_(
+        const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+        unsigned long common_chunks_number,
+        const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
+        const char* chunk_prefix,
+        const bool is_rocksdb_enable,
+        const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+        const bool is_level_enable,
+        const AdServer::ProfilingCommons::LevelMapTraits& level_map_traits,
+        unsigned long max_waiters,
+        const KeyAdapter& key_adapter,
+        const AdapterOptional& optional_adapter);
 
       void trace_match_request_(
         std::ostream& ostr,

@@ -196,6 +196,17 @@
     <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
+  <xsd:complexType name="ChunksRocksDBConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Description of user info chunks
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="block_cache_size_mb" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="compaction_style" type="RocksDBCompactionStyleType" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
   <xsd:complexType name="UserInfoManagerStorageType">
     <xsd:annotation>
       <xsd:documentation>
@@ -213,10 +224,18 @@
           <xsd:element name="HistoryChunksConfig" type="ChunksConfigType"/>
           <xsd:element name="BaseChunksConfig" type="ChunksConfigType"/>
           <xsd:element name="FreqCapChunksConfig" type="ChunksConfigType"/>
+
+          <xsd:element name="AddChunksRocksDBConfig" type="ChunksRocksDBConfigType"/>
+          <xsd:element name="TempChunksRocksDBConfig" type="ChunksRocksDBConfigType"/>
+          <xsd:element name="HistoryChunksRocksDBConfig" type="ChunksRocksDBConfigType"/>
+          <xsd:element name="BaseChunksRocksDBConfig" type="ChunksRocksDBConfigType"/>
+          <xsd:element name="FreqCapChunksRocksDBConfig" type="ChunksRocksDBConfigType"/>
         </xsd:sequence>
 
         <xsd:attribute name="common_chunks_number" type="xsd:positiveInteger" use="required"/>
         <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+        <xsd:attribute name="is_rocksdb_enable" type="xsd:boolean" use="required"/>
+        <xsd:attribute name="is_level_enable" type="xsd:boolean" use="required"/>
       </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>

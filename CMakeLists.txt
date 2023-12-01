@@ -27,6 +27,7 @@ set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
 include_directories(
   .
   Commons
+  ${rocksdb_SOURCE_DIR}/include
   ${UNIXCOMMONS}/src
   ${UNIXCOMMONS}/src/CORBA
   ${UNIXCOMMONS_BUILD_ROOT}/IDL_COMMON
@@ -41,6 +42,7 @@ set(Boost_NO_WARN_NEW_VERSIONS ON)
 
 find_package(ACE REQUIRED)
 find_package(Boost REQUIRED)
+find_package(GTest REQUIRED)
 find_package(IDL REQUIRED)
 find_package(LL REQUIRED)
 find_package(LibXml2 REQUIRED)

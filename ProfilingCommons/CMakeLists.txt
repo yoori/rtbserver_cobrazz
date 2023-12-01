@@ -4,17 +4,14 @@ ADD_SUBDIRECTORY(PlainStorageUtil)
 ADD_SUBDIRECTORY(ProfileMap)
 
 add_library(MessageSaver SHARED
-MessageSaver.cpp
-
-
+  MessageSaver.cpp
 )
+
 target_link_libraries(MessageSaver
- Generics
- PlainStorage3
- PrivacyFilter
- Commons
- LogCommons
+  Commons
+  Generics
+  LogCommons
+  PlainStorage3
+  PrivacyFilter
+  UServerUtils
 )
-#install(TARGETS MessageSaver  DESTINATION ${INSTALL_DIR})
-
-

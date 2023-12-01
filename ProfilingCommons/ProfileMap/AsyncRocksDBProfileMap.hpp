@@ -1,5 +1,5 @@
-#ifndef PROFILEMAPIMPL_HPP_
-#define PROFILEMAPIMPL_HPP_
+#ifndef ASYNCROCKSDBPROFILEMAP_HPP_
+#define ASYNCROCKSDBPROFILEMAP_HPP_
 
 // STD
 #include <optional>
@@ -14,8 +14,27 @@
 // THIS
 #include "ProfileMap.hpp"
 
-namespace AdServer::ProfilingCommons::IoUring
+namespace AdServer::ProfilingCommons::RocksDB
 {
+
+struct RocksDBParams final
+{
+  explicit RocksDBParams(
+    const std::uint64_t block_сache_size_mb,
+    const std::optional<std::int32_t> ttl,
+    const rocksdb::CompactionStyle compaction_style = rocksdb::kCompactionStyleLevel)
+    : block_сache_size_mb(block_сache_size_mb),
+      ttl(ttl),
+      compaction_style(compaction_style)
+  {
+  }
+
+  ~RocksDBParams() = default;
+
+  const std::uint64_t block_сache_size_mb;
+  const std::optional<std::int32_t> ttl;
+  const rocksdb::CompactionStyle compaction_style;
+};
 
 namespace Internal
 {
@@ -32,8 +51,7 @@ private:
   using DataBase = UServerUtils::Grpc::RocksDB::DataBase;
   using DataBasePtr = std::shared_ptr<DataBase>;
   using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
-  using DataBaseManagerPoolPtr = std::unique_ptr<DataBaseManagerPool>;
-  using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
+  using DataBaseManagerPoolPtr = std::shared_ptr<DataBaseManagerPool>;
   using ColumnFamilyHandle = DataBaseManagerPool::ColumnFamilyHandle;
   using ReadOptions = rocksdb::ReadOptions;
   using WriteOptions = rocksdb::WriteOptions;
@@ -43,9 +61,9 @@ private:
 public:
   explicit ProfileMapImpl(
     Logger* logger,
-    const std::uint64_t block_сache_size_mb,
+    const DataBaseManagerPoolPtr& db_manager_pool,
     const std::string& db_path,
-    std::optional<std::int32_t> ttl = {},
+    const RocksDBParams& rocksdb_params,
     std::optional<std::string> column_family_name = {});
 
   ~ProfileMapImpl() = default;
@@ -90,30 +108,36 @@ struct DefaultKeyAdapter
 };
 
 template<class Key, class KeyAdapter = DefaultKeyAdapter>
-class ProfileMapImpl final:
+class RocksDBProfileMap final:
   public ProfileMap<Key>,
   public ReferenceCounting::AtomicImpl
 {
 public:
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
+  using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+  using DataBaseManagerPoolPtr = std::shared_ptr<DataBaseManagerPool>;
   using ConstSmartMemBuf_var = Generics::ConstSmartMemBuf_var;
 
 public:
-  explicit ProfileMapImpl(
+  explicit RocksDBProfileMap(
     Logger* logger,
-    const std::uint64_t block_сache_size_mb,
+    const DataBaseManagerPoolPtr& db_manager_pool,
     const std::string& db_path,
-    std::optional<std::int32_t> ttl = {},
-    std::optional<std::string> column_family_name = {})
-    : impl_(
+    const RocksDBParams& rocksdb_params,
+    std::optional<std::string> column_family_name = {},
+    const KeyAdapter& key_adapter = KeyAdapter())
+    : key_adapter_(key_adapter),
+      impl_(
         logger,
-        block_сache_size_mb,
+        db_manager_pool,
         db_path,
-        ttl,
+        rocksdb_params,
         column_family_name)
   {
   }
+
+  ~RocksDBProfileMap() override = default;
 
   bool check_profile(const Key& key) const override
   {
@@ -154,11 +178,11 @@ public:
   }
 
 private:
-  KeyAdapter key_adapter_;
+  mutable KeyAdapter key_adapter_;
 
   Internal::ProfileMapImpl impl_;
 };
 
-} // namespace AdServer::ProfilingCommons::IoUring
+} // namespace AdServer::ProfilingCommons::RocksDB
 
-#endif //PROFILEMAPIMPL_HPP_
+#endif // ASYNCROCKSDBPROFILEMAP_HPP_

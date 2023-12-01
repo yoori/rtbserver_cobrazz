@@ -3,8 +3,8 @@ include_directories (
 )
 
 add_library(ProfileMap SHARED
+  AsyncRocksDBProfileMap.cpp
   ProfileMapFactory.cpp
-  ProfileMapImpl.cpp
   RocksDBProfileMap.cpp
 )
 

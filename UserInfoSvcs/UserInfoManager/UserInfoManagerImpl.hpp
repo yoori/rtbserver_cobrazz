@@ -420,6 +420,10 @@ namespace AdServer
         const xsd::AdServer::Configuration::ChunksConfigType& chunks_config)
         noexcept;
 
+      AdServer::ProfilingCommons::RocksDB::RocksDBParams
+      fill_rocksdb_map_params_(
+        const xsd::AdServer::Configuration::ChunksRocksDBConfigType& chunks_config) noexcept;
+
     private:
       Generics::ActiveObjectCallback_var callback_;
       Logging::Logger_var logger_;

@@ -440,6 +440,11 @@
 <xsl:variable name="def-storage-max-undumped-size" select="262144000"/>
 <xsl:variable name="def-storage-max-levels0" select="20"/>
 
+<xsl:variable name="def-is-level-enable" select="'true'"/>
+<xsl:variable name="def-is-rocksdb-enable" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb" select="100"/>
+<xsl:variable name="def-rocksdb-compaction-style" select="'kCompactionStyleLevel'"/>
+
 <xsl:variable name="def-profiling-log-sampling"
   select="document('../xsd/AdClusterAppType.xsd')/xsd:schema/xsd:complexType[
   @name='ResearchStatType']/xsd:attribute[

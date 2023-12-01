@@ -4,8 +4,8 @@ add_idl(UserInfoManagerIDL  UserInfoManager.idl ${IDL_DIRECTORY}/UserInfoSvcs/Us
 add_idl(UserInfoManagerControlIDL  UserInfoManagerControl.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserInfoManager)
 
 target_link_libraries(UserInfoManagerIDL
-  CorbaTypesIDL
   CampaignFreqIDL
+  CorbaTypesIDL
   FreqCapInfoIDL
 )
 
@@ -13,31 +13,26 @@ add_library(UserInfoContainer SHARED
   UserInfoContainer.cpp 
   UserOperationLoader.cpp
   UserOperationSaver.cpp
-
 )
+
 add_dependencies(UserInfoContainer UserChannelBaseProfilePST )
 target_link_libraries(UserInfoContainer
- Generics
- PrivacyFilter
-    LogCommons
- Commons
- Allocator
- PlainStorage2
- PlainStorage3
-
- ChannelMatcher
- LogCommons
- UserFreqCapProfile
- UserOperationProfilesPST
-# FileReceiver
-# UserFreqCapProfile
- UserBaseProfileAdapter
- UserHistoryProfileAdapter
- UserOperationProfilesAdapter
- UserFreqCapProfileAdapter
-
+  Allocator
+  ChannelMatcher
+  Commons
+  Generics
+  LogCommons
+  LogCommons
+  PlainStorage2
+  PlainStorage3
+  PrivacyFilter
+  UserBaseProfileAdapter
+  UserFreqCapProfile
+  UserFreqCapProfileAdapter
+  UserHistoryProfileAdapter
+  UserOperationProfilesAdapter
+  UserOperationProfilesPST
 )
-
 
 add_executable(UserInfoManager
 UserInfoManagerMain.cpp 
@@ -47,30 +42,25 @@ UserInfoManagerMain.cpp
   UserInfoContainer.cpp 
   UserInfoManagerLogger.cpp 
   UserInfoManagerStat.cpp
-
 )
+
 target_link_libraries(UserInfoManager
- CORBACommons
- LogCommons
- ProcessControlVars
- Commons
- AdServerCommonsXSD
- PlainStorage2
- PrivacyFilter
- ProfileMap
-
- UserInfoManagerConfigXSD
- UserInfoExchangerIDL
- UserInfoManagerIDL
- UserInfoManagerControlIDL
- CampaignServerIDL
- LogCommons
-
- UserInfoContainer
- StatsDumper
- UserOperationProfilesPST
- UServerUtilsMetrics
-
+  AdServerCommonsXSD
+  CORBACommons
+  CampaignServerIDL
+  Commons
+  LogCommons
+  LogCommons
+  PlainStorage2
+  PrivacyFilter
+  ProcessControlVars
+  ProfileMap
+  StatsDumper
+  UserInfoContainer
+  UserInfoExchangerIDL
+  UserInfoManagerConfigXSD
+  UserInfoManagerControlIDL
+  UserInfoManagerIDL
+  UserOperationProfilesPST
+  UServerUtilsMetrics
 )
-
-#install(TARGETS UserInfoManager UserInfoContainer UserInfoManagerIDL UserInfoManagerControlIDL  DESTINATION ${INSTALL_DIR})

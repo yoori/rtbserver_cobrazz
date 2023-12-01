@@ -1,8 +1,8 @@
 add_idl(UserBindServerIDL UserBindServer.idl ${IDL_DIRECTORY}/UserInfoSvcs/UserBindServer)
 
 target_link_libraries(UserBindServerIDL
-  Commons
   CORBACommons
+  Commons
   CorbaTypesIDL
   UserBindOperationProfilePST
 )
@@ -17,11 +17,12 @@ add_library(UserBindContainer STATIC
 )
 
 target_link_libraries(UserBindContainer
-  Generics
-  PrivacyFilter
   Commons
+  Generics
   LogCommons
+  PrivacyFilter
   ProfileMap
+  UServerUtils
 )
 
 add_pst(UserBindOperationProfilePST UserBindOperationProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer)
@@ -46,16 +47,17 @@ add_grpc_library(UserBindServerProto
 
 target_link_libraries(UserBindServer
   CORBACommons
+  Commons
+  LogCommons
+  MessageSaver
   PrivacyFilter
   ProcessControlVars
-  Commons
   ProfileMap
-  MessageSaver
-  LogCommons
+  UServerUtils
   UserBindContainer
   UserBindServerConfigXSD
   UserBindServerIDL
   UserBindServerProto
-  UServerUtilsMetrics
   UServerUtils
+  UServerUtilsMetrics
 )

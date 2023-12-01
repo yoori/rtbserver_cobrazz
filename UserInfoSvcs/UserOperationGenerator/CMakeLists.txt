@@ -8,19 +8,20 @@ add_executable(UserOperationGenerator
   UserOperationGeneratorImpl.cpp 
   UserOperationGeneratorMain.cpp 
 )
+
 target_link_libraries(UserOperationGenerator
-  UidChannelSnapshot
-  Generics
-  Commons
-  PlainStorage3
-  SyncLogsLib
   CORBACommons
+  Commons
+  Generics
+  PlainStorage3
   ProcessControlVars
-  UserOperationGeneratorConfigXSD
+  ProfileMap
+  SyncLogsLib
+  UServerUtils
+  UidChannelSnapshot
+  UserChannelBaseProfilePST
   UserInfoContainer
+  UserOperationGeneratorConfigXSD
   UserOperationProfilesPST
   XMLUtility
-  UserChannelBaseProfilePST
 )
-
-#install(TARGETS UserOperationGenerator DESTINATION ${INSTALL_DIR})
