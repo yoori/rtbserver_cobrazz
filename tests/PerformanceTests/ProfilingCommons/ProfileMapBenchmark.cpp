@@ -14,7 +14,7 @@
 // THIS
 #include <Logger/Logger.hpp>
 #include <Logger/StreamLogger.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapImpl.hpp>
+#include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMap.hpp>
 #include <UServerUtils/Grpc/Component.hpp>
 #include <UServerUtils/Grpc/ComponentsBuilder.hpp>
@@ -46,7 +46,7 @@ struct ReadStatistics final
 
 struct KeyStringAdapter
 {
-  std::string operator()(const std::string& key) const
+  std::string operator()(const std::string& key)
   {
     return key;
   }
@@ -170,7 +170,13 @@ class ProfileMapIoUringRocksDBFactory final : public ProfileMapFactory
 private:
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
-  using ProfileMap = IoUring::ProfileMapImpl<std::string, KeyStringAdapter>;
+  using ProfileMap =
+    AdServer::ProfilingCommons::RocksDB::RocksDBProfileMap<
+      std::string,
+      KeyStringAdapter>;
+  using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
+  using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+  using DataBaseManagerPoolPtr = std::shared_ptr<DataBaseManagerPool>;
 
 public:
   explicit ProfileMapIoUringRocksDBFactory(
@@ -185,6 +191,20 @@ public:
       expire_time_(expire_time),
       column_family_name_(column_family_name)
   {
+    auto number_threads = std::thread::hardware_concurrency();
+    if (number_threads == 0)
+    {
+      number_threads = 25;
+    }
+
+    ManagerPoolConfig config;
+    config.event_queue_max_size = 10000000;
+    config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
+    config.io_uring_size = 6400;
+    config.number_io_urings = 2 * number_threads;
+    rocksdb_manager_pool_ = std::make_unique<DataBaseManagerPool>(
+      config,
+      logger_);
   }
 
   ~ProfileMapIoUringRocksDBFactory() override = default;
@@ -197,9 +217,12 @@ public:
           Logging::OStream::Config(
             std::cerr,
             Logging::Logger::ERROR)),
-        block_сache_size_mb_,
+        rocksdb_manager_pool_,
         path_db_,
-        expire_time_.microseconds() / 1000000,
+        AdServer::ProfilingCommons::RocksDB::RocksDBParams(
+          block_сache_size_mb_,
+          expire_time_.microseconds() / 1000000,
+          rocksdb::kCompactionStyleLevel),
         column_family_name_));
   }
 
@@ -213,6 +236,8 @@ private:
   const Generics::Time expire_time_;
 
   const std::optional<std::string> column_family_name_;
+
+  DataBaseManagerPoolPtr rocksdb_manager_pool_;
 };
 
 class Benchmark : public Component

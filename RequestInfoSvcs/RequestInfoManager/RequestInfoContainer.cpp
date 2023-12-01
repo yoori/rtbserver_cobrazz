@@ -1,8 +1,7 @@
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include <ProfilingCommons/ProfileMap/RocksDBProfileMap.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapImpl.hpp>
+#include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
 
 #include "Compatibility/RequestProfileAdapter.hpp"
 
@@ -1541,9 +1540,11 @@ namespace RequestInfoSvcs {
       request_processor_(ReferenceCounting::add_ref(request_processor)),
       request_operation_processor_(ReferenceCounting::add_ref(request_operation_processor))
   {
-    using ProfileMap = AdServer::ProfilingCommons::IoUring::ProfileMapImpl<
+    using ProfileMap = AdServer::ProfilingCommons::RocksDB::RocksDBProfileMap<
       AdServer::Commons::RequestId,
       UuidToString>;
+    using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+    using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
 
     static const char* FUN = "RequestInfoContainer::RequestInfoContainer()";
 
@@ -1578,13 +1579,31 @@ namespace RequestInfoSvcs {
     {
       try
       {
+        auto number_threads = std::thread::hardware_concurrency();
+        if (number_threads == 0)
+        {
+          number_threads = 25;
+        }
+
+        ManagerPoolConfig config;
+        config.event_queue_max_size = 10000000;
+        config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
+        config.io_uring_size = 6400;
+        config.number_io_urings = 2 * number_threads;
+        auto db_manager_pool = std::make_shared<DataBaseManagerPool>(
+          config,
+          logger_.in());
+
         const std::uint64_t block_сache_size_mb = 1024;
         ReferenceCounting::SmartPtr<ProfileMap> bid_map_impl =
           new ProfileMap(
             logger_.in(),
-            block_сache_size_mb,
+            db_manager_pool,
             bidfile_base_path.str(),
-            expire_time_.microseconds() / 1000000,
+            AdServer::ProfilingCommons::RocksDB::RocksDBParams{
+              block_сache_size_mb,
+              expire_time_.microseconds() / 1000000,
+              rocksdb::kCompactionStyleLevel},
             rocksdb::kDefaultColumnFamilyName);
 
         bid_profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<

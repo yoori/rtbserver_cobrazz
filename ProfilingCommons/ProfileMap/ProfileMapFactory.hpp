@@ -4,8 +4,11 @@
 #include <ProfilingCommons/PlainStorage3/LevelProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ExpireProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/AdaptProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBWhithLevelAlternativeProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
+
 
 namespace AdServer
 {
@@ -280,6 +283,58 @@ namespace ProfilingCommons
         KeyType>(base_map, max_waiters);
     }
 
+    template<
+      typename Key,
+      typename KeyAccessor,
+      typename ProfileAdapter,
+      typename KeyAdapter>
+    static
+    ReferenceCounting::SmartPtr<
+      AdServer::ProfilingCommons::TransactionProfileMap<Key>>
+    open_adapt_transaction_profile_map(
+      Generics::ActiveObject_var& active_object,
+      Generics::ActiveObjectCallback* callback,
+      Logging::Logger* logger,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
+      const bool is_rocksdb_enable,
+      const std::string& rocksdb_path,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+      const bool is_level_enable,
+      const char* level_root,
+      const char* level_prefix,
+      const LevelMapTraits& level_map_traits,
+      const KeyAdapter& key_adapter = KeyAdapter(),
+      const ProfileAdapter& profile_adapter = ProfileAdapter(),
+      unsigned long max_waiters = 0,
+      LoadingProgressCallbackBase* progress_checker_parent = nullptr)
+    {
+      ReferenceCounting::SmartPtr<RocksDBWhithLevelAlternativeProfileMap<Key, KeyAdapter, KeyAccessor>> ex_map =
+        new RocksDBWhithLevelAlternativeProfileMap<Key, KeyAdapter, KeyAccessor>(
+          logger,
+          callback,
+          rocksdb_manager_pool,
+          is_rocksdb_enable,
+          rocksdb_path,
+          rocksdb_params,
+          "profile",
+          key_adapter,
+          is_level_enable,
+          level_root,
+          level_prefix,
+          level_map_traits,
+          progress_checker_parent);
+
+      active_object = ex_map;
+
+      ReferenceCounting::SmartPtr<ProfileMap<Key>> base_map(
+        new AdaptProfileMap<Key, ProfileAdapter>(
+          ex_map.in(), profile_adapter));
+
+      return new AdServer::ProfilingCommons::TransactionProfileMap<Key>(
+        base_map,
+        max_waiters);
+    }
+
     template<typename KeyType,
       typename KeyAccessorType>
     static
@@ -307,6 +362,53 @@ namespace ProfilingCommons
 
       return new AdServer::ProfilingCommons::TransactionProfileMap<
         KeyType>(ex_map, max_waiters);
+    }
+
+    template<
+      typename Key,
+      typename KeyAccessor,
+      typename KeyAdapter>
+    static
+    typename ReferenceCounting::SmartPtr<
+      AdServer::ProfilingCommons::TransactionProfileMap<Key>>
+    open_transaction_profile_map(
+      Generics::ActiveObject_var& active_object,
+      Generics::ActiveObjectCallback* callback,
+      Logging::Logger* logger,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
+      const bool is_rocksdb_enable,
+      const std::string& rocksdb_path,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+      const bool is_level_enable,
+      const char* level_root,
+      const char* level_prefix,
+      const LevelMapTraits& level_map_traits,
+      const KeyAdapter& key_adapter = KeyAdapter(),
+      unsigned long max_waiters = 0,
+      LoadingProgressCallbackBase* progress_checker_parent = nullptr)
+    {
+      ReferenceCounting::SmartPtr<
+        RocksDBWhithLevelAlternativeProfileMap<Key, KeyAdapter, KeyAccessor>> ex_map =
+          new RocksDBWhithLevelAlternativeProfileMap<Key, KeyAdapter, KeyAccessor>(
+            logger,
+            callback,
+            rocksdb_manager_pool,
+            is_rocksdb_enable,
+            rocksdb_path,
+            rocksdb_params,
+            "profile",
+            key_adapter,
+            is_level_enable,
+            level_root,
+            level_prefix,
+            level_map_traits,
+            progress_checker_parent);
+
+      active_object = ex_map;
+
+      return new AdServer::ProfilingCommons::TransactionProfileMap<Key>(
+        ex_map,
+        max_waiters);
     }
 
     template<typename KeyType,
@@ -386,8 +488,98 @@ namespace ProfilingCommons
         chunks,
         key_hash);
     }
+
+    template<
+      typename Key,
+      typename KeyAccessor,
+      typename KeyHash,
+      typename KeyAdapter,
+      typename AdapterOptional>
+    static ReferenceCounting::SmartPtr<
+      AdServer::ProfilingCommons::ChunkedProfileMap<
+        Key, AdServer::ProfilingCommons::TransactionProfileMap<Key>, KeyHash>>
+    open_chunked_map(
+      Generics::CompositeActiveObject& parent_container,
+      Generics::ActiveObjectCallback_var callback,
+      Logging::Logger* logger,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
+      unsigned long common_chunks_number,
+      const ChunkPathMap& chunk_folders,
+      const char* chunk_prefix,
+      const bool is_rocksdb_enable,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+      const bool is_level_enable,
+      const LevelMapTraits& level_map_traits,
+      const KeyHash& key_hash,
+      unsigned long max_waiters = 0,
+      const KeyAdapter& key_adapter = KeyAdapter(),
+      const AdapterOptional& optional_adapter = AdapterOptional(),
+      LoadingProgressCallbackBase* progress_checker_parent = nullptr)
+    {
+      using ProfileMapType = ChunkedProfileMap<
+        Key,
+        AdServer::ProfilingCommons::TransactionProfileMap<Key>,
+        KeyHash>;
+      using ChunkIdToProfileMap = ProfileMapType::ChunkIdToProfileMap;
+      ChunkIdToProfileMap chunks;
+
+      for (const auto& [chunk_id, chunk_directory] : chunk_folders)
+      {
+        ReferenceCounting::SmartPtr<
+          AdServer::ProfilingCommons::TransactionProfileMap<Key>> base_map;
+
+        const std::string rocksdb_path = chunk_directory + "/RocksDB_" + chunk_prefix;
+        Generics::ActiveObject_var active_object;
+
+        if (AdapterOptional::DEFINED)
+        {
+          base_map = open_adapt_transaction_profile_map<Key, KeyAccessor>(
+            active_object,
+            callback.in(),
+            logger,
+            rocksdb_manager_pool,
+            is_rocksdb_enable,
+            rocksdb_path,
+            rocksdb_params,
+            is_level_enable,
+            chunk_directory.c_str(),
+            chunk_prefix,
+            level_map_traits,
+            key_adapter,
+            optional_adapter.adapter,
+            max_waiters,
+            progress_checker_parent);
+        }
+        else
+        {
+          base_map = open_transaction_profile_map<Key, KeyAccessor>(
+            active_object,
+            callback.in(),
+            logger,
+            rocksdb_manager_pool,
+            is_rocksdb_enable,
+            rocksdb_path,
+            rocksdb_params,
+            is_level_enable,
+            chunk_directory.c_str(),
+            chunk_prefix,
+            level_map_traits,
+            key_adapter,
+            max_waiters,
+            progress_checker_parent);
+        }
+
+        parent_container.add_child_object(active_object);
+        chunks.try_emplace(chunk_id, base_map);
+      }
+
+      return new ProfileMapType(
+        common_chunks_number,
+        chunks,
+        key_hash);
+    }
   };
-}
-}
+} // namespace ProfilingCommons
+} // namespace AdServer
 
 #endif /*PROFILEMAP_PROFILEMAPFACTORY_HPP*/

@@ -2,9 +2,9 @@
 #include <thread>
 
 // THIS
-#include "ProfileMapImpl.hpp"
+#include "AsyncRocksDBProfileMap.hpp"
 
-namespace AdServer::ProfilingCommons::IoUring
+namespace AdServer::ProfilingCommons::RocksDB
 {
 
 namespace Internal
@@ -12,11 +12,12 @@ namespace Internal
 
 ProfileMapImpl::ProfileMapImpl(
   Logger* logger,
-  const std::uint64_t block_сache_size_mb,
+  const DataBaseManagerPoolPtr& db_manager_pool,
   const std::string& db_path,
-  std::optional<std::int32_t> ttl,
+  const RocksDBParams& rocksdb_params,
   std::optional<std::string> column_family_name)
   : logger_(ReferenceCounting::add_ref(logger)),
+    db_manager_pool_(db_manager_pool),
     db_path_(db_path)
 {
   std::size_t number_threads = std::thread::hardware_concurrency();
@@ -30,22 +31,21 @@ ProfileMapImpl::ProfileMapImpl(
   db_options.create_if_missing = true;
 
   rocksdb::ColumnFamilyOptions column_family_options;
-  column_family_options.OptimizeForPointLookup(block_сache_size_mb);
-  column_family_options.compaction_style = rocksdb::kCompactionStyleLevel;
-  if (ttl)
+  column_family_options.OptimizeForPointLookup(rocksdb_params.block_сache_size_mb);
+  column_family_options.compaction_style = rocksdb_params.compaction_style;
+  column_family_options.target_file_size_multiplier = 2;
+
+  std::optional<std::vector<std::int32_t>> ttls;
+  if (rocksdb_params.ttl.has_value())
   {
-    column_family_options.ttl = *ttl;
+    const auto ttl = *rocksdb_params.ttl;
+    column_family_options.ttl = ttl;
+    ttls = std::vector<std::int32_t>{ttl};
   }
 
   if (!column_family_name.has_value())
   {
     column_family_name = rocksdb::kDefaultColumnFamilyName;
-  }
-
-  std::optional<std::vector<std::int32_t>> ttls;
-  if (ttl.has_value())
-  {
-    ttls = std::vector<std::int32_t>{*ttl};
   }
 
   std::vector<rocksdb::ColumnFamilyDescriptor> descriptors{
@@ -61,15 +61,6 @@ ProfileMapImpl::ProfileMapImpl(
 
   column_family_handle_ = &data_base_->column_family(
     *column_family_name);
-
-  ManagerPoolConfig config;
-  config.event_queue_max_size = 1000000;
-  config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
-  config.io_uring_size = 6400;
-  config.number_io_urings = 1.5 * number_threads;
-  db_manager_pool_ = std::make_unique<DataBaseManagerPool>(
-    config,
-    logger_.in());
 
   write_options_.disableWAL = true;
   write_options_.sync = false;

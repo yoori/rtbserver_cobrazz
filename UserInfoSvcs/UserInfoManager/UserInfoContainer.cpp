@@ -44,11 +44,18 @@ namespace UserInfoSvcs
     Logging::Logger* logger,
     unsigned long common_chunks_number,
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
+    const bool is_level_enable,
     const AdServer::ProfilingCommons::LevelMapTraits& add_level_map_traits,
     const AdServer::ProfilingCommons::LevelMapTraits& temp_level_map_traits,
     const AdServer::ProfilingCommons::LevelMapTraits& history_level_map_traits,
     const AdServer::ProfilingCommons::LevelMapTraits& base_level_map_traits,
     const AdServer::ProfilingCommons::LevelMapTraits& freq_cap_level_map_traits,
+    const bool is_rocksdb_enable,
+    const RocksDBParams& add_rocksdb_params,
+    const RocksDBParams& temp_rocksdb_params,
+    const RocksDBParams& history_rocksdb_params,
+    const RocksDBParams& base_rocksdb_params,
+    const RocksDBParams& freq_cap_rocksdb_params,
     unsigned long colo_id,
     const Generics::Time& profile_request_timeout,
     const Generics::Time& history_optimization_period,
@@ -70,12 +77,13 @@ namespace UserInfoSvcs
       session_timeout_(session_timeout),
       base_profile_expire_time_(base_level_map_traits.expire_time)
   {
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<BaseProfileAdapter>
-      AdaptBaseProfile;
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<HistoryProfileAdapter>
-      AdaptHistoryProfile;
-    typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserFreqCapProfileAdapter>
-      AdaptFreqCapProfile;
+    using AdaptBaseProfile =
+      AdServer::ProfilingCommons::OptionalProfileAdapter<BaseProfileAdapter>;
+    using AdaptHistoryProfile =
+      AdServer::ProfilingCommons::OptionalProfileAdapter<HistoryProfileAdapter>;
+    using AdaptFreqCapProfile =
+      AdServer::ProfilingCommons::OptionalProfileAdapter<UserFreqCapProfileAdapter>;
+    using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
 
     if (progress_processor_parent.in())
     {
@@ -90,50 +98,102 @@ namespace UserInfoSvcs
         new AdServer::ProfilingCommons::LoadingProgressCallbackBase();
     }
 
-    base_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptBaseProfile>(
-        common_chunks_number,
-        chunk_folders,
-        BASE_CHUNK_PREFIX,
-        base_level_map_traits,
-        max_base_profile_waiters);
+    auto number_threads = std::thread::hardware_concurrency();
+    if (number_threads == 0)
+    {
+      number_threads = 30;
+    }
 
-    temp_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptBaseProfile>(
-        common_chunks_number,
-        chunk_folders,
-        TEMP_CHUNK_PREFIX,
-        temp_level_map_traits,
-        max_temp_profile_waiters);
+    ManagerPoolConfig config;
+    config.event_queue_max_size = 10000000;
+    config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
+    config.io_uring_size = 6400;
+    config.number_io_urings = 2 * number_threads;
+    auto rocksdb_manager_pool = std::make_shared<RocksdbManagerPool>(
+      config,
+      logger);
 
-    add_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptBaseProfile>(
-        common_chunks_number,
-        chunk_folders,
-        ADD_CHUNK_PREFIX,
-        add_level_map_traits);
+    auto key_adapter = [] (const UserId& key) {
+      return std::string(reinterpret_cast<const char*>(key.begin()), key.size());
+    };
 
-    history_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptHistoryProfile>(
-        common_chunks_number,
-        chunk_folders,
-        HISTORY_CHUNK_PREFIX,
-        history_level_map_traits);
+    base_profiles_ = open_chunked_map_<UserProfileMap, UserId>(
+      rocksdb_manager_pool,
+      common_chunks_number,
+      chunk_folders,
+      BASE_CHUNK_PREFIX,
+      is_rocksdb_enable,
+      base_rocksdb_params,
+      is_level_enable,
+      base_level_map_traits,
+      max_base_profile_waiters,
+      key_adapter,
+      AdaptBaseProfile{});
 
-    temp_history_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptHistoryProfile>(
-        common_chunks_number,
-        chunk_folders,
-        TEMP_HISTORY_CHUNK_PREFIX,
-        temp_level_map_traits);
+    temp_profiles_ = open_chunked_map_<UserProfileMap, UserId>(
+      rocksdb_manager_pool,
+      common_chunks_number,
+      chunk_folders,
+      TEMP_CHUNK_PREFIX,
+      is_rocksdb_enable,
+      temp_rocksdb_params,
+      is_level_enable,
+      temp_level_map_traits,
+      max_temp_profile_waiters,
+      key_adapter,
+      AdaptBaseProfile{});
 
-    freq_cap_profiles_ = open_chunked_map_<
-      UserProfileMap, AdaptFreqCapProfile>(
-        common_chunks_number,
-        chunk_folders,
-        FREQCAP_CHUNK_PREFIX,
-        freq_cap_level_map_traits,
-        max_freqcap_profile_waiters);
+    add_profiles_ = open_chunked_map_<UserProfileMap, UserId>(
+      rocksdb_manager_pool,
+      common_chunks_number,
+      chunk_folders,
+      ADD_CHUNK_PREFIX,
+      is_rocksdb_enable,
+      add_rocksdb_params,
+      is_level_enable,
+      add_level_map_traits,
+      0,
+      key_adapter,
+      AdaptBaseProfile{});
+
+    history_profiles_ = open_chunked_map_<UserProfileMap, UserId>(
+      rocksdb_manager_pool,
+      common_chunks_number,
+      chunk_folders,
+      HISTORY_CHUNK_PREFIX,
+      is_rocksdb_enable,
+      history_rocksdb_params,
+      is_level_enable,
+      history_level_map_traits,
+      0,
+      key_adapter,
+      AdaptHistoryProfile{});
+
+    temp_history_profiles_ = open_chunked_map_<UserProfileMap, UserId>(
+      rocksdb_manager_pool,
+      common_chunks_number,
+      chunk_folders,
+      TEMP_HISTORY_CHUNK_PREFIX,
+      is_rocksdb_enable,
+      temp_rocksdb_params,
+      is_level_enable,
+      temp_level_map_traits,
+      0,
+      key_adapter,
+      AdaptHistoryProfile{});
+
+    freq_cap_profiles_ = open_chunked_map_<UserProfileMap, UserId>(
+      rocksdb_manager_pool,
+      common_chunks_number,
+      chunk_folders,
+      FREQCAP_CHUNK_PREFIX,
+      is_rocksdb_enable,
+      freq_cap_rocksdb_params,
+      is_level_enable,
+      freq_cap_level_map_traits,
+      max_freqcap_profile_waiters,
+      key_adapter,
+      AdaptFreqCapProfile{});
   }
 
   void
@@ -2166,6 +2226,67 @@ namespace UserInfoSvcs
       ostr << FUN << ": Can't open '" << chunk_prefix <<
         "' profiles : " << ex.what();
       throw Exception(ostr);
+    }
+  }
+
+  template<
+    typename ProfileMap,
+    typename Key,
+    typename KeyAdapter,
+    typename AdapterOptional>
+  ReferenceCounting::SmartPtr<ProfileMap>
+  UserInfoContainer::open_chunked_map_(
+    const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+    unsigned long common_chunks_number,
+    const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
+    const char* chunk_prefix,
+    const bool is_rocksdb_enable,
+    const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+    const bool is_level_enable,
+    const AdServer::ProfilingCommons::LevelMapTraits& level_map_traits,
+    unsigned long max_waiters,
+    const KeyAdapter& key_adapter,
+    const AdapterOptional& optional_adapter)
+  {
+    try
+    {
+      return AdServer::ProfilingCommons::ProfileMapFactory::open_chunked_map<
+        Key,
+        AdServer::ProfilingCommons::UserIdAccessor,
+        unsigned long (*)(const Generics::Uuid& uuid),
+        KeyAdapter,
+        AdapterOptional>(
+          *this,
+          Generics::ActiveObjectCallback_var(
+            new Logging::ActiveObjectCallbackImpl(
+              logger_.in(),
+              "UserInfoContainer",
+              "UserInfo",
+              "ADS-IMPL-84")),
+          logger_.in(),
+          rocksdb_manager_pool,
+          common_chunks_number,
+          chunk_folders,
+          chunk_prefix,
+          is_rocksdb_enable,
+          rocksdb_params,
+          is_level_enable,
+          level_map_traits,
+          &AdServer::Commons::uuid_distribution_hash,
+          max_waiters,
+          key_adapter,
+          optional_adapter,
+          loading_progress_processor_.in());
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Can't open '"
+             << chunk_prefix
+             << "' profiles : "
+             << ex.what();
+      throw Exception(stream);
     }
   }
 

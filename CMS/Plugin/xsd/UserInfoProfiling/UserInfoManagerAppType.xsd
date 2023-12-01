@@ -19,6 +19,7 @@
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserInfoManagerThreadParamsType">

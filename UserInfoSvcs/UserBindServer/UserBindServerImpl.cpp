@@ -7,7 +7,6 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/FreqCapManip.hpp>
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
 
@@ -16,6 +15,7 @@
 #include "UserBindOperationLoader.hpp"
 #include "UserBindServerImpl.hpp"
 #include <UServerUtils/MetricsRAII.hpp>
+#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
 namespace Aspect
 {

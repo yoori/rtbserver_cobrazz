@@ -465,4 +465,11 @@
     <xsd:attribute name="enable" type="xsd:boolean" default="false"/>
   </xsd:complexType>
 
+  <xsd:simpleType name="RocksDBCompactionStyleType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="kCompactionStyleLevel"/>
+      <xsd:enumeration value="kCompactionStyleFIFO"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
 </xsd:schema>

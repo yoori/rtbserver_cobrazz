@@ -2120,11 +2120,18 @@ namespace UserInfoSvcs
           logger_,
           storage_config.common_chunks_number(),
           chunk_folders_,
+          storage_config.is_level_enable(),
           fill_level_map_traits_(storage_config.AddChunksConfig()),
           fill_level_map_traits_(storage_config.TempChunksConfig()),
           fill_level_map_traits_(storage_config.HistoryChunksConfig()),
           fill_level_map_traits_(storage_config.BaseChunksConfig()),
           fill_level_map_traits_(storage_config.FreqCapChunksConfig()),
+          storage_config.is_rocksdb_enable(),
+          fill_rocksdb_map_params_(storage_config.AddChunksRocksDBConfig()),
+          fill_rocksdb_map_params_(storage_config.TempChunksRocksDBConfig()),
+          fill_rocksdb_map_params_(storage_config.HistoryChunksRocksDBConfig()),
+          fill_rocksdb_map_params_(storage_config.BaseChunksRocksDBConfig()),
+          fill_rocksdb_map_params_(storage_config.FreqCapChunksRocksDBConfig()),
           user_info_manager_config_.colo_id(),
           user_info_manager_config_.UserInfoExchangerParameters().present() ?
             Generics::Time(user_info_manager_config_.
@@ -3151,6 +3158,28 @@ namespace UserInfoSvcs
       chunks_config.max_levels0(),
       Generics::Time(chunks_config.expire_time()),
       file_controller_);
+  }
+
+  AdServer::ProfilingCommons::RocksDB::RocksDBParams
+  UserInfoManagerImpl::fill_rocksdb_map_params_(
+    const xsd::AdServer::Configuration::ChunksRocksDBConfigType& chunks_config) noexcept
+  {
+    using RocksDBCompactionStyleType = ::xsd::AdServer::Configuration::RocksDBCompactionStyleType;
+    const auto compaction_style_config = chunks_config.compaction_style();
+    rocksdb::CompactionStyle compaction_style = rocksdb::kCompactionStyleLevel;
+    if (compaction_style_config == RocksDBCompactionStyleType::value::kCompactionStyleLevel)
+    {
+      compaction_style = rocksdb::kCompactionStyleLevel;
+    }
+    else if (compaction_style_config == RocksDBCompactionStyleType::value::kCompactionStyleFIFO)
+    {
+      compaction_style = rocksdb::kCompactionStyleFIFO;
+    }
+
+    return AdServer::ProfilingCommons::RocksDB::RocksDBParams(
+      chunks_config.block_cache_size_mb(),
+      chunks_config.expire_time(),
+      compaction_style);
   }
 
   UserStat

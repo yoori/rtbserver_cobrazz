@@ -1,3 +1,1 @@
-ADD_SUBDIRECTORY(LogProcessing)
-ADD_SUBDIRECTORY(PerformanceTests)
-ADD_SUBDIRECTORY(Samples)
+ADD_SUBDIRECTORY(UnitTestsNew)

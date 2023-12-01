@@ -112,7 +112,7 @@ namespace ProfilingCommons
     area_size() const noexcept;
 
   private:
-    KeyAdapterType key_adapter_;
+    mutable KeyAdapterType key_adapter_;
     std::shared_ptr<RocksDBProfileMapImpl> impl_;
   };
 }
