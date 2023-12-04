@@ -4,7 +4,7 @@ include_guard(GLOBAL)
 set(CPP_DEBUGINFO_FLAGS "-ggdb3")
 # -Wno-address used for ignore ACE TAO warnings on (0 == &X) expressions : remove after TAO deprecate
 # -mno-sse2 : required for disable movdqa instruction usage on non aligned uint32 access (Plain library)
-set(CPP_COMMON_FLAGS "-Wno-deprecated-declarations -Wno-address -D_REENTRANT -m64 -march=x86-64 -DPIC -pthread -W -Wall -mno-sse2")
+set(CPP_COMMON_FLAGS "-Wno-deprecated-declarations -Wno-address -D_REENTRANT -m64 -march=x86-64 -DPIC -pthread -W -Wall -mno-sse2 -fcoroutines")
 set(CPP_DEBUG_OPT_FLAGS "-O0 -fno-inline -DDEV_DEBUG -rdynamic")
 set(CPP_RELEASE_OPT_FLAGS "-O3")
 set(CPP_LINKER_FLAGS "-pthread -W -Wall -m64 -march=x86-64")
