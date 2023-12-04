@@ -1,3 +1,4 @@
+
 #include <String/AsciiStringManip.hpp>
 #include <String/UTF8Case.hpp>
 #include <String/StringManip.hpp>
@@ -51,6 +52,8 @@ namespace Action
       const String::SubString ORDER_ID("orderid");
       const String::SubString ACTION_VALUE("value");
       const String::SubString EXTERNAL_ID("fid");
+      const String::SubString REFERER1("referer");
+      const String::SubString REFERER2("referrer");
 
       /* debug params */
       const String::SubString IP_ADDRESS("debug.ip");
@@ -216,6 +219,12 @@ namespace Action
     add_processor_(false, true, Request::Context::DEBUG_CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(
         &RequestInfo::time, Generics::Time::ONE_DAY));
+    add_processor_(false, true, Request::Context::REFERER1,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(
+        &RequestInfo::referer));
+    add_processor_(false, true, Request::Context::REFERER2,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(
+        &RequestInfo::referer));
 
     add_processor_(true, false, Request::Header::REFERER.str,
       new FrontendCommons::UrlParamProcessor<RequestInfo>(
