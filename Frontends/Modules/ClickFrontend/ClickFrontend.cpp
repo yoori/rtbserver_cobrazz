@@ -31,7 +31,7 @@ namespace
   {
     static const unsigned long MAX_NUMBER_PARAMS = 30;
     static const unsigned long MAX_LENGTH_PARAM_NAME = 50;
-    static const unsigned long MAX_LENGTH_PARAM_VALUE = 1024;
+    static const unsigned long MAX_LENGTH_PARAM_VALUE = 12 * 1024;
   };
 
   const String::AsciiStringManip::Caseless
