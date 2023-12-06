@@ -108,6 +108,7 @@ cp ./src/common/*.h %{buildroot}/usr/include/xgboost/common/
 cp ./src/data/*.h %{buildroot}/usr/include/xgboost/data/
 cp ./src/c_api/*.h %{buildroot}/usr/include/xgboost/c_api/
 cp ./src/gbm/*.h %{buildroot}/usr/include/xgboost/gbm/
+cp -r ./rabit/include/rabit/ %{buildroot}/usr/include/rabit
 
 %clean
 rm -rf %{buildroot}
