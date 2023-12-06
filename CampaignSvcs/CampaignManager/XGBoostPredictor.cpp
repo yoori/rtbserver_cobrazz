@@ -1,9 +1,6 @@
 #define DISABLE_OPENMP
 
-#include <CampaignSvcs/CampaignManager/Utils.hpp>
-
 #include <fstream>
-#include <rabit/internal/rabit-inl.h>
 #include <xgboost/predictor.h>
 #include <xgboost/learner.h>
 #include <xgboost/data/simple_dmatrix.h>
@@ -230,23 +227,20 @@ namespace CTR
       }
     }
 
-    // now, init xgboost::gbm::GBTreeModel required for call Predictor::PredictInstance
-    gbtree_learner_model_param_.reset(new xgboost::LearnerModelParam());
-    gbtree_learner_model_param_->num_feature = feats_size;
-    gbtree_learner_model_param_->base_score = base_score_;
-    gbtree_learner_model_param_->num_output_group = 1;
-    gbtree_model_.reset(new xgboost::gbm::GBTreeModel(&*gbtree_learner_model_param_));
+    size_t shape[1]{1};
 
-    /*
-    {
-      // DEBUG
-      xgboost::Json gbtree_json{xgboost::Object()};
-      gbtree_model_->SaveModel(&gbtree_json);
-      std::string json_str;
-      xgboost::Json::Dump(gbtree_json, &json_str);
-      std::cout << "===============" << std::endl << json_str << std::endl << "===============" << std::endl;
-    }
-    */
+    // now, init xgboost::gbm::GBTreeModel required for call Predictor::PredictInstance
+    gbtree_learner_model_param_.reset(new xgboost::LearnerModelParam(
+      feats_size, // num_feature
+      xgboost::linalg::Tensor<float, 1>{{(float)base_score_}, shape, xgboost::DeviceOrd::kCPU}, // base_score
+      1, // num_output_group
+      1, // n_targets
+      xgboost::MultiStrategy::kOneOutputPerTree
+      ));
+
+    gbtree_learner_model_param_->num_feature = feats_size;
+    gbtree_learner_model_param_->num_output_group = 1;
+    gbtree_model_.reset(new xgboost::gbm::GBTreeModel(&*gbtree_learner_model_param_, 0));
 
     // find "model" attribute and load from its content
     const xgboost::Json* json_model_node = xgboost_json_find_attribute(j_tree, "model");
@@ -254,14 +248,10 @@ namespace CTR
     gbtree_model_->LoadModel(*json_model_node);
 
     // create Predictor
-    xgboost::GenericParameter generic_params;
-    std::vector<std::pair<std::string, std::string> > args{
-      { "gpu_id", "-1" },
-      { "nthread", "1" }
-    };
-    generic_params.Init(args);
-
-    predictor_.reset(xgboost::Predictor::Create("cpu_predictor", &generic_params));
+    predictor_.reset(xgboost::Predictor::Create(
+      "cpu_predictor",
+      0 // xgboost::Context
+      ));
 
     preds_.resize(1, 0.0);
 

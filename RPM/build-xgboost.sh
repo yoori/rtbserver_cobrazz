@@ -1,8 +1,8 @@
 #!/bin/bash
 
-VERSION="1.1.0"
-VERSIONSSV=ssv7
-TAG=v1.1.0rc2
+VERSION="2.0.2"
+VERSIONSSV=ssv3
+TAG=v2.0.2
 
 # script require 'sudo rpm' for install RPM packages
 # and access to mirror.yandex.ru repository
@@ -98,11 +98,13 @@ popd
 %install
 pushd build
 DESTDIR=%{buildroot} %{__make} install 
+mkdir -p %{buildroot}/usr/include/xgboost/common/
 mkdir -p %{buildroot}/usr/include/xgboost/data/
 mkdir -p %{buildroot}/usr/include/xgboost/c_api/
 mkdir -p %{buildroot}/usr/include/xgboost/gbm/
 
 popd
+cp ./src/common/*.h %{buildroot}/usr/include/xgboost/common/
 cp ./src/data/*.h %{buildroot}/usr/include/xgboost/data/
 cp ./src/c_api/*.h %{buildroot}/usr/include/xgboost/c_api/
 cp ./src/gbm/*.h %{buildroot}/usr/include/xgboost/gbm/
@@ -113,9 +115,7 @@ rm -rf %{buildroot}
 %postun -n %{name} -p /sbin/ldconfig
 
 %files -n %{name}
-%defattr(444,root,root)
 /usr/lib64/libxgboost.so
-/usr/lib/librabit*.so
 /usr/bin/xgboost
 
 %files -n %{name}-devel
@@ -123,12 +123,9 @@ rm -rf %{buildroot}
 %{_includedir}/xgboost
 %{_includedir}/dmlc
 %{_includedir}/rabit
-
-/usr/lib/librabit*.a
-/usr/lib64/libdmlc.a
-
-/usr/lib/cmake
+/usr/lib64/*.a
 /usr/lib64/cmake
+/usr/lib64/pkgconfig
 
 EOF
 
