@@ -36,6 +36,7 @@ target_link_libraries(FCGIServer
  AdFrontend
  FCGI
  boost_system
+ UServerUtilsMetrics
 
 )
 
