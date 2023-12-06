@@ -1,6 +1,8 @@
 #include <cstring>
-#include"DictionaryContainer.hpp"
+#include <istream>
 #include <String/Tokenizer.hpp>
+
+#include "DictionaryContainer.hpp"
 
 namespace AdServer
 {

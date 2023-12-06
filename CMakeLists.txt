@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
 
+set(CMAKE_CXX_COMPILER  /opt/rh/gcc-toolset-10/root/usr/bin/g++)
+set(CMAKE_C_COMPILER /opt/rh/gcc-toolset-10/root/usr/bin/gcc)
+
 project(rtbserver)
 
 include(cmake/SetupEnvironment.cmake)
