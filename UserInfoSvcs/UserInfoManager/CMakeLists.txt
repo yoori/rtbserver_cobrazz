@@ -69,7 +69,7 @@ target_link_libraries(UserInfoManager
  UserInfoContainer
  StatsDumper
  UserOperationProfilesPST
- UServerUtils
+ UServerUtilsMetrics
 
 )
 

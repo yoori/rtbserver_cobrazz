@@ -92,7 +92,7 @@ target_link_libraries(RequestInfoManager
   PlainStorage2
   UserCampaignReachProfilePST
   UserInfoManagerControllerL
-  UServerUtils
+  UServerUtilsMetrics
 )
 
 add_library(RequestLogLoader SHARED

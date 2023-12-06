@@ -56,5 +56,6 @@ target_link_libraries(UserBindServer
   UserBindServerConfigXSD
   UserBindServerIDL
   UserBindServerProto
+  UServerUtilsMetrics
   UServerUtils
 )

@@ -11,5 +11,5 @@ if(LINUX)
 set(LINUXLINK "Generics")
 endif()
 
-target_link_libraries(sampleBidStats UServerUtils)
+target_link_libraries(sampleBidStats UServerUtilsMetrics)
 
