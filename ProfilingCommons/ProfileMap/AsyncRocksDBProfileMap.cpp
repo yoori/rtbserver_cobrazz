@@ -20,10 +20,19 @@ ProfileMapImpl::ProfileMapImpl(
     db_manager_pool_(db_manager_pool),
     db_path_(db_path)
 {
-  std::size_t number_threads = std::thread::hardware_concurrency();
+  std::size_t number_threads = 0;
+  if (rocksdb_params.number_background_threads)
+  {
+    number_threads = *rocksdb_params.number_background_threads;
+  }
+  else
+  {
+    number_threads = std::thread::hardware_concurrency();
+  }
+
   if (number_threads == 0)
   {
-    number_threads = 16;
+    number_threads = 5;
   }
 
   rocksdb::DBOptions db_options;
