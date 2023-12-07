@@ -22,10 +22,12 @@ struct RocksDBParams final
   explicit RocksDBParams(
     const std::uint64_t block_сache_size_mb,
     const std::optional<std::int32_t> ttl,
-    const rocksdb::CompactionStyle compaction_style = rocksdb::kCompactionStyleLevel)
+    const rocksdb::CompactionStyle compaction_style = rocksdb::kCompactionStyleLevel,
+    const std::optional<std::size_t> number_background_threads = {})
     : block_сache_size_mb(block_сache_size_mb),
       ttl(ttl),
-      compaction_style(compaction_style)
+      compaction_style(compaction_style),
+      number_background_threads(number_background_threads)
   {
   }
 
@@ -34,6 +36,7 @@ struct RocksDBParams final
   const std::uint64_t block_сache_size_mb;
   const std::optional<std::int32_t> ttl;
   const rocksdb::CompactionStyle compaction_style;
+  const std::optional<std::size_t> number_background_threads;
 };
 
 namespace Internal

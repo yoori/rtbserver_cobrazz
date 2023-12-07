@@ -3163,7 +3163,7 @@ namespace UserInfoSvcs
   AdServer::ProfilingCommons::RocksDB::RocksDBParams
   UserInfoManagerImpl::fill_rocksdb_map_params_(
     const xsd::AdServer::Configuration::ChunksRocksDBConfigType& chunks_config) noexcept
-  {
+  {std::cout << "TTTTTTTTTTTTTTTTTTTT" << std::endl;
     using RocksDBCompactionStyleType = ::xsd::AdServer::Configuration::RocksDBCompactionStyleType;
     const auto compaction_style_config = chunks_config.compaction_style();
     rocksdb::CompactionStyle compaction_style = rocksdb::kCompactionStyleLevel;
@@ -3179,7 +3179,8 @@ namespace UserInfoSvcs
     return AdServer::ProfilingCommons::RocksDB::RocksDBParams(
       chunks_config.block_cache_size_mb(),
       chunks_config.expire_time(),
-      compaction_style);
+      compaction_style,
+      chunks_config.number_background_threads());
   }
 
   UserStat

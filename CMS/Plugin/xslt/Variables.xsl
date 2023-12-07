@@ -444,6 +444,7 @@
 <xsl:variable name="def-is-rocksdb-enable" select="'true'"/>
 <xsl:variable name="def-rocksdb-block-cache-size-mb" select="100"/>
 <xsl:variable name="def-rocksdb-compaction-style" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads" select="3"/>
 
 <xsl:variable name="def-profiling-log-sampling"
   select="document('../xsd/AdClusterAppType.xsd')/xsd:schema/xsd:complexType[

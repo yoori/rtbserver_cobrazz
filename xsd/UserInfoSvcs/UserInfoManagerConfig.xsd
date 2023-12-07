@@ -205,6 +205,7 @@
     <xsd:attribute name="block_cache_size_mb" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="compaction_style" type="RocksDBCompactionStyleType" use="required"/>
     <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="number_background_threads" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserInfoManagerStorageType">

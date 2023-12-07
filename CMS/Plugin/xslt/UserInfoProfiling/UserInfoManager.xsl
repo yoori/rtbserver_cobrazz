@@ -64,6 +64,7 @@
   <xsl:param name="block-cache-size-mb"/>
   <xsl:param name="compaction-style"/>
   <xsl:param name="expire-time"/>
+  <xsl:param name="number-background-threads"/>
 
   <xsl:attribute name="block_cache_size_mb">
     <xsl:value-of select="$block-cache-size-mb"/>
@@ -75,6 +76,10 @@
 
   <xsl:attribute name="expire_time">
     <xsl:value-of select="$expire-time"/>
+  </xsl:attribute>
+
+  <xsl:attribute name="number_background_threads">
+    <xsl:value-of select="$number-background-threads"/>
   </xsl:attribute>
 </xsl:template>
 
@@ -281,6 +286,7 @@
           <xsl:with-param name="block-cache-size-mb" select="$def-rocksdb-block-cache-size-mb"/>
           <xsl:with-param name="compaction-style" select="$def-rocksdb-compaction-style"/>
           <xsl:with-param name="expire-time" select="$profile-lifetime * 86400"/>
+          <xsl:with-param name="number-background-threads" select="$def-rocksdb-number-background-threads"/>
         </xsl:call-template>
       </cfg:AddChunksRocksDBConfig>
 
@@ -289,6 +295,7 @@
           <xsl:with-param name="block-cache-size-mb" select="$def-rocksdb-block-cache-size-mb"/>
           <xsl:with-param name="compaction-style" select="$def-rocksdb-compaction-style"/>
           <xsl:with-param name="expire-time" select="$temp-profile-lifetime * 60"/>
+          <xsl:with-param name="number-background-threads" select="$def-rocksdb-number-background-threads"/>
         </xsl:call-template>
       </cfg:TempChunksRocksDBConfig>
 
@@ -297,6 +304,7 @@
           <xsl:with-param name="block-cache-size-mb" select="$def-rocksdb-block-cache-size-mb"/>
           <xsl:with-param name="compaction-style" select="$def-rocksdb-compaction-style"/>
           <xsl:with-param name="expire-time" select="$profile-lifetime * 86400"/>
+          <xsl:with-param name="number-background-threads" select="$def-rocksdb-number-background-threads"/>
         </xsl:call-template>
       </cfg:HistoryChunksRocksDBConfig>
 
@@ -305,16 +313,18 @@
           <xsl:with-param name="block-cache-size-mb" select="$def-rocksdb-block-cache-size-mb"/>
           <xsl:with-param name="compaction-style" select="$def-rocksdb-compaction-style"/>
           <xsl:with-param name="expire-time" select="$profile-lifetime * 86400"/>
+          <xsl:with-param name="number-background-threads" select="$def-rocksdb-number-background-threads"/>
         </xsl:call-template>
       </cfg:BaseChunksRocksDBConfig>
 
-      <cfg:FreqCapRocksDBConfig>
+      <cfg:FreqCapChunksRocksDBConfig>
         <xsl:call-template name="ChunksConfigGeneratorRocksDb">
           <xsl:with-param name="block-cache-size-mb" select="$def-rocksdb-block-cache-size-mb"/>
           <xsl:with-param name="compaction-style" select="$def-rocksdb-compaction-style"/>
           <xsl:with-param name="expire-time" select="$profile-lifetime * 86400"/>
+          <xsl:with-param name="number-background-threads" select="$def-rocksdb-number-background-threads"/>
         </xsl:call-template>
-      </cfg:FreqCapRocksDBConfig>
+      </cfg:FreqCapChunksRocksDBConfig>
 
     </cfg:Storage>
 
