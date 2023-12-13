@@ -1,6 +1,7 @@
 #!/bin/bash
 
-VERSION=$1
+#VERSION=$1
+VERSION=10.1.1
 VERSIONSSV=ssv2
 
 # script require 'sudo rpm' for install RPM packages
@@ -45,7 +46,8 @@ Source0: https://github.com/fmtlib/fmt/archive/refs/tags/%{version}.tar.gz
 BuildRequires: cmake
 BuildRequires: gcc
 BuildRequires: gcc-c++
-BuildRequires: ninja-build
+#BuildRequires: ninja-build
+#BuildRequires: ninja
 
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-%{release}-XXXXXX)
 
@@ -87,7 +89,7 @@ rm -rf %{buildroot}
 %license LICENSE.rst
 %doc ChangeLog.rst README.rst
 
-%{_libdir}/lib%{name}.so.9*
+%{_libdir}/lib%{name}.so.10*
 
 %files -n %{name}-devel
 

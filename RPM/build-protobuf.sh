@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VERSION=$1
-#VERSION="3.21.8"
+VERSION="3.21.8"
 VERSIONSSV=ssv1
 
 pushd `dirname $0` >/dev/null

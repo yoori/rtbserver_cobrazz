@@ -5,7 +5,14 @@
 
 # create build/RPMS folder - all built packages will be duplicated here
 RES_TMP=build/TMP/
+
 RES_RPMS=build/RPMS/
+#VERSION=6.5.2
+#VERSION=7.6.0
+VERSION=8.9.1
+
+_version=%{VERSION}
+
 rm -rf "$RES_TMP"
 
 mkdir -p $RES_TMP
@@ -63,15 +70,20 @@ using RocksDB.
 %prep
 %setup -q -n rocksdb-%{_version}
 
+#%cmake -DWITH_GFLAGS=0
+
 %build
-PORTABLE=1 make -j6 static_lib shared_lib DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0
+PORTABLE=1 make -j6  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0
+#static_lib shared_lib
 
 %install
 rm -rf %{buildroot}
+echo 'rm -rf ' %{buildroot}
 mkdir -p %{buildroot}/usr
+echo 'mkdir -p %{buildroot}/usr'
 echo "Install to %{buildroot}/usr"
-DESTDIR=%{buildroot}/usr make install INSTALL_PATH=%{buildroot}/usr
-mv %{buildroot}/usr/lib %{buildroot}/usr/lib64
+DESTDIR=%{buildroot} make install INSTALL_PATH=%{buildroot}
+#mv %{buildroot}/usr/lib %{buildroot}/usr/lib64
 
 %clean
 rm -rf %{buildroot}
@@ -81,6 +93,8 @@ rm -rf %{buildroot}
 %files -n %{name}
 %defattr(444,root,root)
 %{_libdir}/librocksdb.so*
+%{_libdir}/cmake/*
+%{_libdir}//pkgconfig/*
 
 %files -n %{name}-devel
 %defattr(-,root,root)
@@ -90,8 +104,7 @@ rm -rf %{buildroot}
 
 EOF
 
-#VERSION=6.5.2
-VERSION=7.6.0
+
 
 $SUDO_PREFIX yum-builddep -y "$ROCKSDB_SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
