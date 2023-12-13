@@ -61,11 +61,11 @@ BuildRequires: automake
 BuildRequires: brotli-devel
 BuildRequires: coreutils
 BuildRequires: gcc
-BuildRequires: groff
+BuildRequires: groff-base
 BuildRequires: krb5-devel
 BuildRequires: libidn2-devel
-BuildRequires: libnghttp2-devel
-BuildRequires: libpsl-devel
+#BuildRequires: libnghttp2-devel
+#BuildRequires: libpsl-devel
 BuildRequires: libssh-devel
 BuildRequires: libtool
 BuildRequires: make

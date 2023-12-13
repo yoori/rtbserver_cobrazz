@@ -1,6 +1,7 @@
 #!/bin/bash
 
 VERSION=$1
+VERSION=1.14.0
 VERSIONSSV=ssv2
 
 # script require 'sudo rpm' for install RPM packages
@@ -41,11 +42,14 @@ Summary: Google C++ testing framework
 Group:   Development/Libraries/C and C++
 License: BSD and ASL2.0
 URL:     https://github.com/google/googletest
-Source0: https://github.com/google/googletest/archive/refs/tags/release-%{version}.tar.gz
+#Source0: https://github.com/google/googletest/archive/refs/tags/release-%{version}.tar.gz
+Source0: https://github.com/google/googletest/archive/refs/tags/v%{version}.tar.gz
 BuildRequires: cmake
 BuildRequires: gcc-c++
 
-BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-%{release}-XXXXXX)
+#BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-%{release}-XXXXXX)
+BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-XXXXXX)
+
 %define __product protobuf
 %define __cmake_build_dir build
 %description
@@ -61,7 +65,7 @@ Requires: %{name} = %{version}
 This package contains development files for gtest.
 
 %prep
-%setup -q -n googletest-release-%{_version}
+%setup -q -n googletest-%{_version}
 
 %build
 mkdir build
