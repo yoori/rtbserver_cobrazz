@@ -1,7 +1,9 @@
 #!/bin/bash
 
-VERSION=$1
-UNIXCOMMONSDIR=$2
+#VERSION=$1
+VERSION=1.0.0.0
+#UNIXCOMMONSDIR=$2
+UNIXCOMMONSDIR=/root/unixcommons_cobrazz
 
 # script require 'sudo rpm' for install RPM packages
 # create build/RPMS folder - all built packages will be duplicated here
@@ -13,11 +15,15 @@ mkdir -p $RES_TMP
 mkdir -p $RES_RPMS
 
 # download and install packages required for build
-yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build epel-rpm-macros || \
+yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build epel-rpm-macros GeoIP GeoIP-devel \
+  libxml2-devel libxslt-devel libev-devel gtest-devel cryptopp-devel libevent-devel xerces-c-devel yaml-cpp-devel \
+  java-1.8.0-openjdk-devel libpq-devel gtest-devel httpd-devel c-ares-devel bison xsd net-snmp-devel flex|| \
   { echo "can't install RPM build packages" >&2 ; exit 1 ; }
 
 # create folders for RPM build environment
 mkdir -vp  `rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'`
+
+#cp SPECS/server.spec `rpm -E %_specdir`/server.spec
 
 BIN_RPM_FOLDER=`rpm -E '%_rpmdir/%_arch'`
 DSP_SPEC_FILE=`rpm -E %_specdir`/server.spec
@@ -33,7 +39,7 @@ RPM_SOURCES_DIR=`rpm -E %_sourcedir`
 #git tag v"$VERSION"
 #git push origin --tags
 # get spec from tag
-cp RPM/SPECS/server.spec "$DSP_SPEC_FILE"
+cp SPECS/server.spec "$DSP_SPEC_FILE"
 
 #git archive --format tar.gz --output "$RPM_SOURCES_DIR/stream-dsp-$VERSION.tar.gz" dev
 rm -rf "$RES_TMP/foros-server-$VERSION"

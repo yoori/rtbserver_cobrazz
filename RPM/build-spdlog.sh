@@ -1,6 +1,7 @@
 #!/bin/bash
 
 VERSION=$1
+VERSION=1.12.0
 VERSIONSSV=ssv1
 
 # script require 'sudo rpm' for install RPM packages
