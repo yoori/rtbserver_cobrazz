@@ -9,7 +9,8 @@ RES_TMP=build/TMP/
 RES_RPMS=build/RPMS/
 #VERSION=6.5.2
 #VERSION=7.6.0
-VERSION=8.9.1
+#VERSION=8.9.1
+VERSION=6.26.1
 
 _version=%{VERSION}
 
@@ -94,7 +95,7 @@ rm -rf %{buildroot}
 %defattr(444,root,root)
 %{_libdir}/librocksdb.so*
 %{_libdir}/cmake/*
-%{_libdir}//pkgconfig/*
+#%{_libdir}//pkgconfig/*
 
 %files -n %{name}-devel
 %defattr(-,root,root)
