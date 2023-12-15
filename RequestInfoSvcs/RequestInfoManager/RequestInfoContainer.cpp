@@ -1525,8 +1525,10 @@ namespace RequestInfoSvcs {
     Logging::Logger* logger,
     RequestActionProcessor* request_processor,
     RequestOperationProcessor* request_operation_processor,
+    const DataBaseManagerPoolPtr& rocksdb_manager_pool,
     const char* requestfile_base_path,
     const char* requestfile_prefix,
+    const RocksDBParams& request_rocksdb_params,
     const String::SubString& bidfile_base_path,
     const String::SubString& /*bidfile_prefix*/,
     ProfilingCommons::ProfileMapFactory::Cache* cache,
@@ -1543,8 +1545,9 @@ namespace RequestInfoSvcs {
     using ProfileMap = AdServer::ProfilingCommons::RocksDB::RocksDBProfileMap<
       AdServer::Commons::RequestId,
       UuidToString>;
-    using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
     using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
+    using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+    using DataBaseManagerPoolPtr = std::shared_ptr<DataBaseManagerPool>;
 
     static const char* FUN = "RequestInfoContainer::RequestInfoContainer()";
 
@@ -1553,6 +1556,12 @@ namespace RequestInfoSvcs {
     if(extend_time_period_val.tv_sec == 0)
     {
       extend_time_period_val = expire_time / 2;
+    }
+
+    auto number_threads = std::thread::hardware_concurrency();
+    if (number_threads == 0)
+    {
+      number_threads = 25;
     }
 
     try
@@ -1579,31 +1588,12 @@ namespace RequestInfoSvcs {
     {
       try
       {
-        auto number_threads = std::thread::hardware_concurrency();
-        if (number_threads == 0)
-        {
-          number_threads = 25;
-        }
-
-        ManagerPoolConfig config;
-        config.event_queue_max_size = 10000000;
-        config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
-        config.io_uring_size = 6400;
-        config.number_io_urings = 2 * number_threads;
-        auto db_manager_pool = std::make_shared<DataBaseManagerPool>(
-          config,
-          logger_.in());
-
-        const std::uint64_t block_сache_size_mb = 1024;
         ReferenceCounting::SmartPtr<ProfileMap> bid_map_impl =
           new ProfileMap(
             logger_.in(),
-            db_manager_pool,
+            rocksdb_manager_pool,
             bidfile_base_path.str(),
-            AdServer::ProfilingCommons::RocksDB::RocksDBParams{
-              block_сache_size_mb,
-              expire_time_.microseconds() / 1000000,
-              rocksdb::kCompactionStyleLevel},
+            request_rocksdb_params,
             rocksdb::kDefaultColumnFamilyName);
 
         bid_profile_map_ = new AdServer::ProfilingCommons::TransactionProfileMap<

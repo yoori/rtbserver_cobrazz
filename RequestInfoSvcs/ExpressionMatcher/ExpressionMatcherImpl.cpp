@@ -13,6 +13,7 @@
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/CampaignConfigSource.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/Utils.hpp>
 
 #include "UserTriggerMatchProfileProviderImpl.hpp"
 #include "ConversionProcessor.hpp"
@@ -290,6 +291,30 @@ namespace RequestInfoSvcs
         ex.what();
       throw Exception(ostr);
     }
+
+    try
+    {
+      auto number_threads = std::thread::hardware_concurrency();
+      if (number_threads == 0)
+      {
+        number_threads = 30;
+      }
+
+      UServerUtils::Grpc::RocksDB::Config config;
+      config.event_queue_max_size = 10000000;
+      config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
+      config.io_uring_size = 12800;
+      config.number_io_urings = 2 * number_threads;
+      rocksdb_manager_pool_ = std::make_shared<RocksdbManagerPool>(
+        config,
+        logger());
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't create rocksdb_manager_pool. Caught eh::Exception: " << exc.what();
+      throw Exception(ostr);
+    }
   }
 
   ExpressionMatcherImpl::~ExpressionMatcherImpl() noexcept
@@ -545,15 +570,29 @@ namespace RequestInfoSvcs
       {
         if(!temp_user_trigger_match_container_.get().in())
         {
+          const auto& request_chunks_rocksdb_config =
+            expression_matcher_config_.TriggerImpsConfig()->RequestChunksRocksDBConfig();
+          bool is_request_rocksdb_enable = false;
+          const auto& is_request_rocksdb_enable_optional = request_chunks_rocksdb_config.is_enable();
+          if (is_request_rocksdb_enable_optional.present())
+          {
+            is_request_rocksdb_enable = is_request_rocksdb_enable_optional.get();
+          }
+          const auto request_rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            request_chunks_rocksdb_config);
+
           UserTriggerMatchContainer_var temp_user_trigger_match_container = new UserTriggerMatchContainer(
             logger(),
             0,
             0, // no providers
+            rocksdb_manager_pool_,
             expression_matcher_config_.ChunksConfig().chunks_number(),
             chunk_trigger_folders,
             expression_matcher_config_.TriggerImpsConfig()->TempUserChunksConfig().chunks_prefix().c_str(),
             "",
             0,
+            is_request_rocksdb_enable,
+            request_rocksdb_params,
             expression_matcher_config_.TriggerImpsConfig()->positive_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),
@@ -608,15 +647,29 @@ namespace RequestInfoSvcs
         if(user_trigger_match_profile_provider_.in() &&
            !user_trigger_match_container_.get().in())
         {
+          const auto& request_chunks_rocksdb_config =
+            expression_matcher_config_.TriggerImpsConfig()->RequestChunksRocksDBConfig();
+          bool is_request_rocksdb_enable = false;
+          const auto& is_request_rocksdb_enable_optional = request_chunks_rocksdb_config.is_enable();
+          if (is_request_rocksdb_enable_optional.present())
+          {
+            is_request_rocksdb_enable = is_request_rocksdb_enable_optional.get();
+          }
+          const auto request_rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            request_chunks_rocksdb_config);
+
           UserTriggerMatchContainer_var user_trigger_match_container = new UserTriggerMatchContainer(
             logger(),
             expression_matcher_out_logger_,
             user_trigger_match_profile_provider_,
+            rocksdb_manager_pool_,
             expression_matcher_config_.ChunksConfig().chunks_number(),
             chunk_trigger_folders,
             expression_matcher_config_.TriggerImpsConfig()->UserChunksConfig().chunks_prefix().c_str(),
             expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig().chunks_root().c_str(),
             expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig().chunks_prefix().c_str(),
+            is_request_rocksdb_enable,
+            request_rocksdb_params,
             expression_matcher_config_.TriggerImpsConfig()->positive_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->negative_triggers_group_size(),
             expression_matcher_config_.TriggerImpsConfig()->max_trigger_visits(),

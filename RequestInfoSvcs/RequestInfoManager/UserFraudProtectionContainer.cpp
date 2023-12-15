@@ -291,6 +291,9 @@ namespace RequestInfoSvcs
     Callback* callback,
     const char* file_base_path,
     const char* file_prefix,
+    const bool is_rocksdb_enable,
+    const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+    const RocksDBParams& rocksdb_params,
     ProfilingCommons::ProfileMapFactory::Cache* cache,
     const Generics::Time& expire_time,
     const Generics::Time& extend_time_period)
@@ -311,14 +314,33 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
-        open_transaction_expire_map<
-          AdServer::Commons::UserId,
-          ProfilingCommons::UserIdAccessor>(
-          file_base_path,
-          file_prefix,
-          extend_time_period_val,
-          cache);
+      if (is_rocksdb_enable)
+      {
+        auto key_adapter = [] (const Commons::UserId& key) {
+          return std::string(reinterpret_cast<const char*>(key.begin()), key.size());
+        };
+
+        const std::string rocksdb_path = std::string(file_base_path) + "/Rocksdb_" + file_prefix;
+        user_map_ = ProfilingCommons::ProfileMapFactory::open_transaction_rocksdb_map<
+          Commons::UserId>(
+            logger_.in(),
+            rocksdb_manager_pool,
+            rocksdb_path,
+            rocksdb_params,
+            0,
+            key_adapter);
+      }
+      else
+      {
+        user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+          open_transaction_expire_map<
+            AdServer::Commons::UserId,
+            ProfilingCommons::UserIdAccessor>(
+            file_base_path,
+            file_prefix,
+            extend_time_period_val,
+            cache);
+      }
     }
     catch(const eh::Exception& ex)
     {

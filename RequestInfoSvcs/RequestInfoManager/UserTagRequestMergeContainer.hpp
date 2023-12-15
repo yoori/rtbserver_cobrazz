@@ -25,8 +25,13 @@ namespace RequestInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+    using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+    using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
+  public:
     static const Generics::Time DEFAULT_EXPIRE_TIME;
 
     UserTagRequestMergeContainer(
@@ -35,6 +40,9 @@ namespace RequestInfoSvcs
       const Generics::Time& time_merge_bound,
       const char* file_base_path,
       const char* file_prefix,
+      const bool is_rocksdb_enable,
+      const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+      const RocksDBParams& rocksdb_params,
       ProfilingCommons::ProfileMapFactory::Cache* cache,
       const Generics::Time& expire_time =
         Generics::Time(DEFAULT_EXPIRE_TIME),

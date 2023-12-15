@@ -135,11 +135,14 @@ namespace RequestInfoSvcs
       Logging::Logger* logger,
       TriggerActionProcessor* processor,
       UserTriggerMatchProfileProvider* user_profile_provider,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
       unsigned long common_chunks_number,
       const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
       const char* user_file_prefix,
       const char* request_file_base_path,
       const char* request_file_prefix, // no request profiles mode, if == 0
+      const bool is_request_rocksdb_enable,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& request_rocksdb_params,
       unsigned long positive_triggers_group_size,
       unsigned long negative_triggers_group_size,
       unsigned long max_trigger_visits,
@@ -179,26 +182,24 @@ namespace RequestInfoSvcs
     ~UserTriggerMatchContainer() noexcept;
 
   private:
-    typedef AdServer::ProfilingCommons::ChunkedProfileMap<
+    using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+    using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+
+    using UserProfileMap = AdServer::ProfilingCommons::ChunkedProfileMap<
       AdServer::Commons::UserId,
       AdServer::ProfilingCommons::TransactionProfileMap<AdServer::Commons::UserId>,
-      unsigned long (*)(const Generics::Uuid& uuid) >
-    UserProfileMap;
+      unsigned long (*)(const Generics::Uuid& uuid)>;
 
-    typedef ReferenceCounting::SmartPtr<UserProfileMap>
-      UserProfileMap_var;
+    using UserProfileMap_var = ReferenceCounting::SmartPtr<UserProfileMap>;
 
-    typedef ProfilingCommons::TransactionProfileMap<
-      AdServer::Commons::RequestId>
-      RequestProfileMap;
+    using RequestProfileMap = ProfilingCommons::TransactionProfileMap<
+      AdServer::Commons::RequestId>;
 
-    typedef ReferenceCounting::SmartPtr<RequestProfileMap>
-      RequestProfileMap_var;
+    using RequestProfileMap_var = ReferenceCounting::SmartPtr<RequestProfileMap>;
 
-    typedef Sync::Policy::PosixThread SyncPolicy;
+    using SyncPolicy = Sync::Policy::PosixThread;
 
-    typedef std::list<TriggerActionProcessor::TriggersMatchInfo>
-      TriggersMatchInfoList;
+    using TriggersMatchInfoList = std::list<TriggerActionProcessor::TriggersMatchInfo>;
 
   private:
     Config_var current_config_() const /*throw(NotReady)*/;

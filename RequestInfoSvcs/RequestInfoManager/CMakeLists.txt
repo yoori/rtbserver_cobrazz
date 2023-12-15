@@ -158,6 +158,7 @@ add_library(UserActionInfoContainer STATIC
 
 target_link_libraries(UserActionInfoContainer
   LogCommons
+  ProfileMap
 )
 
 add_library(UserCampaignReachContainer STATIC

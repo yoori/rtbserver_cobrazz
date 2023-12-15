@@ -44,6 +44,10 @@ namespace AdServer
       public RequestContainerProcessor
     {
     public:
+      using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using DataBaseManagerPoolPtr = std::shared_ptr<DataBaseManagerPool>;
+      using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+
       static const Generics::Time DEFAULT_EXPIRE_TIME; // 180 days
 
     public:
@@ -53,8 +57,10 @@ namespace AdServer
         Logging::Logger* logger,
         RequestActionProcessor* request_processor,
         RequestOperationProcessor* request_operation_processor,
+        const DataBaseManagerPoolPtr& rocksdb_manager_pool,
         const char* requestfile_base_path,
         const char* requestfile_prefix,
+        const RocksDBParams& request_rocksdb_params,
         const String::SubString& bidfile_base_path,
         const String::SubString& bidfile_prefix,
         ProfilingCommons::ProfileMapFactory::Cache* cache,

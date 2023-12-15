@@ -687,7 +687,9 @@ Application_::print_user_action_from_file(
   const char* user_id_str,
   bool print_plain,
   bool debug_plain,
-  bool align)
+  bool align,
+  bool is_level_enable,
+  bool is_rocksdb_enable)
   noexcept
 {
   try
@@ -697,12 +699,35 @@ Application_::print_user_action_from_file(
     Logging::Logger_var logger(new Logging::Null::Logger);
     NullProcessor_var act_processor(new NullProcessor());
 
+    auto number_threads = std::thread::hardware_concurrency();
+    if (number_threads == 0)
+    {
+      number_threads = 30;
+    }
+
+    UServerUtils::Grpc::RocksDB::Config config;
+    config.event_queue_max_size = 10000000;
+    config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
+    config.io_uring_size = 12800;
+    config.number_io_urings = 2 * number_threads;
+    auto rocksdb_manager_pool = std::make_shared<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>(
+      config,
+      logger.in());
+
+    AdServer::ProfilingCommons::RocksDB::RocksDBParams rocksdb_params{
+      10,
+      1000000};
+
     UserActionInfoContainer_var act_container(
       new UserActionInfoContainer(
         logger,
         act_processor,
         file,
         "UserAction_",
+        is_level_enable,
+        is_rocksdb_enable,
+        rocksdb_manager_pool,
+        rocksdb_params,
         Generics::Time::ZERO, // action_ignore_time
         0, // cache
         Generics::Time(1000000), // expire time (sec)
@@ -869,6 +894,8 @@ Application_::main(int& argc, char** argv) noexcept
   Generics::AppUtils::CheckOption opt_sync;
   Generics::AppUtils::Option<std::string> opt_file;
   Generics::AppUtils::CheckOption opt_align;
+  Generics::AppUtils::CheckOption opt_level;
+  Generics::AppUtils::CheckOption opt_rocksdb;
 
   args.add(
     Generics::AppUtils::equal_name("help") ||
@@ -915,6 +942,14 @@ Application_::main(int& argc, char** argv) noexcept
     opt_align);
 
   args.add(
+    Generics::AppUtils::equal_name("rocksdb"),
+    opt_rocksdb);
+
+  args.add(
+    Generics::AppUtils::equal_name("level"),
+    opt_level);
+
+  args.add(
     Generics::AppUtils::equal_name("plain-debug"),
     opt_debug_plain);
 
@@ -957,7 +992,9 @@ Application_::main(int& argc, char** argv) noexcept
         remove_uuid_escape(opt_user_id->c_str()).c_str(),
         opt_print_plain.enabled(),
         opt_debug_plain.enabled(),
-        opt_align.enabled());
+        opt_align.enabled(),
+        opt_level.enabled(),
+        opt_rocksdb.enabled());
     }
 
     try

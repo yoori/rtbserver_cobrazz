@@ -1,1 +1,2 @@
+ADD_SUBDIRECTORY(PerformanceTests)
 ADD_SUBDIRECTORY(UnitTestsNew)

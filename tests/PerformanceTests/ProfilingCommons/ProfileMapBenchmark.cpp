@@ -586,7 +586,7 @@ public:
           block_сache_size_mb,
           path_db,
           expire_time,
-          rocksdb::kDefaultColumnFamilyName),
+          /*rocksdb::kDefaultColumnFamilyName*/"profile_map"),
       write_statistics,
       read_statistics,
       db_size_mb,

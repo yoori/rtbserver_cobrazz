@@ -331,6 +331,14 @@
           max_levels0="20"
           chunks_root="{concat($cache-root, '/RequestTriggerMatch/')}"
           expire_time="172800"/>
+
+        <cfg:RequestChunksRocksDBConfig
+          is_enable="{$def-is-rocksdb-enable-request-trigger-match}"
+          block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-request-trigger-match}"
+          compaction_style="{$def-rocksdb-compaction-style-request-trigger-match}"
+          number_background_threads="{$def-rocksdb-number-background-threads-request-trigger-match}"
+          expire_time="{$def-expire-time-request-trigger-match}"/>
+
       </cfg:TriggerImpsConfig>
     </xsl:if>
 

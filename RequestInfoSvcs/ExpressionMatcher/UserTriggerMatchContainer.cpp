@@ -850,11 +850,14 @@ namespace RequestInfoSvcs
     Logging::Logger* logger,
     TriggerActionProcessor* processor,
     UserTriggerMatchProfileProvider* user_profile_provider,
+    const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
     unsigned long common_chunks_number,
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* user_file_prefix,
     const char* request_file_base_path,
     const char* request_file_prefix,
+    const bool is_request_rocksdb_enable,
+    const AdServer::ProfilingCommons::RocksDB::RocksDBParams& request_rocksdb_params,
     unsigned long positive_triggers_group_size,
     unsigned long negative_triggers_group_size,
     unsigned long max_trigger_visits,
@@ -915,9 +918,29 @@ namespace RequestInfoSvcs
     {
       try
       {
-        Generics::ActiveObject_var active_object;
+        if (is_request_rocksdb_enable)
+        {
+          auto key_adapter = [] (const AdServer::Commons::RequestId& key) {
+            return std::string(reinterpret_cast<const char*>(key.begin()), key.size());
+          };
 
-        request_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
+          const std::string rocksdb_path = std::string(request_file_base_path) + "/Rocksdb_" + request_file_prefix;
+
+          request_map_ = AdServer::ProfilingCommons::ProfileMapFactory::open_transaction_rocksdb_map<
+            AdServer::Commons::RequestId>(
+              logger_.in(),
+              rocksdb_manager_pool,
+              rocksdb_path,
+              request_rocksdb_params,
+              0,
+              key_adapter,
+              RequestTriggerMatchProfileAdapter());
+        }
+        else
+        {
+          Generics::ActiveObject_var active_object;
+
+          request_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
           open_adapt_transaction_level_map<
             AdServer::Commons::RequestId,
             AdServer::ProfilingCommons::RequestIdAccessor,
@@ -934,7 +957,8 @@ namespace RequestInfoSvcs
               request_level_map_traits,
               RequestTriggerMatchProfileAdapter());
 
-        add_child_object(active_object);
+          add_child_object(active_object);
+        }
       }
       catch(const eh::Exception& ex)
       {

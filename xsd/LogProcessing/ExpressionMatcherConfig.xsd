@@ -279,6 +279,10 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+
+      <xsd:element name="RequestChunksRocksDBConfig" type="ChunksRocksDBConfigType">
+      </xsd:element>
+
     </xsd:sequence>
 
     <xsd:attribute name="positive_triggers_group_size" type="xsd:nonNegativeInteger" use="required"/>
