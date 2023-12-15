@@ -71,8 +71,8 @@ Requires: nginx = 1:1.22.1
 #Requires: mod_ssl >= 2.2.21.4-1.ssv1
 BuildRequires: libevent-devel = 2.1.8
 Requires: libevent = %__libevent_ver_req
-BuildRequires: OpenSBE = 1.0.0
-BuildRequires: OpenSBE-defs >= 1.0.28.0
+#BuildRequires: OpenSBE = 1.0.0
+#BuildRequires: OpenSBE-defs >= 1.0.28.0
 %if "%{?__type:%{__type}}%{!?__type:0}" == "central"
 Conflicts: foros-server-remote-debuginfo
 Conflicts: foros-server-central-debuginfo < %{version}
@@ -157,7 +157,7 @@ Requires: python3-minio
 BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
 Requires: boost%{__boost_suffix} = 1.76.0
 BuildRequires: xgboost-devel
-Requires: gtest = 1.12.1
+Requires: gtest >= 1.12.1
 BuildRequires: gtest-devel = 1.12.1
 
 Requires: glibc-all-langpacks
