@@ -1,0 +1,15 @@
+libnghttp2-devel
+grpc-devel
+pip install voluptuous
+spdlog-devel
+libcurl-devel
+sudo dnf install jemalloc-devel
+
+sudo dnf group install "C Development Tools and Libraries" "Development Tools"
+virtualenv
+cmake -DUSERVER_FEATURE_STACKTRACE=0 ..
+
+mongo-c-driver-devel
+protobuf-c-devel.x86_64
+pip install --upgrade google-api-python-client
+pip install grpcio-tools

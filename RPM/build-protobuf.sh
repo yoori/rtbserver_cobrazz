@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #VERSION=$1
-VERSION="4.25.1"
+#VERSION="4.25.1"
+VERSION="3.21.8"
 VERSIONSSV=ssv1
 
 pushd `dirname $0` >/dev/null
@@ -124,25 +125,16 @@ The "optimize_for = LITE_RUNTIME" option causes the compiler to generate code
 which only depends libprotobuf-lite, which is much smaller than libprotobuf but
 lacks descriptors, reflection, and some other features.
 
-%package python36
+%package python3
 Summary: Python bindings for Google Protocol Buffers
 Group: Development/Languages
 BuildRequires: python3-devel python3-setuptools
 Conflicts: %{name}-compiler > %{version}
 Conflicts: %{name}-compiler < %{version}
 
-%description python36
+%description python3
 This package contains Python libraries for Google Protocol Buffers
 
-%package python38
-Summary: Python bindings for Google Protocol Buffers
-Group: Development/Languages
-BuildRequires: python38-devel python38-setuptools
-Conflicts: %{name}-compiler > %{version}
-Conflicts: %{name}-compiler < %{version}
-
-%description python38
-This package contains Python libraries for Google Protocol Buffers
 
 %prep
 %setup -q
@@ -157,16 +149,14 @@ export PTHREAD_LIBS="-lpthread"
 
 make %{?_smp_mflags}
 
-#mkdir -p build/python36
-#mkdir -p build/python38
+#mkdir -p build/python3
 
 pushd python
 echo "================="
 pwd
-echo %{__python36}
+echo %{__python3}
 echo "================="
-%{__python36} ./setup.py build
-%{__python38} ./setup.py build
+%{__python3} ./setup.py build
 echo ">================"
 find build/ -type f
 echo ">================"
@@ -183,8 +173,7 @@ make %{?_smp_mflags} install DESTDIR=%{buildroot} STRIPBINARIES=no INSTALL="%{__
 find %{buildroot} -type f -name "*.la" -exec rm -f {} \;
 
 pushd python
-%{__python36} ./setup.py install --root=%{buildroot} --single-version-externally-managed --record=INSTALLED_FILES --optimize=1
-%{__python38} ./setup.py install --root=%{buildroot} --single-version-externally-managed --record=INSTALLED_FILES --optimize=1
+%{__python3} ./setup.py install --root=%{buildroot} --single-version-externally-managed --record=INSTALLED_FILES --optimize=1
 popd
 
 %post -p /sbin/ldconfig
@@ -228,29 +217,21 @@ popd
 %files lite-static
 %{_libdir}/libprotobuf-lite.a
 
-%define python36_sitelib /usr/lib/python3.6/site-packages
-%files python36
-%dir %{python36_sitelib}/google
-%{python36_sitelib}/google/protobuf/
-%{python36_sitelib}/protobuf-*-py?.?.egg-info/
-%{python36_sitelib}/protobuf-*-py?.?-nspkg.pth
+
+%define python3_sitelib /usr/lib/python3.12/site-packages
+%files python3
+%dir %{python3_sitelib}/google
+%{python3_sitelib}/google/protobuf/
+%{python3_sitelib}/protobuf-*-py?.??.egg-info/
+%{python3_sitelib}/protobuf-*-py?.??-nspkg.pth
 %doc python/README.md
 %doc examples/add_person.py examples/list_people.py examples/addressbook.proto
 
-%define python38_sitelib /usr/lib/python3.8/site-packages
-%files python38
-%dir %{python38_sitelib}/google
-%{python38_sitelib}/google/protobuf/
-%{python38_sitelib}/protobuf-*-py?.?.egg-info/
-%{python38_sitelib}/protobuf-*-py?.?-nspkg.pth
-%doc python/README.md
-%doc examples/add_person.py examples/list_people.py examples/addressbook.proto
 
 EOF
 
 PASS_ARGS=("--define" "_version $VERSION" "--define" "_release $VERSIONSSV" \
-  "--define" "__python36 /usr/bin/python3.6" \
-  "--define" "__python38 /usr/bin/python3.8" \
+  "--define" "__python3 /usr/bin/python3.12" \
   )
 #echo "ARGS: " $PASS_ARGS
 

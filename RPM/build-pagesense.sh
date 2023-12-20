@@ -12,10 +12,11 @@ mkdir -p $RES_TMP
 mkdir -p $RES_RPMS
 
 # download and install packages required for build
-sudo yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build libtool \
-  epel-rpm-macros \
+sudo yum -y install  yum-utils rpmdevtools redhat-rpm-config rpm-build libtool \
+   \
   || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
+  #spectool epel-rpm-macros
 
 # create folders for RPM build environment
 mkdir -vp  `rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'`

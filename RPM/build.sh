@@ -15,10 +15,12 @@ mkdir -p $RES_TMP
 mkdir -p $RES_RPMS
 
 # download and install packages required for build
-yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build epel-rpm-macros GeoIP GeoIP-devel \
+yum -y install yum-utils rpmdevtools redhat-rpm-config rpm-build GeoIP GeoIP-devel \
   libxml2-devel libxslt-devel libev-devel gtest-devel cryptopp-devel libevent-devel xerces-c-devel yaml-cpp-devel \
-  java-1.8.0-openjdk-devel libpq-devel gtest-devel httpd-devel c-ares-devel bison xsd net-snmp-devel flex|| \
+  java-1.8.0-openjdk-devel libpq-devel gtest-devel httpd-devel c-ares-devel bison xsd net-snmp-devel flex \
+  boost-devel librdkafka-devel rocksdb-devel zeromq-devel libxml2-devel http-parser-devel protobuf-compiler protobuf-devel pcre-devel grpc-plugins soci-postgresql-devel|| \
   { echo "can't install RPM build packages" >&2 ; exit 1 ; }
+  #spectool epel-rpm-macros 
 
 # create folders for RPM build environment
 mkdir -vp  `rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'`

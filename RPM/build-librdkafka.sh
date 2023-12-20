@@ -12,10 +12,11 @@ mkdir -p $RES_TMP
 mkdir -p $RES_RPMS
 
 # download and install packages required for build
-sudo yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build autoconf automake libtool  python39\
-  glib2-devel cmake gcc-c++ epel-rpm-macros \
+sudo yum -y install yum-utils rpmdevtools redhat-rpm-config rpm-build autoconf automake libtool  python39\
+  glib2-devel cmake gcc-c++  \
   || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
+  #spectool  epel-rpm-macros
 
 sudo yum -y install libzstd-devel zlib-devel cyrus-sasl lz4-devel || \
   { echo "can't install base packages" >&2 ; exit 1 ; }

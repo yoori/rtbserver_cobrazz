@@ -25,8 +25,7 @@
 %define __net_snmp_ver_req      5.8-25
 %define __libevent_ver_req      2.1.8-5.el8
 %define __postgresql_ver_req    9.4.26
-#define __protobuf_ver_req      3.6.1-4
-%define __protobuf_ver_req      3.21.9
+%define __protobuf_ver_req      3.6.1-4
 %define __zeromq_ver_req        4.3.4
 %define __librdkafka_ver_req    1.9.2
 #define __open_ssl_ver_req      1.0.1e-42.el7
@@ -51,12 +50,12 @@ BuildRequires: cmake3
 BuildRequires: libstdc++
 Requires: libstdc++
 #BuildRequires: glibc-devel
-BuildRequires: glibc-devel = %__glibc_ver_req
+BuildRequires: glibc-devel >= %__glibc_ver_req
 #Requires: glibc
-Requires: glibc = %__glibc_ver_req
+Requires: glibc >= %__glibc_ver_req
 
-BuildRequires: ace-tao-devel >= %__ace_ver_req
-Requires: ace-tao = %__ace_ver_req
+##BuildRequires: ace-tao-devel >= %__ace_ver_req
+##Requires: ace-tao = %__ace_ver_req
 BuildRequires: apr-devel >= 1.6.3-12
 BuildRequires: autoconf >= 2.63
 BuildRequires: gcc-c++
@@ -69,7 +68,7 @@ BuildRequires: httpd-devel
 Requires: httpd
 Requires: nginx = 1:1.22.1
 #Requires: mod_ssl >= 2.2.21.4-1.ssv1
-BuildRequires: libevent-devel = 2.1.8
+BuildRequires: libevent-devel >= 2.1.8
 Requires: libevent = %__libevent_ver_req
 #BuildRequires: OpenSBE = 1.0.0
 #BuildRequires: OpenSBE-defs >= 1.0.28.0
@@ -95,8 +94,8 @@ Requires: net-snmp >= %{__net_snmp_ver_req} lm_sensors-libs
 #Requires: net-snmp-subagent >= 2.1.3.1
 #BuildRequires: java-1.8.0-oracle-devel >= 1.7.0.45
 BuildRequires: java-1.8.0-openjdk-devel
-BuildRequires: libxml2-devel = 2.9.7
-BuildRequires: libxslt-devel = 1.1.32
+BuildRequires: libxml2-devel >= 2.9.7
+BuildRequires: libxslt-devel >= 1.1.32
 BuildRequires: make >= 4.2.1
 BuildRequires: openssl-devel >= %{__open_ssl_ver_req}
 BuildRequires: zlib-devel >= 1.2.11-18
@@ -104,20 +103,20 @@ Requires: zlib >= 1.2.11-18
 BuildRequires: bzip2-devel
 BuildRequires: flex >= 2.6.1-9
 BuildRequires: bison >= 3.0.4-10
-BuildRequires: zeromq-devel = %__zeromq_ver_req
-BuildRequires: librdkafka-devel = %__librdkafka_ver_req
+BuildRequires: zeromq-devel >= %__zeromq_ver_req
+BuildRequires: librdkafka-devel >= %__librdkafka_ver_req
 BuildRequires: vanga-devel = %__vanga_ver_req
-BuildRequires: rocksdb-devel = %__rocksdb_ver_req
+BuildRequires: rocksdb-devel >= %__rocksdb_ver_req
 Requires: postgresql94-libs >= %{__postgresql_ver_req}
 Requires: openssl >= %{__open_ssl_ver_req}
-BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
-BuildRequires: protobuf-devel = %{__protobuf_ver_req}
-BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
+
+BuildRequires: protobuf-devel >= %{__protobuf_ver_req}
+BuildRequires: protobuf-compiler >= %{__protobuf_ver_req}
 BuildRequires: userver-devel
 # userver-devel dependencies workaround:
 BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
-BuildRequires: grpc-plugins = 1.48.1-ssv2
+BuildRequires: grpc-plugins >= 1.48
 
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
@@ -154,11 +153,11 @@ Requires: python3-minio
 
 #Requires: libicu = 50.2-4
 #BuildRequires: libicu-devel = 50.2-4
-BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
-Requires: boost%{__boost_suffix} = 1.76.0
+BuildRequires: boost-devel >= 1.76.0
+Requires: boost >= 1.76.0
 BuildRequires: xgboost-devel
 Requires: gtest >= 1.12.1
-BuildRequires: gtest-devel = 1.12.1
+BuildRequires: gtest-devel >= 1.12.1
 
 Requires: glibc-all-langpacks
 Requires: foros-pagesense-programmatic
