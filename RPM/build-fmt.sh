@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#VERSION=$1
+##VERSION=$1
 VERSION=10.1.1
 VERSIONSSV=ssv2
 
