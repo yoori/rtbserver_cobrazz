@@ -81,7 +81,7 @@ namespace AdServer
   class DebugSink : public DebugInfoStatus
   {
   public:
-    typedef FCGI::HttpResponse HttpResponse;
+    typedef FrontendCommons::HttpResponse HttpResponse;
 
     DebugSink(bool allow_show_history_profile) noexcept;
 

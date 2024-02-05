@@ -54,14 +54,20 @@ namespace FrontendCommons
     }
   }
 
+  FrontendInterface::FrontendInterface(
+    FrontendCommons::HttpResponseFactory* response_factory)
+    : response_factory_(ReferenceCounting::add_ref(response_factory))
+  {
+  }
+
   // FrontendInterface
   bool
   FrontendInterface::parse_args_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     /*throw(eh::Exception)*/
   {
-    FCGI::HttpRequest& request = request_holder->request();
+    FrontendCommons::HttpRequest& request = request_holder->request();
 
     HTTP::ParamList params;
 
@@ -70,10 +76,10 @@ namespace FrontendCommons
       // read parameters
       if(!request.args().empty())
       {
-        FCGI::HttpRequest::parse_params(request.args(), params);
+        FrontendCommons::HttpRequest::parse_params(request.args(), params);
       }
 
-      if(request.method() == FCGI::HttpRequest::RM_POST)
+      if(request.method() == FrontendCommons::HttpRequest::RM_POST)
       {
         bool params_in_body = false;
 
@@ -91,7 +97,7 @@ namespace FrontendCommons
 
         if(params_in_body)
         {
-          FCGI::HttpRequest::parse_params(request.body(), params);
+          FrontendCommons::HttpRequest::parse_params(request.body(), params);
         }
       }
 
@@ -99,7 +105,7 @@ namespace FrontendCommons
     }
     catch(const String::StringManip::InvalidFormatException&)
     {
-      FCGI::HttpResponse_var response(new FCGI::HttpResponse(1));
+      FrontendCommons::HttpResponse_var response = create_response();
       response_writer->write(400, response);
       return false;
     }
@@ -109,14 +115,20 @@ namespace FrontendCommons
 
   void
   FrontendInterface::handle_request_noparams(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     /*throw(eh::Exception)*/
   {
     if(parse_args_(request_holder, response_writer))
     {
       handle_request(std::move(request_holder), std::move(response_writer));
     }
+  }
+
+  FrontendCommons::HttpResponse_var
+  FrontendInterface::create_response()
+  {
+    return response_factory_->create();
   }
 }
 

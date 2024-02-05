@@ -298,6 +298,17 @@ then
 
   let "EXIT_CODE|=$?"
 
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$HTTP_FRONTEND_XPATH" \
+    --app-xml $APP_XML \
+    --xsl $XSLT_ROOT/Frontend/HttpAdServer.xsl \
+    --out-file HttpAdServerConfig.xml \
+    --out-dir-suffix "$OUT_DIR_SUFFIX" \
+    --out-dir $OUT_DIR \
+    --plugin-root $PLUGIN_ROOT
+
+    let "EXIT_CODE|=$?"
+
   $EXEC/CurrentEnvGen.sh \
     --service-name "fcgi_adserver" \
     --plugin-root "$PLUGIN_ROOT" \

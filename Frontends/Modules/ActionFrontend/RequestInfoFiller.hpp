@@ -84,7 +84,7 @@ namespace Action
 
     void
     fill(RequestInfo& request_info,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const String::SubString& service_prefix) const
       /*throw(InvalidParamException, ForbiddenException, Exception)*/;
 

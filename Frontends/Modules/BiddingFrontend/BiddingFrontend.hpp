@@ -91,15 +91,16 @@ namespace Bidding
       Logging::Logger* logger,
       CommonModule* common_module,
       StatHolder* stats,
-      Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/;
+      Generics::CompositeMetricsProvider* composite_metrics_provider,
+      FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
 
     virtual void
     handle_request(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -348,7 +349,7 @@ namespace Bidding
       noexcept;
 
     Generics::Time
-    get_request_timeout_(const FCGI::HttpRequest& request) noexcept;
+    get_request_timeout_(const FrontendCommons::HttpRequest& request) noexcept;
 
     static
     AdServer::CampaignSvcs::AdInstantiateType

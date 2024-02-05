@@ -166,7 +166,7 @@ namespace Instantiate
 
     void
     fill(RequestInfo& request_info,
-      const FCGI::HttpRequest& request) const
+      const FrontendCommons::HttpRequest& request) const
       /*throw(InvalidParamException, ForbiddenException, Exception)*/;
 
     const Logging::Logger_var&

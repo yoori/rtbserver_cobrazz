@@ -21,6 +21,7 @@ namespace FrontendCommons
   public:
     FrontendTaskPool(
       Generics::ActiveObjectCallback* callback,
+      FrontendCommons::HttpResponseFactory* response_factory,
       unsigned long threads,
       unsigned long max_pending_tasks)
       /*throw(eh::Exception)*/;
@@ -30,14 +31,14 @@ namespace FrontendCommons
 
     virtual void
     handle_request(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     virtual void
     handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
   protected:
@@ -49,20 +50,20 @@ namespace FrontendCommons
 
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept = 0;
 
     virtual void
     handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     void
     push_handle_request_task_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer,
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer,
       bool noparams)
       noexcept;
 

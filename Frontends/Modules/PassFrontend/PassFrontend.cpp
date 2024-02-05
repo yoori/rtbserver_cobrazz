@@ -57,9 +57,11 @@ namespace Passback
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
-    CommonModule* common_module)
+    CommonModule* common_module,
+    FrontendCommons::HttpResponseFactory* response_factory)
     /*throw(eh::Exception)*/
-    : Logging::LoggerCallbackHolder(
+    : FrontendCommons::FrontendInterface(response_factory),
+      Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -70,6 +72,7 @@ namespace Passback
         0),
       FrontendCommons::FrontendTaskPool(
         this->callback(),
+        response_factory,
         frontend_config->get().PassFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -137,22 +140,22 @@ namespace Passback
 
   void
   Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
-    const FCGI::HttpRequest& request = request_holder->request();
+    const FrontendCommons::HttpRequest& request = request_holder->request();
 
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
+    FrontendCommons::HttpResponse_var response_ptr = create_response();
+    FrontendCommons::HttpResponse& response = *response_ptr;
     int http_status = handle_request_(request, response);
     response_writer->write(http_status, response_ptr);
   }
 
   int
   Frontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response) noexcept
+    const FrontendCommons::HttpRequest& request,
+    FrontendCommons::HttpResponse& response) noexcept
   {
     static const char* FUN = "Frontend::handle_request_()";
 
@@ -192,8 +195,8 @@ namespace Passback
 
   int
   Frontend::handle_redirect_request(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+    const FrontendCommons::HttpRequest& request,
+    FrontendCommons::HttpResponse& response)
     /*throw(ForbiddenException, InvalidParamException, eh::Exception)*/
   {
     static const char* FUN = "Frontend::handle_redirect_request()";

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FRONTENDCOMMONS_FRONTENDSPOOL_H
+#define FRONTENDCOMMONS_FRONTENDSPOOL_H
 
 #include <vector>
 #include <Logger/Logger.hpp>
@@ -6,6 +7,7 @@
 #include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
@@ -56,6 +58,7 @@ namespace AdServer
         const ModuleIdArray& modules,
         Logging::Logger* logger,
         StatHolder* stats,
+        FrontendCommons::HttpResponseFactory* response_factory,
         Generics::CompositeMetricsProvider* composite_metrics_provider);
 
       /**
@@ -72,8 +75,8 @@ namespace AdServer
        */
       virtual void
       handle_request(
-        FCGI::HttpRequestHolder_var request_holder,
-        FCGI::HttpResponseWriter_var response_writer)
+        FrontendCommons::HttpRequestHolder_var request_holder,
+        FrontendCommons::HttpResponseWriter_var response_writer)
         noexcept;
 
       /**
@@ -83,8 +86,8 @@ namespace AdServer
        */
       virtual void
       handle_request_noparams(
-        FCGI::HttpRequestHolder_var request_holder,
-        FCGI::HttpResponseWriter_var response_writer)
+        FrontendCommons::HttpRequestHolder_var request_holder,
+        FrontendCommons::HttpResponseWriter_var response_writer)
         /*throw(eh::Exception)*/;
 
       /**
@@ -120,6 +123,7 @@ namespace AdServer
       ModuleIdArray modules_;
       Logging::Logger_var logger_;
       StatHolder_var stats_;
+      FrontendCommons::HttpResponseFactory_var http_response_factory_;
       Generics::CompositeMetricsProvider_var composite_metrics_provider_;
 
       CommonModule_var common_module_;
@@ -127,3 +131,5 @@ namespace AdServer
     };
   }
 }
+
+#endif //FRONTENDCOMMONS_FRONTENDSPOOL_H

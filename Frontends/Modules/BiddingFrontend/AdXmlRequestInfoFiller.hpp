@@ -29,7 +29,7 @@ namespace Bidding
       ::AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       bool require_icon,
       const String::SubString& client,
       const String::SubString& size);

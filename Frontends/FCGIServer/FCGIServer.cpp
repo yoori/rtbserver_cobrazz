@@ -5,10 +5,11 @@
 
 #include <XMLUtility/Utility.cpp>
 
-#include "FCGIServer.hpp"
-#include "FrontendsPool.hpp"
+#include <Frontends/FrontendCommons/FrontendsPool.hpp>
+#include <Frontends/FrontendCommons/FCGI.hpp>
 #include "Acceptor.hpp"
 #include "AcceptorBoostAsio.hpp"
+#include "FCGIServer.hpp"
 
 namespace
 {
@@ -249,12 +250,16 @@ namespace Frontends
         }
       }
 
+      FrontendCommons::HttpResponseFactory_var response_factory(
+        new FCGI::HttpResponseFactory);
+
       // pass CompositeMetricsProvider here
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
         config_->fe_config().data(),
         modules,
         logger(),
         stats_,
+        response_factory.in(),
         composite_metrics_provider_);
 
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();

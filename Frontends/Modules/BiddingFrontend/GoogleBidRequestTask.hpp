@@ -15,8 +15,8 @@ namespace Bidding
   public:
     GoogleBidRequestTask(
       Frontend* bid_frontend,
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer,
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer,
       const Generics::Time& start_processing_time)
       /*throw(Invalid)*/;
 

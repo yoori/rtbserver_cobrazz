@@ -64,7 +64,8 @@ namespace ImprTrack
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -72,8 +73,8 @@ namespace ImprTrack
 
     void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -142,8 +143,8 @@ namespace ImprTrack
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response) noexcept;
+      const FrontendCommons::HttpRequest& request,
+      FrontendCommons::HttpResponse& response) noexcept;
 
     RequestInfoFiller::EncryptionKeys_var
     read_keys_(
@@ -187,7 +188,7 @@ namespace ImprTrack
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     std::unique_ptr<
-      FrontendCommons::CookieManager<FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
+      FrontendCommons::CookieManager<FrontendCommons::HttpRequest, FrontendCommons::HttpResponse> > cookie_manager_;
     FileCachePtr track_pixel_;
     std::string track_pixel_content_type_;
     BindURLRuleArray bind_url_rules_;

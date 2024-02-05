@@ -1,0 +1,47 @@
+add_executable(HttpServer
+  ../FrontendCommons/FrontendsPool.cpp
+  Application.cpp
+  Handler.cpp
+  HttpResponse.cpp
+  Main.cpp
+)
+
+target_link_libraries(HttpServer
+  ActionFrontend
+  AdFrontend
+  AdInstFrontend
+  AdServerCommonsXSD
+  BidRateProvider
+  BiddingFrontend
+  CORBACommons
+  CTRProvider
+  CampaignConfig
+  CampaignConfigSource
+  CampaignIndex
+  CampaignManagerIDL
+  CampaignManagerLogger
+  ClickFrontend
+  Commons
+  ContentFrontend
+  CreativeTemplateArgs
+  DirectoryModule
+  Generics
+  HTTPServerConfigXSD
+  ImprTrackFrontend
+  OptoutFrontend
+  PassFrontend
+  PassPixelFrontend
+  ProcessControlVars
+  PubPixelFrontend
+  RequestMatchers
+  SecToken
+  UServerUtils
+  UServerUtilsMetrics
+  UserBindFrontend
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  UserInfoManagerControllerL
+  UtilCommons
+  WebStatFrontend
+  XMLUtility
+)

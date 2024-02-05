@@ -1,8 +1,7 @@
-
 add_xsd(ConvServerConfigXSD ConvServerConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
 add_xsd(FCGIServerConfigXSD FCGIServerConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
+add_xsd(HTTPServerConfigXSD HttpServerConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
 add_xsd(FeConfigXSD FeConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
 add_xsd(ProfilingServerConfigXSD ProfilingServerConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
 add_xsd(UIDGeneratorAdapterConfigXSD UIDGeneratorAdapterConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
 add_xsd(ZmqBalancerConfigXSD ZmqBalancerConfig.xsd ${XSD_DIRECTORY}/xsd/Frontends)
-
