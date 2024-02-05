@@ -156,8 +156,8 @@ namespace Bidding
 
   GoogleBidRequestTask::GoogleBidRequestTask(
     Frontend* bid_frontend,
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer,
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
     : BidRequestTask(
@@ -393,7 +393,7 @@ namespace Bidding
       }
 
       // write response
-      FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+      FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
       response->set_content_type(Response::Type::OCTET_STREAM);
       Stream::BinaryStreamWriter response_writer(&response->get_output_stream());
       bid_response.set_processing_time_ms(
@@ -414,7 +414,7 @@ namespace Bidding
   GoogleBidRequestTask::write_empty_response(unsigned int code)
     noexcept
   {
-    FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+    FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
     if(code < 300)
     {
       response->set_content_type(Response::Type::OCTET_STREAM);

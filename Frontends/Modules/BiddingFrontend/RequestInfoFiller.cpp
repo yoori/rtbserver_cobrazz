@@ -3175,7 +3175,7 @@ namespace Bidding
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request,
+    const FrontendCommons::HttpRequest& request,
     const Generics::Time& now) const
     noexcept
   {
@@ -6194,7 +6194,7 @@ namespace Bidding
       const String::SubString args = store_url.query();
 
       HTTP::ParamList params;
-      FCGI::HttpRequest::parse_params(args, params);
+      FrontendCommons::HttpRequest::parse_params(args, params);
       for(auto param_it = params.begin(); param_it != params.end(); ++param_it)
       {
         if(GooglePlay::STORE_APP_ID == param_it->name)

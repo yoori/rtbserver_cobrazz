@@ -78,8 +78,8 @@ namespace Bidding
 
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       throw();
 
     /** Performs initialization for the module child process. */
@@ -95,8 +95,8 @@ namespace Bidding
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+      const FrontendCommons::HttpRequest& request,
+      FrontendCommons::HttpResponse& response)
       throw ();
 
   private:
@@ -334,7 +334,7 @@ namespace Bidding
       throw();
 
     Generics::Time
-    get_request_timeout_(const FCGI::HttpRequest& request) throw ();
+    get_request_timeout_(const FrontendCommons::HttpRequest& request) throw ();
 
     static
     AdServer::CampaignSvcs::AdInstantiateType

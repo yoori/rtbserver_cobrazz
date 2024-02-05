@@ -34,7 +34,7 @@ namespace FrontendCommons
 
   int
   PassbackProcessingTemplate::instantiate(
-    FCGI::HttpResponse& response,
+    FrontendCommons::HttpResponse& response,
     const char* passback_url,
     AdServer::CampaignSvcs::UserStatus user_status,
     bool use_pub_pixels,

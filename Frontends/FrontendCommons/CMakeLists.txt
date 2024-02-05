@@ -1,30 +1,41 @@
 add_library(CookieManager SHARED
-CookieManager.cpp
+  CookieManager.cpp
 )
+
 target_link_libraries(CookieManager
+  CORBACommons
+  Commons
+  FeConfigXSD
+  HTTP
+)
 
- HTTP
- Commons
- CORBACommons
- FeConfigXSD
+add_library(FrontendsPool SHARED
+  FrontendsPool.cpp
+)
 
+target_link_libraries(FrontendsPool
+  Commons
+  UServerUtils
 )
 
 add_library(FCGI SHARED
-FCGI.cpp 
-  FrontendInterface.cpp 
+  FCGI.cpp
+  FrontendInterface.cpp
   FrontendTaskPool.cpp
+  HttpRequest.cpp
+  HttpResponse.cpp
 )
 
 target_link_libraries(FCGI
- Commons
- Stream
- FeConfigXSD
-
+  Commons
+  FeConfigXSD
+  FrontendsPool
+  Stream
+  UServerUtils
 )
 
 add_library(FrontendStatistic SHARED
-    FrontendStatistic.cpp
+  FrontendStatistic.cpp
 )
 
 target_link_libraries(FrontendStatistic
@@ -33,46 +44,45 @@ target_link_libraries(FrontendStatistic
  StatsDumper
 )
 
-
 add_library(ProcessingTemplates SHARED
-    ProcessingTemplates.cpp
+  ProcessingTemplates.cpp
 )
 
 target_link_libraries(ProcessingTemplates
- Generics
- FCGI
- Commons
+  Commons
+  FCGI
+  Generics
 )
 
-
 add_library(RequestMatchers SHARED
-
-RequestMatchers.cpp 
-  UserInfoClient.cpp 
-  UserBindClient.cpp 
-  UserAgentMatcher.cpp 
   ChannelServerSessionPool.cpp
+  RequestMatchers.cpp
+  UserAgentMatcher.cpp
+  UserBindClient.cpp
+  UserInfoClient.cpp
 )
 
 target_link_libraries(RequestMatchers
- HTTP
- BLogic
- Commons
- CORBACommons
- UserInfoClusterControlIDL UserInfoManagerControllerIDL UserInfoManagerControllerL
-UserBindControllerIDL  UserBindControllerStubs
- ChannelSessionFactory
- FeConfigXSD
- pcre
-
+  BLogic
+  CORBACommons
+  ChannelSessionFactory
+  Commons
+  FeConfigXSD
+  HTTP
+  UserBindControllerIDL
+  UserBindControllerStubs
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  UserInfoManagerControllerL
+  UServerUtils
+  pcre
 )
 
 add_library(UserIdController SHARED
-UserIdController.cpp
+  UserIdController.cpp
 )
 
 target_link_libraries(UserIdController
- Generics
- Commons
+  Commons
+  Generics
 )
-#install(TARGETS UserIdController RequestMatchers ProcessingTemplates FrontendStatistic  FCGI CookieManager  DESTINATION ${INSTALL_DIR})

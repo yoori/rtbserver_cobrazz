@@ -15,6 +15,48 @@
   <xsd:import schemaLocation="./cms-commons.xsd" namespace="http://foros.com/cms/commonTypes"/>
   <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
 
+  <xsd:complexType name="AdHttpNetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="13090">
+      <xsd:annotation>
+        <xsd:documentation>
+          Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10276">
+      <xsd:annotation>
+        <xsd:documentation>
+          Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unix_socket_path" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Unix socket path for http server</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Max count of new connections pending acceptance (http)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_connections" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Max connections count to keep (http)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keepalive_timeout_seconds" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Timeout in seconds to drop connection if there's not data received from it (http)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="in_buffer_size" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Size of the buffer to preallocate for request receive: bigger values use more RAM and less CPU (http)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
   <xsd:complexType name="AdFCGINetworkParamsType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10176">
       <xsd:annotation>
@@ -273,6 +315,13 @@
 
   <xsd:complexType name="AdFrontendCommonConfigType">
     <xsd:sequence>
+      <xsd:element name="adHttpNetworkParams" type="AdHttpNetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element name="adFCGINetworkParams" type="AdFCGINetworkParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>

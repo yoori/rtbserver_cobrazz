@@ -4,14 +4,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <boost/bind.hpp>
-#include <boost/asio.hpp>
 
 #include <eh/Errno.hpp>
 
 #include <deque>
 
 #include <Frontends/FrontendCommons/FCGI.hpp>
-#include "FrontendsPool.hpp"
+#include <Frontends/FrontendCommons/FrontendsPool.hpp>
 
 #include "Acceptor.hpp"
 
@@ -167,7 +166,7 @@ namespace Frontends
   };
 
   // Acceptor::HttpResponseWriterImpl
-  class Acceptor::HttpResponseWriterImpl: public FCGI::HttpResponseWriter
+  class Acceptor::HttpResponseWriterImpl: public FrontendCommons::HttpResponseWriter
   {
   public:
     HttpResponseWriterImpl(int sock)
@@ -175,9 +174,9 @@ namespace Frontends
     {}
 
     virtual void
-    write(int res, FCGI::HttpResponse* response_ptr)
+    write(int res, FrontendCommons::HttpResponse* response_ptr)
     {
-      FCGI::HttpResponse& response = *response_ptr;
+      FrontendCommons::HttpResponse& response = *response_ptr;
 
       if(res == 0)
       {
@@ -561,7 +560,7 @@ namespace Frontends
     // process socket
     while (active_)
     {
-      FCGI::HttpRequestHolder_var request_holder(new FCGI::HttpRequestHolder());
+      FCGI::HttpRequestHolderFCGI_var request_holder(new FCGI::HttpRequestHolderFCGI);
 
       {
         Guard lock(rpos_lock_);
@@ -633,7 +632,7 @@ namespace Frontends
       }
       while(true);
 
-      FCGI::HttpResponseWriter_var response_writer(new HttpResponseWriterImpl(sock_));
+      FrontendCommons::HttpResponseWriter_var response_writer(new HttpResponseWriterImpl(sock_));
 
       // process
       frontend_->handle_request_noparams(

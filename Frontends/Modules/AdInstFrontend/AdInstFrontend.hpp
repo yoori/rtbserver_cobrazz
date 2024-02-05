@@ -61,12 +61,13 @@ namespace Instantiate
     typedef Configuration::FeConfig::AdInstFeConfiguration_type
       AdInstFeConfiguration;
 
-    typedef FCGI::HttpResponse HttpResponse;
+    typedef FrontendCommons::HttpResponse HttpResponse;
 
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     /** Determines whether the module is able to process the URI.
@@ -86,14 +87,14 @@ namespace Instantiate
      */
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     virtual void
     handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -121,7 +122,7 @@ namespace Instantiate
     typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
     typedef std::unique_ptr<AdInstFeConfiguration> ConfigPtr;
     typedef std::unique_ptr<
-      FrontendCommons::CookieManager<FCGI::HttpRequest, FCGI::HttpResponse> >
+      FrontendCommons::CookieManager<FrontendCommons::HttpRequest, FrontendCommons::HttpResponse> >
       CookieManagerPtr;
 
   private:
@@ -153,7 +154,7 @@ namespace Instantiate
     void
     log_request_(
       const char* function_name,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       unsigned int log_level)
       /*throw(eh::Exception)*/;
 

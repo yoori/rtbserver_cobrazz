@@ -237,7 +237,7 @@ namespace Bidding
     void
     fill(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const Generics::Time& now) const
       noexcept;
 
