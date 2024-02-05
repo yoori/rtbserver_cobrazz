@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Common Frontends Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../AdServerCommons/AdServerCommons.xsd"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="ServerConfig" type="ServerConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="ServerConfigType">
+    <xsd:sequence>
+      <xsd:element name="Coroutine" type="CoroutineType"/>
+      <xsd:element name="HttpServer" type="HttpServerType" minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="CorbaConfig" type="CorbaConfigType"/>
+      <xsd:element name="Logger" type="ErrorLoggerType"/>
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+
+    <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="HttpServerType">
+    <xsd:attribute name="unix_socket_path" type="xsd:string" use="required"/>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="max_connections" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="keepalive_timeout_seconds" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="in_buffer_size" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="MonitoringType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ModuleType">
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+</xsd:schema>

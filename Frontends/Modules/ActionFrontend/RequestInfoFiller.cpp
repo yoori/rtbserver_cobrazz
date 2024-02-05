@@ -271,7 +271,7 @@ namespace Action
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request,
+    const FrontendCommons::HttpRequest& request,
     const String::SubString& path_params_str) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {

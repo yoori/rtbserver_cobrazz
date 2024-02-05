@@ -147,7 +147,7 @@ namespace ImprTrack
     void
     fill(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     const Logging::Logger_var&
@@ -170,19 +170,19 @@ namespace ImprTrack
     void
     cookies_processing_(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     void
     params_processing_(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     void
     headers_processing_(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
   private:

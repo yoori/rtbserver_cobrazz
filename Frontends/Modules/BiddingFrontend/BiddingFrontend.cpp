@@ -274,8 +274,10 @@ namespace Bidding
     Logging::Logger* logger,
     CommonModule* common_module,
     StatHolder* stats,
-    Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/
-    : GroupLogger(
+    Generics::CompositeMetricsProvider* composite_metrics_provider,
+    FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/
+    : FrontendCommons::FrontendInterface(response_factory),
+      GroupLogger(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -723,7 +725,7 @@ namespace Bidding
   }
 
   Generics::Time
-  Frontend::get_request_timeout_(const FCGI::HttpRequest& request) noexcept
+  Frontend::get_request_timeout_(const FrontendCommons::HttpRequest& request) noexcept
   {
     const HTTP::ParamList& params = request.params();
 
@@ -745,8 +747,8 @@ namespace Bidding
 
   void
   Frontend::handle_request(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
@@ -761,7 +763,7 @@ namespace Bidding
 
     try
     {
-      const FCGI::HttpRequest& request = request_holder->request();
+      const FrontendCommons::HttpRequest& request = request_holder->request();
 
       const Generics::Time expire_time(
         start_process_time + get_request_timeout_(request));
@@ -867,7 +869,7 @@ namespace Bidding
       {
         response_writer->write(
           400,
-          FCGI::HttpResponse_var(new FCGI::HttpResponse()));
+          create_response());
       }
 
       Stream::Error ostr;
@@ -886,7 +888,7 @@ namespace Bidding
       {
         response_writer->write(
           503,
-          FCGI::HttpResponse_var(new FCGI::HttpResponse()));
+          create_response());
       }
 
       Stream::Error ostr;

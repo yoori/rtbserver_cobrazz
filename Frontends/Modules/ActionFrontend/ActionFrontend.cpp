@@ -164,9 +164,11 @@ namespace Action
   Frontend::Frontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
-    CommonModule* common_module)
+    CommonModule* common_module,
+    FrontendCommons::HttpResponseFactory* response_factory)
     /*throw(eh::Exception)*/
-    : Logging::LoggerCallbackHolder(
+    : FrontendCommons::FrontendInterface(response_factory),
+      Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -177,6 +179,7 @@ namespace Action
         0),
       FrontendCommons::FrontendTaskPool(
         this->callback(),
+        response_factory,
         frontend_config->get().ActionFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -346,7 +349,7 @@ namespace Action
 
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
-            FCGI::HttpRequest, FCGI::HttpResponse>(
+            FrontendCommons::HttpRequest, FrontendCommons::HttpResponse>(
               common_config_->Cookies()));
 
         if(common_config_->StatsDumper().present())
@@ -440,7 +443,7 @@ namespace Action
   }
 
   void
-  Frontend::write_pixel(FCGI::HttpResponse& response) /*throw(eh::Exception)*/
+  Frontend::write_pixel(FrontendCommons::HttpResponse& response) /*throw(eh::Exception)*/
   {
     response.set_content_type(String::SubString("image/gif"));
 
@@ -449,7 +452,7 @@ namespace Action
   }
 
   void
-  Frontend::write_html(FCGI::HttpResponse& response) /*throw(eh::Exception)*/
+  Frontend::write_html(FrontendCommons::HttpResponse& response) /*throw(eh::Exception)*/
   {
     response.set_content_type(String::SubString("text/html"));
 
@@ -459,8 +462,8 @@ namespace Action
 
   int
   Frontend::process_advertiser_request(
-    FCGI::HttpResponse& response,
-    const FCGI::HttpRequest& request,
+    FrontendCommons::HttpResponse& response,
+    const FrontendCommons::HttpRequest& request,
     const RequestInfo& request_info,
     bool return_html)
     /*throw(Exception, eh::Exception)*/
@@ -947,16 +950,16 @@ namespace Action
 
   void
   Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
     static const char* FUN = "Action::Frontend::handle_request()";
 
-    const FCGI::HttpRequest& request = request_holder->request();
+    const FrontendCommons::HttpRequest& request = request_holder->request();
 
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
+    FrontendCommons::HttpResponse_var response_ptr = create_response();
+    FrontendCommons::HttpResponse& response = *response_ptr;
 
     logger()->log(String::SubString(
         "Action::Frontend::handle_request(): entered"),

@@ -282,6 +282,7 @@ our %CLEANUP_CONFIG = (
         <dir>FCGIRtbServer2</dir>
         <dir>FCGIAdServer</dir>
         <dir>FCGITrackServer</dir>
+        <dir>HttpAdServer</dir>
       </dirs>
     </xsl:variable>
 

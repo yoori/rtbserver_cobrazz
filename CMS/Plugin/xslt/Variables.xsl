@@ -115,6 +115,7 @@
 <xsl:variable name="default-match-topic" select="'match'"/>
 <xsl:variable name="default-kafka-threads" select="'20'"/>
 <xsl:variable name="default-kafka-message-queue-size" select="'1000000'"/>
+
 <xsl:variable name="http-frontend-descriptor" select="'AdCluster/FrontendSubCluster/HttpFrontend'"/>
 
 <!-- remote specific descriptors -->
@@ -183,9 +184,10 @@
 <xsl:variable name="uid-generator-adapter-log-path" select="'/log/UIDGeneratorAdapter/UIDGeneratorAdapter'"/>
 <xsl:variable name="fcgi-adserver-log-path" select="'/log/FCGIAdServer/FCGIAdServer'"/>
 <xsl:variable name="fcgi-trackserver-log-path" select="'/log/FCGITrackServer/FCGITrackServer'"/>
-
 <xsl:variable name="fcgi-rtbserver1-log-path" select="'/log/FCGIRtbServer1/FCGIRtbServer1'"/>
 <xsl:variable name="fcgi-rtbserver2-log-path" select="'/log/FCGIRtbServer2/FCGIRtbServer2'"/>
+
+<xsl:variable name="http-adserver-log-path" select="'/log/HttpAdServer/HttpAdServer'"/>
 
 <xsl:variable name="fcgi-userbindserver1-log-path" select="'/log/FCGIUserBindServer1/FCGIUserBindServer1'"/>
 <xsl:variable name="fcgi-userbindserver2-log-path" select="'/log/FCGIUserBindServer2/FCGIUserBindServer2'"/>
@@ -435,6 +437,10 @@
 <xsl:variable name="def-fcgi-userbindserver-mon-port" select="$def-range-start + 197"/>
 <xsl:variable name="def-fcgi-requestinfomanager-mon-port" select="$def-range-start + 198"/>
 
+<!-- http ports -->
+<xsl:variable name="def-http-adserver-port" select="$def-range-start + 99"/>
+<xsl:variable name="def-http-adserver-mon-port" select="$def-range-start + 199"/>
+
 <xsl:variable name="def-storage-rw-buffer-size" select="10485760"/>
 <xsl:variable name="def-storage-rwlevel-max-size" select="104857600"/>
 <xsl:variable name="def-storage-max-undumped-size" select="262144000"/>
@@ -515,5 +521,11 @@
 <xsl:variable name="grpc-pool-client-num-clients" select="200"/>
 <xsl:variable name="grpc-pool-client-timeout" select="1500"/>
 <xsl:variable name="grpc-pool-client-enable" select="'false'"/>
+
+<!-- Http server params -->
+<xsl:variable name="http-backlog" select="2048"/>
+<xsl:variable name="http-max-connections" select="65536"/>
+<xsl:variable name="http-keepalive-timeout-seconds" select="600"/>
+<xsl:variable name="http-in-buffer-size" select="32768"/>
 
 </xsl:stylesheet>

@@ -16,8 +16,8 @@ namespace Bidding
   public:
     AdJsonBidRequestTask(
       Frontend* bid_frontend,
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer,
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer,
       const Generics::Time& start_processing_time)
       /*throw(Invalid)*/;
 
@@ -62,7 +62,7 @@ namespace Bidding
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       noexcept;
 
     void

@@ -45,8 +45,8 @@ namespace Bidding
   public:
     BidRequestTask(
       Frontend* bid_frontend,
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer,
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer,
       const Generics::Time& start_processing_time)
       /*throw(Invalid)*/;
 
@@ -127,12 +127,12 @@ namespace Bidding
     void
     write_response_(
       int code,
-      FCGI::HttpResponse_var response)
+      FrontendCommons::HttpResponse_var response)
       noexcept;
 
   protected:
     Frontend* bid_frontend_;
-    FCGI::HttpRequestHolder_var request_holder_;
+    FrontendCommons::HttpRequestHolder_var request_holder_;
     const Generics::Time start_processing_time_;
 
     RequestInfo request_info_;
@@ -148,7 +148,7 @@ namespace Bidding
     std::string keywords_;
 
   private:
-    FCGI::HttpResponseWriter_var response_writer_;
+    FrontendCommons::HttpResponseWriter_var response_writer_;
     bool response_sent_;
   };
 
