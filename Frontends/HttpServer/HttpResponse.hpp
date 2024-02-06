@@ -53,8 +53,6 @@ public:
 public:
   HttpResponse();
 
-  ~HttpResponse() noexcept override = default;
-
   void add_header(
     const String::SubString& name,
     const String::SubString& value) override;
@@ -82,6 +80,8 @@ public:
   bool cookie_installed() const noexcept override;
 
 private:
+  ~HttpResponse() override = default;
+
   HttpResponseContainerPtr transfer() noexcept;
 
 private:

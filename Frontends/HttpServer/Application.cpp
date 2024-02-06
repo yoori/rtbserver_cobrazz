@@ -43,7 +43,7 @@ public:
 
 Application::Application()
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "FCGIServer",
+      "HttpServer",
       ASPECT),
     stats_(new AdServer::StatHolder),
     composite_metrics_provider_(new Generics::CompositeMetricsProvider)
@@ -140,7 +140,7 @@ void Application::read_config(
       throw Exception(stream);
     }
 
-    const auto& monitoring = server_config_->Monitoring();
+    /*const auto& monitoring = server_config_->Monitoring();
     if (monitoring.present())
     {
       UServerUtils::MetricsHTTPProvider_var metrics_http_provider(
@@ -150,7 +150,7 @@ void Application::read_config(
           "/metrics"));
 
       add_child_object(metrics_http_provider);
-    }
+    }*/
   }
   catch (const Exception& exc)
   {
@@ -346,7 +346,7 @@ void Application::init_http()
           handler_post.in(),
           main_task_processor);
 
-        handler_config.method = "HEAD";
+        /*handler_config.method = "HEAD";
         const std::string handler_head_name = "HttpHandlerHead_" + std::to_string(number);
         HttpHandler_var handler_head(
           new HttpHandler(
@@ -357,7 +357,7 @@ void Application::init_http()
             frontend.in()));
         http_server_builder->add_handler(
           handler_head.in(),
-          main_task_processor);
+          main_task_processor);*/
 
         components_builder->add_http_server(std::move(http_server_builder));
         number += 1;
@@ -429,8 +429,6 @@ int Application::run(int argc, char** argv)
     corba_server_adapter_->run();
 
     wait();
-
-    deactivate_object();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
 
     return EXIT_SUCCESS;

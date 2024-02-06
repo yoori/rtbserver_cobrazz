@@ -89,7 +89,7 @@ protected:
     tinyfcgi::message msg;
   };
 
-protected:
+private:
   ~HttpResponseFCGI() noexcept override = default;
 
 private:
@@ -119,7 +119,7 @@ public:
 
   FrontendCommons::HttpResponse_var create() override;
 
-protected:
+private:
   ~HttpResponseFactory() override = default;
 };
 

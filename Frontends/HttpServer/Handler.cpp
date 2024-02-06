@@ -35,8 +35,6 @@ public:
   {
   }
 
-  ~HttpResponseWriterImpl() override = default;
-
   void write(int result, FrontendCommons::HttpResponse* http_response) override
   {
     try
@@ -88,6 +86,9 @@ public:
       }
     }
   }
+
+private:
+  ~HttpResponseWriterImpl() override = default;
 
 private:
   Logger_var logger_;

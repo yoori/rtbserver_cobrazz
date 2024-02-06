@@ -9,10 +9,18 @@ target_link_libraries(CookieManager
   HTTP
 )
 
+add_library(FrontendsPool SHARED
+  FrontendsPool.cpp
+)
+
+target_link_libraries(FrontendsPool
+  Commons
+  UServerUtils
+)
+
 add_library(FCGI SHARED
   FCGI.cpp
   FrontendInterface.cpp
-  FrontendsPool.cpp
   FrontendTaskPool.cpp
   HttpRequest.cpp
   HttpResponse.cpp
@@ -21,6 +29,7 @@ add_library(FCGI SHARED
 target_link_libraries(FCGI
   Commons
   FeConfigXSD
+  FrontendsPool
   Stream
   UServerUtils
 )
@@ -74,6 +83,6 @@ add_library(UserIdController SHARED
 )
 
 target_link_libraries(UserIdController
-  Generics
   Commons
+  Generics
 )

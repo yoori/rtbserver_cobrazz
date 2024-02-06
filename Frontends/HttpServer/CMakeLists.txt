@@ -1,5 +1,4 @@
 add_executable(HttpServer
-  ../FrontendCommons/FrontendsPool.cpp
   Application.cpp
   Handler.cpp
   HttpResponse.cpp
@@ -25,6 +24,7 @@ target_link_libraries(HttpServer
   ContentFrontend
   CreativeTemplateArgs
   DirectoryModule
+  FrontendsPool
   Generics
   HTTPServerConfigXSD
   ImprTrackFrontend
@@ -36,7 +36,7 @@ target_link_libraries(HttpServer
   RequestMatchers
   SecToken
   UServerUtils
-  UServerUtilsMetrics
+  #UServerUtilsMetrics
   UserBindFrontend
   UserInfoClusterControlIDL
   UserInfoManagerControllerIDL

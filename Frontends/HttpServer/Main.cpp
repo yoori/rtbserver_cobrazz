@@ -16,14 +16,13 @@ int main(int argc, char** argv)
   }
   catch (const std::exception& exc)
   {
-    std::cerr << "HttpServer is failed, reason="
+    std::cerr << "HttpServer is failed, reason: "
               << exc.what();
     return EXIT_FAILURE;
   }
   catch (...)
   {
-    std::cerr << "HttpServer is failed. "
-                 "Unknown error";
+    std::cerr << "HttpServer is failed. Unknown error";
     return EXIT_FAILURE;
   }
 }
