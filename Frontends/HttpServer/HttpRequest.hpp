@@ -31,7 +31,7 @@ public:
       header_only_(header_only),
       secure_(secure)
   {
-    for (auto& header : headers)
+    for (auto& header : headers_)
     {
       const auto& name = header.name;
       const auto& value = header.value;
@@ -47,12 +47,12 @@ public:
     return method_;
   }
 
-  const String::SubString& uri() const noexcept override
+  String::SubString uri() const noexcept override
   {
     return String::SubString(uri_);
   }
 
-  const String::SubString& args() const noexcept override
+  String::SubString args() const noexcept override
   {
     return String::SubString(query_string_);
   }
@@ -67,7 +67,7 @@ public:
     return subheaders_;
   }
 
-  const String::SubString& body() const noexcept override
+  String::SubString body() const noexcept override
   {
     return String::SubString(body_);
   }
@@ -82,7 +82,7 @@ public:
     return secure_;
   }
 
-  const String::SubString& server_name() const noexcept override
+  String::SubString server_name() const noexcept override
   {
     return String::SubString(body_);
   }

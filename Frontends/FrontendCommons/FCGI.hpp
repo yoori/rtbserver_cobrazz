@@ -132,21 +132,21 @@ public:
 
   Method method() const noexcept;
 
-  const String::SubString& uri() const noexcept;
+  String::SubString uri() const noexcept;
 
-  const String::SubString& args() const noexcept;
+  String::SubString args() const noexcept;
 
   const HTTP::ParamList& params() const noexcept;
 
   const HTTP::SubHeaderList& headers() const noexcept;
 
-  const String::SubString& body() const noexcept;
+  String::SubString body() const noexcept;
 
   InputStream& get_input_stream() const noexcept;
 
   bool secure() const noexcept;
 
-  const String::SubString& server_name() const noexcept;
+  String::SubString server_name() const noexcept;
 
   void set_params(HTTP::ParamList&& params) noexcept;
 
@@ -223,13 +223,13 @@ HttpRequestFCGI::method() const noexcept
   return method_;
 }
 
-inline const String::SubString&
+inline String::SubString
 HttpRequestFCGI::uri() const noexcept
 {
   return uri_;
 }
 
-inline const String::SubString&
+inline String::SubString
 HttpRequestFCGI::args() const noexcept
 {
   return query_string_;
@@ -247,7 +247,7 @@ HttpRequestFCGI::headers() const noexcept
   return headers_;
 }
 
-inline const String::SubString&
+inline String::SubString
 HttpRequestFCGI::body() const noexcept
 {
   return body_;
@@ -264,7 +264,7 @@ inline bool HttpRequestFCGI::secure() const noexcept
   return secure_;
 }
 
-inline const String::SubString&
+inline String::SubString
 HttpRequestFCGI::server_name() const noexcept
 {
   return server_name_;

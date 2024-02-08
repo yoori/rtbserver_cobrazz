@@ -1,22 +1,30 @@
 add_library(ActionFrontend SHARED
- RequestInfoFiller.cpp 
-  ActionFrontend.cpp 
+  ActionFrontend.cpp
   ActionFrontendStat.cpp
+  RequestInfoFiller.cpp
 )
+
 target_link_libraries(ActionFrontend
-
- Generics
- Geoip
- Commons
- CORBACommons
- CommonModule
-# CampaignManagerStubs
- CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
- FeConfigXSD
- FrontendStatistic
- UserIdController
- CookieManager FCGI ProcessingTemplates RequestMatchers UserIdController
-
+  BidRateProvider
+  CORBACommons
+  CTRProvider
+  CampaignConfig
+  CampaignConfigSource
+  CampaignIndex
+  CampaignManagerIDL
+  CampaignManagerLogger
+  CommonModule
+  Commons
+  CookieManager
+  CreativeTemplateArgs
+  FCGI
+  FeConfigXSD
+  FrontendStatistic
+  Generics
+  Geoip
+  ProcessingTemplates
+  RequestMatchers
+  SecToken
+  UserIdController
+  UserIdController
 )
-
-#install(TARGETS ActionFrontend  DESTINATION ${INSTALL_DIR})

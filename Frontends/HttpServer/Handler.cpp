@@ -116,7 +116,7 @@ HttpHandler::HttpHandler(
 void HttpHandler::handle_stream_request(
   const HttpRequest& request,
   RequestContext& /*context*/,
-  ResponseBodyStream& response_body_stream)
+  ResponseBodyStream& response_body_stream) const
 {
   FrontendCommons::HttpRequest::Method method =
     FrontendCommons::HttpRequest::Method::RM_GET;
@@ -154,8 +154,8 @@ void HttpHandler::handle_stream_request(
 
   std::string_view query_string;
   const auto& url = request.GetUrl();
-  const auto pos = url.find('?', url.size());
-  if (pos != std::string::npos)
+  const auto pos = url.find('?', uri.size());
+  if (pos != std::string::npos && pos != url.size() - 1)
   {
     query_string = std::string_view(
       url.data() + pos + 1,

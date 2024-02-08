@@ -19,7 +19,7 @@ const char ASPECT[] = "HttpApplication";
 const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 const char SERVER_STATS_OBJ_KEY[] = "HttpServerStats";
 
-}
+} // namespace
 
 namespace Configuration = xsd::AdServer::Configuration;
 
@@ -36,10 +36,15 @@ public:
 
   ~XMLUtilityScope()
   {
-    XMLUtility::terminate();
+    try
+    {
+      XMLUtility::terminate();
+    }
+    catch (...)
+    {
+    }
   }
 };
-
 
 Application::Application()
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
@@ -265,6 +270,10 @@ void Application::init_http()
       {
         modules.push_back(FrontendsPool::M_AD);
       }
+      else if (it->name() == "echo")
+      {
+        modules.push_back(FrontendsPool::M_ECHO);
+      }
       else
       {
         Stream::Error stream;
@@ -318,7 +327,7 @@ void Application::init_http()
 
         HttpHandlerConfig handler_config;
         handler_config.method = "GET";
-        handler_config.path = "/";
+        handler_config.path = "/*";
         handler_config.response_body_stream = true;
 
         const std::string handler_get_name = "HttpHandlerGet_" + std::to_string(number);
@@ -345,19 +354,6 @@ void Application::init_http()
         http_server_builder->add_handler(
           handler_post.in(),
           main_task_processor);
-
-        /*handler_config.method = "HEAD";
-        const std::string handler_head_name = "HttpHandlerHead_" + std::to_string(number);
-        HttpHandler_var handler_head(
-          new HttpHandler(
-            handler_head_name,
-            handler_config,
-            {},
-            logger(),
-            frontend.in()));
-        http_server_builder->add_handler(
-          handler_head.in(),
-          main_task_processor);*/
 
         components_builder->add_http_server(std::move(http_server_builder));
         number += 1;
@@ -438,9 +434,7 @@ int Application::run(int argc, char** argv)
     Stream::Error stream;
     stream << FNS
            << exc.what();
-    logger()->critical(
-      stream.str(),
-      ASPECT);
+    logger()->critical(stream.str(), ASPECT);
   }
   catch (const CORBA::SystemException& exc)
   {
@@ -448,27 +442,21 @@ int Application::run(int argc, char** argv)
     stream << FNS
            << ": Got CORBA::SystemException: "
            << exc;
-    logger()->emergency(
-      stream.str(),
-      ASPECT);
+    logger()->emergency(stream.str(), ASPECT);
   }
   catch (const eh::Exception& exc)
   {
     Stream::Error stream;
     stream << FNS
            << exc.what();
-    logger()->log(stream.str(),
-                  Logging::Logger::EMERGENCY,
-                  ASPECT);
+    logger()->log(stream.str(), Logging::Logger::EMERGENCY, ASPECT);
   }
   catch (...)
   {
     Stream::Error stream;
     stream << FNS
            << ": Unknown exception";
-    logger()->log(stream.str(),
-                  Logging::Logger::EMERGENCY,
-                  ASPECT);
+    logger()->log(stream.str(), Logging::Logger::EMERGENCY, ASPECT);
   }
 
   return EXIT_FAILURE;
