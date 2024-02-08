@@ -147,6 +147,7 @@
     <cfg:Module name="click"/>
     <cfg:Module name="imprtrack"/>
     <cfg:Module name="ad"/>
+    <cfg:Module name="echo"/>
   </cfg:ServerConfig>
 
 </xsl:template>

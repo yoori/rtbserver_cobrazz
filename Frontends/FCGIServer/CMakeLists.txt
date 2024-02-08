@@ -25,6 +25,7 @@ target_link_libraries(FCGIServer
   ContentFrontend
   CreativeTemplateArgs
   DirectoryModule
+  EchoFrontend
   FCGI
   FCGIServerConfigXSD
   Generics

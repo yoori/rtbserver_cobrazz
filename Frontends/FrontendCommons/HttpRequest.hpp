@@ -70,21 +70,21 @@ public:
 
   virtual Method method() const noexcept = 0;
 
-  virtual const String::SubString& uri() const noexcept = 0;
+  virtual String::SubString uri() const noexcept = 0;
 
-  virtual const String::SubString& args() const noexcept = 0;
+  virtual String::SubString args() const noexcept = 0;
 
   virtual const HTTP::ParamList& params() const noexcept = 0;
 
   virtual const HTTP::SubHeaderList& headers() const noexcept = 0;
 
-  virtual const String::SubString& body() const noexcept = 0;
+  virtual String::SubString body() const noexcept = 0;
 
   virtual InputStream& get_input_stream() const noexcept = 0;
 
   virtual bool secure() const noexcept = 0;
 
-  virtual const String::SubString& server_name() const noexcept = 0;
+  virtual String::SubString server_name() const noexcept = 0;
 
   virtual void set_params(HTTP::ParamList&& params) noexcept = 0;
 

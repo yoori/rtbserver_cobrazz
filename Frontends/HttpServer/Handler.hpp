@@ -29,12 +29,12 @@ public:
     const HandlerConfig& handler_config,
     const std::optional<Level> log_level,
     Logger* logger,
-    FrontendCommons::FrontendInterface* frontend);
+    FrontendInterface* frontend);
 
   void handle_stream_request(
     const HttpRequest& request,
     RequestContext& context,
-    ResponseBodyStream& response_body_stream);
+    ResponseBodyStream& response_body_stream) const override;
 
 private:
   ~HttpHandler() override = default;
