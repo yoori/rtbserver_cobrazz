@@ -13,6 +13,7 @@
 #include <ClickFrontend/ClickFrontend.hpp>
 #include <ImprTrackFrontend/ImprTrackFrontend.hpp>
 #include <AdFrontend/AdFrontend.hpp>
+#include <EchoFrontend/EchoFrontend.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/HttpServer/HttpResponse.hpp>
 
@@ -214,6 +215,14 @@ namespace AdServer
           {
             init_frontend<AdFrontend>(
               fe_config.AdFeConfiguration(),
+              logger_,
+              common_module_,
+              http_response_factory_.in());
+          }
+          else if(*module_it == M_ECHO)
+          {
+            init_frontend<AdServer::Echo::Frontend>(
+              fe_config.CommonFeConfiguration(),
               logger_,
               common_module_,
               http_response_factory_.in());

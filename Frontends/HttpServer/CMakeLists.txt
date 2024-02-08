@@ -24,6 +24,7 @@ target_link_libraries(HttpServer
   ContentFrontend
   CreativeTemplateArgs
   DirectoryModule
+  EchoFrontend
   FrontendsPool
   Generics
   HTTPServerConfigXSD

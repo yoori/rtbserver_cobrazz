@@ -43,7 +43,8 @@ namespace AdServer
         M_ADINST,
         M_CLICK,
         M_IMPRTRACK,
-        M_AD
+        M_AD,
+        M_ECHO
       };
 
       typedef std::vector<ModuleId> ModuleIdArray;

@@ -89,7 +89,8 @@ ssize_t HttpResponse::write(const String::SubString& str) noexcept
     const std::size_t msg_size = std::min(
       str.size() - saved_size,
       chunk.capacity() - chunk.size());
-    chunk.append(saved_size, msg_size);
+    const char* const begin = str.data() + saved_size;
+    chunk.append(begin, begin + msg_size);
     saved_size += msg_size;
   }
 
