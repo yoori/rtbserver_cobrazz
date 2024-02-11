@@ -56,6 +56,7 @@ find_package(XSD REQUIRED)
 find_package(XercesC REQUIRED)
 find_package(YY REQUIRED)
 find_package(gRPC REQUIRED)
+find_package(gRPC REQUIRED)
 find_package(userver REQUIRED)
 
 set(CORBA_INCLUDES ${UNIXCOMMONS}/src/CORBA)
