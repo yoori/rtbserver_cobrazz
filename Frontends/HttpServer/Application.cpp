@@ -132,9 +132,10 @@ void Application::read_config(
 
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        server_config_->Logger(),
-        argv0));
+      logger(new Logging::OStream::Logger(
+        Logging::OStream::Config(
+          std::cerr,
+          Logging::Logger::ERROR)));
     }
     catch (const Config::LoggerConfigReader::Exception& exc)
     {
@@ -303,7 +304,7 @@ void Application::init_http()
       auto& statistic_storage = components_builder->get_statistics_storage();
 
       const auto& http_servers_config = server_config_->HttpServer();
-      std::size_t number = 1;
+      std::size_t number = 0;
       for (const auto& http_server_config : http_servers_config)
       {
         ServerConfig server_config;
@@ -311,7 +312,8 @@ void Application::init_http()
 
         auto& listener_config = server_config.listener_config;
         listener_config.max_connections = http_server_config.max_connections();
-        listener_config.unix_socket_path = http_server_config.unix_socket_path();
+        /*listener_config.unix_socket_path = http_server_config.unix_socket_path();*/
+        listener_config.port = 7777 + number;
 
         auto& connection_config = listener_config.connection_config;
         connection_config.keepalive_timeout = std::chrono::seconds{http_server_config.keepalive_timeout_seconds()};
@@ -417,12 +419,12 @@ int Application::run(int argc, char** argv)
     }
 
     register_vars_controller();
-    init_corba();
+    //init_corba();
     init_http();
 
     activate_object();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    corba_server_adapter_->run();
+    //corba_server_adapter_->run();
 
     wait();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";

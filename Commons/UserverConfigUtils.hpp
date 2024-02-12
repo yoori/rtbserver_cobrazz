@@ -46,7 +46,7 @@ create_task_processor_container_builder(
     coro_config.EventThreadPool();
   EventThreadPoolConfig event_thread_pool_config;
   event_thread_pool_config.threads =
-    event_thread_pool.number_threads();
+    /*event_thread_pool.number_threads()*/std::thread::hardware_concurrency();
   event_thread_pool_config.thread_name =
     event_thread_pool.name();
   event_thread_pool_config.defer_events =
@@ -60,9 +60,9 @@ create_task_processor_container_builder(
   main_task_processor_config.name =
     main_task_processor.name();
   main_task_processor_config.should_guess_cpu_limit =
-    main_task_processor.should_guess_cpu_limit();
+    /*main_task_processor.should_guess_cpu_limit()*/false;
   main_task_processor_config.worker_threads =
-    main_task_processor.number_threads();
+    /*main_task_processor.number_threads()*/std::thread::hardware_concurrency();
 
   switch (main_task_processor.overload_action()) {
     case OverloadActionType::cancel:

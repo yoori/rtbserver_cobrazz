@@ -33,7 +33,7 @@ Frontend::Frontend(
     FrontendCommons::FrontendTaskPool(
       callback(),
       response_factory,
-      frontend_config->get().ActionFeConfiguration()->threads(),
+      /*frontend_config->get().ActionFeConfiguration()->threads()*/1000,
       0),
     logger_(ReferenceCounting::add_ref(logger))
 {
