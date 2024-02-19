@@ -120,6 +120,7 @@ namespace Frontends
         throw Exception(ostr);
       }
 
+      /*
       // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
       // init metrics http provider
       if(config_->Monitoring().present())
@@ -132,6 +133,7 @@ namespace Frontends
 
         add_child_object(metrics_http_provider);
       }
+      */
     }
     catch (const Exception &ex)
     {

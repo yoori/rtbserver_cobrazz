@@ -227,6 +227,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
     shutdowner_ = corba_server_adapter_->shutdowner();
 
+    /*
     if(config().Monitoring().present())
     {
       UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
@@ -237,6 +238,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
       add_child_object(metrics_http_provider);
     }
+    */
 
     activate_object();
 
