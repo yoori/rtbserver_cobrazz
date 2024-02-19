@@ -246,6 +246,7 @@ namespace UserInfoSvcs
     CEncoder_var b12_encoder_;
     CEncoder_var b20_encoder_;
     CEncoder_var h96_encoder_;
+    CEncoder_var h20_encoder_;
 
     std::vector<CEncoder_var> encoders_;
   };
@@ -901,13 +902,13 @@ namespace UserInfoSvcs
     default_encoder_ = new Encoders::DefaultEncoder(1);
     size_less_256_encoder_ = new Encoders::SizeLess256Encoder(2);
     h8_h4_h4_h4_h12_encoder_ = new Encoders::h8_h4_h4_h4_h12_Encoder(3);
-      // ifa, advark, btw, buz, rambler, rpb
+      // ifa, advark, btw, buz, rambler, rpb, alfasense, umedia
     h64_encoder_ = new Encoders::hX_Encoder(4, 64); // bln, decenterads
     caese_b22_encoder_ = new Encoders::CAESE_B22_Encoder(5); // google
     h40_encoder_ = new Encoders::hX_Encoder(6, 40); // videonow
     b8_encoder_ = new Encoders::BMX_Encoder(7, 8, false); // relap, otm
     b12_encoder_ = new Encoders::BMX_Encoder(8, 12, false); // otm, mgid
-    h32_encoder_ = new Encoders::hX_Encoder(9, 32); // gpm, admixer, hyper, admedia
+    h32_encoder_ = new Encoders::hX_Encoder(9, 32); // gpm, admixer, hyper, admedia, adlook, otm
     aid_h32_encoder_ = new Encoders::hX_Encoder(10, 32, String::SubString("aid")); // otm(aid..)
     H32_encoder_ = new Encoders::HX_Encoder(11, 32); // sape
     H8_H4_H4_H4_H12_encoder_ = new Encoders::H8_H4_H4_H4_H12_Encoder(12); // mobfox
@@ -915,6 +916,7 @@ namespace UserInfoSvcs
     b20_encoder_ = new Encoders::BMX_Encoder(14, 20, false); // rtw(subset)
     uint_encoder_ = new Encoders::UIntEncoder(15); // pprofit
     h96_encoder_ = new Encoders::hX_Encoder(16, 96); // moevideo
+    h20_encoder_ = new Encoders::hX_Encoder(17, 20); // moevideo
     // TODO c/, yandex/
 
     encoders_.resize(256);
@@ -938,6 +940,7 @@ namespace UserInfoSvcs
     encoders_[b12_encoder_->id()] = b12_encoder_;
     encoders_[b20_encoder_->id()] = b20_encoder_;
     encoders_[h96_encoder_->id()] = h96_encoder_;
+    encoders_[h20_encoder_->id()] = h20_encoder_;
   };
 
   const ExternalIdHashAdapter::EncodingSelector::Encoder*

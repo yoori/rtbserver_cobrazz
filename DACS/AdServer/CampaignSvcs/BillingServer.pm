@@ -13,7 +13,7 @@ sub start
   my $command =
     "mkdir -p \${log_root}/BillingServer/In/BillOperation && " .
     "mkdir -p \${cache_root}/BillingServer && " .
-    "export MALLOC_ARENA_MAX=2 && " .
+    "export MALLOC_ARENA_MAX=1 && " .
     "{ BillingServer " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/BillingServer.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}BillingServer.out 2>&1 & }";
