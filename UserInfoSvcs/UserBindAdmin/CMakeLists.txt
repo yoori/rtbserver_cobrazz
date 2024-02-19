@@ -11,7 +11,7 @@ target_link_libraries(UserBindAdmin
  UserBindServerIDL
  UserBindControllerIDL
  UserBindServerProto
- UServerUtilsMetrics
+# UServerUtilsMetrics
 )
 
 

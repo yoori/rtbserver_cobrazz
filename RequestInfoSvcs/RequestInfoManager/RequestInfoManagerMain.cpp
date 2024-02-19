@@ -180,6 +180,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
       }
     }
 
+    /*
     if(config().Monitoring().present())
     {
         UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
@@ -190,6 +191,7 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
 
         add_child_object(metrics_http_provider);
     }
+    */
 
     // Creating user info manager servant
     request_info_manager_impl_ =
