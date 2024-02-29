@@ -4,11 +4,9 @@
 // UNIXCOMMONS
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <Generics/CompositeMetricsProvider.hpp>
 #include <Generics/Singleton.hpp>
 #include <UServerUtils/Grpc/ComponentsBuilder.hpp>
 #include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/MetricsHTTPProvider.hpp>
 
 // THIS
 #include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
@@ -28,7 +26,6 @@ public:
   using Boolean = CORBA::Boolean;
   using CorbaConfig = CORBACommons::CorbaConfig;
   using CorbaServerAdapter_var = CORBACommons::CorbaServerAdapter_var;
-  using CompositeMetricsProvider_var = Generics::CompositeMetricsProvider_var;
   using Frontend_var = FrontendCommons::Frontend_var;
   using StatHolder_var = AdServer::StatHolder_var;
   using ServerConfig = xsd::AdServer::Configuration::ServerConfigType;
@@ -68,8 +65,6 @@ private:
   CorbaServerAdapter_var corba_server_adapter_;
 
   StatHolder_var stats_;
-
-  CompositeMetricsProvider_var composite_metrics_provider_;
 
   Frontend_var frontend_;
 };

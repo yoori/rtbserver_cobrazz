@@ -1,6 +1,7 @@
 // UNIX_COMMONS
 #include <XMLUtility/StringManip.hpp>
 #include <XMLUtility/Utility.hpp>
+#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
 
 // THIS
 #include <Commons/ConfigUtils.hpp>
@@ -8,9 +9,11 @@
 #include <Commons/UserverConfigUtils.hpp>
 #include <Frontends/HttpServer/Application.hpp>
 #include <Frontends/FrontendCommons/FrontendsPool.hpp>
+#include <Frontends/FrontendCommons/Statistics.hpp>
 #include <Frontends/HttpServer/Handler.hpp>
 #include <Frontends/HttpServer/HttpResponse.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
+
 
 namespace
 {
@@ -50,8 +53,7 @@ Application::Application()
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
       "HttpServer",
       ASPECT),
-    stats_(new AdServer::StatHolder),
-    composite_metrics_provider_(new Generics::CompositeMetricsProvider)
+    stats_(new AdServer::StatHolder)
 {
 }
 
@@ -144,18 +146,6 @@ void Application::read_config(
              << exc.what();
       throw Exception(stream);
     }
-
-    /*const auto& monitoring = server_config_->Monitoring();
-    if (monitoring.present())
-    {
-      UServerUtils::MetricsHTTPProvider_var metrics_http_provider(
-        new UServerUtils::MetricsHTTPProvider(
-          composite_metrics_provider_,
-          monitoring->port(),
-          "/metrics"));
-
-      add_child_object(metrics_http_provider);
-    }*/
   }
   catch (const Exception& exc)
   {
@@ -198,14 +188,10 @@ void Application::init_http()
   using ServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using HttpHandlerConfig = UServerUtils::Http::Server::HandlerConfig;
+  using ListenerConfig = UServerUtils::Http::Server::ListenerConfig;
 
   try
   {
-    auto task_processor_container_builder =
-      Config::create_task_processor_container_builder(
-        logger(),
-        server_config_->Coroutine());
-
     ModuleIdArray modules;
     const auto& module = server_config_->Module();
     for (auto it = module.begin(); it != module.end(); ++it)
@@ -285,6 +271,14 @@ void Application::init_http()
       }
     }
 
+    auto statistics_provider = std::make_shared<
+      UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+        std::shared_mutex>>(logger());
+    auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
+    statistics_provider->add(time_statistics_provider);
+    auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
+    statistics_provider->add(common_counter_statistics_provider);
+
     FrontendCommons::HttpResponseFactory_var response_factory(
       new HttpResponseFactory);
 
@@ -294,13 +288,24 @@ void Application::init_http()
         modules,
         logger(),
         stats_,
-        response_factory.in(),
-        composite_metrics_provider_));
+        response_factory.in()));
 
-    auto init_func = [this, frontend = frontend] (TaskProcessorContainer& task_processor_container) {
+    auto init_func = [this, frontend, statistics_provider] (TaskProcessorContainer& task_processor_container) {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
-      auto components_builder = std::make_unique<ComponentsBuilder>();
+      ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
+      statistics_provider_info.statistics_provider = statistics_provider;
+      statistics_provider_info.statistics_prefix = "cobrazz";
+      auto components_builder = std::make_unique<ComponentsBuilder>(statistics_provider_info);
       auto& statistic_storage = components_builder->get_statistics_storage();
+
+      const auto monitoring_config = server_config_->Monitoring();
+      std::optional<ListenerConfig> monitor_listener_config;
+      if(monitoring_config.present())
+      {
+        ListenerConfig config;
+        config.port = monitoring_config->port();
+        monitor_listener_config = config;
+      }
 
       const auto& http_servers_config = server_config_->HttpServer();
       std::size_t number = 1;
@@ -308,6 +313,10 @@ void Application::init_http()
       {
         ServerConfig server_config;
         server_config.server_name = "HttpServer_" + std::to_string(number);
+        if (number == 1)
+        {
+          server_config.monitor_listener_config = monitor_listener_config;
+        }
 
         auto& listener_config = server_config.listener_config;
         listener_config.max_connections = http_server_config.max_connections();
@@ -361,6 +370,11 @@ void Application::init_http()
 
       return components_builder;
     };
+
+    auto task_processor_container_builder =
+      Config::create_task_processor_container_builder(
+        logger(),
+        server_config_->Coroutine());
 
     ManagerCoro_var manager(
       new ManagerCoro(

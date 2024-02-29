@@ -13,7 +13,6 @@
 #include "UserInfoManager.hpp"
 #include "UserInfoManagerImpl.hpp"
 #include "UserInfoManagerControlImpl.hpp"
-#include "Generics/CompositeMetricsProvider.hpp"
 
 class UserInfoManagerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
@@ -70,7 +69,6 @@ private:
   typedef Sync::PosixGuard ShutdownGuard;
 
   ShutdownMutex shutdown_lock_;
-  Generics::CompositeMetricsProvider_var composite_metrics_provider_;
 };
 
 typedef ReferenceCounting::SmartPtr<UserInfoManagerApp_>

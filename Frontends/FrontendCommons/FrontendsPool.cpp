@@ -27,15 +27,13 @@ namespace AdServer
       const ModuleIdArray& modules,
       Logging::Logger* logger,
       StatHolder* stats,
-      FrontendCommons::HttpResponseFactory* response_factory,
-      Generics::CompositeMetricsProvider* composite_metrics_provider)
+      FrontendCommons::HttpResponseFactory* response_factory)
       : FrontendCommons::FrontendInterface(response_factory),
         config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
         stats_(ReferenceCounting::add_ref(stats)),
         http_response_factory_(ReferenceCounting::add_ref(response_factory)),
-        composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
         common_module_(new CommonModule(logger_))
     {
       frontends_.reserve(4);
@@ -114,7 +112,6 @@ namespace AdServer
               logger_,
               common_module_,
               stats_,
-              composite_metrics_provider_,
               http_response_factory_.in());
           }
           else if(*module_it == M_PUBPIXEL)
@@ -160,7 +157,6 @@ namespace AdServer
               fe_config.UserBindFeConfiguration(),
               logger_,
               common_module_,
-              composite_metrics_provider_,
               http_response_factory_.in());
           }
           else if(*module_it == M_PASSBACK)

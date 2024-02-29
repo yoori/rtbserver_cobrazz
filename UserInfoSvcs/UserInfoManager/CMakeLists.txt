@@ -61,6 +61,6 @@ target_link_libraries(UserInfoManager
   UserInfoManagerConfigXSD
   UserInfoManagerControlIDL
   UserInfoManagerIDL
+  UserInfoStatistics
   UserOperationProfilesPST
-  UServerUtilsMetrics
 )

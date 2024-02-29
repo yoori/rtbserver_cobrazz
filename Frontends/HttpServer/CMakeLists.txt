@@ -37,7 +37,6 @@ target_link_libraries(HttpServer
   RequestMatchers
   SecToken
   UServerUtils
-  #UServerUtilsMetrics
   UserBindFrontend
   UserInfoClusterControlIDL
   UserInfoManagerControllerIDL

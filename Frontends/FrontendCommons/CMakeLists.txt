@@ -36,12 +36,14 @@ target_link_libraries(FCGI
 
 add_library(FrontendStatistic SHARED
   FrontendStatistic.cpp
+  Statistics.cpp
 )
 
 target_link_libraries(FrontendStatistic
- CORBACommons
- Logger
- StatsDumper
+  CORBACommons
+  Logger
+  StatsDumper
+  UServerUtils
 )
 
 add_library(ProcessingTemplates SHARED

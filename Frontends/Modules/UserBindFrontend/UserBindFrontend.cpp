@@ -22,6 +22,7 @@
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
 #include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
+#include <Frontends/FrontendCommons/Statistics.hpp>
 
 #include "UserBindFrontend.hpp"
 
@@ -400,7 +401,6 @@ namespace AdServer
   UserBindFrontend::UserBindFrontend(Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
-    Generics::CompositeMetricsProvider *composite_metrics_provider,
     FrontendCommons::HttpResponseFactory* response_factory)
     /*throw(eh::Exception)*/
     : FrontendCommons::FrontendInterface(response_factory),
@@ -422,8 +422,7 @@ namespace AdServer
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::USER_BIND_FRONTEND),
       bind_task_count_(0),
-      match_task_count_(0),
-      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
+      match_task_count_(0)
   {}
 
   bool
@@ -1273,12 +1272,9 @@ namespace AdServer
   {
     static const char* FUN = "UserBindFrontend::process_request_()";
 
-    {
-        /// prometheus
-        std::map<std::string,std::string> m;
-        m["ssp_name"]=request_info.source_id;
-        composite_metrics_provider_->add_value_prometheus("request_count",m,1);
-    }
+    const auto statistic_id = FrontendCommons::CounterStatisticId::UserBind_RequestCount;
+    const std::string_view statistic_label = std::string_view(request_info.source_id);
+    ADD_COMMON_COUNTER_STATISTIC(statistic_id, statistic_label, 1)
 
     using GetUserIdResponsePtr =
       FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
