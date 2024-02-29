@@ -4,7 +4,6 @@
 #include <vector>
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -59,8 +58,7 @@ namespace AdServer
         const ModuleIdArray& modules,
         Logging::Logger* logger,
         StatHolder* stats,
-        FrontendCommons::HttpResponseFactory* response_factory,
-        Generics::CompositeMetricsProvider* composite_metrics_provider);
+        FrontendCommons::HttpResponseFactory* response_factory);
 
       /**
        * @brief Handle or not URI.
@@ -125,8 +123,6 @@ namespace AdServer
       Logging::Logger_var logger_;
       StatHolder_var stats_;
       FrontendCommons::HttpResponseFactory_var http_response_factory_;
-      Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-
       CommonModule_var common_module_;
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };

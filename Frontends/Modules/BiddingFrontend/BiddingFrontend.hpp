@@ -12,10 +12,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Generics/AtomicInt.hpp>
-#include "Generics/CompositeMetricsProvider.hpp"
-
-#include <UServerUtils/MetricsHTTPProvider.hpp>
-#include <UServerUtils/MetricsRAII.hpp>
 
 #include <Sync/PosixLock.hpp>
 
@@ -44,8 +40,6 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
-#include "UServerUtils/MetricsHTTPProvider.hpp"
-#include "RequestMetricsProvider.hpp"
 
 namespace AdServer
 {
@@ -91,7 +85,6 @@ namespace Bidding
       Logging::Logger* logger,
       CommonModule* common_module,
       StatHolder* stats,
-      Generics::CompositeMetricsProvider* composite_metrics_provider,
       FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/;
 
     virtual bool
@@ -423,10 +416,6 @@ namespace Bidding
 
     mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
     unsigned long reached_max_pending_tasks_;
-
-  private:
-    const Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-//    const RequestMetricsProvider_var request_metrics_provider_;
   };
 }
 }

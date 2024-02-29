@@ -37,7 +37,6 @@ target_link_libraries(FCGIServer
   PubPixelFrontend
   RequestMatchers
   SecToken
-  UServerUtilsMetrics
   UserBindFrontend
   UserInfoClusterControlIDL
   UserInfoManagerControllerIDL

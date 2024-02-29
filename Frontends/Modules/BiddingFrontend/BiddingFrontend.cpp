@@ -11,7 +11,6 @@
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 #include <Generics/TaskPool.hpp>
-#include "Generics/CompositeMetricsProvider.hpp"
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
@@ -25,7 +24,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
+#include <Frontends/FrontendCommons/Statistics.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
@@ -38,7 +37,6 @@
 #include "ClickStarBidRequestTask.hpp"
 #include "AdJsonBidRequestTask.hpp"
 #include "DAOBidRequestTask.hpp"
-#include "RequestMetricsProvider.hpp"
 
 #include "BiddingFrontend.hpp"
 
@@ -274,7 +272,6 @@ namespace Bidding
     Logging::Logger* logger,
     CommonModule* common_module,
     StatHolder* stats,
-    Generics::CompositeMetricsProvider* composite_metrics_provider,
     FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/
     : FrontendCommons::FrontendInterface(response_factory),
       GroupLogger(
@@ -299,11 +296,8 @@ namespace Bidding
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
       passback_task_count_(0),
-      reached_max_pending_tasks_(0),
-      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
-//      request_metrics_provider_(new RequestMetricsProvider())
+      reached_max_pending_tasks_(0)
   {
-//    composite_metrics_provider_->add_provider(request_metrics_provider_);
   }
 
   bool
@@ -753,7 +747,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
 
-    metrics_raii raii(composite_metrics_provider_, "input_request");
+    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_InputRequest)
 
     // create task - push it to task runner
     // and push goal for timeout control
@@ -835,7 +829,7 @@ namespace Bidding
       {
         bid_task_count_ += -1;
 
-        metrics_raii raii(composite_metrics_provider_, "skip_request");
+        DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_SkipRequest)
 
         {
           MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
@@ -1821,7 +1815,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::trigger_match_()";
 
-    metrics_raii raii(composite_metrics_provider_, "server_request");
+    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_ServerRequest)
 
     if(!request_info.filter_request)
     {
@@ -2006,7 +2000,7 @@ namespace Bidding
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
-    metrics_raii raii(composite_metrics_provider_, "user_info_request");
+    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_UserInfoRequest)
 
     Generics::Time start_process_time;
 
@@ -2367,13 +2361,13 @@ namespace Bidding
 
               if(creative.order_set_id)
               {
-
-                seq_orders[result_seq_order_i].ccg_id = creative.cmp_id;
+                const auto ccg_id = creative.cmp_id;
+                seq_orders[result_seq_order_i].ccg_id = ccg_id;
                 seq_orders[result_seq_order_i].set_id = creative.order_set_id;
                 seq_orders[result_seq_order_i].imps = 1;
-		////qwerty
-		BidStatisticsPrometheusInc(composite_metrics_provider_,seq_orders[result_seq_order_i].ccg_id);
                 ++result_seq_order_i;
+
+                ADD_COMMON_COUNTER_STATISTIC(FrontendCommons::CounterStatisticId::BiddingFrontend_Bids, ccg_id, 1)
               }
 
               campaign_ids[creative_i] = creative.campaign_group_id;
