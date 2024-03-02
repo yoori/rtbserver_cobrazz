@@ -325,8 +325,9 @@ namespace UserInfoSvcs
     Generics::ActiveObject* interruptor) const
     /*throw(eh::Exception)*/
   {
-    Sync::PosixGuard guard(files_lock_);
     std::vector<Operation> operations;
+
+    Sync::PosixGuard guard(files_lock_);
 
     Files::const_iterator it = files_.begin();
     Files::const_iterator temp_it = temp_snapshot.files_.begin();
@@ -383,7 +384,7 @@ namespace UserInfoSvcs
       ++temp_it;
     }
 
-    return std::move(operations);
+    return operations;
   }
 
   void

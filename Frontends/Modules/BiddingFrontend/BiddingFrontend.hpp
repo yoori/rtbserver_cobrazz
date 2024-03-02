@@ -15,7 +15,7 @@
 #include "Generics/CompositeMetricsProvider.hpp"
 
 #include <UServerUtils/MetricsHTTPProvider.hpp>
-#include <UServerUtils/metrics_raii.hpp>
+//#include <UServerUtils/metrics_raii.hpp>
 
 #include <Sync/PosixLock.hpp>
 

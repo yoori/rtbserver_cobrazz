@@ -723,7 +723,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
 
-    metrics_raii raii(composite_metrics_provider_,"input_request");
+    //metrics_raii raii(composite_metrics_provider_,"input_request");
     //request_metrics_provider_->add_input_request();
 
     // create task - push it to task runner
@@ -807,7 +807,7 @@ namespace Bidding
         bid_task_count_ += -1;
 
 //        request_metrics_provider_->add_skip_request();
-        metrics_raii raii(composite_metrics_provider_,"skip_request");
+        //metrics_raii raii(composite_metrics_provider_,"skip_request");
 
         {
           MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
@@ -1751,7 +1751,7 @@ namespace Bidding
     static const char* FUN = "Bidding::Frontend::trigger_match_()";
 
 //    request_metrics_provider_->add_channel_server_request();
-    metrics_raii raii(composite_metrics_provider_,"server_request");
+    //metrics_raii raii(composite_metrics_provider_,"server_request");
 
     if(!request_info.filter_request)
     {
@@ -1936,7 +1936,7 @@ namespace Bidding
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
-    metrics_raii raii(composite_metrics_provider_,"user_info_request");
+    //metrics_raii raii(composite_metrics_provider_,"user_info_request");
 //    request_metrics_provider_->add_user_info_request();
 
     Generics::Time start_process_time;
