@@ -33,6 +33,7 @@ namespace AdServer
       const std::string AD_SERVER("ADSERVER");
       const std::string REFERER("REFERER");
       const std::string REFERER_DOMAIN("DOMAIN");
+      const std::string REFERER_DOMAIN_HASH("DOMAIN_HASH");
       const std::string UID("UID");
       const std::string UNSIGNEDUID("UNSIGNEDUID");
       const std::string USER_STATUS("USERSTATUS");
