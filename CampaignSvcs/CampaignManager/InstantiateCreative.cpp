@@ -438,6 +438,7 @@ namespace AdServer
 
           request_args[CreativeTokens::REFERER] = "";
           request_args[CreativeTokens::REFERER_DOMAIN] = "";
+          request_args[CreativeTokens::REFERER_DOMAIN_HASH] = "";
           request_args[CreativeTokens::ETID] = "";
           request_args[CreativeTokens::SOURCE_ID] = "";
           request_args[CreativeTokens::EXTERNAL_USER_ID] = "";
@@ -707,7 +708,10 @@ namespace AdServer
           try
           {
             HTTP::BrowserAddress referer_url = HTTP::BrowserAddress(String::SubString(referer));
-            request_args[CreativeTokens::REFERER_DOMAIN] = referer_url.host().str();
+            std::string domain_value = referer_url.host().str();
+            request_args[CreativeTokens::REFERER_DOMAIN] = domain_value;
+            request_args[CreativeTokens::REFERER_DOMAIN_HASH] = std::to_string(Generics::CRC::quick(
+              0, domain_value.data(), domain_value.size()));
           }
           catch(const eh::Exception&)
           {}
