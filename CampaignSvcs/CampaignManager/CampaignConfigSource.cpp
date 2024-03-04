@@ -3308,6 +3308,7 @@ namespace CampaignSvcs
 
     // advertiser
     system_tokens[CreativeTokens::ADVERTISER_ID] = "0";
+    system_tokens[CreativeTokens::REQUEST_ID] = "";
     system_tokens[CreativeTokens::CID] = "0";
     system_tokens[CreativeTokens::CCID] = "0";
     system_tokens[CreativeTokens::CGID] = "0";
@@ -3350,6 +3351,8 @@ namespace CampaignSvcs
     // internal
     system_tokens[CreativeTokens::USER_BIND] = "";
     system_tokens[CreativeTokens::REFERER] = "";
+    system_tokens[CreativeTokens::REFERER_DOMAIN] = "";
+    system_tokens[CreativeTokens::REFERER_DOMAIN_HASH] = "";
     system_tokens[CreativeTokens::ETID] = "";
     system_tokens[CreativeTokens::UID] = "";
     system_tokens[CreativeTokens::ORIGLINK] = "";
@@ -3361,7 +3364,7 @@ namespace CampaignSvcs
     system_tokens[CreativeTokens::COLOCATION] = "";
     system_tokens[CreativeTokens::COHORT] = "";
     system_tokens[CreativeTokens::TRACKPIXEL] = "";
-    system_tokens[CreativeTokens::REQUESTID] = "";
+    system_tokens[CreativeTokens::REQUEST_ID] = "";
     system_tokens[CreativeTokens::GREQUESTID] = "";
 
     // other

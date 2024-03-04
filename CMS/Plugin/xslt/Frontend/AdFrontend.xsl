@@ -865,6 +865,7 @@
       <cfg:Id value="W/W/W"/>
       <cfg:Id value="{cap0}"/>
       <cfg:Id value="%7Bcap1%7D"/>
+      <cfg:Id value="none"/>
       <cfg:Id><xsl:attribute name="value">{UID}</xsl:attribute></cfg:Id>
     </cfg:SkipExternalIds>
   </cfg:CommonFeConfiguration>

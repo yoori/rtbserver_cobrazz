@@ -96,7 +96,7 @@ namespace AdServer
       const std::string SITE_ID("SITEID");
       const std::string PUBLISHER_ID("PUBID");
 
-      const std::string REQUESTID ("REQUESTID");
+      const std::string REQUEST_ID("REQUESTID");
       const std::string GREQUESTID("GREQUESTID");
 
       const std::string HTTPS_SAFE("HTTPS_SAFE");

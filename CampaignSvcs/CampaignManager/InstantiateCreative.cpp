@@ -1311,6 +1311,8 @@ namespace AdServer
             request_params.user_agent.in(), 0, MAX_UA_TOKEN_SIZE);
         }
 
+        // Fill video place traits
+
         request_template_params = request_args_ptr;
       }
 
@@ -1558,6 +1560,8 @@ namespace AdServer
               }
             }
 
+            creative_args[CreativeTokens::REQUEST_ID] = OptionValue(
+              0, select_params.request_id.to_string());
             creative_args[CreativeTokens::CCID] = OptionValue(
               0, IntToStr(creative->ccid));
             creative_args[CreativeTokens::ADVERTISER_ID] = OptionValue(
@@ -1573,9 +1577,6 @@ namespace AdServer
               0, creative->creative_format);
             creative_args[CreativeTokens::ACTIONPIXEL] = OptionValue(
               0, ""); // stub for old token
-
-            creative_args[CreativeTokens::REQUESTID] = OptionValue(
-              0, rid_signer_.sign(it->request_id).str());
 
             if(request_params.log_as_test)
             {

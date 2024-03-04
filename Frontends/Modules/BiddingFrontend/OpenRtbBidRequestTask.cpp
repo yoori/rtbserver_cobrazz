@@ -1566,5 +1566,6 @@ namespace Bidding
       throw;
     }
   }
+
 }
 }

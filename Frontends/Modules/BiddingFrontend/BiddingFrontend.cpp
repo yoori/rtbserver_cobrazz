@@ -37,6 +37,7 @@
 #include "AdJsonBidRequestTask.hpp"
 #include "DAOBidRequestTask.hpp"
 #include "RequestMetricsProvider.hpp"
+#include "Utils.hpp"
 
 #include "BiddingFrontend.hpp"
 
@@ -150,6 +151,7 @@ namespace Bidding
       const Generics::Time max_val = Generics::Time(str.substr(pos + 1), "%H:%M");
       return Commons::Interval<Generics::Time>(min_val, max_val);
     }
+
   }
 
   class Frontend::UpdateConfigTask: public Generics::TaskGoal
@@ -2725,56 +2727,39 @@ namespace Bidding
 
       {
         // fill special tokens
-        request_params.common_info.tokens.length(
-          (request_info.bid_request_id.empty() ? 0 : 1) +
-          (request_info.bid_site_id.empty() ? 0 : 1) +
-          (request_info.bid_publisher_id.empty() ? 0 : 1) +
-          (request_info.application_id.empty() ? 0 : 1) +
-          (!request_info.advertising_id.empty() ||
-            !request_info.idfa.empty() ||
-            history_match_result.cohort[0] ? 1 : 0) +
-          (request_params.common_info.ext_track_params[0] ? 1 : 0));
-
-        CORBA::ULong tok_i = 0;
         if(!request_info.bid_request_id.empty())
         {
-          request_params.common_info.tokens[tok_i].name = "BR_ID";
-          request_params.common_info.tokens[tok_i].value << request_info.bid_request_id;
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "BR_ID", request_info.bid_request_id);
         }
 
         if(!request_info.bid_site_id.empty())
         {
-          request_params.common_info.tokens[tok_i].name = "BS_ID";
-          request_params.common_info.tokens[tok_i].value << request_info.bid_site_id;
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "BS_ID", request_info.bid_site_id);
         }
 
         if(!request_info.bid_publisher_id.empty())
         {
-          request_params.common_info.tokens[tok_i].name = "BP_ID";
-          request_params.common_info.tokens[tok_i].value << request_info.bid_publisher_id;
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "BP_ID", request_info.bid_publisher_id);
         }
 
         if(!request_info.application_id.empty())
         {
-          request_params.common_info.tokens[tok_i].name = "APPLICATION_ID";
-          request_params.common_info.tokens[tok_i].value << request_info.application_id;
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "APPLICATION_ID", request_info.application_id);
         }
 
         if(!request_info.idfa.empty())
         {
-          request_params.common_info.tokens[tok_i].name = "IDFA";
-          request_params.common_info.tokens[tok_i].value << request_info.idfa;
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "IDFA", request_info.idfa);
         }
         else if(!request_info.advertising_id.empty())
         {
-          request_params.common_info.tokens[tok_i].name = "ADVERTISING_ID";
-          request_params.common_info.tokens[tok_i].value << request_info.advertising_id;
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "ADVERTISING_ID", request_info.advertising_id);
         }
         else if(history_match_result.cohort[0])
         {
@@ -2785,27 +2770,33 @@ namespace Bidding
             request_info.platform_names.find("ios") !=
               request_info.platform_names.end())
           {
-            request_params.common_info.tokens[tok_i].name = "IDFA";
-            request_params.common_info.tokens[tok_i].value = history_match_result.cohort;
-            ++tok_i;
+            add_token(request_params.common_info.tokens,
+              "IDFA", std::string(history_match_result.cohort));
           }
           else
           {
-            request_params.common_info.tokens[tok_i].name = "ADVERTISING_ID";
-            request_params.common_info.tokens[tok_i].value = history_match_result.cohort;
-            ++tok_i;
+            add_token(request_params.common_info.tokens,
+              "ADVERTISING_ID", std::string(history_match_result.cohort));
           }
         }
 
         if(request_params.common_info.ext_track_params[0])
         {
-          request_params.common_info.tokens[tok_i].name = "EXT_TRACK_PARAMS";
-          request_params.common_info.tokens[tok_i].value =
-            request_params.common_info.ext_track_params.in();
-          ++tok_i;
+          add_token(request_params.common_info.tokens,
+            "EXT_TRACK_PARAMS", std::string(request_params.common_info.ext_track_params));
         }
 
-        request_params.common_info.tokens.length(tok_i);
+        if(request_info.location)
+        {
+          add_token(request_params.common_info.tokens,
+            "GEO_REGION", request_info.location->region);
+        }
+
+        if(!request_info.ssp_devicetype_str.empty())
+        {
+          add_token(request_params.common_info.tokens,
+            "SSP_DEVICETYPE", request_info.ssp_devicetype_str);
+        }
       }
 
       if (interrupted)
