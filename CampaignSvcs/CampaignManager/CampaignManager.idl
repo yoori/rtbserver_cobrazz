@@ -169,6 +169,8 @@ module AdServer
         unsigned long native_ads_impression_tracker_type;
 
         boolean fill_track_html;
+
+        TokenSeq tokens;
       };
 
       typedef sequence<AdSlotInfo> AdSlotSeq;
