@@ -378,6 +378,7 @@ namespace AdServer
         std::string tag_size;
         std::string tns_counter_device_type;
         unsigned long publisher_account_id;
+        TokenValueMap tokens;
 
         AdSlotContext() noexcept;
       };

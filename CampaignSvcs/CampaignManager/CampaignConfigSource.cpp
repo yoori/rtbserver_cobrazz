@@ -3347,6 +3347,9 @@ namespace CampaignSvcs
     system_tokens["BS_ID"] = "";
     system_tokens["BR_ID"] = "";
     system_tokens["BP_ID"] = "";
+    system_tokens[CreativeTokens::GEO_REGION] = "";
+    system_tokens[CreativeTokens::SSP_DEVICETYPE] = "";
+    system_tokens[CreativeTokens::SSP_VIDEO_PLACEMENT] = "";
 
     // internal
     system_tokens[CreativeTokens::USER_BIND] = "";

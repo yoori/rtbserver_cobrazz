@@ -104,7 +104,6 @@ namespace AdServer
       const std::string ETID("ETID");
       const std::string DNS_ENCODED_UIDS("DNSUIDS");
 
-      // REQ-3977
       const std::string IP("IP");
       const std::string UA("UA");
       const std::string EXT_TRACK_PARAMS("EXT_TRACK_PARAMS");
@@ -118,6 +117,10 @@ namespace AdServer
       const std::string EXTERNAL_USER_ID("EXTERNALID");
 
       const std::string ERID("ERID");
+
+      const std::string GEO_REGION("GEO_REGION");
+      const std::string SSP_DEVICETYPE("SSP_DEVICETYPE");
+      const std::string SSP_VIDEO_PLACEMENT("SSP_VIDEO_PLACEMENT");
     }
 
     class CreativeTextGenerator

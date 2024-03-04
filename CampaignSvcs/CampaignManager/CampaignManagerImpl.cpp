@@ -3565,6 +3565,12 @@ namespace AdServer
           ad_slot_context.tns_counter_device_type,
           norm_platform_names);
 
+        for(CORBA::ULong token_i = 0; token_i < ad_slot.tokens.length(); ++token_i)
+        {
+          ad_slot_context.tokens.emplace(ad_slot.tokens[token_i].name,
+              ad_slot.tokens[token_i].value);
+        }
+
         // determine auction type, using order: max ecpm, prop probability, random
         {
           RevenueDecimal auction_offset = RevenueDecimal::div(

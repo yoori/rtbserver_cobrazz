@@ -2856,13 +2856,15 @@ namespace Bidding
         if(request_info.location)
         {
           add_token(request_params.common_info.tokens,
-            "GEO_REGION", request_info.location->region);
+            "GEO_REGION",
+            request_info.location->region);
         }
 
         if(!request_info.ssp_devicetype_str.empty())
         {
           add_token(request_params.common_info.tokens,
-            "SSP_DEVICETYPE", request_info.ssp_devicetype_str);
+            "SSP_DEVICETYPE",
+            request_info.ssp_devicetype_str);
         }
       }
 
