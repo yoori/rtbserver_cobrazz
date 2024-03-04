@@ -22,7 +22,7 @@ namespace RequestInfoSvcs
       {
         ArrayType result(source.size());
         std::copy(source.begin(), source.end(), result.begin());
-        return std::move(result);
+        return result;
       }
     };
   };
