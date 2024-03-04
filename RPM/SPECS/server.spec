@@ -31,13 +31,13 @@
 %define __librdkafka_ver_req    1.9.2
 #define __open_ssl_ver_req      1.0.1e-42.el7
 %define __open_ssl_ver_req      1.1.1k-7
-%define __vanga_ver_req         1.0.0.17
-%define __rocksdb_ver_req       6.26.1
+%define __vanga_ver_req         1.0.0.20
+%define __rocksdb_ver_req       8.8.1
 %define __boost_suffix          176
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv404%{?dist}
+Release: ssv405%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -64,7 +64,7 @@ BuildRequires: GeoIP-devel >= %__geoip_ver_req
 Requires: GeoIP >= %__geoip_ver_req
 Requires: foros-geoip >= 1.0.0.0
 #BuildRequires: httpd-devel >= {__apache_ver_req}
-BuildRequires: httpd-devel
+#BuildRequires: httpd-devel
 #Requires: httpd = {__apache_ver_req}
 Requires: httpd
 Requires: nginx = 1:1.22.1
