@@ -21,6 +21,7 @@
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 
+#include "Utils.hpp"
 #include "KeywordFormatter.hpp"
 #include "RequestInfoFiller.hpp"
 
@@ -176,6 +177,7 @@ namespace Request
     const String::SubString DEVICE_GEO_COUNTRY("country");
     const String::SubString DEVICE_GEO_REGION("region");
     const String::SubString DEVICE_GEO_CITY("city");
+    const String::SubString DEVICE_DEVICETYPE("devicetype");
 
     // regs
     const String::SubString REGS("regs");
@@ -2484,8 +2486,25 @@ namespace Bidding
   {
     static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
 
+    openrtb_devicetype_mapping_.emplace(0, "Unknown");
+    openrtb_devicetype_mapping_.emplace(1, "Mobile/Tablet - General");
+    openrtb_devicetype_mapping_.emplace(2, "Personal Computer");
+    openrtb_devicetype_mapping_.emplace(3, "Connected TV");
+    openrtb_devicetype_mapping_.emplace(4, "Phone");
+    openrtb_devicetype_mapping_.emplace(5, "Tablet");
+    openrtb_devicetype_mapping_.emplace(6, "Connected Device");
+    openrtb_devicetype_mapping_.emplace(7, "Set Top Box");
+    openrtb_devicetype_mapping_.emplace(8, "OOH Device");
+
+    openrtb_video_placement_mapping_.emplace(1, "In-Stream");
+    openrtb_video_placement_mapping_.emplace(2, "In-Banner");
+    openrtb_video_placement_mapping_.emplace(3, "In-Article");
+    openrtb_video_placement_mapping_.emplace(4, "In-Feed");
+    openrtb_video_placement_mapping_.emplace(5, "Interstitial");
+
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("MegafonID")), "megafon-stableid");
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("quietmedia")), "megafon-stableid");
+    source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("const.uno")), "megafon-stableid");
 
     if(geo_ip_path)
     {
@@ -2952,6 +2971,12 @@ namespace Bidding
       device_processor->add_processor(
         Request::OpenRtb::DEVICE_CARRIER,
         &JsonProcessingContext::carrier);
+
+      device_processor->add_processor(
+        Request::OpenRtb::DEVICE_DEVICETYPE,
+        JsonRequestParamProcessor_var(
+          new JsonContextNumberParamProcessor<JsonProcessingContext, unsigned int>(
+            &JsonProcessingContext::ssp_devicetype)));
 
       JsonCompositeRequestParamProcessor_var device_geo_processor =
         new JsonCompositeRequestParamProcessor();
@@ -4213,6 +4238,8 @@ namespace Bidding
     }
 
     request_info.is_app = context.app;
+    request_info.ssp_devicetype_str = openrtb_devicetype_to_string_(
+      context.ssp_devicetype);
 
     fill_by_user_agent(
       request_params,
@@ -4921,6 +4948,13 @@ namespace Bidding
           kw_fmt.add_dict_keyword(MatchKeywords::DEAL_ID, norm_keyword_(deal_it->id));
         }
 
+        if (slot_it->video_placement.has_value())
+        {
+          add_token(ad_slot_request.tokens,
+            "SSP_VIDEO_PLACEMENT",
+            openrtb_video_placement_to_string_(*slot_it->video_placement));
+        }
+
         ++slot_i;
         ++slot_it;
       }
@@ -5017,11 +5051,11 @@ namespace Bidding
           source = source_mapping_it->second;
         }
 
-        if(!sub_it->id.empty())
+        if(!sub_it->id.empty() && use_external_user_id_(sub_it->id))
         {
           request_info.ext_user_ids.emplace_back(source + "/" + sub_it->id);
         }
-        else if(!sub_it->stable_id.empty())
+        else if(!sub_it->stable_id.empty() && use_external_user_id_(sub_it->stable_id))
         {
           request_info.ext_user_ids.emplace_back(
             (!source.empty() ? source : Request::OpenRtb::STABLE_SOURCE) + "/" + sub_it->stable_id);
@@ -6304,6 +6338,32 @@ namespace Bidding
         kw_fmt.add_keyword(std::string("rtblanguage") + norm_keyword_(context->language));
       }
     }    
+  }
+
+  std::string
+  RequestInfoFiller::openrtb_devicetype_to_string_(unsigned int devicetype)
+    const
+  {
+    auto it = openrtb_devicetype_mapping_.find(devicetype);
+    if (it != openrtb_devicetype_mapping_.end())
+    {
+      return it->second;
+    }
+
+    return std::string();
+  }
+
+  std::string
+  RequestInfoFiller::openrtb_video_placement_to_string_(unsigned int video_placement_type)
+    const
+  {
+    auto it = openrtb_video_placement_mapping_.find(video_placement_type);
+    if (it != openrtb_video_placement_mapping_.end())
+    {
+      return it->second;
+    }
+
+    return std::string();
   }
 }
 }

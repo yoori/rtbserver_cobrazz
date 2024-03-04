@@ -308,7 +308,8 @@ namespace Bidding
     typedef std::list<UserEid> UserEidList;
 
     JsonProcessingContext()
-      : site(false),
+      : ssp_devicetype(0),
+        site(false),
         app(false),
         secure(false),
         test(false),
@@ -341,6 +342,7 @@ namespace Bidding
     std::string macmd5;
     std::string language;
     std::string carrier;
+    unsigned int ssp_devicetype;
 
     std::string request_id;
     StringList currencies;

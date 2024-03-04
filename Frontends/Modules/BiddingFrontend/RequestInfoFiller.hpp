@@ -156,6 +156,8 @@ namespace Bidding
     std::string application_id;
     std::string advertising_id; // ADVERTISING_ID
     std::string idfa;
+    std::string ssp_devicetype_str;
+    std::string ssp_video_placementtype_str;
 
     SourceTraits::NoticeInstantiateType notice_instantiate_type;
     SourceTraits::NoticeInstantiateType vast_notice_instantiate_type;
@@ -448,6 +450,11 @@ namespace Bidding
     static std::string
     norm_keyword_(const String::SubString& kw) noexcept;
 
+    std::string openrtb_devicetype_to_string_(unsigned int devicetype) const;
+
+    std::string openrtb_video_placement_to_string_(
+      unsigned int video_placement_type) const;
+
   private:
     Logging::Logger_var logger_;
     unsigned long colo_id_;
@@ -469,6 +476,9 @@ namespace Bidding
     const AccountTraitsById account_traits_;
 
     std::unique_ptr<AdXmlRequestInfoFiller> adxml_request_info_filler_;
+
+    std::unordered_map<unsigned int, std::string> openrtb_devicetype_mapping_;
+    std::unordered_map<unsigned int, std::string> openrtb_video_placement_mapping_;
   };
 }
 }
