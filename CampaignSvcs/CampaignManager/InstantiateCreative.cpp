@@ -1556,6 +1556,12 @@ namespace AdServer
               }
             }
 
+            for(auto token_it = ad_slot_context.tokens.begin();
+                token_it != ad_slot_context.tokens.end(); ++token_it)
+            {
+              creative_args[token_it->first] = OptionValue(0, token_it->second);
+            }
+
             creative_args[CreativeTokens::REQUEST_ID] = OptionValue(
               0, select_params.request_id.to_string());
             creative_args[CreativeTokens::CCID] = OptionValue(
