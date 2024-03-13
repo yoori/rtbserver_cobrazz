@@ -11,7 +11,7 @@
 #include <Generics/GnuHashTable.hpp>
 #include <Generics/HashTableAdapters.hpp>
 #include <Generics/TaskPool.hpp>
-#include "Generics/CompositeMetricsProvider.hpp"
+//#include "Generics/CompositeMetricsProvider.hpp"
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
@@ -25,7 +25,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
+//#include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
@@ -38,7 +38,6 @@
 #include "ClickStarBidRequestTask.hpp"
 #include "AdJsonBidRequestTask.hpp"
 #include "DAOBidRequestTask.hpp"
-#include "RequestMetricsProvider.hpp"
 #include "Utils.hpp"
 
 #include "BiddingFrontend.hpp"
@@ -275,8 +274,9 @@ namespace Bidding
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
-    StatHolder* stats,
-    Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/
+    StatHolder* stats
+    //, Generics::CompositeMetricsProvider* composite_metrics_provider
+    ) /*throw(eh::Exception)*/
     : GroupLogger(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
@@ -299,11 +299,11 @@ namespace Bidding
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
       passback_task_count_(0),
-      reached_max_pending_tasks_(0),
-      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
-//      request_metrics_provider_(new RequestMetricsProvider())
+      reached_max_pending_tasks_(0)
+      //composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
+      //request_metrics_provider_(new RequestMetricsProvider())
   {
-//    composite_metrics_provider_->add_provider(request_metrics_provider_);
+    //composite_metrics_provider_->add_provider(request_metrics_provider_);
   }
 
   bool
@@ -753,7 +753,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
 
-    metrics_raii raii(composite_metrics_provider_, "input_request");
+    //metrics_raii raii(composite_metrics_provider_, "input_request");
 
     // create task - push it to task runner
     // and push goal for timeout control
@@ -835,7 +835,7 @@ namespace Bidding
       {
         bid_task_count_ += -1;
 
-        metrics_raii raii(composite_metrics_provider_, "skip_request");
+        //metrics_raii raii(composite_metrics_provider_, "skip_request");
 
         {
           MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
@@ -1821,7 +1821,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::trigger_match_()";
 
-    metrics_raii raii(composite_metrics_provider_, "server_request");
+    //metrics_raii raii(composite_metrics_provider_, "server_request");
 
     if(!request_info.filter_request)
     {
@@ -2006,7 +2006,7 @@ namespace Bidding
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
-    metrics_raii raii(composite_metrics_provider_, "user_info_request");
+    //metrics_raii raii(composite_metrics_provider_, "user_info_request");
 
     Generics::Time start_process_time;
 
@@ -2372,7 +2372,7 @@ namespace Bidding
                 seq_orders[result_seq_order_i].set_id = creative.order_set_id;
                 seq_orders[result_seq_order_i].imps = 1;
 		////qwerty
-		BidStatisticsPrometheusInc(composite_metrics_provider_,seq_orders[result_seq_order_i].ccg_id);
+		//BidStatisticsPrometheusInc(composite_metrics_provider_,seq_orders[result_seq_order_i].ccg_id);
                 ++result_seq_order_i;
               }
 

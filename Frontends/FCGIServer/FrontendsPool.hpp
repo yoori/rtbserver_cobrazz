@@ -3,7 +3,7 @@
 #include <vector>
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <Generics/CompositeMetricsProvider.hpp>
+//#include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
@@ -55,8 +55,9 @@ namespace AdServer
         const char* config_path,
         const ModuleIdArray& modules,
         Logging::Logger* logger,
-        StatHolder* stats,
-        Generics::CompositeMetricsProvider* composite_metrics_provider);
+        StatHolder* stats
+        //, Generics::CompositeMetricsProvider* composite_metrics_provider
+        );
 
       /**
        * @brief Handle or not URI.
@@ -120,7 +121,7 @@ namespace AdServer
       ModuleIdArray modules_;
       Logging::Logger_var logger_;
       StatHolder_var stats_;
-      Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+      //Generics::CompositeMetricsProvider_var composite_metrics_provider_;
 
       CommonModule_var common_module_;
       std::vector<FrontendCommons::Frontend_var> frontends_;

@@ -12,10 +12,10 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Generics/AtomicInt.hpp>
-#include "Generics/CompositeMetricsProvider.hpp"
+//#include "Generics/CompositeMetricsProvider.hpp"
 
-#include <UServerUtils/MetricsHTTPProvider.hpp>
-#include <UServerUtils/MetricsRAII.hpp>
+//#include <UServerUtils/MetricsHTTPProvider.hpp>
+//#include <UServerUtils/MetricsRAII.hpp>
 
 #include <Sync/PosixLock.hpp>
 
@@ -44,8 +44,7 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
-#include "UServerUtils/MetricsHTTPProvider.hpp"
-#include "RequestMetricsProvider.hpp"
+//#include "RequestMetricsProvider.hpp"
 
 namespace AdServer
 {
@@ -90,8 +89,9 @@ namespace Bidding
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
-      StatHolder* stats,
-      Generics::CompositeMetricsProvider* composite_metrics_provider) /*throw(eh::Exception)*/;
+      StatHolder* stats
+      //, Generics::CompositeMetricsProvider* composite_metrics_provider
+      ) /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
@@ -424,8 +424,8 @@ namespace Bidding
     unsigned long reached_max_pending_tasks_;
 
   private:
-    const Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-//    const RequestMetricsProvider_var request_metrics_provider_;
+    //const Generics::CompositeMetricsProvider_var composite_metrics_provider_;
+    //const RequestMetricsProvider_var request_metrics_provider_;
   };
 }
 }

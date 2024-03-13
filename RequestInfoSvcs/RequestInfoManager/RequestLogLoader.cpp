@@ -11,6 +11,7 @@
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/TagRequest.hpp>
 #include "CompositeMetricsProviderRIM.hpp"
+
 /*
  * LogFetcherBase - base class for process one type logs
  * LogRecordFetcher - LogFetcherBase implementation
@@ -282,10 +283,13 @@ namespace RequestInfoSvcs
           log_errors_->report_error(
             Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
-            std::map<std::string, std::string> m;
-            m["type"] = name_info.base_name;
-            cmprim_->add_value_prometheus("processedFilesByType",m,1);
-            cmprim_->add_value_prometheus("processedRecordCountByType",m,name_info.processed_lines_count);
+
+        /*
+        std::map<std::string, std::string> m;
+        m["type"] = name_info.base_name;
+        cmprim_->add_value_prometheus("processedFilesByType", m, 1);
+        cmprim_->add_value_prometheus("processedRecordCountByType", m, name_info.processed_lines_count);
+        */
       }
     }
     catch (const eh::Exception& ex)

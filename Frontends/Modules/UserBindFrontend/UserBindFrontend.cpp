@@ -399,8 +399,9 @@ namespace AdServer
   //
   UserBindFrontend::UserBindFrontend(Configuration* frontend_config,
     Logging::Logger* logger,
-    CommonModule* common_module,
-    Generics::CompositeMetricsProvider *composite_metrics_provider)
+    CommonModule* common_module
+    //, Generics::CompositeMetricsProvider* composite_metrics_provider
+    )
     /*throw(eh::Exception)*/
     : Logging::LoggerCallbackHolder(
         Logging::Logger_var(
@@ -419,8 +420,8 @@ namespace AdServer
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::USER_BIND_FRONTEND),
       bind_task_count_(0),
-      match_task_count_(0),
-      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
+      match_task_count_(0)
+      //, composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {}
 
   bool
@@ -1270,12 +1271,11 @@ namespace AdServer
   {
     static const char* FUN = "UserBindFrontend::process_request_()";
 
-    {
-        /// prometheus
-        std::map<std::string,std::string> m;
-        m["ssp_name"]=request_info.source_id;
-        composite_metrics_provider_->add_value_prometheus("request_count",m,1);
-    }
+    /// prometheus
+    /*
+    composite_metrics_provider_->add_value_prometheus(
+      "request_count", {std::make_pair("ssp_name", request_info.source_id)}, 1);
+    */
 
     using GetUserIdResponsePtr =
       FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;

@@ -30,7 +30,7 @@
 #include "UserBindContainer.hpp"
 #include "BindRequestContainer.hpp"
 #include "UserBindServer_service.cobrazz.pb.hpp"
-#include <Generics/CompositeMetricsProvider.hpp>
+//#include <Generics/CompositeMetricsProvider.hpp>
 
 namespace AdServer
 {
@@ -66,8 +66,9 @@ namespace UserInfoSvcs
     UserBindServerImpl(
       Generics::ActiveObjectCallback* callback,
       Logging::Logger* logger,
-      const UserBindServerConfig& user_bind_server_config,
-      Generics::CompositeMetricsProvider_var composite_metrics_provider)
+      const UserBindServerConfig& user_bind_server_config
+      //, Generics::CompositeMetricsProvider_var composite_metrics_provider
+      )
       /*throw(Exception)*/;
 
     virtual
@@ -255,8 +256,7 @@ namespace UserInfoSvcs
     BindRequestProcessorHolder_var bind_request_container_;
 
     Commons::UserIdBlackList user_id_black_list_;
-    Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-
+    //Generics::CompositeMetricsProvider_var composite_metrics_provider_;
   };
 
   typedef ReferenceCounting::SmartPtr<UserBindServerImpl>

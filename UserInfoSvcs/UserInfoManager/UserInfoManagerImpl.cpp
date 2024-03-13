@@ -13,7 +13,7 @@
 
 #include "UserInfoContainer.hpp"
 #include "UserInfoManagerImpl.hpp"
-#include "UServerUtils/MetricsRAII.hpp"
+//#include "UServerUtils/MetricsRAII.hpp"
 
 namespace Aspect
 {
@@ -159,8 +159,9 @@ namespace UserInfoSvcs
   UserInfoManagerImpl::UserInfoManagerImpl(
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
-    const UserInfoManagerConfig& user_info_manager_config,
-    Generics::CompositeMetricsProvider* composite_metrics_provider)
+    const UserInfoManagerConfig& user_info_manager_config
+    //, Generics::CompositeMetricsProvider* composite_metrics_provider
+    )
     /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -185,9 +186,8 @@ namespace UserInfoSvcs
           "UserInfoManagerImpl::check_operations_()",
           Aspect::USER_INFO_MANAGER,
           "ADS-IMPL-82")),
-      loading_progress_processor_(new LoadingProgressProcessor(1.0)),
-      composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
-
+      loading_progress_processor_(new LoadingProgressProcessor(1.0))
+      //, composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {
     static const char* FUN = "UserInfoManagerImpl::UserInfoManagerImpl()";
 
@@ -846,7 +846,7 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "UserInfoManager::get_user_profile()";
 
-    metrics_raii raii_tmp(composite_metrics_provider_, "UserInfoManagerImpl::get_user_profile");
+    //metrics_raii raii_tmp(composite_metrics_provider_, "UserInfoManagerImpl::get_user_profile");
     try
     {
       UserInfoContainerAccessor user_info_container = get_user_info_container_();
@@ -1185,7 +1185,7 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "UserInfoManagerImpl::match()";
 
-    metrics_raii raii_tmp(composite_metrics_provider_, "UserInfoManagerImpl::match");
+    //metrics_raii raii_tmp(composite_metrics_provider_, "UserInfoManagerImpl::match");
     try
     {
       Generics::Timer process_timer;
