@@ -8,7 +8,7 @@
 
 #include "UserInfoManagerMain.hpp"
 #include "UserInfoManagerStat.hpp"
-#include "UServerUtils/MetricsHTTPProvider.hpp"
+//#include "UServerUtils/MetricsHTTPProvider.hpp"
 
 namespace
 {
@@ -21,8 +21,8 @@ namespace
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
-      "UserInfoManagerApp_", ASPECT),
-    composite_metrics_provider_(new Generics::CompositeMetricsProvider)
+      "UserInfoManagerApp_", ASPECT)
+    //, composite_metrics_provider_(new Generics::CompositeMetricsProvider)
 {}
 
 void
@@ -171,8 +171,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       new AdServer::UserInfoSvcs::UserInfoManagerImpl(
         callback(),
         logger(),
-        config(),
-        composite_metrics_provider_);
+        config()
+        //, composite_metrics_provider_
+        );
 
     add_child_object(user_info_manager_impl_);
 

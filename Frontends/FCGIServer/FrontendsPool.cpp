@@ -24,13 +24,14 @@ namespace AdServer
       const char* config_path,
       const ModuleIdArray& modules,
       Logging::Logger* logger,
-      StatHolder* stats,
-      Generics::CompositeMetricsProvider* composite_metrics_provider)
+      StatHolder* stats
+      //, Generics::CompositeMetricsProvider* composite_metrics_provider
+      )
       : config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
         stats_(ReferenceCounting::add_ref(stats)),
-        composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
+        //composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
         common_module_(new CommonModule(logger_))
     {
       frontends_.reserve(4);
@@ -108,8 +109,9 @@ namespace AdServer
               fe_config.BidFeConfiguration(),
               logger_,
               common_module_,
-              stats_,
-              composite_metrics_provider_);
+              stats_
+              //, composite_metrics_provider_
+              );
           }
           else if(*module_it == M_PUBPIXEL)
           {
@@ -148,8 +150,9 @@ namespace AdServer
             init_frontend<UserBindFrontend>(
               fe_config.UserBindFeConfiguration(),
               logger_,
-              common_module_,
-              composite_metrics_provider_);
+              common_module_
+              //, composite_metrics_provider_
+              );
           }
           else if(*module_it == M_PASSBACK)
           {

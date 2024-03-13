@@ -12,7 +12,8 @@
 #include "RequestInfoManagerMain.hpp"
 #include "RequestInfoManagerStats.hpp"
 #include "RequestInfoManagerStatsAgent.hpp"
-#include "UServerUtils/MetricsHTTPProvider.hpp"
+//#include "UServerUtils/MetricsHTTPProvider.hpp"
+
 namespace
 {
   const char ASPECT[] = "RequestInfoManager";
