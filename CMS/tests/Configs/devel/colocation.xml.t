@@ -391,6 +391,7 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
         host="{$HOST}">
         <configuration>
           <predictor xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <networkParams port="{ $PORT_BASE + 68 }"/>
             <logging log_level="7" sys_log="false"/>
             <merger max_timeout="600">
               <impression from="0" to="-1"/>
