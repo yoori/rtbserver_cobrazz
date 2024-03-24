@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package AdServer.ChannelSvcs.Proto;
+
+option optimize_for = SPEED;
+
+message Error
+{
+  enum Type
+  {
+    Implementation = 0;
+    NotConfigured = 1;
+  }
+
+  Type type = 1;
+  string description = 2;
+}
+
+message MatchQuery
+{
+  string request_id = 1;
+  string first_url = 2;
+  string first_url_words = 3;
+  string urls = 4;
+  string urls_words = 5;
+  string pwords = 6;
+  string swords = 7;
+  bytes uid = 8;
+  string statuses = 9;
+  bool non_strict_word_match = 10;
+  bool non_strict_url_match = 11;
+  bool return_negative = 12;
+  bool simplify_page = 13;
+  bool fill_content = 14;
+}
+
+message MatchRequest
+{
+  uint32 id_request_grpc = 1;
+  MatchQuery query = 2;
+}
+
+message ChannelAtom
+{
+  uint32 id = 1;
+  uint32 trigger_channel_id = 2;
+}
+
+message TriggerMatchResult
+{
+  repeated ChannelAtom page_channels = 1;
+  repeated ChannelAtom search_channels = 2;
+  repeated ChannelAtom url_channels = 3;
+  repeated ChannelAtom url_keyword_channels = 4;
+  repeated uint32 uid_channels = 5;
+}
+
+message ContentChannelAtom
+{
+  uint32 id = 1;
+  uint32 weight = 2;
+};
+
+message MatchResponseInfo
+{
+  TriggerMatchResult matched_channels = 1;
+  repeated ContentChannelAtom content_channels = 2;
+  bool no_adv = 3;
+  bool no_track = 4;
+  bytes match_time = 5;
+}
+
+message MatchResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    MatchResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetCcgTraitsRequest
+{
+  uint32 id_request_grpc = 1;
+  repeated uint32 ids = 2;
+}
+
+message CCGKeyword
+{
+  uint32 ccg_keyword_id = 1;
+  uint32 ccg_id = 2;
+  uint32 channel_id = 3;
+  bytes max_cpc = 4;
+  bytes ctr = 5;
+  string click_url = 6;
+  string original_keyword = 7;
+}
+
+message GetCcgTraitsResponseInfo
+{
+  repeated CCGKeyword ccg_keywords = 1;
+  repeated uint32 neg_ccg = 2;
+}
+
+message GetCcgTraitsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetCcgTraitsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+service ChannelServer
+{
+  rpc match(stream MatchRequest) returns (stream MatchResponse) {}
+  rpc get_ccg_traits(stream GetCcgTraitsRequest) returns (stream GetCcgTraitsResponse) {}
+}

@@ -41,16 +41,25 @@ inline
 AdServer::Commons::UserId
 unpack_user_id(const std::string& user_id)
 {
-  if(!user_id.empty())
+  if(user_id.empty())
+  {
+    return AdServer::Commons::UserId();
+  }
+  else
   {
     return AdServer::Commons::UserId(
       user_id.data(),
       user_id.data() + user_id.size());
   }
-  else
-  {
-    return AdServer::Commons::UserId();
-  }
+}
+
+template<typename DecimalType>
+std::string pack_decimal(const DecimalType& dec)
+{
+  std::string result;
+  result.resize(DecimalType::PACK_SIZE);
+  dec.pack(result.data());
+  return result;
 }
 
 } // namespace GrpcAlgs

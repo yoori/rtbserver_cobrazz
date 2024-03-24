@@ -10,11 +10,19 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/UserverConfigUtils.hpp>
+#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
+#include <UServerUtils/Grpc/Config.hpp>
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Core/Server/Config.hpp>
+
+#include "ChannelServer_service.cobrazz.pb.hpp"
 
 #include "ChannelServerMain.hpp"
 #include "ChannelServerImpl.hpp"
 #include "ChannelServerControlImpl.hpp"
 #include "ChannelUpdateImpl.hpp"
+#include "GrpcService.hpp"
 #include "ProcessStatsControl.hpp"
 //#include "ChannelServer.hpp"
 
@@ -200,6 +208,54 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   }
 }
 
+void ChannelServerApp_::init_coro_()
+{
+  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+
+  // Creating coroutine manager
+  auto task_processor_container_builder =
+    Config::create_task_processor_container_builder(
+      logger(),
+      configuration_->Coroutine());
+
+  auto init_func = [this] (TaskProcessorContainer& task_processor_container) {
+    auto& main_task_processor = task_processor_container.get_main_task_processor();
+    auto components_builder = std::make_unique<ComponentsBuilder>();
+
+    auto grpc_server_builder = Config::create_grpc_cobrazz_server_builder(
+      logger(),
+      configuration_->GrpcServer());
+
+    auto match_service = AdServer::ChannelSvcs::create_grpc_service<
+      AdServer::ChannelSvcs::Proto::ChannelServer_match_Service,
+      AdServer::ChannelSvcs::ChannelServerCustomImpl,
+      &AdServer::ChannelSvcs::ChannelServerCustomImpl::match>(
+        logger(),
+        server_impl_.in());
+    grpc_server_builder->add_service(
+      match_service.in(),
+      main_task_processor);
+
+    auto get_ccg_traits_service = AdServer::ChannelSvcs::create_grpc_service<
+      AdServer::ChannelSvcs::Proto::ChannelServer_get_ccg_traits_Service,
+      AdServer::ChannelSvcs::ChannelServerCustomImpl,
+      &AdServer::ChannelSvcs::ChannelServerCustomImpl::get_ccg_traits>(
+        logger(),
+        server_impl_.in());
+    grpc_server_builder->add_service(
+      get_ccg_traits_service.in(),
+      main_task_processor);
+
+    return components_builder;
+  };
+
+  manager_coro_ = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger());
+}
+
 void ChannelServerApp_::main(int& argc, char** argv) noexcept
 {
   const char FUN[] = "ChannelServerApp_::main(): ";
@@ -235,13 +291,19 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
     //Initialization CORBA
     init_corba_();
 
+    //Initialization Coroutine system
+    init_coro_();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
+    // Running coroutine system
+    manager_coro_->activate_object();
     // Running orb loop
     corba_server_adapter_->run();
 
     wait();
+    manager_coro_->deactivate_object();
+    manager_coro_->wait_object();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
-
   }
   catch (const Exception& e)
   {
