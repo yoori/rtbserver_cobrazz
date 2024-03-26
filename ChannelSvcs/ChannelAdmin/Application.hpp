@@ -11,12 +11,16 @@
 
 #include <Generics/Singleton.hpp>
 #include <Generics/CompositeActiveObject.hpp>
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionImpl.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
+
+#include "ChannelSvcs/ChannelCommons/proto/ChannelServer_client.cobrazz.pb.hpp"
 
 /**
  * \class Application Application.hpp "ChannelAdmin/Application.hpp"
@@ -25,7 +29,13 @@
 class Application
 {
 public:
-    
+  using ManagerCoro = UServerUtils::Grpc::Manager;
+  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using GrpcClientFactory = UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
+  using GrpcClientFactoryPtr = std::unique_ptr<GrpcClientFactory>;
+  using MatchResponse = AdServer::ChannelSvcs::Proto::MatchResponse;
+  using MatchResponsePtr = std::unique_ptr<MatchResponse>;
+
   /**
    * Macros defining Application base exception class.
    */
@@ -115,6 +125,8 @@ public:
   static std::string concat_sequence(ITER begin, ITER end) noexcept;
 
 private:
+  void init_server_grpc_();
+
   void init_server_interface_() /*throw(InvalidArgument)*/;
 
   void init_update_interface_() /*throw(InvalidArgument)*/;
@@ -129,6 +141,8 @@ private:
     T1* iface_ptr,
     T2& res)
     /*throw(Exception)*/;
+
+  MatchResponsePtr make_match_query_grpc();
 
   int update_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/;
@@ -193,7 +207,8 @@ private:
     /*throw(eh::Exception)*/;
 
 private:
-
+  ManagerCoro_var manager_coro_;
+  GrpcClientFactoryPtr grpc_client_factory_;
   bool use_session_;
   Generics::Time date_;
   std::vector<unsigned long> channels_id_;

@@ -14,6 +14,7 @@
 #include <HTTP/UrlAddress.hpp>
 #include <Commons/CorbaTypes.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelCommons.hpp>
 #include <ChannelSvcs/ChannelCommons/Serialization.hpp>
@@ -67,12 +68,13 @@ namespace
     "-u[--urls] url -p[--pwords] page_word -e [--swords] search_word -U uid\n"
       "Options:\n"
       "-r[--reference] reference: set CORBA reference\n"
-      "-P[--host_and_port] host:port: set host and port for CORBA reference "
+      "-P[--host_and_port] host:port: set host and port for CORBA reference or GRPC endpoint(required -g flag set)"
       "if it didn't set\n"
       "-a[--stat] calculate time execution statistic of call\n"
       "-t n: do query n times\n"
       "-d[--non-strict-hard] enable non-strict word matching\n"
       "-f[--non-strict-soft] enable non-strict word matching\n"
+      "-g[--grpc] use the grpc protocol to communicate with the channel server"
       "-l[--non-strict-url] enable non-strict-url matching\n"
       "-u[--urls] word: phrase for url matching\n"
       "-U[--uid] uid: uid in text representation\n"
@@ -354,6 +356,7 @@ namespace
 
   enum CheckOptionId
   {
+    OPT_GRPC,
     OPT_SPECIAL,
     OPT_ONLY_SPECIAL,
     OPT_NS_WORD_H,
@@ -370,6 +373,8 @@ namespace
 
   static Option<Generics::AppUtils::CheckOption> check_options[] =
   {
+    { OPT_GRPC, "grpc", "g" ,
+      Generics::AppUtils::CheckOption() },
     { OPT_SPECIAL, "special", "h" ,
       Generics::AppUtils::CheckOption() },
     { OPT_ONLY_SPECIAL, "only-special", "H",
@@ -479,9 +484,33 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/:
   use_session_(false),
   date_(0)
 {
-  logger_ = 
+  logger_ =
     new Logging::OStream::Logger(Logging::OStream::Config(std::cout));
   adapter_ = new CORBACommons::CorbaClientAdapter;
+
+  UServerUtils::Grpc::CoroPoolConfig coro_pool_config;
+  UServerUtils::Grpc::EventThreadPoolConfig event_thread_pool_config;
+  UServerUtils::Grpc::TaskProcessorConfig main_task_processor_config;
+  main_task_processor_config.name = "main_task_processor";
+  main_task_processor_config.worker_threads = 3;
+  main_task_processor_config.thread_name = "main_tskpr";
+
+  auto init_func = [] (UServerUtils::Grpc::TaskProcessorContainer& task_processor_container) {
+    return std::make_unique<UServerUtils::Grpc::ComponentsBuilder>();
+  };
+
+  auto task_processor_container_builder =
+    std::make_unique<UServerUtils::Grpc::TaskProcessorContainerBuilder>(
+      logger_.in(),
+      coro_pool_config,
+      event_thread_pool_config,
+      main_task_processor_config);
+
+  manager_coro_ = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger_.in());
+  manager_coro_->activate_object();
 }
 
 Application::~Application() noexcept
@@ -590,6 +619,25 @@ void Application::init_update_interface_() /*throw(InvalidArgument)*/
       throw InvalidArgument(ostr);
     }
   }
+}
+
+void Application::init_server_grpc_()
+{
+  if (!string_options[OPT_HOST_AND_PORT].value.installed())
+  {
+    Stream::Error stream;
+    stream << "GRPC protocol requires --host_and_port command line argument";
+    throw InvalidArgument(stream);
+  }
+
+  UServerUtils::Grpc::Core::Client::ConfigPoolCoro config_grpc_client;
+  config_grpc_client.number_async_client = 5;
+  config_grpc_client.number_channels = 5;
+  config_grpc_client.endpoint = *string_options[OPT_HOST_AND_PORT].value;
+
+  grpc_client_factory_ = std::make_unique<GrpcClientFactory>(
+    logger_.in(),
+    config_grpc_client);
 }
 
 void Application::init_server_interface_() /*throw(InvalidArgument)*/
@@ -870,6 +918,11 @@ void Application::deactivate_objects()
   {
     load_session_factory_->deactivate_object();
     load_session_factory_->wait_object();
+  }
+  if (manager_coro_.in())
+  {
+    manager_coro_->deactivate_object();
+    manager_coro_->wait_object();
   }
 }
 
@@ -1690,6 +1743,23 @@ void add_row_to_match_result(
 }
 
 void add_row_to_match_result(
+  const google::protobuf::RepeatedPtrField<AdServer::ChannelSvcs::Proto::ChannelAtom>& channels,
+  char type,
+  const Table::Filters& filters,
+  Table* table)
+{
+  for (int i = 0; i < channels.size(); ++i)
+  {
+    const auto& channel = channels[i];
+    Table::Row row(3);
+    row.add_field(channel.id());
+    row.add_field(channel.trigger_channel_id());
+    row.add_field(type);
+    table->add_row(row, filters);
+  }
+}
+
+void add_row_to_match_result(
   const AdServer::ChannelSvcs::ChannelIdSeq& channels,
   char type,
   const Table::Filters& filters,
@@ -1698,6 +1768,23 @@ void add_row_to_match_result(
   for(size_t i = 0; i < channels.length(); i++)
   {
     const CORBA::ULong& channel = channels[i];
+    Table::Row row(3);
+    row.add_field(channel);
+    row.add_field(channel);
+    row.add_field(type);
+    table->add_row(row, filters);
+  }
+}
+
+void add_row_to_match_result(
+  const google::protobuf::RepeatedField<std::uint32_t>& channels,
+  char type,
+  const Table::Filters& filters,
+  Table* table)
+{
+  for(int i = 0; i < channels.size(); i++)
+  {
+    const auto channel = channels[i];
     Table::Row row(3);
     row.add_field(channel);
     row.add_field(channel);
@@ -1749,6 +1836,51 @@ void print_match_result(T& result, const Table::Filters& filters, bool no_print_
   }
 }
 
+void print_match_result(
+  const AdServer::ChannelSvcs::Proto::MatchResponseInfo& result,
+  const Table::Filters& filters,
+  const bool no_print_content)
+{
+  std::unique_ptr<Table> table(new Table(2));
+  table->column(0, Table::Column("NO_ADV"));
+  table->column(1, Table::Column("NO_TRACK"));
+  Table::Row row(2);
+  row.add_field(result.no_adv() ? "yes" : "no");
+  row.add_field(result.no_track() ? "yes" : "no");
+  table->add_row(row);
+  table->dump(std::cout);
+
+  table.reset(new Table(3));
+  table->column(0, Table::Column("channel_id", Table::Column::NUMBER));
+  table->column(1, Table::Column("trigger_channel_id", Table::Column::NUMBER));
+  table->column(2, Table::Column("type"));
+  add_row_to_match_result(
+    result.matched_channels().page_channels(), 'P', filters, table.get());
+  add_row_to_match_result(
+    result.matched_channels().search_channels(), 'S', filters, table.get());
+  add_row_to_match_result(
+    result.matched_channels().url_channels(), 'U', filters, table.get());
+  add_row_to_match_result(
+    result.matched_channels().url_keyword_channels(), 'R', filters, table.get());
+  add_row_to_match_result(
+    result.matched_channels().uid_channels(), 'A', filters, table.get());
+  table->dump(std::cout);
+  if(!no_print_content)
+  {
+    table.reset(new Table(2));
+    table->column(0, Table::Column("content_id", Table::Column::NUMBER));
+    table->column(1, Table::Column("content_weight"));
+    for(int j = 0; j < result.content_channels().size(); ++j)
+    {
+      Table::Row row(2);
+      row.add_field(result.content_channels()[j].id());
+      row.add_field(result.content_channels()[j].weight());
+      table->add_row(row);
+    }
+    table->dump(std::cout);
+  }
+}
+
 void Application::print_unmatched(
   const char* name,
   const CORBACommons::StringSeq& unmatched)
@@ -1780,6 +1912,22 @@ void print_match_appendix(
   table->column(2, Table::Column("match_time"));
   row.add_field((result->no_adv ? 1: 0));
   row.add_field((result->no_track ? 1: 0));
+  row.add_field(match_time);
+  table->add_row(row);
+  table->dump(std::cout);
+}
+
+void print_match_appendix(
+  const std::string& match_time,
+  const AdServer::ChannelSvcs::Proto::MatchResponseInfo& result)
+{
+  std::unique_ptr<Table> table(new Table(3));
+  Table::Row row(3);
+  table->column(0, Table::Column("NO_ADV", Table::Column::NUMBER));
+  table->column(1, Table::Column("NO_TRACK", Table::Column::NUMBER));
+  table->column(2, Table::Column("match_time"));
+  row.add_field((result.no_adv() ? 1 : 0));
+  row.add_field((result.no_track() ? 1 : 0));
   row.add_field(match_time);
   table->add_row(row);
   table->dump(std::cout);
@@ -1855,10 +2003,96 @@ void Application::make_match_query(
   }
 }
 
+Application::MatchResponsePtr Application::make_match_query_grpc()
+{
+  using ChannelServer_match_ClientPool = AdServer::ChannelSvcs::Proto::ChannelServer_match_ClientPool;
+  using MatchRequest = AdServer::ChannelSvcs::Proto::MatchRequest;
+
+  try
+  {
+    auto client = grpc_client_factory_->create<ChannelServer_match_ClientPool>(
+      manager_coro_->get_main_task_processor());
+
+    auto request = std::make_unique<MatchRequest>();
+
+    Generics::Uuid uid;
+    auto* query = request->mutable_query();
+    query->set_request_id("ChannelAdmin");
+    query->set_first_url(*string_options[OPT_URL].value);
+    query->set_pwords(*string_options[OPT_PWORDS].value);
+    query->set_swords(*string_options[OPT_SWORDS].value);
+    if (!string_options[OPT_UID].value.installed())
+    {
+      query->set_uid(GrpcAlgs::pack_user_id(Generics::Uuid()));
+    }
+    else
+    {
+      query->set_uid(GrpcAlgs::pack_user_id(
+        Generics::Uuid(*string_options[OPT_UID].value, false)));
+    }
+    query->set_non_strict_word_match(
+      check_options[OPT_NS_WORD_H].value.enabled() ||
+      check_options[OPT_NS_WORD_S].value.enabled());
+    query->set_non_strict_url_match(check_options[OPT_NS_WORD_U].value.enabled());
+    query->set_return_negative(check_options[OPT_NEGATIVE].value.enabled());
+    query->set_simplify_page(!check_options[OPT_NO_SIMPLIFY_PAGE].value.enabled());
+    query->set_fill_content(!check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+    if (string_options[OPT_STATUS].value->empty())
+    {
+      throw Exception("statuses didn't set");
+    }
+    std::string statuses;
+    statuses.push_back((*string_options[OPT_STATUS].value)[0]);
+    if (string_options[OPT_STATUS].value->size() > 1)
+    {
+      statuses.push_back((*string_options[OPT_STATUS].value)[1]);
+    }
+    else
+    {
+      statuses.push_back(0);
+    }
+    query->set_statuses(std::move(statuses));
+
+    auto result = client->write(std::move(request), 1500);
+    if (result.status == UServerUtils::Grpc::Core::Client::Status::Ok)
+    {
+      auto response = std::move(result.response);
+      return response;
+    }
+    else if (result.status == UServerUtils::Grpc::Core::Client::Status::Timeout)
+    {
+      throw Exception("Timeout is reached");
+    }
+    else if (result.status == UServerUtils::Grpc::Core::Client::Status::InternalError)
+    {
+      throw Exception("Internal error occure");
+    }
+  }
+  catch(const eh::Exception& exc)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << ": Exception: "
+           << exc.what();
+    throw Exception(stream);
+  }
+
+  return {};
+}
+
 int Application::match_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/
 {
-  init_server_interface_();
+  const bool is_grpc = check_options[OPT_GRPC].value.enabled();
+  if (is_grpc)
+  {
+    init_server_grpc_();
+  }
+  else
+  {
+    init_server_interface_();
+  }
+
   {
     if(!check_options[OPT_WILD_INPUT].value.enabled())
     {
@@ -1898,14 +2132,27 @@ int Application::match_()
   std::string err_descr;
   try
   {
-    if (use_session_)
+    if (is_grpc)
     {
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result_1; 
-      AdServer::ChannelSvcs::ChannelIdSeq empty;
-      make_match_query<
-        AdServer::ChannelSvcs::ChannelServerSession,
-        AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var>(
-          channel_session_, result_1);
+      auto response = make_match_query_grpc();
+      auto& info = response->info();
+      print_match_result(
+        info,
+        filters_,
+        check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+      match_time << GrpcAlgs::unpack_time(info.match_time());
+      print_match_appendix(match_time.str(), info);
+    }
+    else
+    {
+      if (use_session_)
+      {
+        AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result_1;
+        AdServer::ChannelSvcs::ChannelIdSeq empty;
+        make_match_query<
+          AdServer::ChannelSvcs::ChannelServerSession,
+          AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var>(
+            channel_session_, result_1);
         print_match_result(
           result_1,
           filters_, check_options[OPT_NO_PRINT_CONTENT].value.enabled());
@@ -1922,19 +2169,20 @@ int Application::match_()
           }
         }
         print_match_appendix(match_time.str(), result_1);
-    }
-    else
-    {
-      AdServer::ChannelSvcs::ChannelServer::MatchResult_var result_2; 
-      make_match_query<
-        AdServer::ChannelSvcs::ChannelServer,
-        AdServer::ChannelSvcs::ChannelServer::MatchResult_var>(
-          channel_server_, result_2);
+      }
+      else
+      {
+        AdServer::ChannelSvcs::ChannelServer::MatchResult_var result_2;
+        make_match_query<
+          AdServer::ChannelSvcs::ChannelServer,
+          AdServer::ChannelSvcs::ChannelServer::MatchResult_var>(
+            channel_server_, result_2);
         print_match_result(
           result_2,
           filters_, check_options[OPT_NO_PRINT_CONTENT].value.enabled());
         match_time << CorbaAlgs::unpack_time(result_2->match_time);
         print_match_appendix(match_time.str(), result_2);
+      }
     }
   }
   catch(const Exception& e)
@@ -1945,6 +2193,7 @@ int Application::match_()
   {
     throw Exception(err_descr);
   }
+
   return 0;
 }
 
