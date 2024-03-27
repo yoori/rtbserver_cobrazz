@@ -247,6 +247,8 @@ void ChannelServerApp_::init_coro_()
       get_ccg_traits_service.in(),
       main_task_processor);
 
+    components_builder->add_grpc_cobrazz_server(std::move(grpc_server_builder));
+
     return components_builder;
   };
 
