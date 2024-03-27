@@ -35,6 +35,8 @@ public:
   using GrpcClientFactoryPtr = std::unique_ptr<GrpcClientFactory>;
   using MatchResponse = AdServer::ChannelSvcs::Proto::MatchResponse;
   using MatchResponsePtr = std::unique_ptr<MatchResponse>;
+  using MatchClient = AdServer::ChannelSvcs::Proto::ChannelServer_match_ClientPool;
+  using MatchClientPtr = std::shared_ptr<MatchClient>;
 
   /**
    * Macros defining Application base exception class.
@@ -69,6 +71,9 @@ public:
 
     template<typename Object, typename Function, typename ReturnType, typename...Args>
       void calc_stat_r(Object* call, Function func, ReturnType& ret, Args&... args);
+
+    template<typename R, typename F>
+    R calc_stat_r(F&& f);
 
     virtual ~StatMarker() noexcept;
 
@@ -209,6 +214,7 @@ private:
 private:
   ManagerCoro_var manager_coro_;
   GrpcClientFactoryPtr grpc_client_factory_;
+  MatchClientPtr match_client_;
   bool use_session_;
   Generics::Time date_;
   std::vector<unsigned long> channels_id_;
@@ -295,6 +301,34 @@ void Application::StatMarker::calc_stat_r(Object* call, Function func, ReturnTyp
     {
     }
   }
+}
+
+template<typename R, typename F>
+R Application::StatMarker::calc_stat_r(F&& f)
+{
+  std::unique_ptr<R> ret;
+  for(size_t i = 0; i < times_; ++i)
+  {
+    Generics::Timer timer;
+    try
+    {
+      timer.start();
+    }
+    catch(...)
+    {
+    }
+    ret = std::make_unique<R>(f());
+    try
+    {
+      timer.stop();
+      calc_value_(timer.elapsed_time(), i);
+    }
+    catch(...)
+    {
+    }
+  }
+
+  return std::move(*ret);
 }
 
 #endif // AD_SERVER_CHANNEL_SERVICE_CHANNEL_ADMIN_APPLICATION_HPP_

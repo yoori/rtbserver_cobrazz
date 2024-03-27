@@ -1144,17 +1144,24 @@ namespace ChannelSvcs
     auto& query = request->query();
     try
     {
+      Generics::Timer timer;
+      static MatchBreakSeparators separators;
+      timer.start();
+
       auto response = create_grpc_response<Proto::MatchResponse>(
         id_request_grpc);
       auto* info = response->mutable_info();
 
-      Generics::Timer timer;
-      static MatchBreakSeparators separators;
-      timer.start();
       if(state_ == UpdateData::US_ZERO)
       {
-        throw AdServer::ChannelSvcs::NotConfigured(
-          "Source chunks wasn't setted for server yet");
+        Stream::Error stream;
+        stream << FNS
+               << ": Source chunks wasn't setted for server yet";
+        auto response = create_grpc_error_response<Proto::MatchResponse>(
+          Proto::Error_Type::Error_Type_NotConfigured,
+          stream.str(),
+          id_request_grpc);
+        return response;
       }
       std::unique_ptr<std::ostringstream> logstr;
       TriggerMatchRes res;
@@ -1167,14 +1174,7 @@ namespace ChannelSvcs
           << "::s:" <<  query.swords()
           << "::U:" <<  uid.to_string(false);
       }
-
       const auto& query_statuses = query.statuses();
-      if (query_statuses.size() != 2)
-      {
-        throw AdServer::ChannelSvcs::ImplementationException(
-          "Not correct size of statuses");
-      }
-
       unsigned int match_flags =
         (query.non_strict_word_match() ? MF_NONSTRICTKW : MF_NONE) |
         (query.non_strict_url_match() ? MF_NONSTRICTURL : MF_NONE) |
@@ -1188,18 +1188,22 @@ namespace ChannelSvcs
       AdServer::ChannelSvcs::MatchWords additional_url_keywords;
       MatchUrls url_words, additional_url_words;
       //parsing urls
+      const auto& first_url_query = query.first_url();
+      const auto& first_url_words_query = query.first_url_words();
       ChannelContainer::match_parse_urls(
-        String::SubString(query.first_url()),
-        String::SubString(query.first_url_words()),
+        String::SubString(first_url_query.data(), first_url_query.size()),
+        String::SubString(first_url_words_query.data(), first_url_words_query.size()),
         ports_,
         query.non_strict_url_match(),
         url_words,
         phrases[CT_URL_KEYWORDS],
         logger(),
         segmentor_);
+      const auto& urls_query = query.urls();
+      const auto& urls_words_query = query.urls_words();
       ChannelContainer::match_parse_urls(
-        String::SubString(query.urls()),
-        String::SubString(query.urls_words()),
+        String::SubString(urls_query.data(), urls_query.size()),
+        String::SubString(urls_words_query.data(), urls_words_query.size()),
         ports_,
         query.non_strict_url_match(),
         additional_url_words,
@@ -1208,8 +1212,10 @@ namespace ChannelSvcs
         segmentor_);
 
       StringVector exact_phrases;
+      const auto& swords_query = query.swords();
+      const auto& pwords_query = query.pwords();
       parse_keywords(
-        String::SubString(query.swords()),
+        String::SubString(swords_query.data(), swords_query.size()),
         phrases[CT_SEARCH],
         match_flags & MF_NONSTRICTKW ? PM_SIMPLIFY : PM_NO_SIMPLIFY,
         match_flags & MF_NONSTRICTKW ? nullptr : &separators,
@@ -1217,7 +1223,7 @@ namespace ChannelSvcs
         &exact_phrases,//exact match
         match_flags & MF_NONSTRICTKW ? segmentor_ : 0);
       parse_keywords(
-        String::SubString(query.pwords()),
+        String::SubString(pwords_query.data(), pwords_query.size()),
         phrases[CT_PAGE],
         (query.simplify_page() || match_flags & MF_NONSTRICTKW) ?
         PM_SIMPLIFY : PM_NO_SIMPLIFY,
@@ -1373,8 +1379,14 @@ namespace ChannelSvcs
 
       if(state_ == UpdateData::US_ZERO)
       {
-        throw AdServer::ChannelSvcs::NotConfigured(
-          "Source chunks wasn't setted for server yet");
+        Stream::Error stream;
+        stream << FNS
+               << ": Source chunks wasn't setted for server yet";
+        auto response = create_grpc_error_response<Proto::GetCcgTraitsResponse>(
+          Proto::Error_Type::Error_Type_NotConfigured,
+          stream.str(),
+          id_request_grpc);
+        return response;
       }
 
       const auto& ids = request->ids();

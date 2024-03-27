@@ -74,7 +74,7 @@ namespace
       "-t n: do query n times\n"
       "-d[--non-strict-hard] enable non-strict word matching\n"
       "-f[--non-strict-soft] enable non-strict word matching\n"
-      "-g[--grpc] use the grpc protocol to communicate with the channel server"
+      "-g[--grpc] use grpc protocol to communicate with the channel server\n"
       "-l[--non-strict-url] enable non-strict-url matching\n"
       "-u[--urls] word: phrase for url matching\n"
       "-U[--uid] uid: uid in text representation\n"
@@ -89,7 +89,7 @@ namespace
       "  filter option ::= <field name><rel op><value>\n"
       "  rel op ::= ~ | !~ | = | != | < | > | <= | >=  // '~' relational operator means \"contained\"\n"
       "At least one of u,p,e,o options should present.\n"
-      "Examples:\n ./ChannelAdmin match -sr "
+      "Examples:\n ./ChannelAdmin match -r "
       "corbaloc:iiop:localhost:2104/ChannelManagerController "
       " -a norm -t 10 -u dev.ocslab.com -p \"steal money\" -e prison\n"
       "Make matching query to server working on localhost and 2104 port,"
@@ -484,15 +484,17 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/:
   use_session_(false),
   date_(0)
 {
-  logger_ =
-    new Logging::OStream::Logger(Logging::OStream::Config(std::cout));
+  logger_ = new Logging::OStream::Logger(
+    Logging::OStream::Config(
+      std::cerr,
+      Logging::Logger::CRITICAL));
   adapter_ = new CORBACommons::CorbaClientAdapter;
 
   UServerUtils::Grpc::CoroPoolConfig coro_pool_config;
   UServerUtils::Grpc::EventThreadPoolConfig event_thread_pool_config;
   UServerUtils::Grpc::TaskProcessorConfig main_task_processor_config;
   main_task_processor_config.name = "main_task_processor";
-  main_task_processor_config.worker_threads = 3;
+  main_task_processor_config.worker_threads = 1;
   main_task_processor_config.thread_name = "main_tskpr";
 
   auto init_func = [] (UServerUtils::Grpc::TaskProcessorContainer& task_processor_container) {
@@ -623,21 +625,27 @@ void Application::init_update_interface_() /*throw(InvalidArgument)*/
 
 void Application::init_server_grpc_()
 {
-  if (!string_options[OPT_HOST_AND_PORT].value.installed())
+  if (!match_client_)
   {
-    Stream::Error stream;
-    stream << "GRPC protocol requires --host_and_port command line argument";
-    throw InvalidArgument(stream);
+    if (!string_options[OPT_HOST_AND_PORT].value.installed())
+    {
+      Stream::Error stream;
+      stream << "GRPC protocol requires --host_and_port command line argument";
+      throw InvalidArgument(stream);
+    }
+
+    UServerUtils::Grpc::Core::Client::ConfigPoolCoro config_grpc_client;
+    config_grpc_client.number_async_client = 5;
+    config_grpc_client.number_channels = 5;
+    config_grpc_client.endpoint = *string_options[OPT_HOST_AND_PORT].value;
+
+    grpc_client_factory_ = std::make_unique<GrpcClientFactory>(
+      logger_.in(),
+      config_grpc_client);
+
+    match_client_ = grpc_client_factory_->create<MatchClient>(
+      manager_coro_->get_main_task_processor());
   }
-
-  UServerUtils::Grpc::Core::Client::ConfigPoolCoro config_grpc_client;
-  config_grpc_client.number_async_client = 5;
-  config_grpc_client.number_channels = 5;
-  config_grpc_client.endpoint = *string_options[OPT_HOST_AND_PORT].value;
-
-  grpc_client_factory_ = std::make_unique<GrpcClientFactory>(
-    logger_.in(),
-    config_grpc_client);
 }
 
 void Application::init_server_interface_() /*throw(InvalidArgument)*/
@@ -2005,14 +2013,10 @@ void Application::make_match_query(
 
 Application::MatchResponsePtr Application::make_match_query_grpc()
 {
-  using ChannelServer_match_ClientPool = AdServer::ChannelSvcs::Proto::ChannelServer_match_ClientPool;
   using MatchRequest = AdServer::ChannelSvcs::Proto::MatchRequest;
 
   try
   {
-    auto client = grpc_client_factory_->create<ChannelServer_match_ClientPool>(
-      manager_coro_->get_main_task_processor());
-
     auto request = std::make_unique<MatchRequest>();
 
     Generics::Uuid uid;
@@ -2047,13 +2051,19 @@ Application::MatchResponsePtr Application::make_match_query_grpc()
     {
       statuses.push_back((*string_options[OPT_STATUS].value)[1]);
     }
-    else
-    {
-      statuses.push_back(0);
-    }
     query->set_statuses(std::move(statuses));
 
-    auto result = client->write(std::move(request), 1500);
+    StatMarker stat_marker(
+      *string_options[OPT_STAT].value,
+      "Match",
+      *ulong_options[OPT_TIMES].value);
+
+    auto func = [request = std::move(request), match_client = match_client_] () {
+      auto copy_request = std::make_unique<MatchRequest>(*request);
+      return match_client->write(std::move(copy_request), 1500);
+    };
+
+    auto result = stat_marker.calc_stat_r<MatchClient::WriteResult>(std::move(func));
     if (result.status == UServerUtils::Grpc::Core::Client::Status::Ok)
     {
       auto response = std::move(result.response);
@@ -2067,6 +2077,8 @@ Application::MatchResponsePtr Application::make_match_query_grpc()
     {
       throw Exception("Internal error occure");
     }
+
+    return std::move(result.response);
   }
   catch(const eh::Exception& exc)
   {
@@ -2135,13 +2147,35 @@ int Application::match_()
     if (is_grpc)
     {
       auto response = make_match_query_grpc();
-      auto& info = response->info();
-      print_match_result(
-        info,
-        filters_,
-        check_options[OPT_NO_PRINT_CONTENT].value.enabled());
-      match_time << GrpcAlgs::unpack_time(info.match_time());
-      print_match_appendix(match_time.str(), info);
+      if (response->has_error())
+      {
+        const auto& error = response->error();
+        std::cout << "Server error occure:\n type=";
+        switch (error.type())
+        {
+        case AdServer::ChannelSvcs::Proto::Error_Type_NotConfigured:
+          std::cout << "NotConfigured\n";
+          break;
+        case AdServer::ChannelSvcs::Proto::Error_Type_Implementation:
+          std::cout << "Implementation\n";
+          break;
+        default:
+          throw Exception("Unknown error type");
+        }
+        std::cout << " description="
+                  << error.description()
+                  << std::endl;
+      }
+      else
+      {
+        auto& info = response->info();
+        print_match_result(
+          info,
+          filters_,
+          check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+        match_time << GrpcAlgs::unpack_time(info.match_time());
+        print_match_appendix(match_time.str(), info);
+      }
     }
     else
     {
