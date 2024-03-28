@@ -494,7 +494,7 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/:
   UServerUtils::Grpc::EventThreadPoolConfig event_thread_pool_config;
   UServerUtils::Grpc::TaskProcessorConfig main_task_processor_config;
   main_task_processor_config.name = "main_task_processor";
-  main_task_processor_config.worker_threads = 1;
+  main_task_processor_config.worker_threads = 10;
   main_task_processor_config.thread_name = "main_tskpr";
 
   auto init_func = [] (UServerUtils::Grpc::TaskProcessorContainer& task_processor_container) {
