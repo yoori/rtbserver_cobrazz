@@ -1,3 +1,4 @@
+ADD_SUBDIRECTORY(BenchamrkProto)
 ADD_SUBDIRECTORY(ChannelAdmin)
 ADD_SUBDIRECTORY(ChannelCommons)
 ADD_SUBDIRECTORY(ChannelManagerController)
