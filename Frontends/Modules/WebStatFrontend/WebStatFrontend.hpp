@@ -45,7 +45,8 @@ namespace WebStat
     Frontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -53,8 +54,8 @@ namespace WebStat
 
     void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -89,8 +90,8 @@ namespace WebStat
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+      const FrontendCommons::HttpRequest& request,
+      FrontendCommons::HttpResponse& response)
       noexcept;
 
   private:

@@ -34,8 +34,6 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
-//#include <Generics/CompositeMetricsProvider.hpp>
-
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer
@@ -75,9 +73,8 @@ namespace AdServer
     UserBindFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module
-      //, Generics::CompositeMetricsProvider* composite_metrics_provider
-      )
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -85,8 +82,8 @@ namespace AdServer
 
     void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -112,8 +109,8 @@ namespace AdServer
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+      const FrontendCommons::HttpRequest& request,
+      FrontendCommons::HttpResponse& response)
       noexcept;
 
     int
@@ -276,14 +273,13 @@ namespace AdServer
       channel_servers_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::CookieManager<
-      FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
+      FrontendCommons::HttpRequest, FrontendCommons::HttpResponse> > cookie_manager_;
 
     Generics::TaskExecutor_var bind_task_runner_;
     Generics::TaskExecutor_var match_task_runner_;
 
     Algs::AtomicInt bind_task_count_;
     Algs::AtomicInt match_task_count_;
-    //Generics::CompositeMetricsProvider_var composite_metrics_provider_;
   };
 }
 

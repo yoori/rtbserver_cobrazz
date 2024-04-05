@@ -63,7 +63,7 @@ namespace Frontends
     void
     send_response(
       int code,
-      FCGI::HttpResponse_var response)
+      FrontendCommons::HttpResponse_var response)
       noexcept;
 
     SocketType&
@@ -81,7 +81,7 @@ namespace Frontends
       SendBuf(SendBuf&& init);
 
       //std::vector<char> wbuf;
-      FCGI::HttpResponse_var response; // hold buffers ownership
+      FrontendCommons::HttpResponse_var response; // hold buffers ownership
       std::vector<boost::asio::const_buffer> bufs;
     };
 
@@ -107,7 +107,7 @@ namespace Frontends
     void
     process_request_(
       boost::asio::yield_context yield,
-      FCGI::HttpRequest_var request) noexcept;
+      FrontendCommons::HttpRequest_var request) noexcept;
 
   private:
     static const int READ_BUF_SIZE_ = 1024 * 1024; // 1 Mb
@@ -143,7 +143,7 @@ namespace Frontends
     {}
 
     virtual void
-    write(int code, FCGI::HttpResponse_var response)
+    write(int code, FrontendCommons::HttpResponse_var response)
     {
       connection_->send_response(code, response);
     }
@@ -340,9 +340,9 @@ namespace Frontends
     }
 
     // try parse request
-    FCGI::HttpRequest_var request(new FCGI::HttpRequest);
+    FrontendCommons::HttpRequest_var request(new FrontendCommons::HttpRequest);
     int parse_res = request->parse(data_start, data_end - data_start);
-    if(parse_res == FCGI::PARSE_OK)
+    if(parse_res == FrontendCommons::PARSE_OK)
     {
       // push to async processing
       auto self(shared_from_this());
@@ -360,16 +360,16 @@ namespace Frontends
       //logger_i_()->warning(Gears::SubString("getting PARSE_NEED_MORE"), Aspect::WORKER);
       break;
 
-    case FCGI::PARSE_INVALID_HEADER:
+    case FrontendCommons::PARSE_INVALID_HEADER:
       logger_i_()->info(Gears::SubString("invalid fcgi header"), Aspect::WORKER);
       return false;
-    case FCGI::PARSE_BEGIN_REQUEST_EXPECTED:
+    case FrontendCommons::PARSE_BEGIN_REQUEST_EXPECTED:
       logger_i_()->info(Gears::SubString("begin request expected"), Aspect::WORKER);
       return false;
-    case FCGI::PARSE_INVALID_ID:
+    case FrontendCommons::PARSE_INVALID_ID:
       logger_i_()->info(Gears::SubString("invalid FCGI header id"), Aspect::WORKER);
       return false;
-    case FCGI::PARSE_FRAGMENTED_STDIN:
+    case FrontendCommons::PARSE_FRAGMENTED_STDIN:
       logger_i_()->info(Gears::SubString("fragmented stdin"), Aspect::WORKER);
       return false;
     }
@@ -380,7 +380,7 @@ namespace Frontends
   void
   FCGIServer::Connection::process_request_(
     boost::asio::yield_context yield,
-    FCGI::HttpRequest_var request) noexcept
+    FrontendCommons::HttpRequest_var request) noexcept
   {
     int res_code;
 
@@ -406,10 +406,10 @@ namespace Frontends
   void
   FCGIServer::Connection::send_response(
     int code,
-    FCGI::HttpResponse_var response_ptr)
+    FrontendCommons::HttpResponse_var response_ptr)
     noexcept
   {
-    FCGI::HttpResponse_var response(std::move(response_ptr));
+    FrontendCommons::HttpResponse_var response(std::move(response_ptr));
 
     // send response
     std::vector<Gears::SubString> buffers;

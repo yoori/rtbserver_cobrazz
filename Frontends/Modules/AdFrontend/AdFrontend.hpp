@@ -76,12 +76,13 @@ namespace AdServer
     typedef Configuration::FeConfig::PassFeConfiguration_type
       PassFeConfiguration;
 
-    typedef FCGI::HttpResponse HttpResponse;
+    typedef FrontendCommons::HttpResponse HttpResponse;
 
     AdFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     /** Determines whether the module is able to process the URI.
@@ -101,8 +102,8 @@ namespace AdServer
      */
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer) noexcept;
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer) noexcept;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -148,7 +149,7 @@ namespace AdServer
     typedef std::unique_ptr<AdFeConfiguration> ConfigPtr;
     typedef std::unique_ptr<PassFeConfiguration> PassConfigPtr;
     typedef std::unique_ptr<
-      FrontendCommons::CookieManager<FCGI::HttpRequest, HttpResponse> >
+      FrontendCommons::CookieManager<FrontendCommons::HttpRequest, HttpResponse> >
       CookieManagerPtr;
 
     typedef Sync::Policy::PosixThreadRW SyncPolicy;
@@ -173,7 +174,7 @@ namespace AdServer
     int
     acquire_ad(
       HttpResponse& response,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const RequestInfo& request_info,
       const Generics::SubStringHashAdapter& instantiate_creative_type,
       std::string& str_response,
@@ -248,7 +249,7 @@ namespace AdServer
     opt_out_client_(
       const HTTP::CookieList& cookies,
       HttpResponse& response,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const RequestInfo& request_info)
       noexcept;
 
@@ -263,7 +264,7 @@ namespace AdServer
     void
     log_request(
       const char* function_name,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       unsigned int log_level)
       /*throw(eh::Exception)*/;
 

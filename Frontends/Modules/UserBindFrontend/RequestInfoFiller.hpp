@@ -104,7 +104,7 @@ namespace UserBind
     void
     fill(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const String::SubString& path_args)
       /*throw(InvalidParamException, Exception)*/;
 
@@ -144,20 +144,20 @@ namespace UserBind
     void
     cookies_processing_(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
 
     void
     params_processing_(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const String::SubString& path_args)
       /*throw(InvalidParamException, Exception)*/;
 
     void
     headers_processing_(
       RequestInfo& request_info,
-      const FCGI::HttpRequest& request)
+      const FrontendCommons::HttpRequest& request)
       /*throw(InvalidParamException, Exception)*/;
   };
 }

@@ -9,9 +9,9 @@ add_library(BillingProcessor SHARED
 )
 
 target_link_libraries(BillingProcessor
-  Generics
-  Commons
   BillingServerIDL
+  Commons
+  Generics
   RequestProfilePST
 )
 
@@ -20,12 +20,12 @@ add_library(PassbackContainer SHARED
 )
 
 target_link_libraries(PassbackContainer
-  pcre
+  Commons
   Generics
   PlainStorage2
   PrivacyFilter
-  Commons
   RequestInfoManagerCompatibility
+  pcre
 )
 
 add_library(RequestInfoContainer SHARED
@@ -33,13 +33,13 @@ add_library(RequestInfoContainer SHARED
 )
 
 target_link_libraries(RequestInfoContainer
-  pcre
+  Commons
   Generics
   PlainStorage2
   PrivacyFilter
-  Commons
   ProfileMap
   RequestInfoManagerCompatibility
+  pcre
 )
 
 add_idl(RequestInfoManagerIDL RequestInfoManager.idl ${IDL_DIRECTORY}/RequestInfoSvcs/RequestInfoManager)
@@ -50,73 +50,65 @@ target_link_libraries(RequestInfoManagerIDL
 )
 
 add_executable(RequestInfoManager
-  RequestInfoManagerMain.cpp 
-  RequestInfoManagerImpl.cpp 
-  RequestOutLogger.cpp 
-  RequestLogLoader.cpp
-  RequestOperationDistributor.cpp 
   ExpressionMatcherNotifier.cpp
+  RequestInfoManagerImpl.cpp
+  RequestInfoManagerMain.cpp
+  RequestLogLoader.cpp
+  RequestOperationDistributor.cpp
+  RequestOutLogger.cpp
 )
 
 target_link_libraries(RequestInfoManager
-  pcre
+  BillingProcessor
   CORBACommons
-  ProcessControlVars
-  PrivacyFilter
-  SNMPAgent
-  RequestInfoManagerIDL
-  Commons
-
-  RequestInfoManagerConfigXSD
-
-  BillingProcessor
-  PassbackContainer
-  RequestInfoContainer
-  ExpressionMatcherIDL
-  UserInfoManagerControllerIDL
   CampaignServerIDL
+  Commons
+  ExpressionMatcherIDL
   LogCommons
-
-  RequestInfoContainer
-
-  BillingProcessor
   MessageSaver
+  PassbackContainer
+  PlainStorage2
+  PrivacyFilter
+  ProcessControlVars
+  RequestInfoContainer
+  RequestInfoManagerConfigXSD
+  RequestInfoManagerIDL
   RequestLogLoader
   RequestOperationSaver
   RequestOutLogger
+  SNMPAgent
   TagRequestProfiler
   UserActionInfoContainer
   UserCampaignReachContainer
-  UserFraudProtectionContainer
-  UserSiteReachContainer
-  UserTagRequestMergeContainer
   UserCampaignReachProfilePST
   UserChannelInventoryProfilePST
-  UserCampaignReachProfilePST
-  PlainStorage2
-  UserCampaignReachProfilePST
+  UserFraudProtectionContainer
+  UserInfoManagerControllerIDL
   UserInfoManagerControllerL
-#  UServerUtilsMetrics
+  UserSiteReachContainer
+  UserTagRequestMergeContainer
+  pcre
 )
 
 add_library(RequestLogLoader SHARED
-  RequestLogLoader.cpp 
-  RequestOperationLoader.cpp 
   RequestInfoManagerStats.cpp
+  RequestLogLoader.cpp
+  RequestOperationLoader.cpp
 )
 
 target_link_libraries(RequestLogLoader
   Generics
-  Logger
-  String
   LogCommons
-  PlainStorage3
-  RequestInfoManagerCompatibility
+  LogGeneralizerConfigXSD
   LogGeneralizerIDL
   LogGeneralizerLib
-  RequestCompatibility
-  LogGeneralizerConfigXSD
+  Logger
+  PlainStorage3
   Postgres
+  RequestCompatibility
+  RequestInfoManagerCompatibility
+  RequestInfoStatistics
+  String
 )
 
 add_library(RequestOperationSaver SHARED
@@ -124,15 +116,13 @@ add_library(RequestOperationSaver SHARED
 )
 
 target_link_libraries(RequestOperationSaver
+  Commons
   Generics
+  LogCommons
+  MessageSaver
   PlainStorage3
   PrivacyFilter
-  Commons
-  LogCommons
-
   RequestLogLoader
-  MessageSaver
-
   UserCampaignReachProfilePST
 )
 
@@ -192,5 +182,3 @@ add_library(UserTagRequestMergeContainer STATIC
 target_link_libraries(UserTagRequestMergeContainer
   LogCommons
 )
-
-#install(TARGETS BillingProcessor PassbackContainer RequestInfoContainer RequestInfoManagerIDL RequestInfoManager RequestLogLoader RequestOperationSaver  DESTINATION ${INSTALL_DIR})

@@ -36,7 +36,8 @@ namespace AdServer
   public:
     DirectoryModule(
       Configuration* frontend_config_,
-      Logging::Logger* logger)
+      Logging::Logger* logger,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -44,8 +45,8 @@ namespace AdServer
 
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -182,8 +183,8 @@ namespace AdServer
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+      const FrontendCommons::HttpRequest& request,
+      FrontendCommons::HttpResponse& response)
       noexcept;
 
   private:

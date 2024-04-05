@@ -22,6 +22,7 @@
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
 #include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
+#include <Frontends/FrontendCommons/Statistics.hpp>
 
 #include "UserBindFrontend.hpp"
 
@@ -399,11 +400,11 @@ namespace AdServer
   //
   UserBindFrontend::UserBindFrontend(Configuration* frontend_config,
     Logging::Logger* logger,
-    CommonModule* common_module
-    //, Generics::CompositeMetricsProvider* composite_metrics_provider
-    )
+    CommonModule* common_module,
+    FrontendCommons::HttpResponseFactory* response_factory)
     /*throw(eh::Exception)*/
-    : Logging::LoggerCallbackHolder(
+    : FrontendCommons::FrontendInterface(response_factory),
+      Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -414,6 +415,7 @@ namespace AdServer
         0),
       FrontendCommons::FrontendTaskPool(
         this->callback(),
+        response_factory,
         frontend_config->get().UserBindFeConfiguration()->threads(),
         frontend_config->get().UserBindFeConfiguration()->bind_pending_task_limit()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -421,7 +423,6 @@ namespace AdServer
       campaign_managers_(this->logger(), Aspect::USER_BIND_FRONTEND),
       bind_task_count_(0),
       match_task_count_(0)
-      //, composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
   {}
 
   bool
@@ -572,7 +573,7 @@ namespace AdServer
 
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
-            FCGI::HttpRequest, FCGI::HttpResponse>(
+            FrontendCommons::HttpRequest, FrontendCommons::HttpResponse>(
               common_config_->Cookies()));
 
         for (UserBindFeConfiguration::Source_sequence::const_iterator
@@ -746,14 +747,14 @@ namespace AdServer
 
   void
   UserBindFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
-    const FCGI::HttpRequest& request = request_holder->request();
+    const FrontendCommons::HttpRequest& request = request_holder->request();
 
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
+    FrontendCommons::HttpResponse_var response_ptr = create_response();
+    FrontendCommons::HttpResponse& response = *response_ptr;
 
     int http_status = handle_request_(
       request,
@@ -849,8 +850,8 @@ namespace AdServer
 
   int
   UserBindFrontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response) noexcept
+    const FrontendCommons::HttpRequest& request,
+    FrontendCommons::HttpResponse& response) noexcept
   {
     static const char* FUN = "UserBindFrontend::handle_request_()";
     int http_status = 204;
@@ -1271,11 +1272,9 @@ namespace AdServer
   {
     static const char* FUN = "UserBindFrontend::process_request_()";
 
-    /// prometheus
-    /*
-    composite_metrics_provider_->add_value_prometheus(
-      "request_count", {std::make_pair("ssp_name", request_info.source_id)}, 1);
-    */
+    const auto statistic_id = FrontendCommons::CounterStatisticId::UserBind_RequestCount;
+    const std::string_view statistic_label = std::string_view(request_info.source_id);
+    ADD_COMMON_COUNTER_STATISTIC(statistic_id, statistic_label, 1)
 
     using GetUserIdResponsePtr =
       FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;

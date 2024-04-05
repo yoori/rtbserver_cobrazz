@@ -9,14 +9,11 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 #include <boost/asio/io_service.hpp>
-//#include <boost/beast/core/bind_handler.hpp>
-
-//#include <eh/Errno.hpp>
 
 #include <deque>
 
 #include <Frontends/FrontendCommons/FCGI.hpp>
-#include "FrontendsPool.hpp"
+#include <Frontends/FrontendCommons/FrontendsPool.hpp>
 
 #include "BoostAsioContextRunActiveObject.hpp"
 #include "AcceptorBoostAsio.hpp"
@@ -93,7 +90,7 @@ namespace Frontends
     void
     send_response(
       int code,
-      FCGI::HttpResponse* response)
+      FrontendCommons::HttpResponse* response)
       noexcept;
 
     SocketType&
@@ -111,7 +108,7 @@ namespace Frontends
       SendBuf(SendBuf&& init);
 
       //std::vector<char> wbuf;
-      FCGI::HttpResponse_var response; // hold buffers ownership
+      FrontendCommons::HttpResponse_var response; // hold buffers ownership
       std::vector<boost::asio::const_buffer> bufs;
     };
 
@@ -159,7 +156,7 @@ namespace Frontends
   };
 
   // AcceptorBoostAsio::HttpResponseWriterImpl
-  class AcceptorBoostAsio::HttpResponseWriterImpl: public FCGI::HttpResponseWriter
+  class AcceptorBoostAsio::HttpResponseWriterImpl: public FrontendCommons::HttpResponseWriter
   {
   public:
     HttpResponseWriterImpl(Connection_var conn)
@@ -168,7 +165,7 @@ namespace Frontends
     {}
 
     virtual void
-    write(int res, FCGI::HttpResponse* response_ptr)
+    write(int res, FrontendCommons::HttpResponse* response_ptr)
     {
       if(res == 0)
       {
@@ -385,12 +382,11 @@ namespace Frontends
     }
 
     // try parse request
-    FCGI::HttpRequestHolder_var request_holder(new FCGI::HttpRequestHolder());
-
+    FCGI::HttpRequestHolderFCGI_var request_holder(new FCGI::HttpRequestHolderFCGI);
     int parse_res = request_holder->parse(data_start, data_end - data_start);
     if(parse_res == FCGI::PARSE_OK)
     {
-      FCGI::HttpResponseWriter_var response_writer(
+      FrontendCommons::HttpResponseWriter_var response_writer(
         new HttpResponseWriterImpl(shared_from_this()));
 
       // process
@@ -425,10 +421,10 @@ namespace Frontends
   void
   AcceptorBoostAsio::Connection::send_response(
     int code,
-    FCGI::HttpResponse* response_ptr)
+    FrontendCommons::HttpResponse* response_ptr)
     noexcept
   {
-    FCGI::HttpResponse_var response(ReferenceCounting::add_ref(response_ptr));
+    FrontendCommons::HttpResponse_var response(ReferenceCounting::add_ref(response_ptr));
 
     // send response
     std::vector<String::SubString> buffers;

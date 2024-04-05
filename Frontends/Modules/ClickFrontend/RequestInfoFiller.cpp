@@ -315,7 +315,7 @@ namespace AdServer
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request,
+    const FrontendCommons::HttpRequest& request,
     const FrontendCommons::ParsedParamsMap& parsed_params) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {

@@ -53,11 +53,11 @@ target_link_libraries(UserBindServer
   PrivacyFilter
   ProcessControlVars
   ProfileMap
+  UserInfoStatistics
   UServerUtils
   UserBindContainer
   UserBindServerConfigXSD
   UserBindServerIDL
   UserBindServerProto
   UServerUtils
-#  UServerUtilsMetrics
 )

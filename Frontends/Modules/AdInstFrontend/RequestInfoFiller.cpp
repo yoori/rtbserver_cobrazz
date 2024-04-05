@@ -520,7 +520,7 @@ namespace Instantiate
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request) const
+    const FrontendCommons::HttpRequest& request) const
     /*throw(InvalidParamException, ForbiddenException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::fill()";

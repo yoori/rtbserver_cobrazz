@@ -1,11 +1,12 @@
-#pragma once
+#ifndef FRONTENDCOMMONS_FRONTENDSPOOL_H
+#define FRONTENDCOMMONS_FRONTENDSPOOL_H
 
 #include <vector>
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-//#include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
@@ -41,7 +42,8 @@ namespace AdServer
         M_ADINST,
         M_CLICK,
         M_IMPRTRACK,
-        M_AD
+        M_AD,
+        M_ECHO
       };
 
       typedef std::vector<ModuleId> ModuleIdArray;
@@ -55,9 +57,8 @@ namespace AdServer
         const char* config_path,
         const ModuleIdArray& modules,
         Logging::Logger* logger,
-        StatHolder* stats
-        //, Generics::CompositeMetricsProvider* composite_metrics_provider
-        );
+        StatHolder* stats,
+        FrontendCommons::HttpResponseFactory* response_factory);
 
       /**
        * @brief Handle or not URI.
@@ -73,8 +74,8 @@ namespace AdServer
        */
       virtual void
       handle_request(
-        FCGI::HttpRequestHolder_var request_holder,
-        FCGI::HttpResponseWriter_var response_writer)
+        FrontendCommons::HttpRequestHolder_var request_holder,
+        FrontendCommons::HttpResponseWriter_var response_writer)
         noexcept;
 
       /**
@@ -84,8 +85,8 @@ namespace AdServer
        */
       virtual void
       handle_request_noparams(
-        FCGI::HttpRequestHolder_var request_holder,
-        FCGI::HttpResponseWriter_var response_writer)
+        FrontendCommons::HttpRequestHolder_var request_holder,
+        FrontendCommons::HttpResponseWriter_var response_writer)
         /*throw(eh::Exception)*/;
 
       /**
@@ -121,10 +122,11 @@ namespace AdServer
       ModuleIdArray modules_;
       Logging::Logger_var logger_;
       StatHolder_var stats_;
-      //Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-
+      FrontendCommons::HttpResponseFactory_var http_response_factory_;
       CommonModule_var common_module_;
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };
   }
 }
+
+#endif //FRONTENDCOMMONS_FRONTENDSPOOL_H

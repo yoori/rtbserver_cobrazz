@@ -38,7 +38,8 @@ namespace AdServer
   public:
     ContentFrontend(
       Configuration* frontend_config,
-      Logging::Logger* logger)
+      Logging::Logger* logger,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     virtual void
@@ -50,14 +51,14 @@ namespace AdServer
 
     virtual void
     handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs shutdown for the module child process. */
@@ -151,14 +152,14 @@ namespace AdServer
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
+      const FrontendCommons::HttpRequest& request,
+      FrontendCommons::HttpResponse& response)
       noexcept;
 
     void parse_configs_() /*throw(Exception)*/;
 
     void parse_headers_(
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       bool& secure) noexcept;
 
   private:

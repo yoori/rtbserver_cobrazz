@@ -15,7 +15,6 @@
 #include "PassbackContainer.hpp"
 #include "TagRequestProcessor.hpp"
 #include "RequestOperationLoader.hpp"
-#include "CompositeMetricsProviderRIM.hpp"
 
 namespace AdServer
 {
@@ -64,8 +63,7 @@ namespace AdServer
     public:
       LogFetcherBase(
         unsigned int priority,
-        LogProcessing::FileReceiver* file_receiver,
-        CompositeMetricsProviderRIM* cmprim)
+        LogProcessing::FileReceiver* file_receiver)
         noexcept;
 
       virtual
@@ -89,7 +87,6 @@ namespace AdServer
     protected:
       const unsigned int priority_;
       LogProcessing::FileReceiver_var file_receiver_;
-      CompositeMetricsProviderRIM_var cmprim_;
     };
 
     typedef ReferenceCounting::AssertPtr<LogFetcherBase>::Ptr LogFetcher_var;
@@ -113,8 +110,7 @@ namespace AdServer
         const Generics::Time& check_period,
         const Generics::Time& max_process_time,
         std::size_t threads_count,
-        RequestInfoManagerStatsImpl* process_stats_values,
-        CompositeMetricsProviderRIM* cmprim)
+        RequestInfoManagerStatsImpl* process_stats_values)
         /*throw(Exception)*/;
 
     protected:
@@ -210,7 +206,6 @@ namespace AdServer
 
       FileReceiverFacade_var file_receiver_facade_;
       LogFetchers log_fetchers_;
-      CompositeMetricsProviderRIM_var cmprim_;
     };
 
     typedef ReferenceCounting::SmartPtr<RequestLogLoader> RequestLogLoader_var;
