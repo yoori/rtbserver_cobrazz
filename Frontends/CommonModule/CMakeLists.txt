@@ -1,19 +1,19 @@
 add_library(CommonModule SHARED
-CommonModule.cpp
+  CommonModule.cpp
 )
+
 target_link_libraries(CommonModule
- Generics
-
- Commons
- StatInfoIDL BillStatInfoIDL CampaignServerIDL
- FeConfigXSD
-AdServerCommonsXSD
- RequestMatchers
- DomainParser
- Polyglot
- UserIdController
-DomainConfigXSD
-GenericSegmentor
+  AdServerCommonsXSD
+  BillStatInfoIDL
+  CampaignServerIDL
+  Commons
+  DomainConfigXSD
+  DomainParser
+  FeConfigXSD
+  GenericSegmentor
+  Generics
+  Polyglot
+  RequestMatchers
+  StatInfoIDL
+  UserIdController
 )
-
-#install(TARGETS CommonModule DESTINATION ${INSTALL_DIR})

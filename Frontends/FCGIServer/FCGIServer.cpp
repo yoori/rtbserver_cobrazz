@@ -1,14 +1,26 @@
+// UNIXCOMMONS
+#include <eh/Exception.hpp>
+#include <CORBACommons/StatsImpl.hpp>
+#include <SNMPAgent/SNMPAgentX.hpp>
+#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
+#include <UServerUtils/Grpc/Config.hpp>
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Grpc/Core/Server/Config.hpp>
+#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <XMLUtility/Utility.cpp>
 
+// THIS
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
-
-#include <XMLUtility/Utility.cpp>
-
-#include "FCGIServer.hpp"
-#include "FrontendsPool.hpp"
+#include <Commons/UserverConfigUtils.hpp>
+#include <Frontends/FrontendCommons/FrontendsPool.hpp>
+#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/Statistics.hpp>
 #include "Acceptor.hpp"
 #include "AcceptorBoostAsio.hpp"
+#include "FCGIServer.hpp"
 
 namespace
 {
@@ -24,9 +36,9 @@ namespace Frontends
   FCGIServer::FCGIServer() /*throw(eh::Exception)*/
     : AdServer::Commons::ProcessControlVarsLoggerImpl(
         "FCGIServer", ASPECT),
-      stats_(new StatHolder()) // to remove ?
-      //, composite_metrics_provider_(new Generics::CompositeMetricsProvider())
-  {}
+      stats_(new StatHolder())
+  {
+  }
 
   void
   FCGIServer::shutdown(CORBA::Boolean wait_for_completion)
@@ -119,21 +131,6 @@ namespace Frontends
         ostr << FUN << ": got LoggerConfigReader::Exception: " << ex.what();
         throw Exception(ostr);
       }
-
-      /*
-      // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
-      // init metrics http provider
-      if(config_->Monitoring().present())
-      {
-        UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
-          new UServerUtils::MetricsHTTPProvider(
-            composite_metrics_provider_,
-            config_->Monitoring()->port(),
-            "/metrics");
-
-        add_child_object(metrics_http_provider);
-      }
-      */
     }
     catch (const Exception &ex)
     {
@@ -174,7 +171,93 @@ namespace Frontends
   void
   FCGIServer::init_fcgi_() /*throw(Exception)*/
   {
+    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
+    using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
+    using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
+
     static const char* FUN = "FCGIServer::init_fcgi_()";
+
+    try
+    {
+      auto task_processor_container_builder =
+        Config::create_task_processor_container_builder(
+          logger(),
+          config_->Coroutine());
+      auto statistics_provider = std::make_shared<
+        UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+          std::shared_mutex>>(logger());
+      auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
+      statistics_provider->add(time_statistics_provider);
+      auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
+      statistics_provider->add(common_counter_statistics_provider);
+
+      auto init_func = [this, statistics_provider] (TaskProcessorContainer& task_processor_container) {
+        auto& main_task_processor = task_processor_container.get_main_task_processor();
+
+        ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
+        statistics_provider_info.statistics_provider = statistics_provider;
+        statistics_provider_info.statistics_prefix = "cobrazz";
+        auto components_builder = std::make_unique<ComponentsBuilder>(
+          statistics_provider_info);
+        auto& statistic_storage = components_builder->get_statistics_storage();
+
+        const auto& monitoring_config = config_->Monitoring();
+        std::optional<HttpListenerConfig> monitor_listener_config;
+        if (monitoring_config.present())
+        {
+          HttpListenerConfig config;
+          config.port = monitoring_config->port();
+          monitor_listener_config = config;
+        }
+
+        HttpServerConfig server_config;
+        server_config.server_name = "HttpRequestInfoManager";
+        server_config.monitor_listener_config = monitor_listener_config;
+
+        auto& listener_config = server_config.listener_config;
+        listener_config.unix_socket_path = "/tmp/http_fcgi.sock";
+        listener_config.handler_defaults = {};
+
+        auto& connection_config = listener_config.connection_config;
+        connection_config.keepalive_timeout = std::chrono::seconds{10};
+
+        auto http_server_builder = std::make_unique<HttpServerBuilder>(
+          logger(),
+          server_config,
+          main_task_processor,
+          statistic_storage);
+        components_builder->add_http_server(std::move(http_server_builder));
+
+        return components_builder;
+      };
+
+      ManagerCoro_var manager(
+        new ManagerCoro(
+          std::move(task_processor_container_builder),
+          std::move(init_func),
+          logger()));
+
+      add_child_object(manager.in());
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error ostr;
+      ostr << FUN
+           << "Can't initialize coroutine system: "
+           << exc.what();
+      throw Exception(ostr);
+    }
+    catch (...)
+    {
+      Stream::Error ostr;
+      ostr << FUN
+           << "Unknown error";
+      throw Exception(ostr);
+    }
 
     try
     {
@@ -251,14 +334,15 @@ namespace Frontends
         }
       }
 
-      // pass CompositeMetricsProvider here
+      FrontendCommons::HttpResponseFactory_var response_factory(
+        new FCGI::HttpResponseFactory);
+
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
         config_->fe_config().data(),
         modules,
         logger(),
-        stats_
-        //, composite_metrics_provider_
-        );
+        stats_,
+        response_factory.in());
 
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)

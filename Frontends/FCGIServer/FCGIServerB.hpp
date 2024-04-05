@@ -71,7 +71,7 @@ namespace Frontends
     public:
       Response(Connection_var conn);
 
-      FCGI::HttpResponse&
+      FrontendCommons::HttpResponse&
       response();
 
       void
@@ -79,7 +79,7 @@ namespace Frontends
 
     private:
       std::vector<char> wbuf_;
-      std::unique_ptr<FCGI::HttpResponse> response_;
+      std::unique_ptr<FrontendCommons::HttpResponse> response_;
     };
 
   protected:

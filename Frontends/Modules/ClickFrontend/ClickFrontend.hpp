@@ -62,7 +62,8 @@ namespace AdServer
     ClickFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     /** Determines whether the module is able to process the URI.
@@ -89,14 +90,14 @@ namespace AdServer
      */
     virtual void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     virtual void
     handle_request_noparams_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -148,7 +149,7 @@ namespace AdServer
     void
     check_constraints_(
       const FrontendCommons::ParsedParamsMap& params,
-      const FCGI::HttpRequest& request) const
+      const FrontendCommons::HttpRequest& request) const
       /*throw(ForbiddenException, InvalidParamException)*/;
 
     void
@@ -206,7 +207,7 @@ namespace AdServer
     Generics::TaskRunner_var task_runner_;
 
     std::unique_ptr<FrontendCommons::CookieManager<
-      FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
+      FrontendCommons::HttpRequest, FrontendCommons::HttpResponse> > cookie_manager_;
     SetUidController_var set_uid_controller_;
   };
 

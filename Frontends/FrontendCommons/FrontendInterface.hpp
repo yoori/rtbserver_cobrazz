@@ -71,6 +71,9 @@ namespace FrontendCommons
 
     typedef ReferenceCounting::SmartPtr<Configuration> Configuration_var;
 
+    FrontendInterface(
+      FrontendCommons::HttpResponseFactory* response_factory);
+
     /**
      * @brief Handle or not URI.
      * @param uri.
@@ -85,8 +88,8 @@ namespace FrontendCommons
      */
     virtual void
     handle_request(
-      FCGI::HttpRequestHolder_var request,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept = 0;
 
     /**
@@ -96,9 +99,12 @@ namespace FrontendCommons
      */
     virtual void
     handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/;
+
+    FrontendCommons::HttpResponse_var
+    create_response();
 
     /**
      * @brief Initialize frontend.
@@ -116,11 +122,14 @@ namespace FrontendCommons
     virtual
     ~FrontendInterface() noexcept = default;
 
-    static bool
+    bool
     parse_args_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/;
+
+  private:
+    FrontendCommons::HttpResponseFactory_var response_factory_;
   };
 
   typedef ReferenceCounting::SmartPtr<FrontendInterface> Frontend_var;

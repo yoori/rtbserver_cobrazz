@@ -9,16 +9,20 @@
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
 
 #include "RequestInfoManager.hpp"
 #include "RequestInfoManagerImpl.hpp"
-#include "CompositeMetricsProviderRIM.hpp"
+
 
 class RequestInfoManagerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
     public Generics::CompositeActiveObject
 {
 public:
+  using ManagerCoro = UServerUtils::Grpc::Manager;
+  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
 
@@ -58,7 +62,8 @@ private:
   typedef Sync::PosixGuard ShutdownGuard;
 
   ShutdownMutex shutdown_lock_;
-  CompositeMetricsProviderRIM_var cmprim_;
+
+  ManagerCoro_var manager_;
 };
 
 typedef ReferenceCounting::SmartPtr<RequestInfoManagerApp_>

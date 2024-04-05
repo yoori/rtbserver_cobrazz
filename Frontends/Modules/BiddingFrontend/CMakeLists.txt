@@ -17,46 +17,45 @@ add_library(BiddingFrontend SHARED
   ClickStarBidRequestTask.cpp 
   DAOBidRequestTask.cpp 
   KeywordFormatter.cpp
-  #RequestMetricsProvider.cpp
   Utils.cpp
 )
 
-target_link_libraries(BiddingFrontend 
-  Stream
-  Geoip
+target_link_libraries(BiddingFrontend
+  BidRateProvider
+  BillStatInfoIDL
   CORBACommons
-
-  Polyglot
-
-  Commons
-  #ChannelControllerStubs
+  CTRProvider
+  CampaignConfig
+  CampaignConfigSource
+  CampaignIndex
+  CampaignManagerIDL
+  CampaignManagerLogger
+  CampaignServerIDL
   ChannelManagerControllerIDL
-  # UserInfoManagerControllerStubs
-  UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerL
-
-  # CampaignManagerStubs
-  CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex
-  CreativeTemplateArgs SecToken CampaignManagerLogger
-
-  DomainParser
-  # CampaignServerStubs
-  StatInfoIDL BillStatInfoIDL CampaignServerIDL
-
-  # UserBindServerStubs
-  UserBindServerIDL UserBindContainer
-
-  RequestMatchers
-  FrontendStatistic
-  UserIdController
   CommonModule
-
+  Commons
+  CreativeTemplateArgs
+  DomainParser
+  FCGI
   FeConfigXSD
+  FrontendStatistic
+  Gason
+  Geoip
+  Polyglot
+  RequestMatchers
+  SecToken
+  StatInfoIDL
+  Stream
+  UServerUtils
+  UserBindContainer
+  UserBindServerIDL
+  UserIdController
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  UserInfoManagerControllerL
   baidu-biddingPB
   google-biddingPB
-  tanx-biddingPB
-  Gason
   protobuf
   protoc
-  FCGI
-  UServerUtils
+  tanx-biddingPB
 )

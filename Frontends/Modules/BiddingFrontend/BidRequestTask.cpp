@@ -6,8 +6,8 @@ namespace Bidding
 {
   BidRequestTask::BidRequestTask(
     Frontend* bid_frontend,
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer,
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
     : bid_frontend_(bid_frontend),
@@ -135,7 +135,7 @@ namespace Bidding
   void
   BidRequestTask::write_response_(
     int code,
-    FCGI::HttpResponse_var response)
+    FrontendCommons::HttpResponse_var response)
     noexcept
   {
     bool send_response = (to_interrupt_.exchange_and_add(1) == 0);
@@ -143,7 +143,7 @@ namespace Bidding
     if(send_response)
     {
       response_writer_->write(code, response);
-      response_writer_ = FCGI::HttpResponseWriter_var();
+      response_writer_ = FrontendCommons::HttpResponseWriter_var();
       response_sent_ = true;
     }
   }
@@ -151,7 +151,7 @@ namespace Bidding
   void
   BidRequestTask::clear() noexcept
   {
-    request_holder_ = FCGI::HttpRequestHolder_var();
+    request_holder_ = FrontendCommons::HttpRequestHolder_var();
     request_info_ = RequestInfo();
     hostname_ = CORBA::String_var();
     request_params_ = RequestParamsHolder_var();

@@ -106,8 +106,10 @@ namespace AdServer
    */
   ContentFrontend::ContentFrontend(
     Configuration* frontend_config,
-    Logging::Logger* logger) /*throw(eh::Exception)*/
-    : Logging::LoggerCallbackHolder(
+    Logging::Logger* logger,
+    FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/
+    : FrontendCommons::FrontendInterface(response_factory),
+      Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -117,6 +119,7 @@ namespace AdServer
         Aspect::CONTENT_FRONTEND, 0),
       FrontendCommons::FrontendTaskPool(
         this->callback(),
+        response_factory,
         frontend_config->get().ContentFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -249,7 +252,7 @@ namespace AdServer
   }
 
   void ContentFrontend::parse_headers_(
-    const FCGI::HttpRequest& request,
+    const FrontendCommons::HttpRequest& request,
     bool& secure) noexcept
   {
     secure = false;
@@ -272,11 +275,11 @@ namespace AdServer
 
   void
   ContentFrontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
-    FCGI::HttpRequest& request = request_holder->request();
+    FrontendCommons::HttpRequest& request = request_holder->request();
 
     HTTP::ParamList params;
     
@@ -331,7 +334,7 @@ namespace AdServer
 
     if (!request.body().empty())
     {
-      FCGI::HttpRequest::parse_params(request.body(), params);
+      FrontendCommons::HttpRequest::parse_params(request.body(), params);
     }
     
     request.set_params(std::move(params));
@@ -341,22 +344,22 @@ namespace AdServer
 
   void
   ContentFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
-    const FCGI::HttpRequest& request = request_holder->request();
+    const FrontendCommons::HttpRequest& request = request_holder->request();
 
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
+    FrontendCommons::HttpResponse_var response_ptr = create_response();
+    FrontendCommons::HttpResponse& response = *response_ptr;
     int http_status = handle_request_(request, response);
     response_writer->write(http_status, response_ptr);
   }
 
   int
   ContentFrontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+    const FrontendCommons::HttpRequest& request,
+    FrontendCommons::HttpResponse& response)
     noexcept
   {
     static const char* FUN = "ContentFrontend::handle_request()";

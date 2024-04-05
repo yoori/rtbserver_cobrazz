@@ -47,8 +47,8 @@ namespace Bidding
 
   AdFoxBidRequestTask::AdFoxBidRequestTask(
     Frontend* bid_frontend,
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer,
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
     : OpenRtbBidRequestTask(
@@ -83,10 +83,10 @@ namespace Bidding
 
     if(!bid_response.empty())
     {
-      FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+      FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
       response->set_content_type(Response::Type::TEXT_XML);
 
-      FCGI::OutputStream& output = response->get_output_stream();
+      FrontendCommons::OutputStream& output = response->get_output_stream();
       std::string bid_response = response_ostr.str();
       output.write(bid_response.data(), bid_response.size());
 
@@ -102,7 +102,7 @@ namespace Bidding
   AdFoxBidRequestTask::write_empty_response(unsigned int code)
     noexcept
   {
-    FCGI::HttpResponse_var response(new FCGI::HttpResponse());
+    FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
 
     if(code < 300)
     {

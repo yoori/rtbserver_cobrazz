@@ -9,12 +9,12 @@
 #include <Commons/FreqCapManip.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
+#include <UserInfoSvcs/UserInfoCommons/Statistics.hpp>
 
 #include "UserBindContainer.hpp"
 #include "UserBindOperationSaver.hpp"
 #include "UserBindOperationLoader.hpp"
 #include "UserBindServerImpl.hpp"
-//#include <UServerUtils/MetricsRAII.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 
 namespace Aspect
@@ -141,9 +141,7 @@ namespace UserInfoSvcs
   UserBindServerImpl::UserBindServerImpl(
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
-    const UserBindServerConfig& user_bind_server_config
-    //, Generics::CompositeMetricsProvider_var composite_metrics_provider
-    )
+    const UserBindServerConfig& user_bind_server_config)
         /*throw(Exception)*/
     : callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
@@ -152,7 +150,6 @@ namespace UserInfoSvcs
       user_bind_server_config_(user_bind_server_config),
       user_bind_container_(new UserBindProcessorHolder()),
       bind_request_container_(new BindRequestProcessorHolder())
-      //, composite_metrics_provider_(composite_metrics_provider)
   {
     static const char* FUN = "UserBindServerImpl::UserBindServerImpl()";
 
@@ -246,7 +243,7 @@ namespace UserInfoSvcs
       "  request_info.for_set_cookie = " << request_info.for_set_cookie << std::endl <<
       std::endl;
     */
-    //metrics_raii raii(composite_metrics_provider_,"get_user_id&");
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_GetUserIdCorba)
 
     UserBindProcessorHolder::Accessor user_bind_accessor =
       user_bind_container_->get_accessor();
@@ -387,7 +384,7 @@ namespace UserInfoSvcs
   UserBindServerImpl::GetUserIdResponsePtr
   UserBindServerImpl::get_user_id(GetUserIdRequestPtr&& request)
   {
-    //metrics_raii raii(composite_metrics_provider_,"get_user_id&&");
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_GetUserIdGrpc)
 
     const auto id_request_grpc = request->id_request_grpc();
     try
@@ -537,7 +534,7 @@ namespace UserInfoSvcs
       AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/
   {
     static const char* FUN = "UserBindServerImpl::add_user_id()";
-    //metrics_raii raii(composite_metrics_provider_, "add_user_id&");
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_AddUserIdCorba)
 
     /*
     std::cerr << FUN << ": " << std::endl <<
@@ -588,7 +585,8 @@ namespace UserInfoSvcs
   UserBindServerImpl::AddUserIdResponsePtr
   UserBindServerImpl::add_user_id(AddUserIdRequestPtr&& request)
   {
-    //metrics_raii raii(composite_metrics_provider_, "add_user_id&&");
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_AddUserIdGrpc)
+
     const auto id_request_grpc = request->id_request_grpc();
     try
     {

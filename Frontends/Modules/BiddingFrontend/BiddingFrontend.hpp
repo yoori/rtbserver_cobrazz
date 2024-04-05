@@ -12,10 +12,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Generics/AtomicInt.hpp>
-//#include "Generics/CompositeMetricsProvider.hpp"
-
-//#include <UServerUtils/MetricsHTTPProvider.hpp>
-//#include <UServerUtils/MetricsRAII.hpp>
 
 #include <Sync/PosixLock.hpp>
 
@@ -44,7 +40,6 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
-//#include "RequestMetricsProvider.hpp"
 
 namespace AdServer
 {
@@ -89,17 +84,16 @@ namespace Bidding
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
-      StatHolder* stats
-      //, Generics::CompositeMetricsProvider* composite_metrics_provider
-      ) /*throw(eh::Exception)*/;
+      StatHolder* stats,
+      FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/;
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
 
     virtual void
     handle_request(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -348,7 +342,7 @@ namespace Bidding
       noexcept;
 
     Generics::Time
-    get_request_timeout_(const FCGI::HttpRequest& request) noexcept;
+    get_request_timeout_(const FrontendCommons::HttpRequest& request) noexcept;
 
     static
     AdServer::CampaignSvcs::AdInstantiateType
@@ -422,10 +416,6 @@ namespace Bidding
 
     mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
     unsigned long reached_max_pending_tasks_;
-
-  private:
-    //const Generics::CompositeMetricsProvider_var composite_metrics_provider_;
-    //const RequestMetricsProvider_var request_metrics_provider_;
   };
 }
 }

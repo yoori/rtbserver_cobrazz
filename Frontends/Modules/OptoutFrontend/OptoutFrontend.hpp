@@ -47,12 +47,13 @@ namespace AdServer
     DECLARE_EXCEPTION(RequestFailure, Exception);
 
   public:
-    typedef FCGI::HttpResponse HttpResponse;
+    typedef FrontendCommons::HttpResponse HttpResponse;
 
     OptoutFrontend(
       Configuration* frontend_config,
       Logging::Logger* logger,
-      CommonModule* common_module)
+      CommonModule* common_module,
+      FrontendCommons::HttpResponseFactory* response_factory)
       /*throw(eh::Exception)*/;
 
     virtual bool
@@ -60,8 +61,8 @@ namespace AdServer
 
     void
     handle_request_(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */
@@ -95,7 +96,7 @@ namespace AdServer
     typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
     typedef std::unique_ptr<OptOutFeConfiguration> ConfigPtr;
     typedef std::unique_ptr<FrontendCommons::CookieManager<
-      FCGI::HttpRequest, FCGI::HttpResponse> >
+      FrontendCommons::HttpRequest, FrontendCommons::HttpResponse> >
       CookieManagerPtr;
 
   private:
@@ -107,7 +108,7 @@ namespace AdServer
 
     int
     handle_request_(
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       HttpResponse& response)
       noexcept;
 
@@ -115,7 +116,7 @@ namespace AdServer
     set_OO_cookie(
       const String::SubString& oo_value,
       HttpResponse& response,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const Generics::Time& cookie_expire_time)
       /*throw(eh::Exception)*/;
 

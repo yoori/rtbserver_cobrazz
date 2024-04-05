@@ -666,7 +666,7 @@ namespace ImprTrack
   void
   RequestInfoFiller::fill(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request)
+    const FrontendCommons::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
     request_info.time = Generics::Time::get_time_of_day();
@@ -850,7 +850,7 @@ namespace ImprTrack
   void
   RequestInfoFiller::params_processing_(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request)
+    const FrontendCommons::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
     const HTTP::ParamList& params = request.params();
@@ -901,7 +901,7 @@ namespace ImprTrack
   void
   RequestInfoFiller::headers_processing_(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request)
+    const FrontendCommons::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
     const HTTP::SubHeaderList& headers = request.headers();
@@ -925,7 +925,7 @@ namespace ImprTrack
   void
   RequestInfoFiller::cookies_processing_(
     RequestInfo& request_info,
-    const FCGI::HttpRequest& request)
+    const FrontendCommons::HttpRequest& request)
     /*throw(InvalidParamException, Exception)*/
   {
     static const char* FUN = "RequestInfoFiller::cookies_processing_()";

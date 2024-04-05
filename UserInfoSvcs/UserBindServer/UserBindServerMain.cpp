@@ -5,14 +5,18 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/UserverConfigUtils.hpp>
+#include <UserInfoSvcs/UserInfoCommons/Statistics.hpp>
+
+#include "GrpcService.hpp"
+#include "UserBindServerMain.hpp"
+
+// UNIXCOMMONS
 #include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
 #include <UServerUtils/Grpc/Config.hpp>
 #include <UServerUtils/Grpc/ComponentsBuilder.hpp>
 #include <UServerUtils/Grpc/Manager.hpp>
 #include <UServerUtils/Grpc/Core/Server/Config.hpp>
-
-#include "GrpcService.hpp"
-#include "UserBindServerMain.hpp"
+#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
 
 namespace
 {
@@ -24,7 +28,6 @@ namespace
 UserBindServerApp_::UserBindServerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
       "UserBindServerApp_", ASPECT)
-    //, composite_metrics_provider_(new Generics::CompositeMetricsProvider())
 {}
 
 void
@@ -63,6 +66,9 @@ UserBindServerApp_::main(int& argc, char** argv)
   using AddUserIdService_var = AdServer::UserInfoSvcs::AddUserIdService_var;
   using GetSourceService = AdServer::UserInfoSvcs::GetSourceService;
   using GetSourceService_var = AdServer::UserInfoSvcs::GetSourceService_var;
+  using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
+  using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
+  using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
 
   static const char* FUN = "UserBindServerApp_::main()";
   
@@ -151,26 +157,9 @@ UserBindServerApp_::main(int& argc, char** argv)
       new AdServer::UserInfoSvcs::UserBindServerImpl(
         callback(),
         logger(),
-        config()
-        //, composite_metrics_provider_
-        );
+        config());
 
     add_child_object(user_bind_server_impl_);
-
-    /*
-    // init CompositeMetricsProvider here, pass to MetricsHTTPProvider and to modules
-    // init metrics http provider
-    if(config().Monitoring().present())
-    {
-      UServerUtils::MetricsHTTPProvider_var metrics_http_provider =
-        new UServerUtils::MetricsHTTPProvider(
-          composite_metrics_provider_,
-          config().Monitoring()->port(),
-          "/metrics");
-
-      add_child_object(metrics_http_provider);
-    }
-    */
 
     // Creating coroutine manager
     auto task_processor_container_builder =
@@ -178,12 +167,49 @@ UserBindServerApp_::main(int& argc, char** argv)
         logger(),
         config().Coroutine());
 
-    auto init_func = [this] (
+    auto time_statistics_provider = AdServer::UserInfoSvcs::get_time_statistics_provider();
+    auto statistics_provider = std::make_shared<
+      UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+        std::shared_mutex>>(logger());
+    statistics_provider->add(time_statistics_provider);
+
+    auto init_func = [this, statistics_provider] (
       TaskProcessorContainer& task_processor_container) {
-        auto& main_task_processor =
-          task_processor_container.get_main_task_processor();
-        auto components_builder =
-          std::make_unique<ComponentsBuilder>();
+        auto& main_task_processor = task_processor_container.get_main_task_processor();
+
+        ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
+        statistics_provider_info.statistics_provider = statistics_provider;
+        statistics_provider_info.statistics_prefix = "cobrazz";
+        auto components_builder = std::make_unique<ComponentsBuilder>(
+          statistics_provider_info);
+        auto& statistic_storage = components_builder->get_statistics_storage();
+
+        const auto& monitoring_config = config().Monitoring();
+        std::optional<HttpListenerConfig> monitor_listener_config;
+        if (monitoring_config.present())
+        {
+          HttpListenerConfig config;
+          config.port = monitoring_config->port();
+          monitor_listener_config = config;
+        }
+
+        HttpServerConfig server_config;
+        server_config.server_name = "HttpUserBindServer";
+        server_config.monitor_listener_config = monitor_listener_config;
+
+        auto& listener_config = server_config.listener_config;
+        listener_config.unix_socket_path = "/tmp/http_user_bind_server.sock";
+        listener_config.handler_defaults = {};
+
+        auto& connection_config = listener_config.connection_config;
+        connection_config.keepalive_timeout = std::chrono::seconds{10};
+
+        auto http_server_builder = std::make_unique<HttpServerBuilder>(
+          logger(),
+          server_config,
+          main_task_processor,
+          statistic_storage);
+        components_builder->add_http_server(std::move(http_server_builder));
 
         auto grpc_server_builder =
           Config::create_grpc_cobrazz_server_builder(

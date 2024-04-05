@@ -5,12 +5,12 @@
 #include "RequestInfoManagerStats.hpp"
 #include "RequestLogLoader.hpp"
 #include <Generics/DirSelector.hpp>
+#include <RequestInfoSvcs/RequestInfoCommons/Statistics.hpp>
 
 #include <Commons/DelegateActiveObject.hpp>
 #include <LogCommons/Request.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 #include <LogCommons/TagRequest.hpp>
-#include "CompositeMetricsProviderRIM.hpp"
 
 /*
  * LogFetcherBase - base class for process one type logs
@@ -52,8 +52,7 @@ namespace RequestInfoSvcs
       const char* folder,
       unsigned int priority,
       const Generics::Time& check_period,
-      RequestInfoManagerStatsImpl* proc_stat_impl,
-      CompositeMetricsProviderRIM* cmprim)
+      RequestInfoManagerStatsImpl* proc_stat_impl)
       noexcept;
 
     virtual
@@ -112,8 +111,7 @@ namespace RequestInfoSvcs
       unsigned int priority,
       const Generics::Time& check_period,
       const ProcessFun& process_fun,
-      RequestInfoManagerStatsImpl* proc_stat_impl,
-      CompositeMetricsProviderRIM* cmprim)
+      RequestInfoManagerStatsImpl* proc_stat_impl)
       noexcept;
 
   protected:
@@ -150,8 +148,7 @@ namespace RequestInfoSvcs
       unsigned int priority,
       const Generics::Time& check_period,
       RequestOperationProcessor* request_operation_processor,
-      RequestInfoManagerStatsImpl* proc_stat_impl,
-      CompositeMetricsProviderRIM* cmprim)
+      RequestInfoManagerStatsImpl* proc_stat_impl)
       noexcept;
 
   protected:
@@ -204,11 +201,9 @@ namespace RequestInfoSvcs
   /** LogFetcherBase */
   LogFetcherBase::LogFetcherBase(
     unsigned int priority,
-    LogProcessing::FileReceiver* file_receiver,
-    CompositeMetricsProviderRIM* cmprim) noexcept
+    LogProcessing::FileReceiver* file_receiver) noexcept
     : priority_(priority), 
-      file_receiver_(ReferenceCounting::add_ref(file_receiver)), 
-      cmprim_(ReferenceCounting::add_ref(cmprim))
+      file_receiver_(ReferenceCounting::add_ref(file_receiver))
   {}
 
   unsigned int
@@ -230,8 +225,7 @@ namespace RequestInfoSvcs
     const char* folder,
     unsigned int priority,
     const Generics::Time& check_period,
-    RequestInfoManagerStatsImpl* proc_stat_impl,
-    CompositeMetricsProviderRIM* cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl)
     noexcept
     : LogFetcherBase(
         priority,
@@ -240,8 +234,7 @@ namespace RequestInfoSvcs
             (std::string(folder) + "/Intermediate").c_str(),
             FETCH_FILES_LIMIT,
             processing_state->interrupter,
-            nullptr)),
-        cmprim),
+            nullptr))),
       log_errors_(ReferenceCounting::add_ref(callback)),
       processing_state_(ReferenceCounting::add_ref(processing_state)),
       DIR_(folder),
@@ -284,12 +277,13 @@ namespace RequestInfoSvcs
             Generics::ActiveObjectCallback::ERROR, ostr.str());
         }
 
-        /*
-        std::map<std::string, std::string> m;
-        m["type"] = name_info.base_name;
-        cmprim_->add_value_prometheus("processedFilesByType", m, 1);
-        cmprim_->add_value_prometheus("processedRecordCountByType", m, name_info.processed_lines_count);
-        */
+        const auto processed_filed_statistic_id =
+          AdServer::RequestInfoSvcs::CounterStatisticId::LogRecordFetcherBase_ProcessedFiles;
+        const auto processed_record_count_statistic_id =
+          AdServer::RequestInfoSvcs::CounterStatisticId::LogRecordFetcherBase_ProcessedRecordCount;
+        const std::string_view label(name_info.base_name);
+        ADD_COMMON_COUNTER_STATISTIC(processed_filed_statistic_id, label, 1)
+        ADD_COMMON_COUNTER_STATISTIC(processed_record_count_statistic_id, label, name_info.processed_lines_count)
       }
     }
     catch (const eh::Exception& ex)
@@ -400,8 +394,7 @@ namespace RequestInfoSvcs
     unsigned int priority,
     const Generics::Time& check_period,
     const ProcessFun& process_fun,
-    RequestInfoManagerStatsImpl* proc_stat_impl,
-    CompositeMetricsProviderRIM* cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl)
     noexcept
     : LogRecordFetcherBase(
         callback,
@@ -409,8 +402,7 @@ namespace RequestInfoSvcs
         folder,
         priority,
         check_period,
-        proc_stat_impl,
-        cmprim),
+        proc_stat_impl),
       process_fun_(process_fun)
   {
     if (proc_stat_impl_)
@@ -499,8 +491,7 @@ namespace RequestInfoSvcs
     unsigned int priority,
     const Generics::Time& check_period,
     RequestOperationProcessor* request_operation_processor,
-    RequestInfoManagerStatsImpl* proc_stat_impl,
-    CompositeMetricsProviderRIM *cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl)
     noexcept
     : LogRecordFetcherBase(
         callback,
@@ -508,8 +499,7 @@ namespace RequestInfoSvcs
         folder,
         priority,
         check_period,
-        proc_stat_impl,
-        cmprim),
+        proc_stat_impl),
       request_operation_loader_(
         new RequestOperationLoader(request_operation_processor))
   {}
@@ -950,7 +940,6 @@ namespace RequestInfoSvcs
   template <typename Traits, typename ProcessFun>
   ReferenceCounting::SmartPtr<LogRecordFetcher<Traits, ProcessFun> >
   make_fetcher(
-    CompositeMetricsProviderRIM* cmprim,
     Generics::ActiveObjectCallback* callback,
     LogProcessingState* processing_state,
     const InLog& in_log,
@@ -965,8 +954,7 @@ namespace RequestInfoSvcs
       in_log.priority,
       check_period,
       process_fun,
-      proc_stat_impl,
-      cmprim);
+      proc_stat_impl);
   }
 
   /** InLog */
@@ -987,18 +975,15 @@ namespace RequestInfoSvcs
     const Generics::Time& check_period,
     const Generics::Time&,
     std::size_t threads_count,
-    RequestInfoManagerStatsImpl* proc_stat_impl,
-    CompositeMetricsProviderRIM *cmprim)
+    RequestInfoManagerStatsImpl* proc_stat_impl)
     /*throw(Exception)*/
     : log_errors_callback_(ReferenceCounting::add_ref(callback)),
-      processing_state_(new LogProcessingState()),
-      cmprim_(ReferenceCounting::add_ref(cmprim))
+      processing_state_(new LogProcessingState())
   {
     using namespace AdServer::LogProcessing;
 
     // initialize log files processing contexts
     log_fetchers_[RequestLogType] = make_fetcher<RequestTraits>(
-      cmprim_,
       log_errors_callback_,
       processing_state_,
       in_logs.request,
@@ -1009,7 +994,6 @@ namespace RequestInfoSvcs
       proc_stat_impl);
 
     log_fetchers_[ImpressionLogType] = make_fetcher<ImpressionTraits>(
-      cmprim_,
       log_errors_callback_,
       processing_state_,
       in_logs.impression,
@@ -1018,7 +1002,6 @@ namespace RequestInfoSvcs
       proc_stat_impl);
 
     log_fetchers_[ClickLogType] = make_fetcher<ClickTraits>(
-      cmprim_,
       log_errors_callback_,
       processing_state_,
       in_logs.click,
@@ -1030,7 +1013,6 @@ namespace RequestInfoSvcs
       proc_stat_impl);
 
     log_fetchers_[AdvertiserActionLogType] = make_fetcher<AdvertiserActionTraits>(
-      cmprim_,
       log_errors_callback_,
       processing_state_,
       in_logs.advertiser_action,
@@ -1039,7 +1021,6 @@ namespace RequestInfoSvcs
       proc_stat_impl);
 
     log_fetchers_[PassbackImpressionLogType] = make_fetcher<PassbackImpressionTraits>(
-      cmprim_,
       log_errors_callback_,
       processing_state_,
       in_logs.passback_impression,
@@ -1048,7 +1029,6 @@ namespace RequestInfoSvcs
       proc_stat_impl);
 
     log_fetchers_[TagRequestLogType] = make_fetcher<TagRequestTraits>(
-      cmprim_,
       log_errors_callback_,
       processing_state_,
       in_logs.tag_request,
@@ -1063,8 +1043,7 @@ namespace RequestInfoSvcs
       in_logs.request_operation.priority,
       check_period,
       request_operation_processor,
-      proc_stat_impl,
-      cmprim_));
+      proc_stat_impl));
 
     add_child_object(processing_state_->interrupter);
 

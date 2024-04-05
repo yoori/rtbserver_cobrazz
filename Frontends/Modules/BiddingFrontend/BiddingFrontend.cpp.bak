@@ -528,7 +528,7 @@ namespace Bidding
 
     RequestTask(
       Frontend* bid_frontend,
-      const FCGI::HttpRequest& http_request,
+      const FrontendCommons::HttpRequest& http_request,
       const Generics::Time& start_processing_time)
       throw (Invalid)
       : to_interrupt(false),
@@ -588,12 +588,12 @@ namespace Bidding
     }
 
     virtual int
-    write_response(FCGI::HttpResponse& response)
+    write_response(FrontendCommons::HttpResponse& response)
       throw() = 0;
 
     virtual int
     write_empty_response(
-      FCGI::HttpResponse& response,
+      FrontendCommons::HttpResponse& response,
       bool bad_request)
       throw() = 0;
 
@@ -635,7 +635,7 @@ namespace Bidding
   public:
     GoogleRequestTask(
       Frontend* bid_frontend,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const Generics::Time& start_processing_time)
       throw (Invalid)
       : RequestTask(
@@ -667,7 +667,7 @@ namespace Bidding
     }
 
     virtual int
-    write_response(FCGI::HttpResponse& response)
+    write_response(FrontendCommons::HttpResponse& response)
       throw()
     {
       response.set_content_type(Response::Type::OCTET_STREAM);
@@ -682,7 +682,7 @@ namespace Bidding
 
     virtual int
     write_empty_response(
-      FCGI::HttpResponse& response,
+      FrontendCommons::HttpResponse& response,
       bool /*bad_request*/)
       throw()
     {
@@ -722,7 +722,7 @@ namespace Bidding
   public:
     OpenRtbRequestTask(
       Frontend* bid_frontend,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const Generics::Time& start_processing_time)
       throw (Invalid)
       : RequestTask(
@@ -800,7 +800,7 @@ namespace Bidding
     }
 
     virtual int
-    write_response(FCGI::HttpResponse& response)
+    write_response(FrontendCommons::HttpResponse& response)
       throw()
     {
       response.set_content_type(Response::Type::JSON);
@@ -810,7 +810,7 @@ namespace Bidding
 
       if(!bid_response.empty())
       {
-        FCGI::OutputStream& output = response.get_output_stream();
+        FrontendCommons::OutputStream& output = response.get_output_stream();
         output.write(bid_response.data(), bid_response.size());
         //output.flush();
         return 0; //OK;
@@ -821,7 +821,7 @@ namespace Bidding
 
     virtual int
     write_empty_response(
-      FCGI::HttpResponse& response,
+      FrontendCommons::HttpResponse& response,
       bool bad_request)
       throw()
     {
@@ -859,7 +859,7 @@ namespace Bidding
   public:
     AppNexusRequestTask(
       Frontend* bid_frontend,
-      const FCGI::HttpRequest& request,
+      const FrontendCommons::HttpRequest& request,
       const Generics::Time& start_processing_time)
       throw (Invalid)
       : RequestTask(
@@ -892,13 +892,13 @@ namespace Bidding
     }
 
     virtual int
-    write_response(FCGI::HttpResponse& response)
+    write_response(FrontendCommons::HttpResponse& response)
       throw()
     {
       if(!bid_response.empty())
       {
         response.set_content_type(Response::Type::JSON);
-        FCGI::OutputStream& output = response.get_output_stream();
+        FrontendCommons::OutputStream& output = response.get_output_stream();
         output.write(bid_response.data(), bid_response.size());
         return 0; //OK;
       }
@@ -908,7 +908,7 @@ namespace Bidding
 
     virtual int
     write_empty_response(
-      FCGI::HttpResponse& response,
+      FrontendCommons::HttpResponse& response,
       bool bad_request)
       throw()
     {
@@ -926,7 +926,7 @@ namespace Bidding
         "  }\n"
         "}";
 
-      FCGI::OutputStream& output = response.get_output_stream();
+      FrontendCommons::OutputStream& output = response.get_output_stream();
       output.write(no_bid, sizeof(no_bid) - 1);
       return 0; //OK;
     }
@@ -1365,7 +1365,7 @@ namespace Bidding
   }
 
   Generics::Time
-  Frontend::get_request_timeout_(const FCGI::HttpRequest& request) throw ()
+  Frontend::get_request_timeout_(const FrontendCommons::HttpRequest& request) throw ()
   {
     const HTTP::ParamList& params = request.params();
 
@@ -1387,14 +1387,14 @@ namespace Bidding
 
   void
   Frontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     throw ()
   {
-    const FCGI::HttpRequest& request = request_holder->request();
+    const FrontendCommons::HttpRequest& request = request_holder->request();
 
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
+    FrontendCommons::HttpResponse_var response_ptr(new FCGI::HttpResponseFCGI());
+    FrontendCommons::HttpResponse& response = *response_ptr;
 
     int http_status = handle_request_(request, response);
     response_writer->write(http_status, response_ptr);
@@ -1402,8 +1402,8 @@ namespace Bidding
 
   int
   Frontend::handle_request_(
-    const FCGI::HttpRequest& request,
-    FCGI::HttpResponse& response)
+    const FrontendCommons::HttpRequest& request,
+    FrontendCommons::HttpResponse& response)
     throw ()
   {
     static const char* FUN = "Bidding::Frontend::handle_request()";

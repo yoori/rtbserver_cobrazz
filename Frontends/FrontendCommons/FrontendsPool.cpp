@@ -1,4 +1,3 @@
-
 #include "FrontendsPool.hpp"
 #include <BiddingFrontend/BiddingFrontend.hpp>
 #include <DirectoryModule/DirectoryModule.hpp>
@@ -14,6 +13,9 @@
 #include <ClickFrontend/ClickFrontend.hpp>
 #include <ImprTrackFrontend/ImprTrackFrontend.hpp>
 #include <AdFrontend/AdFrontend.hpp>
+#include <EchoFrontend/EchoFrontend.hpp>
+#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/HttpServer/HttpResponse.hpp>
 
 namespace AdServer
 {
@@ -24,14 +26,14 @@ namespace AdServer
       const char* config_path,
       const ModuleIdArray& modules,
       Logging::Logger* logger,
-      StatHolder* stats
-      //, Generics::CompositeMetricsProvider* composite_metrics_provider
-      )
-      : config_(new Configuration(config_path)),
+      StatHolder* stats,
+      FrontendCommons::HttpResponseFactory* response_factory)
+      : FrontendCommons::FrontendInterface(response_factory),
+        config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
         stats_(ReferenceCounting::add_ref(stats)),
-        //composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider)),
+        http_response_factory_(ReferenceCounting::add_ref(response_factory)),
         common_module_(new CommonModule(logger_))
     {
       frontends_.reserve(4);
@@ -45,8 +47,8 @@ namespace AdServer
 
     void
     FrontendsPool::handle_request(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       noexcept
     {
       for (auto frontend_it = frontends_.begin();
@@ -61,14 +63,14 @@ namespace AdServer
         }
       }
 
-      FCGI::HttpResponse_var response(new FCGI::HttpResponse(1));
+      FrontendCommons::HttpResponse_var response = create_response();
       response_writer->write(404, response);
     }
 
     void
     FrontendsPool::handle_request_noparams(
-      FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FrontendCommons::HttpRequestHolder_var request_holder,
+      FrontendCommons::HttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/
     {
       for (auto frontend_it = frontends_.begin();
@@ -83,7 +85,7 @@ namespace AdServer
         }
       }
 
-      FCGI::HttpResponse_var response(new FCGI::HttpResponse(1));
+      FrontendCommons::HttpResponse_var response = create_response();
       response_writer->write(404, response);
     }
 
@@ -109,99 +111,117 @@ namespace AdServer
               fe_config.BidFeConfiguration(),
               logger_,
               common_module_,
-              stats_
-              //, composite_metrics_provider_
-              );
+              stats_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_PUBPIXEL)
           {
             init_frontend<PubPixel::Frontend>(
               fe_config.PubPixelFeConfiguration(),
-              logger_);
+              logger_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_CONTENT)
           {
             init_frontend<ContentFrontend>(
               fe_config.ContentFeConfiguration(),
-              logger_);
+              logger_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_DIRECTORY)
           {
             init_frontend<DirectoryModule>(
               fe_config.ContentFeConfiguration(),
-              logger_);
+              logger_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_WEBSTAT)
           {
             init_frontend<WebStat::Frontend>(
               fe_config.WebStatFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_ACTION)
           {
             init_frontend<Action::Frontend>(
               fe_config.ActionFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_USERBIND)
           {
             init_frontend<UserBindFrontend>(
               fe_config.UserBindFeConfiguration(),
               logger_,
-              common_module_
-              //, composite_metrics_provider_
-              );
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_PASSBACK)
           {
             init_frontend<Passback::Frontend>(
               fe_config.PassFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_PASSBACKPIXEL)
           {
             init_frontend<PassbackPixel::Frontend>(
               fe_config.PassPixelFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_OPTOUT)
           {
             init_frontend<OptoutFrontend>(
               fe_config.OptOutFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_ADINST)
           {
             init_frontend<Instantiate::Frontend>(
               fe_config.AdInstFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_CLICK)
           {
             init_frontend<ClickFrontend>(
               fe_config.ClickFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_IMPRTRACK)
           {
             init_frontend<ImprTrack::Frontend>(
               fe_config.ImprTrackFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
           }
           else if(*module_it == M_AD)
           {
             init_frontend<AdFrontend>(
               fe_config.AdFeConfiguration(),
               logger_,
-              common_module_);
+              common_module_,
+              http_response_factory_.in());
+          }
+          else if(*module_it == M_ECHO)
+          {
+            init_frontend<AdServer::Echo::Frontend>(
+              fe_config.CommonFeConfiguration(),
+              logger_,
+              common_module_,
+              http_response_factory_.in());
           }
         }
       }

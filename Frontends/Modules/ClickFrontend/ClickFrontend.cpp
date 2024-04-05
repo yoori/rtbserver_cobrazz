@@ -120,9 +120,11 @@ namespace AdServer
   ClickFrontend::ClickFrontend(
     Configuration* frontend_config,
     Logging::Logger* logger,
-    CommonModule* common_module)
+    CommonModule* common_module,
+    FrontendCommons::HttpResponseFactory* response_factory)
     /*throw(eh::Exception)*/
-    : Logging::LoggerCallbackHolder(
+    : FrontendCommons::FrontendInterface(response_factory),
+      Logging::LoggerCallbackHolder(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -133,6 +135,7 @@ namespace AdServer
         0),
       FrontendCommons::FrontendTaskPool(
         this->callback(),
+        response_factory,
         frontend_config->get().ClickFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -193,7 +196,7 @@ namespace AdServer
 
       cookie_manager_.reset(
         new FrontendCommons::CookieManager<
-          FCGI::HttpRequest, FCGI::HttpResponse>(
+          FrontendCommons::HttpRequest, FrontendCommons::HttpResponse>(
             common_config_->Cookies()));
     }
     catch(const eh::Exception& e)
@@ -207,11 +210,11 @@ namespace AdServer
 
   void
   ClickFrontend::handle_request_noparams_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
-    FCGI::HttpRequest& request = request_holder->request();
+    FrontendCommons::HttpRequest& request = request_holder->request();
 
     HTTP::ParamList params;
 
@@ -265,7 +268,7 @@ namespace AdServer
 
     if (!request.body().empty())
     {
-      FCGI::HttpRequest::parse_params(request.body(), params);
+      FrontendCommons::HttpRequest::parse_params(request.body(), params);
     }
 
     request.set_params(std::move(params));
@@ -492,7 +495,7 @@ namespace AdServer
   void
   ClickFrontend::check_constraints_(
     const FrontendCommons::ParsedParamsMap& params,
-    const FCGI::HttpRequest& request) const
+    const FrontendCommons::HttpRequest& request) const
     /*throw(ForbiddenException, InvalidParamException)*/
   {
     static const char* FUN = "ClickFrontend::check_constraints_()";
@@ -586,16 +589,16 @@ namespace AdServer
 
   void
   ClickFrontend::handle_request_(
-    FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FrontendCommons::HttpRequestHolder_var request_holder,
+    FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
     static const char* FUN = "ClickFrontend::handle_request()";
 
-    const FCGI::HttpRequest& request = request_holder->request();
+    const FrontendCommons::HttpRequest& request = request_holder->request();
 
-    FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
+    FrontendCommons::HttpResponse_var response_ptr = create_response();
+    FrontendCommons::HttpResponse& response = *response_ptr;
 
     log(String::SubString("ClickFrontend::handle_request: entered"),
       TraceLevel::MIDDLE,
