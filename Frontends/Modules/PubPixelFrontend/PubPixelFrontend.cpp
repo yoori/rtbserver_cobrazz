@@ -37,6 +37,8 @@ namespace PubPixel
   };
 
   Frontend::Frontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     FrontendCommons::HttpResponseFactory* response_factory)
@@ -55,6 +57,8 @@ namespace PubPixel
         response_factory,
         frontend_config->get().PubPixelFeConfiguration()->threads(),
         0), // max pending tasks
+      task_processor_(task_processor),
+      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       campaign_managers_(this->logger(), Aspect::PUBPIXEL_FRONTEND)
   {}

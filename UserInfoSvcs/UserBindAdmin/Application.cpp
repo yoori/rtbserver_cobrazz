@@ -206,11 +206,17 @@ void Application::run(int argc, char** argv)
       controller_ref_group.push_back(ref);
       controller_groups.push_back(controller_ref_group);
 
+      UServerUtils::Grpc::Core::Common::SchedulerPtr scheduler =
+        UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+          3,
+          logger.in());
+
       grpc_user_bind_distributor =
         GrpcUserBindOperationDistributor_var(
           new GrpcUserBindOperationDistributor(
             logger.in(),
-            manager_coro.in(),
+            manager_coro->get_main_task_processor(),
+            scheduler,
             controller_groups,
             corba_client_adapter,
             config_grpc_client,

@@ -17,6 +17,8 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -24,9 +26,9 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
+#include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/UserBindClient.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
-
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
@@ -34,11 +36,7 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
-#include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -60,25 +58,21 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
-    typedef Configuration::FeConfig::CommonFeConfiguration_type
-      CommonFeConfiguration;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using AdFeConfiguration = Configuration::FeConfig::AdFeConfiguration_type;
+    using PassFeConfiguration = Configuration::FeConfig::PassFeConfiguration_type;
+    using HttpResponse = FrontendCommons::HttpResponse;
 
-    typedef Configuration::FeConfig::AdFeConfiguration_type
-      AdFeConfiguration;
-
-    typedef Configuration::FeConfig::PassFeConfiguration_type
-      PassFeConfiguration;
-
-    typedef FrontendCommons::HttpResponse HttpResponse;
+  public:
 
     AdFrontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -280,6 +274,9 @@ namespace AdServer
       const AdServer::CampaignSvcs::ChannelIdArray& hit_channels);
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     /* configuration */
     CommonConfigPtr common_config_;
     ConfigPtr config_;
@@ -294,8 +291,6 @@ namespace AdServer
     CookieManagerPtr cookie_manager_;
     std::list<std::string> remove_cookies_holder_;
     FrontendCommons::CookieNameSet remove_cookies_;
-
-    ManagerCoro_var manager_coro_;
 
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;

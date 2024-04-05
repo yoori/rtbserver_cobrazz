@@ -38,6 +38,7 @@ namespace Profiling
     using ManagerCoro = UServerUtils::Grpc::Manager;
     using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
     using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

@@ -249,16 +249,14 @@
   <xsl:param name="unixcommons-root"/>
   <xsl:param name="env-config"/>
   <xsl:param name="colo-config"/>
-
   <xsl:param name="campaign-servers"/>
   <xsl:param name="user-bind-servers"/>
   <xsl:param name="channel-controller-path"/>
-
+  <xsl:param name="channel-servers"/>
+  <xsl:param name="channel-server-grpc-port"/>
   <xsl:param name="channel-server-count"/>
-
   <xsl:param name="stats-collector-path"/>
   <xsl:param name="stats-collector"/>
-
   <xsl:param name="frontend-config"/>
 
   <xsl:variable name="www-root"><xsl:value-of select="$env-config/@data_root"/>
@@ -890,10 +888,10 @@
     </cfg:Coroutine>
 
     <cfg:GrpcClientPool
-        num_channels="{$grpc-pool-client-num-channels}"
-        num_clients="{$grpc-pool-client-num-clients}"
-        timeout="{$grpc-pool-client-timeout}"
-        enable="{$grpc-pool-client-enable}">
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
       <xsl:call-template name="GrpcClientChannelArgList"/>
     </cfg:GrpcClientPool>
 
@@ -1017,7 +1015,7 @@
 
   <cfg:ClickFeConfiguration threads="{$click-matching-threads}"
     match_task_limit="{$match-task-limit}"
-    max_pending_tasks="0">
+    max_pending_tasks="0" time_duration_client_mark_bad="{$def-time-duration-client-mark-bad}">
     <xsl:attribute name="template_file"><xsl:value-of
       select="$ps-res-data-root"/>/http/tag/click.html</xsl:attribute>
     <xsl:attribute name="set_uid">
@@ -1039,6 +1037,14 @@
     <cfg:UriList>
       <cfg:Uri path="/click"/>
     </cfg:UriList>
+    <cfg:ChannelServerEndpointList>
+      <xsl:for-each select="$channel-servers">
+        <cfg:Endpoint>
+          <xsl:attribute name="host"><xsl:value-of select="@host"/></xsl:attribute>
+          <xsl:attribute name="port"><xsl:value-of select="$channel-server-grpc-port"/></xsl:attribute>
+        </cfg:Endpoint>
+      </xsl:for-each>
+    </cfg:ChannelServerEndpointList>
     <xsl:call-template name="ConvertFrontendLogger">
       <xsl:with-param name="logger-node" select="$click-module/cfg:logging"/>
       <xsl:with-param name="default-log-level" select="$click-module-log-level"/>
@@ -1594,6 +1600,26 @@
     <xsl:if test="count($unixcommons-install-root) = 0"><xsl:value-of select="$def-unixcommons-root"/></xsl:if>
   </xsl:variable>
 
+  <xsl:variable
+    name="channel-servers"
+    select="$fe-cluster-path/service[@descriptor = $channel-server-descriptor] |
+    $fe-cluster-path/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/ChannelServer']"/>
+
+  <xsl:variable
+    name="channel-serving-root-config"
+    select="$fe-config/cfg:channelServer"/>
+
+  <xsl:variable
+    name="channel-server-config"
+    select="$xpath/configuration/cfg:channelServer  | $channel-serving-root-config"/>
+
+  <xsl:variable name="channel-server-grpc-port">
+    <xsl:value-of select="$channel-server-config/cfg:networkParams/@grpc_port"/>
+    <xsl:if test="count($channel-server-config/cfg:networkParams/@grpc_port) = 0">
+      <xsl:value-of select="$def-channel-server-grpc-port"/>
+    </xsl:if>
+  </xsl:variable>
+
   <!-- check config sections -->
   <xsl:choose>
     <xsl:when test="count($colo-config) = 0">
@@ -1610,15 +1636,14 @@
       <xsl:with-param name="unixcommons-root" select="$unixcommons-root"/>
       <xsl:with-param name="env-config" select="$env-config"/>
       <xsl:with-param name="colo-config" select="$colo-config"/>
-
       <xsl:with-param name="campaign-servers" select="$campaign-servers"/>
       <xsl:with-param name="user-bind-servers" select="$user-bind-servers"/>
       <xsl:with-param name="channel-controller-path" select="$channel-controller-path"/>
-
+      <xsl:with-param name="channel-servers" select="$channel-servers"/>
+      <xsl:with-param name="channel-server-grpc-port" select="$channel-server-grpc-port"/>
       <xsl:with-param name="channel-server-count" select="$channel-server-count"/>
       <xsl:with-param name="stats-collector-path" select="$stats-collector-path"/>
       <xsl:with-param name="stats-collector" select="$stats-collector-config"/>
-
       <xsl:with-param name="frontend-config" select="$frontend-config"/>
     </xsl:call-template>
   </cfg:FeConfiguration>

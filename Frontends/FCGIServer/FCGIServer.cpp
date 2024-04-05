@@ -178,9 +178,11 @@ namespace Frontends
     using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
     using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
     using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
 
     static const char* FUN = "FCGIServer::init_fcgi_()";
 
+    ManagerCoro_var manager;
     try
     {
       auto task_processor_container_builder =
@@ -235,11 +237,10 @@ namespace Frontends
         return components_builder;
       };
 
-      ManagerCoro_var manager(
-        new ManagerCoro(
-          std::move(task_processor_container_builder),
-          std::move(init_func),
-          logger()));
+      manager = new ManagerCoro(
+        std::move(task_processor_container_builder),
+        std::move(init_func),
+        logger());
 
       add_child_object(manager.in());
     }
@@ -337,12 +338,28 @@ namespace Frontends
       FrontendCommons::HttpResponseFactory_var response_factory(
         new FCGI::HttpResponseFactory);
 
+      auto number_scheduler_threads = std::thread::hardware_concurrency();
+      if (number_scheduler_threads == 0)
+      {
+        Stream::Error ostr;
+        ostr << FNS
+             << "hardware_concurrency is failed";
+        throw Exception(ostr);
+      }
+      SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+        number_scheduler_threads,
+        logger());
+
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
+        manager->get_main_task_processor(),
+        scheduler,
         config_->fe_config().data(),
         modules,
         logger(),
         stats_,
         response_factory.in());
+      frontend_pool_ = frontend_pool;
+      frontend_pool_->init();
 
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)
@@ -368,9 +385,6 @@ namespace Frontends
               bind_it->backlog(),
               bind_it->accept_threads())));
       }
-
-      frontend_pool_ = frontend_pool;
-      frontend_pool_->init();
     }
     catch(const eh::Exception& ex)
     {

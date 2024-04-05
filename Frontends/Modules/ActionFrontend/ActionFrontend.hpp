@@ -14,6 +14,8 @@
 #include <GeoIP/IPMap.hpp>
 #include <String/TextTemplate.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -24,9 +26,6 @@
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -49,17 +48,19 @@ namespace Action
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
-    typedef ReferenceCounting::SmartPtr<Frontend> Frontend_var;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using Frontend_var = ReferenceCounting::SmartPtr<Frontend>;
+
+  public:
     static Frontend_var instance;
 
     Frontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -223,8 +224,10 @@ namespace Action
       CookieManagerPtr;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     // configuration
-    //std::string config_file_;
     CommonConfigPtr common_config_;
     ConfigPtr config_;
     Configuration_var frontend_config_;
@@ -238,7 +241,6 @@ namespace Action
       channel_servers_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     CookieManagerPtr cookie_manager_;
-    ManagerCoro_var manager_coro_;
 
     IPMapPtr ip_map_;
     FileCachePtr track_pixel_;

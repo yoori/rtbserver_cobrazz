@@ -11,11 +11,13 @@
 #include <Generics/Uuid.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-
 #include <HTTP/Http.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
+#include <ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp>
 
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -28,9 +30,6 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -49,17 +48,15 @@ namespace AdServer
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-  private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
-
   public:
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     ClickFrontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -177,6 +174,9 @@ namespace AdServer
       noexcept;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     std::string config_file_;
 
     /* configuration */
@@ -191,8 +191,9 @@ namespace AdServer
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelServerSessionPool>
-      channel_servers_;
+    std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
+    AdServer::ChannelSvcs::GrpcChannelOperationPoolPtr grpc_channel_operation_pool_;
+
     FrontendCommons::UserBindClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;
 
@@ -201,8 +202,6 @@ namespace AdServer
 
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
-
-    ManagerCoro_var manager_coro_;
 
     Generics::TaskRunner_var task_runner_;
 

@@ -4,4 +4,5 @@ add_library(EchoFrontend SHARED
 
 target_link_libraries(EchoFrontend
   Generics
+  UServerUtils
 )

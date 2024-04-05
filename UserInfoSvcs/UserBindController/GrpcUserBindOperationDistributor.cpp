@@ -15,14 +15,14 @@ const char* ASPECT_GRPC_USER_BIND_DISTRIBUTOR =
 
 GrpcUserBindOperationDistributor::GrpcUserBindOperationDistributor(
   Logging::Logger* logger,
-  ManagerCoro* manager_coro,
+  TaskProcessor& task_processor,
+  const SchedulerPtr& scheduler,
   const ControllerRefList& controller_refs,
   const CORBACommons::CorbaClientAdapter* corba_client_adapter,
   const ConfigPoolClient& config_pool_client,
   const std::size_t grpc_client_timeout,
   const Generics::Time& pool_timeout)
   : logger_(ReferenceCounting::add_ref(logger)),
-    manager_coro_(ReferenceCounting::add_ref(manager_coro)),
     callback_(Generics::ActiveObjectCallback_var(
       new Logging::ActiveObjectCallbackImpl(
         logger,
@@ -33,14 +33,12 @@ GrpcUserBindOperationDistributor::GrpcUserBindOperationDistributor(
     grpc_client_timeout_(grpc_client_timeout),
     pool_timeout_(pool_timeout),
     controller_refs_(controller_refs),
-    scheduler_(UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
-      config_pool_client_.number_threads,
-      logger_.in())),
+    scheduler_(scheduler),
     factory_client_container_(new FactoryClientContainer(
       logger_.in(),
       scheduler_,
       config_pool_client_,
-      manager_coro_->get_main_task_processor())),
+      task_processor)),
     corba_client_adapter_(ReferenceCounting::add_ref(corba_client_adapter)),
     task_runner_(new Generics::TaskRunner(callback_, try_count_))
 {

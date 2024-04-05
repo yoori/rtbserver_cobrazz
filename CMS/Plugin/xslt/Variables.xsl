@@ -529,4 +529,7 @@
 <xsl:variable name="http-keepalive-timeout-seconds" select="600"/>
 <xsl:variable name="http-in-buffer-size" select="32768"/>
 
+<!-- Click frontend params -->
+<xsl:variable name="def-time-duration-client-mark-bad" select="20"/>
+
 </xsl:stylesheet>

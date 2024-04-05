@@ -189,7 +189,9 @@ void Application::init_http()
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using HttpHandlerConfig = UServerUtils::Http::Server::HandlerConfig;
   using ListenerConfig = UServerUtils::Http::Server::ListenerConfig;
+  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
 
+  ManagerCoro_var manager;
   try
   {
     ModuleIdArray modules;
@@ -279,19 +281,43 @@ void Application::init_http()
     auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
     statistics_provider->add(common_counter_statistics_provider);
 
+    auto number_scheduler_threads = std::thread::hardware_concurrency();
+    if (number_scheduler_threads == 0)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "hardware_concurrency is failed";
+      throw Exception(stream);
+    }
+
+    SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+      number_scheduler_threads,
+      logger());
+
     FrontendCommons::HttpResponseFactory_var response_factory(
       new HttpResponseFactory);
 
-    FrontendCommons::Frontend_var frontend(
-      new FrontendsPool(
-        server_config_->fe_config().data(),
-        modules,
-        logger(),
-        stats_,
-        response_factory.in()));
-
-    auto init_func = [this, frontend, statistics_provider] (TaskProcessorContainer& task_processor_container) {
+    auto init_func = [
+      this,
+      statistics_provider,
+      modules = std::move(modules),
+      scheduler = std::move(scheduler),
+      response_factory = std::move(response_factory)] (
+        TaskProcessorContainer& task_processor_container) {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
+
+      FrontendCommons::Frontend_var frontend(
+        new FrontendsPool(
+          main_task_processor,
+          scheduler,
+          server_config_->fe_config().data(),
+          modules,
+          logger(),
+          stats_,
+          response_factory.in()));
+      frontend_ = frontend;
+      frontend_->init();
+
       ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
       statistics_provider_info.statistics_provider = statistics_provider;
       statistics_provider_info.statistics_prefix = "cobrazz";
@@ -376,16 +402,12 @@ void Application::init_http()
         logger(),
         server_config_->Coroutine());
 
-    ManagerCoro_var manager(
-      new ManagerCoro(
-        std::move(task_processor_container_builder),
-        std::move(init_func),
-        logger()));
+    manager = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger());
 
     add_child_object(manager.in());
-
-    frontend_ = frontend;
-    frontend_->init();
   }
   catch (const eh::Exception& exc)
   {
