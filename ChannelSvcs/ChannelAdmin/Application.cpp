@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <unistd.h>
 
+#include <boost/algorithm/string.hpp>
+
 #include <String/StringManip.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
@@ -68,8 +70,8 @@ namespace
     "-u[--urls] url -p[--pwords] page_word -e [--swords] search_word -U uid\n"
       "Options:\n"
       "-r[--reference] reference: set CORBA reference\n"
-      "-P[--host_and_port] host:port: set host and port for CORBA reference or GRPC endpoint(required -g flag set)"
-      "if it didn't set\n"
+      "-P[--host_and_port] host:port: set host and port for CORBA reference "
+      "or GRPC endpoint/endpoints(required -g flag set) if it didn't set\n"
       "-a[--stat] calculate time execution statistic of call\n"
       "-t n: do query n times\n"
       "-d[--non-strict-hard] enable non-strict word matching\n"
@@ -625,18 +627,60 @@ void Application::init_update_interface_() /*throw(InvalidArgument)*/
 
 void Application::init_server_grpc_()
 {
-  if (!match_client_)
+  using Host = std::string;
+  using Port = std::size_t;
+  using Endpoint = std::pair<Host, Port>;
+
+  static std::vector<Endpoint> endpoints;
+  if (!endpoints.empty())
   {
-    if (!string_options[OPT_HOST_AND_PORT].value.installed())
+    return;
+  }
+
+  if (!string_options[OPT_HOST_AND_PORT].value.installed())
+  {
+    Stream::Error stream;
+    stream << "GRPC protocol requires --host_and_port command line argument";
+    throw InvalidArgument(stream);
+  }
+
+  const auto endpoints_string = *string_options[OPT_HOST_AND_PORT].value;
+  std::vector<std::string> endpoint_strings;
+  boost::split(
+    endpoint_strings,
+    endpoints_string,
+    boost::is_any_of(";"));
+  for (const auto& str : endpoint_strings)
+  {
+    std::vector<std::string> endpoint;
+    boost::split(
+      endpoint,
+      str,
+      boost::is_any_of(":"));
+    if (endpoint.size() != 2)
     {
       Stream::Error stream;
-      stream << "GRPC protocol requires --host_and_port command line argument";
+      stream << "Not correct endpoint format";
       throw InvalidArgument(stream);
     }
+    endpoints.emplace_back(
+      endpoint[0],
+      std::atoi(endpoint[1].c_str()));
+  }
 
-    UServerUtils::Grpc::Core::Client::ConfigPoolCoro config_grpc_client;
-    config_grpc_client.number_async_client = 5;
-    config_grpc_client.number_channels = 5;
+  if (endpoints.empty())
+  {
+    Stream::Error stream;
+    stream << "Number endpoints is null";
+    throw InvalidArgument(stream);
+  }
+
+  UServerUtils::Grpc::Core::Client::ConfigPoolCoro config_grpc_client;
+  config_grpc_client.number_async_client = 5;
+  config_grpc_client.number_channels = 5;
+
+  if (endpoints.size() == 1)
+  {
     config_grpc_client.endpoint = *string_options[OPT_HOST_AND_PORT].value;
 
     grpc_client_factory_ = std::make_unique<GrpcClientFactory>(
@@ -645,6 +689,20 @@ void Application::init_server_grpc_()
 
     match_client_ = grpc_client_factory_->create<MatchClient>(
       manager_coro_->get_main_task_processor());
+  }
+  else
+  {
+    auto scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+      5,
+      logger_.in());
+    grpc_channel_client_pool_ = std::make_unique<AdServer::ChannelSvcs::GrpcChannelOperationPool>(
+      logger_.in(),
+      manager_coro_->get_main_task_processor(),
+      scheduler,
+      endpoints,
+      config_grpc_client,
+      1000,
+      30000);
   }
 }
 
@@ -2017,70 +2075,101 @@ Application::MatchResponsePtr Application::make_match_query_grpc()
 
   try
   {
-    auto request = std::make_unique<MatchRequest>();
-
-    Generics::Uuid uid;
-    auto* query = request->mutable_query();
-    query->set_request_id("ChannelAdmin");
-    query->set_first_url(*string_options[OPT_URL].value);
-    query->set_pwords(*string_options[OPT_PWORDS].value);
-    query->set_swords(*string_options[OPT_SWORDS].value);
+    std::string uid;
     if (!string_options[OPT_UID].value.installed())
     {
-      query->set_uid(GrpcAlgs::pack_user_id(Generics::Uuid()));
+      uid = GrpcAlgs::pack_user_id(Generics::Uuid());
     }
     else
     {
-      query->set_uid(GrpcAlgs::pack_user_id(
-        Generics::Uuid(*string_options[OPT_UID].value, false)));
+      uid = GrpcAlgs::pack_user_id(
+        Generics::Uuid(*string_options[OPT_UID].value, false));
     }
-    query->set_non_strict_word_match(
-      check_options[OPT_NS_WORD_H].value.enabled() ||
-      check_options[OPT_NS_WORD_S].value.enabled());
-    query->set_non_strict_url_match(check_options[OPT_NS_WORD_U].value.enabled());
-    query->set_return_negative(check_options[OPT_NEGATIVE].value.enabled());
-    query->set_simplify_page(!check_options[OPT_NO_SIMPLIFY_PAGE].value.enabled());
-    query->set_fill_content(!check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+
     if (string_options[OPT_STATUS].value->empty())
     {
       throw Exception("statuses didn't set");
     }
+
     std::string statuses;
     statuses.push_back((*string_options[OPT_STATUS].value)[0]);
     if (string_options[OPT_STATUS].value->size() > 1)
     {
       statuses.push_back((*string_options[OPT_STATUS].value)[1]);
     }
-    query->set_statuses(std::move(statuses));
 
-    StatMarker stat_marker(
-      *string_options[OPT_STAT].value,
-      "Match",
-      *ulong_options[OPT_TIMES].value);
-
-    auto func = [request = std::move(request), match_client = match_client_] () {
-      auto copy_request = std::make_unique<MatchRequest>(*request);
-      return match_client->write(std::move(copy_request), 1500);
-    };
-
-    auto result = stat_marker.calc_stat_r<MatchClient::WriteResult>(std::move(func));
-    if (result.status == UServerUtils::Grpc::Core::Client::Status::Ok)
+    if (match_client_)
     {
-      auto response = std::move(result.response);
+      auto request = std::make_unique<MatchRequest>();
+
+      auto* query = request->mutable_query();
+      query->set_request_id("ChannelAdmin");
+      query->set_first_url(*string_options[OPT_URL].value);
+      query->set_pwords(*string_options[OPT_PWORDS].value);
+      query->set_swords(*string_options[OPT_SWORDS].value);
+      query->set_uid(uid);
+      query->set_non_strict_word_match(
+        check_options[OPT_NS_WORD_H].value.enabled() ||
+        check_options[OPT_NS_WORD_S].value.enabled());
+      query->set_non_strict_url_match(check_options[OPT_NS_WORD_U].value.enabled());
+      query->set_return_negative(check_options[OPT_NEGATIVE].value.enabled());
+      query->set_simplify_page(!check_options[OPT_NO_SIMPLIFY_PAGE].value.enabled());
+      query->set_fill_content(!check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+      if (string_options[OPT_STATUS].value->empty())
+      {
+        throw Exception("statuses didn't set");
+      }
+      query->set_statuses(std::move(statuses));
+
+      StatMarker stat_marker(
+        *string_options[OPT_STAT].value,
+        "Match",
+        *ulong_options[OPT_TIMES].value);
+
+      auto func = [request = std::move(request), match_client = match_client_] () {
+        auto copy_request = std::make_unique<MatchRequest>(*request);
+        return match_client->write(std::move(copy_request), 1500);
+      };
+
+      auto result = stat_marker.calc_stat_r<MatchClient::WriteResult>(std::move(func));
+      if (result.status == UServerUtils::Grpc::Core::Client::Status::Ok)
+      {
+        auto response = std::move(result.response);
+        return response;
+      }
+      else if (result.status == UServerUtils::Grpc::Core::Client::Status::Timeout)
+      {
+        throw Exception("Timeout is reached");
+      }
+      else if (result.status == UServerUtils::Grpc::Core::Client::Status::InternalError)
+      {
+        throw Exception("Internal error occure");
+      }
+
+      return std::move(result.response);
+    }
+    else
+    {
+      auto response = grpc_channel_client_pool_->match(
+        std::string("ChannelAdmin"),
+        *string_options[OPT_URL].value,
+        std::string{},
+        std::string{},
+        std::string{},
+        *string_options[OPT_PWORDS].value,
+        *string_options[OPT_SWORDS].value,
+        uid,
+        statuses,
+        check_options[OPT_NS_WORD_H].value.enabled() || check_options[OPT_NS_WORD_S].value.enabled(),
+        check_options[OPT_NS_WORD_U].value.enabled(),
+        check_options[OPT_NEGATIVE].value.enabled(),
+        !check_options[OPT_NO_SIMPLIFY_PAGE].value.enabled(),
+        !check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+
       return response;
     }
-    else if (result.status == UServerUtils::Grpc::Core::Client::Status::Timeout)
-    {
-      throw Exception("Timeout is reached");
-    }
-    else if (result.status == UServerUtils::Grpc::Core::Client::Status::InternalError)
-    {
-      throw Exception("Internal error occure");
-    }
-
-    return std::move(result.response);
   }
-  catch(const eh::Exception& exc)
+  catch (const eh::Exception& exc)
   {
     Stream::Error stream;
     stream << FNS
@@ -2147,7 +2236,11 @@ int Application::match_()
     if (is_grpc)
     {
       auto response = make_match_query_grpc();
-      if (response->has_error())
+      if (!response)
+      {
+        std::cout << "Internal grpc error occure\n";
+      }
+      else if (response->has_error())
       {
         const auto& error = response->error();
         std::cout << "Server error occure:\n type=";

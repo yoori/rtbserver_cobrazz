@@ -109,7 +109,7 @@ GrpcChannelOperationPool::create_match_request(
   query->set_pwords(pwords);
   query->set_swords(swords);
   query->set_uid(uid);
-  query->set_uid(statuses);
+  query->set_statuses(statuses);
   query->set_non_strict_word_match(non_strict_word_match);
   query->set_non_strict_url_match(non_strict_url_match);
   query->set_return_negative(return_negative);

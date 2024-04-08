@@ -12,6 +12,7 @@ target_link_libraries(ChannelAdmin
   Commons
   DictionaryProviderIDL
   Generics
+  GrpcChannelOperationPool
   Logger
   UServerUtils
   UtilCommons

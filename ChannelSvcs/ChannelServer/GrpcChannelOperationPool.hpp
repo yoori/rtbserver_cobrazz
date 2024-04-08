@@ -78,7 +78,7 @@ public:
     const Endpoints& endpoints,
     const ConfigPoolClient& config_pool_client,
     const std::size_t grpc_client_timeout_ms = 1000,
-    const std::size_t time_duration_client_bad_ms = 10000);
+    const std::size_t time_duration_client_bad_ms = 30000);
 
   ~GrpcChannelOperationPool() = default;
 
@@ -142,15 +142,14 @@ private:
     }
 
     const std::size_t size = client_holders_.size();
-    const std::size_t number = counter_.fetch_add(1, std::memory_order_relaxed);
-    std::size_t i = 0;
-    do
+    for (std::size_t i = 0; i < size; ++i)
     {
       try
       {
-        const auto& client_holder = client_holders_[(number + i) % size];
-        i += 1;
-
+        const std::size_t number = counter_.fetch_add(
+          1,
+          std::memory_order_relaxed);
+        const auto& client_holder = client_holders_[number % size];
         if (client_holder->is_bad())
         {
           continue;
@@ -175,6 +174,13 @@ private:
           grpc_client_timeout_ms_);
         if (!response)
         {
+          Stream::Error stream;
+          stream << FNS
+                 << ": Internal grpc error";
+          logger_->error(
+            stream.str(),
+            ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+
           continue;
         }
 
@@ -192,7 +198,17 @@ private:
             case Proto::Error_Type::Error_Type_Implementation:
             case Proto::Error_Type::Error_Type_NotConfigured:
             {
-              break;
+              Stream::Error stream;
+              stream << FNS
+                     << "Error type="
+                     << (error_type == Proto::Error_Type::Error_Type_Implementation
+                         ? "Implementation" : "NotConfigured")
+                     << " description="
+                     << error.description();
+              logger_->error(
+                stream.str(),
+                ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+              return response;
             }
             default:
             {
@@ -239,7 +255,6 @@ private:
         }
       }
     }
-    while (i < size);
 
     try
     {
@@ -345,16 +360,17 @@ public:
       static_assert(Internal::always_false_v<Client>);
     }
 
-    auto result = client->write(std::move(request), timeout);
-    if (result.status == Status::Ok)
+    for (std::size_t i = 1; i <= 3; ++i)
     {
-      return std::move(result.response);
+      auto result = client->write(std::move(request), timeout);
+      if (result.status == Status::Ok)
+      {
+        return std::move(result.response);
+      }
     }
-    else
-    {
-      set_bad();
-      return {};
-    }
+
+    set_bad();
+    return {};
   }
 
 private:
