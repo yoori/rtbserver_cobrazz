@@ -101,6 +101,7 @@
     </xsl:variable>
 
     <xsl:variable name="chunks-root" select="concat($cache-root, '/ExpressionMatcher/')"/>
+    <xsl:variable name="channel-matcher-cache-path" select="concat($cache-root, '/ExpressionMatcher/ChannelMatcherCache/RocksDB')"/>
 
     <xsl:variable name="in-logs-dir" select="concat($workspace-root, '/log/ExpressionMatcher/In/')"/>
     <xsl:variable name="out-logs-dir" select="concat($workspace-root, '/log/ExpressionMatcher/Out/')"/>
@@ -372,6 +373,13 @@
         <cfg:GlobalColoUserStat period="{$flush-logs-period}"/>
         <cfg:ColoUserStat period="{$flush-logs-period}"/>
       </cfg:OutLogs>
+
+      <cfg:ChannelMatcherCache
+        enable="{$channel-matcher-cache-rocksdb-enable}"
+        recheck_period="{$channel-matcher-cache-recheck-period}"
+        ttl="{$channel-matcher-cache-rocksdb-ttl}"
+        db_path="{$channel-matcher-cache-path}"
+        block-cache-size-mb="{$channel-matcher-cache-rocksdb-block-cache-size-mb}"/>
     </cfg:LogProcessing>
 
     <cfg:DailyProcessing processing_time="00:01" thread_pool_size="5"/>

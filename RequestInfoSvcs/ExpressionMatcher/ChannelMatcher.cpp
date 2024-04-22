@@ -1,9 +1,17 @@
+// BOOST
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+// THREAD
+#include <thread>
+
 #include <Generics/BoundedMap.hpp>
 #include "ChannelMatcher.hpp"
 
 namespace Aspect
 {
   const char CHANNEL_MATCHER[] = "ChannelMatcher";
+  const char ROCKSDB_CACHE[] = "RocksdbCache";
 }
 
 namespace AdServer
@@ -27,7 +35,7 @@ namespace RequestInfoSvcs
     };
   };
 
-  struct ChannelMatcher::MatchKeyHolder: public ReferenceCounting::AtomicImpl
+  struct CalculateChannelMatcher::MatchKeyHolder: public ReferenceCounting::AtomicImpl
   {
     typedef std::vector<unsigned long> ChannelIdArray;
 
@@ -44,7 +52,7 @@ namespace RequestInfoSvcs
     ~MatchKeyHolder() noexcept = default;
   };
 
-  class ChannelMatcher::MatchCache: public ReferenceCounting::AtomicImpl
+  class CalculateChannelMatcher::MatchCache: public ReferenceCounting::AtomicImpl
   {
   protected:
     class MatchSizePolicy;
@@ -188,14 +196,14 @@ namespace RequestInfoSvcs
     CacheMap cache_map_;
   };
 
-  ChannelMatcher::MatchKey::MatchKey(const CampaignSvcs::ChannelIdSet& history_channels)
+  CalculateChannelMatcher::MatchKey::MatchKey(const CampaignSvcs::ChannelIdSet& history_channels)
     : match_key_holder_(new MatchKeyHolder(history_channels))
   {}
 
-  ChannelMatcher::MatchKey::~MatchKey() noexcept
+  CalculateChannelMatcher::MatchKey::~MatchKey() noexcept
   {}
 
-  ChannelMatcher::MatchResult::MatchResult(
+  CalculateChannelMatcher::MatchResult::MatchResult(
     const ChannelIdSet& result_channels_val,
     const ChannelIdSet& result_estimate_channels_val,
     const ChannelActionMap& result_channel_actions_val)
@@ -208,7 +216,7 @@ namespace RequestInfoSvcs
   {}
 
   // ChannelMatcher
-  ChannelMatcher::ChannelMatcher(
+  CalculateChannelMatcher::CalculateChannelMatcher(
     Logging::Logger* logger,
     unsigned long cache_limit,
     const Generics::Time& /*cache_timeout*/)
@@ -217,11 +225,8 @@ namespace RequestInfoSvcs
       cache_limit_(cache_limit)
   {}
 
-  ChannelMatcher::~ChannelMatcher() noexcept
-  {}
-
-  ChannelMatcher::Config_var
-  ChannelMatcher::config() const /*throw(Exception)*/
+  CalculateChannelMatcher::Config_var
+  CalculateChannelMatcher::config() const /*throw(Exception)*/
   {
     try
     {
@@ -231,14 +236,14 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::config(): Caught eh::Exception: " <<
+      ostr << "CalculateChannelMatcher::config(): Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }
   }
 
-  ChannelMatcher::ExpressionChannelIndex_var
-  ChannelMatcher::get_channel_index_() const /*throw(Exception)*/
+  CalculateChannelMatcher::ExpressionChannelIndex_var
+  CalculateChannelMatcher::get_channel_index_() const /*throw(Exception)*/
   {
     try
     {
@@ -248,14 +253,14 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::get_channel_index_(): Caught eh::Exception: " <<
+      ostr << "CalculateChannelMatcher::get_channel_index_(): Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }
   }
 
   void
-  ChannelMatcher::config(Config* new_config) /*throw(Exception)*/
+  CalculateChannelMatcher::config(Config* new_config) /*throw(Exception)*/
   {
     try
     {
@@ -296,14 +301,14 @@ namespace RequestInfoSvcs
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << "ChannelMatcher::config(...): Caught eh::Exception: " <<
+      ostr << "CalculateChannelMatcher::config(...): Caught eh::Exception: " <<
         ex.what();
       throw Exception(ostr);
     }
   }
 
   void
-  ChannelMatcher::process_request_(
+  CalculateChannelMatcher::process_request_(
     const AdServer::CampaignSvcs::ExpressionChannelIndex* channel_index,
     const ChannelActionConfig* channel_action_config,
     ChannelIdSet& result_channels,
@@ -329,7 +334,7 @@ namespace RequestInfoSvcs
     }
   }
 
-  void ChannelMatcher::process_request(
+  void CalculateChannelMatcher::process_request(
     const ChannelIdSet& history_channels,
     ChannelIdSet& result_channels,
     ChannelIdSet* result_estimate_channels,
@@ -438,6 +443,227 @@ namespace RequestInfoSvcs
       history_channels.begin(),
       history_channels.end(),
       std::inserter(result_channels, result_channels.begin()));
+  }
+
+  CacheChannelMatcher::CacheChannelMatcher(
+    ChannelMatcher* delegate,
+    Logging::Logger* logger,
+    const std::uint32_t cache_recheck_period,
+    const std::string& db_path,
+    const std::uint32_t block_сache_size_mb,
+    const std::uint32_t ttl)
+    : delegate_(ReferenceCounting::add_ref(delegate)),
+      logger_(ReferenceCounting::add_ref(logger)),
+      cache_(std::make_unique<RocksdbCache>(
+        logger,
+        cache_recheck_period,
+        db_path,
+        block_сache_size_mb,
+        ttl))
+  {
+  }
+
+  void CacheChannelMatcher::process_request(
+    const ChannelIdSet& history_channels,
+    ChannelIdSet& result_channels,
+    ChannelIdSet* result_estimate_channels,
+    ChannelActionMap* result_channel_actions)
+  {
+    const std::string key = cache_->create_key(history_channels);
+    DataPtr data = cache_->get(key);
+    if (data)
+    {
+      result_channels.merge(std::move(data->channels));
+      if (result_estimate_channels)
+      {
+        result_estimate_channels->merge(std::move(data->estimate_channels));
+      }
+      if (result_channel_actions)
+      {
+        result_channel_actions->merge(std::move(data->channel_actions));
+      }
+
+      return;
+    }
+
+    data = std::make_unique<Data>();
+    delegate_->process_request(
+      history_channels,
+      data->channels,
+      &data->estimate_channels,
+      &data->channel_actions);
+
+    cache_->set(key, *data);
+
+    result_channels.merge(std::move(data->channels));
+    if (result_estimate_channels)
+    {
+      result_estimate_channels->merge(std::move(data->estimate_channels));
+    }
+    if (result_channel_actions)
+    {
+      result_channel_actions->merge(std::move(data->channel_actions));
+    }
+  }
+
+  CacheChannelMatcher::Config_var
+  CacheChannelMatcher::config() const
+  {
+    return delegate_->config();
+  }
+
+  void CacheChannelMatcher::config(Config* config)
+  {
+    delegate_->config(config);
+  }
+
+  CacheChannelMatcher::RocksdbCache::RocksdbCache(
+    Logger* logger,
+    const std::uint32_t cache_recheck_period,
+    const std::string& db_path,
+    const std::uint32_t block_сache_size_mb,
+    const std::uint32_t ttl)
+    : logger_(ReferenceCounting::add_ref(logger)),
+      cache_recheck_period_(cache_recheck_period)
+  {
+    std::size_t number_threads = std::thread::hardware_concurrency();
+    if (number_threads == 0)
+    {
+      number_threads = 16;
+    }
+
+    rocksdb::DBOptions db_options;
+    db_options.IncreaseParallelism(number_threads);
+    db_options.create_if_missing = true;
+
+    rocksdb::ColumnFamilyOptions column_family_options;
+    column_family_options.OptimizeForPointLookup(block_сache_size_mb);
+    column_family_options.compaction_style = rocksdb::kCompactionStyleLevel;
+    column_family_options.ttl = ttl;
+
+    std::optional<std::vector<int>> ttls{{static_cast<int>(ttl)}};
+
+    std::vector<rocksdb::ColumnFamilyDescriptor> descriptors{
+      {rocksdb::kDefaultColumnFamilyName, column_family_options}
+    };
+
+    data_base_ = std::make_unique<DataBase>(
+      logger,
+      db_path,
+      db_options,
+      descriptors,
+      true,
+      ttls);
+
+    write_options_.disableWAL = true;
+    write_options_.sync = false;
+  }
+
+  std::string CacheChannelMatcher::RocksdbCache::create_key(
+    const ChannelIdSet& history_channels)
+  {
+    return md5(std::begin(history_channels), std::end(history_channels));
+  }
+
+  CacheChannelMatcher::DataPtr
+  CacheChannelMatcher::RocksdbCache::get(const std::string& key) noexcept
+  {
+    try
+    {
+      std::string result;
+      const auto status = data_base_->get().Get(
+        read_options_,
+        rocksdb::Slice(key.data(), key.size()),
+        &result);
+
+      if (status.ok())
+      {
+        std::istringstream stream(std::move(result));
+        boost::archive::text_iarchive iarchive(stream);
+        auto data = std::make_unique<Data>();
+        iarchive >> *data;
+
+        const auto now = std::chrono::system_clock::now();
+        const auto duration =
+          std::chrono::duration_cast<std::chrono::seconds>(
+            now - data->time).count();
+        if (duration >= cache_recheck_period_)
+        {
+          return {};
+        }
+
+        return data;
+      }
+      else
+      {
+        if (!status.IsNotFound())
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << status.ToString();
+          logger_->error(stream.str(), Aspect::ROCKSDB_CACHE);
+        }
+
+        return {};
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << exc.what();
+      logger_->error(stream.str(), Aspect::ROCKSDB_CACHE);
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Unknown error";
+      logger_->error(stream.str(), Aspect::ROCKSDB_CACHE);
+    }
+
+    return {};
+  }
+
+  void CacheChannelMatcher::RocksdbCache::set(
+    const std::string& key,
+    const Data& data) noexcept
+  {
+    try
+    {
+      std::string string_buffer;
+      string_buffer.reserve(200);
+      std::ostringstream stream(std::move(string_buffer));
+      boost::archive::text_oarchive oarchive(stream);
+      oarchive << data;
+      const auto value = stream.str();
+
+      const auto status = data_base_->get().Put(
+        write_options_,
+        rocksdb::Slice(key.data(), key.size()),
+        rocksdb::Slice(value.data(), value.size()));
+      if (!status.ok())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << status.ToString();
+        logger_->error(stream.str(), Aspect::ROCKSDB_CACHE);
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << exc.what();
+      logger_->error(stream.str(), Aspect::ROCKSDB_CACHE);
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Unknown error";
+      logger_->error(stream.str(), Aspect::ROCKSDB_CACHE);
+    }
   }
 }
 }

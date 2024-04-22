@@ -1,86 +1,89 @@
-include_directories( /opt/foros/vanga/include)
-
+include_directories(/opt/foros/vanga/include)
 
 ADD_SUBDIRECTORY(Compatibility)
 
 add_library(ExpressionChannelMatcher STATIC
-ChannelMatcher.cpp
+  ChannelMatcher.cpp
 )
+
+target_link_libraries(ExpressionChannelMatcher
+  ExpressionChannelIndex
+  UServerUtils
+  boost_serialization
+)
+
 add_library(UserTriggerMatchContainer STATIC
-UserTriggerMatchContainer.cpp
+  UserTriggerMatchContainer.cpp
 )
+
 target_link_libraries(UserTriggerMatchContainer
-UserTriggerMatchProfilePST
-RequestTriggerMatchProfilePST
+  RequestTriggerMatchProfilePST
+  UserTriggerMatchProfilePST
 )
 
 add_library(UserInventoryContainer STATIC
-UserInventoryContainer.cpp
+  UserInventoryContainer.cpp
 )
+
 add_dependencies(UserInventoryContainer UserChannelInventoryProfilePST)
 
 add_library(UserColoReachContainer STATIC
-UserColoReachContainer.cpp
+  UserColoReachContainer.cpp
 )
+
 add_dependencies(UserColoReachContainer UserChannelInventoryProfilePST )
 
 add_idl(ExpressionMatcherIDL  ExpressionMatcher.idl ${IDL_DIRECTORY}/RequestInfoSvcs/ExpressionMatcher)
+
 target_link_libraries(ExpressionMatcherIDL
-CORBACommons
-CorbaTypesIDL
+  CORBACommons
+  CorbaTypesIDL
 )
 
 add_executable(ExpressionMatcher
-  ExpressionMatcherLogLoader.cpp 
-  ExpressionMatcherImpl.cpp 
-  ExpressionMatcherMain.cpp 
-  ExpressionMatcherOutLogger.cpp 
-  ExpressionMatcherStats.cpp 
-  UserTriggerMatchProfileProviderImpl.cpp 
   ConversionProcessor.cpp
+  ExpressionMatcherImpl.cpp
+  ExpressionMatcherLogLoader.cpp
+  ExpressionMatcherMain.cpp
+  ExpressionMatcherOutLogger.cpp
+  ExpressionMatcherStats.cpp
+  UserTriggerMatchProfileProviderImpl.cpp
 )
 
 target_link_libraries(ExpressionMatcher
-  ConsiderMessagesPST
-  RequestOperationProfilePST
-  ExpressionMatcherIDL
-  UserColoReachContainer
-  UserInventoryContainer
-  UserTriggerMatchContainer
-  ExpressionChannelMatcher
-  CORBACommons
-  ProcessControlIDL
-  Logger
-  String
-  Generics
-  Sync
-  pthread
-  ExpressionChannelIndex
-  UserChannelInventoryProfilePST
-
-  LogCommons
-  ProcessControlVars
-  Commons
-
-
   AdServerCommonsXSD
-  ExpressionMatcherConfigXSD
-
-  UserChannelInventoryProfilePST
-  ExpressionMatcherCompatibility
-  RequestTriggerMatchProfilePST
-  PlainStorage3
-  SNMPAgent
-  UserInfoManagerControllerL
+  CORBACommons
+  CampaignConfigSource
   CampaignServerIDL
-  ProfileMap
-  XMLUtility
+  CampaignTypes
   ChannelCommons
   ChannelContainer
   ChannelSessionFactory
-  CampaignTypes
-  CampaignConfigSource
+  Commons
+  ConsiderMessagesPST
+  ExpressionChannelIndex
+  ExpressionChannelMatcher
+  ExpressionMatcherCompatibility
+  ExpressionMatcherConfigXSD
+  ExpressionMatcherIDL
+  Generics
+  LogCommons
+  Logger
+  PlainStorage3
+  ProcessControlIDL
+  ProcessControlVars
+  ProfileMap
+  RequestOperationProfilePST
+  RequestTriggerMatchProfilePST
+  SNMPAgent
+  String
+  Sync
+  UserChannelInventoryProfilePST
+  UserChannelInventoryProfilePST
+  UserColoReachContainer
+  UserInfoManagerControllerL
+  UserInventoryContainer
+  UserTriggerMatchContainer
+  XMLUtility
+  pthread
 )
-
-
-#install(TARGETS ExpressionMatcher ExpressionMatcherIDL  DESTINATION ${INSTALL_DIR})

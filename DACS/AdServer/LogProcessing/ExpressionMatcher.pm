@@ -45,6 +45,7 @@ sub start
    "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelOverlapUserStat && " .
    "mkdir -p \${log_root}/ExpressionMatcher/Out/ChannelOverlapUserStat_ && " .
    "mkdir -p \${cache_root}/ExpressionMatcher && " .
+   "mkdir -p \${cache_root}/ExpressionMatcher/ChannelMatcherCache && " .
    "mkdir -p \${cache_root}/Estimation && " .
    "mkdir -p \${cache_root}/RequestTriggerMatch && " .
    "ulimit -n 4096 && " .

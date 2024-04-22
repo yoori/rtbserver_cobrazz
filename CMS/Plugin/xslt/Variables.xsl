@@ -528,4 +528,9 @@
 <xsl:variable name="http-keepalive-timeout-seconds" select="600"/>
 <xsl:variable name="http-in-buffer-size" select="32768"/>
 
+<xsl:variable name="channel-matcher-cache-rocksdb-enable" select="'true'"/>
+<xsl:variable name="channel-matcher-cache-rocksdb-block-cache-size-mb" select="300"/>
+<xsl:variable name="channel-matcher-cache-rocksdb-ttl" select="86400"/>
+<xsl:variable name="channel-matcher-cache-recheck-period" select="86400"/>
+
 </xsl:stylesheet>

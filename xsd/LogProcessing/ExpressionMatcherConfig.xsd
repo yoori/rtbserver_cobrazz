@@ -199,6 +199,7 @@
     <xsd:sequence>
       <xsd:element name="InLogs" type="InLogsType"/>
       <xsd:element name="OutLogs" type="OutLogsType"/>
+      <xsd:element name="ChannelMatcherCache" type="ChannelMatcherCacheType"/>
     </xsd:sequence>
 
     <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
@@ -241,6 +242,14 @@
     </xsd:sequence>
 
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ChannelMatcherCacheType">
+    <xsd:attribute name="enable" type="xsd:boolean" use="required"/>
+    <xsd:attribute name="recheck_period" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="ttl" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="db_path" type="xsd:string" use="required"/>
+    <xsd:attribute name="block-cache-size-mb" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="DailyProcessingType">
