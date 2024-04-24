@@ -303,8 +303,9 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     corba_server_adapter_->run();
     wait();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
-    manager_->wait_object();
+
     manager_->deactivate_object();
+    manager_->wait_object();
   }
   catch (const Exception& e)
   {

@@ -440,6 +440,7 @@
 <!-- http ports -->
 <xsl:variable name="def-http-adserver-port" select="$def-range-start + 99"/>
 <xsl:variable name="def-http-adserver-mon-port" select="$def-range-start + 199"/>
+<xsl:variable name="def-expression-matcher-mon-port" select="$def-range-start + 201"/>
 
 <xsl:variable name="def-storage-rw-buffer-size" select="10485760"/>
 <xsl:variable name="def-storage-rwlevel-max-size" select="104857600"/>

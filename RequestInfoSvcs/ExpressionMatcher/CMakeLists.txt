@@ -2,12 +2,21 @@ include_directories(/opt/foros/vanga/include)
 
 ADD_SUBDIRECTORY(Compatibility)
 
+add_library(ExpressionMatcherStatistics STATIC
+  Statistics.cpp
+)
+
+target_link_libraries(ExpressionMatcherStatistics
+  UServerUtils
+)
+
 add_library(ExpressionChannelMatcher STATIC
   ChannelMatcher.cpp
 )
 
 target_link_libraries(ExpressionChannelMatcher
   ExpressionChannelIndex
+  ExpressionMatcherStatistics
   UServerUtils
   boost_serialization
 )

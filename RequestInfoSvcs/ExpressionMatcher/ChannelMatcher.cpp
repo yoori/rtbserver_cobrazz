@@ -5,8 +5,12 @@
 // THREAD
 #include <thread>
 
+// UNIXCOMMONS
 #include <Generics/BoundedMap.hpp>
+
+// THIS
 #include "ChannelMatcher.hpp"
+#include "Statistics.hpp"
 
 namespace Aspect
 {
@@ -469,10 +473,14 @@ namespace RequestInfoSvcs
     ChannelIdSet* result_estimate_channels,
     ChannelActionMap* result_channel_actions)
   {
+    ADD_COUNTER_STATISTIC(CounterStatisticId::ProcessedRbcRecords, 1);
+
     const std::string key = cache_->create_key(history_channels);
     DataPtr data = cache_->get(key);
     if (data)
     {
+      ADD_COUNTER_STATISTIC(CounterStatisticId::ProcessRbcCacheHits, 1);
+
       result_channels.merge(std::move(data->channels));
       if (result_estimate_channels)
       {

@@ -124,6 +124,9 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
+      <xsd:element name="Coroutine" type="CoroutineType"/>
+
     </xsd:sequence>
 
     <xsd:attribute name="update_period" type="xsd:positiveInteger" use="required">
@@ -298,6 +301,10 @@
   <xsd:complexType name="ChunksDistributionType">
     <xsd:attribute name="distribution_file_path" type="xsd:string" use="required"/>
     <xsd:attribute name="distribution_file_schema" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="MonitoringType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
 </xsd:schema>

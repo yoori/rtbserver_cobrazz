@@ -5,6 +5,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
@@ -19,9 +20,9 @@ public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
 
-  typedef
-    AdServer::RequestInfoSvcs::ExpressionMatcherImpl::ExpressionMatcherConfig
-    Configuration;
+  using ManagerCoro = UServerUtils::Grpc::Manager;
+  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using Configuration = AdServer::RequestInfoSvcs::ExpressionMatcherImpl::ExpressionMatcherConfig;
 
 public:
   ExpressionMatcherApp_() /*throw(eh::Exception)*/;
@@ -44,6 +45,8 @@ private:
   typedef std::unique_ptr<Configuration> ConfigPtr;
 
 private:
+  ManagerCoro_var manager_;
+
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   CORBACommons::CorbaConfig corba_config_;
 
