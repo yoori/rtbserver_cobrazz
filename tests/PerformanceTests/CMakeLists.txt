@@ -3,7 +3,8 @@ include_directories (
 )
 
 foreach(Path
-  ProfilingCommons/ProfileMapBenchmark.cpp)
+  ProfilingCommons/ProfileMapBenchmark.cpp
+  Rocksdb/RocksdbMemoryTest.cpp)
     get_filename_component(file_name ${Path} NAME_WE)
     add_executable(${file_name} ${Path})
     target_link_libraries(${file_name}

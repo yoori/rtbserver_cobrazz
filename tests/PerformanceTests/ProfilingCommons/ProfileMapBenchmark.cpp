@@ -370,9 +370,9 @@ private:
 
   std::atomic<bool> is_strop_{false};
 
-  std::atomic<std::uint64_t> counter_;
+  std::atomic<std::uint64_t> counter_{0};
 
-  std::atomic<std::uint64_t> current_size_;
+  std::atomic<std::uint64_t> current_size_{0};
 
   const std::uint64_t diff_size_print_ = db_size_bytes_ / 100;
 
