@@ -205,61 +205,61 @@ HttpResponseFactory::create()
 
 ParseRes HttpRequestFCGI::parse(char* buf, size_t size)
 {
-  tinyfcgi::const_message m(buf, size);
+  tinyfcgi::const_message message(buf, size);
 
   uint16_t id = 0;
   bool need_more = true;
 
-  auto stdin_i = m.end();
+  auto stdin_i = message.end();
 
-  for(auto i = m.begin(); i != m.end(); ++i)
+  for(auto header_it = message.begin(); header_it != message.end(); ++header_it)
   {
-    const tinyfcgi::header& h = *i;
+    const tinyfcgi::header& header = *header_it;
 
-    if (!h.valid())
+    if (!header.valid())
     {
       return PARSE_INVALID_HEADER; // invalid header
     }
 
     if (id == 0)
     {
-      if (h.type != FCGI_BEGIN_REQUEST)
+      if (header.type != FCGI_BEGIN_REQUEST)
       {
         return PARSE_BEGIN_REQUEST_EXPECTED; // begin request expected
       }
-      id = h.id();
+      id = header.id();
     }
     else
     {
-      if (id != h.id())
+      if (id != header.id())
       {
         return PARSE_INVALID_ID; // all headers should have same id
       }
     }
 
-    if (h.type == FCGI_STDIN)
+    if (header.type == FCGI_STDIN)
     {
-      if (h.size() == 0)
+      if (header.size() == 0)
       {
         need_more = false;
         break;
       }
 
-      if (stdin_i == m.end())
+      if (stdin_i == message.end())
       {
-        stdin_i = i;
+        stdin_i = header_it;
       }
       else
       {
         return PARSE_FRAGMENTED_STDIN; // fragmented stdin not supported
       }
 
-      auto next_i = i;
+      auto next_i = header_it;
       ++next_i;
       if (next_i.valid() && next_i->valid() &&
           next_i->type == FCGI_STDIN && next_i->size() > 0)
       {
-        tinyfcgi::header* mh = (tinyfcgi::header*)&h;
+        tinyfcgi::header* mh = (tinyfcgi::header*)&header;
         mh->merge_next();
         continue;
       }
