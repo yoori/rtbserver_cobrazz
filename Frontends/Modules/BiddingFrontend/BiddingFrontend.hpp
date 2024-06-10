@@ -43,6 +43,7 @@
 #include "PlannerPool.hpp"
 #include "UServerUtils/MetricsHTTPProvider.hpp"
 #include "RequestMetricsProvider.hpp"
+#include "Stage.hpp"
 
 namespace AdServer
 {
@@ -328,14 +329,14 @@ namespace Bidding
     bool
     check_interrupt_(
       const char* fun,
-      const char* stage,
-      const BidRequestTask* task)
+      const Stage stage,
+      BidRequestTask* task)
       noexcept;
 
     void
     interrupt_(
       const char* fun,
-      const char* stage,
+      const Stage stage,
       const BidRequestTask* task)
       noexcept;
 
