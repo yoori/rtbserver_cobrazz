@@ -93,11 +93,11 @@ namespace Bidding
       *request_params_;
 
     bool fill_response = true;
-    std::ostringstream response_ostr;
+    std::string bid_response_string;
 
     try
     {
-      AdServer::Commons::JsonFormatter root_response(response_ostr);
+      AdServer::Commons::JsonFormatter root_response(bid_response_string);
       AdServer::Commons::JsonObject bid_response(
         root_response.add_object(Response::AppNexus::BID_RESPONSE));
       AdServer::Commons::JsonObject responses(
@@ -176,12 +176,10 @@ namespace Bidding
 
     if(fill_response)
     {
-      const std::string bid_response = response_ostr.str();
-
       FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
       response->set_content_type(Response::Type::JSON);
-      FrontendCommons::OutputStream& output = response->get_output_stream();
-      output.write(bid_response.data(), bid_response.size());
+      auto& output = response->get_output_stream();
+      output.write(bid_response_string.data(), bid_response_string.size());
 
       write_response_(200, response);
 

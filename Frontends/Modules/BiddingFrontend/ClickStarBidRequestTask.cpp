@@ -108,24 +108,20 @@ namespace Bidding
     AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
       *request_params_;
 
-    std::ostringstream response_ostr;
+    std::string bid_response;
 
     fill_response_(
-      response_ostr,
+      bid_response,
       request_info(),
       request_params,
       campaign_match_result);
-
-    // write response
-    const std::string bid_response = response_ostr.str();
 
     if(!bid_response.empty())
     {
       FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
       response->set_content_type(Response::Type::JSON);
 
-      FrontendCommons::OutputStream& output = response->get_output_stream();
-      std::string bid_response = response_ostr.str();
+      auto& output = response->get_output_stream();
       output.write(bid_response.data(), bid_response.size());
 
       write_response_(200, response);
@@ -168,7 +164,7 @@ namespace Bidding
 
   void
   ClickStarBidRequestTask::fill_response_(
-    std::ostream& response_ostr,
+    std::string& response,
     const RequestInfo& /*request_info*/,
     const AdServer::CampaignSvcs::CampaignManager::RequestParams& /*request_params*/,
     const AdServer::CampaignSvcs::CampaignManager::
@@ -179,22 +175,15 @@ namespace Bidding
 
     try
     {
-      response_ostr << "[";
+      AdServer::Commons::JsonFormatter json_formatter(response, false);
 
       for(CORBA::ULong slot_i = 0;
         slot_i < campaign_match_result.ad_slots.length(); ++slot_i)
       {
-        if(slot_i > 0)
-        {
-          response_ostr << ",";
-        }
-
         fill_response_adslot_(
-          response_ostr,
+          &json_formatter,
           campaign_match_result.ad_slots[slot_i]);
       }
-
-      response_ostr << "]";
     }
     catch(const eh::Exception& ex)
     {
@@ -207,11 +196,12 @@ namespace Bidding
 
   void
   ClickStarBidRequestTask::fill_response_adslot_(
-    std::ostream& response_ostr,
+    AdServer::Commons::JsonFormatter* json_formatter,
     const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
-    AdServer::Commons::JsonFormatter root_json(response_ostr);
+    AdServer::Commons::JsonObject root_json(
+      json_formatter->add_object());
 
     // result cpc price, ecpm is in 0.01/1000
     CampaignSvcs::RevenueDecimal cpc_price =

@@ -66,24 +66,20 @@ namespace Bidding
     AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
       *request_params_;
 
-    std::ostringstream response_ostr;
+    std::string bid_response;
 
     fill_response_(
-      response_ostr,
+      bid_response,
       request_info(),
       request_params,
       campaign_match_result);
-
-    // write response
-    const std::string bid_response = response_ostr.str();
 
     if(!bid_response.empty())
     {
       FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
       response->set_content_type(Response::Type::TEXT_XML);
 
-      FrontendCommons::OutputStream& output = response->get_output_stream();
-      std::string bid_response = response_ostr.str();
+      auto& output = response->get_output_stream();
       output.write(bid_response.data(), bid_response.size());
 
       write_response_(200, response);
@@ -126,7 +122,7 @@ namespace Bidding
 
   void
   DAOBidRequestTask::fill_response_(
-    std::ostream& response_ostr,
+    std::string& response,
     const RequestInfo& /*request_info*/,
     const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
     const AdServer::CampaignSvcs::CampaignManager::
@@ -139,7 +135,7 @@ namespace Bidding
     {
       //Generics::Time now = Generics::Time::get_time_of_day();
 
-      AdServer::Commons::JsonFormatter root_json(response_ostr);
+      AdServer::Commons::JsonFormatter root_json(response, true);
 
       assert(campaign_match_result.ad_slots.length() > 0);
 
