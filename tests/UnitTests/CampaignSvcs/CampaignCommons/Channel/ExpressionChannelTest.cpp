@@ -371,7 +371,7 @@ int check_custom_tree_construct(
   }
 
   AdServer::RequestInfoSvcs::ChannelMatcher_var channel_matcher =
-    new AdServer::RequestInfoSvcs::ChannelMatcher(
+    new AdServer::RequestInfoSvcs::CalculateChannelMatcher(
       0,
       cache_size,
       Generics::Time::ONE_DAY);

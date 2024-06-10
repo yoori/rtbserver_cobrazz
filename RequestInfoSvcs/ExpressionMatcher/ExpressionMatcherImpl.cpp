@@ -181,10 +181,37 @@ namespace RequestInfoSvcs
     }
 
     /* init processors */
-    channel_matcher_ = new ChannelMatcher(
-      logger(),
-      expression_matcher_config_.LogProcessing().channel_match_cache_size(),
-      Generics::Time::ZERO);
+    try
+    {
+      const auto& channel_matcher_cache =
+        expression_matcher_config.LogProcessing().ChannelMatcherCache();
+      ChannelMatcher_var calculate_channel_matcher = new CalculateChannelMatcher(
+        logger(),
+        expression_matcher_config_.LogProcessing().channel_match_cache_size(),
+        Generics::Time::ZERO);
+      if (channel_matcher_cache.enable())
+      {
+        channel_matcher_ = new CacheChannelMatcher(
+          calculate_channel_matcher.in(),
+          logger(),
+          channel_matcher_cache.recheck_period(),
+          channel_matcher_cache.db_path(),
+          channel_matcher_cache.block_cache_size_mb(),
+          channel_matcher_cache.ttl());
+      }
+      else
+      {
+        channel_matcher_ = ReferenceCounting::add_ref(calculate_channel_matcher.in());
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Can't init ExpressionMatcherOutLogger. eh::Exception caught: "
+             << exc.what();
+      throw Exception(stream);
+    }
 
     try
     {

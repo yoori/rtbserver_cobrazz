@@ -1,12 +1,21 @@
 #ifndef _EXPRESSION_MATCHER_CHANNEL_MATCHER_HPP_
 #define _EXPRESSION_MATCHER_CHANNEL_MATCHER_HPP_
 
+#include <chrono>
+
+#include <boost/serialization/binary_object.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/serialization/set.hpp>
+
+#include <openssl/md5.h>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Logger/Logger.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
+#include <UServerUtils/Grpc/RocksDB/DataBase.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
@@ -15,15 +24,12 @@ namespace AdServer
 {
   namespace RequestInfoSvcs
   {
-    class ChannelMatcher:
-      public ReferenceCounting::AtomicImpl
+    class ChannelMatcher : virtual public ReferenceCounting::Interface
     {
     public:
-      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-      typedef CampaignSvcs::ExpressionChannelHolderMap ChannelMap;
-      typedef AdServer::CampaignSvcs::ChannelIdSet ChannelIdSet;
-      typedef std::map<unsigned long, unsigned long> ChannelActionMap;
+      using ChannelMap = CampaignSvcs::ExpressionChannelHolderMap;
+      using ChannelIdSet = AdServer::CampaignSvcs::ChannelIdSet;
+      using ChannelActionMap = std::map<unsigned long, unsigned long>;
 
       struct Config: public ReferenceCounting::AtomicImpl
       {
@@ -32,18 +38,43 @@ namespace AdServer
         ChannelIdSet all_channels;
 
       private:
-        virtual ~Config() noexcept {}
+        virtual ~Config() noexcept = default;
       };
+      using Config_var = ReferenceCounting::SmartPtr<Config>;
 
-      typedef ReferenceCounting::SmartPtr<Config> Config_var;
+    public:
+      ChannelMatcher() = default;
+
+      virtual void process_request(
+        const ChannelIdSet& history_channels,
+        ChannelIdSet& result_channels,
+        ChannelIdSet* result_cpm_channels = nullptr,
+        ChannelActionMap* channel_actions = nullptr) = 0;
+
+      virtual Config_var config() const = 0;
+
+      virtual void config(Config* config) = 0;
+
+    protected:
+      virtual ~ChannelMatcher() = default;
+    };
+
+    using ChannelMatcher_var = ReferenceCounting::SmartPtr<ChannelMatcher>;
+
+    class CalculateChannelMatcher final :
+      public ChannelMatcher,
+      public ReferenceCounting::AtomicImpl
+    {
+    public:
+      using Logger_var = Logging::Logger_var;
+
+      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
       class MatchKeyHolder;
 
       struct MatchKey
       {
       public:
-        //MatchKey(CampaignSvcs::ChannelIdSet&& history_channels);
-
         MatchKey(const CampaignSvcs::ChannelIdSet& history_channels);
 
         virtual ~MatchKey() noexcept;
@@ -75,21 +106,21 @@ namespace AdServer
         MatchResult_var;
 
     public:
-      ChannelMatcher(
+      CalculateChannelMatcher(
         Logging::Logger* logger,
         unsigned long cache_limit,
         const Generics::Time& cache_timeout)
         /*throw(Exception)*/;
 
-      Config_var config() const /*throw(Exception)*/;
+      Config_var config() const override /*throw(Exception)*/;
 
-      void config(Config* config) /*throw(Exception)*/;
+      void config(Config* config) override /*throw(Exception)*/;
 
       void process_request(
         const ChannelIdSet& history_channels,
         ChannelIdSet& result_channels,
-        ChannelIdSet* result_cpm_channels = 0,
-        ChannelActionMap* channel_actions = 0)
+        ChannelIdSet* result_estimate_channels = nullptr,
+        ChannelActionMap* channel_actions = nullptr) override
         /*throw(Exception)*/;
 
     private:
@@ -115,8 +146,7 @@ namespace AdServer
         ChannelActionConfig_var;
 
     private:
-      virtual
-      ~ChannelMatcher() noexcept;
+      ~CalculateChannelMatcher() override = default;
 
     void
     process_request_(
@@ -141,8 +171,133 @@ namespace AdServer
       ChannelActionConfig_var channel_action_config_;
     };
 
-    typedef ReferenceCounting::SmartPtr<ChannelMatcher>
-      ChannelMatcher_var;
+    class CacheChannelMatcher final :
+      public ChannelMatcher,
+      public ReferenceCounting::AtomicImpl
+    {
+    public:
+      struct Data final
+      {
+        using Time = std::chrono::system_clock::time_point;
+
+        ChannelIdSet channels;
+        ChannelIdSet estimate_channels;
+        ChannelActionMap channel_actions;
+        Time time = std::chrono::system_clock::now();
+
+      private:
+        template <typename Archive>
+        void serialize(Archive& ar, const unsigned int /*version*/)
+        {
+          ar & channels;
+          ar & estimate_channels;
+          ar & channel_actions;
+          ar & boost::serialization::make_binary_object(&time, sizeof(Time));
+        }
+
+        friend class boost::serialization::access;
+      };
+
+      using DataPtr = std::unique_ptr<Data>;
+      using Logger = Logging::Logger;
+      using Logger_var = Logging::Logger_var;
+
+      DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+    private:
+      class RocksdbCache;
+      using RocksdbCachePtr = std::unique_ptr<RocksdbCache>;
+
+    public:
+      CacheChannelMatcher(
+        ChannelMatcher* delegate,
+        Logger* logger,
+        const std::uint32_t cache_recheck_period,
+        const std::string& db_path,
+        const std::uint32_t block_сache_size_mb,
+        const std::uint32_t ttl);
+
+      void process_request(
+        const ChannelIdSet& history_channels,
+        ChannelIdSet& result_channels,
+        ChannelIdSet* result_estimate_channels = nullptr,
+        ChannelActionMap* channel_actions = nullptr) override;
+
+      Config_var config() const override;
+
+      void config(Config* config) override;
+
+    protected:
+      ~CacheChannelMatcher() override = default;
+
+    private:
+      ChannelMatcher_var delegate_;
+
+      Logger_var logger_;
+
+      RocksdbCachePtr cache_;
+    };
+
+    class CacheChannelMatcher::RocksdbCache final
+    {
+    private:
+      using Data = CacheChannelMatcher::Data;
+      using DataPtr = CacheChannelMatcher::DataPtr;
+      using ChannelIdSet = CacheChannelMatcher::ChannelIdSet;
+      using Logger = Logging::Logger;
+      using Logger_var = Logging::Logger_var;
+      using DataBase = UServerUtils::Grpc::RocksDB::DataBase;
+      using DataBasePtr = std::unique_ptr<DataBase>;
+      using ReadOptions = rocksdb::ReadOptions;
+      using WriteOptions = rocksdb::WriteOptions;
+
+    public:
+      RocksdbCache(
+        Logger* logger,
+        const std::uint32_t cache_recheck_period,
+        const std::string& db_path,
+        const std::uint32_t block_сache_size_mb,
+        const std::uint32_t ttl);
+
+      ~RocksdbCache() = default;
+
+      std::string create_key(const ChannelIdSet& history_channels);
+
+      DataPtr get(const std::string& key) noexcept;
+
+      void set(const std::string& key, const Data& data) noexcept;
+      
+    private:
+      template<class It>
+      std::string md5(It begin, It end)
+      {
+        using Value = typename std::iterator_traits<It>::value_type;
+
+        MD5_CTX ctx;
+        MD5_Init(&ctx);
+        for (; begin != end; ++begin)
+        {
+          MD5_Update(&ctx, std::addressof(*begin), sizeof(Value));
+        }
+
+        std::string result;
+        result.resize(MD5_DIGEST_LENGTH);
+        MD5_Final(reinterpret_cast<unsigned char*>(result.data()), &ctx);
+
+        return result;
+      }
+
+    private:
+      const Logger_var logger_;
+
+      const std::uint32_t cache_recheck_period_;
+
+      DataBasePtr data_base_;
+
+      ReadOptions read_options_;
+
+      WriteOptions write_options_;
+    };
 
   } // namespace RequestInfoSvcs
 } // namespace AdServer
