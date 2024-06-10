@@ -10,6 +10,7 @@
 #include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
 
 #include "BiddingFrontend.hpp"
+#include "Stage.hpp"
 
 namespace AdServer
 {
@@ -75,6 +76,11 @@ namespace Bidding
     const CORBA::String_var&
     hostname() const noexcept;
 
+    void set_current_stage(
+      const Stage stage) noexcept;
+
+    Stage get_current_stage();
+
     virtual void
     print_request(std::ostream& out) const noexcept = 0;
 
@@ -121,7 +127,7 @@ namespace Bidding
     execute_() noexcept;
 
     bool
-    check_interrupt_(const char* stage)
+    check_interrupt_(const Stage stage)
       noexcept;
 
     void
@@ -146,6 +152,9 @@ namespace Bidding
     CORBA::String_var hostname_;
     RequestParamsHolder_var request_params_;
     std::string keywords_;
+
+    Stage current_stage_ = Stage::Initial;
+    std::mutex mutex_current_stage_;
 
   private:
     FrontendCommons::HttpResponseWriter_var response_writer_;
@@ -194,6 +203,28 @@ namespace Bidding
   BidRequestTask::hostname() const noexcept
   {
     return hostname_;
+  }
+
+  inline
+  void BidRequestTask::set_current_stage(
+    const Stage stage) noexcept
+  {
+    try
+    {
+      std::lock_guard lock(mutex_current_stage_);
+      current_stage_ = stage;
+    }
+    catch (...)
+    {
+    }
+  }
+
+  inline
+  Stage
+  BidRequestTask::get_current_stage()
+  {
+    std::lock_guard lock(mutex_current_stage_);
+    return current_stage_;
   }
 
   inline

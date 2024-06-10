@@ -23,6 +23,7 @@ namespace Bidding
         const String::SubString CONTENT_TYPE("Content-Type");
         const String::SubString OPENRTB_VERSION("x-openrtb-version");
         const String::SubString OPENRTB_VERSION_VALUE("2.3");
+        const String::SubString OPENRTB_INTERRUPTED_BID("X-Interrupted-Bid");
 
         const String::AsciiStringManip::Caseless CONTENT_ENCODING("content-encoding");
         const String::AsciiStringManip::Caseless CONTENT_ENCODING2("content_encoding");
@@ -423,6 +424,15 @@ namespace Bidding
         Response::Header::OPENRTB_VERSION,
         Response::Header::OPENRTB_VERSION_VALUE);
 
+      if (interrupted())
+      {
+        const std::string_view stage =  convert_stage_to_string(
+          get_current_stage());
+        response->add_header(
+          Response::Header::OPENRTB_INTERRUPTED_BID,
+          String::SubString(stage.data(), stage.length()));
+      }
+
       auto& output = response->get_output_stream();
       output.write(bid_response.data(), bid_response.size());
 
@@ -440,6 +450,15 @@ namespace Bidding
   {
     FrontendCommons::HttpResponse_var response = bid_frontend_->create_response();
 
+    if (interrupted())
+    {
+      const std::string_view stage =  convert_stage_to_string(
+        get_current_stage());
+      response->add_header(
+        Response::Header::OPENRTB_INTERRUPTED_BID,
+        String::SubString(stage.data(), stage.length()));
+    }
+
     if(code < 300)
     {
       // no-bid is No content by OpenRTB 2.0 spec
@@ -453,8 +472,6 @@ namespace Bidding
     {
       write_response_(code, response);
     }
-
-    //return !bad_request ? 204 /* HTTP_NO_CONTENT */ : 400 /* HTTP_BAD_REQUEST */;
   }
 
   void
