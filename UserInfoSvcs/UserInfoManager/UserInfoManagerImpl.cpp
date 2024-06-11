@@ -843,7 +843,7 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "UserInfoManager::get_user_profile()";
 
-    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserInfoManager_GetUserProfile)
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserInfoManager_GetUserProfile);
     try
     {
       UserInfoContainerAccessor user_info_container = get_user_info_container_();

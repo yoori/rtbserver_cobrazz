@@ -282,8 +282,8 @@ namespace RequestInfoSvcs
         const auto processed_record_count_statistic_id =
           AdServer::RequestInfoSvcs::CounterStatisticId::LogRecordFetcherBase_ProcessedRecordCount;
         const std::string_view label(name_info.base_name);
-        ADD_COMMON_COUNTER_STATISTIC(processed_filed_statistic_id, label, 1)
-        ADD_COMMON_COUNTER_STATISTIC(processed_record_count_statistic_id, label, name_info.processed_lines_count)
+        ADD_COMMON_COUNTER_STATISTIC(processed_filed_statistic_id, label, 1);
+        ADD_COMMON_COUNTER_STATISTIC(processed_record_count_statistic_id, label, name_info.processed_lines_count);
       }
     }
     catch (const eh::Exception& ex)

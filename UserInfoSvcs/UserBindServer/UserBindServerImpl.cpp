@@ -243,7 +243,7 @@ namespace UserInfoSvcs
       "  request_info.for_set_cookie = " << request_info.for_set_cookie << std::endl <<
       std::endl;
     */
-    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_GetUserIdCorba)
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_GetUserIdCorba);
 
     UserBindProcessorHolder::Accessor user_bind_accessor =
       user_bind_container_->get_accessor();
@@ -384,7 +384,7 @@ namespace UserInfoSvcs
   UserBindServerImpl::GetUserIdResponsePtr
   UserBindServerImpl::get_user_id(GetUserIdRequestPtr&& request)
   {
-    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_GetUserIdGrpc)
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_GetUserIdGrpc);
 
     const auto id_request_grpc = request->id_request_grpc();
     try
@@ -534,7 +534,7 @@ namespace UserInfoSvcs
       AdServer::UserInfoSvcs::UserBindServer::ChunkNotFound)*/
   {
     static const char* FUN = "UserBindServerImpl::add_user_id()";
-    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_AddUserIdCorba)
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_AddUserIdCorba);
 
     /*
     std::cerr << FUN << ": " << std::endl <<
