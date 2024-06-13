@@ -80,9 +80,11 @@ namespace AdServer
         {}
       };
 
-      typedef ReferenceCounting::SmartPtr<Config> Config_var;
-
-      typedef std::list<AdServer::Commons::RequestId> RequestIdList;
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+      using Config_var = ReferenceCounting::SmartPtr<Config>;
+      using RequestIdList = std::list<AdServer::Commons::RequestId>;
 
     public:
       UserFraudProtectionContainer(
@@ -91,6 +93,9 @@ namespace AdServer
         Callback* callback,
         const char* file_base_path,
         const char* file_prefix,
+        const bool is_rocksdb_enable,
+        const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+        const RocksDBParams& rocksdb_params,
         ProfilingCommons::ProfileMapFactory::Cache* cache,
         const Generics::Time& expire_time =
           Generics::Time(DEFAULT_FRAUD_PROFILE_EXPIRE_TIME),

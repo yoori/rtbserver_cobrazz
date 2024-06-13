@@ -6,9 +6,9 @@
 #include <ProfilingCommons/ProfileMap/AdaptProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBWhithLevelAlternativeProfileMap.hpp>
+#include <ProfilingCommons/ProfileMap/RocksDBWhithAlternativeProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/TransactionProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ChunkedExpireProfileMap.hpp>
-
 
 namespace AdServer
 {
@@ -105,6 +105,33 @@ namespace ProfilingCommons
         KeyType>(base_map, max_waiters);
     }
 
+    template<typename Key,
+      typename KeyAdapter>
+    static ReferenceCounting::SmartPtr<
+      AdServer::ProfilingCommons::TransactionProfileMap<Key>>
+    open_transaction_rocksdb_map(
+      Logging::Logger* logger,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
+      const std::string& rocksdb_path,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+      const unsigned long max_waiters,
+      const KeyAdapter& key_adapter = KeyAdapter())
+    {
+      using RocksDBProfileMap = ProfilingCommons::RocksDB::RocksDBProfileMap<Key, KeyAdapter>;
+
+      ReferenceCounting::SmartPtr<RocksDBProfileMap> base_map = new RocksDBProfileMap(
+        logger,
+        rocksdb_manager_pool,
+        rocksdb_path,
+        rocksdb_params,
+        "profile_map",
+        key_adapter);
+
+      return new AdServer::ProfilingCommons::TransactionProfileMap<Key>(
+        base_map,
+        max_waiters);
+    }
+
     template<typename KeyType,
       typename KeyAccessorType,
       typename ProfileAdapterType>
@@ -154,6 +181,109 @@ namespace ProfilingCommons
 
       return new AdServer::ProfilingCommons::TransactionProfileMap<
         KeyType>(base_map, max_waiters);
+    }
+
+    template<typename Key,
+      typename KeyAccessor,
+      typename KeyAdapter,
+      typename ProfileAdapter>
+    static
+    ReferenceCounting::SmartPtr<AdServer::ProfilingCommons::TransactionProfileMap<Key>>
+    open_transaction_expire_map(
+      Logging::Logger* logger,
+      const char* root,
+      const char* prefix,
+      const bool is_level_enable,
+      const Generics::Time& extend_time,
+      const bool is_rocksdb_enable,
+      const std::string& rocksdb_path,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+      const KeyAdapter& key_adapter = KeyAdapter(),
+      const ProfileAdapter& profile_adapter = ProfileAdapter(),
+      Cache* cache = 0,
+      unsigned long max_waiters = 0)
+    {
+      ReferenceCounting::SmartPtr<ProfileMap<Key>> ex_map;
+      if (is_level_enable)
+      {
+        if (cache)
+        {
+          typedef CacheFileOpenStrategy<
+            typename ExpireProfileMapTraits<Key, KeyAccessor>::SubMap>
+            CacheFileOpenStrategyT;
+
+          CacheFileOpenStrategyT file_open_strategy(cache);
+
+          ex_map = new ExpireProfileMap<Key,
+            KeyAccessor,
+            CacheFileOpenStrategyT>(
+            // (std::string(root) + "/" + prefix + "/").c_str(),
+            root,
+            prefix,
+            extend_time,
+            file_open_strategy);
+        }
+        else
+        {
+          ex_map = new ExpireProfileMap<Key, KeyAccessor>(
+            // (std::string(root) + "/" + prefix + "/").c_str(),
+            root,
+            prefix,
+            extend_time);
+        }
+      }
+
+      ReferenceCounting::SmartPtr<ProfileMap<Key>> rocksdb_whith_alternative_map =
+        new AdServer::ProfilingCommons::RocksDBWhithAlternativeProfileMap(
+          logger,
+          rocksdb_manager_pool,
+          is_rocksdb_enable,
+          rocksdb_path,
+          rocksdb_params,
+          "profile_map",
+          key_adapter,
+          ex_map.in());
+
+      ReferenceCounting::SmartPtr<ProfileMap<Key> > base_map(
+        new AdaptProfileMap<Key, ProfileAdapter>(
+          rocksdb_whith_alternative_map, profile_adapter));
+
+      return new AdServer::ProfilingCommons::TransactionProfileMap<
+        Key>(base_map, max_waiters);
+    }
+
+    template<typename Key,
+      typename KeyAdapter,
+      typename ProfileAdapter>
+    static ReferenceCounting::SmartPtr<
+      AdServer::ProfilingCommons::TransactionProfileMap<Key>>
+    open_transaction_rocksdb_map(
+      Logging::Logger* logger,
+      const std::shared_ptr<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>& rocksdb_manager_pool,
+      const std::string& rocksdb_path,
+      const AdServer::ProfilingCommons::RocksDB::RocksDBParams& rocksdb_params,
+      const unsigned long max_waiters,
+      const KeyAdapter& key_adapter = KeyAdapter(),
+      const ProfileAdapter& profile_adapter = ProfileAdapter())
+    {
+      using RocksDBProfileMap = ProfilingCommons::RocksDB::RocksDBProfileMap<Key, KeyAdapter>;
+
+      ReferenceCounting::SmartPtr<RocksDBProfileMap> ex_map = new RocksDBProfileMap(
+        logger,
+        rocksdb_manager_pool,
+        rocksdb_path,
+        rocksdb_params,
+        "profile_map",
+        key_adapter);
+
+      ReferenceCounting::SmartPtr<ProfileMap<Key>> base_map(
+        new AdaptProfileMap<Key, ProfileAdapter>(
+          ex_map, profile_adapter));
+
+      return new AdServer::ProfilingCommons::TransactionProfileMap<Key>(
+        base_map,
+        max_waiters);
     }
 
     template<typename KeyType, typename KeyAccessorType>

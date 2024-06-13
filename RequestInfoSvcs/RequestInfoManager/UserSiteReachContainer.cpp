@@ -25,6 +25,9 @@ namespace RequestInfoSvcs
     SiteReachProcessor* site_reach_processor,
     const char* user_site_reach_file_base_path,
     const char* user_site_reach_file_prefix,
+    const bool is_rocksdb_enable,
+    const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+    const RocksDBParams& rocksdb_params,
     ProfilingCommons::ProfileMapFactory::Cache* cache,
     const Generics::Time& expire_time,
     const Generics::Time& extend_time_period)
@@ -45,16 +48,36 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = ProfilingCommons::ProfileMapFactory::
-        open_transaction_expire_map<
-          Commons::UserId,
-          ProfilingCommons::UserIdAccessor,
-          UserSiteReachProfileAdapter>(
-          user_site_reach_file_base_path,
-          user_site_reach_file_prefix,
-          extend_time_period_val,
-          UserSiteReachProfileAdapter(),
-          cache);
+      if (is_rocksdb_enable)
+      {
+        auto key_adapter = [] (const Commons::UserId& key) {
+          return std::string(reinterpret_cast<const char*>(key.begin()), key.size());
+        };
+
+        const std::string rocksdb_path = std::string(user_site_reach_file_base_path) + "/Rocksdb_" + user_site_reach_file_prefix;
+        user_map_ = ProfilingCommons::ProfileMapFactory::open_transaction_rocksdb_map<
+          Commons::UserId>(
+            logger_.in(),
+            rocksdb_manager_pool,
+            rocksdb_path,
+            rocksdb_params,
+            0,
+            key_adapter,
+            UserSiteReachProfileAdapter());
+      }
+      else
+      {
+        user_map_ = ProfilingCommons::ProfileMapFactory::
+          open_transaction_expire_map<
+            Commons::UserId,
+            ProfilingCommons::UserIdAccessor,
+            UserSiteReachProfileAdapter>(
+              user_site_reach_file_base_path,
+              user_site_reach_file_prefix,
+              extend_time_period_val,
+              UserSiteReachProfileAdapter(),
+              cache);
+      }
     }
     catch(const eh::Exception& ex)
     {

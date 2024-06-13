@@ -24,6 +24,7 @@
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <LogCommons/RequestBasicChannels.hpp>
+#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
 
 #include "ExpressionMatcher_s.hpp"
 
@@ -58,8 +59,9 @@ namespace AdServer
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(InvalidArgument, Exception);
 
-      typedef xsd::AdServer::Configuration::ExpressionMatcherConfigType
-        ExpressionMatcherConfig;
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using ExpressionMatcherConfig = xsd::AdServer::Configuration::ExpressionMatcherConfigType;
 
     public:
       ExpressionMatcherImpl(
@@ -430,6 +432,8 @@ namespace AdServer
 
       ExpressionMatcherLogLoader_var log_loader_;
       ReferenceCounting::PtrHolder<PlacementColo_var> placement_colo_;
+
+      RocksdbManagerPoolPtr rocksdb_manager_pool_;
     };
 
     typedef ReferenceCounting::SmartPtr<ExpressionMatcherImpl>

@@ -182,13 +182,34 @@
     </xsl:call-template>
 
     <cfg:UserActionChunksConfig chunks_prefix="{$user-action-prefix}"
-      chunks_root="{$user-action-info-chunks-root}"/>
+      chunks_root="{$user-action-info-chunks-root}" is_level_enable="true"/>
+
+    <cfg:UserActionChunksRocksDBConfig
+      is_enable="{$def-is-rocksdb-enable-user-action}"
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-user-action}"
+      compaction_style="{$def-rocksdb-compaction-style-user-action}"
+      number_background_threads="{$def-rocksdb-number-background-threads-user-action}"
+      expire_time="{$def-expire-time-user-action}"/>
 
     <cfg:UserCampaignReachChunksConfig chunks_prefix="{$user-campaign-reach-prefix}"
       chunks_root="{$user-campaign-reach-chunks-root}"/>
 
+    <cfg:UserCampaignReachChunksRocksDBConfig
+      is_enable="{$def-is-rocksdb-enable-user-campaign-reach}"
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-user-campaign-reach}"
+      compaction_style="{$def-rocksdb-compaction-style-user-campaign-reach}"
+      number_background_threads="{$def-rocksdb-number-background-threads-user-campaign-reach}"
+      expire_time="{$def-expire-time-user-campaign-reach}"/>
+
     <cfg:UserFraudProtectionChunksConfig chunks_prefix="{$user-fraud-protection-prefix}"
       chunks_root="{$user-fraud-protection-chunks-root}"/>
+
+    <cfg:UserFraudProtectionChunksRocksDBConfig
+      is_enable="{$def-is-rocksdb-enable-user-fraud-protection}"
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-user-fraud-protection}"
+      compaction_style="{$def-rocksdb-compaction-style-user-fraud-protection}"
+      number_background_threads="{$def-rocksdb-number-background-threads-user-fraud-protection}"
+      expire_time="{$def-expire-time-user-fraud-protection}"/>
 
     <cfg:PassbackChunksConfig chunks_prefix="{$passback-prefix}"
       chunks_root="{$passback-chunks-root}">
@@ -202,12 +223,26 @@
     <cfg:UserSiteReachChunksConfig chunks_prefix="{$user-site-reach-prefix}"
       chunks_root="{concat($cache-root, '/', $user-site-reach-chunks-root, '/')}"/>
 
+    <cfg:UserSiteReachChunksRocksDBConfig
+      is_enable="{$def-is-rocksdb-enable-user-site-reach}"
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-user-site-reach}"
+      compaction_style="{$def-rocksdb-compaction-style-user-site-reach}"
+      number_background_threads="{$def-rocksdb-number-background-threads-user-site-reach}"
+      expire_time="{$def-expire-time-user-site-reach}"/>
+
     <xsl:if test="count($colo-config/cfg:tagGroupStats/@enable) = 0 or
       $colo-config/cfg:tagGroupStats/@enable = 'true' or
       $colo-config/cfg:tagGroupStats/@enable = '1'">
       <cfg:TagRequestGroupingConfig merge_time_bound="1" chunks_prefix="{$user-tag-request-group-prefix}"
         chunks_root="{concat($cache-root, '/', $user-tag-request-group-chunks-root, '/')}"/>
     </xsl:if>
+
+    <cfg:TagRequestGroupingRocksDBConfig
+      is_enable="{$def-is-rocksdb-enable-tag-request-grouping}"
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-tag-request-grouping}"
+      compaction_style="{$def-rocksdb-compaction-style-tag-request-grouping}"
+      number_background_threads="{$def-rocksdb-number-background-threads-tag-request-grouping}"
+      expire_time="{$def-expire-time-tag-request-grouping}"/>
 
     <cfg:ChunksConfig chunks_prefix="{$request-prefix}"
       chunks_root="{$request-chunks-root}">
@@ -217,6 +252,12 @@
           select="$def-request-expire-time"/></xsl:if>
       </xsl:attribute>
     </cfg:ChunksConfig>
+
+    <cfg:ChunksRocksDBConfig
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-request-info}"
+      compaction_style="{$def-rocksdb-compaction-style-request-info}"
+      number_background_threads="{$def-rocksdb-number-background-threads-request-info}"
+      expire_time="{$def-expire-time-request-info}"/>
 
     <cfg:BidChunksConfig chunks_prefix="Bid_"
       chunks_root="{$bid-chunks-root}">

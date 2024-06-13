@@ -227,11 +227,11 @@ private:
         }
 
         const auto data_case = response->data_case();
-        if (data_case == GetBindResponse::DataCase::kInfo)
+        if (data_case == Response::DataCase::kInfo)
         {
           return response;
         }
-        else if (data_case == GetBindResponse::DataCase::kError)
+        else if (data_case == Response::DataCase::kError)
         {
           const auto& error = response->error();
           const auto error_type = error.type();

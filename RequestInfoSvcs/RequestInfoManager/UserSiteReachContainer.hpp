@@ -58,6 +58,10 @@ namespace AdServer
       public virtual ReferenceCounting::AtomicImpl
     {
     public:
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
     public:
@@ -66,6 +70,9 @@ namespace AdServer
         SiteReachProcessor* site_reach_processor,
         const char* file_base_path,
         const char* file_prefix,
+        const bool is_rocksdb_enable,
+        const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+        const RocksDBParams& rocksdb_params,
         ProfilingCommons::ProfileMapFactory::Cache* cache,
         const Generics::Time& expire_time =
           USER_SITE_REACH_DEFAULT_EXPIRE_TIME,

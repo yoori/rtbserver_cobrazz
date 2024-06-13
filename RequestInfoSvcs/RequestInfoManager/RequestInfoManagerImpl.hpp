@@ -29,6 +29,7 @@
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager_s.hpp>
+#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
 
 #include "CompositeRequestActionProcessor.hpp"
 #include "UserCampaignReachContainer.hpp"
@@ -85,11 +86,10 @@ namespace AdServer
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(NotReady, Exception);
 
-      typedef
-        xsd::AdServer::Configuration::RequestInfoManagerConfigType
-        RequestInfoManagerConfig;
-
-      typedef std::list<unsigned long> ChunkIdList;
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using RequestInfoManagerConfig = xsd::AdServer::Configuration::RequestInfoManagerConfigType;
+      using ChunkIdList = std::list<unsigned long>;
 
     public:
       RequestInfoManagerImpl(
@@ -374,6 +374,8 @@ namespace AdServer
 
       RequestOperationDistributor_var request_operation_distributor_;
       RequestLogLoader_var request_log_loader_;
+
+      RocksdbManagerPoolPtr rocksdb_manager_pool_;
     };
 
     typedef

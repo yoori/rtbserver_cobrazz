@@ -449,9 +449,51 @@
 
 <xsl:variable name="def-is-level-enable" select="'true'"/>
 <xsl:variable name="def-is-rocksdb-enable" select="'true'"/>
-<xsl:variable name="def-rocksdb-block-cache-size-mb" select="100"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb" select="128"/>
 <xsl:variable name="def-rocksdb-compaction-style" select="'kCompactionStyleLevel'"/>
 <xsl:variable name="def-rocksdb-number-background-threads" select="3"/>
+
+<xsl:variable name="def-is-rocksdb-enable-user-campaign-reach" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-user-campaign-reach" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-user-campaign-reach" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-user-campaign-reach" select="10"/>
+<xsl:variable name="def-expire-time-user-campaign-reach" select="3888000"/>
+
+<xsl:variable name="def-is-rocksdb-enable-user-fraud-protection" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-user-fraud-protection" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-user-fraud-protection" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-user-fraud-protection" select="10"/>
+<xsl:variable name="def-expire-time-user-fraud-protection" select="3888000"/>
+
+<xsl:variable name="def-is-rocksdb-enable-user-site-reach" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-user-site-reach" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-user-site-reach" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-user-site-reach" select="10"/>
+<xsl:variable name="def-expire-time-user-site-reach" select="3888000"/>
+
+<xsl:variable name="def-is-rocksdb-enable-tag-request-grouping" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-tag-request-grouping" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-tag-request-grouping" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-tag-request-grouping" select="10"/>
+<xsl:variable name="def-expire-time-tag-request-grouping" select="3888000"/>
+
+<xsl:variable name="def-is-rocksdb-enable-user-action" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-user-action" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-user-action" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-user-action" select="10"/>
+<xsl:variable name="def-expire-time-user-action" select="3888000"/>
+
+<xsl:variable name="def-is-rocksdb-enable-request-trigger-match" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-request-trigger-match" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-request-trigger-match" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-request-trigger-match" select="10"/>
+<xsl:variable name="def-expire-time-request-trigger-match" select="172800"/>
+
+<xsl:variable name="def-is-rocksdb-enable-request-info" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-request-info" select="1024"/>
+<xsl:variable name="def-rocksdb-compaction-style-request-info" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-request-info" select="20"/>
+<xsl:variable name="def-expire-time-request-info" select="7776000"/>
 
 <xsl:variable name="def-profiling-log-sampling"
   select="document('../xsd/AdClusterAppType.xsd')/xsd:schema/xsd:complexType[

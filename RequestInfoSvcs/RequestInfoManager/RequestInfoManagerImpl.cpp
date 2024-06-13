@@ -7,6 +7,7 @@
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
 #include <RequestInfoSvcs/ExpressionMatcher/ExpressionMatcher.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/Utils.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
 
 #include <Commons/LogReferrerUtils.hpp>
@@ -517,6 +518,30 @@ namespace RequestInfoSvcs{
       ostr << FUN << ": Can't instantiate object. Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
+
+    try
+    {
+      auto number_threads = std::thread::hardware_concurrency();
+      if (number_threads == 0)
+      {
+        number_threads = 30;
+      }
+
+      UServerUtils::Grpc::RocksDB::Config config;
+      config.event_queue_max_size = 10000000;
+      config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
+      config.io_uring_size = 12800;
+      config.number_io_urings = 2 * number_threads;
+      rocksdb_manager_pool_ = std::make_shared<RocksdbManagerPool>(
+        config,
+        logger_.in());
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Can't create rocksdb_manager_pool. Caught eh::Exception: " << exc.what();
+      throw Exception(ostr);
+    }
   }
 
   RequestInfoManagerImpl::~RequestInfoManagerImpl() noexcept
@@ -879,6 +904,18 @@ namespace RequestInfoSvcs{
           std::string chunks_root_dir = chunks_config.chunks_root();
           std::string chunks_prefix = chunks_config.chunks_prefix();
 
+          const auto& user_fraud_protection_chunks_rocksdb_config =
+            request_info_manager_config_.UserFraudProtectionChunksRocksDBConfig();
+          bool is_rocksdb_enable = false;
+          const auto& is_rocksdb_enable_optional =
+            user_fraud_protection_chunks_rocksdb_config.is_enable();
+          if (is_rocksdb_enable_optional.present())
+          {
+            is_rocksdb_enable = is_rocksdb_enable_optional.get();
+          }
+          const auto rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            user_fraud_protection_chunks_rocksdb_config);
+
           UserFraudProtectionContainer_var user_fraud_protection_container =
             new UserFraudProtectionContainer(
               logger_,
@@ -886,6 +923,9 @@ namespace RequestInfoSvcs{
               user_fraud_deactivator_,
               chunks_root_dir.c_str(),
               chunks_prefix.c_str(),
+              is_rocksdb_enable,
+              rocksdb_manager_pool_,
+              rocksdb_params,
               profile_cache_);
 
           UserFraudProtectionContainer::Config_var fraud_config(
@@ -932,6 +972,20 @@ namespace RequestInfoSvcs{
 
           std::string user_action_info_chunks_root_dir = chunks_config.chunks_root();
           std::string user_action_info_chunks_prefix = chunks_config.chunks_prefix();
+          
+          const bool is_level_enable = chunks_config.is_level_enable();
+
+          const auto& user_action_chunks_rocksdb_config =
+            request_info_manager_config_.UserActionChunksRocksDBConfig();
+          bool is_rocksdb_enable = false;
+          const auto& is_rocksdb_enable_optional =
+            user_action_chunks_rocksdb_config.is_enable();
+          if (is_rocksdb_enable_optional.present())
+          {
+            is_rocksdb_enable = is_rocksdb_enable_optional.get();
+          }
+          const auto rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            user_action_chunks_rocksdb_config);
 
           UserActionInfoContainer_var user_action_info_container =
             new UserActionInfoContainer(
@@ -939,6 +993,10 @@ namespace RequestInfoSvcs{
               0, // will be linked to request_info_container_.get()->proxy(),
               user_action_info_chunks_root_dir.c_str(),
               user_action_info_chunks_prefix.c_str(),
+              is_level_enable,
+              is_rocksdb_enable,
+              rocksdb_manager_pool_,
+              rocksdb_params,
               request_info_manager_config_.action_ignore_time().present() ?
                 Generics::Time(*request_info_manager_config_.action_ignore_time()) :
                 DEFAULT_ACTION_IGNORE_TIME,
@@ -990,12 +1048,27 @@ namespace RequestInfoSvcs{
           std::string user_campaign_reach_chunks_root_dir = chunks_config.chunks_root();
           std::string user_campaign_reach_chunks_prefix = chunks_config.chunks_prefix();
 
+          const auto& user_campaign_reach_chunks_rocksdb_config =
+            request_info_manager_config_.UserCampaignReachChunksRocksDBConfig();
+          bool is_rocksdb_enable = false;
+          const auto& is_rocksdb_enable_optional =
+            user_campaign_reach_chunks_rocksdb_config.is_enable();
+          if (is_rocksdb_enable_optional.present())
+          {
+            is_rocksdb_enable = is_rocksdb_enable_optional.get();
+          }
+          const auto rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            user_campaign_reach_chunks_rocksdb_config);
+
           UserCampaignReachContainer_var user_campaign_reach_container =
             new UserCampaignReachContainer(
               logger_,
               request_out_logger_.in(),
               user_campaign_reach_chunks_root_dir.c_str(),
               user_campaign_reach_chunks_prefix.c_str(),
+              is_rocksdb_enable,
+              rocksdb_manager_pool_,
+              rocksdb_params,
               profile_cache_);
 
           user_campaign_reach_container_ = user_campaign_reach_container;
@@ -1036,6 +1109,11 @@ namespace RequestInfoSvcs{
         xsd::AdServer::Configuration::ChunksConfigType&
           chunks_config = request_info_manager_config_.ChunksConfig();
 
+        const auto& chunks_rocksdb_config =
+          request_info_manager_config_.ChunksRocksDBConfig();
+        const auto rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+          chunks_rocksdb_config);
+
         xsd::AdServer::Configuration::ChunksConfigType* bid_chunks_config = 0;
 
         if(request_info_manager_config_.BidChunksConfig().present())
@@ -1048,8 +1126,10 @@ namespace RequestInfoSvcs{
             logger_,
             processing_distributor_.in(),
             request_operation_distributor_,
+            rocksdb_manager_pool_,
             chunks_config.chunks_root().c_str(),
             chunks_config.chunks_prefix().c_str(),
+            rocksdb_params,
             bid_chunks_config ? String::SubString(bid_chunks_config->chunks_root()) :
               String::SubString(),
             bid_chunks_config ? String::SubString(bid_chunks_config->chunks_prefix()) :
@@ -1153,12 +1233,27 @@ namespace RequestInfoSvcs{
           std::string user_site_reach_chunks_root_dir = chunks_config.chunks_root();
           std::string user_site_reach_chunks_prefix = chunks_config.chunks_prefix();
 
+          const auto& user_site_reach_chunks_rocksdb_config =
+            request_info_manager_config_.UserSiteReachChunksRocksDBConfig();
+          bool is_rocksdb_enable = false;
+          const auto& is_rocksdb_enable_optional =
+            user_site_reach_chunks_rocksdb_config.is_enable();
+          if (is_rocksdb_enable_optional.present())
+          {
+            is_rocksdb_enable = is_rocksdb_enable_optional.get();
+          }
+          const auto rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            user_site_reach_chunks_rocksdb_config);
+
           UserSiteReachContainer_var user_site_reach_container =
             new UserSiteReachContainer(
               logger_,
               request_out_logger_.in(),
               user_site_reach_chunks_root_dir.c_str(),
               user_site_reach_chunks_prefix.c_str(),
+              is_rocksdb_enable,
+              rocksdb_manager_pool_,
+              rocksdb_params,
               profile_cache_);
 
           user_site_reach_container_ = user_site_reach_container;
@@ -1209,6 +1304,19 @@ namespace RequestInfoSvcs{
           xsd::AdServer::Configuration::TagRequestGroupingConfigType&
             config = *request_info_manager_config_.TagRequestGroupingConfig();
 
+          const auto& tag_request_grouping_rocksdb_config =
+            request_info_manager_config_.TagRequestGroupingRocksDBConfig();
+          bool is_rocksdb_enable = false;
+          const auto& is_rocksdb_enable_optional =
+            tag_request_grouping_rocksdb_config.is_enable();
+          if (is_rocksdb_enable_optional.present())
+          {
+            is_rocksdb_enable = is_rocksdb_enable_optional.get();
+          }
+          const auto rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+            tag_request_grouping_rocksdb_config);
+
+
           UserTagRequestMergeContainer_var user_tag_request_merge_container =
             new UserTagRequestMergeContainer(
               logger_,
@@ -1216,6 +1324,9 @@ namespace RequestInfoSvcs{
               Generics::Time(config.merge_time_bound()),
               config.chunks_root().c_str(),
               config.chunks_prefix().c_str(),
+              is_rocksdb_enable,
+              rocksdb_manager_pool_,
+              rocksdb_params,
               profile_cache_);
 
           user_tag_request_merge_container_ = user_tag_request_merge_container;

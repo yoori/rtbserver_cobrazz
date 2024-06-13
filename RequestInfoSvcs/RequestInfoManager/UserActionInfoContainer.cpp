@@ -1,6 +1,7 @@
 #include <Generics/Time.hpp>
 #include <PrivacyFilter/Filter.hpp>
 
+#include <ProfilingCommons/ProfileMap/RocksDBWhithAlternativeProfileMap.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/UserActionProfile.hpp>
 
 #include "Compatibility/UserActionProfileAdapter.hpp"
@@ -510,6 +511,10 @@ namespace RequestInfoSvcs
     RequestContainerProcessor* request_container_processor,
     const char* useractionfile_base_path,
     const char* useractionfile_prefix,
+    const bool is_level_enable,
+    const bool is_rocksdb_enable,
+    const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+    const RocksDBParams& rocksdb_params,
     const Generics::Time& action_ignore_time,
     ProfilingCommons::ProfileMapFactory::Cache* cache,
     const Generics::Time& expire_time,
@@ -533,16 +538,28 @@ namespace RequestInfoSvcs
 
     try
     {
-      user_map_ = ProfilingCommons::ProfileMapFactory::
-        open_transaction_expire_map<
+      auto key_adapter = [] (const Commons::UserId& key) {
+        return std::string(reinterpret_cast<const char*>(key.begin()), key.size());
+      };
+
+      const std::string rocksdb_path = std::string(useractionfile_base_path) + "/Rocksdb_" + useractionfile_prefix;
+      user_map_ = ProfilingCommons::ProfileMapFactory::open_transaction_expire_map<
           Commons::UserId,
           ProfilingCommons::UserIdAccessor,
+          decltype(key_adapter),
           UserActionProfileAdapter>(
-          useractionfile_base_path,
-          useractionfile_prefix,
-          extend_time_period_val,
-          UserActionProfileAdapter(),
-          cache);
+            logger_.in(),
+            useractionfile_base_path,
+            useractionfile_prefix,
+            is_level_enable,
+            extend_time_period_val,
+            is_rocksdb_enable,
+            rocksdb_path,
+            rocksdb_manager_pool,
+            rocksdb_params,
+            key_adapter,
+            UserActionProfileAdapter(),
+            cache);
     }
     catch(const eh::Exception& ex)
     {

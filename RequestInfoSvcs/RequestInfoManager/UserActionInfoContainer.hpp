@@ -32,13 +32,22 @@ namespace AdServer
       public virtual AdvActionProcessor
     {
     public:
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+
       DECLARE_EXCEPTION(Exception, RequestContainerProcessor::Exception);
 
+    public:
       UserActionInfoContainer(
         Logging::Logger* logger,
         RequestContainerProcessor* request_processor,
         const char* useractionfile_base_path,
         const char* useractionfile_prefix,
+        const bool is_level_enable,
+        const bool is_rocksdb_enable,
+        const RocksdbManagerPoolPtr& rocksdb_manager_pool,
+        const RocksDBParams& rocksdb_params,
         const Generics::Time& action_ignore_time,
         ProfilingCommons::ProfileMapFactory::Cache* cache,
         const Generics::Time& expire_time = DEFAULT_ACTION_PROFILE_EXPIRE_TIME,

@@ -62,6 +62,9 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="UserActionChunksRocksDBConfig" type="ChunksRocksDBConfigType">
+      </xsd:element>
+
       <xsd:element name="UserCampaignReachChunksConfig" type="ChunksConfigType">
         <xsd:annotation>
           <xsd:documentation>
@@ -70,12 +73,18 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="UserCampaignReachChunksRocksDBConfig" type="ChunksRocksDBConfigType">
+      </xsd:element>
+
       <xsd:element name="UserFraudProtectionChunksConfig" type="ChunksConfigType">
         <xsd:annotation>
           <xsd:documentation>
 
           </xsd:documentation>
         </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="UserFraudProtectionChunksRocksDBConfig" type="ChunksRocksDBConfigType">
       </xsd:element>
 
       <xsd:element name="PassbackChunksConfig" type="ChunksConfigType">
@@ -92,6 +101,9 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="UserSiteReachChunksRocksDBConfig" type="ChunksRocksDBConfigType">
+      </xsd:element>
+
       <xsd:element name="TagRequestGroupingConfig"
         type="TagRequestGroupingConfigType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
@@ -100,12 +112,18 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="TagRequestGroupingRocksDBConfig" type="ChunksRocksDBConfigType">
+      </xsd:element>
+
       <xsd:element name="ChunksConfig" type="ChunksConfigType">
         <xsd:annotation>
           <xsd:documentation>
 
           </xsd:documentation>
         </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="ChunksRocksDBConfig" type="ChunksRocksDBConfigType">
       </xsd:element>
 
       <xsd:element name="BidChunksConfig" type="ChunksConfigType"
@@ -188,6 +206,7 @@
     <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
     <xsd:attribute name="chunks_prefix" type="xsd:string" use="required"/>
     <xsd:attribute name="expire_time" type="xsd:positiveInteger"/>
+    <xsd:attribute name="is_level_enable" type="xsd:boolean" use="optional" default="false"/>
   </xsd:complexType>
 
   <xsd:complexType name="TagRequestGroupingConfigType">

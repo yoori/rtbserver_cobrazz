@@ -72,7 +72,9 @@ protected:
     const char* user_id_str,
     bool print_plain,
     bool debug_plain,
-    bool align)
+    bool align,
+    bool is_level_enable,
+    bool is_rocksdb_enable)
     noexcept;
 
   int print_passback(
