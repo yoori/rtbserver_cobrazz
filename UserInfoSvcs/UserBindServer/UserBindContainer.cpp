@@ -9,6 +9,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
 
+#include "UserBindChunkTwoLayers.hpp"
 #include "UserBindContainer.hpp"
 
 namespace Aspect
@@ -35,7 +36,13 @@ namespace UserInfoSvcs
     unsigned long portions_number,
     bool load_slave,
     unsigned long partition_index, // instance partition number (first or second part of cluster)
-    unsigned long partitions_number)
+    unsigned long partitions_number,
+    const bool enable_two_layer_mode,
+    const std::uint16_t memory_days,
+    const std::size_t rocksdb_number_threads,
+    const rocksdb::CompactionStyle rocksdb_compaction_style,
+    const std::uint32_t rocksdb_block_сache_size_mb,
+    const std::uint32_t rocksdb_ttl)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       common_chunks_number_(common_chunks_number)
@@ -47,21 +54,44 @@ namespace UserInfoSvcs
     for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
         chunk_it != chunk_folders.end(); ++chunk_it)
     {
-      chunks_[chunk_it->first] = new UserBindChunk(
-        logger,
-        chunk_it->second.c_str(),
-        file_prefix,
-        bound_file_prefix,
-        extend_time_period,
-        bound_extend_time_period,
-        min_age,
-        bind_at_min_age,
-        max_bad_event,
-        portions_number,
-        load_slave,
-        partition_index,
-        partitions_number,
-        chunk_folders.size());
+      if (enable_two_layer_mode)
+      {
+        chunks_[chunk_it->first] = new UserBindTwoLayersChunk(
+          logger,
+          memory_days,
+          chunk_it->second,
+          file_prefix,
+          bound_file_prefix,
+          min_age,
+          bind_at_min_age,
+          max_bad_event,
+          portions_number,
+          load_slave,
+          partition_index,
+          partitions_number,
+          rocksdb_number_threads,
+          rocksdb_compaction_style,
+          rocksdb_block_сache_size_mb,
+          rocksdb_ttl);
+      }
+      else
+      {
+        chunks_[chunk_it->first] = new UserBindChunk(
+          logger,
+          chunk_it->second.c_str(),
+          file_prefix,
+          bound_file_prefix,
+          extend_time_period,
+          bound_extend_time_period,
+          min_age,
+          bind_at_min_age,
+          max_bad_event,
+          portions_number,
+          load_slave,
+          partition_index,
+          partitions_number,
+          chunk_folders.size());
+      }
     }
   }
 

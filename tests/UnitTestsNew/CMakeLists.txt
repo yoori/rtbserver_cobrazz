@@ -1,6 +1,7 @@
 add_executable(UnitTestNew
   RequestInfoSvcs/ExpressionMatcher/ChannelMatcherTest.cpp
-  UserInfoSvcs/UserInfoContainer/FetchableHashTableTest.cpp
+  UserInfoSvcs/UserBindServer/FetchableHashTableTest.cpp
+  UserInfoSvcs/UserBindServer/UserBindChunkTypesTest.cpp
   UserInfoSvcs/UserInfoContainer/UserInfoContainerTest.cpp
   test_main.cpp
 )
@@ -10,6 +11,7 @@ target_link_libraries(UnitTestNew
   GTest::gtest_main
   ExpressionChannelMatcher
   ProfileMap
+  UserBindContainer
   UserInfoContainer
 )
 

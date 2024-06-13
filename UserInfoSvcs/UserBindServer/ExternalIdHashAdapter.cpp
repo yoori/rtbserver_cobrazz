@@ -312,10 +312,37 @@ namespace UserInfoSvcs
   operator=(ExternalIdHashAdapter&& init)
     noexcept
   {
-    free_buf_();
+    if (this != &init)
+    {
+      free_buf_();
 
-    data_ = init.data_;
-    init.data_ = 0;
+      data_ = init.data_;
+      init.data_ = nullptr;
+    }
+
+    return *this;
+  }
+
+  ExternalIdHashAdapter& ExternalIdHashAdapter::operator=(
+    const ExternalIdHashAdapter& other) noexcept
+  {
+    if (this != &other)
+    {
+      free_buf_();
+      data_ = nullptr;
+
+      if (other.data_)
+      {
+        const EncodingSelector::Encoder* encoder =
+          EncodingSelectorSingleton::instance().get_encoder(
+            *(static_cast<unsigned char*>(other.data_) + EXT_HASH_BUF_PRESPACE));
+
+        const int size = encoder->encoded_size_by_buf(
+          static_cast<char*>(other.data_) + EXT_HASH_BUF_PRESPACE + 1);
+        data_ = ExternalIdKeyAllocator::instance().alloc(EXT_HASH_BUF_PRESPACE + 1 + size);
+        ::memcpy(data_, other.data_, EXT_HASH_BUF_PRESPACE + 1 + size);
+      }
+    }
 
     return *this;
   }
@@ -342,8 +369,7 @@ namespace UserInfoSvcs
 
   bool
   ExternalIdHashAdapter::
-  operator==(const ExternalIdHashAdapter& right) const
-    noexcept
+  operator==(const ExternalIdHashAdapter& right) const noexcept
   {
     if(::memcmp(data_, right.data_, EXT_HASH_BUF_PRESPACE + 1) != 0)
     {
@@ -366,8 +392,7 @@ namespace UserInfoSvcs
   }
 
   std::string
-  ExternalIdHashAdapter::text() const
-    noexcept
+  ExternalIdHashAdapter::text() const noexcept
   {
     if(data_)
     {
@@ -382,6 +407,11 @@ namespace UserInfoSvcs
     {
       return std::string();
     }
+  }
+
+  std::string ExternalIdHashAdapter::str() const noexcept
+  {
+    return text();
   }
 
   unsigned char

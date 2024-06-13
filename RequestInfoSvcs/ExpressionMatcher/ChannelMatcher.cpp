@@ -629,7 +629,7 @@ namespace RequestInfoSvcs
     try
     {
       std::string string_buffer;
-      string_buffer.reserve(200);
+      string_buffer.reserve(100);
       std::ostringstream stream(std::move(string_buffer));
       boost::archive::binary_oarchive oarchive(
         stream,

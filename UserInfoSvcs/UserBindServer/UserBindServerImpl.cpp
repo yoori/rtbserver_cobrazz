@@ -1016,6 +1016,23 @@ namespace UserInfoSvcs
 
     try
     {
+      const auto rocksdb_config = user_bind_server_config_.RocksDBConfig();
+
+      const auto rocksdb_number_background_threads = rocksdb_config.number_background_threads().present() ?
+        *rocksdb_config.number_background_threads() :
+        std::thread::hardware_concurrency() / 2;
+
+      const auto compaction_style_config = rocksdb_config.compaction_style();
+      rocksdb::CompactionStyle rocksdb_compaction_style = rocksdb::kCompactionStyleLevel;
+      if (compaction_style_config == xsd::AdServer::Configuration::RocksDBCompactionStyleType::kCompactionStyleLevel)
+      {
+        rocksdb_compaction_style = rocksdb::kCompactionStyleLevel;
+      }
+      else if (compaction_style_config == xsd::AdServer::Configuration::RocksDBCompactionStyleType::kCompactionStyleFIFO)
+      {
+        rocksdb_compaction_style = rocksdb::kCompactionStyleFIFO;
+      }
+
       UserBindProcessor_var user_bind_processor = new UserBindContainer(
         logger_,
         user_bind_server_config_.Storage().common_chunks_number(),
@@ -1030,7 +1047,13 @@ namespace UserInfoSvcs
         user_bind_server_config_.Storage().portions(),
         (user_bind_server_config_.Storage().user_bind_keep_mode() == "keep slave"), // load_slave
         user_bind_server_config_.partition_index(),
-        user_bind_server_config_.partitions_number());
+        user_bind_server_config_.partitions_number(),
+        user_bind_server_config_.enable_two_layers(),
+        user_bind_server_config_.memory_days(),
+        rocksdb_number_background_threads,
+        rocksdb_compaction_style,
+        rocksdb_config.block_cache_size_mb(),
+        rocksdb_config.expire_time());
 
       UserBindProcessor_var res_user_bind_processor;
 

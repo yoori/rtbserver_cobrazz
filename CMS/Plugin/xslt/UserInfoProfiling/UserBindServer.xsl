@@ -79,6 +79,18 @@
         select="$colo-config/cfg:coloParams/@max_bad_SSPID_events"/>
     </xsl:attribute>
 
+    <xsl:attribute name="enable_two_layers"><xsl:value-of select="$user-bind-server-config/@enable_two_layers"/>
+      <xsl:if test="count($user-bind-server-config/@enable_two_layers) = 0">
+        <xsl:value-of select="$def-user-bind-server-two-layers-enable"/>
+      </xsl:if>
+    </xsl:attribute>
+
+    <xsl:attribute name="memory_days"><xsl:value-of select="$user-bind-server-config/@memory_days"/>
+      <xsl:if test="count($user-bind-server-config/@memory_days) = 0">
+        <xsl:value-of select="$def-user-bind-server-memory-days"/>
+      </xsl:if>
+    </xsl:attribute>
+
     <!-- start config generation -->
     <!-- check that defined all needed parameters -->
     <cfg:CorbaConfig>
@@ -185,6 +197,25 @@
     </cfg:GrpcServer>
 
     <cfg:Monitoring port="{$def-fcgi-userbindserver-mon-port}"/>
+
+    <cfg:RocksDBConfig>
+      <xsl:attribute name="block_cache_size_mb">
+        <xsl:value-of select="$def-user-bind-server-rocksdb-block-cache-size-mb"/>
+      </xsl:attribute>
+
+      <xsl:attribute name="compaction_style">
+        <xsl:value-of select="$def-user-bind-server-rocksdb-compaction-style"/>
+      </xsl:attribute>
+
+      <xsl:attribute name="expire_time">
+        <xsl:value-of select="$def-user-bind-server-rocksdb-expire-time"/>
+      </xsl:attribute>
+
+      <xsl:attribute name="number_background_threads">
+        <xsl:value-of select="$def-user-bind-server-rocksdb-number-background-threads"/>
+      </xsl:attribute>
+    </cfg:RocksDBConfig>
+
   </cfg:UserBindServerConfig>
 
 </xsl:template>

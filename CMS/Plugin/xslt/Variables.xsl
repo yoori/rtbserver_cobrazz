@@ -534,4 +534,12 @@
 <xsl:variable name="channel-matcher-cache-rocksdb-ttl" select="86400"/>
 <xsl:variable name="channel-matcher-cache-recheck-period" select="86400"/>
 
+<!-- UserBindServer params -->
+<xsl:variable name="def-user-bind-server-two-layers-enable" select="'false'"/>
+<xsl:variable name="def-user-bind-server-memory-days" select="3"/>
+<xsl:variable name="def-user-bind-server-rocksdb-block-cache-size-mb" select="300"/>
+<xsl:variable name="def-user-bind-server-rocksdb-compaction-style" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-user-bind-server-rocksdb-number-background-threads" select="10"/>
+<xsl:variable name="def-user-bind-server-rocksdb-expire-time" select="3"/>
+
 </xsl:stylesheet>

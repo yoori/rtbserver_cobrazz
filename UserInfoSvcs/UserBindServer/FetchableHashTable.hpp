@@ -373,6 +373,22 @@ namespace AdServer::UserInfoSvcs
     std::deque<unsigned char> array_;
   };
 
+  template<typename KeyType, typename ValueType>
+  class FetcherDelegate : private Generics::Uncopyable
+  {
+  public:
+    FetcherDelegate() = default;
+
+    virtual ~FetcherDelegate() = default;
+
+    virtual void on_hashtable_erase(
+      KeyType&& key,
+      ValueType&& value) noexcept = 0;
+  };
+
+  template<typename KeyType, typename ValueType>
+  using FetcherDelegatePtr = std::shared_ptr<FetcherDelegate<KeyType, ValueType>>;
+
   //
   // specific container wrappers that allow:
   // safe fetch of containers by portions
@@ -391,27 +407,40 @@ namespace AdServer::UserInfoSvcs
     using ThisFetchableHashTable = FetchableHashTable<KeyType, ValueType, HashSetType>;
     using FetchArray = std::vector<std::pair<KeyType, ValueType>>;
 
-    class Fetcher
+    class FilterDefault final
     {
+    public:
+      bool operator()(const ValueType& /*value*/)
+      {
+        return true;
+      }
+    };
+
+    template<class Filter = FilterDefault>
+    class Fetcher : Generics::Uncopyable
+    {
+    private:
       friend class FetchableHashTable;
+      using Data = std::pair<KeyType, ValueType>;
+      using HelperArray = std::vector<Data>;
 
     public:
-      Fetcher(const Fetcher& init)
-        : owner_(init.owner_),
-          position_(init.position_)
-      {}
-
-      bool
-      get(FetchArray& ret,
+      bool get(FetchArray& ret,
         unsigned long actual_fetch_size,
         unsigned long max_fetch_size = 0);
 
     protected:
-      Fetcher(const FetchableHashTable& owner);
+      Fetcher(
+        FetchableHashTable& owner,
+        const Filter& filter = Filter{},
+        const FetcherDelegatePtr<KeyType, ValueType>& delegate = {});
 
     protected:
-      const FetchableHashTable& owner_;
+      FetchableHashTable& owner_;
       IndexType position_;
+      Filter filter_;
+      FetcherDelegatePtr<KeyType, ValueType> delegate_;
+      HelperArray helper_array_;
     };
 
     FetchableHashTable();
@@ -424,8 +453,10 @@ namespace AdServer::UserInfoSvcs
 
     bool erase(KeyType key);
 
-    Fetcher
-    fetcher() const;
+    template<class Filter = FilterDefault>
+    Fetcher<Filter> fetcher(
+      const Filter& filter = Filter{},
+      const FetcherDelegatePtr<KeyType, ValueType>& delegate = {});
 
   protected:
     struct HashElement final
@@ -570,6 +601,11 @@ namespace AdServer::UserInfoSvcs
     {
       return all_elements_[index];
     }
+
+  private:
+    template<typename Key,
+             typename = std::enable_if_t<std::is_same_v<std::decay_t<Key>, KeyType>>>
+    bool erase_no_guard(Key&& key);
 
   protected:
     mutable SyncPolicy::Mutex lock_;

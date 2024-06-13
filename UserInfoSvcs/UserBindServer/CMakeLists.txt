@@ -11,7 +11,9 @@ add_library(UserBindContainer STATIC
   ExternalIdHashAdapter.cpp 
   ChunkUtils.cpp 
   UserBindContainer.cpp 
-  UserBindChunk.cpp 
+  UserBindChunk.cpp
+  UserBindChunkTypes.cpp
+  UserBindChunkTwoLayers.cpp
   BindRequestContainer.cpp 
   BindRequestChunk.cpp
 )

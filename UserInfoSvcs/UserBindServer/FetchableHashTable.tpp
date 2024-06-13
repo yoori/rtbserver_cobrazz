@@ -4,51 +4,86 @@ namespace AdServer::UserInfoSvcs
     typename KeyType,
     typename ValueType,
     template<typename, typename, typename> class HashSetType>
-  FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher::Fetcher(
-    const FetchableHashTable<KeyType, ValueType, HashSetType>& owner)
+  template<class Filter>
+  FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher<Filter>::Fetcher(
+    FetchableHashTable& owner,
+    const Filter& filter,
+    const FetcherDelegatePtr<KeyType, ValueType>& delegate)
     : owner_(owner),
-      position_(1)
+      position_(1),
+      filter_(filter),
+      delegate_(delegate)
   {}
 
   template<
     typename KeyType,
     typename ValueType,
     template<typename, typename, typename> class HashSetType>
-  bool
-  FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher::get(
+  template<class Filter>
+  bool FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher<Filter>::get(
     FetchArray& ret,
     unsigned long fetch_actual_size,
     unsigned long max_fetch_size)
   {
     ret.clear();
     ret.reserve(fetch_actual_size);
-    unsigned long local_pos = 0;
-    unsigned long local_full_pos = 0;
+    helper_array_.clear();
+    helper_array_.reserve(fetch_actual_size);
+    bool need_continue = false;
 
-    FetchableHashTable::SyncPolicy::WriteGuard lock(owner_.lock_);
-    auto el_it = owner_.all_elements_.begin() + position_;
-    auto actual_it = owner_.actual_elements_.begin() + position_;
-
-    while(el_it != owner_.all_elements_.end() &&
-      local_pos < fetch_actual_size &&
-      (max_fetch_size == 0 || local_full_pos < max_fetch_size))
     {
-      if(*actual_it)
+      unsigned long local_pos = 0;
+      unsigned long local_full_pos = 0;
+
+      FetchableHashTable::SyncPolicy::WriteGuard lock(owner_.lock_);
+      auto el_it = owner_.all_elements_.begin() + position_;
+      auto actual_it = owner_.actual_elements_.begin() + position_;
+
+      while(el_it != owner_.all_elements_.end() &&
+        local_pos < fetch_actual_size &&
+        (max_fetch_size == 0 || local_full_pos < max_fetch_size))
       {
-        const auto& element = std::get<HashElement>(*el_it);
-        ret.push_back(std::make_pair(element.key, element.value));
-        ++local_pos;
+        if(*actual_it)
+        {
+          auto& element = std::get<HashElement>(*el_it);
+          if (filter_(element.value))
+          {
+            ret.emplace_back(element.key, element.value);
+            ++local_pos;
+          }
+          else
+          {
+            helper_array_.emplace_back(
+              element.key,
+              std::move(element.value));
+          }
+        }
+
+        ++el_it;
+        ++actual_it;
+        ++local_full_pos;
       }
 
-      ++el_it;
-      ++actual_it;
-      ++local_full_pos;
+      position_ += local_full_pos;
+      need_continue =  el_it != owner_.all_elements_.end();
+
+      for (const auto& [key, _] : helper_array_)
+      {
+        owner_.erase_no_guard(key);
+      }
     }
 
-    position_ += local_pos;
-    return el_it != owner_.all_elements_.end();
+    if (delegate_)
+    {
+      for (auto& [key, value] : helper_array_)
+      {
+        delegate_->on_hashtable_erase(
+          std::move(key),
+          std::move(value));
+      }
+    }
 
-    return true;
+    return need_continue;
   }
 
   template<
@@ -57,7 +92,7 @@ namespace AdServer::UserInfoSvcs
     template<typename, typename, typename> class HashSetType>
   FetchableHashTable<KeyType, ValueType, HashSetType>::FetchableHashTable()
     : element_map_(
-        static_cast<typename HashElementSet::size_type>(100000),
+        static_cast<typename HashElementSet::size_type>(1024),
         HashElementVariantHashOp(*this),
         HashElementVariantEqualOp(*this))
   {
@@ -72,7 +107,7 @@ namespace AdServer::UserInfoSvcs
   FetchableHashTable<KeyType, ValueType, HashSetType>::FetchableHashTable(
     FetchableHashTable<KeyType, ValueType, HashSetType>&& init)
     : element_map_(
-        static_cast<typename HashElementSet::size_type>(100000),
+        static_cast<typename HashElementSet::size_type>(1024),
         HashElementVariantHashOp(*this),
         HashElementVariantEqualOp(*this))
   {
@@ -162,14 +197,22 @@ namespace AdServer::UserInfoSvcs
     KeyType key)
   {
     SyncPolicy::WriteGuard lock(lock_);
-    std::get<HashElement>(all_elements_.front()).key = std::move(key);
+    return erase_no_guard(std::move(key));
+  }
 
+  template<
+    typename KeyType,
+    typename ValueType,
+    template<typename, typename, typename> class HashSetType>
+  template<typename Key, typename>
+  bool FetchableHashTable<KeyType, ValueType, HashSetType>::erase_no_guard(Key&& key)
+  {
+    std::get<HashElement>(all_elements_.front()).key = std::forward<Key>(key);
     auto it = element_map_.find(0);
     if(it != element_map_.end())
     {
       all_elements_[*it] = head_index_free_;
       head_index_free_ = *it;
-
       actual_elements_[*it] = false;
       element_map_.erase(it);
 
@@ -183,9 +226,15 @@ namespace AdServer::UserInfoSvcs
     typename KeyType,
     typename ValueType,
     template<typename, typename, typename> class HashSetType>
-  typename FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher
-  FetchableHashTable<KeyType, ValueType, HashSetType>::fetcher() const
+  template<class Filter>
+  typename FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher<Filter>
+  FetchableHashTable<KeyType, ValueType, HashSetType>::fetcher(
+    const Filter& filter,
+    const FetcherDelegatePtr<KeyType, ValueType>& delegate)
   {
-    return typename FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher(*this);
+    return typename FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher<Filter>(
+      *this,
+      filter,
+      delegate);
   }
 } // namespace AdServer::UserInfoSvcs

@@ -683,7 +683,7 @@ namespace UserInfoSvcs
     mutable FlushSyncPolicy::Mutex flush_lock_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindChunk>
+  typedef ReferenceCounting::SmartPtr<UserBindProcessor>
     UserBindChunk_var;
 
 } /* UserInfoSvcs */

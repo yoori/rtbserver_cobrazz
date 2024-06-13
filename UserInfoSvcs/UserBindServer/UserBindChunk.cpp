@@ -1232,10 +1232,10 @@ namespace UserInfoSvcs
         time_period_holder_it != max_time_it->second.end();
         ++time_period_holder_it)
       {
-        const TimePeriodHolderType* time_period_holder = time_period_holder_it->time_holder.in();
+        TimePeriodHolderType* time_period_holder = time_period_holder_it->time_holder.in();
         //SyncPolicy::ReadGuard lock(time_period_holder->lock);
         const Generics::Time& min_time = time_period_holder->min_time;
-        const auto& users = time_period_holder->users;
+        auto& users = time_period_holder->users;
 
         auto fetcher = users.fetcher();
         while(true)

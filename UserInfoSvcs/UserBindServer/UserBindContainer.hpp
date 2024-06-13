@@ -19,6 +19,8 @@
 #include <Commons/LockMap.hpp>
 #include <Commons/Containers.hpp>
 
+#include <rocksdb/advanced_options.h>
+
 #include "UserBindChunk.hpp"
 
 namespace AdServer
@@ -47,7 +49,13 @@ namespace UserInfoSvcs
       unsigned long portions_number,
       bool load_slave,
       unsigned long partition_index, // instance partition number (first or second part of cluster)
-      unsigned long partitions_number)
+      unsigned long partitions_number,
+      const bool enable_two_layer_mode,
+      const std::uint16_t memory_days,
+      const std::size_t rocksdb_number_threads,
+      const rocksdb::CompactionStyle rocksdb_compaction_style,
+      const std::uint32_t rocksdb_block_сache_size_mb,
+      const std::uint32_t rocksdb_ttl)
       /*throw(Exception)*/;
 
     static void
