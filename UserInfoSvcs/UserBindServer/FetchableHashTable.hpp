@@ -3,13 +3,12 @@
 
 #include <deque>
 #include <bitset>
+#include <variant>
 #include <Generics/GnuHashTable.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Commons/tsl/sparse_set.h>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct bit_deque
   {
@@ -388,10 +387,9 @@ namespace UserInfoSvcs
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(MaxIndexReached, Exception);
 
-    typedef uint32_t IndexType;
-    typedef FetchableHashTable<KeyType, ValueType, HashSetType>
-      ThisFetchableHashTable;
-    typedef std::vector<std::pair<KeyType, ValueType> > FetchArray;
+    using IndexType = uint32_t;
+    using ThisFetchableHashTable = FetchableHashTable<KeyType, ValueType, HashSetType>;
+    using FetchArray = std::vector<std::pair<KeyType, ValueType>>;
 
     class Fetcher
     {
@@ -413,38 +411,44 @@ namespace UserInfoSvcs
 
     protected:
       const FetchableHashTable& owner_;
-      unsigned long position_;
+      IndexType position_;
     };
 
     FetchableHashTable();
 
-    FetchableHashTable(FetchableHashTable&& init);
+    FetchableHashTable(FetchableHashTable&& other);
 
-    bool
-    get(ValueType& value, KeyType key);
+    bool get(ValueType& value, KeyType key);
 
-    void
-    set(KeyType key, ValueType value) /*throw(MaxIndexReached)*/;
+    void set(KeyType key, ValueType value);
 
-    bool
-    erase(KeyType key);
+    bool erase(KeyType key);
 
     Fetcher
     fetcher() const;
 
   protected:
-    struct HashElement
+    struct HashElement final
     {
-      HashElement()
+      explicit HashElement()
       {}
 
-      HashElement(KeyType key_val)
+      explicit HashElement(KeyType&& key_val)
         : key(std::move(key_val))
       {}
 
-      HashElement(KeyType key_val, ValueType value_val)
+      explicit HashElement(const KeyType& key_val)
+        : key(key_val)
+      {}
+
+      explicit HashElement(KeyType&& key_val, ValueType&& value_val)
         : key(std::move(key_val)),
           value(std::move(value_val))
+      {}
+
+      HashElement(const KeyType& key_val, const ValueType& value_val)
+        : key(key_val),
+          value(value_val)
       {}
 
       HashElement(HashElement&& init)
@@ -452,11 +456,14 @@ namespace UserInfoSvcs
           value(std::move(init.value))
       {}
 
-      HashElement&
-      operator=(HashElement&& init)
+      HashElement& operator=(HashElement&& init)
       {
-        key = std::move(init.key);
-        value = std::move(init.value);
+        if (this != &init)
+        {
+          key = std::move(init.key);
+          value = std::move(init.value);
+        }
+
         return *this;
       }
 
@@ -464,101 +471,102 @@ namespace UserInfoSvcs
       ValueType value;
     };
 
-    struct HashElementHashOp
+    struct HashElementVariantHashOp
     {
     public:
-      HashElementHashOp(
+      explicit HashElementVariantHashOp(
         const FetchableHashTable<KeyType, ValueType, HashSetType>& owner)
         : owner_(&owner)
       {}
 
-      HashElementHashOp(const HashElementHashOp& init)
+      HashElementVariantHashOp(const HashElementVariantHashOp& init)
         : owner_(init.owner_)
       {}
 
-      HashElementHashOp(HashElementHashOp&& init)
-        : owner_(init.owner_)
+      HashElementVariantHashOp(HashElementVariantHashOp&& init)
+        : owner_(std::move(init.owner_))
       {}
 
-      HashElementHashOp&
-      operator=(HashElementHashOp&& init)
+      HashElementVariantHashOp& operator=(HashElementVariantHashOp&& init)
       {
-        owner_ = init.owner_;
+        if (this != &init)
+        {
+          owner_ = std::move(init.owner_);
+        }
+
         return *this;
       }
 
-      size_t
-      operator()(uint32_t element_index) const
+      auto operator()(const IndexType element_index) const
       {
-        size_t ret_hash = owner_->get_hash_element_(element_index).key.hash();
-        return ret_hash;
-      };
-
-      /*
-      size_t
-      operator()(const KeyType& key) const
-      {
-        return key.hash();
-      };
-      */
-
-    protected:
-      const FetchableHashTable<KeyType, ValueType, HashSetType>* owner_;
-    };
-
-    struct HashElementEqualOp
-    {
-    public:
-      HashElementEqualOp(
-        const FetchableHashTable<KeyType, ValueType, HashSetType>& owner)
-        : owner_(&owner)
-      {}
-
-      HashElementEqualOp(const HashElementEqualOp& init)
-        : owner_(init.owner_)
-      {}
-
-      HashElementEqualOp(HashElementEqualOp&& init)
-        : owner_(init.owner_)
-      {}
-
-      HashElementEqualOp&
-      operator=(HashElementEqualOp&& init)
-      {
-        owner_ = init.owner_;
-        return *this;
-      }
-
-      size_t
-      operator()(uint32_t element_index1, uint32_t element_index2) const
-      {
-        return owner_->get_hash_element_(element_index1).key ==
-          owner_->get_hash_element_(element_index2).key;
+        const auto& variant = owner_->hash_element_variant_(element_index);
+        const auto hash = std::get<HashElement>(variant).key.hash();
+        return hash;
       };
 
     protected:
       const FetchableHashTable<KeyType, ValueType, HashSetType>* owner_;
     };
 
-    typedef std::deque<HashElement> HashElementArray;
+    struct HashElementVariantEqualOp
+    {
+    public:
+      HashElementVariantEqualOp(
+        const FetchableHashTable<KeyType, ValueType, HashSetType>& owner)
+        : owner_(&owner)
+      {}
 
-    typedef HashSetType<
+      HashElementVariantEqualOp(const HashElementVariantEqualOp& other)
+        : owner_(other.owner_)
+      {}
+
+      HashElementVariantEqualOp(HashElementVariantEqualOp&& other)
+        : owner_(std::move(other.owner_))
+      {}
+
+      HashElementVariantEqualOp& operator=(HashElementVariantEqualOp&& other)
+      {
+        if (this != &other)
+        {
+          owner_ = std::move(other.owner_);
+        }
+
+        return *this;
+      }
+
+      bool operator() (
+        const IndexType element_index1,
+        const IndexType element_index2) const
+      {
+        const auto& variant1 = owner_->hash_element_variant_(element_index1);
+        const auto& variant2 = owner_->hash_element_variant_(element_index2);
+        if (variant1.index() != variant2.index())
+        {
+          return false;
+        }
+
+        return std::get<HashElement>(variant1).key == std::get<HashElement>(variant2).key;
+      };
+
+    protected:
+      const FetchableHashTable<KeyType, ValueType, HashSetType>* owner_;
+    };
+
+    using HashElementVariant = std::variant<HashElement, IndexType>;
+    using HashElementArray = std::deque<HashElementVariant>;
+    using HashElementSet = HashSetType<
       IndexType,
-      HashElementHashOp,
-      HashElementEqualOp>
-      HashElementSet;
-
-    typedef Sync::Policy::PosixThread SyncPolicy;
+      HashElementVariantHashOp,
+      HashElementVariantEqualOp>;
+    using SyncPolicy = Sync::Policy::PosixThread;
 
   protected:
-    HashElement&
-    get_hash_element_(unsigned long index)
+    HashElementVariant& hash_element_variant_(const IndexType index)
     {
       return all_elements_[index];
     }
 
-    const HashElement&
-    get_hash_element_(unsigned long index) const
+    const HashElementVariant& hash_element_variant_(const IndexType index) const
     {
       return all_elements_[index];
     }
@@ -567,12 +575,13 @@ namespace UserInfoSvcs
     mutable SyncPolicy::Mutex lock_;
     bit_deque actual_elements_;
     HashElementArray all_elements_;
+    IndexType head_index_free_ = 0;
     HashElementSet element_map_;
   };
 
   //
   template<typename KeyType, typename HashOp, typename EqualOp>
-  struct UnorderedSet: public std::unordered_set<KeyType, HashOp, EqualOp>
+  struct UnorderedSet final: public std::unordered_set<KeyType, HashOp, EqualOp>
   {
     UnorderedSet(int bucket_count, HashOp hash_op, EqualOp equal_op)
       : std::unordered_set<KeyType, HashOp, EqualOp>(
@@ -583,7 +592,7 @@ namespace UserInfoSvcs
   };
 
   template<typename KeyType, typename HashOp, typename EqualOp>
-  struct SparseSet: public tsl::sparse_set<KeyType, HashOp, EqualOp>
+  struct SparseSet final: public tsl::sparse_set<KeyType, HashOp, EqualOp>
   {
     SparseSet(int bucket_count, HashOp hash_op, EqualOp equal_op)
       : tsl::sparse_set<KeyType, HashOp, EqualOp>(
@@ -594,16 +603,13 @@ namespace UserInfoSvcs
   };
 
   template<typename KeyType, typename ValueType>
-  struct USFetchableHashTable:
-    public FetchableHashTable<KeyType, ValueType, UnorderedSet>
+  struct USFetchableHashTable final : public FetchableHashTable<KeyType, ValueType, UnorderedSet>
   {};
 
   template<typename KeyType, typename ValueType>
-  struct SparseFetchableHashTable:
-    public FetchableHashTable<KeyType, ValueType, SparseSet>
+  struct SparseFetchableHashTable final : public FetchableHashTable<KeyType, ValueType, SparseSet>
   {};
-}
-}
+} // namespace AdServer::UserInfoSvcs
 
 #include "FetchableHashTable.tpp"
 

@@ -1,6 +1,4 @@
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   template<
     typename KeyType,
@@ -27,8 +25,7 @@ namespace UserInfoSvcs
     unsigned long local_pos = 0;
     unsigned long local_full_pos = 0;
 
-    FetchableHashTable<KeyType, ValueType, HashSetType>::
-      SyncPolicy::WriteGuard lock(owner_.lock_);
+    FetchableHashTable::SyncPolicy::WriteGuard lock(owner_.lock_);
     auto el_it = owner_.all_elements_.begin() + position_;
     auto actual_it = owner_.actual_elements_.begin() + position_;
 
@@ -38,13 +35,9 @@ namespace UserInfoSvcs
     {
       if(*actual_it)
       {
-        //std::cout << "next actual(" << local_pos << ")" << std::endl;
-        ret.push_back(std::make_pair(el_it->key, el_it->value));
+        const auto& element = std::get<HashElement>(*el_it);
+        ret.push_back(std::make_pair(element.key, element.value));
         ++local_pos;
-      }
-      else
-      {
-        //std::cout << "next non actual(" << local_pos << ")" << std::endl;
       }
 
       ++el_it;
@@ -54,6 +47,8 @@ namespace UserInfoSvcs
 
     position_ += local_pos;
     return el_it != owner_.all_elements_.end();
+
+    return true;
   }
 
   template<
@@ -62,9 +57,9 @@ namespace UserInfoSvcs
     template<typename, typename, typename> class HashSetType>
   FetchableHashTable<KeyType, ValueType, HashSetType>::FetchableHashTable()
     : element_map_(
-        static_cast<typename HashElementSet::size_type>(1024),
-        HashElementHashOp(*this),
-        HashElementEqualOp(*this))
+        static_cast<typename HashElementSet::size_type>(100000),
+        HashElementVariantHashOp(*this),
+        HashElementVariantEqualOp(*this))
   {
     all_elements_.push_back(HashElement());
     actual_elements_.push_back(true);
@@ -77,9 +72,9 @@ namespace UserInfoSvcs
   FetchableHashTable<KeyType, ValueType, HashSetType>::FetchableHashTable(
     FetchableHashTable<KeyType, ValueType, HashSetType>&& init)
     : element_map_(
-        static_cast<typename HashElementSet::size_type>(1024),
-        HashElementHashOp(*this),
-        HashElementEqualOp(*this))
+        static_cast<typename HashElementSet::size_type>(100000),
+        HashElementVariantHashOp(*this),
+        HashElementVariantEqualOp(*this))
   {
     SyncPolicy::WriteGuard lock(init.lock_);
     actual_elements_.swap(init.actual_elements_);
@@ -95,16 +90,13 @@ namespace UserInfoSvcs
   FetchableHashTable<KeyType, ValueType, HashSetType>::get(
     ValueType& value, KeyType key)
   {
-    KeyType del_key;
-
     SyncPolicy::WriteGuard lock(lock_);
-    del_key = std::move(all_elements_.begin()->key);
-    all_elements_.begin()->key = std::move(key);
+    std::get<HashElement>(all_elements_.front()).key = std::move(key);
 
-    auto it = element_map_.find(0);
+    const auto it = element_map_.find(0);
     if(it != element_map_.end() && actual_elements_[*it])
     {
-      value = all_elements_[*it].value;
+      value = std::get<HashElement>(all_elements_[*it]).value;
       return true;
     }
 
@@ -118,35 +110,46 @@ namespace UserInfoSvcs
   void
   FetchableHashTable<KeyType, ValueType, HashSetType>::set(
     KeyType key, ValueType value)
-    /*throw(MaxIndexReached)*/
   {
-    KeyType del_key;
-
     SyncPolicy::WriteGuard lock(lock_);
-    del_key = std::move(all_elements_.begin()->key);
-    all_elements_.begin()->key = std::move(key);
+    auto& first_element = std::get<HashElement>(all_elements_.front());
+    first_element.key = std::move(key);
 
     auto it = element_map_.find(0);
     if(it != element_map_.end())
     {
       all_elements_[*it] = HashElement(
-        std::move(all_elements_.begin()->key),
+        std::move(first_element.key),
         std::move(value));
-      actual_elements_[*it] = true;
     }
     else
     {
-      if(all_elements_.size() + 1 > std::numeric_limits<IndexType>::max())
+      if(head_index_free_ == 0
+      && all_elements_.size() + 1 > std::numeric_limits<IndexType>::max())
       {
         throw MaxIndexReached("");
       }
 
-      all_elements_.push_back(HashElement(
-         std::move(all_elements_.begin()->key),
-         std::move(value)));
-      actual_elements_.push_back(true);
-      unsigned long new_index = all_elements_.size() - 1;
-      element_map_.insert(new_index);
+      if (head_index_free_ == 0)
+      {
+        all_elements_.push_back(HashElement(
+           std::move(first_element.key),
+           std::move(value)));
+        actual_elements_.push_back(true);
+        unsigned long new_index = all_elements_.size() - 1;
+        element_map_.insert(new_index);
+      }
+      else
+      {
+        const auto index = head_index_free_;
+        auto& index_element = all_elements_[index];
+        head_index_free_ = std::get<IndexType>(index_element);
+        actual_elements_[index] = true;
+        index_element = HashElement(
+          std::move(first_element.key),
+          std::move(value));
+        element_map_.insert(index);
+      }
     }
   }
 
@@ -158,18 +161,15 @@ namespace UserInfoSvcs
   FetchableHashTable<KeyType, ValueType, HashSetType>::erase(
     KeyType key)
   {
-    KeyType del_key;
-    HashElement del_hash_element;
-
     SyncPolicy::WriteGuard lock(lock_);
-    del_key = std::move(all_elements_.begin()->key);
-    all_elements_.begin()->key = std::move(key);
+    std::get<HashElement>(all_elements_.front()).key = std::move(key);
 
     auto it = element_map_.find(0);
     if(it != element_map_.end())
     {
-      del_hash_element = std::move(all_elements_[*it]);
-      all_elements_[*it] = HashElement();
+      all_elements_[*it] = head_index_free_;
+      head_index_free_ = *it;
+
       actual_elements_[*it] = false;
       element_map_.erase(it);
 
@@ -186,8 +186,6 @@ namespace UserInfoSvcs
   typename FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher
   FetchableHashTable<KeyType, ValueType, HashSetType>::fetcher() const
   {
-    return typename FetchableHashTable<
-      KeyType, ValueType, HashSetType>::Fetcher(*this);
+    return typename FetchableHashTable<KeyType, ValueType, HashSetType>::Fetcher(*this);
   }
-}
-}
+} // namespace AdServer::UserInfoSvcs

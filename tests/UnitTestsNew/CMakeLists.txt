@@ -1,5 +1,6 @@
 add_executable(UnitTestNew
   RequestInfoSvcs/ExpressionMatcher/ChannelMatcherTest.cpp
+  UserInfoSvcs/UserInfoContainer/FetchableHashTableTest.cpp
   UserInfoSvcs/UserInfoContainer/UserInfoContainerTest.cpp
   test_main.cpp
 )
