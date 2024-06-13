@@ -371,6 +371,7 @@
 
 <!-- default ports for grpc services -->
 <xsl:variable name="def-user-bind-server-grpc-port" select="$def-range-start + 200"/>
+<xsl:variable name="def-channel-server-grpc-port" select="$def-range-start + 208"/>
 
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="'10156'"/>

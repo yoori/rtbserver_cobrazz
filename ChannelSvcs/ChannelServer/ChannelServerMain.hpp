@@ -6,6 +6,7 @@
 #include <Generics/ActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ProcessControl.hpp>
@@ -20,6 +21,9 @@ class ChannelServerApp_ :
   public AdServer::Commons::ProcessControlVarsLoggerImpl
 {
 public:
+  using ManagerCoro = UServerUtils::Grpc::Manager;
+  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
 
@@ -64,10 +68,13 @@ private:
 private:
   void load_config_(const char* name) /*throw(Exception)*/;
   void init_corba_() /*throw(Exception, CORBA::SystemException)*/;
+  void init_coro_();
 
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   CORBACommons::CorbaConfig corba_config_;
+
+  ManagerCoro_var manager_coro_;
 
   ConfigPtr configuration_;
   AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;

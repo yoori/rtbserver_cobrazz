@@ -11,12 +11,16 @@
 
 #include <Generics/Singleton.hpp>
 #include <Generics/CompositeActiveObject.hpp>
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionImpl.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
+
+#include "ChannelSvcs/ChannelCommons/proto/ChannelServer_client.cobrazz.pb.hpp"
 
 /**
  * \class Application Application.hpp "ChannelAdmin/Application.hpp"
@@ -25,7 +29,15 @@
 class Application
 {
 public:
-    
+  using ManagerCoro = UServerUtils::Grpc::Manager;
+  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using GrpcClientFactory = UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
+  using GrpcClientFactoryPtr = std::unique_ptr<GrpcClientFactory>;
+  using MatchResponse = AdServer::ChannelSvcs::Proto::MatchResponse;
+  using MatchResponsePtr = std::unique_ptr<MatchResponse>;
+  using MatchClient = AdServer::ChannelSvcs::Proto::ChannelServer_match_ClientPool;
+  using MatchClientPtr = std::shared_ptr<MatchClient>;
+
   /**
    * Macros defining Application base exception class.
    */
@@ -59,6 +71,9 @@ public:
 
     template<typename Object, typename Function, typename ReturnType, typename...Args>
       void calc_stat_r(Object* call, Function func, ReturnType& ret, Args&... args);
+
+    template<typename R, typename F>
+    R calc_stat_r(F&& f);
 
     virtual ~StatMarker() noexcept;
 
@@ -115,6 +130,8 @@ public:
   static std::string concat_sequence(ITER begin, ITER end) noexcept;
 
 private:
+  void init_server_grpc_();
+
   void init_server_interface_() /*throw(InvalidArgument)*/;
 
   void init_update_interface_() /*throw(InvalidArgument)*/;
@@ -129,6 +146,8 @@ private:
     T1* iface_ptr,
     T2& res)
     /*throw(Exception)*/;
+
+  MatchResponsePtr make_match_query_grpc();
 
   int update_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/;
@@ -193,7 +212,9 @@ private:
     /*throw(eh::Exception)*/;
 
 private:
-
+  ManagerCoro_var manager_coro_;
+  GrpcClientFactoryPtr grpc_client_factory_;
+  MatchClientPtr match_client_;
   bool use_session_;
   Generics::Time date_;
   std::vector<unsigned long> channels_id_;
@@ -280,6 +301,34 @@ void Application::StatMarker::calc_stat_r(Object* call, Function func, ReturnTyp
     {
     }
   }
+}
+
+template<typename R, typename F>
+R Application::StatMarker::calc_stat_r(F&& f)
+{
+  std::unique_ptr<R> ret;
+  for(size_t i = 0; i < times_; ++i)
+  {
+    Generics::Timer timer;
+    try
+    {
+      timer.start();
+    }
+    catch(...)
+    {
+    }
+    ret = std::make_unique<R>(f());
+    try
+    {
+      timer.stop();
+      calc_value_(timer.elapsed_time(), i);
+    }
+    catch(...)
+    {
+    }
+  }
+
+  return std::move(*ret);
 }
 
 #endif // AD_SERVER_CHANNEL_SERVICE_CHANNEL_ADMIN_APPLICATION_HPP_

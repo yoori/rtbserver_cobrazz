@@ -28,6 +28,7 @@
 
 #include <Commons/Constants.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/PathManip.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
@@ -40,11 +41,35 @@
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>
 
-
 #include "ChannelServerTypes.hpp"
 #include "ChannelServerImpl.hpp"
 #include "ContainerMatchers.hpp"
 #include "ChannelContainer.hpp"
+
+
+namespace
+{
+  template<class Response>
+  auto create_grpc_response(const std::uint32_t id_request_grpc)
+  {
+    auto response = std::make_unique<Response>();
+    response->set_id_request_grpc(id_request_grpc);
+    return response;
+  }
+
+  template<class Response>
+  auto create_grpc_error_response(
+    const AdServer::ChannelSvcs::Proto::Error_Type error_type,
+    const String::SubString detail,
+    const std::uint32_t id_request_grpc)
+  {
+    auto response = create_grpc_response<Response>(id_request_grpc);
+    auto* error = response->mutable_error();
+    error->set_type(error_type);
+    error->set_description(detail.data(), detail.length());
+    return response;
+  }
+} // namespace
 
 namespace AdServer
 {
@@ -1112,6 +1137,153 @@ namespace ChannelSvcs
     }
   }
 
+  ChannelServerCustomImpl::MatchResponsePtr
+  ChannelServerCustomImpl::match(MatchRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    auto& query = request->query();
+    try
+    {
+      Generics::Timer timer;
+      static MatchBreakSeparators separators;
+      timer.start();
+
+      auto response = create_grpc_response<Proto::MatchResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+
+      if(state_ == UpdateData::US_ZERO)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Source chunks wasn't setted for server yet";
+        auto response = create_grpc_error_response<Proto::MatchResponse>(
+          Proto::Error_Type::Error_Type_NotConfigured,
+          stream.str(),
+          id_request_grpc);
+        return response;
+      }
+      std::unique_ptr<std::ostringstream> logstr;
+      TriggerMatchRes res;
+      const Generics::Uuid uid = GrpcAlgs::unpack_user_id(query.uid());
+      if (statistic_logger_)
+      {
+        logstr.reset(new std::ostringstream);
+        *logstr << query.request_id() << "::u:" <<  query.urls()
+          << "::p:" <<  query.pwords()
+          << "::s:" <<  query.swords()
+          << "::U:" <<  uid.to_string(false);
+      }
+      const auto& query_statuses = query.statuses();
+      unsigned int match_flags =
+        (query.non_strict_word_match() ? MF_NONSTRICTKW : MF_NONE) |
+        (query.non_strict_url_match() ? MF_NONSTRICTURL : MF_NONE) |
+        (query.return_negative() ? MF_NEGATIVE : MF_NONE) |
+        (query_statuses[0] == 'A' ||
+         query_statuses[1] == 'A' ? MF_ACTIVE : MF_NONE) |
+        (query_statuses[0] == 'I' ||
+         query_statuses[1] == 'I' ? MF_INACTIVE : MF_NONE);
+
+      AdServer::ChannelSvcs::MatchWords phrases[CT_MAX];
+      AdServer::ChannelSvcs::MatchWords additional_url_keywords;
+      MatchUrls url_words, additional_url_words;
+      //parsing urls
+      const auto& first_url_query = query.first_url();
+      const auto& first_url_words_query = query.first_url_words();
+      ChannelContainer::match_parse_urls(
+        String::SubString(first_url_query.data(), first_url_query.size()),
+        String::SubString(first_url_words_query.data(), first_url_words_query.size()),
+        ports_,
+        query.non_strict_url_match(),
+        url_words,
+        phrases[CT_URL_KEYWORDS],
+        logger(),
+        segmentor_);
+      const auto& urls_query = query.urls();
+      const auto& urls_words_query = query.urls_words();
+      ChannelContainer::match_parse_urls(
+        String::SubString(urls_query.data(), urls_query.size()),
+        String::SubString(urls_words_query.data(), urls_words_query.size()),
+        ports_,
+        query.non_strict_url_match(),
+        additional_url_words,
+        additional_url_keywords,
+        logger(),
+        segmentor_);
+
+      StringVector exact_phrases;
+      const auto& swords_query = query.swords();
+      const auto& pwords_query = query.pwords();
+      parse_keywords(
+        String::SubString(swords_query.data(), swords_query.size()),
+        phrases[CT_SEARCH],
+        match_flags & MF_NONSTRICTKW ? PM_SIMPLIFY : PM_NO_SIMPLIFY,
+        match_flags & MF_NONSTRICTKW ? nullptr : &separators,
+        match_flags & MF_NONSTRICTKW ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ,
+        &exact_phrases,//exact match
+        match_flags & MF_NONSTRICTKW ? segmentor_ : 0);
+      parse_keywords(
+        String::SubString(pwords_query.data(), pwords_query.size()),
+        phrases[CT_PAGE],
+        (query.simplify_page() || match_flags & MF_NONSTRICTKW) ?
+        PM_SIMPLIFY : PM_NO_SIMPLIFY,
+        match_flags & MF_NONSTRICTKW ? nullptr : &separators,
+        match_flags & MF_NONSTRICTKW ? 1 : Commons::DEFAULT_MAX_HARD_WORD_SEQ,
+        0,//exact match
+        (query.simplify_page() || match_flags & MF_NONSTRICTKW ?
+         segmentor_ : 0));
+
+      phrases[CT_URL_KEYWORDS].insert(
+        exact_phrases.begin(), exact_phrases.end());
+
+      container_->match(
+        url_words,
+        additional_url_words,
+        phrases,
+        additional_url_keywords,
+        exact_phrases,
+        uid,
+        match_flags,
+        res);
+      fill_result_(res, *info, query.fill_content());
+      timer.stop();
+      if (statistic_logger_)
+      {
+        log_parsed_input_(url_words, phrases, exact_phrases, *logstr);
+        log_result_(res, timer.elapsed_time(), *logstr);
+        statistic_logger_->log(logstr->str(), Logging::Logger::DEBUG, ASPECT);
+      }
+
+      info->set_match_time(GrpcAlgs::pack_time(timer.elapsed_time()));
+      __gnu_cxx::__atomic_add(&queries_counter_, 1);
+
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::MatchResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Unknown error";
+      auto response = create_grpc_error_response<Proto::MatchResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
   struct comp_string_ptr
   {
     bool operator() (const char* lhs, const char* rhs) const
@@ -1193,6 +1365,93 @@ namespace ChannelSvcs
       return true;
     }
     return false;
+  }
+
+  ChannelServerCustomImpl::GetCcgTraitsResponsePtr
+  ChannelServerCustomImpl::get_ccg_traits(GetCcgTraitsRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      auto response = create_grpc_response<Proto::GetCcgTraitsResponse>(
+        id_request_grpc);
+      auto* response_info = response->mutable_info();
+
+      if(state_ == UpdateData::US_ZERO)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Source chunks wasn't setted for server yet";
+        auto response = create_grpc_error_response<Proto::GetCcgTraitsResponse>(
+          Proto::Error_Type::Error_Type_NotConfigured,
+          stream.str(),
+          id_request_grpc);
+        return response;
+      }
+
+      const auto& ids = request->ids();
+      if (!ids.empty())
+      {
+        ChannelMatchInfo_var info = container_->get_active();
+        ChannelMatchInfo::const_iterator it;
+        size_t len[2] = {0, 0};
+        const std::size_t ids_size = ids.size();
+        for (std::size_t i = 0; i < ids_size; ++i)
+        {
+          it = info->find(ids[i]);
+          if(it != info->end())
+          {
+            len[0] += it->second.ccg_keywords.size();
+          }
+        }
+
+        auto* ccg_keywords = response_info->mutable_ccg_keywords();
+        ccg_keywords->Reserve(len[0]);
+        auto* neg_ccg = response_info->mutable_neg_ccg();
+        neg_ccg->Reserve(len[0]);
+
+        len[0] = 0;
+        CCGKeywordProtoPacker packer(ccg_keywords, neg_ccg);
+        for(std::size_t i = 0; i < ids_size; ++i)
+        {
+          it = info->find(ids[i]);
+          if(it != info->end())
+          {
+            for(std::vector<CCGKeyword_var>::const_iterator it_id = it->second.ccg_keywords.begin();
+                it_id != it->second.ccg_keywords.end();
+                ++it_id)
+            {
+              packer(**it_id);
+            }
+          }
+        }
+      }
+
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetCcgTraitsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << ": Unknown error";
+      auto response = create_grpc_error_response<Proto::GetCcgTraitsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
   }
 
   //
@@ -1560,6 +1819,19 @@ namespace ChannelSvcs
     return in.size();
   }
 
+  void ChannelServerCustomImpl::add_channels_(
+    unsigned int channel_id,
+    const TriggerMatchItem::value_type& in,
+    google::protobuf::RepeatedPtrField<Proto::ChannelAtom>* out) noexcept
+  {
+    for (size_t i = 0; i < in.size(); ++i)
+    {
+      auto* channel_atom = out->Add();
+      channel_atom->set_id(channel_id);
+      channel_atom->set_trigger_channel_id(in[i]);
+    }
+  }
+
   void ChannelServerCustomImpl::log_parsed_input_(
     const MatchUrls& url_words,
     const MatchWords match_words[CT_MAX],
@@ -1693,6 +1965,97 @@ namespace ChannelSvcs
     }
   }
 
+  void ChannelServerCustomImpl::fill_result_(
+    const TriggerMatchRes& result,
+    AdServer::ChannelSvcs::Proto::MatchResponseInfo& res,
+    bool fill_content)
+  {
+    TriggerMatchRes::const_iterator it = result.begin();
+    if(it != result.end() && it->first == c_special_adv)
+    {
+      res.set_no_adv(true);
+      ++it;
+    }
+    else
+    {
+      res.set_no_adv(false);
+    }
+    if(it != result.end() && it->first == c_special_track)
+    {
+      res.set_no_track(true);
+      ++it;
+    }
+    else
+    {
+      res.set_no_track(false);
+    }
+    if(it != result.end())
+    {
+      auto& out = *res.mutable_matched_channels();
+
+      const std::size_t count_ct_page = result.count_channels[CT_PAGE];
+      auto* page_channels = out.mutable_page_channels();
+      page_channels->Reserve(count_ct_page);
+
+      const std::size_t count_ct_search = result.count_channels[CT_SEARCH];
+      auto* search_channels = out.mutable_search_channels();
+      search_channels->Reserve(count_ct_search);
+
+      const std::size_t count_ct_url = result.count_channels[CT_URL];
+      auto* url_channels = out.mutable_url_channels();
+      url_channels->Reserve(count_ct_url);
+
+      const std::size_t count_url_keywords = result.count_channels[CT_URL_KEYWORDS];
+      auto* url_keyword_channels = out.mutable_url_keyword_channels();
+      url_keyword_channels->Reserve(count_url_keywords);
+
+      auto* uid_channels = out.mutable_uid_channels();
+      uid_channels->Reserve(result.count_channels[CT_MAX]);
+
+      auto* content_channels = res.mutable_content_channels();
+      if(fill_content)
+      {
+        content_channels->Reserve(
+          count_ct_page + count_ct_search +
+          count_ct_url + count_url_keywords);
+      }
+
+      do
+      {
+        const TriggerMatchItem& item = it->second;
+        if(item.flags & TriggerMatchItem::TMI_UID)
+        {
+          uid_channels->Add(it->first);
+        }
+        else if(!(item.flags & TriggerMatchItem::TMI_NEGATIVE))
+        {
+          add_channels_(
+            it->first,
+            item.trigger_ids[CT_PAGE],
+            page_channels);
+          add_channels_(
+            it->first,
+            item.trigger_ids[CT_SEARCH],
+            search_channels);
+          add_channels_(
+            it->first,
+            item.trigger_ids[CT_URL],
+            url_channels);
+          add_channels_(
+            it->first,
+            item.trigger_ids[CT_URL_KEYWORDS],
+            url_keyword_channels);
+          if(item.weight && fill_content)
+          {
+            auto* content_channel_atom = content_channels->Add();
+            content_channel_atom->set_id(it->first);
+            content_channel_atom->set_weight(item.weight);
+          }
+        }
+      } while(++it != result.end());
+    }
+  }
+
   void ChannelServerCustomImpl::log_result_(
     const TriggerMatchRes& res,
     const Generics::Time& time,
@@ -1794,6 +2157,36 @@ namespace ChannelSvcs
     value.click_url << in.click_url;
     value.original_keyword << in.original_keyword;
     return value;
+  }
+
+  ChannelServerCustomImpl::CCGKeywordProtoPacker::CCGKeywordProtoPacker(
+    google::protobuf::RepeatedPtrField<Proto::CCGKeyword>* ccg_out,
+    google::protobuf::RepeatedField<uint32_t>* neg_out)
+    : out_(ccg_out),
+      neg_out_(neg_out)
+  {
+  }
+
+  void ChannelServerCustomImpl::CCGKeywordProtoPacker::operator()(
+    const CCGKeyword& id)
+  {
+    if(neg_out_ &&
+      !id.original_keyword.empty() && id.original_keyword[0] == '-')
+    {
+      neg_out_->Add(id.ccg_id);
+    }
+    else
+    {
+      auto* ccgkeyword = out_->Add();
+      ccgkeyword->set_ccg_keyword_id(id.ccg_keyword_id);
+      ccgkeyword->set_ccg_id(id.ccg_id);
+      ccgkeyword->set_channel_id(id.channel_id);
+      ccgkeyword->set_max_cpc(
+        GrpcAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(id.max_cpc));
+      ccgkeyword->set_ctr(GrpcAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(id.ctr));
+      ccgkeyword->set_click_url(id.click_url);
+      ccgkeyword->set_original_keyword(id.original_keyword);
+    }
   }
 
 

@@ -3,20 +3,20 @@ add_idl(ChannelServerIDL ChannelServer.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelC
 add_idl(ChannelUpdateBaseIDL ChannelUpdateBase.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelCommons)
 
 target_link_libraries(ChannelCommonsIDL
-  Commons
   BLogic
-  LogCommons
   CORBACommons
+  Commons
   CorbaTypesIDL
+  LogCommons
 )
 
 target_link_libraries(ChannelUpdateBaseIDL
-  Commons
   BLogic
-  LogCommons
   CORBACommons
-  CorbaTypesIDL
   ChannelCommonsIDL
+  Commons
+  CorbaTypesIDL
+  LogCommons
 )
 
 target_link_libraries(ChannelServerIDL
@@ -31,17 +31,25 @@ target_link_libraries(ChannelServerIDL
   ProcessControlIDL
 )
 
+include(${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake)
+add_grpc_library(ChannelServerProto
+  PROTOS
+    ChannelServer.proto
+  SOURCE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_library(ChannelCommons SHARED
   ChannelUtils.cpp ChannelUpdateStatLogger.cpp TriggerParser.cpp
 )
 
 target_link_libraries(ChannelCommons
+  BLogic
+  ChannelCommonsIDL
+  ChannelServerProto
+  Commons
   Generics
   HTTP
-  Commons
-  BLogic
   LogCommons
-  ChannelCommonsIDL
+  UServerUtils
 )
-
-#install(TARGETS ChannelCommons ChannelServerIDL ChannelUpdateBaseIDL ChannelCommonsIDL  DESTINATION ${INSTALL_DIR})

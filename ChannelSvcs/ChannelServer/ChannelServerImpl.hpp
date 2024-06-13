@@ -37,6 +37,8 @@
 #include "UpdateContainer.hpp"
 #include "DictionaryMatcher.hpp"
 
+#include "ChannelServer_service.cobrazz.pb.hpp"
+
 namespace AdServer
 {
 namespace ChannelSvcs
@@ -48,18 +50,23 @@ namespace ChannelSvcs
   /**
    * Implementation of common part ChannelServer
    */
-  class ChannelServerCustomImpl:
+  class ChannelServerCustomImpl final:
     public virtual Generics::CompositeActiveObject,
     public virtual CORBACommons::ReferenceCounting::ServantImpl
       <POA_AdServer::ChannelSvcs::ChannelServer>
   {
+  public:
+    using MatchRequestPtr = std::unique_ptr<Proto::MatchRequest>;
+    using MatchResponsePtr = std::unique_ptr<Proto::MatchResponse>;
+    using GetCcgTraitsRequestPtr = std::unique_ptr<Proto::GetCcgTraitsRequest>;
+    using GetCcgTraitsResponsePtr = std::unique_ptr<Proto::GetCcgTraitsResponse>;
 
   public:
 
     //
     // IDL:AdServer/ChannelSvcs/ChannelCurrent/check:1.0
     //
-    virtual void check(
+    void check(
       const ::AdServer::ChannelSvcs::ChannelCurrent::CheckQuery& query,
       ::AdServer::ChannelSvcs::ChannelCurrent::CheckData_out data)
       /*throw(AdServer::ChannelSvcs::ImplementationException,
@@ -68,25 +75,29 @@ namespace ChannelSvcs
     //
     // IDL:AdServer/ChannelSvcs/ChannelServer/match:1.0
     //
-    virtual void match(
+    void match(
       const ::AdServer::ChannelSvcs::ChannelServerBase::MatchQuery& query,
-      ::AdServer::ChannelSvcs::ChannelServer::MatchResult_out result)
+      ::AdServer::ChannelSvcs::ChannelServer::MatchResult_out result) override
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
+
+    MatchResponsePtr match(MatchRequestPtr&& request);
 
     //
     // IDL:AdServer/ChannelSvcs/ChannelServer/match:1.0
     //
-    virtual void get_ccg_traits(
+    void get_ccg_traits(
       const ::AdServer::ChannelSvcs::ChannelIdSeq& query,
-      ::AdServer::ChannelSvcs::ChannelServer::TraitsResult_out result)
+      ::AdServer::ChannelSvcs::ChannelServer::TraitsResult_out result) override
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
+
+    GetCcgTraitsResponsePtr get_ccg_traits(GetCcgTraitsRequestPtr&& request);
 
     //
     // IDL:AdServer/ChannelSvcs/ChannelServerControl/set_sources:1.0
     //
-    virtual void set_sources(const ::AdServer::ChannelSvcs::
+    void set_sources(const ::AdServer::ChannelSvcs::
       ChannelServerControl::DBSourceInfo& db_info,
       const ::AdServer::ChannelSvcs::ChunkKeySeq& sources)
       /*throw(AdServer::ChannelSvcs::ImplementationException)*/;
@@ -94,7 +105,7 @@ namespace ChannelSvcs
     //
     // IDL:AdServer/ChannelSvcs/ChannelServerControl/set_proxy_sources:1.0
     //
-    virtual void set_proxy_sources(
+    void set_proxy_sources(
         const ::AdServer::ChannelSvcs::ChannelServerControl::ProxySourceInfo&
           poxy_info,
         const ::AdServer::ChannelSvcs::ChunkKeySeq& sources)
@@ -120,7 +131,7 @@ namespace ChannelSvcs
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
 
-    virtual void update_all_ccg(
+    void update_all_ccg(
       const AdServer::ChannelSvcs::ChannelCurrent::CCGQuery& query,
       AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_out result)
       /*throw(AdServer::ChannelSvcs::ImplementationException,
@@ -133,11 +144,11 @@ namespace ChannelSvcs
       Logging::Logger* logger,
       const ChannelServerConfig* server_config) /*throw(Exception)*/;
 
-    virtual void
-    deactivate_object() /*throw(Exception, eh::Exception)*/;
+    void
+    deactivate_object() override /*throw(Exception, eh::Exception)*/;
 
   protected:
-    virtual ~ChannelServerCustomImpl() noexcept;
+    ~ChannelServerCustomImpl() noexcept override;
   public:
 
     bool ready() noexcept;
@@ -205,6 +216,20 @@ namespace ChannelSvcs
       CORBA::ULong* neg_out_;
     };
 
+    class CCGKeywordProtoPacker final
+    {
+    public:
+      explicit CCGKeywordProtoPacker(
+        google::protobuf::RepeatedPtrField<Proto::CCGKeyword>* ccg_out,
+        google::protobuf::RepeatedField<uint32_t>* neg_out = nullptr);
+
+      void operator() (const CCGKeyword& id);
+
+    private:
+      google::protobuf::RepeatedPtrField<Proto::CCGKeyword>* out_;
+      google::protobuf::RepeatedField<uint32_t>* neg_out_;
+    };
+
     template<class MAPIN, class CORBASEQ>
     class DeletedPacker:
       public std::unary_function<
@@ -231,11 +256,21 @@ namespace ChannelSvcs
       AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom* out)
       noexcept;
 
+    static void add_channels_(
+      unsigned int channel_id,
+      const TriggerMatchItem::value_type& in,
+      google::protobuf::RepeatedPtrField<Proto::ChannelAtom>* out) noexcept;
+
     void fill_result_(
       const TriggerMatchRes& result,
       AdServer::ChannelSvcs::ChannelServer::MatchResult& res,
       bool fill_content)
       noexcept;
+
+    void fill_result_(
+      const TriggerMatchRes& result,
+      AdServer::ChannelSvcs::Proto::MatchResponseInfo& res,
+      bool fill_content);
 
     void unpack_ref_list_(
       const ::AdServer::ChannelSvcs::
