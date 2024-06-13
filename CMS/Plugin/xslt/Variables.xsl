@@ -585,4 +585,7 @@
 <xsl:variable name="def-user-bind-server-rocksdb-number-background-threads" select="10"/>
 <xsl:variable name="def-user-bind-server-rocksdb-expire-time" select="3"/>
 
+<!-- Click frontend params -->
+<xsl:variable name="def-time-duration-client-mark-bad" select="20"/>
+
 </xsl:stylesheet>

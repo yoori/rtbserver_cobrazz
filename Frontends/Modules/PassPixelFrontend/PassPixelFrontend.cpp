@@ -40,6 +40,8 @@ namespace PassbackPixel
    * PassbackPixel::Frontend implementation
    */
   Frontend::Frontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -60,6 +62,8 @@ namespace PassbackPixel
         response_factory,
         frontend_config->get().PassPixelFeConfiguration()->threads(),
         0), // max pending tasks
+      task_processor_(task_processor),
+      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::PASS_PIXEL_FRONTEND)

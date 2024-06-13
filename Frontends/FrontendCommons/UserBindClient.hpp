@@ -21,19 +21,19 @@ namespace FrontendCommons
   public:
     using UserBindControllerGroupSeq = xsd::AdServer::Configuration::
       CommonFeConfigurationType::UserBindControllerGroup_sequence;
-    using GrpcDistributor =
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
-    using GrpcDistributor_var =
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using GrpcDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
+    using GrpcDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
     using ConfigGrpcClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
 
   public:
     explicit UserBindClient(
       const UserBindControllerGroupSeq& user_bind_controller_group,
       const CORBACommons::CorbaClientAdapter* corba_client_adapter,
       Logging::Logger* logger,
-      ManagerCoro* manager_coro,
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       const ConfigGrpcClient& config_grpc_client,
       const std::size_t timeout_grpc_client,
       const bool grpc_enable) noexcept;

@@ -19,6 +19,7 @@
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionImpl.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
+#include <ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp>
 
 #include "ChannelSvcs/ChannelCommons/proto/ChannelServer_client.cobrazz.pb.hpp"
 
@@ -215,6 +216,7 @@ private:
   ManagerCoro_var manager_coro_;
   GrpcClientFactoryPtr grpc_client_factory_;
   MatchClientPtr match_client_;
+  AdServer::ChannelSvcs::GrpcChannelOperationPoolPtr grpc_channel_client_pool_;
   bool use_session_;
   Generics::Time date_;
   std::vector<unsigned long> channels_id_;
@@ -317,7 +319,9 @@ R Application::StatMarker::calc_stat_r(F&& f)
     catch(...)
     {
     }
-    ret = std::make_unique<R>(f());
+
+    ret = std::make_unique<R>(std::forward<F>(f)());
+
     try
     {
       timer.stop();

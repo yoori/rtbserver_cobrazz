@@ -16,6 +16,8 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -52,18 +54,19 @@ namespace Instantiate
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+  private:
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
-    typedef Configuration::FeConfig::CommonFeConfiguration_type
-      CommonFeConfiguration;
-
-    typedef Configuration::FeConfig::AdInstFeConfiguration_type
-      AdInstFeConfiguration;
-
-    typedef FrontendCommons::HttpResponse HttpResponse;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using AdInstFeConfiguration = Configuration::FeConfig::AdInstFeConfiguration_type;
+    using HttpResponse = FrontendCommons::HttpResponse;
 
     Frontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -159,6 +162,9 @@ namespace Instantiate
       /*throw(eh::Exception)*/;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     CommonConfigPtr common_config_;
     ConfigPtr config_;
     //std::string fe_config_path_;

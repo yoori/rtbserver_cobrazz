@@ -20,7 +20,6 @@
 #include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
 #include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
 #include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -55,6 +54,7 @@ private:
   class ResolvePartitionTask;
 
   using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using TaskProcessor = userver::engine::TaskProcessor;
   using ClientContainerPtr = std::shared_ptr<ClientContainer>;
   using FactoryClientContainerPtr = std::unique_ptr<FactoryClientContainer>;
   using PartitionPtr = std::shared_ptr<Partition>;
@@ -65,8 +65,6 @@ private:
 
 public:
   using ChunkId = unsigned int;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
   using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
@@ -87,7 +85,8 @@ public:
 public:
   GrpcUserBindOperationDistributor(
     Logger* logger,
-    ManagerCoro* manager_coro,
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     const ControllerRefList& controller_refs,
     const CORBACommons::CorbaClientAdapter* corba_client_adapter,
     const ConfigPoolClient& config_pool_client,
@@ -181,8 +180,7 @@ private:
         }
 
         chunk_id = partition->chunk_id(id);
-        auto client_container =
-          partition->get_client_container(chunk_id);
+        auto client_container = partition->get_client_container(chunk_id);
         if (!client_container)
         {
           try_to_reresolve_partition(partition_number);
@@ -309,8 +307,6 @@ private:
 
 private:
   const Logger_var logger_;
-
-  const ManagerCoro_var manager_coro_;
 
   Generics::ActiveObjectCallback_var callback_;
 

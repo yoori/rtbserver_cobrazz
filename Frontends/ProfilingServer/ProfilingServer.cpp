@@ -596,11 +596,25 @@ namespace Profiling
         const auto config_grpc_data = Config::create_pool_client_config(
           config_->GrpcClientPool());
 
+        auto number_scheduler_threads = std::thread::hardware_concurrency();
+        if (number_scheduler_threads == 0)
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << "hardware_concurrency is failed";
+          throw Exception(stream);
+        }
+
+        SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+          number_scheduler_threads,
+          logger());
+
         user_bind_client_ = new FrontendCommons::UserBindClient(
           config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          manager_coro_.in(),
+          manager_coro_->get_main_task_processor(),
+          scheduler,
           config_grpc_data.first,
           config_grpc_data.second,
           config_grpc_client.enable());

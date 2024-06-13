@@ -118,6 +118,8 @@ namespace Config
 namespace AdServer
 {
   ClickFrontend::ClickFrontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -138,6 +140,8 @@ namespace AdServer
         response_factory,
         frontend_config->get().ClickFeConfiguration()->threads(),
         0), // max pending tasks
+      task_processor_(task_processor),
+      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::CLICK_FRONTEND)
@@ -286,24 +290,6 @@ namespace AdServer
       {
         parse_config_();
 
-        // Coroutine
-        auto task_processor_container_builder =
-          Config::create_task_processor_container_builder(
-            logger(),
-            common_config_->Coroutine());
-        auto init_func = [] (
-          TaskProcessorContainer& task_processor_container) {
-            return std::make_unique<ComponentsBuilder>();
-        };
-
-        manager_coro_ = ManagerCoro_var(
-          new ManagerCoro(
-            std::move(task_processor_container_builder),
-            std::move(init_func),
-            logger()));
-
-        add_child_object(manager_coro_);
-
         request_info_filler_.reset(
           new ClickFE::RequestInfoFiller(
             logger(),
@@ -326,7 +312,8 @@ namespace AdServer
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            manager_coro_.in(),
+            task_processor_,
+            scheduler_,
             config_grpc_data.first,
             config_grpc_data.second,
             config_grpc_client.enable());
@@ -350,6 +337,37 @@ namespace AdServer
             channel_manager_controller_refs,
             corba_client_adapter_,
             callback()));
+
+        if (common_config_->GrpcClientPool().enable())
+        {
+          using Host = std::string;
+          using Port = std::size_t;
+          using Endpoint = std::pair<Host, Port>;
+          using Endpoints = std::vector<Endpoint>;
+
+          Endpoints endpoints;
+          const auto& endpoints_config = config_->ChannelServerEndpointList();
+          auto it = endpoints_config.Endpoint().begin();
+          auto it_end = endpoints_config.Endpoint().end();
+          for (; it != it_end; ++it)
+          {
+            endpoints.emplace_back(it->host(), it->port());
+          }
+
+          const auto& config_grpc_client = common_config_->GrpcClientPool();
+          const auto config_grpc_data = Config::create_pool_client_config(
+            config_grpc_client);
+
+          grpc_channel_operation_pool_ =
+            std::make_unique<AdServer::ChannelSvcs::GrpcChannelOperationPool>(
+              logger(),
+              task_processor_,
+              scheduler_,
+              endpoints,
+              config_grpc_data.first,
+              config_grpc_data.second,
+              config_->time_duration_client_mark_bad() * 1000);
+        }
 
         template_files_ = new Commons::TextTemplateCache(
           static_cast<unsigned long>(-1),
@@ -938,42 +956,141 @@ namespace AdServer
 
     // do trigger match
     AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
+    std::unique_ptr<AdServer::ChannelSvcs::Proto::MatchResponse> trigger_match_result_proto;
 
-    try
+    std::vector<ChannelMatch> trigger_match_page_channels;
+
+    bool is_grpc_success = false;
+    if (grpc_channel_operation_pool_)
     {
-      AdServer::ChannelSvcs::ChannelServerBase::MatchQuery query;
-      query.non_strict_word_match = false;
-      query.non_strict_url_match = false;
-      query.return_negative = false;
-      query.simplify_page = false;
-      query.statuses[0] = 'A';
-      query.statuses[1] = '\0';
-      query.fill_content = false;
-      std::ostringstream keywords_ostr;
-      keywords_ostr << "poadclick poadclicka" << advertiser_id <<
-        " poadclickc" << campaign_id;
-      for(auto mit = markers.begin(); mit != markers.end(); ++mit)
+      is_grpc_success = true;
+      try
       {
-        std::string base_trigger = std::string("poad") + *mit + "click";
-        keywords_ostr << " " << base_trigger <<
-          " " << base_trigger << "a" << advertiser_id <<
-          " " << base_trigger << "c" << campaign_id;
+        std::ostringstream keywords_ostr;
+        keywords_ostr << "poadclick poadclicka"
+                      << advertiser_id
+                      << " poadclickc"
+                      << campaign_id;
+        for(auto mit = markers.begin(); mit != markers.end(); ++mit)
+        {
+          std::string base_trigger = std::string("poad") + *mit + "click";
+          keywords_ostr << " "
+                        << base_trigger
+                        << " "
+                        << base_trigger
+                        << "a"
+                        << advertiser_id
+                        << " "
+                        << base_trigger
+                        << "c"
+                        << campaign_id;
+        }
+
+        trigger_match_result_proto = grpc_channel_operation_pool_->match(
+          std::string{},
+          std::string{},
+          std::string{},
+          std::string{},
+          std::string{},
+          keywords_ostr.str(),
+          std::string{},
+          std::string{},
+          {'A', '\0'},
+          false,
+          false,
+          false,
+          false,
+          false);
+
+        if (trigger_match_result_proto && trigger_match_result_proto->has_info())
+        {
+          const auto& info_proto = trigger_match_result_proto->info();
+          const auto& matched_channels_proto = info_proto.matched_channels();
+          const auto& page_channels_proto = matched_channels_proto.page_channels();
+          trigger_match_page_channels.reserve(page_channels_proto.size());
+          std::transform(
+            std::begin(page_channels_proto),
+            std::end(page_channels_proto),
+            std::back_inserter(trigger_match_page_channels),
+            [] (const auto& value) {
+              return ChannelMatch(value.id(), value.trigger_channel_id());
+            });
+        }
+        else
+        {
+          is_grpc_success = false;
+        }
       }
-
-      query.pwords << keywords_ostr.str();
-
-      channel_servers_->match(query, trigger_match_result);
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
     }
-    catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
+
+    if (!is_grpc_success)
     {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": caught ChannelServerSessionPool::Exception: " <<
-        ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-117");
+      try
+      {
+        AdServer::ChannelSvcs::ChannelServerBase::MatchQuery query;
+        query.non_strict_word_match = false;
+        query.non_strict_url_match = false;
+        query.return_negative = false;
+        query.simplify_page = false;
+        query.statuses[0] = 'A';
+        query.statuses[1] = '\0';
+        query.fill_content = false;
+        std::ostringstream keywords_ostr;
+        keywords_ostr << "poadclick poadclicka" << advertiser_id <<
+          " poadclickc" << campaign_id;
+        for(auto mit = markers.begin(); mit != markers.end(); ++mit)
+        {
+          std::string base_trigger = std::string("poad") + *mit + "click";
+          keywords_ostr << " " << base_trigger <<
+            " " << base_trigger << "a" << advertiser_id <<
+            " " << base_trigger << "c" << campaign_id;
+        }
+
+        query.pwords << keywords_ostr.str();
+
+        channel_servers_->match(query, trigger_match_result);
+
+        if (trigger_match_result)
+        {
+          const auto& page_channels_corba = trigger_match_result->matched_channels.page_channels;
+          trigger_match_page_channels.reserve(page_channels_corba.length());
+          std::transform(
+            page_channels_corba.get_buffer(),
+            page_channels_corba.get_buffer() + page_channels_corba.length(),
+            std::back_inserter(trigger_match_page_channels),
+            [] (const auto& value) {
+              return ChannelMatch(value.id, value.trigger_channel_id);
+            });
+        }
+      }
+      catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN <<
+          ": caught ChannelServerSessionPool::Exception: " <<
+          ex.what();
+        logger()->log(ostr.str(),
+          Logging::Logger::EMERGENCY,
+          Aspect::CLICK_FRONTEND,
+          "ADS-IMPL-117");
+      }
     }
 
     // resolve actual user id (cookies)
@@ -1049,8 +1166,7 @@ namespace AdServer
     // do history match
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
 
-    if(trigger_match_result.ptr() != 0 &&
-       trigger_match_result->matched_channels.page_channels.length() != 0)
+    if(!trigger_match_page_channels.empty())
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
@@ -1074,12 +1190,9 @@ namespace AdServer
         typedef std::set<ChannelMatch> ChannelMatchSet;
         ChannelMatchSet page_channels;
 
-        std::transform(
-          trigger_match_result->matched_channels.page_channels.get_buffer(),
-          trigger_match_result->matched_channels.page_channels.get_buffer() +
-          trigger_match_result->matched_channels.page_channels.length(),
-          std::inserter(page_channels, page_channels.end()),
-          GetChannelTriggerId());
+        page_channels.insert(
+          std::begin(trigger_match_page_channels),
+          std::end(trigger_match_page_channels));
 
         match_params.page_channel_ids.length(page_channels.size());
         CORBA::ULong res_ch_i = 0;

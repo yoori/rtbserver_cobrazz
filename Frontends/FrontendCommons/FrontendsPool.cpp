@@ -23,12 +23,16 @@ namespace AdServer
   {
     // FrontendsPool
     FrontendsPool::FrontendsPool(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       const char* config_path,
       const ModuleIdArray& modules,
       Logging::Logger* logger,
       StatHolder* stats,
       FrontendCommons::HttpResponseFactory* response_factory)
       : FrontendCommons::FrontendInterface(response_factory),
+        task_processor_(task_processor),
+        scheduler_(scheduler),
         config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
@@ -243,7 +247,6 @@ namespace AdServer
       }
 
       frontends_.clear();
-
       common_module_->shutdown();
     }
 
@@ -255,7 +258,12 @@ namespace AdServer
     { 
       if (cfg.present())
       {
-        frontends_.emplace_back(new Frontend(config_, std::forward<T>(params)...));
+        frontends_.emplace_back(
+          new Frontend(
+            task_processor_,
+            scheduler_,
+            config_,
+            std::forward<T>(params)...));
         frontends_.back()->init();
       }
     }

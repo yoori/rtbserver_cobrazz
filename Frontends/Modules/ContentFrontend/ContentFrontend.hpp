@@ -6,12 +6,13 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
-#include <Frontends/FrontendCommons/HTTPUtils.hpp>
-// #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
+#include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -24,19 +25,19 @@ namespace AdServer
     public ReferenceCounting::AtomicImpl
   {
   public:
-    typedef Configuration::FeConfig::CommonFeConfiguration_type
-      CommonFeConfiguration;
-    typedef Configuration::FeConfig::ContentFeConfiguration_type
-      ContentFeConfiguration;
-
-    typedef ReferenceCounting::SmartPtr<ContentFrontend>
-      ContentFrontend_var;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using ContentFeConfiguration = Configuration::FeConfig::ContentFeConfiguration_type;
+    using ContentFrontend_var = ReferenceCounting::SmartPtr<ContentFrontend>;
 
   public:
     static ContentFrontend_var instance;
 
   public:
     ContentFrontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       FrontendCommons::HttpResponseFactory* response_factory)
@@ -163,6 +164,9 @@ namespace AdServer
       bool& secure) noexcept;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     Configuration_var frontend_config_;
     CommonConfigPtr common_config_;
     ConfigPtr config_;

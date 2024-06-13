@@ -270,6 +270,8 @@ namespace Bidding
   // Frontend implementation
   //
   Frontend::Frontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -285,6 +287,8 @@ namespace Bidding
         "Bidding::Frontend",
         Aspect::BIDDING_FRONTEND,
         0),
+      task_processor_(task_processor),
+      scheduler_(scheduler),
       /*
       FrontendCommons::FrontendTaskPool(
         this->callback(),
@@ -452,24 +456,6 @@ namespace Bidding
           logger());
         add_child_object(user_info_client_);
 
-      // Coroutine
-      auto task_processor_container_builder =
-        Config::create_task_processor_container_builder(
-          logger(),
-          common_config_->Coroutine());
-      auto init_func = [] (
-        TaskProcessorContainer& task_processor_container) {
-          return std::make_unique<ComponentsBuilder>();
-      };
-
-      manager_coro_ = ManagerCoro_var(
-        new ManagerCoro(
-          std::move(task_processor_container_builder),
-          std::move(init_func),
-          logger()));
-
-      add_child_object(manager_coro_);
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           const auto& config_grpc_client = common_config_->GrpcClientPool();
@@ -480,7 +466,8 @@ namespace Bidding
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            manager_coro_.in(),
+            task_processor_,
+            scheduler_,
             config_grpc_data.first,
             config_grpc_data.second,
             config_grpc_client.enable());

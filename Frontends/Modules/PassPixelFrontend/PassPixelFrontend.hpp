@@ -10,6 +10,8 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -37,10 +39,14 @@ namespace PassbackPixel
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     Frontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -104,6 +110,9 @@ namespace PassbackPixel
       noexcept;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     /* configuration */
     //std::string config_file_;
     CommonConfigPtr common_config_;

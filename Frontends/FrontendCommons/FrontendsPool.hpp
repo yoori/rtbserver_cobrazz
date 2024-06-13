@@ -1,14 +1,23 @@
 #ifndef FRONTENDCOMMONS_FRONTENDSPOOL_H
 #define FRONTENDCOMMONS_FRONTENDSPOOL_H
 
+// STD
 #include <vector>
+
+// UNIXCOMMONS
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
 
-#include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/HttpResponse.hpp>
+// USERVER
+#include <userver/engine/task/task_processor.hpp>
+
+// THIS
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
+#include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
+
 
 namespace AdServer
 {
@@ -19,11 +28,14 @@ namespace AdServer
      *
      * @brief HTTP frontends pool.
      */
-    class FrontendsPool :
+    class FrontendsPool final :
       public virtual FrontendCommons::FrontendInterface,
       public virtual ReferenceCounting::AtomicImpl  
     {
     public:
+      using TaskProcessor = userver::engine::TaskProcessor;
+      using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
       enum ModuleId
@@ -54,6 +66,8 @@ namespace AdServer
        * @param config path
        */
       FrontendsPool(
+        TaskProcessor& task_processor,
+        const SchedulerPtr& scheduler,
         const char* config_path,
         const ModuleIdArray& modules,
         Logging::Logger* logger,
@@ -118,6 +132,8 @@ namespace AdServer
         T&&... params);
 
     private:
+      TaskProcessor& task_processor_;
+      SchedulerPtr scheduler_;
       Configuration_var config_;
       ModuleIdArray modules_;
       Logging::Logger_var logger_;

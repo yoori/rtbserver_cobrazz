@@ -162,6 +162,8 @@ namespace Action
   };
 
   Frontend::Frontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -182,6 +184,8 @@ namespace Action
         response_factory,
         frontend_config->get().ActionFeConfiguration()->threads(),
         0), // max pending tasks
+      task_processor_(task_processor),
+      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::ACTION_FRONTEND)
@@ -259,24 +263,6 @@ namespace Action
       {
         parse_config_();
 
-        // Coroutine
-        auto task_processor_container_builder =
-          Config::create_task_processor_container_builder(
-            logger(),
-            common_config_->Coroutine());
-        auto init_func = [] (
-          TaskProcessorContainer& task_processor_container) {
-            return std::make_unique<ComponentsBuilder>();
-        };
-
-        manager_coro_ = ManagerCoro_var(
-          new ManagerCoro(
-            std::move(task_processor_container_builder),
-            std::move(init_func),
-            logger()));
-
-        add_child_object(manager_coro_);
-
         if(config_->PathUriList().present())
         {
           for(xsd::AdServer::Configuration::UriListType::Uri_sequence::const_iterator
@@ -303,7 +289,8 @@ namespace Action
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            manager_coro_.in(),
+            task_processor_,
+            scheduler_,
             config_grpc_data.first,
             config_grpc_data.second,
             config_grpc_client.enable());

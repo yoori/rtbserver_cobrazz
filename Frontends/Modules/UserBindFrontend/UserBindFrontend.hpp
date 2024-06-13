@@ -10,9 +10,10 @@
 #include <Generics/ActiveObject.hpp>
 #include <Generics/FileCache.hpp>
 #include <Generics/Uuid.hpp>
-
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <String/TextTemplate.hpp>
 
@@ -26,11 +27,7 @@
 #include <Frontends/FrontendCommons/UserBindClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
-
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -54,23 +51,20 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);
 
   public:
-    typedef Configuration::FeConfig::CommonFeConfiguration_type
-      CommonFeConfiguration;
-
-    typedef Configuration::FeConfig::UserBindFeConfiguration_type
-      UserBindFeConfiguration;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using UserBindFeConfiguration = Configuration::FeConfig::UserBindFeConfiguration_type;
 
   public:
     UserBindFrontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -248,6 +242,9 @@ namespace AdServer
       const noexcept;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     // configuration
     CommonConfigPtr common_config_;
     ConfigPtr config_;
@@ -261,7 +258,6 @@ namespace AdServer
     SourceMap sources_;
     std::unique_ptr<GeoIPMapping::IPMapCity2> ip_map_;
     std::unique_ptr<UserBind::RequestInfoFiller> request_info_filler_;
-    ManagerCoro_var manager_coro_;
 
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;

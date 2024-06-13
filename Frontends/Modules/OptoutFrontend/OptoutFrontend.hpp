@@ -13,6 +13,8 @@
 #include <String/StringManip.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
 
@@ -47,9 +49,14 @@ namespace AdServer
     DECLARE_EXCEPTION(RequestFailure, Exception);
 
   public:
-    typedef FrontendCommons::HttpResponse HttpResponse;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using HttpResponse = FrontendCommons::HttpResponse;
 
+  public:
     OptoutFrontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -132,6 +139,9 @@ namespace AdServer
       HttpResponse& response) noexcept;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     /* configuration */
     std::string config_file_;
     CommonConfigPtr common_config_;

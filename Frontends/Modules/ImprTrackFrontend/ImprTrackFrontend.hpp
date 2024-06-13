@@ -12,6 +12,8 @@
 #include <Logger/DistributorLogger.hpp>
 #include <Generics/FileCache.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
@@ -33,9 +35,6 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer
@@ -54,14 +53,16 @@ namespace ImprTrack
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+
+  public:
     Frontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -177,6 +178,9 @@ namespace ImprTrack
       const noexcept;
 
   private:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     // configuration
     std::string config_file_;
 
@@ -195,8 +199,6 @@ namespace ImprTrack
 
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
     IPMapPtr ip_map_;
-
-    ManagerCoro_var manager_coro_;
 
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;

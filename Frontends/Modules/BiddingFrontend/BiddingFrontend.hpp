@@ -21,6 +21,8 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/AtomicInt.hpp>
 #include <Commons/Interval.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <userver/engine/task/task_processor.hpp>
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
@@ -31,9 +33,6 @@
 #include <Frontends/FrontendCommons/UserBindClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include "GroupLogger.hpp"
 #include "RequestInfoFiller.hpp"
@@ -66,22 +65,17 @@ namespace Bidding
     friend class GoogleBidRequestTask;
     friend class AppNexusBidRequestTask;
 
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
-
   public:
-    typedef FrontendCommons::HTTPExceptions::Exception Exception;
-
-    typedef Configuration::FeConfig::CommonFeConfiguration_type
-      CommonFeConfiguration;
-
-    typedef Configuration::FeConfig::BidFeConfiguration_type
-      BiddingFeConfiguration;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using BiddingFeConfiguration = Configuration::FeConfig::BidFeConfiguration_type;
 
   public:
     Frontend(
+      TaskProcessor& task_processor,
+      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -378,6 +372,9 @@ namespace Bidding
       bool add_root_native);
     */
   protected:
+    TaskProcessor& task_processor_;
+    const SchedulerPtr scheduler_;
+
     // ADSC-10554
     // Interrupted requests queue
     Generics::TaskExecutor_var passback_task_runner_;
@@ -406,8 +403,6 @@ namespace Bidding
     Generics::TaskRunner_var control_task_runner_;
     PlannerPool_var planner_pool_;
     StatHolder_var stats_;
-
-    ManagerCoro_var manager_coro_;
 
     mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;
     ExtConfig_var ext_config_;

@@ -4,6 +4,10 @@
 // UNIX_COMMONS
 #include <Logger/Logger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
+#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+
+// USERVER
+#include <userver/engine/task/task_processor.hpp>
 
 // THIS
 #include <Frontends/CommonModule/CommonModule.hpp>
@@ -19,14 +23,18 @@ class Frontend final :
   public FrontendCommons::FrontendTaskPool,
   public ReferenceCounting::AtomicImpl
 {
-private:
+public:
   using HttpResponseFactory = FrontendCommons::HttpResponseFactory;
   using HttpResponseFactory_var = FrontendCommons::HttpResponseFactory_var;
+  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using TaskProcessor = userver::engine::TaskProcessor;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
 
 public:
   Frontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logger* logger,
     CommonModule* common_module,
@@ -44,6 +52,10 @@ private:
   void shutdown() noexcept override;
 
 private:
+  TaskProcessor& task_processor_;
+
+  const SchedulerPtr scheduler_;
+
   Logger_var logger_;
 };
 

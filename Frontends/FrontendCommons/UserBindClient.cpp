@@ -9,7 +9,8 @@ namespace FrontendCommons
     const UserBindControllerGroupSeq& user_bind_controller_group,
     const CORBACommons::CorbaClientAdapter* corba_client_adapter,
     Logging::Logger* logger,
-    ManagerCoro* manager_coro,
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     const ConfigGrpcClient& config_grpc_client,
     const std::size_t timeout_grpc_client,
     const bool grpc_enable) noexcept
@@ -45,7 +46,8 @@ namespace FrontendCommons
       grpc_distributor_ = GrpcDistributor_var(
         new GrpcDistributor(
           logger,
-          manager_coro,
+          task_processor,
+          scheduler,
           controller_groups,
           corba_client_adapter,
           config_grpc_client,

@@ -188,6 +188,8 @@ namespace AdServer
    *  AdFrontend implementation
    */
   AdFrontend::AdFrontend(
+    TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -208,6 +210,8 @@ namespace AdServer
         response_factory,
         frontend_config->get().AdFeConfiguration()->threads(),
         0), // max pending tasks
+      task_processor_(task_processor),
+      scheduler_(scheduler),
       fe_config_path_(frontend_config->path()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
@@ -289,24 +293,6 @@ namespace AdServer
       {
         parse_configs_();
 
-        // Coroutine
-        auto task_processor_container_builder =
-          Config::create_task_processor_container_builder(
-            logger(),
-            common_config_->Coroutine());
-        auto init_func = [] (
-          TaskProcessorContainer& task_processor_container) {
-            return std::make_unique<ComponentsBuilder>();
-        };
-
-        manager_coro_ = ManagerCoro_var(
-          new ManagerCoro(
-            std::move(task_processor_container_builder),
-            std::move(init_func),
-            logger()));
-
-        add_child_object(manager_coro_);
-
         /* create list of cookies to remove */
         if(common_config_->OutdatedCookies().present())
         {
@@ -356,7 +342,8 @@ namespace AdServer
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            manager_coro_.in(),
+            task_processor_,
+            scheduler_,
             config_grpc_data.first,
             config_grpc_data.second,
             config_grpc_client.enable());
