@@ -136,7 +136,7 @@ public:
   ~StringDefHashAdapter();
 
   bool operator==(
-    const StringDefHashAdapter& right) const;
+    const StringDefHashAdapter& right) const noexcept;
 
   std::size_t hash() const noexcept;
 
