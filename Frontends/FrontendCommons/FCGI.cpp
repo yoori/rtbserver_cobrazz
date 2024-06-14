@@ -277,7 +277,7 @@ ParseRes HttpRequestFCGI::parse(char* buf, size_t size)
   }
 
   input_stream_.set_buf(body_);
-  for(auto i = m.begin(); i != m.end(); ++i)
+  for(auto i = message.begin(); i != message.end(); ++i)
   {
     const tinyfcgi::header& h = *i;
     if (h.type == FCGI_PARAMS)
