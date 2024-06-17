@@ -198,7 +198,7 @@ UserBindServerApp_::main(int& argc, char** argv)
         server_config.monitor_listener_config = monitor_listener_config;
 
         auto& listener_config = server_config.listener_config;
-        listener_config.unix_socket_path = "/tmp/http_user_bind_server.sock";
+        listener_config.unix_socket_path = "/tmp/http_user_bind_server" + std::to_string(getpid()) + ".sock";
         listener_config.handler_defaults = {};
 
         auto& connection_config = listener_config.connection_config;
@@ -287,10 +287,7 @@ UserBindServerApp_::main(int& argc, char** argv)
 
     // Running orb loop
     corba_server_adapter_->run();
-
     wait();
-
-    logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
   catch (const Exception& e)
   {
@@ -313,6 +310,8 @@ UserBindServerApp_::main(int& argc, char** argv)
       "ADS-IMPL-59") << FUN <<
       ": Got eh::Exception: " << e.what();
   }
+
+  logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
 }
 
 int

@@ -221,7 +221,7 @@ namespace Frontends
         server_config.monitor_listener_config = monitor_listener_config;
 
         auto& listener_config = server_config.listener_config;
-        listener_config.unix_socket_path = "/tmp/http_fcgi.sock";
+        listener_config.unix_socket_path = "/tmp/http_fcgi" + std::to_string(getpid()) + ".sock";
         listener_config.handler_defaults = {};
 
         auto& connection_config = listener_config.connection_config;

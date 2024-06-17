@@ -585,7 +585,7 @@ namespace UserInfoSvcs
   UserBindServerImpl::AddUserIdResponsePtr
   UserBindServerImpl::add_user_id(AddUserIdRequestPtr&& request)
   {
-    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_AddUserIdGrpc)
+    DO_TIME_STATISTIC_USER_INFO(AdServer::UserInfoSvcs::TimeStatisticId::UserBindServer_AddUserIdGrpc);
 
     const auto id_request_grpc = request->id_request_grpc();
     try
