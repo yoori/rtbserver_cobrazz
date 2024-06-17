@@ -52,6 +52,13 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="expression-matcher-mon-port">
+      <xsl:value-of select="$expression-matcher-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($expression-matcher-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$def-expression-matcher-mon-port"/>
+      </xsl:if>
+    </xsl:variable>
+
     <exsl:document href="expressionMatcher.port"
       method="text" omit-xml-declaration="yes"
       >  ['expressionMatcher', <xsl:copy-of select="$expression-matcher-port"/>],</exsl:document>
@@ -392,7 +399,7 @@
 
     <cfg:DailyProcessing processing_time="00:01" thread_pool_size="5"/>
 
-    <cfg:Monitoring port="{$def-expression-matcher-mon-port}"/>
+    <cfg:Monitoring port="{$expression-matcher-mon-port}"/>
 
     <cfg:Coroutine>
       <cfg:CoroPool

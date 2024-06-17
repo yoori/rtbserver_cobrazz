@@ -383,7 +383,7 @@ namespace UserInfoSvcs
       ++temp_it;
     }
 
-    return std::move(operations);
+    return operations;
   }
 
   void

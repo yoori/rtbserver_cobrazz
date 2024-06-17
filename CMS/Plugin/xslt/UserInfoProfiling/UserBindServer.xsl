@@ -56,6 +56,13 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="user-bind-server-mon-port">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$def-user-bind-server-mon-port"/>
+      </xsl:if>
+    </xsl:variable>
+
     <exsl:document href="userBindServer.port"
       method="text" omit-xml-declaration="yes"
       >  ['userBindServer', <xsl:copy-of select="$user-bind-server-port"/>],</exsl:document>
@@ -191,12 +198,11 @@
         sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
     </cfg:Coroutine>
 
-    <cfg:GrpcServer ip="{$grpc-server-ip}">
-      <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
+    <cfg:GrpcServer ip="{$grpc-server-ip}" port="{$user-bind-server-grpc-port}">
       <xsl:call-template name="GrpcServerChannelArgList"/>
     </cfg:GrpcServer>
 
-    <cfg:Monitoring port="{$def-fcgi-userbindserver-mon-port}"/>
+    <cfg:Monitoring port="{$user-bind-server-mon-port}"/>
 
     <cfg:RocksDBConfig>
       <xsl:attribute name="block_cache_size_mb">

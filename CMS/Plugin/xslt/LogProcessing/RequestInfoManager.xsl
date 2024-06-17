@@ -75,6 +75,13 @@
     </xsl:if>
   </xsl:variable>
 
+  <xsl:variable name="request-info-manager-mon-port">
+    <xsl:value-of select="$request-info-manager-config/cfg:networkParams/@monitoring_port"/>
+    <xsl:if test="count($request-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$def-request-info-manager-mon-port"/>
+    </xsl:if>
+  </xsl:variable>
+
   <exsl:document href="requestInfoManager.port"
     method="text" omit-xml-declaration="yes"
     >  ['requestInfoManager', <xsl:copy-of select="$request-info-manager-port"/>],</exsl:document>
@@ -417,7 +424,7 @@
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
     </xsl:call-template>
 
-    <cfg:Monitoring port="{$def-fcgi-requestinfomanager-mon-port}"/>
+    <cfg:Monitoring port="{$request-info-manager-mon-port}"/>
 
     <cfg:Coroutine>
       <cfg:CoroPool

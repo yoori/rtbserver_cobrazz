@@ -339,24 +339,38 @@
 <xsl:variable name="def-range-start" select="10100"/>
 <xsl:variable name="def-user-info-manager-port" select="$def-range-start + 1"/>
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
+<xsl:variable name="def-user-info-manager-grpc-port" select="$def-range-start + 201"/>
+
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
+<xsl:variable name="def-channel-server-grpc-port" select="$def-range-start + 203"/>
+
 <xsl:variable name="def-channel-controller-port" select="$def-range-start + 4"/>
 <xsl:variable name="def-campaign-server-port" select="$def-range-start + 6"/>
 <xsl:variable name="def-campaign-manager-port" select="$def-range-start + 7"/>
 <xsl:variable name="def-conv-server-port" select="$def-range-start + 34"/>
 <xsl:variable name="def-channel-search-service-port" select="$def-range-start + 9"/>
 <xsl:variable name="def-dictionary-provider-port" select="$def-range-start + 10"/>
+
 <xsl:variable name="def-user-bind-server-port" select="$def-range-start + 28"/>
+<xsl:variable name="def-user-bind-server-grpc-port" select="$def-range-start + 228"/>
+<xsl:variable name="def-user-bind-server-mon-port" select="$def-range-start + 328"/>
+
 <xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 29"/>
 <xsl:variable name="def-user-operation-generator-port" select="$def-range-start + 30"/>
 <xsl:variable name="def-billing-server-port" select="$def-range-start + 31"/>
 <xsl:variable name="def-log-generalizer-port" select="$def-range-start + 11"/>
 <!--xsl:variable name="def-log-delivering-port" select="concat($def-range-start, '112')"/-->
 <xsl:variable name="def-sync-logs-port" select="$def-range-start + 12"/>
+
 <xsl:variable name="def-expression-matcher-port" select="$def-range-start + 13"/>
+<xsl:variable name="def-expression-matcher-mon-port" select="$def-range-start + 313"/>
+
 <xsl:variable name="def-sync-logs-server-port" select="$def-range-start + 14"/>
 <xsl:variable name="def-stat-receiver-port" select="$def-range-start +15"/>
+
 <xsl:variable name="def-request-info-manager-port" select="$def-range-start + 16"/>
+<xsl:variable name="def-request-info-manager-mon-port" select="$def-range-start + 316"/>
+
 <!--xsl:variable name="def-local-channel-proxy-port" select="concat($def-range-start, '120')"/-->
 <xsl:variable name="def-stunnel-client-port" select="$def-range-start + 21"/>
 <xsl:variable name="def-uid-generator-adapter-port" select="$def-range-start + 32"/>
@@ -368,11 +382,6 @@
 
 <xsl:variable name="def-stats-collector-port" select="$def-range-start + 18"/>
 <xsl:variable name="def-stats-dumping-period" select="'60'"/>
-
-<!-- default ports for grpc services -->
-<xsl:variable name="def-user-bind-server-grpc-port" select="$def-range-start + 200"/>
-<xsl:variable name="def-channel-server-grpc-port" select="$def-range-start + 208"/>
-<xsl:variable name="def-user-info-manager-grpc-port" select="$def-range-start + 201"/>
 
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="'10156'"/>
@@ -416,33 +425,30 @@
 
 <!-- fcgi ports -->
 <xsl:variable name="def-fcgi-adserver-port" select="$def-range-start + 76"/>
-<xsl:variable name="def-fcgi-adserver-mon-port" select="$def-range-start + 176"/>
+<xsl:variable name="def-fcgi-adserver-mon-port" select="$def-range-start + 376"/>
 
 <xsl:variable name="def-fcgi-rtbserver1-port" select="$def-range-start + 77"/>
-<xsl:variable name="def-fcgi-rtbserver1-mon-port" select="$def-range-start + 177"/>
+<xsl:variable name="def-fcgi-rtbserver1-mon-port" select="$def-range-start + 377"/>
 <xsl:variable name="def-fcgi-rtbserver2-port" select="$def-range-start + 96"/>
-<xsl:variable name="def-fcgi-rtbserver2-mon-port" select="$def-range-start + 196"/>
+<xsl:variable name="def-fcgi-rtbserver2-mon-port" select="$def-range-start + 396"/>
 
 <xsl:variable name="def-fcgi-userbindserver1-port" select="$def-range-start + 78"/>
-<xsl:variable name="def-fcgi-userbindserver1-mon-port" select="$def-range-start + 178"/>
+<xsl:variable name="def-fcgi-userbindserver1-mon-port" select="$def-range-start + 378"/>
 <xsl:variable name="def-fcgi-userbindserver2-port" select="$def-range-start + 94"/>
-<xsl:variable name="def-fcgi-userbindserver2-mon-port" select="$def-range-start + 194"/>
+<xsl:variable name="def-fcgi-userbindserver2-mon-port" select="$def-range-start + 394"/>
 
 <xsl:variable name="def-fcgi-userbindintserver-port" select="$def-range-start + 79"/>
-<xsl:variable name="def-fcgi-userbindintserver-mon-port" select="$def-range-start + 179"/>
+<xsl:variable name="def-fcgi-userbindintserver-mon-port" select="$def-range-start + 379"/>
 <xsl:variable name="def-fcgi-userbindaddserver-port" select="$def-range-start + 93"/>
-<xsl:variable name="def-fcgi-userbindaddserver-mon-port" select="$def-range-start + 193"/>
+<xsl:variable name="def-fcgi-userbindaddserver-mon-port" select="$def-range-start + 393"/>
 <xsl:variable name="def-fcgi-trackserver-port" select="$def-range-start + 95"/>
-<xsl:variable name="def-fcgi-trackserver-mon-port" select="$def-range-start + 195"/>
+<xsl:variable name="def-fcgi-trackserver-mon-port" select="$def-range-start + 395"/>
 
 <xsl:variable name="def-fcgi-userinfomanager-mon-port" select="$def-range-start + 196"/>
-<xsl:variable name="def-fcgi-userbindserver-mon-port" select="$def-range-start + 197"/>
-<xsl:variable name="def-fcgi-requestinfomanager-mon-port" select="$def-range-start + 198"/>
 
 <!-- http ports -->
 <xsl:variable name="def-http-adserver-port" select="$def-range-start + 99"/>
 <xsl:variable name="def-http-adserver-mon-port" select="$def-range-start + 199"/>
-<xsl:variable name="def-expression-matcher-mon-port" select="$def-range-start + 201"/>
 
 <xsl:variable name="def-storage-rw-buffer-size" select="10485760"/>
 <xsl:variable name="def-storage-rwlevel-max-size" select="104857600"/>

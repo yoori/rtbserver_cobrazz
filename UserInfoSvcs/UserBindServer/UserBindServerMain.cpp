@@ -260,15 +260,15 @@ UserBindServerApp_::main(int& argc, char** argv)
           std::move(grpc_server_builder));
 
         return components_builder;
-     };
+      };
 
-     ManagerCoro_var manager_coro(
-       new ManagerCoro(
-         std::move(task_processor_container_builder),
-         std::move(init_func),
-         logger()));
+    ManagerCoro_var manager_coro(
+      new ManagerCoro(
+        std::move(task_processor_container_builder),
+        std::move(init_func),
+        logger()));
 
-     add_child_object(manager_coro);
+    add_child_object(manager_coro);
 
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);

@@ -310,7 +310,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 13 }"/>
+            <networkParams port="{ $PORT_BASE + 13 }" monitoring_port="{ $PORT_BASE + 313 }"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams period="10"/>
             <statLogging file_check_period="10" flush_period="10" activity_flush_period="10" inventory_ecpm_flush_period="10"/>
@@ -336,7 +336,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 20 }"/>
+            <networkParams port="{ $PORT_BASE + 20 }" monitoring_port="{ $PORT_BASE + 320 }"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <statLogging file_check_period="10" flush_period="30"/>
           </requestInfoManager>
@@ -406,7 +406,8 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <userInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 1 }"/>
+            <networkParams port="{ $PORT_BASE + 1 }"
+              grpc_port="{$PORT_BASE + 201}" monitoring_port="{$PORT_BASE + 301}"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams update_period="10"/>
             <profilesCleanupParams life_time="3600" clean_time="00:01"/>
@@ -434,7 +435,8 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <channelServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 3 }"/>
+            <networkParams port="{ $PORT_BASE + 3 }"
+              grpc_port="{$PORT_BASE + 203}"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams period="30"/>
           </channelServer>
@@ -471,7 +473,8 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <userBindServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 28 }"/>
+            <networkParams port="{$PORT_BASE + 28}"
+              grpc_port="{$PORT_BASE + 228}" monitoring_port="{$PORT_BASE + 328}"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </userBindServer>
         </configuration>
@@ -495,6 +498,15 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <adHttpNetworkParams/>
+            <adFCGINetworkParams port="{ $PORT_BASE + 76 }" monitoring_port="{ $PORT_BASE + 376 }"/>
+            <rtbFCGI1NetworkParams port="{ $PORT_BASE + 77 }" monitoring_port="{ $PORT_BASE + 377 }"/>
+            <rtbFCGI2NetworkParams port="{ $PORT_BASE + 96 }" monitoring_port="{ $PORT_BASE + 396 }"/>
+            <trackFCGINetworkParams port="{ $PORT_BASE + 95 }" monitoring_port="{ $PORT_BASE + 395 }"/>
+            <userBindFCGI1NetworkParams port="{ $PORT_BASE + 78 }" monitoring_port="{ $PORT_BASE + 378 }"/>
+            <userBindFCGI2NetworkParams port="{ $PORT_BASE + 94 }" monitoring_port="{ $PORT_BASE + 394 }"/>
+            <userBindIntFCGINetworkParams port="{ $PORT_BASE + 79 }" monitoring_port="{ $PORT_BASE + 379 }"/>
+            <userBindAddFCGINetworkParams port="{ $PORT_BASE + 93 }" monitoring_port="{ $PORT_BASE + 393 }"/>
             <webServerParams max_clients="1000"/>
             <debugInfo use_acl="false" show_history_profile="true"/>
             <requestModule>
@@ -518,7 +530,6 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
           </frontend>
         </configuration>
       </service>
-
 
       <service
         descriptor="AdCluster/FrontendSubCluster/BillingServer"

@@ -89,13 +89,19 @@
     </xsl:call-template>
 
     <xsl:variable name="fcgi-userbindaddserver-mon-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:userBindAddFCGINetworkParams/@mon_port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:userBindAddFCGINetworkParams/@mon_port) = 0">
+      <xsl:value-of select="$fcgi-adserver-config/cfg:userBindAddFCGINetworkParams/@monitoring_port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:userBindAddFCGINetworkParams/@monitoring_port) = 0">
         <xsl:value-of select="$def-fcgi-userbindaddserver-mon-port"/>
       </xsl:if>
     </xsl:variable>
 
     <cfg:Monitoring port="{$fcgi-userbindaddserver-mon-port}"/>
+
+    <cfg:Coroutine>
+      <cfg:CoroPool/>
+      <cfg:EventThreadPool/>
+      <cfg:MainTaskProcessor/>
+    </cfg:Coroutine>
 
     <cfg:Module name="userbind"/>
   </cfg:FCGIServerConfig>

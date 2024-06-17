@@ -131,6 +131,13 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="user-info-manager-mon-port">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@monitoring_port"/>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
+        <xsl:value-of select="$def-user-info-manager-mon-port"/>
+      </xsl:if>
+    </xsl:variable>
+
     <exsl:document href="userInfoManager.port"
       method="text" omit-xml-declaration="yes"
       >  ['userInfoManager', <xsl:copy-of select="$user-info-manager-port"/>],</exsl:document>
@@ -426,7 +433,7 @@
     <cfg:ReadWriteStats>
     </cfg:ReadWriteStats>
 
-    <cfg:Monitoring port="{$def-fcgi-userinfomanager-mon-port}"/>
+    <cfg:Monitoring port="{$user-info-manager-mon-port}"/>
 
     <cfg:Coroutine>
       <cfg:CoroPool
@@ -448,8 +455,7 @@
         sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
     </cfg:Coroutine>
 
-    <cfg:GrpcServer ip="{$grpc-server-ip}">
-      <xsl:attribute name="port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>
+    <cfg:GrpcServer ip="{$grpc-server-ip}" port="{$user-info-manager-grpc-port}">
       <xsl:call-template name="GrpcServerChannelArgList"/>
     </cfg:GrpcServer>
 
