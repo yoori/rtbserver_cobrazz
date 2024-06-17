@@ -64,12 +64,79 @@ unpack_user_id(const std::string& user_id)
   }
 }
 
-template<typename DecimalType>
-std::string pack_decimal(const DecimalType& dec)
+inline
+AdServer::Commons::RequestId
+unpack_request_id(const std::string& request_id)
+{
+  return unpack_user_id(request_id);
+}
+
+template<class RepeatedType, class MemPointerFunction, class ...MemPointersFunction>
+inline void print_repeated_fields(
+  std::ostream& out,
+  const char* delim,
+  const char* field_delim,
+  const RepeatedType& repeated_value,
+  MemPointerFunction pointer,
+  MemPointersFunction ...pointers)
+{
+  static_assert(
+    (std::is_member_function_pointer_v<MemPointerFunction>),
+    "Pointer must be pointer to member function");
+
+  if constexpr (sizeof...(pointers) >= 1)
+  {
+    static_assert(
+      (std::is_member_function_pointer_v<MemPointersFunction> && ...),
+      "Pointer must be pointer to member function");
+  }
+
+  const int size = repeated_value.size();
+  for (int i = 0; i < size; ++i)
+  {
+    if (i != 0)
+    {
+      out << delim;
+    }
+
+    out << (repeated_value[i].*pointer)();
+    ((out << field_delim << (repeated_value[i].*pointers)()), ...);
+  }
+}
+
+template<class RepeatedType>
+inline void print_repeated(
+  std::ostream& out,
+  const char* delim,
+  const RepeatedType& repeated_value)
+{
+  const int size = repeated_value.size();
+  for (int i = 0; i < size; ++i)
+  {
+    if (i != 0)
+    {
+      out << delim;
+    }
+
+    out << repeated_value[i];
+  }
+}
+
+template<class DecimalType>
+inline std::string pack_decimal(const DecimalType& data)
 {
   std::string result;
   result.resize(DecimalType::PACK_SIZE);
-  dec.pack(result.data());
+  data.pack(result.data());
+  return result;
+}
+
+template<class DecimalType>
+inline DecimalType unpack_decimal(const std::string& data)
+{
+  DecimalType result;
+  assert(DecimalType::PACK_SIZE == data.size());
+  result.unpack(data.data());
   return result;
 }
 

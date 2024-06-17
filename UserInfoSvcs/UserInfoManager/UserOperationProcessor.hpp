@@ -78,7 +78,7 @@ namespace UserInfoSvcs
         bool provide_persistent_channels_val = false,
         bool change_last_request_val = true,
         bool household_val = false,
-        const CoordData* coord_data_val = 0) noexcept
+        const CoordData* coord_data_val = nullptr) noexcept
         : ProfileMatchParams(
             cohort,
             cohort2,

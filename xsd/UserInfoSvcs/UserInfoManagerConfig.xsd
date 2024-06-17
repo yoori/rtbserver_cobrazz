@@ -166,7 +166,24 @@
           <xsd:documentation>Collect disk read/write statistics</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+
       <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
+
+      <xsd:element name="Coroutine" type="CoroutineType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configure coroutine
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
+      <xsd:element name="GrpcServer" type="GrpcServerType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Configure grpc server
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
 
     </xsd:sequence>
 

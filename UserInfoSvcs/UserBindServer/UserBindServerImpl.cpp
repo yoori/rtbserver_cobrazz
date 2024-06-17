@@ -940,7 +940,7 @@ namespace UserInfoSvcs
       auto* response_info = response->mutable_info();
       auto* chunks = response_info->mutable_chunks();
 
-      for (const auto &chunk: chunks_)
+      for (const auto& chunk: chunks_)
       {
         chunks->Add(chunk.first);
       }
@@ -948,22 +948,6 @@ namespace UserInfoSvcs
         user_bind_server_config_.Storage().common_chunks_number();
       response_info->set_chunks_number(chunks_number);
 
-      return response;
-    }
-    catch (const NotReady& exc)
-    {
-      auto response = create_grpc_error_response<GetSourceResponse>(
-        Error_Type::Error_Type_NotReady,
-        exc.what(),
-        id_request_grpc);
-      return response;
-    }
-    catch(const UserBindProcessor::ChunkNotFound& exc)
-    {
-      auto response = create_grpc_error_response<GetSourceResponse>(
-        Error_Type::Error_Type_ChunkNotFound,
-        exc.what(),
-        id_request_grpc);
       return response;
     }
     catch (const eh::Exception& exc)

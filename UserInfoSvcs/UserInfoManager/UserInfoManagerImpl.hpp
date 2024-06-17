@@ -38,6 +38,8 @@
 #include "UserOperationLoader.hpp"
 #include "UserOperationSaver.hpp"
 
+#include "UserInfoManager_service.cobrazz.pb.hpp"
+
 namespace AdServer
 {
   namespace UserInfoSvcs
@@ -53,12 +55,35 @@ namespace AdServer
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-      typedef xsd::AdServer::Configuration::UserInfoManagerConfigType
-        UserInfoManagerConfig;
+      using UserInfoManagerConfig =
+        xsd::AdServer::Configuration::UserInfoManagerConfigType;
+      using ChunkIdList = std::list<unsigned long>;
+      using ColoUserIdVector = std::vector<ColoUserIds>;
 
-      typedef std::list<unsigned long> ChunkIdList;
-
-      typedef std::vector<ColoUserIds> ColoUserIdVector; // TO RECHECK !!!
+      using GetMasterStampRequestPtr = std::unique_ptr<Proto::GetMasterStampRequest>;
+      using GetMasterStampResponsePtr = std::unique_ptr<Proto::GetMasterStampResponse>;
+      using GetUserProfileRequestPtr = std::unique_ptr<Proto::GetUserProfileRequest>;
+      using GetUserProfileResponsePtr = std::unique_ptr<Proto::GetUserProfileResponse>;
+      using MatchRequestPtr = std::unique_ptr<Proto::MatchRequest>;
+      using MatchResponsePtr = std::unique_ptr<Proto::MatchResponse>;
+      using UpdateUserFreqCapsRequestPtr = std::unique_ptr<Proto::UpdateUserFreqCapsRequest>;
+      using UpdateUserFreqCapsResponsePtr = std::unique_ptr<Proto::UpdateUserFreqCapsResponse>;
+      using ConfirmUserFreqCapsRequestPtr = std::unique_ptr<Proto::ConfirmUserFreqCapsRequest>;
+      using ConfirmUserFreqCapsResponsePtr = std::unique_ptr<Proto::ConfirmUserFreqCapsResponse>;
+      using FraudUserRequestPtr = std::unique_ptr<Proto::FraudUserRequest>;
+      using FraudUserResponsePtr = std::unique_ptr<Proto::FraudUserResponse>;
+      using RemoveUserProfileRequestPtr = std::unique_ptr<Proto::RemoveUserProfileRequest>;
+      using RemoveUserProfileResponsePtr = std::unique_ptr<Proto::RemoveUserProfileResponse>;
+      using MergeRequestPtr = std::unique_ptr<Proto::MergeRequest>;
+      using MergeResponsePtr = std::unique_ptr<Proto::MergeResponse>;
+      using ConsiderPublishersOptinRequestPtr = std::unique_ptr<Proto::ConsiderPublishersOptinRequest>;
+      using ConsiderPublishersOptinResponsePtr = std::unique_ptr<Proto::ConsiderPublishersOptinResponse>;
+      using UimReadyRequestPtr = std::unique_ptr<Proto::UimReadyRequest>;
+      using UimReadyResponsePtr = std::unique_ptr<Proto::UimReadyResponse>;
+      using GetProgressRequestPtr = std::unique_ptr<Proto::GetProgressRequest>;
+      using GetProgressResponsePtr = std::unique_ptr<Proto::GetProgressResponse>;
+      using ClearExpiredRequestPtr = std::unique_ptr<Proto::ClearExpiredRequest>;
+      using ClearExpiredResponsePtr = std::unique_ptr<Proto::ClearExpiredResponse>;
 
     public:
       UserInfoManagerImpl(
@@ -73,49 +98,69 @@ namespace AdServer
         /*throw(Generics::ActiveObject::Exception, eh::Exception)*/;
 
       // UserInfoMatcher interface
-      virtual void get_master_stamp(
-        CORBACommons::TimestampInfo_out master_stamp)
+      void get_master_stamp(
+        CORBACommons::TimestampInfo_out master_stamp) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException)*/;
+
+      GetMasterStampResponsePtr
+      get_master_stamp(GetMasterStampRequestPtr&& request);
 
       virtual CORBA::Boolean
       uim_ready() noexcept;
 
-      char* get_progress() noexcept;
+      UimReadyResponsePtr
+      uim_ready(UimReadyRequestPtr&& request);
 
-      virtual CORBA::Boolean merge(
+      char* get_progress() noexcept override;
+
+      GetProgressResponsePtr
+      get_progress(GetProgressRequestPtr&& request);
+
+      CORBA::Boolean merge(
         const AdServer::UserInfoSvcs::UserInfo& user_info,
         const AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams& match_params,
         const AdServer::UserInfoSvcs::UserProfiles& merge_user_profile,
         CORBA::Boolean_out merge_success,
-        CORBACommons::TimestampInfo_out last_request)
+        CORBACommons::TimestampInfo_out last_request) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
-      virtual CORBA::Boolean fraud_user(
+      MergeResponsePtr merge(MergeRequestPtr&& request);
+
+      CORBA::Boolean fraud_user(
         const CORBACommons::UserIdInfo& user_id,
-        const CORBACommons::TimestampInfo& time)
+        const CORBACommons::TimestampInfo& time) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
-      
-      virtual CORBA::Boolean match(
+
+      FraudUserResponsePtr
+      fraud_user(FraudUserRequestPtr&& request);
+
+      CORBA::Boolean match(
         const AdServer::UserInfoSvcs::UserInfo& user_info,
         const AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams& match_params,
-        AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out match_result)
+        AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out match_result) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
-      virtual CORBA::Boolean get_user_profile(
+      MatchResponsePtr
+      match(MatchRequestPtr&& request);
+
+      CORBA::Boolean get_user_profile(
         const CORBACommons::UserIdInfo& user_id,
         CORBA::Boolean temporary,
         const AdServer::UserInfoSvcs::ProfilesRequestInfo& profile_request,
-        AdServer::UserInfoSvcs::UserProfiles_out user_profile)
+        AdServer::UserInfoSvcs::UserProfiles_out user_profile) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
+
+      GetUserProfileResponsePtr
+      get_user_profile(GetUserProfileRequestPtr&& request);
 
       virtual CORBA::Boolean remove_user_profile(
         const CORBACommons::UserIdInfo& user_info)
@@ -123,8 +168,10 @@ namespace AdServer
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
-      virtual void
-      update_user_freq_caps(
+      RemoveUserProfileResponsePtr remove_user_profile(
+        RemoveUserProfileRequestPtr&& request);
+
+      void update_user_freq_caps(
         const CORBACommons::UserIdInfo& user_id,
         const CORBACommons::TimestampInfo& time,
         const CORBACommons::RequestIdInfo& request_id,
@@ -133,34 +180,45 @@ namespace AdServer
         const FreqCapIdSeq& virtual_freq_caps,
         const AdServer::UserInfoSvcs::UserInfoManager::SeqOrderSeq& seq_orders,
         const CampaignIdSeq& campaign_ids_seq,
-        const CampaignIdSeq& uc_campaign_ids_seq)
+        const CampaignIdSeq& uc_campaign_ids_seq) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
-      virtual void confirm_user_freq_caps(
+      UpdateUserFreqCapsResponsePtr
+      update_user_freq_caps(UpdateUserFreqCapsRequestPtr&& request);
+
+      void confirm_user_freq_caps(
         const CORBACommons::UserIdInfo& user_id,
         const CORBACommons::TimestampInfo& time,
         const CORBACommons::RequestIdInfo& request_id,
-        const CORBACommons::IdSeq& exclude_pubpixel_accounts)
+        const CORBACommons::IdSeq& exclude_pubpixel_accounts) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
+      ConfirmUserFreqCapsResponsePtr
+      confirm_user_freq_caps(ConfirmUserFreqCapsRequestPtr&& request);
       
-      virtual void consider_publishers_optin(
+      void consider_publishers_optin(
         const CORBACommons::UserIdInfo& user_id_info,
         const CORBACommons::IdSeq& exclude_pubpixel_accounts,
-        const CORBACommons::TimestampInfo& now)
+        const CORBACommons::TimestampInfo& now) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
               AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
               AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
+      ConsiderPublishersOptinResponsePtr
+      consider_publishers_optin(ConsiderPublishersOptinRequestPtr&& request);
+
       void clear_expired(
         CORBA::Boolean synch,
         const CORBACommons::TimestampInfo& cleanup_time,
-        CORBA::Long portion)
+        CORBA::Long portion) override
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::ImplementationException)*/;
+
+      ClearExpiredResponsePtr
+      clear_expired(ClearExpiredRequestPtr&& request);
 
       UserStat get_stats()
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,

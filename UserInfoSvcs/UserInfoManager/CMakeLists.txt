@@ -16,12 +16,20 @@ add_library(UserInfoContainer SHARED
 )
 
 add_dependencies(UserInfoContainer UserChannelBaseProfilePST )
+
+include(${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake)
+add_grpc_library(UserInfoManagerProto
+  PROTOS
+    UserInfoManager.proto
+  SOURCE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 target_link_libraries(UserInfoContainer
   Allocator
   ChannelMatcher
   Commons
   Generics
-  LogCommons
   LogCommons
   PlainStorage2
   PlainStorage3
@@ -35,7 +43,7 @@ target_link_libraries(UserInfoContainer
 )
 
 add_executable(UserInfoManager
-UserInfoManagerMain.cpp 
+  UserInfoManagerMain.cpp
   FileRWStats.cpp 
   UserInfoManagerImpl.cpp 
   UserInfoManagerControlImpl.cpp 
@@ -50,7 +58,6 @@ target_link_libraries(UserInfoManager
   CampaignServerIDL
   Commons
   LogCommons
-  LogCommons
   PlainStorage2
   PrivacyFilter
   ProcessControlVars
@@ -61,6 +68,8 @@ target_link_libraries(UserInfoManager
   UserInfoManagerConfigXSD
   UserInfoManagerControlIDL
   UserInfoManagerIDL
+  UserInfoManagerProto
   UserInfoStatistics
   UserOperationProfilesPST
+  UServerUtils
 )

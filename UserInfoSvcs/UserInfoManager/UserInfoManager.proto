@@ -1,0 +1,378 @@
+syntax = "proto3";
+
+package AdServer.UserInfoSvcs.Proto;
+
+option optimize_for = SPEED;
+
+message Error
+{
+  enum Type
+  {
+    NotReady = 0;
+    ChunkNotFound = 1;
+    Implementation = 2;
+  }
+
+  Type type = 1;
+  string description = 2;
+}
+
+message UserProfiles
+{
+  bytes base_user_profile = 1;
+  bytes add_user_profile = 2;
+  bytes history_user_profile = 3;
+  bytes freq_cap = 4;
+  bytes pref_profile = 5;
+}
+
+message UserInfo
+{
+  bytes user_id = 1;
+  bytes huser_id = 2;
+  uint32 time = 3;
+  int32 last_colo_id = 4;
+  int32 current_colo_id = 5;
+  int32 request_colo_id = 6;
+  bool temporary = 7;
+}
+
+message GetMasterStampRequest
+{
+  uint32 id_request_grpc = 1;
+}
+
+message GetMasterStampResponseInfo
+{
+  bytes master_stamp = 1;
+}
+
+message GetMasterStampResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetMasterStampResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ProfilesRequestInfo
+{
+  bool base_profile = 1;
+  bool add_profile = 2;
+  bool history_profile = 3;
+  bool freq_cap_profile = 4;
+  bool pref_profile = 5;
+}
+
+message GetUserProfileRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+  bool temporary = 3;
+  ProfilesRequestInfo profile_request = 4;
+}
+
+message GetUserProfileResponseInfo
+{
+  bool return_value = 1;
+  UserProfiles user_profile = 2;
+}
+
+message GetUserProfileResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetUserProfileResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ChannelTriggerMatch
+{
+  uint32 channel_id = 1;
+  uint32 channel_trigger_id = 2;
+}
+
+message MatchParams
+{
+  repeated uint32 persistent_channel_ids = 1;
+  repeated ChannelTriggerMatch search_channel_ids = 2;
+  repeated ChannelTriggerMatch page_channel_ids = 3;
+  repeated ChannelTriggerMatch url_channel_ids = 4;
+  repeated ChannelTriggerMatch url_keyword_channel_ids = 5;
+  bytes publishers_optin_timeout = 6;
+  bool use_empty_profile = 7;
+  bool silent_match = 8;
+  bool no_match = 9;
+  bool no_result = 10;
+  bool ret_freq_caps = 11;
+  bool provide_channel_count = 12;
+  bool provide_persistent_channels = 13;
+  bool change_last_request = 14;
+  string cohort = 15;
+  string cohort2 = 16;
+  bool filter_contextual_triggers = 17;
+  repeated GeoData geo_data_seq = 18;
+}
+
+message MatchRequest
+{
+  uint32 id_request_grpc = 1;
+  UserInfo user_info = 2;
+  MatchParams match_params = 3;
+}
+
+message ChannelWeight
+{
+  uint32 channel_id = 1;
+  uint32 weight = 2;
+}
+
+message SeqOrderInfo
+{
+  uint32 ccg_id = 1;
+  uint32 set_id = 2;
+  uint32 imps = 3;
+}
+
+message CampaignFreq
+{
+  uint32 campaign_id = 1;
+  uint32 imps = 2;
+}
+
+message GeoData
+{
+  bytes latitude = 1;
+  bytes longitude = 2;
+  bytes accuracy = 3;
+}
+
+message MatchResult
+{
+  bool times_inited = 1;
+  bytes last_request_time = 2;
+  bytes create_time = 3;
+  bytes session_start = 4;
+  int32 colo_id = 5;
+  repeated ChannelWeight channels = 6;
+  repeated ChannelWeight hid_channels = 7;
+  repeated uint32 full_freq_caps = 8;
+  repeated uint32 full_virtual_freq_caps = 9;
+  repeated SeqOrderInfo seq_orders = 10;
+  repeated CampaignFreq campaign_freqs = 11;
+  bool fraud_request = 12;
+  bytes process_time = 13;
+  int32 adv_channel_count = 14;
+  int32 discover_channel_count = 15;
+  string cohort = 16;
+  string cohort2 = 17;
+  repeated uint32 exclude_pubpixel_accounts = 18;
+  repeated GeoData geo_data_seq = 19;
+}
+
+message MatchResponseInfo
+{
+  bool return_value = 1;
+  MatchResult match_result = 2;
+}
+
+message MatchResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    MatchResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message UpdateUserFreqCapsRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+  bytes time = 3;
+  bytes request_id = 4;
+  repeated uint32 freq_caps = 5;
+  repeated uint32 uc_freq_caps = 6;
+  repeated uint32 virtual_freq_caps = 7;
+  repeated SeqOrderInfo seq_orders = 8;
+  repeated uint32 campaign_ids = 9;
+  repeated uint32 uc_campaign_ids = 10;
+}
+
+message UpdateUserFreqCapsResponse
+{
+  uint32 id_request_grpc = 1;
+  optional Error error = 2;
+}
+
+message ConfirmUserFreqCapsRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+  bytes time = 3;
+  bytes request_id = 4;
+  repeated uint32 exclude_pubpixel_accounts = 5;
+}
+
+message ConfirmUserFreqCapsResponse
+{
+  uint32 id_request_grpc = 1;
+  optional Error error = 2;
+}
+
+message FraudUserRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+  bytes time = 3;
+}
+
+message FraudUserResponseInfo
+{
+  bool return_value = 1;
+}
+
+message FraudUserResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    FraudUserResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message RemoveUserProfileRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+}
+
+message RemoveUserProfileResponseInfo
+{
+  bool return_value = 1;
+}
+
+message RemoveUserProfileResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    RemoveUserProfileResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message MergeRequest
+{
+  uint32 id_request_grpc = 1;
+  UserInfo user_info = 2;
+  MatchParams match_params = 3;
+  UserProfiles merge_user_profile = 4;
+}
+
+message MergeResponseInfo
+{
+  bool return_value = 1;
+  bool merge_success = 2;
+  bytes last_request = 3;
+}
+
+message MergeResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    MergeResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ConsiderPublishersOptinRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+  repeated uint32 exclude_pubpixel_accounts = 3;
+  bytes now = 4;
+}
+
+message ConsiderPublishersOptinResponse
+{
+  uint32 id_request_grpc = 1;
+  optional Error error = 2;
+}
+
+message UimReadyRequest
+{
+  uint32 id_request_grpc = 1;
+}
+
+message UimReadyResponseInfo
+{
+  bool return_value = 1;
+}
+
+message UimReadyResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    UimReadyResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message GetProgressRequest
+{
+  uint32 id_request_grpc = 1;
+}
+
+message GetProgressResponseInfo
+{
+  string return_value = 1;
+}
+
+message GetProgressResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetProgressResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ClearExpiredRequest
+{
+  uint32 id_request_grpc = 1;
+  bool sync = 2;
+  bytes cleanup_time = 3;
+  int32 portion = 4;
+}
+
+message ClearExpiredResponse
+{
+  uint32 id_request_grpc = 1;
+  optional Error error = 2;
+}
+
+service UserInfoManagerService
+{
+  rpc get_master_stamp(stream GetMasterStampRequest) returns (stream GetMasterStampResponse) {}
+  rpc get_user_profile(stream GetUserProfileRequest) returns (stream GetUserProfileResponse) {}
+  rpc match(stream MatchRequest) returns (stream MatchResponse) {}
+  rpc update_user_freq_caps(stream UpdateUserFreqCapsRequest) returns (stream UpdateUserFreqCapsResponse) {}
+  rpc confirm_user_freq_caps(stream ConfirmUserFreqCapsRequest) returns (stream ConfirmUserFreqCapsResponse) {}
+  rpc fraud_user(stream FraudUserRequest) returns (stream FraudUserResponse) {}
+  rpc remove_user_profile(stream RemoveUserProfileRequest) returns (stream RemoveUserProfileResponse) {}
+  rpc merge(stream MergeRequest) returns (stream MergeResponse) {}
+  rpc consider_publishers_optin(stream ConsiderPublishersOptinRequest) returns (stream ConsiderPublishersOptinResponse) {}
+  rpc uim_ready(stream UimReadyRequest) returns (stream UimReadyResponse) {}
+  rpc get_progress(stream GetProgressRequest) returns (stream GetProgressResponse) {}
+  rpc clear_expired(stream ClearExpiredRequest) returns (stream ClearExpiredResponse) {}
+}
