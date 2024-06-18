@@ -340,6 +340,7 @@
 <xsl:variable name="def-user-info-manager-port" select="$def-range-start + 1"/>
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
 <xsl:variable name="def-user-info-manager-grpc-port" select="$def-range-start + 201"/>
+<xsl:variable name="def-campaign-manager-grpc-port" select="$def-range-start + 202"/>
 
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
 <xsl:variable name="def-channel-server-grpc-port" select="$def-range-start + 203"/>

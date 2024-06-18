@@ -4,19 +4,27 @@ add_idl(CampaignManagerIDL CampaignManager.idl ${IDL_DIRECTORY}/CampaignSvcs/Cam
 
 target_link_libraries(CampaignManagerIDL CorbaTypesIDL CampaignFreqIDL CampaignCommonsIDL)
 
+include(${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake)
+add_grpc_library(CampaignManagerProto
+  PROTOS
+    CampaignManager.proto
+  SOURCE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_library(BidRateProvider SHARED
   BidCostProvider.cpp
 )
 
 target_link_libraries(BidRateProvider
-  Generics
   CORBACommons
-  CorbaTypesIDL
   CampaignManagerIDL
-  ProcessControlIDL
-  pthread
-  pcre
+  CorbaTypesIDL
+  Generics
   HTTP
+  ProcessControlIDL
+  pcre
+  pthread
 )
 
 add_definitions(-D_REENTRANT -D_USE_OCCI  -DXSD_CXX11)
@@ -28,13 +36,13 @@ add_library(CTRProvider SHARED
 link_directories(/opt/foros/vanga/lib)
 
 target_link_libraries(CTRProvider
+  /opt/foros/vanga/lib/libVangaDTree.so
+  CampaignConfig
+  Gason
   Generics
   PlainStorage3
-  Gason
-  CampaignConfig
   pcre
   xgboost
-  /opt/foros/vanga/lib/libVangaDTree.so
 )
 
 add_library(CampaignConfig SHARED
@@ -43,12 +51,12 @@ add_library(CampaignConfig SHARED
 )
 
 target_link_libraries(CampaignConfig
+  BillingServerIDL
+  CampaignManagerIDL
+  ExpressionChannel
   Generics
   HTTP
   XslTransformer
-  ExpressionChannel
-  CampaignManagerIDL
-  BillingServerIDL
 )
 
 add_library(CampaignConfigSource 
@@ -56,12 +64,12 @@ add_library(CampaignConfigSource
 )
 
 target_link_libraries(CampaignConfigSource
+  CampaignConfig
+  CampaignIndex
+  CampaignManagerIDL
+  DomainParser
   Generics
   HTTP
-  CampaignConfig
-  CampaignManagerIDL
-  CampaignIndex
-  DomainParser
 )
 
 add_library(CampaignIndex
@@ -79,8 +87,8 @@ add_library( CreativeTemplateArgs SHARED
 )
 
 target_link_libraries(CreativeTemplateArgs
- Generics
- Commons
+  Commons
+  Generics
 )
 
 add_library(SecToken 
@@ -107,53 +115,48 @@ target_link_libraries(CampaignManagerLogger
 )
 
 add_executable(CampaignManager
-  CampaignManagerImpl.cpp 
-  CampaignManagerMain.cpp 
-  InstantiateCreative.cpp 
-  CreativeTextGenerator.cpp 
-  ConfigManips.cpp 
-  SelectCreative.cpp 
-  CampaignSelector.cpp 
   BillingStateContainer.cpp
+  CampaignManagerImpl.cpp
+  CampaignManagerMain.cpp
+  CampaignSelector.cpp
+  ConfigManips.cpp
+  CreativeTextGenerator.cpp
+  InstantiateCreative.cpp
+  SelectCreative.cpp
 )
 
 target_link_libraries(CampaignManager
-  CampaignConfigSource
-  Stream
-  HTTP
-  CORBACommons
-  Commons
-  XslTransformer
-  Gason
-  PlainStorage3
-
   AdServerCommonsXSD
-  CampaignManagerConfigXSD
-
+  BidRateProvider
+  BillingServerIDL
+  CORBACommons
+  CTRProvider
   CampaignCommonsIDL
-  CampaignServerIDL
-  CampaignManagerIDL
-  CampaignTypes
-
-  ProcessControlVars
-
-  ExpressionChannelIndex
-  ExpressionChannel
-  CreativeTemplateArgs
   CampaignConfig
   CampaignConfigSource
+  CampaignConfigSource
   CampaignIndex
-  DomainParser
+  CampaignManagerConfigXSD
+  CampaignManagerIDL
   CampaignManagerLogger
-  PassbackTemplate
-  SecToken
-  BillingServerIDL
-  KafkaProducer
-
-  CTRProvider
-  BidRateProvider
+  CampaignManagerProto
+  CampaignServerIDL
+  CampaignTypes
+  Commons
+  CreativeTemplateArgs
   DomainConfigXSD
+  DomainParser
+  ExpressionChannel
+  ExpressionChannelIndex
+  Gason
+  HTTP
+  KafkaProducer
+  PassbackTemplate
+  PlainStorage3
+  ProcessControlVars
+  SecToken
   StatInfoIDL
+  Stream
+  XslTransformer
+  UServerUtils
 )
-
-#install(TARGETS CampaignManager CampaignManagerLogger CreativeTemplateArgs CampaignConfig CampaignConfig CTRProvider CampaignManagerIDL BidRateProvider  DESTINATION ${INSTALL_DIR})

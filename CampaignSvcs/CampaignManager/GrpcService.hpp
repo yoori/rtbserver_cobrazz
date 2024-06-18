@@ -1,27 +1,27 @@
-#ifndef USERINFOSVCS_USERINFOMANAGER_GRPCSERVICE_HPP_
-#define USERINFOSVCS_USERINFOMANAGER_GRPCSERVICE_HPP_
+#ifndef CAMPAIGNMANAGER_GRPCSERVICE_HPP
+#define CAMPAIGNMANAGER_GRPCSERVICE_HPP
 
 // PROTOBUF
-#include "UserInfoManager_service.cobrazz.pb.hpp"
+#include "CampaignManager_service.cobrazz.pb.hpp"
 
 // THIS
+#include "CampaignManagerImpl.hpp"
 #include <Logger/Logger.hpp>
-#include "UserInfoManagerImpl.hpp"
 
-namespace AdServer::UserInfoSvcs
+namespace AdServer::CampaignSvcs
 {
 
 namespace Internal
 {
 
-constexpr char ASPECT[] = "GrpcUserInfoService";
+constexpr char ASPECT[] = "GrpcCampaignManagerService";
 
 } // namespace Internal
 
 template<
   class BaseService,
   std::unique_ptr<typename BaseService::Response>
-  (UserInfoManagerImpl::*ptr_to_mem)(
+  (CampaignManagerImpl::*ptr_to_mem)(
     std::unique_ptr<typename BaseService::Request>&&)>
 class GrpcService final
   : public BaseService,
@@ -37,9 +37,9 @@ public:
 public:
   explicit GrpcService(
     Logger* logger,
-    UserInfoManagerImpl* user_info_manager_impl)
+    CampaignManagerImpl* campaign_manager_impl)
     : logger_(ReferenceCounting::add_ref(logger)),
-      user_info_manager_impl_(ReferenceCounting::add_ref(user_info_manager_impl))
+      campaign_manager_impl_(ReferenceCounting::add_ref(campaign_manager_impl))
   {
   }
 
@@ -59,7 +59,7 @@ public:
 
         try
         {
-          auto response = (user_info_manager_impl_->*ptr_to_mem)(
+          auto response = (campaign_manager_impl_->*ptr_to_mem)(
             std::move(request));
           send_reponse(
             std::move(writer),
@@ -115,13 +115,13 @@ private:
 private:
   Logger_var logger_;
 
-  UserInfoManagerImpl_var user_info_manager_impl_;
+  CampaignManagerImpl_var campaign_manager_impl_;
 };
 
 template<
   class BaseService,
   std::unique_ptr<typename BaseService::Response>
-  (UserInfoManagerImpl::*ptr_to_mem)(
+  (CampaignManagerImpl::*ptr_to_mem)(
     std::unique_ptr<typename BaseService::Request>&&)>
 using GrpcService_var =
   ReferenceCounting::SmartPtr<GrpcService<BaseService, ptr_to_mem>>;
@@ -129,18 +129,18 @@ using GrpcService_var =
 template<
   class BaseService,
   std::unique_ptr<typename BaseService::Response>
-  (UserInfoManagerImpl::*ptr_to_mem)(
+  (CampaignManagerImpl::*ptr_to_mem)(
     std::unique_ptr<typename BaseService::Request>&&)>
 auto create_grpc_service(
   Logging::Logger* logger,
-  UserInfoManagerImpl* user_info_manager_impl)
+  CampaignManagerImpl* campaign_manager_impl)
 {
   return ReferenceCounting::SmartPtr<GrpcService<BaseService, ptr_to_mem>>(
     new GrpcService<BaseService, ptr_to_mem>(
       logger,
-      user_info_manager_impl));
+      campaign_manager_impl));
 }
 
-} // namespace AdServer::UserInfoSvcs
+} // namespace AdServer::CampaignSvcs
 
-#endif /* USERINFOSVCS_USERINFOMANAGER_GRPCSERVICE_HPP_ */
+#endif // CAMPAIGNMANAGER_GRPCSERVICE_HPP

@@ -205,8 +205,6 @@ public:
   using UimReadyResponsePtr = std::unique_ptr<Proto::UimReadyResponse>;
   using GetProgressRequestPtr = std::unique_ptr<Proto::GetProgressRequest>;
   using GetProgressResponsePtr = std::unique_ptr<Proto::GetProgressResponse>;
-  using ClearExpiredRequestPtr = std::unique_ptr<Proto::ClearExpiredRequest>;
-  using ClearExpiredResponsePtr = std::unique_ptr<Proto::ClearExpiredResponse>;
 
 public:
   GrpcUserInfoOperationDistributor(

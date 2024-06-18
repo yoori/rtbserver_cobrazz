@@ -17,6 +17,7 @@ target_link_libraries(ExpressionChannel
   CORBACommons
   Commons
   CampaignCommonsIDL
+  CampaignManagerProto
 )
 
 add_library(ExpressionChannelIndex SHARED

@@ -4,7 +4,12 @@
 // STD
 #include <cassert>
 
+// PROTOBUF
+#include <google/protobuf/repeated_field.h>
+#include <google/protobuf/repeated_ptr_field.h>
+
 // THIS
+#include <Commons/Containers.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 // UNIX_COMMONS
@@ -16,18 +21,14 @@ namespace GrpcAlgs
 
 DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-inline
-std::string
-pack_time(const Generics::Time& time)
+inline std::string pack_time(const Generics::Time& time)
 {
   std::string result(Generics::Time::TIME_PACK_LEN, '0');
   time.pack(result.data());
   return result;
 }
 
-inline
-Generics::Time
-unpack_time(const std::string& data)
+inline Generics::Time unpack_time(const std::string& data)
 {
   assert(Generics::Time::TIME_PACK_LEN == data.length());
 
@@ -37,9 +38,7 @@ unpack_time(const std::string& data)
   return time;
 }
 
-inline
-std::string
-pack_user_id(const AdServer::Commons::UserId& user_id)
+inline std::string pack_user_id(const AdServer::Commons::UserId& user_id)
 {
   std::string result;
   result.resize(user_id.size());
@@ -48,9 +47,7 @@ pack_user_id(const AdServer::Commons::UserId& user_id)
 }
 
 
-inline
-AdServer::Commons::UserId
-unpack_user_id(const std::string& user_id)
+inline AdServer::Commons::UserId unpack_user_id(const std::string& user_id)
 {
   if(user_id.empty())
   {
@@ -64,9 +61,12 @@ unpack_user_id(const std::string& user_id)
   }
 }
 
-inline
-AdServer::Commons::RequestId
-unpack_request_id(const std::string& request_id)
+inline std::string pack_request_id(const AdServer::Commons::RequestId& request_id)
+{
+  return pack_user_id(request_id);
+}
+
+inline AdServer::Commons::RequestId unpack_request_id(const std::string& request_id)
 {
   return unpack_user_id(request_id);
 }
@@ -123,6 +123,19 @@ inline void print_repeated(
 }
 
 template<class DecimalType>
+inline std::string pack_optional_decimal(
+  const AdServer::Commons::Optional<DecimalType>& data)
+{
+  std::string result;
+  if (data.present())
+  {
+    result.resize(DecimalType::PACK_SIZE);
+    data->pack(result.data());
+  }
+  return result;
+}
+
+template<class DecimalType>
 inline std::string pack_decimal(const DecimalType& data)
 {
   std::string result;
@@ -138,6 +151,48 @@ inline DecimalType unpack_decimal(const std::string& data)
   assert(DecimalType::PACK_SIZE == data.size());
   result.unpack(data.data());
   return result;
+}
+
+template<class DecimalType>
+inline DecimalType unpack_optional_decimal(const std::string& data)
+{
+  if (data.empty())
+  {
+    return AdServer::Commons::Optional<DecimalType>();
+  }
+  else
+  {
+    DecimalType result;
+    assert(DecimalType::PACK_SIZE == data.size());
+    result.unpack(data.data());
+    return result;
+  }
+}
+
+template<class It, class Type>
+void fill_repeated_field(
+  const It& begin,
+  const It& end,
+  google::protobuf::RepeatedField<Type>& result)
+{
+  result.Add(begin, end);
+}
+
+template<class T, class DecimalType>
+void pack_decimal_into_repeated_field(
+  google::protobuf::RepeatedField<T>& seq,
+  const DecimalType& value)
+{
+  const int EL_NUMBER = DecimalType::PACK_SIZE / 4 +
+    (DecimalType::PACK_SIZE % 4 ? 1 : 0);
+  uint32_t buf[EL_NUMBER];
+  ::memset(buf, 0, EL_NUMBER * 4);
+  value.pack(buf);
+
+  auto pos = seq.size();
+  seq.Reserve(pos + EL_NUMBER + 1);
+  seq.Add(0);
+  seq.Add(buf, buf + EL_NUMBER);
 }
 
 } // namespace GrpcAlgs
