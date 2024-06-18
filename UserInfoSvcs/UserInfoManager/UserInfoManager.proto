@@ -204,10 +204,18 @@ message UpdateUserFreqCapsRequest
   repeated uint32 uc_campaign_ids = 10;
 }
 
+message UpdateUserFreqCapsResponseInfo
+{
+}
+
 message UpdateUserFreqCapsResponse
 {
   uint32 id_request_grpc = 1;
-  optional Error error = 2;
+  oneof data
+  {
+    UpdateUserFreqCapsResponseInfo info = 2;
+    Error error = 3;
+  }
 }
 
 message ConfirmUserFreqCapsRequest
@@ -219,10 +227,18 @@ message ConfirmUserFreqCapsRequest
   repeated uint32 exclude_pubpixel_accounts = 5;
 }
 
+message ConfirmUserFreqCapsResponseInfo
+{
+}
+
 message ConfirmUserFreqCapsResponse
 {
   uint32 id_request_grpc = 1;
-  optional Error error = 2;
+  oneof data
+  {
+    ConfirmUserFreqCapsResponseInfo info = 2;
+    Error error = 3;
+  }
 }
 
 message FraudUserRequest
@@ -273,7 +289,7 @@ message MergeRequest
   uint32 id_request_grpc = 1;
   UserInfo user_info = 2;
   MatchParams match_params = 3;
-  UserProfiles merge_user_profile = 4;
+  UserProfiles merge_user_profiles = 4;
 }
 
 message MergeResponseInfo
@@ -301,10 +317,18 @@ message ConsiderPublishersOptinRequest
   bytes now = 4;
 }
 
+message ConsiderPublishersOptinResponseInfo
+{
+}
+
 message ConsiderPublishersOptinResponse
 {
   uint32 id_request_grpc = 1;
-  optional Error error = 2;
+  oneof data
+  {
+    ConsiderPublishersOptinResponseInfo info = 2;
+    Error error = 3;
+  }
 }
 
 message UimReadyRequest

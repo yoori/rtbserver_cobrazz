@@ -90,6 +90,13 @@
         </xsl:if>
       </xsl:variable>
 
+      <xsl:variable name="user-info-manager-grpc-port">
+        <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@grpc_port"/>
+        <xsl:if test="count($user-info-manager-config/cfg:networkParams/@grpc_port) = 0">
+          <xsl:value-of select="$def-user-info-manager-grpc-port"/>
+        </xsl:if>
+      </xsl:variable>
+
       <xsl:variable name="user-info-manager-hosts">
         <xsl:call-template name="GetHosts">
           <xsl:with-param name="hosts" select="@host"/>
@@ -101,6 +108,7 @@
           name="corba_ref_prefix"
           select="concat('corbaloc:iiop:', ., ':', $user-info-manager-port)"/>
         <cfg:UserInfoManagerHost>
+          <xsl:attribute name="grpc_port"><xsl:value-of select="$user-info-manager-grpc-port"/></xsl:attribute>
           <cfg:UserInfoManagerRef>
             <xsl:attribute name="name">
               <xsl:value-of select="."/>

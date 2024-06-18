@@ -156,6 +156,7 @@ namespace AdServer
         ChunkIdSet chunks;
         unsigned long common_chunks_number;
         bool ready;
+        std::size_t grpc_port = 0;
       };
 
       typedef std::vector<UserInfoManagerRef> UserInfoManagerRefVector;

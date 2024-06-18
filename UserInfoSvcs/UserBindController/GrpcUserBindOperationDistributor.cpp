@@ -68,31 +68,29 @@ GrpcUserBindOperationDistributor::GrpcUserBindOperationDistributor(
 void GrpcUserBindOperationDistributor::resolve_partition(
   const PartitionNumber partition_number) noexcept
 {
-  using ImplementationException =
-    AdServer::UserInfoSvcs::UserBindController::ImplementationException;
-  using NotReady =
-    AdServer::UserInfoSvcs::UserBindController::NotReady;
+  using UserBindController =
+    AdServer::UserInfoSvcs::UserBindController;
   using UserBindController_var =
     AdServer::UserInfoSvcs::UserBindController_var;
 
   PartitionPtr partition;
 
-  auto it_controllers = controller_refs_.begin();
-  std::advance(it_controllers, partition_number);
-  auto& controllers = *it_controllers;
+  auto it_controller_ref = controller_refs_.begin();
+  std::advance(it_controller_ref, partition_number);
+  auto& corba_object_ref_list = *it_controller_ref;
 
-  for (const auto& controller : controllers)
+  for (const auto& ref : corba_object_ref_list)
   {
     try
     {
-      CORBA::Object_var obj = corba_client_adapter_->resolve_object(controller);
+      CORBA::Object_var obj = corba_client_adapter_->resolve_object(ref);
       if(CORBA::is_nil(obj.in()))
       {
         continue;
       }
 
       UserBindController_var controller =
-        AdServer::UserInfoSvcs::UserBindController::_narrow(obj.in());
+        UserBindController::_narrow(obj.in());
 
       if (CORBA::is_nil(controller.in()))
       {
@@ -118,18 +116,8 @@ void GrpcUserBindOperationDistributor::resolve_partition(
       for (std::size_t i = 0; i < length_user_bind_servers; ++i)
       {
         const auto& user_bind_description = (*user_bind_servers)[i];
-        const auto& chunk_ids = user_bind_description.chunk_ids;
-        if (chunk_ids.length() == 0)
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << ": number of chunk_id is null";
-          logger_->error(
-            stream.str(),
-            ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
-          continue;
-        }
 
+        const auto& chunk_ids = user_bind_description.chunk_ids;
         const std::size_t grpc_port = user_bind_description.grpc_port;
         const std::string host(user_bind_description.host.in());
         if (host.empty())
@@ -140,7 +128,7 @@ void GrpcUserBindOperationDistributor::resolve_partition(
           logger_->error(
             stream.str(),
             ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
-          continue;
+          throw Exception(stream.str());
         }
 
         const std::size_t length_chunk_ids = chunk_ids.length();
@@ -179,16 +167,7 @@ void GrpcUserBindOperationDistributor::resolve_partition(
           max_chunk_number));
       break;
     }
-    catch (const CORBA::SystemException& /*exc*/)
-    {
-    }
-    catch (const ImplementationException& /*exc*/)
-    {
-    }
-    catch (const NotReady& /*exc*/)
-    {
-    }
-    catch (const eh::Exception& /*exc*/)
+    catch (...)
     {
     }
   }
@@ -238,17 +217,16 @@ void GrpcUserBindOperationDistributor::try_to_reresolve_partition(
           this,
           partition_num)));
   }
-  catch (const eh::Exception& /*exc*/)
+  catch (...)
   {
   }
 }
 
 GrpcUserBindOperationDistributor::PartitionNumber
 GrpcUserBindOperationDistributor::get_partition_number(
-  const String::SubString& user_id) const noexcept
+  const String::SubString& id) const noexcept
 {
-  return (AdServer::Commons::external_id_distribution_hash(
-    user_id) >> 8) % try_count_;
+  return (AdServer::Commons::external_id_distribution_hash(id) >> 8) % try_count_;
 }
 
 GrpcUserBindOperationDistributor::PartitionPtr

@@ -9,25 +9,7 @@ namespace AdServer
 {
 namespace Commons
 {
-  /*
-  struct ExternalUserId
-  {
-    ExternalUserId()
-    {}
-
-    ExternalUserId(
-      const String::SubString& source_id_val,
-      const String::SubString& id_val)
-      : source_id(source_id_val.str()),
-        id(id_val.str())
-    {}
-
-    std::string source_id;
-    std::string id;
-  };
-  */
-
-  typedef std::vector<std::string> ExternalUserIdArray;
+  using ExternalUserIdArray = std::vector<std::string>;
 
   void
   dns_encode_external_user_ids(

@@ -137,6 +137,7 @@ namespace UserInfoSvcs{
           it != user_info_manager_seq.end(); ++it)
       {
         UserInfoManagerRef user_info_manager_host;
+        user_info_manager_host.grpc_port = it->grpc_port();
 
         /* load UIMControl ref */
         CORBACommons::CorbaObjectRef corba_object_ref;
@@ -806,6 +807,9 @@ namespace UserInfoSvcs{
           user_info_manager_ref.chunks.begin(),
           user_info_manager_ref.chunks.end(),
           user_info_manager_descr.chunk_ids);
+
+        user_info_manager_descr.host << user_info_manager_ref.user_info_manager_host_name;
+        user_info_manager_descr.grpc_port = user_info_manager_ref.grpc_port;
       }
     }
     catch(const eh::Exception& ex)
