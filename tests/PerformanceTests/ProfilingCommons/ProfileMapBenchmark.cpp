@@ -46,7 +46,7 @@ struct ReadStatistics final
 
 struct KeyStringAdapter
 {
-  std::string operator()(const std::string& key)
+  std::string operator()(const std::string& key) const
   {
     return key;
   }

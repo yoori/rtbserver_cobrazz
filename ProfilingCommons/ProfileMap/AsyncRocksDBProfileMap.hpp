@@ -104,7 +104,7 @@ private:
 struct DefaultKeyAdapter
 {
   template<typename Key>
-  std::string operator()(const Key& key)
+  std::string operator()(const Key& key) const
   {
     return key;
   }
@@ -181,7 +181,7 @@ public:
   }
 
 private:
-  mutable KeyAdapter key_adapter_;
+  const KeyAdapter key_adapter_;
 
   Internal::ProfileMapImpl impl_;
 };
