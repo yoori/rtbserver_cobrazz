@@ -51,6 +51,7 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
+    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);

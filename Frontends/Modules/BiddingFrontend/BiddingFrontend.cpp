@@ -450,18 +450,22 @@ namespace Bidding
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          task_processor_,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
         add_child_object(user_info_client_);
 
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
@@ -1491,11 +1495,6 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::resolve_user_id_()";
 
-    using GetUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
-    using AddUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
-
     Generics::Time start_process_time;
 
     if(logger()->log_level() >= Logging::Logger::TRACE)
@@ -1573,26 +1572,57 @@ namespace Bidding
             ext_user_id_it != external_user_ids.end();
             ++ext_user_id_it)
           {
-            GetUserIdResponsePtr response;
-            if (grpc_distributor)
+            bool is_grpc_success = false;
+            try
             {
-              response = grpc_distributor->get_user_id(
-                *ext_user_id_it,
-                String::SubString{},
-                request_info.current_time,
-                request_info.user_create_time,
-                false,
-                false,
-                false);
+              if (grpc_distributor)
+              {
+                is_grpc_success = true;
+
+                auto response = grpc_distributor->get_user_id(
+                  *ext_user_id_it,
+                  String::SubString{},
+                  request_info.current_time,
+                  request_info.user_create_time,
+                  false,
+                  false,
+                  false);
+
+                if (response && response->has_info())
+                {
+                  const auto& info = response->info();
+                  min_age_reached |= info.min_age_reached();
+                  local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
+                }
+                else
+                {
+                  is_grpc_success = false;
+                  GrpcAlgs::print_grpc_error_response(
+                    response,
+                    logger(),
+                    Aspect::BIDDING_FRONTEND);
+                }
+              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FNS
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::BIDDING_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FNS
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::BIDDING_FRONTEND);
             }
 
-            if (response && response->has_info())
-            {
-              const auto& info = response->info();
-              min_age_reached |= info.min_age_reached();
-              local_match_user_id = GrpcAlgs::unpack_user_id(info.user_id());
-            }
-            else
+            if (!is_grpc_success)
             {
               AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
               get_request_info.id << *ext_user_id_it;
@@ -1639,18 +1669,20 @@ namespace Bidding
             {
               if(ext_user_id_it != base_ext_user_id_it)
               {
-                const auto user_id = match_user_id.to_string();
-
-                AddUserIdResponsePtr response;
+                bool is_grpc_success = false;
                 if (grpc_distributor)
                 {
-                  response = grpc_distributor->add_user_id(
+                  auto response = grpc_distributor->add_user_id(
                     *ext_user_id_it,
                     request_info.current_time,
-                    user_id);
+                    GrpcAlgs::pack_user_id(match_user_id));
+                  if (response && response->has_info())
+                  {
+                    is_grpc_success = true;
+                  }
                 }
 
-                if (!response || response->has_error())
+                if (!is_grpc_success)
                 {
                   AdServer::UserInfoSvcs::UserBindServer::AddUserRequestInfo add_user_request;
                   add_user_request.id << *ext_user_id_it;
@@ -1982,10 +2014,12 @@ namespace Bidding
     const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& time,
-    CORBA::String_var& /*hostname*/)
-    noexcept
+    CORBA::String_var& /*hostname*/) noexcept
   {
     static const char* FUN = "Bidding::Frontend::history_match_()";
+
+    using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+    using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
@@ -2004,8 +2038,143 @@ namespace Bidding
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
+      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+        grpc_distributor = user_info_client_->grpc_distributor();
 
-      if(uim_session.in())
+      bool is_grpc_success = false;
+      if (grpc_distributor)
+      {
+        try
+        {
+          MatchParams match_params;
+          match_params.use_empty_profile = false;
+          match_params.silent_match = false;
+          match_params.no_match = trigger_match_result && trigger_match_result->no_track;
+          match_params.no_result = false;
+          match_params.ret_freq_caps = true;
+          match_params.provide_channel_count = false;
+          match_params.provide_persistent_channels = false;
+          match_params.change_last_request = true;
+          match_params.publishers_optin_timeout = time - Generics::Time::ONE_DAY * 15;
+          match_params.cohort = (!request_info.idfa.empty() ?
+            request_info.idfa : request_info.advertising_id);
+          const auto& platform_ids = request_params.context_info.platform_ids;
+          match_params.persistent_channel_ids.insert(
+            match_params.persistent_channel_ids.end(),
+            platform_ids.get_buffer(),
+            platform_ids.get_buffer() + platform_ids.length());
+
+          UserInfo user_info;
+          user_info.user_id = GrpcAlgs::pack_user_id(user_id);
+          user_info.huser_id = GrpcAlgs::pack_user_id(AdServer::Commons::UserId{});
+          user_info.last_colo_id = colo_id_;
+          user_info.request_colo_id = colo_id_;
+          user_info.current_colo_id = -1;
+          user_info.temporary = false;
+          user_info.time = time.tv_sec;
+
+          if(trigger_match_result && !trigger_match_result->no_track)
+          {
+            ChannelMatchSet page_channels;
+            ChannelMatchSet url_channels;
+            ChannelMatchSet search_channels;
+            ChannelMatchSet url_keyword_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.page_channels.get_buffer(),
+              trigger_match_result->matched_channels.page_channels.get_buffer() +
+                trigger_match_result->matched_channels.page_channels.length(),
+              std::inserter(page_channels, page_channels.end()),
+              GetChannelTriggerId());
+
+            std::transform(
+              trigger_match_result->matched_channels.url_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_channels.length(),
+              std::inserter(url_channels, url_channels.end()),
+              GetChannelTriggerId());
+
+            std::transform(
+              trigger_match_result->matched_channels.search_channels.get_buffer(),
+              trigger_match_result->matched_channels.search_channels.get_buffer() +
+                trigger_match_result->matched_channels.search_channels.length(),
+              std::inserter(search_channels, search_channels.end()),
+              GetChannelTriggerId());
+
+            std::transform(
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_keyword_channels.length(),
+              std::inserter(url_keyword_channels, url_keyword_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.page_channel_ids.reserve(page_channels.size());
+            for (const auto& page_channel : page_channels)
+            {
+              match_params.page_channel_ids.emplace_back(
+                page_channel.channel_id,
+                page_channel.channel_trigger_id);
+            }
+
+            match_params.url_channel_ids.reserve(url_channels.size());
+            for (const auto& url_channel : url_channels)
+            {
+              match_params.url_channel_ids.emplace_back(
+                url_channel.channel_id,
+                url_channel.channel_trigger_id);
+            }
+
+            match_params.search_channel_ids.reserve(search_channels.size());
+            for (const auto& search_channel : search_channels)
+            {
+              match_params.search_channel_ids.emplace_back(
+                search_channel.channel_id,
+                search_channel.channel_trigger_id);
+            }
+
+            match_params.url_keyword_channel_ids.reserve(url_keyword_channels.size());
+            for (const auto& url_keyword_channel : url_keyword_channels)
+            {
+              match_params.url_keyword_channel_ids.emplace_back(
+                url_keyword_channel.channel_id,
+                url_keyword_channel.channel_trigger_id);
+            }
+          }
+
+          auto response = grpc_distributor->match(user_info, match_params);
+          if (response && response->has_info())
+          {
+            request_params.profiling_available = true;
+            is_grpc_success = true;
+          }
+          else
+          {
+             GrpcAlgs::print_grpc_error_response(
+               response,
+               logger(),
+               Aspect::BIDDING_FRONTEND);
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FNS
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::BIDDING_FRONTEND);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FNS
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::BIDDING_FRONTEND);
+        }
+      }
+
+      if(!is_grpc_success && uim_session.in())
       {
         try
         {
@@ -2310,6 +2479,135 @@ namespace Bidding
 
       try
       {
+        using SeqOrders = AdServer::UserInfoSvcs::Types::SeqOrders;
+        using CampaignIds = AdServer::UserInfoSvcs::Types::CampaignIds;
+        using FreqCaps = AdServer::UserInfoSvcs::Types::FreqCaps;
+        using UcFreqCaps = AdServer::UserInfoSvcs::Types::UcFreqCaps;
+        using UcCampaignIds = AdServer::UserInfoSvcs::Types::UcCampaignIds;
+
+        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+          grpc_distributor = user_info_client_->grpc_distributor();
+
+        if (grpc_distributor)
+        {
+          bool is_error = false;
+          SeqOrders seq_orders;
+          seq_orders.reserve(seq_order_len);
+          for(std::size_t ad_slot_i = 0;
+              ad_slot_i < campaign_match_result.ad_slots.length();
+              ++ad_slot_i)
+          {
+            const auto& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
+            if (ad_slot_result.selected_creatives.length() > 0)
+            {
+              CampaignIds campaign_ids;
+              campaign_ids.reserve(ad_slot_result.selected_creatives.length());
+
+              for (std::size_t creative_i = 0;
+                   creative_i < ad_slot_result.selected_creatives.length();
+                   ++creative_i)
+              {
+                const auto& creative = ad_slot_result.selected_creatives[creative_i];
+                if (creative.order_set_id)
+                {
+                  const auto ccg_id = creative.cmp_id;
+                  seq_orders.emplace_back(ccg_id, creative.order_set_id, 1);
+                  ADD_COMMON_COUNTER_STATISTIC(FrontendCommons::CounterStatisticId::BiddingFrontend_Bids, ccg_id, 1);
+                }
+
+                campaign_ids.emplace_back(creative.campaign_group_id);
+              }
+
+              FreqCaps freq_caps;
+              freq_caps.insert(
+                std::end(freq_caps),
+                ad_slot_result.freq_caps.get_buffer(),
+                ad_slot_result.freq_caps.get_buffer() + ad_slot_result.freq_caps.length());
+
+              UcFreqCaps uc_freq_caps;
+              uc_freq_caps.insert(
+                std::end(uc_freq_caps),
+                ad_slot_result.uc_freq_caps.get_buffer(),
+                ad_slot_result.uc_freq_caps.get_buffer() + ad_slot_result.uc_freq_caps.length());
+
+              std::string request_id_string;
+              if (ad_slot_result.request_id.length() != 0)
+              {
+                request_id_string.resize(ad_slot_result.request_id.length());
+                std::memcpy(
+                  request_id_string.data(),
+                  ad_slot_result.request_id.get_buffer(),
+                  ad_slot_result.request_id.length());
+              }
+
+              auto response = grpc_distributor->update_user_freq_caps(
+                GrpcAlgs::pack_user_id(user_id),
+                now,
+                request_id_string,
+                freq_caps,
+                uc_freq_caps,
+                {},
+                seq_orders,
+                ad_slot_result.track_impr ? CampaignIds{} : campaign_ids,
+                ad_slot_result.track_impr ? campaign_ids : UcCampaignIds{});
+              if (!response || response->has_error())
+              {
+                is_error = true;
+                GrpcAlgs::print_grpc_error_response(
+                  response,
+                  logger(),
+                  Aspect::BIDDING_FRONTEND);
+                break;
+              }
+            }
+          }
+
+          if (!is_error)
+          {
+            result = true;
+          }
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": "
+               << exc.what();
+        logger()->error(
+          stream.str(),
+          Aspect::BIDDING_FRONTEND);
+      }
+      catch (...)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Unknown error";
+        logger()->error(
+          stream.str(),
+          Aspect::BIDDING_FRONTEND);
+      }
+
+      if (result)
+      {
+        if(logger()->log_level() >= Logging::Logger::TRACE)
+        {
+          Generics::Time end_process_time = Generics::Time::get_time_of_day();
+          Stream::Error ostr;
+          ostr << FUN
+               << ": campaign selection considering = "
+               << (end_process_time - start_process_time);
+          logger()->log(
+            ostr.str(),
+            Logging::Logger::TRACE,
+            Aspect::BIDDING_FRONTEND);
+        }
+
+        return result;
+      }
+
+      try
+      {
         AdServer::UserInfoSvcs::UserInfoMatcher_var uim_session =
           user_info_client_->user_info_session();
 
@@ -2356,7 +2654,7 @@ namespace Bidding
                 seq_orders[result_seq_order_i].imps = 1;
                 ++result_seq_order_i;
 
-                ADD_COMMON_COUNTER_STATISTIC(FrontendCommons::CounterStatisticId::BiddingFrontend_Bids, ccg_id, 1)
+                ADD_COMMON_COUNTER_STATISTIC(FrontendCommons::CounterStatisticId::BiddingFrontend_Bids, ccg_id, 1);
               }
 
               campaign_ids[creative_i] = creative.campaign_group_id;

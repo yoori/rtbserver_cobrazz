@@ -20,6 +20,9 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
+#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/Grpc/Manager.hpp>
+
 #include "RequestInfoFiller.hpp"
 
 namespace AdServer
@@ -37,10 +40,8 @@ namespace Passback
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-  private:
-    using Exception = FrontendCommons::HTTPExceptions::Exception;
-
   public:
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
 

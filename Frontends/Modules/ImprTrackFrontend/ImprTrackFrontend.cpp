@@ -308,12 +308,12 @@ namespace ImprTrack
           callback(), config_->match_threads(), 0, config_->match_task_limit());
         add_child_object(task_runner_);
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
@@ -329,7 +329,11 @@ namespace ImprTrack
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          task_processor_,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_server_controller_refs;
@@ -596,184 +600,335 @@ namespace ImprTrack
         }
         else if(user_bind_client_) // not opt out
         {
-          bool cresolve_failed = false;
-
           // resolve actual user id (cookies)
           assert(user_bind_client_.in());
 
-          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-            user_bind_client_->user_bind_mapper();
+          AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+            grpc_distributor = user_bind_client_->grpc_distributor();
 
-          try
-          {
-            // for apps result_user_id is null
-            if(!result_user_id.is_null())
-            {
-              const std::string cookie_external_id_str =
-                std::string("c/") + result_user_id.to_string();
-
-              AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-              get_request_info.id << cookie_external_id_str;
-              get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
-              get_request_info.silent = true;
-              get_request_info.generate_user_id = false;
-              get_request_info.for_set_cookie = request_info.set_cookie;
-              get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-              get_request_info.current_user_id = CorbaAlgs::pack_user_id(result_user_id);
-
-              AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
-                user_bind_mapper->get_user_id(get_request_info);
-
-              if(prev_user_bind_info->invalid_operation)
-              {
-                cresolve_failed = true;
-                invalid_bind_operation = true;
-                report_bad_user_(request_info);
-              }
-              else
-              {
-                Commons::UserId cresolved_user_id =
-                  CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
-                if(!cresolved_user_id.is_null())
-                {
-                  result_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
-                  result_user_id_type = RUIT_CRESOLVE;
-                }
-              }
-            }
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
-          {
-            cresolve_failed = true;
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-          {
-            cresolve_failed = true;
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-          {
-            cresolve_failed = true;
-          }
-          catch(const CORBA::SystemException& e)
-          {
-            cresolve_failed = true;
-          }
-
-          if(!cresolve_failed)
+          bool is_grpc_success = false;
+          if (grpc_distributor)
           {
             try
             {
-              // rebind external user id
-              // optimization: don't do resolve if user id in parameters equal to
-              //   cookies user id
-              // current_user_id passed in parameters
-              // result_user_id from cookie or got by cookie resoving uid
-              if(!(request_info.current_user_id == result_user_id) &&
-                !request_info.external_user_id.empty())
+              is_grpc_success = true;
+              bool cresolve_failed = false;
+
+              // for apps result_user_id is null
+              if (!result_user_id.is_null())
               {
-                const std::string external_user_id = request_info.external_user_id;
+                const std::string cookie_external_id_str =
+                  std::string("c/") + result_user_id.to_string();
 
-                if(!result_user_id.is_null())
+                auto response = grpc_distributor->get_user_id(
+                  cookie_external_id_str,
+                  GrpcAlgs::pack_user_id(result_user_id),
+                  request_info.time,
+                  Generics::Time::ZERO,
+                  true,
+                  false,
+                  request_info.set_cookie);
+                if (!response || response->has_error())
                 {
-                  // result_user_id got from cookie or by cookie resolving
-                  AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-                    add_user_request_info;
-                  add_user_request_info.id << external_user_id;
-                  add_user_request_info.user_id = CorbaAlgs::pack_user_id(result_user_id);
-                  add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+                  GrpcAlgs::print_grpc_error_response(
+                    response,
+                    logger(),
+                    Aspect::IMPR_TRACK_FRONTEND);
+                  throw Exception ("get_user_id is failed");
+                }
 
-                  AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-                    prev_user_bind_info =
-                      user_bind_mapper->add_user_id(add_user_request_info);
-
-                  if(prev_user_bind_info->invalid_operation)
-                  {
-                    invalid_bind_operation = true;
-                    report_bad_user_(request_info);
-                  }
-
-                  /* INVALID: use cookie user id
-                  result_user_id = CorbaAlgs::unpack_user_id(
-                    prev_user_bind_info->merge_user_id);
-                  common_module_->user_id_controller()->null_blacklisted(
-                    result_user_id);
-                  */
-
-                  (void)prev_user_bind_info;
+                const auto& info_proto = response->info();
+                if (info_proto.invalid_operation())
+                {
+                  cresolve_failed = true;
+                  invalid_bind_operation = true;
+                  report_bad_user_(request_info);
                 }
                 else
                 {
-                  // reconstruct cookie uid by UserBind table
-                  // don't use current_user_id - this allow to use ImprTrack frontend
-                  // for sign any uid
-                  AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-                  get_request_info.id << external_user_id;
-                  get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
-                  get_request_info.silent = true;
-                  get_request_info.generate_user_id = false;
-                  get_request_info.for_set_cookie = request_info.set_cookie;
-                  get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-                  // get_request_info.current_user_id is null
-
-                  AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var
-                    prev_user_bind_info =
-                      user_bind_mapper->get_user_id(get_request_info);
-
-                  if(prev_user_bind_info->invalid_operation)
+                  const auto cresolved_user_id =
+                    GrpcAlgs::unpack_user_id(info_proto.user_id());
+                  if(!cresolved_user_id.is_null())
                   {
-                    invalid_bind_operation = true;
-                    report_bad_user_(request_info);
+                    result_user_id = cresolved_user_id;
+                    result_user_id_type = RUIT_CRESOLVE;
                   }
-                  else
+                }
+
+                if(!cresolve_failed)
+                {
+                  // rebind external user id
+                  // optimization: don't do resolve if user id in parameters equal to
+                  //   cookies user id
+                  // current_user_id passed in parameters
+                  // result_user_id from cookie or got by cookie resoving uid
+                  if(!(request_info.current_user_id == result_user_id) &&
+                    !request_info.external_user_id.empty())
                   {
-                    AdServer::Commons::UserId resolved_user_id =
-                      CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
-                    if(!resolved_user_id.is_null())
+                    const std::string external_user_id = request_info.external_user_id;
+
+                    if(!result_user_id.is_null())
                     {
-                      result_user_id = resolved_user_id;
-                      result_user_id_type = RUIT_EXTIDRESOLVE;
-                      common_module_->user_id_controller()->null_blacklisted(result_user_id);
+                      auto response = grpc_distributor->add_user_id(
+                        external_user_id,
+                        request_info.time,
+                        GrpcAlgs::pack_user_id(result_user_id));
+                      if (!response || response->has_error())
+                      {
+                        GrpcAlgs::print_grpc_error_response(
+                          response,
+                          logger(),
+                          Aspect::IMPR_TRACK_FRONTEND);
+                        throw Exception("add_user_id is failed");
+                      }
+
+                      if(response->info().invalid_operation())
+                      {
+                        invalid_bind_operation = true;
+                        report_bad_user_(request_info);
+                      }
                     }
+                    else
+                    {
+                      // reconstruct cookie uid by UserBind table
+                      // don't use current_user_id - this allow to use ImprTrack frontend
+                      // for sign any uid
+                      auto response = grpc_distributor->get_user_id(
+                        external_user_id,
+                        String::SubString{},
+                        request_info.time,
+                        Generics::Time::ZERO,
+                        true,
+                        false,
+                        request_info.set_cookie);
+                      if (!response || response->has_error())
+                      {
+                        GrpcAlgs::print_grpc_error_response(
+                          response,
+                          logger(),
+                          Aspect::IMPR_TRACK_FRONTEND);
+                        throw Exception("get_user_id is failed");
+                      }
+
+                      const auto& info_proto = response->info();
+                      if (info_proto.invalid_operation())
+                      {
+                        invalid_bind_operation = true;
+                        report_bad_user_(request_info);
+                      }
+                      else
+                      {
+                        const auto resolved_user_id =
+                          GrpcAlgs::unpack_user_id(info_proto.user_id());
+                        if(!resolved_user_id.is_null())
+                        {
+                          result_user_id = resolved_user_id;
+                          result_user_id_type = RUIT_EXTIDRESOLVE;
+                          common_module_->user_id_controller()->null_blacklisted(result_user_id);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+            }
+          }
+
+          if (!is_grpc_success)
+          {
+            bool cresolve_failed = false;
+
+            AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+              user_bind_client_->user_bind_mapper();
+
+            try
+            {
+              // for apps result_user_id is null
+              if (!result_user_id.is_null())
+              {
+                const std::string cookie_external_id_str =
+                  std::string("c/") + result_user_id.to_string();
+
+                AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
+                get_request_info.id << cookie_external_id_str;
+                get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+                get_request_info.silent = true;
+                get_request_info.generate_user_id = false;
+                get_request_info.for_set_cookie = request_info.set_cookie;
+                get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
+                get_request_info.current_user_id = CorbaAlgs::pack_user_id(result_user_id);
+
+                AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
+                  user_bind_mapper->get_user_id(get_request_info);
+
+                if(prev_user_bind_info->invalid_operation)
+                {
+                  cresolve_failed = true;
+                  invalid_bind_operation = true;
+                  report_bad_user_(request_info);
+                }
+                else
+                {
+                  Commons::UserId cresolved_user_id =
+                    CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+                  if(!cresolved_user_id.is_null())
+                  {
+                    result_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+                    result_user_id_type = RUIT_CRESOLVE;
                   }
                 }
               }
             }
             catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
             {
-              Stream::Error ostr;
-              ostr << FUN << ": caught UserBindServer::NotReady";
-              logger()->log(ostr.str(),
-                Logging::Logger::EMERGENCY,
-                Aspect::IMPR_TRACK_FRONTEND,
-                "ADS-IMPL-109");
+              cresolve_failed = true;
             }
             catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
             {
-              Stream::Error ostr;
-              ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-              logger()->log(ostr.str(),
-                Logging::Logger::ERROR,
-                Aspect::IMPR_TRACK_FRONTEND,
-                "ADS-IMPL-109");
+              cresolve_failed = true;
             }
             catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
             {
-              Stream::Error ostr;
-              ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-                ex.description;
-              logger()->log(ostr.str(),
-                Logging::Logger::ERROR,
-                Aspect::IMPR_TRACK_FRONTEND,
-                "ADS-IMPL-109");
+              cresolve_failed = true;
             }
             catch(const CORBA::SystemException& e)
             {
-              Stream::Error ostr;
-              ostr << FUN << ": caught CORBA::SystemException: " << e;
-              logger()->log(ostr.str(),
-                Logging::Logger::ERROR,
-                Aspect::IMPR_TRACK_FRONTEND,
-                "ADS-ICON-6");
+              cresolve_failed = true;
+            }
+
+            if(!cresolve_failed)
+            {
+              try
+              {
+                // rebind external user id
+                // optimization: don't do resolve if user id in parameters equal to
+                //   cookies user id
+                // current_user_id passed in parameters
+                // result_user_id from cookie or got by cookie resoving uid
+                if(!(request_info.current_user_id == result_user_id) &&
+                  !request_info.external_user_id.empty())
+                {
+                  const std::string external_user_id = request_info.external_user_id;
+
+                  if(!result_user_id.is_null())
+                  {
+                    // result_user_id got from cookie or by cookie resolving
+                    AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+                      add_user_request_info;
+                    add_user_request_info.id << external_user_id;
+                    add_user_request_info.user_id = CorbaAlgs::pack_user_id(result_user_id);
+                    add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+
+                    AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+                      prev_user_bind_info =
+                        user_bind_mapper->add_user_id(add_user_request_info);
+
+                    if(prev_user_bind_info->invalid_operation)
+                    {
+                      invalid_bind_operation = true;
+                      report_bad_user_(request_info);
+                    }
+
+                    /* INVALID: use cookie user id
+                    result_user_id = CorbaAlgs::unpack_user_id(
+                      prev_user_bind_info->merge_user_id);
+                    common_module_->user_id_controller()->null_blacklisted(
+                      result_user_id);
+                    */
+
+                    (void)prev_user_bind_info;
+                  }
+                  else
+                  {
+                    // reconstruct cookie uid by UserBind table
+                    // don't use current_user_id - this allow to use ImprTrack frontend
+                    // for sign any uid
+                    AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
+                    get_request_info.id << external_user_id;
+                    get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+                    get_request_info.silent = true;
+                    get_request_info.generate_user_id = false;
+                    get_request_info.for_set_cookie = request_info.set_cookie;
+                    get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
+                    // get_request_info.current_user_id is null
+
+                    AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var
+                      prev_user_bind_info =
+                        user_bind_mapper->get_user_id(get_request_info);
+
+                    if(prev_user_bind_info->invalid_operation)
+                    {
+                      invalid_bind_operation = true;
+                      report_bad_user_(request_info);
+                    }
+                    else
+                    {
+                      AdServer::Commons::UserId resolved_user_id =
+                        CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+                      if(!resolved_user_id.is_null())
+                      {
+                        result_user_id = resolved_user_id;
+                        result_user_id_type = RUIT_EXTIDRESOLVE;
+                        common_module_->user_id_controller()->null_blacklisted(result_user_id);
+                      }
+                    }
+                  }
+                }
+              }
+              catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+              {
+                Stream::Error ostr;
+                ostr << FUN << ": caught UserBindServer::NotReady";
+                logger()->log(ostr.str(),
+                  Logging::Logger::EMERGENCY,
+                  Aspect::IMPR_TRACK_FRONTEND,
+                  "ADS-IMPL-109");
+              }
+              catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+              {
+                Stream::Error ostr;
+                ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+                logger()->log(ostr.str(),
+                  Logging::Logger::ERROR,
+                  Aspect::IMPR_TRACK_FRONTEND,
+                  "ADS-IMPL-109");
+              }
+              catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+              {
+                Stream::Error ostr;
+                ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+                  ex.description;
+                logger()->log(ostr.str(),
+                  Logging::Logger::ERROR,
+                  Aspect::IMPR_TRACK_FRONTEND,
+                  "ADS-IMPL-109");
+              }
+              catch(const CORBA::SystemException& e)
+              {
+                Stream::Error ostr;
+                ostr << FUN << ": caught CORBA::SystemException: " << e;
+                logger()->log(ostr.str(),
+                  Logging::Logger::ERROR,
+                  Aspect::IMPR_TRACK_FRONTEND,
+                  "ADS-ICON-6");
+              }
             }
           }
         } // if(user_bind_client_)
@@ -787,8 +942,117 @@ namespace ImprTrack
         {
           AdServer::UserInfoSvcs::UserInfoMatcher_var
             uim_session = user_info_client_->user_info_session();
+          AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+            grpc_distributor = user_info_client_->grpc_distributor();
 
-          if(uim_session.in())
+          bool is_grpc_success = false;
+          if (grpc_distributor)
+          {
+            using UserProfiles = AdServer::UserInfoSvcs::Types::UserProfiles;
+            using ProfilesRequestInfo = AdServer::UserInfoSvcs::Types::ProfilesRequestInfo;
+            using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+            using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+
+            try
+            {
+              is_grpc_success = true;
+
+              ProfilesRequestInfo profiles_request;
+              profiles_request.base_profile = true;
+              profiles_request.add_profile = true;
+              profiles_request.history_profile = true;
+              profiles_request.freq_cap_profile = true;
+
+              auto get_user_profile_response =
+                grpc_distributor->get_user_profile(
+                  GrpcAlgs::pack_user_id(request_info.current_user_id),
+                  false, // persistent profile
+                  profiles_request);
+              if (!get_user_profile_response || get_user_profile_response->has_error())
+              {
+                GrpcAlgs::print_grpc_error_response(
+                  get_user_profile_response,
+                  logger(),
+                  Aspect::IMPR_TRACK_FRONTEND);
+                throw Exception(std::string("get_user_profile is failed"));
+              }
+
+              const auto& user_profile_response_info =
+                get_user_profile_response->info();
+              if (user_profile_response_info.return_value())
+              {
+                UserInfo user_info;
+                user_info.user_id = GrpcAlgs::pack_user_id(result_user_id);
+                user_info.last_colo_id = request_info.colo_id;
+                user_info.request_colo_id = request_info.colo_id;
+                user_info.current_colo_id = -1;
+                user_info.temporary = false;
+                user_info.time = request_info.time.tv_sec;
+
+                MatchParams merge_match_params;
+                merge_match_params.use_empty_profile = false;
+                merge_match_params.silent_match = false;
+                merge_match_params.no_match = false;
+                merge_match_params.no_result = false;
+                merge_match_params.provide_persistent_channels = false;
+                merge_match_params.change_last_request = false;
+                merge_match_params.publishers_optin_timeout =
+                  Generics::Time::ZERO;
+
+                const auto& user_profiles_proto = user_profile_response_info.user_profiles();
+
+                UserProfiles merge_user_profiles;
+                merge_user_profiles.add_user_profile = user_profiles_proto.add_user_profile();
+                merge_user_profiles.base_user_profile = user_profiles_proto.base_user_profile();
+                merge_user_profiles.pref_profile = user_profiles_proto.pref_profile();
+                merge_user_profiles.history_user_profile = user_profiles_proto.history_user_profile();
+                merge_user_profiles.freq_cap = user_profiles_proto.freq_cap();
+
+                auto merge_response = grpc_distributor->merge(
+                  user_info,
+                  merge_match_params,
+                  merge_user_profiles);
+                if (!merge_response || merge_response->has_error())
+                {
+                  GrpcAlgs::print_grpc_error_response(
+                    merge_response,
+                    logger(),
+                    Aspect::IMPR_TRACK_FRONTEND);
+                  throw Exception(std::string("merge is failed"));
+                }
+
+                auto remove_user_profile_response = grpc_distributor->remove_user_profile(
+                  GrpcAlgs::pack_user_id(request_info.current_user_id));
+                if (!remove_user_profile_response || remove_user_profile_response->has_error())
+                {
+                  GrpcAlgs::print_grpc_error_response(
+                    remove_user_profile_response,
+                    logger(),
+                    Aspect::IMPR_TRACK_FRONTEND);
+                  throw Exception(std::string("remove_user_profile is failed"));
+                }
+              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+            }
+          }
+
+          if(!is_grpc_success && uim_session.in())
           {
             try
             {
@@ -885,8 +1149,58 @@ namespace ImprTrack
           // save freq caps
           AdServer::UserInfoSvcs::UserInfoMatcher_var
             uim_session = user_info_client_->user_info_session();
+          AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+            grpc_distributor = user_info_client_->grpc_distributor();
 
-          if(uim_session.in())
+          bool is_grpc_success = false;
+          if (grpc_distributor)
+          {
+            using ExcludePubpixelAccounts =
+              AdServer::UserInfoSvcs::Types::ExcludePubpixelAccounts;
+            try
+            {
+              is_grpc_success = true;
+
+              ExcludePubpixelAccounts pubpixel_accounts;
+              pubpixel_accounts.insert(
+                std::end(pubpixel_accounts),
+                std::begin(request_info.pubpixel_accounts),
+                std::end(request_info.pubpixel_accounts));
+
+              auto response = grpc_distributor->confirm_user_freq_caps(
+                GrpcAlgs::pack_user_id(freq_cap_user_id),
+                request_info.time,
+                GrpcAlgs::pack_request_id(request_info.common_request_id),
+                pubpixel_accounts);
+              if (!response || response->has_error())
+              {
+                is_grpc_success = false;
+                GrpcAlgs::print_grpc_error_response(
+                  response,
+                  logger(),
+                  Aspect::IMPR_TRACK_FRONTEND);
+              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+            }
+          }
+
+          if(!is_grpc_success && uim_session.in())
           {
             try
             {
@@ -1280,69 +1594,131 @@ namespace ImprTrack
 
     assert(user_bind_client_.in());
 
-    AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-      user_bind_client_->user_bind_mapper();
+    AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+      grpc_distributor = user_bind_client_->grpc_distributor();
 
-    // resolve cookie user id
-    try
+    bool is_grpc_success = false;
+    if (grpc_distributor)
     {
-      // resolve cookie user id only if user id in params not equal to cookie user id
-      if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+      // resolve cookie user id
+      try
       {
-        const std::string cookie_external_id_str =
-          std::string("c/") + cookie_user_id.to_string();
+        is_grpc_success = true;
 
-        AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-        get_request_info.id << cookie_external_id_str;
-        get_request_info.timestamp = CorbaAlgs::pack_time(now);
-        get_request_info.silent = true;
-        get_request_info.generate_user_id = false;
-        get_request_info.for_set_cookie = false;
-        get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-        get_request_info.current_user_id = CorbaAlgs::pack_user_id(cookie_user_id);
+        if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+        {
+          const std::string cookie_external_id_str =
+            std::string("c/") + cookie_user_id.to_string();
 
-        AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
-          user_bind_mapper->get_user_id(get_request_info);
+          auto response = grpc_distributor->get_user_id(
+            cookie_external_id_str,
+            GrpcAlgs::pack_user_id(cookie_user_id),
+            now,
+            Generics::Time::ZERO,
+            true,
+            false,
+            false);
 
-        resolved_cookie_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+          if (response && response->has_info())
+          {
+            const auto& info_proto = response->info();
+            resolved_cookie_user_id = GrpcAlgs::unpack_user_id(info_proto.user_id());
+          }
+          else
+          {
+            is_grpc_success = false;
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::IMPR_TRACK_FRONTEND);
+          }
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
       }
     }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+
+    if (!is_grpc_success)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindServer::NotReady";
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::IMPR_TRACK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::IMPR_TRACK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-        ex.description;
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::IMPR_TRACK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught CORBA::SystemException: " << e;
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::IMPR_TRACK_FRONTEND,
-        "ADS-ICON-6");
+      AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+        user_bind_client_->user_bind_mapper();
+
+      // resolve cookie user id
+      try
+      {
+        // resolve cookie user id only if user id in params not equal to cookie user id
+        if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+        {
+          const std::string cookie_external_id_str =
+            std::string("c/") + cookie_user_id.to_string();
+
+          AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
+          get_request_info.id << cookie_external_id_str;
+          get_request_info.timestamp = CorbaAlgs::pack_time(now);
+          get_request_info.silent = true;
+          get_request_info.generate_user_id = false;
+          get_request_info.for_set_cookie = false;
+          get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
+          get_request_info.current_user_id = CorbaAlgs::pack_user_id(cookie_user_id);
+
+          AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
+            user_bind_mapper->get_user_id(get_request_info);
+
+          resolved_cookie_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+        }
+      }
+      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindServer::NotReady";
+        logger()->log(ostr.str(),
+          Logging::Logger::EMERGENCY,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+        logger()->log(ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+          ex.description;
+        logger()->log(ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+      catch(const CORBA::SystemException& e)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": caught CORBA::SystemException: " << e;
+        logger()->log(ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-ICON-6");
+      }
     }
 
     // do history match
@@ -1353,100 +1729,205 @@ namespace ImprTrack
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
+      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+        grpc_distributor = user_info_client_->grpc_distributor();
 
-      try
+      bool is_grpc_success = false;
+      if (grpc_distributor)
       {
-        // call UIM only if any page channel matched
-        AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
-        match_params.use_empty_profile = false;
-        match_params.silent_match = false;
-        match_params.no_match = false;
-        match_params.no_result = true;
-        match_params.ret_freq_caps = false;
-        match_params.provide_channel_count = false;
-        match_params.provide_persistent_channels = false;
-        match_params.change_last_request = false;
-        match_params.filter_contextual_triggers = false;
-        match_params.publishers_optin_timeout =
-          CorbaAlgs::pack_time(Generics::Time::ZERO);
+        using ChannelMatchSet = std::set<ChannelMatch>;
+        using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+        using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+
+        try
+        {
+          is_grpc_success = true;
+
+          // call UIM only if any page channel matched
+          MatchParams match_params;
+          match_params.use_empty_profile = false;
+          match_params.silent_match = false;
+          match_params.no_match = false;
+          match_params.no_result = true;
+          match_params.ret_freq_caps = false;
+          match_params.provide_channel_count = false;
+          match_params.provide_persistent_channels = false;
+          match_params.change_last_request = false;
+          match_params.filter_contextual_triggers = false;
+          match_params.publishers_optin_timeout = Generics::Time::ZERO;
+
+          ChannelMatchSet page_channels;
+
+          std::transform(
+            trigger_match_result->matched_channels.page_channels.get_buffer(),
+            trigger_match_result->matched_channels.page_channels.get_buffer() +
+              trigger_match_result->matched_channels.page_channels.length(),
+            std::inserter(page_channels, page_channels.end()),
+            GetChannelTriggerId());
+
+          match_params.page_channel_ids.reserve(page_channels.size());
+          for (const auto& page_channel : page_channels)
+          {
+            match_params.page_channel_ids.emplace_back(
+              page_channel.channel_id,
+              page_channel.channel_trigger_id);
+          }
+
+          UserInfo user_info;
+          user_info.user_id = GrpcAlgs::pack_user_id(user_id);
+          user_info.last_colo_id = -1;
+          user_info.request_colo_id = common_config_->colo_id();
+          user_info.current_colo_id = -1;
+          user_info.temporary = false;
+          user_info.time = now.tv_sec;
+
+          if (user_id != AdServer::Commons::PROBE_USER_ID)
+          {
+            user_info.user_id = GrpcAlgs::pack_user_id(user_id);
+            auto response = grpc_distributor->match(
+              user_info,
+              match_params);
+            if (!response || response->has_error())
+            {
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                Aspect::IMPR_TRACK_FRONTEND);
+              throw Exception(std::string("match is failed"));
+            }
+          }
+
+          if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
+          {
+            user_info.user_id = GrpcAlgs::pack_user_id(resolved_cookie_user_id);
+            auto response = grpc_distributor->match(
+              user_info,
+              match_params);
+            if (!response || response->has_error())
+            {
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                Aspect::IMPR_TRACK_FRONTEND);
+              throw Exception(std::string("match is failed"));
+            }
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+        }
+      }
+
+      if (!is_grpc_success)
+      {
+        try
+        {
+          // call UIM only if any page channel matched
+          AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
+          match_params.use_empty_profile = false;
+          match_params.silent_match = false;
+          match_params.no_match = false;
+          match_params.no_result = true;
+          match_params.ret_freq_caps = false;
+          match_params.provide_channel_count = false;
+          match_params.provide_persistent_channels = false;
+          match_params.change_last_request = false;
+          match_params.filter_contextual_triggers = false;
+          match_params.publishers_optin_timeout =
+            CorbaAlgs::pack_time(Generics::Time::ZERO);
         
-        typedef std::set<ChannelMatch> ChannelMatchSet;
-        ChannelMatchSet page_channels;
+          typedef std::set<ChannelMatch> ChannelMatchSet;
+          ChannelMatchSet page_channels;
 
-        std::transform(
-          trigger_match_result->matched_channels.page_channels.get_buffer(),
-          trigger_match_result->matched_channels.page_channels.get_buffer() +
-          trigger_match_result->matched_channels.page_channels.length(),
-          std::inserter(page_channels, page_channels.end()),
-          GetChannelTriggerId());
+          std::transform(
+            trigger_match_result->matched_channels.page_channels.get_buffer(),
+            trigger_match_result->matched_channels.page_channels.get_buffer() +
+              trigger_match_result->matched_channels.page_channels.length(),
+            std::inserter(page_channels, page_channels.end()),
+            GetChannelTriggerId());
 
-        match_params.page_channel_ids.length(page_channels.size());
-        CORBA::ULong res_ch_i = 0;
-        for (ChannelMatchSet::const_iterator ch_it = page_channels.begin();
-             ch_it != page_channels.end(); ++ch_it, ++res_ch_i)
-        {
-          match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-          match_params.page_channel_ids[res_ch_i].channel_trigger_id =
-            ch_it->channel_trigger_id;
-        }
+          match_params.page_channel_ids.length(page_channels.size());
+          CORBA::ULong res_ch_i = 0;
+          for (ChannelMatchSet::const_iterator ch_it = page_channels.begin();
+               ch_it != page_channels.end(); ++ch_it, ++res_ch_i)
+          {
+            match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+            match_params.page_channel_ids[res_ch_i].channel_trigger_id =
+              ch_it->channel_trigger_id;
+          }
 
-        AdServer::UserInfoSvcs::UserInfo user_info;
-        user_info.user_id = CorbaAlgs::pack_user_id(user_id);
-        user_info.last_colo_id = -1;
-        user_info.request_colo_id = common_config_->colo_id();
-        user_info.current_colo_id = -1;
-        user_info.temporary = false;
-        user_info.time = now.tv_sec;
-
-        if (user_id != AdServer::Commons::PROBE_USER_ID)
-        {
+          AdServer::UserInfoSvcs::UserInfo user_info;
           user_info.user_id = CorbaAlgs::pack_user_id(user_id);
-          uim_session->match(
-            user_info,
-            match_params,
-            history_match_result.out());
-        }
+          user_info.last_colo_id = -1;
+          user_info.request_colo_id = common_config_->colo_id();
+          user_info.current_colo_id = -1;
+          user_info.temporary = false;
+          user_info.time = now.tv_sec;
 
-        if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
+          if (user_id != AdServer::Commons::PROBE_USER_ID)
+          {
+            user_info.user_id = CorbaAlgs::pack_user_id(user_id);
+            uim_session->match(
+              user_info,
+              match_params,
+              history_match_result.out());
+          }
+
+          if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
+          {
+            user_info.user_id = CorbaAlgs::pack_user_id(resolved_cookie_user_id);
+            AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var local_history_match_result;
+            uim_session->match(
+              user_info,
+              match_params,
+              local_history_match_result.out());
+          }
+        }
+        catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
         {
-          user_info.user_id = CorbaAlgs::pack_user_id(resolved_cookie_user_id);
-          AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var local_history_match_result;
-          uim_session->match(
-            user_info,
-            match_params,
-            local_history_match_result.out());
+          Stream::Error ostr;
+          ostr << FUN <<
+            ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
+            e.description;
+
+          logger()->log(ostr.str(),
+            Logging::Logger::EMERGENCY,
+            Aspect::IMPR_TRACK_FRONTEND,
+            "ADS-IMPL-112");
         }
-      }
-      catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN <<
-          ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
-          e.description;
+        catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
+        {
+          logger()->log(
+            String::SubString("UserInfoManager not ready for matching."),
+            TraceLevel::MIDDLE,
+            Aspect::IMPR_TRACK_FRONTEND);
+        }
+        catch(const CORBA::SystemException& ex)
+        {
+          Stream::Error ostr;
+          ostr << FUN <<
+            ": Can't match history channels. Caught CORBA::SystemException: " <<
+            ex;
 
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::IMPR_TRACK_FRONTEND,
-          "ADS-IMPL-112");
-      }
-      catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-      {
-        logger()->log(
-          String::SubString("UserInfoManager not ready for matching."),
-          TraceLevel::MIDDLE,
-          Aspect::IMPR_TRACK_FRONTEND);
-      }
-      catch(const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN <<
-          ": Can't match history channels. Caught CORBA::SystemException: " <<
-          ex;
-
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::IMPR_TRACK_FRONTEND,
-          "ADS-ICON-2");
+          logger()->log(ostr.str(),
+            Logging::Logger::EMERGENCY,
+            Aspect::IMPR_TRACK_FRONTEND,
+            "ADS-ICON-2");
+        }
       }
 
       try

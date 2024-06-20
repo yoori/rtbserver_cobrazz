@@ -35,10 +35,10 @@ namespace Profiling
   {
   private:
     using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
     using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using ManagerCoro = UServerUtils::Grpc::Manager;
+    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -217,15 +217,13 @@ namespace Profiling
       /*throw(Exception)*/;
 
   private:
+    ManagerCoro_var manager_coro_;
     CORBACommons::CorbaConfig corba_config_;
     ProfilingServerConfigPtr config_;
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
     Logging::LoggerCallbackHolder logger_callback_holder_;
-    ManagerCoro_var manager_coro_;
-
     std::unique_ptr<zmq::context_t> zmq_context_;
-
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
     FrontendCommons::UserBindClient_var user_bind_client_;

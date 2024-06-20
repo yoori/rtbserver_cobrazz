@@ -180,11 +180,10 @@ void Application::run(int argc, char** argv)
       event_thread_pool_config,
       main_task_processor_config);
 
-  ManagerCoro_var manager_coro(
-    new ManagerCoro(
-      std::move(task_processor_container_builder),
-      std::move(init_func),
-      logger.in()));
+  ManagerCoro_var manager_coro = new ManagerCoro(
+    std::move(task_processor_container_builder),
+    std::move(init_func),
+    logger.in());
   manager_coro->activate_object();
 
   GrpcUserBindOperationDistributor_var grpc_user_bind_distributor;

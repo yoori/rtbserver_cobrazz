@@ -13,6 +13,7 @@
 #include "ChannelSvcs/ChannelCommons/proto/ChannelServer_client.cobrazz.pb.hpp"
 
 // UNIXCOMMONS
+#include <GrpcAlgs.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
 #include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
@@ -23,19 +24,6 @@
 
 namespace AdServer::ChannelSvcs
 {
-
-namespace Internal
-{
-
-template<class T>
-struct always_false : std::false_type
-{
-};
-
-template<class T>
-constexpr auto always_false_v = always_false<T>::value;
-
-} // namespace Internal
 
 extern const char* ASPECT_GRPC_CHANNEL_OPERATION_POOL;
 
@@ -166,7 +154,7 @@ private:
         }
         else
         {
-          static_assert(Internal::always_false_v<Request>);
+          static_assert(GrpcAlgs::AlwaysFalseV<Request>);
         }
 
         auto response = client_holder->template do_request<Client, Request, Response>(
@@ -357,7 +345,7 @@ public:
     }
     else
     {
-      static_assert(Internal::always_false_v<Client>);
+      static_assert(GrpcAlgs::AlwaysFalseV<Client>);
     }
 
     for (std::size_t i = 1; i <= 3; ++i)

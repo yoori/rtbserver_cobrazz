@@ -15,14 +15,13 @@ const char* ASPECT_GRPC_USER_INFO_DISTRIBUTOR =
 
 GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
   Logger* logger,
-  ManagerCoro* manager_coro,
+  TaskProcessor& task_processor,
   const ControllerRefList& controller_refs,
   const CorbaClientAdapter* corba_client_adapter,
   const ConfigPoolClient& config_pool_client,
   const std::size_t grpc_client_timeout,
   const Generics::Time& pool_timeout)
   : logger_(ReferenceCounting::add_ref(logger)),
-    manager_coro_(ReferenceCounting::add_ref(manager_coro)),
     callback_(Generics::ActiveObjectCallback_var(
       new Logging::ActiveObjectCallbackImpl(
         logger,
@@ -40,7 +39,7 @@ GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
       logger_.in(),
       scheduler_,
       config_pool_client_,
-      manager_coro_->get_main_task_processor())),
+      task_processor)),
     corba_client_adapter_(ReferenceCounting::add_ref(corba_client_adapter)),
     task_runner_(new Generics::TaskRunner(callback_, try_count_))
 {

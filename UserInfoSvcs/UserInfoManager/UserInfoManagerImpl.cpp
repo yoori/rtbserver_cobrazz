@@ -767,34 +767,34 @@ namespace UserInfoSvcs
       UserFreqCapProfile::CampaignIds uc_campaign_ids;
 
       const auto& freq_caps = request->freq_caps();
-      std::copy(
+      fcs.insert(
+        std::end(fcs),
         std::begin(freq_caps),
-        std::end(freq_caps),
-        std::back_inserter(fcs));
+        std::end(freq_caps));
 
       const auto& uc_freq_caps = request->uc_freq_caps();
-      std::copy(
+      uc_fcs.insert(
+        std::end(uc_fcs),
         std::begin(uc_freq_caps),
-        std::end(uc_freq_caps),
-        std::back_inserter(uc_fcs));
+        std::end(uc_freq_caps));
 
       const auto& virtual_freq_caps = request->virtual_freq_caps();
-      std::copy(
+      virtual_fcs.insert(
+        std::end(virtual_fcs),
         std::begin(virtual_freq_caps),
-        std::end(virtual_freq_caps),
-        std::back_inserter(virtual_fcs));
+        std::end(virtual_freq_caps));
 
       const auto& campaign_ids_seq = request->campaign_ids();
-      std::copy(
+      campaign_ids.insert(
+        std::end(campaign_ids),
         std::begin(campaign_ids_seq),
-        std::end(campaign_ids_seq),
-        std::back_inserter(campaign_ids));
+        std::end(campaign_ids_seq));
 
       const auto& uc_campaign_ids_seq = request->uc_campaign_ids();
-      std::copy(
+      uc_campaign_ids.insert(
+        std::end(uc_campaign_ids),
         std::begin(uc_campaign_ids_seq),
-        std::end(uc_campaign_ids_seq),
-        std::back_inserter(uc_campaign_ids));
+        std::end(uc_campaign_ids_seq));
 
       const auto& seq_orders_seq = request->seq_orders();
       for(int i = 0; i < seq_orders_seq.size(); ++i)
@@ -1545,32 +1545,32 @@ namespace UserInfoSvcs
         profile_request.history_profile() ? &mb_history_profile_out : nullptr,
         profile_request.freq_cap_profile() ? &mb_fc_profile_out : nullptr))
       {
-        auto* user_profile_proto = info_proto->mutable_user_profile();
+        auto* user_profiles_proto = info_proto->mutable_user_profiles();
 
         if (mb_base_profile_out.in())
         {
-          auto* base_user_profile_proto = user_profile_proto->mutable_base_user_profile();
+          auto* base_user_profiles_proto = user_profiles_proto->mutable_base_user_profile();
           convert_mem_buf(mb_base_profile_out->membuf(),
-                          *base_user_profile_proto);
+                          *base_user_profiles_proto);
         }
 
         if (mb_add_profile_out.in())
         {
-          auto* add_user_profile_proto = user_profile_proto->mutable_add_user_profile();
+          auto* add_user_profiles_proto = user_profiles_proto->mutable_add_user_profile();
           convert_mem_buf(mb_add_profile_out->membuf(),
-                          *add_user_profile_proto);
+                          *add_user_profiles_proto);
         }
 
         if (mb_history_profile_out.in())
         {
-          auto* history_user_profile_proto = user_profile_proto->mutable_history_user_profile();
+          auto* history_user_profiles_proto = user_profiles_proto->mutable_history_user_profile();
           convert_mem_buf(mb_history_profile_out->membuf(),
-                          *history_user_profile_proto);
+                          *history_user_profiles_proto);
         }
 
         if(mb_fc_profile_out.in())
         {
-          auto* freq_cap_proto = user_profile_proto->mutable_freq_cap();
+          auto* freq_cap_proto = user_profiles_proto->mutable_freq_cap();
           convert_mem_buf(
             mb_fc_profile_out->membuf(),
             *freq_cap_proto);
@@ -1578,7 +1578,7 @@ namespace UserInfoSvcs
 
         if(mb_pref_profile_out.in())
         {
-          auto* pref_profile_proto = user_profile_proto->mutable_pref_profile();
+          auto* pref_profile_proto = user_profiles_proto->mutable_pref_profile();
           convert_mem_buf(mb_pref_profile_out->membuf(),
                           *pref_profile_proto);
         }

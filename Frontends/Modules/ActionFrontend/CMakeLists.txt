@@ -26,5 +26,4 @@ target_link_libraries(ActionFrontend
   RequestMatchers
   SecToken
   UserIdController
-  UserIdController
 )

@@ -19,6 +19,8 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 #include <LogCommons/LogCommons.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -70,6 +72,37 @@ namespace AdServer
 {
 namespace Instantiate
 {
+
+namespace
+{
+  template<class Error>
+  inline const char* get_merge_error_message(
+    const Error& error) noexcept
+  {
+    using ErrorType = typename Error::Type;
+
+    switch (error.type())
+    {
+      case ErrorType::Error_Type_ChunkNotFound:
+      {
+        return MergeMessage::SOURCE_EXCEPTION;
+      }
+      case ErrorType::Error_Type_NotReady:
+      {
+        return MergeMessage::SOURCE_NOT_READY;
+      }
+      case ErrorType::Error_Type_Implementation:
+      {
+        return MergeMessage::SOURCE_EXCEPTION;
+      }
+      default:
+      {
+        return MergeMessage::SOURCE_EXCEPTION;
+      }
+    }
+  }
+} // namespace
+
   /**
    *  Adinstfrontend implementation
    */
@@ -180,10 +213,19 @@ namespace Instantiate
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+        const bool is_grpc_enable = config_grpc_client.enable();
+
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          task_processor_,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          is_grpc_enable);
         add_child_object(user_info_client_);
 
         request_info_filler_.reset(
@@ -510,6 +552,126 @@ namespace Instantiate
 
     AdServer::UserInfoSvcs::UserInfoMatcher_var
       uim_session = user_info_client_->user_info_session();
+    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+      grpc_distributor = user_info_client_->grpc_distributor();
+
+    bool is_grpc_success = false;
+    if (grpc_distributor)
+    {
+      using ProfilesRequestInfo = AdServer::UserInfoSvcs::Types::ProfilesRequestInfo;
+
+      try
+      {
+        is_grpc_success = true;
+        merge_success = false;
+
+        if(request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
+        {
+          merge_error_message = MergeMessage::SOURCE_IS_PROBE;
+          return;
+        }
+        else
+        {
+          ProfilesRequestInfo profiles_request;
+          profiles_request.base_profile = true;
+          profiles_request.add_profile = true;
+          profiles_request.history_profile = true;
+          profiles_request.freq_cap_profile = false; // don't merge freq cap profiles
+          profiles_request.pref_profile = false;
+
+          auto response = grpc_distributor->get_user_profile(
+            GrpcAlgs::pack_user_id(request_info.temp_user_id),
+            true,
+            profiles_request);
+          if (!response || response->has_error())
+          {
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::AD_INST_FRONTEND);
+
+            if (response)
+            {
+              merge_error_message = get_merge_error_message(response->error());
+            }
+            else
+            {
+              merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+            }
+
+            throw Exception("get_user_profile is failed");
+          }
+
+          const auto& info_proto = response->info();
+          if (!info_proto.return_value())
+          {
+            merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
+            return;
+          }
+
+          const auto& user_profiles = info_proto.user_profiles();
+          if (user_profiles.base_user_profile().empty()
+           && user_profiles.add_user_profile().empty())
+          {
+            merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
+            return;
+          }
+
+          merge_success = true;
+        }
+
+        if(merge_success && request_info.remove_merged_uid)
+        {
+          auto response = grpc_distributor->remove_user_profile(
+            GrpcAlgs::pack_user_id(request_info.temp_user_id));
+          if (!response || response->has_error())
+          {
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::AD_INST_FRONTEND);
+            if (response)
+            {
+              merge_error_message = get_merge_error_message(response->error());
+            }
+            else
+            {
+              merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+            }
+
+            throw Exception("remove_user_profile is failed");
+          }
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        if (merge_error_message.empty())
+        {
+          merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+        }
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        if (merge_error_message.empty())
+        {
+          merge_error_message = MergeMessage::SOURCE_EXCEPTION;
+        }
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+      return;
 
     try
     {

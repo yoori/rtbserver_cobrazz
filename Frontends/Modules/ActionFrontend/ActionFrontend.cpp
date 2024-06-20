@@ -279,12 +279,12 @@ namespace Action
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
@@ -303,7 +303,11 @@ namespace Action
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          task_processor_,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
@@ -776,126 +780,246 @@ namespace Action
         trigger_match_result->matched_channels.url_channels.length() != 0 ||
         trigger_match_result->matched_channels.url_keyword_channels.length() != 0))
       {
-        AdServer::UserInfoSvcs::UserInfoMatcher_var
-          uim_session = user_info_client_->user_info_session();
+        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+          grpc_distributor = user_info_client_->grpc_distributor();
 
-        try
+        bool is_grpc_success = false;
+        if (grpc_distributor)
         {
-          // call UIM only if any channel matched
-          AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
-          match_params.use_empty_profile = false;
-          match_params.silent_match = false;
-          match_params.no_match = false;
-          match_params.no_result = true;
-          match_params.ret_freq_caps = false;
-          match_params.provide_channel_count = false;
-          match_params.provide_persistent_channels = false;
-          match_params.change_last_request = false;
-          match_params.filter_contextual_triggers = false;
-          match_params.publishers_optin_timeout =
-            CorbaAlgs::pack_time(Generics::Time::ZERO);
+          using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
+          using UserInfo = AdServer::UserInfoSvcs::Types::UserInfo;
+          using ChannelMatchSet = std::set<ChannelMatch>;
 
-          typedef std::set<ChannelMatch> ChannelMatchSet;
-          ChannelMatchSet page_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.page_channels.get_buffer(),
-            trigger_match_result->matched_channels.page_channels.get_buffer() +
-            trigger_match_result->matched_channels.page_channels.length(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
-
-          match_params.page_channel_ids.length(page_channels.size());
-          CORBA::ULong res_ch_i = 0;
-          for (ChannelMatchSet::const_iterator ch_it = page_channels.begin();
-               ch_it != page_channels.end(); ++ch_it, ++res_ch_i)
+          try
           {
-            match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-            match_params.page_channel_ids[res_ch_i].channel_trigger_id =
-              ch_it->channel_trigger_id;
+            is_grpc_success = true;
+
+            // call UIM only if any channel matched
+            MatchParams match_params;
+            match_params.use_empty_profile = false;
+            match_params.silent_match = false;
+            match_params.no_match = false;
+            match_params.no_result = true;
+            match_params.ret_freq_caps = false;
+            match_params.provide_channel_count = false;
+            match_params.provide_persistent_channels = false;
+            match_params.change_last_request = false;
+            match_params.filter_contextual_triggers = false;
+            match_params.publishers_optin_timeout = Generics::Time::ZERO;
+
+            ChannelMatchSet page_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.page_channels.get_buffer(),
+              trigger_match_result->matched_channels.page_channels.get_buffer() +
+                trigger_match_result->matched_channels.page_channels.length(),
+              std::inserter(page_channels, page_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.page_channel_ids.reserve(page_channels.size());
+            for (const auto& page_channel : page_channels)
+            {
+              match_params.page_channel_ids.emplace_back(
+                page_channel.channel_id,
+                page_channel.channel_trigger_id);
+            }
+
+            ChannelMatchSet url_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_channels.length(),
+              std::inserter(url_channels, url_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_channel_ids.reserve(url_channels.size());
+            for (const auto& url_channel : url_channels)
+            {
+              match_params.url_channel_ids.emplace_back(
+                url_channel.channel_id,
+                url_channel.channel_trigger_id);
+            }
+
+            ChannelMatchSet url_keyword_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_keyword_channels.length(),
+              std::inserter(url_keyword_channels, url_keyword_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_keyword_channel_ids.reserve(url_keyword_channels.size());
+            for (const auto& url_keyword_channel : url_keyword_channels)
+            {
+              match_params.url_keyword_channel_ids.emplace_back(
+                url_keyword_channel.channel_id,
+                url_keyword_channel.channel_trigger_id);
+            }
+
+            UserInfo user_info;
+            user_info.user_id = GrpcAlgs::pack_user_id(user_id);
+            user_info.last_colo_id = -1;
+            user_info.request_colo_id = common_config_->colo_id();
+            user_info.current_colo_id = -1;
+            user_info.temporary = false;
+            user_info.time = now.tv_sec;
+
+            auto response = grpc_distributor->match(
+              user_info,
+              match_params);
+            if (!response || response->has_error())
+            {
+              is_grpc_success = false;
+              GrpcAlgs::print_grpc_error_response(
+                response,
+                logger(),
+                Aspect::ACTION_FRONTEND);
+            }
           }
-
-          ChannelMatchSet url_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.url_channels.get_buffer(),
-            trigger_match_result->matched_channels.url_channels.get_buffer() +
-            trigger_match_result->matched_channels.url_channels.length(),
-            std::inserter(url_channels, url_channels.end()),
-            GetChannelTriggerId());
-
-          match_params.url_channel_ids.length(url_channels.size());
-          res_ch_i = 0;
-          for (ChannelMatchSet::const_iterator ch_it = url_channels.begin();
-               ch_it != url_channels.end(); ++ch_it, ++res_ch_i)
+          catch (const eh::Exception& exc)
           {
-            match_params.url_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-            match_params.url_channel_ids[res_ch_i].channel_trigger_id =
-              ch_it->channel_trigger_id;
+            is_grpc_success = false;
+            Stream::Error stream;
+            stream << __func__
+                   << ": "
+                   << exc.what();
+            logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
           }
-
-          ChannelMatchSet url_keyword_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
-            trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
-            trigger_match_result->matched_channels.url_keyword_channels.length(),
-            std::inserter(url_keyword_channels, url_keyword_channels.end()),
-            GetChannelTriggerId());
-
-          match_params.url_keyword_channel_ids.length(url_keyword_channels.size());
-          res_ch_i = 0;
-          for (ChannelMatchSet::const_iterator ch_it = url_keyword_channels.begin();
-               ch_it != url_keyword_channels.end(); ++ch_it, ++res_ch_i)
+          catch (...)
           {
-            match_params.url_keyword_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
-            match_params.url_keyword_channel_ids[res_ch_i].channel_trigger_id =
-              ch_it->channel_trigger_id;
+            is_grpc_success = false;
+            Stream::Error stream;
+            stream << __func__
+                   << ": Unknown error";
+            logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
           }
-
-          AdServer::UserInfoSvcs::UserInfo user_info;
-          user_info.user_id = CorbaAlgs::pack_user_id(user_id);
-          user_info.last_colo_id = -1;
-          user_info.request_colo_id = common_config_->colo_id();
-          user_info.current_colo_id = -1;
-          user_info.temporary = false;
-          user_info.time = now.tv_sec;
-
-          AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
-          uim_session->match(
-            user_info,
-            match_params,
-            match_result.out());
         }
-        catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
-        {
-          Stream::Error ostr;
-          ostr << __func__ <<
-            ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
-            e.description;
 
-          logger()->log(ostr.str(),
+        if (!is_grpc_success)
+        {
+          AdServer::UserInfoSvcs::UserInfoMatcher_var
+            uim_session = user_info_client_->user_info_session();
+
+          try
+          {
+            // call UIM only if any channel matched
+            AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
+            match_params.use_empty_profile = false;
+            match_params.silent_match = false;
+            match_params.no_match = false;
+            match_params.no_result = true;
+            match_params.ret_freq_caps = false;
+            match_params.provide_channel_count = false;
+            match_params.provide_persistent_channels = false;
+            match_params.change_last_request = false;
+            match_params.filter_contextual_triggers = false;
+            match_params.publishers_optin_timeout =
+              CorbaAlgs::pack_time(Generics::Time::ZERO);
+
+            typedef std::set<ChannelMatch> ChannelMatchSet;
+            ChannelMatchSet page_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.page_channels.get_buffer(),
+              trigger_match_result->matched_channels.page_channels.get_buffer() +
+                trigger_match_result->matched_channels.page_channels.length(),
+              std::inserter(page_channels, page_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.page_channel_ids.length(page_channels.size());
+            CORBA::ULong res_ch_i = 0;
+            for (ChannelMatchSet::const_iterator ch_it = page_channels.begin();
+                ch_it != page_channels.end(); ++ch_it, ++res_ch_i)
+            {
+              match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+              match_params.page_channel_ids[res_ch_i].channel_trigger_id =
+                ch_it->channel_trigger_id;
+            }
+
+            ChannelMatchSet url_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_channels.length(),
+              std::inserter(url_channels, url_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_channel_ids.length(url_channels.size());
+            res_ch_i = 0;
+            for (ChannelMatchSet::const_iterator ch_it = url_channels.begin();
+                 ch_it != url_channels.end(); ++ch_it, ++res_ch_i)
+            {
+              match_params.url_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+              match_params.url_channel_ids[res_ch_i].channel_trigger_id =
+                ch_it->channel_trigger_id;
+            }
+
+            ChannelMatchSet url_keyword_channels;
+
+            std::transform(
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
+              trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
+                trigger_match_result->matched_channels.url_keyword_channels.length(),
+              std::inserter(url_keyword_channels, url_keyword_channels.end()),
+              GetChannelTriggerId());
+
+            match_params.url_keyword_channel_ids.length(url_keyword_channels.size());
+            res_ch_i = 0;
+            for (ChannelMatchSet::const_iterator ch_it = url_keyword_channels.begin();
+                 ch_it != url_keyword_channels.end(); ++ch_it, ++res_ch_i)
+            {
+              match_params.url_keyword_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
+              match_params.url_keyword_channel_ids[res_ch_i].channel_trigger_id =
+                ch_it->channel_trigger_id;
+            }
+
+            AdServer::UserInfoSvcs::UserInfo user_info;
+            user_info.user_id = CorbaAlgs::pack_user_id(user_id);
+            user_info.last_colo_id = -1;
+            user_info.request_colo_id = common_config_->colo_id();
+            user_info.current_colo_id = -1;
+            user_info.temporary = false;
+            user_info.time = now.tv_sec;
+
+            AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
+            uim_session->match(
+              user_info,
+              match_params,
+              match_result.out());
+          }
+          catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
+          {
+            Stream::Error ostr;
+            ostr << __func__ <<
+              ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
+              e.description;
+
+            logger()->log(ostr.str(),
+              Logging::Logger::EMERGENCY,
+              Aspect::ACTION_FRONTEND,
+              "ADS-IMPL-112");
+          }
+          catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
+          {
+            logger()->log(
+              String::SubString("UserInfoManager not ready for matching."),
+              TraceLevel::MIDDLE,
+              Aspect::ACTION_FRONTEND);
+          }
+          catch(const CORBA::SystemException& ex)
+          {
+            Stream::Error ostr;
+            ostr << __func__ <<
+              ": Can't match history channels: CORBA::SystemException: " << ex;
+
+            logger()->log(ostr.str(),
             Logging::Logger::EMERGENCY,
-            Aspect::ACTION_FRONTEND,
-            "ADS-IMPL-112");
-        }
-        catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-        {
-          logger()->log(
-            String::SubString("UserInfoManager not ready for matching."),
-            TraceLevel::MIDDLE,
-            Aspect::ACTION_FRONTEND);
-        }
-        catch(const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << __func__ <<
-            ": Can't match history channels: CORBA::SystemException: " << ex;
-
-          logger()->log(ostr.str(),
-            Logging::Logger::EMERGENCY,
-            Aspect::ACTION_FRONTEND,
-            "ADS-ICON-2");
+              Aspect::ACTION_FRONTEND,
+              "ADS-ICON-2");
+          }
         }
 
         try
@@ -1053,65 +1177,112 @@ namespace Action
 
         if(user_bind_client_)
         {
-          try
-          {
-            AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-              user_bind_client_->user_bind_mapper();
+          AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+            grpc_distributor = user_bind_client_->grpc_distributor();
 
-            AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-              add_user_request_info;
-            const std::string external_id_str =
-              std::string("c/") + relink_user_id.to_string();
-            add_user_request_info.id << external_id_str;
-            add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
-            add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+          bool is_grpc_success = false;
+          if (grpc_distributor)
+          {
+            try
+            {
+              is_grpc_success = true;
+              const std::string external_id_str =
+                std::string("c/") + relink_user_id.to_string();
 
-            AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-              prev_user_bind_info =
-                user_bind_mapper->add_user_id(add_user_request_info);
+              auto response = grpc_distributor->add_user_id(
+                external_id_str,
+                request_info.time,
+                GrpcAlgs::pack_user_id(link_user_id));
+              if (!response || response->has_error())
+              {
+                is_grpc_success = false;
+                GrpcAlgs::print_grpc_error_response(
+                  response,
+                  logger(),
+                  Aspect::ACTION_FRONTEND);
+              }
+            }
+            catch (const eh::Exception& exc)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": "
+                     << exc.what();
+              logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+            }
+            catch (...)
+            {
+              is_grpc_success = false;
+              Stream::Error stream;
+              stream << FUN
+                     << ": Unknown error";
+              logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+            }
+          }
 
-            (void)prev_user_bind_info;
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+          if (!is_grpc_success)
           {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindServer::NotReady";
-            logger()->log(ostr.str(),
-              Logging::Logger::EMERGENCY,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-              ex.description;
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-IMPL-109");
-          }
-          catch(const CORBA::SystemException& e)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": caught CORBA::SystemException: " << e;
-            logger()->log(ostr.str(),
-              Logging::Logger::ERROR,
-              Aspect::ACTION_FRONTEND,
-              "ADS-ICON-6");
-          }
-          catch(...)
-          {
-            assert(0);
+            try
+            {
+              AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+                user_bind_client_->user_bind_mapper();
+
+              AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+                add_user_request_info;
+              const std::string external_id_str =
+                std::string("c/") + relink_user_id.to_string();
+              add_user_request_info.id << external_id_str;
+              add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
+              add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+
+              AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+                prev_user_bind_info =
+                  user_bind_mapper->add_user_id(add_user_request_info);
+
+              (void)prev_user_bind_info;
+            }
+            catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught UserBindServer::NotReady";
+              logger()->log(ostr.str(),
+                Logging::Logger::EMERGENCY,
+                Aspect::ACTION_FRONTEND,
+                "ADS-IMPL-109");
+            }
+            catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+              logger()->log(ostr.str(),
+                Logging::Logger::ERROR,
+                Aspect::ACTION_FRONTEND,
+                "ADS-IMPL-109");
+            }
+            catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+                ex.description;
+              logger()->log(ostr.str(),
+                Logging::Logger::ERROR,
+                Aspect::ACTION_FRONTEND,
+                "ADS-IMPL-109");
+            }
+            catch(const CORBA::SystemException& e)
+            {
+              Stream::Error ostr;
+              ostr << FUN << ": caught CORBA::SystemException: " << e;
+              logger()->log(ostr.str(),
+                Logging::Logger::ERROR,
+                Aspect::ACTION_FRONTEND,
+                "ADS-ICON-6");
+            }
+            catch(...)
+            {
+              assert(0);
+            }
           }
         }
       }
@@ -1120,64 +1291,111 @@ namespace Action
     // link ifa
     if(user_bind_client_ && !request_info.ifa.empty())
     {
-      try
-      {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
+      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
+        grpc_distributor = user_bind_client_->grpc_distributor();
 
-        AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-          add_user_request_info;
-        const std::string external_id_str = std::string("ifa/") + request_info.ifa;
-        add_user_request_info.id << external_id_str;
-        add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
-        add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+      bool is_grpc_success = false;
+      if (grpc_distributor)
+      {
+        try
+        {
+          is_grpc_success = true;
+          const std::string external_id_str =
+            std::string("ifa/") + request_info.ifa;
 
-        AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-          prev_user_bind_info =
-            user_bind_mapper->add_user_id(add_user_request_info);
+          auto response = grpc_distributor->add_user_id(
+            external_id_str,
+            request_info.time,
+            GrpcAlgs::pack_user_id(link_user_id));
+          if (!response || response->has_error())
+          {
+            is_grpc_success = false;
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::ACTION_FRONTEND);
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+        }
+      }
 
-        (void)prev_user_bind_info;
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      if (!is_grpc_success)
       {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindServer::NotReady";
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-          ex.description;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-IMPL-109");
-      }
-      catch(const CORBA::SystemException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << e;
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::ACTION_FRONTEND,
-          "ADS-ICON-6");
-      }
-      catch(...)
-      {
-        assert(0);
+        try
+        {
+          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
+            user_bind_client_->user_bind_mapper();
+
+          AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+            add_user_request_info;
+          const std::string external_id_str = std::string("ifa/") + request_info.ifa;
+          add_user_request_info.id << external_id_str;
+          add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
+          add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+
+          AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
+            prev_user_bind_info =
+              user_bind_mapper->add_user_id(add_user_request_info);
+
+          (void)prev_user_bind_info;
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindServer::NotReady";
+          logger()->log(ostr.str(),
+            Logging::Logger::EMERGENCY,
+            Aspect::ACTION_FRONTEND,
+            "ADS-IMPL-109");
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::ACTION_FRONTEND,
+            "ADS-IMPL-109");
+        }
+        catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
+            ex.description;
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::ACTION_FRONTEND,
+            "ADS-IMPL-109");
+        }
+        catch(const CORBA::SystemException& e)
+        {
+          Stream::Error ostr;
+          ostr << FUN << ": caught CORBA::SystemException: " << e;
+          logger()->log(ostr.str(),
+            Logging::Logger::ERROR,
+            Aspect::ACTION_FRONTEND,
+            "ADS-ICON-6");
+        }
+        catch(...)
+        {
+          assert(0);
+        }
       }
     }    
   }

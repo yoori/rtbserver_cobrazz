@@ -7,6 +7,8 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/Containers.hpp>
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
 #include "PassFrontend.hpp"
@@ -290,11 +292,63 @@ namespace Passback
     if(!passback_info.pubpixel_accounts.empty() &&
        !passback_info.current_user_id.is_null())
     {
+      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
+        grpc_distributor = user_info_client_->grpc_distributor();
+
+      bool is_grpc_success = false;
+      if (grpc_distributor)
+      {
+        using ExcludePubpixelAccounts =
+          AdServer::UserInfoSvcs::Types::ExcludePubpixelAccounts;
+
+        try
+        {
+          is_grpc_success = true;
+
+          ExcludePubpixelAccounts pubpixel_accounts;
+          pubpixel_accounts.insert(
+            std::end(pubpixel_accounts),
+            std::begin(passback_info.pubpixel_accounts),
+            std::end(passback_info.pubpixel_accounts));
+
+          auto response = grpc_distributor->confirm_user_freq_caps(
+            GrpcAlgs::pack_user_id(passback_info.current_user_id),
+            passback_info.time,
+            GrpcAlgs::pack_request_id(Commons::RequestId{}),
+            pubpixel_accounts);
+          if (!response || response->has_error())
+          {
+            is_grpc_success = false;
+            GrpcAlgs::print_grpc_error_response(
+              response,
+              logger(),
+              Aspect::PASS_FRONTEND);
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": "
+                 << exc.what();
+          logger()->error(stream.str(), Aspect::PASS_FRONTEND);
+        }
+        catch (...)
+        {
+          is_grpc_success = false;
+          Stream::Error stream;
+          stream << FUN
+                 << ": Unknown error";
+          logger()->error(stream.str(), Aspect::PASS_FRONTEND);
+        }
+      }
+
       // save freq caps
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
 
-      if(uim_session.in())
+      if(!is_grpc_success && uim_session.in())
       {
         try
         {
@@ -366,10 +420,18 @@ namespace Passback
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
+        const auto& config_grpc_client = common_config_->GrpcClientPool();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_grpc_client);
+
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
-          logger());
+          logger(),
+          task_processor_,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_grpc_client.enable());
 
         add_child_object(user_info_client_);
 

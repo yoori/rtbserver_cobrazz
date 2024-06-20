@@ -22,22 +22,10 @@
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/UserInfoManip.hpp>
+#include <GrpcAlgs.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
-
-namespace Internal
-{
-
-template<class T>
-struct always_false : std::false_type
-{
-};
-
-template<class T>
-constexpr auto always_false_v = always_false<T>::value;
-
-} // namespace Internal
 
 extern const char* ASPECT_GRPC_USER_INFO_DISTRIBUTOR;
 
@@ -67,6 +55,17 @@ struct ProfilesRequestInfo final
 struct SeqOrderInfo final
 {
   SeqOrderInfo() = default;
+
+  SeqOrderInfo(
+    const std::uint32_t ccg_id,
+    const std::uint32_t set_id,
+    const std::uint32_t imps)
+    : ccg_id(ccg_id),
+      set_id(set_id),
+      imps(imps)
+  {
+  }
+
   ~SeqOrderInfo() = default;
 
   std::uint32_t ccg_id = 0;
@@ -92,6 +91,15 @@ struct UserInfo final
 struct ChannelTriggerMatch final
 {
   ChannelTriggerMatch() = default;
+
+  ChannelTriggerMatch(
+    const std::uint32_t channel_id,
+    const std::uint32_t channel_trigger_id)
+    : channel_id(channel_id),
+      channel_trigger_id(channel_trigger_id)
+  {
+  }
+
   ~ChannelTriggerMatch() = default;
 
   std::uint32_t channel_id = 0;
@@ -101,12 +109,26 @@ using ChannelTriggerMatchArray = std::vector<ChannelTriggerMatch>;
 
 struct GeoData final
 {
+  using CoordDecimal = AdServer::CampaignSvcs::CoordDecimal;
+  using AccuracyDecimal = AdServer::CampaignSvcs::AccuracyDecimal;
+
   GeoData() = default;
+
+  GeoData(
+    const CoordDecimal& latitude,
+    const CoordDecimal& longitude,
+    const AccuracyDecimal& accuracy)
+    : latitude(latitude),
+      longitude(longitude),
+      accuracy(accuracy)
+  {
+  }
+
   ~GeoData() = default;
 
-  AdServer::CampaignSvcs::CoordDecimal latitude;
-  AdServer::CampaignSvcs::CoordDecimal longitude;
-  AdServer::CampaignSvcs::AccuracyDecimal accuracy;
+  CoordDecimal latitude;
+  CoordDecimal longitude;
+  AccuracyDecimal accuracy;
 };
 using GeoDataArray = std::vector<GeoData>;
 
@@ -175,14 +197,12 @@ private:
 
 public:
   using ChunkId = unsigned long;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
   using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
   using ControllerRef = CORBACommons::CorbaObjectRefList;
   using ControllerRefList = std::list<ControllerRef>;
-
+  using TaskProcessor = userver::engine::TaskProcessor;
   using GetMasterStampRequestPtr = std::unique_ptr<Proto::GetMasterStampRequest>;
   using GetMasterStampResponsePtr = std::unique_ptr<Proto::GetMasterStampResponse>;
   using GetUserProfileRequestPtr = std::unique_ptr<Proto::GetUserProfileRequest>;
@@ -209,7 +229,7 @@ public:
 public:
   GrpcUserInfoOperationDistributor(
     Logger* logger,
-    ManagerCoro* manager_coro,
+    TaskProcessor& task_processor,
     const ControllerRefList& controller_refs,
     const CorbaClientAdapter* corba_client_adapter,
     const ConfigPoolClient& config_pool_client,
@@ -391,7 +411,7 @@ private:
         }
         else
         {
-          static_assert(Internal::always_false_v<Request>);
+          static_assert(GrpcAlgs::AlwaysFalseV<Request>);
         }
 
         auto response = client_container->template do_request<Client, Request, Response>(
@@ -486,8 +506,6 @@ private:
 
 private:
   const Logger_var logger_;
-
-  const ManagerCoro_var manager_coro_;
 
   Generics::ActiveObjectCallback_var callback_;
 
@@ -710,7 +728,7 @@ public:
     }
     else
     {
-      static_assert(Internal::always_false_v<Client>);
+      static_assert(GrpcAlgs::AlwaysFalseV<Client>);
     }
 
     auto result = client->write(std::move(request), timeout);

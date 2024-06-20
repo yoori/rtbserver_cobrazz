@@ -1,48 +1,46 @@
 add_pst(DMPProfilingInfoPST  DMPProfilingInfo.pst ${PST_DIRECTORY}/Frontends/ProfilingServer)
 
-
 add_library(HashFilter SHARED
-HashFilter.cpp
+  HashFilter.cpp
 )
 
 target_link_libraries(HashFilter 
-    Generics
- Sync
- pthread
+  Generics
+  Sync
+  pthread
 )
 
 add_executable(ProfilingServer
-  DMPKafkaStreamer.cpp 
-  ProfilingServerStats.cpp 
-  ProfilingServer.cpp 
+  DMPKafkaStreamer.cpp
+  ProfilingServer.cpp
+  ProfilingServerStats.cpp
   RequestInfoFiller.cpp
-
 )
+
 target_link_libraries(ProfilingServer
- Generics
- Commons
-
- AdServerCommonsXSD
- 
- XMLUtility
-
- CORBACommons
- ProcessControlVars
-
- RequestMatchers
-# CampaignManagerStubs
-CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
-# UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
-
- ProfilingServerConfigXSD
- zmq
- UtilCommons
-# DMPProfilingInfo
- KafkaProducer
- HashFilter
-DMPProfilingInfoPST
-
+  AdServerCommonsXSD
+  BidRateProvider
+  CORBACommons
+  CTRProvider
+  CampaignConfig
+  CampaignConfigSource
+  CampaignIndex
+  CampaignManagerIDL
+  CampaignManagerLogger
+  Commons
+  CreativeTemplateArgs
+  DMPProfilingInfoPST
+  Generics
+  HashFilter
+  KafkaProducer
+  ProcessControlVars
+  ProfilingServerConfigXSD
+  RequestMatchers
+  SecToken
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  UserInfoManagerControllerL
+  UtilCommons
+  XMLUtility
+  zmq
 )
-
-#install(TARGETS ProfilingServer HashFilter  DESTINATION ${INSTALL_DIR})

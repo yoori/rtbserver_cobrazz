@@ -7,36 +7,52 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
+#include <UserInfoSvcs/UserInfoManagerController/GrpcUserInfoOperationDistributor.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
+
+#include <UServerUtils/Grpc/Manager.hpp>
 
 namespace FrontendCommons
 {
-  class UserInfoClient:
+  class UserInfoClient final:
       public virtual ReferenceCounting::AtomicImpl,
       public Generics::CompositeActiveObject
   {
   public:
-    typedef xsd::AdServer::Configuration::
-      CommonFeConfigurationType::UserInfoManagerControllerGroup_sequence
-      UserInfoManagerControllerGroupSeq;
+    using UserInfoManagerControllerGroupSeq =
+      xsd::AdServer::Configuration::CommonFeConfigurationType::UserInfoManagerControllerGroup_sequence;
+    using GrpcDistributor =
+      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
+    using GrpcDistributor_var =
+      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
+    using ConfigGrpcClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+    using TaskProcessor = userver::engine::TaskProcessor;
 
   public:
-    UserInfoClient(
+    explicit UserInfoClient(
       const UserInfoManagerControllerGroupSeq& user_info_manager_controller_group,
       const CORBACommons::CorbaClientAdapter* corba_client_adapter,
-      Logging::Logger* logger)
-      noexcept;
-
-    virtual ~UserInfoClient() noexcept {};
+      Logging::Logger* logger,
+      TaskProcessor& task_processor,
+      const ConfigGrpcClient& config_grpc_client,
+      const std::size_t timeout_grpc_client,
+      const bool grpc_enable) noexcept;
 
     AdServer::UserInfoSvcs::UserInfoMatcher*
     user_info_session() noexcept;
 
+    GrpcDistributor_var grpc_distributor() noexcept;
+
+  protected:
+    ~UserInfoClient() override = default;
+
   private:
     AdServer::UserInfoSvcs::UserInfoMatcher_var user_info_matcher_;
+
+    GrpcDistributor_var grpc_distributor_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserInfoClient> UserInfoClient_var;
+  using UserInfoClient_var = ReferenceCounting::SmartPtr<UserInfoClient>;
 }
 
 #endif /* _USER_INFO_CLIENT_ */

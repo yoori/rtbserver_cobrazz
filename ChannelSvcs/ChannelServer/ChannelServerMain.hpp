@@ -21,11 +21,12 @@ class ChannelServerApp_ :
   public AdServer::Commons::ProcessControlVarsLoggerImpl
 {
 public:
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
+
+private:
+  using ManagerCoro = UServerUtils::Grpc::Manager;
+  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
 
 public:
   ChannelServerApp_() /*throw(eh::Exception)*/;
