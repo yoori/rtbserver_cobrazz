@@ -1,20 +1,19 @@
 #include <eh/Exception.hpp>
 
 #include <Generics/ActiveObject.hpp>
-#include <Generics/Scheduler.hpp>
 
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <CORBACommons/Stats.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Commons/CorbaConfig.hpp>
+#include <Commons/GrpcService.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/UserverConfigUtils.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
+
 #include <UServerUtils/Grpc/Config.hpp>
 #include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
 
 #include "ChannelServer_service.cobrazz.pb.hpp"
 
@@ -22,9 +21,7 @@
 #include "ChannelServerImpl.hpp"
 #include "ChannelServerControlImpl.hpp"
 #include "ChannelUpdateImpl.hpp"
-#include "GrpcService.hpp"
 #include "ProcessStatsControl.hpp"
-//#include "ChannelServer.hpp"
 
 namespace
 {
@@ -227,7 +224,7 @@ void ChannelServerApp_::init_coro_()
       logger(),
       configuration_->GrpcServer());
 
-    auto match_service = AdServer::ChannelSvcs::create_grpc_service<
+    auto match_service = AdServer::Commons::create_grpc_service<
       AdServer::ChannelSvcs::Proto::ChannelServer_match_Service,
       AdServer::ChannelSvcs::ChannelServerCustomImpl,
       &AdServer::ChannelSvcs::ChannelServerCustomImpl::match>(
@@ -237,7 +234,7 @@ void ChannelServerApp_::init_coro_()
       match_service.in(),
       main_task_processor);
 
-    auto get_ccg_traits_service = AdServer::ChannelSvcs::create_grpc_service<
+    auto get_ccg_traits_service = AdServer::Commons::create_grpc_service<
       AdServer::ChannelSvcs::Proto::ChannelServer_get_ccg_traits_Service,
       AdServer::ChannelSvcs::ChannelServerCustomImpl,
       &AdServer::ChannelSvcs::ChannelServerCustomImpl::get_ccg_traits>(

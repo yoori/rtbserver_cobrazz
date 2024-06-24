@@ -30,7 +30,6 @@ target_link_libraries(UserBindContainer
 add_pst(UserBindOperationProfilePST UserBindOperationProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserBindServer)
 
 add_executable(UserBindServer
-  GrpcService.cpp
   UserBindServerMain.cpp
   UserBindServerImpl.cpp
   UserBindOperationSaver.cpp

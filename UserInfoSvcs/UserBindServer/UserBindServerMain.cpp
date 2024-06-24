@@ -1,14 +1,17 @@
 #include <eh/Exception.hpp>
 
-#include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/CorbaConfig.hpp>
+#include <Commons/ErrorHandler.hpp>
+#include <Commons/GrpcService.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/UserverConfigUtils.hpp>
 #include <UserInfoSvcs/UserInfoCommons/Statistics.hpp>
 
-#include "GrpcService.hpp"
 #include "UserBindServerMain.hpp"
+
+// PROTOBUF
+#include "UserBindServer_service.cobrazz.pb.hpp"
 
 // UNIXCOMMONS
 #include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
@@ -56,16 +59,6 @@ UserBindServerApp_::main(int& argc, char** argv)
   using ManagerCoro = UServerUtils::Grpc::Manager;
   using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
   using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
-  using GetBindRequestService = AdServer::UserInfoSvcs::GetBindRequestService;
-  using GetBindRequestService_var = AdServer::UserInfoSvcs::GetBindRequestService_var;
-  using AddBindRequestService = AdServer::UserInfoSvcs::AddBindRequestService;
-  using AddBindRequestService_var = AdServer::UserInfoSvcs::AddBindRequestService_var;
-  using GetUserIdService = AdServer::UserInfoSvcs::GetUserIdService;
-  using GetUserIdService_var = AdServer::UserInfoSvcs::GetUserIdService_var;
-  using AddUserIdService = AdServer::UserInfoSvcs::AddUserIdService;
-  using AddUserIdService_var = AdServer::UserInfoSvcs::AddUserIdService_var;
-  using GetSourceService = AdServer::UserInfoSvcs::GetSourceService;
-  using GetSourceService_var = AdServer::UserInfoSvcs::GetSourceService_var;
   using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
@@ -211,47 +204,61 @@ UserBindServerApp_::main(int& argc, char** argv)
           statistic_storage);
         components_builder->add_http_server(std::move(http_server_builder));
 
-        auto grpc_server_builder =
-          Config::create_grpc_cobrazz_server_builder(
-            logger(),
-            config().GrpcServer());
+        auto grpc_server_builder = Config::create_grpc_cobrazz_server_builder(
+          logger(),
+          config().GrpcServer());
 
-        GetBindRequestService_var get_bind_request_service(
-          new GetBindRequestService(
+        auto get_bind_request_service = AdServer::Commons::create_grpc_service<
+          AdServer::UserInfoSvcs::UserBindService_get_bind_request_Service,
+          AdServer::UserInfoSvcs::UserBindServerImpl,
+          &AdServer::UserInfoSvcs::UserBindServerImpl::get_bind_request>(
             logger(),
-            user_bind_server_impl_.in()));
+            user_bind_server_impl_.in());
+
         grpc_server_builder->add_service(
           get_bind_request_service.in(),
           main_task_processor);
 
-        AddBindRequestService_var add_bind_request_service(
-          new AddBindRequestService(
-            logger(),
-            user_bind_server_impl_.in()));
+        auto add_bind_request_service = AdServer::Commons::create_grpc_service<
+          AdServer::UserInfoSvcs::UserBindService_add_bind_request_Service,
+          AdServer::UserInfoSvcs::UserBindServerImpl,
+          &AdServer::UserInfoSvcs::UserBindServerImpl::add_bind_request>(
+          logger(),
+          user_bind_server_impl_.in());
+
         grpc_server_builder->add_service(
           add_bind_request_service.in(),
           main_task_processor);
 
-        GetUserIdService_var get_user_id_service(
-          new GetUserIdService(
-            logger(),
-            user_bind_server_impl_.in()));
+        auto get_user_id_service = AdServer::Commons::create_grpc_service<
+          AdServer::UserInfoSvcs::UserBindService_get_user_id_Service,
+          AdServer::UserInfoSvcs::UserBindServerImpl,
+          &AdServer::UserInfoSvcs::UserBindServerImpl::get_user_id>(
+          logger(),
+          user_bind_server_impl_.in());
+
         grpc_server_builder->add_service(
           get_user_id_service.in(),
           main_task_processor);
 
-        AddUserIdService_var add_user_id_service(
-          new AddUserIdService(
+        auto add_user_id_service = AdServer::Commons::create_grpc_service<
+          AdServer::UserInfoSvcs::UserBindService_add_user_id_Service,
+          AdServer::UserInfoSvcs::UserBindServerImpl,
+          &AdServer::UserInfoSvcs::UserBindServerImpl::add_user_id>(
             logger(),
-            user_bind_server_impl_.in()));
+            user_bind_server_impl_.in());
+
         grpc_server_builder->add_service(
           add_user_id_service.in(),
           main_task_processor);
 
-        GetSourceService_var get_source_service(
-          new GetSourceService(
+        auto get_source_service = AdServer::Commons::create_grpc_service<
+          AdServer::UserInfoSvcs::UserBindService_get_source_Service,
+          AdServer::UserInfoSvcs::UserBindServerImpl,
+          &AdServer::UserInfoSvcs::UserBindServerImpl::get_source>(
             logger(),
-            user_bind_server_impl_.in()));
+            user_bind_server_impl_.in());
+
         grpc_server_builder->add_service(
           get_source_service.in(),
           main_task_processor);

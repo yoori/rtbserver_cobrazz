@@ -16,7 +16,6 @@
 #include <UServerUtils/Grpc/Manager.hpp>
 #include <UServerUtils/Grpc/Core/Server/Config.hpp>
 
-#include "GrpcService.hpp"
 #include "CampaignManagerImpl.hpp"
 
 /**

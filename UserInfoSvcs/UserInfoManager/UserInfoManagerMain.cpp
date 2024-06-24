@@ -14,7 +14,7 @@
 
 #include "UserInfoManager_service.cobrazz.pb.hpp"
 
-#include "GrpcService.hpp"
+#include <Commons/GrpcService.hpp>
 #include "UserInfoManagerMain.hpp"
 #include "UserInfoManagerStat.hpp"
 
@@ -207,8 +207,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           logger(),
           config().GrpcServer());
 
-      auto get_master_stamp_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto get_master_stamp_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_master_stamp_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::get_master_stamp>(
           logger(),
           user_info_manager_impl_.in());
@@ -216,8 +217,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         get_master_stamp_service.in(),
         main_task_processor);
 
-      auto get_user_profile_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto get_user_profile_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_user_profile_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::get_user_profile>(
           logger(),
           user_info_manager_impl_.in());
@@ -225,8 +227,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         get_user_profile_service.in(),
         main_task_processor);
 
-      auto match_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto match_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_match_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::match>(
           logger(),
           user_info_manager_impl_.in());
@@ -234,8 +237,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         match_service.in(),
         main_task_processor);
 
-      auto update_user_freq_caps_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto update_user_freq_caps_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_update_user_freq_caps_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::update_user_freq_caps>(
           logger(),
           user_info_manager_impl_.in());
@@ -243,8 +247,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         update_user_freq_caps_service.in(),
         main_task_processor);
 
-      auto confirm_user_freq_caps_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto confirm_user_freq_caps_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_confirm_user_freq_caps_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::confirm_user_freq_caps>(
           logger(),
           user_info_manager_impl_.in());
@@ -252,8 +257,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         confirm_user_freq_caps_service.in(),
         main_task_processor);
 
-      auto fraud_user_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto fraud_user_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_fraud_user_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::fraud_user>(
           logger(),
           user_info_manager_impl_.in());
@@ -261,8 +267,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         fraud_user_service.in(),
         main_task_processor);
 
-      auto remove_user_profile_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto remove_user_profile_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_remove_user_profile_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::remove_user_profile>(
           logger(),
           user_info_manager_impl_.in());
@@ -270,8 +277,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         remove_user_profile_service.in(),
         main_task_processor);
 
-      auto merge_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto merge_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_merge_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::merge>(
           logger(),
           user_info_manager_impl_.in());
@@ -279,8 +287,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         merge_service.in(),
         main_task_processor);
 
-      auto consider_publishers_optin_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto consider_publishers_optin_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_consider_publishers_optin_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::consider_publishers_optin>(
           logger(),
           user_info_manager_impl_.in());
@@ -288,8 +297,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         consider_publishers_optin_service.in(),
         main_task_processor);
 
-      auto uim_ready_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto uim_ready_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_uim_ready_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::uim_ready>(
           logger(),
           user_info_manager_impl_.in());
@@ -297,8 +307,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         uim_ready_service.in(),
         main_task_processor);
 
-      auto get_progress_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto get_progress_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_progress_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::get_progress>(
           logger(),
           user_info_manager_impl_.in());
@@ -306,8 +317,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         get_progress_service.in(),
         main_task_processor);
 
-      auto clear_expired_service = AdServer::UserInfoSvcs::create_grpc_service<
+      auto clear_expired_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_clear_expired_Service,
+        UserInfoManagerImpl,
         &UserInfoManagerImpl::clear_expired>(
           logger(),
           user_info_manager_impl_.in());

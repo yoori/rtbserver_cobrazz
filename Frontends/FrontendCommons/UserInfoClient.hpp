@@ -10,8 +10,6 @@
 #include <UserInfoSvcs/UserInfoManagerController/GrpcUserInfoOperationDistributor.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
 
-#include <UServerUtils/Grpc/Manager.hpp>
-
 namespace FrontendCommons
 {
   class UserInfoClient final:
