@@ -24,15 +24,20 @@ function(add_idl _target _idlfile target_dir)
   add_custom_target(${FINDIDL_TARGET} DEPENDS "${OUTPUTS}")
 
   add_custom_command(
-    OUTPUT ${MIDL_OUTPUT} ${OUTPUTC} ${OUTPUTS}
-    COMMAND tao_idl ARGS  -Sp -in -ci .ipp -cs .cpp -hc .hpp -hs _s.hpp -ss _s.cpp  -I ${PROJECT_SOURCE_DIR} -I ${CORBA_INCLUDES}  ${SRC} -o ${MIDL_OUTPUT_PATH} 
-    DEPENDS ${SRC} ${FINDIDL_TARGET}
-    )
+          OUTPUT ${MIDL_OUTPUT} ${OUTPUTC} ${OUTPUTS}
+          COMMAND tao_idl ARGS  -Sp -in -ci .ipp -cs .cpp -hc .hpp -hs _s.hpp -ss _s.cpp  -I ${PROJECT_SOURCE_DIR} -I ${CORBA_INCLUDES}  ${SRC} -o ${MIDL_OUTPUT_PATH}
+          #       COMMAND ${CMAKE_COMMAND} -E echo "done generating ${MIDL_OUTPUT_PATH}"
+          #       COMMAND ${CMAKE_COMMAND} -E echo "OUTPUTC ${OUTPUTC};"
+          COMMAND sed -i "'s/if (0 == &_tao_elem)/if (true)/g'" ${OUTPUTC}
+          #       COMMAND ${CMAKE_COMMAND} -E echo "done sed"
+          COMMENT "Add IDL. ${_target}"
+          DEPENDS ${SRC} ${FINDIDL_TARGET}
+  )
 
   cmake_parse_arguments(FINDIDL "" "TLBIMP" "" ${ARGN})
 
   if(FINDIDL_TLBIMP)
-      file(GLOB TLBIMPv7_FILES "C:/Program Files*/Microsoft SDKs/Windows/v7*/bin/TlbImp.exe") 
+      file(GLOB TLBIMPv7_FILES "C:/Program Files*/Microsoft SDKs/Windows/v7*/bin/TlbImp.exe")
       file(GLOB TLBIMPv8_FILES "C:/Program Files*/Microsoft SDKs/Windows/v8*/bin/*/TlbImp.exe")
       file(GLOB TLBIMPv10_FILES "C:/Program Files*/Microsoft SDKs/Windows/v10*/bin/*/TlbImp.exe")
 
@@ -78,13 +83,13 @@ function(add_idl _target _idlfile target_dir)
   endif()
   add_library(${_target} SHARED
       ${OUTPUTC} ${OUTPUTS}
-  ) 
+  )
 
   target_link_libraries(
       ${_target}
       ACE
       TAO TAO_AnyTypeCode  TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny TAO_EndpointPolicy TAO_FaultTolerance
-      TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable 
+      TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable
       TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
   )
 
