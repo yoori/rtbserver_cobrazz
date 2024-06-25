@@ -13,10 +13,10 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/TaskRunner.hpp>
-#include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
-#include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Grpc/Client/ConfigPoolCoro.hpp>
+#include <UServerUtils/Grpc/Client/PoolClientFactory.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
+#include <UServerUtils/Manager.hpp>
 
 // THIS
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -185,7 +185,7 @@ private:
   struct PartitionHolder;
   class PartitionResolver;
 
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
   using ClientContainerPtr = std::shared_ptr<ClientContainer>;
   using FactoryClientContainerPtr = std::unique_ptr<FactoryClientContainer>;
   using PartitionPtr = std::shared_ptr<Partition>;
@@ -199,7 +199,7 @@ public:
   using ChunkId = unsigned long;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
-  using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+  using ConfigPoolClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
   using ControllerRef = CORBACommons::CorbaObjectRefList;
   using ControllerRefList = std::list<ControllerRef>;
   using TaskProcessor = userver::engine::TaskProcessor;
@@ -631,7 +631,7 @@ public:
   using ClientsPtr = std::shared_ptr<Clients>;
 
 private:
-  using Status = UServerUtils::Grpc::Core::Client::Status;
+  using Status = UServerUtils::Grpc::Client::Status;
   using Mutex = std::shared_mutex;
 
 public:
@@ -756,34 +756,20 @@ class GrpcUserInfoOperationDistributor::FactoryClientContainer final
   : private Generics::Uncopyable
 {
 public:
-  using GetMasterStampClientPtr =
-    typename ClientContainer::GetMasterStampClientPtr;
-  using GetUserProfileClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using MatchClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using UpdateUserFreqCapsClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using ConfirmUserFreqCapsClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using FraudUserClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using RemoveUserProfileClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using MergeClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using ConsiderPublishersOptinClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using UimReadyClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using GetProgressClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using ClearExpiredClientPtr =
-    typename ClientContainer::GetUserProfileClientPtr;
-  using GrpcCobrazzPoolClientFactory =
-    UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
-  using TaskProcessor =
-    GrpcCobrazzPoolClientFactory::TaskProcessor;
+  using GetMasterStampClientPtr = typename ClientContainer::GetMasterStampClientPtr;
+  using GetUserProfileClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using MatchClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using UpdateUserFreqCapsClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using ConfirmUserFreqCapsClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using FraudUserClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using RemoveUserProfileClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using MergeClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using ConsiderPublishersOptinClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using UimReadyClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using GetProgressClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using ClearExpiredClientPtr = typename ClientContainer::GetUserProfileClientPtr;
+  using GrpcPoolClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
+  using TaskProcessor = userver::engine::TaskProcessor;
 
 private:
   using Mutex = std::shared_mutex;
@@ -836,7 +822,7 @@ public:
       std::string endpoint = endpoint_stream.str();
       config.endpoint = endpoint;
 
-      UServerUtils::Grpc::GrpcCobrazzPoolClientFactory factory(
+      GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
         config);

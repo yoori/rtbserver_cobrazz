@@ -5,7 +5,7 @@
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 // UNIX_COMMONS
-#include <UServerUtils/Grpc/Core/Common/Utils.hpp>
+#include <UServerUtils/Grpc/Common/Utils.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -32,7 +32,7 @@ GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
     grpc_client_timeout_(grpc_client_timeout),
     pool_timeout_(pool_timeout),
     controller_refs_(controller_refs),
-    scheduler_(UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+    scheduler_(UServerUtils::Grpc::Common::Utils::create_scheduler(
       config_pool_client_.number_threads,
       logger_.in())),
     factory_client_container_(new FactoryClientContainer(

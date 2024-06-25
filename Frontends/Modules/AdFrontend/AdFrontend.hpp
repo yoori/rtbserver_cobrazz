@@ -17,7 +17,7 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
@@ -62,7 +62,7 @@ namespace AdServer
 
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using AdFeConfiguration = Configuration::FeConfig::AdFeConfiguration_type;
     using PassFeConfiguration = Configuration::FeConfig::PassFeConfiguration_type;

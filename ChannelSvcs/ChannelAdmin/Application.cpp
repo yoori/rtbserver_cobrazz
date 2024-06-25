@@ -492,19 +492,19 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/:
       Logging::Logger::CRITICAL));
   adapter_ = new CORBACommons::CorbaClientAdapter;
 
-  UServerUtils::Grpc::CoroPoolConfig coro_pool_config;
-  UServerUtils::Grpc::EventThreadPoolConfig event_thread_pool_config;
-  UServerUtils::Grpc::TaskProcessorConfig main_task_processor_config;
+  UServerUtils::CoroPoolConfig coro_pool_config;
+  UServerUtils::EventThreadPoolConfig event_thread_pool_config;
+  UServerUtils::TaskProcessorConfig main_task_processor_config;
   main_task_processor_config.name = "main_task_processor";
   main_task_processor_config.worker_threads = 10;
   main_task_processor_config.thread_name = "main_tskpr";
 
-  auto init_func = [] (UServerUtils::Grpc::TaskProcessorContainer& task_processor_container) {
-    return std::make_unique<UServerUtils::Grpc::ComponentsBuilder>();
+  auto init_func = [] (UServerUtils::TaskProcessorContainer& task_processor_container) {
+    return std::make_unique<UServerUtils::ComponentsBuilder>();
   };
 
   auto task_processor_container_builder =
-    std::make_unique<UServerUtils::Grpc::TaskProcessorContainerBuilder>(
+    std::make_unique<UServerUtils::TaskProcessorContainerBuilder>(
       logger_.in(),
       coro_pool_config,
       event_thread_pool_config,
@@ -675,7 +675,7 @@ void Application::init_server_grpc_()
     throw InvalidArgument(stream);
   }
 
-  UServerUtils::Grpc::Core::Client::ConfigPoolCoro config_grpc_client;
+  UServerUtils::Grpc::Client::ConfigPoolCoro config_grpc_client;
   config_grpc_client.number_async_client = 5;
   config_grpc_client.number_channels = 5;
 
@@ -692,7 +692,7 @@ void Application::init_server_grpc_()
   }
   else
   {
-    auto scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+    auto scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
       5,
       logger_.in());
     grpc_channel_client_pool_ = std::make_unique<AdServer::ChannelSvcs::GrpcChannelOperationPool>(
@@ -2132,16 +2132,16 @@ Application::MatchResponsePtr Application::make_match_query_grpc()
       };
 
       auto result = stat_marker.calc_stat_r<MatchClient::WriteResult>(std::move(func));
-      if (result.status == UServerUtils::Grpc::Core::Client::Status::Ok)
+      if (result.status == UServerUtils::Grpc::Client::Status::Ok)
       {
         auto response = std::move(result.response);
         return response;
       }
-      else if (result.status == UServerUtils::Grpc::Core::Client::Status::Timeout)
+      else if (result.status == UServerUtils::Grpc::Client::Status::Timeout)
       {
         throw Exception("Timeout is reached");
       }
-      else if (result.status == UServerUtils::Grpc::Core::Client::Status::InternalError)
+      else if (result.status == UServerUtils::Grpc::Client::Status::InternalError)
       {
         throw Exception("Internal error occure");
       }

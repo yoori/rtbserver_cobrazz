@@ -22,8 +22,8 @@
 #include <Frontends/ProfilingServer/HashFilter.hpp>
 #include <Frontends/ProfilingServer/ProfilingServerStats.hpp>
 
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 namespace AdServer
 {
@@ -34,11 +34,11 @@ namespace Profiling
     private Generics::CompositeActiveObject
   {
   private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+    using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+    using ManagerCoro = UServerUtils::Manager;
+    using ManagerCoro_var = UServerUtils::Manager_var;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

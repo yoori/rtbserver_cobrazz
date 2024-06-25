@@ -11,8 +11,9 @@
 
 #include <Generics/Singleton.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Grpc/Client/PoolClientFactory.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
@@ -30,9 +31,9 @@
 class Application
 {
 public:
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-  using GrpcClientFactory = UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
+  using GrpcClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
   using GrpcClientFactoryPtr = std::unique_ptr<GrpcClientFactory>;
   using MatchResponse = AdServer::ChannelSvcs::Proto::MatchResponse;
   using MatchResponsePtr = std::unique_ptr<MatchResponse>;

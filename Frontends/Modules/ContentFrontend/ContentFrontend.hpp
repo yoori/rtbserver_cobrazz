@@ -6,7 +6,7 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/TextTemplateCache.hpp>
@@ -26,7 +26,7 @@ namespace AdServer
   {
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using ContentFeConfiguration = Configuration::FeConfig::ContentFeConfiguration_type;
     using ContentFrontend_var = ReferenceCounting::SmartPtr<ContentFrontend>;

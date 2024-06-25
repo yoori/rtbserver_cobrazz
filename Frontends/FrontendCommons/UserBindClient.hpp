@@ -10,8 +10,6 @@
 #include <UserInfoSvcs/UserBindController/GrpcUserBindOperationDistributor.hpp>
 #include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
 
-#include <UServerUtils/Grpc/Manager.hpp>
-
 namespace FrontendCommons
 {
   class UserBindClient final:
@@ -23,9 +21,9 @@ namespace FrontendCommons
       CommonFeConfigurationType::UserBindControllerGroup_sequence;
     using GrpcDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
     using GrpcDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
-    using ConfigGrpcClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+    using ConfigGrpcClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   public:
     explicit UserBindClient(

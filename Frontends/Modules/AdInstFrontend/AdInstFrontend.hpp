@@ -16,7 +16,7 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
@@ -34,9 +34,6 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -60,7 +57,7 @@ namespace Instantiate
   public:
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using AdInstFeConfiguration = Configuration::FeConfig::AdInstFeConfiguration_type;
     using HttpResponse = FrontendCommons::HttpResponse;

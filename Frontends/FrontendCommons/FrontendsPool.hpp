@@ -7,7 +7,7 @@
 // UNIXCOMMONS
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
 #include <userver/engine/task/task_processor.hpp>
@@ -34,7 +34,7 @@ namespace AdServer
     {
     public:
       using TaskProcessor = userver::engine::TaskProcessor;
-      using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+      using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 

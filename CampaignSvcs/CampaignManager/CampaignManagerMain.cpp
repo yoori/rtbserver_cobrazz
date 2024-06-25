@@ -143,10 +143,10 @@ char* CampaignManagerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
 void
 CampaignManagerApp_::main(int& argc, char** argv) noexcept
 {
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using CampaignManagerImpl = AdServer::CampaignSvcs::CampaignManagerImpl;
 
   const char* stage = "beginning main()";
@@ -230,7 +230,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
       auto components_builder = std::make_unique<ComponentsBuilder>();
-      auto grpc_server_builder = Config::create_grpc_cobrazz_server_builder(
+      auto grpc_server_builder = Config::create_grpc_server_builder(
         logger(),
         campaign_manager_config_->GrpcServer());
 

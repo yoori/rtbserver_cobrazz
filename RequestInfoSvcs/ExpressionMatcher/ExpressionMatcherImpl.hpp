@@ -24,7 +24,7 @@
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <LogCommons/RequestBasicChannels.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 
 #include "ExpressionMatcher_s.hpp"
 

@@ -5,8 +5,8 @@
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Singleton.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 // THIS
 #include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
@@ -30,10 +30,10 @@ public:
   using StatHolder_var = AdServer::StatHolder_var;
   using ServerConfig = xsd::AdServer::Configuration::ServerConfigType;
   using ServerConfigPtr = std::unique_ptr<ServerConfig>;
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 

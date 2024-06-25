@@ -5,12 +5,12 @@
 
 #include <eh/Exception.hpp>
 #include <XMLUtility/Utility.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
-#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Grpc/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Config.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/CorbaConfig.hpp>
@@ -61,9 +61,9 @@ ExpressionMatcherApp_::is_alive() /*throw(CORBA::SystemException)*/
 void
 ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
 {
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using ManagerCoro = UServerUtils::Manager;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;

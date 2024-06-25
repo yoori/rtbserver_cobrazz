@@ -5,7 +5,7 @@
 #include <UserInfoSvcs/UserBindController/UserBindController.hpp>
 
 // UNIX_COMMONS
-#include <UServerUtils/Grpc/Core/Common/Utils.hpp>
+#include <UServerUtils/Grpc/Common/Utils.hpp>
 
 namespace AdServer::UserInfoSvcs
 {

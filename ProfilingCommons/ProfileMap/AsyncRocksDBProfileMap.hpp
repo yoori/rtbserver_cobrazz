@@ -8,8 +8,8 @@
 #include <Generics/Uncopyable.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBase.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
+#include <UServerUtils/RocksDB/DataBase.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 
 // THIS
 #include "ProfileMap.hpp"

@@ -3,7 +3,7 @@
 
 // UNIXCOMMONS
 #include <eh/Exception.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 
 // THIS
 #include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>

@@ -14,7 +14,7 @@
 #include <GeoIP/IPMap.hpp>
 #include <String/TextTemplate.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/TextTemplateCache.hpp>
@@ -52,7 +52,7 @@ namespace Action
 
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Frontend_var = ReferenceCounting::SmartPtr<Frontend>;
 
   public:

@@ -12,7 +12,7 @@
 #include <Logger/DistributorLogger.hpp>
 #include <Generics/FileCache.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/UserInfoManip.hpp>
@@ -57,7 +57,7 @@ namespace ImprTrack
 
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   public:
     Frontend(

@@ -2,12 +2,11 @@
 #include <eh/Exception.hpp>
 #include <CORBACommons/StatsImpl.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
-#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Grpc/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 #include <XMLUtility/Utility.cpp>
 
 // THIS
@@ -171,14 +170,14 @@ namespace Frontends
   void
   FCGIServer::init_fcgi_() /*throw(Exception)*/
   {
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+    using ManagerCoro = UServerUtils::Manager;
+    using ManagerCoro_var = UServerUtils::Manager_var;
+    using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
     using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
     using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
     using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
     static const char* FUN = "FCGIServer::init_fcgi_()";
 
@@ -346,7 +345,7 @@ namespace Frontends
              << "hardware_concurrency is failed";
         throw Exception(ostr);
       }
-      SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+      SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
         number_scheduler_threads,
         logger());
 

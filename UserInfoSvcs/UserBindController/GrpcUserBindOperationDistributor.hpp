@@ -18,9 +18,9 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/TaskRunner.hpp>
-#include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
+#include <UServerUtils/Grpc/Client/ConfigPoolCoro.hpp>
+#include <UServerUtils/Grpc/Client/PoolClientFactory.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -41,7 +41,7 @@ private:
   struct PartitionHolder;
   class ResolvePartitionTask;
 
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
   using TaskProcessor = userver::engine::TaskProcessor;
   using ClientContainerPtr = std::shared_ptr<ClientContainer>;
   using FactoryClientContainerPtr = std::unique_ptr<FactoryClientContainer>;
@@ -56,7 +56,7 @@ public:
   using ChunkId = unsigned int;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
-  using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+  using ConfigPoolClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
   using ControllerRef = CORBACommons::CorbaObjectRefList;
   using ControllerRefList = std::list<ControllerRef>;
 
@@ -381,7 +381,7 @@ public:
   using ClientsPtr = std::shared_ptr<Clients>;
 
 private:
-  using Status = UServerUtils::Grpc::Core::Client::Status;
+  using Status = UServerUtils::Grpc::Client::Status;
   using Mutex = std::shared_mutex;
 
 public:
@@ -476,18 +476,12 @@ class GrpcUserBindOperationDistributor::FactoryClientContainer final
   : private Generics::Uncopyable
 {
 public:
-  using GetBindRequestClientPtr =
-    typename ClientContainer::GetBindRequestClientPtr;
-  using AddBindRequestClientPtr =
-    typename ClientContainer::AddBindRequestClientPtr;
-  using GetUserIdClientPtr =
-    typename ClientContainer::GetUserIdClientPtr;
-  using AddUserIdClientPtr =
-    typename ClientContainer::AddUserIdClientPtr;
-  using GrpcCobrazzPoolClientFactory =
-    UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
-  using TaskProcessor =
-    GrpcCobrazzPoolClientFactory::TaskProcessor;
+  using GetBindRequestClientPtr = typename ClientContainer::GetBindRequestClientPtr;
+  using AddBindRequestClientPtr = typename ClientContainer::AddBindRequestClientPtr;
+  using GetUserIdClientPtr = typename ClientContainer::GetUserIdClientPtr;
+  using AddUserIdClientPtr = typename ClientContainer::AddUserIdClientPtr;
+  using GrpcPoolClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
+  using TaskProcessor = userver::engine::TaskProcessor;
 
 private:
   using Mutex = std::shared_mutex;
@@ -539,7 +533,7 @@ public:
       std::string endpoint = endpoint_stream.str();
       config.endpoint = endpoint;
 
-      UServerUtils::Grpc::GrpcCobrazzPoolClientFactory factory(
+      GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
         config);

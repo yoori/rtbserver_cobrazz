@@ -9,7 +9,7 @@
 #include <Generics/ActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
@@ -35,7 +35,7 @@ namespace PubPixel
   {
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:

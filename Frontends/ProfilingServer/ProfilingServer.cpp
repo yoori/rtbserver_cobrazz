@@ -603,7 +603,7 @@ namespace Profiling
           throw Exception(stream);
         }
 
-        SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+        SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
           number_scheduler_threads,
           logger());
 

@@ -1,7 +1,7 @@
 // UNIX_COMMONS
 #include <XMLUtility/StringManip.hpp>
 #include <XMLUtility/Utility.hpp>
-#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
 
 // THIS
 #include <Commons/ConfigUtils.hpp>
@@ -189,7 +189,7 @@ void Application::init_http()
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using HttpHandlerConfig = UServerUtils::Http::Server::HandlerConfig;
   using ListenerConfig = UServerUtils::Http::Server::ListenerConfig;
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   ManagerCoro_var manager;
   try
@@ -290,7 +290,7 @@ void Application::init_http()
       throw Exception(stream);
     }
 
-    SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+    SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
       number_scheduler_threads,
       logger());
 

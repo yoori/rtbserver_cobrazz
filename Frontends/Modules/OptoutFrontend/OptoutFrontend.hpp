@@ -13,7 +13,7 @@
 #include <String/StringManip.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
@@ -50,7 +50,7 @@ namespace AdServer
 
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using HttpResponse = FrontendCommons::HttpResponse;
 
   public:

@@ -6,11 +6,10 @@
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserverConfigUtils.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include "UserInfoManager_service.cobrazz.pb.hpp"
 
@@ -87,10 +86,10 @@ void
 UserInfoManagerApp_::main(int& argc, char** argv)
   noexcept
 {
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using UserInfoManagerImpl = AdServer::UserInfoSvcs::UserInfoManagerImpl;
 
   static const char* FUN = "UserInfoManagerApp_::main()";
@@ -202,10 +201,9 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       auto components_builder =
         std::make_unique<ComponentsBuilder>();
 
-      auto grpc_server_builder =
-        Config::create_grpc_cobrazz_server_builder(
-          logger(),
-          config().GrpcServer());
+      auto grpc_server_builder = Config::create_grpc_server_builder(
+        logger(),
+        config().GrpcServer());
 
       auto get_master_stamp_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_master_stamp_Service,

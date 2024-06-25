@@ -10,7 +10,7 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
@@ -19,9 +19,6 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -43,7 +40,7 @@ namespace Passback
   public:
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   public:
     Frontend(

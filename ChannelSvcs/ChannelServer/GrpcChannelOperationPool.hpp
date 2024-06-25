@@ -15,9 +15,9 @@
 // UNIXCOMMONS
 #include <GrpcAlgs.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
+#include <UServerUtils/Grpc/Client/ConfigPoolCoro.hpp>
+#include <UServerUtils/Grpc/Client/PoolClientFactory.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
 #include <userver/engine/task/task_processor.hpp>
@@ -42,7 +42,7 @@ public:
   using Port = std::size_t;
   using Endpoint = std::pair<Host, Port>;
   using Endpoints = std::vector<Endpoint>;
-  using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+  using ConfigPoolClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
   using Time = Generics::Time;
@@ -56,7 +56,7 @@ public:
   using GetCcgTraitsResponse = Proto::GetCcgTraitsResponse;
   using GetCcgTraitsResponsePtr = std::unique_ptr<GetCcgTraitsResponse>;
   using TaskProcessor = userver::engine::TaskProcessor;
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
 public:
   explicit GrpcChannelOperationPool(
@@ -294,7 +294,7 @@ public:
   using ClientsPtr = std::shared_ptr<Clients>;
 
 private:
-  using Status = UServerUtils::Grpc::Core::Client::Status;
+  using Status = UServerUtils::Grpc::Client::Status;
   using Mutex = std::shared_mutex;
 
 public:
@@ -394,8 +394,8 @@ class GrpcChannelOperationPool::FactoryClientHolder final : private Generics::Un
 public:
   using MatchClient = Proto::ChannelServer_match_ClientPool;
   using GetCcgTraitsClient = Proto::ChannelServer_get_ccg_traits_ClientPool;
-  using GrpcCobrazzPoolClientFactory = UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
-  using TaskProcessor = GrpcCobrazzPoolClientFactory::TaskProcessor;
+  using GrpcPoolClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
+  using TaskProcessor = userver::engine::TaskProcessor;
 
 private:
   using Mutex = std::shared_mutex;
@@ -452,7 +452,7 @@ public:
       std::string endpoint = endpoint_stream.str();
       config.endpoint = endpoint;
 
-      UServerUtils::Grpc::GrpcCobrazzPoolClientFactory factory(
+      GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
         config);

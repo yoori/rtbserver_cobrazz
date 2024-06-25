@@ -12,7 +12,7 @@
 #include <Logger/ActiveObjectCallback.hpp>
 #include <Generics/MMap.hpp>
 #include <HTTP/Http.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <FrontendCommons/BoundedCache.hpp>
@@ -36,7 +36,7 @@ namespace AdServer
   {
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:

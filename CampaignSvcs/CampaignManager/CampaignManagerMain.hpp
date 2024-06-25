@@ -10,11 +10,10 @@
 #include <Commons/UserverConfigUtils.hpp>
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <CampaignSvcs/DomainConfig.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/Grpc/Server/Config.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include "CampaignManagerImpl.hpp"
 

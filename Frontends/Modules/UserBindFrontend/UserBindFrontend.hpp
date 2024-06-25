@@ -12,7 +12,7 @@
 #include <Generics/Uuid.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <String/TextTemplate.hpp>
@@ -51,14 +51,14 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+    using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);
 
   public:
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using UserBindFeConfiguration = Configuration::FeConfig::UserBindFeConfiguration_type;
 

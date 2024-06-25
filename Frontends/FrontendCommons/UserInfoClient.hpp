@@ -23,7 +23,7 @@ namespace FrontendCommons
       AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
     using GrpcDistributor_var =
       AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
-    using ConfigGrpcClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+    using ConfigGrpcClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
     using TaskProcessor = userver::engine::TaskProcessor;
 
   public:

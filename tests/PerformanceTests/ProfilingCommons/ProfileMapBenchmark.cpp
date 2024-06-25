@@ -16,30 +16,21 @@
 #include <Logger/StreamLogger.hpp>
 #include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMap.hpp>
-#include <UServerUtils/Grpc/Component.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Utils.hpp>
+#include <UServerUtils/Component.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
+#include <UServerUtils/Utils.hpp>
 
-using namespace UServerUtils::Grpc;
-using TaskProcessor = TaskProcessorContainer::TaskProcessor;
 using namespace AdServer::ProfilingCommons;
 
 struct WriteStatistics final
 {
-  WriteStatistics() = default;
-  ~WriteStatistics() = default;
-
   std::atomic<std::uint64_t> success{0};
   std::atomic<std::uint64_t> error{0};
 };
 
 struct ReadStatistics final
 {
-  ReadStatistics() = default;
-  ~ReadStatistics() = default;
-
   std::atomic<std::uint64_t> success{0};
   std::atomic<std::uint64_t> error{0};
 };
@@ -240,7 +231,7 @@ private:
   DataBaseManagerPoolPtr rocksdb_manager_pool_;
 };
 
-class Benchmark : public Component
+class Benchmark : public UServerUtils::Component
 {
 public:
   using ProfileMapT = ProfileMap<std::string>;
@@ -821,14 +812,14 @@ public:
           std::cerr,
           Logging::Logger::ERROR)));
 
-      CoroPoolConfig coro_pool_config;
+      UServerUtils::CoroPoolConfig coro_pool_config;
       coro_pool_config.initial_size = 100000;
       coro_pool_config.max_size = 1000000;
 
-      EventThreadPoolConfig event_thread_pool_config;
+      UServerUtils::EventThreadPoolConfig event_thread_pool_config;
       event_thread_pool_config.threads = 4;
 
-      TaskProcessorConfig main_task_processor_config;
+      UServerUtils::TaskProcessorConfig main_task_processor_config;
       main_task_processor_config.name = "main_task_processor";
       main_task_processor_config.worker_threads =
         std::thread::hardware_concurrency();
@@ -836,8 +827,8 @@ public:
       main_task_processor_config.should_guess_cpu_limit = false;
       main_task_processor_config.wait_queue_length_limit = 200000;
 
-      TaskProcessorContainerBuilderPtr task_processor_container_builder(
-        new TaskProcessorContainerBuilder(
+      UServerUtils::TaskProcessorContainerBuilderPtr task_processor_container_builder(
+        new UServerUtils::TaskProcessorContainerBuilder(
           logger_userver.in(),
           coro_pool_config,
           event_thread_pool_config,
@@ -845,16 +836,16 @@ public:
 
       auto init_func =
         [benchmark = std::move(benchmark_)] (
-          TaskProcessorContainer& task_processor_container) {
-          ComponentsBuilderPtr components_builder(
-            new ComponentsBuilder);
+          UServerUtils::TaskProcessorContainer& task_processor_container) {
+          UServerUtils::ComponentsBuilderPtr components_builder(
+            new UServerUtils::ComponentsBuilder);
           components_builder->add_user_component(
             "Benchmark",
             benchmark.in());
           return components_builder;
         };
 
-      Manager_var manager = new Manager(
+      UServerUtils::Manager_var manager = new UServerUtils::Manager(
         std::move(task_processor_container_builder),
         std::move(init_func),
         logger_userver.in());

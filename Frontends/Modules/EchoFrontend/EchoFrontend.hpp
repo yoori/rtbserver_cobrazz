@@ -4,7 +4,7 @@
 // UNIX_COMMONS
 #include <Logger/Logger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
 #include <userver/engine/task/task_processor.hpp>
@@ -26,7 +26,7 @@ class Frontend final :
 public:
   using HttpResponseFactory = FrontendCommons::HttpResponseFactory;
   using HttpResponseFactory_var = FrontendCommons::HttpResponseFactory_var;
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
   using TaskProcessor = userver::engine::TaskProcessor;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
