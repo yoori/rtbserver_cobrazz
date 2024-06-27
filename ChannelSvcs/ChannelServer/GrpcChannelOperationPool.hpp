@@ -12,9 +12,10 @@
 // PROTO
 #include "ChannelSvcs/ChannelCommons/proto/ChannelServer_client.cobrazz.pb.hpp"
 
+// THIS
+#include <Commons/GrpcAlgs.hpp>
+
 // UNIXCOMMONS
-#include <GrpcAlgs.hpp>
-#include <Generics/CompositeActiveObject.hpp>
 #include <UServerUtils/Grpc/Client/ConfigPoolCoro.hpp>
 #include <UServerUtils/Grpc/Client/PoolClientFactory.hpp>
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
@@ -25,7 +26,7 @@
 namespace AdServer::ChannelSvcs
 {
 
-extern const char* ASPECT_GRPC_CHANNEL_OPERATION_POOL;
+inline constexpr char ASPECT_GRPC_CHANNEL_OPERATION_POOL[] = "GRPC_CHANNEL_OPERATION_POOL";
 
 class GrpcChannelOperationPool final : Generics::Uncopyable
 {
@@ -57,6 +58,8 @@ public:
   using GetCcgTraitsResponsePtr = std::unique_ptr<GetCcgTraitsResponse>;
   using TaskProcessor = userver::engine::TaskProcessor;
   using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
   explicit GrpcChannelOperationPool(
@@ -211,6 +214,13 @@ private:
             }
           }
         }
+        else
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << "Unknown response type";
+          throw  Exception(stream);
+        }
       }
       catch (const eh::Exception& exc)
       {
@@ -317,6 +327,13 @@ public:
     }
 
     const Generics::Time now = Generics::Time::get_time_of_day();
+    {
+      std::shared_lock lock(mutex_);
+      if (marked_as_bad_ && now < marked_as_bad_time_ + time_duration_client_bad_)
+      {
+        return true;
+      }
+    }
 
     std::unique_lock lock(mutex_);
     if (marked_as_bad_ && now >= marked_as_bad_time_ + time_duration_client_bad_)
@@ -395,7 +412,6 @@ public:
   using MatchClient = Proto::ChannelServer_match_ClientPool;
   using GetCcgTraitsClient = Proto::ChannelServer_get_ccg_traits_ClientPool;
   using GrpcPoolClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
-  using TaskProcessor = userver::engine::TaskProcessor;
 
 private:
   using Mutex = std::shared_mutex;

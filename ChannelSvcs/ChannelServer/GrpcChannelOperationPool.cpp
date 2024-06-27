@@ -1,11 +1,8 @@
 // THIS
 #include "ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp"
 
-
 namespace AdServer::ChannelSvcs
 {
-
-const char* ASPECT_GRPC_CHANNEL_OPERATION_POOL = "ASPECT_GRPC_CHANNEL_OPERATION_POOL";
 
 GrpcChannelOperationPool::GrpcChannelOperationPool(
   Logger* logger,
@@ -54,8 +51,8 @@ GrpcChannelOperationPool::match(
 {
   return do_request<
     Proto::ChannelServer_match_ClientPool,
-    Proto::MatchRequest,
-    Proto::MatchResponse>(
+    MatchRequest,
+    MatchResponse>(
       request_id,
       first_url,
       first_url_words,
@@ -78,8 +75,8 @@ GrpcChannelOperationPool::get_ccg_traits(
 {
   return do_request<
     Proto::ChannelServer_get_ccg_traits_ClientPool,
-    Proto::GetCcgTraitsRequest,
-    Proto::GetCcgTraitsResponse>(ids);
+    GetCcgTraitsRequest,
+    GetCcgTraitsResponse>(ids);
 }
 
 GrpcChannelOperationPool::MatchRequestPtr
