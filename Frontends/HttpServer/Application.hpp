@@ -9,9 +9,11 @@
 #include <UServerUtils/Manager.hpp>
 
 // THIS
-#include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
+#include <ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/GrpcCampaignManagerPool.hpp>
+#include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
 #include <xsd/Frontends/HttpServerConfig.hpp>
 
 namespace AdServer::Frontends::Http
@@ -34,6 +36,12 @@ public:
   using ManagerCoro = UServerUtils::Manager;
   using ManagerCoro_var = UServerUtils::Manager_var;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+  using GrpcChannelOperationPool = AdServer::ChannelSvcs::GrpcChannelOperationPool;
+  using GrpcChannelOperationPoolPtr = std::shared_ptr<GrpcChannelOperationPool>;
+  using GrpcCampaignManagerPool = FrontendCommons::GrpcCampaignManagerPool;
+  using GrpcCampaignManagerPoolPtr = std::shared_ptr<GrpcCampaignManagerPool>;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+  using TaskProcessor = userver::engine::TaskProcessor;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -56,6 +64,14 @@ private:
   void init_corba();
 
   void init_http();
+
+  GrpcChannelOperationPoolPtr create_grpc_channel_operation_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
+
+  GrpcCampaignManagerPoolPtr create_grpc_campaign_manager_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
 
 private:
   CorbaConfig corba_config_;

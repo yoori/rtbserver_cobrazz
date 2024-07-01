@@ -23,6 +23,7 @@ namespace AdServer
   {
     // FrontendsPool
     FrontendsPool::FrontendsPool(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       const char* config_path,
@@ -31,6 +32,7 @@ namespace AdServer
       StatHolder* stats,
       FrontendCommons::HttpResponseFactory* response_factory)
       : FrontendCommons::FrontendInterface(response_factory),
+        grpc_container_(grpc_container),
         task_processor_(task_processor),
         scheduler_(scheduler),
         config_(new Configuration(config_path)),
@@ -260,6 +262,7 @@ namespace AdServer
       {
         frontends_.emplace_back(
           new Frontend(
+            grpc_container_,
             task_processor_,
             scheduler_,
             config_,

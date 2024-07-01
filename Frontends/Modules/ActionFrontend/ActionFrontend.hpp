@@ -1,4 +1,3 @@
-
 #ifndef _AD_FRONTENDS_ACTION_FRONTEND_ACTION_FRONTEND_HPP_
 #define _AD_FRONTENDS_ACTION_FRONTEND_ACTION_FRONTEND_HPP_
 
@@ -26,6 +25,7 @@
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -51,6 +51,7 @@ namespace Action
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Frontend_var = ReferenceCounting::SmartPtr<Frontend>;
@@ -59,6 +60,7 @@ namespace Action
     static Frontend_var instance;
 
     Frontend(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config,
@@ -224,6 +226,7 @@ namespace Action
       CookieManagerPtr;
 
   private:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
 

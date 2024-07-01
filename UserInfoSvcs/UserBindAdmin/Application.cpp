@@ -5,7 +5,7 @@
 #include <UServerUtils/Manager.hpp>
 
 // PROTO
-#include "UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp"
+#include <UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp>
 
 // THIS
 #include <Commons/GrpcAlgs.hpp>

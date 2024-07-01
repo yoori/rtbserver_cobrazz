@@ -34,6 +34,7 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -56,11 +57,13 @@ namespace ImprTrack
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   public:
     Frontend(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config,
@@ -178,6 +181,7 @@ namespace ImprTrack
       const noexcept;
 
   private:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
 

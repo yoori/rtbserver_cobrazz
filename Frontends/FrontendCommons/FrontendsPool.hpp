@@ -16,6 +16,7 @@
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
 
@@ -35,6 +36,7 @@ namespace AdServer
     public:
       using TaskProcessor = userver::engine::TaskProcessor;
       using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+      using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -66,6 +68,7 @@ namespace AdServer
        * @param config path
        */
       FrontendsPool(
+        const GrpcContainerPtr& grpc_container,
         TaskProcessor& task_processor,
         const SchedulerPtr& scheduler,
         const char* config_path,
@@ -132,14 +135,24 @@ namespace AdServer
         T&&... params);
 
     private:
+      const GrpcContainerPtr grpc_container_;
+
       TaskProcessor& task_processor_;
+
       SchedulerPtr scheduler_;
+
       Configuration_var config_;
+
       ModuleIdArray modules_;
+
       Logging::Logger_var logger_;
+
       StatHolder_var stats_;
+
       FrontendCommons::HttpResponseFactory_var http_response_factory_;
+
       CommonModule_var common_module_;
+
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };
   }

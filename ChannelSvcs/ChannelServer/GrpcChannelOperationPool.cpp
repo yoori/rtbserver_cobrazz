@@ -11,7 +11,7 @@ GrpcChannelOperationPool::GrpcChannelOperationPool(
   const Endpoints& endpoints,
   const ConfigPoolClient& config_pool_client,
   const std::size_t grpc_client_timeout_ms,
-  const std::size_t time_duration_client_bad_ms)
+  const std::size_t time_duration_client_bad_sec)
   : logger_(ReferenceCounting::add_ref(logger)),
     task_processor_(task_processor),
     scheduler_(scheduler),
@@ -20,7 +20,7 @@ GrpcChannelOperationPool::GrpcChannelOperationPool(
       scheduler_,
       config_pool_client,
       task_processor,
-      Time{static_cast<time_t>(time_duration_client_bad_ms / 1000)})),
+      Time{static_cast<time_t>(time_duration_client_bad_sec)})),
     grpc_client_timeout_ms_(grpc_client_timeout_ms)
 {
   const std::size_t size = endpoints.size();

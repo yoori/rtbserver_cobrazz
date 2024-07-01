@@ -137,11 +137,6 @@
         minOccurs="0"
         maxOccurs="1"/>
 
-      <xsd:element name="Coroutine"
-        type="CoroutineType"
-        minOccurs="1"
-        maxOccurs="1"/>
-
       <xsd:element name="GrpcClientPool"
         type="GrpcClientPoolType"
         minOccurs="1"
@@ -601,7 +596,6 @@
     <xsd:sequence>
       <xsd:element name="PathUriList" type="UriListType"/>
       <xsd:element name="UriList" type="UriListType"/>
-      <xsd:element name="ChannelServerEndpointList" type="EndpointListType"/>
       <xsd:element name="Logger" type="FrontendLoggerType">
         <xsd:annotation>
           <xsd:documentation>
@@ -618,9 +612,6 @@
       type="xsd:nonNegativeInteger"
       use="required"/>
     <xsd:attribute name="match_task_limit"
-      type="xsd:nonNegativeInteger"
-      use="required"/>
-    <xsd:attribute name="time_duration_client_mark_bad"
       type="xsd:nonNegativeInteger"
       use="required"/>
 
@@ -1013,15 +1004,6 @@
     </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:complexType name="EndpointListType">
-    <xsd:sequence>
-      <xsd:element name="Endpoint"
-        type="EndpointType"
-        minOccurs="1"
-        maxOccurs="unbounded"/>
-    </xsd:sequence>
-  </xsd:complexType>
-
   <xsd:complexType name="UriListType">
     <xsd:sequence>
       <xsd:element name="Uri"
@@ -1038,11 +1020,6 @@
         minOccurs="0"
         maxOccurs="unbounded"/>
     </xsd:sequence>
-  </xsd:complexType>
-
-  <xsd:complexType name="EndpointType">
-    <xsd:attribute name="host" type="xsd:string" use="required"/>
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="UriType">

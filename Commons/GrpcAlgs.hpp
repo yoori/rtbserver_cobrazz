@@ -3,6 +3,7 @@
 
 // STD
 #include <cassert>
+#include <type_traits>
 
 // PROTOBUF
 #include <google/protobuf/repeated_field.h>
@@ -204,7 +205,15 @@ void pack_decimal_into_repeated_field(
   seq.Add(buf, buf + EL_NUMBER);
 }
 
-template<class Error>
+template<class E>
+concept ConceptError1 = requires(E e)
+{
+  std::decay_t<decltype(e.type())>::Error_Type_ChunkNotFound;
+  std::decay_t<decltype(e.type())>::Error_Type_NotReady;
+  std::decay_t<decltype(e.type())>::Error_Type_Implementation;
+};
+
+template<ConceptError1 Error>
 void print_grpc_error(
   const Error& error,
   Logging::Logger* logger,
@@ -220,41 +229,90 @@ void print_grpc_error(
       {
         Stream::Error stream;
         stream << FNS
-               << ": Chunk not found.";
-        logger->error(
-          stream.str(),
-          aspect);
+               << "Chunk not found.";
+        logger->error(stream.str(), aspect);
         break;
       }
       case ErrorType::Error_Type_NotReady:
       {
         Stream::Error stream;
         stream << FNS
-               << ": Not ready.";
-        logger->error(
-          stream.str(),
-          aspect);
+               << "Not ready.";
+        logger->error(stream.str(), aspect);
         break;
       }
       case ErrorType::Error_Type_Implementation:
       {
         Stream::Error stream;
         stream << FNS
-               << ": "
                << error.description();
-        logger->error(
-          stream.str(),
-          aspect);
+        logger->error(stream.str(), aspect);
         break;
       }
       default:
       {
         Stream::Error stream;
         stream << FNS
-               << ": Unknown error type";
-        logger->error(
-          stream.str(),
-          aspect);
+               << "Unknown error type";
+        logger->error(stream.str(),aspect);
+      }
+    }
+  }
+  catch (...)
+  {
+  }
+}
+
+template<class E>
+concept ConceptError2 = requires(E e)
+{
+  std::decay_t<decltype(e.type())>::Error_Type_NotReady;
+  std::decay_t<decltype(e.type())>::Error_Type_IncorrectArgument;
+  std::decay_t<decltype(e.type())>::Error_Type_Implementation;
+};
+
+template<ConceptError2 Error>
+void print_grpc_error(
+  const Error& error,
+  Logging::Logger* logger,
+  const char* aspect) noexcept
+{
+  using ErrorType = typename Error::Type;
+
+  try
+  {
+    switch (error.type())
+    {
+      case ErrorType::Error_Type_NotReady:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not ready.";
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      case ErrorType::Error_Type_IncorrectArgument:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not ready.";
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      case ErrorType::Error_Type_Implementation:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << error.description();
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      default:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error type";
+        logger->error(stream.str(), aspect);
       }
     }
   }
@@ -282,10 +340,7 @@ void print_grpc_error_response(
     {
       if (response->has_error())
       {
-        print_grpc_error(
-          response->error(),
-          logger,
-          aspect);
+        print_grpc_error(response->error(), logger, aspect);
       }
     }
   }

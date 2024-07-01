@@ -107,6 +107,7 @@ namespace
    *  Adinstfrontend implementation
    */
   Frontend::Frontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -129,6 +130,7 @@ namespace
         response_factory,
         frontend_config->get().AdInstFeConfiguration()->threads(),
         0), // max pending tasks
+      grpc_container_(grpc_container),
       task_processor_(task_processor),
       scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),

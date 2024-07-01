@@ -69,7 +69,7 @@ public:
     const Endpoints& endpoints,
     const ConfigPoolClient& config_pool_client,
     const std::size_t grpc_client_timeout_ms = 1000,
-    const std::size_t time_duration_client_bad_ms = 30000);
+    const std::size_t time_duration_client_bad_sec = 30);
 
   ~GrpcChannelOperationPool() = default;
 
@@ -286,7 +286,7 @@ private:
   std::atomic<std::size_t> counter_{0};
 };
 
-using GrpcChannelOperationPoolPtr = std::unique_ptr<GrpcChannelOperationPool>;
+using GrpcChannelOperationPoolPtr = std::shared_ptr<GrpcChannelOperationPool>;
 
 class GrpcChannelOperationPool::ClientHolder final : private Generics::Uncopyable
 {

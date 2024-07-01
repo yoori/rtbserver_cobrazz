@@ -14,6 +14,7 @@
 <xsl:output method="xml" indent="yes" encoding="utf-8"/>
 
 <xsl:include href="../Functions.xsl"/>
+<xsl:include href="../GrpcChannelArgs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -26,8 +27,13 @@
   <xsl:param name="http-adserver-config"/>
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="server-root"/>
+  <xsl:param name="channel-servers-path"/>
+  <xsl:param name="campaign-managers-path"/>
 
   <cfg:ServerConfig>
+    <xsl:attribute name="time_duration_grpc_client_mark_bad">
+      <xsl:value-of select="$def-time-duration-grpc-client-mark-bad"/>
+    </xsl:attribute>
     <xsl:variable name="config-root"><xsl:value-of select="$env-config/@config_root"/>
       <xsl:if test="count($env-config/@config_root) = 0"><xsl:value-of select="$def-config-root"/></xsl:if>
     </xsl:variable>
@@ -148,6 +154,49 @@
     <cfg:Module name="imprtrack"/>
     <cfg:Module name="ad"/>
     <cfg:Module name="echo"/>
+
+    <cfg:ChannelGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:ChannelGrpcClientPool>
+
+    <cfg:CampaignGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:CampaignGrpcClientPool>
+
+    <cfg:ChannelServerEndpointList>
+      <xsl:for-each select="$channel-servers-path">
+        <cfg:Endpoint>
+          <xsl:attribute name="host"><xsl:value-of select="@host"/></xsl:attribute>
+          <xsl:attribute name="port"><xsl:value-of select="configuration/cfg:channelServer/cfg:networkParams/@grpc_port"/>
+            <xsl:if test="count(configuration/cfg:channelServer/cfg:networkParams/@grpc_port) = 0">
+              <xsl:value-of select="$def-channel-server-grpc-port"/>
+            </xsl:if>
+          </xsl:attribute>
+        </cfg:Endpoint>
+      </xsl:for-each>
+    </cfg:ChannelServerEndpointList>
+
+    <cfg:CampaignManagerEndpointList>
+      <xsl:for-each select="$campaign-managers-path">
+        <cfg:Endpoint>
+          <xsl:attribute name="host"><xsl:value-of select="@host"/></xsl:attribute>
+          <xsl:attribute name="port"><xsl:value-of select="configuration/cfg:campaignManager/cfg:networkParams/@grpc_port"/>
+            <xsl:if test="count(configuration/cfg:campaignManager/cfg:networkParams/@grpc_port) = 0">
+              <xsl:value-of select="$def-campaign-manager-grpc-port"/>
+            </xsl:if>
+          </xsl:attribute>
+        </cfg:Endpoint>
+      </xsl:for-each>
+    </cfg:CampaignManagerEndpointList>
+
   </cfg:ServerConfig>
 
 </xsl:template>
@@ -239,6 +288,10 @@
     </xsl:for-each>
   </xsl:variable>
 
+  <xsl:variable name="channel-servers-path" select="$xpath/../service[@descriptor = $channel-server-descriptor]"/>
+
+  <xsl:variable name="campaign-managers-path" select="$xpath/../service[@descriptor = $campaign-manager-descriptor]"/>
+
   <xsl:for-each select="exsl:node-set($http-hosts)/host">
     <xsl:variable name="fhost" select="."/>
     <xsl:choose>
@@ -257,6 +310,8 @@
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="be-cluster-path" select="$be-cluster-path"/>
       <xsl:with-param name="server-root" select="$server-root"/>
+      <xsl:with-param name="channel-servers-path" select="$channel-servers-path"/>
+      <xsl:with-param name="campaign-managers-path" select="$campaign-managers-path"/>
     </xsl:call-template>
   </cfg:AdConfiguration>
 

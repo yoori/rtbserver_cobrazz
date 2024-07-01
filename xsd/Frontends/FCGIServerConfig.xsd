@@ -31,9 +31,14 @@
       <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="Coroutine" type="CoroutineType"/>
       <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="ChannelGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="ChannelServerEndpointList" type="EndpointListType"/>
+      <xsd:element name="CampaignGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="CampaignManagerEndpointList" type="EndpointListType"/>
     </xsd:sequence>
 
     <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
+    <xsd:attribute name="time_duration_grpc_client_mark_bad" type="xsd:nonNegativeInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="BindSocketType">
@@ -48,6 +53,17 @@
 
   <xsd:complexType name="ModuleType">
     <xsd:attribute name="name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointType">
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointListType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="EndpointType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
 </xsd:schema>

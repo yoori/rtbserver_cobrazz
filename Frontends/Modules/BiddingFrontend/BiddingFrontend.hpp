@@ -33,6 +33,7 @@
 #include <Frontends/FrontendCommons/UserBindClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "GroupLogger.hpp"
 #include "RequestInfoFiller.hpp"
@@ -66,6 +67,7 @@ namespace Bidding
     friend class AppNexusBidRequestTask;
 
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
@@ -74,6 +76,7 @@ namespace Bidding
 
   public:
     Frontend(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config,
@@ -372,6 +375,7 @@ namespace Bidding
       bool add_root_native);
     */
   protected:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
 

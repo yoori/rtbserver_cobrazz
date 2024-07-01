@@ -29,6 +29,7 @@ target_link_libraries(FCGIServer
   FCGI
   FCGIServerConfigXSD
   Generics
+  GrpcCampaignManagerPool
   ImprTrackFrontend
   OptoutFrontend
   PassFrontend

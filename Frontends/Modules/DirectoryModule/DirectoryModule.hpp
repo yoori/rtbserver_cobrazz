@@ -19,6 +19,7 @@
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 namespace AdServer
 {
@@ -35,12 +36,14 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     DirectoryModule(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config_,
@@ -196,6 +199,7 @@ namespace AdServer
       noexcept;
 
   private:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
     DirAliasMap directories_;

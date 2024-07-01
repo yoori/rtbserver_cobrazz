@@ -118,6 +118,7 @@ namespace Config
 namespace AdServer
 {
   ClickFrontend::ClickFrontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -140,6 +141,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().ClickFeConfiguration()->threads(),
         0), // max pending tasks
+      grpc_container_(grpc_container),
       task_processor_(task_processor),
       scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -341,37 +343,6 @@ namespace AdServer
             channel_manager_controller_refs,
             corba_client_adapter_,
             callback()));
-
-        if (common_config_->GrpcClientPool().enable())
-        {
-          using Host = std::string;
-          using Port = std::size_t;
-          using Endpoint = std::pair<Host, Port>;
-          using Endpoints = std::vector<Endpoint>;
-
-          Endpoints endpoints;
-          const auto& endpoints_config = config_->ChannelServerEndpointList();
-          auto it = endpoints_config.Endpoint().begin();
-          auto it_end = endpoints_config.Endpoint().end();
-          for (; it != it_end; ++it)
-          {
-            endpoints.emplace_back(it->host(), it->port());
-          }
-
-          const auto& config_grpc_client = common_config_->GrpcClientPool();
-          const auto config_grpc_data = Config::create_pool_client_config(
-            config_grpc_client);
-
-          grpc_channel_operation_pool_ =
-            std::make_unique<AdServer::ChannelSvcs::GrpcChannelOperationPool>(
-              logger(),
-              task_processor_,
-              scheduler_,
-              endpoints,
-              config_grpc_data.first,
-              config_grpc_data.second,
-              config_->time_duration_client_mark_bad() * 1000);
-        }
 
         template_files_ = new Commons::TextTemplateCache(
           static_cast<unsigned long>(-1),
@@ -969,7 +940,8 @@ namespace AdServer
     std::vector<ChannelMatch> trigger_match_page_channels;
 
     bool is_grpc_success = false;
-    if (grpc_channel_operation_pool_)
+    const auto& grpc_channel_operation_pool = grpc_container_->grpc_channel_operation_pool;
+    if (grpc_channel_operation_pool)
     {
       is_grpc_success = true;
       try
@@ -994,7 +966,7 @@ namespace AdServer
                         << campaign_id;
         }
 
-        trigger_match_result_proto = grpc_channel_operation_pool_->match(
+        trigger_match_result_proto = grpc_channel_operation_pool->match(
           std::string{},
           std::string{},
           std::string{},

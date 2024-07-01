@@ -399,6 +399,7 @@ namespace AdServer
   // UserBindFrontend implementation
   //
   UserBindFrontend::UserBindFrontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -421,6 +422,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().UserBindFeConfiguration()->threads(),
         frontend_config->get().UserBindFeConfiguration()->bind_pending_task_limit()),
+      grpc_container_(grpc_container),
       task_processor_(task_processor),
       scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
@@ -1292,11 +1294,6 @@ namespace AdServer
     const auto statistic_id = FrontendCommons::CounterStatisticId::UserBind_RequestCount;
     const std::string_view statistic_label = std::string_view(request_info.source_id);
     ADD_COMMON_COUNTER_STATISTIC(statistic_id, statistic_label, 1)
-
-    using GetUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
-    using AddUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
 
     int http_status = 200; // non used on response
 

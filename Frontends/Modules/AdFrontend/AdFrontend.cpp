@@ -217,6 +217,7 @@ namespace AdServer
    *  AdFrontend implementation
    */
   AdFrontend::AdFrontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -239,6 +240,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().AdFeConfiguration()->threads(),
         0), // max pending tasks
+      grpc_container_(grpc_container),
       task_processor_(task_processor),
       scheduler_(scheduler),
       fe_config_path_(frontend_config->path()),

@@ -16,6 +16,7 @@
 #include <Commons/UserverConfigUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendsPool.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/Statistics.hpp>
 #include "Acceptor.hpp"
 #include "AcceptorBoostAsio.hpp"
@@ -170,6 +171,10 @@ namespace Frontends
   void
   FCGIServer::init_fcgi_() /*throw(Exception)*/
   {
+    using Host = std::string;
+    using Port = std::size_t;
+    using Endpoint = std::pair<Host, Port>;
+    using Endpoints = std::vector<Endpoint>;
     using ComponentsBuilder = UServerUtils::ComponentsBuilder;
     using ManagerCoro = UServerUtils::Manager;
     using ManagerCoro_var = UServerUtils::Manager_var;
@@ -178,10 +183,12 @@ namespace Frontends
     using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
     using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+    using GrpcChannelOperationPool = AdServer::ChannelSvcs::GrpcChannelOperationPool;
+    using GrpcCampaignManagerPool = FrontendCommons::GrpcCampaignManagerPool;
 
     static const char* FUN = "FCGIServer::init_fcgi_()";
 
-    ManagerCoro_var manager;
+    ManagerCoro_var manager_coro;
     try
     {
       auto task_processor_container_builder =
@@ -202,8 +209,7 @@ namespace Frontends
         ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
         statistics_provider_info.statistics_provider = statistics_provider;
         statistics_provider_info.statistics_prefix = "cobrazz";
-        auto components_builder = std::make_unique<ComponentsBuilder>(
-          statistics_provider_info);
+        auto components_builder = std::make_unique<ComponentsBuilder>(statistics_provider_info);
         auto& statistic_storage = components_builder->get_statistics_storage();
 
         const auto& monitoring_config = config_->Monitoring();
@@ -223,9 +229,6 @@ namespace Frontends
         listener_config.unix_socket_path = "/tmp/http_fcgi" + std::to_string(getpid()) + ".sock";
         listener_config.handler_defaults = {};
 
-        auto& connection_config = listener_config.connection_config;
-        connection_config.keepalive_timeout = std::chrono::seconds{10};
-
         auto http_server_builder = std::make_unique<HttpServerBuilder>(
           logger(),
           server_config,
@@ -236,12 +239,12 @@ namespace Frontends
         return components_builder;
       };
 
-      manager = new ManagerCoro(
+      manager_coro = new ManagerCoro(
         std::move(task_processor_container_builder),
         std::move(init_func),
         logger());
 
-      add_child_object(manager.in());
+      add_child_object(manager_coro.in());
     }
     catch (const eh::Exception& exc)
     {
@@ -349,8 +352,61 @@ namespace Frontends
         number_scheduler_threads,
         logger());
 
+      std::shared_ptr<GrpcChannelOperationPool> grpc_channel_operation_pool;
+      if (config_->ChannelGrpcClientPool().enable())
+      {
+        Endpoints endpoints;
+        const auto& endpoint_list = config_->ChannelServerEndpointList().Endpoint();
+        auto it = std::begin(endpoint_list);
+        const auto it_end = std::end(endpoint_list);
+        for (; it != it_end; ++it)
+        {
+          endpoints.emplace_back(it->host(), it->port());
+        }
+
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_->ChannelGrpcClientPool());
+        grpc_channel_operation_pool = std::make_shared<GrpcChannelOperationPool>(
+          logger(),
+          manager_coro->get_main_task_processor(),
+          scheduler,
+          endpoints,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_->time_duration_grpc_client_mark_bad());
+      }
+
+      std::shared_ptr<GrpcCampaignManagerPool> grpc_campaign_manager_pool;
+      if (config_->CampaignGrpcClientPool().enable())
+      {
+        Endpoints endpoints;
+        const auto& endpoint_list = config_->CampaignManagerEndpointList().Endpoint();
+        auto it = std::begin(endpoint_list);
+        const auto it_end = std::end(endpoint_list);
+        for (; it != it_end; ++it)
+        {
+          endpoints.emplace_back(it->host(), it->port());
+        }
+
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_->CampaignGrpcClientPool());
+        grpc_campaign_manager_pool = std::make_shared<GrpcCampaignManagerPool>(
+          logger(),
+          manager_coro->get_main_task_processor(),
+          scheduler,
+          endpoints,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          config_->time_duration_grpc_client_mark_bad());
+      }
+
+      auto grpc_container = std::make_shared<FrontendCommons::GrpcContainer>();
+      grpc_container->grpc_channel_operation_pool = grpc_channel_operation_pool;
+      grpc_container->grpc_campaign_manager_pool = grpc_campaign_manager_pool;
+
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
-        manager->get_main_task_processor(),
+        grpc_container,
+        manager_coro->get_main_task_processor(),
         scheduler,
         config_->fe_config().data(),
         modules,

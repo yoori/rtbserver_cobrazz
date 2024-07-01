@@ -30,6 +30,7 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -49,12 +50,14 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     ClickFrontend(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config,
@@ -174,6 +177,7 @@ namespace AdServer
       noexcept;
 
   private:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
 
@@ -192,7 +196,6 @@ namespace AdServer
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
-    AdServer::ChannelSvcs::GrpcChannelOperationPoolPtr grpc_channel_operation_pool_;
 
     FrontendCommons::UserBindClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;

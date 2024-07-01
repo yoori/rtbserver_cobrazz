@@ -162,6 +162,7 @@ namespace Action
   };
 
   Frontend::Frontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -184,6 +185,7 @@ namespace Action
         response_factory,
         frontend_config->get().ActionFeConfiguration()->threads(),
         0), // max pending tasks
+      grpc_container_(grpc_container),
       task_processor_(task_processor),
       scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),

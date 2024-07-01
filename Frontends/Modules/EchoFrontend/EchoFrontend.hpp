@@ -12,6 +12,7 @@
 // THIS
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 
 namespace AdServer::Echo
@@ -26,6 +27,7 @@ class Frontend final :
 public:
   using HttpResponseFactory = FrontendCommons::HttpResponseFactory;
   using HttpResponseFactory_var = FrontendCommons::HttpResponseFactory_var;
+  using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
   using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
   using TaskProcessor = userver::engine::TaskProcessor;
   using Logger = Logging::Logger;
@@ -33,6 +35,7 @@ public:
 
 public:
   Frontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -52,6 +55,8 @@ private:
   void shutdown() noexcept override;
 
 private:
+  const GrpcContainerPtr grpc_container_;
+
   TaskProcessor& task_processor_;
 
   const SchedulerPtr scheduler_;

@@ -28,6 +28,7 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -51,12 +52,12 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);
 
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
@@ -64,6 +65,7 @@ namespace AdServer
 
   public:
     UserBindFrontend(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config,
@@ -243,6 +245,7 @@ namespace AdServer
       const noexcept;
 
   private:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
 

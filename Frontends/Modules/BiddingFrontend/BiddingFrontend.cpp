@@ -270,6 +270,7 @@ namespace Bidding
   // Frontend implementation
   //
   Frontend::Frontend(
+    const GrpcContainerPtr& grpc_container,
     TaskProcessor& task_processor,
     const SchedulerPtr& scheduler,
     Configuration* frontend_config,
@@ -287,14 +288,9 @@ namespace Bidding
         "Bidding::Frontend",
         Aspect::BIDDING_FRONTEND,
         0),
+      grpc_container_(grpc_container),
       task_processor_(task_processor),
       scheduler_(scheduler),
-      /*
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().BidFeConfiguration()->threads(),
-        frontend_config->get().BidFeConfiguration()->max_pending_tasks()),
-      */
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),

@@ -9,7 +9,7 @@
 #include <boost/functional/hash.hpp>
 
 // PROTO
-#include "UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp"
+#include <UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp>
 
 // UNIX_COMMONS
 #include <GrpcAlgs.hpp>

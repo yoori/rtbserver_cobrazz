@@ -8,6 +8,7 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserverConfigUtils.hpp>
 #include <Frontends/HttpServer/Application.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/FrontendsPool.hpp>
 #include <Frontends/FrontendCommons/Statistics.hpp>
 #include <Frontends/HttpServer/Handler.hpp>
@@ -189,9 +190,8 @@ void Application::init_http()
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using HttpHandlerConfig = UServerUtils::Http::Server::HandlerConfig;
   using ListenerConfig = UServerUtils::Http::Server::ListenerConfig;
-  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
-  ManagerCoro_var manager;
+  ManagerCoro_var manager_coro;
   try
   {
     ModuleIdArray modules;
@@ -273,14 +273,6 @@ void Application::init_http()
       }
     }
 
-    auto statistics_provider = std::make_shared<
-      UServerUtils::Statistics::CompositeStatisticsProviderImpl<
-        std::shared_mutex>>(logger());
-    auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
-    statistics_provider->add(time_statistics_provider);
-    auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
-    statistics_provider->add(common_counter_statistics_provider);
-
     auto number_scheduler_threads = std::thread::hardware_concurrency();
     if (number_scheduler_threads == 0)
     {
@@ -299,15 +291,26 @@ void Application::init_http()
 
     auto init_func = [
       this,
-      statistics_provider,
       modules = std::move(modules),
       scheduler = std::move(scheduler),
       response_factory = std::move(response_factory)] (
         TaskProcessorContainer& task_processor_container) {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
 
+      auto grpc_channel_operation_pool = create_grpc_channel_operation_pool(
+        scheduler,
+        main_task_processor);
+      auto grpc_campaign_manager_pool = create_grpc_campaign_manager_pool(
+        scheduler,
+        main_task_processor);
+
+      auto grpc_container = std::make_shared<FrontendCommons::GrpcContainer>();
+      grpc_container->grpc_channel_operation_pool = grpc_channel_operation_pool;
+      grpc_container->grpc_campaign_manager_pool = grpc_campaign_manager_pool;
+
       FrontendCommons::Frontend_var frontend(
         new FrontendsPool(
+          grpc_container,
           main_task_processor,
           scheduler,
           server_config_->fe_config().data(),
@@ -317,6 +320,14 @@ void Application::init_http()
           response_factory.in()));
       frontend_ = frontend;
       frontend_->init();
+
+      auto statistics_provider = std::make_shared<
+        UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+          std::shared_mutex>>(logger());
+      auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
+      statistics_provider->add(time_statistics_provider);
+      auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
+      statistics_provider->add(common_counter_statistics_provider);
 
       ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
       statistics_provider_info.statistics_provider = statistics_provider;
@@ -366,26 +377,24 @@ void Application::init_http()
         handler_config.response_body_stream = true;
 
         const std::string handler_get_name = "HttpHandlerGet_" + std::to_string(number);
-        HttpHandler_var handler_get(
-          new HttpHandler(
-            handler_get_name,
-            handler_config,
-            {},
-            logger(),
-            frontend.in()));
+        HttpHandler_var handler_get = new HttpHandler(
+          handler_get_name,
+          handler_config,
+          {},
+          logger(),
+          frontend.in());
         http_server_builder->add_handler(
           handler_get.in(),
           main_task_processor);
 
         handler_config.method = "POST";
         const std::string handler_post_name = "HttpHandlerPost_" + std::to_string(number);
-        HttpHandler_var handler_post(
-          new HttpHandler(
-            handler_post_name,
-            handler_config,
-            {},
-            logger(),
-            frontend.in()));
+        HttpHandler_var handler_post = new HttpHandler(
+          handler_post_name,
+          handler_config,
+          {},
+          logger(),
+          frontend.in());
         http_server_builder->add_handler(
           handler_post.in(),
           main_task_processor);
@@ -402,12 +411,12 @@ void Application::init_http()
         logger(),
         server_config_->Coroutine());
 
-    manager = new ManagerCoro(
+    manager_coro = new ManagerCoro(
       std::move(task_processor_container_builder),
       std::move(init_func),
       logger());
 
-    add_child_object(manager.in());
+    add_child_object(manager_coro.in());
   }
   catch (const eh::Exception& exc)
   {
@@ -416,6 +425,80 @@ void Application::init_http()
            << exc.what();
     throw Exception(stream);
   }
+}
+
+Application::GrpcChannelOperationPoolPtr
+Application::create_grpc_channel_operation_pool(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  using Host = std::string;
+  using Port = std::size_t;
+  using Endpoint = std::pair<Host, Port>;
+  using Endpoints = std::vector<Endpoint>;
+
+  std::shared_ptr<GrpcChannelOperationPool> grpc_channel_operation_pool;
+  if (server_config_->ChannelGrpcClientPool().enable())
+  {
+    Endpoints endpoints;
+    const auto& endpoint_list = server_config_->ChannelServerEndpointList().Endpoint();
+    auto it = std::begin(endpoint_list);
+    const auto it_end = std::end(endpoint_list);
+    for (; it != it_end; ++it)
+    {
+      endpoints.emplace_back(it->host(), it->port());
+    }
+
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->ChannelGrpcClientPool());
+    grpc_channel_operation_pool = std::make_shared<GrpcChannelOperationPool>(
+      logger(),
+      task_processor,
+      scheduler,
+      endpoints,
+      config_grpc_data.first,
+      config_grpc_data.second,
+      server_config_->time_duration_grpc_client_mark_bad());
+  }
+
+  return grpc_channel_operation_pool;
+}
+
+Application::GrpcCampaignManagerPoolPtr
+Application::create_grpc_campaign_manager_pool(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  using Host = std::string;
+  using Port = std::size_t;
+  using Endpoint = std::pair<Host, Port>;
+  using Endpoints = std::vector<Endpoint>;
+
+  std::shared_ptr<GrpcCampaignManagerPool> grpc_campaign_manager_pool;
+  if (server_config_->CampaignGrpcClientPool().enable())
+  {
+    Endpoints endpoints;
+    const auto& endpoint_list = server_config_->CampaignManagerEndpointList().Endpoint();
+    auto it = std::begin(endpoint_list);
+    const auto it_end = std::end(endpoint_list);
+    for (; it != it_end; ++it)
+    {
+      endpoints.emplace_back(it->host(), it->port());
+    }
+
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->CampaignGrpcClientPool());
+    grpc_campaign_manager_pool = std::make_shared<GrpcCampaignManagerPool>(
+      logger(),
+      task_processor,
+      scheduler,
+      endpoints,
+      config_grpc_data.first,
+      config_grpc_data.second,
+      server_config_->time_duration_grpc_client_mark_bad());
+  }
+
+  return grpc_campaign_manager_pool;
 }
 
 int Application::run(int argc, char** argv)

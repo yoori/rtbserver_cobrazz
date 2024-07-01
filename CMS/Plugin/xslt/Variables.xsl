@@ -594,6 +594,6 @@
 <xsl:variable name="def-user-bind-server-rocksdb-expire-time" select="3"/>
 
 <!-- Click frontend params -->
-<xsl:variable name="def-time-duration-client-mark-bad" select="20"/>
+<xsl:variable name="def-time-duration-grpc-client-mark-bad" select="20"/>
 
 </xsl:stylesheet>

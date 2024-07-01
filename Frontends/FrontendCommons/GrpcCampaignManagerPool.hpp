@@ -726,6 +726,8 @@ private:
   Cache cache_;
 };
 
+using GrpcCampaignManagerPoolPtr = std::shared_ptr<GrpcCampaignManagerPool>;
+
 } // namespace FrontendCommons
 
 #endif // FRONTENDCOMMONS_GRPCCAMPAIGNMANAGERPOOL_HPP

@@ -28,6 +28,7 @@
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "OptoutFrontendStat.hpp"
 #include "RequestInfoFiller.hpp"
@@ -49,12 +50,14 @@ namespace AdServer
     DECLARE_EXCEPTION(RequestFailure, Exception);
 
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using HttpResponse = FrontendCommons::HttpResponse;
 
   public:
     OptoutFrontend(
+      const GrpcContainerPtr& grpc_container,
       TaskProcessor& task_processor,
       const SchedulerPtr& scheduler,
       Configuration* frontend_config,
@@ -139,6 +142,7 @@ namespace AdServer
       HttpResponse& response) noexcept;
 
   private:
+    const GrpcContainerPtr grpc_container_;
     TaskProcessor& task_processor_;
     const SchedulerPtr scheduler_;
 
