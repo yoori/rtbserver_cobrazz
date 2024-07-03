@@ -30,10 +30,8 @@
       <xsd:element name="PassPixelFeConfiguration" type="PassPixelFeConfigurationType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="WebStatFeConfiguration" type="WebStatFeConfigurationType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="PubPixelFeConfiguration" type="PubPixelFeConfigurationType" minOccurs="0" maxOccurs="1"/>
-
       <xsd:element name="BidFeConfiguration" type="BidFeConfigurationType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="UserBindFeConfiguration" type="UserBindFeConfigurationType" minOccurs="0" maxOccurs="1"/>
-
       <xsd:element name="OptOutFeConfiguration" type="OptOutFeConfigurationType" minOccurs="0" maxOccurs="1"/>
     </xsd:sequence>
   </xsd:complexType>
@@ -135,11 +133,6 @@
       <xsd:element name="SkipExternalIds"
         type="SkipExternalIdsType"
         minOccurs="0"
-        maxOccurs="1"/>
-
-      <xsd:element name="GrpcClientPool"
-        type="GrpcClientPoolType"
-        minOccurs="1"
         maxOccurs="1"/>
 
     </xsd:sequence>

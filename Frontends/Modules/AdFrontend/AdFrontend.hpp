@@ -17,8 +17,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -63,8 +61,6 @@ namespace AdServer
 
   public:
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using AdFeConfiguration = Configuration::FeConfig::AdFeConfiguration_type;
     using PassFeConfiguration = Configuration::FeConfig::PassFeConfiguration_type;
@@ -74,8 +70,6 @@ namespace AdServer
 
     AdFrontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -278,8 +272,6 @@ namespace AdServer
 
   private:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     /* configuration */
     CommonConfigPtr common_config_;

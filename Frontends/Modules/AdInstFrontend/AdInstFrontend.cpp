@@ -108,8 +108,6 @@ namespace
    */
   Frontend::Frontend(
     const GrpcContainerPtr& grpc_container,
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -131,8 +129,6 @@ namespace
         frontend_config->get().AdInstFeConfiguration()->threads(),
         0), // max pending tasks
       grpc_container_(grpc_container),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::AD_INST_FRONTEND)
@@ -215,19 +211,11 @@ namespace
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-        const bool is_grpc_enable = config_grpc_client.enable();
-
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          is_grpc_enable);
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         request_info_filler_.reset(
@@ -554,8 +542,7 @@ namespace
 
     AdServer::UserInfoSvcs::UserInfoMatcher_var
       uim_session = user_info_client_->user_info_session();
-    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-      grpc_distributor = user_info_client_->grpc_distributor();
+    const auto grpc_distributor = user_info_client_->grpc_distributor();
 
     bool is_grpc_success = false;
     if (grpc_distributor)

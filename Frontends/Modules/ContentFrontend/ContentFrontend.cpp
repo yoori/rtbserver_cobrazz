@@ -106,8 +106,6 @@ namespace AdServer
    */
   ContentFrontend::ContentFrontend(
     const GrpcContainerPtr& grpc_container,
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/
@@ -126,8 +124,6 @@ namespace AdServer
         frontend_config->get().ContentFeConfiguration()->threads(),
         0), // max pending tasks
       grpc_container_(grpc_container),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       campaign_managers_(this->logger(), Aspect::CONTENT_FRONTEND)
   {}

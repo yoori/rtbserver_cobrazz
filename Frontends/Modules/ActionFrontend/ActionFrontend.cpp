@@ -163,8 +163,6 @@ namespace Action
 
   Frontend::Frontend(
     const GrpcContainerPtr& grpc_container,
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -186,8 +184,6 @@ namespace Action
         frontend_config->get().ActionFeConfiguration()->threads(),
         0), // max pending tasks
       grpc_container_(grpc_container),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::ACTION_FRONTEND)
@@ -281,21 +277,13 @@ namespace Action
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -306,10 +294,7 @@ namespace Action
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
@@ -782,9 +767,7 @@ namespace Action
         trigger_match_result->matched_channels.url_channels.length() != 0 ||
         trigger_match_result->matched_channels.url_keyword_channels.length() != 0))
       {
-        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-          grpc_distributor = user_info_client_->grpc_distributor();
-
+        const auto grpc_distributor = user_info_client_->grpc_distributor();
         bool is_grpc_success = false;
         if (grpc_distributor)
         {
@@ -1179,9 +1162,7 @@ namespace Action
 
         if(user_bind_client_)
         {
-          AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-            grpc_distributor = user_bind_client_->grpc_distributor();
-
+          const auto grpc_distributor = user_bind_client_->grpc_distributor();
           bool is_grpc_success = false;
           if (grpc_distributor)
           {
@@ -1293,9 +1274,7 @@ namespace Action
     // link ifa
     if(user_bind_client_ && !request_info.ifa.empty())
     {
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-        grpc_distributor = user_bind_client_->grpc_distributor();
-
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
       bool is_grpc_success = false;
       if (grpc_distributor)
       {

@@ -400,8 +400,6 @@ namespace AdServer
   //
   UserBindFrontend::UserBindFrontend(
     const GrpcContainerPtr& grpc_container,
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -423,8 +421,6 @@ namespace AdServer
         frontend_config->get().UserBindFeConfiguration()->threads(),
         frontend_config->get().UserBindFeConfiguration()->bind_pending_task_limit()),
       grpc_container_(grpc_container),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::USER_BIND_FRONTEND),
@@ -520,22 +516,13 @@ namespace AdServer
         */
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-        const bool is_grpc_enable = config_grpc_client.enable();
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            is_grpc_enable);
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -543,10 +530,7 @@ namespace AdServer
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          is_grpc_enable);
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
@@ -781,8 +765,7 @@ namespace AdServer
     {
       AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
         user_bind_client_->user_bind_mapper();
-      FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-        user_bind_client_->grpc_distributor();
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)
@@ -1342,8 +1325,7 @@ namespace AdServer
             {
               AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
                 user_bind_client_->user_bind_mapper();
-              FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-                user_bind_client_->grpc_distributor();
+             const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
               const std::string cookie_external_id_str =
                 std::string("c/") + result_user_id.to_string();
@@ -1500,8 +1482,7 @@ namespace AdServer
                   {
                     AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
                       user_bind_client_->user_bind_mapper();
-                    FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-                      user_bind_client_->grpc_distributor();
+                    const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
                     const std::string& external_id_str = cur_external_id;
 
@@ -1697,8 +1678,7 @@ namespace AdServer
                   {
                     AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
                       user_bind_client_->user_bind_mapper();
-                    FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-                      user_bind_client_->grpc_distributor();
+                    const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
                     bool invalid_operation = true;
 
@@ -2188,8 +2168,7 @@ namespace AdServer
       // merge merge_user_id into user_id
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
-      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-        grpc_distributor = user_info_client_->grpc_distributor();
+      const auto grpc_distributor = user_info_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)

@@ -230,6 +230,7 @@ public:
   GrpcUserInfoOperationDistributor(
     Logger* logger,
     TaskProcessor& task_processor,
+    const SchedulerPtr& scheduler,
     const ControllerRefList& controller_refs,
     const CorbaClientAdapter* corba_client_adapter,
     const ConfigPoolClient& config_pool_client,
@@ -518,8 +519,6 @@ private:
   const Generics::Time pool_timeout_;
 
   const ControllerRefList controller_refs_;
-
-  const SchedulerPtr scheduler_;
 
   FactoryClientContainerPtr factory_client_container_;
 
@@ -960,8 +959,7 @@ public:
   mutable Mutex mutex;
 };
 
-using GrpcUserInfoOperationDistributor_var =
-  ReferenceCounting::SmartPtr<GrpcUserInfoOperationDistributor>;
+using GrpcUserInfoOperationDistributor_var = ReferenceCounting::SmartPtr<GrpcUserInfoOperationDistributor>;
 
 } // namespace AdServer::UserInfoSvcs
 

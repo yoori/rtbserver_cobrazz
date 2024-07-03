@@ -9,6 +9,9 @@
 #include <UServerUtils/Manager.hpp>
 #include <XMLUtility/Utility.cpp>
 
+// CONFIG
+#include <xsd/Frontends/FeConfig.hpp>
+
 // THIS
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
@@ -18,6 +21,8 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/Statistics.hpp>
+#include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
+#include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
 #include "Acceptor.hpp"
 #include "AcceptorBoostAsio.hpp"
 #include "FCGIServer.hpp"
@@ -185,6 +190,10 @@ namespace Frontends
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using GrpcChannelOperationPool = AdServer::ChannelSvcs::GrpcChannelOperationPool;
     using GrpcCampaignManagerPool = FrontendCommons::GrpcCampaignManagerPool;
+    using GrpcUserBindOperationDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
+    using GrpcUserBindOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
+    using GrpcUserInfoOperationDistributor = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
+    using GrpcUserInfoOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
 
     static const char* FUN = "FCGIServer::init_fcgi_()";
 
@@ -400,15 +409,103 @@ namespace Frontends
           config_->time_duration_grpc_client_mark_bad());
       }
 
+      const std::string fe_config_path = config_->fe_config();
+      Config::ErrorHandler error_handler;
+      const auto fe_config = xsd::AdServer::Configuration::FeConfiguration(
+        fe_config_path.c_str(),
+        error_handler);
+      if(error_handler.has_errors())
+      {
+        std::string error_string;
+        throw Exception(error_handler.text(error_string));
+      }
+
+      if (!fe_config->CommonFeConfiguration().present())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "CommonFeConfiguration not presented";
+        throw Exception(stream);
+      }
+      const auto& common_fe_config = *fe_config->CommonFeConfiguration();
+
+      GrpcUserBindOperationDistributor_var grpc_user_bind_operation_distributor;
+      if (config_->UserBindGrpcClientPool().enable())
+      {
+        using ControllerRefList = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRefList;
+        using ControllerRef = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRef;
+
+        ControllerRefList controller_groups;
+        const auto& user_bind_controller_group = common_fe_config.UserBindControllerGroup();
+        for (auto cg_it = std::begin(user_bind_controller_group);
+             cg_it != std::end(user_bind_controller_group);
+             ++cg_it)
+        {
+          ControllerRef controller_ref_group;
+          Config::CorbaConfigReader::read_multi_corba_ref(
+            *cg_it,
+            controller_ref_group);
+          controller_groups.push_back(controller_ref_group);
+        }
+
+        CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_->UserBindGrpcClientPool());
+
+        grpc_user_bind_operation_distributor = new GrpcUserBindOperationDistributor(
+          logger(),
+          manager_coro->get_main_task_processor(),
+          scheduler,
+          controller_groups,
+          corba_client_adapter,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          Generics::Time::ONE_SECOND);
+      }
+
+      GrpcUserInfoOperationDistributor_var grpc_user_info_operation_distributor;
+      if (config_->UserInfoGrpcClientPool().enable())
+      {
+        using ControllerRefList = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRefList;
+        using ControllerRef = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRef;
+
+        ControllerRefList controller_groups;
+        const auto& user_info_controller_group = common_fe_config.UserInfoManagerControllerGroup();
+        for (auto cg_it = std::begin(user_info_controller_group);
+             cg_it != std::end(user_info_controller_group);
+             ++cg_it)
+        {
+          ControllerRef controller_ref_group;
+          Config::CorbaConfigReader::read_multi_corba_ref(
+            *cg_it,
+            controller_ref_group);
+          controller_groups.push_back(controller_ref_group);
+        }
+
+        CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+        const auto config_grpc_data = Config::create_pool_client_config(
+          config_->UserInfoGrpcClientPool());
+
+        grpc_user_info_operation_distributor = new GrpcUserInfoOperationDistributor(
+          logger(),
+          manager_coro->get_main_task_processor(),
+          scheduler,
+          controller_groups,
+          corba_client_adapter,
+          config_grpc_data.first,
+          config_grpc_data.second,
+          Generics::Time::ONE_SECOND);
+      }
+
       auto grpc_container = std::make_shared<FrontendCommons::GrpcContainer>();
       grpc_container->grpc_channel_operation_pool = grpc_channel_operation_pool;
       grpc_container->grpc_campaign_manager_pool = grpc_campaign_manager_pool;
+      grpc_container->grpc_user_bind_operation_distributor = grpc_user_bind_operation_distributor;
+      grpc_container->grpc_user_info_operation_distributor = grpc_user_info_operation_distributor;
 
       FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
         grpc_container,
-        manager_coro->get_main_task_processor(),
-        scheduler,
-        config_->fe_config().data(),
+        fe_config_path.c_str(),
         modules,
         logger(),
         stats_,

@@ -8,10 +8,8 @@ namespace FrontendCommons
     const UserInfoManagerControllerGroupSeq& user_info_manager_controller_group,
     const CORBACommons::CorbaClientAdapter* corba_client_adapter,
     Logging::Logger* logger,
-    TaskProcessor& task_processor,
-    const ConfigGrpcClient& config_grpc_client,
-    const std::size_t timeout_grpc_client,
-    const bool grpc_enable) noexcept
+    GrpcUserInfoOperationDistributor* grpc_user_info_distributor) noexcept
+    : grpc_user_info_distributor_(ReferenceCounting::add_ref(grpc_user_info_distributor))
   {
     AdServer::UserInfoSvcs::UserInfoOperationDistributor::
       ControllerRefList controller_groups;
@@ -38,20 +36,6 @@ namespace FrontendCommons
         corba_client_adapter);
     user_info_matcher_ = ReferenceCounting::add_ref(distributor);
     add_child_object(distributor);
-
-    if (grpc_enable)
-    {
-      grpc_distributor_ = GrpcDistributor_var(
-        new GrpcDistributor(
-          logger,
-          task_processor,
-          controller_groups,
-          corba_client_adapter,
-          config_grpc_client,
-          timeout_grpc_client,
-          Generics::Time::ONE_SECOND));
-      add_child_object(grpc_distributor_);
-    }
   }
 
   AdServer::UserInfoSvcs::UserInfoMatcher*
@@ -61,9 +45,9 @@ namespace FrontendCommons
       UserInfoManagerSession::_duplicate(user_info_matcher_);
   }
 
-  UserInfoClient::GrpcDistributor_var
+  UserInfoClient::GrpcUserInfoOperationDistributor_var
   UserInfoClient::grpc_distributor() noexcept
   {
-    return grpc_distributor_;
+    return grpc_user_info_distributor_;
   }
 }

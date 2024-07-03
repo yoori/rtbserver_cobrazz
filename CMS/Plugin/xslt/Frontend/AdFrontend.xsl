@@ -866,14 +866,6 @@
       <cfg:Id><xsl:attribute name="value">{UID}</xsl:attribute></cfg:Id>
     </cfg:SkipExternalIds>
 
-    <cfg:GrpcClientPool
-      num_channels="{$grpc-pool-client-num-channels}"
-      num_clients="{$grpc-pool-client-num-clients}"
-      timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
-      <xsl:call-template name="GrpcClientChannelArgList"/>
-    </cfg:GrpcClientPool>
-
   </cfg:CommonFeConfiguration>
 
   <xsl:variable name="inventory-users-percentage-value"><xsl:value-of select="$colo-config/cfg:inventoryStats/@simplifying"/>

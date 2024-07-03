@@ -184,6 +184,22 @@
       </xsl:for-each>
     </cfg:CampaignManagerEndpointList>
 
+    <cfg:UserBindGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:UserBindGrpcClientPool>
+
+    <cfg:UserInfoGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:UserInfoGrpcClientPool>
+
   </cfg:FCGIServerConfig>
 
 </xsl:template>

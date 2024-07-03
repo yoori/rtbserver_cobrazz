@@ -13,8 +13,6 @@
 #include <Logger/DistributorLogger.hpp>
 #include <HTTP/Http.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
 #include <ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp>
@@ -58,8 +56,6 @@ namespace AdServer
   public:
     ClickFrontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -178,8 +174,6 @@ namespace AdServer
 
   private:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     std::string config_file_;
 

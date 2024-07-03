@@ -271,8 +271,6 @@ namespace Bidding
   //
   Frontend::Frontend(
     const GrpcContainerPtr& grpc_container,
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -289,8 +287,6 @@ namespace Bidding
         Aspect::BIDDING_FRONTEND,
         0),
       grpc_container_(grpc_container),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
@@ -446,18 +442,11 @@ namespace Bidding
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         if(!common_config_->UserBindControllerGroup().empty())
@@ -466,11 +455,7 @@ namespace Bidding
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -1553,8 +1538,7 @@ namespace Bidding
         {
           AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
             user_bind_client_->user_bind_mapper();
-          FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-            user_bind_client_->grpc_distributor();
+          const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
           auto base_ext_user_id_it = external_user_ids.begin();
 
@@ -2034,8 +2018,7 @@ namespace Bidding
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
-      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-        grpc_distributor = user_info_client_->grpc_distributor();
+      const auto grpc_distributor = user_info_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)
@@ -2481,9 +2464,7 @@ namespace Bidding
         using UcFreqCaps = AdServer::UserInfoSvcs::Types::UcFreqCaps;
         using UcCampaignIds = AdServer::UserInfoSvcs::Types::UcCampaignIds;
 
-        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-          grpc_distributor = user_info_client_->grpc_distributor();
-
+        const auto grpc_distributor = user_info_client_->grpc_distributor();
         if (grpc_distributor)
         {
           bool is_error = false;

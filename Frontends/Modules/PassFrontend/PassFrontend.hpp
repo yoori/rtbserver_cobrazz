@@ -10,8 +10,6 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -41,14 +39,10 @@ namespace Passback
   public:
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   public:
     Frontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -111,8 +105,6 @@ namespace Passback
 
   private:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     /* configuration */
     std::string config_file_;

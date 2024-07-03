@@ -13,8 +13,6 @@
 #include <GeoIP/IPMap.hpp>
 #include <String/TextTemplate.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -47,13 +45,9 @@ namespace Action
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
-  private:
-    using Exception = FrontendCommons::HTTPExceptions::Exception;
-
   public:
+    using Exception = FrontendCommons::HTTPExceptions::Exception;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Frontend_var = ReferenceCounting::SmartPtr<Frontend>;
 
   public:
@@ -61,8 +55,6 @@ namespace Action
 
     Frontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -227,8 +219,6 @@ namespace Action
 
   private:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     // configuration
     CommonConfigPtr common_config_;

@@ -119,8 +119,6 @@ namespace AdServer
 {
   ClickFrontend::ClickFrontend(
     const GrpcContainerPtr& grpc_container,
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -142,8 +140,6 @@ namespace AdServer
         frontend_config->get().ClickFeConfiguration()->threads(),
         0), // max pending tasks
       grpc_container_(grpc_container),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::CLICK_FRONTEND)
@@ -304,21 +300,13 @@ namespace AdServer
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -326,10 +314,7 @@ namespace AdServer
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
@@ -1078,9 +1063,7 @@ namespace AdServer
 
     assert(user_bind_client_.in());
 
-    AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-      grpc_distributor = user_bind_client_->grpc_distributor();
-
+    const auto grpc_distributor = user_bind_client_->grpc_distributor();
     if (is_grpc_success && grpc_distributor)
     {
       // resolve cookie user id
@@ -1211,8 +1194,7 @@ namespace AdServer
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
-      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-        grpc_distributor = user_info_client_->grpc_distributor();
+      const auto grpc_distributor = user_info_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)

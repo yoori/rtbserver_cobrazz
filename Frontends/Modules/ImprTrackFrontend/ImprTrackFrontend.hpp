@@ -1,4 +1,3 @@
-
 #ifndef _AD_FRONTENDS_IMPR_TRACK_FRONTEND_IMPR_TRACK_FRONTEND_HPP_
 #define _AD_FRONTENDS_IMPR_TRACK_FRONTEND_IMPR_TRACK_FRONTEND_HPP_
 
@@ -12,8 +11,6 @@
 #include <Logger/DistributorLogger.hpp>
 #include <Generics/FileCache.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
@@ -58,14 +55,10 @@ namespace ImprTrack
 
   public:
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
   public:
     Frontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -182,8 +175,6 @@ namespace ImprTrack
 
   private:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     // configuration
     std::string config_file_;

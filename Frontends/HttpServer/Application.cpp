@@ -1,20 +1,21 @@
 // UNIX_COMMONS
-#include <XMLUtility/StringManip.hpp>
 #include <XMLUtility/Utility.hpp>
 #include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
+
+// CONFIG
+#include <xsd/Frontends/FeConfig.hpp>
 
 // THIS
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserverConfigUtils.hpp>
 #include <Frontends/HttpServer/Application.hpp>
-#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/FrontendsPool.hpp>
 #include <Frontends/FrontendCommons/Statistics.hpp>
 #include <Frontends/HttpServer/Handler.hpp>
 #include <Frontends/HttpServer/HttpResponse.hpp>
-#include <xsd/AdServerCommons/AdServerCommons.hpp>
-
+#include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
+#include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
 
 namespace
 {
@@ -303,16 +304,22 @@ void Application::init_http()
       auto grpc_campaign_manager_pool = create_grpc_campaign_manager_pool(
         scheduler,
         main_task_processor);
+      auto grpc_user_bind_operation_distributor = create_grpc_user_bind_operation_distributor(
+        scheduler,
+        main_task_processor);
+      auto grpc_user_info_operation_distributor = create_grpc_user_info_operation_distributor(
+        scheduler,
+        main_task_processor);
 
       auto grpc_container = std::make_shared<FrontendCommons::GrpcContainer>();
       grpc_container->grpc_channel_operation_pool = grpc_channel_operation_pool;
       grpc_container->grpc_campaign_manager_pool = grpc_campaign_manager_pool;
+      grpc_container->grpc_user_bind_operation_distributor = grpc_user_bind_operation_distributor;
+      grpc_container->grpc_user_info_operation_distributor = grpc_user_info_operation_distributor;
 
       FrontendCommons::Frontend_var frontend(
         new FrontendsPool(
           grpc_container,
-          main_task_processor,
-          scheduler,
           server_config_->fe_config().data(),
           modules,
           logger(),
@@ -499,6 +506,130 @@ Application::create_grpc_campaign_manager_pool(
   }
 
   return grpc_campaign_manager_pool;
+}
+
+Application::GrpcUserBindOperationDistributor_var
+Application::create_grpc_user_bind_operation_distributor(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  const std::string fe_config_path = server_config_->fe_config();
+  Config::ErrorHandler error_handler;
+  const auto fe_config = xsd::AdServer::Configuration::FeConfiguration(
+    fe_config_path.c_str(),
+    error_handler);
+  if (error_handler.has_errors())
+  {
+    std::string error_string;
+    throw Exception(error_handler.text(error_string));
+  }
+
+  if (!fe_config->CommonFeConfiguration().present())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "CommonFeConfiguration not presented";
+    throw Exception(stream);
+  }
+  const auto& common_fe_config = *fe_config->CommonFeConfiguration();
+
+  GrpcUserBindOperationDistributor_var grpc_user_bind_operation_distributor;
+  if (server_config_->UserBindGrpcClientPool().enable())
+  {
+    using ControllerRefList = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRefList;
+    using ControllerRef = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRef;
+
+    ControllerRefList controller_groups;
+    const auto& user_bind_controller_group = common_fe_config.UserBindControllerGroup();
+    for (auto cg_it = std::begin(user_bind_controller_group);
+         cg_it != std::end(user_bind_controller_group);
+         ++cg_it)
+    {
+      ControllerRef controller_ref_group;
+      Config::CorbaConfigReader::read_multi_corba_ref(
+        *cg_it,
+        controller_ref_group);
+      controller_groups.push_back(controller_ref_group);
+    }
+
+    CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->UserBindGrpcClientPool());
+
+    grpc_user_bind_operation_distributor = new GrpcUserBindOperationDistributor(
+      logger(),
+      task_processor,
+      scheduler,
+      controller_groups,
+      corba_client_adapter.in(),
+      config_grpc_data.first,
+      config_grpc_data.second,
+      Generics::Time::ONE_SECOND);
+  }
+
+  return grpc_user_bind_operation_distributor;
+}
+
+Application::GrpcUserInfoOperationDistributor_var
+Application::create_grpc_user_info_operation_distributor(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  const std::string fe_config_path = server_config_->fe_config();
+  Config::ErrorHandler error_handler;
+  const auto fe_config = xsd::AdServer::Configuration::FeConfiguration(
+    fe_config_path.c_str(),
+    error_handler);
+  if (error_handler.has_errors())
+  {
+    std::string error_string;
+    throw Exception(error_handler.text(error_string));
+  }
+
+  if (!fe_config->CommonFeConfiguration().present())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "CommonFeConfiguration not presented";
+    throw Exception(stream);
+  }
+  const auto& common_fe_config = *fe_config->CommonFeConfiguration();
+
+  GrpcUserInfoOperationDistributor_var grpc_user_info_operation_distributor;
+  if (server_config_->UserInfoGrpcClientPool().enable())
+  {
+    using ControllerRefList = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRefList;
+    using ControllerRef = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRef;
+
+    ControllerRefList controller_groups;
+    const auto& user_info_controller_group = common_fe_config.UserInfoManagerControllerGroup();
+    for (auto cg_it = std::begin(user_info_controller_group);
+         cg_it != std::end(user_info_controller_group);
+         ++cg_it)
+    {
+      ControllerRef controller_ref_group;
+      Config::CorbaConfigReader::read_multi_corba_ref(
+        *cg_it,
+        controller_ref_group);
+      controller_groups.push_back(controller_ref_group);
+    }
+
+    CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->UserInfoGrpcClientPool());
+
+    grpc_user_info_operation_distributor = new GrpcUserInfoOperationDistributor(
+      logger(),
+      task_processor,
+      scheduler,
+      controller_groups,
+      corba_client_adapter.in(),
+      config_grpc_data.first,
+      config_grpc_data.second,
+      Generics::Time::ONE_SECOND);
+  }
+
+  return grpc_user_info_operation_distributor;
 }
 
 int Application::run(int argc, char** argv)

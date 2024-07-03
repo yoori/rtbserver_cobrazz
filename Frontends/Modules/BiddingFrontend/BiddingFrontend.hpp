@@ -21,8 +21,6 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/AtomicInt.hpp>
 #include <Commons/Interval.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
@@ -68,8 +66,6 @@ namespace Bidding
 
   public:
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using BiddingFeConfiguration = Configuration::FeConfig::BidFeConfiguration_type;
@@ -77,8 +73,6 @@ namespace Bidding
   public:
     Frontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -376,8 +370,6 @@ namespace Bidding
     */
   protected:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     // ADSC-10554
     // Interrupted requests queue

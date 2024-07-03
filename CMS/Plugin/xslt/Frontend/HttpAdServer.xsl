@@ -155,22 +155,6 @@
     <cfg:Module name="ad"/>
     <cfg:Module name="echo"/>
 
-    <cfg:ChannelGrpcClientPool
-      num_channels="{$grpc-pool-client-num-channels}"
-      num_clients="{$grpc-pool-client-num-clients}"
-      timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
-      <xsl:call-template name="GrpcClientChannelArgList"/>
-    </cfg:ChannelGrpcClientPool>
-
-    <cfg:CampaignGrpcClientPool
-      num_channels="{$grpc-pool-client-num-channels}"
-      num_clients="{$grpc-pool-client-num-clients}"
-      timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
-      <xsl:call-template name="GrpcClientChannelArgList"/>
-    </cfg:CampaignGrpcClientPool>
-
     <cfg:ChannelServerEndpointList>
       <xsl:for-each select="$channel-servers-path">
         <cfg:Endpoint>
@@ -196,6 +180,38 @@
         </cfg:Endpoint>
       </xsl:for-each>
     </cfg:CampaignManagerEndpointList>
+
+    <cfg:ChannelGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:ChannelGrpcClientPool>
+
+    <cfg:CampaignGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:CampaignGrpcClientPool>
+
+    <cfg:UserBindGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:UserBindGrpcClientPool>
+
+    <cfg:UserInfoGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="{$grpc-pool-client-enable}">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:UserInfoGrpcClientPool>
 
   </cfg:ServerConfig>
 

@@ -9,8 +9,6 @@
 #include <Generics/ActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-#include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
@@ -36,15 +34,11 @@ namespace PubPixel
   {
   public:
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     Frontend(
       const GrpcContainerPtr& grpc_container,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
       Configuration* frontend_config,
       Logging::Logger* logger,
       FrontendCommons::HttpResponseFactory* response_factory)
@@ -125,8 +119,6 @@ namespace PubPixel
 
   private:
     const GrpcContainerPtr grpc_container_;
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
 
     // configuration
     Configuration_var frontend_config_;

@@ -243,13 +243,13 @@
         sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
     </cfg:Coroutine>
 
-    <cfg:GrpcClientPool
+    <cfg:UserBindGrpcClientPool
       num_channels="{$grpc-pool-client-num-channels}"
       num_clients="{$grpc-pool-client-num-clients}"
       timeout="{$grpc-pool-client-timeout}"
       enable="{$grpc-pool-client-enable}">
       <xsl:call-template name="GrpcClientChannelArgList"/>
-    </cfg:GrpcClientPool>
+    </cfg:UserBindGrpcClientPool>
 
   </cfg:ProfilingServerConfig>
 

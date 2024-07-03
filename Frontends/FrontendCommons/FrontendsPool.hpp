@@ -34,8 +34,6 @@ namespace AdServer
       public virtual ReferenceCounting::AtomicImpl  
     {
     public:
-      using TaskProcessor = userver::engine::TaskProcessor;
-      using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
       using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -69,8 +67,6 @@ namespace AdServer
        */
       FrontendsPool(
         const GrpcContainerPtr& grpc_container,
-        TaskProcessor& task_processor,
-        const SchedulerPtr& scheduler,
         const char* config_path,
         const ModuleIdArray& modules,
         Logging::Logger* logger,
@@ -136,10 +132,6 @@ namespace AdServer
 
     private:
       const GrpcContainerPtr grpc_container_;
-
-      TaskProcessor& task_processor_;
-
-      SchedulerPtr scheduler_;
 
       Configuration_var config_;
 

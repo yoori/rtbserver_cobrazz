@@ -16,6 +16,7 @@ const char* ASPECT_GRPC_USER_INFO_DISTRIBUTOR =
 GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
   Logger* logger,
   TaskProcessor& task_processor,
+  const SchedulerPtr& scheduler,
   const ControllerRefList& controller_refs,
   const CorbaClientAdapter* corba_client_adapter,
   const ConfigPoolClient& config_pool_client,
@@ -32,12 +33,9 @@ GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
     grpc_client_timeout_(grpc_client_timeout),
     pool_timeout_(pool_timeout),
     controller_refs_(controller_refs),
-    scheduler_(UServerUtils::Grpc::Common::Utils::create_scheduler(
-      config_pool_client_.number_threads,
-      logger_.in())),
     factory_client_container_(new FactoryClientContainer(
       logger_.in(),
-      scheduler_,
+      scheduler,
       config_pool_client_,
       task_processor)),
     corba_client_adapter_(ReferenceCounting::add_ref(corba_client_adapter)),

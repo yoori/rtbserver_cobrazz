@@ -9,10 +9,9 @@
 #include <UServerUtils/Manager.hpp>
 
 // THIS
-#include <ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/GrpcCampaignManagerPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
 #include <xsd/Frontends/HttpServerConfig.hpp>
 
@@ -26,6 +25,8 @@ class Application final :
 public:
   using ALIVE_STATUS = CORBACommons::IProcessControl::ALIVE_STATUS;
   using Boolean = CORBA::Boolean;
+
+private:
   using CorbaConfig = CORBACommons::CorbaConfig;
   using CorbaServerAdapter_var = CORBACommons::CorbaServerAdapter_var;
   using Frontend_var = FrontendCommons::Frontend_var;
@@ -42,6 +43,10 @@ public:
   using GrpcCampaignManagerPoolPtr = std::shared_ptr<GrpcCampaignManagerPool>;
   using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
   using TaskProcessor = userver::engine::TaskProcessor;
+  using GrpcUserBindOperationDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
+  using GrpcUserBindOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
+  using GrpcUserInfoOperationDistributor = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
+  using GrpcUserInfoOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -70,6 +75,14 @@ private:
     TaskProcessor& task_processor);
 
   GrpcCampaignManagerPoolPtr create_grpc_campaign_manager_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
+
+  GrpcUserBindOperationDistributor_var create_grpc_user_bind_operation_distributor(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
+
+  GrpcUserInfoOperationDistributor_var create_grpc_user_info_operation_distributor(
     const SchedulerPtr& scheduler,
     TaskProcessor& task_processor);
 
