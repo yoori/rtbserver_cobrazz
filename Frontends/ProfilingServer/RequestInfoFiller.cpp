@@ -293,7 +293,7 @@ namespace Profiling
 
     // fill request info
     std::string original_bind_user_id = dmp_profiling_info.bind_user_ids();
-    Commons::Optional<HTTP::BrowserAddress> referer;
+    std::optional<HTTP::BrowserAddress> referer;
 
     if(dmp_profiling_info.url()[0])
     {
@@ -310,7 +310,7 @@ namespace Profiling
           catch(const eh::Exception&)
           {}
 
-          if(!referer.present())
+          if(!referer)
           {
             // got uri without domain
             std::string use_url("dummy");
@@ -343,7 +343,7 @@ namespace Profiling
     // unpack bind key from referer if it have required suffix (bind_url_suffix_)
     if(original_bind_user_id.empty())
     {
-      const String::SubString host = referer.present() ?
+      const String::SubString host = referer ?
         referer->host() : String::SubString();
 
       if(bind_url_suffix_.size() < host.size() &&

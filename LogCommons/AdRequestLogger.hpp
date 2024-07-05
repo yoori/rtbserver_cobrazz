@@ -1,10 +1,10 @@
 #ifndef AD_SERVER_LOG_COMMONS_AD_REQUEST_LOGGER_HPP
 #define AD_SERVER_LOG_COMMONS_AD_REQUEST_LOGGER_HPP
 
-
 #include <iosfwd>
 #include <string>
 #include <ostream>
+#include <optional>
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -26,7 +26,7 @@ public:
   GenericAdRequestData(
     const Generics::Time& time,
     const AdServer::Commons::RequestId& request_id,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod
+    const std::optional<unsigned long>& user_id_hash_mod
   ) : time_(time),
     request_id_(request_id),
     distribution_hash_(request_distribution_hash(
@@ -552,7 +552,7 @@ public:
     const Generics::Time& time,
     const AdServer::Commons::RequestId& request_id,
     const StringIoWrapperOptional& referrer,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod
+    const std::optional<unsigned long>& user_id_hash_mod
   )
   :
     time_(time),
@@ -644,7 +644,7 @@ public:
     const AdServer::Commons::RequestId& request_id,
     const OptionalFixedNumber& pub_revenue,
     const OptionalFixedNumber& pub_sys_revenue,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod
+    const std::optional<unsigned long>& user_id_hash_mod
   )
   :
     time_(time),
@@ -717,7 +717,7 @@ public:
     const OptionalFixedNumber& pub_revenue,
     const OptionalFixedNumber& pub_sys_revenue,
     char pub_revenue_type,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod
+    const std::optional<unsigned long>& user_id_hash_mod
   )
   :
     time_(time),
@@ -820,7 +820,7 @@ public:
     const OptionalFixedNumber& pub_sys_revenue,
     char pub_revenue_type,
     char request_type,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod
+    const std::optional<unsigned long>& user_id_hash_mod
   )
   :
     time_(time),
@@ -949,7 +949,7 @@ public:
     char pub_revenue_type,
     char request_type,
     const String::SubString& action_name,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod
+    const std::optional<unsigned long>& user_id_hash_mod
   )
   :
     time_(time),
@@ -1096,7 +1096,7 @@ public:
     char request_type,
     long viewability,
     const String::SubString& action_name,
-    const AdServer::Commons::Optional<unsigned long>& user_id_hash_mod)
+    const std::optional<unsigned long>& user_id_hash_mod)
   :
     time_(time),
     request_id_(request_id),

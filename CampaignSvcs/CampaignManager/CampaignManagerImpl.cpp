@@ -1,5 +1,5 @@
-
 #include <algorithm>
+#include <optional>
 
 #include <eh/Exception.hpp>
 #include <Logger/Logger.hpp>
@@ -1871,9 +1871,9 @@ namespace AdServer
         CreativeParamsList creative_params_list;
         InstantiateParams inst_params(
           instantiate_ad_info.user_id_hash_mod.defined ?
-          AdServer::Commons::Optional<unsigned long>(
+          std::optional<unsigned long>(
             instantiate_ad_info.user_id_hash_mod.value) :
-          AdServer::Commons::Optional<unsigned long>());
+          std::optional<unsigned long>());
         inst_params.open_price = instantiate_ad_info.open_price;
         inst_params.openx_price = instantiate_ad_info.openx_price;
         inst_params.liverail_price = instantiate_ad_info.liverail_price;
@@ -2342,9 +2342,9 @@ namespace AdServer
         CreativeParamsList creative_params_list;
         InstantiateParams inst_params(
           instantiate_ad_info.user_id_hash_mod().defined() ?
-          AdServer::Commons::Optional<unsigned long>(
+          std::optional<unsigned long>(
             instantiate_ad_info.user_id_hash_mod().value()) :
-          AdServer::Commons::Optional<unsigned long>());
+          std::optional<unsigned long>());
         inst_params.open_price = instantiate_ad_info.open_price();
         inst_params.openx_price = instantiate_ad_info.openx_price();
         inst_params.liverail_price = instantiate_ad_info.liverail_price();
@@ -3365,11 +3365,11 @@ namespace AdServer
               ad_slot.tag_visibility,
               ad_slot.video_min_duration,
               ad_slot.video_max_duration >= 0 ?
-                AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration) :
-                AdServer::Commons::Optional<unsigned long>(),
+                std::optional<unsigned long>(ad_slot.video_max_duration) :
+                std::optional<unsigned long>(),
               ad_slot.video_skippable_max_duration >= 0 ?
-                AdServer::Commons::Optional<unsigned long>(ad_slot.video_skippable_max_duration) :
-                AdServer::Commons::Optional<unsigned long>(),
+                std::optional<unsigned long>(ad_slot.video_skippable_max_duration) :
+                std::optional<unsigned long>(),
               ad_slot.video_allow_skippable,
               ad_slot.video_allow_unskippable,
               allowed_durations,
@@ -3643,11 +3643,11 @@ namespace AdServer
             ad_slot.tag_visibility(),
             ad_slot.video_min_duration(),
             ad_slot.video_max_duration() >= 0 ?
-              AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration()) :
-              AdServer::Commons::Optional<unsigned long>(),
+              std::optional<unsigned long>(ad_slot.video_max_duration()) :
+              std::optional<unsigned long>(),
             ad_slot.video_skippable_max_duration() >= 0 ?
-              AdServer::Commons::Optional<unsigned long>(ad_slot.video_skippable_max_duration()) :
-              AdServer::Commons::Optional<unsigned long>(),
+              std::optional<unsigned long>(ad_slot.video_skippable_max_duration()) :
+              std::optional<unsigned long>(),
             ad_slot.video_allow_skippable(),
             ad_slot.video_allow_unskippable(),
             allowed_durations,
@@ -3826,7 +3826,7 @@ namespace AdServer
 
       low_predicted_pub_ecpm_system = init_predicted_ecpm_system;
 
-      Commons::Optional<BidCostProvider::RequestParams> bid_request_params;
+      std::optional<BidCostProvider::RequestParams> bid_request_params;
 
       for(CampaignSelectionDataList::const_iterator it = selected_campaigns.begin();
           it != selected_campaigns.end();
@@ -3843,7 +3843,7 @@ namespace AdServer
               init_bid_request_params(*bid_request_params, request_params, tag);
             }
 
-            AdServer::Commons::Optional<RevenueDecimal> local_low_predicted_pub_ecpm_system =
+            std::optional<RevenueDecimal> local_low_predicted_pub_ecpm_system =
               bid_cost_provider->get_bid_cost(
                 *bid_request_params,
                 LOW_ALLOWABLE_LOSE_WIN_PERCENTAGE,
@@ -3881,7 +3881,7 @@ namespace AdServer
             init_bid_request_params(*bid_request_params, request_params, tag);
           }
 
-          AdServer::Commons::Optional<RevenueDecimal> local_top_predicted_pub_ecpm_system =
+          std::optional<RevenueDecimal> local_top_predicted_pub_ecpm_system =
             bid_cost_provider->get_bid_cost(
               *bid_request_params,
               TOP_ALLOWABLE_LOSE_WIN_PERCENTAGE,
@@ -3934,7 +3934,7 @@ namespace AdServer
 
       low_predicted_pub_ecpm_system = init_predicted_ecpm_system;
 
-      Commons::Optional<BidCostProvider::RequestParams> bid_request_params;
+      std::optional<BidCostProvider::RequestParams> bid_request_params;
 
       for(CampaignSelectionDataList::const_iterator it = selected_campaigns.begin();
           it != selected_campaigns.end();
@@ -3951,7 +3951,7 @@ namespace AdServer
               init_bid_request_params(*bid_request_params, request_params, tag);
             }
 
-            AdServer::Commons::Optional<RevenueDecimal> local_low_predicted_pub_ecpm_system =
+            std::optional<RevenueDecimal> local_low_predicted_pub_ecpm_system =
               bid_cost_provider->get_bid_cost(
                 *bid_request_params,
                 LOW_ALLOWABLE_LOSE_WIN_PERCENTAGE,
@@ -3989,7 +3989,7 @@ namespace AdServer
             init_bid_request_params(*bid_request_params, request_params, tag);
           }
 
-          AdServer::Commons::Optional<RevenueDecimal> local_top_predicted_pub_ecpm_system =
+          std::optional<RevenueDecimal> local_top_predicted_pub_ecpm_system =
             bid_cost_provider->get_bid_cost(
               *bid_request_params,
               TOP_ALLOWABLE_LOSE_WIN_PERCENTAGE,
@@ -6559,12 +6559,12 @@ namespace AdServer
         campaign_select_params.video_min_duration = ad_slot.video_min_duration;
         campaign_select_params.video_max_duration =
           ad_slot.video_max_duration >= 0 ?
-            AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration) :
-            AdServer::Commons::Optional<unsigned long>();
+            std::optional<unsigned long>(ad_slot.video_max_duration) :
+            std::optional<unsigned long>();
         campaign_select_params.video_skippable_max_duration =
           ad_slot.video_skippable_max_duration >= 0 ?
-            AdServer::Commons::Optional<unsigned long>(ad_slot.video_skippable_max_duration) :
-            AdServer::Commons::Optional<unsigned long>();
+            std::optional<unsigned long>(ad_slot.video_skippable_max_duration) :
+            std::optional<unsigned long>();
         campaign_select_params.video_allow_skippable = ad_slot.video_allow_skippable;
         campaign_select_params.video_allow_unskippable = ad_slot.video_allow_unskippable;
         CorbaAlgs::convert_sequence(ad_slot.allowed_durations, campaign_select_params.allowed_durations);
@@ -7097,12 +7097,12 @@ namespace AdServer
         campaign_select_params.video_min_duration = ad_slot.video_min_duration();
         campaign_select_params.video_max_duration =
           ad_slot.video_max_duration() >= 0 ?
-            AdServer::Commons::Optional<unsigned long>(ad_slot.video_max_duration()) :
-            AdServer::Commons::Optional<unsigned long>();
+            std::optional<unsigned long>(ad_slot.video_max_duration()) :
+          std::optional<unsigned long>();
         campaign_select_params.video_skippable_max_duration =
           ad_slot.video_skippable_max_duration() >= 0 ?
-          AdServer::Commons::Optional<unsigned long>(ad_slot.video_skippable_max_duration()) :
-          AdServer::Commons::Optional<unsigned long>();
+            std::optional<unsigned long>(ad_slot.video_skippable_max_duration()) :
+            std::optional<unsigned long>();
         campaign_select_params.video_allow_skippable = ad_slot.video_allow_skippable();
         campaign_select_params.video_allow_unskippable = ad_slot.video_allow_unskippable();
         campaign_select_params.allowed_durations.insert(
@@ -8256,7 +8256,7 @@ namespace AdServer
         {
           try
           {
-            Commons::Optional<RevenueDecimal> pub_imp_revenue;
+            std::optional<RevenueDecimal> pub_imp_revenue;
 
             if (pub_imp_revenue_type != RT_NONE)
             {
@@ -8413,7 +8413,7 @@ namespace AdServer
           {
             try
             {
-              Commons::Optional<RevenueDecimal> pub_imp_revenue;
+              std::optional<RevenueDecimal> pub_imp_revenue;
 
               if (pub_imp_revenue_type != RT_NONE)
               {

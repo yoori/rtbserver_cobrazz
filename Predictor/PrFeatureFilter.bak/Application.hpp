@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <optional>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -64,7 +65,7 @@ public:
   struct TreeNode: public ReferenceCounting::AtomicCopyImpl
   {
     SVM_var svm;
-    AdServer::Commons::Optional<GainToTreeNodeBranchingMap> branching;
+    std::optional<GainToTreeNodeBranchingMap> branching;
 
   protected:
     virtual ~TreeNode() noexcept {}

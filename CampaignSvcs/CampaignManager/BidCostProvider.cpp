@@ -1,5 +1,7 @@
 #include <cassert>
 #include <fstream>
+#include <optional>
+
 #include <Generics/Singleton.hpp>
 #include <Generics/Rand.hpp>
 #include <Generics/DirSelector.hpp>
@@ -181,7 +183,7 @@ namespace CampaignSvcs
     return Generics::Time::ZERO;
   }
 
-  AdServer::Commons::Optional<RevenueDecimal>
+  std::optional<RevenueDecimal>
   BidCostProvider::get_bid_cost(
     const RequestParams& request_params,
     const RevenueDecimal& allowable_lose_win_percentage,
@@ -196,7 +198,7 @@ namespace CampaignSvcs
     assert(cost_mapping_);
     if(request_params.tag_id == 0)
     {
-      return AdServer::Commons::Optional<RevenueDecimal>();
+      return std::optional<RevenueDecimal>();
     }
     
     CostMapping::Key key(request_params.tag_id, request_params.domain);
@@ -204,7 +206,7 @@ namespace CampaignSvcs
     if(cost_map_it == cost_mapping_->cost_map.end())
     {
       //std::cerr << "BidCostProvider::get_bid_cost(): cost element not found" << std::endl;
-      return AdServer::Commons::Optional<RevenueDecimal>();
+      return std::optional<RevenueDecimal>();
     }
 
     const auto& cells = cost_map_it->second->cells;
@@ -222,7 +224,7 @@ namespace CampaignSvcs
       }
       std::cerr << " ]" << std::endl;
       */
-      return AdServer::Commons::Optional<RevenueDecimal>();
+      return std::optional<RevenueDecimal>();
     }
 
     if(cell_it->win_rate_reduction < allowable_lose_win_percentage)
@@ -233,17 +235,17 @@ namespace CampaignSvcs
     if(cell_it == cells.end())
     {
       //std::cerr << "BidCostProvider::get_bid_cost(): cell not found #2" << std::endl;
-      return AdServer::Commons::Optional<RevenueDecimal>();
+      return std::optional<RevenueDecimal>();
     }
 
     if(cell_it->max_sys_impression < orig_bid_cost)
     {
       //std::cerr << "BidCostProvider::get_bid_cost(): max_sys_impression < orig_bid_cost" << std::endl;
-      return AdServer::Commons::Optional<RevenueDecimal>();
+      return std::optional<RevenueDecimal>();
     }
 
     //std::cerr << "BidCostProvider::get_bid_cost(): return " << cell_it->sys_impression << std::endl;
-    return AdServer::Commons::Optional<RevenueDecimal>(cell_it->sys_impression);
+    return std::optional<RevenueDecimal>(cell_it->sys_impression);
   }
 
   void

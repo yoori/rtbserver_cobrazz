@@ -1184,7 +1184,7 @@ namespace Profiling
               !full_external_user_id.empty() &&
               *full_external_user_id.begin() != '/')
             {
-              Commons::Optional<AdServer::Commons::UserId> internal_user_id;
+              std::optional<AdServer::Commons::UserId> internal_user_id;
 
               if(full_external_user_id.compare(0, 2, "c/") == 0)
               {
@@ -1198,7 +1198,7 @@ namespace Profiling
                 }
               }
 
-              if(!internal_user_id.present() || user_id != *internal_user_id)
+              if(!internal_user_id || user_id != *internal_user_id)
               {
                 auto response = grpc_distributor->add_user_id(
                   full_external_user_id,
@@ -1252,7 +1252,7 @@ namespace Profiling
               !full_external_user_id.empty() &&
               *full_external_user_id.begin() != '/')
             {
-              Commons::Optional<AdServer::Commons::UserId> internal_user_id;
+              std::optional<AdServer::Commons::UserId> internal_user_id;
 
               if(full_external_user_id.compare(0, 2, "c/") == 0)
               {
@@ -1265,7 +1265,7 @@ namespace Profiling
                 {}
               }
 
-              if(!internal_user_id.present() || user_id != *internal_user_id)
+              if(!internal_user_id || user_id != *internal_user_id)
               {
                 AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
                   add_user_request_info;

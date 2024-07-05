@@ -31,7 +31,7 @@ namespace PubPixel
       : user_status(AdServer::CampaignSvcs::US_UNDEFINED)
     {};
 
-    AdServer::Commons::Optional<std::string> country;
+    std::optional<std::string> country;
     AdServer::CampaignSvcs::UserStatus user_status;
     std::string peer_ip;
     typedef std::vector<unsigned long> PublisherAccountIDs;

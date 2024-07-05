@@ -1412,7 +1412,7 @@ namespace Action
             this,
             request_info.time,
             match_user_id,
-            (request_info.action_id.present() ? *request_info.action_id : 0),
+            (request_info.action_id ? *request_info.action_id : 0),
               request_info.referer));
         }
         catch (const Generics::TaskRunner::Overflow&)
@@ -1449,15 +1449,15 @@ namespace Action
       }
 
       verify_action_info.referer << request_info.referer;
-      verify_action_info.action_value_defined = request_info.value.present();
-      if(request_info.value.present())
+      verify_action_info.action_value_defined = request_info.value.has_value();
+      if(request_info.value)
       {
         verify_action_info.action_value = CorbaAlgs::pack_decimal(*request_info.value);
       }
 
       verify_action_info.order_id << request_info.order_id;
     
-      if(request_info.campaign_id.present())
+      if(request_info.campaign_id)
       {
         verify_action_info.campaign_id_defined = true;
         verify_action_info.campaign_id = *request_info.campaign_id;
@@ -1467,7 +1467,7 @@ namespace Action
         verify_action_info.campaign_id_defined = false;
       }
 
-      if(request_info.action_id.present())
+      if(request_info.action_id)
       {
         verify_action_info.action_id_defined = true;
         verify_action_info.action_id = *request_info.action_id;

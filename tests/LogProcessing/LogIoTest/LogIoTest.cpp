@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <optional>
 
 #include <String/SubString.hpp>
 #include <Logger/Logger.hpp>
@@ -1823,7 +1824,7 @@ int main(int argc, char **argv)
   {
     ClickCollector collector;
     ClickData data(TEST_TIME, TEST_USER_ID, "Referrer 1",
-      AdServer::Commons::Optional<unsigned long>());
+      std::optional<unsigned long>());
     collector.add(data);
     LogIoTester<ClickTraits>(dump_on_fail).test(collector);
 #if 0
@@ -1851,7 +1852,7 @@ int main(int argc, char **argv)
         'N',
         66,
         String::SubString(),
-        AdServer::Commons::Optional<unsigned long>()
+        std::optional<unsigned long>()
       );
     collector.add(data);
     LogIoTester<ImpressionTraits>(dump_on_fail).test(collector);
@@ -1890,7 +1891,7 @@ int main(int argc, char **argv)
   {
     PassbackImpressionCollector collector;
     PassbackImpressionData data(TEST_TIME, TEST_USER_ID,
-      AdServer::Commons::Optional<unsigned long>());
+      std::optional<unsigned long>());
     collector.add(data);
     LogIoTester<PassbackImpressionTraits>(dump_on_fail).test(collector);
   }

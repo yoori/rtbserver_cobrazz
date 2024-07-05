@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <functional>
 #include <math.h>
+#include <optional>
+
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <String/AsciiStringManip.hpp>
@@ -377,16 +379,6 @@ namespace AppStore
 
 namespace AdServer
 {
-
-namespace Commons
-{
-  std::ostream&
-  operator <<(std::ostream& os, const Optional<long>& ov)
-    /*throw(eh::Exception)*/
-  {
-    return os << (ov.present() ? *ov : 0);
-  }
-}
 
 namespace Bidding
 {
@@ -1831,7 +1823,7 @@ namespace Bidding
         Request::OpenRtb::NATIVE_PLACEMENT,
         JsonNativeParamProcessor_var(
           new JsonContextNumberParamProcessor<Native,
-            AdServer::Commons::Optional<long> >(
+            std::optional<long> >(
             &Native::placement)));
 
       JsonNativeParamProcessor_var asset_processor =
@@ -2150,7 +2142,7 @@ namespace Bidding
         JsonAdSlotParamProcessor_var(
           new JsonContextNumberParamProcessor<
             JsonAdSlotProcessingContext,
-            AdServer::Commons::Optional<long> >(
+            std::optional<long> >(
             &JsonAdSlotProcessingContext::video_placement)));
 
       video_processor->add_processor(
@@ -2188,7 +2180,7 @@ namespace Bidding
           JsonAdSlotParamProcessor_var(
             new JsonContextNumberParamProcessor<
               JsonAdSlotProcessingContext,
-              AdServer::Commons::Optional<long> >(
+              std::optional<long> >(
                 &JsonAdSlotProcessingContext::private_auction)));
 
         JsonAdSlotParamProcessor_var deal_processor =
@@ -2329,7 +2321,7 @@ namespace Bidding
         Request::AppNexus::REQUEST_TAG_ID,
         JsonAdSlotParamProcessor_var(
           new JsonContextNumberParamProcessor<JsonAdSlotProcessingContext,
-            AdServer::Commons::Optional<long> >(
+            std::optional<long> >(
             &JsonAdSlotProcessingContext::slot_id)));
 
       processor->add_processor(
@@ -2363,14 +2355,14 @@ namespace Bidding
         Request::AppNexus::REQUEST_TAG_SITE_ID,
         JsonAdSlotParamProcessor_var(
           new JsonContextNumberParamProcessor<JsonAdSlotProcessingContext,
-            AdServer::Commons::Optional<long> >(
+            std::optional<long> >(
             &JsonAdSlotProcessingContext::site_id)));
 
       processor->add_processor(
         Request::AppNexus::REQUEST_TAG_INVENTORY_SOURCE_ID,
         JsonAdSlotParamProcessor_var(
           new JsonContextNumberParamProcessor<JsonAdSlotProcessingContext,
-            AdServer::Commons::Optional<long> >(
+            std::optional<long> >(
             &JsonAdSlotProcessingContext::inventory_source_id)));
 
       processor->add_processor(
@@ -3954,7 +3946,7 @@ namespace Bidding
         request_params.publisher_account_ids[0] = *(source_it->second.default_account_id);
       }
 
-      if(source_it->second.request_type.present())
+      if(source_it->second.request_type)
       {
         request_params.common_info.request_type = *(source_it->second.request_type);
       }
@@ -3975,7 +3967,7 @@ namespace Bidding
 
       request_info.native_ads_instantiate_type =
         source_it->second.native_ads_instantiate_type;
-      if(source_it->second.native_ads_impression_tracker_type.present())
+      if(source_it->second.native_ads_impression_tracker_type)
       {
         request_info.native_ads_impression_tracker_type =
           *source_it->second.native_ads_impression_tracker_type;
@@ -4454,7 +4446,7 @@ namespace Bidding
          // ADSC-10919
           kw_fmt.add_dict_keyword(
             MatchKeywords::PLACEMENT,
-            slot_it->video_placement.present()?
+            slot_it->video_placement ?
               get_value_from_seq(
                 Request::OpenRtb::VIDEO_PLACEMENTS,
                 *slot_it->video_placement) :
@@ -4462,7 +4454,7 @@ namespace Bidding
 
           kw_fmt.add_dict_keyword(
             MatchKeywords::PLACEMENT,
-            slot_it->video_placement.present() ?
+            slot_it->video_placement ?
               get_value_from_seq(
                 Request::OpenRtb::VIDEO_PLACEMENTS,
                 *slot_it->video_placement) :
@@ -4610,14 +4602,14 @@ namespace Bidding
             MatchKeywords::NATIVE_PLACEMENT,
             get_value_from_seq(
               Request::OpenRtb::NATIVE_PLACEMENTS,
-              slot_it->native->placement.present() ?
+              slot_it->native->placement ?
                 *slot_it->native->placement: 0));
 
           kw_fmt.add_dict_keyword(
             MatchKeywords::NATIVE_PLACEMENT,
             get_value_from_seq(
               Request::OpenRtb::NATIVE_PLACEMENTS,
-              slot_it->native->placement.present() ?
+              slot_it->native->placement ?
                 *slot_it->native->placement: 0), false);
           
           if(ad_slot_request.format[0] == 0)
@@ -5140,7 +5132,7 @@ namespace Bidding
     // filter by member_id
     bool ignore_request_by_member_id = false;
 
-    if(request_info.appnexus_member_id.present() &&
+    if(request_info.appnexus_member_id &&
        context.member_ids.find(*request_info.appnexus_member_id) ==
          context.member_ids.end())
     {
@@ -5393,14 +5385,14 @@ namespace Bidding
         ad_slot_request.tag_predicted_viewability = -1;
       }
 
-      if (context.selling_member_id.present() ||
-        slot_it->inventory_source_id.present() ||
-        slot_it->site_id.present() ||
-        slot_it->slot_id.present())
+      if (context.selling_member_id ||
+        slot_it->inventory_source_id ||
+        slot_it->site_id ||
+        slot_it->slot_id)
       {
         Stream::Stack<EXT_TAG_ID_MAX_LENGTH> oss;
-        oss << context.selling_member_id << '-' << slot_it->inventory_source_id
-            << '-' << slot_it->site_id << '-' << slot_it->slot_id;
+        oss << context.selling_member_id.value_or(-1) << '-' << slot_it->inventory_source_id.value_or(-1)
+            << '-' << slot_it->site_id.value_or(-1) << '-' << slot_it->slot_id.value_or(-1);
         ad_slot_request.ext_tag_id << normalize_ext_tag_id_(oss.str());
       }
 
@@ -5560,7 +5552,7 @@ namespace Bidding
         Request::AppNexus::REQUEST_BIDINFO_SELLING_MEMBER_ID,
         JsonRequestParamProcessor_var(
           new JsonContextNumberParamProcessor<JsonProcessingContext,
-            AdServer::Commons::Optional<long> >(
+            std::optional<long> >(
             &JsonProcessingContext::selling_member_id)));
 
       bid_info_processor->add_processor(

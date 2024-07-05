@@ -85,7 +85,7 @@ namespace RequestInfoSvcs
       UserTagRequestMergeProfileWriter::tag_groups_Container::
         reverse_iterator target_git = tag_groups.rend();
 
-      unsigned long referer_hash = tag_request_info.referer_hash.present() ?
+      unsigned long referer_hash = tag_request_info.referer_hash ?
         *tag_request_info.referer_hash : 0;
 
       /* group merging condition(F - all fields excluding pl and referer_hash):
@@ -95,7 +95,7 @@ namespace RequestInfoSvcs
        *       left.referer_hash == right.referer_hash &&
        *       (time condition)
        */
-      if(tag_request_info.page_load_id.present() &&
+      if(tag_request_info.page_load_id &&
         *tag_request_info.page_load_id)
       {
         for(UserTagRequestMergeProfileWriter::tag_groups_Container::
@@ -182,7 +182,7 @@ namespace RequestInfoSvcs
             target_git->min_time(), static_cast<uint32_t>(tag_request_info.time.tv_sec));
           target_git->max_time() = std::max(
             target_git->max_time(), static_cast<uint32_t>(tag_request_info.time.tv_sec));
-          if(tag_request_info.page_load_id.present() &&
+          if(tag_request_info.page_load_id &&
             *tag_request_info.page_load_id)
           {
             target_git->page_load_id() = *tag_request_info.page_load_id;
@@ -205,7 +205,7 @@ namespace RequestInfoSvcs
         }
 
         TagGroupWriter new_tag_group_writer;
-        new_tag_group_writer.page_load_id() = tag_request_info.page_load_id.present() ?
+        new_tag_group_writer.page_load_id() = tag_request_info.page_load_id ?
           *tag_request_info.page_load_id : 0;
         new_tag_group_writer.referer_hash() = referer_hash;
         new_tag_group_writer.min_time() = tag_request_info.time.tv_sec;
@@ -304,8 +304,8 @@ namespace RequestInfoSvcs
 
     TagRequestGroupProcessor::TagRequestGroupInfoList tag_request_group_info_list;
 
-    if(!tag_request_info.referer_hash.present() &&
-       !tag_request_info.page_load_id.present())
+    if(!tag_request_info.referer_hash &&
+       !tag_request_info.page_load_id)
     {
       // don't save group into profile - it can't be merged with some other request
       tag_request_group_info_list.push_back(TagRequestGroupProcessor::TagRequestGroupInfo());

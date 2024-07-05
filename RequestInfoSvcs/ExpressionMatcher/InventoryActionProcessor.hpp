@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <optional>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -120,7 +121,7 @@ namespace AdServer
         Generics::Time placement_colo_time;
         unsigned long colo_id;
 
-        typedef AdServer::Commons::Optional<ChannelIdVector> ChannelIdVectorOptional;
+        typedef std::optional<ChannelIdVector> ChannelIdVectorOptional;
         ChannelIdVectorOptional triggered_expression_channels; // sorted
         ChannelIdSet triggered_cpm_expression_channels;
         ChannelActionMap channel_actions;
@@ -132,7 +133,7 @@ namespace AdServer
         Commons::ImmutableString country_code;
         RevenueDecimal cost_threshold;
         unsigned long max_text_ads;
-        AdServer::Commons::Optional<AdSlot> display_ad;
+        std::optional<AdSlot> display_ad;
         AdBidSlotList text_ads;
         CampaignSvcs::AuctionType auction_type;
         bool ad_request;
@@ -348,7 +349,7 @@ namespace AdServer
         offset << "tag_size: " << tag_size << std::endl <<
         offset << "country: " << country_code << std::endl <<
         offset << "triggered_expression_channels:";
-      if(triggered_expression_channels.present())
+      if(triggered_expression_channels)
       {
         Algs::print(ostr,
           triggered_expression_channels->begin(), triggered_expression_channels->end());
@@ -358,7 +359,7 @@ namespace AdServer
         triggered_cpm_expression_channels.begin(),
         triggered_cpm_expression_channels.end());
       ostr << offset << "display_ad:";
-      if(display_ad.present())
+      if(display_ad)
       {
         ostr << " [ " << display_ad->avg_revenue << ": ";
         Algs::print(ostr, display_ad->imp_channels.begin(), display_ad->imp_channels.end());

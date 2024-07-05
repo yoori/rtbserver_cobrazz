@@ -2,6 +2,7 @@
 #define CLICKFRONTEND_REQUESTINFIFILLER_HPP
 
 #include <string>
+#include <optional>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -64,7 +65,7 @@ namespace ClickFE
     AdServer::CampaignSvcs::UserStatus user_status;
     AdServer::Commons::UserId cookie_user_id;
 
-    AdServer::Commons::Optional<bool> set_uid_param;
+    std::optional<bool> set_uid_param;
   };
 
   typedef FrontendCommons::RequestParamProcessor<RequestInfo>

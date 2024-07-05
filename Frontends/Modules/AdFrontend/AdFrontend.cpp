@@ -2730,15 +2730,15 @@ namespace AdServer
         ad_slot.min_ecpm = CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
           CampaignSvcs::RevenueDecimal::ZERO);
 
-        ad_slot.up_expand_space = request_info.up_expand_space.present() ?
+        ad_slot.up_expand_space = request_info.up_expand_space ?
           static_cast<long>(*request_info.up_expand_space) : -1;
-        ad_slot.right_expand_space = request_info.right_expand_space.present() ?
+        ad_slot.right_expand_space = request_info.right_expand_space ?
           static_cast<long>(*request_info.right_expand_space) : -1;
-        ad_slot.down_expand_space = request_info.down_expand_space.present() ?
+        ad_slot.down_expand_space = request_info.down_expand_space ?
           static_cast<long>(*request_info.down_expand_space) : -1;
-        ad_slot.left_expand_space = request_info.left_expand_space.present() ?
+        ad_slot.left_expand_space = request_info.left_expand_space ?
           static_cast<long>(*request_info.left_expand_space) : -1;
-        ad_slot.tag_visibility = request_info.tag_visibility.present() ?
+        ad_slot.tag_visibility = request_info.tag_visibility ?
           static_cast<long>(*request_info.tag_visibility) : -1;
 
         ad_slot.debug_ccg = request_info.debug_ccg;

@@ -1,6 +1,8 @@
 #ifndef TAGREQUESTPROCESSOR_HPP
 #define TAGREQUESTPROCESSOR_HPP
 
+#include <optional>
+
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/Time.hpp>
@@ -28,13 +30,13 @@ namespace RequestInfoSvcs
     char user_status;
     std::string referer;
     AdServer::LogProcessing::StringList urls;
-    AdServer::Commons::Optional<unsigned long> referer_hash;
+    std::optional<unsigned long> referer_hash;
 
     Generics::Time isp_time;
     std::string country;
     unsigned long site_id;
     Commons::UserId user_id;
-    AdServer::Commons::Optional<unsigned long> page_load_id;
+    std::optional<unsigned long> page_load_id;
     bool ad_shown;
     bool profile_referer;
     AdServer::CampaignSvcs::RevenueDecimal floor_cost;
@@ -83,7 +85,7 @@ namespace RequestInfoSvcs
       offset << "user_status = '" << user_status << "'" << std::endl <<
       offset << "referer = '" << referer << "'" << std::endl <<
       offset << "page_load_id = ";
-    if(page_load_id.present())
+    if(page_load_id)
     {
       out << *page_load_id;
     }

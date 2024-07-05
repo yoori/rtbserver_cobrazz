@@ -272,7 +272,7 @@ namespace Passback
     {
       AdServer::CampaignSvcs::CampaignManager::PassbackInfo info;
       info.request_id = CorbaAlgs::pack_request_id(passback_info.request_id);
-      if(passback_info.user_id_hash_mod.present())
+      if(passback_info.user_id_hash_mod)
       {
         info.user_id_hash_mod.defined = true;
         info.user_id_hash_mod.value = *passback_info.user_id_hash_mod;

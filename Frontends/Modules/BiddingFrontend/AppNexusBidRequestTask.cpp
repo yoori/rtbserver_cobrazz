@@ -140,7 +140,7 @@ namespace Bidding
               String::SubString(ad_slot_result.creative_body));
 
           unsigned long member_id = 0;
-          if(request_info_.appnexus_member_id.present())
+          if(request_info_.appnexus_member_id)
           {
             member_id = *request_info_.appnexus_member_id;
           }

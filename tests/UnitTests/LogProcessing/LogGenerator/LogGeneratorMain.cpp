@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <optional>
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/DirSelector.hpp>
@@ -509,7 +510,7 @@ struct Filler
   operator ()(ClickCollectorT& collector)
   {
     ClickData data(TEST_TIME, TEST_REQUEST_ID, "",
-      AdServer::Commons::Optional<unsigned long>());
+      std::optional<unsigned long>());
 
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
@@ -1241,19 +1242,19 @@ struct Filler
   operator ()(SeqCollector<GenericAdRequestData, true>& collector)
   {
     GenericAdRequestData data(TEST_TIME, TEST_REQUEST_ID,
-      AdServer::Commons::Optional<unsigned long>());
+      std::optional<unsigned long>());
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
       if (generate_unique_request_ids_)
       {
         data = GenericAdRequestData(TEST_TIME,
           RequestId::create_random_based(),
-          AdServer::Commons::Optional<unsigned long>());
+          std::optional<unsigned long>());
       }
       collector.add(data);
       data = GenericAdRequestData(
         data.time().time() - Generics::Time::ONE_SECOND, TEST_REQUEST_ID,
-          AdServer::Commons::Optional<unsigned long>());
+        std::optional<unsigned long>());
     }
   }
 
@@ -1263,7 +1264,7 @@ struct Filler
     ImpressionData data(TEST_TIME, TEST_REQUEST_ID, TEST_REQUEST_ID, "",
       OptionalFixedNumber(), OptionalFixedNumber(), 'A', 'T', -1,
       String::SubString(),
-      AdServer::Commons::Optional<unsigned long>());
+      std::optional<unsigned long>());
     for (unsigned i = BEGIN_INDEX; i < BEGIN_INDEX + *records_count; ++i)
     {
       if (generate_unique_request_ids_)
@@ -1272,7 +1273,7 @@ struct Filler
           UserId::create_random_based(), "",
           OptionalFixedNumber(), OptionalFixedNumber(), 'A', 'T', -1,
           String::SubString(),
-          AdServer::Commons::Optional<unsigned long>());
+          std::optional<unsigned long>());
       }
       collector.add(data);
       data = ImpressionData(
@@ -1281,7 +1282,7 @@ struct Filler
         'A', 'T',
         -1,
         String::SubString(),
-        AdServer::Commons::Optional<unsigned long>());
+        std::optional<unsigned long>());
     }
   }
 

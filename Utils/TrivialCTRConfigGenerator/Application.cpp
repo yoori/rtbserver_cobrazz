@@ -3,6 +3,7 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
+#include <optional>
 
 #include <Generics/MemBuf.hpp>
 #include <Generics/AppUtils.hpp>
@@ -299,7 +300,7 @@ Application_::generate_(
 
   for(auto it = res.begin(); it != res.end(); ++it)
   {
-    AdServer::Commons::Optional<RevenueDecimal> ctr;
+    std::optional<RevenueDecimal> ctr;
 
     if(it->second.imps >= TRUST_IMPS)
     {
@@ -343,7 +344,7 @@ Application_::generate_(
     }
     */
 
-    if(ctr.has_value())
+    if(ctr)
     {
       result_ostr << it->first.tag_id << "," << (
         !it->first.domain.empty() ? it->first.domain : EMPTY_DOMAIN_MARKER) <<

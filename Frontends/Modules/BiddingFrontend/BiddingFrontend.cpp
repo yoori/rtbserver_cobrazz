@@ -703,7 +703,7 @@ namespace Bidding
       {
         const auto source_it = sources_.find(it->value);
 
-        if (source_it != sources_.end() && source_it->second.max_bid_time.present())
+        if (source_it != sources_.end() && source_it->second.max_bid_time)
         {
           return *(source_it->second.max_bid_time);
         }
@@ -3928,7 +3928,7 @@ namespace Bidding
     {
       unsigned long account_id = account_ids[i];
       auto account_it = account_traits_.find(account_id);
-      if(account_it != account_traits_.end() && account_it->second->max_cpm.present())
+      if(account_it != account_traits_.end() && account_it->second->max_cpm)
       {
         val = std::min(val, *(account_it->second->max_cpm));
       }

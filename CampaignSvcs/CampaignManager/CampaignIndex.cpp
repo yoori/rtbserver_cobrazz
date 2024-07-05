@@ -1,4 +1,5 @@
 #include <iostream>
+#include <optional>
 
 #include <HTTP/UrlAddress.hpp>
 #include <Generics/Rand.hpp>
@@ -1725,8 +1726,8 @@ namespace AdServer
       unsigned long down_expand_space,
       unsigned long left_expand_space,
       unsigned long video_min_duration,
-      const AdServer::Commons::Optional<unsigned long>& video_max_duration,
-      const AdServer::Commons::Optional<unsigned long>& video_skippable_max_duration,
+      const std::optional<unsigned long>& video_max_duration,
+      const std::optional<unsigned long>& video_skippable_max_duration,
       bool video_allow_skippable,
       bool video_allow_unskippable,
       const AllowedDurationSet& allowed_durations,
@@ -1774,17 +1775,17 @@ namespace AdServer
              key.format.c_str()) &&
            // check video duration
            (creative->video_duration >= video_min_duration &&
-            (creative->video_skip_offset.present() ? // skippable
-              (!video_skippable_max_duration.present() ||
+            (creative->video_skip_offset ? // skippable
+              (!video_skippable_max_duration ||
                 creative->video_duration <= *video_skippable_max_duration) :
-              (!video_max_duration.present() ||
+              (!video_max_duration ||
                 creative->video_duration <= *video_max_duration)
              )) &&
            (allowed_durations.empty() ||
              (allowed_durations.find(creative->video_duration) != allowed_durations.end())) &&
            // check video skippable
-           ((video_allow_skippable && creative->video_skip_offset.present()) ||
-            (video_allow_unskippable && !creative->video_skip_offset.present())) &&
+           ((video_allow_skippable && creative->video_skip_offset) ||
+            (video_allow_unskippable && !creative->video_skip_offset)) &&
            // check frequency caps
            (creative->fc_id == 0 ||
             (profiling_available &&
@@ -1863,7 +1864,7 @@ namespace AdServer
           }
 
           if(!(creative->video_duration >= video_min_duration &&
-            (!video_max_duration.present() ||
+            (!video_max_duration ||
              creative->video_duration <= *video_max_duration)))
           {
             trace_params->trace_stream << "by video duration; ";
@@ -1875,8 +1876,8 @@ namespace AdServer
             trace_params->trace_stream << "by video allowed_durations; ";
           }
 
-          if(!((video_allow_skippable && creative->video_skip_offset.present()) ||
-            (video_allow_unskippable && !creative->video_skip_offset.present())))
+          if(!((video_allow_skippable && creative->video_skip_offset) ||
+            (video_allow_unskippable && !creative->video_skip_offset)))
           {
             trace_params->trace_stream << "by video skippable; ";
           }
@@ -2139,8 +2140,8 @@ namespace AdServer
       unsigned long left_expand_space,
       long tag_visibility,
       unsigned long video_min_duration,
-      const AdServer::Commons::Optional<unsigned long>& video_max_duration,
-      const AdServer::Commons::Optional<unsigned long>& video_skippable_max_duration,
+      const std::optional<unsigned long>& video_max_duration,
+      const std::optional<unsigned long>& video_skippable_max_duration,
       bool video_allow_skippable,
       bool video_allow_unskippable,      
       const AllowedDurationSet& allowed_durations,

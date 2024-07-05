@@ -782,7 +782,7 @@ namespace
         click_info.ccg_keyword_id = first_creative.ccg_keyword_id;
         click_info.ctr = CorbaAlgs::pack_decimal(first_creative.ctr);
 
-        if(request_info.user_id_hash_mod.present())
+        if(request_info.user_id_hash_mod)
         {
           click_info.user_id_hash_mod.defined = true;
           click_info.user_id_hash_mod.value = *request_info.user_id_hash_mod;
@@ -926,7 +926,7 @@ namespace
       {
         inst_ad_info.context_info.length(1);
 
-        if(request_info.pub_imp_revenue.present())
+        if(request_info.pub_imp_revenue)
         {
           inst_ad_info.pub_imp_revenue_defined = true;
           inst_ad_info.pub_imp_revenue = CorbaAlgs::pack_decimal(
@@ -951,7 +951,7 @@ namespace
         context_info.short_referer_hash = request_info.short_referer_hash;
       }
 
-      if(request_info.user_id_hash_mod.present())
+      if(request_info.user_id_hash_mod)
       {
         inst_ad_info.user_id_hash_mod.defined = true;
         inst_ad_info.user_id_hash_mod.value = *request_info.user_id_hash_mod;

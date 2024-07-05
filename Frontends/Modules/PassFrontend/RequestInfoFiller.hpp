@@ -40,7 +40,7 @@ namespace Passback
     AdServer::Commons::RequestId request_id;
     std::string passback_url;
     Generics::Time time;
-    AdServer::Commons::Optional<unsigned long> user_id_hash_mod;
+    std::optional<unsigned long> user_id_hash_mod;
     bool test_request;
     AccountIdList pubpixel_accounts;
     AdServer::Commons::UserId current_user_id;

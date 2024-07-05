@@ -2,6 +2,7 @@
 #define ADINSTFRONTEND_REQUESTINFOFILLER_HPP
 
 #include <string>
+#include <optional>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -84,7 +85,7 @@ namespace Instantiate
     std::string source_id;
     FrontendCommons::Location_var location;
     FrontendCommons::CoordLocation_var coord_location;
-    AdServer::Commons::Optional<unsigned long> user_id_hash_mod;
+    std::optional<unsigned long> user_id_hash_mod;
     std::string referer;
     std::string security_token;
     std::string pub_impr_track_url;
@@ -143,7 +144,7 @@ namespace Instantiate
     unsigned long full_referer_hash;
     unsigned long short_referer_hash;
     bool set_cookie;
-    Commons::Optional<AdServer::CampaignSvcs::RevenueDecimal> pub_imp_revenue;
+    std::optional<AdServer::CampaignSvcs::RevenueDecimal> pub_imp_revenue;
 
     std::map<std::string, std::string> tokens;
   };

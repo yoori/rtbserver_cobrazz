@@ -1,6 +1,8 @@
 #ifndef _CORBA_CAMPAIGN_TYPES_HPP_
 #define _CORBA_CAMPAIGN_TYPES_HPP_
 
+#include <optional>
+
 #include "CampaignTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include "CampaignSvcsVersionAdapter.hpp"
@@ -162,24 +164,24 @@ namespace AdServer
       delivery_limits.delivery_pacing = delivery_info.delivery_pacing;
 
       delivery_limits.imps = delivery_info.imps_defined ?
-        Commons::Optional<unsigned long>(delivery_info.imps) :
-        Commons::Optional<unsigned long>();
+        std::optional<unsigned long>(delivery_info.imps) :
+        std::optional<unsigned long>();
 
-      delivery_limits.daily_imps = Commons::Optional<unsigned long>();
+      delivery_limits.daily_imps = std::optional<unsigned long>();
       /*
       delivery_limits.daily_imps = delivery_info.daily_imps_defined ?
-        Commons::Optional<unsigned long>(delivery_info.daily_imps) :
-        Commons::Optional<unsigned long>();
+        std::optional<unsigned long>(delivery_info.daily_imps) :
+        std::optional<unsigned long>();
       */
       delivery_limits.clicks = delivery_info.clicks_defined ?
-        Commons::Optional<unsigned long>(delivery_info.clicks) :
-        Commons::Optional<unsigned long>();
+        std::optional<unsigned long>(delivery_info.clicks) :
+        std::optional<unsigned long>();
 
-      delivery_limits.daily_clicks = Commons::Optional<unsigned long>();
+      delivery_limits.daily_clicks = std::optional<unsigned long>();
       /*
       delivery_limits.daily_clicks = delivery_info.daily_clicks_defined ?
-        Commons::Optional<unsigned long>(delivery_info.daily_clicks) :
-        Commons::Optional<unsigned long>();
+        std::optional<unsigned long>(delivery_info.daily_clicks) :
+        std::optional<unsigned long>();
       */
     }
 

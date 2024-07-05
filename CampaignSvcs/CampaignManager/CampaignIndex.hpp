@@ -1,6 +1,8 @@
 #ifndef _CAMPAIGN_INDEX_HPP_
 #define _CAMPAIGN_INDEX_HPP_
 
+#include <optional>
+
 #include <eh/Exception.hpp>
 #include <Generics/CRC.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -365,8 +367,8 @@ namespace AdServer
         unsigned long down_expand_space,
         unsigned long left_expand_space,
         unsigned long video_min_duration,
-        const AdServer::Commons::Optional<unsigned long>& video_max_duration,
-        const AdServer::Commons::Optional<unsigned long>& video_skippable_max_duration,
+        const std::optional<unsigned long>& video_max_duration,
+        const std::optional<unsigned long>& video_skippable_max_duration,
         bool video_allow_skippable,
         bool video_allow_unskippable,
         const AllowedDurationSet& allowed_durations,
@@ -409,8 +411,8 @@ namespace AdServer
         unsigned long left_expand_space,
         long tag_visibility,
         unsigned long video_min_duration,
-        const AdServer::Commons::Optional<unsigned long>& video_max_duration,
-        const AdServer::Commons::Optional<unsigned long>& video_skippable_max_duration,
+        const std::optional<unsigned long>& video_max_duration,
+        const std::optional<unsigned long>& video_skippable_max_duration,
         bool video_allow_skippable,
         bool video_allow_unskippable,
         const AllowedDurationSet& allowed_durations,

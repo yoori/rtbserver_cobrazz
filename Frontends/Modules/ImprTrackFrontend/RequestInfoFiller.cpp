@@ -1,3 +1,5 @@
+#include <optional>
+
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <Commons/DecimalUtils.hpp>
@@ -557,7 +559,7 @@ namespace ImprTrack
     add_processor_(false, true, Param::USER_ID_DISTRIBUTION_HASH,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
-        AdServer::Commons::Optional<unsigned long>,
+        std::optional<unsigned long>,
         unsigned long>(
         &RequestInfo::user_id_hash_mod));
     add_processor_(false, true, Param::PUBLISHER_ACCOUNT_ID,

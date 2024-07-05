@@ -3,6 +3,8 @@
 
 #include <list>
 #include <vector>
+#include <optional>
+
 #include <Generics/Time.hpp>
 #include <Commons/Algs.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -340,9 +342,9 @@ namespace AdServer
       unsigned long num_shown;
       unsigned long position;
       std::string tag_size;
-      AdServer::Commons::Optional<unsigned long> tag_visibility;
-      AdServer::Commons::Optional<unsigned long> tag_top_offset;
-      AdServer::Commons::Optional<unsigned long> tag_left_offset;
+      std::optional<unsigned long> tag_visibility;
+      std::optional<unsigned long> tag_top_offset;
+      std::optional<unsigned long> tag_left_offset;
 
       std::string client_app;
       std::string client_app_version;
@@ -462,7 +464,7 @@ namespace AdServer
       AdServer::Commons::RequestId request_id;
       Generics::Time time;
       bool verify_impression;
-      AdServer::Commons::Optional<PubRevenue> pub_revenue;
+      std::optional<PubRevenue> pub_revenue;
       AdServer::Commons::UserId user_id;
       int viewability; // contains viewabliity from log
 
@@ -1005,7 +1007,7 @@ namespace AdServer
         space << "verify_impression: " << verify_impression << std::endl <<
         space << "user_id: " << user_id << std::endl <<
         space << "pub_revenue: ";
-      if(pub_revenue.present())
+      if(pub_revenue)
       {
         out << "revenue_type=" << pub_revenue->revenue_type <<
           ", imp=" << pub_revenue->impression;

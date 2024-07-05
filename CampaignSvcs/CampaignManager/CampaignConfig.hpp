@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <optional>
 
 #include <eh/Exception.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -798,7 +799,7 @@ namespace CampaignSvcs
       bool defined_content_category;
       HTTP::BrowserAddress destination_url;
       unsigned long video_duration;
-      Commons::Optional<unsigned long> video_skip_offset;
+      std::optional<unsigned long> video_skip_offset;
       bool https_safe_flag;
       std::string erid;
       Contract_var initial_contract;

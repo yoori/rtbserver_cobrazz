@@ -1701,7 +1701,7 @@ namespace AdServer
           ad_info.ecpm = cs_data->ecpm; // max ecpm bid
 
           // external_ecpm_bid : will be used as bid_..._amount (SiteReferrerStats)
-          if(ad_slot_context.pub_imp_revenue.present())
+          if(ad_slot_context.pub_imp_revenue)
           {
             ad_info.external_ecpm_bid = RevenueDecimal::mul(
               *ad_slot_context.pub_imp_revenue,
@@ -1806,7 +1806,7 @@ namespace AdServer
           {
             RevenueDecimal full_pub_revenue = std::max(
               RevenueDecimal::div(
-                ad_slot_context.pub_imp_revenue.present() ?
+                ad_slot_context.pub_imp_revenue ?
                   RevenueDecimal::mul(
                     *ad_slot_context.pub_imp_revenue,
                     RevenueDecimal(false, 100, 0),
@@ -2120,7 +2120,7 @@ namespace AdServer
           ad_info.ecpm = cs_data->ecpm; // max ecpm bid
 
           // external_ecpm_bid : will be used as bid_..._amount (SiteReferrerStats)
-          if(ad_slot_context.pub_imp_revenue.present())
+          if(ad_slot_context.pub_imp_revenue)
           {
             ad_info.external_ecpm_bid = RevenueDecimal::mul(
               *ad_slot_context.pub_imp_revenue,
@@ -2211,7 +2211,7 @@ namespace AdServer
           {
             RevenueDecimal full_pub_revenue = std::max(
               RevenueDecimal::div(
-                ad_slot_context.pub_imp_revenue.present() ?
+                ad_slot_context.pub_imp_revenue ?
                 RevenueDecimal::mul(
                   *ad_slot_context.pub_imp_revenue,
                   RevenueDecimal(false, 100, 0),

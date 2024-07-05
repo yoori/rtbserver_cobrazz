@@ -1265,10 +1265,10 @@ inline
 unsigned long
 request_distribution_hash(
   const AdServer::Commons::RequestId& request_id,
-  const AdServer::Commons::Optional<unsigned long>& user_id_distrib_hash
+  const std::optional<unsigned long>& user_id_distrib_hash
 )
 {
-  return user_id_distrib_hash.present() ? *user_id_distrib_hash :
+  return user_id_distrib_hash ? *user_id_distrib_hash :
     AdServer::Commons::uuid_distribution_hash(request_id);
 }
 

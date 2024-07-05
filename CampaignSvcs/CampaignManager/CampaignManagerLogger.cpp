@@ -2275,7 +2275,7 @@ namespace AdServer
               ad_info.adv_time,
               ad_info.request_id,
               request_info.request_id, // global request id
-              request_info.request_user_id.present() ?
+              request_info.request_user_id ?
                 *request_info.request_user_id :
                 request_info.user_id,
               request_info.household_id,
@@ -2327,7 +2327,7 @@ namespace AdServer
               ad_ri.walled_garden,
               ad_info.text_campaign ? 'T' : 'D',
               adapt_user_status(
-                request_info.request_user_status.present() ?
+                request_info.request_user_status ?
                 *request_info.request_user_status :
                 request_info.user_status),
               std::move(lost_auction_ccgs),
@@ -2341,13 +2341,13 @@ namespace AdServer
               ad_ri.tag_size,
               ad_ri.size_id,
               ad_ri.household_based,
-              ad_ri.tag_visibility.present() ?
+              ad_ri.tag_visibility ?
                 OptionalUlong(*ad_ri.tag_visibility) :
                 OptionalUlong(),
-              ad_ri.tag_top_offset.present() ?
+              ad_ri.tag_top_offset ?
                 OptionalUlong(*ad_ri.tag_top_offset) :
                 OptionalUlong(),
-              ad_ri.tag_left_offset.present() ?
+              ad_ri.tag_left_offset ?
                 OptionalUlong(*ad_ri.tag_left_offset) :
                 OptionalUlong(),
               ad_info.ctr_reset_id,
@@ -2362,7 +2362,7 @@ namespace AdServer
               ad_info.position == 1 ? ad_ri.floor_cost : RevenueDecimal::ZERO,
               ad_info.ctr_algorithm_id,
               ad_info.ctr,
-              (request_info.short_referer_hash.present() ?
+              (request_info.short_referer_hash ?
                 *request_info.short_referer_hash : 0), // FIXME: short_referer_hash for RequestsLogs
               ad_ri.auction_type,
               ad_info.conv_rate_algorithm_id,
@@ -2404,7 +2404,7 @@ namespace AdServer
             impression_info.user_id : Commons::UserId(),
           impression_info.referrer,
           impression_info.pub_imp_revenue,
-          Commons::Optional<RevenueDecimal>(), // pub sys revenue (deprecated)
+          std::optional<RevenueDecimal>(), // pub sys revenue (deprecated)
           impression_info.pub_imp_revenue_type == RT_SHARE ? 'P' : 'A',
           impression_info.verify_type == RVT_IMPRESSION ? 'T' : (
             impression_info.verify_type == RVT_NOTICE ? 'N' : 'C'),
@@ -2488,7 +2488,7 @@ namespace AdServer
       static const char* FUN = "ActionRequestLogger::process_action()";
 
       if(!adv_action_info.log_as_test &&
-         adv_action_info.action_id.present())
+         adv_action_info.action_id)
       {
         try
         {
@@ -2615,7 +2615,7 @@ namespace AdServer
             "", // ext_tag_id
             request_info.referer.empty() ?
               EMPTY_REFERER_ : request_info.referer,
-            request_info.full_referer_hash.present() ?
+            request_info.full_referer_hash ?
               AdServer::LogProcessing::OptionalUlong(*request_info.full_referer_hash) :
               AdServer::LogProcessing::OptionalUlong(),
             adapt_user_status(request_info.user_status),
@@ -2661,7 +2661,7 @@ namespace AdServer
             opt_in = CollectorT::DataT::OptInSection(
               ad_ri.site_id,
               request_info.user_id,
-              ad_ri.page_load_id.present() ?
+              ad_ri.page_load_id ?
                 AdServer::LogProcessing::OptionalUlong(*ad_ri.page_load_id) :
                 AdServer::LogProcessing::OptionalUlong(),
               ad_shown,
@@ -2679,7 +2679,7 @@ namespace AdServer
             ad_ri.ext_tag_id,
             request_info.referer.empty() ?
               EMPTY_REFERER_ : request_info.referer,
-            request_info.full_referer_hash.present() ?
+            request_info.full_referer_hash ?
               AdServer::LogProcessing::OptionalUlong(*request_info.full_referer_hash) :
               AdServer::LogProcessing::OptionalUlong(),
             adapt_user_status(request_info.user_status),
@@ -2719,13 +2719,13 @@ namespace AdServer
         add_data.add(
           CollectorT::DataT::KeyT(
             ad_ri.request_tag_id,
-            ad_ri.tag_top_offset.present() ?
+            ad_ri.tag_top_offset ?
               CollectorT::DataT::KeyT::OptionalUlong(*ad_ri.tag_top_offset) :
               CollectorT::DataT::KeyT::OptionalUlong(),
-            ad_ri.tag_left_offset.present() ?
+            ad_ri.tag_left_offset ?
               CollectorT::DataT::KeyT::OptionalUlong(*ad_ri.tag_left_offset) :
               CollectorT::DataT::KeyT::OptionalUlong(),
-            ad_ri.tag_visibility.present() ?
+            ad_ri.tag_visibility ?
               CollectorT::DataT::KeyT::OptionalUlong(*ad_ri.tag_visibility) :
               CollectorT::DataT::KeyT::OptionalUlong(),
             ri.log_as_test),

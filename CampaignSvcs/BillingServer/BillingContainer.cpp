@@ -131,8 +131,8 @@ namespace CampaignSvcs
         std::endl;
 #     endif
 
-      if(delivery_limits_.budget.present() ||
-        delivery_limits_.daily_budget.present())
+      if(delivery_limits_.budget ||
+        delivery_limits_.daily_budget)
       {
         if(delivery_limits_.delivery_pacing == 'D' &&
           delivery_limits_.date_end != Generics::Time::ZERO)
@@ -147,12 +147,12 @@ namespace CampaignSvcs
     bool
     check_required() const
     {
-      return delivery_limits_.budget.present() ||
-        delivery_limits_.daily_budget.present() ||
-        delivery_limits_.imps_dec.has_value() ||
-        delivery_limits_.daily_imps_dec.has_value() ||
-        delivery_limits_.clicks_dec.has_value() ||
-        delivery_limits_.daily_clicks_dec.has_value();
+      return delivery_limits_.budget ||
+        delivery_limits_.daily_budget ||
+        delivery_limits_.imps_dec ||
+        delivery_limits_.daily_imps_dec ||
+        delivery_limits_.clicks_dec ||
+        delivery_limits_.daily_clicks_dec;
     };
 
     bool
@@ -179,7 +179,7 @@ namespace CampaignSvcs
       // check without additional amount
       // additional amount can generate much forced loops at last amount
       bool check_result;
-      Commons::Optional<RevenueDecimal> allowed_add_amount;
+      std::optional<RevenueDecimal> allowed_add_amount;
       std::optional<ImpRevenueDecimal> allowed_add_imps;
       std::optional<ImpRevenueDecimal> allowed_add_clicks;
 
@@ -209,7 +209,7 @@ namespace CampaignSvcs
       if(check_result || forced)
       {
         const RevenueDecimal& res_add_amount =
-          allowed_add_amount.present() ? *allowed_add_amount : add_amount;
+          allowed_add_amount ? *allowed_add_amount : add_amount;
         const ImpRevenueDecimal res_add_imps =
           allowed_add_imps.has_value() ? *allowed_add_imps : add_imps;
         const ImpRevenueDecimal res_add_clicks =
@@ -241,7 +241,7 @@ namespace CampaignSvcs
     daily_budget_defined() const noexcept
     {
       return (delivery_limits_.delivery_pacing == 'F' &&
-          delivery_limits_.daily_budget.present()) ||
+          delivery_limits_.daily_budget) ||
         (delivery_limits_.delivery_pacing == 'D' &&
           delivery_limits_.date_end != Generics::Time::ZERO);
     }
@@ -257,7 +257,7 @@ namespace CampaignSvcs
         // check today amount
         if(delivery_limits_.delivery_pacing == 'F')
         {
-          if(delivery_limits_.daily_budget.present())
+          if(delivery_limits_.daily_budget)
           {
             res = *delivery_limits_.daily_budget;
             return true;
@@ -342,7 +342,7 @@ namespace CampaignSvcs
           if(delivery_limits_.delivery_pacing == 'F')
           {
             // check fixed daily budget
-            if(delivery_limits_.daily_budget.present())
+            if(delivery_limits_.daily_budget)
             {
               /*
 #             ifdef DEBUG_OUTPUT
@@ -439,9 +439,9 @@ namespace CampaignSvcs
 
         if(!positive || (
              // some total limit defined
-             delivery_limits_.budget.present() ||
-             delivery_limits_.imps_dec.has_value() ||
-             delivery_limits_.clicks_dec.has_value()))
+             delivery_limits_.budget ||
+             delivery_limits_.imps_dec ||
+             delivery_limits_.clicks_dec))
         {
           const RevenueDecimal total_amount = (amount_holder ?
             amount_holder->get_total_amount() :
@@ -458,7 +458,7 @@ namespace CampaignSvcs
 #         ifdef DEBUG_OUTPUT
           std::cerr << "DeliveryLimitsChecker::check_(): total_amount = " << total_amount <<
             ", total_budget = " << (
-              delivery_limits_.budget.present() ?
+              delivery_limits_.budget ?
               *delivery_limits_.budget : RevenueDecimal::ZERO) << std::endl;
 #         endif
 
@@ -470,12 +470,12 @@ namespace CampaignSvcs
               return false;
             }
 
-            if(delivery_limits_.imps_dec.has_value() && total_imps >= *delivery_limits_.imps_dec)
+            if(delivery_limits_.imps_dec && total_imps >= *delivery_limits_.imps_dec)
             {
               return false;
             }
 
-            if(delivery_limits_.clicks_dec.has_value() && total_clicks >= *delivery_limits_.clicks_dec)
+            if(delivery_limits_.clicks_dec && total_clicks >= *delivery_limits_.clicks_dec)
             {
               return false;
             }
@@ -489,7 +489,7 @@ namespace CampaignSvcs
 
             if(allowed_imps)
             {
-              *allowed_imps = delivery_limits_.imps_dec.has_value() ?
+              *allowed_imps = delivery_limits_.imps_dec ?
                 std::min(
                   *delivery_limits_.imps_dec - total_imps,
                   *allowed_imps) :
@@ -578,7 +578,7 @@ namespace CampaignSvcs
                 *allowed_clicks);
             }
           }
-        } // !positive || delivery_limits_.budget.present()
+        } // !positive || delivery_limits_.budget
 
         // TODO: check imps/daily_imp/clicks/daily_clicks limits
       }
@@ -3690,7 +3690,7 @@ namespace CampaignSvcs
     DeliveryLimitsType& delivery_limits)
     const noexcept
   {
-    if(delivery_limits.daily_budget.present())
+    if(delivery_limits.daily_budget)
     {
       delivery_limits.daily_budget = RevenueDecimal::mul(
         *delivery_limits.daily_budget,
@@ -3698,7 +3698,7 @@ namespace CampaignSvcs
         Generics::DMR_FLOOR);
     }
 
-    if(delivery_limits.budget.present())
+    if(delivery_limits.budget)
     {
       delivery_limits.budget = RevenueDecimal::mul(
         *delivery_limits.budget,

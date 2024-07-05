@@ -4,6 +4,7 @@
 // STD
 #include <cassert>
 #include <type_traits>
+#include <optional>
 
 // PROTOBUF
 #include <google/protobuf/repeated_field.h>
@@ -134,10 +135,10 @@ inline void print_repeated(
 
 template<class DecimalType>
 inline std::string pack_optional_decimal(
-  const AdServer::Commons::Optional<DecimalType>& data)
+  const std::optional<DecimalType>& data)
 {
   std::string result;
-  if (data.present())
+  if (data)
   {
     result.resize(DecimalType::PACK_SIZE);
     data->pack(result.data());
@@ -168,7 +169,7 @@ inline DecimalType unpack_optional_decimal(const std::string& data)
 {
   if (data.empty())
   {
-    return AdServer::Commons::Optional<DecimalType>();
+    return std::optional<DecimalType>();
   }
   else
   {

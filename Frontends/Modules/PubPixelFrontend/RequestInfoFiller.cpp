@@ -122,7 +122,7 @@ namespace PubPixel
       Request::Parameters::LOCATION_NAME,
       RequestParamProcessor_var(
         new FrontendCommons::LocationCountryParamProcessor<
-          RequestInfo, AdServer::Commons::Optional<std::string> >(
+          RequestInfo, std::optional<std::string> >(
             &RequestInfo::country))));
     param_processors_.insert(std::make_pair(
       Request::Parameters::PUBLISHER_ACCOUNT_IDS,
@@ -180,7 +180,7 @@ namespace PubPixel
         }
       }
 
-      if(!request_info.country.present() && ip_map_.get())
+      if(!request_info.country && ip_map_.get())
       {
         try
         {

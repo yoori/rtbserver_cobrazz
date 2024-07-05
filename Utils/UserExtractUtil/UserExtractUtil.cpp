@@ -1,6 +1,7 @@
 #include "UserExtractUtil.hpp"
 
 #include <set>
+#include <optional>
 
 #include <Generics/AppUtils.hpp>
 #include <String/Tokenizer.hpp>
@@ -125,7 +126,7 @@ print_channels(
 void
 extract_data(
   const Generics::Time& min_req_time,
-  const AdServer::Commons::Optional<Generics::Time>& day,
+  const std::optional<Generics::Time>& day,
   const std::set<unsigned long>& channel_whitelist,
   ProfileMap* profile_map_ptr,
   std::ostream& os,
@@ -159,7 +160,7 @@ extract_data(
       {
         const auto days = profile_reader.days();
 
-        if (day.present())
+        if (day)
         {
           auto day_it = days.begin();
 
@@ -265,7 +266,7 @@ main(
 
     extract_data(
       *min_req_time,
-      AdServer::Commons::Optional<Generics::Time>(day.installed(), *day),
+      day.installed() ? std::optional<Generics::Time>(*day) : std::optional<Generics::Time>(),
       std::set<unsigned long>(channel_whitelist->begin(), channel_whitelist->end()),
       profile_map,
       std::cout,

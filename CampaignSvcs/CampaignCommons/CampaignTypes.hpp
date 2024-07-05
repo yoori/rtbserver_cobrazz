@@ -5,6 +5,7 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <optional>
 #include <Generics/Time.hpp>
 #include <Generics/SimpleDecimal.hpp>
 #include <Generics/Decimal.hpp>
@@ -306,7 +307,7 @@ namespace AdServer
     typedef Generics::SimpleDecimal<uint32_t, 6, 5> DeliveryThresholdDecimal;
     typedef Generics::Decimal<uint64_t, 36, 8> ImpRevenueDecimal;
     //typedef RevenueDecimal EcpmDecimal;
-    typedef AdServer::Commons::Optional<RevenueDecimal> OptionalRevenueDecimal;
+    typedef std::optional<RevenueDecimal> OptionalRevenueDecimal;
 
     const RevenueDecimal REVENUE_ONE(false, 1, 0);
     const ExtRevenueDecimal EXT_REVENUE_ONE(false, 1, 0);
@@ -324,10 +325,10 @@ namespace AdServer
       OptionalRevenueDecimal budget;
       OptionalRevenueDecimal daily_budget;
       char delivery_pacing;
-      Commons::Optional<unsigned long> imps;
-      Commons::Optional<unsigned long> daily_imps;
-      Commons::Optional<unsigned long> clicks;
-      Commons::Optional<unsigned long> daily_clicks;
+      std::optional<unsigned long> imps;
+      std::optional<unsigned long> daily_imps;
+      std::optional<unsigned long> clicks;
+      std::optional<unsigned long> daily_clicks;
     };
 
     class OptionValueMap: public std::map<unsigned long, std::string>

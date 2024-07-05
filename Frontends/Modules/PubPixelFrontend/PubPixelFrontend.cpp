@@ -230,7 +230,7 @@ namespace PubPixel
               std::end(request_info.publisher_account_ids));
 
             auto get_pub_pixels_response = grpc_campaign_manager_pool->get_pub_pixels(
-              request_info.country.present() ? *request_info.country : std::string(),
+              request_info.country ? *request_info.country : std::string(),
               request_info.user_status,
               publisher_account_ids);
             if (!get_pub_pixels_response || get_pub_pixels_response->has_error())
@@ -303,7 +303,7 @@ namespace PubPixel
 
           pub_pixels_ptr =
             campaign_managers_.get_pub_pixels(
-              request_info.country.present() ? request_info.country->c_str() : "",
+              request_info.country ? request_info.country->c_str() : "",
               request_info.user_status,
               publisher_account_ids);
 

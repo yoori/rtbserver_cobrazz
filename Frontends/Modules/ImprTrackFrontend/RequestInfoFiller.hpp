@@ -56,7 +56,7 @@ namespace ImprTrack
     // creatives and request_ids ordered
     CreativeList creatives;
     RequestIdList request_ids;
-    AdServer::Commons::Optional<unsigned long> user_id_hash_mod;
+    std::optional<unsigned long> user_id_hash_mod;
     AdServer::Commons::UserId current_user_id;
     AdServer::Commons::UserId actual_user_id;
     Generics::Time time;

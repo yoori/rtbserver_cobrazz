@@ -303,15 +303,15 @@ namespace AdServer
     class ExpandSpaceParamProcessor:
       public FrontendCommons::NumberParamProcessor<
         RequestInfo,
-        Commons::Optional<unsigned long>,
+        std::optional<unsigned long>,
         unsigned long>
     {
     public:
       ExpandSpaceParamProcessor(
-        Commons::Optional<unsigned long> RequestInfo::* field)
+        std::optional<unsigned long> RequestInfo::* field)
         : FrontendCommons::NumberParamProcessor<
             RequestInfo,
-            Commons::Optional<unsigned long>,
+            std::optional<unsigned long>,
             unsigned long>(field)
       {}
 
@@ -321,7 +321,7 @@ namespace AdServer
       {
         FrontendCommons::NumberParamProcessor<
           RequestInfo,
-          Commons::Optional<unsigned long>,
+          std::optional<unsigned long>,
           unsigned long>::process(
             request_info, value);
         request_info.down_expand_space = 0x0FFFFFFF;
@@ -624,7 +624,7 @@ namespace AdServer
       new FrontendCommons::NumberParamProcessor<RequestInfo, unsigned long>(
         &RequestInfo::random));
     add_processor_(true, true, Request::Context::SET_UID,
-      new FrontendCommons::BoolParamProcessor<RequestInfo, Commons::Optional<bool> >(
+      new FrontendCommons::BoolParamProcessor<RequestInfo, std::optional<bool> >(
         &RequestInfo::set_uid));
     add_processor_(true, true, Request::Context::TEST_REQUEST,
       new TestRequestParamProcessor());
@@ -648,7 +648,7 @@ namespace AdServer
     add_processor_(true, true, Request::Context::TAG_VISIBILITY,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
-        Commons::Optional<unsigned long>,
+        std::optional<unsigned long>,
         unsigned long>(
           &RequestInfo::tag_visibility));
     add_processor_(true, true, Request::Context::REQUEST_TOKEN,
@@ -1011,7 +1011,7 @@ namespace AdServer
           set_uid_controller_->generate_if_allowed(
             request_info.user_status,
             request_info.client_id,
-            request_info.set_uid.present() & *request_info.set_uid);
+            request_info.set_uid && *request_info.set_uid);
 
         if (set_uid)
         {

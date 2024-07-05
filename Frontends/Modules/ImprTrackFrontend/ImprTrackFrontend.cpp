@@ -537,7 +537,7 @@ namespace ImprTrack
           verify_impression_info.viewability = request_info.viewability;
           verify_impression_info.action_name << request_info.action_name;
 
-          if(request_info.user_id_hash_mod.present())
+          if(request_info.user_id_hash_mod)
           {
             verify_impression_info.user_id_hash_mod.defined = true;
             verify_impression_info.user_id_hash_mod.value =
