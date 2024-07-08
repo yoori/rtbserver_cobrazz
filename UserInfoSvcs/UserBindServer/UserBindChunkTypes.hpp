@@ -920,6 +920,7 @@ inline std::ostream& operator<<(
   const HashHashAdapter& adapter)
 {
   stream << adapter.hash();
+  return stream;
 }
 
 inline std::istream& operator>>(
@@ -927,6 +928,7 @@ inline std::istream& operator>>(
   HashHashAdapter& adapter)
 {
   stream >> adapter.hash_;
+  return stream;
 }
 
 inline bool SeenUserInfoHolder::need_save() const noexcept

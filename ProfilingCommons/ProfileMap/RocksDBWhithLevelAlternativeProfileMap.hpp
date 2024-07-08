@@ -199,15 +199,18 @@ bool RocksDBWhithLevelAlternativeProfileMap<Key, KeyAdapter, KeySerializer>::rem
   const Key& key,
   OperationPriority op_priority)
 {
+  bool result = false;
   if (rocksdb_profile_map_)
   {
-    rocksdb_profile_map_->remove_profile(key, op_priority);
+    result |= rocksdb_profile_map_->remove_profile(key, op_priority);
   }
 
   if (level_profile_map_)
   {
-    level_profile_map_->remove_profile(key, op_priority);
+    result |= level_profile_map_->remove_profile(key, op_priority);
   }
+
+  return result;
 }
 
 template<class Key, class KeyAdapter, class KeySerializer>
