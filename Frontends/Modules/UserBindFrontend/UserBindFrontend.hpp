@@ -131,13 +131,15 @@ namespace AdServer
     typedef std::unique_ptr<UserBindServerPool> UserBindServerPoolPtr;
     typedef UserBindServerPool::ObjectHandlerType UserBindServerHandler;
 
-    struct RedirectRule: public ReferenceCounting::AtomicImpl
+    struct RedirectRule final: public ReferenceCounting::AtomicImpl
     {
-    public:
+      using AllowedParams = std::unordered_map<std::string, std::string>;
+
       bool use_keywords;
       bool passback;
       unsigned long weight;
       bool redirect_empty_uid;
+      AllowedParams allowed_params;
 
       Generics::GnuHashSet<Generics::StringHashAdapter> keywords;
       String::TextTemplate::IStream redirect;
@@ -146,22 +148,18 @@ namespace AdServer
       bool init_bind_request;
 
     protected:
-      virtual
-      ~RedirectRule() noexcept
-      {}
+      ~RedirectRule() override = default;
     };
 
     typedef ReferenceCounting::SmartPtr<RedirectRule> RedirectRule_var;
 
-    class SourceEntity: public ReferenceCounting::AtomicImpl
+    class SourceEntity final: public ReferenceCounting::AtomicImpl
     {
     public:
       std::list<RedirectRule_var> rules;
 
     protected:
-      virtual
-      ~SourceEntity() noexcept
-      {}
+      ~SourceEntity() override = default;
     };
 
     typedef ReferenceCounting::SmartPtr<SourceEntity> SourceEntity_var;
@@ -201,10 +199,11 @@ namespace AdServer
     init_redirect_rule_(
       const String::SubString& redirect,
       const String::SubString* keywords,
-      bool passback,
-      unsigned long weight,
+      const bool passback,
+      const unsigned long weight,
       const String::SubString& location,
-      bool redirect_empty_uid)
+      const bool redirect_empty_uid,
+      RedirectRule::AllowedParams&& allowed_params)
       /*throw(UserBindFrontend::InvalidSource)*/;
 
     static void

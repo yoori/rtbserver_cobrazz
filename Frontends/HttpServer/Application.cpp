@@ -642,7 +642,7 @@ int Application::run(int argc, char** argv)
     {
       Stream::Error stream;
       stream << "config file or colocation config file is not specified\n"
-                "usage: FCGIServer <config_file>";
+                "usage: HttpAdServerConfig <config_file>";
       throw Exception(stream);
     }
 

@@ -908,6 +908,9 @@
   </xsd:complexType>
 
   <xsd:complexType name="UserBindSourceType">
+    <xsd:sequence>
+      <xsd:element name="redirectUrlParam" type="RedirectUrlParamType"  minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
     <xsd:attribute name="id" type="xsd:string" use="required"/>
     <xsd:attribute name="redirect" type="xsd:string" use="required"/>
     <xsd:attribute name="passback" type="xsd:boolean" use="required"/>
@@ -1238,5 +1241,10 @@
       <xsd:enumeration value="resources"/>
     </xsd:restriction>
   </xsd:simpleType>
+
+  <xsd:complexType name="RedirectUrlParamType">
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="token" type="xsd:string" use="required"/>
+  </xsd:complexType>
 
 </xsd:schema>
