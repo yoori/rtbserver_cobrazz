@@ -558,6 +558,16 @@ namespace AdServer
             std::string keywords = it->keywords();
             String::SubString keywords_ss(keywords);
 
+            RedirectRule::AllowedParams allowed_params;
+            auto it_redirect_param = it->redirectUrlParam().begin();
+            const auto it_redirect_param_end = it->redirectUrlParam().end();
+            for (; it_redirect_param != it_redirect_param_end; ++it_redirect_param)
+            {
+              allowed_params.try_emplace(
+                it_redirect_param->name(),
+                it_redirect_param->token());
+            }
+
             source->rules.push_back(
               init_redirect_rule_(
                 it->redirect(),
@@ -565,7 +575,8 @@ namespace AdServer
                 it->passback(),
                 it->weight(),
                 it->location(),
-                it->redirect_empty_uid()));
+                it->redirect_empty_uid(),
+                std::move(allowed_params)));
           }
         }
 
@@ -1024,9 +1035,23 @@ namespace AdServer
         try
         {
           if(redirect_rule.in() && (
-               !request_info.user_id.is_null() || redirect_rule->redirect_empty_uid))
+            !request_info.user_id.is_null() || redirect_rule->redirect_empty_uid))
           {
             String::TextTemplate::Args templ_args;
+
+            const auto& params = request.params();
+            const auto& allowed_params = redirect_rule->allowed_params;
+            if (!allowed_params.empty())
+            {
+              for (const auto& param : params)
+              {
+                const auto it = allowed_params.find(param.name);
+                if (it != std::end(allowed_params))
+                {
+                  templ_args[it->second] = param.value;
+                }
+              }
+            }
 
             // fill params by request
             templ_args[TemplateParams::EXTERNALID] = request_info.external_id;
@@ -1046,14 +1071,14 @@ namespace AdServer
               templ_args[TemplateParams::SIGNEDUID] =
                 common_module_->user_id_controller()->sign(
                   bind_result.result_user_id).str();
-	    }
+            }
 
             if(!request_info.user_id.is_null())
             {
               templ_args[TemplateParams::SIGNEDCOOKIEUID] =
                 common_module_->user_id_controller()->sign(
                   request_info.user_id).str();
-	    }
+            }
 
             std::string ssp_user_id_str;
 
@@ -2181,10 +2206,11 @@ namespace AdServer
   UserBindFrontend::init_redirect_rule_(
     const String::SubString& redirect,
     const String::SubString* keywords,
-    bool passback,
-    unsigned long weight,
+    const bool passback,
+    const unsigned long weight,
     const String::SubString& location,
-    bool redirect_empty_uid)
+    const bool redirect_empty_uid,
+    RedirectRule::AllowedParams&& allowed_params)
     /*throw(UserBindFrontend::InvalidSource)*/
   {
     static const char* FUN = "UserBindFrontend::init_redirect_rule_";
@@ -2226,6 +2252,7 @@ namespace AdServer
       redirect_rule->init_bind_request = false;
       redirect_rule->weight = weight;
       redirect_rule->redirect_empty_uid = redirect_empty_uid;
+      redirect_rule->allowed_params = std::move(allowed_params);
 
       {
         String::TextTemplate::Keys keys;

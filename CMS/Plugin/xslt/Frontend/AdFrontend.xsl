@@ -1404,6 +1404,10 @@
                test="count(@weight) = 0">1</xsl:if></xsl:attribute>
              <xsl:attribute name="redirect_empty_uid"><xsl:value-of select="@redirect_empty_uid"/><xsl:if
                test="count(@redirect_empty_uid) = 0">false</xsl:if></xsl:attribute>
+
+             <xsl:for-each select="cfg:redirectUrlParam">
+               <cfg:redirectUrlParam name="{@name}" token="{@token}"/>
+             </xsl:for-each>
            </cfg:Source>
 
            <xsl:for-each select="cfg:keywordRedirect">
