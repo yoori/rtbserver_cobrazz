@@ -28,7 +28,7 @@ namespace FrontendCommons
 
 inline constexpr char ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL[] = "GRPC_CAMPAIGN_MANAGERS_POOL";
 
-class GrpcCampaignManagerPool final : Generics::Uncopyable
+class GrpcCampaignManagerPool final : private Generics::Uncopyable
 {
 private:
   class ClientHolder;
@@ -50,7 +50,15 @@ public:
   using TaskProcessor = userver::engine::TaskProcessor;
   using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
 
-  using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
+  using GetPubPixelsRequest = AdServer::CampaignSvcs::Proto::GetPubPixelsRequest;
+  using GetPubPixelsRequestPtr = std::unique_ptr<GetPubPixelsRequest>;
+  using GetPubPixelsResponse = AdServer::CampaignSvcs::Proto::GetPubPixelsResponse;
+  using GetPubPixelsResponsePtr = std::unique_ptr<GetPubPixelsResponse>;
+  using ConsiderWebOperationRequest = AdServer::CampaignSvcs::Proto::ConsiderWebOperationRequest;
+  using ConsiderWebOperationRequestPtr = std::unique_ptr<ConsiderWebOperationRequest>;
+  using ConsiderWebOperationResponse = AdServer::CampaignSvcs::Proto::ConsiderWebOperationResponse;
+  using ConsiderWebOperationResponsePtr = std::unique_ptr<ConsiderWebOperationResponse>;
+  /*using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
   using GetCampaignCreativeRequestPtr = std::unique_ptr<GetCampaignCreativeRequest>;
   using GetCampaignCreativeResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeResponse;
   using GetCampaignCreativeResponsePtr = std::unique_ptr<GetCampaignCreativeResponse>;
@@ -102,10 +110,6 @@ public:
   using VerifyOptOperationRequestPtr = std::unique_ptr<VerifyOptOperationRequest>;
   using VerifyOptOperationResponse = AdServer::CampaignSvcs::Proto::VerifyOptOperationResponse;
   using VerifyOptOperationResponsePtr = std::unique_ptr<VerifyOptOperationResponse>;
-  using ConsiderWebOperationRequest = AdServer::CampaignSvcs::Proto::ConsiderWebOperationRequest;
-  using ConsiderWebOperationRequestPtr = std::unique_ptr<ConsiderWebOperationRequest>;
-  using ConsiderWebOperationResponse = AdServer::CampaignSvcs::Proto::ConsiderWebOperationResponse;
-  using ConsiderWebOperationResponsePtr = std::unique_ptr<ConsiderWebOperationResponse>;
   using GetConfigRequest = AdServer::CampaignSvcs::Proto::GetConfigRequest;
   using GetConfigRequestPtr = std::unique_ptr<GetConfigRequest>;
   using GetConfigResponse = AdServer::CampaignSvcs::Proto::GetConfigResponse;
@@ -122,10 +126,6 @@ public:
   using GetColocationFlagsRequestPtr = std::unique_ptr<GetColocationFlagsRequest>;
   using GetColocationFlagsResponse = AdServer::CampaignSvcs::Proto::GetColocationFlagsResponse;
   using GetColocationFlagsResponsePtr = std::unique_ptr<GetColocationFlagsResponse>;
-  using GetPubPixelsRequest = AdServer::CampaignSvcs::Proto::GetPubPixelsRequest;
-  using GetPubPixelsRequestPtr = std::unique_ptr<GetPubPixelsRequest>;
-  using GetPubPixelsResponse = AdServer::CampaignSvcs::Proto::GetPubPixelsResponse;
-  using GetPubPixelsResponsePtr = std::unique_ptr<GetPubPixelsResponse>;
   using ProcessAnonymousRequestRequest = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestRequest;
   using ProcessAnonymousRequestRequestPtr = std::unique_ptr<ProcessAnonymousRequestRequest>;
   using ProcessAnonymousRequestResponse = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestResponse;
@@ -133,7 +133,7 @@ public:
   using GetFileRequest = AdServer::CampaignSvcs::Proto::GetFileRequest;
   using GetFileRequestPtr = std::unique_ptr<GetFileRequest>;
   using GetFileResponse = AdServer::CampaignSvcs::Proto::GetFileResponse;
-  using GetFileResponsePtr = std::unique_ptr<GetFileResponse>;
+  using GetFileResponsePtr = std::unique_ptr<GetFileResponse>;*/
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -152,7 +152,30 @@ public:
   GetPubPixelsResponsePtr get_pub_pixels(
     const std::string& country,
     const std::uint32_t user_status,
-    const std::vector<std::uint32_t>& publisher_account_ids);
+    const std::vector<std::uint32_t>& publisher_account_ids) noexcept;
+
+  ConsiderWebOperationResponsePtr consider_web_operation(
+    const Generics::Time& time,
+    const std::uint32_t colo_id,
+    const std::uint32_t tag_id,
+    const std::uint32_t cc_id,
+    const std::string& ct,
+    const std::string& curct,
+    const std::string& browser,
+    const std::string& os,
+    const std::string& app,
+    const std::string& source,
+    const std::string& operation,
+    const std::string& user_bind_src,
+    const std::uint32_t result,
+    const std::uint32_t user_status,
+    const bool test_request,
+    const std::vector<std::string>& request_ids,
+    const std::string& global_request_id,
+    const std::string& referer,
+    const std::string& ip_address,
+    const std::string& external_user_id,
+    const std::string& user_agent) noexcept;
 
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
@@ -160,163 +183,31 @@ private:
     const std::uint32_t user_status,
     const std::vector<std::uint32_t>& publisher_account_ids);
 
+  ConsiderWebOperationRequestPtr create_consider_web_operation_request(
+    const Generics::Time& time,
+    const std::uint32_t colo_id,
+    const std::uint32_t tag_id,
+    const std::uint32_t cc_id,
+    const std::string& ct,
+    const std::string& curct,
+    const std::string& browser,
+    const std::string& os,
+    const std::string& app,
+    const std::string& source,
+    const std::string& operation,
+    const std::string& user_bind_src,
+    const std::uint32_t result,
+    const std::uint32_t user_status,
+    const bool test_request,
+    const std::vector<std::string>& request_ids,
+    const std::string& global_request_id,
+    const std::string& referer,
+    const std::string& ip_address,
+    const std::string& external_user_id,
+    const std::string& user_agent);
+
   template<class Client, class Request, class Response, class ...Args>
-  std::unique_ptr<Response> do_request(Args&& ...args) noexcept
-  {
-    if (client_holders_.empty())
-    {
-      try
-      {
-        Stream::Error stream;
-        stream << FNS
-               << " client_holders is empty";
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-      }
-      catch (...)
-      {
-      }
-      return {};
-    }
-
-    const std::size_t size = client_holders_.size();
-    for (std::size_t i = 0; i < size; ++i)
-    {
-      try
-      {
-        const std::size_t number = counter_.fetch_add(
-          1,
-          std::memory_order_relaxed);
-        const auto& client_holder = client_holders_[number % size];
-        if (client_holder->is_bad())
-        {
-          continue;
-        }
-
-        std::unique_ptr<Request> request;
-        if constexpr(std::is_same_v<Request, GetPubPixelsRequest>)
-        {
-          request = create_get_pub_pixels_request(std::forward<Args>(args)...);
-        }
-        else
-        {
-          static_assert(GrpcAlgs::AlwaysFalseV<Request>);
-        }
-
-        auto response = client_holder->template do_request<Client, Request, Response>(
-          std::move(request),
-          grpc_client_timeout_ms_);
-        if (!response)
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << "Internal grpc error";
-          logger_->error(
-            stream.str(),
-            ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-
-          continue;
-        }
-
-        const auto data_case = response->data_case();
-        if (data_case == Response::DataCase::kInfo)
-        {
-          return response;
-        }
-        else if (data_case == Response::DataCase::kError)
-        {
-          std::ostringstream stream;
-          stream << FNS
-                 << "Error type=";
-
-          const auto& error = response->error();
-          const auto error_type = error.type();
-          switch (error_type)
-          {
-            case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_Implementation:
-            {
-              stream << "Implementation";
-            }
-            case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_NotReady:
-            {
-              stream << "NotReady";
-            }
-            case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_IncorrectArgument:
-            {
-              stream << "IncorrectArgument";
-            }
-            default:
-            {
-              Stream::Error stream;
-              stream << FNS
-                     << "Unknown error type";
-              throw  Exception(stream);
-            }
-          }
-
-          stream << ", description="
-                 << error.description();
-          logger_->error(
-            stream.str(),
-            ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-          return response;
-        }
-        else
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << "Unknown response type";
-          throw  Exception(stream);
-        }
-      }
-      catch (const eh::Exception& exc)
-      {
-        try
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << exc.what();
-          logger_->error(
-            stream.str(),
-            ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-        }
-        catch (...)
-        {
-        }
-      }
-      catch (...)
-      {
-        try
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << "Unknown error";
-          logger_->error(
-            stream.str(),
-            ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-        }
-        catch (...)
-        {
-        }
-      }
-    }
-
-    try
-    {
-      Stream::Error stream;
-      stream << FNS
-             << "max tries is reached";
-      logger_->error(
-        stream.str(),
-        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-    }
-    catch (...)
-    {
-    }
-
-    return {};
-  }
+  std::unique_ptr<Response> do_request(Args&& ...args) noexcept;
 
 private:
   const Logger_var logger_;

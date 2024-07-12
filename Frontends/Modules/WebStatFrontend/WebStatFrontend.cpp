@@ -181,46 +181,97 @@ namespace WebStat
       {
         const RequestInfo& request_info = *req_it;
 
-        CampaignSvcs::CampaignManager::WebOperationInfo web_op_info;
-        //web_op_info.check_args = true;
-        web_op_info.time = CorbaAlgs::pack_time(request_info.time);
-        web_op_info.colo_id = request_info.colo_id;
-        web_op_info.tag_id = request_info.tag_id;
-        web_op_info.cc_id = request_info.cc_id;
-        web_op_info.ct << request_info.ct;
-        web_op_info.curct << request_info.curct;
-        web_op_info.browser << request_info.browser;
-        web_op_info.os << request_info.os;
-        web_op_info.app << request_info.application;
-        web_op_info.source << request_info.source;
-        web_op_info.operation << request_info.operation;
-        web_op_info.result = request_info.result;
-        web_op_info.user_status = static_cast<unsigned long>(request_info.user_status);
-        web_op_info.test_request = request_info.test_request;
-        web_op_info.referer << request_info.referer;
-        web_op_info.ip_address << request_info.peer_ip;
-        web_op_info.external_user_id << request_info.external_user_id;
-        web_op_info.user_agent << request_info.user_agent;
-        if (!request_info.request_ids.empty())
+        bool is_grpc_success = false;
+        auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+        if (grpc_campaign_manager_pool)
         {
-          web_op_info.request_ids.length(request_info.request_ids.size());
-          CORBA::ULong ri = 0;
-          for(RequestIdSet::const_iterator rit = request_info.request_ids.begin();
-              rit != request_info.request_ids.end(); ++rit, ++ri)
+          is_grpc_success = true;
+
+          std::vector<std::string> request_ids;
+          if (!request_info.request_ids.empty())
           {
-            if (!rit->is_null())
+            request_ids.reserve(request_info.request_ids.size());
+            for (const auto& request_id : request_info.request_ids)
             {
-              web_op_info.request_ids[ri] = CorbaAlgs::pack_request_id(*rit);
+              if (!request_id.is_null())
+              {
+                request_ids.emplace_back(GrpcAlgs::pack_request_id(request_id));
+              }
             }
           }
-        }
-        if (!request_info.global_request_id.is_null())
-        {
-          web_op_info.global_request_id =
-            CorbaAlgs::pack_request_id(request_info.global_request_id);
+
+          auto response = grpc_campaign_manager_pool->consider_web_operation(
+            request_info.time,
+            request_info.colo_id,
+            request_info.tag_id,
+            request_info.cc_id,
+            request_info.ct,
+            request_info.curct,
+            request_info.browser,
+            request_info.os,
+            request_info.application,
+            request_info.source,
+            request_info.operation,
+            std::string{},
+            request_info.result,
+            static_cast<std::uint32_t>(request_info.user_status),
+            request_info.test_request,
+            request_ids,
+            !request_info.global_request_id.is_null() ?
+              GrpcAlgs::pack_request_id(request_info.global_request_id) : std::string{},
+            request_info.referer,
+            request_info.peer_ip,
+            request_info.external_user_id,
+            request_info.user_agent);
+          if (!response || response->has_error())
+          {
+            is_grpc_success = false;
+          }
         }
 
-        campaign_managers_.consider_web_operation(web_op_info);
+        if (!is_grpc_success)
+        {
+          CampaignSvcs::CampaignManager::WebOperationInfo web_op_info;
+          //web_op_info.check_args = true;
+          web_op_info.time = CorbaAlgs::pack_time(request_info.time);
+          web_op_info.colo_id = request_info.colo_id;
+          web_op_info.tag_id = request_info.tag_id;
+          web_op_info.cc_id = request_info.cc_id;
+          web_op_info.ct << request_info.ct;
+          web_op_info.curct << request_info.curct;
+          web_op_info.browser << request_info.browser;
+          web_op_info.os << request_info.os;
+          web_op_info.app << request_info.application;
+          web_op_info.source << request_info.source;
+          web_op_info.operation << request_info.operation;
+          web_op_info.result = request_info.result;
+          web_op_info.user_status = static_cast<unsigned long>(request_info.user_status);
+          web_op_info.test_request = request_info.test_request;
+          web_op_info.referer << request_info.referer;
+          web_op_info.ip_address << request_info.peer_ip;
+          web_op_info.external_user_id << request_info.external_user_id;
+          web_op_info.user_agent << request_info.user_agent;
+          if (!request_info.request_ids.empty())
+          {
+            web_op_info.request_ids.length(request_info.request_ids.size());
+            CORBA::ULong ri = 0;
+            for(RequestIdSet::const_iterator rit = request_info.request_ids.begin();
+              rit != request_info.request_ids.end(); ++rit, ++ri)
+            {
+              if (!rit->is_null())
+              {
+                web_op_info.request_ids[ri] = CorbaAlgs::pack_request_id(*rit);
+              }
+            }
+          }
+          if (!request_info.global_request_id.is_null())
+          {
+            web_op_info.global_request_id =
+              CorbaAlgs::pack_request_id(request_info.global_request_id);
+          }
+
+          campaign_managers_.consider_web_operation(web_op_info);
+        }
       }
 
       if(!request_info_list.empty() && !request_info_list.begin()->origin.empty())
