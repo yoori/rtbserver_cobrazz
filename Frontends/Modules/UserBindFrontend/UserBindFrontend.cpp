@@ -1293,11 +1293,6 @@ namespace AdServer
     const std::string_view statistic_label = std::string_view(request_info.source_id);
     ADD_COMMON_COUNTER_STATISTIC(statistic_id, statistic_label, 1)
 
-    using GetUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::GetUserIdResponsePtr;
-    using AddUserIdResponsePtr =
-      FrontendCommons::UserBindClient::GrpcDistributor::AddUserIdResponsePtr;
-
     int http_status = 200; // non used on response
 
     if (request_info.delete_op)

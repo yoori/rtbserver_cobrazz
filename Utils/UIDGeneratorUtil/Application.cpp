@@ -44,7 +44,7 @@ Application_::send_(
   const String::SubString& socket_str,
   const Generics::Time& timeout,
   unsigned long max_portion)
-  noexcept
+  /*throw (eh::Exception)*/
 {
   const String::SubString::SizeType sep_pos = socket_str.find(':');
   if(sep_pos != String::SubString::NPOS)

@@ -374,7 +374,7 @@ namespace AdServer::UserInfoSvcs
   };
 
   template<typename KeyType, typename ValueType>
-  class FetcherDelegate : private Generics::Uncopyable
+  class FetcherDelegate : virtual private Generics::Uncopyable
   {
   public:
     FetcherDelegate() = default;

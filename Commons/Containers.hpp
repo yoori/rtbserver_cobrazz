@@ -193,6 +193,10 @@ namespace AdServer
       explicit ValueStateHolder(const ObjectType& val): val_(val), state_(S_GOOD) {}
       ValueStateHolder(const ObjectType* val): val_(val ? *val : ObjectType()), state_(val ? S_GOOD : S_NOT_INITED) {}
 
+      ValueStateHolder(const ValueStateHolder<ObjectType>& val)
+        : val_(val.val_), state_(val.state_)
+      {}
+
       const ObjectType*
       operator->() const noexcept
       {
@@ -236,7 +240,7 @@ namespace AdServer
         return *this;
       }
 
-      ValueStateHolder&
+      ValueStateHolder<ObjectType>&
       operator=(const ValueStateHolder<ObjectType>& val)
       {
         if(val.present())

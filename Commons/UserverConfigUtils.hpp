@@ -23,10 +23,6 @@ create_task_processor_container_builder(
     UServerUtils::Grpc::EventThreadPoolConfig;
   using TaskProcessorConfig =
     UServerUtils::Grpc::TaskProcessorConfig;
-  using CoroutineType =
-    xsd::AdServer::Configuration::CoroutineType;
-  using MainTaskProcessorType =
-    xsd::AdServer::Configuration::MainTaskProcessorType;
   using OverloadActionType =
     xsd::AdServer::Configuration::OverloadActionType;
   using TaskProcessorContainerBuilder =

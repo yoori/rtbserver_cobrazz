@@ -21,6 +21,7 @@
 #include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
 #include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
 #include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
+#include "../UserBindController/UserBindOperationDistributor.hpp"
 
 namespace AdServer::UserInfoSvcs
 {
@@ -151,148 +152,7 @@ private:
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(
     const String::SubString& id,
-    Args&& ...args) noexcept
-  {
-    ChunkId chunk_id = 0;
-    for (std::size_t i = 0; i < try_count_; ++i)
-    {
-      const PartitionNumber partition_number =
-        (get_partition_number(id) + i) % partition_holders_.size();
-
-      try
-      {
-        PartitionPtr partition = get_partition(partition_number);
-        if (!partition)
-        {
-          try_to_reresolve_partition(partition_number);
-          continue;
-        }
-
-        chunk_id = partition->chunk_id(id);
-        auto client_container = partition->get_client_container(chunk_id);
-        if (!client_container)
-        {
-          try_to_reresolve_partition(partition_number);
-          continue;
-        }
-
-        if (client_container->is_bad(pool_timeout_))
-        {
-          continue;
-        }
-
-        std::unique_ptr<Request> request;
-        if constexpr (std::is_same_v<Request, GetBindRequest>)
-        {
-          request = create_get_bind_request(std::forward<Args>(args)...);
-        }
-        else if constexpr (std::is_same_v<Request, AddBindRequest>)
-        {
-          request = create_add_bind_request(std::forward<Args>(args)...);
-        }
-        else if constexpr (std::is_same_v<Request, GetUserIdRequest>)
-        {
-          request = create_get_user_id_request(std::forward<Args>(args)...);
-        }
-        else if constexpr (std::is_same_v<Request, AddUserIdRequest>)
-        {
-          request = create_add_user_id_request(std::forward<Args>(args)...);
-        }
-        else
-        {
-          static_assert(GrpcAlgs::AlwaysFalseV<Request>);
-        }
-
-        auto response = client_container->template do_request<Client, Request, Response>(
-          std::move(request),
-          grpc_client_timeout_);
-        if (!response)
-        {
-          client_container->set_bad();
-          try_to_reresolve_partition(partition_number);
-          continue;
-        }
-
-        const auto data_case = response->data_case();
-        if (data_case == Response::DataCase::kInfo)
-        {
-          return response;
-        }
-        else if (data_case == Response::DataCase::kError)
-        {
-          const auto& error = response->error();
-          const auto error_type = error.type();
-          switch (error_type)
-          {
-            case Error_Type::Error_Type_NotReady:
-            {
-              client_container->set_bad();
-              break;
-            }
-            case Error_Type::Error_Type_ChunkNotFound:
-            {
-              client_container->set_bad();
-              try_to_reresolve_partition(partition_number);
-              break;
-            }
-            case Error_Type::Error_Type_Implementation:
-            {
-              client_container->set_bad();
-              try_to_reresolve_partition(partition_number);
-              break;
-            }
-            default:
-            {
-              Stream::Error stream;
-              stream << FNS
-                     << ": "
-                     << "Unknown error type";
-              logger_->error(
-                stream.str(),
-                ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
-              client_container->set_bad();
-              try_to_reresolve_partition(partition_number);
-              break;
-            }
-          }
-        }
-      }
-      catch (const eh::Exception& exc)
-      {
-        try
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << ": "
-                 << exc.what();
-          logger_->error(
-            stream.str(),
-            ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
-        }
-        catch (...)
-        {
-        }
-      }
-    }
-
-    try
-    {
-      Stream::Error stream;
-      stream << FNS
-             << ": max tries reached for id="
-             << id
-             << " and chunk="
-             << chunk_id;
-      logger_->error(
-        stream.str(),
-        ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
-    }
-    catch (...)
-    {
-    }
-
-    return {};
-  }
+    Args&& ...args) noexcept;
 
 private:
   const Logger_var logger_;
@@ -604,8 +464,6 @@ public:
   ClientContainerPtr get_client_container(
     const ChunkId chunk_id) noexcept
   {
-    using Result = std::pair<bool, ClientContainerPtr>;
-
     const auto it = chunk_to_client_container_.find(chunk_id);
     if (it == std::end(chunk_to_client_container_))
     {
@@ -652,6 +510,151 @@ public:
 using GrpcUserBindOperationDistributor_var =
   ReferenceCounting::SmartPtr<GrpcUserBindOperationDistributor>;
 
+template<class Client, class Request, class Response, class ...Args>
+std::unique_ptr<Response> GrpcUserBindOperationDistributor::do_request(
+  const String::SubString& id,
+  Args&& ...args) noexcept
+{
+  ChunkId chunk_id = 0;
+  for (std::size_t i = 0; i < try_count_; ++i)
+  {
+    const PartitionNumber partition_number =
+      (get_partition_number(id) + i) % partition_holders_.size();
+
+    try
+    {
+      PartitionPtr partition = get_partition(partition_number);
+      if (!partition)
+      {
+        try_to_reresolve_partition(partition_number);
+        continue;
+      }
+
+      chunk_id = partition->chunk_id(id);
+      auto client_container = partition->get_client_container(chunk_id);
+      if (!client_container)
+      {
+        try_to_reresolve_partition(partition_number);
+        continue;
+      }
+
+      if (client_container->is_bad(pool_timeout_))
+      {
+        continue;
+      }
+
+      std::unique_ptr<Request> request;
+      if constexpr (std::is_same_v<Request, GetBindRequest>)
+      {
+        request = create_get_bind_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, AddBindRequest>)
+      {
+        request = create_add_bind_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, GetUserIdRequest>)
+      {
+        request = create_get_user_id_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, AddUserIdRequest>)
+      {
+        request = create_add_user_id_request(std::forward<Args>(args)...);
+      }
+      else
+      {
+        static_assert(GrpcAlgs::AlwaysFalseV<Request>);
+      }
+
+      auto response = client_container->template do_request<Client, Request, Response>(
+        std::move(request),
+        grpc_client_timeout_);
+      if (!response)
+      {
+        client_container->set_bad();
+        try_to_reresolve_partition(partition_number);
+        continue;
+      }
+
+      const auto data_case = response->data_case();
+      if (data_case == Response::DataCase::kInfo)
+      {
+        return response;
+      }
+      else if (data_case == Response::DataCase::kError)
+      {
+        const auto& error = response->error();
+        const auto error_type = error.type();
+        switch (error_type)
+        {
+          case Error_Type::Error_Type_NotReady:
+          {
+            client_container->set_bad();
+            break;
+          }
+          case Error_Type::Error_Type_ChunkNotFound:
+          {
+            client_container->set_bad();
+            try_to_reresolve_partition(partition_number);
+            break;
+          }
+          case Error_Type::Error_Type_Implementation:
+          {
+            client_container->set_bad();
+            try_to_reresolve_partition(partition_number);
+            break;
+          }
+          default:
+          {
+            Stream::Error stream;
+            stream << FNS
+                   << ": "
+                   << "Unknown error type";
+            logger_->error(
+              stream.str(),
+              ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
+            client_container->set_bad();
+            try_to_reresolve_partition(partition_number);
+            break;
+          }
+        }
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      try
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": "
+               << exc.what();
+        logger_->error(
+          stream.str(),
+          ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
+      }
+      catch (...)
+      {
+      }
+    }
+  }
+
+  try
+  {
+    Stream::Error stream;
+    stream << FNS
+           << ": max tries reached for id="
+           << id
+           << " and chunk="
+           << chunk_id;
+    logger_->error(
+      stream.str(),
+      ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
+  }
+  catch (...)
+  {
+  }
+
+  return {};
+}
 } // namespace AdServer::UserInfoSvcs
 
 #endif // USERBINDCONTROLLER_GRPCUSERBINDOPERATIONDISTRIBUTOR_HPP

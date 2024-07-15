@@ -322,6 +322,8 @@ public:
     }
     return *this;
   }
+  ~StatCollector() = default;
+  StatCollector(const StatCollector&) = default;
 
   bool operator==(const StatCollector& collector) const
   {

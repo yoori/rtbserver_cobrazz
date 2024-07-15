@@ -48,7 +48,7 @@ namespace CampaignSvcs
     const CORBACommons::CorbaObjectRefList& billing_server_refs,
     unsigned long max_use_count,
     bool optimize_campaign_ctr)
-    noexcept
+    /*throw (eh::Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       task_runner_(new Generics::TaskRunner(callback, 1)),
       scheduler_(new Generics::Planner(callback)),

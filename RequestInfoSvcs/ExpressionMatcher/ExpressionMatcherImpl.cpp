@@ -66,16 +66,6 @@ namespace RequestInfoSvcs
       return first;
     }
 
-    std::string
-    fetch_dir_path(const xsd::AdServer::Configuration::InLogsType& lp_config) /*throw(eh::Exception)*/
-    {
-      return
-        AdServer::LogProcessing::FileReceiverConfig::make_path(
-          lp_config.log_root().c_str(),
-          lp_config.RequestBasicChannels().path().present() ? lp_config.RequestBasicChannels().path()->c_str() :
-            DEFAULT_REQUEST_BASIC_CHANNELS_BASE_NAME);
-    }
-
     ExpressionMatcherLogLoader::LogReadTraits
     make_log_read_traits(
       ExpressionMatcherLogLoader::LogType log_type,

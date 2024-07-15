@@ -215,7 +215,12 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
       case '\0':
         continue;
       case '-':
-        if (!is_dec(*str) && *str != '.') return *endptr = str, JSON_PARSE_BAD_NUMBER;
+        if (!is_dec(*str) && *str != '.')
+        {
+          *endptr = str;
+          return JSON_PARSE_BAD_NUMBER;
+        }
+        break;  // Prevent fallthrough
       case '0':
       case '1':
       case '2':

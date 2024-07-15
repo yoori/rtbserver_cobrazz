@@ -10,34 +10,6 @@
 
 typedef std::list<std::string> CertificateSeq;
 
-namespace
-{
-  void parse_certificate_seq(
-    const char* certificates,
-    CertificateSeq& certificate_seq)
-    /*throw(eh::Exception)*/
-  {
-    /* parse certificate sequence */
-    std::string certificate_seq_s = certificates;
-    std::string::size_type begin_word = 0;
-    std::string::size_type end_word;
-
-    while ((end_word = certificate_seq_s.find(';', begin_word)) !=
-      std::string::npos)
-    {
-      certificate_seq.push_back(
-        std::string(certificate_seq_s.begin() + begin_word,
-                    certificate_seq_s.begin() + end_word));
-        begin_word = end_word + 1;
-    }
-
-    certificate_seq.push_back(
-      std::string(certificate_seq_s.begin() + begin_word,
-                  certificate_seq_s.end()));
-  }
-}
-
-
 namespace Config
 {
   /** CorbaConfigReader */

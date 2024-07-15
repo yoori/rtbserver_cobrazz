@@ -30,7 +30,7 @@ namespace UserInfoSvcs
       const ControllerRefList& controller_refs,
       const CORBACommons::CorbaClientAdapter* corba_client_adapter,
       const Generics::Time& pool_timeout = Generics::Time::ONE_SECOND)
-      noexcept;
+      /*throw (eh::Exception)*/;
 
     // UserInfoMapper interface
     virtual

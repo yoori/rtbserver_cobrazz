@@ -1545,9 +1545,6 @@ namespace RequestInfoSvcs {
     using ProfileMap = AdServer::ProfilingCommons::RocksDB::RocksDBProfileMap<
       AdServer::Commons::RequestId,
       UuidToString>;
-    using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
-    using DataBaseManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
-    using DataBaseManagerPoolPtr = std::shared_ptr<DataBaseManagerPool>;
 
     static const char* FUN = "RequestInfoContainer::RequestInfoContainer()";
 
@@ -1606,6 +1603,11 @@ namespace RequestInfoSvcs {
           "Caught eh::Exception: " << ex.what();
         throw Exception(ostr);
       }
+    }
+    else
+    {
+      // avoid unused parameter warning - or we can use __attribute__((unused))
+      (void)rocksdb_manager_pool;
     }
   }
 
@@ -2088,8 +2090,6 @@ namespace RequestInfoSvcs {
         *reinterpret_cast<const uint32_t*>(
           mem_buf->membuf().data()) == CURRENT_REQUEST_PROFILE_VERSION);
 
-      bool click_done = false;
-
       // reconstruct impression_non_considered for duplicate process
       /*
       if(impression_non_considered > 0 || click_non_considered > 0)
@@ -2521,7 +2521,6 @@ namespace RequestInfoSvcs {
     bool save_profile = false;
 
     bool delegate_process_notice = false;
-    bool notice_done = false;
     ImpressionInfo notice_info;
 
     //bool impression_done = false;
@@ -2597,7 +2596,6 @@ namespace RequestInfoSvcs {
           if(request_reader.notice_non_considered() != 0)
           {
             // notice already done - read cost values
-            notice_done = true;
             convert_request_reader_to_impression_info(
               notice_info,
               request_reader,

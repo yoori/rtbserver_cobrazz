@@ -186,15 +186,17 @@ bool RocksDBWhithAlternativeProfileMap<Key, KeyAdapter>::remove_profile(
   const Key& key,
   OperationPriority op_priority)
 {
+  bool res = false;
   if (rocksdb_profile_map_)
   {
-    rocksdb_profile_map_->remove_profile(key, op_priority);
+    res = rocksdb_profile_map_->remove_profile(key, op_priority);
   }
 
   if (other_profile_map_)
   {
-    other_profile_map_->remove_profile(key, op_priority);
+    res |= other_profile_map_->remove_profile(key, op_priority);
   }
+  return res;
 }
 
 template<class Key, class KeyAdapter>

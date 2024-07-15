@@ -250,11 +250,11 @@ Application_::generate_(
       splitter.get_token(imps_str);
       splitter.get_token(clicks_str);
 
-      unsigned long tag_id;
+      unsigned long tag_id{0};
       String::StringManip::str_to_int(tag_id_str, tag_id);
-      unsigned long imps;
+      unsigned long imps{0};
       String::StringManip::str_to_int(imps_str, imps);
-      unsigned long clicks;
+      unsigned long clicks{0};
       String::StringManip::str_to_int(clicks_str, clicks);
 
       sum_imps += imps;
@@ -288,7 +288,6 @@ Application_::generate_(
   
   // fetch table
   std::unordered_map<unsigned long, Value> tag_res;
-  unsigned long no_data_records = 0;
   unsigned long gt1000_records = 0;
   unsigned long gt10000_records = 0;
 

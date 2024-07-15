@@ -237,8 +237,6 @@ namespace AdServer
     uint8_t /*data_marker*/)
     /*throw(eh::Exception)*/
   {
-    static const char* FUN = "UserIdController::get_by_ssp_user_id()";
-
     return ssp_user_id;
 
     /*

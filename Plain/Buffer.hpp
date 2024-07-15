@@ -25,6 +25,10 @@ namespace PlainTypes
 
     Buffer&
     operator=(const Buffer& right) noexcept;
+
+    Buffer();
+    Buffer(const Buffer& right);
+
   };
 }
 
@@ -93,6 +97,12 @@ namespace PlainTypes
     assign(right.data(), right.size());
     return *this;
   }
+
+  inline
+  Buffer::Buffer() : Generics::MemBuf() {}
+
+  inline
+  Buffer::Buffer(const Buffer& right): Generics::MemBuf(right){}
 }
 
 #endif /*PLAIN_BUFFER_HPP*/

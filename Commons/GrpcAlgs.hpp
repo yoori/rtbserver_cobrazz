@@ -109,7 +109,10 @@ inline void print_repeated_fields(
     }
 
     out << (repeated_value[i].*pointer)();
-    ((out << field_delim << (repeated_value[i].*pointers)()), ...);
+    if constexpr (sizeof...(pointers) >= 1)//todo:check it please
+    {
+      ((out << field_delim << (repeated_value[i].*pointers)()), ...);
+    }
   }
 }
 

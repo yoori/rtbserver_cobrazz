@@ -144,7 +144,7 @@ namespace AdServer
            */
           virtual int32_t
           partitioner_cb(
-            const RdKafka::Topic *topic,
+            __attribute__((unused)) const RdKafka::Topic *topic,
             const std::string *key,
             int32_t partition_cnt,
             void *msg_opaque);

@@ -13,7 +13,6 @@ namespace CampaignSvcs
 {
   namespace
   {
-    const std::string COST_FILE_NAME("bid_cost.csv");
     const String::SubString BIDCOST_CONFIG_FOLDER_NAME_REGEXP("\\d{8}\\.\\d{6}");
 
     bool
@@ -122,12 +121,15 @@ namespace CampaignSvcs
   BidCostProvider::BidCostProvider(
     const String::SubString& directory,
     const Generics::Time& config_timestamp,
-    Generics::TaskRunner* task_runner)
+    Generics::TaskRunner* task_runner,
+    const std::string &fileName)
     : task_runner_(ReferenceCounting::add_ref(task_runner)),
       config_timestamp_(config_timestamp),
       remove_config_files_at_destroy_(false)
   {
-    load_(directory, COST_FILE_NAME);
+    load_(directory
+    , fileName
+      );
   }
 
   BidCostProvider::~BidCostProvider() noexcept
@@ -338,7 +340,7 @@ namespace CampaignSvcs
     std::string directory_str;
     directory.assign_to(directory_str);
 
-    const std::string cost_file = directory_str + "/" + COST_FILE_NAME;
+    const std::string cost_file = directory_str + "/" + file;
 
     CostMapping_var cost_mapping(new CostMapping());
 

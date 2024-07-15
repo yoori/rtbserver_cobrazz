@@ -221,7 +221,10 @@ namespace Bidding
         video(false),
         predicted_view_rate(-1)
     {}
-        
+
+    JsonAdSlotProcessingContext(const JsonAdSlotProcessingContext&) = default;
+    JsonAdSlotProcessingContext& operator=(const JsonAdSlotProcessingContext&) = default;
+    
     std::string id;
     AdServer::CampaignSvcs::RevenueDecimal min_cpm_price;
     Commons::Optional<long> private_auction;
