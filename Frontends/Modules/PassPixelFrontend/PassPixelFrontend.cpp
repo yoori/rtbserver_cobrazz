@@ -228,13 +228,34 @@ namespace PassbackPixel
         Aspect::PASS_PIXEL_FRONTEND, "ADS-IMPL-194");
     }
 
-    AdServer::CampaignSvcs::CampaignManager::PassbackTrackInfo info;
-    info.time = CorbaAlgs::pack_time(passback_track_info.time);
-    info.country << passback_track_info.country;
-    info.colo_id = passback_track_info.colo_id;
-    info.tag_id = passback_track_info.tag_id;
-    info.user_status = passback_track_info.user_status;
-    campaign_managers_.consider_passback_track(info);
+    bool is_grpc_success = false;
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      is_grpc_success = true;
+
+      auto response = grpc_campaign_manager_pool->consider_passback_track(
+        passback_track_info.time,
+        passback_track_info.country,
+        passback_track_info.colo_id,
+        passback_track_info.tag_id,
+        passback_track_info.user_status);
+      if (!response || response->has_error())
+      {
+        is_grpc_success = false;
+      }
+    }
+
+    if (!is_grpc_success)
+    {
+      AdServer::CampaignSvcs::CampaignManager::PassbackTrackInfo info;
+      info.time = CorbaAlgs::pack_time(passback_track_info.time);
+      info.country << passback_track_info.country;
+      info.colo_id = passback_track_info.colo_id;
+      info.tag_id = passback_track_info.tag_id;
+      info.user_status = passback_track_info.user_status;
+      campaign_managers_.consider_passback_track(info);
+    }
 
     return http_status;
   }

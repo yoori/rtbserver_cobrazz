@@ -58,6 +58,10 @@ public:
   using ConsiderWebOperationRequestPtr = std::unique_ptr<ConsiderWebOperationRequest>;
   using ConsiderWebOperationResponse = AdServer::CampaignSvcs::Proto::ConsiderWebOperationResponse;
   using ConsiderWebOperationResponsePtr = std::unique_ptr<ConsiderWebOperationResponse>;
+  using ConsiderPassbackTrackRequest = AdServer::CampaignSvcs::Proto::ConsiderPassbackTrackRequest;
+  using ConsiderPassbackTrackRequestPtr = std::unique_ptr<ConsiderPassbackTrackRequest>;
+  using ConsiderPassbackTrackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackTrackResponse;
+  using ConsiderPassbackTrackResponsePtr = std::unique_ptr<ConsiderPassbackTrackResponse>;
   /*using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
   using GetCampaignCreativeRequestPtr = std::unique_ptr<GetCampaignCreativeRequest>;
   using GetCampaignCreativeResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeResponse;
@@ -90,10 +94,6 @@ public:
   using ConsiderPassbackRequestPtr = std::unique_ptr<ConsiderPassbackRequest>;
   using ConsiderPassbackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackResponse;
   using ConsiderPassbackResponsePtr = std::unique_ptr<ConsiderPassbackResponse>;
-  using ConsiderPassbackTrackRequest = AdServer::CampaignSvcs::Proto::ConsiderPassbackTrackRequest;
-  using ConsiderPassbackTrackRequestPtr = std::unique_ptr<ConsiderPassbackTrackRequest>;
-  using ConsiderPassbackTrackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackTrackResponse;
-  using ConsiderPassbackTrackResponsePtr = std::unique_ptr<ConsiderPassbackTrackResponse>;
   using GetClickUrlRequest = AdServer::CampaignSvcs::Proto::GetClickUrlRequest;
   using GetClickUrlRequestPtr = std::unique_ptr<GetClickUrlRequest>;
   using GetClickUrlResponse = AdServer::CampaignSvcs::Proto::GetClickUrlResponse;
@@ -145,7 +145,7 @@ public:
     const Endpoints& endpoints,
     const ConfigPoolClient& config_pool_client,
     const std::size_t grpc_client_timeout_ms = 1000,
-    const std::size_t time_duration_client_bad_ms = 30000);
+    const std::size_t time_duration_client_bad_sec = 30);
 
   ~GrpcCampaignManagerPool() = default;
 
@@ -177,6 +177,13 @@ public:
     const std::string& external_user_id,
     const std::string& user_agent) noexcept;
 
+  ConsiderPassbackTrackResponsePtr consider_passback_track(
+    const Generics::Time& time,
+    const std::string& country,
+    const std::uint32_t colo_id,
+    const std::uint32_t tag_id,
+    const std::uint32_t user_status) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -205,6 +212,13 @@ private:
     const std::string& ip_address,
     const std::string& external_user_id,
     const std::string& user_agent);
+
+  ConsiderPassbackTrackRequestPtr create_consider_passback_track_request(
+    const Generics::Time& time,
+    const std::string& country,
+    const std::uint32_t colo_id,
+    const std::uint32_t tag_id,
+    const std::uint32_t user_status);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(Args&& ...args) noexcept;

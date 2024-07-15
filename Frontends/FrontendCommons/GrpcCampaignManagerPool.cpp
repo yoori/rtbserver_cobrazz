@@ -11,7 +11,7 @@ GrpcCampaignManagerPool::GrpcCampaignManagerPool(
   const Endpoints& endpoints,
   const ConfigPoolClient& config_pool_client,
   const std::size_t grpc_client_timeout_ms,
-  const std::size_t time_duration_client_bad_ms)
+  const std::size_t time_duration_client_bad_sec)
   : logger_(ReferenceCounting::add_ref(logger)),
     task_processor_(task_processor),
     scheduler_(scheduler),
@@ -20,7 +20,7 @@ GrpcCampaignManagerPool::GrpcCampaignManagerPool(
       scheduler_,
       config_pool_client,
       task_processor,
-      Time{static_cast<time_t>(time_duration_client_bad_ms / 1000)})),
+      Time{static_cast<time_t>(time_duration_client_bad_sec)})),
     grpc_client_timeout_ms_(grpc_client_timeout_ms)
 {
   const std::size_t size = endpoints.size();
@@ -75,6 +75,10 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
       else if constexpr (std::is_same_v<Request, ConsiderWebOperationRequest>)
       {
         request = create_consider_web_operation_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, ConsiderPassbackTrackRequest>)
+      {
+        request = create_consider_passback_track_request(std::forward<Args>(args)...);
       }
       else
       {
@@ -265,6 +269,27 @@ GrpcCampaignManagerPool::consider_web_operation(
       user_agent);
 }
 
+GrpcCampaignManagerPool::ConsiderPassbackTrackResponsePtr
+GrpcCampaignManagerPool::consider_passback_track(
+  const Generics::Time& time,
+  const std::string& country,
+  const std::uint32_t colo_id,
+  const std::uint32_t tag_id,
+  const std::uint32_t user_status) noexcept
+{
+  using ConsiderPassbackTrackClient = AdServer::CampaignSvcs::Proto::CampaignManager_consider_passback_track_ClientPool;
+
+  return do_request<
+    ConsiderPassbackTrackClient,
+    ConsiderPassbackTrackRequest,
+    ConsiderPassbackTrackResponse>(
+      time,
+      country,
+      colo_id,
+      tag_id,
+      user_status);
+}
+
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
 GrpcCampaignManagerPool::create_get_pub_pixels_request(
   const std::string& country,
@@ -278,6 +303,7 @@ GrpcCampaignManagerPool::create_get_pub_pixels_request(
   ids->Add(
     std::begin(publisher_account_ids),
     std::end(publisher_account_ids));
+
   return request;
 }
 
@@ -331,6 +357,26 @@ GrpcCampaignManagerPool::create_consider_web_operation_request(
   web_op_info->set_ip_address(ip_address);
   web_op_info->set_external_user_id(external_user_id);
   web_op_info->set_user_agent(user_agent);
+
+  return request;
+}
+
+GrpcCampaignManagerPool::ConsiderPassbackTrackRequestPtr
+GrpcCampaignManagerPool::create_consider_passback_track_request(
+  const Generics::Time& time,
+  const std::string& country,
+  const std::uint32_t colo_id,
+  const std::uint32_t tag_id,
+  const std::uint32_t user_status)
+{
+  auto request = std::make_unique<ConsiderPassbackTrackRequest>();
+  auto* const pass_info = request->mutable_pass_info();
+  pass_info->set_time(GrpcAlgs::pack_time(time));
+  pass_info->set_country(country);
+  pass_info->set_colo_id(colo_id);
+  pass_info->set_tag_id(tag_id);
+  pass_info->set_user_status(user_status);
+
   return request;
 }
 
