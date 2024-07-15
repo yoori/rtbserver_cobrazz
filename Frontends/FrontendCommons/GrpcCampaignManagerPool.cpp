@@ -80,6 +80,10 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
       {
         request = create_consider_passback_track_request(std::forward<Args>(args)...);
       }
+      else if constexpr (std::is_same_v<Request, ConsiderPassbackRequest>)
+      {
+        request = create_consider_passback_request(std::forward<Args>(args)...);
+      }
       else
       {
         static_assert(GrpcAlgs::AlwaysFalseV<Request>);
@@ -290,6 +294,25 @@ GrpcCampaignManagerPool::consider_passback_track(
       user_status);
 }
 
+GrpcCampaignManagerPool::ConsiderPassbackResponsePtr
+GrpcCampaignManagerPool::consider_passback(
+  const Generics::Uuid& request_id,
+  const UserIdHashModInfo& user_id_hash_mod,
+  const std::string& passback,
+  const Generics::Time& time) noexcept
+{
+  using ConsiderPassbackClient = AdServer::CampaignSvcs::Proto::CampaignManager_consider_passback_ClientPool;
+
+  return do_request<
+    ConsiderPassbackClient,
+    ConsiderPassbackRequest,
+    ConsiderPassbackResponse>(
+      request_id,
+      user_id_hash_mod,
+      passback,
+      time);
+}
+
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
 GrpcCampaignManagerPool::create_get_pub_pixels_request(
   const std::string& country,
@@ -376,6 +399,26 @@ GrpcCampaignManagerPool::create_consider_passback_track_request(
   pass_info->set_colo_id(colo_id);
   pass_info->set_tag_id(tag_id);
   pass_info->set_user_status(user_status);
+
+  return request;
+}
+
+GrpcCampaignManagerPool::ConsiderPassbackRequestPtr
+GrpcCampaignManagerPool::create_consider_passback_request(
+    const Generics::Uuid& request_id,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::string& passback,
+    const Generics::Time& time)
+{
+  auto request = std::make_unique<ConsiderPassbackRequest>();
+  auto* const pass_info = request->mutable_pass_info();
+  pass_info->set_request_id(GrpcAlgs::pack_request_id(request_id));
+  pass_info->set_passback(passback);
+  pass_info->set_time(GrpcAlgs::pack_time(time));
+
+  auto* const user_id_hash_proto = pass_info->mutable_user_id_hash_mod();
+  user_id_hash_proto->set_value(user_id_hash_mod.value.value_or(0));
+  user_id_hash_proto->set_defined(user_id_hash_mod.value.has_value());
 
   return request;
 }

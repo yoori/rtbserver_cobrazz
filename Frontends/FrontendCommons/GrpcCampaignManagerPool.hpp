@@ -3,6 +3,7 @@
 
 // STD
 #include <chrono>
+#include <optional>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -39,6 +40,16 @@ private:
   using FactoryClientHolderPtr = std::unique_ptr<FactoryClientHolder>;
 
 public:
+  struct UserIdHashModInfo final
+  {
+    UserIdHashModInfo(const std::optional<std::uint32_t> value)
+      : value(value)
+    {
+    }
+
+    std::optional<std::uint32_t> value;
+  };
+
   using Host = std::string;
   using Port = std::size_t;
   using Endpoint = std::pair<Host, Port>;
@@ -62,6 +73,10 @@ public:
   using ConsiderPassbackTrackRequestPtr = std::unique_ptr<ConsiderPassbackTrackRequest>;
   using ConsiderPassbackTrackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackTrackResponse;
   using ConsiderPassbackTrackResponsePtr = std::unique_ptr<ConsiderPassbackTrackResponse>;
+  using ConsiderPassbackRequest = AdServer::CampaignSvcs::Proto::ConsiderPassbackRequest;
+  using ConsiderPassbackRequestPtr = std::unique_ptr<ConsiderPassbackRequest>;
+  using ConsiderPassbackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackResponse;
+  using ConsiderPassbackResponsePtr = std::unique_ptr<ConsiderPassbackResponse>;
   /*using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
   using GetCampaignCreativeRequestPtr = std::unique_ptr<GetCampaignCreativeRequest>;
   using GetCampaignCreativeResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeResponse;
@@ -90,10 +105,6 @@ public:
   using GetCategoryChannelsRequestPtr = std::unique_ptr<GetCategoryChannelsRequest>;
   using GetCategoryChannelsResponse = AdServer::CampaignSvcs::Proto::GetCategoryChannelsResponse;
   using GetCategoryChannelsResponsePtr = std::unique_ptr<GetCategoryChannelsResponse>;
-  using ConsiderPassbackRequest = AdServer::CampaignSvcs::Proto::ConsiderPassbackRequest;
-  using ConsiderPassbackRequestPtr = std::unique_ptr<ConsiderPassbackRequest>;
-  using ConsiderPassbackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackResponse;
-  using ConsiderPassbackResponsePtr = std::unique_ptr<ConsiderPassbackResponse>;
   using GetClickUrlRequest = AdServer::CampaignSvcs::Proto::GetClickUrlRequest;
   using GetClickUrlRequestPtr = std::unique_ptr<GetClickUrlRequest>;
   using GetClickUrlResponse = AdServer::CampaignSvcs::Proto::GetClickUrlResponse;
@@ -184,6 +195,12 @@ public:
     const std::uint32_t tag_id,
     const std::uint32_t user_status) noexcept;
 
+  ConsiderPassbackResponsePtr consider_passback(
+    const Generics::Uuid& request_id,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::string& passback,
+    const Generics::Time& time) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -219,6 +236,12 @@ private:
     const std::uint32_t colo_id,
     const std::uint32_t tag_id,
     const std::uint32_t user_status);
+
+  ConsiderPassbackRequestPtr create_consider_passback_request(
+    const Generics::Uuid& request_id,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::string& passback,
+    const Generics::Time& time);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(Args&& ...args) noexcept;

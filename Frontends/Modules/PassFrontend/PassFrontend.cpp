@@ -270,21 +270,41 @@ namespace Passback
 
     if(!passback_info.test_request)
     {
-      AdServer::CampaignSvcs::CampaignManager::PassbackInfo info;
-      info.request_id = CorbaAlgs::pack_request_id(passback_info.request_id);
-      if(passback_info.user_id_hash_mod)
+      bool is_grpc_success = false;
+      const auto& grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+      if (grpc_campaign_manager_pool)
       {
-        info.user_id_hash_mod.defined = true;
-        info.user_id_hash_mod.value = *passback_info.user_id_hash_mod;
-      }
-      else
-      {
-        info.user_id_hash_mod.defined = false;
+        is_grpc_success = true;
+        auto response = grpc_campaign_manager_pool->consider_passback(
+          passback_info.request_id,
+          FrontendCommons::GrpcCampaignManagerPool::UserIdHashModInfo(
+            passback_info.user_id_hash_mod),
+          {},
+          passback_info.time);
+        if (!response || response->has_error())
+        {
+          is_grpc_success = false;
+        }
       }
 
-      info.time = CorbaAlgs::pack_time(passback_info.time);
+      if (!is_grpc_success)
+      {
+        AdServer::CampaignSvcs::CampaignManager::PassbackInfo info;
+        info.request_id = CorbaAlgs::pack_request_id(passback_info.request_id);
+        if(passback_info.user_id_hash_mod)
+        {
+          info.user_id_hash_mod.defined = true;
+          info.user_id_hash_mod.value = *passback_info.user_id_hash_mod;
+        }
+        else
+        {
+          info.user_id_hash_mod.defined = false;
+        }
 
-      campaign_managers_.consider_passback(info);
+        info.time = CorbaAlgs::pack_time(passback_info.time);
+
+        campaign_managers_.consider_passback(info);
+      }
     }
 
     if(!passback_info.pubpixel_accounts.empty() &&
@@ -295,8 +315,7 @@ namespace Passback
       bool is_grpc_success = false;
       if (grpc_distributor)
       {
-        using ExcludePubpixelAccounts =
-          AdServer::UserInfoSvcs::Types::ExcludePubpixelAccounts;
+        using ExcludePubpixelAccounts = AdServer::UserInfoSvcs::Types::ExcludePubpixelAccounts;
 
         try
         {
