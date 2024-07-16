@@ -84,6 +84,14 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
       {
         request = create_consider_passback_request(std::forward<Args>(args)...);
       }
+      else if constexpr (std::is_same_v<Request, ActionTakenRequest>)
+      {
+        request = create_action_taken_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, ProcessMatchRequestRequest>)
+      {
+        request = create_process_match_request_request(std::forward<Args>(args)...);
+      }
       else
       {
         static_assert(GrpcAlgs::AlwaysFalseV<Request>);
@@ -313,6 +321,84 @@ GrpcCampaignManagerPool::consider_passback(
       time);
 }
 
+GrpcCampaignManagerPool::ActionTakenResponsePtr
+GrpcCampaignManagerPool::action_taken(
+  const Generics::Time& time,
+  const bool test_request,
+  const bool log_as_test,
+  const bool campaign_id_defined,
+  const std::uint32_t campaign_id,
+  const bool action_id_defined,
+  const std::uint32_t action_id,
+  const std::string& order_id,
+  const bool action_value_defined,
+  const std::string& action_value,
+  const std::string& referer,
+  const std::uint32_t user_status,
+  const Generics::Uuid& user_id,
+  const std::string& ip_hash,
+  const std::vector<std::uint32_t>& platform_ids,
+  const std::string& peer_ip,
+  const std::vector<GeoInfo>& location) noexcept
+{
+  using ActionTakenClient = AdServer::CampaignSvcs::Proto::CampaignManager_action_taken_ClientPool;
+
+  return do_request<
+    ActionTakenClient,
+    ActionTakenRequest,
+    ActionTakenResponse>(
+      time,
+      test_request,
+      log_as_test,
+      campaign_id_defined,
+      campaign_id,
+      action_id_defined,
+      action_id,
+      order_id,
+      action_value_defined,
+      action_value,
+      referer,
+      user_status,
+      user_id,
+      ip_hash,
+      platform_ids,
+      peer_ip,
+      location);
+}
+
+GrpcCampaignManagerPool::ProcessMatchRequestResponsePtr
+GrpcCampaignManagerPool::process_match_request(
+  const Generics::Uuid& user_id,
+  const std::string& household_id,
+  const Generics::Time& request_time,
+  const std::string& source,
+  const std::vector<std::uint32_t>& channels,
+  const std::vector<ChannelTriggerMatchInfo>& pkw_channels,
+  const std::vector<std::uint32_t>& hid_channels,
+  const std::uint32_t colo_id,
+  const std::vector<GeoInfo>& location,
+  const std::vector<GeoCoordInfo>& coord_location,
+  const std::string& full_referer) noexcept
+{
+  using ProcessMatchRequestClient = AdServer::CampaignSvcs::Proto::CampaignManager_process_match_request_ClientPool;
+
+  return do_request<
+    ProcessMatchRequestClient,
+    ProcessMatchRequestRequest,
+    ProcessMatchRequestResponse>(
+      user_id,
+      household_id,
+      request_time,
+      source,
+      channels,
+      pkw_channels,
+      hid_channels,
+      colo_id,
+      location,
+      coord_location,
+      full_referer);
+}
+
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
 GrpcCampaignManagerPool::create_get_pub_pixels_request(
   const std::string& country,
@@ -419,6 +505,123 @@ GrpcCampaignManagerPool::create_consider_passback_request(
   auto* const user_id_hash_proto = pass_info->mutable_user_id_hash_mod();
   user_id_hash_proto->set_value(user_id_hash_mod.value.value_or(0));
   user_id_hash_proto->set_defined(user_id_hash_mod.value.has_value());
+
+  return request;
+}
+
+GrpcCampaignManagerPool::ActionTakenRequestPtr
+GrpcCampaignManagerPool::create_action_taken_request(
+    const Generics::Time& time,
+    const bool test_request,
+    const bool log_as_test,
+    const bool campaign_id_defined,
+    const std::uint32_t campaign_id,
+    const bool action_id_defined,
+    const std::uint32_t action_id,
+    const std::string& order_id,
+    const bool action_value_defined,
+    const std::string& action_value,
+    const std::string& referer,
+    const std::uint32_t user_status,
+    const Generics::Uuid& user_id,
+    const std::string& ip_hash,
+    const std::vector<std::uint32_t>& platform_ids,
+    const std::string& peer_ip,
+    const std::vector<GeoInfo>& location)
+{
+  auto request = std::make_unique<ActionTakenRequest>();
+  auto* action_info = request->mutable_action_info();
+
+  action_info->set_time(GrpcAlgs::pack_time(time));
+  action_info->set_test_request(test_request);
+  action_info->set_log_as_test(log_as_test);
+  action_info->set_campaign_id_defined(campaign_id_defined);
+  action_info->set_campaign_id(campaign_id);
+  action_info->set_action_id_defined(action_id_defined);
+  action_info->set_action_id(action_id);
+  action_info->set_order_id(order_id);
+  action_info->set_action_value_defined(action_value_defined);
+  action_info->set_action_value(action_value);
+  action_info->set_referer(referer);
+  action_info->set_user_status(user_status);
+  action_info->set_user_id(GrpcAlgs::pack_user_id(user_id));
+  action_info->set_ip_hash(ip_hash);
+  action_info->set_peer_ip(peer_ip);
+
+  auto* platform_ids_proto = action_info->mutable_platform_ids();
+  platform_ids_proto->Add(std::begin(platform_ids), std::end(platform_ids));
+
+  auto* location_proto = action_info->mutable_location();
+  location_proto->Reserve(location.size());
+  for (const auto& [country, region, city] : location)
+  {
+    auto* geo_info = location_proto->Add();
+    geo_info->set_country(country);
+    geo_info->set_region(region);
+    geo_info->set_city(city);
+  }
+
+  return request;
+}
+
+GrpcCampaignManagerPool::ProcessMatchRequestRequestPtr
+GrpcCampaignManagerPool::create_process_match_request_request(
+  const Generics::Uuid& user_id,
+  const std::string& household_id,
+  const Generics::Time& request_time,
+  const std::string& source,
+  const std::vector<std::uint32_t>& channels,
+  const std::vector<ChannelTriggerMatchInfo>& pkw_channels,
+  const std::vector<std::uint32_t>& hid_channels,
+  const std::uint32_t colo_id,
+  const std::vector<GeoInfo>& location,
+  const std::vector<GeoCoordInfo>& coord_location,
+  const std::string& full_referer)
+{
+  auto request = std::make_unique<ProcessMatchRequestRequest>();
+  auto* match_request_info = request->mutable_match_request_info();
+
+  match_request_info->set_user_id(GrpcAlgs::pack_user_id(user_id));
+  match_request_info->set_household_id(household_id);
+  match_request_info->set_request_time(GrpcAlgs::pack_time(request_time));
+  match_request_info->set_source(source);
+
+  auto* match_info = match_request_info->mutable_match_info();
+  match_info->set_colo_id(colo_id);
+  match_info->set_full_referer(full_referer);
+  auto* channels_proto = match_info->mutable_channels();
+  channels_proto->Add(std::begin(channels), std::end(channels));
+  auto* hid_channels_proto = match_info->mutable_hid_channels();
+  hid_channels_proto->Add(std::begin(hid_channels), std::end(hid_channels));
+
+  auto* pkw_channels_proto = match_info->mutable_pkw_channels();
+  pkw_channels_proto->Reserve(pkw_channels.size());
+  for (const auto& [channel_trigger_id, channel_id] : pkw_channels)
+  {
+    auto* element = pkw_channels_proto->Add();
+    element->set_channel_trigger_id(channel_trigger_id);
+    element->set_channel_id(channel_id);
+  }
+
+  auto* location_proto = match_info->mutable_location();
+  location_proto->Reserve(location.size());
+  for (const auto& [country, region, city] : location)
+  {
+    auto* element = location_proto->Add();
+    element->set_country(country);
+    element->set_region(region);
+    element->set_city(city);
+  }
+
+  auto* coord_location_proto = match_info->mutable_coord_location();
+  coord_location_proto->Reserve(coord_location.size());
+  for (const auto& [longitude, latitude, accuracy] : coord_location)
+  {
+    auto* element = coord_location_proto->Add();
+    element->set_longitude(longitude);
+    element->set_latitude(latitude);
+    element->set_accuracy(accuracy);
+  }
 
   return request;
 }

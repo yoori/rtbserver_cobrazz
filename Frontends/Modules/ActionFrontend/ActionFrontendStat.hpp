@@ -37,6 +37,10 @@ namespace AdServer
       /*throw(Exception)*/;
 
     void consider_request(
+      const bool test_request,
+      const AdServer::CampaignSvcs::UserStatus user_status) noexcept;
+
+    void consider_request(
       const AdServer::CampaignSvcs::CampaignManager::ActionInfo& verify_action_info)
       noexcept;
 

@@ -50,6 +50,54 @@ public:
     std::optional<std::uint32_t> value;
   };
 
+  struct GeoInfo final
+  {
+    GeoInfo(
+      const String::SubString& country,
+      const String::SubString& region,
+      const String::SubString& city)
+      : country(country.data(), country.size()),
+        region(region.data(), region.size()),
+        city(city.data(), city.size())
+    {
+    }
+
+    std::string country;
+    std::string region;
+    std::string city;
+  };
+
+  struct ChannelTriggerMatchInfo final
+  {
+    ChannelTriggerMatchInfo(
+      const std::uint32_t channel_trigger_id,
+      const std::uint32_t channel_id)
+      : channel_trigger_id(channel_trigger_id),
+        channel_id(channel_id)
+    {
+    }
+
+    std::uint32_t channel_trigger_id = 0;
+    std::uint32_t channel_id = 0;
+  };
+
+  struct GeoCoordInfo final
+  {
+    GeoCoordInfo(
+      const std::string& longitude,
+      const std::string& latitude,
+      const std::string& accuracy)
+      : longitude(longitude),
+        latitude(latitude),
+        accuracy(accuracy)
+    {
+    }
+
+    std::string longitude;
+    std::string latitude;
+    std::string accuracy;
+  };
+
   using Host = std::string;
   using Port = std::size_t;
   using Endpoint = std::pair<Host, Port>;
@@ -77,14 +125,18 @@ public:
   using ConsiderPassbackRequestPtr = std::unique_ptr<ConsiderPassbackRequest>;
   using ConsiderPassbackResponse = AdServer::CampaignSvcs::Proto::ConsiderPassbackResponse;
   using ConsiderPassbackResponsePtr = std::unique_ptr<ConsiderPassbackResponse>;
-  /*using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
-  using GetCampaignCreativeRequestPtr = std::unique_ptr<GetCampaignCreativeRequest>;
-  using GetCampaignCreativeResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeResponse;
-  using GetCampaignCreativeResponsePtr = std::unique_ptr<GetCampaignCreativeResponse>;
+  using ActionTakenRequest = AdServer::CampaignSvcs::Proto::ActionTakenRequest;
+  using ActionTakenRequestPtr = std::unique_ptr<ActionTakenRequest>;
+  using ActionTakenResponse = AdServer::CampaignSvcs::Proto::ActionTakenResponse;
+  using ActionTakenResponsePtr = std::unique_ptr<ActionTakenResponse>;
   using ProcessMatchRequestRequest = AdServer::CampaignSvcs::Proto::ProcessMatchRequestRequest;
   using ProcessMatchRequestRequestPtr = std::unique_ptr<ProcessMatchRequestRequest>;
   using ProcessMatchRequestResponse = AdServer::CampaignSvcs::Proto::ProcessMatchRequestResponse;
   using ProcessMatchRequestResponsePtr = std::unique_ptr<ProcessMatchRequestResponse>;
+  /*using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
+  using GetCampaignCreativeRequestPtr = std::unique_ptr<GetCampaignCreativeRequest>;
+  using GetCampaignCreativeResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeResponse;
+  using GetCampaignCreativeResponsePtr = std::unique_ptr<GetCampaignCreativeResponse>;
   using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
   using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
   using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
@@ -113,10 +165,6 @@ public:
   using VerifyImpressionRequestPtr = std::unique_ptr<VerifyImpressionRequest>;
   using VerifyImpressionResponse = AdServer::CampaignSvcs::Proto::VerifyImpressionResponse;
   using VerifyImpressionResponsePtr = std::unique_ptr<VerifyImpressionResponse>;
-  using ActionTakenRequest = AdServer::CampaignSvcs::Proto::ActionTakenRequest;
-  using ActionTakenRequestPtr = std::unique_ptr<ActionTakenRequest>;
-  using ActionTakenResponse = AdServer::CampaignSvcs::Proto::ActionTakenResponse;
-  using ActionTakenResponsePtr = std::unique_ptr<ActionTakenResponse>;
   using VerifyOptOperationRequest = AdServer::CampaignSvcs::Proto::VerifyOptOperationRequest;
   using VerifyOptOperationRequestPtr = std::unique_ptr<VerifyOptOperationRequest>;
   using VerifyOptOperationResponse = AdServer::CampaignSvcs::Proto::VerifyOptOperationResponse;
@@ -201,6 +249,38 @@ public:
     const std::string& passback,
     const Generics::Time& time) noexcept;
 
+  ActionTakenResponsePtr action_taken(
+    const Generics::Time& time,
+    const bool test_request,
+    const bool log_as_test,
+    const bool campaign_id_defined,
+    const std::uint32_t campaign_id,
+    const bool action_id_defined,
+    const std::uint32_t action_id,
+    const std::string& order_id,
+    const bool action_value_defined,
+    const std::string& action_value,
+    const std::string& referer,
+    const std::uint32_t user_status,
+    const Generics::Uuid& user_id,
+    const std::string& ip_hash,
+    const std::vector<std::uint32_t>& platform_ids,
+    const std::string& peer_ip,
+    const std::vector<GeoInfo>& location) noexcept;
+
+  ProcessMatchRequestResponsePtr process_match_request(
+    const Generics::Uuid& user_id,
+    const std::string& household_id,
+    const Generics::Time& request_time,
+    const std::string& source,
+    const std::vector<std::uint32_t>& channels,
+    const std::vector<ChannelTriggerMatchInfo>& pkw_channels,
+    const std::vector<std::uint32_t>& hid_channels,
+    const std::uint32_t colo_id,
+    const std::vector<GeoInfo>& location,
+    const std::vector<GeoCoordInfo>& coord_location,
+    const std::string& full_referer) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -242,6 +322,38 @@ private:
     const UserIdHashModInfo& user_id_hash_mod,
     const std::string& passback,
     const Generics::Time& time);
+
+  ActionTakenRequestPtr create_action_taken_request(
+    const Generics::Time& time,
+    const bool test_request,
+    const bool log_as_test,
+    const bool campaign_id_defined,
+    const std::uint32_t campaign_id,
+    const bool action_id_defined,
+    const std::uint32_t action_id,
+    const std::string& order_id,
+    const bool action_value_defined,
+    const std::string& action_value,
+    const std::string& referer,
+    const std::uint32_t user_status,
+    const Generics::Uuid& user_id,
+    const std::string& ip_hash,
+    const std::vector<std::uint32_t>& platform_ids,
+    const std::string& peer_ip,
+    const std::vector<GeoInfo>& location);
+
+  ProcessMatchRequestRequestPtr create_process_match_request_request(
+    const Generics::Uuid& user_id,
+    const std::string& household_id,
+    const Generics::Time& request_time,
+    const std::string& source,
+    const std::vector<std::uint32_t>& channels,
+    const std::vector<ChannelTriggerMatchInfo>& pkw_channels,
+    const std::vector<std::uint32_t>& hid_channels,
+    const std::uint32_t colo_id,
+    const std::vector<GeoInfo>& location,
+    const std::vector<GeoCoordInfo>& coord_location,
+    const std::string& full_referer);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(Args&& ...args) noexcept;
