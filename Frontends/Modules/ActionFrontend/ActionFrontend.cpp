@@ -1007,6 +1007,45 @@ namespace Action
           }
         }
 
+        is_grpc_success = false;
+        auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+        if (grpc_campaign_manager_pool)
+        {
+          using ChannelTriggerMatchInfo = FrontendCommons::GrpcCampaignManagerPool::ChannelTriggerMatchInfo;
+
+          std::vector<ChannelTriggerMatchInfo> pkw_channels;
+          const std::size_t size = trigger_match_result->matched_channels.page_channels.length();
+          pkw_channels.reserve(size);
+          for (std::size_t i = 0; i < size; i += 1)
+          {
+            pkw_channels.emplace_back(
+              trigger_match_result->matched_channels.page_channels[i].trigger_channel_id,
+              trigger_match_result->matched_channels.page_channels[i].id);
+          }
+
+          auto response = grpc_campaign_manager_pool->process_match_request(
+            user_id,
+            {},
+            now,
+            {},
+            {},
+            pkw_channels,
+            {},
+            common_config_->colo_id(),
+            {},
+            {},
+            {});
+          if (response && !response->has_error())
+          {
+            is_grpc_success = true;
+          }
+        }
+
+        if (is_grpc_success)
+        {
+          return;
+        }
+
         try
         {
           AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
@@ -1029,7 +1068,6 @@ namespace Action
             Aspect::ACTION_FRONTEND,
             "ADS-ICON-4");
         }
-
       }
     }
     catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
@@ -1431,11 +1469,164 @@ namespace Action
   {
     static const char* FUN = "Frontend::action_taken_all_()";
 
+    bool is_grpc_success = false;
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      using GeoInfo = FrontendCommons::GrpcCampaignManagerPool::GeoInfo;
+
+      try
+      {
+        const auto& time = request_info.time;
+        const auto& test_request = request_info.test_request;
+        const auto& log_as_test = request_info.log_as_test;
+        const auto& referer = request_info.referer;
+        const auto& order_id = request_info.order_id;
+
+        std::vector<GeoInfo> location;
+        location.emplace_back(
+          request_info.location.country_code,
+          request_info.location.region,
+          request_info.location.city);
+
+        const bool action_value_defined =  request_info.value.has_value();
+        std::string action_value = action_value_defined ? GrpcAlgs::pack_decimal(*request_info.value) : std::string();
+
+        const bool campaign_id_defined = request_info.campaign_id.has_value();
+        const std::uint32_t campaign_id = campaign_id_defined ? *request_info.campaign_id : 0;
+
+        const bool action_id_defined = request_info.action_id.has_value();
+        const std::uint32_t action_id = action_id_defined ? *request_info.action_id : 0;
+
+        std::string ip_hash;
+        std::string peer_ip;
+        if(common_config_->ip_logging_enabled())
+        {
+          FrontendCommons::ip_hash(
+            ip_hash,
+            request_info.peer_ip,
+            common_config_->ip_salt());
+          peer_ip = request_info.peer_ip;
+        }
+
+        const std::vector<std::uint32_t> platform_ids(
+          std::begin(request_info.platform_ids),
+          std::end(request_info.platform_ids));
+
+        const Commons::UserId* verify_user_ids[] = {
+          &request_info.user_id,
+          &request_info.utm_resolved_user_id,
+          &utm_cookie_resolved_user_id
+        };
+        std::set<Commons::UserId> processed_user_ids;
+        const std::size_t verify_user_ids_size =
+          sizeof(verify_user_ids) / sizeof(verify_user_ids[0]);
+        for(std::size_t index = 0; index < verify_user_ids_size; index += 1)
+        {
+          const auto& verify_user_id = *verify_user_ids[index];
+
+          if(!verify_user_id.is_null() &&
+            verify_user_id != AdServer::Commons::PROBE_USER_ID &&
+            processed_user_ids.find(verify_user_id) == processed_user_ids.end())
+          {
+            const auto& user_id = verify_user_id;
+            const auto& user_status = AdServer::CampaignSvcs::US_OPTIN;
+
+            auto response = grpc_campaign_manager_pool->action_taken(
+              time,
+              test_request,
+              log_as_test,
+              campaign_id_defined,
+              campaign_id,
+              action_id_defined,
+              action_id,
+              order_id,
+              action_value_defined,
+              action_value,
+              referer,
+              user_status,
+              user_id,
+              ip_hash,
+              platform_ids,
+              peer_ip,
+              location);
+            if (!response || response->has_error())
+            {
+              throw Exception("action_taken is failed");
+            }
+
+            if (stats_)
+            {
+              stats_->consider_request(test_request, user_status);
+            }
+
+            processed_user_ids.insert(verify_user_id);
+          }
+        }
+
+        if (processed_user_ids.empty())
+        {
+          const auto user_id = Commons::UserId{};
+          const auto user_status = request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT ?
+            AdServer::CampaignSvcs::US_UNDEFINED : AdServer::CampaignSvcs::US_OPTOUT;
+
+          auto response = grpc_campaign_manager_pool->action_taken(
+            time,
+            test_request,
+            log_as_test,
+            campaign_id_defined,
+            campaign_id,
+            action_id_defined,
+            action_id,
+            order_id,
+            action_value_defined,
+            action_value,
+            referer,
+            user_status,
+            user_id,
+            ip_hash,
+            platform_ids,
+            peer_ip,
+            location);
+          if (!response || response->has_error())
+          {
+            throw Exception("action_taken is failed");
+          }
+
+          if (stats_)
+          {
+            stats_->consider_request(test_request, user_status);
+          }
+        }
+
+        is_grpc_success = true;
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << exc.what();
+        logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error";
+        logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+    {
+      return;
+    }
+
     try
     {      
       AdServer::CampaignSvcs::CampaignManager::ActionInfo verify_action_info;
-
-      // verify_action_info.user_id, verify_action_info.user_status must be initialized in loop
 
       verify_action_info.time = CorbaAlgs::pack_time(request_info.time);
       verify_action_info.test_request = request_info.test_request;
