@@ -92,6 +92,18 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
       {
         request = create_process_match_request_request(std::forward<Args>(args)...);
       }
+      else if constexpr (std::is_same_v<Request, GetColocationFlagsRequest>)
+      {
+        request = create_get_colocation_flags_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, VerifyOptOperationRequest>)
+      {
+        request = create_verify_opt_operation_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, GetCampaignCreativeRequest>)
+      {
+        request = create_get_campaign_creative_request(std::forward<Args>(args)...);
+      }
       else
       {
         static_assert(GrpcAlgs::AlwaysFalseV<Request>);
@@ -399,6 +411,64 @@ GrpcCampaignManagerPool::process_match_request(
       full_referer);
 }
 
+GrpcCampaignManagerPool::GetColocationFlagsResponsePtr
+GrpcCampaignManagerPool::get_colocation_flags() noexcept
+{
+  using GetColocationFlagsClient = AdServer::CampaignSvcs::Proto::CampaignManager_get_colocation_flags_ClientPool;
+
+  return do_request<
+    GetColocationFlagsClient,
+    GetColocationFlagsRequest,
+    GetColocationFlagsResponse>();
+}
+
+GrpcCampaignManagerPool::VerifyOptOperationResponsePtr
+GrpcCampaignManagerPool::verify_opt_operation(
+  const std::uint32_t time,
+  const std::int32_t colo_id,
+  const std::string& referer,
+  const OptOperation operation,
+  const std::uint32_t status,
+  const std::uint32_t user_status,
+  const bool log_as_test,
+  const std::string& browser,
+  const std::string& os,
+  const std::string& ct,
+  const std::string& curct,
+  const AdServer::Commons::UserId& user_id) noexcept
+{
+  using VerifyOptOperationClient = AdServer::CampaignSvcs::Proto::CampaignManager_verify_opt_operation_ClientPool;
+
+  return do_request<
+    VerifyOptOperationClient,
+    VerifyOptOperationRequest,
+    VerifyOptOperationResponse>(
+      time,
+      colo_id,
+      referer,
+      operation,
+      status,
+      user_status,
+      log_as_test,
+      browser,
+      os,
+      ct,
+      curct,
+      user_id);
+}
+
+GrpcCampaignManagerPool::GetCampaignCreativeResponsePtr
+GrpcCampaignManagerPool::get_campaign_creative(
+  const RequestParams& request_params) noexcept
+{
+  using GetCampaignCreativeClient = AdServer::CampaignSvcs::Proto::CampaignManager_get_campaign_creative_ClientPool;
+
+  return do_request<
+    GetCampaignCreativeClient,
+    GetCampaignCreativeRequest,
+    GetCampaignCreativeResponse>(request_params);
+}
+
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
 GrpcCampaignManagerPool::create_get_pub_pixels_request(
   const std::string& country,
@@ -618,10 +688,345 @@ GrpcCampaignManagerPool::create_process_match_request_request(
   for (const auto& [longitude, latitude, accuracy] : coord_location)
   {
     auto* element = coord_location_proto->Add();
-    element->set_longitude(longitude);
-    element->set_latitude(latitude);
-    element->set_accuracy(accuracy);
+    element->set_longitude(GrpcAlgs::pack_decimal(longitude));
+    element->set_latitude(GrpcAlgs::pack_decimal(latitude));
+    element->set_accuracy(GrpcAlgs::pack_decimal(accuracy));
   }
+
+  return request;
+}
+
+GrpcCampaignManagerPool::GetColocationFlagsRequestPtr
+GrpcCampaignManagerPool::create_get_colocation_flags_request()
+{
+  return std::make_unique<GetColocationFlagsRequest>();
+}
+
+GrpcCampaignManagerPool::VerifyOptOperationRequestPtr
+GrpcCampaignManagerPool::create_verify_opt_operation_request(
+  const std::uint32_t time,
+  const std::int32_t colo_id,
+  const std::string& referer,
+  const OptOperation operation,
+  const std::uint32_t status,
+  const std::uint32_t user_status,
+  const bool log_as_test,
+  const std::string& browser,
+  const std::string& os,
+  const std::string& ct,
+  const std::string& curct,
+  const AdServer::Commons::UserId& user_id)
+{
+  auto request = std::make_unique<VerifyOptOperationRequest>();
+  request->set_time(time);
+  request->set_colo_id(colo_id);
+  request->set_referer(referer);
+  request->set_operation(operation);
+  request->set_status(status);
+  request->set_user_status(user_status);
+  request->set_log_as_test(log_as_test);
+  request->set_browser(browser);
+  request->set_os(os);
+  request->set_ct(ct);
+  request->set_curct(curct);
+  request->set_user_id(GrpcAlgs::pack_user_id(user_id));
+
+  return request;
+}
+
+GrpcCampaignManagerPool::GetCampaignCreativeRequestPtr
+GrpcCampaignManagerPool::create_get_campaign_creative_request(
+  const RequestParams& request_params)
+{
+  auto request = std::make_unique<GetCampaignCreativeRequest>();
+  auto* const request_params_proto = request->mutable_request_params();
+
+  const auto& common_info = request_params.common_info;
+  auto* const common_info_proto = request_params_proto->mutable_common_info();
+  common_info_proto->set_time(GrpcAlgs::pack_time(common_info.time));
+  common_info_proto->set_request_id(GrpcAlgs::pack_request_id(common_info.request_id));
+  common_info_proto->set_creative_instantiate_type(common_info.creative_instantiate_type);
+  common_info_proto->set_request_type(common_info.request_type);
+  common_info_proto->set_random(common_info.random);
+  common_info_proto->set_test_request(common_info.test_request);
+  common_info_proto->set_log_as_test(common_info.log_as_test);
+  common_info_proto->set_colo_id(common_info.colo_id);
+  common_info_proto->set_external_user_id(common_info.external_user_id);
+  common_info_proto->set_source_id(common_info.source_id);
+
+  auto* const location_proto = common_info_proto->mutable_location();
+  location_proto->Reserve(common_info.location.size());
+  for (const auto& data : common_info.location)
+  {
+    auto* const location = location_proto->Add();
+    location->set_country(data.country);
+    location->set_region(data.region);
+    location->set_city(data.city);
+  }
+
+  auto* const coord_location_proto = common_info_proto->mutable_coord_location();
+  coord_location_proto->Reserve(common_info.coord_location.size());
+  for (const auto& data : common_info.coord_location)
+  {
+    auto* const coord_location = coord_location_proto->Add();
+    coord_location->set_longitude(GrpcAlgs::pack_decimal(data.longitude));
+    coord_location->set_latitude(GrpcAlgs::pack_decimal(data.latitude));
+    coord_location->set_accuracy(GrpcAlgs::pack_decimal(data.accuracy));
+  }
+
+  common_info_proto->set_full_referer(common_info.full_referer);
+  common_info_proto->set_referer(common_info.referer);
+
+  common_info_proto->mutable_urls()->Add(
+    std::begin(common_info.urls),
+    std::end(common_info.urls));
+
+  common_info_proto->set_security_token(common_info.security_token);
+  common_info_proto->set_pub_impr_track_url(common_info.pub_impr_track_url);
+  common_info_proto->set_pub_param(common_info.pub_param);
+  common_info_proto->set_preclick_url(common_info.preclick_url);
+  common_info_proto->set_click_prefix_url(common_info.click_prefix_url);
+  common_info_proto->set_original_url(common_info.original_url);
+  common_info_proto->set_track_user_id(GrpcAlgs::pack_user_id(common_info.track_user_id));
+  common_info_proto->set_user_id(GrpcAlgs::pack_user_id(common_info.user_id));
+  common_info_proto->set_user_status(common_info.user_status);
+  common_info_proto->set_signed_user_id(common_info.signed_user_id);
+  common_info_proto->set_peer_ip(common_info.peer_ip);
+  common_info_proto->set_user_agent(common_info.user_agent);
+  common_info_proto->set_cohort(common_info.cohort);
+  common_info_proto->set_hpos(common_info.hpos);
+  common_info_proto->set_ext_track_params(common_info.ext_track_params);
+
+  auto* const tokens_proto = common_info_proto->mutable_tokens();
+  tokens_proto->Reserve(common_info.tokens.size());
+  for (const auto& [name, value] : common_info.tokens)
+  {
+    auto* const token_proto = tokens_proto->Add();
+    token_proto->set_name(name);
+    token_proto->set_value(value);
+  }
+
+  common_info_proto->set_set_cookie(common_info.set_cookie);
+  common_info_proto->set_passback_type(common_info.passback_type);
+  common_info_proto->set_passback_url(common_info.passback_url);
+
+  const auto& context_info = request_params.context_info;
+  auto* const context_info_proto = request_params_proto->mutable_context_info();
+  context_info_proto->set_enabled_notice(context_info.enabled_notice);
+  context_info_proto->set_client(context_info.client);
+  context_info_proto->set_client_version(context_info.client_version);
+  context_info_proto->mutable_platform_ids()->Add(
+    std::begin(context_info.platform_ids),
+    std::end(context_info.platform_ids));
+  context_info_proto->mutable_geo_channels()->Add(
+    std::begin(context_info.geo_channels),
+    std::end(context_info.geo_channels));
+  context_info_proto->set_platform(context_info.platform);
+  context_info_proto->set_full_platform(context_info.full_platform);
+  context_info_proto->set_web_browser(context_info.web_browser);
+  context_info_proto->set_ip_hash(context_info.ip_hash);
+  context_info_proto->set_profile_referer(context_info.profile_referer);
+  context_info_proto->set_page_load_id(context_info.page_load_id);
+  context_info_proto->set_full_referer_hash(context_info.full_referer_hash);
+  context_info_proto->set_short_referer_hash(context_info.short_referer_hash);
+
+  request_params_proto->set_publisher_site_id(request_params.publisher_site_id);
+  request_params_proto->mutable_publisher_account_ids()->Add(
+    std::begin(request_params.publisher_account_ids),
+    std::end(request_params.publisher_account_ids));
+  request_params_proto->set_fill_track_pixel(request_params.fill_track_pixel);
+  request_params_proto->set_fill_iurl(request_params.fill_iurl);
+  request_params_proto->set_ad_instantiate_type(request_params.ad_instantiate_type);
+  request_params_proto->set_only_display_ad(request_params.only_display_ad);
+  request_params_proto->mutable_full_freq_caps()->Add(
+    std::begin(request_params.full_freq_caps),
+    std::end(request_params.full_freq_caps));
+
+  auto* const seq_orders_proto = request_params_proto->mutable_seq_orders();
+  seq_orders_proto->Reserve(request_params.seq_orders.size());
+  for (const auto& [ccg_id, set_id, imps] : request_params.seq_orders)
+  {
+    auto* const seq_order = seq_orders_proto->Add();
+    seq_order->set_ccg_id(ccg_id);
+    seq_order->set_set_id(set_id);
+    seq_order->set_imps(imps);
+  }
+
+  auto* const campaign_freqs_proto = request_params_proto->mutable_campaign_freqs();
+  campaign_freqs_proto->Reserve(request_params.campaign_freqs.size());
+  for (const auto& [campaign_id, imps] : request_params.campaign_freqs)
+  {
+    auto* const campaign_freqs = campaign_freqs_proto->Add();
+    campaign_freqs->set_campaign_id(campaign_id);
+    campaign_freqs->set_imps(imps);
+  }
+
+  request_params_proto->set_household_id(GrpcAlgs::pack_user_id(request_params.household_id));
+  request_params_proto->set_merged_user_id(GrpcAlgs::pack_user_id(request_params.merged_user_id));
+  request_params_proto->set_search_engine_id(request_params.search_engine_id);
+  request_params_proto->set_search_words(request_params.search_words);
+  request_params_proto->set_page_keywords_present(request_params.page_keywords_present);
+  request_params_proto->set_profiling_available(request_params.profiling_available);
+  request_params_proto->set_fraud(request_params.fraud);
+  request_params_proto->mutable_channels()->Add(
+    std::begin(request_params.channels),
+    std::end(request_params.channels));
+  request_params_proto->mutable_hid_channels()->Add(
+    std::begin(request_params.hid_channels),
+    std::end(request_params.hid_channels));
+
+  auto* const ccg_keywords_proto = request_params_proto->mutable_ccg_keywords();
+  ccg_keywords_proto->Reserve(request_params.ccg_keywords.size());
+  for (const auto& data : request_params.ccg_keywords)
+  {
+    auto* const ccg_keyword_proto = ccg_keywords_proto->Add();
+    ccg_keyword_proto->set_ccg_keyword_id(data.ccg_keyword_id);
+    ccg_keyword_proto->set_ccg_id(data.ccg_id);
+    ccg_keyword_proto->set_channel_id(data.channel_id);
+    ccg_keyword_proto->set_max_cpc(GrpcAlgs::pack_decimal(data.max_cpc));
+    ccg_keyword_proto->set_ctr(GrpcAlgs::pack_decimal(data.ctr));
+    ccg_keyword_proto->set_click_url(data.click_url);
+    ccg_keyword_proto->set_original_keyword(data.original_keyword);
+  }
+
+  auto* const hid_ccg_keywords_proto = request_params_proto->mutable_hid_ccg_keywords();
+  hid_ccg_keywords_proto->Reserve(request_params.hid_ccg_keywords.size());
+  for (const auto& data : request_params.hid_ccg_keywords)
+  {
+    auto* const hid_ccg_keyword_proto = hid_ccg_keywords_proto->Add();
+    hid_ccg_keyword_proto->set_ccg_keyword_id(data.ccg_keyword_id);
+    hid_ccg_keyword_proto->set_ccg_id(data.ccg_id);
+    hid_ccg_keyword_proto->set_channel_id(data.channel_id);
+    hid_ccg_keyword_proto->set_max_cpc(GrpcAlgs::pack_decimal(data.max_cpc));
+    hid_ccg_keyword_proto->set_ctr(GrpcAlgs::pack_decimal(data.ctr));
+    hid_ccg_keyword_proto->set_click_url(data.click_url);
+    hid_ccg_keyword_proto->set_original_keyword(data.original_keyword);
+  }
+
+  auto* const trigger_match_result_proto = request_params_proto->mutable_trigger_match_result();
+  auto* const url_channels_proto = trigger_match_result_proto->mutable_url_channels();
+  url_channels_proto->Reserve(request_params.trigger_match_result.url_channels.size());
+  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.url_channels)
+  {
+    auto* const url_channel_proto = url_channels_proto->Add();
+    url_channel_proto->set_channel_trigger_id(channel_trigger_id);
+    url_channel_proto->set_channel_id(channel_id);
+  }
+
+  auto* const pkw_channels_proto = trigger_match_result_proto->mutable_pkw_channels();
+  pkw_channels_proto->Reserve(request_params.trigger_match_result.pkw_channels.size());
+  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.pkw_channels)
+  {
+    auto* const pkw_channel_proto = pkw_channels_proto->Add();
+    pkw_channel_proto->set_channel_trigger_id(channel_trigger_id);
+    pkw_channel_proto->set_channel_id(channel_id);
+  }
+
+  auto* const skw_channels_proto = trigger_match_result_proto->mutable_skw_channels();
+  skw_channels_proto->Reserve(request_params.trigger_match_result.skw_channels.size());
+  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.skw_channels)
+  {
+    auto* const skw_channel_proto = skw_channels_proto->Add();
+    skw_channel_proto->set_channel_trigger_id(channel_trigger_id);
+    skw_channel_proto->set_channel_id(channel_id);
+  }
+
+  auto* const ukw_channels_proto = trigger_match_result_proto->mutable_ukw_channels();
+  ukw_channels_proto->Reserve(request_params.trigger_match_result.ukw_channels.size());
+  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.ukw_channels)
+  {
+    auto* const ukw_channel_proto = ukw_channels_proto->Add();
+    ukw_channel_proto->set_channel_trigger_id(channel_trigger_id);
+    ukw_channel_proto->set_channel_id(channel_id);
+  }
+
+  trigger_match_result_proto->mutable_uid_channels()->Add(
+    std::begin(request_params.trigger_match_result.uid_channels),
+    std::end(request_params.trigger_match_result.uid_channels));
+
+  request_params_proto->set_client_create_time(GrpcAlgs::pack_time(request_params.client_create_time));
+  request_params_proto->set_session_start(GrpcAlgs::pack_time(request_params.session_start));
+  request_params_proto->mutable_exclude_pubpixel_accounts()->Add(
+    std::begin(request_params.exclude_pubpixel_accounts),
+    std::end(request_params.exclude_pubpixel_accounts));
+  request_params_proto->set_tag_delivery_factor(request_params.tag_delivery_factor);
+  request_params_proto->set_ccg_delivery_factor(request_params.ccg_delivery_factor);
+  request_params_proto->set_preview_ccid(request_params.preview_ccid);
+
+  auto* const ad_slots_proto = request_params_proto->mutable_ad_slots();
+  ad_slots_proto->Reserve(request_params.ad_slots.size());
+  for (const auto& ad_slot : request_params.ad_slots)
+  {
+    auto* const ad_slot_proto = ad_slots_proto->Add();
+    ad_slot_proto->set_ad_slot_id(ad_slot.ad_slot_id);
+    ad_slot_proto->set_format(ad_slot.format);
+    ad_slot_proto->set_tag_id(ad_slot.tag_id);
+    ad_slot_proto->mutable_sizes()->Add(
+      std::begin(ad_slot.sizes),
+      std::end(ad_slot.sizes));
+    ad_slot_proto->set_ext_tag_id(ad_slot.ext_tag_id);
+    ad_slot_proto->set_min_ecpm(
+      GrpcAlgs::pack_decimal<AdServer::CampaignSvcs::RevenueDecimal>(ad_slot.min_ecpm));
+    ad_slot_proto->set_min_ecpm_currency_code(ad_slot.min_ecpm_currency_code);
+    ad_slot_proto->mutable_currency_codes()->Add(
+      std::begin(ad_slot.currency_codes),
+      std::end(ad_slot.currency_codes));
+    ad_slot_proto->set_passback(ad_slot.passback);
+    ad_slot_proto->set_up_expand_space(ad_slot.up_expand_space);
+    ad_slot_proto->set_right_expand_space(ad_slot.right_expand_space);
+    ad_slot_proto->set_left_expand_space(ad_slot.left_expand_space);
+    ad_slot_proto->set_tag_visibility(ad_slot.tag_visibility);
+    ad_slot_proto->set_tag_predicted_viewability(ad_slot.tag_predicted_viewability);
+    ad_slot_proto->set_down_expand_space(ad_slot.down_expand_space);
+    ad_slot_proto->set_video_min_duration(ad_slot.video_min_duration);
+    ad_slot_proto->set_video_max_duration(ad_slot.video_max_duration);
+    ad_slot_proto->set_video_skippable_max_duration(ad_slot.video_skippable_max_duration);
+    ad_slot_proto->set_video_allow_skippable(ad_slot.video_allow_skippable);
+    ad_slot_proto->set_video_allow_unskippable(ad_slot.video_allow_unskippable);
+    ad_slot_proto->set_video_width(ad_slot.video_width);
+    ad_slot_proto->set_video_height(ad_slot.video_height);
+    ad_slot_proto->mutable_exclude_categories()->Add(
+      std::begin(ad_slot.exclude_categories),
+      std::end(ad_slot.exclude_categories));
+    ad_slot_proto->mutable_required_categories()->Add(
+      std::begin(ad_slot.required_categories),
+      std::end(ad_slot.required_categories));
+    ad_slot_proto->set_debug_ccg(ad_slot.debug_ccg);
+    ad_slot_proto->mutable_allowed_durations()->Add(
+      std::begin(ad_slot.allowed_durations),
+      std::end(ad_slot.allowed_durations));
+
+    auto* const native_data_tokens_proto = ad_slot_proto->mutable_native_data_tokens();
+    native_data_tokens_proto->Reserve(ad_slot.native_data_tokens.size());
+    for (const auto& native_data_token : ad_slot.native_data_tokens)
+    {
+      auto* const native_data_token_proto = native_data_tokens_proto->Add();
+      native_data_token_proto->set_name(native_data_token.name);
+      native_data_token_proto->set_required(native_data_token.required);
+    }
+
+    auto* const native_image_tokens_proto = ad_slot_proto->mutable_native_image_tokens();
+    native_image_tokens_proto->Reserve(ad_slot.native_image_tokens.size());
+    for (const auto& native_image_token : ad_slot.native_image_tokens)
+    {
+      auto* const native_image_token_proto = native_image_tokens_proto->Add();
+      native_image_token_proto->set_name(native_image_token.name);
+      native_image_token_proto->set_required(native_image_token.required);
+      native_image_token_proto->set_width(native_image_token.width);
+      native_image_token_proto->set_height(native_image_token.height);
+    }
+
+    ad_slot_proto->set_native_ads_impression_tracker_type(ad_slot.native_ads_impression_tracker_type);
+    ad_slot_proto->set_fill_track_html(ad_slot.fill_track_html);
+  }
+
+  request_params_proto->set_required_passback(request_params.required_passback);
+  request_params_proto->set_profiling_type(request_params.profiling_type);
+  request_params_proto->set_disable_fraud_detection(request_params.disable_fraud_detection);
+  request_params_proto->set_need_debug_info(request_params.need_debug_info);
+  request_params_proto->set_page_keywords(request_params.page_keywords);
+  request_params_proto->set_url_keywords(request_params.url_keywords);
+  request_params_proto->set_ssp_location(request_params.ssp_location);
 
   return request;
 }

@@ -196,6 +196,11 @@ namespace AdServer
 
     void
     convert_ccg_keywords_(
+      std::vector<FrontendCommons::GrpcCampaignManagerPool::CCGKeyword>& ccg_keywords,
+      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords) noexcept;
+
+    void
+    convert_ccg_keywords_(
       AdServer::CampaignSvcs::CampaignManager::CCGKeywordSeq& ccg_keywords,
       const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords)
       noexcept;

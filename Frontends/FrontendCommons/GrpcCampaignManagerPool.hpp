@@ -23,6 +23,7 @@
 
 // THIS
 #include <Commons/GrpcAlgs.hpp>
+#include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace FrontendCommons
 {
@@ -83,19 +84,272 @@ public:
 
   struct GeoCoordInfo final
   {
+    using CoordDecimal = AdServer::CampaignSvcs::CoordDecimal;
     GeoCoordInfo(
-      const std::string& longitude,
-      const std::string& latitude,
-      const std::string& accuracy)
+      const CoordDecimal& longitude,
+      const CoordDecimal& latitude,
+      const CoordDecimal& accuracy)
       : longitude(longitude),
         latitude(latitude),
         accuracy(accuracy)
     {
     }
 
-    std::string longitude;
-    std::string latitude;
-    std::string accuracy;
+    CoordDecimal longitude;
+    CoordDecimal latitude;
+    CoordDecimal accuracy;
+  };
+
+  struct TokenInfo final
+  {
+    TokenInfo(
+      const std::string& name,
+      const std::string& value)
+      : name(name),
+        value(value)
+    {
+    }
+
+    std::string name;
+    std::string value;
+  };
+
+  struct SeqOrderInfo final
+  {
+    SeqOrderInfo(
+      const std::uint32_t ccg_id,
+      const std::uint32_t set_id,
+      const std::uint32_t imps)
+      : ccg_id(ccg_id),
+        set_id(set_id),
+        imps(imps)
+    {
+    }
+
+    std::uint32_t ccg_id = 0;
+    std::uint32_t set_id = 0;
+    std::uint32_t imps = 0;
+  };
+
+  struct CampaignFreq final
+  {
+    CampaignFreq(
+      const std::uint32_t campaign_id,
+      const std::uint32_t imps)
+      : campaign_id(campaign_id),
+        imps(imps)
+    {
+    }
+
+    std::uint32_t campaign_id = 0;
+    std::uint32_t imps = 0;
+  };
+
+  struct NativeDataToken final
+  {
+    NativeDataToken(
+      const std::string& name,
+      const bool required)
+      : name(name),
+        required(required)
+    {
+    }
+
+    std::string name;
+    bool required = false;
+  };
+
+  struct NativeImageToken final
+  {
+    NativeImageToken(
+      const std::string& name,
+      const bool required,
+      const std::uint32_t width,
+      const std::uint32_t height)
+      : name(name),
+        required(required),
+        width(width),
+        height(height)
+    {
+    }
+
+    std::string name;
+    bool required = false;
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+  };
+
+  struct CCGKeyword final
+  {
+    using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
+    using CTRDecimal = AdServer::CampaignSvcs::CTRDecimal;
+
+    CCGKeyword(
+      const std::uint32_t ccg_keyword_id,
+      const std::uint32_t ccg_id,
+      const std::uint32_t channel_id,
+      const RevenueDecimal& max_cpc,
+      const CTRDecimal& ctr,
+      const std::string& click_url,
+      const std::string& original_keyword)
+      : ccg_keyword_id(ccg_keyword_id),
+        ccg_id(ccg_id),
+        channel_id(channel_id),
+        max_cpc(max_cpc),
+        ctr(ctr),
+        click_url(click_url),
+        original_keyword(original_keyword)
+    {
+    }
+
+    std::uint32_t ccg_keyword_id = 0;
+    std::uint32_t ccg_id = 0;
+    std::uint32_t channel_id = 0;
+    RevenueDecimal max_cpc;
+    CTRDecimal ctr;
+    std::string click_url;
+    std::string original_keyword;
+  };
+
+  struct TriggerMatchResult final
+  {
+    std::vector<ChannelTriggerMatchInfo> url_channels;
+    std::vector<ChannelTriggerMatchInfo> pkw_channels;
+    std::vector<ChannelTriggerMatchInfo> skw_channels;
+    std::vector<ChannelTriggerMatchInfo> ukw_channels;
+    std::vector<std::uint32_t> uid_channels;
+  };
+
+  struct AdSlotInfo final
+  {
+    using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
+
+    std::uint32_t ad_slot_id = 0;
+    std::string format;
+    std::uint32_t tag_id = 0;
+    std::vector<std::string> sizes;
+    std::string ext_tag_id;
+    RevenueDecimal min_ecpm;
+    std::string min_ecpm_currency_code;
+    std::vector<std::string> currency_codes;
+    bool passback = false;
+    std::int32_t up_expand_space = 0;
+    std::int32_t right_expand_space = 0;
+    std::int32_t left_expand_space = 0;
+    std::int32_t tag_visibility = 0;
+    std::int32_t tag_predicted_viewability = 0;
+    std::int32_t down_expand_space = 0;
+    std::uint32_t video_min_duration = 0;
+    std::int32_t video_max_duration = 0;
+    std::int32_t video_skippable_max_duration = 0;
+    std::int32_t video_allow_skippable = 0;
+    std::int32_t video_allow_unskippable = 0;
+    std::uint32_t video_width = 0;
+    std::uint32_t video_height = 0;
+    std::vector<std::string> exclude_categories;
+    std::vector<std::string> required_categories;
+    std::uint32_t debug_ccg = 0;
+    std::vector<std::uint32_t> allowed_durations;
+    std::vector<NativeDataToken> native_data_tokens;
+    std::vector<NativeImageToken> native_image_tokens;
+    std::uint32_t native_ads_impression_tracker_type = 0;
+    bool fill_track_html = false;
+  };
+
+  struct CommonAdRequestInfo final
+  {
+    Generics::Time time;
+    AdServer::Commons::RequestId request_id;
+    std::string creative_instantiate_type;
+    std::uint32_t request_type = 0;
+    std::uint32_t random = 0;
+    bool test_request = false;
+    bool log_as_test = false;
+    std::uint32_t colo_id = 0;
+    std::string external_user_id;
+    std::string source_id;
+    std::vector<GeoInfo> location;
+    std::vector<GeoCoordInfo> coord_location;
+    std::string full_referer;
+    std::string referer;
+    std::vector<std::string> urls;
+    std::string security_token;
+    std::string pub_impr_track_url;
+    std::string pub_param;
+    std::string preclick_url;
+    std::string click_prefix_url;
+    std::string original_url;
+    AdServer::Commons::UserId track_user_id;
+    AdServer::Commons::UserId user_id;
+    std::uint32_t user_status = 0;
+    std::string signed_user_id;
+    std::string peer_ip;
+    std::string user_agent;
+    std::string cohort;
+    std::uint32_t hpos = 0;
+    std::string ext_track_params;
+    std::vector<TokenInfo> tokens;
+    bool set_cookie = false;
+    std::string passback_type;
+    std::string passback_url;
+  };
+
+  struct ContextAdRequestInfo final
+  {
+    bool enabled_notice = false;
+    std::string client;
+    std::string client_version;
+    std::vector<std::uint32_t> platform_ids;
+    std::vector<std::uint32_t> geo_channels;
+    std::string platform;
+    std::string full_platform;
+    std::string web_browser;
+    std::string ip_hash;
+    bool profile_referer = false;
+    std::uint32_t page_load_id = 0;
+    std::uint32_t full_referer_hash = 0;
+    std::uint32_t short_referer_hash = 0;
+  };
+
+  struct RequestParams final
+  {
+    CommonAdRequestInfo common_info;
+    ContextAdRequestInfo context_info;
+    std::uint32_t publisher_site_id = 0;
+    std::vector<std::uint32_t> publisher_account_ids;
+    bool fill_track_pixel = false;
+    bool fill_iurl = false;
+    std::uint32_t ad_instantiate_type = 0;
+    bool only_display_ad = false;
+    std::vector<std::uint32_t> full_freq_caps;
+    std::vector<SeqOrderInfo> seq_orders;
+    std::vector<CampaignFreq> campaign_freqs;
+    AdServer::Commons::UserId household_id;
+    AdServer::Commons::UserId merged_user_id;
+    std::uint32_t search_engine_id = 0;
+    std::string search_words;
+    bool page_keywords_present = false;
+    bool profiling_available = false;
+    bool fraud = false;
+    std::vector<std::uint32_t> channels;
+    std::vector<std::uint32_t> hid_channels;
+    std::vector<CCGKeyword> ccg_keywords;
+    std::vector<CCGKeyword> hid_ccg_keywords;
+    TriggerMatchResult trigger_match_result;
+    Generics::Time client_create_time;
+    Generics::Time session_start;
+    std::vector<std::uint32_t> exclude_pubpixel_accounts;
+    std::uint32_t tag_delivery_factor = 0;
+    std::uint32_t ccg_delivery_factor = 0;
+    std::uint32_t preview_ccid = 0;
+    std::vector<AdSlotInfo> ad_slots;
+    bool required_passback = false;
+    std::uint32_t profiling_type = 0;
+    bool disable_fraud_detection = false;
+    bool need_debug_info = false;
+    std::string page_keywords;
+    std::string url_keywords;
+    std::string ssp_location;
   };
 
   using Host = std::string;
@@ -108,6 +362,7 @@ public:
   using Time = Generics::Time;
   using TaskProcessor = userver::engine::TaskProcessor;
   using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+  using OptOperation = AdServer::CampaignSvcs::Proto::OptOperation;
 
   using GetPubPixelsRequest = AdServer::CampaignSvcs::Proto::GetPubPixelsRequest;
   using GetPubPixelsRequestPtr = std::unique_ptr<GetPubPixelsRequest>;
@@ -133,11 +388,19 @@ public:
   using ProcessMatchRequestRequestPtr = std::unique_ptr<ProcessMatchRequestRequest>;
   using ProcessMatchRequestResponse = AdServer::CampaignSvcs::Proto::ProcessMatchRequestResponse;
   using ProcessMatchRequestResponsePtr = std::unique_ptr<ProcessMatchRequestResponse>;
-  /*using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
+  using VerifyOptOperationRequest = AdServer::CampaignSvcs::Proto::VerifyOptOperationRequest;
+  using VerifyOptOperationRequestPtr = std::unique_ptr<VerifyOptOperationRequest>;
+  using VerifyOptOperationResponse = AdServer::CampaignSvcs::Proto::VerifyOptOperationResponse;
+  using VerifyOptOperationResponsePtr = std::unique_ptr<VerifyOptOperationResponse>;
+  using GetCampaignCreativeRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeRequest;
   using GetCampaignCreativeRequestPtr = std::unique_ptr<GetCampaignCreativeRequest>;
   using GetCampaignCreativeResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeResponse;
   using GetCampaignCreativeResponsePtr = std::unique_ptr<GetCampaignCreativeResponse>;
-  using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
+  using GetColocationFlagsRequest = AdServer::CampaignSvcs::Proto::GetColocationFlagsRequest;
+  using GetColocationFlagsRequestPtr = std::unique_ptr<GetColocationFlagsRequest>;
+  using GetColocationFlagsResponse = AdServer::CampaignSvcs::Proto::GetColocationFlagsResponse;
+  using GetColocationFlagsResponsePtr = std::unique_ptr<GetColocationFlagsResponse>;
+  /*using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
   using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
   using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
   using MatchGeoChannelsResponsePtr = std::unique_ptr<MatchGeoChannelsResponse>;
@@ -165,10 +428,6 @@ public:
   using VerifyImpressionRequestPtr = std::unique_ptr<VerifyImpressionRequest>;
   using VerifyImpressionResponse = AdServer::CampaignSvcs::Proto::VerifyImpressionResponse;
   using VerifyImpressionResponsePtr = std::unique_ptr<VerifyImpressionResponse>;
-  using VerifyOptOperationRequest = AdServer::CampaignSvcs::Proto::VerifyOptOperationRequest;
-  using VerifyOptOperationRequestPtr = std::unique_ptr<VerifyOptOperationRequest>;
-  using VerifyOptOperationResponse = AdServer::CampaignSvcs::Proto::VerifyOptOperationResponse;
-  using VerifyOptOperationResponsePtr = std::unique_ptr<VerifyOptOperationResponse>;
   using GetConfigRequest = AdServer::CampaignSvcs::Proto::GetConfigRequest;
   using GetConfigRequestPtr = std::unique_ptr<GetConfigRequest>;
   using GetConfigResponse = AdServer::CampaignSvcs::Proto::GetConfigResponse;
@@ -181,10 +440,6 @@ public:
   using GetCampaignCreativeByCcidRequestPtr = std::unique_ptr<GetCampaignCreativeByCcidRequest>;
   using GetCampaignCreativeByCcidResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeByCcidResponse;
   using GetCampaignCreativeByCcidResponsePtr = std::unique_ptr<GetCampaignCreativeByCcidResponse>;
-  using GetColocationFlagsRequest = AdServer::CampaignSvcs::Proto::GetColocationFlagsRequest;
-  using GetColocationFlagsRequestPtr = std::unique_ptr<GetColocationFlagsRequest>;
-  using GetColocationFlagsResponse = AdServer::CampaignSvcs::Proto::GetColocationFlagsResponse;
-  using GetColocationFlagsResponsePtr = std::unique_ptr<GetColocationFlagsResponse>;
   using ProcessAnonymousRequestRequest = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestRequest;
   using ProcessAnonymousRequestRequestPtr = std::unique_ptr<ProcessAnonymousRequestRequest>;
   using ProcessAnonymousRequestResponse = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestResponse;
@@ -281,6 +536,25 @@ public:
     const std::vector<GeoCoordInfo>& coord_location,
     const std::string& full_referer) noexcept;
 
+  GetColocationFlagsResponsePtr get_colocation_flags() noexcept;
+
+  VerifyOptOperationResponsePtr verify_opt_operation(
+    const std::uint32_t time,
+    const std::int32_t colo_id,
+    const std::string& referer,
+    const OptOperation operation,
+    const std::uint32_t status,
+    const std::uint32_t user_status,
+    const bool log_as_test,
+    const std::string& browser,
+    const std::string& os,
+    const std::string& ct,
+    const std::string& curct,
+    const AdServer::Commons::UserId& user_id) noexcept;
+
+  GetCampaignCreativeResponsePtr get_campaign_creative(
+    const RequestParams& request_params) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -354,6 +628,25 @@ private:
     const std::vector<GeoInfo>& location,
     const std::vector<GeoCoordInfo>& coord_location,
     const std::string& full_referer);
+
+  GetColocationFlagsRequestPtr create_get_colocation_flags_request();
+
+  VerifyOptOperationRequestPtr create_verify_opt_operation_request(
+    const std::uint32_t time,
+    const std::int32_t colo_id,
+    const std::string& referer,
+    const OptOperation operation,
+    const std::uint32_t status,
+    const std::uint32_t user_status,
+    const bool log_as_test,
+    const std::string& browser,
+    const std::string& os,
+    const std::string& ct,
+    const std::string& curct,
+    const AdServer::Commons::UserId& user_id);
+
+  GetCampaignCreativeRequestPtr create_get_campaign_creative_request(
+    const RequestParams& request_params);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(Args&& ...args) noexcept;
