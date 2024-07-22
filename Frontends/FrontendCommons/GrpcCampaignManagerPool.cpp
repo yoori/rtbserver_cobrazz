@@ -104,6 +104,14 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
       {
         request = create_get_campaign_creative_request(std::forward<Args>(args)...);
       }
+      else if constexpr (std::is_same_v<Request, InstantiateAdRequest>)
+      {
+        request = create_instantiate_ad_request(std::forward<Args>(args)...);
+      }
+      else if constexpr (std::is_same_v<Request, GetClickUrlRequest>)
+      {
+        request = create_get_click_url_request(std::forward<Args>(args)...);
+      }
       else
       {
         static_assert(GrpcAlgs::AlwaysFalseV<Request>);
@@ -469,6 +477,63 @@ GrpcCampaignManagerPool::get_campaign_creative(
     GetCampaignCreativeResponse>(request_params);
 }
 
+GrpcCampaignManagerPool::InstantiateAdResponsePtr
+GrpcCampaignManagerPool::instantiate_ad(
+  const InstantiateAdInfo& instantiate_ad) noexcept
+{
+  using InstantiateAdClient = AdServer::CampaignSvcs::Proto::CampaignManager_instantiate_ad_ClientPool;
+
+  return do_request<
+    InstantiateAdClient,
+    InstantiateAdRequest,
+    InstantiateAdResponse>(instantiate_ad);
+}
+
+GrpcCampaignManagerPool::GetClickUrlResponsePtr
+GrpcCampaignManagerPool::get_click_url(
+  const Generics::Time& time,
+  const Generics::Time& bid_time,
+  const std::uint32_t colo_id,
+  const std::uint32_t tag_id,
+  const std::uint32_t tag_size_id,
+  const std::uint32_t ccid,
+  const std::uint32_t ccg_keyword_id,
+  const std::uint32_t creative_id,
+  const AdServer::Commons::UserId& match_user_id,
+  const AdServer::Commons::UserId& cookie_user_id,
+  const AdServer::Commons::UserId& request_id,
+  const UserIdHashModInfo& user_id_hash_mod,
+  const std::string& relocate,
+  const std::string& referer,
+  const bool log_click,
+  const CTRDecimal& ctr,
+  const std::vector<TokenInfo>& tokens) noexcept
+{
+  using GetClickUrlClient = AdServer::CampaignSvcs::Proto::CampaignManager_get_click_url_ClientPool;
+
+  return do_request<
+    GetClickUrlClient,
+    GetClickUrlRequest,
+    GetClickUrlResponse>(
+      time,
+      bid_time,
+      colo_id,
+      tag_id,
+      tag_size_id,
+      ccid,
+      ccg_keyword_id,
+      creative_id,
+      match_user_id,
+      cookie_user_id,
+      request_id,
+      user_id_hash_mod,
+      relocate,
+      referer,
+      log_click,
+      ctr,
+      tokens);
+}
+
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
 GrpcCampaignManagerPool::create_get_pub_pixels_request(
   const std::string& country,
@@ -734,27 +799,22 @@ GrpcCampaignManagerPool::create_verify_opt_operation_request(
   return request;
 }
 
-GrpcCampaignManagerPool::GetCampaignCreativeRequestPtr
-GrpcCampaignManagerPool::create_get_campaign_creative_request(
-  const RequestParams& request_params)
+void GrpcCampaignManagerPool::fill_common_ad_request_info(
+  const CommonAdRequestInfo& common_info,
+  AdServer::CampaignSvcs::Proto::CommonAdRequestInfo& common_info_proto)
 {
-  auto request = std::make_unique<GetCampaignCreativeRequest>();
-  auto* const request_params_proto = request->mutable_request_params();
+  common_info_proto.set_time(GrpcAlgs::pack_time(common_info.time));
+  common_info_proto.set_request_id(GrpcAlgs::pack_request_id(common_info.request_id));
+  common_info_proto.set_creative_instantiate_type(common_info.creative_instantiate_type);
+  common_info_proto.set_request_type(common_info.request_type);
+  common_info_proto.set_random(common_info.random);
+  common_info_proto.set_test_request(common_info.test_request);
+  common_info_proto.set_log_as_test(common_info.log_as_test);
+  common_info_proto.set_colo_id(common_info.colo_id);
+  common_info_proto.set_external_user_id(common_info.external_user_id);
+  common_info_proto.set_source_id(common_info.source_id);
 
-  const auto& common_info = request_params.common_info;
-  auto* const common_info_proto = request_params_proto->mutable_common_info();
-  common_info_proto->set_time(GrpcAlgs::pack_time(common_info.time));
-  common_info_proto->set_request_id(GrpcAlgs::pack_request_id(common_info.request_id));
-  common_info_proto->set_creative_instantiate_type(common_info.creative_instantiate_type);
-  common_info_proto->set_request_type(common_info.request_type);
-  common_info_proto->set_random(common_info.random);
-  common_info_proto->set_test_request(common_info.test_request);
-  common_info_proto->set_log_as_test(common_info.log_as_test);
-  common_info_proto->set_colo_id(common_info.colo_id);
-  common_info_proto->set_external_user_id(common_info.external_user_id);
-  common_info_proto->set_source_id(common_info.source_id);
-
-  auto* const location_proto = common_info_proto->mutable_location();
+  auto* const location_proto = common_info_proto.mutable_location();
   location_proto->Reserve(common_info.location.size());
   for (const auto& data : common_info.location)
   {
@@ -764,7 +824,7 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
     location->set_city(data.city);
   }
 
-  auto* const coord_location_proto = common_info_proto->mutable_coord_location();
+  auto* const coord_location_proto = common_info_proto.mutable_coord_location();
   coord_location_proto->Reserve(common_info.coord_location.size());
   for (const auto& data : common_info.coord_location)
   {
@@ -774,30 +834,30 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
     coord_location->set_accuracy(GrpcAlgs::pack_decimal(data.accuracy));
   }
 
-  common_info_proto->set_full_referer(common_info.full_referer);
-  common_info_proto->set_referer(common_info.referer);
+  common_info_proto.set_full_referer(common_info.full_referer);
+  common_info_proto.set_referer(common_info.referer);
 
-  common_info_proto->mutable_urls()->Add(
+  common_info_proto.mutable_urls()->Add(
     std::begin(common_info.urls),
     std::end(common_info.urls));
 
-  common_info_proto->set_security_token(common_info.security_token);
-  common_info_proto->set_pub_impr_track_url(common_info.pub_impr_track_url);
-  common_info_proto->set_pub_param(common_info.pub_param);
-  common_info_proto->set_preclick_url(common_info.preclick_url);
-  common_info_proto->set_click_prefix_url(common_info.click_prefix_url);
-  common_info_proto->set_original_url(common_info.original_url);
-  common_info_proto->set_track_user_id(GrpcAlgs::pack_user_id(common_info.track_user_id));
-  common_info_proto->set_user_id(GrpcAlgs::pack_user_id(common_info.user_id));
-  common_info_proto->set_user_status(common_info.user_status);
-  common_info_proto->set_signed_user_id(common_info.signed_user_id);
-  common_info_proto->set_peer_ip(common_info.peer_ip);
-  common_info_proto->set_user_agent(common_info.user_agent);
-  common_info_proto->set_cohort(common_info.cohort);
-  common_info_proto->set_hpos(common_info.hpos);
-  common_info_proto->set_ext_track_params(common_info.ext_track_params);
+  common_info_proto.set_security_token(common_info.security_token);
+  common_info_proto.set_pub_impr_track_url(common_info.pub_impr_track_url);
+  common_info_proto.set_pub_param(common_info.pub_param);
+  common_info_proto.set_preclick_url(common_info.preclick_url);
+  common_info_proto.set_click_prefix_url(common_info.click_prefix_url);
+  common_info_proto.set_original_url(common_info.original_url);
+  common_info_proto.set_track_user_id(GrpcAlgs::pack_user_id(common_info.track_user_id));
+  common_info_proto.set_user_id(GrpcAlgs::pack_user_id(common_info.user_id));
+  common_info_proto.set_user_status(common_info.user_status);
+  common_info_proto.set_signed_user_id(common_info.signed_user_id);
+  common_info_proto.set_peer_ip(common_info.peer_ip);
+  common_info_proto.set_user_agent(common_info.user_agent);
+  common_info_proto.set_cohort(common_info.cohort);
+  common_info_proto.set_hpos(common_info.hpos);
+  common_info_proto.set_ext_track_params(common_info.ext_track_params);
 
-  auto* const tokens_proto = common_info_proto->mutable_tokens();
+  auto* const tokens_proto = common_info_proto.mutable_tokens();
   tokens_proto->Reserve(common_info.tokens.size());
   for (const auto& [name, value] : common_info.tokens)
   {
@@ -806,29 +866,48 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
     token_proto->set_value(value);
   }
 
-  common_info_proto->set_set_cookie(common_info.set_cookie);
-  common_info_proto->set_passback_type(common_info.passback_type);
-  common_info_proto->set_passback_url(common_info.passback_url);
+  common_info_proto.set_set_cookie(common_info.set_cookie);
+  common_info_proto.set_passback_type(common_info.passback_type);
+  common_info_proto.set_passback_url(common_info.passback_url);
+}
+
+void GrpcCampaignManagerPool::fill_context_ad_request_info(
+  const ContextAdRequestInfo& context_info,
+  AdServer::CampaignSvcs::Proto::ContextAdRequestInfo& context_info_proto)
+{
+  context_info_proto.set_enabled_notice(context_info.enabled_notice);
+  context_info_proto.set_client(context_info.client);
+  context_info_proto.set_client_version(context_info.client_version);
+  context_info_proto.mutable_platform_ids()->Add(
+    std::begin(context_info.platform_ids),
+    std::end(context_info.platform_ids));
+  context_info_proto.mutable_geo_channels()->Add(
+    std::begin(context_info.geo_channels),
+    std::end(context_info.geo_channels));
+  context_info_proto.set_platform(context_info.platform);
+  context_info_proto.set_full_platform(context_info.full_platform);
+  context_info_proto.set_web_browser(context_info.web_browser);
+  context_info_proto.set_ip_hash(context_info.ip_hash);
+  context_info_proto.set_profile_referer(context_info.profile_referer);
+  context_info_proto.set_page_load_id(context_info.page_load_id);
+  context_info_proto.set_full_referer_hash(context_info.full_referer_hash);
+  context_info_proto.set_short_referer_hash(context_info.short_referer_hash);
+}
+
+GrpcCampaignManagerPool::GetCampaignCreativeRequestPtr
+GrpcCampaignManagerPool::create_get_campaign_creative_request(
+  const RequestParams& request_params)
+{
+  auto request = std::make_unique<GetCampaignCreativeRequest>();
+  auto* const request_params_proto = request->mutable_request_params();
+
+  const auto& common_info = request_params.common_info;
+  auto* const common_info_proto = request_params_proto->mutable_common_info();
+  fill_common_ad_request_info(common_info, *common_info_proto);
 
   const auto& context_info = request_params.context_info;
   auto* const context_info_proto = request_params_proto->mutable_context_info();
-  context_info_proto->set_enabled_notice(context_info.enabled_notice);
-  context_info_proto->set_client(context_info.client);
-  context_info_proto->set_client_version(context_info.client_version);
-  context_info_proto->mutable_platform_ids()->Add(
-    std::begin(context_info.platform_ids),
-    std::end(context_info.platform_ids));
-  context_info_proto->mutable_geo_channels()->Add(
-    std::begin(context_info.geo_channels),
-    std::end(context_info.geo_channels));
-  context_info_proto->set_platform(context_info.platform);
-  context_info_proto->set_full_platform(context_info.full_platform);
-  context_info_proto->set_web_browser(context_info.web_browser);
-  context_info_proto->set_ip_hash(context_info.ip_hash);
-  context_info_proto->set_profile_referer(context_info.profile_referer);
-  context_info_proto->set_page_load_id(context_info.page_load_id);
-  context_info_proto->set_full_referer_hash(context_info.full_referer_hash);
-  context_info_proto->set_short_referer_hash(context_info.short_referer_hash);
+  fill_context_ad_request_info(context_info, *context_info_proto);
 
   request_params_proto->set_publisher_site_id(request_params.publisher_site_id);
   request_params_proto->mutable_publisher_account_ids()->Add(
@@ -1027,6 +1106,128 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
   request_params_proto->set_page_keywords(request_params.page_keywords);
   request_params_proto->set_url_keywords(request_params.url_keywords);
   request_params_proto->set_ssp_location(request_params.ssp_location);
+
+  return request;
+}
+
+GrpcCampaignManagerPool::InstantiateAdRequestPtr
+GrpcCampaignManagerPool::create_instantiate_ad_request(
+  const InstantiateAdInfo& instantiate_ad)
+{
+  auto request = std::make_unique<InstantiateAdRequest>();
+  auto* const instantiate_ad_info_proto = request->mutable_instantiate_ad_info();
+
+  const auto& common_info = instantiate_ad.common_info;
+  auto* const common_info_proto = instantiate_ad_info_proto->mutable_common_info();
+  fill_common_ad_request_info(common_info, *common_info_proto);
+
+  const auto& context_info = instantiate_ad.context_info;
+  auto* const context_info_proto = instantiate_ad_info_proto->mutable_context_info();
+  context_info_proto->Reserve(context_info.size());
+  for (const auto& info : context_info)
+  {
+    auto* const info_proto = context_info_proto->Add();
+    fill_context_ad_request_info(info, *info_proto);
+  }
+
+  instantiate_ad_info_proto->set_format(instantiate_ad.format);
+  instantiate_ad_info_proto->set_publisher_site_id(instantiate_ad.publisher_site_id);
+  instantiate_ad_info_proto->set_publisher_account_id(instantiate_ad.publisher_account_id);
+  instantiate_ad_info_proto->set_tag_id(instantiate_ad.tag_id);
+  instantiate_ad_info_proto->set_tag_size_id(instantiate_ad.tag_size_id);
+
+  auto* const creatives_proto = instantiate_ad_info_proto->mutable_creatives();
+  creatives_proto->Reserve(instantiate_ad.creatives.size());
+  for (const auto& creative : instantiate_ad.creatives)
+  {
+    auto* const creative_proto = creatives_proto->Add();
+    creative_proto->set_ccid(creative.ccid);
+    creative_proto->set_ccg_keyword_id(creative.ccg_keyword_id);
+    creative_proto->set_request_id(GrpcAlgs::pack_request_id(creative.request_id));
+    creative_proto->set_ctr(GrpcAlgs::pack_decimal(creative.ctr));
+  }
+
+  instantiate_ad_info_proto->set_creative_id(instantiate_ad.creative_id);
+
+  auto* const user_id_hash_mod_proto = instantiate_ad_info_proto->mutable_user_id_hash_mod();
+  const auto& user_id_hash_mod = instantiate_ad.user_id_hash_mod;
+  user_id_hash_mod_proto->set_defined(user_id_hash_mod.value.has_value());
+  user_id_hash_mod_proto->set_value(user_id_hash_mod.value.value_or(0));
+
+  instantiate_ad_info_proto->set_merged_user_id(GrpcAlgs::pack_user_id(instantiate_ad.merged_user_id));
+  instantiate_ad_info_proto->mutable_pubpixel_accounts()->Add(
+    std::begin(instantiate_ad.pubpixel_accounts),
+    std::end(instantiate_ad.pubpixel_accounts));
+  instantiate_ad_info_proto->set_open_price(instantiate_ad.open_price);
+  instantiate_ad_info_proto->set_openx_price(instantiate_ad.openx_price);
+  instantiate_ad_info_proto->set_liverail_price(instantiate_ad.liverail_price);
+  instantiate_ad_info_proto->set_google_price(instantiate_ad.google_price);
+  instantiate_ad_info_proto->set_ext_tag_id(instantiate_ad.ext_tag_id);
+  instantiate_ad_info_proto->set_video_width(instantiate_ad.video_width);
+  instantiate_ad_info_proto->set_video_height(instantiate_ad.video_height);
+  instantiate_ad_info_proto->set_consider_request(instantiate_ad.consider_request);
+  instantiate_ad_info_proto->set_enabled_notice(instantiate_ad.enabled_notice);
+  instantiate_ad_info_proto->set_emulate_click(instantiate_ad.emulate_click);
+  instantiate_ad_info_proto->set_pub_imp_revenue(
+    GrpcAlgs::pack_decimal(instantiate_ad.pub_imp_revenue));
+  instantiate_ad_info_proto->set_pub_imp_revenue_defined(
+    instantiate_ad.pub_imp_revenue_defined);
+
+  return request;
+}
+
+GrpcCampaignManagerPool::GetClickUrlRequestPtr
+GrpcCampaignManagerPool::create_get_click_url_request(
+  const Generics::Time& time,
+  const Generics::Time& bid_time,
+  const std::uint32_t colo_id,
+  const std::uint32_t tag_id,
+  const std::uint32_t tag_size_id,
+  const std::uint32_t ccid,
+  const std::uint32_t ccg_keyword_id,
+  const std::uint32_t creative_id,
+  const AdServer::Commons::UserId& match_user_id,
+  const AdServer::Commons::UserId& cookie_user_id,
+  const AdServer::Commons::RequestId& request_id,
+  const UserIdHashModInfo& user_id_hash_mod,
+  const std::string& relocate,
+  const std::string& referer,
+  const bool log_click,
+  const CTRDecimal& ctr,
+  const std::vector<TokenInfo>& tokens)
+{
+  auto request = std::make_unique<GetClickUrlRequest>();
+  auto* const click_info_proto = request->mutable_click_info();
+
+  click_info_proto->set_time(GrpcAlgs::pack_time(time));
+  click_info_proto->set_bid_time(GrpcAlgs::pack_time(bid_time));
+  click_info_proto->set_colo_id(colo_id);
+  click_info_proto->set_tag_id(tag_id);
+  click_info_proto->set_tag_size_id(tag_size_id);
+  click_info_proto->set_ccid(ccid);
+  click_info_proto->set_ccg_keyword_id(ccg_keyword_id);
+  click_info_proto->set_creative_id(creative_id);
+  click_info_proto->set_match_user_id(GrpcAlgs::pack_user_id(match_user_id));
+  click_info_proto->set_cookie_user_id(GrpcAlgs::pack_user_id(cookie_user_id));
+  click_info_proto->set_request_id(GrpcAlgs::pack_request_id(request_id));
+
+  auto* const user_id_hash_mod_proto = click_info_proto->mutable_user_id_hash_mod();
+  user_id_hash_mod_proto->set_defined(user_id_hash_mod.value.has_value());
+  user_id_hash_mod_proto->set_value(user_id_hash_mod.value.value_or(0));
+
+  click_info_proto->set_relocate(relocate);
+  click_info_proto->set_referer(referer);
+  click_info_proto->set_log_click(log_click);
+  click_info_proto->set_ctr(GrpcAlgs::pack_decimal(ctr));
+
+  auto* const tokens_proto = click_info_proto->mutable_tokens();
+  tokens_proto->Reserve(tokens.size());
+  for (const auto& token : tokens)
+  {
+    auto* const token_proto = tokens_proto->Add();
+    token_proto->set_value(token.value);
+    token_proto->set_name(token.name);
+  }
 
   return request;
 }

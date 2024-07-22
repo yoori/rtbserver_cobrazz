@@ -759,11 +759,99 @@ namespace
   Frontend::instantiate_click_(
     HttpResponse& response,
     const RequestInfo& request_info,
-    const AdServer::CampaignSvcs::CampaignManager::InstantiateAdResult*
-      inst_ad_result)
+    const AdServer::Commons::RequestId& request_id)
     /*throw(Exception)*/
   {
     static const char* FUN = "Frontend::instantiate_click_()";
+
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      try
+      {
+        if (!request_info.creatives.empty())
+        {
+          const RequestInfo::CreativeInfo& first_creative = request_info.creatives.front();
+          const auto& colo_id = request_info.colo_id;
+          const auto& tag_id = request_info.tag_id;
+          const auto& tag_size_id = request_info.tag_size_id;
+          const auto& creative_id = request_info.creative_id;
+          const auto& log_click = request_info.consider_request;
+          const auto& ccid = first_creative.ccid;
+          const auto& ccg_keyword_id = first_creative.ccg_keyword_id;
+          const auto& ctr = first_creative.ctr;
+
+          FrontendCommons::GrpcCampaignManagerPool::UserIdHashModInfo user_id_hash_mod;
+          if (request_info.user_id_hash_mod)
+          {
+            user_id_hash_mod.value = *request_info.user_id_hash_mod;
+          }
+          else if(request_info.consider_request &&
+            !request_info.enabled_notice &&
+            !request_info.user_id.is_null())
+          {
+            user_id_hash_mod.value = AdServer::LogProcessing::user_id_distribution_hash(
+              request_info.user_id);
+          }
+
+          const auto& time = request_info.time;
+          const auto& bid_time = request_info.bid_time;
+          const auto& referer = request_info.referer;
+
+          auto response_proto = grpc_campaign_manager_pool->get_click_url(
+            time,
+            bid_time,
+            colo_id,
+            tag_id,
+            tag_size_id,
+            ccid,
+            ccg_keyword_id,
+            creative_id,
+            AdServer::Commons::UserId{},
+            AdServer::Commons::UserId{},
+            request_id,
+            user_id_hash_mod,
+            std::string{},
+            referer,
+            log_click,
+            ctr,
+            {});
+          if (!response_proto || response_proto->has_error())
+          {
+            throw Exception("get_click_url is failed");
+          }
+
+          const auto& info_proto = response_proto->info();
+          if (info_proto.return_value())
+          {
+            // do redirect to click_url
+            response.add_header(
+              Response::Header::LOCATION,
+              request_info.click_prefix_url + info_proto.click_result_info().url());
+            return 302;
+          }
+          else
+          {
+            return 204;
+          }
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
+      }
+      catch (...)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: Unknown error";
+        logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
+      }
+    }
 
     try
     {
@@ -803,12 +891,7 @@ namespace
 
         click_info.time = CorbaAlgs::pack_time(request_info.time);
         click_info.bid_time = CorbaAlgs::pack_time(request_info.bid_time);
-
-        if (inst_ad_result->request_ids.length())
-        {
-          click_info.request_id =
-            inst_ad_result->request_ids[0];
-        }
+        click_info.request_id = CorbaAlgs::pack_request_id(request_id);
         click_info.referer << request_info.referer;
         
         CORBA::Boolean got_click_url = false;
@@ -851,6 +934,224 @@ namespace
 
     AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
       campaign_matching_result;
+
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      try
+      {
+        FrontendCommons::GrpcCampaignManagerPool::InstantiateAdInfo inst_ad_info;
+
+        inst_ad_info.common_info.time = request_info.bid_time;
+        inst_ad_info.common_info.request_id = request_info.global_request_id;
+        inst_ad_info.common_info.creative_instantiate_type = std::string_view(
+          instantiate_type.text().data(),
+          instantiate_type.text().length());
+        inst_ad_info.common_info.request_type = AdServer::CampaignSvcs::AR_NORMAL;
+        inst_ad_info.common_info.random = request_info.random;
+        inst_ad_info.common_info.test_request = request_info.test_request;
+        inst_ad_info.common_info.log_as_test = request_info.log_as_test;
+        inst_ad_info.common_info.colo_id = request_info.colo_id;
+        inst_ad_info.common_info.external_user_id = request_info.external_user_id;
+        inst_ad_info.common_info.source_id = request_info.source_id;
+
+        if (request_info.location)
+        {
+          auto& location = inst_ad_info.common_info.location;
+          location.emplace_back(
+            request_info.location->country,
+            request_info.location->region,
+            request_info.location->city);
+        }
+
+        if (request_info.coord_location)
+        {
+          auto& coord_location = inst_ad_info.common_info.coord_location;
+          coord_location.emplace_back(
+            request_info.coord_location->longitude,
+            request_info.coord_location->latitude,
+            request_info.coord_location->accuracy);
+        }
+
+        inst_ad_info.common_info.referer = request_info.referer;
+        inst_ad_info.common_info.security_token = request_info.security_token;
+        inst_ad_info.common_info.pub_impr_track_url = request_info.pub_impr_track_url;
+        inst_ad_info.common_info.preclick_url = request_info.preclick_url;
+        inst_ad_info.common_info.click_prefix_url = request_info.click_prefix_url;
+        inst_ad_info.common_info.original_url = request_info.original_url;
+
+        inst_ad_info.common_info.track_user_id = request_info.track_user_id;
+        inst_ad_info.common_info.user_id = request_info.user_id;
+        inst_ad_info.common_info.user_status =
+          static_cast<CORBA::ULong>(
+            request_info.user_status != AdServer::CampaignSvcs::US_PROBE ?
+            request_info.user_status :
+            AdServer::CampaignSvcs::US_UNDEFINED);
+        inst_ad_info.common_info.signed_user_id = request_info.signed_user_id;
+        inst_ad_info.common_info.peer_ip = request_info.peer_ip;
+        inst_ad_info.common_info.user_agent = request_info.user_agent;
+        inst_ad_info.common_info.cohort = request_info.cohort;
+        inst_ad_info.common_info.hpos = request_info.hpos;
+        inst_ad_info.common_info.ext_track_params = request_info.ext_track_params;
+        inst_ad_info.pubpixel_accounts.insert(
+          std::end(inst_ad_info.pubpixel_accounts),
+          std::begin(request_info.pubpixel_accounts),
+          std::end(request_info.pubpixel_accounts));
+
+        // required passback for non profiling requests
+        inst_ad_info.common_info.passback_type = request_info.passback_type;
+        inst_ad_info.common_info.passback_url = request_info.passback_url;
+        inst_ad_info.common_info.set_cookie = request_info.set_cookie;
+
+        inst_ad_info.common_info.tokens.reserve(request_info.tokens.size());
+        for (const auto& [name, value] : request_info.tokens)
+        {
+          inst_ad_info.common_info.tokens.emplace_back(name, value);
+        }
+
+        inst_ad_info.publisher_site_id = request_info.publisher_site_id;
+        inst_ad_info.publisher_account_id = request_info.publisher_account_id;
+        inst_ad_info.pub_imp_revenue_defined = false;
+        inst_ad_info.emulate_click = request_info.emulate_click;
+
+        if (request_info.consider_request)
+        {
+          if(request_info.pub_imp_revenue)
+          {
+            inst_ad_info.pub_imp_revenue_defined = true;
+            inst_ad_info.pub_imp_revenue = *request_info.pub_imp_revenue;
+          }
+          inst_ad_info.context_info.emplace_back();
+          auto& context_info = inst_ad_info.context_info.back();
+          context_info.enabled_notice = request_info.enabled_notice;
+
+          context_info.client = request_info.client_app;
+          context_info.client_version = request_info.client_app_version;
+          context_info.web_browser = request_info.web_browser;
+          context_info.platform = request_info.platform;
+          context_info.full_platform = request_info.full_platform;
+          context_info.platform_ids.insert(
+            std::end(context_info.platform_ids),
+            std::begin(request_info.platform_ids),
+            std::end(request_info.platform_ids));
+          context_info.profile_referer = false;
+          context_info.page_load_id = 0;
+          context_info.full_referer_hash = request_info.full_referer_hash;
+          context_info.short_referer_hash = request_info.short_referer_hash;
+        }
+
+        if (request_info.user_id_hash_mod)
+        {
+          inst_ad_info.user_id_hash_mod.value = *request_info.user_id_hash_mod;
+        }
+        else if(request_info.consider_request &&
+                !request_info.enabled_notice &&
+                !request_info.user_id.is_null())
+        {
+          inst_ad_info.user_id_hash_mod.value =
+            AdServer::LogProcessing::user_id_distribution_hash(request_info.user_id);
+        }
+
+        inst_ad_info.consider_request = request_info.consider_request;
+        inst_ad_info.open_price = request_info.open_price;
+        inst_ad_info.openx_price = request_info.openx_price;
+        inst_ad_info.liverail_price = request_info.liverail_price;
+        inst_ad_info.google_price = request_info.google_price;
+        inst_ad_info.format = request_info.format;
+        inst_ad_info.tag_id = request_info.tag_id;
+        inst_ad_info.tag_size_id = request_info.tag_size_id;
+        inst_ad_info.creative_id = request_info.creative_id;
+        inst_ad_info.ext_tag_id = request_info.ext_tag_id;
+        inst_ad_info.video_width = request_info.video_width;
+        inst_ad_info.video_height = request_info.video_height;
+
+        auto request_id_it = request_info.request_ids.begin();
+        inst_ad_info.creatives.reserve(request_info.creatives.size());
+        for (const auto& data : request_info.creatives)
+        {
+          inst_ad_info.creatives.emplace_back();
+          auto& creative = inst_ad_info.creatives.back();
+          creative.ccid = creative.ccid;
+          creative.ccg_keyword_id = creative.ccg_keyword_id;
+          creative.ctr = creative.ctr;
+          if(request_id_it != request_info.request_ids.end())
+          {
+            creative.request_id = *request_id_it;
+            ++request_id_it;
+          }
+        }
+
+        if(!request_info.temp_user_id.is_null() &&
+           !request_info.user_id.is_null())
+        {
+          inst_ad_info.merged_user_id = request_info.temp_user_id;
+        }
+
+        auto response_proto = grpc_campaign_manager_pool->instantiate_ad(
+          inst_ad_info);
+        if (!response_proto || response_proto->has_error())
+        {
+          throw Exception("instantiate_ad is failed");
+        }
+        const auto& info_proto = response_proto->info();
+
+        if (request_info.emulate_click)
+        {
+          const auto& request_ids_proto = info_proto.request_ids();
+          AdServer::Commons::RequestId request_id;
+          if (!request_ids_proto.empty())
+          {
+            request_id = GrpcAlgs::unpack_request_id(
+              request_ids_proto[0]);
+          }
+
+          return instantiate_click_(
+            response,
+            request_info,
+            request_id);
+        }
+        else if (!info_proto.creative_body().empty())
+        {
+          std::string response_body(info_proto.creative_body());
+          response.set_content_type(String::SubString(info_proto.mime_format()));
+
+          response.get_output_stream().write(
+            response_body.c_str(),
+            response_body.length());
+
+          if(logger()->log_level() >= TraceLevel::MIDDLE)
+          {
+            Stream::Error ostr;
+            ostr << FUN << ": response:" << std::endl << response_body;
+
+            logger()->log(ostr.str(),
+                          TraceLevel::MIDDLE,
+                          Aspect::AD_INST_FRONTEND);
+          }
+
+          return 200;
+        }
+        else
+        {
+          return 204;
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
+      }
+      catch (...)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: Unknown error";
+        logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
+      }
+    }
 
     try
     {
@@ -1020,10 +1321,17 @@ namespace
 
       if (request_info.emulate_click)
       {
+        AdServer::Commons::RequestId request_id;
+        if (inst_ad_result->request_ids.length())
+        {
+          request_id = CorbaAlgs::unpack_request_id(
+            inst_ad_result->request_ids[0]);
+        }
+
         return instantiate_click_(
           response,
           request_info,
-          inst_ad_result.ptr());
+          request_id);
       }
       else if (inst_ad_result->creative_body[0])
       {

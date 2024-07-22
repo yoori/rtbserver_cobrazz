@@ -41,9 +41,12 @@ private:
   using FactoryClientHolderPtr = std::unique_ptr<FactoryClientHolder>;
 
 public:
+  using CTRDecimal = AdServer::CampaignSvcs::CTRDecimal;
+  using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
+
   struct UserIdHashModInfo final
   {
-    UserIdHashModInfo(const std::optional<std::uint32_t> value)
+    UserIdHashModInfo(const std::optional<std::uint32_t> value = {})
       : value(value)
     {
     }
@@ -181,9 +184,6 @@ public:
 
   struct CCGKeyword final
   {
-    using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
-    using CTRDecimal = AdServer::CampaignSvcs::CTRDecimal;
-
     CCGKeyword(
       const std::uint32_t ccg_keyword_id,
       const std::uint32_t ccg_id,
@@ -211,6 +211,28 @@ public:
     std::string original_keyword;
   };
 
+  struct TrackCreativeInfo final
+  {
+    TrackCreativeInfo(
+      const std::uint32_t ccid,
+      const std::uint32_t ccg_keyword_id,
+      const AdServer::Commons::RequestId& request_id,
+      const CTRDecimal& ctr)
+      : ccid(ccid),
+        ccg_keyword_id(ccg_keyword_id),
+        request_id(request_id),
+        ctr(ctr)
+    {
+    }
+
+    TrackCreativeInfo() = default;
+
+    std::uint32_t ccid = 0;
+    std::uint32_t ccg_keyword_id = 0;
+    AdServer::Commons::RequestId request_id;
+    CTRDecimal ctr;
+  };
+
   struct TriggerMatchResult final
   {
     std::vector<ChannelTriggerMatchInfo> url_channels;
@@ -222,8 +244,6 @@ public:
 
   struct AdSlotInfo final
   {
-    using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
-
     std::uint32_t ad_slot_id = 0;
     std::string format;
     std::uint32_t tag_id = 0;
@@ -352,6 +372,34 @@ public:
     std::string ssp_location;
   };
 
+  struct InstantiateAdInfo final
+  {
+    CommonAdRequestInfo common_info;
+    std::vector<ContextAdRequestInfo> context_info;
+    std::string format;
+    std::uint32_t publisher_site_id = 0;
+    std::uint32_t publisher_account_id = 0;
+    std::uint32_t tag_id = 0;
+    std::uint32_t tag_size_id = 0;
+    std::vector<TrackCreativeInfo> creatives;
+    std::uint32_t creative_id = 0;
+    UserIdHashModInfo user_id_hash_mod;
+    AdServer::Commons::UserId merged_user_id;
+    std::vector<std::uint32_t> pubpixel_accounts;
+    std::string open_price;
+    std::string openx_price;
+    std::string liverail_price;
+    std::string google_price;
+    std::string ext_tag_id;
+    std::uint32_t video_width = 0;
+    std::uint32_t video_height = 0;
+    bool consider_request = false;
+    bool enabled_notice = false;
+    bool emulate_click = false;
+    RevenueDecimal pub_imp_revenue;
+    bool pub_imp_revenue_defined = false;
+  };
+
   using Host = std::string;
   using Port = std::size_t;
   using Endpoint = std::pair<Host, Port>;
@@ -400,14 +448,18 @@ public:
   using GetColocationFlagsRequestPtr = std::unique_ptr<GetColocationFlagsRequest>;
   using GetColocationFlagsResponse = AdServer::CampaignSvcs::Proto::GetColocationFlagsResponse;
   using GetColocationFlagsResponsePtr = std::unique_ptr<GetColocationFlagsResponse>;
-  /*using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
-  using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
-  using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
-  using MatchGeoChannelsResponsePtr = std::unique_ptr<MatchGeoChannelsResponse>;
   using InstantiateAdRequest = AdServer::CampaignSvcs::Proto::InstantiateAdRequest;
   using InstantiateAdRequestPtr = std::unique_ptr<InstantiateAdRequest>;
   using InstantiateAdResponse = AdServer::CampaignSvcs::Proto::InstantiateAdResponse;
   using InstantiateAdResponsePtr = std::unique_ptr<InstantiateAdResponse>;
+  using GetClickUrlRequest = AdServer::CampaignSvcs::Proto::GetClickUrlRequest;
+  using GetClickUrlRequestPtr = std::unique_ptr<GetClickUrlRequest>;
+  using GetClickUrlResponse = AdServer::CampaignSvcs::Proto::GetClickUrlResponse;
+  using GetClickUrlResponsePtr = std::unique_ptr<GetClickUrlResponse>;
+  /*using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
+  using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
+  using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
+  using MatchGeoChannelsResponsePtr = std::unique_ptr<MatchGeoChannelsResponse>;
   using GetChannelLinksRequest = AdServer::CampaignSvcs::Proto::GetChannelLinksRequest;
   using GetChannelLinksRequestPtr = std::unique_ptr<GetChannelLinksRequest>;
   using GetChannelLinksResponse = AdServer::CampaignSvcs::Proto::GetChannelLinksResponse;
@@ -420,10 +472,6 @@ public:
   using GetCategoryChannelsRequestPtr = std::unique_ptr<GetCategoryChannelsRequest>;
   using GetCategoryChannelsResponse = AdServer::CampaignSvcs::Proto::GetCategoryChannelsResponse;
   using GetCategoryChannelsResponsePtr = std::unique_ptr<GetCategoryChannelsResponse>;
-  using GetClickUrlRequest = AdServer::CampaignSvcs::Proto::GetClickUrlRequest;
-  using GetClickUrlRequestPtr = std::unique_ptr<GetClickUrlRequest>;
-  using GetClickUrlResponse = AdServer::CampaignSvcs::Proto::GetClickUrlResponse;
-  using GetClickUrlResponsePtr = std::unique_ptr<GetClickUrlResponse>;
   using VerifyImpressionRequest = AdServer::CampaignSvcs::Proto::VerifyImpressionRequest;
   using VerifyImpressionRequestPtr = std::unique_ptr<VerifyImpressionRequest>;
   using VerifyImpressionResponse = AdServer::CampaignSvcs::Proto::VerifyImpressionResponse;
@@ -555,6 +603,28 @@ public:
   GetCampaignCreativeResponsePtr get_campaign_creative(
     const RequestParams& request_params) noexcept;
 
+  InstantiateAdResponsePtr instantiate_ad(
+    const InstantiateAdInfo& instantiate_ad) noexcept;
+
+  GetClickUrlResponsePtr get_click_url(
+    const Generics::Time& time,
+    const Generics::Time& bid_time,
+    const std::uint32_t colo_id,
+    const std::uint32_t tag_id,
+    const std::uint32_t tag_size_id,
+    const std::uint32_t ccid,
+    const std::uint32_t ccg_keyword_id,
+    const std::uint32_t creative_id,
+    const AdServer::Commons::UserId& match_user_id,
+    const AdServer::Commons::UserId& cookie_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::string& relocate,
+    const std::string& referer,
+    const bool log_click,
+    const CTRDecimal& ctr,
+    const std::vector<TokenInfo>& tokens) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -645,8 +715,38 @@ private:
     const std::string& curct,
     const AdServer::Commons::UserId& user_id);
 
+  void fill_common_ad_request_info(
+    const CommonAdRequestInfo& common_info,
+    AdServer::CampaignSvcs::Proto::CommonAdRequestInfo& common_info_proto);
+
+  void fill_context_ad_request_info(
+    const ContextAdRequestInfo& context_info,
+    AdServer::CampaignSvcs::Proto::ContextAdRequestInfo& context_info_proto);
+
   GetCampaignCreativeRequestPtr create_get_campaign_creative_request(
     const RequestParams& request_params);
+
+  InstantiateAdRequestPtr create_instantiate_ad_request(
+    const InstantiateAdInfo& instantiate_ad);
+
+  GetClickUrlRequestPtr create_get_click_url_request(
+    const Generics::Time& time,
+    const Generics::Time& bid_time,
+    const std::uint32_t colo_id,
+    const std::uint32_t tag_id,
+    const std::uint32_t tag_size_id,
+    const std::uint32_t ccid,
+    const std::uint32_t ccg_keyword_id,
+    const std::uint32_t creative_id,
+    const AdServer::Commons::UserId& match_user_id,
+    const AdServer::Commons::UserId&cookie_user_id,
+    const AdServer::Commons::RequestId& request_id,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::string& relocate,
+    const std::string& referer,
+    const bool log_click,
+    const CTRDecimal& ctr,
+    const std::vector<TokenInfo>& tokens);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(Args&& ...args) noexcept;

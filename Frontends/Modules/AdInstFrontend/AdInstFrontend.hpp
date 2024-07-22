@@ -138,8 +138,7 @@ namespace Instantiate
     instantiate_click_(
       HttpResponse& response,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::InstantiateAdResult*
-        inst_ad_result)
+      const AdServer::Commons::RequestId& request_id)
       /*throw(Exception)*/;
 
     int
