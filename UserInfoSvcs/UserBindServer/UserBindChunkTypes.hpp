@@ -558,9 +558,8 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class BoundContainers :
   public Saver,
-  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>
-  //todo: triple time Uncopyable?
-  // , private Generics::Uncopyable
+  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>,
+  virtual private Generics::Uncopyable
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -635,9 +634,8 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class SeenContainers :
   public Saver,
-  public LoaderDelegate<Key, Value>
-  //todo: triple time Uncopyable?
-  // , private Generics::Uncopyable
+  public LoaderDelegate<Key, Value>,
+  virtual private Generics::Uncopyable
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -694,9 +692,8 @@ class Portion final
              ExternalIdHashAdapter,
              BoundUserInfoHolder,
              FilterDate,
-             SparseFetchableHashTable>
-  //todo: triple time Uncopyable?
-  // , private Generics::Uncopyable
+             SparseFetchableHashTable>,
+    virtual private Generics::Uncopyable
 {
 public:
   using SeenRocksdbContainerFactory = RocksdbContainerFactory<
@@ -765,8 +762,7 @@ private:
 using PortionPtr = std::shared_ptr<Portion>;
 
 class Portions final :
-  //todo: triple time Uncopyable?
-  // private Generics::Uncopyable,
+  virtual private Generics::Uncopyable,
   private LoaderDelegate<HashHashAdapter, SeenUserInfoHolder>,
   private LoaderDelegate<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder>
 {

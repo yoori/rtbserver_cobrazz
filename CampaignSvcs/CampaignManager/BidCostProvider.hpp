@@ -99,7 +99,7 @@ namespace CampaignSvcs
       const String::SubString& directory,
       const Generics::Time& config_timestamp,
       Generics::TaskRunner* task_runner,
-      const std::string &fileName = "bid_cost.csv")
+      const std::string &file_name = "bid_cost.csv")
       /*throw(Exception)*/;
 
     AdServer::Commons::Optional<RevenueDecimal>
@@ -136,9 +136,8 @@ namespace CampaignSvcs
 
     void
     load_(
-      const String::SubString& directory
-      , const String::SubString& file
-      )
+      const String::SubString& directory,
+      const String::SubString& file)
       /*throw(InvalidConfig, Exception)*/;
 
     void

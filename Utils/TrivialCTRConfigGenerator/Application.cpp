@@ -251,12 +251,28 @@ Application_::generate_(
       splitter.get_token(clicks_str);
 
       unsigned long tag_id{0};
-      String::StringManip::str_to_int(tag_id_str, tag_id);
-      unsigned long imps{0};
-      String::StringManip::str_to_int(imps_str, imps);
-      unsigned long clicks{0};
-      String::StringManip::str_to_int(clicks_str, clicks);
+      if(!String::StringManip::str_to_int(tag_id_str, tag_id))
+      {
+        Stream::Error ostr;
+        ostr << "generate: tag id is invalid: " << tag_id_str;
+        throw InvalidArgument(ostr);
+      }
 
+      unsigned long imps{0};
+      if(!String::StringManip::str_to_int(imps_str, imps))
+      {
+        Stream::Error ostr;
+        ostr << "generate: imps is invalid: " << imps_str;
+        throw InvalidArgument(ostr);
+      }
+
+      unsigned long clicks{0};
+      if(!String::StringManip::str_to_int(clicks_str, clicks))
+      {
+        Stream::Error ostr;
+        ostr << "generate: clicks is invalid: " << clicks_str;
+        throw InvalidArgument(ostr);
+      }
       sum_imps += imps;
       sum_clicks += clicks;
       if(domain == EMPTY_DOMAIN_MARKER)

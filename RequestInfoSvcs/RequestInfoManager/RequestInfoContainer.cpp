@@ -1525,7 +1525,7 @@ namespace RequestInfoSvcs {
     Logging::Logger* logger,
     RequestActionProcessor* request_processor,
     RequestOperationProcessor* request_operation_processor,
-    const DataBaseManagerPoolPtr& rocksdb_manager_pool,
+    __attribute__((unused))const DataBaseManagerPoolPtr& rocksdb_manager_pool,
     const char* requestfile_base_path,
     const char* requestfile_prefix,
     const RocksDBParams& request_rocksdb_params,
@@ -1603,11 +1603,6 @@ namespace RequestInfoSvcs {
           "Caught eh::Exception: " << ex.what();
         throw Exception(ostr);
       }
-    }
-    else
-    {
-      // avoid unused parameter warning - or we can use __attribute__((unused))
-      (void)rocksdb_manager_pool;
     }
   }
 
