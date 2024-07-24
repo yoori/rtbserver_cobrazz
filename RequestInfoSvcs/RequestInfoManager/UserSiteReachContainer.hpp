@@ -35,7 +35,8 @@ namespace AdServer
 
         bool operator==(const SiteReachInfo& right) const;
 
-        void print(std::ostream& ostr, const char* offset) const;
+        template<typename OStream>
+        void print(OStream& ostr, const char* offset) const;
       };
 
       virtual void process_site_reach(const SiteReachInfo& reach_info)
@@ -132,10 +133,10 @@ namespace AdServer
           appearance_list.end(), right.appearance_list.begin());
     }
 
-    inline
+    template<typename OStream>
     void
     SiteReachProcessor::SiteReachInfo::print(
-      std::ostream& ostr, const char* offset) const
+      OStream& ostr, const char* offset) const
     {
       ostr << offset << "appearance_list: ";
       Algs::print(ostr, appearance_list.begin(), appearance_list.end());

@@ -43,8 +43,9 @@ namespace AdServer
 
         bool operator==(const ReachInfo& right) const;
 
-        std::ostream& print(
-          std::ostream& ostr, const char* offset) const;
+        template<typename OStream>
+        OStream& print(
+          OStream& ostr, const char* offset) const;
 
       private:
         template<typename ContainerType>
@@ -202,10 +203,10 @@ namespace AdServer
         compare_seq_(text_advertisers, right.text_advertisers);
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    OStream&
     CampaignReachProcessor::ReachInfo::print(
-      std::ostream& ostr, const char* offset) const
+      OStream& ostr, const char* offset) const
     {
       ostr << offset << "campaigns: ";
       Algs::print(ostr, campaigns.begin(), campaigns.end());

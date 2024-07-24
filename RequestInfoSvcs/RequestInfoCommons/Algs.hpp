@@ -679,9 +679,9 @@ namespace RequestInfoSvcs
 }
 }
 
-inline
-std::ostream&
-operator<<(std::ostream& out, const AdServer::RequestInfoSvcs::IdAppearance& val)
+template<typename OStream>
+OStream&
+operator<<(OStream& out, const AdServer::RequestInfoSvcs::IdAppearance& val)
 {
   out << "[ id: " << val.id << ", date = " << val.date.gm_f() <<
     ", last_appearance_date = " << val.last_appearance_date.gm_f() <<

@@ -560,7 +560,11 @@ namespace Frontends
         ru::madnet::enrichment::protocol::DmpResponse dmp_response;
         dmp_response.set_id(dmp_request.id());
         dmp_response.set_code(0);
-        dmp_response.SerializeToOstream(&ostr);
+        {
+          std::ostringstream ss;
+          dmp_response.SerializeToOstream(&ss);
+          ostr << ss.str();
+        }
 
         Buf write_buf(ostr.str().size() + 4);
         //*reinterpret_cast<uint32_t*>(write_buf.data()) = htonl(ostr.str().size());

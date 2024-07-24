@@ -303,9 +303,9 @@ namespace CorbaAlgs
     }
   }
 
-  template<typename SourceSeqType>
+  template<typename OStream, typename SourceSeqType>
   void print_sequence(
-    std::ostream& out,
+    OStream& out,
     const SourceSeqType& source_seq,
     const char* delim = ",")
     /*throw(CORBA::SystemException)*/

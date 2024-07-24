@@ -261,7 +261,8 @@ namespace AdServer
           {
             CORBA::Double real_value;
             cur_value.value >>= real_value;
-            std::fixed(str_value);
+            // TODO width_out
+            // std::fixed(str_value);
             str_value << real_value;
           } else if(cur_value.value.type()->equal(CORBA::_tc_string))
           {

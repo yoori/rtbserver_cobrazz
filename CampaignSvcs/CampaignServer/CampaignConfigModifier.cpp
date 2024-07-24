@@ -639,9 +639,10 @@ namespace CampaignSvcs
     return false; // unlimited daily budget
   }
 
+  template<typename OStream>
   bool
   CampaignConfigModifier::campaign_is_active_(
-    std::ostream* deactivate_trace_str,
+    OStream* deactivate_trace_str,
     bool& campaign_daily_budget_defined,
     RevenueDecimal& campaign_daily_budget,
     const Generics::Time& now,
@@ -713,9 +714,10 @@ namespace CampaignSvcs
     return true;
   }
 
+  template<typename OStream>
   bool
   CampaignConfigModifier::ccg_is_active_(
-    std::ostream* deactivate_trace_str,
+    OStream* deactivate_trace_str,
     bool& ccg_daily_budget_defined,
     RevenueDecimal& ccg_daily_budget,
     Generics::Time& today_open_time,

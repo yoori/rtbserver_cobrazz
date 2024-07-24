@@ -246,7 +246,11 @@ Application_::generate_request_buf_(
 
   // write little endian size
   Stream::MemoryStream::OutputMemoryStream<char> ostr(10*1024);
-  request.SerializeToOstream(&ostr);
+  {
+    std::stringstream ss;
+    request.SerializeToOstream(&ss);
+    ostr << ss.str();
+  }
   uint32_t sz = ostr.str().size();
   std::string b = ostr.str().str();
   buf.resize(b.size() + 4);

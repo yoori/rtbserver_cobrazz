@@ -82,9 +82,9 @@ inline AdServer::Commons::RequestId unpack_request_id(const std::string& request
   return unpack_user_id(request_id);
 }
 
-template<class RepeatedType, class MemPointerFunction, class ...MemPointersFunction>
+template<class OStream, class RepeatedType, class MemPointerFunction, class ...MemPointersFunction>
 inline void print_repeated_fields(
-  std::ostream& out,
+  OStream& out,
   const char* delim,
   const char* field_delim,
   const RepeatedType& repeated_value,
@@ -115,9 +115,9 @@ inline void print_repeated_fields(
   }
 }
 
-template<class RepeatedType>
+template<class OStream, class RepeatedType>
 inline void print_repeated(
-  std::ostream& out,
+  OStream& out,
   const char* delim,
   const RepeatedType& repeated_value)
 {
