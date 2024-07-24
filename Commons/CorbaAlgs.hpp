@@ -366,9 +366,9 @@ namespace CorbaAlgs
     }
   }
 
-  template<typename SourceSeqType, typename FieldType>
+  template<typename OStream, typename SourceSeqType, typename FieldType>
   void print_sequence_fields(
-    std::ostream& out,
+    OStream& out,
     const SourceSeqType& source_seq,
     FieldType SourceSeqType::value_type::* field1,
     FieldType SourceSeqType::value_type::* field2,
