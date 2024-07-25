@@ -84,7 +84,7 @@ template<class RepeatedType, class MemPointerFunction, class ...MemPointersFunct
 inline void print_repeated_fields(
   std::ostream& out,
   const char* delim,
-  const char* field_delim,
+  [[maybe_unused]] const char* field_delim,
   const RepeatedType& repeated_value,
   MemPointerFunction pointer,
   MemPointersFunction ...pointers)
@@ -109,10 +109,7 @@ inline void print_repeated_fields(
     }
 
     out << (repeated_value[i].*pointer)();
-    if constexpr (sizeof...(pointers) >= 1)//todo:check it please
-    {
-      ((out << field_delim << (repeated_value[i].*pointers)()), ...);
-    }
+    ((out << field_delim << (repeated_value[i].*pointers)()), ...);
   }
 }
 
