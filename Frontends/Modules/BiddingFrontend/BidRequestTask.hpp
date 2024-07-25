@@ -81,6 +81,7 @@ namespace Bidding
 
     Stage get_current_stage();
 
+    // TODO need overload for outputmemorystream
     virtual void
     print_request(std::ostream& out) const noexcept = 0;
 

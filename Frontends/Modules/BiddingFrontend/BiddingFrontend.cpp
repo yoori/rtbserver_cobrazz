@@ -3954,7 +3954,8 @@ namespace Bidding
       ostr << fun << ": request processing timed out(" << timeout << "):"
         << std::endl;
 
-      request_task->print_request(ostr);
+      // TODO
+      // request_task->print_request(ostr);
 
       logger()->log(
         ostr.str(),

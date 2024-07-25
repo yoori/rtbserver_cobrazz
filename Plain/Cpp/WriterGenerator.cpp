@@ -326,6 +326,8 @@ namespace Cpp
     Utils::fetch_fields_with_fixed_sum(
       *fields, FieldBuffersImplOps(
         out_cpp_, offset_.c_str(), class_name.c_str()));
+
+    out_cpp_ << offset_ << "const unsigned " << struct_descriptor->name() << BASE_SUFFIX << "::" << "FIXED_SIZE;" << std::endl << std::endl;
   }
 
   /* protected writer generation */
