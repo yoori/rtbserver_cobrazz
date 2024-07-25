@@ -47,6 +47,11 @@ namespace AdServer
           std::ostream& os,
           const StatCounter& cnt);
 
+        template<typename Elem, typename Traits, typename Allocator,
+          typename AllocatorInitializer, const size_t SIZE>
+        friend
+        struct Stream::MemoryStream::OutputMemoryStreamHelper;
+
       private:
         mutable Algs::AtomicUInt prev_;
         Algs::AtomicUInt current_;
@@ -421,39 +426,6 @@ namespace AdServer
 
 namespace Stream::MemoryStream
 {
-  template<>
-  struct ToCharsLenHelper<AdServer::Commons::Kafka::StatCounter>
-  {
-    size_t
-    operator()(const AdServer::Commons::Kafka::StatCounter&) noexcept
-    {
-      // TODO
-      return 0;
-    }
-  };
-
-  template<>
-  struct ToCharsHelper<AdServer::Commons::Kafka::StatCounter>
-  {
-    std::to_chars_result
-    operator()(char*, char* last, const AdServer::Commons::Kafka::StatCounter&) noexcept
-    {
-      // TODO
-      return {last, std::errc::value_too_large};
-    }
-  };
-
-  template<>
-  struct ToStringHelper<AdServer::Commons::Kafka::StatCounter>
-  {
-    std::string
-    operator()(const AdServer::Commons::Kafka::StatCounter&) noexcept
-    {
-      // TODO
-      return "";
-    }
-  };
-
   template<typename Elem, typename Traits, typename Allocator,
     typename AllocatorInitializer, const size_t SIZE>
   struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
@@ -461,11 +433,13 @@ namespace Stream::MemoryStream
   {
     OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
     operator()(OutputMemoryStream<Elem, Traits, Allocator,
-      AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::Kafka::StatCounter& arg)
+      AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::Kafka::StatCounter& cnt)
     {
-      typedef typename AdServer::Commons::Kafka::StatCounter ArgT;
-      return OutputMemoryStreamHelperImpl(ostr, arg,
-        ToCharsLenHelper<ArgT>(), ToCharsHelper<ArgT>(), ToStringHelper<ArgT>());
+      int current = cnt.current_;
+      int prev = cnt.prev_;
+      cnt.prev_ = current;
+      ostr << current - prev << "/" << current;
+      return ostr;
     }
   };
 }

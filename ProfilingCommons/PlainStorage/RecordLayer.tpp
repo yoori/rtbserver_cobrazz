@@ -1282,6 +1282,7 @@ namespace PlainStorage
         Generics::ArrayAutoPtr<unsigned char> index_buf(to_read_index_size);
         it->block->read(next_index_offset, index_buf.get(), to_read_index_size);
 
+        // TODO
 //        ostr << std::hex << std::setfill('0');
 //        for(unsigned long i = 0; i < to_read_index_size; ++i)
 //        {
@@ -1292,6 +1293,7 @@ namespace PlainStorage
       }
 
       ostr << "): " << std::endl;
+      // TODO
 //      it->block->print_(ostr, (std::string(offset) + "    ").c_str());
     }
 

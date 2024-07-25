@@ -555,21 +555,19 @@ namespace Frontends
       if(!dmp_request.has_options() || dmp_request.options().need_response())
       {
         // fill response
-        Stream::MemoryStream::OutputMemoryStream<char> ostr(128);
-
         ru::madnet::enrichment::protocol::DmpResponse dmp_response;
         dmp_response.set_id(dmp_request.id());
         dmp_response.set_code(0);
-        {
-          std::ostringstream ss;
-          dmp_response.SerializeToOstream(&ss);
-          ostr << ss.str();
-        }
 
-        Buf write_buf(ostr.str().size() + 4);
+        std::string ostr;
+        ostr.reserve(128);
+        dmp_response.SerializeToString(&ostr);
+        uint32_t sz = ostr.size();
+
+        Buf write_buf(sz + 4);
         //*reinterpret_cast<uint32_t*>(write_buf.data()) = htonl(ostr.str().size());
-        *reinterpret_cast<uint32_t*>(write_buf.data()) = ostr.str().size();
-        ::memcpy(write_buf.data() + 4, ostr.str().data(), ostr.str().size());
+        *reinterpret_cast<uint32_t*>(write_buf.data()) = sz;
+        ::memcpy(write_buf.data() + 4, ostr.data(), ostr.size());
 
         add_write_buf_(write_buf);
       }

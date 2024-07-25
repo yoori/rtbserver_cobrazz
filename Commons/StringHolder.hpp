@@ -170,39 +170,6 @@ operator <<(std::ostream& os, const AdServer::Commons::ImmutableString& arg)
 
 namespace Stream::MemoryStream
 {
-  template<>
-  struct ToCharsLenHelper<AdServer::Commons::ImmutableString>
-  {
-    size_t
-    operator()(const AdServer::Commons::ImmutableString&) noexcept
-    {
-      // TODO
-      return 0;
-    }
-  };
-
-  template<>
-  struct ToCharsHelper<AdServer::Commons::ImmutableString>
-  {
-    std::to_chars_result
-    operator()(char*, char* last, const AdServer::Commons::ImmutableString&) noexcept
-    {
-      // TODO
-      return {last, std::errc::value_too_large};
-    }
-  };
-
-  template<>
-  struct ToStringHelper<AdServer::Commons::ImmutableString>
-  {
-    std::string
-    operator()(const AdServer::Commons::ImmutableString&) noexcept
-    {
-      // TODO
-      return "";
-    }
-  };
-
   template<typename Elem, typename Traits, typename Allocator,
     typename AllocatorInitializer, const size_t SIZE>
   struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
@@ -212,9 +179,7 @@ namespace Stream::MemoryStream
     operator()(OutputMemoryStream<Elem, Traits, Allocator,
       AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::ImmutableString& arg)
     {
-      typedef typename AdServer::Commons::ImmutableString ArgT;
-      return OutputMemoryStreamHelperImpl(ostr, arg,
-        ToCharsLenHelper<ArgT>(), ToCharsHelper<ArgT>(), ToStringHelper<ArgT>());
+      return ostr << arg.str();
     }
   };
 }
