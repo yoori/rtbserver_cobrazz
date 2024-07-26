@@ -925,7 +925,7 @@ namespace Profiling
 
                 auto response = grpc_distributor->get_user_id(
                   full_external_user_id,
-                  GrpcAlgs::pack_user_id(match_user_id),
+                  match_user_id,
                   CorbaAlgs::unpack_time(request_params.common_info.time),
                   Generics::Time::ZERO,
                   false,

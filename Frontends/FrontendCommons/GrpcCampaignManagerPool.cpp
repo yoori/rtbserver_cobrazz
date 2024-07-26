@@ -25,15 +25,186 @@ GrpcCampaignManagerPool::GrpcCampaignManagerPool(
 {
   const std::size_t size = endpoints.size();
   client_holders_.reserve(size);
-  for (const auto& [host, port] : endpoints)
+  for (const auto& endpoint : endpoints)
   {
-    client_holders_.emplace_back(
-      factory_client_holder_->create(host, port));
+    const auto client_holder = factory_client_holder_->create(
+      endpoint.host,
+      endpoint.port);
+    client_holders_.emplace_back(client_holder);
+    service_ids_.emplace_back(endpoint.service_id);
+    const auto result = service_id_to_client_holder_.try_emplace(
+      service_ids_.back(),
+      client_holder);
+    if (!result.second)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "service_id="
+             << endpoint.service_id
+             << " already exist";
+      throw Exception(stream);
+    }
   }
 }
 
 template<class Client, class Request, class Response, class ...Args>
-std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) noexcept
+std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
+  const ClientHolderPtr& client_holder,
+  Args&& ...args) noexcept
+{
+  try
+  {
+    std::unique_ptr<Request> request;
+    if constexpr (std::is_same_v<Request, GetPubPixelsRequest>)
+    {
+      request = create_get_pub_pixels_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, ConsiderWebOperationRequest>)
+    {
+      request = create_consider_web_operation_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, ConsiderPassbackTrackRequest>)
+    {
+      request = create_consider_passback_track_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, ConsiderPassbackRequest>)
+    {
+      request = create_consider_passback_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, ActionTakenRequest>)
+    {
+      request = create_action_taken_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, ProcessMatchRequestRequest>)
+    {
+      request = create_process_match_request_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, GetColocationFlagsRequest>)
+    {
+      request = create_get_colocation_flags_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, VerifyOptOperationRequest>)
+    {
+      request = create_verify_opt_operation_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, GetCampaignCreativeRequest>)
+    {
+      request = create_get_campaign_creative_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, InstantiateAdRequest>)
+    {
+      request = create_instantiate_ad_request(std::forward<Args>(args)...);
+    }
+    else if constexpr (std::is_same_v<Request, GetClickUrlRequest>)
+    {
+      request = create_get_click_url_request(std::forward<Args>(args)...);
+    }
+    else
+    {
+      static_assert(GrpcAlgs::AlwaysFalseV<Request>);
+    }
+
+    auto response = client_holder->template do_request<Client, Request, Response>(
+      std::move(request),
+      grpc_client_timeout_ms_);
+    if (!response)
+    {
+      return {};
+    }
+
+    const auto data_case = response->data_case();
+    if (data_case == Response::DataCase::kInfo)
+    {
+      return response;
+    }
+    else if (data_case == Response::DataCase::kError)
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Error type=";
+
+      const auto& error = response->error();
+      const auto error_type = error.type();
+      switch (error_type)
+      {
+        case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_Implementation:
+        {
+          stream << "Implementation";
+          break;
+        }
+        case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_NotReady:
+        {
+          stream << "NotReady";
+          break;
+        }
+        case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_IncorrectArgument:
+        {
+          stream << "IncorrectArgument";
+          break;
+        }
+        default:
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << "Unknown error type";
+          throw Exception(stream);
+        }
+      }
+
+      stream << ", description="
+             << error.description();
+      logger_->error(
+        stream.str(),
+        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
+
+      return response;
+    }
+    else
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Unknown response type";
+      throw Exception(stream);
+    }
+  }
+  catch (const eh::Exception& exc)
+  {
+    try
+    {
+      Stream::Error stream;
+      stream << FNS
+             << exc.what();
+      logger_->error(
+        stream.str(),
+        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
+    }
+    catch (...)
+    {
+    }
+  }
+  catch (...)
+  {
+    try
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Unknown error";
+      logger_->error(
+        stream.str(),
+        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
+    }
+    catch (...)
+    {
+    }
+  }
+
+  return {};
+}
+
+template<class Client, class Request, class Response, class ...Args>
+std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
+  const std::optional<std::string_view> service_id,
+  Args&& ...args) noexcept
 {
   if (client_holders_.empty())
   {
@@ -41,7 +212,7 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
     {
       Stream::Error stream;
       stream << FNS
-             << " client_holders is empty";
+             << "client_holders is empty";
       logger_->error(
         stream.str(),
         ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
@@ -53,168 +224,59 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(Args&& ...args) no
     return {};
   }
 
+  if (service_id)
+  {
+    const auto it = service_id_to_client_holder_.find(*service_id);
+    if (it != std::end(service_id_to_client_holder_))
+    {
+      const auto& client_holder = it->second;
+      if (!client_holder->is_bad())
+      {
+        auto response = do_request_service<Client, Request, Response>(
+          client_holder,
+          std::forward<Args>(args)...);
+        if (response)
+        {
+          return response;
+        }
+      }
+    }
+    else
+    {
+      try
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not existing service_id="
+               << *service_id;
+        logger_->error(
+          stream.str(),
+          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
+      }
+      catch (...)
+      {
+      }
+    }
+  }
+
   const std::size_t size = client_holders_.size();
   for (std::size_t i = 0; i < size; ++i)
   {
-    try
+    const std::size_t number = counter_.fetch_add(
+      1,
+      std::memory_order_relaxed);
+    const auto& client_holder = client_holders_[number % size];
+    if (client_holder->is_bad())
     {
-      const std::size_t number = counter_.fetch_add(
-        1,
-        std::memory_order_relaxed);
-      const auto& client_holder = client_holders_[number % size];
-      if (client_holder->is_bad())
-      {
-        continue;
-      }
-
-      std::unique_ptr<Request> request;
-      if constexpr (std::is_same_v<Request, GetPubPixelsRequest>)
-      {
-        request = create_get_pub_pixels_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, ConsiderWebOperationRequest>)
-      {
-        request = create_consider_web_operation_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, ConsiderPassbackTrackRequest>)
-      {
-        request = create_consider_passback_track_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, ConsiderPassbackRequest>)
-      {
-        request = create_consider_passback_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, ActionTakenRequest>)
-      {
-        request = create_action_taken_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, ProcessMatchRequestRequest>)
-      {
-        request = create_process_match_request_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, GetColocationFlagsRequest>)
-      {
-        request = create_get_colocation_flags_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, VerifyOptOperationRequest>)
-      {
-        request = create_verify_opt_operation_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, GetCampaignCreativeRequest>)
-      {
-        request = create_get_campaign_creative_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, InstantiateAdRequest>)
-      {
-        request = create_instantiate_ad_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, GetClickUrlRequest>)
-      {
-        request = create_get_click_url_request(std::forward<Args>(args)...);
-      }
-      else
-      {
-        static_assert(GrpcAlgs::AlwaysFalseV<Request>);
-      }
-
-      auto response = client_holder->template do_request<Client, Request, Response>(
-        std::move(request),
-        grpc_client_timeout_ms_);
-      if (!response)
-      {
-        Stream::Error stream;
-        stream << FNS
-               << "Internal grpc error";
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-
-        continue;
-      }
-
-      const auto data_case = response->data_case();
-      if (data_case == Response::DataCase::kInfo)
-      {
-        return response;
-      }
-      else if (data_case == Response::DataCase::kError)
-      {
-        std::ostringstream stream;
-        stream << FNS
-               << "Error type=";
-
-        const auto& error = response->error();
-        const auto error_type = error.type();
-        switch (error_type)
-        {
-          case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_Implementation:
-          {
-            stream << "Implementation";
-            break;
-          }
-          case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_NotReady:
-          {
-            stream << "NotReady";
-            break;
-          }
-          case AdServer::CampaignSvcs::Proto::Error_Type::Error_Type_IncorrectArgument:
-          {
-            stream << "IncorrectArgument";
-            break;
-          }
-          default:
-          {
-            Stream::Error stream;
-            stream << FNS
-                   << "Unknown error type";
-            throw  Exception(stream);
-          }
-        }
-
-        stream << ", description="
-               << error.description();
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-        return response;
-      }
-      else
-      {
-        Stream::Error stream;
-        stream << FNS
-               << "Unknown response type";
-        throw  Exception(stream);
-      }
+      continue;
     }
-    catch (const eh::Exception& exc)
+
+    auto response = do_request_service<Client, Request, Response>(
+      client_holder,
+      std::forward<Args>(args)...);
+    if (response)
     {
-      try
-      {
-        Stream::Error stream;
-        stream << FNS
-               << exc.what();
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-      }
-      catch (...)
-      {
-      }
-    }
-    catch (...)
-    {
-      try
-      {
-        Stream::Error stream;
-        stream << FNS
-               << "Unknown error";
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-      }
-      catch (...)
-      {
-      }
+      return response;
     }
   }
 
@@ -245,7 +307,11 @@ GrpcCampaignManagerPool::get_pub_pixels(
   return do_request<
     GetPubPixelsClient,
     GetPubPixelsRequest,
-    GetPubPixelsResponse>(country, user_status, publisher_account_ids);
+    GetPubPixelsResponse>(
+      {},
+      country,
+      user_status,
+      publisher_account_ids);
 }
 
 GrpcCampaignManagerPool::ConsiderWebOperationResponsePtr
@@ -278,6 +344,7 @@ GrpcCampaignManagerPool::consider_web_operation(
     ConsiderWebOperationClient,
     ConsiderWebOperationRequest,
     ConsiderWebOperationResponse>(
+      {},
       time,
       colo_id,
       tag_id,
@@ -315,6 +382,7 @@ GrpcCampaignManagerPool::consider_passback_track(
     ConsiderPassbackTrackClient,
     ConsiderPassbackTrackRequest,
     ConsiderPassbackTrackResponse>(
+      {},
       time,
       country,
       colo_id,
@@ -335,6 +403,7 @@ GrpcCampaignManagerPool::consider_passback(
     ConsiderPassbackClient,
     ConsiderPassbackRequest,
     ConsiderPassbackResponse>(
+      {},
       request_id,
       user_id_hash_mod,
       passback,
@@ -367,6 +436,7 @@ GrpcCampaignManagerPool::action_taken(
     ActionTakenClient,
     ActionTakenRequest,
     ActionTakenResponse>(
+      {},
       time,
       test_request,
       log_as_test,
@@ -406,6 +476,7 @@ GrpcCampaignManagerPool::process_match_request(
     ProcessMatchRequestClient,
     ProcessMatchRequestRequest,
     ProcessMatchRequestResponse>(
+      {},
       user_id,
       household_id,
       request_time,
@@ -427,7 +498,7 @@ GrpcCampaignManagerPool::get_colocation_flags() noexcept
   return do_request<
     GetColocationFlagsClient,
     GetColocationFlagsRequest,
-    GetColocationFlagsResponse>();
+    GetColocationFlagsResponse>({});
 }
 
 GrpcCampaignManagerPool::VerifyOptOperationResponsePtr
@@ -451,6 +522,7 @@ GrpcCampaignManagerPool::verify_opt_operation(
     VerifyOptOperationClient,
     VerifyOptOperationRequest,
     VerifyOptOperationResponse>(
+      {},
       time,
       colo_id,
       referer,
@@ -474,11 +546,14 @@ GrpcCampaignManagerPool::get_campaign_creative(
   return do_request<
     GetCampaignCreativeClient,
     GetCampaignCreativeRequest,
-    GetCampaignCreativeResponse>(request_params);
+    GetCampaignCreativeResponse>(
+      {},
+      request_params);
 }
 
 GrpcCampaignManagerPool::InstantiateAdResponsePtr
 GrpcCampaignManagerPool::instantiate_ad(
+  const std::string_view service_id,
   const InstantiateAdInfo& instantiate_ad) noexcept
 {
   using InstantiateAdClient = AdServer::CampaignSvcs::Proto::CampaignManager_instantiate_ad_ClientPool;
@@ -486,11 +561,14 @@ GrpcCampaignManagerPool::instantiate_ad(
   return do_request<
     InstantiateAdClient,
     InstantiateAdRequest,
-    InstantiateAdResponse>(instantiate_ad);
+    InstantiateAdResponse>(
+      service_id,
+      instantiate_ad);
 }
 
 GrpcCampaignManagerPool::GetClickUrlResponsePtr
 GrpcCampaignManagerPool::get_click_url(
+  const std::string_view service_id,
   const Generics::Time& time,
   const Generics::Time& bid_time,
   const std::uint32_t colo_id,
@@ -515,6 +593,7 @@ GrpcCampaignManagerPool::get_click_url(
     GetClickUrlClient,
     GetClickUrlRequest,
     GetClickUrlResponse>(
+      service_id,
       time,
       bid_time,
       colo_id,
@@ -688,12 +767,12 @@ GrpcCampaignManagerPool::create_action_taken_request(
 
   auto* location_proto = action_info->mutable_location();
   location_proto->Reserve(location.size());
-  for (const auto& [country, region, city] : location)
+  for (const auto& data : location)
   {
     auto* geo_info = location_proto->Add();
-    geo_info->set_country(country);
-    geo_info->set_region(region);
-    geo_info->set_city(city);
+    geo_info->set_country(data.country);
+    geo_info->set_region(data.region);
+    geo_info->set_city(data.city);
   }
 
   return request;
@@ -731,31 +810,31 @@ GrpcCampaignManagerPool::create_process_match_request_request(
 
   auto* pkw_channels_proto = match_info->mutable_pkw_channels();
   pkw_channels_proto->Reserve(pkw_channels.size());
-  for (const auto& [channel_trigger_id, channel_id] : pkw_channels)
+  for (const auto& pkw_channel : pkw_channels)
   {
     auto* element = pkw_channels_proto->Add();
-    element->set_channel_trigger_id(channel_trigger_id);
-    element->set_channel_id(channel_id);
+    element->set_channel_trigger_id(pkw_channel.channel_trigger_id);
+    element->set_channel_id(pkw_channel.channel_id);
   }
 
   auto* location_proto = match_info->mutable_location();
   location_proto->Reserve(location.size());
-  for (const auto& [country, region, city] : location)
+  for (const auto& data : location)
   {
     auto* element = location_proto->Add();
-    element->set_country(country);
-    element->set_region(region);
-    element->set_city(city);
+    element->set_country(data.country);
+    element->set_region(data.region);
+    element->set_city(data.city);
   }
 
   auto* coord_location_proto = match_info->mutable_coord_location();
   coord_location_proto->Reserve(coord_location.size());
-  for (const auto& [longitude, latitude, accuracy] : coord_location)
+  for (const auto& data : coord_location)
   {
     auto* element = coord_location_proto->Add();
-    element->set_longitude(GrpcAlgs::pack_decimal(longitude));
-    element->set_latitude(GrpcAlgs::pack_decimal(latitude));
-    element->set_accuracy(GrpcAlgs::pack_decimal(accuracy));
+    element->set_longitude(GrpcAlgs::pack_decimal(data.longitude));
+    element->set_latitude(GrpcAlgs::pack_decimal(data.latitude));
+    element->set_accuracy(GrpcAlgs::pack_decimal(data.accuracy));
   }
 
   return request;
@@ -859,11 +938,11 @@ void GrpcCampaignManagerPool::fill_common_ad_request_info(
 
   auto* const tokens_proto = common_info_proto.mutable_tokens();
   tokens_proto->Reserve(common_info.tokens.size());
-  for (const auto& [name, value] : common_info.tokens)
+  for (const auto& token : common_info.tokens)
   {
     auto* const token_proto = tokens_proto->Add();
-    token_proto->set_name(name);
-    token_proto->set_value(value);
+    token_proto->set_name(token.name);
+    token_proto->set_value(token.value);
   }
 
   common_info_proto.set_set_cookie(common_info.set_cookie);
@@ -923,21 +1002,21 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
 
   auto* const seq_orders_proto = request_params_proto->mutable_seq_orders();
   seq_orders_proto->Reserve(request_params.seq_orders.size());
-  for (const auto& [ccg_id, set_id, imps] : request_params.seq_orders)
+  for (const auto& seq_order : request_params.seq_orders)
   {
-    auto* const seq_order = seq_orders_proto->Add();
-    seq_order->set_ccg_id(ccg_id);
-    seq_order->set_set_id(set_id);
-    seq_order->set_imps(imps);
+    auto* const seq_order_proto = seq_orders_proto->Add();
+    seq_order_proto->set_ccg_id(seq_order.ccg_id);
+    seq_order_proto->set_set_id(seq_order.set_id);
+    seq_order_proto->set_imps(seq_order.imps);
   }
 
   auto* const campaign_freqs_proto = request_params_proto->mutable_campaign_freqs();
   campaign_freqs_proto->Reserve(request_params.campaign_freqs.size());
-  for (const auto& [campaign_id, imps] : request_params.campaign_freqs)
+  for (const auto& campaign_freq : request_params.campaign_freqs)
   {
-    auto* const campaign_freqs = campaign_freqs_proto->Add();
-    campaign_freqs->set_campaign_id(campaign_id);
-    campaign_freqs->set_imps(imps);
+    auto* const campaign_freq_proto = campaign_freqs_proto->Add();
+    campaign_freq_proto->set_campaign_id(campaign_freq.campaign_id);
+    campaign_freq_proto->set_imps(campaign_freq.imps);
   }
 
   request_params_proto->set_household_id(GrpcAlgs::pack_user_id(request_params.household_id));
@@ -970,53 +1049,53 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
 
   auto* const hid_ccg_keywords_proto = request_params_proto->mutable_hid_ccg_keywords();
   hid_ccg_keywords_proto->Reserve(request_params.hid_ccg_keywords.size());
-  for (const auto& data : request_params.hid_ccg_keywords)
+  for (const auto& hid_ccg_keyword : request_params.hid_ccg_keywords)
   {
     auto* const hid_ccg_keyword_proto = hid_ccg_keywords_proto->Add();
-    hid_ccg_keyword_proto->set_ccg_keyword_id(data.ccg_keyword_id);
-    hid_ccg_keyword_proto->set_ccg_id(data.ccg_id);
-    hid_ccg_keyword_proto->set_channel_id(data.channel_id);
-    hid_ccg_keyword_proto->set_max_cpc(GrpcAlgs::pack_decimal(data.max_cpc));
-    hid_ccg_keyword_proto->set_ctr(GrpcAlgs::pack_decimal(data.ctr));
-    hid_ccg_keyword_proto->set_click_url(data.click_url);
-    hid_ccg_keyword_proto->set_original_keyword(data.original_keyword);
+    hid_ccg_keyword_proto->set_ccg_keyword_id(hid_ccg_keyword.ccg_keyword_id);
+    hid_ccg_keyword_proto->set_ccg_id(hid_ccg_keyword.ccg_id);
+    hid_ccg_keyword_proto->set_channel_id(hid_ccg_keyword.channel_id);
+    hid_ccg_keyword_proto->set_max_cpc(GrpcAlgs::pack_decimal(hid_ccg_keyword.max_cpc));
+    hid_ccg_keyword_proto->set_ctr(GrpcAlgs::pack_decimal(hid_ccg_keyword.ctr));
+    hid_ccg_keyword_proto->set_click_url(hid_ccg_keyword.click_url);
+    hid_ccg_keyword_proto->set_original_keyword(hid_ccg_keyword.original_keyword);
   }
 
   auto* const trigger_match_result_proto = request_params_proto->mutable_trigger_match_result();
   auto* const url_channels_proto = trigger_match_result_proto->mutable_url_channels();
   url_channels_proto->Reserve(request_params.trigger_match_result.url_channels.size());
-  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.url_channels)
+  for (const auto& url_channel : request_params.trigger_match_result.url_channels)
   {
     auto* const url_channel_proto = url_channels_proto->Add();
-    url_channel_proto->set_channel_trigger_id(channel_trigger_id);
-    url_channel_proto->set_channel_id(channel_id);
+    url_channel_proto->set_channel_trigger_id(url_channel.channel_trigger_id);
+    url_channel_proto->set_channel_id(url_channel.channel_id);
   }
 
   auto* const pkw_channels_proto = trigger_match_result_proto->mutable_pkw_channels();
   pkw_channels_proto->Reserve(request_params.trigger_match_result.pkw_channels.size());
-  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.pkw_channels)
+  for (const auto& pkw_channel : request_params.trigger_match_result.pkw_channels)
   {
     auto* const pkw_channel_proto = pkw_channels_proto->Add();
-    pkw_channel_proto->set_channel_trigger_id(channel_trigger_id);
-    pkw_channel_proto->set_channel_id(channel_id);
+    pkw_channel_proto->set_channel_trigger_id(pkw_channel.channel_trigger_id);
+    pkw_channel_proto->set_channel_id(pkw_channel.channel_id);
   }
 
   auto* const skw_channels_proto = trigger_match_result_proto->mutable_skw_channels();
   skw_channels_proto->Reserve(request_params.trigger_match_result.skw_channels.size());
-  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.skw_channels)
+  for (const auto& skw_channel : request_params.trigger_match_result.skw_channels)
   {
     auto* const skw_channel_proto = skw_channels_proto->Add();
-    skw_channel_proto->set_channel_trigger_id(channel_trigger_id);
-    skw_channel_proto->set_channel_id(channel_id);
+    skw_channel_proto->set_channel_trigger_id(skw_channel.channel_trigger_id);
+    skw_channel_proto->set_channel_id(skw_channel.channel_id);
   }
 
   auto* const ukw_channels_proto = trigger_match_result_proto->mutable_ukw_channels();
   ukw_channels_proto->Reserve(request_params.trigger_match_result.ukw_channels.size());
-  for (const auto& [channel_trigger_id, channel_id]: request_params.trigger_match_result.ukw_channels)
+  for (const auto& ukw_channel : request_params.trigger_match_result.ukw_channels)
   {
     auto* const ukw_channel_proto = ukw_channels_proto->Add();
-    ukw_channel_proto->set_channel_trigger_id(channel_trigger_id);
-    ukw_channel_proto->set_channel_id(channel_id);
+    ukw_channel_proto->set_channel_trigger_id(ukw_channel.channel_trigger_id);
+    ukw_channel_proto->set_channel_id(ukw_channel.channel_id);
   }
 
   trigger_match_result_proto->mutable_uid_channels()->Add(

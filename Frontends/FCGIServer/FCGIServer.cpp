@@ -365,12 +365,12 @@ namespace Frontends
       if (config_->ChannelGrpcClientPool().enable())
       {
         Endpoints endpoints;
-        const auto& endpoint_list = config_->ChannelServerEndpointList().Endpoint();
-        auto it = std::begin(endpoint_list);
-        const auto it_end = std::end(endpoint_list);
-        for (; it != it_end; ++it)
+        const auto& endpoints_config = config_->ChannelServerEndpointList().Endpoint();
+        for (const auto& endpoint_config : endpoints_config)
         {
-          endpoints.emplace_back(it->host(), it->port());
+          endpoints.emplace_back(
+            endpoint_config.host(),
+            endpoint_config.port());
         }
 
         const auto config_grpc_data = Config::create_pool_client_config(
@@ -388,13 +388,25 @@ namespace Frontends
       std::shared_ptr<GrpcCampaignManagerPool> grpc_campaign_manager_pool;
       if (config_->CampaignGrpcClientPool().enable())
       {
-        Endpoints endpoints;
-        const auto& endpoint_list = config_->CampaignManagerEndpointList().Endpoint();
-        auto it = std::begin(endpoint_list);
-        const auto it_end = std::end(endpoint_list);
-        for (; it != it_end; ++it)
+        FrontendCommons::GrpcCampaignManagerPool::Endpoints endpoints;
+        const auto& endpoints_config = config_->CampaignManagerEndpointList().Endpoint();
+        for (const auto& endpoint_config : endpoints_config)
         {
-          endpoints.emplace_back(it->host(), it->port());
+          if (!endpoint_config.service_index().present())
+          {
+            Stream::Error stream;
+            stream << FNS
+                   << "Service index not exist in CampaignManagerEndpointList";
+            throw Exception(stream);
+          }
+
+          const std::string host = endpoint_config.host();
+          const std::size_t port = endpoint_config.port();
+          const std::string service_id = *endpoint_config.service_index();
+          endpoints.emplace_back(
+            host,
+            port,
+            service_id);
         }
 
         const auto config_grpc_data = Config::create_pool_client_config(

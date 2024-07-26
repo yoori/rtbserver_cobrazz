@@ -1366,7 +1366,7 @@ namespace AdServer
                   is_grpc_success = true;
                   auto response = grpc_distributor->get_user_id(
                     cookie_external_id_str,
-                    GrpcAlgs::pack_user_id(result_user_id),
+                    result_user_id,
                     request_info.time,
                     Generics::Time::ZERO,
                     true,
@@ -1523,7 +1523,7 @@ namespace AdServer
                         is_grpc_success = true;
                         auto response = grpc_distributor->get_user_id(
                           external_id_str,
-                          String::SubString{},
+                          {},
                           request_info.time,
                           Generics::Time::ZERO,
                           true,

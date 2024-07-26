@@ -72,38 +72,6 @@ namespace
       const String::SubString LOCATION("Location");
     }
   }
-
-  struct ChannelMatch
-  {
-    ChannelMatch(unsigned long channel_id_val,
-                 unsigned long channel_trigger_id_val)
-      :
-      channel_id(channel_id_val),
-      channel_trigger_id(channel_trigger_id_val)
-    {}
-
-    bool operator<(const ChannelMatch& right) const
-    {
-      return
-        (channel_id < right.channel_id ||
-         (channel_id == right.channel_id &&
-          channel_trigger_id < right.channel_trigger_id));
-    }
-
-    unsigned long channel_id;
-    unsigned long channel_trigger_id;
-  };
-
-  struct GetChannelTriggerId
-  {
-    ChannelMatch
-    operator() (
-      const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom& atom)
-      noexcept
-    {
-      return ChannelMatch(atom.id, atom.trigger_channel_id);
-    }
-  };
 }
 
 namespace Config
@@ -402,8 +370,8 @@ namespace AdServer
     AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
-    const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
-    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+    const std::vector<ChannelMatch>& trigger_match_page_channels,
+    const std::vector<std::uint32_t>& history_match_channels,
     const String::SubString& peer_ip_val)
     const noexcept
   {
@@ -419,27 +387,27 @@ namespace AdServer
     mri.request_time = CorbaAlgs::pack_time(now);
 
     {
-      CORBA::ULong result_len =
-        trigger_match_result->matched_channels.page_channels.length();
-      mri.match_info.pkw_channels.length(result_len);
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      const auto length = trigger_match_page_channels.size();
+      mri.match_info.pkw_channels.length(length);
+      CORBA::ULong i = 0;
+      for (const auto& page_channel : trigger_match_page_channels)
       {
         mri.match_info.pkw_channels[i].channel_id =
-          trigger_match_result->matched_channels.page_channels[i].id;
+          page_channel.channel_id;
         mri.match_info.pkw_channels[i].channel_trigger_id =
-          trigger_match_result->matched_channels.page_channels[i].trigger_channel_id;
+          page_channel.channel_trigger_id;
+        i += 1;
       }
     }
 
-    if(history_match_result)
     {
-      CORBA::ULong result_len =
-        history_match_result->channels.length();
-      mri.match_info.channels.length(result_len);
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      const auto length = history_match_channels.size();
+      mri.match_info.channels.length(length);
+      CORBA::ULong i = 0;
+      for (const auto& history_match_channel : history_match_channels)
       {
-        mri.match_info.channels[i] =
-          history_match_result->channels[i].channel_id;
+        mri.match_info.channels[i] = history_match_channel;
+        i += 1;
       }
     }
 
@@ -521,7 +489,8 @@ namespace AdServer
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::UserId& cookie_user_id,
       const Generics::Time& now,
-      const AdServer::CampaignSvcs::CampaignManager::ClickResultInfo& click_result_info,
+      const std::uint32_t campaign_id,
+      const std::uint32_t advertiser_id,
       const String::SubString& peer_ip,
       const std::list<std::string>& markers)
       noexcept
@@ -529,8 +498,8 @@ namespace AdServer
         user_id_(user_id),
         cookie_user_id_(cookie_user_id),
         now_(now),
-        campaign_id_(click_result_info.campaign_id),
-        advertiser_id_(click_result_info.advertiser_id),
+        campaign_id_(campaign_id),
+        advertiser_id_(advertiser_id),
         peer_ip_(peer_ip.str()),
         markers_(markers)
     {}
@@ -583,6 +552,381 @@ namespace AdServer
       Aspect::CLICK_FRONTEND);
 
     int http_status = 200;
+
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      try
+      {
+        std::string found_uri;
+        bool params_in_path = FrontendCommons::find_uri(
+          config_->PathUriList().Uri(), request.uri(), found_uri, 0, false);
+        FrontendCommons::ParsedParamsMap parsed_params;
+
+        if (params_in_path)
+        {
+          std::string arguments = request.uri().substr(found_uri.length()).str();
+
+          if(!request.args().empty())
+          {
+            arguments += std::string("?") + request.args().str();
+          }
+
+          FrontendCommons::parse_args(
+            parsed_params,
+            arguments,
+            AMP,
+            EQL);
+        }
+        else // !params_in_path
+        {
+          const auto& params = request.params();
+          for (const auto& param : params)
+          {
+            // use last defined parameter (actual for baidu(static)
+            // when requestid defined for both frontends
+            parsed_params[param.name] = param.value;
+          }
+        }
+
+        check_constraints_(parsed_params, request);
+
+        if (log_level() >= TraceLevel::MIDDLE)
+        {
+          std::ostringstream ostr;
+          ostr << FUN << ": " << '\n' <<
+            "Uri: " << request.uri() << '\n' <<
+            "Arg: " << request.args() << '\n' <<
+            "Params ("<< parsed_params.size() << "):"  << '\n';
+
+          for (const auto& param : parsed_params)
+          {
+            ostr << "    "
+                 << param.first
+                 << " : "
+                 << param.second
+                 << "\n";
+          }
+
+          ostr << "Headers ("
+               << request.headers().size() << "):"
+               << '\n';
+
+          for (const auto& header : request.headers())
+          {
+            ostr << "    "
+                 << header.name
+                 << " : "
+                 << header.value
+                 << '\n';
+          }
+
+          log(ostr.str(),
+            TraceLevel::MIDDLE,
+            Aspect::CLICK_FRONTEND);
+        }
+
+        ClickFE::RequestInfo request_info;
+        request_info_filler_->fill(request_info, request, parsed_params);
+
+        const auto& colo_id = request_info.colo_id;
+        const auto& tag_id = request_info.tag_id;
+        const auto& tag_size_id = request_info.tag_size_id;
+        const auto& ccid = request_info.ccid;
+        const auto& creative_id = request_info.creative_id;
+        const auto& ccg_keyword_id = request_info.ccg_keyword_id;
+        FrontendCommons::GrpcCampaignManagerPool::UserIdHashModInfo user_id_hash_mod;
+        if (request_info.user_id_hash_mod_defined)
+        {
+          user_id_hash_mod.value = request_info.user_id_hash_mod_value;
+        }
+        const auto& relocate = request_info.relocate;
+        const auto& time = request_info.request_time;
+        const auto& bid_time = request_info.bid_time;
+        const auto& request_id = request_info.request_id;
+        const auto& referer = request_info.referer;
+        const auto& log_click = true;
+        const auto& ctr = request_info.ctr;
+        const auto& match_user_id = request_info.match_user_id;
+        const auto& cookie_user_id = request_info.cookie_user_id;
+
+        std::vector<FrontendCommons::GrpcCampaignManagerPool::TokenInfo> tokens;
+        tokens.reserve(request_info.tokens.size() + 2);
+        if (!request_info.match_user_id.is_null())
+        {
+          tokens.emplace_back(
+            "UNSIGNEDUID",
+            request_info.match_user_id.to_string());
+        }
+
+        if (!request_info.cookie_user_id.is_null())
+        {
+          tokens.emplace_back(
+            "UNSIGNEDCOOKIEUID",
+            request_info.cookie_user_id.to_string());
+        }
+
+        for(const auto& token : request_info.tokens)
+        {
+          tokens.emplace_back(
+            token.first,
+            token.second);
+        }
+
+        std::string click_result_url;
+        bool got_click_url = false;
+
+        AdServer::SetUidController::SetUidPtr set_uid;
+        if (ccid != 0 || creative_id != 0)
+        {
+          auto resposne_proto = grpc_campaign_manager_pool->get_click_url(
+            request_info.campaign_manager_index,
+            time,
+            bid_time,
+            colo_id,
+            tag_id,
+            tag_size_id,
+            ccid,
+            ccg_keyword_id,
+            creative_id,
+            match_user_id,
+            cookie_user_id,
+            request_id,
+            user_id_hash_mod,
+            relocate,
+            referer,
+            log_click,
+            ctr,
+            tokens);
+          if (!resposne_proto || resposne_proto->has_error())
+          {
+            throw Exception("get_click_url is failed");
+          }
+          const auto& info_proto = resposne_proto->info();
+          got_click_url = info_proto.return_value();
+          const auto& click_result_info_proto = info_proto.click_result_info();
+          click_result_url = click_result_info_proto.url();
+
+          set_uid = set_uid_controller_->generate_if_allowed(
+            request_info.user_status,
+            request_info.cookie_user_id,
+            false);
+
+          if((!request_info.match_user_id.is_null() && !(
+            request_info.match_user_id == AdServer::Commons::PROBE_USER_ID)) ||
+             (!request_info.cookie_user_id.is_null() && !(
+               request_info.cookie_user_id == AdServer::Commons::PROBE_USER_ID)) ||
+             set_uid)
+          {
+            try
+            {
+              const auto user_id =
+                set_uid ? set_uid->client_id.uuid() : request_info.match_user_id;
+              const auto& cookie_user_id = request_info.cookie_user_id;
+              const auto& campaign_id = click_result_info_proto.campaign_id();
+              const auto& advertiser_id = click_result_info_proto.advertiser_id();
+              const auto& request_time = request_info.request_time;
+              const auto& peer_ip = request_info.peer_ip;
+              const auto& markers = request_info.markers;
+
+              const bool is_coroutin_thread =
+                userver::engine::current_task::IsTaskProcessorThread();
+              if (is_coroutin_thread)
+              {
+                auto& current_task_processor =
+                  userver::engine::current_task::GetTaskProcessor();
+                // delay match click channels
+                userver::engine::AsyncNoSpan(
+                  current_task_processor,
+                  [
+                    click_frontend = ReferenceCounting::SmartPtr<ClickFrontend>(
+                      ReferenceCounting::add_ref(this)),
+                    user_id = user_id,
+                    cookie_user_id = cookie_user_id,
+                    request_time = request_time,
+                    campaign_id = campaign_id,
+                    advertiser_id = advertiser_id,
+                    peer_ip = peer_ip,
+                    markers = markers
+                  ] () {
+                    click_frontend->match_click_channels_(
+                      user_id,
+                      cookie_user_id,
+                      request_time,
+                      campaign_id,
+                      advertiser_id,
+                      peer_ip,
+                      markers);
+                  }).Detach();
+              }
+              else
+              {
+                // delay match click channels
+                task_runner_->enqueue_task(new MatchClickChannelsTask(
+                  this,
+                  user_id,
+                  cookie_user_id,
+                  request_time,
+                  campaign_id,
+                  advertiser_id,
+                  request_info.peer_ip,
+                  request_info.markers));
+              }
+            }
+            catch (const Generics::TaskRunner::Overflow& exc)
+            {
+              logger()->sstream(
+                Logging::Logger::ERROR,
+                Aspect::CLICK_FRONTEND,
+                "ADS-IMPL-198") << FUN <<
+                ": the limit of simultaneous matching tasks has been reached: " <<
+                exc.what();
+            }
+          }
+        }
+        else
+        {
+          set_uid = set_uid_controller_->generate_if_allowed(
+            request_info.user_status,
+            request_info.cookie_user_id,
+            false);
+        }
+
+        if (set_uid)
+        {
+          FrontendCommons::add_UID_cookie(
+            response,
+            request,
+            *cookie_manager_,
+            set_uid->client_id.str());
+        }
+
+        if(common_config_->ResponseHeaders().present())
+        {
+          FrontendCommons::add_headers(
+            *(common_config_->ResponseHeaders()),
+            response);
+        }
+
+        FrontendCommons::CORS::set_headers(request, response);
+
+        bool instantiated = false;
+
+        if (request_info.use_click_template)
+        {
+          try
+          {
+            // instantiate click template
+            Commons::TextTemplate_var templ = template_files_->get(click_template_file_);
+
+            typedef std::map<String::SubString, std::string> ArgMap;
+            ArgMap args_cont;
+            if (!request_info.preclick_url.empty())
+            {
+              args_cont[Tokens::PRECLICK] = request_info.preclick_url;
+            }
+
+            if (got_click_url)
+            {
+              args_cont[Tokens::CLICK_URL] = request_info.click_prefix +
+                click_result_url;
+            }
+
+            String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
+            String::TextTemplate::DefaultValue args_with_default(&args);
+            String::TextTemplate::ArgsEncoder args_with_encoding(
+              &args_with_default);
+            std::string response_content = templ->instantiate(
+              args_with_encoding);
+
+            response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
+            response.get_output_stream().write(
+              response_content.data(), response_content.size());
+            http_status = 200;
+
+            instantiated = true;
+          }
+          catch (const eh::Exception& ex)
+          {
+            logger()->sstream(
+              Logging::Logger::EMERGENCY,
+              Aspect::CLICK_FRONTEND,
+              "ADS-IMPL-?") << FUN
+                            << ": eh::Exception has been caught: "
+                            << ex.what();
+          }
+        }
+
+        if (!instantiated)
+        {
+          if (got_click_url)
+          {
+            // do redirect to click_url
+            http_status = 302;
+            response.add_header(
+              Response::Header::LOCATION,
+              request_info.click_prefix + click_result_url);
+
+            if (log_level() >= TraceLevel::MIDDLE)
+            {
+              Stream::Error ostr;
+              ostr << FUN
+                   << ": redirecting to "
+                   << click_result_url;
+
+              log(ostr.str(),
+                  TraceLevel::MIDDLE,
+                  Aspect::CLICK_FRONTEND);
+            }
+          }
+          else
+          {
+            log(String::SubString("DO NOT redirecting !"),
+              TraceLevel::MIDDLE,
+              Aspect::CLICK_FRONTEND);
+
+            http_status = 204;
+          }
+        }
+
+        response_writer->write(http_status, response_ptr);
+        return;
+      }
+      catch (const ForbiddenException& exc)
+      {
+        http_status = 403;
+        Stream::Error stream;
+        stream << FNS
+               << "ForbiddenException caught: "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
+      catch (const InvalidParamException& exc)
+      {
+        http_status = 400;
+        Stream::Error stream;
+        stream << FNS
+               << "InvalidParamException caught: "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
+      catch (const eh::Exception& exc)
+      {
+        http_status = 500;
+        Stream::Error stream;
+        stream << FNS
+               << exc.what();
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
+      catch (...)
+      {
+        http_status = 500;
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error";
+        logger()->error(stream.str(), Aspect::CLICK_FRONTEND);
+      }
+    }
 
     try
     {
@@ -754,7 +1098,8 @@ namespace AdServer
               set_uid ? set_uid->client_id.uuid() : request_info.match_user_id,
               request_info.cookie_user_id,
               CorbaAlgs::unpack_time(click_info.time),
-              click_result_info.in(),
+              click_result_info->campaign_id,
+              click_result_info->advertiser_id,
               request_info.peer_ip,
               request_info.markers));
           }
@@ -918,11 +1263,8 @@ namespace AdServer
     using MatchParams = AdServer::UserInfoSvcs::Types::MatchParams;
     using ChannelMatchSet = std::set<ChannelMatch>;
 
-    // do trigger match
-    AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
-    std::unique_ptr<AdServer::ChannelSvcs::Proto::MatchResponse> trigger_match_result_proto;
-
     std::vector<ChannelMatch> trigger_match_page_channels;
+    std::vector<std::uint32_t> history_match_channels;
 
     bool is_grpc_success = false;
     const auto& grpc_channel_operation_pool = grpc_container_->grpc_channel_operation_pool;
@@ -951,7 +1293,7 @@ namespace AdServer
                         << campaign_id;
         }
 
-        trigger_match_result_proto = grpc_channel_operation_pool->match(
+        auto response = grpc_channel_operation_pool->match(
           std::string{},
           std::string{},
           std::string{},
@@ -967,9 +1309,9 @@ namespace AdServer
           false,
           false);
 
-        if (trigger_match_result_proto && trigger_match_result_proto->has_info())
+        if (response && response->has_info())
         {
-          const auto& info_proto = trigger_match_result_proto->info();
+          const auto& info_proto = response->info();
           const auto& matched_channels_proto = info_proto.matched_channels();
           const auto& page_channels_proto = matched_channels_proto.page_channels();
           trigger_match_page_channels.reserve(page_channels_proto.size());
@@ -1030,6 +1372,7 @@ namespace AdServer
 
         query.pwords << keywords_ostr.str();
 
+        AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
         channel_servers_->match(query, trigger_match_result);
 
         if (trigger_match_result)
@@ -1064,7 +1407,8 @@ namespace AdServer
     assert(user_bind_client_.in());
 
     const auto grpc_distributor = user_bind_client_->grpc_distributor();
-    if (is_grpc_success && grpc_distributor)
+    is_grpc_success = false;
+    if (grpc_distributor)
     {
       // resolve cookie user id
       try
@@ -1079,7 +1423,7 @@ namespace AdServer
 
           auto response = grpc_distributor->get_user_id(
             cookie_external_id_str,
-            GrpcAlgs::pack_user_id(cookie_user_id),
+            cookie_user_id,
             now,
             Generics::Time::ZERO,
             true,
@@ -1187,9 +1531,6 @@ namespace AdServer
       }
     }
 
-    // do history match
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
-
     if(!trigger_match_page_channels.empty())
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
@@ -1216,13 +1557,9 @@ namespace AdServer
           match_params.filter_contextual_triggers = false;
           match_params.publishers_optin_timeout = Generics::Time::ZERO;
 
-          ChannelMatchSet page_channels;
-          std::transform(
-            trigger_match_result->matched_channels.page_channels.get_buffer(),
-            trigger_match_result->matched_channels.page_channels.get_buffer() +
-              trigger_match_result->matched_channels.page_channels.length(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
+          ChannelMatchSet page_channels(
+            std::begin(trigger_match_page_channels),
+            std::end(trigger_match_page_channels));
 
           match_params.page_channel_ids.reserve(page_channels.size());
           for (const auto& page_channel : page_channels)
@@ -1242,7 +1579,6 @@ namespace AdServer
 
           if (user_id != AdServer::Commons::PROBE_USER_ID)
           {
-            user_info.user_id = GrpcAlgs::pack_user_id(user_id);
             auto response = grpc_distributor->match(
               user_info,
               match_params);
@@ -1255,23 +1591,14 @@ namespace AdServer
               throw Exception("match is failed");
             }
 
-            history_match_result = new AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult;
-
             const auto& info_proto = response->info();
             const auto& match_result_proto = info_proto.match_result();
             const auto& channels_proto = match_result_proto.channels();
 
-            if (!channels_proto.empty())
+            history_match_channels.reserve(channels_proto.size());
+            for (const auto& channel_proto : channels_proto)
             {
-              auto& channels_history = history_match_result->channels;
-              channels_history.length(channels_proto.size());
-              CORBA::ULong index = 0;
-              for (const auto& channel_proto : channels_proto)
-              {
-                channels_history[index].channel_id = channel_proto.channel_id();
-                channels_history[index].weight = channel_proto.weight();
-                index += 1;
-              }
+              history_match_channels.emplace_back(channel_proto.channel_id());
             }
           }
 
@@ -1314,7 +1641,7 @@ namespace AdServer
       {
         try
         {
-          history_match_result =
+          AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result =
             AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var{};
 
           // call UIM only if any page channel matched
@@ -1332,14 +1659,9 @@ namespace AdServer
             CorbaAlgs::pack_time(Generics::Time::ZERO);
 
           typedef std::set<ChannelMatch> ChannelMatchSet;
-          ChannelMatchSet page_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.page_channels.get_buffer(),
-            trigger_match_result->matched_channels.page_channels.get_buffer() +
-            trigger_match_result->matched_channels.page_channels.length(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
+          ChannelMatchSet page_channels(
+            std::begin(trigger_match_page_channels),
+            std::end(trigger_match_page_channels));
 
           match_params.page_channel_ids.length(page_channels.size());
           CORBA::ULong res_ch_i = 0;
@@ -1366,6 +1688,14 @@ namespace AdServer
               user_info,
               match_params,
               history_match_result.out());
+
+            const auto& channels = history_match_result->channels;
+            const auto channels_length = channels.length();
+            for (CORBA::ULong i = 0; i < channels_length; i += 1)
+            {
+              history_match_channels.emplace_back(
+                history_match_result->channels[i].channel_id);
+            }
           }
 
           if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
@@ -1411,6 +1741,91 @@ namespace AdServer
         }
       }
 
+      is_grpc_success = false;
+      const auto& grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+      if (grpc_campaign_manager_pool)
+      {
+        using ChannelTriggerMatchInfo = FrontendCommons::GrpcCampaignManagerPool::ChannelTriggerMatchInfo;
+        try
+        {
+          const auto& colo_id = common_config_->colo_id();
+          const auto& request_time = now;
+
+          std::vector<ChannelTriggerMatchInfo> pkw_channels;
+          pkw_channels.reserve(trigger_match_page_channels.size());
+          for (const auto& trigger_match_page_channel : trigger_match_page_channels)
+          {
+            pkw_channels.emplace_back(
+              trigger_match_page_channel.channel_trigger_id,
+              trigger_match_page_channel.channel_id);
+          }
+
+          std::vector<FrontendCommons::GrpcCampaignManagerPool::GeoInfo> location;
+          if (!peer_ip.empty() && ip_map_.get())
+          {
+            try
+            {
+              GeoIPMapping::IPMapCity2::CityLocation geo_location;
+              if (ip_map_->city_location_by_addr(
+                peer_ip.str().c_str(),
+                geo_location,
+                false))
+              {
+                FrontendCommons::Location_var helper_location = new FrontendCommons::Location();
+                helper_location->country = geo_location.country_code.str();
+                geo_location.region.assign_to(helper_location->region);
+                helper_location->city = geo_location.city.str();
+                helper_location->normalize();
+
+                location.emplace_back(
+                  helper_location->country,
+                  helper_location->region,
+                  helper_location->city);
+              }
+            }
+            catch (...)
+            {
+            }
+          }
+
+          const auto response = grpc_campaign_manager_pool->process_match_request(
+            user_id,
+            {},
+            request_time,
+            {},
+            history_match_channels,
+            pkw_channels,
+            {},
+            colo_id,
+            location,
+            {},
+            {});
+          if (response && response->has_info())
+          {
+            is_grpc_success = true;
+          }
+        }
+        catch (const eh::Exception& exc)
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << exc.what();
+          logger()->emergency(stream.str(), Aspect::CLICK_FRONTEND);
+        }
+        catch (...)
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << "Unknown error";
+          logger()->emergency(stream.str(), Aspect::CLICK_FRONTEND);
+        }
+      }
+
+      if (is_grpc_success)
+      {
+        return;
+      }
+
       try
       {
         AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
@@ -1418,8 +1833,8 @@ namespace AdServer
           request_info,
           user_id,
           now,
-          trigger_match_result,
-          history_match_result,
+          trigger_match_page_channels,
+          history_match_channels,
           peer_ip);
 
         campaign_managers_.process_match_request(request_info);

@@ -1561,7 +1561,7 @@ namespace Bidding
 
                 auto response = grpc_distributor->get_user_id(
                   *ext_user_id_it,
-                  String::SubString{},
+                  {},
                   request_info.current_time,
                   request_info.user_create_time,
                   false,

@@ -799,6 +799,7 @@ namespace
           const auto& referer = request_info.referer;
 
           auto response_proto = grpc_campaign_manager_pool->get_click_url(
+            request_info.campaign_manager_index,
             time,
             bid_time,
             colo_id,
@@ -840,7 +841,6 @@ namespace
       {
         Stream::Error stream;
         stream << FNS
-               << "Can't do opt out: "
                << exc.what();
         logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
       }
@@ -848,7 +848,7 @@ namespace
       {
         Stream::Error stream;
         stream << FNS
-               << "Can't do opt out: Unknown error";
+               << "Unknown error";
         logger()->error(stream.str(), Aspect::AD_INST_FRONTEND);
       }
     }
@@ -1071,9 +1071,9 @@ namespace
         {
           inst_ad_info.creatives.emplace_back();
           auto& creative = inst_ad_info.creatives.back();
-          creative.ccid = creative.ccid;
-          creative.ccg_keyword_id = creative.ccg_keyword_id;
-          creative.ctr = creative.ctr;
+          creative.ccid = data.ccid;
+          creative.ccg_keyword_id = data.ccg_keyword_id;
+          creative.ctr = data.ctr;
           if(request_id_it != request_info.request_ids.end())
           {
             creative.request_id = *request_id_it;
@@ -1088,6 +1088,7 @@ namespace
         }
 
         auto response_proto = grpc_campaign_manager_pool->instantiate_ad(
+          request_info.campaign_manager_index,
           inst_ad_info);
         if (!response_proto || response_proto->has_error())
         {

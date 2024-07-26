@@ -32,17 +32,32 @@ inline constexpr char ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL[] = "GRPC_CAMPAIGN_MANA
 
 class GrpcCampaignManagerPool final : private Generics::Uncopyable
 {
-private:
-  class ClientHolder;
-  class FactoryClientHolder;
-
-  using ClientHolderPtr = std::shared_ptr<ClientHolder>;
-  using ClientHolders = std::vector<ClientHolderPtr>;
-  using FactoryClientHolderPtr = std::unique_ptr<FactoryClientHolder>;
-
 public:
   using CTRDecimal = AdServer::CampaignSvcs::CTRDecimal;
   using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
+
+  struct Endpoint final
+  {
+    using Host = std::string;
+    using Port = std::size_t;
+    using ServiceId = std::string;
+
+    Endpoint(
+      const Host& host,
+      const Port port,
+      const ServiceId& service_id)
+      : host(host),
+        port(port),
+        service_id(service_id)
+    {
+    }
+
+    Host host;
+    Port port = 0;
+    ServiceId service_id;
+  };
+  using Endpoints = std::vector<Endpoint>;
+  using ServiceId = Endpoint::ServiceId;
 
   struct UserIdHashModInfo final
   {
@@ -400,10 +415,6 @@ public:
     bool pub_imp_revenue_defined = false;
   };
 
-  using Host = std::string;
-  using Port = std::size_t;
-  using Endpoint = std::pair<Host, Port>;
-  using Endpoints = std::vector<Endpoint>;
   using ConfigPoolClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
@@ -498,6 +509,16 @@ public:
   using GetFileResponsePtr = std::unique_ptr<GetFileResponse>;*/
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+private:
+  class ClientHolder;
+  class FactoryClientHolder;
+
+  using ClientHolderPtr = std::shared_ptr<ClientHolder>;
+  using ClientHolders = std::vector<ClientHolderPtr>;
+  using FactoryClientHolderPtr = std::unique_ptr<FactoryClientHolder>;
+  using ServiceIds = std::list<ServiceId>;
+  using ServiceIdToClientHolder = std::unordered_map<std::string_view, ClientHolderPtr>;
 
 public:
   explicit GrpcCampaignManagerPool(
@@ -604,9 +625,11 @@ public:
     const RequestParams& request_params) noexcept;
 
   InstantiateAdResponsePtr instantiate_ad(
+    const std::string_view service_id,
     const InstantiateAdInfo& instantiate_ad) noexcept;
 
   GetClickUrlResponsePtr get_click_url(
+    const std::string_view service_id,
     const Generics::Time& time,
     const Generics::Time& bid_time,
     const std::uint32_t colo_id,
@@ -749,7 +772,14 @@ private:
     const std::vector<TokenInfo>& tokens);
 
   template<class Client, class Request, class Response, class ...Args>
-  std::unique_ptr<Response> do_request(Args&& ...args) noexcept;
+  std::unique_ptr<Response> do_request_service(
+    const ClientHolderPtr& client_holder,
+    Args&& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> do_request(
+    const std::optional<std::string_view> service_id,
+    Args&& ...args) noexcept;
 
 private:
   const Logger_var logger_;
@@ -763,6 +793,10 @@ private:
   const std::size_t grpc_client_timeout_ms_;
 
   ClientHolders client_holders_;
+
+  ServiceIds service_ids_;
+
+  ServiceIdToClientHolder service_id_to_client_holder_;
 
   std::atomic<std::size_t> counter_{0};
 };
@@ -857,7 +891,7 @@ public:
 
   ~ClientHolder() = default;
 
-  bool is_bad() const
+  bool is_bad() const noexcept
   {
     {
       std::shared_lock lock(mutex_);
@@ -984,7 +1018,7 @@ public:
       static_assert(GrpcAlgs::AlwaysFalseV<Client>);
     }
 
-    for (std::size_t i = 1; i <= 3; ++i)
+    for (std::size_t i = 1; i <= 5; ++i)
     {
       auto result = client->write(std::move(request), timeout);
       if (result.status == Status::Ok)
@@ -1054,6 +1088,8 @@ public:
 
 private:
   using Mutex = std::shared_mutex;
+  using Host = typename Endpoint::Host;
+  using Port = typename Endpoint::Port;
   using Key = std::pair<Host, Port>;
   using Value = ClientHolder::ClientsPtr;
   using Cache = std::unordered_map<Key, Value, boost::hash<Key>>;

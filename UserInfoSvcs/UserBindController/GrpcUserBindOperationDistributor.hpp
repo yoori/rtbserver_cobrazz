@@ -96,7 +96,7 @@ public:
   GetUserIdResponsePtr
   get_user_id(
     const String::SubString& external_id,
-    const String::SubString& current_user_id,
+    const AdServer::Commons::UserId& current_user_id,
     const Generics::Time& timestamp,
     const Generics::Time& create_timestamp,
     const bool silent,
@@ -136,7 +136,7 @@ private:
 
   GetUserIdRequestPtr create_get_user_id_request(
     const String::SubString& external_id,
-    const String::SubString& current_user_id,
+    const AdServer::Commons::UserId& current_user_id,
     const Generics::Time& timestamp,
     const Generics::Time& create_timestamp,
     const bool silent,

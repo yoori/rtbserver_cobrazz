@@ -2342,7 +2342,7 @@ namespace AdServer
 
           auto response = grpc_distributor->get_user_id(
             ext_user_id,
-            GrpcAlgs::pack_user_id(request_info.client_id),
+            request_info.client_id,
             request_info.current_time,
             Generics::Time::ZERO,
             true,

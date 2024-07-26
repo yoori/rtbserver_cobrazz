@@ -18,6 +18,7 @@
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
+<xsl:variable name="cluster-id" select="$CLUSTER_ID"/>
 
 <!-- FCGIServer config generate function -->
 <xsl:template name="FCGIServerConfigGenerator">
@@ -28,7 +29,7 @@
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="server-root"/>
   <xsl:param name="channel-servers-path"/>
-  <xsl:param name="campaign-managers-path"/>
+  <xsl:param name="campaign-manager-host-grpc-port-set"/>
 
   <cfg:FCGIServerConfig>
     <xsl:attribute name="time_duration_grpc_client_mark_bad">
@@ -172,14 +173,11 @@
     </cfg:CampaignGrpcClientPool>
 
     <cfg:CampaignManagerEndpointList>
-      <xsl:for-each select="$campaign-managers-path">
+      <xsl:for-each select="exsl:node-set($campaign-manager-host-grpc-port-set)/host">
         <cfg:Endpoint>
-          <xsl:attribute name="host"><xsl:value-of select="@host"/></xsl:attribute>
-          <xsl:attribute name="port"><xsl:value-of select="configuration/cfg:campaignManager/cfg:networkParams/@grpc_port"/>
-            <xsl:if test="count(configuration/cfg:campaignManager/cfg:networkParams/@grpc_port) = 0">
-              <xsl:value-of select="$def-campaign-manager-grpc-port"/>
-            </xsl:if>
-          </xsl:attribute>
+          <xsl:attribute name="host"><xsl:value-of select="."/></xsl:attribute>
+          <xsl:attribute name="port"><xsl:value-of select="@grpc_port"/></xsl:attribute>
+          <xsl:attribute name="service_index"><xsl:value-of select="concat($cluster-id, '_', position())"/></xsl:attribute>
         </cfg:Endpoint>
       </xsl:for-each>
     </cfg:CampaignManagerEndpointList>
@@ -295,6 +293,33 @@
 
   <xsl:variable name="campaign-managers-path" select="$xpath/../service[@descriptor = $campaign-manager-descriptor]"/>
 
+  <xsl:variable name="campaign-manager-host-grpc-port-set">
+    <xsl:for-each select="$xpath/../service[@descriptor = $campaign-manager-descriptor]">
+      <xsl:variable name="campaign-manager-host-subset">
+        <xsl:call-template name="GetHosts">
+          <xsl:with-param name="hosts" select="@host"/>
+          <xsl:with-param name="error-prefix" select="'CampaignManager'"/>
+        </xsl:call-template>
+      </xsl:variable>
+      <xsl:variable
+        name="campaign-manager-config"
+        select="./configuration/cfg:campaignManager"/>
+      <xsl:if test="count($campaign-manager-config) = 0">
+        <xsl:message terminate="yes"> FCGIAdServer: Can't find campaign manager config </xsl:message>
+      </xsl:if>
+
+      <xsl:variable name="campaign-manager-grpc-port">
+        <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@grpc_port"/>
+        <xsl:if test="count($campaign-manager-config/cfg:networkParams/@grpc_port) = 0">
+          <xsl:value-of select="$def-campaign-manager-grpc-port"/>
+        </xsl:if>
+      </xsl:variable>
+      <xsl:for-each select="exsl:node-set($campaign-manager-host-subset)/host">
+        <host grpc_port="{$campaign-manager-grpc-port}"><xsl:value-of select="."/></host>
+      </xsl:for-each>
+    </xsl:for-each>
+  </xsl:variable>
+
   <xsl:for-each select="exsl:node-set($fcgi-hosts)/host">
     <xsl:variable name="fhost" select="."/>
     <xsl:choose>
@@ -314,7 +339,7 @@
       <xsl:with-param name="be-cluster-path" select="$be-cluster-path"/>
       <xsl:with-param name="server-root" select="$server-root"/>
       <xsl:with-param name="channel-servers-path" select="$channel-servers-path"/>
-      <xsl:with-param name="campaign-managers-path" select="$campaign-managers-path"/>
+      <xsl:with-param name="campaign-manager-host-grpc-port-set" select="$campaign-manager-host-grpc-port-set"/>
     </xsl:call-template>
   </cfg:AdConfiguration>
 

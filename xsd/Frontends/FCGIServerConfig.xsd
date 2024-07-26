@@ -60,6 +60,7 @@
   <xsd:complexType name="EndpointType">
     <xsd:attribute name="host" type="xsd:string" use="required"/>
     <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="service_index" type="xsd:string" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="EndpointListType">

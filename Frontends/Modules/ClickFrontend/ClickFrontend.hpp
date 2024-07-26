@@ -47,6 +47,9 @@ namespace AdServer
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
+  private:
+    struct ChannelMatch;
+
   public:
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
@@ -167,10 +170,9 @@ namespace AdServer
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
-      const String::SubString& peer_ip_val) const
-      noexcept;
+      const std::vector<ChannelMatch>& trigger_match_page_channels,
+      const std::vector<std::uint32_t>& history_match_channels,
+      const String::SubString& peer_ip_val) const noexcept;
 
   private:
     const GrpcContainerPtr grpc_container_;
@@ -215,6 +217,26 @@ namespace AdServer
 //
 namespace AdServer
 {
+
+  struct ClickFrontend::ChannelMatch
+  {
+    ChannelMatch(unsigned long channel_id_val,
+                 unsigned long channel_trigger_id_val)
+      : channel_id(channel_id_val),
+        channel_trigger_id(channel_trigger_id_val)
+    {}
+
+    bool operator<(const ChannelMatch& right) const
+    {
+      return (channel_id < right.channel_id ||
+        (channel_id == right.channel_id &&
+         channel_trigger_id < right.channel_trigger_id));
+    }
+
+    unsigned long channel_id;
+    unsigned long channel_trigger_id;
+  };
+
   inline
   ClickFrontend::~ClickFrontend() noexcept
   {}
