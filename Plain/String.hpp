@@ -9,7 +9,7 @@ namespace PlainTypes
 {
   struct String: public std::string
   {
-    static const unsigned long FIXED_SIZE = 4;
+    static constexpr unsigned long FIXED_SIZE = 4;
 
     String();
 
