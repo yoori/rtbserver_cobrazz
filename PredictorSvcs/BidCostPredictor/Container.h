@@ -1,15 +1,15 @@
 #ifndef BIDCOSTPREDICTOR_CONTAINER_H
 #define BIDCOSTPREDICTOR_CONTAINER_H
 
-// THIS
+// UNIXCOMMONS
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+
+// THIS
 #include "ModelBidCost.hpp"
 #include "ModelCtr.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 class Container : public virtual ReferenceCounting::Interface
@@ -40,7 +40,6 @@ protected:
 
 using Container_var = ReferenceCounting::SmartPtr<Container>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_CONTAINER_H

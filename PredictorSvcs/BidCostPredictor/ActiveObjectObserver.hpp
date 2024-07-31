@@ -4,71 +4,56 @@
 // STD
 #include <mutex>
 
-// THIS
+// UNIXCOMMONS
 #include <Generics/ActiveObject.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-namespace PredictorSvcs
+namespace PredictorSvcs::BidCostPredictor
 {
-namespace BidCostPredictor
-{
-
-class ActiveObjectDelegate : Generics::Uncopyable
-{
-public:
-  using Severity = Generics::ActiveObjectCallback::Severity;
-
-public:
-  ActiveObjectDelegate() = default;
-
-  virtual void report_error(
-    Severity severity,
-    const String::SubString& description,
-    const char* error_code = 0) noexcept = 0;
-
-protected:
-  virtual ~ActiveObjectDelegate() = default;
-};
 
 class ActiveObjectObserver final :
   public Generics::ActiveObjectCallback,
-  public virtual ReferenceCounting::AtomicImpl
+  public ReferenceCounting::AtomicImpl
 {
 public:
-  explicit ActiveObjectObserver(
-    ActiveObjectDelegate* delegate)
-    : delegate_(delegate)
+  using ErrorCallback = std::function<void(
+    const Severity,
+    const String::SubString&,
+    const char*)>;
+
+public:
+  explicit ActiveObjectObserver(const ErrorCallback& error_callback)
+    : error_callback_(error_callback)
   {
   }
 
+protected:
   ~ActiveObjectObserver() override = default;
 
+private:
   void report_error(
     Severity severity,
     const String::SubString& description,
-    const char* error_code = 0) noexcept override
+    const char* error_code = nullptr) noexcept override
   {
-    std::lock_guard lock(mutex_);
-    if (delegate_)
-      delegate_->report_error(severity, description, error_code);
-  }
-
-  void clear_delegate()
-  {
-    std::lock_guard lock(mutex_);
-    delegate_ = nullptr;
+    try
+    {
+      if (error_callback_)
+      {
+        error_callback_(severity, description, error_code);
+      }
+    }
+    catch (...)
+    {
+    }
   }
 
 private:
-  ActiveObjectDelegate* delegate_ = nullptr;
-
-  std::mutex mutex_;
+  const ErrorCallback error_callback_;
 };
 
-using ActiveObjectObserver_var =
-  ReferenceCounting::SmartPtr<ActiveObjectObserver>;
+using ActiveObjectObserver_var = ReferenceCounting::SmartPtr<ActiveObjectObserver>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_ACTIVEOBJECTOBSERVER_HPP

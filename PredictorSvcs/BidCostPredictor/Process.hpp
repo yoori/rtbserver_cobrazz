@@ -1,34 +1,34 @@
 #ifndef BIDCOSTPREDICTOR_PROCESS_H
 #define BIDCOSTPREDICTOR_PROCESS_H
 
+// POSIX
+#include <unistd.h>
+
 // STD
 #include <mutex>
 #include <string>
 #include <vector>
 
-// POSIX
-#include <unistd.h>
-
-// THIS
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class Process final
-  : public virtual ReferenceCounting::AtomicImpl
+class Process final : public virtual ReferenceCounting::AtomicImpl
 {
+public:
+  using Option = std::string;
+  using Options = std::vector<std::string>;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
 public:
   explicit Process(
     const std::string& bin_path,
-    const std::vector<std::string>& options);
-
-  ~Process() override;
+    const Options& options);
 
   void launch();
 
@@ -36,21 +36,21 @@ public:
 
   void stop() noexcept;
 
+protected:
+  ~Process() override = default;
+
 private:
   const std::string bin_path_;
 
-  const std::vector<std::string> options_;
+  const Options options_;
 
   std::mutex mutex_;
 
   pid_t pid_ = -1;
-
-  bool is_stopped_ = false;
 };
 
 using Process_var = ReferenceCounting::SmartPtr<Process>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_PROCESS_H

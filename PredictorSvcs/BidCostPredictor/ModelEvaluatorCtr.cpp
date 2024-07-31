@@ -7,12 +7,12 @@
 
 namespace Aspect
 {
-const char* MODEL_EVALUATOR_CTR = "MODEL_EVALUATOR_CTR";
+
+inline constexpr char MODEL_EVALUATOR_CTR[] = "MODEL_EVALUATOR_CTR";
+
 } // namespace Aspect
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
@@ -25,110 +25,112 @@ ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
     tag_imps_(tag_imps),
     data_provider_(ReferenceCounting::add_ref(data_provider)),
     model_factory_(ReferenceCounting::add_ref(model_factory)),
-    logger_(ReferenceCounting::add_ref(logger)),
-    collector_(1, 1)
+    logger_(ReferenceCounting::add_ref(logger))
 {
-}
-
-ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
-{
-  if (is_stopped_.load(std::memory_order_relaxed))
-  {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelEvaluatorCtr already is stopped";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    return {};
-  }
-
   if (!data_provider_)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : data_provider is null";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    return {};
+    Stream::Error stream;
+    stream << FNS
+           << "data_provider is null";
+    throw Exception(stream);
   }
 
   if (!model_factory_)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : model_factory is null";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    return {};
+    Stream::Error stream;
+    stream << FNS
+           << "model_factory is null";
+    throw Exception(stream);
   }
+}
 
-  model_ = model_factory_->create();
-  if (!model_)
-  {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : model is null";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    return {};
-  }
-
-  if (!data_provider_->load(collector_))
-  {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : data_provider load collector is failed";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    return {};
-  }
-
-  if (collector_.empty())
-  {
-    logger_->info(
-      std::string("ModelEvaluatorCtr: Collector is empty"),
-      Aspect::MODEL_EVALUATOR_CTR);
-    return model_;
-  }
-
+ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
+{
   try
   {
-    logger_->info(
-      std::string("ModelEvaluatorCtr started"),
-      Aspect::MODEL_EVALUATOR_CTR);
+    if (is_stopped_.load())
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelEvaluatorCtr already is stopped";
+      logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+      return {};
+    }
 
-    calculate();
-    is_success_ = true;
+    ModelCtr_var model = model_factory_->create();
+    if (!model)
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "model is null";
+      logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+      return {};
+    }
 
-    logger_->info(
-      std::string("ModelEvaluatorCtr is successfully stopped"),
-      Aspect::MODEL_EVALUATOR_CTR);
+    HelpCollector collector(1, 1, 1);
+    if (!data_provider_->load(collector))
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "data_provider load of collector is failed";
+      logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+      return {};
+    }
+
+    if (collector.empty())
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Collector is empty";
+      logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+      return model;
+    }
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelEvaluatorCtr started";
+      logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+    }
+
+    calculate(collector, *model);
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelEvaluatorCtr is successfully stopped";
+      logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+    }
+
+    return model;
   }
   catch (const eh::Exception& exc)
   {
-    is_success_ = false;
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelEvaluatorCtr is failed"
+    Stream::Error stream;
+    stream << FNS
+           << "ModelEvaluatorCtr is failed"
            << " : Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
-    return {};
+  }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "ModelEvaluatorCtr is failed"
+           << " : Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
   }
 
-  if (is_success_)
-  {
-    return std::move(model_);
-  }
-  else
-  {
-    model_.reset();
-    return {};
-  }
+  return {};
 }
 
-ModelEvaluatorCtrImpl::~ModelEvaluatorCtrImpl()
-{
-}
-
-void ModelEvaluatorCtrImpl::calculate()
+void ModelEvaluatorCtrImpl::calculate(
+  const HelpCollector collector,
+  ModelCtr& model)
 {
   using Data = std::pair<Clicks, Imps>;
+
   std::unordered_map<TagId, Data> helper_tag_hash;
   helper_tag_hash.reserve(100000);
 
@@ -139,9 +141,9 @@ void ModelEvaluatorCtrImpl::calculate()
   std::size_t records_reached_10000_imps = 0;
   std::size_t records_reached_100000_imps = 0;
 
-  auto it = collector_.begin();
-  auto it_end = collector_.end();
-  for (;it != it_end; ++it)
+  auto it = collector.begin();
+  const auto it_end = collector.end();
+  for (; it != it_end; ++it)
   {
     const auto total_clicks = it->second->total_clicks();
     const auto total_imps = it->second->total_imps();
@@ -201,29 +203,31 @@ void ModelEvaluatorCtrImpl::calculate()
 
     if (ctr && !ctr->is_zero())
     {
-      model_->set_ctr(tag_id, url, *ctr);
+      model.set_ctr(tag_id, url, *ctr);
     }
   }
 
-  std::stringstream stream;
-  stream << "\n"
-         << "Records reached 1000 imps : "
-         << records_reached_1000_imps
-         << "\n"
-         << "Records reached 10000 imps : "
-         << records_reached_10000_imps
-         << "\n"
-         << "Records reached 100000 imps : "
-         << records_reached_100000_imps;
-  logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+  {
+    std::ostringstream stream;
+    stream << '\n'
+           << "Records reached 1000 imps : "
+           << records_reached_1000_imps
+           << '\n'
+           << "Records reached 10000 imps : "
+           << records_reached_10000_imps
+           << '\n'
+           << "Records reached 100000 imps : "
+           << records_reached_100000_imps;
+    logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+  }
 
   coef = FixedNumber("0.1");
   Imps tag_sum_imps = 0;
   Clicks tag_sum_clicks = 0;
 
   auto it_helper = helper_tag_hash.begin();
-  auto it_helper_end = helper_tag_hash.end();
-  Url_var url_replacement(new Url("?"));
+  const auto it_helper_end = helper_tag_hash.end();
+  UrlPtr url_replacement(new Url("?"));
   for (; it_helper != it_helper_end; ++it_helper)
   {
     const auto& tag_id = it_helper->first;
@@ -245,18 +249,20 @@ void ModelEvaluatorCtrImpl::calculate()
 
       if (!ctr.is_zero())
       {
-        model_->set_ctr(tag_id, url_replacement, ctr);
+        model.set_ctr(tag_id, url_replacement, ctr);
       }
     }
   }
 
-  stream = std::stringstream();
-  stream << "Global CTR: "
-         << "imps = "
-         << tag_sum_imps
-         << ", clicks = "
-         << tag_sum_clicks;
-  logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+  {
+    std::ostringstream stream;
+    stream << "Global CTR: "
+           << "imps = "
+           << tag_sum_imps
+           << ", clicks = "
+           << tag_sum_clicks;
+    logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+  }
 
   if (tag_sum_imps)
   {
@@ -266,17 +272,23 @@ void ModelEvaluatorCtrImpl::calculate()
         FixedNumber(false, tag_sum_imps, 0)),
       FixedNumber("0.5"),
       Generics::DMR_FLOOR);
-    model_->set_ctr(0, url_replacement, default_ctr);
+    model.set_ctr(0, url_replacement, default_ctr);
   }
 }
 
 void ModelEvaluatorCtrImpl::stop() noexcept
 {
-  is_stopped_.store(true, std::memory_order_relaxed);
-  logger_->info(
-    std::string("ModelEvaluatorCtr was interrupted"),
-    Aspect::MODEL_EVALUATOR_CTR);
+  is_stopped_.store(true);
+  try
+  {
+    std::ostringstream stream;
+    stream << FNS
+           << "ModelEvaluatorCtr was interrupted";
+    logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
+  }
+  catch (...)
+  {
+  }
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

@@ -4,12 +4,10 @@
 // STD
 #include <string>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class ModelManager
+class ModelManager : public virtual ReferenceCounting::Interface
 {
 public:
   ModelManager() = default;
@@ -22,7 +20,8 @@ protected:
   virtual ~ModelManager() = default;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+using ModelManager_var = ReferenceCounting::SmartPtr<ModelManager>;
+
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_MODELMANAGER_HPP

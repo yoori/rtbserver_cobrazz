@@ -4,9 +4,7 @@
 // THIS
 #include "Configuration.h"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 Configuration::Configuration(
@@ -18,7 +16,7 @@ Configuration::Configuration(
     if (!file)
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
+      stream << FNS
              << "Can't open file="
              << path_json_config;
       throw Exception(stream);
@@ -31,14 +29,14 @@ Configuration::Configuration(
   catch(const boost::exception& exc)
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << boost::diagnostic_information(exc);
     throw Exception(stream);
   }
   catch(const std::exception& exc)
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << exc.what();
     throw Exception(stream);
   }
@@ -53,7 +51,9 @@ Configuration::Configuration(
 bool Configuration::exists(const std::string& path) const
 {
   if (ptree_.empty())
+  {
     return false;
+  }
 
   try
   {
@@ -73,19 +73,20 @@ bool Configuration::exists(const std::string& path) const
         return false;
       pointer = &it2->second;
     }
+
     return true;
   }
   catch(const boost::exception& exc)
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << boost::diagnostic_information(exc);
     throw Exception(stream);
   }
   catch(const std::exception& exc)
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << exc.what();
     throw Exception(stream);
   }
@@ -103,8 +104,8 @@ std::list<Configuration> Configuration::get_list_of(
   if (!exists(path))
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Not existing path="
+    stream << FNS
+           << "Not existing path="
            << path;
     throw Exception(stream);
   }
@@ -127,8 +128,8 @@ Configuration Configuration::get_config(
   if (!exists(path))
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Not existing path="
+    stream << FNS
+           << "Not existing path="
            << path;
     throw Exception(stream);
   }
@@ -147,5 +148,4 @@ std::ostream& operator<<(
   return ostr;
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

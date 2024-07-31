@@ -2,14 +2,12 @@
 #include "LogCommons/LogCommons.ipp"
 #include "BidCostCollector.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
 
-template<> const char *BidCostTraits::B::base_name_ = "BidCost";
-template<> const char *BidCostTraits::B::signature_ = "BidCost";
-template<> const char *BidCostTraits::B::current_version_ = "2.5";
+template<> const char* BidCostTraits::B::base_name_ = "BidCost";
+template<> const char* BidCostTraits::B::signature_ = "BidCost";
+template<> const char* BidCostTraits::B::current_version_ = "2.5";
 
 FixedBufStream<TabCategory>& operator>>(
   FixedBufStream<TabCategory>& is,
@@ -22,6 +20,7 @@ FixedBufStream<TabCategory>& operator>>(
     key.invariant();
     key.calc_hash();
   }
+
   return is;
 }
 
@@ -31,6 +30,7 @@ std::ostream& operator<<(
 {
   TabOutputArchive oa(os);
   oa << key;
+
   return os;
 }
 
@@ -41,6 +41,7 @@ FixedBufStream<TabCategory>& operator>>(
   using NoInvariants = Aux_::NoInvariants;
   TokenizerInputArchive<NoInvariants> ia(is);
   ia >> data;
+
   return is;
 }
 
@@ -50,8 +51,8 @@ std::ostream& operator<<(
 {
   SimpleTabOutputArchive oa(os);
   oa << data;
+
   return os;
 }
 
-} // namespace LogProcessing
-} // namespace PredictorSvcs
+} // namespace AdServer::LogProcessing

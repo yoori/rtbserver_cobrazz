@@ -5,21 +5,26 @@
 #include <memory>
 #include <string>
 
-// THIS
+// UNIXCOMMONS
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/Interface.hpp>
+
+// THIS
 #include "Pid.hpp"
 #include "Processor.hpp"
 #include "ShutdownManager.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 class Daemon : public virtual ReferenceCounting::Interface
 {
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
 public:
   Daemon(
     const std::string& pid_path,
@@ -30,7 +35,7 @@ public:
   void stop() noexcept;
 
 protected:
-  virtual ~Daemon();
+  ~Daemon() override = default;
 
   virtual void start_logic() = 0;
 
@@ -43,21 +48,18 @@ private:
 
   void wait() noexcept;
 
-  const char* name() noexcept;
-
 private:
   const std::string pid_path_;
 
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 
-  std::unique_ptr<PidSetter> pid_setter_;
+  const std::unique_ptr<PidSetter> pid_setter_;
 
   bool is_running_ = false;
 };
 
 using Daemon_var = ReferenceCounting::SmartPtr<Daemon>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif // BIDCOSTPREDICTOR_DAEMON_HPP

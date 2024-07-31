@@ -6,10 +6,14 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <thread>
+
+// UNIXCOMMONS
+#include <Generics/TaskRunner.hpp>
 
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
-#include <Generics/TaskRunner.hpp>
+
 #include <LogCommons/BidCostStat.hpp>
 #include "ActiveObjectObserver.hpp"
 #include "LogHelper.hpp"
@@ -19,41 +23,27 @@
 #include "ShutdownManager.hpp"
 #include "Utils.hpp"
 
-namespace Aspect
-{
-extern const char* REAGGREGATOR;
-}
-
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class ReaggregatorMultyThread final :
-  public Processor,
-  public virtual ReferenceCounting::AtomicImpl,
-  private ActiveObjectDelegate
+class ReaggregatorMultyThread final : public Processor
 {
+private:
+  using ThreadPtr = std::unique_ptr<std::jthread>;
   using DayTimestamp = LogProcessing::DayTimestamp;
-
   using Path = Utils::Path;
   using AggregatedFiles = std::multimap<DayTimestamp, Path>;
   using ProcessedFiles = std::list<Path>;
   using ProcessedFiles_var = std::shared_ptr<ProcessedFiles>;
   using ResultFile = Utils::GeneratedPath;
-
   using Collector = LogProcessing::BidCostStatInnerCollector;
   using LogTraits = LogProcessing::BidCostStatInnerTraits;
 
-  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-  static constexpr std::uint8_t COUNT_THREADS = 4;
-
   enum class Addressee
   {
-    Calculator,
+    Calculator = 1,
     Writer
   };
 
@@ -68,26 +58,34 @@ class ReaggregatorMultyThread final :
     Read = 0,
     Calculate,
     Write,
-    Clean
+    Clean,
+    MAX_NUMBER
   };
+
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
   explicit ReaggregatorMultyThread(
     const std::string& input_dir,
     const std::string& output_dir,
-    Logging::Logger* logger);
+    Logger* logger);
 
+  std::string name() noexcept override;
+
+protected:
   ~ReaggregatorMultyThread() override;
 
-  void start() override;
-
-  void stop() noexcept override;
-
-  void wait() noexcept override;
-
-  const char* name() noexcept override;
-
 private:
+  void activate_object_() override;
+
+  void deactivate_object_() override;
+
+  void wait_object_() override;
+
   void reaggregate();
 
   void remove_unique(AggregatedFiles& files);
@@ -99,7 +97,8 @@ private:
 
   void do_merge(
     Collector& temp_collector,
-    const std::string& file_path) noexcept;
+    const std::string& file_path,
+    const bool need_task_read) noexcept;
 
   void do_write(
     const ProcessedFiles_var& processed_files,
@@ -120,49 +119,11 @@ private:
     Collector& collector,
     ResultFile& result_file);
 
-  void report_error(
-    Severity severity,
-    const String::SubString& description,
-    const char* error_code = 0) noexcept override;
-
-  template<class MemPtr,
-           class ...Args>
-  std::enable_if_t<
-    std::is_member_function_pointer_v<MemPtr>,
-    bool>
-  post_task(
+  template<ConceptMemberPtr MemPtr, class ...Args>
+  bool post_task(
     const ThreadID id,
     MemPtr mem_ptr,
-    Args&& ...args) noexcept
-  {
-    if (task_runners_.size() <= static_cast<std::size_t>(id))
-      return false;
-
-    try
-    {
-      task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
-        AdServer::Commons::make_delegate_task(
-          std::bind(
-            mem_ptr,
-            this,
-            std::forward<Args>(args)...)));
-      return true;
-    }
-    catch (const eh::Exception& exc)
-    {
-      shutdown_manager_.stop();
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Can't enqueue_task"
-             << " Reason: "
-             << exc.what();
-      logger_->critical(
-        stream.str(),
-        Aspect::REAGGREGATOR);
-
-      return false;
-    }
-  }
+    Args&& ...args) noexcept;
 
 private:
   const std::string input_dir_;
@@ -171,15 +132,15 @@ private:
 
   const std::string prefix_;
 
-  Logging::Logger_var logger_;
-
-  ActiveObjectObserver_var observer_;
-
-  std::vector<Generics::TaskRunner_var> task_runners_;
+  const Logger_var logger_;
 
   PoolCollector<Collector, 1000000> pool_collector_;
 
   PoolCollector<Collector, 100000> pool_temp_collector_;
+
+  std::atomic<bool> is_success_completed_ = false;
+
+  ActiveObjectObserver_var observer_;
   // Calculate thread
   AggregatedFiles aggregated_files_;
   // Calculate thread
@@ -190,17 +151,12 @@ private:
   DayTimestamp current_date_;
   // Read thread
   Persantage persantage_;
-  // Read thread
-  bool is_read_stoped_ = false;
 
-  bool is_running_ = false;
+  std::vector<Generics::TaskRunner_var> task_runners_;
 
-  ShutdownManager shutdown_manager_;
-
-  bool is_success_completed_ = false;
+  ThreadPtr helper_thread_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_REAGGREGATORMULTYTHREAD_HPP

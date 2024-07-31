@@ -1,4 +1,5 @@
 // STD
+#include <filesystem>
 #include <regex>
 
 // THIS
@@ -7,12 +8,12 @@
 
 namespace Aspect
 {
-const char* DATA_PROVIDER = "DATA_PROVIDER";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char DATA_PROVIDER[] = "DATA_PROVIDER";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 DataModelProviderImpl::DataModelProviderImpl(
@@ -21,106 +22,243 @@ DataModelProviderImpl::DataModelProviderImpl(
   Logging::Logger* logger)
   : input_dir_(input_dir),
     logger_(ReferenceCounting::add_ref(logger)),
-    observer_(new ActiveObjectObserver(this)),
     prefix_(LogTraits::B::log_base_name()),
     persantage_(logger_, Aspect::DATA_PROVIDER, 5),
     help_collector_(max_imps, 1000000, 1)
 {
-  for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
+  using Severity = Generics::ActiveObjectCallback::Severity;
+
+  if (!std::filesystem::is_directory(input_dir_))
   {
-    task_runners_.emplace_back(new Generics::TaskRunner(observer_, 1));
+    Stream::Error stream;
+    stream << FNS
+           << "Not existing input directory="
+           << input_dir_;
+    throw Exception(stream);
+  }
+
+  observer_ = new ActiveObjectObserver(
+    [this] (
+      const Severity severity,
+      const String::SubString& description,
+      const char* error_code) {
+      if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
+      {
+        shutdown_manager_.stop();
+
+        Stream::Error stream;
+        stream << FNS
+               << "DataModelProvider stopped due to incorrect operation of queues."
+               << " Reason: "
+               << description;
+        logger_->critical(
+          stream.str(),
+          Aspect::DATA_PROVIDER,
+          error_code);
+      }
+    });
+
+  const auto size = static_cast<std::uint8_t>(ThreadID::MAX_NUMBER);
+  for (std::uint8_t i = 0; i < size; i += 1)
+  {
+    task_runners_.emplace_back(
+      new Generics::TaskRunner(observer_, 1));
+    task_runners_.back()->activate_object();
   }
 }
 
 DataModelProviderImpl::~DataModelProviderImpl()
 {
   shutdown_manager_.stop();
-  observer_->clear_delegate();
-  wait();
+  clear();
+}
+
+void DataModelProviderImpl::wait() noexcept
+{
+  shutdown_manager_.wait();
+}
+
+void DataModelProviderImpl::clear() noexcept
+{
+  for (auto& task_runner : task_runners_)
+  {
+    try
+    {
+      task_runner->wait_for_queue_exhausting();
+    }
+    catch (...)
+    {
+    }
+
+    try
+    {
+      task_runner->deactivate_object();
+      task_runner->wait_object();
+    }
+    catch (...)
+    {
+    }
+  }
+  task_runners_.clear();
+}
+
+template<ConceptMemberPtr MemPtr, class ...Args>
+bool DataModelProviderImpl::post_task(
+  const ThreadID id,
+  MemPtr mem_ptr,
+  Args&& ...args) noexcept
+{
+  try
+  {
+    if (task_runners_.size() <= static_cast<std::size_t>(id))
+    {
+      Stream::Error stream;
+      stream << "Thread id="
+             << static_cast<std::size_t>(id)
+             << " greater than number of threads="
+             << task_runners_.size();
+      throw Exception(stream);
+    }
+
+    task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
+      AdServer::Commons::make_delegate_task(
+        std::bind(
+          mem_ptr,
+          this,
+          std::forward<Args>(args)...)));
+    return true;
+  }
+  catch (const eh::Exception& exc)
+  {
+    shutdown_manager_.stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't enqueue_task. Reason: "
+           << exc.what();
+    logger_->critical(
+      stream.str(),
+      Aspect::DATA_PROVIDER);
+  }
+  catch (...)
+  {
+    shutdown_manager_.stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't enqueue_task. Reason: Unknown error";
+    logger_->critical(
+      stream.str(),
+      Aspect::DATA_PROVIDER);
+  }
+
+  return false;
 }
 
 bool DataModelProviderImpl::load(
   HelpCollector& help_collector) noexcept
 {
-  if (is_success_)
+  if (is_load_success_.load())
   {
-    logger_->info(
-      std::string("DataModelProvider already is loaded"),
-      Aspect::DATA_PROVIDER);
+    std::ostringstream stream;
+    stream << FNS
+           << "DataModelProvider already is loaded";
+    logger_->info(stream.str(), Aspect::DATA_PROVIDER);
     help_collector = help_collector_;
+
     return true;
   }
   else if (shutdown_manager_.is_stoped())
   {
     if (is_interrupted_.load())
     {
-      logger_->critical(
-        std::string("DataModelProvider is interrupted"),
-        Aspect::DATA_PROVIDER);
+      Stream::Error stream;
+      stream << FNS
+             << "DataModelProvider is interrupted";
+      logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
     }
     else
     {
-      logger_->critical(
-        std::string("DataModelProvider is failed"),
-        Aspect::DATA_PROVIDER);
+      Stream::Error stream;
+      stream << FNS
+             << "DataModelProvider is failed";
+      logger_->critical(stream.str(),  Aspect::DATA_PROVIDER);
     }
+
     return false;
   }
 
-  logger_->info(
-    std::string("DataModelProvider started"),
-    Aspect::DATA_PROVIDER);
+  if (!is_idle_.load())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Already in the process of loading";
+    logger_->critical(stream.str(),  Aspect::DATA_PROVIDER);
+
+    return false;
+  }
+  is_idle_.store(false);
+
+  {
+    std::ostringstream stream;
+    stream << FNS
+           << "DataModelProvider started";
+    logger_->info(stream.str(), Aspect::DATA_PROVIDER);
+  }
+
   try
   {
-    start();
+    run();
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
+    Stream::Error stream;
     stream << "DataModelProvider is failed. Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
     shutdown_manager_.stop();
+
+    return false;
+  }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << "DataModelProvider is failed. Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
+    shutdown_manager_.stop();
+
     return false;
   }
 
   wait();
 
-  if (is_success_)
+  if (is_load_success_.load())
   {
     help_collector = help_collector_;
-    logger_->info(
-      std::string("DataModelProvider is finish success"),
-      Aspect::DATA_PROVIDER);
+
+    std::ostringstream stream;
+    stream << FNS
+           << "DataModelProvider loading successful";
+    logger_->info(stream.str(), Aspect::DATA_PROVIDER);
+
     return true;
   }
   else
   {
-    logger_->critical(
-      std::string("DataModelProvider is failed"),
-      Aspect::DATA_PROVIDER);
+    Stream::Error stream;
+    stream << FNS
+           << "DataModelProvider is failed";
+    logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
+
     return false;
   }
 }
 
-void DataModelProviderImpl::start()
+void DataModelProviderImpl::run()
 {
-  if (!Utils::exist_directory(input_dir_))
-  {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Not existing input directory="
-         << input_dir_;
-    throw Exception(ostr);
-  }
-
-  if (task_runners_.empty())
-    throw Exception("task_runners is empty");
-
-  aggregated_files_ =
-    Utils::get_directory_files(
-      input_dir_,
-      prefix_);
+  aggregated_files_ = Utils::get_directory_files(
+    input_dir_,
+    prefix_);
   std::reverse(
     std::begin(aggregated_files_),
     std::end(aggregated_files_));
@@ -129,99 +267,55 @@ void DataModelProviderImpl::start()
 
   if (aggregated_files_.empty())
   {
-    logger_->info(
-      std::string("Aggregated files is empty"),
-      Aspect::DATA_PROVIDER);
-    is_success_ = true;
+    is_load_success_.store(true);
+    std::ostringstream stream;
+    stream << FNS
+           << "Aggregated files is empty";
+    logger_->info(stream.str(), Aspect::DATA_PROVIDER);
     return;
-  }
-
-  is_running_ = true;
-
-  try
-  {
-    for (auto& task_runner : task_runners_)
-    {
-      task_runner->activate_object();
-    }
-  }
-  catch(const eh::Exception& exc)
-  {
-    shutdown_manager_.stop();
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Can't init task runner : "
-         << exc.what();
-    throw Exception(ostr);
   }
 
   for (int i = 1; i <= 2; ++i)
   {
-    if (!post_task(
-      ThreadID::Read,
-      &DataModelProviderImpl::do_read))
+    if (!post_task(ThreadID::Read, &DataModelProviderImpl::do_read))
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << " Fatal error: initial read is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << " Fatal error: initial read is failed";
+      throw Exception(stream);
     }
   }
 }
 
 void DataModelProviderImpl::stop() noexcept
 {
-  logger_->info(
-    std::string("DataModelProvider was interrupted"),
-    Aspect::DATA_PROVIDER);
+  std::ostringstream stream;
+  stream << FNS
+         << "DataModelProvider was interrupted";
+  logger_->info(stream.str(), Aspect::DATA_PROVIDER);
+
+  is_interrupted_.store(true);
   shutdown_manager_.stop();
-}
-
-void DataModelProviderImpl::wait() noexcept
-{
-  if (!is_running_)
-    return;
-
-  is_running_ = false;
-
-  shutdown_manager_.wait();
-
-  for (auto& task_runner : task_runners_)
-  {
-    try
-    {
-      task_runner->wait_for_queue_exhausting();
-    }
-    catch (...)
-    {}
-
-    try
-    {
-      task_runner->deactivate_object();
-      task_runner->wait_object();
-    }
-    catch (...)
-    {}
-  }
-
-  task_runners_.clear();
 }
 
 void DataModelProviderImpl::do_read() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   if (aggregated_files_.empty())
   {
-    if (!is_read_stoped_)
+    static bool is_read_stoped = false;
+    if (!is_read_stoped)
     {
       post_task(
         ThreadID::Calculate,
         &DataModelProviderImpl::do_stop);
     }
 
-    is_read_stoped_ = true;
+    is_read_stoped = true;
     return;
   }
 
@@ -240,8 +334,8 @@ void DataModelProviderImpl::do_read() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
+    Stream::Error stream;
+    stream << FNS
            << ": Can't add file="
            << file_path
            << " to model collector. Reason: "
@@ -268,7 +362,9 @@ void DataModelProviderImpl::do_calculate(
   Collector& temp_collector) noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   post_task(
     ThreadID::Read,
@@ -284,8 +380,8 @@ void DataModelProviderImpl::do_calculate(
       auto it_url_hash = url_hash_.find(url);
       if (it_url_hash == url_hash_.end())
       {
-        auto url_var = std::make_shared<std::string>(url);
-        it_url_hash = url_hash_.try_emplace(*url_var, url_var).first;
+        const auto url_ptr = std::make_shared<std::string>(url);
+        it_url_hash = url_hash_.try_emplace(*url_ptr, url_ptr).first;
       }
 
       const HelpCollector::Key key(tag_id, it_url_hash->second);
@@ -301,10 +397,19 @@ void DataModelProviderImpl::do_calculate(
   catch (const eh::Exception& exc)
   {
     shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << ": Reason : "
+    Stream::Error stream;
+    stream << FNS
+           << "Reason : "
            << exc.what();
+    logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
+    return;
+  }
+  catch (...)
+  {
+    shutdown_manager_.stop();
+    Stream::Error stream;
+    stream << FNS
+           << "Reason : Unknown error";
     logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
     return;
   }
@@ -318,7 +423,9 @@ void DataModelProviderImpl::do_calculate(
 void DataModelProviderImpl::do_clean(Collector& collector) noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   collector.clear();
   //pool_collector_.add_collector(std::move(collector));
@@ -327,32 +434,12 @@ void DataModelProviderImpl::do_clean(Collector& collector) noexcept
 void DataModelProviderImpl::do_stop() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
-  is_interrupted_.store(true);
-  is_success_ = true;
+  is_load_success_.store(true);
   shutdown_manager_.stop();
 }
 
-void DataModelProviderImpl::report_error(
-  Severity severity,
-  const String::SubString& description,
-  const char* error_code) noexcept
-{
-  if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
-  {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : DataModelProvider stopped due to incorrect operation of queues."
-           << " Reason: "
-           << description;
-    logger_->critical(
-      stream.str(),
-      Aspect::DATA_PROVIDER,
-      error_code);
-  }
-}
-
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

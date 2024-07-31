@@ -5,77 +5,74 @@
 #include <string>
 #include <vector>
 
+// UNIXCOMMONS
+#include <Generics/TaskRunner.hpp>
+#include <Logger/Logger.hpp>
+
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
-#include <Generics/TaskRunner.hpp>
 #include <LogCommons/BidCostStat.hpp>
-#include <Logger/Logger.hpp>
 #include "ActiveObjectObserver.hpp"
 #include "DataModelProvider.hpp"
 #include "LogHelper.hpp"
 #include "Persantage.hpp"
-#include "ShutdownManager.hpp"
 #include "PoolCollector.hpp"
+#include "ShutdownManager.hpp"
 
-namespace Aspect
-{
-extern const char* DATA_PROVIDER;
-}
-
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
 class DataModelProviderImpl final :
   public DataModelProvider,
-  public virtual ReferenceCounting::AtomicImpl,
-  private ActiveObjectDelegate
+  public ReferenceCounting::AtomicImpl
 {
+private:
   using DayTimestamp = LogProcessing::DayTimestamp;
-
   using Collector = LogProcessing::BidCostStatInnerCollector;
   using LogTraits = LogProcessing::BidCostStatInnerTraits;
-
   using Path = std::string;
   using AggregatedFiles = std::list<Path>;
-
   using Key = typename HelpCollector::Key;
-  using Url_var = typename Key::Url_var;
+  using UrlPtr = typename Key::UrlPtr;
   using Url = std::string_view;
-  using UrlHash = std::unordered_map<Url, Url_var>;
-
+  using UrlHash = std::unordered_map<Url, UrlPtr>;
   using Imps = typename HelpCollector::Imps;
-
-  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-  static constexpr std::uint8_t COUNT_THREADS = 3;
 
   enum class ThreadID
   {
     Read = 0,
     Calculate,
-    Clean
+    Clean,
+    MAX_NUMBER
   };
+
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
   DataModelProviderImpl(
     const Imps max_imps,
     const std::string& input_dir,
-    Logging::Logger* logger);
-
-  ~DataModelProviderImpl() override;
+    Logger* logger);
 
   bool load(HelpCollector& help_collector) noexcept override;
 
   void stop() noexcept override;
 
+protected:
+  ~DataModelProviderImpl() override;
+
 private:
-  void start();
+  void run();
 
   void wait() noexcept;
+
+  void clear() noexcept;
 
   void do_read() noexcept;
 
@@ -85,66 +82,28 @@ private:
 
   void do_clean(Collector& collector) noexcept;
 
-  void report_error(
-    Severity severity,
-    const String::SubString& description,
-    const char* error_code = 0) noexcept override;
-
-  template<class MemPtr,
-          class ...Args>
-  std::enable_if_t<
-    std::is_member_function_pointer_v<MemPtr>,
-    bool>
-  post_task(
+  template<ConceptMemberPtr MemPtr, class ...Args>
+  bool post_task(
     const ThreadID id,
     MemPtr mem_ptr,
-    Args&& ...args) noexcept
-  {
-    if (task_runners_.size() <= static_cast<std::size_t>(id))
-    {
-      shutdown_manager_.stop();
-      return false;
-    }
-
-    try
-    {
-      task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
-        AdServer::Commons::make_delegate_task(
-          std::bind(
-            mem_ptr,
-            this,
-            std::forward<Args>(args)...)));
-      return true;
-    }
-    catch (const eh::Exception& exc)
-    {
-      shutdown_manager_.stop();
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Can't enqueue_task"
-             << " Reason: "
-             << exc.what();
-      logger_->critical(
-              stream.str(),
-              Aspect::DATA_PROVIDER);
-      return false;
-    }
-  }
+    Args&& ...args) noexcept;
 
 private:
   const std::string input_dir_;
 
-  Logging::Logger_var logger_;
-
-  ActiveObjectObserver_var observer_;
+  const Logger_var logger_;
 
   const std::string prefix_;
 
-  std::vector<Generics::TaskRunner_var> task_runners_;
-
-  //PoolCollector<Collector, 1000000> pool_collector_;
-
   ShutdownManager shutdown_manager_;
+
+  ActiveObjectObserver_var observer_;
+
+  std::atomic<bool> is_idle_ = true;
+
+  std::atomic<bool> is_load_success_ = false;
+
+  std::atomic<bool> is_interrupted_ = false;
   // Read thread
   AggregatedFiles aggregated_files_;
   // Read thread
@@ -154,16 +113,11 @@ private:
   // Calculate thread
   UrlHash url_hash_;
 
-  bool is_read_stoped_ = false;
+  std::vector<Generics::TaskRunner_var> task_runners_;
 
-  bool is_running_ = false;
-
-  bool is_success_ = false;
-
-  std::atomic<bool> is_interrupted_{false};
+  //PoolCollector<Collector, 1000000> pool_collector_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_DATAPROVIDERWINIMPL_HPP

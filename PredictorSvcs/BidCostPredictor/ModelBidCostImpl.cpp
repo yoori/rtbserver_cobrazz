@@ -5,15 +5,15 @@
 
 namespace Aspect
 {
-const char* MODEL_BID_COST = "MODEL_BID_COST";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char MODEL_BID_COST[] = "MODEL_BID_COST";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
-ModelBidCostImpl::ModelBidCostImpl(Logging::Logger* logger)
+ModelBidCostImpl::ModelBidCostImpl(Logger* logger)
   : logger_(ReferenceCounting::add_ref(logger))
 {
   collector_.prepare_adding(10000000);
@@ -28,8 +28,8 @@ ModelBidCostImpl::Cost ModelBidCostImpl::get_cost(
   Cost min_cost(false, 100000, 0);
   Cost max_cost(false, 0, 0);
 
-  auto it =
-    win_rates_.lower_bound(std::tuple(tag_id, url, win_rate));
+  auto it = win_rates_.lower_bound(
+    std::tuple(tag_id, url, win_rate));
   const auto it_end = std::end(win_rates_);
   while (it != it_end
     && std::get<0>(it->first) == tag_id
@@ -54,18 +54,13 @@ ModelBidCostImpl::Cost ModelBidCostImpl::get_cost(
 
 void ModelBidCostImpl::set_cost(
   const TagId& tag_id,
-  const Url_var& url,
+  const UrlPtr& url,
   const WinRate& win_rate,
   const Cost& cost,
   const Cost& max_cost)
 {
-  const LogProcessing::BidCostKey key(
-    tag_id,
-    url,
-    win_rate);
-  const LogProcessing::BidCostData data(
-    cost,
-    max_cost);
+  const BidCostKey key(tag_id, url, win_rate);
+  const BidCostData data(cost, max_cost);
 
   collector_.add(key, data);
   win_rates_.try_emplace({
@@ -84,23 +79,37 @@ void ModelBidCostImpl::clear() noexcept
 
 void ModelBidCostImpl::save(const std::string& path) const
 {
-  logger_->info(
-    "ModelBidCost save started, file_path=" + path,
-    Aspect::MODEL_BID_COST);
+  {
+    std::ostringstream stream;
+    stream << FNS
+           << "ModelBidCost save started, file_path="
+           << path;
+    logger_->info(stream.str(), Aspect::MODEL_BID_COST);
+  }
 
   try
   {
-    LogHelper<LogProcessing::BidCostTraits>::save(path, collector_);
-    logger_->info(
-      std::string("ModelBidCost save is success"),
-      Aspect::MODEL_BID_COST);
+    LogHelper<BidCostTraits>::save(path, collector_);
+
+    std::ostringstream stream;
+    stream << FNS
+           << "ModelBidCost save is success";
+    logger_->info(stream.str(), Aspect::MODEL_BID_COST);
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelBidCost save is failed. Reason: "
+    Stream::Error stream;
+    stream << FNS
+           << "ModelBidCost save is failed. Reason: "
            << exc.what();
+    logger_->critical(stream.str(), Aspect::MODEL_BID_COST);
+    throw;
+  }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "ModelBidCost save is failed. Reason: Unknown error";
     logger_->critical(stream.str(), Aspect::MODEL_BID_COST);
     throw;
   }
@@ -110,35 +119,55 @@ void ModelBidCostImpl::load(const std::string& path)
 {
   try
   {
-    logger_->info(
-      "ModelBidCost load started, path=" + path,
-      Aspect::MODEL_BID_COST);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelBidCost load started, path="
+             << path;
+      logger_->info(stream.str(), Aspect::MODEL_BID_COST);
+    }
+
     clear();
-    LogHelper<LogProcessing::BidCostTraits>::load(path, collector_);
-    for (const auto& [k, d]: collector_)
+    LogHelper<BidCostTraits>::load(path, collector_);
+
+    for (const auto& [k, v]: collector_)
     {
       win_rates_.try_emplace({
         k.tag_id(),
         k.url(),
         k.win_rate()},
-        d.cost(),
-        d.max_cost());
+        v.cost(),
+        v.max_cost());
     }
-    logger_->info(
-      std::string("ModelBidCost load is success"),
-      Aspect::MODEL_BID_COST);
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelBidCost load is success";
+      logger_->info(stream.str(), Aspect::MODEL_BID_COST);
+    }
   }
   catch (const eh::Exception& exc)
   {
     clear();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelBidCost load is failed. Reason: "
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelBidCost load is failed. Reason: "
            << exc.what();
+    logger_->error(stream.str(), Aspect::MODEL_BID_COST);
+    throw;
+  }
+  catch (...)
+  {
+    clear();
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelBidCost load is failed. Reason: Unknown error";
     logger_->error(stream.str(), Aspect::MODEL_BID_COST);
     throw;
   }
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

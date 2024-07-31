@@ -1,12 +1,15 @@
 // STD
 #include <iostream>
 #include <string>
+#include <thread>
 
 // POSIX
 #include <signal.h>
 
-// THIS
+//UNIXCOMMONS
 #include <Generics/AppUtils.hpp>
+
+// THIS
 #include <Logger/StreamLogger.hpp>
 #include "Application.hpp"
 #include "AggregatorMultyThread.hpp"
@@ -14,19 +17,17 @@
 #include "DaemonImpl.hpp"
 #include "Pid.hpp"
 #include "ModelProcessor.hpp"
-#include "Processor.hpp"
 #include "ReaggregatorMultyThread.hpp"
 #include "Regenerator.hpp"
-#include "ThreadGuard.h"
 
 namespace Aspect
 {
-const char* APPLICATION = "APPLICATION";
-}
 
-namespace
-{
-const char USAGE[] =
+inline constexpr char APPLICATION[] = "APPLICATION";
+
+} // namespace Aspect
+
+inline constexpr char USAGE[] =
   "Usage: BitCostPredictor <COMMAND> [OPTIONS]\n"
   "Commands:\n"
   "  service start <PATH CONFIG>\n"
@@ -38,11 +39,8 @@ const char USAGE[] =
   "  service stop /home/user/config.json\n"
   "  service status /home/user/config.json\n"
   "  regenerate /tmp/original /tmp/destination\n";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 int Application::run(int argc, char **argv)
@@ -51,15 +49,13 @@ int Application::run(int argc, char **argv)
 
   Generics::AppUtils::Args args(-1);
   args.add(
-    Generics::AppUtils::equal_name("help")
-    || Generics::AppUtils::short_name("h"),
+    Generics::AppUtils::equal_name("help") || Generics::AppUtils::short_name("h"),
     option_help);
   args.parse(argc - 1, argv + 1);
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(
-      Logging::OStream::Config(std::cerr)));
+  Logging::Logger_var logger = new Logging::OStream::Logger(
+    Logging::OStream::Config(std::cerr));
 
   if (commands.empty()
    || option_help.enabled()
@@ -76,7 +72,7 @@ int Application::run(int argc, char **argv)
     ++it;
     if (it == commands.end())
     {
-      std::cerr << "daemon: daemon path_config not defined";
+      std::cerr << "service: option not defined (start/stop/status)";
       return EXIT_FAILURE;
     }
     const std::string& service_option = *it;
@@ -92,10 +88,8 @@ int Application::run(int argc, char **argv)
     if (service_option == "start")
     {
       const Configuration configuration(path_config);
-      const std::string log_path =
-        configuration.get("config.log_path");
-      const std::string pid_path =
-        configuration.get("config.pid_path");
+      const std::string log_path = configuration.get("config.log_path");
+      const std::string pid_path = configuration.get("config.pid_path");
 
       const std::size_t model_period =
         configuration.get<std::size_t>("config.model.period");
@@ -107,24 +101,21 @@ int Application::run(int argc, char **argv)
       std::ofstream ostream(log_path, std::ios::app);
       if (!ostream.is_open())
       {
-        Stream::Error ostr;
-        ostr << __PRETTY_FUNCTION__
-             << "Can't open file="
-             << log_path;
-        throw Exception(ostr);
+        Stream::Error stream;
+        stream << FNS
+               << "Can't open file="
+               << log_path;
+        throw Exception(stream);
       }
-      Logging::Logger_var logger(
-        new Logging::OStream::Logger(
-          Logging::OStream::Config(
-            ostream,
-            Logging::Logger::INFO)));
+      Logging::Logger_var logger = new Logging::OStream::Logger(
+        Logging::OStream::Config(
+          ostream,
+          Logging::Logger::INFO));
 
       std::stringstream stream;
       stream << "Configuration:\n"
              << configuration;
-      logger->info(
-        stream.str(),
-        Aspect::APPLICATION);
+      logger->info(stream.str(), Aspect::APPLICATION);
 
       Daemon_var daemon(
         new DaemonImpl(
@@ -140,9 +131,9 @@ int Application::run(int argc, char **argv)
       }
       catch (const eh::Exception& exc)
       {
-        std::stringstream stream;
-        stream << __PRETTY_FUNCTION__
-               << " : Reason: "
+        Stream::Error stream;
+        stream << FNS
+               << "Reason: "
                << exc.what();
         logger->critical(stream.str(), Aspect::APPLICATION);
         return EXIT_FAILURE;
@@ -172,9 +163,9 @@ int Application::run(int argc, char **argv)
       }
       catch (const eh::Exception& exc)
       {
-        std::stringstream stream;
-        stream << __PRETTY_FUNCTION__
-               << " : Reason: "
+        Stream::Error stream;
+        stream << FNS
+               << "Reason: "
                << exc.what();
         std::cerr << stream.str()
                   << std::endl;
@@ -203,9 +194,9 @@ int Application::run(int argc, char **argv)
       }
       catch (const eh::Exception& exc)
       {
-        std::stringstream stream;
-        stream << __PRETTY_FUNCTION__
-               << " : Reason: "
+        Stream::Error stream;
+        stream << FNS
+               << "Reason: "
                << exc.what();
         std::cerr << stream.str()
                   << std::endl;
@@ -219,7 +210,10 @@ int Application::run(int argc, char **argv)
   {
     ++it;
     if (it == commands.end())
+    {
+      std::cerr << "path_config not defined";
       return EXIT_FAILURE;
+    }
 
     const std::string& path_config = *it;
 
@@ -231,7 +225,7 @@ int Application::run(int argc, char **argv)
     if (!ostream.is_open())
     {
       Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
+      ostr << FNS
            << "Can't open file="
            << log_path;
       throw Exception(ostr);
@@ -288,8 +282,7 @@ int Application::run(int argc, char **argv)
       Processor_var processor;
       if (command == "model")
       {
-        processor = Processor_var(
-          new ModelProcessor(
+        processor = new ModelProcessor(
             bid_cost_model_dir,
             bid_cost_model_file_name,
             bid_cost_model_temp_dir,
@@ -300,25 +293,23 @@ int Application::run(int argc, char **argv)
             ctr_model_trust_imps,
             ctr_model_tag_imps,
             model_agg_dir,
-            logger));
+            logger);
       }
       else if (command == "aggregate")
       {
-        processor = Processor_var(
-          new AggregatorMultyThread(
+        processor = new AggregatorMultyThread(
             agg_max_process_files,
             agg_dump_max_size,
             agg_input_dir,
             agg_output_dir,
-            logger));
+            logger);
       }
       else if (command == "reaggregate")
       {
-        processor = Processor_var(
-          new ReaggregatorMultyThread(
+        processor = new ReaggregatorMultyThread(
             reagg_input_dir,
             reagg_output_dir,
-            logger));
+            logger);
       }
       else
       {
@@ -333,17 +324,17 @@ int Application::run(int argc, char **argv)
       sigaddset(&mask, SIGUSR1);
       sigprocmask(SIG_BLOCK, &mask, nullptr);
 
-      ThreadGuard thread([processor, logger, mask] () {
+      std::jthread thread([processor, logger, mask] () {
         try
         {
           int signo = 0;
           if (sigwait(&mask, &signo) != 0)
           {
-            std::stringstream stream;
-            stream << __PRETTY_FUNCTION__
-                   << " : sigwait is failed";
+            Stream::Error stream;
+            stream << FNS
+                   << "sigwait is failed";
             logger->critical(stream.str(), Aspect::APPLICATION);
-            processor->stop();
+            processor->deactivate_object();
           }
           else
           {
@@ -367,55 +358,75 @@ int Application::run(int argc, char **argv)
             {
               stream << " interrupted service";
               logger->info(stream.str(), Aspect::APPLICATION);
-              processor->stop();
+              processor->deactivate_object();
             }
           }
         }
         catch (const eh::Exception &exc)
         {
-          std::stringstream stream;
-          stream << __PRETTY_FUNCTION__
-                 << " : Reason: "
-                 << exc.what();
-          logger->critical(stream.str(), Aspect::APPLICATION);
-          processor->stop();
+          try
+          {
+            Stream::Error stream;
+            stream << FNS
+                   << "Reason: "
+                   << exc.what();
+            logger->critical(stream.str(), Aspect::APPLICATION);
+            processor->deactivate_object();
+          }
+          catch (...)
+          {
+          }
         }
       });
 
       try
       {
-        processor->start();
-        processor->wait();
+        processor->activate_object();
       }
-      catch (const eh::Exception &exc)
+      catch (const eh::Exception& exc)
       {
         kill(::getpid(), SIGUSR1);
         logger->critical(std::string(exc.what()), Aspect::APPLICATION);
 
-        std::stringstream stream;
+        Stream::Error stream;
         stream << processor->name()
                << ": is failed";
         logger->critical(stream.str(), Aspect::APPLICATION);
-        throw;
+
+        try
+        {
+          processor->deactivate_object();
+        }
+        catch (...)
+        {
+        }
+      }
+
+      try
+      {
+        processor->wait_object();
+      }
+      catch (...)
+      {
       }
 
       const auto pid = ::getpid();
       if (::kill(pid, SIGUSR1) == -1)
       {
-        std::stringstream stream;
-        stream << __PRETTY_FUNCTION__
-               << " : Reason: kill is failed";
+        Stream::Error stream;
+        stream << FNS
+               << "Reason: kill is failed";
         logger->error(stream.str(), Aspect::APPLICATION);
       }
     }
     catch (const eh::Exception& exc)
     {
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << " : Reason: "
+      Stream::Error stream;
+      stream << FNS
+             << "Reason: "
              << exc.what();
       logger->critical(stream.str(), Aspect::APPLICATION);
-      throw;
+      return EXIT_FAILURE;
     }
   }
   else if (command == "regenerate")
@@ -438,13 +449,38 @@ int Application::run(int argc, char **argv)
     }
     output_directory = *it;
 
-    Processor_var processor(
-      new Regenerator(
-        input_directory,
-        output_directory,
-        logger));
-    processor->start();
-    processor->wait();
+    Processor_var processor = new Regenerator(
+      input_directory,
+      output_directory,
+      logger);
+
+    try
+    {
+      processor->activate_object();
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << processor->name()
+             << ": is failed";
+      logger->critical(stream.str(), Aspect::APPLICATION);
+
+      try
+      {
+        processor->deactivate_object();
+      }
+      catch (...)
+      {
+      }
+    }
+
+    try
+    {
+      processor->wait_object();
+    }
+    catch (...)
+    {
+    }
   }
   else
   {
@@ -457,5 +493,4 @@ int Application::run(int argc, char **argv)
   return EXIT_SUCCESS;
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

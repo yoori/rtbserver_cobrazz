@@ -1,15 +1,15 @@
 #ifndef BIDCOSTPREDICTOR_MODELFACTORY_HPP
 #define BIDCOSTPREDICTOR_MODELFACTORY_HPP
 
-// THIS
+// UNIXCOMMONS
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+
+// THIS
 #include "ModelCtr.hpp"
 #include "ModelBidCost.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 template<class Model>
@@ -33,7 +33,6 @@ using ModelBidCostFactory_var = ReferenceCounting::SmartPtr<ModelBidCostFactory>
 using ModelCtrFactory = ModelFactory<ModelCtr>;
 using ModelCtrFactory_var = ReferenceCounting::SmartPtr<ModelCtrFactory>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_MODELFACTORY_HPP

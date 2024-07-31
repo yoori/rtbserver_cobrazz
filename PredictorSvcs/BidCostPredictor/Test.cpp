@@ -3,14 +3,17 @@
 
 // STD
 #include <chrono>
+#include <filesystem>
 #include <regex>
 #include <string>
 
 // POSIX
 #include <sys/stat.h>
 
-// THIS
+// UNIXCOMMONS
 #include <Generics/Uncopyable.hpp>
+
+// THIS
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <Logger/StreamLogger.hpp>
@@ -25,8 +28,6 @@
 #include "ModelEvaluatorBidCost.hpp"
 #include "ModelEvaluatorCtr.hpp"
 #include "ModelBidCostFactory.hpp"
-#include "ModelCtrFactory.hpp"
-#include "Processor.hpp"
 #include "DataModelProviderImpl.hpp"
 #include "Reaggregator.hpp"
 #include "ReaggregatorMultyThread.hpp"
@@ -35,11 +36,12 @@
 
 namespace Aspect
 {
-const char TEST_BID_PREDICTOR[] = "Test";
-}
+
+inline constexpr char TEST_BID_PREDICTOR[] = "Test";
+
+} // namespace Aspect
 
 using namespace PredictorSvcs::BidCostPredictor;
-
 namespace LogProcessing = AdServer::LogProcessing;
 
 DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -48,22 +50,24 @@ using FixedNumber = LogProcessing::FixedNumber;
 
 void copy_file(
   const std::string& path_in,
-  const std::string& pah_out)
+  const std::string& path_out)
 {
   std::ifstream istream(path_in);
   if (!istream.is_open())
   {
-    Stream::Error ostr;
-    ostr << "Can't open file" << path_in;
-    throw Exception(ostr);
+    Stream::Error stream;
+    stream << "Can't open file"
+           << path_in;
+    throw Exception(stream);
   }
 
-  std::ofstream ostream(pah_out);
+  std::ofstream ostream(path_out);
   if (!ostream.is_open())
   {
-    Stream::Error ostr;
-    ostr << "Can't open file" << pah_out;
-    throw Exception(ostr);
+    Stream::Error stream;
+    stream << "Can't open file"
+           << path_out;
+    throw Exception(stream);
   }
 
   std::istreambuf_iterator<char> it_begin(istream);
@@ -73,32 +77,36 @@ void copy_file(
 
   if (!ostream.good())
   {
-    Stream::Error ostr;
-    ostr << "Error copy file=" << path_in
-         << " to" << pah_out;
-    throw Exception(ostr);
+    Stream::Error stream;
+    stream << "Error copy file="
+         << path_in
+         << " to"
+         << path_out;
+    throw Exception(stream);
   }
 }
 
 class TestAgg final : private Generics::Uncopyable
 {
+private:
   using Collector = LogProcessing::BidCostStatCollector;
   using Key = typename Collector::KeyT;
   using Data = typename Collector::DataT;
   using LogTraits = LogProcessing::BidCostStatTraits;
-
   using CollectorInner = LogProcessing::BidCostStatInnerCollector;
   using KeyInner = typename CollectorInner::KeyT;
   using DataInner = typename CollectorInner::DataT;
   using LogInnerTraits = LogProcessing::BidCostStatInnerTraits;
-
   using DayTimestamp = LogProcessing::DayTimestamp;
-
   using Processors = std::list<Processor_var>;
 
 public:
-  TestAgg(
-    Logging::Logger* logger,
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
+public:
+  explicit TestAgg(
+    Logger* logger,
     const std::string& directory,
     const std::size_t number_dates_per_file = 5,
     const std::size_t number_record_per_date = 1000,
@@ -111,10 +119,10 @@ public:
   void add_processor(Processor_var&& processor);
 
 private:
-  bool run_helper();
+  bool run_test();
 
 private:
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 
   const std::string directory_;
 
@@ -130,7 +138,7 @@ private:
 };
 
 TestAgg::TestAgg(
-  Logging::Logger* logger,
+  Logger* logger,
   const std::string& directory,
   const std::size_t number_dates_per_file,
   const std::size_t number_record_per_date,
@@ -146,7 +154,9 @@ TestAgg::TestAgg(
 void TestAgg::add_processor(Processor_var&& processor)
 {
   if (!processor)
+  {
     throw Exception("processor is null");
+  }
 
   processors_.emplace_back(std::move(processor));
 }
@@ -155,7 +165,7 @@ bool TestAgg::run() noexcept
 {
   try
   {
-    const bool status = run_helper();
+    const bool status = run_test();
     if (status)
     {
       logger_->info(
@@ -173,24 +183,31 @@ bool TestAgg::run() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
+    Stream::Error stream;
     stream << "TEST FAILED.\n Reason: "
            << exc.what();
-    logger_->error(
-      stream.str(),
-      Aspect::TEST_BID_PREDICTOR);
-    return false;
+    logger_->error(stream.str(), Aspect::TEST_BID_PREDICTOR);
   }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << "TEST FAILED.\n Reason: Unknown error";
+    logger_->error(stream.str(), Aspect::TEST_BID_PREDICTOR);
+  }
+
+  return false;
 }
 
-bool TestAgg::run_helper()
+bool TestAgg::run_test()
 {
   logger_->info(
     std::string("Start test..."),
     Aspect::TEST_BID_PREDICTOR);
 
-  if (!Utils::exist_directory(directory_))
+  if (!std::filesystem::is_directory(directory_))
+  {
     throw Exception("Not existing directory=" + directory_);
+  }
 
   auto files = Utils::get_directory_files(directory_);
   for (const auto& file : files)
@@ -244,10 +261,14 @@ bool TestAgg::run_helper()
   const std::string prefix(LogTraits::B::log_base_name());
   files = Utils::get_directory_files(directory_, prefix);
   if (files.empty())
+  {
     throw Exception("File not created. Fatal error");
+  }
 
   if (files.size() > 1)
+  {
     throw Exception("Logic error. Number files in directory more then 1");
+  }
 
   const auto& path = *files.begin();
 
@@ -273,12 +294,12 @@ bool TestAgg::run_helper()
   {
     const auto t_start = std::chrono::high_resolution_clock::now();
 
-    processor->start();
-    processor->wait();
+    processor->activate_object();
+    processor->wait_object();
 
     const auto t_end = std::chrono::high_resolution_clock::now();
-    const double elapsed_time_ms =
-      std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    const double elapsed_time_ms = std::chrono::duration<double, std::milli>(
+      t_end - t_start).count();
     std::stringstream stream;
     stream << processor->name()
            << " elapsed time[ms] = "
@@ -338,7 +359,7 @@ BOOST_AUTO_TEST_CASE(single_thread)
   const std::size_t max_process_files = 51;
   const std::size_t dump_max_size = 1303;
 
-  if (!Utils::exist_directory(directory))
+  if (!std::filesystem::is_directory(directory))
   {
     Stream::Error ostr;
     ostr << "Not existing directory="
@@ -348,12 +369,12 @@ BOOST_AUTO_TEST_CASE(single_thread)
 
   const std::string result_directory =
   directory + "/" + "agg_reagg";
-  if (!Utils::exist_directory(result_directory))
+  if (!std::filesystem::is_directory(result_directory))
   {
     if (mkdir(result_directory.c_str(), 0777) != 0)
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
+      stream << FNS
              << "Can't create directory="
              << result_directory;
       throw Exception(stream);
@@ -401,7 +422,7 @@ BOOST_AUTO_TEST_CASE(multiple_thread)
   const std::size_t max_process_files = 51;
   const std::size_t dump_max_size = 1303;
 
-  if (!Utils::exist_directory(directory))
+  if (!std::filesystem::is_directory(directory))
   {
     Stream::Error ostr;
     ostr << "Not existing directory="
@@ -411,12 +432,12 @@ BOOST_AUTO_TEST_CASE(multiple_thread)
 
   const std::string result_directory =
   directory + "/" + "agg_reagg";
-  if (!Utils::exist_directory(result_directory))
+  if (!std::filesystem::is_directory(result_directory))
   {
     if (mkdir(result_directory.c_str(), 0777) != 0)
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
+      stream << FNS
              << "Can't create directory="
              << result_directory;
       throw Exception(stream);
@@ -475,7 +496,7 @@ BOOST_AUTO_TEST_CASE(provider)
     std::string("Start data model provider test"),
     Aspect::TEST_BID_PREDICTOR);
 
-  if (!Utils::exist_directory(directory))
+  if (!std::filesystem::is_directory(directory))
   {
     Stream::Error stream;
     stream << "Not existing directory="
@@ -483,9 +504,8 @@ BOOST_AUTO_TEST_CASE(provider)
     throw  Exception(stream);
   }
 
-  const std::string result_directory =
-    directory + "/" + "provider";
-  if (!Utils::exist_directory(result_directory))
+  const std::string result_directory = directory + "/" + "provider";
+  if (!std::filesystem::is_directory(result_directory))
   {
     if (mkdir(result_directory.c_str(), 0777) != 0)
     {
@@ -497,8 +517,7 @@ BOOST_AUTO_TEST_CASE(provider)
     }
   }
 
-  const auto need_delete_files =
-    Utils::get_directory_files(result_directory);
+  const auto need_delete_files = Utils::get_directory_files(result_directory);
   for (const auto& path : need_delete_files)
   {
     std::remove(path.c_str());
@@ -576,12 +595,14 @@ BOOST_AUTO_TEST_CASE(provider)
       logger));
   HelpCollector help_hollector_result(100000);
   provider->load(help_hollector_result);
-  help_hollector_result.operator==(help_hollector_result);
+
+  BOOST_CHECK_EQUAL(help_hollector_result == help_hollector_check, true);
+
   logger->info(
     std::string("Data model provider test is finished"),
     Aspect::TEST_BID_PREDICTOR);
 
-  BOOST_CHECK_EQUAL(help_hollector_result == help_hollector_check, true);
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -1296,7 +1317,7 @@ BOOST_AUTO_TEST_CASE(test1)
 {
   HelpCollector collector(100);
 
-  HelpCollector::Key key(1, Types::Url_var(new std::string("url1")));
+  HelpCollector::Key key(1, Types::UrlPtr(new std::string("url1")));
   auto& inner_collecrtor = collector.find_or_insert(key);
   BOOST_CHECK_EQUAL(inner_collecrtor.empty(), true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 0, true);

@@ -9,12 +9,12 @@
 
 namespace Aspect
 {
-const char* DAEMON_IMPL = "DAEMON_IMPL";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char DAEMON_IMPL[] = "DAEMON_IMPL";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 DaemonImpl::DaemonImpl(
@@ -30,33 +30,79 @@ DaemonImpl::DaemonImpl(
     agg_period_(agg_period),
     reagg_period_(reagg_period),
     path_exe_(get_path_exe()),
-    logger_(ReferenceCounting::add_ref(logger)),
-    observer_(new ActiveObjectObserver(this))
+    logger_(ReferenceCounting::add_ref(logger))
 {
+  using Severity = Generics::ActiveObjectCallback::Severity;
+
+  observer_ = new ActiveObjectObserver(
+    [this] (
+      const Severity severity,
+      const String::SubString& description,
+      const char* error_code) {
+      if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "DaemonImpl stopped due to incorrect operation of queues."
+               << " Reason: "
+               << description;
+        logger_->critical(
+          stream.str(),
+          Aspect::DAEMON_IMPL,
+          error_code);
+
+        stop();
+      }
+    });
 }
 
-DaemonImpl::~DaemonImpl()
+template<ConceptMemberPtr MemPtr, class ...Args>
+bool DaemonImpl::post_task(
+  MemPtr mem_ptr,
+  const std::size_t count_sec,
+  Args&& ...args) noexcept
 {
-  observer_->clear_delegate();
-  shutdown_manager_.stop();
-  wait_logic();
+  try
+  {
+    const auto time = Generics::Time::get_time_of_day()
+      + Generics::Time::ONE_SECOND * count_sec;
+    planner_->schedule(
+      AdServer::Commons::make_delegate_goal_task(
+        std::bind(
+          mem_ptr,
+          this,
+          std::forward<Args>(args)...),
+        task_runner_),
+      time);
+
+    return true;
+  }
+  catch (const eh::Exception& exc)
+  {
+    stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't schedule task. Reason: "
+           << exc.what();
+    logger_->critical(stream.str(), Aspect::DAEMON_IMPL);
+
+    return false;
+  }
 }
 
 void DaemonImpl::start_logic()
 {
-  is_running_ = true;
-
-  task_runner_ =
-    Generics::TaskRunner_var(
-      new Generics::TaskRunner(observer_, 1));
-  planner_ =
-    Generics::Planner_var(
-      new Generics::Planner(observer_));
-
+  task_runner_ = new Generics::TaskRunner(observer_, 1);
   task_runner_->activate_object();
+
+  planner_ = new Generics::Planner(observer_);
   planner_->activate_object();
 
-  logger_->info(std::string("DaemonImpl is started"), Aspect::DAEMON_IMPL);
+  std::ostringstream stream;
+  stream << FNS
+         << "DaemonImpl is started";
+  logger_->info(stream.str(), Aspect::DAEMON_IMPL);
 
   post_task(&DaemonImpl::do_task_agg, 0);
   post_task(&DaemonImpl::do_task_reagg, 1);
@@ -65,7 +111,10 @@ void DaemonImpl::start_logic()
 
 void DaemonImpl::stop_logic() noexcept
 {
-  logger_->info(std::string("Stopping DaemonImpl..."), Aspect::DAEMON_IMPL);
+  std::ostringstream stream;
+  stream << FNS
+         << "Stopping DaemonImpl...";
+  logger_->info(stream.str(), Aspect::DAEMON_IMPL);
 
   shutdown_manager_.stop();
 
@@ -78,11 +127,6 @@ void DaemonImpl::stop_logic() noexcept
 
 void DaemonImpl::wait_logic() noexcept
 {
-  if (!is_running_)
-    return;
-
-  is_running_ = false;
-
   shutdown_manager_.wait();
 
   try
@@ -94,15 +138,19 @@ void DaemonImpl::wait_logic() noexcept
     }
   }
   catch (...)
-  {}
+  {
+  }
 
   try
   {
     if (task_runner_)
+    {
       task_runner_->wait_for_queue_exhausting();
+    }
   }
   catch (...)
-  {}
+  {
+  }
 
   try
   {
@@ -113,20 +161,24 @@ void DaemonImpl::wait_logic() noexcept
     }
   }
   catch (...)
-  {}
+  {
+  }
 
-  task_runner_.reset();
   planner_.reset();
+  task_runner_.reset();
 
-  logger_->info(
-    std::string("DaemonImpl is stoped"),
-    Aspect::DAEMON_IMPL);
+  std::ostringstream stream;
+  stream << FNS
+         << "DaemonImpl is stoped";
+  logger_->info(stream.str(), Aspect::DAEMON_IMPL);
 }
 
 void DaemonImpl::do_task_model() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   try
   {
@@ -137,12 +189,14 @@ void DaemonImpl::do_task_model() noexcept
     Process_var process;
     {
       std::lock_guard lock(mutex_process_);
-      process = Process_var(new Process(path_exe_, options));
+      process = new Process(path_exe_, options);
       process_ = process;
     }
 
     if (shutdown_manager_.is_stoped())
+    {
       return;
+    }
 
     process->launch();
     process->wait();
@@ -152,9 +206,9 @@ void DaemonImpl::do_task_model() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Reason : "
+    Stream::Error stream;
+    stream << FNS
+           << "Reason : "
            << exc.what();
     logger_->error(stream.str(), Aspect::DAEMON_IMPL);
 
@@ -170,7 +224,9 @@ void DaemonImpl::do_task_model() noexcept
 void DaemonImpl::do_task_agg() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   try
   {
@@ -181,12 +237,14 @@ void DaemonImpl::do_task_agg() noexcept
     Process_var process;
     {
       std::lock_guard lock(mutex_process_);
-      process = Process_var(new Process(path_exe_, options));
+      process = new Process(path_exe_, options);
       process_ = process;
     }
 
     if (shutdown_manager_.is_stoped())
+    {
       return;
+    }
 
     process->launch();
     process->wait();
@@ -196,9 +254,9 @@ void DaemonImpl::do_task_agg() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Reason : "
+    Stream::Error stream;
+    stream << FNS
+           << "Reason : "
            << exc.what();
     logger_->error(stream.str(), Aspect::DAEMON_IMPL);
 
@@ -214,7 +272,9 @@ void DaemonImpl::do_task_agg() noexcept
 void DaemonImpl::do_task_reagg() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   try
   {
@@ -232,18 +292,20 @@ void DaemonImpl::do_task_reagg() noexcept
     process->wait();
 
     if (shutdown_manager_.is_stoped())
+    {
       return;
+    }
 
     std::lock_guard lock(mutex_process_);
     process_.reset();
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Reason : "
-         << exc.what();
-    logger_->error(ostr.str(), Aspect::DAEMON_IMPL);
+    Stream::Error stream;
+    stream << FNS
+           << "Reason : "
+           << exc.what();
+    logger_->error(stream.str(), Aspect::DAEMON_IMPL);
 
     std::lock_guard lock(mutex_process_);
     process_.reset();
@@ -261,8 +323,8 @@ std::string DaemonImpl::get_path_exe()
   if (sprintf(arg, "/proc/%d/exe", getpid()) < 0)
   {
     Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Reason : "
+    ostr << FNS
+         << "Reason : "
          << "sprintf is failed";
     throw Exception(ostr);
   }
@@ -270,8 +332,8 @@ std::string DaemonImpl::get_path_exe()
   if (readlink(arg, exe_path, PATH_MAX) == -1)
   {
     Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Reason : "
+    ostr << FNS
+         << "Reason : "
          << "readlink is failed";
     throw Exception(ostr);
   }
@@ -279,22 +341,4 @@ std::string DaemonImpl::get_path_exe()
   return std::string(exe_path);
 }
 
-void DaemonImpl::report_error(
-  Severity severity,
-  const String::SubString& description,
-  const char* error_code) noexcept
-{
-  if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
-  {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : DaemonImpl stopped due to incorrect operation of queues."
-           << " Reason: "
-           << description;
-    logger_->critical(stream.str(), Aspect::DAEMON_IMPL, error_code);
-  }
-}
-
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

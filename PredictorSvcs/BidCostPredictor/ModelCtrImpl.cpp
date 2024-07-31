@@ -4,12 +4,12 @@
 
 namespace Aspect
 {
-const char* MODEL_CTR = "MODEL_CTR";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char MODEL_CTR[] = "MODEL_CTR";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 ModelCtrImpl::ModelCtrImpl(Logging::Logger* logger)
@@ -22,14 +22,11 @@ ModelCtrImpl::Ctr ModelCtrImpl::get_ctr(
   const TagId& tag_id,
   const Url& url) const
 {
-  const LogProcessing::CtrKey key(
-    tag_id,
-    url);
-  if (const auto it = collector_.find(key);
-    it != collector_.end())
+  const CtrKey key(tag_id, url);
+  const auto it = collector_.find(key);
+  if (it != std::end(collector_))
   {
-    const auto& ctr = it->second.ctr();
-    return ctr ;
+    return it->second.ctr() ;
   }
   else
   {
@@ -39,43 +36,65 @@ ModelCtrImpl::Ctr ModelCtrImpl::get_ctr(
 
 void ModelCtrImpl::set_ctr(
   const TagId& tag_id,
-  const Url_var& url,
+  const UrlPtr& url,
   const Ctr& ctr)
 {
-  const LogProcessing::CtrKey key(
-    tag_id,
-    url);
-  const LogProcessing::CtrData data(
-    ctr);
-
+  const CtrKey key(tag_id, url);
+  const CtrData data(ctr);
   collector_.add(key, data);
 }
 
 void ModelCtrImpl::clear() noexcept
 {
-  collector_.clear();
+  try
+  {
+    collector_.clear();
+  }
+  catch (...)
+  {
+  }
 }
 
 void ModelCtrImpl::load(const std::string& path)
 {
   try
   {
-    logger_->info(
-      "ModelCtr load started, path=" + path,
-      Aspect::MODEL_CTR);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelCtr load started, path="
+             << path;
+      logger_->info(stream.str(), Aspect::MODEL_CTR);
+    }
+
     clear();
     LogHelper<LogProcessing::CtrTraits>::load(path, collector_);
-    logger_->info(
-      std::string("ModelCtr load is success"),
-      Aspect::MODEL_CTR);
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelCtr load is success";
+      logger_->info(stream.str(), Aspect::MODEL_CTR);
+    }
   }
   catch (const eh::Exception& exc)
   {
     clear();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelCtr load is failed. Reason: "
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelCtr load is failed. Reason: "
            << exc.what();
+    logger_->error(stream.str(), Aspect::MODEL_CTR);
+    throw;
+  }
+  catch (...)
+  {
+    clear();
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelCtr load is failed. Reason: Unknown error";
     logger_->error(stream.str(), Aspect::MODEL_CTR);
     throw;
   }
@@ -85,24 +104,44 @@ void ModelCtrImpl::save(const std::string& path) const
 {
   try
   {
-    logger_->info(
-      "ModelCtr save started, file_path=" + path,
-      Aspect::MODEL_CTR);
-    LogHelper<LogProcessing::CtrTraits>::save(path, collector_);
-    logger_->info(
-      std::string("ModelCtr save is success"),
-      Aspect::MODEL_CTR);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelCtr save started, file_path="
+             << path;
+      logger_->info(stream.str(), Aspect::MODEL_CTR);
+    }
+
+    LogHelper<CtrTraits>::save(path, collector_);
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "ModelCtr save is success";
+      logger_->info(stream.str(), Aspect::MODEL_CTR);
+    }
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelCtr save is failed. Reason: "
+    std::remove(path.c_str());
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelCtr save is failed. Reason: "
            << exc.what();
+    logger_->error(stream.str(), Aspect::MODEL_CTR);
+    throw;
+  }
+  catch (...)
+  {
+    std::remove(path.c_str());
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelCtr save is failed. Reason: Unknown error";
     logger_->error(stream.str(), Aspect::MODEL_CTR);
     throw;
   }
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

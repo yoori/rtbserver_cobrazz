@@ -4,40 +4,41 @@
 // STD
 #include <fstream>
 
-// THIS
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
+
+// THIS
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/LogCommons.hpp>
 
-namespace AdServer
+namespace AdServer::LogProcessing
 {
-namespace LogProcessing
-{
+
 using BidCostStatInnerTraits = LogDefaultTraits<BidCostStatInnerCollector, false>;
-} // namespace LogProcessing
-} // namespace AdServer
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+} // namespace AdServer::LogProcessing
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
-namespace detail
+namespace Detail
 {
+
 template<class, class = void>
-struct is_collector : std::false_type
+struct IsCollector : std::false_type
 {
 };
 
 template<class T>
-struct is_collector<T, std::void_t<typename T::CollectorTag>> : std::true_type
+struct IsCollector<T, std::void_t<typename T::CollectorTag>> : std::true_type
 {
 };
 
 template<class T>
-constexpr bool is_collector_v = is_collector<T>::value;
-} // namespace detail
+constexpr bool IsCollectorV = IsCollector<T>::value;
+
+} // namespace Detail
 
 namespace LogProcessing = AdServer::LogProcessing;
 
@@ -50,14 +51,16 @@ struct LogHelper
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  static void load(const std::string& file_path, Collector& collector)
+  static void load(
+    const std::string& file_path,
+    Collector& collector)
   {
     std::ifstream fstream(file_path);
     if (!fstream.is_open())
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Can't open file="
+      stream << FNS
+             << "Can't open file="
              << file_path;
       throw Exception(stream);
     }
@@ -68,23 +71,27 @@ struct LogHelper
     if (!(fstream >> log_header))
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Failed to read log header [file="
-             << file_path << "]";
+      stream << FNS
+             << "Failed to read log header [file="
+             << file_path
+             << "]";
       throw Exception(stream);
     }
 
     if (log_header.version() != LogTraits::current_version())
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Invalid log header version [file="
-             << file_path << "]";
+      stream << FNS
+             << "Invalid log header version [file="
+             << file_path
+             << "]";
       throw Exception(stream);
     }
 
     if (fstream.eof() || fstream.peek() == EOF)
+    {
       return;
+    }
 
     LogProcessing::LogIoProxy<LogTraits>::load(collector, fstream);
   }
@@ -97,8 +104,8 @@ struct LogHelper
     if (!fstream.is_open())
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Can't open file="
+      stream << FNS
+             << "Can't open file="
              << path;
       throw Exception(stream);
     }
@@ -108,29 +115,58 @@ struct LogHelper
 
     if (!(fstream << log_header))
     {
+      std::remove(path.c_str());
+
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Failed to write log header [file="
+      stream << FNS
+             << "Failed to write log header [file="
              << path
              << "]";
       throw Exception(stream);
     }
 
     if (collector.empty())
+    {
       return;
-
-    if constexpr (detail::is_collector_v<DataT>)
-    {
-      LogProcessing::PackedSaveStrategy<LogTraits>().save(fstream, collector);
     }
-    else
+
+    try
     {
-      LogProcessing::DefaultSaveStrategy<LogTraits>().save(fstream, collector);
+      if constexpr (Detail::IsCollectorV<DataT>)
+      {
+        LogProcessing::PackedSaveStrategy<LogTraits>().save(fstream, collector);
+      }
+      else
+      {
+        LogProcessing::DefaultSaveStrategy<LogTraits>().save(fstream, collector);
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      std::remove(path.c_str());
+
+      Stream::Error stream;
+      stream << FNS
+             << "Failed to write collector [file="
+             << path
+             << "] Reason: "
+             << exc.what();
+      throw Exception(stream);
+    }
+    catch (...)
+    {
+      std::remove(path.c_str());
+
+      Stream::Error stream;
+      stream << FNS
+             << "Failed to write collector [file="
+             << path
+             << "] Reason: Unknown error";
+      throw Exception(stream);
     }
   }
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_LOGHELPER_HPP

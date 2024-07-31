@@ -1,33 +1,32 @@
 add_library(BidCostPredictorLib SHARED
-  Application.cpp
   Aggregator.cpp
   AggregatorMultyThread.cpp
+  Application.cpp
+  BidCostCollector.cpp
   Configuration.cpp
   ContainerImpl.cpp
   CtrCollector.cpp
-  DataModelProviderImpl.cpp
   Daemon.cpp
   DaemonImpl.cpp
+  DataModelProviderImpl.cpp
   LogHelper.cpp
-  ModelCtrImpl.cpp
-  ModelEvaluatorCtr.cpp
-  ModelEvaluatorBidCost.cpp
   ModelBidCostImpl.cpp
+  ModelCtrImpl.cpp
+  ModelEvaluatorBidCost.cpp
+  ModelEvaluatorCtr.cpp
   ModelProcessor.cpp
   Process.cpp
-  Regenerator.cpp
   Reaggregator.cpp
   ReaggregatorMultyThread.cpp
+  Regenerator.cpp
   Storage.cpp
-  BidCostCollector.cpp
   Utils.cpp
 )
 
 target_link_libraries(BidCostPredictorLib
-  Generics
   Commons
+  Generics
   LogCommons
-  CORBACommons
 )
 
 add_executable(BidCostPredictor
@@ -46,4 +45,11 @@ target_link_libraries(BidCostPredictorTest
   BidCostPredictorLib
 )
 
-install(TARGETS BidCostPredictorLib BidCostPredictor BidCostPredictorTest  DESTINATION ${INSTALL_DIR})
+install(
+  TARGETS
+    BidCostPredictor
+    BidCostPredictorLib
+    BidCostPredictorTest
+  DESTINATION
+    ${INSTALL_DIR}
+)

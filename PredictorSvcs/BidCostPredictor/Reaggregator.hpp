@@ -4,6 +4,7 @@
 // STD
 #include <list>
 #include <map>
+#include <thread>
 
 // THIS
 #include <LogCommons/BidCostStat.hpp>
@@ -14,26 +15,26 @@
 #include "Processor.hpp"
 #include "Utils.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class Reaggregator final :
-  public Processor,
-  public virtual ReferenceCounting::AtomicImpl
+class Reaggregator final : public Processor
 {
+private:
+  using ThreadPtr = std::unique_ptr<std::jthread>;
   using DayTimestamp = LogProcessing::DayTimestamp;
-
   using Path = Utils::Path;
   using AggregatedFiles = std::multimap<DayTimestamp, Path>;
   using ProcessedFiles = std::list<Path>;
   using ResultFile = Utils::GeneratedPath;
-
   using Collector = AdServer::LogProcessing::BidCostStatInnerCollector;
   using LogTraits = AdServer::LogProcessing::BidCostStatInnerTraits;
+
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -41,19 +42,20 @@ public:
   explicit Reaggregator(
     const std::string& input_dir,
     const std::string& output_dir,
-    Logging::Logger* logger);
+    Logger* logger);
 
-  ~Reaggregator() = default;
+  std::string name() noexcept override;
 
-  void start();
-
-  void stop() noexcept;
-
-  void wait() noexcept;
-
-  const char* name() noexcept override;
+protected:
+  ~Reaggregator() override;
 
 private:
+  void activate_object_() override;
+
+  void wait_object_() override;
+
+  void run() noexcept;
+
   void reaggregate(
     const std::string& input_dir,
     const std::string& output_dir,
@@ -81,12 +83,13 @@ private:
 
   const std::string prefix_;
 
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 
   Persantage persantage_;
+
+  ThreadPtr thread_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_REAGGREGATOR_HPP

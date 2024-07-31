@@ -4,16 +4,17 @@
 
 namespace Aspect
 {
-const char* STORAGE = "STORAGE";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char STORAGE[] = "STORAGE";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 Storage::Storage(
   Logging::Logger* logger,
+  Generics::ActiveObjectCallback* callback,
   const std::string& bid_cost_model_dir,
   const std::string& ctr_model_dir,
   const std::size_t update_period)
@@ -21,18 +22,17 @@ Storage::Storage(
     bid_cost_model_dir_(bid_cost_model_dir),
     ctr_model_dir_(ctr_model_dir),
     update_period_(update_period),
-    container_(
-      new ContainerImpl(
-        logger_, bid_cost_model_dir, ctr_model_dir)),
-    observer_(new ActiveObjectObserver(this))
+    scheduler_(new Generics::Planner(callback)),
+    task_runner_(new Generics::TaskRunner(callback, 1)),
+    container_(new ContainerImpl(
+      logger_,
+      bid_cost_model_dir,
+      ctr_model_dir))
 {
-}
+  add_child_object(scheduler_);
+  add_child_object(task_runner_);
 
-Storage::~Storage()
-{
-  observer_->clear_delegate();
-  shutdown_manager_.stop();
-  wait();
+  create_scheduler_task(update_period_);
 }
 
 Storage::Cost Storage::get_cost(
@@ -41,12 +41,17 @@ Storage::Cost Storage::get_cost(
   const WinRate& win_rate,
   const Cost& current_cost) const
 {
-  if (!container_)
-    throw Exception("Contianer is null");
-
   std::shared_lock lock(shared_mutex_);
   Container_var container = container_;
   lock.unlock();
+
+  if (!container)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Container is null";
+    throw Exception(stream);
+  }
 
   return container->get_cost(
     tag_id,
@@ -59,148 +64,96 @@ Storage::Ctr Storage::get_ctr(
   const TagId& tag_id,
   const Url& url) const
 {
-  if (!container_)
-    throw Exception("Contianer is null");
-
   std::shared_lock lock(shared_mutex_);
   Container_var container = container_;
   lock.unlock();
 
+  if (!container)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Container is null";
+    throw Exception(stream);
+  }
+
   return container->get_ctr(tag_id, url);
 }
 
-void Storage::start()
+void Storage::create_scheduler_task(const std::size_t period) noexcept
 {
-  is_running_ = true;
-
-  task_runner_ = Generics::TaskRunner_var(
-    new Generics::TaskRunner(
-      observer_,
-      1));
-  planner_ = Generics::Planner_var(
-    new Generics::Planner(
-      observer_));
-
-  task_runner_->activate_object();
-  planner_->activate_object();
-
-  post_task(&Storage::do_update, update_period_);
-
-  logger_->info(std::string("Storage is started"), Aspect::STORAGE);
-}
-
-void Storage::stop() noexcept
-{
-  shutdown_manager_.stop();
-  logger_->info(
-    std::string("Storage was interrupted"),
-    Aspect::STORAGE);
-}
-
-void Storage::wait() noexcept
-{
-  if (!is_running_)
-    return;
-  is_running_ = false;
-
-  shutdown_manager_.wait();
-
   try
   {
-    if (planner_)
+    const auto time = Generics::Time::get_time_of_day()
+      + Generics::Time::ONE_SECOND * period;
+    scheduler_->schedule(
+      AdServer::Commons::make_delegate_goal_task(
+        [this] () {
+          update();
+        },
+        task_runner_),
+      time);
+  }
+  catch (const eh::Exception& exc)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << exc.what();
+    logger_->alert(stream.str(), Aspect::STORAGE);
+  }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Unknown error";
+    logger_->alert(stream.str(), Aspect::STORAGE);
+  }
+}
+
+void Storage::update() noexcept
+{
+  try
+  {
     {
-      planner_->deactivate_object();
-      planner_->wait_object();
+      std::ostringstream stream;
+      stream << FNS
+             << "Start updating container";
+      logger_->info(stream.str(), Aspect::STORAGE);
     }
-  }
-  catch (...)
-  {}
 
-  try
-  {
-    if (task_runner_)
-      task_runner_->wait_for_queue_exhausting();
-  }
-  catch (...)
-  {}
-
-  try
-  {
-    if (task_runner_)
-    {
-      task_runner_->deactivate_object();
-      task_runner_->wait_object();
-    }
-  }
-  catch (...)
-  {}
-
-  task_runner_.reset();
-  planner_.reset();
-
-  logger_->info(
-          std::string("Storage is stoped"),
-          Aspect::STORAGE);
-}
-
-const char* Storage::name() noexcept
-{
-  return "Storage";
-}
-
-void Storage::do_update() noexcept
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  try
-  {
-    logger_->info(
-      std::string("Start updating container"),
-      Aspect::STORAGE);
-
-    Container_var temp_container(
-      new ContainerImpl(
-        logger_,
-        bid_cost_model_dir_,
-        ctr_model_dir_));
+    Container_var temp_container = new ContainerImpl(
+      logger_,
+      bid_cost_model_dir_,
+      ctr_model_dir_);
 
     std::unique_lock lock(shared_mutex_);
     container_.swap(temp_container);
     lock.unlock();
 
-    logger_->info(
-      std::string("Container is updated"),
-      Aspect::STORAGE);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Container is updated";
+      logger_->info(stream.str(), Aspect::STORAGE);
+    }
   }
   catch (const Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " Can't update container reason : "
+    Stream::Error stream;
+    stream << FNS
+           << "Can't update container reason : "
            << exc.what();
     logger_->error(stream.str(), Aspect::STORAGE);
   }
-
-  post_task(&Storage::do_update, update_period_);
-}
-
-void Storage::report_error(
-  Severity severity,
-  const String::SubString& description,
-  const char* error_code) noexcept
-{
-  if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
+  catch (...)
   {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Storage stopped due to incorrect operation of queues."
-           << " Reason: "
-           << description;
-    logger_->critical(stream.str(), Aspect::STORAGE, error_code);
+    Stream::Error stream;
+    stream << FNS
+           << "Can't update container reason : "
+           << "Unknown error";
+    logger_->error(stream.str(), Aspect::STORAGE);
   }
+
+  create_scheduler_task(update_period_);
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

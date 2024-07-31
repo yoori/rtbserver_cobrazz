@@ -1,17 +1,16 @@
 #ifndef BIDCOSTPREDICTOR_DATAMODELPROVIDER_HPP
 #define BIDCOSTPREDICTOR_DATAMODELPROVIDER_HPP
 
-// THIS
+// UNIXCOMMONS
 #include <ReferenceCounting/Interface.hpp>
+
+// THIS
 #include "HelpCollector.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class DataModelProvider :
-  public virtual ReferenceCounting::Interface
+class DataModelProvider : public virtual ReferenceCounting::Interface
 {
 public:
   DataModelProvider() = default;
@@ -26,7 +25,6 @@ protected:
 
 using DataModelProvider_var = ReferenceCounting::SmartPtr<DataModelProvider>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_DATAMODELPROVIDER_HPP

@@ -5,9 +5,7 @@
 #include <LogCommons/StatCollector.hpp>
 #include "Types.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
 
 namespace Predictor = PredictorSvcs::BidCostPredictor;
@@ -17,7 +15,7 @@ class BidCostKey final
 public:
   using TagId = Predictor::Types::TagId;
   using Url = Predictor::Types::Url;
-  using Url_var = Predictor::Types::Url_var;
+  using UrlPtr = Predictor::Types::UrlPtr;
   using WinRate = Predictor::Types::WinRate;
 
 public:
@@ -41,7 +39,7 @@ public:
 
   explicit BidCostKey(
     const TagId& tag_id,
-    const Url_var& url,
+    const UrlPtr& url,
     const WinRate& win_rate)
     : tag_id_(tag_id),
       url_(url),
@@ -58,7 +56,9 @@ public:
   bool operator==(const BidCostKey& rht) const
   {
     if (&rht == this)
+    {
       return true;
+    }
 
     return tag_id_ == rht.tag_id_
       && *url_ == *rht.url_
@@ -75,7 +75,7 @@ public:
     return *url_;
   }
 
-  const Url_var& url_var() const noexcept
+  const UrlPtr& url_var() const noexcept
   {
     return url_;
   }
@@ -97,10 +97,7 @@ public:
   template <class ARCHIVE_>
   void serialize(ARCHIVE_& ar)
   {
-    (ar
-     & tag_id_
-     & *url_)
-    ^ win_rate_;
+    (ar & tag_id_ & *url_) ^ win_rate_;
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
@@ -123,7 +120,7 @@ private:
 private:
   TagId tag_id_ = 0;
 
-  Url_var url_;
+  UrlPtr url_;
 
   WinRate win_rate_;
 
@@ -132,7 +129,9 @@ private:
 
 class BidCostData final
 {
+public:
   using Cost = FixedNumber;
+
 public:
   explicit BidCostData()
   : cost_(Cost::ZERO),
@@ -167,6 +166,7 @@ public:
   {
     cost_ += rhs.cost_;
     max_cost_ += rhs.max_cost_;
+
     return *this;
   }
 
@@ -178,9 +178,7 @@ public:
   template <class ARCHIVE_>
   void serialize(ARCHIVE_& ar)
   {
-    (ar
-     & cost_)
-    ^ max_cost_;
+    (ar & cost_) ^ max_cost_;
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
@@ -200,7 +198,6 @@ private:
 using BidCostCollector = StatCollector<BidCostKey, BidCostData, true, true>;
 using BidCostTraits = LogDefaultTraits<BidCostCollector, false>;
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing
 
 #endif //BIDCOSTPREDICTOR_BIDCOSTCOLLECTOR_HPP

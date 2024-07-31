@@ -4,16 +4,16 @@
 // STD
 #include <memory>
 
-// THIS
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
+
+// THIS
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
 #include <LogCommons/StatCollector.hpp>
 #include "HelpCollector.hpp"
 
-namespace AdServer
-{
-namespace LogProcessing
+namespace AdServer::LogProcessing
 {
 
 namespace Predictor = PredictorSvcs::BidCostPredictor;
@@ -24,7 +24,7 @@ public:
   using Key = typename Predictor::HelpCollector::Key;
   using TagId = typename Key::TagId;
   using Url = typename Key::Url;
-  using Url_var = typename Key::Url_var;
+  using UrlPtr = typename Key::UrlPtr;
   using Hash = std::size_t;
 
 public:
@@ -45,7 +45,7 @@ public:
 
   explicit CtrKey(
     const TagId& tag_id,
-    const Url_var& url)
+    const UrlPtr& url)
     : tag_id_(tag_id),
       url_(url)
   {
@@ -60,10 +60,11 @@ public:
   bool operator==(const CtrKey& rht) const
   {
     if (&rht == this)
+    {
       return true;
+    }
 
-    return tag_id_ == rht.tag_id_
-      && *url_ == *rht.url_;
+    return tag_id_ == rht.tag_id_ && *url_ == *rht.url_;
   }
 
   TagId tag_id() const noexcept
@@ -76,7 +77,7 @@ public:
     return *url_;
   }
 
-  const Url_var& url_var() const noexcept
+  const UrlPtr& url_var() const noexcept
   {
     return url_;
   }
@@ -93,9 +94,7 @@ public:
   template <class ARCHIVE_>
   void serialize(ARCHIVE_& ar)
   {
-    (ar
-     & tag_id_)
-    ^ *url_;
+    (ar & tag_id_) ^ *url_;
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
@@ -117,7 +116,7 @@ private:
 private:
   TagId tag_id_ = 0;
 
-  Url_var url_;
+  UrlPtr url_;
 
   Hash hash_ = 0;
 };
@@ -128,6 +127,7 @@ public:
   using Ctr = LogProcessing::FixedNumber;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
 public:
   CtrData() = default;
 
@@ -156,7 +156,7 @@ public:
   CtrData& operator+=(const CtrData& /*other*/)
   {
     Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
+    ostr << FNS
          << " : Reason: Logic error";
     throw Exception(ostr);
   }
@@ -182,7 +182,6 @@ private:
 using CtrCollector = StatCollector<CtrKey, CtrData, true, true>;
 using CtrTraits = LogDefaultTraits<CtrCollector, false>;
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing
 
 #endif //BIDCOSTPREDICTOR_CTRCOLLECTOR_HPP

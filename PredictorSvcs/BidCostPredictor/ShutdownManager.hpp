@@ -6,36 +6,29 @@
 #include <memory>
 #include <mutex>
 
-// THIS
+// UNIXCOMMONS
 #include <Generics/Uncopyable.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 class ShutdownManager final : private Generics::Uncopyable
 {
 public:
-  ShutdownManager() = default;
+  explicit ShutdownManager() = default;
 
   ~ShutdownManager() = default;
 
   void stop() noexcept
   {
-    try
     {
-      {
-        std::lock_guard lock(mutex_);
-        is_stoped_ = true;
-      }
-      cv_.notify_all();
+      std::lock_guard lock(mutex_);
+      is_stoped_ = true;
     }
-    catch (...)
-    {}
+    cv_.notify_all();
   }
 
-  bool is_stoped() noexcept
+  bool is_stoped() const noexcept
   {
     std::unique_lock lock(mutex_);
     return is_stoped_;
@@ -43,24 +36,20 @@ public:
 
   void wait() noexcept
   {
-    try
-    {
-      std::unique_lock lock(mutex_);
-      cv_.wait(lock, [this]{return is_stoped_;});
-    }
-    catch (...)
-    {}
+    std::unique_lock lock(mutex_);
+    cv_.wait(lock, [this] () {
+      return is_stoped_;
+    });
   }
 
 private:
   std::condition_variable cv_;
 
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
 
   bool is_stoped_ = false;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_SHUTDOWNMANAGER_HPP

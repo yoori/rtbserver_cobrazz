@@ -1,3 +1,6 @@
+// STD
+#include <filesystem>
+
 // THIS
 #include <LogCommons/BidCostStat.hpp>
 #include <Logger/Logger.hpp>
@@ -5,17 +8,16 @@
 #include "Aggregator.hpp"
 #include "FileCleaner.hpp"
 #include "LogHelper.hpp"
-#include "Remover.hpp"
 #include "Utils.hpp"
 
 namespace Aspect
 {
-const char AGGREGATOR[] = "Aggregator";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char AGGREGATOR[] = "Aggregator";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 Aggregator::Aggregator(
@@ -33,56 +35,102 @@ Aggregator::Aggregator(
     logger_(ReferenceCounting::add_ref(logger)),
     persantage_(logger_, Aspect::AGGREGATOR, 5)
 {
+  if (!std::filesystem::is_directory(input_dir_))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not exist directory="
+           << input_dir_;
+    throw Exception(stream);
+  }
+
+  if (!std::filesystem::is_directory(output_dir_))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not exist directory="
+           << output_dir_;
+    throw Exception(stream);
+  }
 }
 
-void Aggregator::start()
+Aggregator::~Aggregator()
 {
   try
   {
-    logger_->info(
-      std::string("Aggregate: started"),
-      Aspect::AGGREGATOR);
-
-    if (!Utils::exist_directory(input_dir_))
+    const auto need_remove_files = Utils::get_directory_files(
+      output_dir_,
+      "~");
+    for (const auto& path : need_remove_files)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Not existing input directory="
-           << input_dir_;
-      throw Exception(ostr);
+      std::remove(path.c_str());
     }
+  }
+  catch (...)
+  {
+  }
+}
 
-    if (!Utils::exist_directory(output_dir_))
+std::string Aggregator::name() noexcept
+{
+  return "AggregatorSingleThread";
+}
+
+void Aggregator::activate_object_()
+{
+  thread_ = std::make_unique<std::jthread>([this] () {
+    run();
+  });
+}
+
+void Aggregator::wait_object_()
+{
+  thread_.reset();
+}
+
+void Aggregator::run() noexcept
+{
+  try
+  {
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Not existing output directory="
-           << output_dir_;
-      throw Exception(ostr);
+      std::ostringstream stream;
+      stream << FNS
+             << "Aggregate: started";
+      logger_->info(stream.str(), Aspect::AGGREGATOR);
     }
 
     aggregate();
 
-    logger_->info(
-      std::string("Aggregate: finished"),
-      Aspect::AGGREGATOR);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Aggregator completed successfully";
+      logger_->info(stream.str(), Aspect::AGGREGATOR);
+    }
   }
-  catch(const eh::Exception& ex)
+  catch(const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << ": [Fatal error]: Aggregate is failed: "
-           << ex.what();
+    Stream::Error stream;
+    stream << FNS
+           << "Aggregate is failed: "
+           << exc.what();
     logger_->critical(stream.str(), Aspect::AGGREGATOR);
+  }
+
+  try
+  {
+    deactivate_object();
+  }
+  catch (...)
+  {
   }
 }
 
 void Aggregator::aggregate()
 {
-  auto input_files =
-    Utils::get_directory_files(
-      input_dir_,
-      prefix_stat_);
+  auto input_files = Utils::get_directory_files(
+    input_dir_,
+    prefix_stat_);
   persantage_.set_total_number(input_files.size());
 
   while(!input_files.empty())
@@ -107,7 +155,7 @@ void Aggregator::aggregate()
     }
     catch (const eh::Exception& exc)
     {
-      std::stringstream stream;
+      Stream::Error stream;
       stream << "Can't process files=[";
       std::for_each(
         std::begin(files),
@@ -123,29 +171,14 @@ void Aggregator::aggregate()
   }
 }
 
-void Aggregator::stop() noexcept
-{
-}
-
-void Aggregator::wait() noexcept
-{
-}
-
-const char* Aggregator::name() noexcept
-{
-  return "AggregatorSingleThread";
-}
-
 void Aggregator::process_files(const ProcessFiles& files)
 {
   Collector collector;
   PriorityQueue priority_queue;
 
   ProcessedFiles processed_files;
-
   ResultFiles result_files;
   FileCleaner file_cleaner(result_files);
-
   std::size_t record_count = 0;
 
   Collector temp_collector;
@@ -154,13 +187,13 @@ void Aggregator::process_files(const ProcessFiles& files)
     persantage_.increase();
     try
     {
-        LogHelper<LogTraits>::load(file_path, temp_collector);
+      LogHelper<LogTraits>::load(file_path, temp_collector);
     }
     catch (const eh::Exception &exc)
     {
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << ": Can't process file="
+      Stream::Error stream;
+      stream << FNS
+             << "Can't process file="
              << file_path
              << ". Reason: "
              << exc.what();
@@ -179,25 +212,37 @@ void Aggregator::process_files(const ProcessFiles& files)
     while (record_count >= dump_max_size_)
     {
       if (collector.empty())
-        throw Exception("Logic error. Collector is empty");
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Logic error. Collector is empty";
+        throw Exception(stream);
+      }
 
       if (priority_queue.empty())
-        throw Exception("Logic error. Priority_queue is empty");
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Logic error. Priority_queue is empty";
+        throw Exception(stream);
+      }
 
       const auto date = priority_queue.top();
       priority_queue.pop();
       const auto it = collector.find(KeyCollector(date));
       if (it == collector.end())
       {
-        Stream::Error ostr;
-        ostr << ": Logic error. Not existing date="
-             << date
-             << " in collector";
-        throw Exception(ostr);
+        Stream::Error stream;
+        stream << FNS
+               << "Logic error. Not existing date="
+               << date
+               << " in collector";
+        throw Exception(stream);
       }
-      Remover remover(collector, it);
 
-      const auto& collector_inner = it->second;
+      const auto collector_inner = it->second;
+      collector.erase(it);
+
       dump_file(
         output_dir_,
         prefix_agg_,
@@ -208,7 +253,7 @@ void Aggregator::process_files(const ProcessFiles& files)
     }
   }
 
-  for (const auto& [k, v]: collector)
+  for (const auto& [k, v] : collector)
   {
     dump_file(
       output_dir_,
@@ -218,21 +263,21 @@ void Aggregator::process_files(const ProcessFiles& files)
       result_files);
   }
 
-  for (const auto& [temp_path, result_path]: result_files)
+  for (const auto& [temp_path, result_path] : result_files)
   {
     if (std::rename(temp_path.c_str(), result_path.c_str()))
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Can't rename file="
-           << temp_path
-           << " to"
-           << result_path;
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Can't rename file="
+             << temp_path
+             << " to"
+             << result_path;
+      throw Exception(stream);
     }
   }
 
-  file_cleaner.clear_temp();
+  file_cleaner.remove_temp_files();
 
   for (const auto& original_path : processed_files)
   {
@@ -247,8 +292,10 @@ void Aggregator::dump_file(
   const CollectorInner& collector,
   ResultFiles& result_files)
 {
-  const auto generated_path =
-    Utils::generate_file_path(output_dir, prefix, date);
+  const auto generated_path = Utils::generate_file_path(
+    output_dir,
+    prefix,
+    date);
   const auto& temp_path = generated_path.first;
 
   LogHelper<LogInnerTraits>::save(temp_path, collector);
@@ -264,7 +311,9 @@ std::size_t Aggregator::merge(
   for (auto& [temp_key, temp_inner_collector]: temp_collector)
   {
     if (temp_inner_collector.empty())
+    {
       continue;
+    }
 
     if (collector.find(temp_key) == collector.end())
     {
@@ -280,8 +329,7 @@ std::size_t Aggregator::merge(
         k.url(),
         k.cost());
 
-      if (auto it = inner_collector.find(new_k);
-          it == inner_collector.end())
+      if (auto it = inner_collector.find(new_k); it == inner_collector.end())
       {
         count_added += 1;
         inner_collector.add(new_k, v);
@@ -296,5 +344,4 @@ std::size_t Aggregator::merge(
   return count_added;
 }
 
-} // namespace PredictorSvcs
-} // namespace BidCostPredictor
+} // namespace PredictorSvcs::BidCostPredictor

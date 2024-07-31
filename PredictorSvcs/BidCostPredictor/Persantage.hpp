@@ -4,26 +4,26 @@
 // STD
 #include <string>
 
+// UNIXCOMMONS
+#include <Generics/Uncopyable.hpp>
+#include <Logger/Logger.hpp>
+
 // THIS
-#include "Generics/Uncopyable.hpp"
-#include "Logger/Logger.hpp"
 #include "Utils.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 class Persantage final : private Generics::Uncopyable
 {
 public:
-  Persantage(
-    const Logging::Logger_var& logger,
-    const char* aspect,
+  explicit Persantage(
+    Logging::Logger* logger,
+    const std::string& aspect,
     const std::size_t diff = 5,
     const std::size_t total_number = 0,
     const bool need_print_memory = true)
-    : logger_(logger),
+    : logger_(ReferenceCounting::add_ref(logger)),
       aspect_(aspect),
       diff_(diff),
       total_number_(total_number),
@@ -38,48 +38,54 @@ public:
     total_number_ = total_number;
   }
 
-  void increase()
+  void increase() noexcept
   {
-    if (total_number_ == 0)
+    try
     {
-      logger_->error(
-        std::string("Total number is null"),
-        aspect_);
-      return;
-    }
-
-    if (current_number_ * 100 >= counter_ * diff_ * total_number_)
-    {
-      counter_ += 1;
-      const std::size_t percentage =
-        (current_number_ * 100) / total_number_;
-      logger_->info(
-        "Percentage of processed data = " +
-        std::to_string(percentage),
-        aspect_);
-
-      if (need_print_memory_)
+      if (total_number_ == 0)
       {
-        try
+        Stream::Error stream;
+        stream << FNS
+               << "Total number is null";
+        logger_->error(stream.str(), aspect_.c_str());
+
+        return;
+      }
+
+      if (current_number_ * 100 >= counter_ * diff_ * total_number_)
+      {
+        counter_ += 1;
+        const std::size_t percentage = (current_number_ * 100) / total_number_;
+
+        std::ostringstream stream;
+        stream << FNS
+               << "Percentage of processed data = "
+               << std::to_string(percentage);
+        logger_->info(stream.str(), aspect_.c_str());
+
+        if (need_print_memory_)
         {
           const auto memory = Utils::memory_process_usage();
-          std::stringstream stream;
-          stream << "Ram[Gb]=" << memory.second;
-          logger_->info(stream.str(), aspect_);
+          std::ostringstream stream;
+          stream << FNS
+                 << "Ram[Gb] = "
+                 << memory.second;
+          logger_->info(stream.str(), aspect_.c_str());
         }
-        catch (...)
-        {}
       }
+      current_number_ += 1;
     }
-    current_number_ += 1;
+    catch (...)
+    {
+    }
   }
 
 private:
-  Logging::Logger_var logger_;
+  const Logging::Logger_var logger_;
 
-  const char* aspect_;
+  const std::string aspect_;
 
-  std::size_t diff_ = 0;
+  const std::size_t diff_ = 0;
 
   std::size_t total_number_ = 0;
 
@@ -90,7 +96,6 @@ private:
   bool need_print_memory_ = false;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif // BIDCOSTPREDICTOR_PERSANTAGE_HPP

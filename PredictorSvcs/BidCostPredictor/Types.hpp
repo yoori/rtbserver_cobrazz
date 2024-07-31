@@ -8,16 +8,12 @@
 // THIS
 #include <LogCommons/LogCommons.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
-{
-namespace Types
+namespace PredictorSvcs::BidCostPredictor::Types
 {
 
 using TagId = unsigned long;
 using Url = std::string;
-using Url_var = std::shared_ptr<Url>;
+using UrlPtr = std::shared_ptr<Url>;
 using Imps = long;
 using Clicks = long;
 using FixedNumber = AdServer::LogProcessing::FixedNumber;
@@ -26,8 +22,6 @@ using WinRate = Cost;
 using Point = Types::FixedNumber;
 using Points = std::vector<Point>;
 
-} // namespace Types
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor::Types
 
 #endif //BIDCOSTPREDICTOR_TYPES_H

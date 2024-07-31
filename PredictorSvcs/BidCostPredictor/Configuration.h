@@ -13,16 +13,16 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-// THIS
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
+
+// THIS
 #include <LogCommons/LogCommons.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class Configuration
+class Configuration final
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -68,8 +68,8 @@ T Configuration::get(const std::string& path) const
   if (!exists(path))
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
-           << "not existing path=" << path;
+    stream << FNS
+           << "Not existing path=" << path;
     throw Exception(stream);
   }
 
@@ -81,8 +81,8 @@ T Configuration::get(const std::string& path) const
   else
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
-           << "not correct value of path=" << path;
+    stream << FNS
+           << "Not correct value of path=" << path;
     throw Exception(stream);
   }
 }
@@ -103,7 +103,6 @@ T Configuration::get(
   }
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_CONFIGURATION_H

@@ -1,31 +1,36 @@
 #ifndef BIDCOSTPREDICTOR_MODELCTRIMPL_HPP
 #define BIDCOSTPREDICTOR_MODELCTRIMPL_HPP
 
-// THIS
+// UNIXCOMMONS
 #include "ReferenceCounting/AtomicImpl.hpp"
+
+// THIS
 #include "CtrCollector.hpp"
 #include "ModelCtr.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class ModelCtrImpl :
+class ModelCtrImpl final :
   public ModelCtr,
-  public virtual ReferenceCounting::AtomicImpl
+  public ReferenceCounting::AtomicImpl
 {
 public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+  using CtrCollector = LogProcessing::CtrCollector;
+  using CtrKey = LogProcessing::CtrKey;
+  using CtrData = LogProcessing::CtrData;
+  using CtrTraits = LogProcessing::CtrTraits;
   using TagId = typename ModelCtr::TagId;
   using Url = typename ModelCtr::Url;
-  using Url_var = typename ModelCtr::Url_var;
+  using UrlPtr = typename ModelCtr::UrlPtr;
   using Ctr = typename ModelCtr::Ctr;
 
-  ModelCtrImpl(Logging::Logger* logger);
-
-  ~ModelCtrImpl() override = default;
+public:
+  explicit ModelCtrImpl(Logger* logger);
 
   Ctr get_ctr(
     const TagId& tag_id,
@@ -33,7 +38,7 @@ public:
 
   void set_ctr(
     const TagId& tag_id,
-    const Url_var& url,
+    const UrlPtr& url,
     const Ctr& ctr) override;
 
   void clear() noexcept;
@@ -42,13 +47,15 @@ public:
 
   void save(const std::string& path) const;
 
-private:
-  Logging::Logger_var logger_;
+protected:
+  ~ModelCtrImpl() override = default;
 
-  LogProcessing::CtrCollector collector_;
+private:
+  const Logger_var logger_;
+
+  CtrCollector collector_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_MODELCTRIMPL_HPP

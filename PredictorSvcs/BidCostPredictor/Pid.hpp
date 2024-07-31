@@ -1,32 +1,32 @@
 #ifndef BIDCOSTPREDICTOR_PID_HPP
 #define BIDCOSTPREDICTOR_PID_HPP
 
-// STD
-#include <fstream>
-#include <iterator>
-#include <optional>
-#include <string>
-
 // POSIX
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-// THIS
+// STD
+#include <fstream>
+#include <iterator>
+#include <optional>
+#include <string>
+
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
-#include "Generics/Uncopyable.hpp"
+#include <Generics/Uncopyable.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class PidSetter : private Generics::Uncopyable
+class PidSetter final : private Generics::Uncopyable
 {
-  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 public:
-  PidSetter(const std::string& file_path)
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
+public:
+  explicit PidSetter(const std::string& file_path)
     : file_path_(file_path)
   {
   }
@@ -49,7 +49,7 @@ public:
     if (fd_ < 0)
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
+      stream << FNS
              << "Can't open file="
              << file_path_;
       throw Exception(stream);
@@ -67,26 +67,26 @@ public:
     if (ftruncate(fd_, 0) == -1)
     {
       Stream::Error stream;
-      stream << __PRETTY_FUNCTION__
-             << " : Reason: ftruncate is failed";
+      stream << FNS
+             << " Reason: ftruncate is failed";
       throw Exception(stream);
     }
 
     char buf[16];
     if (sprintf(buf, "%ld", static_cast<long>(getpid())) < 0)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << " : Reason: sprintf is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Reason: sprintf is failed";
+      throw Exception(stream);
     }
 
     if (write(fd_, buf, strlen(buf) + 1) == -1)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << " : Reason: write is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Reason: write is failed";
+      throw Exception(stream);
     }
 
     return true;
@@ -145,12 +145,14 @@ private:
   bool is_lock_ = false;
 };
 
-class PidGetter : private Generics::Uncopyable
+class PidGetter final : private Generics::Uncopyable
 {
+public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
 public:
   PidGetter(const std::string& file_path)
-  : file_path_(file_path)
+    : file_path_(file_path)
   {
   }
 
@@ -159,18 +161,20 @@ public:
     std::ifstream fstream(file_path_);
     if (!fstream.is_open())
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << " : Reason: Can't open file="
-           << file_path_;
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Reason: Can't open file="
+             << file_path_;
+      throw Exception(stream);
     }
 
     const std::string data{
       std::istreambuf_iterator<char>(fstream),
       std::istreambuf_iterator<char>()};
     if (data.empty())
+    {
       return {};
+    }
 
     try
     {
@@ -179,8 +183,9 @@ public:
     }
     catch (...)
     {
-      return {};
     }
+
+    return {};
   }
 
 private:
@@ -189,7 +194,6 @@ private:
   int fd_ = -1;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_PID_HPP
