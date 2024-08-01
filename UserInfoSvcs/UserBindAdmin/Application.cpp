@@ -344,7 +344,7 @@ void Application::run(int argc, char** argv)
       {
         response = grpc_user_bind_distributor->get_user_id(
           external_id,
-          current_user_id,
+          AdServer::Commons::UserId(current_user_id),
           timestamp,
           create_timestamp,
           silent,

@@ -627,7 +627,8 @@ std::size_t AggregatorMultyThread::merge(
         k.tag_id(),
         std::string(),
         k.url(),
-        k.cost());
+        k.cost(),
+        0);
 
       auto it = inner_collector.find(new_k);
       if (it == inner_collector.end())

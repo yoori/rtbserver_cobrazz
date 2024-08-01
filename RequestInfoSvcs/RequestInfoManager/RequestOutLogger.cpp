@@ -2653,7 +2653,8 @@ namespace RequestInfoSvcs
               ri.tag_id,
               ri.ext_tag_id,
               normalize_referer_(ri.referer),
-              RevenueDecimal(cost).ceil(6)
+              RevenueDecimal(cost).ceil(6),
+              ri.cc_id
               ),
             inner_data);
 

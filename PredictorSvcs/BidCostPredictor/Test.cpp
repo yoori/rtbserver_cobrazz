@@ -229,8 +229,8 @@ bool TestAgg::run_test()
     const std::string ext_tag_id = "ext_tag_id" + id_string;
     const std::string url = "url=" + id_string;
 
-    KeyInner key(tag_id, ext_tag_id, url, cost);
-    KeyInner key_result(tag_id, std::string(), url, cost);
+    KeyInner key(tag_id, ext_tag_id, url, cost, 0);
+    KeyInner key_result(tag_id, std::string(), url, cost, 0);
 
     const long unverified_imps = 1;
     const long imps = 2;
@@ -545,7 +545,7 @@ BOOST_AUTO_TEST_CASE(provider)
       FixedNumber cost = initial_cost;
       for (std::size_t cost_i = 1; cost_i <= number_cost; ++cost_i)
       {
-        Key key(tag_id, std::string(), url, cost);
+        Key key(tag_id, std::string(), url, cost, 0);
         cost += step_cost;
         Data data(unverified_imps, imps, clicks);
         collector_file.add(key, data);

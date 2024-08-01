@@ -327,7 +327,8 @@ std::size_t Aggregator::merge(
         k.tag_id(),
         std::string(),
         k.url(),
-        k.cost());
+        k.cost(),
+        0);
 
       if (auto it = inner_collector.find(new_k); it == inner_collector.end())
       {
