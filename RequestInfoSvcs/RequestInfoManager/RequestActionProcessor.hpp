@@ -108,8 +108,9 @@ namespace AdServer
           return lhs;
         }
 
-        std::ostream&
-        print(std::ostream& out, const char* space) const noexcept;
+        template<typename OStream>
+        OStream&
+        print(OStream& out, const char* space) const noexcept;
 
         static RevenueDecimal
         convert_currency(
@@ -254,8 +255,9 @@ namespace AdServer
             Generics::DMR_CEIL);
         }
 
-        std::ostream&
-        print(std::ostream& out, const char* space) const noexcept;
+        template<typename OStream>
+        OStream&
+        print(OStream& out, const char* space) const noexcept;
       };
 
       struct ChannelRevenue
@@ -402,16 +404,18 @@ namespace AdServer
 
       Revenue delta_adv_revenue;
 
-      std::ostream&
-      print(std::ostream& out, const char* space) const
+      template<typename OStream>
+      OStream&
+      print(OStream& out, const char* space) const
         noexcept;
 
       static const char*
       request_state_string(RequestState request_state)
         noexcept;
 
-      static std::ostream&
-      print_request_state(std::ostream& out, RequestState request_state)
+      template<typename OStream>
+      static OStream&
+      print_request_state(OStream& out, RequestState request_state)
         noexcept;
     };
 
@@ -487,8 +491,9 @@ namespace AdServer
       std::string order_id;
       RevenueDecimal action_value;
 
-      std::ostream& print(
-        std::ostream& ostr, const char* space = "") const noexcept;
+      template<typename OStream>
+      OStream& print(
+        OStream& ostr, const char* space = "") const noexcept;
     };
 
     typedef std::list<AdvCustomActionInfo> AdvCustomActionInfoList;
@@ -638,8 +643,9 @@ namespace AdServer
         unsigned long ccg_id;
         AdServer::Commons::UserId user_id;
 
-        std::ostream& print(
-          std::ostream& ostr, const char* space = "") const noexcept;
+        template<typename OStream>
+        OStream& print(
+          OStream& ostr, const char* space = "") const noexcept;
       };
 
       struct AdvExActionInfo
@@ -657,8 +663,9 @@ namespace AdServer
         std::string ip_address;
         RevenueDecimal action_value;
 
-        std::ostream& print(
-          std::ostream& ostr, const char* space = "") const noexcept;
+        template<typename OStream>
+        OStream& print(
+          OStream& ostr, const char* space = "") const noexcept;
       };
 
       virtual void process_adv_action(
@@ -840,10 +847,10 @@ namespace AdServer
       return *this;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    OStream&
     RequestInfo::Revenue::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "rate_id: " << rate_id << std::endl <<
@@ -854,10 +861,10 @@ namespace AdServer
       return out;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    OStream&
     RequestInfo::RevenueSys::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       this->RequestInfo::Revenue::print(out, space);
@@ -897,20 +904,20 @@ namespace AdServer
       return "unknown";
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    OStream&
     RequestInfo::print_request_state(
-      std::ostream& out, RequestState request_state)
+      OStream& out, RequestState request_state)
       noexcept
     {
       out << request_state_string(request_state);
       return out;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    OStream&
     RequestInfo::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       std::string add_space(space);
@@ -1021,9 +1028,10 @@ namespace AdServer
       return out;
     }
 
-    inline std::ostream&
+    template<typename OStream>
+    OStream&
     AdvCustomActionInfo::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "time: " << time.get_gm_time() << std::endl <<
@@ -1036,9 +1044,9 @@ namespace AdServer
     }
 
     /* AdvActionProcessor::AdvActionInfo */
-    inline
-    std::ostream& AdvActionProcessor::AdvActionInfo::print(
-      std::ostream& out, const char* space) const
+    template<typename OStream>
+    OStream& AdvActionProcessor::AdvActionInfo::print(
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "time: " << time.get_gm_time() << std::endl <<
@@ -1049,9 +1057,9 @@ namespace AdServer
     }
 
     /* AdvActionProcessor::AdvExActionInfo */
-    inline
-    std::ostream& AdvActionProcessor::AdvExActionInfo::print(
-      std::ostream& out, const char* space) const
+    template<typename OStream>
+    OStream& AdvActionProcessor::AdvExActionInfo::print(
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "time: " << time.get_gm_time() << std::endl <<

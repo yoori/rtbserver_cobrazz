@@ -567,4 +567,55 @@ LogGeneralizerImpl::init_hf_log_proc_info_(
 } // namespace LogProcessing
 } // namespace AdServer
 
+namespace Stream::MemoryStream
+{
+  template<>
+  struct ToCharsLenHelper<xsd::AdServer::Configuration::LogUploadType4>
+  {
+    size_t
+    operator()(const xsd::AdServer::Configuration::LogUploadType4&) noexcept
+    {
+      // TODO
+      return 0;
+    }
+  };
+
+  template<>
+  struct ToCharsHelper<xsd::AdServer::Configuration::LogUploadType4>
+  {
+    std::to_chars_result
+    operator()(char*, char* last, const xsd::AdServer::Configuration::LogUploadType4&) noexcept
+    {
+      // TODO
+      return {last, std::errc::value_too_large};
+    }
+  };
+
+  template<>
+  struct ToStringHelper<xsd::AdServer::Configuration::LogUploadType4>
+  {
+    std::string
+    operator()(const xsd::AdServer::Configuration::LogUploadType4&) noexcept
+    {
+      // TODO
+      return "";
+    }
+  };
+
+  template<typename Elem, typename Traits, typename Allocator,
+    typename AllocatorInitializer, const size_t SIZE>
+  struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
+    SIZE, xsd::AdServer::Configuration::LogUploadType4>
+  {
+    OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
+    operator()(OutputMemoryStream<Elem, Traits, Allocator,
+      AllocatorInitializer, SIZE>& ostr, const xsd::AdServer::Configuration::LogUploadType4& arg)
+    {
+      typedef typename xsd::AdServer::Configuration::LogUploadType4 ArgT;
+      return OutputMemoryStreamHelperImpl(ostr, arg,
+        ToCharsLenHelper<ArgT>(), ToCharsHelper<ArgT>(), ToStringHelper<ArgT>());
+    }
+  };
+}
+
 #endif /* AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_IMPL_HPP */

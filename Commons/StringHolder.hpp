@@ -8,6 +8,8 @@
 #include <Generics/Hash.hpp>
 #include <Generics/Hash.hpp>
 
+#include <Stream/MemoryStream.hpp>
+
 namespace AdServer
 {
 namespace Commons
@@ -164,6 +166,22 @@ operator <<(std::ostream& os, const AdServer::Commons::ImmutableString& arg)
 {
   os << arg.str();
   return os;
+}
+
+namespace Stream::MemoryStream
+{
+  template<typename Elem, typename Traits, typename Allocator,
+    typename AllocatorInitializer, const size_t SIZE>
+  struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
+    SIZE, AdServer::Commons::ImmutableString>
+  {
+    OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
+    operator()(OutputMemoryStream<Elem, Traits, Allocator,
+      AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::ImmutableString& arg)
+    {
+      return ostr << arg.str();
+    }
+  };
 }
 
 #endif /*COMMONS_STRINGHOLDER_HPP*/

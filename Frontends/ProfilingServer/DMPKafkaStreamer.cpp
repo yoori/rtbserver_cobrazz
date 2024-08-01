@@ -20,14 +20,16 @@ namespace
   using namespace AdServer::Profiling;
   using namespace AdServer::Commons;
 
+  template<typename OStream>
   void dmp_profile_to_stream(
     const DMPProfilingInfoReader& dmp_profiling_info,
     const ExternalUserIdArray& bind_user_ids,
     const Generics::Time& now,
-    std::ostream& ostr)
+    OStream& ostr)
   {    
-    ostr <<  now.tv_sec << "." <<  std::setfill('0') <<
-      std::setw(6) << now.tv_usec << ",";
+    // TODO fix iomanips
+    //ostr <<  now.tv_sec << "." <<  std::setfill('0') <<
+    //  std::setw(6) << now.tv_usec << ",";
 
     // Skip beeline user_id
     auto bind_user_it = bind_user_ids.begin();

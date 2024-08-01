@@ -450,9 +450,9 @@ namespace Algs
     return IteratorRange<IteratorType>(begin, end);
   }
 
-  template<typename IteratorType>
-  std::ostream&
-  print(std::ostream& out,
+  template<typename OStream, typename IteratorType>
+  OStream&
+  print(OStream& out,
     IteratorType it_begin, IteratorType it_end, const char* delim = ", ")
   {
     for(IteratorType it = it_begin; it != it_end; ++it)

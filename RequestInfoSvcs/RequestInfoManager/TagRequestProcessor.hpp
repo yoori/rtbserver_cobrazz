@@ -44,7 +44,8 @@ namespace RequestInfoSvcs
     AdServer::Commons::RequestId request_id; // passback request id
     Commons::StringHolder_var user_agent;
 
-    void print(std::ostream& out, const char* offset) const noexcept;
+    template<typename OStream>
+    void print(OStream& out, const char* offset) const noexcept;
   };
 
   /**
@@ -71,9 +72,9 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
-  inline
+  template<typename OStream>
   void TagRequestInfo::
-  print(std::ostream& out, const char* offset) const noexcept
+  print(OStream& out, const char* offset) const noexcept
   {
     out << offset << "user_id = " << user_id.to_string() << std::endl <<
       offset << "time = " << time.get_gm_time() << std::endl <<

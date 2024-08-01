@@ -13,15 +13,9 @@
 
 namespace Declaration
 {
-  void type_traits(std::ostream& out, Declaration::BaseType* type)
-    noexcept;  
-}
-
-namespace Declaration
-{
-  inline
+  template<typename OStream>
   void type_traits(
-    std::ostream& out, Declaration::BaseType* type)
+    OStream& out, Declaration::BaseType* type)
     noexcept
   {
     Declaration::BaseDescriptor_var type_descriptor =

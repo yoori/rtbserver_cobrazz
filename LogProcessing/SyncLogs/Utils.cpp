@@ -12,9 +12,10 @@
 
 namespace
 {
+  template<typename OStream>
   void form_run_cmd_error_string(
-    std::ostream &oss,
-    const char *add_info,
+    OStream& oss,
+    const char* add_info,
     const char* command,
     int status)
     /*throw(eh::Exception)*/

@@ -1159,9 +1159,9 @@ search_for_files(
   Logging::Logger *logger = 0
 );
 
-template <class SEQ_>
-std::ostream&
-output_sequence(std::ostream &os, const SEQ_ &seq, const char *sep = ",");
+template <class OStream, class SEQ_>
+OStream&
+output_sequence(OStream &os, const SEQ_ &seq, const char *sep = ",");
 
 void
 parse_string_list(
