@@ -13,6 +13,7 @@
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include "ActiveObjectObserver.hpp"
+#include "CreativeProvider.hpp"
 #include "DataModelProvider.hpp"
 #include "LogHelper.hpp"
 #include "Persantage.hpp"
@@ -29,6 +30,7 @@ class DataModelProviderImpl final :
   public ReferenceCounting::AtomicImpl
 {
 private:
+  using CcIdToCategories = CreativeProvider::CcIdToCategories;
   using DayTimestamp = LogProcessing::DayTimestamp;
   using Collector = LogProcessing::BidCostStatInnerCollector;
   using LogTraits = LogProcessing::BidCostStatInnerTraits;
@@ -58,7 +60,8 @@ public:
   DataModelProviderImpl(
     const Imps max_imps,
     const std::string& input_dir,
-    Logger* logger);
+    Logger* logger,
+    CreativeProvider* creative_provider);
 
   bool load(HelpCollector& help_collector) noexcept override;
 
@@ -93,6 +96,8 @@ private:
 
   const Logger_var logger_;
 
+  const CreativeProvider_var creative_provider_;
+
   const std::string prefix_;
 
   ShutdownManager shutdown_manager_;
@@ -116,6 +121,8 @@ private:
   std::vector<Generics::TaskRunner_var> task_runners_;
 
   //PoolCollector<Collector, 1000000> pool_collector_;
+
+  CcIdToCategories cc_id_to_categories_;
 };
 
 } // namespace PredictorSvcs::BidCostPredictor

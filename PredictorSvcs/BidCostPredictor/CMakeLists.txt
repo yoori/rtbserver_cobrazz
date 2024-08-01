@@ -5,6 +5,7 @@ add_library(BidCostPredictorLib SHARED
   BidCostCollector.cpp
   Configuration.cpp
   ContainerImpl.cpp
+  CreativeProvider.cpp
   CtrCollector.cpp
   Daemon.cpp
   DaemonImpl.cpp
@@ -27,6 +28,7 @@ target_link_libraries(BidCostPredictorLib
   Commons
   Generics
   LogCommons
+  Postgres
 )
 
 add_executable(BidCostPredictor

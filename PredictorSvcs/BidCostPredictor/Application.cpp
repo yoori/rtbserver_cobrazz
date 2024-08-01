@@ -91,12 +91,9 @@ int Application::run(int argc, char **argv)
       const std::string log_path = configuration.get("config.log_path");
       const std::string pid_path = configuration.get("config.pid_path");
 
-      const std::size_t model_period =
-        configuration.get<std::size_t>("config.model.period");
-      const std::size_t agg_period =
-        configuration.get<std::size_t>("config.aggregator.period");
-      const std::size_t reagg_period =
-        configuration.get<std::size_t>("config.reaggregator.period");
+      const std::size_t model_period = configuration.get<std::size_t>("config.model.period");
+      const std::size_t agg_period = configuration.get<std::size_t>("config.aggregator.period");
+      const std::size_t reagg_period = configuration.get<std::size_t>("config.reaggregator.period");
 
       std::ofstream ostream(log_path, std::ios::app);
       if (!ostream.is_open())
@@ -238,78 +235,74 @@ int Application::run(int argc, char **argv)
 
     try
     {
-      const Configuration config_model =
-        configuration.get_config("config.model");
-      const std::string model_agg_dir =
-        config_model.get("input_directory");
-      const std::string bid_cost_model_dir =
-        config_model.get("bid_cost.output_directory");
-      const std::string bid_cost_model_temp_dir =
-        config_model.get("bid_cost.temp_directory");
-      const std::string bid_cost_model_file_name =
-        config_model.get("bid_cost.file_name");
-      const std::string ctr_model_dir =
-        config_model.get("ctr.output_directory");
-      const std::string ctr_model_temp_dir =
-        config_model.get("ctr.temp_directory");
-      const std::string ctr_model_file_name =
-        config_model.get("ctr.file_name");
-      const Imps ctr_model_max_imps =
-        config_model.get<Imps>("ctr.max_imps");
-      const Imps ctr_model_trust_imps =
-        config_model.get<Imps>("ctr.trust_imps");
-      const Imps ctr_model_tag_imps =
-        config_model.get<Imps>("ctr.tag_imps");
+      const auto pg_config = configuration.get_config("config.pg_connection");
+      const std::string pg_host = pg_config.get("host");
+      const std::size_t pg_port = pg_config.get<std::size_t>("port");
+      const std::string pg_dbname = pg_config.get("dbname");
+      const std::string pg_user = pg_config.get("user");
+      const std::string pg_password = pg_config.get("password");
 
-      const Configuration config_aggregator =
-        configuration.get_config("config.aggregator");
-      const std::size_t agg_max_process_files =
-        config_aggregator.get<std::size_t>("max_process_files");
-      const std::size_t agg_dump_max_size =
-        config_aggregator.get<std::size_t>("dump_max_size");
-      const std::string agg_input_dir =
-        config_aggregator.get("input_directory");
-      const std::string agg_output_dir =
-        config_aggregator.get("output_directory");
+      const Configuration config_model = configuration.get_config("config.model");
+      const std::string model_agg_dir = config_model.get("input_directory");
+      const std::string bid_cost_model_dir = config_model.get("bid_cost.output_directory");
+      const std::string bid_cost_model_temp_dir = config_model.get("bid_cost.temp_directory");
+      const std::string bid_cost_model_file_name = config_model.get("bid_cost.file_name");
+      const std::string ctr_model_dir = config_model.get("ctr.output_directory");
+      const std::string ctr_model_temp_dir = config_model.get("ctr.temp_directory");
+      const std::string ctr_model_file_name = config_model.get("ctr.file_name");
+      const Imps ctr_model_max_imps = config_model.get<Imps>("ctr.max_imps");
+      const Imps ctr_model_trust_imps = config_model.get<Imps>("ctr.trust_imps");
+      const Imps ctr_model_tag_imps = config_model.get<Imps>("ctr.tag_imps");
 
-      const Configuration config_reaggregator =
-        configuration.get_config("config.reaggregator");
-      const std::string reagg_input_dir =
-        config_reaggregator.get("input_directory");
-      const std::string reagg_output_dir =
-        config_reaggregator.get("output_directory");
+      const Configuration config_aggregator = configuration.get_config("config.aggregator");
+      const std::size_t agg_max_process_files = config_aggregator.get<std::size_t>("max_process_files");
+      const std::size_t agg_dump_max_size = config_aggregator.get<std::size_t>("dump_max_size");
+      const std::string agg_input_dir = config_aggregator.get("input_directory");
+      const std::string agg_output_dir = config_aggregator.get("output_directory");
+
+      const Configuration config_reaggregator = configuration.get_config("config.reaggregator");
+      const std::string reagg_input_dir = config_reaggregator.get("input_directory");
+      const std::string reagg_output_dir = config_reaggregator.get("output_directory");
 
       Processor_var processor;
       if (command == "model")
       {
+        CreativeProvider_var creative_provider = new CreativeProviderDB(
+          pg_host,
+          pg_port,
+          pg_dbname,
+          pg_user,
+          pg_password,
+          logger.in());
         processor = new ModelProcessor(
-            bid_cost_model_dir,
-            bid_cost_model_file_name,
-            bid_cost_model_temp_dir,
-            ctr_model_dir,
-            ctr_model_file_name,
-            ctr_model_temp_dir,
-            ctr_model_max_imps,
-            ctr_model_trust_imps,
-            ctr_model_tag_imps,
-            model_agg_dir,
-            logger);
+          bid_cost_model_dir,
+          bid_cost_model_file_name,
+          bid_cost_model_temp_dir,
+          ctr_model_dir,
+          ctr_model_file_name,
+          ctr_model_temp_dir,
+          ctr_model_max_imps,
+          ctr_model_trust_imps,
+          ctr_model_tag_imps,
+          model_agg_dir,
+          logger.in(),
+          creative_provider.in());
       }
       else if (command == "aggregate")
       {
         processor = new AggregatorMultyThread(
-            agg_max_process_files,
-            agg_dump_max_size,
-            agg_input_dir,
-            agg_output_dir,
-            logger);
+          agg_max_process_files,
+          agg_dump_max_size,
+          agg_input_dir,
+          agg_output_dir,
+          logger);
       }
       else if (command == "reaggregate")
       {
         processor = new ReaggregatorMultyThread(
-            reagg_input_dir,
-            reagg_output_dir,
-            logger);
+          reagg_input_dir,
+          reagg_output_dir,
+          logger);
       }
       else
       {

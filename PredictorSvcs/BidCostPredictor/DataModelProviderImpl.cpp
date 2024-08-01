@@ -19,9 +19,11 @@ namespace PredictorSvcs::BidCostPredictor
 DataModelProviderImpl::DataModelProviderImpl(
   const Imps max_imps,
   const std::string& input_dir,
-  Logging::Logger* logger)
+  Logger* logger,
+  CreativeProvider* creative_provider)
   : input_dir_(input_dir),
     logger_(ReferenceCounting::add_ref(logger)),
+    creative_provider_(ReferenceCounting::add_ref(creative_provider)),
     prefix_(LogTraits::B::log_base_name()),
     persantage_(logger_, Aspect::DATA_PROVIDER, 5),
     help_collector_(max_imps, 1000000, 1)
@@ -64,6 +66,11 @@ DataModelProviderImpl::DataModelProviderImpl(
     task_runners_.emplace_back(
       new Generics::TaskRunner(observer_, 1));
     task_runners_.back()->activate_object();
+  }
+
+  if (creative_provider_)
+  {
+    creative_provider_->load(cc_id_to_categories_);
   }
 }
 

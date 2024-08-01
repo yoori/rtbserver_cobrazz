@@ -8,6 +8,7 @@
 
 // THIS
 #include <LogCommons/LogCommons.hpp>
+#include "CreativeProvider.hpp"
 #include "DataModelProvider.hpp"
 #include "ModelCtr.hpp"
 #include "ModelEvaluator.hpp"
@@ -46,7 +47,8 @@ public:
     const Imps& ctr_model_trust_imps,
     const Imps& ctr_model_tag_imps,
     const std::string& agg_dir,
-    Logger* logger);
+    Logger* logger,
+    CreativeProvider* creative_provider);
 
   std::string name() noexcept override;
 

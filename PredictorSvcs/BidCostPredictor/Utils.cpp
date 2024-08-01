@@ -18,9 +18,6 @@
 namespace PredictorSvcs::BidCostPredictor::Utils
 {
 
-namespace
-{
-
 class GeneratorNumber final
 {
 public:
@@ -55,8 +52,6 @@ private:
 
   std::mutex mutex_;
 };
-
-} // namespace
 
 Files get_directory_files(
   const Path& path_dir,
@@ -96,20 +91,28 @@ Files get_directory_files(
       if (dir_info == DirInfo::RegularFile)
       {
         if (!S_ISREG(st.st_mode))
+        {
           continue;
+        }
       }
       else if (dir_info == DirInfo::Directory)
       {
         if (!S_ISDIR(st.st_mode))
+        {
           continue;
+        }
       }
 
       const std::string_view file_name(ent->d_name);
       if (file_name.size() < prefix.size())
+      {
         continue;
+      }
 
       if (file_name.substr(0, prefix.size()) == prefix)
+      {
         files.emplace_back(result_path);
+      }
     }
   }
 

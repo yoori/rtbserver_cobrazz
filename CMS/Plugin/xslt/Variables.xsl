@@ -544,6 +544,11 @@
 <xsl:variable name="bidcost-predictor-reaggregator-input-directory" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
 <xsl:variable name="bidcost-predictor-reaggregator-output-directory" select="'/log/Predictor/ResearchLogs/BidCostStatAgg'"/>
 <xsl:variable name="bidcost-predictor-reaggregator-period" select="3600"/>
+<xsl:variable name="bidcost-predictor-pg-connection-host" select="'postdb00'"/>
+<xsl:variable name="bidcost-predictor-pg-connection-port" select="5432"/>
+<xsl:variable name="bidcost-predictor-pg-connection-dbname" select="'stat'"/>
+<xsl:variable name="bidcost-predictor-pg-connection-user" select="'ro'"/>
+<xsl:variable name="bidcost-predictor-pg-connection-password" select="'Q1oL6mm5hPTjnDQ'"/>
 
 <!-- Predictor SVM generator defaults -->
 <xsl:variable name="def-svm-generator-port" select="$def-range-start + 69"/>

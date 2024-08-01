@@ -35,7 +35,8 @@ ModelProcessor::ModelProcessor(
   const Imps& ctr_model_trust_imps,
   const Imps& ctr_model_tag_imps,
   const std::string& agg_dir,
-  Logger* logger)
+  Logger* logger,
+  CreativeProvider* creative_provider)
   : model_dir_(model_dir),
     model_file_name_(model_file_name),
     temp_model_dir_(temp_model_dir),
@@ -47,7 +48,8 @@ ModelProcessor::ModelProcessor(
     data_provider_(new DataModelProviderImpl(
       ctr_model_max_imps,
       agg_dir_,
-      logger_))
+      logger_,
+      creative_provider))
 {
   const Points points {
     Point("0.95"),

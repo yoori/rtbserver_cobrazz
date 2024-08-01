@@ -592,7 +592,8 @@ BOOST_AUTO_TEST_CASE(provider)
     new DataModelProviderImpl(
       100000,
       result_directory,
-      logger));
+      logger,
+      nullptr));
   HelpCollector help_hollector_result(100000);
   provider->load(help_hollector_result);
 
@@ -601,8 +602,6 @@ BOOST_AUTO_TEST_CASE(provider)
   logger->info(
     std::string("Data model provider test is finished"),
     Aspect::TEST_BID_PREDICTOR);
-
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -1348,6 +1347,36 @@ BOOST_AUTO_TEST_CASE(test1)
   inner_collecrtor.add(key_inner4, data_inner4);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 125, true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 8, true);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(creative_provider)
+
+BOOST_AUTO_TEST_CASE(test)
+{
+  using CcIdToCategories = CreativeProvider::CcIdToCategories;
+
+  Logging::Logger_var logger = new Logging::OStream::Logger(
+    Logging::OStream::Config(std::cerr));
+
+  const std::string pg_host = "postdb00";
+  const std::size_t pg_port = 5432;
+  const std::string pg_dbname = "stat";
+  const std::string pg_user = "ro";
+  const std::string pg_password = "Q1oL6mm5hPTjnDQ";
+
+  CreativeProvider_var creative_provider = new CreativeProviderDB(
+    pg_host,
+    pg_port,
+    pg_dbname,
+    pg_user,
+    pg_password,
+    logger.in());
+
+  CcIdToCategories cc_id_to_categories;
+  creative_provider->load(cc_id_to_categories);
+  BOOST_CHECK_EQUAL(cc_id_to_categories.size() >= 1, true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
