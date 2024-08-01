@@ -13,6 +13,8 @@ You can install the required libraries using pip:
 ```bash
 pip install -r requirements.txt
 ```
+## Notes
+Ensure that you have a valid API key for the Yandex GPT API and add it to your <b>envoirment</b> as variables <b>YANDEX_ACCOUNT_ID</b> and <b>YANDEX_GPT_API_KEY</b>.
 
 ## Usage
 To run the script, use the following command:
@@ -24,9 +26,15 @@ python getSiteCategories.py --websites "website1.com, website2.com"
 
 - `--websites`: A comma-and-space separated list of websites for which you want to fetch categories.
 
-## Example
+## Example 1
 ```bash
-python getSiteCategories.py --websites "google.com, yandex.ru, facebook.com"
+ python3 getSiteCategories.py --websites "google.com, yandex.ru, facebook.com"
+```
+
+## Example 2
+You can run it with passing environment variables.
+```bash
+ YANDEX_ACCOUNT_ID=<accoind_id> YANDEX_GPT_API_KEY=<API_key> python3 getSiteCategories.py --websites "google.com, yandex.ru, facebook.com"
 ```
 The script will output the categories in <b>result.json</b> file in the following format:
 
@@ -61,5 +69,3 @@ The script will output the categories in <b>result.json</b> file in the followin
 }
 ```
 
-## Notes
-Ensure that you have a valid API key for the Yandex GPT API and replace the placeholder in the script.

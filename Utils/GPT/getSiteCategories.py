@@ -1,12 +1,14 @@
+import os
 import requests
 import json
-
 import argparse
+
+outputfilename = 'result.json'
 
 def main(websites):
     print("get categories for websites:", websites)
     prompt = {
-        "modelUri": "gpt://<id_acc>/yandexgpt-lite",
+        "modelUri": "gpt://{}/yandexgpt-lite".format(os.getenv('YANDEX_ACCOUNT_ID')),
         "completionOptions": {
             "stream": False,
             "temperature": 0.6,
@@ -31,7 +33,7 @@ def main(websites):
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "Api-Key <api_key>"
+        "Authorization": "Api-Key {}".format(os.getenv('YANDEX_GPT_API_KEY'))
     }
 
     response = requests.post(url, headers=headers, json=prompt)
@@ -42,8 +44,9 @@ def main(websites):
     # print(message_text)
     message_text = message_text.strip('`').strip()
     inner_json_obj = json.loads(message_text)
-    # print(inner_json_obj)
-
+    
+    print("Done. Write to a file:", outputfilename)
+    print(inner_json_obj)
     with open("result.json", 'w', encoding='utf-8') as f:
         json.dump(inner_json_obj, f, ensure_ascii=False, indent=4)
 
