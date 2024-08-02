@@ -2,6 +2,7 @@
 #define BIDCOSTPREDICTOR_DATAPROVIDERWINIMPL_HPP
 
 // STD
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -32,8 +33,6 @@ class DataModelProviderImpl final :
 private:
   using CcIdToCategories = CreativeProvider::CcIdToCategories;
   using DayTimestamp = LogProcessing::DayTimestamp;
-  using Collector = LogProcessing::BidCostStatInnerCollector;
-  using LogTraits = LogProcessing::BidCostStatInnerTraits;
   using Path = std::string;
   using AggregatedFiles = std::list<Path>;
   using Key = typename HelpCollector::Key;
@@ -41,6 +40,23 @@ private:
   using Url = std::string_view;
   using UrlHash = std::unordered_map<Url, UrlPtr>;
   using Imps = typename HelpCollector::Imps;
+
+  struct ReadData final
+  {
+    using Key = LogProcessing::BidCostStatInnerKey;
+    using Data = LogProcessing::BidCostStatInnerData;
+
+    ReadData(Key&& key, Data&& data)
+      : key(std::move(key)),
+        data(std::move(data))
+    {
+    }
+
+    Key key;
+    Data data;
+  };
+  using ReadCollector = std::deque<ReadData>;
+  using ReadCollectorPtr = std::shared_ptr<ReadCollector>;
 
   enum class ThreadID
   {
@@ -79,17 +95,19 @@ private:
 
   void do_read() noexcept;
 
-  void do_calculate(Collector& temp_collector) noexcept;
+  void do_calculate(ReadCollectorPtr& temp_collector) noexcept;
 
   void do_stop() noexcept;
 
-  void do_clean(Collector& collector) noexcept;
+  void do_clean(ReadCollectorPtr& temp_collector) noexcept;
 
   template<ConceptMemberPtr MemPtr, class ...Args>
   bool post_task(
     const ThreadID id,
     MemPtr mem_ptr,
     Args&& ...args) noexcept;
+
+  ReadCollectorPtr load(const Path& file_path);
 
 private:
   const std::string input_dir_;
@@ -119,8 +137,6 @@ private:
   UrlHash url_hash_;
 
   std::vector<Generics::TaskRunner_var> task_runners_;
-
-  //PoolCollector<Collector, 1000000> pool_collector_;
 
   CcIdToCategories cc_id_to_categories_;
 };

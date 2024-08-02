@@ -3,6 +3,7 @@
 #include <regex>
 
 // THIS
+#include <LogCommons/LogCommons.hpp>
 #include "DataModelProviderImpl.hpp"
 #include "Utils.hpp"
 
@@ -24,7 +25,7 @@ DataModelProviderImpl::DataModelProviderImpl(
   : input_dir_(input_dir),
     logger_(ReferenceCounting::add_ref(logger)),
     creative_provider_(ReferenceCounting::add_ref(creative_provider)),
-    prefix_(LogTraits::B::log_base_name()),
+    prefix_(LogProcessing::BidCostStatInnerTraits::B::log_base_name()),
     persantage_(logger_, Aspect::DATA_PROVIDER, 5),
     help_collector_(max_imps, 1000000, 1)
 {
@@ -223,8 +224,8 @@ bool DataModelProviderImpl::load(
     stream << "DataModelProvider is failed. Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
-    shutdown_manager_.stop();
 
+    shutdown_manager_.stop();
     return false;
   }
   catch (...)
@@ -232,8 +233,8 @@ bool DataModelProviderImpl::load(
     Stream::Error stream;
     stream << "DataModelProvider is failed. Reason: Unknown error";
     logger_->critical(stream.str(), Aspect::DATA_PROVIDER);
-    shutdown_manager_.stop();
 
+    shutdown_manager_.stop();
     return false;
   }
 
@@ -332,12 +333,10 @@ void DataModelProviderImpl::do_read() noexcept
   const auto file_path = *it;
   aggregated_files_.erase(it);
 
-  //auto temp_collector = pool_collector_.get_collector();
-  auto temp_collector = Collector();
-  temp_collector.prepare_adding(1000000);
+  ReadCollectorPtr temp_collector;
   try
   {
-    LogHelper<LogTraits>::load(file_path, temp_collector);
+    temp_collector = load(file_path);
   }
   catch (const eh::Exception& exc)
   {
@@ -352,10 +351,6 @@ void DataModelProviderImpl::do_read() noexcept
     post_task(
       ThreadID::Read,
       &DataModelProviderImpl::do_read);
-    post_task(
-      ThreadID::Clean,
-      &DataModelProviderImpl::do_clean,
-      std::move(temp_collector));
     return;
   }
 
@@ -365,8 +360,7 @@ void DataModelProviderImpl::do_read() noexcept
     std::move(temp_collector));
 }
 
-void DataModelProviderImpl::do_calculate(
-  Collector& temp_collector) noexcept
+void DataModelProviderImpl::do_calculate(ReadCollectorPtr& temp_collector) noexcept
 {
   if (shutdown_manager_.is_stoped())
   {
@@ -379,7 +373,7 @@ void DataModelProviderImpl::do_calculate(
 
   try
   {
-    for (const auto& [key_temp, data_temp] : temp_collector)
+    for (const auto& [key_temp, data_temp] : *temp_collector)
     {
       const auto& tag_id = key_temp.tag_id();
       const auto& url = key_temp.url();
@@ -424,18 +418,17 @@ void DataModelProviderImpl::do_calculate(
   post_task(
     ThreadID::Clean,
     &DataModelProviderImpl::do_clean,
-    std::move(temp_collector));
+    temp_collector);
 }
 
-void DataModelProviderImpl::do_clean(Collector& collector) noexcept
+void DataModelProviderImpl::do_clean(ReadCollectorPtr& temp_collector) noexcept
 {
   if (shutdown_manager_.is_stoped())
   {
     return;
   }
 
-  collector.clear();
-  //pool_collector_.add_collector(std::move(collector));
+  temp_collector.reset();
 }
 
 void DataModelProviderImpl::do_stop() noexcept
@@ -447,6 +440,97 @@ void DataModelProviderImpl::do_stop() noexcept
 
   is_load_success_.store(true);
   shutdown_manager_.stop();
+}
+
+DataModelProviderImpl::ReadCollectorPtr
+DataModelProviderImpl::load(const Path& file_path)
+{
+  using LogHeader = typename LogProcessing::BidCostStatInnerTraits::HeaderType;
+  using TabCategory = LogProcessing::TabCategory;
+  using FixedBufStream = LogProcessing::FixedBufStream<TabCategory>;
+
+  ReadCollectorPtr read_collector = std::make_shared<ReadCollector>();
+
+  std::ifstream stream(file_path);
+  if (!stream)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Can't open file="
+           << file_path;
+    throw Exception(stream);
+  }
+
+  LogHeader log_header;
+  if (!(stream >> log_header))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Failed to read log header [file="
+           << file_path
+           << "]";
+    throw Exception(stream);
+  }
+
+  if (stream.eof() || stream.peek() == EOF)
+  {
+    return read_collector;
+  }
+
+  std::string line;
+  line.reserve(1024);
+  std::size_t line_num = 0;
+  for (; stream.peek(), !stream.eof(); line_num += 1)
+  {
+    line_num += 1;
+    line.clear();
+    LogProcessing::read_until_eol(stream, line, false);
+    if (stream.eof())
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Malformed file (file must end with an end-of-line character), line="
+             << line_num;
+      throw Exception(stream);
+    }
+
+    if (!stream.good())
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Error occure, line="
+             << line_num;
+      throw Exception(stream);
+    }
+
+    ReadData::Key key;
+    ReadData::Data data;
+    FixedBufStream fbs(line);
+    if (!(fbs >> key))
+    {
+      Stream::Error es;
+      es << FNS
+         << "Failed to read key from istream (line number = "
+         << line_num
+         << ")";
+      throw Exception(es);
+    }
+    if (!(fbs >> data))
+    {
+      Stream::Error es;
+      es << FNS
+         << "Failed to read data from istream (line number = "
+         << line_num
+         << ")";
+    }
+    fbs.transfer_state(stream);
+
+    read_collector->emplace_back(
+      std::move(key),
+      std::move(data));
+  }
+
+  return read_collector;
 }
 
 } // namespace PredictorSvcs::BidCostPredictor

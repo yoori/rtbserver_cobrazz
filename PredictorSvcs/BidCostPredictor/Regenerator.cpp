@@ -263,7 +263,7 @@ void Regenerator::regenerate(
         LogProcessing::FixedBufStream<LogProcessing::TabCategory> fbs(line);
         if (!(fbs >> const_cast<Key&>(static_cast<const Key&>(value.first))))
         {
-          std::stringstream stream;
+          Stream::Error stream;
           stream << FNS
                  << "Failed to read key from istream (line number = "
                  << line_num
@@ -273,7 +273,7 @@ void Regenerator::regenerate(
         }
         if (!(fbs >> static_cast<Data&>(value.second)))
         {
-          std::stringstream stream;
+          Stream::Error stream;
           stream << FNS
                  << "Failed to read data from istream (line number = "
                  << line_num
