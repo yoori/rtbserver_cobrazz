@@ -559,15 +559,16 @@ namespace Frontends
         dmp_response.set_id(dmp_request.id());
         dmp_response.set_code(0);
 
-        std::string ostr;
-        ostr.reserve(128);
-        dmp_response.SerializeToString(&ostr);
-        uint32_t sz = ostr.size();
+        std::ostringstream ostr;
+        dmp_response.SerializeToOstream(&ostr);
+
+        std::string strbuf = ostr.str();
+        uint32_t sz = strbuf.size();
 
         Buf write_buf(sz + 4);
         //*reinterpret_cast<uint32_t*>(write_buf.data()) = htonl(ostr.str().size());
         *reinterpret_cast<uint32_t*>(write_buf.data()) = sz;
-        ::memcpy(write_buf.data() + 4, ostr.data(), ostr.size());
+        ::memcpy(write_buf.data() + 4, strbuf.data(), strbuf.size());
 
         add_write_buf_(write_buf);
       }
