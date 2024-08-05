@@ -220,7 +220,7 @@ json_parse(char *str, char **endptr, JsonValue *value, JsonAllocator &allocator)
           *endptr = str;
           return JSON_PARSE_BAD_NUMBER;
         }
-        break;  // Prevent fallthrough
+        [[fallthrough]];
       case '0':
       case '1':
       case '2':

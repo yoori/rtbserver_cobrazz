@@ -122,13 +122,11 @@ namespace CampaignSvcs
     const String::SubString& directory,
     const Generics::Time& config_timestamp,
     Generics::TaskRunner* task_runner,
-    const std::string &file_name)
+    const std::string& file_name)
     : task_runner_(ReferenceCounting::add_ref(task_runner)),
       config_timestamp_(config_timestamp),
       remove_config_files_at_destroy_(false)
-  {
-    load_(directory, file_name);
-  }
+  { load_(directory, file_name); }
 
   BidCostProvider::~BidCostProvider() noexcept
   {

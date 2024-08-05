@@ -1525,7 +1525,7 @@ namespace RequestInfoSvcs {
     Logging::Logger* logger,
     RequestActionProcessor* request_processor,
     RequestOperationProcessor* request_operation_processor,
-    __attribute__((unused))const DataBaseManagerPoolPtr& rocksdb_manager_pool,
+    [[maybe_unused]] const DataBaseManagerPoolPtr& rocksdb_manager_pool,
     const char* requestfile_base_path,
     const char* requestfile_prefix,
     const RocksDBParams& request_rocksdb_params,

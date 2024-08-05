@@ -21,8 +21,7 @@
 #include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
 #include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
 #include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
-#include "../UserBindController/UserBindOperationDistributor.hpp"
-
+#include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
 namespace AdServer::UserInfoSvcs
 {
 

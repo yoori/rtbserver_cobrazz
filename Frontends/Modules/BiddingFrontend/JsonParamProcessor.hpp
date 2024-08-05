@@ -223,8 +223,11 @@ namespace Bidding
     {}
 
     JsonAdSlotProcessingContext(const JsonAdSlotProcessingContext&) = default;
+    JsonAdSlotProcessingContext(JsonAdSlotProcessingContext&&) noexcept = default ;
+
     JsonAdSlotProcessingContext& operator=(const JsonAdSlotProcessingContext&) = default;
-    
+    JsonAdSlotProcessingContext& operator=(JsonAdSlotProcessingContext&&) = default;
+
     std::string id;
     AdServer::CampaignSvcs::RevenueDecimal min_cpm_price;
     Commons::Optional<long> private_auction;

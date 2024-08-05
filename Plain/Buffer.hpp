@@ -99,10 +99,10 @@ namespace PlainTypes
   }
 
   inline
-  Buffer::Buffer() : Generics::MemBuf() {}
+  Buffer::Buffer() = default;
 
   inline
-  Buffer::Buffer(const Buffer& right): Generics::MemBuf(right){}
+  Buffer::Buffer(const Buffer& right) = default;
 }
 
 #endif /*PLAIN_BUFFER_HPP*/

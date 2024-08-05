@@ -307,6 +307,10 @@ public:
   struct CollectorTag {};
 
   StatCollector(): map_impl_(new RefCountableMapImpl_) {}
+  StatCollector(const StatCollector&) = default;
+  StatCollector(StatCollector&&) noexcept = default;
+
+  ~StatCollector() = default;
 
   template<typename Range>
   StatCollector(const Range& range): map_impl_(new RefCountableMapImpl_)
@@ -322,8 +326,7 @@ public:
     }
     return *this;
   }
-  ~StatCollector() = default;
-  StatCollector(const StatCollector&) = default;
+  StatCollector& operator=(StatCollector&&) = default;
 
   bool operator==(const StatCollector& collector) const
   {
