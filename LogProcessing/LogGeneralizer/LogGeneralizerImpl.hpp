@@ -579,7 +579,6 @@ LogGeneralizerImpl::init_hf_log_proc_info_(
        AllocatorInitializer, SIZE>& ostr, const xsd::AdServer::Configuration::LogUploadType4& arg)
      {
        return ostr << static_cast<const ::xml_schema::string&>(arg);
-       //return ostr << static_cast<xsd::AdServer::Configuration::LogUploadType4::value>(arg);
      }
    };
  }

@@ -848,7 +848,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     RequestInfo::Revenue::print(
       OStream& out, const char* space) const
       noexcept
@@ -862,7 +862,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     RequestInfo::RevenueSys::print(
       OStream& out, const char* space) const
       noexcept
@@ -905,7 +905,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     RequestInfo::print_request_state(
       OStream& out, RequestState request_state)
       noexcept
@@ -915,7 +915,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     RequestInfo::print(
       OStream& out, const char* space) const
       noexcept
@@ -1029,7 +1029,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     AdvCustomActionInfo::print(
       OStream& out, const char* space) const
       noexcept
@@ -1045,7 +1045,8 @@ namespace AdServer
 
     /* AdvActionProcessor::AdvActionInfo */
     template<typename OStream>
-    OStream& AdvActionProcessor::AdvActionInfo::print(
+    inline OStream&
+    AdvActionProcessor::AdvActionInfo::print(
       OStream& out, const char* space) const
       noexcept
     {
@@ -1058,7 +1059,8 @@ namespace AdServer
 
     /* AdvActionProcessor::AdvExActionInfo */
     template<typename OStream>
-    OStream& AdvActionProcessor::AdvExActionInfo::print(
+    inline OStream&
+    AdvActionProcessor::AdvExActionInfo::print(
       OStream& out, const char* space) const
       noexcept
     {

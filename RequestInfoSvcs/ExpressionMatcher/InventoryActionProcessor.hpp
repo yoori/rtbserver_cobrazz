@@ -343,7 +343,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    void
+    inline void
     MatchRequestProcessor::MatchInfo::print(
       OStream& ostr, const char* offset) const
       noexcept
@@ -453,7 +453,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     InventoryActionProcessor::InventoryInfo::print_channels_(
       OStream& ostr,
       const ChannelIdVector& lst)
@@ -464,7 +464,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     InventoryActionProcessor::InventoryInfo::print_channel_counter_map_(
       OStream& ostr,
       const ChannelImpCounterVector& chs) const noexcept
@@ -479,7 +479,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     InventoryActionProcessor::InventoryInfo::print_channel_avg_revenue_map_(
       OStream& ostr,
       const ChannelAvgRevenueVector& chs) const noexcept
@@ -493,7 +493,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    void
+    inline void
     InventoryActionProcessor::InventoryInfo::print(
       OStream& ostr, const char* offset) const noexcept
     {

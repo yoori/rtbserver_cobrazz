@@ -73,8 +73,8 @@ namespace AdServer
 namespace RequestInfoSvcs
 {
   template<typename OStream>
-  void TagRequestInfo::
-  print(OStream& out, const char* offset) const noexcept
+  inline void
+  TagRequestInfo::print(OStream& out, const char* offset) const noexcept
   {
     out << offset << "user_id = " << user_id.to_string() << std::endl <<
       offset << "time = " << time.get_gm_time() << std::endl <<

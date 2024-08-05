@@ -9,6 +9,7 @@
 #include <Commons/AtomicInt.hpp>
 #include <Commons/DelegateActiveObject.hpp>
 #include <Commons/Kafka/LimitedMTQueue.hpp>
+#include <Stream/MemoryStream.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 
 namespace AdServer

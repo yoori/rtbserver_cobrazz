@@ -7,7 +7,6 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Hash.hpp>
 #include <Generics/Hash.hpp>
-
 #include <Stream/MemoryStream.hpp>
 
 namespace AdServer
