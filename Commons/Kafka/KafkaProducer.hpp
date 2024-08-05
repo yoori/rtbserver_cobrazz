@@ -47,10 +47,14 @@ namespace AdServer
           std::ostream& os,
           const StatCounter& cnt);
 
-        template<typename Elem, typename Traits, typename Allocator,
-          typename AllocatorInitializer, const size_t SIZE>
         friend
-        struct Stream::MemoryStream::OutputMemoryStreamHelper;
+        std::pair<int, int>
+        StatCounterPreparePrint(const StatCounter&);
+
+        // template<typename Elem, typename Traits, typename Allocator,
+        //   typename AllocatorInitializer, const size_t SIZE>
+        // friend
+        // struct Stream::MemoryStream::OutputMemoryStreamHelper;
 
       private:
         mutable Algs::AtomicUInt prev_;
@@ -424,6 +428,19 @@ namespace AdServer
   }
 }
 
+namespace AdServer::Commons::Kafka
+{
+  inline
+  std::pair<int, int>
+  StatCounterPreparePrint(const StatCounter& cnt)
+  {
+    int current = cnt.current_;
+    int prev = cnt.prev_;
+    cnt.prev_ = current;
+    return {current, prev};
+  }
+}
+
 namespace Stream::MemoryStream
 {
   template<typename Elem, typename Traits, typename Allocator,
@@ -435,9 +452,7 @@ namespace Stream::MemoryStream
     operator()(OutputMemoryStream<Elem, Traits, Allocator,
       AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::Kafka::StatCounter& cnt)
     {
-      int current = cnt.current_;
-      int prev = cnt.prev_;
-      cnt.prev_ = current;
+      auto [current, prev] = AdServer::Commons::Kafka::StatCounterPreparePrint(cnt);
       ostr << current - prev << "/" << current;
       return ostr;
     }
