@@ -4,7 +4,7 @@
 * DMP Kafka streamer
 */
 #include <iomanip>
-#include <numeric> 
+#include <numeric>
 #include "DMPKafkaStreamer.hpp"
 #include <LogCommons/CsvUtils.hpp>
 
@@ -26,7 +26,7 @@ namespace
     const ExternalUserIdArray& bind_user_ids,
     const Generics::Time& now,
     OStream& ostr)
-  {    
+  {
     // std::setfill('0') << std::setw(6) << now.tv_usec
     ostr << now.tv_sec << "." <<
       Stream::MemoryStream::width_out(now.tv_usec, 6, '0') << ",";
@@ -38,7 +38,7 @@ namespace
       bind_user_it++;
     }
 
-    // dmp profile without keywords    
+    // dmp profile without keywords
     ostr <<
       dmp_profiling_info.version() << "," <<
       dmp_profiling_info.time() << "," <<
@@ -60,12 +60,12 @@ namespace
 
   typedef unsigned long (
     Kafka::Producer::* GetStatFunc)() const;
-  
+
   template <GetStatFunc Member>
   struct Sum
   {
     typedef DMPKafkaStreamer::ProducerTable::value_type Value;
-    
+
     unsigned long operator()(unsigned long left, const Value& right)
     {
       return left + (right.second->*Member)();
@@ -105,7 +105,7 @@ namespace AdServer
     {
       size_t producers_size =
         sizeof(PRODUCER_DESCRIPTORS) / sizeof(*PRODUCER_DESCRIPTORS);
-      
+
       for (size_t i = 0; i < producers_size; ++i)
       {
         const KafkaProducerDescriptor& descriptor =
@@ -121,12 +121,12 @@ namespace AdServer
               logger,
               callback,
               topic_config.get());
-          
+
           producers_.insert(
             std::make_pair(
               descriptor.producer_type,
               producer));
-          
+
           owner->add_child_object(producer);
         }
       }
@@ -149,7 +149,7 @@ namespace AdServer
       if (producer != producers_.end())
       {
         Stream::MemoryStream::OutputMemoryStream<char> ostr(1024);
-        
+
         dmp_profile_to_stream(
           dmp_profiling_info,
           bind_user_ids,
@@ -161,7 +161,7 @@ namespace AdServer
           AdServer::LogProcessing::write_not_empty_string_as_csv(
             ostr, dmp_profiling_info.keywords());
         }
-        
+
         producer->second->push_data(
           dmp_profiling_info.external_user_id(),
           ostr.str().str());
@@ -183,7 +183,7 @@ namespace AdServer
         0ul,
         Sum<&Commons::Kafka::Producer::sent>());
     }
-    
+
     unsigned long
     DMPKafkaStreamer::sent_bytes() const
     {
@@ -193,7 +193,7 @@ namespace AdServer
         0ul,
         Sum<&Commons::Kafka::Producer::sent_bytes>());
     }
-    
+
     unsigned long
     DMPKafkaStreamer::errors() const
     {
@@ -205,4 +205,4 @@ namespace AdServer
     }
   }
 }
-    
+

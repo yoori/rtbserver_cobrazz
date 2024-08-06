@@ -18,7 +18,7 @@ namespace Bidding
 {
   // RequestParamsHolder
   class RequestParamsHolder:
-     public AdServer::CampaignSvcs::CampaignManager::RequestParams,   
+     public AdServer::CampaignSvcs::CampaignManager::RequestParams,
      public ReferenceCounting::AtomicImpl
   {
   protected:

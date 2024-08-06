@@ -29,7 +29,7 @@ namespace Commons
     StringHolder(const String::SubString& str)
       : str_(str.data(), str.length())
     {}
-    
+
     const std::string*
     operator ->() const noexcept
     {
@@ -74,7 +74,7 @@ namespace Commons
       Generics::Murmur64Hash hash(hash_);
       hash_add(hash, value_->str());
     }
-    
+
     StringHolder_var
     value() const noexcept
     {

@@ -1178,7 +1178,7 @@ namespace PlainStorage
           fragment_size,
           size + sizeof(u_int32_t),
           safe_block_size);
-        
+
         {
           SizeType check_fragment_size;
           assert(
@@ -1306,7 +1306,7 @@ namespace PlainStorage
           raise(SIGSEGV);
         }
       }
-      
+
 #     endif
     }
     catch(const eh::Exception& ex)
@@ -1506,7 +1506,7 @@ namespace PlainStorage
     SizeType flag_offset = ActualFBH::size() + index.sub_index;
 
     bool use_as_control = false;
-    
+
     {
       typename FragmentAllocateLockMap::WriteGuard block_lock(
         fragment_alloc_locks_.write_lock(index.base_index));
@@ -1647,7 +1647,7 @@ namespace PlainStorage
         ostr << FUN << ": first free reference corrupted";
         throw BaseException(ostr);
       }
-      
+
       for(typename BlockIndex::SubIndex i = result_index + 1;
           i < fragment_count; ++i)
       {

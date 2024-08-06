@@ -52,11 +52,6 @@ namespace AdServer
         std::pair<int, int>
         StatCounterPreparePrint(const StatCounter&);
 
-        // template<typename Elem, typename Traits, typename Allocator,
-        //   typename AllocatorInitializer, const size_t SIZE>
-        // friend
-        // struct Stream::MemoryStream::OutputMemoryStreamHelper;
-
       private:
         mutable Algs::AtomicUInt prev_;
         Algs::AtomicUInt current_;
