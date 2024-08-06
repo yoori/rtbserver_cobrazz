@@ -33,9 +33,9 @@ private:
   using Point = Types::FixedNumber;
   using Points = std::vector<Point>;
   using TaskRunner_var = Generics::TaskRunner_var;
-  using Iterator = typename HelpCollector::ConstIterator;
-  using UrlPtr = typename HelpCollector::Key::UrlPtr;
-  using TagId = typename HelpCollector::Key::TagId;
+  using Iterator = BidCostHelpCollector::ConstIterator;
+  using UrlPtr = BidCostHelpCollector::Key::UrlPtr;
+  using TagId = BidCostHelpCollector::Key::TagId;
   using Cost = Types::Cost;
   using FixedNumber = Types::FixedNumber;
   using WinRate = Types::WinRate;
@@ -114,7 +114,7 @@ private:
 
   Persantage persantage_;
 
-  HelpCollector collector_;
+  BidCostHelpCollector collector_;
 
   std::atomic<bool> is_idle_ = true;
 

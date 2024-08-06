@@ -33,7 +33,8 @@ public:
 
   Ctr get_ctr(
     const TagId& tag_id,
-    const Url& url) const override;
+    const Url& url,
+    const CreativeCategoryId& creative_category_id) const override;
 
 protected:
   ~ContainerImpl() override = default;
