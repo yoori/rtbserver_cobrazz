@@ -1085,7 +1085,7 @@ namespace PlainStorage
       ostr << FUN << ": Empty index of write blocks";
       throw CorruptedRecord(ostr);
     }
-    
+
     SizeType cur_size = full_size_;
 
     typename WriteBlockWithPosList::iterator erase_it = write_blocks_.end();
@@ -1333,7 +1333,7 @@ namespace PlainStorage
   template<typename NextIndexType,
     typename NextIndexSerializerType, typename SyncPolicyType>
   template<typename IndexBufElem>
-  void 
+  void
   WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
   WriteRecordImpl::print_exception_(
     std::ostream& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept
@@ -1350,7 +1350,7 @@ namespace PlainStorage
   template<typename NextIndexType,
     typename NextIndexSerializerType, typename SyncPolicyType>
   template<typename IndexBufElem>
-  void 
+  void
   WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
   WriteRecordImpl::print_exception_(
     Stream::Error& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept

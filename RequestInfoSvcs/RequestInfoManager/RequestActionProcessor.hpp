@@ -224,7 +224,7 @@ namespace AdServer
           check_sys();
           return RevenueDecimal::div(action, currency_rate);
         }
-        
+
         RevenueDecimal
         convert_impression(const RevenueDecimal& currency_rate)
           const /*throw(Exception, RevenueDecimal::Overflow)*/
@@ -367,7 +367,7 @@ namespace AdServer
 
       Generics::Time kw_last_page_match;
       Generics::Time kw_last_search_match;
-      
+
       bool disabled_pub_cost_check;
 
       // uses only by RequestActionProcessor

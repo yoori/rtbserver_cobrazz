@@ -44,7 +44,7 @@ namespace Frontends
       return res;
     }
   }
-  
+
   class DMPProfilingSender:
     public ReferenceCounting::AtomicImpl,
     public Generics::SimpleActiveObject
@@ -706,7 +706,7 @@ namespace Frontends
           lp_config.KeywordHitStat().get(),
           (lp_config.log_root() + KEYWORD_HIT_STAT_OUT_DIR).c_str()) :
         LogProcessing::LogFlushTraits());
-    
+
     DescriptorHandlerPoller_var poller = new DescriptorHandlerPoller(
       callback,
       config.Processing().threads(),
@@ -776,7 +776,7 @@ namespace Frontends
     }
 
     Generics::Time next_flush;
-    
+
     try
     {
       next_flush = stat_logger_->flush_if_required();

@@ -71,7 +71,7 @@ namespace yy
     : PlainFlexLexer(in, out)
   {}
 
-  PlainScanner::~PlainScanner() throw()
+  PlainScanner::~PlainScanner() noexcept
   {}
 
   void PlainScanner::set_debug(bool debug)

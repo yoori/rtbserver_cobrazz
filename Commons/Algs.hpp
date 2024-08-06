@@ -491,7 +491,7 @@ namespace Algs
 
     return out;
   }
-  
+
   inline
   Generics::Time
   round_to_day(const Generics::Time& time) noexcept

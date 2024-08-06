@@ -34,7 +34,7 @@ namespace AdServer
         const AdServer::UserInfoSvcs::UserInfoManagerDescriptionSeq&
         user_info_managers__) /*throw(eh::Exception)*/;
 
-      virtual ~UserInfoManagerSessionImpl() throw();
+      virtual ~UserInfoManagerSessionImpl() noexcept;
 
       virtual CORBA::ValueBase* _copy_value();
 
@@ -130,7 +130,7 @@ namespace AdServer
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::ImplementationException)*/;
 
     protected:
-      void init_() throw();
+      void init_() noexcept;
       mutable Sync::Policy::PosixThread::Mutex init_lock_;
 
       unsigned long
