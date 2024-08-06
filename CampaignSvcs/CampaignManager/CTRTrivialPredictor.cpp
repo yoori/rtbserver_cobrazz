@@ -35,7 +35,7 @@ namespace CTR
   }
 
   size_t
-  TrivialPredictor::KeyHashAdapter::hash() const throw ()
+  TrivialPredictor::KeyHashAdapter::hash() const noexcept
   {
     return hash_;
   }
