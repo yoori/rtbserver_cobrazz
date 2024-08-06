@@ -5,7 +5,8 @@
 #include <ReferenceCounting/Interface.hpp>
 
 // THIS
-#include "HelpCollector.hpp"
+#include "BidCostHelpCollector.hpp"
+#include "CtrHelpCollector.hpp"
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -15,7 +16,9 @@ class DataModelProvider : public virtual ReferenceCounting::Interface
 public:
   DataModelProvider() = default;
 
-  virtual bool load(HelpCollector& collector) noexcept = 0;
+  virtual bool load(BidCostHelpCollector& collector) noexcept = 0;
+
+  virtual bool load(CtrHelpCollector& collector) noexcept = 0;
 
   virtual void stop() noexcept = 0;
 

@@ -1,5 +1,5 @@
-#ifndef BIDCOSTPREDICTOR_HELPCOLLECTOR_HPP
-#define BIDCOSTPREDICTOR_HELPCOLLECTOR_HPP
+#ifndef BIDCOSTPREDICTOR_BIDCOSTHELPCOLLECTOR_HPP
+#define BIDCOSTPREDICTOR_BIDCOSTHELPCOLLECTOR_HPP
 
 // BOOST
 #include <boost/container/flat_map.hpp>
@@ -21,7 +21,7 @@ namespace PredictorSvcs::BidCostPredictor
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-namespace DetailHelpCollector
+namespace DetailBidCostHelpCollector
 {
 
 class Key final
@@ -92,9 +92,9 @@ private:
   Hash hash_ = 0;
 };
 
-} // namespace DetailHelpCollector
+} // namespace DetailBidCostHelpCollector
 
-class HelpCollector final
+class BidCostHelpCollector final
 {
 public:
   using Cost = Types::Cost;
@@ -111,8 +111,6 @@ public:
     using ConstIterator = typename FlatMap::const_iterator;
     using ConstReverseIterator = typename FlatMap::const_reverse_iterator;
     using SizeType = typename FlatMap::size_type;
-    using Imps = typename HelpCollector::Imps;
-    using Clicks = typename HelpCollector::Clicks;
 
   public:
     explicit InnerCollector(const Imps max_imps = 100000)
@@ -222,7 +220,7 @@ public:
     Clicks total_clicks_ = 0;
   };
 
-  using Key = DetailHelpCollector::Key;
+  using Key = DetailBidCostHelpCollector::Key;
   using Data = InnerCollector;
   using DataPtr = std::shared_ptr<Data>;
   using Map = std::unordered_map<
@@ -234,9 +232,9 @@ public:
   using ConstIterator = typename Map::const_iterator;
 
 public:
-  explicit HelpCollector(
+  explicit BidCostHelpCollector(
     const Imps max_imps = 100000,
-    const std::size_t bucket_count = 1,
+    const std::size_t bucket_count = 1000000,
     const std::size_t inner_collector_capacity = 1)
     : map_(std::make_shared<Map>(bucket_count)),
       max_imps_(max_imps),
@@ -244,12 +242,12 @@ public:
   {
   }
 
-  ~HelpCollector() = default;
+  ~BidCostHelpCollector() = default;
 
-  HelpCollector(const HelpCollector&) = default;
-  HelpCollector(HelpCollector&&) = default;
-  HelpCollector& operator=(const HelpCollector&) = default;
-  HelpCollector& operator=(HelpCollector&&) = default;
+  BidCostHelpCollector(const BidCostHelpCollector&) = default;
+  BidCostHelpCollector(BidCostHelpCollector&&) = default;
+  BidCostHelpCollector& operator=(const BidCostHelpCollector&) = default;
+  BidCostHelpCollector& operator=(BidCostHelpCollector&&) = default;
 
   std::size_t size() const
   {
@@ -309,7 +307,7 @@ public:
     map_->erase(it);
   }
 
-  HelpCollector& add(const Key& key, const Data& data)
+  BidCostHelpCollector& add(const Key& key, const Data& data)
   {
     auto it = map_->find(key);
     if (it == map_->end())
@@ -323,7 +321,7 @@ public:
     return *this;
   }
 
-  bool operator==(const HelpCollector& other) const
+  bool operator==(const BidCostHelpCollector& other) const
   {
     if (this == &other)
     {
@@ -365,4 +363,4 @@ private:
 
 } // namespace PredictorSvcs::BidCostPredictor
 
-#endif //BIDCOSTPREDICTOR_HELPCOLLECTOR_HPP
+#endif //BIDCOSTPREDICTOR_BIDCOSTHELPCOLLECTOR_HPP

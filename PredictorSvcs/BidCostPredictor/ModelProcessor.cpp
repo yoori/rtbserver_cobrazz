@@ -48,8 +48,7 @@ ModelProcessor::ModelProcessor(
     data_provider_(new DataModelProviderImpl(
       ctr_model_max_imps,
       agg_dir_,
-      logger_,
-      creative_provider))
+      logger_))
 {
   const Points points {
     Point("0.95"),
@@ -72,7 +71,8 @@ ModelProcessor::ModelProcessor(
     ctr_model_tag_imps,
     data_provider_,
     ctr_model_factory,
-    logger_);
+    logger_,
+    creative_provider);
 }
 
 void ModelProcessor::activate_object_()

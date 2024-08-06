@@ -11,7 +11,7 @@
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
 #include <LogCommons/StatCollector.hpp>
-#include "HelpCollector.hpp"
+#include "Types.hpp"
 
 namespace AdServer::LogProcessing
 {
@@ -21,33 +21,38 @@ namespace Predictor = PredictorSvcs::BidCostPredictor;
 class CtrKey final
 {
 public:
-  using Key = typename Predictor::HelpCollector::Key;
-  using TagId = typename Key::TagId;
-  using Url = typename Key::Url;
-  using UrlPtr = typename Key::UrlPtr;
+  using TagId = Predictor::Types::TagId;
+  using Url = Predictor::Types::Url;
+  using UrlPtr = Predictor::Types::UrlPtr;
+  using CreativeCategoryId = Predictor::Types::CreativeCategoryId;
   using Hash = std::size_t;
 
 public:
   explicit CtrKey()
   : tag_id_(0),
-    url_(std::make_shared<Url>())
+    url_(std::make_shared<Url>()),
+    creative_category_id_(0)
   {
   }
 
   explicit CtrKey(
     const TagId& tag_id,
-    const Url& url)
+    const Url& url,
+    const CreativeCategoryId& creative_category_id)
     : tag_id_(tag_id),
-      url_(std::make_shared<Url>(url))
+      url_(std::make_shared<Url>(url)),
+      creative_category_id_(creative_category_id)
   {
     calc_hash();
   }
 
   explicit CtrKey(
     const TagId& tag_id,
-    const UrlPtr& url)
+    const UrlPtr& url,
+    const CreativeCategoryId& creative_category_id)
     : tag_id_(tag_id),
-      url_(url)
+      url_(url),
+      creative_category_id_(creative_category_id)
   {
     calc_hash();
   }
@@ -64,7 +69,9 @@ public:
       return true;
     }
 
-    return tag_id_ == rht.tag_id_ && *url_ == *rht.url_;
+    return tag_id_ == rht.tag_id_
+      && *url_ == *rht.url_
+      && creative_category_id_ == rht.creative_category_id_;
   }
 
   TagId tag_id() const noexcept
@@ -77,9 +84,14 @@ public:
     return *url_;
   }
 
-  const UrlPtr& url_var() const noexcept
+  const UrlPtr& url_ptr() const noexcept
   {
     return url_;
+  }
+
+  CreativeCategoryId creative_category_id() const noexcept
+  {
+    return creative_category_id_;
   }
 
   void invariant() const noexcept
@@ -94,7 +106,7 @@ public:
   template <class ARCHIVE_>
   void serialize(ARCHIVE_& ar)
   {
-    (ar & tag_id_) ^ *url_;
+    (ar & tag_id_ & *url_) ^ creative_category_id_;
   }
 
   friend FixedBufStream<TabCategory>& operator>>(
@@ -111,12 +123,15 @@ private:
     Generics::Murmur64Hash hasher(hash_);
     Generics::hash_add(hasher, tag_id_);
     Generics::hash_add(hasher, *url_);
+    Generics::hash_add(hasher, creative_category_id_);
   }
 
 private:
   TagId tag_id_ = 0;
 
   UrlPtr url_;
+
+  CreativeCategoryId creative_category_id_ = 0;
 
   Hash hash_ = 0;
 };

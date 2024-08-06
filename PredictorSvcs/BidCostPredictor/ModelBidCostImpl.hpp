@@ -8,7 +8,7 @@
 // THIS
 #include "ModelBidCost.hpp"
 #include "BidCostCollector.hpp"
-#include "HelpCollector.hpp"
+#include "BidCostHelpCollector.hpp"
 
 namespace PredictorSvcs::BidCostPredictor
 {

@@ -34,11 +34,13 @@ public:
 
   Ctr get_ctr(
     const TagId& tag_id,
-    const Url& url) const override;
+    const Url& url,
+    const CreativeCategoryId& creative_category_id) const override;
 
   void set_ctr(
     const TagId& tag_id,
     const UrlPtr& url,
+    const CreativeCategoryId& creative_category_id,
     const Ctr& ctr) override;
 
   void clear() noexcept;

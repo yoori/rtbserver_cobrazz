@@ -14,7 +14,6 @@
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include "ActiveObjectObserver.hpp"
-#include "CreativeProvider.hpp"
 #include "DataModelProvider.hpp"
 #include "LogHelper.hpp"
 #include "Persantage.hpp"
@@ -31,15 +30,13 @@ class DataModelProviderImpl final :
   public ReferenceCounting::AtomicImpl
 {
 private:
-  using CcIdToCategories = CreativeProvider::CcIdToCategories;
   using DayTimestamp = LogProcessing::DayTimestamp;
   using Path = std::string;
   using AggregatedFiles = std::list<Path>;
-  using Key = typename HelpCollector::Key;
-  using UrlPtr = typename Key::UrlPtr;
+  using UrlPtr = Types::UrlPtr;
   using Url = std::string_view;
   using UrlHash = std::unordered_map<Url, UrlPtr>;
-  using Imps = typename HelpCollector::Imps;
+  using Imps = BidCostHelpCollector::Imps;
 
   struct ReadData final
   {
@@ -76,10 +73,11 @@ public:
   DataModelProviderImpl(
     const Imps max_imps,
     const std::string& input_dir,
-    Logger* logger,
-    CreativeProvider* creative_provider);
+    Logger* logger);
 
-  bool load(HelpCollector& help_collector) noexcept override;
+  bool load(BidCostHelpCollector& help_collector) noexcept override;
+
+  bool load(CtrHelpCollector& collector) noexcept override;
 
   void stop() noexcept override;
 
@@ -109,12 +107,14 @@ private:
 
   ReadCollectorPtr load(const Path& file_path);
 
+  bool load(
+    BidCostHelpCollector& bid_cost_collector,
+    CtrHelpCollector& ctr_collector) noexcept;
+
 private:
   const std::string input_dir_;
 
   const Logger_var logger_;
-
-  const CreativeProvider_var creative_provider_;
 
   const std::string prefix_;
 
@@ -132,13 +132,13 @@ private:
   // Read thread
   Persantage persantage_;
   // Calculate thread
-  HelpCollector help_collector_;
+  BidCostHelpCollector bid_cost_collector_;
+  // Calculate thread
+  CtrHelpCollector ctr_collector_;
   // Calculate thread
   UrlHash url_hash_;
 
   std::vector<Generics::TaskRunner_var> task_runners_;
-
-  CcIdToCategories cc_id_to_categories_;
 };
 
 } // namespace PredictorSvcs::BidCostPredictor

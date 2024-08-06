@@ -13,6 +13,7 @@
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include "ActiveObjectObserver.hpp"
+#include "CreativeProvider.hpp"
 #include "ModelEvaluator.hpp"
 #include "ModelFactory.hpp"
 #include "Persantage.hpp"
@@ -37,8 +38,13 @@ private:
   using Imps = Types::Imps;
   using Clicks = Types::Clicks;
   using FixedNumber = Types::FixedNumber;
+  using CreativeCategoryId = Types::CreativeCategoryId;
+  using CcIdToCategories = CreativeProvider::CcIdToCategories;
 
 public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
@@ -47,7 +53,8 @@ public:
     const Imps tag_imps,
     DataModelProvider* data_provider,
     ModelCtrFactory* model_factory,
-    Logging::Logger* logger);
+    Logger* logger,
+    CreativeProvider* creative_provider);
 
   ModelCtr_var evaluate() noexcept override;
 
@@ -58,7 +65,8 @@ protected:
 
 private:
   void calculate(
-    const HelpCollector collector,
+    const CtrHelpCollector& collector,
+    const CcIdToCategories& cc_id_to_categories,
     ModelCtr& model);
 
 private:
@@ -70,7 +78,9 @@ private:
 
   const ModelCtrFactory_var model_factory_;
 
-  const Logging::Logger_var logger_;
+  const Logger_var logger_;
+
+  const CreativeProvider_var creative_provider_;
 
   std::atomic<bool> is_stopped_{false};
 };

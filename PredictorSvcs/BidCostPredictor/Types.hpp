@@ -21,6 +21,8 @@ using Cost = FixedNumber;
 using WinRate = Cost;
 using Point = Types::FixedNumber;
 using Points = std::vector<Point>;
+using CcId = unsigned long;
+using CreativeCategoryId = unsigned long;
 
 } // namespace PredictorSvcs::BidCostPredictor::Types
 

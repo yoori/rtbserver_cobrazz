@@ -20,13 +20,14 @@
 #include "Aggregator.hpp"
 #include "AggregatorMultyThread.hpp"
 #include "BidCostCollector.hpp"
+#include "BidCostHelpCollector.hpp"
+#include "CreativeProvider.hpp"
 #include "CtrCollector.hpp"
-#include "HelpCollector.hpp"
+#include "CtrHelpCollector.hpp"
 #include "LogHelper.hpp"
 #include "ModelBidCostImpl.hpp"
 #include "ModelCtrImpl.hpp"
 #include "ModelEvaluatorBidCost.hpp"
-#include "ModelEvaluatorCtr.hpp"
 #include "ModelBidCostFactory.hpp"
 #include "DataModelProviderImpl.hpp"
 #include "Reaggregator.hpp"
@@ -537,6 +538,7 @@ BOOST_AUTO_TEST_CASE(provider)
   const std::string url = "url";
 
   Collector collector_file;
+  Types::CcId cc_id = 777;
   for (std::size_t url_i = 1; url_i <= number_url_per_file; ++url_i)
   {
     const std::string url = url_prefix + std::to_string(url_i);
@@ -545,7 +547,7 @@ BOOST_AUTO_TEST_CASE(provider)
       FixedNumber cost = initial_cost;
       for (std::size_t cost_i = 1; cost_i <= number_cost; ++cost_i)
       {
-        Key key(tag_id, std::string(), url, cost, 0);
+        Key key(tag_id, std::string(), url, cost, cc_id);
         cost += step_cost;
         Data data(unverified_imps, imps, clicks);
         collector_file.add(key, data);
@@ -553,26 +555,29 @@ BOOST_AUTO_TEST_CASE(provider)
     }
   }
 
-  HelpCollector help_hollector_check(100000);
+  BidCostHelpCollector bid_cost_help_collector_check(1000000);
+  CtrHelpCollector ctr_help_collector_check(1000000);
   for (std::size_t url_i = 1; url_i <= number_url_per_file; ++url_i)
   {
     const std::string url = url_prefix + std::to_string(url_i);
     for (std::size_t tag_id = tag_initial; tag_id <= tag_initial + number_tags_per_url; ++tag_id)
     {
-      HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-      HelpCollector::InnerCollector collector_inner(100000);
+      CtrHelpCollector::Key ctr_key(tag_id, std::make_shared<std::string>(url), cc_id);
+      BidCostHelpCollector::Key bid_key(tag_id, std::make_shared<std::string>(url));
+      BidCostHelpCollector::InnerCollector collector_inner(100000);
       FixedNumber cost = FixedNumber("0.01");
       for (std::size_t cost_i = 1; cost_i <= number_cost; ++cost_i)
       {
-        HelpCollector::InnerKey key_inner(cost);
-        HelpCollector::InnerData data_inner(
+        BidCostHelpCollector::InnerKey key_inner(cost);
+        BidCostHelpCollector::InnerData data_inner(
           unverified_imps * number_file,
           imps * number_file,
           clicks * number_file);
         collector_inner.add(key_inner, data_inner);
         cost += step_cost;
+        ctr_help_collector_check.add(ctr_key, imps * number_file, clicks * number_file);
       }
-      help_hollector_check.add(key, collector_inner);
+      bid_cost_help_collector_check.add(bid_key, collector_inner);
     }
   }
 
@@ -592,12 +597,15 @@ BOOST_AUTO_TEST_CASE(provider)
     new DataModelProviderImpl(
       100000,
       result_directory,
-      logger,
-      nullptr));
-  HelpCollector help_hollector_result(100000);
-  provider->load(help_hollector_result);
+      logger));
+  BidCostHelpCollector bid_cost_help_collector_result;
+  provider->load(bid_cost_help_collector_result);
 
-  BOOST_CHECK_EQUAL(help_hollector_result == help_hollector_check, true);
+  CtrHelpCollector ctr_help_collector_result;
+  provider->load(ctr_help_collector_result);
+
+  BOOST_CHECK_EQUAL(bid_cost_help_collector_result == bid_cost_help_collector_check, true);
+  BOOST_CHECK_EQUAL(ctr_help_collector_result == ctr_help_collector_check, true);
 
   logger->info(
     std::string("Data model provider test is finished"),
@@ -617,21 +625,21 @@ public:
 
   ~DataModelProviderEmpty() override = default;
 
-  bool load(HelpCollector& collector) noexcept override
+  bool load(BidCostHelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector(100000);
+    BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.01");
     long unverified_imps = 100;
     long imps = 40;
     long clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -643,8 +651,8 @@ public:
     imps = 9;
     clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -652,6 +660,11 @@ public:
     }
 
     collector.add(key, inner_collector);
+    return true;
+  }
+
+  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  {
     return true;
   }
 
@@ -703,21 +716,21 @@ public:
 
   ~DataModelProvider1() override = default;
 
-  bool load(HelpCollector& collector) noexcept override
+  bool load(BidCostHelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector(100000);
+    BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.02");
     long unverified_imps = 100;
     long imps = 40;
     long clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -729,8 +742,8 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -738,6 +751,11 @@ public:
     }
 
     collector.add(key, inner_collector);
+    return true;
+  }
+
+  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  {
     return true;
   }
 
@@ -818,21 +836,21 @@ public:
 
   ~DataModelProvider2() override = default;
 
-  bool load(HelpCollector& collector) noexcept override
+  bool load(BidCostHelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector(100000);
+    BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
     long imps = 100;
     long clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -844,8 +862,8 @@ public:
     imps = 40;
     clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -857,8 +875,8 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -866,6 +884,11 @@ public:
     }
 
     collector.add(key, inner_collector);
+    return true;
+  }
+
+  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  {
     return true;
   }
 
@@ -946,21 +969,21 @@ public:
 
   ~DataModelProvider3() override = default;
 
-  bool load(HelpCollector& collector) noexcept override
+  bool load(BidCostHelpCollector& collector) noexcept override
   {
     const unsigned long tag_id = 1;
     const std::string url = "url";
 
-    HelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
-    HelpCollector::InnerCollector inner_collector(100000);
+    BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
+    BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.03");
     long unverified_imps = 400;
     long imps = 100;
     long clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -972,8 +995,8 @@ public:
     imps = 40;
     clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -985,8 +1008,8 @@ public:
     imps = 10;
     clicks = 5;
     {
-      HelpCollector::InnerKey key_inner(cost);
-      HelpCollector::InnerData data_inner(
+      BidCostHelpCollector::InnerKey key_inner(cost);
+      BidCostHelpCollector::InnerData data_inner(
         unverified_imps,
         imps,
         clicks);
@@ -994,6 +1017,11 @@ public:
     }
 
     collector.add(key, inner_collector);
+    return true;
+  }
+
+  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  {
     return true;
   }
 
@@ -1253,7 +1281,8 @@ BOOST_AUTO_TEST_CASE(test1)
   {
     LogProcessing::CtrKey key(
       1,
-      std::make_shared<std::string>("url"));
+      std::make_shared<std::string>("url"),
+      11);
 
     LogProcessing::CtrData data(
       Types::FixedNumber("0.1"));
@@ -1263,7 +1292,8 @@ BOOST_AUTO_TEST_CASE(test1)
   {
     LogProcessing::CtrKey key(
       2,
-      std::make_shared<std::string>("url"));
+      std::make_shared<std::string>("url"),
+      22);
 
     LogProcessing::CtrData data(
       Types::FixedNumber("0.2"));
@@ -1273,7 +1303,8 @@ BOOST_AUTO_TEST_CASE(test1)
   {
     LogProcessing::CtrKey key(
       3,
-      std::make_shared<std::string>("url2"));
+      std::make_shared<std::string>("url2"),
+      33);
 
     LogProcessing::CtrData data(
       Types::FixedNumber("0.3"));
@@ -1283,7 +1314,8 @@ BOOST_AUTO_TEST_CASE(test1)
   {
     LogProcessing::CtrKey key(
       4,
-      std::make_shared<std::string>("url3"));
+      std::make_shared<std::string>("url3"),
+      44);
 
     LogProcessing::CtrData data(
       Types::FixedNumber("0.4"));
@@ -1301,10 +1333,10 @@ BOOST_AUTO_TEST_CASE(test1)
   ModelCtr_var model(new ModelCtrImpl(logger));
   model->load(path_file);
 
-  auto ctr = model->get_ctr(1, "url");
+  auto ctr = model->get_ctr(1, "url", 11);
   BOOST_CHECK_EQUAL(ctr == Types::FixedNumber("0.1"), true);
 
-  ctr = model->get_ctr(777, "url");
+  ctr = model->get_ctr(777, "url", 77);
   BOOST_CHECK_EQUAL(ctr.is_zero(), true);
 }
 
@@ -1314,36 +1346,36 @@ BOOST_AUTO_TEST_SUITE(help_collector)
 
 BOOST_AUTO_TEST_CASE(test1)
 {
-  HelpCollector collector(100);
+  BidCostHelpCollector collector(100);
 
-  HelpCollector::Key key(1, Types::UrlPtr(new std::string("url1")));
+  BidCostHelpCollector::Key key(1, Types::UrlPtr(new std::string("url1")));
   auto& inner_collecrtor = collector.find_or_insert(key);
   BOOST_CHECK_EQUAL(inner_collecrtor.empty(), true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 0, true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 0, true);
 
-  HelpCollector::InnerKey key_inner1(Types::FixedNumber("0.1"));
-  HelpCollector::InnerData data_inner1(1000000, 10, 1);
+  BidCostHelpCollector::InnerKey key_inner1(Types::FixedNumber("0.1"));
+  BidCostHelpCollector::InnerData data_inner1(1000000, 10, 1);
   inner_collecrtor.add(key_inner1, data_inner1);
 
   auto& inner_collecrtor2 = collector.find_or_insert(key);
   BOOST_CHECK_EQUAL(inner_collecrtor2.total_imps() == 10, true);
   BOOST_CHECK_EQUAL(inner_collecrtor2.total_clicks() == 1, true);
 
-  HelpCollector::InnerKey key_inner2(Types::FixedNumber("0.1"));
-  HelpCollector::InnerData data_inner2(1000000, 15, 2);
+  BidCostHelpCollector::InnerKey key_inner2(Types::FixedNumber("0.1"));
+  BidCostHelpCollector::InnerData data_inner2(1000000, 15, 2);
   inner_collecrtor.add(key_inner2, data_inner2);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 25, true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 3, true);
 
-  HelpCollector::InnerKey key_inner3(Types::FixedNumber("0.1"));
-  HelpCollector::InnerData data_inner3(1000000, 100, 5);
+  BidCostHelpCollector::InnerKey key_inner3(Types::FixedNumber("0.1"));
+  BidCostHelpCollector::InnerData data_inner3(1000000, 100, 5);
   inner_collecrtor.add(key_inner3, data_inner3);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 125, true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 8, true);
 
-  HelpCollector::InnerKey key_inner4(Types::FixedNumber("0.1"));
-  HelpCollector::InnerData data_inner4(1000000, 100, 5);
+  BidCostHelpCollector::InnerKey key_inner4(Types::FixedNumber("0.1"));
+  BidCostHelpCollector::InnerData data_inner4(1000000, 100, 5);
   inner_collecrtor.add(key_inner4, data_inner4);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_imps() == 125, true);
   BOOST_CHECK_EQUAL(inner_collecrtor.total_clicks() == 8, true);
