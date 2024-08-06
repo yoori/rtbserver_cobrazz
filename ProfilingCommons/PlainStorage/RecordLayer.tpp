@@ -404,17 +404,25 @@ namespace PlainStorage
     void
     sync_full_size_() /*throw (BaseException, CorruptedRecord)*/;
 
+    std::ostream& print_(
+      std::ostream& ostr, const char* offset = "") const noexcept;
+
+    Stream::Error& print_(
+      Stream::Error& ostr, const char* offset = "") const noexcept;
+
+  private:
     template<typename OStream>
-    OStream& print_(
-      OStream& ostr, const char* offset = "") const noexcept;
+    OStream&
+    print_impl_(
+      OStream& ostr, const char* offset) const noexcept;
 
     template<typename IndexBufElem>
     void print_exception_(
       std::ostream& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept;
 
-    template<typename OStream, typename IndexBufElem>
+    template<typename IndexBufElem>
     void print_exception_(
-      OStream& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept;
+      Stream::Error& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept;
 
   protected:
     struct WriteBlockWithPos
@@ -1226,10 +1234,30 @@ namespace PlainStorage
 
   template<typename NextIndexType,
     typename NextIndexSerializerType, typename SyncPolicyType>
+  std::ostream&
+  WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteRecordImpl::print_(std::ostream& ostr, const char* offset)
+    const noexcept
+  {
+    return print_impl_(ostr, offset);
+  }
+
+  template<typename NextIndexType,
+    typename NextIndexSerializerType, typename SyncPolicyType>
+  Stream::Error&
+  WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteRecordImpl::print_(Stream::Error& ostr, const char* offset)
+    const noexcept
+  {
+    return print_impl_(ostr, offset);
+  }
+
+  template<typename NextIndexType,
+    typename NextIndexSerializerType, typename SyncPolicyType>
   template<typename OStream>
   OStream&
   WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
-  WriteRecordImpl::print_(OStream& ostr, const char* offset)
+  WriteRecordImpl::print_impl_(OStream& ostr, const char* offset)
     const noexcept
   {
     ostr << offset << "this = " << this << std::endl <<
@@ -1295,8 +1323,7 @@ namespace PlainStorage
       }
 
       ostr << "): " << std::endl;
-      // TODO
-//      it->block->print_(ostr, (std::string(offset) + "    ").c_str());
+      it->block->print_(ostr, (std::string(offset) + "    ").c_str());
     }
 
     ostr << std::endl;
@@ -1322,11 +1349,11 @@ namespace PlainStorage
 
   template<typename NextIndexType,
     typename NextIndexSerializerType, typename SyncPolicyType>
-  template<typename OStream, typename IndexBufElem>
+  template<typename IndexBufElem>
   void 
   WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
   WriteRecordImpl::print_exception_(
-    OStream& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept
+    Stream::Error& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept
   {
     for(unsigned long i = 0; i < to_read_index_size; ++i)
     {
