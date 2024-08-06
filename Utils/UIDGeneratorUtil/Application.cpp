@@ -245,11 +245,12 @@ Application_::generate_request_buf_(
   }
 
   // write little endian size
-  std::string strbuf;
-  strbuf.reserve(10*1024);
-  request.SerializeToString(&strbuf);
+  std::ostringstream ostr;
+  request.SerializeToOstream(&ostr);
 
+  std::string strbuf = ostr.str();
   uint32_t sz = strbuf.size();
+
   buf.resize(sz + 4);
   ::memcpy(&buf[0], &sz, sizeof(sz));
   ::memcpy(reinterpret_cast<unsigned char*>(&buf[0]) + 4, strbuf.data(), strbuf.size());

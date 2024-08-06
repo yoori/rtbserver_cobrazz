@@ -151,6 +151,16 @@ namespace PlainStorage
     {
       return out;
     }
+
+    /** debug
+     * print struct of block
+     */
+    virtual Stream::Error&
+    print_(Stream::Error& out, const char* /*offset = ""*/) const
+      noexcept
+    {
+      return out;
+    }
   };
 
   typedef ReferenceCounting::SmartPtr<ReadBlock> ReadBlock_var;

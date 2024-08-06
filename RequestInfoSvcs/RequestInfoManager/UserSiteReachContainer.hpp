@@ -134,7 +134,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    void
+    inline void
     SiteReachProcessor::SiteReachInfo::print(
       OStream& ostr, const char* offset) const
     {

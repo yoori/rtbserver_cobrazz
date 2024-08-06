@@ -14,8 +14,8 @@
 namespace Declaration
 {
   template<typename OStream>
-  void type_traits(
-    OStream& out, Declaration::BaseType* type)
+  inline void
+  type_traits(OStream& out, Declaration::BaseType* type)
     noexcept
   {
     Declaration::BaseDescriptor_var type_descriptor =

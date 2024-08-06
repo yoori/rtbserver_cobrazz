@@ -3950,12 +3950,11 @@ namespace Bidding
 
     if (logger()->log_level() >= Logging::Logger::TRACE)
     {
-      Stream::Error ostr;
+      std::ostringstream ostr;
       ostr << fun << ": request processing timed out(" << timeout << "):"
         << std::endl;
 
-      // TODO
-      // request_task->print_request(ostr);
+      request_task->print_request(ostr);
 
       logger()->log(
         ostr.str(),

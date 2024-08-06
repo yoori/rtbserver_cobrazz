@@ -27,9 +27,9 @@ namespace
     const Generics::Time& now,
     OStream& ostr)
   {    
-    // TODO fix iomanips
-    //ostr <<  now.tv_sec << "." <<  std::setfill('0') <<
-    //  std::setw(6) << now.tv_usec << ",";
+    // std::setfill('0') << std::setw(6) << now.tv_usec
+    ostr << now.tv_sec << "." <<
+      Stream::MemoryStream::width_out(now.tv_usec, 6, '0') << ",";
 
     // Skip beeline user_id
     auto bind_user_it = bind_user_ids.begin();

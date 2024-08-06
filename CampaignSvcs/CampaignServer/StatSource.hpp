@@ -396,7 +396,7 @@ namespace CampaignSvcs
   }
 
   template<typename OStream>
-  void
+  inline void
   StatSource::Stat::CampaignStat::print(
     OStream& out, const char* offset) const noexcept
   {
@@ -494,7 +494,7 @@ namespace CampaignSvcs
   }
 
   template<typename OStream>
-  void
+  inline void
   StatSource::Stat::print(OStream& out, const char* offset) const
     noexcept
   {

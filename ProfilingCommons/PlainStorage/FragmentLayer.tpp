@@ -315,6 +315,18 @@ namespace PlainStorage
       const char* offset = "")
       const noexcept;
 
+    Stream::Error&
+    print_(Stream::Error& ostr,
+      const char* offset = "")
+      const noexcept;
+
+  private:
+    template<typename OStream>
+    OStream&
+    print_impl_(OStream& ostr,
+      const char* offset)
+      const noexcept;
+
   protected:
     /**
      * Empty virtual destructor
@@ -863,6 +875,35 @@ namespace PlainStorage
   WriteFragmentLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
   WriteFragmentImpl::print_(
     std::ostream& ostr,
+    const char* offset)
+    const noexcept
+  {
+    return print_impl_(ostr, offset);
+  }
+
+  template<
+    typename NextIndexType,
+    typename NextIndexSerializerType,
+    typename SyncPolicyType>
+  Stream::Error&
+  WriteFragmentLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteFragmentImpl::print_(
+    Stream::Error& ostr,
+    const char* offset)
+    const noexcept
+  {
+    return print_impl_(ostr, offset);
+  }
+
+  template<
+    typename NextIndexType,
+    typename NextIndexSerializerType,
+    typename SyncPolicyType>
+  template<typename OStream>
+  OStream&
+  WriteFragmentLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteFragmentImpl::print_impl_(
+    OStream& ostr,
     const char* offset)
     const noexcept
   {

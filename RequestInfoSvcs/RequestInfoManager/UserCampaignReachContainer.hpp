@@ -204,7 +204,7 @@ namespace AdServer
     }
 
     template<typename OStream>
-    OStream&
+    inline OStream&
     CampaignReachProcessor::ReachInfo::print(
       OStream& ostr, const char* offset) const
     {

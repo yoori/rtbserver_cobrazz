@@ -6,6 +6,7 @@
 #include <list>
 #include <Generics/BitAlgs.hpp>
 #include <Generics/Time.hpp>
+#include <Stream/MemoryStream.hpp>
 
 //#define REQUESTINFOCOMMONS_ALGS_DEBUG
 
