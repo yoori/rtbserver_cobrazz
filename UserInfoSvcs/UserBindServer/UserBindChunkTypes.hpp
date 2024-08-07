@@ -558,7 +558,8 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class BoundContainers :
   public Saver,
-  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>
+  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>,
+  private Generics::UncopyableTag<BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>>
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -633,7 +634,8 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class SeenContainers :
   public Saver,
-  public LoaderDelegate<Key, Value>
+  public LoaderDelegate<Key, Value>,
+  private Generics::UncopyableTag<SeenContainers<Key, Value, Filter, HashTable>>
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -690,7 +692,8 @@ class Portion final
              ExternalIdHashAdapter,
              BoundUserInfoHolder,
              FilterDate,
-             SparseFetchableHashTable>
+             SparseFetchableHashTable>,
+    private Generics::UncopyableTag<Portion>
 {
 public:
   using SeenRocksdbContainerFactory = RocksdbContainerFactory<
@@ -760,7 +763,8 @@ using PortionPtr = std::shared_ptr<Portion>;
 
 class Portions final :
   private LoaderDelegate<HashHashAdapter, SeenUserInfoHolder>,
-  private LoaderDelegate<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder>
+  private LoaderDelegate<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder>,
+  private Generics::UncopyableTag<Portions>
 {
 public:
   using Logger = Logging::Logger;
