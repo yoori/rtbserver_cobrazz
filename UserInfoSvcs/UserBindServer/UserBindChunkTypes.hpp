@@ -228,7 +228,7 @@ extern std::vector<RocksdbColumnFamilyPtr> create_rocksdb(
   const std::uint32_t ttl);
 
 template<class Key, class Value>
-class Container : private virtual Generics::Uncopyable
+class Container : private Generics::Uncopyable
 {
 public:
   Container() = default;
@@ -256,7 +256,7 @@ template<class Key, class Value>
 using ContainerPtr = std::shared_ptr<Container<Key, Value>>;
 
 template<class Key, class Value>
-class LoaderDelegate : private virtual  Generics::Uncopyable
+class LoaderDelegate : private Generics::Uncopyable
 {
 public:
   LoaderDelegate() = default;
@@ -290,7 +290,7 @@ private:
   Delegate& delegate_;
 };
 
-class Saver : private virtual Generics::Uncopyable
+class Saver : private Generics::Uncopyable
 {
 public:
   Saver() = default;
@@ -558,8 +558,7 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class BoundContainers :
   public Saver,
-  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>,
-  virtual private Generics::Uncopyable
+  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -634,8 +633,7 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class SeenContainers :
   public Saver,
-  public LoaderDelegate<Key, Value>,
-  virtual private Generics::Uncopyable
+  public LoaderDelegate<Key, Value>
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -692,8 +690,7 @@ class Portion final
              ExternalIdHashAdapter,
              BoundUserInfoHolder,
              FilterDate,
-             SparseFetchableHashTable>,
-    virtual private Generics::Uncopyable
+             SparseFetchableHashTable>
 {
 public:
   using SeenRocksdbContainerFactory = RocksdbContainerFactory<
@@ -762,7 +759,6 @@ private:
 using PortionPtr = std::shared_ptr<Portion>;
 
 class Portions final :
-  virtual private Generics::Uncopyable,
   private LoaderDelegate<HashHashAdapter, SeenUserInfoHolder>,
   private LoaderDelegate<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder>
 {
