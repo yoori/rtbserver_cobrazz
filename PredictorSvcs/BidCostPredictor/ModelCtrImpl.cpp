@@ -20,9 +20,10 @@ ModelCtrImpl::ModelCtrImpl(Logging::Logger* logger)
 
 ModelCtrImpl::Ctr ModelCtrImpl::get_ctr(
   const TagId& tag_id,
-  const Url& url) const
+  const Url& url,
+  const CreativeCategoryId& creative_category_id) const
 {
-  const CtrKey key(tag_id, url);
+  const CtrKey key(tag_id, url, creative_category_id);
   const auto it = collector_.find(key);
   if (it != std::end(collector_))
   {
@@ -37,9 +38,10 @@ ModelCtrImpl::Ctr ModelCtrImpl::get_ctr(
 void ModelCtrImpl::set_ctr(
   const TagId& tag_id,
   const UrlPtr& url,
+  const CreativeCategoryId& creative_category_id,
   const Ctr& ctr)
 {
-  const CtrKey key(tag_id, url);
+  const CtrKey key(tag_id, url, creative_category_id);
   const CtrData data(ctr);
   collector_.add(key, data);
 }

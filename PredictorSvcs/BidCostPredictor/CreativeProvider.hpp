@@ -14,6 +14,7 @@
 #include <Commons/Postgres/Connection.hpp>
 #include <Commons/Postgres/ConnectionPool.hpp>
 #include <Commons/Postgres/Environment.hpp>
+#include "Types.hpp"
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -21,9 +22,9 @@ namespace PredictorSvcs::BidCostPredictor
 class CreativeProvider : public virtual ReferenceCounting::Interface
 {
 public:
-  using CcId = unsigned long;
-  using CreativeCategoryId = unsigned long;
-  using CreativeCategoryIds = std::vector<CreativeCategoryId>;
+  using CcId = Types::CcId;
+  using CreativeCategoryId = Types::CreativeCategoryId;
+  using CreativeCategoryIds = std::list<CreativeCategoryId>;
   using CcIdToCategories = std::unordered_map<CcId, CreativeCategoryIds>;
 
 public:

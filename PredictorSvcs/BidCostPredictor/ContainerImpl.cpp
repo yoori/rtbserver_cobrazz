@@ -160,11 +160,13 @@ ContainerImpl::Cost ContainerImpl::get_cost(
 
 ContainerImpl::Ctr ContainerImpl::get_ctr(
   const TagId& tag_id,
-  const Url& url) const
+  const Url& url,
+  const CreativeCategoryId& creative_category_id) const
 {
   return model_ctr_->get_ctr(
     tag_id,
-    url);
+    url,
+    creative_category_id);
 }
 
 } // namespace PredictorSvcs::BidCostPredictor

@@ -20,14 +20,13 @@ namespace PredictorSvcs::BidCostPredictor
 DataModelProviderImpl::DataModelProviderImpl(
   const Imps max_imps,
   const std::string& input_dir,
-  Logger* logger,
-  CreativeProvider* creative_provider)
+  Logger* logger)
   : input_dir_(input_dir),
     logger_(ReferenceCounting::add_ref(logger)),
-    creative_provider_(ReferenceCounting::add_ref(creative_provider)),
     prefix_(LogProcessing::BidCostStatInnerTraits::B::log_base_name()),
     persantage_(logger_, Aspect::DATA_PROVIDER, 5),
-    help_collector_(max_imps, 1000000, 1)
+    bid_cost_collector_(max_imps, 1000000, 1),
+    ctr_collector_(max_imps, 1000000)
 {
   using Severity = Generics::ActiveObjectCallback::Severity;
 
@@ -67,11 +66,6 @@ DataModelProviderImpl::DataModelProviderImpl(
     task_runners_.emplace_back(
       new Generics::TaskRunner(observer_, 1));
     task_runners_.back()->activate_object();
-  }
-
-  if (creative_provider_)
-  {
-    creative_provider_->load(cc_id_to_categories_);
   }
 }
 
@@ -164,7 +158,21 @@ bool DataModelProviderImpl::post_task(
 }
 
 bool DataModelProviderImpl::load(
-  HelpCollector& help_collector) noexcept
+  BidCostHelpCollector& bid_cost_collector) noexcept
+{
+  CtrHelpCollector ctr_collector;
+  return load(bid_cost_collector, ctr_collector);
+}
+
+bool DataModelProviderImpl::load(CtrHelpCollector& ctr_collector) noexcept
+{
+  BidCostHelpCollector bid_cost_collector;
+  return load(bid_cost_collector, ctr_collector);
+}
+
+bool DataModelProviderImpl::load(
+  BidCostHelpCollector& bid_cost_collector,
+  CtrHelpCollector& ctr_collector) noexcept
 {
   if (is_load_success_.load())
   {
@@ -172,7 +180,8 @@ bool DataModelProviderImpl::load(
     stream << FNS
            << "DataModelProvider already is loaded";
     logger_->info(stream.str(), Aspect::DATA_PROVIDER);
-    help_collector = help_collector_;
+    bid_cost_collector = bid_cost_collector_;
+    ctr_collector = ctr_collector_;
 
     return true;
   }
@@ -242,7 +251,8 @@ bool DataModelProviderImpl::load(
 
   if (is_load_success_.load())
   {
-    help_collector = help_collector_;
+    bid_cost_collector = bid_cost_collector_;
+    ctr_collector = ctr_collector_;
 
     std::ostringstream stream;
     stream << FNS
@@ -377,6 +387,7 @@ void DataModelProviderImpl::do_calculate(ReadCollectorPtr& temp_collector) noexc
     {
       const auto& tag_id = key_temp.tag_id();
       const auto& url = key_temp.url();
+      const auto& cc_id = key_temp.cc_id();
 
       auto it_url_hash = url_hash_.find(url);
       if (it_url_hash == url_hash_.end())
@@ -384,14 +395,17 @@ void DataModelProviderImpl::do_calculate(ReadCollectorPtr& temp_collector) noexc
         const auto url_ptr = std::make_shared<std::string>(url);
         it_url_hash = url_hash_.try_emplace(*url_ptr, url_ptr).first;
       }
+      const auto& url_ptr = it_url_hash->second;
 
-      const HelpCollector::Key key(tag_id, it_url_hash->second);
-      auto& help_collector_inner = help_collector_.find_or_insert(key);
-
-      const auto& cost = key_temp.cost();
       if (!data_temp.is_null())
       {
-        help_collector_inner.add(cost, data_temp);
+        const BidCostHelpCollector::Key bid_cost_key(tag_id, url_ptr);
+        auto& bid_cost_collector_inner = bid_cost_collector_.find_or_insert(bid_cost_key);
+        const auto& cost = key_temp.cost();
+        bid_cost_collector_inner.add(cost, data_temp);
+
+        const CtrHelpCollector::Key ctr_key(tag_id, url_ptr, cc_id);
+        ctr_collector_.add(ctr_key, data_temp.imps(), data_temp.clicks());
       }
     }
   }

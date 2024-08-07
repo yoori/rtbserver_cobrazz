@@ -15,11 +15,12 @@ namespace PredictorSvcs::BidCostPredictor
 class Container : public virtual ReferenceCounting::Interface
 {
 public:
-  using TagId = typename ModelBidCost::TagId;
-  using Url = typename ModelBidCost::Url;
-  using WinRate = typename ModelBidCost::WinRate;
-  using Cost = typename ModelBidCost::Cost;
-  using Ctr = typename ModelCtr::Ctr;
+  using TagId = Types::TagId;
+  using Url = Types::Url;
+  using WinRate = Types::WinRate;
+  using Cost = Types::Cost;
+  using CreativeCategoryId = Types::CreativeCategoryId;
+  using Ctr = ModelCtr::Ctr;
 
 public:
   Container() = default;
@@ -32,7 +33,8 @@ public:
 
   virtual Ctr get_ctr(
     const TagId& tag_id,
-    const Url& url) const = 0;
+    const Url& url,
+    const CreativeCategoryId& creative_category_id) const = 0;
 
 protected:
     virtual ~Container() = default;

@@ -62,7 +62,8 @@ Storage::Cost Storage::get_cost(
 
 Storage::Ctr Storage::get_ctr(
   const TagId& tag_id,
-  const Url& url) const
+  const Url& url,
+  const CreativeCategoryId& creative_category_id) const
 {
   std::shared_lock lock(shared_mutex_);
   Container_var container = container_;
@@ -76,7 +77,7 @@ Storage::Ctr Storage::get_ctr(
     throw Exception(stream);
   }
 
-  return container->get_ctr(tag_id, url);
+  return container->get_ctr(tag_id, url, creative_category_id);
 }
 
 void Storage::create_scheduler_task(const std::size_t period) noexcept
