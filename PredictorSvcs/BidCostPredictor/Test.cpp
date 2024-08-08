@@ -24,12 +24,12 @@
 #include "CreativeProvider.hpp"
 #include "CtrCollector.hpp"
 #include "CtrHelpCollector.hpp"
+#include "DataModelProviderImpl.hpp"
 #include "LogHelper.hpp"
 #include "ModelBidCostImpl.hpp"
 #include "ModelCtrImpl.hpp"
 #include "ModelEvaluatorBidCost.hpp"
 #include "ModelBidCostFactory.hpp"
-#include "DataModelProviderImpl.hpp"
 #include "Reaggregator.hpp"
 #include "ReaggregatorMultyThread.hpp"
 #include "ReferenceCounting/Interface.hpp"
@@ -225,7 +225,7 @@ bool TestAgg::run_test()
   const FixedNumber cost("0.01");
   for (std::uint32_t i = 1; i <= number_record_per_date_; ++i)
   {
-    const unsigned long tag_id = i;
+    const Types::TagId tag_id = i;
     const std::string id_string = std::to_string(i);
     const std::string ext_tag_id = "ext_tag_id" + id_string;
     const std::string url = "url=" + id_string;
@@ -233,9 +233,9 @@ bool TestAgg::run_test()
     KeyInner key(tag_id, ext_tag_id, url, cost, 0);
     KeyInner key_result(tag_id, std::string(), url, cost, 0);
 
-    const long unverified_imps = 1;
-    const long imps = 2;
-    const long clicks = 3;
+    const Types::Imps unverified_imps = 1;
+    const Types::Imps imps = 2;
+    const Types::Clicks clicks = 3;
     DataInner data(unverified_imps, imps, clicks);
     DataInner data_result(
       unverified_imps * number_files_,
@@ -477,8 +477,42 @@ BOOST_AUTO_TEST_CASE(multiple_thread)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-
 BOOST_AUTO_TEST_SUITE(data_model_provider)
+
+class CreativeProviderTest :
+  public CreativeProvider,
+  public virtual ReferenceCounting::AtomicImpl
+{
+public:
+  CreativeProviderTest(
+    const Types::CcId number_cc_id,
+    const Types::CreativeCategoryId number_creative_id_per_cc_id)
+    : number_cc_id_(number_cc_id),
+      number_creative_id_per_cc_id_(number_creative_id_per_cc_id)
+  {
+  }
+
+  void load(CcIdToCategories& cc_id_to_categories)
+  {
+    Types::CcId cc_id = 1;
+    for (; cc_id <= number_cc_id_; ++cc_id)
+    {
+      Types::CreativeCategoryId category_id = 1;
+      for (; category_id <= number_creative_id_per_cc_id_; ++category_id)
+      {
+        cc_id_to_categories[cc_id].emplace_back(category_id);
+      }
+    }
+  }
+
+protected:
+  ~CreativeProviderTest() override = default;
+
+private:
+  const Types::CcId number_cc_id_;
+
+  const Types::CreativeCategoryId number_creative_id_per_cc_id_;
+};
 
 BOOST_AUTO_TEST_CASE(provider)
 {
@@ -532,13 +566,14 @@ BOOST_AUTO_TEST_CASE(provider)
   const std::size_t number_cost = 100;
   const auto initial_cost = FixedNumber("0.01");
   const auto step_cost = FixedNumber("0.0012");
-  const long unverified_imps = 1;
-  const long imps = 2;
-  const long clicks = 3;
+  const Types::Imps unverified_imps = 1;
+  const Types::Imps imps = 2;
+  const Types::Clicks clicks = 3;
+  const Types::CcId number_cc_id = 2;
+  const Types::CreativeCategoryId number_creative_id_per_cc_id = 3;
   const std::string url = "url";
 
   Collector collector_file;
-  Types::CcId cc_id = 777;
   for (std::size_t url_i = 1; url_i <= number_url_per_file; ++url_i)
   {
     const std::string url = url_prefix + std::to_string(url_i);
@@ -547,10 +582,13 @@ BOOST_AUTO_TEST_CASE(provider)
       FixedNumber cost = initial_cost;
       for (std::size_t cost_i = 1; cost_i <= number_cost; ++cost_i)
       {
-        Key key(tag_id, std::string(), url, cost, cc_id);
+        for (Types::CcId cc_id = 1; cc_id <= number_cc_id; ++cc_id)
+        {
+          Key key(tag_id, std::string(), url, cost, cc_id);
+          Data data(unverified_imps, imps, clicks);
+          collector_file.add(key, data);
+        }
         cost += step_cost;
-        Data data(unverified_imps, imps, clicks);
-        collector_file.add(key, data);
       }
     }
   }
@@ -562,7 +600,6 @@ BOOST_AUTO_TEST_CASE(provider)
     const std::string url = url_prefix + std::to_string(url_i);
     for (std::size_t tag_id = tag_initial; tag_id <= tag_initial + number_tags_per_url; ++tag_id)
     {
-      CtrHelpCollector::Key ctr_key(tag_id, std::make_shared<std::string>(url), cc_id);
       BidCostHelpCollector::Key bid_key(tag_id, std::make_shared<std::string>(url));
       BidCostHelpCollector::InnerCollector collector_inner(100000);
       FixedNumber cost = FixedNumber("0.01");
@@ -570,14 +607,22 @@ BOOST_AUTO_TEST_CASE(provider)
       {
         BidCostHelpCollector::InnerKey key_inner(cost);
         BidCostHelpCollector::InnerData data_inner(
-          unverified_imps * number_file,
-          imps * number_file,
-          clicks * number_file);
+          unverified_imps * number_cc_id * number_file,
+          imps * number_cc_id * number_file,
+          clicks * number_cc_id * number_file);
         collector_inner.add(key_inner, data_inner);
         cost += step_cost;
-        ctr_help_collector_check.add(ctr_key, imps * number_file, clicks * number_file);
       }
       bid_cost_help_collector_check.add(bid_key, collector_inner);
+
+      for (Types::CreativeCategoryId category_id = 1; category_id <= number_creative_id_per_cc_id; ++category_id)
+      {
+        CtrHelpCollector::Key ctr_key(tag_id, std::make_shared<std::string>(url), category_id);
+        ctr_help_collector_check.add(
+          ctr_key,
+          imps * number_cc_id * number_cost * number_file,
+          clicks * number_cc_id * number_cost * number_file);
+      }
     }
   }
 
@@ -593,10 +638,14 @@ BOOST_AUTO_TEST_CASE(provider)
       path_originale_file + std::to_string(i));
   }
 
+  CreativeProvider_var creative_provider(
+    new CreativeProviderTest(number_cc_id, number_creative_id_per_cc_id));
+
   DataModelProvider_var provider(
     new DataModelProviderImpl(
-      100000,
+      1000000,
       result_directory,
+      creative_provider,
       logger));
   BidCostHelpCollector bid_cost_help_collector_result;
   provider->load(bid_cost_help_collector_result);
@@ -627,16 +676,16 @@ public:
 
   bool load(BidCostHelpCollector& collector) noexcept override
   {
-    const unsigned long tag_id = 1;
+    const Types::TagId tag_id = 1;
     const std::string url = "url";
 
     BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
     BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.01");
-    long unverified_imps = 100;
-    long imps = 40;
-    long clicks = 5;
+    Types::Imps unverified_imps = 100;
+    Types::Imps imps = 40;
+    Types::Clicks clicks = 5;
     {
       BidCostHelpCollector::InnerKey key_inner(cost);
       BidCostHelpCollector::InnerData data_inner(
@@ -663,7 +712,7 @@ public:
     return true;
   }
 
-  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  bool load(CtrHelpCollector&) noexcept override
   {
     return true;
   }
@@ -702,9 +751,9 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_empty)
   auto model = model_evaluator->evaluate();
   model->save(path_file);
 
-  LogProcessing::BidCostCollector bid_collector;
-  LogHelper<LogProcessing::BidCostTraits>::load(path_file, bid_collector);
-  BOOST_CHECK_EQUAL(bid_collector.empty(), true);
+  BidCostCollector bid_collector;
+  bid_collector.load(path_file);
+  BOOST_CHECK_EQUAL(std::begin(bid_collector) == std::end(bid_collector), true);
 }
 
 class DataModelProvider1 :
@@ -718,16 +767,16 @@ public:
 
   bool load(BidCostHelpCollector& collector) noexcept override
   {
-    const unsigned long tag_id = 1;
+    const Types::TagId tag_id = 1;
     const std::string url = "url";
 
     BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
     BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.02");
-    long unverified_imps = 100;
-    long imps = 40;
-    long clicks = 5;
+    Types::Imps unverified_imps = 100;
+    Types::Imps imps = 40;
+    Types::Clicks clicks = 5;
     {
       BidCostHelpCollector::InnerKey key_inner(cost);
       BidCostHelpCollector::InnerData data_inner(
@@ -754,7 +803,7 @@ public:
     return true;
   }
 
-  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  bool load(CtrHelpCollector&) noexcept override
   {
     return true;
   }
@@ -793,8 +842,8 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_1)
     auto model = model_evaluator->evaluate();
     model->save(path_file);
 
-    LogProcessing::BidCostCollector bid_collector;
-    LogHelper<LogProcessing::BidCostTraits>::load(path_file, bid_collector);
+    BidCostCollector bid_collector;
+    bid_collector.load(path_file);
 
     // top_level_win_rate = 0.25
     // check_win_rate = [0,2375; 0,1875; 0,125; 0,0625]
@@ -802,29 +851,21 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_1)
     // target_cost = 0.02, max_cost = 0.02
 
     BOOST_CHECK_EQUAL(bid_collector.size() == 4, true);
-    LogProcessing::BidCostKey key1(1, "url", FixedNumber("0.95"));
-    auto it1 = bid_collector.find(key1);
+    BidCostCollector::Data data1(1, "url", FixedNumber("0.95"), FixedNumber("0.02"), FixedNumber("0.02"));
+    auto it1 = std::find(std::begin(bid_collector), std::end(bid_collector), data1);
     BOOST_CHECK_EQUAL(it1 != bid_collector.end(), true);
-    BOOST_CHECK_EQUAL(it1->second.cost(), FixedNumber("0.02"));
-    BOOST_CHECK_EQUAL(it1->second.max_cost(), FixedNumber("0.02"));
 
-    LogProcessing::BidCostKey key2(1, "url", FixedNumber("0.75"));
-    auto it2 = bid_collector.find(key2);
+    BidCostCollector::Data data2(1, "url", FixedNumber("0.75"), FixedNumber("0.02"), FixedNumber("0.02"));
+    auto it2 = std::find(std::begin(bid_collector), std::end(bid_collector), data2);
     BOOST_CHECK_EQUAL(it2 != bid_collector.end(), true);
-    BOOST_CHECK_EQUAL(it2->second.cost(), FixedNumber("0.02"));
-    BOOST_CHECK_EQUAL(it2->second.max_cost(), FixedNumber("0.02"));
 
-    LogProcessing::BidCostKey key3(1, "url", FixedNumber("0.5"));
-    auto it3 = bid_collector.find(key3);
+    BidCostCollector::Data data3(1, "url", FixedNumber("0.5"), FixedNumber("0.02"), FixedNumber("0.02"));
+    auto it3 = std::find(std::begin(bid_collector), std::end(bid_collector), data3);
     BOOST_CHECK_EQUAL(it3 != bid_collector.end(), true);
-    BOOST_CHECK_EQUAL(it3->second.cost(), FixedNumber("0.02"));
-    BOOST_CHECK_EQUAL(it3->second.max_cost(), FixedNumber("0.02"));
 
-   LogProcessing::BidCostKey key4(1, "url", FixedNumber("0.25"));
-   auto it4 = bid_collector.find(key4);
+   BidCostCollector::Data data4(1, "url", FixedNumber("0.25"), FixedNumber("0.02"), FixedNumber("0.02"));
+   auto it4 = std::find(std::begin(bid_collector), std::end(bid_collector), data4);
    BOOST_CHECK_EQUAL(it4 != bid_collector.end(), true);
-   BOOST_CHECK_EQUAL(it4->second.cost(), FixedNumber("0.02"));
-   BOOST_CHECK_EQUAL(it4->second.max_cost(), FixedNumber("0.02"));
 }
 
 class DataModelProvider2 :
@@ -838,16 +879,16 @@ public:
 
   bool load(BidCostHelpCollector& collector) noexcept override
   {
-    const unsigned long tag_id = 1;
+    const Types::TagId tag_id = 1;
     const std::string url = "url";
 
     BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
     BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.03");
-    long unverified_imps = 400;
-    long imps = 100;
-    long clicks = 5;
+    Types::Imps unverified_imps = 400;
+    Types::Imps imps = 100;
+    Types::Clicks clicks = 5;
     {
       BidCostHelpCollector::InnerKey key_inner(cost);
       BidCostHelpCollector::InnerData data_inner(
@@ -887,7 +928,7 @@ public:
     return true;
   }
 
-  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  bool load(CtrHelpCollector&) noexcept override
   {
     return true;
   }
@@ -926,8 +967,8 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_2)
   auto model = model_evaluator->evaluate();
   model->save(path_file);
 
-  LogProcessing::BidCostCollector bid_collector;
-  LogHelper<LogProcessing::BidCostTraits>::load(path_file, bid_collector);
+  BidCostCollector bid_collector;
+  bid_collector.load(path_file);
 
   // top_level_win_rate = 0.25
   // check_win_rate = [0,2375; 0,1875; 0,125; 0,0625]
@@ -935,29 +976,21 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_2)
   // target_cost = 0.02, max_cost = 0.03
 
   BOOST_CHECK_EQUAL(bid_collector.size() == 4, true);
-  LogProcessing::BidCostKey key1(1, "url", FixedNumber("0.95"));
-  auto it1 = bid_collector.find(key1);
+  BidCostCollector::Data data1(1, "url", FixedNumber("0.95"), FixedNumber("0.02"), FixedNumber("0.03"));
+  auto it1 = std::find(std::begin(bid_collector), std::end(bid_collector), data1);
   BOOST_CHECK_EQUAL(it1 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it1->second.cost(), FixedNumber("0.02"));
-  BOOST_CHECK_EQUAL(it1->second.max_cost(), FixedNumber("0.03"));
 
-  LogProcessing::BidCostKey key2(1, "url", FixedNumber("0.75"));
-  auto it2 = bid_collector.find(key2);
+  BidCostCollector::Data data2(1, "url", FixedNumber("0.75"), FixedNumber("0.02"), FixedNumber("0.03"));
+  auto it2 = std::find(std::begin(bid_collector), std::end(bid_collector), data2);
   BOOST_CHECK_EQUAL(it2 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it2->second.cost(), FixedNumber("0.02"));
-  BOOST_CHECK_EQUAL(it2->second.max_cost(), FixedNumber("0.03"));
 
-  LogProcessing::BidCostKey key3(1, "url", FixedNumber("0.5"));
-  auto it3 = bid_collector.find(key3);
+  BidCostCollector::Data data3(1, "url", FixedNumber("0.5"), FixedNumber("0.02"), FixedNumber("0.03"));
+  auto it3 = std::find(std::begin(bid_collector), std::end(bid_collector), data3);
   BOOST_CHECK_EQUAL(it3 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it3->second.cost(), FixedNumber("0.02"));
-  BOOST_CHECK_EQUAL(it3->second.max_cost(), FixedNumber("0.03"));
 
-  LogProcessing::BidCostKey key4(1, "url", FixedNumber("0.25"));
-  auto it4 = bid_collector.find(key4);
+  BidCostCollector::Data data4(1, "url", FixedNumber("0.25"), FixedNumber("0.02"), FixedNumber("0.03"));
+  auto it4 = std::find(std::begin(bid_collector), std::end(bid_collector), data4);
   BOOST_CHECK_EQUAL(it4 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it4->second.cost(), FixedNumber("0.02"));
-  BOOST_CHECK_EQUAL(it4->second.max_cost(), FixedNumber("0.03"));
 }
 
 class DataModelProvider3 :
@@ -971,16 +1004,16 @@ public:
 
   bool load(BidCostHelpCollector& collector) noexcept override
   {
-    const unsigned long tag_id = 1;
+    const Types::TagId tag_id = 1;
     const std::string url = "url";
 
     BidCostHelpCollector::Key key(tag_id, std::make_shared<std::string>(url));
     BidCostHelpCollector::InnerCollector inner_collector(100000);
 
     auto cost = FixedNumber("0.03");
-    long unverified_imps = 400;
-    long imps = 100;
-    long clicks = 5;
+    Types::Imps unverified_imps = 400;
+    Types::Imps imps = 100;
+    Types::Clicks clicks = 5;
     {
       BidCostHelpCollector::InnerKey key_inner(cost);
       BidCostHelpCollector::InnerData data_inner(
@@ -1020,7 +1053,7 @@ public:
     return true;
   }
 
-  bool load(CtrHelpCollector& /*collector*/) noexcept override
+  bool load(CtrHelpCollector&) noexcept override
   {
     return true;
   }
@@ -1059,8 +1092,8 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_3)
   auto model = model_evaluator->evaluate();
   model->save(path_file);
 
-  LogProcessing::BidCostCollector bid_collector;
-  LogHelper<LogProcessing::BidCostTraits>::load(path_file, bid_collector);
+  BidCostCollector bid_collector;
+  bid_collector.load(path_file);
 
   // top_level_win_rate = 0,025
   // check_win_rate = [0,02375; 0,01875; 0,0125; 0,00625]
@@ -1068,29 +1101,21 @@ BOOST_AUTO_TEST_CASE(bid_cost_model_3)
   // target_cost = 0.03, max_cost = 0.03
 
   BOOST_CHECK_EQUAL(bid_collector.size() == 4, true);
-  LogProcessing::BidCostKey key1(1, "url", FixedNumber("0.95"));
-  auto it1 = bid_collector.find(key1);
+  BidCostCollector::Data data1(1, "url", FixedNumber("0.95"), FixedNumber("0.03"), FixedNumber("0.03"));
+  auto it1 = std::find(std::begin(bid_collector), std::end(bid_collector), data1);
   BOOST_CHECK_EQUAL(it1 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it1->second.cost(), FixedNumber("0.03"));
-  BOOST_CHECK_EQUAL(it1->second.max_cost(), FixedNumber("0.03"));
 
-  LogProcessing::BidCostKey key2(1, "url", FixedNumber("0.75"));
-  auto it2 = bid_collector.find(key2);
+  BidCostCollector::Data data2(1, "url", FixedNumber("0.75"), FixedNumber("0.03"), FixedNumber("0.03"));
+  auto it2 = std::find(std::begin(bid_collector), std::end(bid_collector), data2);
   BOOST_CHECK_EQUAL(it2 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it2->second.cost(), FixedNumber("0.03"));
-  BOOST_CHECK_EQUAL(it2->second.max_cost(), FixedNumber("0.03"));
 
-  LogProcessing::BidCostKey key3(1, "url", FixedNumber("0.5"));
-  auto it3 = bid_collector.find(key3);
+  BidCostCollector::Data data3(1, "url", FixedNumber("0.5"), FixedNumber("0.03"), FixedNumber("0.03"));
+  auto it3 = std::find(std::begin(bid_collector), std::end(bid_collector), data3);
   BOOST_CHECK_EQUAL(it3 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it3->second.cost(), FixedNumber("0.03"));
-  BOOST_CHECK_EQUAL(it3->second.max_cost(), FixedNumber("0.03"));
 
-  LogProcessing::BidCostKey key4(1, "url", FixedNumber("0.25"));
-  auto it4 = bid_collector.find(key4);
+  BidCostCollector::Data data4(1, "url", FixedNumber("0.25"), FixedNumber("0.03"), FixedNumber("0.03"));
+  auto it4 = std::find(std::begin(bid_collector), std::end(bid_collector), data4);
   BOOST_CHECK_EQUAL(it4 != bid_collector.end(), true);
-  BOOST_CHECK_EQUAL(it4->second.cost(), FixedNumber("0.03"));
-  BOOST_CHECK_EQUAL(it4->second.max_cost(), FixedNumber("0.03"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -1107,28 +1132,28 @@ BOOST_AUTO_TEST_CASE(test1)
 
   model->set_cost(
     1,
-    std::make_shared<std::string>("url"),
+    "url",
     LogProcessing::FixedNumber("0.1"),
     LogProcessing::FixedNumber("1.2"),
     LogProcessing::FixedNumber("3.0"));
 
   model->set_cost(
     1,
-    std::make_shared<std::string>("url"),
+    "url",
     LogProcessing::FixedNumber("0.2"),
     LogProcessing::FixedNumber("1.5"),
     LogProcessing::FixedNumber("2.5"));
 
   model->set_cost(
     1,
-    std::make_shared<std::string>("url"),
+    "url",
     LogProcessing::FixedNumber("0.3"),
     LogProcessing::FixedNumber("2.0"),
     LogProcessing::FixedNumber("2.2"));
 
   model->set_cost(
     2,
-    std::make_shared<std::string>("url"),
+    "url",
     LogProcessing::FixedNumber("0.4"),
     LogProcessing::FixedNumber("0.1"),
     LogProcessing::FixedNumber("10.0"));
@@ -1171,62 +1196,38 @@ BOOST_AUTO_TEST_CASE(test1)
 
 BOOST_AUTO_TEST_CASE(test_load)
 {
-  LogProcessing::BidCostCollector collector;
-  {
-    LogProcessing::BidCostKey key(
-      1,
-      std::make_shared<std::string>("url"),
-      LogProcessing::FixedNumber("0.1"));
+  BidCostCollector collector;
+  collector.add(
+    1,
+    "url",
+    LogProcessing::FixedNumber("0.1"),
+    LogProcessing::FixedNumber("1.2"),
+    LogProcessing::FixedNumber("3.0"));
 
-    LogProcessing::BidCostData data(
-      LogProcessing::FixedNumber("1.2"),
-      LogProcessing::FixedNumber("3.0"));
+  collector.add(
+    1,
+    "url",
+    LogProcessing::FixedNumber("0.2"),
+    LogProcessing::FixedNumber("1.5"),
+    LogProcessing::FixedNumber("2.5"));
 
-    collector.add(key, data);
-  }
+  collector.add(
+    1,
+    "url",
+    LogProcessing::FixedNumber("0.3"),
+    LogProcessing::FixedNumber("2.0"),
+    LogProcessing::FixedNumber("2.2"));
 
-  {
-    LogProcessing::BidCostKey key(
-     1,
-     std::make_shared<std::string>("url"),
-     LogProcessing::FixedNumber("0.2"));
-
-    LogProcessing::BidCostData data(
-      LogProcessing::FixedNumber("1.5"),
-      LogProcessing::FixedNumber("2.5"));
-
-    collector.add(key, data);
-  }
-
-  {
-    LogProcessing::BidCostKey key(
-      1,
-      std::make_shared<std::string>("url"),
-      LogProcessing::FixedNumber("0.3"));
-
-    LogProcessing::BidCostData data(
-      LogProcessing::FixedNumber("2.0"),
-      LogProcessing::FixedNumber("2.2"));
-
-    collector.add(key, data);
-  }
-
-  {
-    LogProcessing::BidCostKey key(
-      2,
-      std::make_shared<std::string>("url"),
-      LogProcessing::FixedNumber("0.4"));
-
-    LogProcessing::BidCostData data(
-      LogProcessing::FixedNumber("0.1"),
-      LogProcessing::FixedNumber("10.0"));
-
-     collector.add(key, data);
-  }
+  collector.add(
+    2,
+    "url",
+    LogProcessing::FixedNumber("0.4"),
+    LogProcessing::FixedNumber("0.1"),
+    LogProcessing::FixedNumber("10.0"));
 
   const std::string path_file = "/tmp/model_data";
   std::remove(path_file.c_str());
-  LogHelper<LogProcessing::BidCostTraits>::save(path_file, collector);
+  collector.save(path_file);
 
   Logging::Logger_var logger(
     new Logging::OStream::Logger(
@@ -1269,75 +1270,6 @@ BOOST_AUTO_TEST_CASE(test_load)
     LogProcessing::FixedNumber("0.1"),
     LogProcessing::FixedNumber("0.5"));
   BOOST_CHECK_EQUAL(result == LogProcessing::FixedNumber("0.5"), true);
-}
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(ctr_model_search)
-
-BOOST_AUTO_TEST_CASE(test1)
-{
-  LogProcessing::CtrCollector collector;
-  {
-    LogProcessing::CtrKey key(
-      1,
-      std::make_shared<std::string>("url"),
-      11);
-
-    LogProcessing::CtrData data(
-      Types::FixedNumber("0.1"));
-    collector.add(key, data);
-  }
-
-  {
-    LogProcessing::CtrKey key(
-      2,
-      std::make_shared<std::string>("url"),
-      22);
-
-    LogProcessing::CtrData data(
-      Types::FixedNumber("0.2"));
-    collector.add(key, data);
-  }
-
-  {
-    LogProcessing::CtrKey key(
-      3,
-      std::make_shared<std::string>("url2"),
-      33);
-
-    LogProcessing::CtrData data(
-      Types::FixedNumber("0.3"));
-    collector.add(key, data);
-  }
-
-  {
-    LogProcessing::CtrKey key(
-      4,
-      std::make_shared<std::string>("url3"),
-      44);
-
-    LogProcessing::CtrData data(
-      Types::FixedNumber("0.4"));
-    collector.add(key, data);
-  }
-
-  const std::string path_file = "/tmp/model_data";
-  std::remove(path_file.c_str());
-  LogHelper<LogProcessing::CtrTraits>::save(path_file, collector);
-
-  Logging::Logger_var logger(
-    new Logging::OStream::Logger(
-      Logging::OStream::Config(std::cerr)));
-
-  ModelCtr_var model(new ModelCtrImpl(logger));
-  model->load(path_file);
-
-  auto ctr = model->get_ctr(1, "url", 11);
-  BOOST_CHECK_EQUAL(ctr == Types::FixedNumber("0.1"), true);
-
-  ctr = model->get_ctr(777, "url", 77);
-  BOOST_CHECK_EQUAL(ctr.is_zero(), true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -1409,6 +1341,222 @@ BOOST_AUTO_TEST_CASE(test)
   CcIdToCategories cc_id_to_categories;
   creative_provider->load(cc_id_to_categories);
   BOOST_CHECK_EQUAL(cc_id_to_categories.size() >= 1, true);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(ctr_collector)
+
+BOOST_AUTO_TEST_CASE(test)
+{
+  const std::string path = "/tmp/test_file";
+  std::filesystem::remove(path);
+
+  {
+    CtrCollector collector;
+    {
+      const Types::TagId tag_id = 0;
+      const Types::Url url;
+      const Types::CreativeCategoryId creative_category_id = 0;
+      const Types::Ctr ctr = Types::Ctr("0.0");
+      collector.add(tag_id, url, creative_category_id, ctr);
+    }
+
+    {
+      const Types::TagId tag_id = 1;
+      const Types::Url url = "url1";
+      const Types::CreativeCategoryId creative_category_id = 11;
+      const Types::Ctr ctr = Types::Ctr("0.1");
+      collector.add(tag_id, url, creative_category_id, ctr);
+    }
+
+    {
+      const Types::TagId tag_id = 2;
+      const Types::Url url = "url2";
+      const Types::CreativeCategoryId creative_category_id = 22;
+      const Types::Ctr ctr = Types::Ctr("0.2");
+      collector.add(tag_id, url, creative_category_id, ctr);
+    }
+
+    {
+      const Types::TagId tag_id = 3;
+      const Types::Url url = "url1";
+      const Types::CreativeCategoryId creative_category_id = 33;
+      const Types::Ctr ctr = Types::Ctr("0.3");
+      collector.add(tag_id, url, creative_category_id, ctr);
+    }
+
+    collector.save(path);
+  }
+
+  {
+    CtrCollector collector;
+    collector.load(path);
+
+    BOOST_CHECK_EQUAL(*collector.get(0, "", 0), Types::Ctr("0.0"));
+    BOOST_CHECK_EQUAL(*collector.get(1, "url1", 11), Types::Ctr("0.1"));
+    BOOST_CHECK_EQUAL(*collector.get(2, "url2", 22), Types::Ctr("0.2"));
+    BOOST_CHECK_EQUAL(*collector.get(3, "url1", 33), Types::Ctr("0.3"));
+    BOOST_CHECK_EQUAL(collector.get(3, "url2", 33) == std::nullopt, true);
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(bid_cost_collector)
+
+BOOST_AUTO_TEST_CASE(test)
+{
+  const std::string path = "/tmp/test_file";
+  std::filesystem::remove(path);
+
+  {
+    BidCostCollector collector;
+    {
+      const Types::TagId tag_id = 0;
+      const std::string url;
+      const Types::WinRate win_rate = Types::WinRate::ZERO;
+      const Types::Cost cost = Types::Cost::ZERO;
+      const Types::Cost max_cost = Types::Cost::ZERO;
+
+      collector.add(tag_id, url, win_rate, cost, max_cost);
+    }
+
+    {
+      const Types::TagId tag_id = 0;
+      const std::string url = "url1";
+      const Types::WinRate win_rate = Types::WinRate("0.1");
+      const Types::Cost cost = Types::Cost("0.2");
+      const Types::Cost max_cost = Types::Cost("0.3");
+
+      collector.add(tag_id, url, win_rate, cost, max_cost);
+    }
+
+    collector.save(path);
+  }
+
+  {
+    BidCostCollector collector;
+    collector.load(path);
+    std::size_t i = 0;
+    for (const auto& data : collector)
+    {
+      if (i == 0)
+      {
+        BOOST_CHECK_EQUAL(data.tag_id, 0);
+        BOOST_CHECK_EQUAL(data.url, "");
+        BOOST_CHECK_EQUAL(data.win_rate, Types::WinRate::ZERO);
+        BOOST_CHECK_EQUAL(data.cost, Types::Cost::ZERO);
+        BOOST_CHECK_EQUAL(data.max_cost, Types::Cost::ZERO);
+      }
+      else if (i == 1)
+      {
+        BOOST_CHECK_EQUAL(data.tag_id, 0);
+        BOOST_CHECK_EQUAL(data.url, "url1");
+        BOOST_CHECK_EQUAL(data.win_rate, Types::WinRate("0.1"));
+        BOOST_CHECK_EQUAL(data.cost, Types::Cost("0.2"));
+        BOOST_CHECK_EQUAL(data.max_cost, Types::Cost("0.3"));
+      }
+      i += 1;
+    }
+    BOOST_CHECK_EQUAL(i, 2);
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(ctr_model)
+
+BOOST_AUTO_TEST_CASE(test)
+{
+  Logging::Logger_var logger = new Logging::OStream::Logger(
+    Logging::OStream::Config(std::cerr));
+
+  ModelCtr_var model = new ModelCtrImpl(logger.in());
+
+  {
+    const Types::TagId tag_id = 1;
+    const Types::Url url = "url1";
+    const Types::CreativeCategoryId creative_category_id = 11;
+    const Types::Ctr ctr = Types::Ctr("0.9");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url1", std::vector<Types::CreativeCategoryId>{11}), Types::Ctr("0.9"));
+
+  {
+    const Types::TagId tag_id = 1;
+    const Types::Url url = "url1";
+    const Types::CreativeCategoryId creative_category_id = 12;
+    const Types::Ctr ctr = Types::Ctr("1.0");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url1", std::vector<Types::CreativeCategoryId>{11, 12}), Types::Ctr("0.9"));
+
+  {
+    const Types::TagId tag_id = 1;
+    const Types::Url url = "url1";
+    const Types::CreativeCategoryId creative_category_id = 14;
+    const Types::Ctr ctr = Types::Ctr("0.8");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url1", std::vector<Types::CreativeCategoryId>{11, 12}), Types::Ctr("0.9"));
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url1", std::vector<Types::CreativeCategoryId>{11, 12, 14}), Types::Ctr("0.8"));
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14}), Types::Ctr("0.0"));
+
+  {
+    const Types::TagId tag_id = 1;
+    const Types::Url url = "url2";
+    const Types::CreativeCategoryId creative_category_id = 0;
+    const Types::Ctr ctr = Types::Ctr("2.0");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14}), Types::Ctr("2.0"));
+
+  {
+    const Types::TagId tag_id = 1;
+    const Types::Url url = "?";
+    const Types::CreativeCategoryId creative_category_id = 15;
+    const Types::Ctr ctr = Types::Ctr("2.2");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14}), Types::Ctr("2.0"));
+
+  {
+    const Types::TagId tag_id = 1;
+    const Types::Url url = "?";
+    const Types::CreativeCategoryId creative_category_id = 17;
+    const Types::Ctr ctr = Types::Ctr("1.2");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(1, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14, 17}), Types::Ctr("1.2"));
+  BOOST_CHECK_EQUAL(model->get_ctr(2, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14, 17}), Types::Ctr("0.0"));
+
+  {
+    const Types::TagId tag_id = 2;
+    const Types::Url url = "?";
+    const Types::CreativeCategoryId creative_category_id = 0;
+    const Types::Ctr ctr = Types::Ctr("9.9");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(2, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14, 17}), Types::Ctr("9.9"));
+
+  {
+    const Types::TagId tag_id = 2;
+    const Types::Url url = "url2";
+    const Types::CreativeCategoryId creative_category_id = 111;
+    const Types::Ctr ctr = Types::Ctr("7.7");
+    model->set_ctr(tag_id, url, creative_category_id, ctr);
+  }
+
+  BOOST_CHECK_EQUAL(model->get_ctr(2, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 14, 17}), Types::Ctr("9.9"));
+  BOOST_CHECK_EQUAL(model->get_ctr(2, "url2", std::vector<Types::CreativeCategoryId>{11, 12, 111, 17}), Types::Ctr("7.7"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

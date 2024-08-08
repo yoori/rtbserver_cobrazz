@@ -10,9 +10,9 @@
 #include <ReferenceCounting/Interface.hpp>
 
 // THIS
-#include "Pid.hpp"
-#include "Processor.hpp"
-#include "ShutdownManager.hpp"
+#include <PredictorSvcs/BidCostPredictor/Pid.hpp>
+#include <PredictorSvcs/BidCostPredictor/Processor.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

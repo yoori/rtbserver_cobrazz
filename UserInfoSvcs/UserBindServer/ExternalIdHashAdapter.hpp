@@ -52,7 +52,7 @@ namespace UserInfoSvcs
       std::ostream& stream,
       const ExternalIdHashAdapter& adapter)
     {
-      static const std::string empty("###");
+      static const std::string empty("-");
       const auto& str = adapter.str();
       stream << (str.empty() ? empty : str);
       return stream;
@@ -75,11 +75,10 @@ namespace UserInfoSvcs
     std::istream& stream,
     ExternalIdHashAdapter& adapter)
   {
-    static std::string empty("###");
-
+    static const std::string empty("-");
     std::string text;
     stream >> text;
-    if (text.size() == 3 && text == empty)
+    if (text == empty)
     {
       text = std::string();
     }

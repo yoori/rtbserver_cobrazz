@@ -12,14 +12,13 @@
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include "ActiveObjectObserver.hpp"
-#include "CreativeProvider.hpp"
-#include "ModelEvaluator.hpp"
-#include "ModelFactory.hpp"
-#include "Persantage.hpp"
-#include "DataModelProvider.hpp"
-#include "ModelEvaluator.hpp"
-#include "ShutdownManager.hpp"
+#include <PredictorSvcs/BidCostPredictor/ActiveObjectObserver.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelEvaluator.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelFactory.hpp>
+#include <PredictorSvcs/BidCostPredictor/Persantage.hpp>
+#include <PredictorSvcs/BidCostPredictor/DataModelProvider.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelEvaluator.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
 
 
 namespace PredictorSvcs::BidCostPredictor
@@ -32,14 +31,12 @@ class ModelEvaluatorCtrImpl final :
   public ReferenceCounting::AtomicImpl
 {
 private:
-  using TagId = typename ModelCtr::TagId;
-  using Url = typename ModelCtr::Url;
-  using UrlPtr = typename ModelCtr::UrlPtr;
+  using CreativeCategoryId = Types::CreativeCategoryId;
+  using TagId = Types::TagId;
+  using Url = Types::Url;
   using Imps = Types::Imps;
   using Clicks = Types::Clicks;
   using FixedNumber = Types::FixedNumber;
-  using CreativeCategoryId = Types::CreativeCategoryId;
-  using CcIdToCategories = CreativeProvider::CcIdToCategories;
 
 public:
   using Logger = Logging::Logger;
@@ -53,8 +50,7 @@ public:
     const Imps tag_imps,
     DataModelProvider* data_provider,
     ModelCtrFactory* model_factory,
-    Logger* logger,
-    CreativeProvider* creative_provider);
+    Logger* logger);
 
   ModelCtr_var evaluate() noexcept override;
 
@@ -66,7 +62,6 @@ protected:
 private:
   void calculate(
     const CtrHelpCollector& collector,
-    const CcIdToCategories& cc_id_to_categories,
     ModelCtr& model);
 
 private:
@@ -79,8 +74,6 @@ private:
   const ModelCtrFactory_var model_factory_;
 
   const Logger_var logger_;
-
-  const CreativeProvider_var creative_provider_;
 
   std::atomic<bool> is_stopped_{false};
 };

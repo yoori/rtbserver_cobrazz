@@ -11,9 +11,9 @@
 
 // THIS
 #include <LogCommons/LogCommons.hpp>
-#include "LogHelper.hpp"
-#include "Processor.hpp"
-#include "Utils.hpp"
+#include <PredictorSvcs/BidCostPredictor/LogHelper.hpp>
+#include <PredictorSvcs/BidCostPredictor/Processor.hpp>
+#include <PredictorSvcs/BidCostPredictor/Utils.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

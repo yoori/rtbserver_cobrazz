@@ -1,58 +1,191 @@
+// STD
+#include <cassert>
+#include <filesystem>
+#include <fstream>
+
 // THIS
-#include "LogCommons/LogCommons.ipp"
 #include "CtrCollector.hpp"
 
-namespace AdServer::LogProcessing
+namespace PredictorSvcs::BidCostPredictor
 {
 
-template<> const char* CtrTraits::B::base_name_ = "CtrStat";
-template<> const char* CtrTraits::B::signature_ = "CtrStat";
-template<> const char* CtrTraits::B::current_version_ = "2.5";
-
-FixedBufStream<TabCategory>& operator>>(
-  FixedBufStream<TabCategory>& is,
-  CtrKey& key)
+namespace
 {
-  TokenizerInputArchive<> ia(is);
-  ia >> key;
-  if (is)
+
+inline constexpr std::string_view empty_string_place_holder = "-";
+
+} // namespace
+
+CtrCollector::CtrCollector(const std::size_t capacity)
+{
+  map_.reserve(capacity);
+}
+
+void CtrCollector::add(
+  const TagId tag_id,
+  const Url& url,
+  const CreativeCategoryId& creative_category_id,
+  const Ctr& ctr)
+{
+  auto it = url_hash_helper_.find(url);
+  if (it == std::end(url_hash_helper_))
   {
-    key.invariant();
-    key.calc_hash();
+    urls_.emplace_back(url);
+    it = url_hash_helper_.emplace(urls_.back()).first;
+  }
+  map_.try_emplace(
+    {tag_id, std::string_view(*it), creative_category_id},
+    ctr);
+}
+
+void CtrCollector::save(const std::string& file_path) const
+{
+  std::filesystem::path path(file_path);
+  if (std::filesystem::exists(path))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "File with path="
+           << file_path
+           << " already exist";
+    throw Exception(stream);
   }
 
-  return is;
+  if (!path.has_filename())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not exist filename for path="
+           << file_path;
+    throw Exception(stream);
+  }
+  const std::string filename = path.filename();
+
+  if (!path.has_parent_path())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not exist parent directory of path="
+           << file_path;
+    throw Exception(stream);
+  }
+  const std::string directory = path.parent_path();
+
+  const std::string temp_file = directory +  "/~" +  filename;
+  std::ofstream file(temp_file);
+  if (!file)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Can't open file="
+           << temp_file;
+    throw Exception(stream);
+  }
+
+  try
+  {
+    bool need_new_line = false;
+    for (const auto& [k, v] : map_)
+    {
+      if (need_new_line)
+      {
+        file << '\n';
+      }
+
+      file << std::get<0>(k)
+           << '\n'
+           << (std::get<1>(k).empty() ? empty_string_place_holder : std::get<1>(k))
+           << '\n'
+           << std::get<2>(k)
+           << '\n'
+           << v;
+      need_new_line = true;
+    }
+
+    if (!file)
+    {
+      std::filesystem::remove(temp_file);
+      Stream::Error stream;
+      stream << FNS
+             << "Can't write data to file="
+             << temp_file;
+      throw Exception(stream);
+    }
+
+    if (std::rename(temp_file.c_str(), file_path.c_str()))
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't rename file="
+             << temp_file
+             << " to file"
+             << file_path;
+      throw Exception(stream);
+    }
+  }
+  catch (...)
+  {
+    std::filesystem::remove(temp_file);
+    throw;
+  }
 }
 
-std::ostream& operator<<(
-  std::ostream& os,
-  const CtrKey& key)
+void CtrCollector::load(const std::string& path)
 {
-  TabOutputArchive oa(os);
-  oa << key;
+  std::ifstream file(path);
+  if (!file)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Can't open file="
+           << path;
+    throw Exception(stream);
+  }
 
-  return os;
+  clear();
+
+  std::size_t line = 1;
+  TagId tag_id = 0;
+  Url url;
+  CreativeCategoryId creative_category_id = 0;
+  Ctr ctr = Ctr::ZERO;
+  while (!file.eof() && file.peek() != std::char_traits<char>::eof())
+  {
+    url.clear();
+
+    file >> tag_id
+         >> url
+         >> creative_category_id
+         >> ctr;
+    if (url == empty_string_place_holder)
+    {
+      url.clear();
+    }
+
+    add(tag_id, url, creative_category_id, ctr);
+
+    if (!file)
+    {
+      clear();
+
+      Stream::Error stream;
+      stream << FNS
+             << "Error reading file="
+             << path
+             << ", line="
+             << line;
+      throw Exception(stream);
+    }
+
+    line += 1;
+  }
 }
 
-FixedBufStream<TabCategory>& operator>>(
-  FixedBufStream<TabCategory>& is,
-  CtrData& data)
+void CtrCollector::clear() noexcept
 {
-  using NoInvariants = Aux_::NoInvariants;
-  TokenizerInputArchive<NoInvariants> ia(is);
-  ia >> data;
-
-  return is;
+  map_.clear();
+  url_hash_helper_.clear();
+  urls_.clear();
 }
 
-std::ostream& operator<<(
-  std::ostream& os,
-  const CtrData& data)
-{
-  SimpleTabOutputArchive oa(os);
-  oa << data;
-
-  return os;
-}
-
-} // namespace AdServer::LogProcessing
+} // namespace PredictorSvcs::BidCostPredictor

@@ -30,13 +30,14 @@ target_link_libraries(BidRateProvider
 add_definitions(-D_REENTRANT -D_USE_OCCI  -DXSD_CXX11)
 
 add_library(CTRProvider SHARED
-  CTRProvider.cpp XGBoostPredictor.cpp CTRTrivialPredictor.cpp
+  CTRProvider.cpp XGBoostPredictor.cpp
 )
 
 link_directories(/opt/foros/vanga/lib)
 
 target_link_libraries(CTRProvider
   /opt/foros/vanga/lib/libVangaDTree.so
+  BidCostPredictorLib
   CampaignConfig
   Gason
   Generics

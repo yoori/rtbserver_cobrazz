@@ -12,49 +12,84 @@ inline constexpr char MODEL_CTR[] = "MODEL_CTR";
 namespace PredictorSvcs::BidCostPredictor
 {
 
-ModelCtrImpl::ModelCtrImpl(Logging::Logger* logger)
+ModelCtrImpl::ModelCtrImpl(Logger* logger)
   : logger_(ReferenceCounting::add_ref(logger))
 {
-  collector_.prepare_adding(10000000);
 }
 
 ModelCtrImpl::Ctr ModelCtrImpl::get_ctr(
   const TagId& tag_id,
   const Url& url,
-  const CreativeCategoryId& creative_category_id) const
+  const CreativeCategoryIds& creative_category_ids) const
 {
-  const CtrKey key(tag_id, url, creative_category_id);
-  const auto it = collector_.find(key);
-  if (it != std::end(collector_))
+  static const std::string any_domain = "?";
+
+  Ctr ctr = Ctr::MAXIMUM;
   {
-    return it->second.ctr() ;
+    for (const auto& creative_category_id : creative_category_ids)
+    {
+      const auto category_ctr = collector_.get(tag_id, url, creative_category_id);
+      if (category_ctr)
+      {
+        ctr = std::min(ctr, *category_ctr);
+      }
+    }
+
+    if (ctr != Ctr::MAXIMUM)
+    {
+      return ctr;
+    }
   }
-  else
+
   {
-    return Ctr::ZERO;
+    const auto empty_category_ctr = collector_.get(tag_id, url, 0);
+    if (empty_category_ctr)
+    {
+      ctr = std::min(ctr, *empty_category_ctr);
+    }
+
+    for (const auto& creative_category_id : creative_category_ids)
+    {
+      const auto category_ctr = collector_.get(tag_id, any_domain, creative_category_id);
+      if (category_ctr)
+      {
+        ctr = std::min(ctr, *category_ctr);
+      }
+    }
+
+    if (ctr != Ctr::MAXIMUM)
+    {
+      return ctr;
+    }
   }
+
+  {
+    const auto empty_category_ctr = collector_.get(tag_id, any_domain, 0);
+    if (empty_category_ctr)
+    {
+      return *empty_category_ctr;
+    }
+  }
+
+  return Ctr::ZERO;
 }
 
 void ModelCtrImpl::set_ctr(
   const TagId& tag_id,
-  const UrlPtr& url,
+  const Url& url,
   const CreativeCategoryId& creative_category_id,
   const Ctr& ctr)
 {
-  const CtrKey key(tag_id, url, creative_category_id);
-  const CtrData data(ctr);
-  collector_.add(key, data);
+  collector_.add(
+    tag_id,
+    url,
+    creative_category_id,
+    ctr);
 }
 
 void ModelCtrImpl::clear() noexcept
 {
-  try
-  {
-    collector_.clear();
-  }
-  catch (...)
-  {
-  }
+  collector_.clear();
 }
 
 void ModelCtrImpl::load(const std::string& path)
@@ -70,7 +105,7 @@ void ModelCtrImpl::load(const std::string& path)
     }
 
     clear();
-    LogHelper<LogProcessing::CtrTraits>::load(path, collector_);
+    collector_.load(path);
 
     {
       std::ostringstream stream;
@@ -114,7 +149,7 @@ void ModelCtrImpl::save(const std::string& path) const
       logger_->info(stream.str(), Aspect::MODEL_CTR);
     }
 
-    LogHelper<CtrTraits>::save(path, collector_);
+    collector_.save(path);
 
     {
       std::ostringstream stream;
@@ -125,8 +160,6 @@ void ModelCtrImpl::save(const std::string& path) const
   }
   catch (const eh::Exception& exc)
   {
-    std::remove(path.c_str());
-
     Stream::Error stream;
     stream << FNS
            << "ModelCtr save is failed. Reason: "
@@ -136,8 +169,6 @@ void ModelCtrImpl::save(const std::string& path) const
   }
   catch (...)
   {
-    std::remove(path.c_str());
-
     Stream::Error stream;
     stream << FNS
            << "ModelCtr save is failed. Reason: Unknown error";

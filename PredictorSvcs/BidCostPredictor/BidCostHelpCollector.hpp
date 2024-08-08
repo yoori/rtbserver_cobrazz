@@ -14,7 +14,7 @@
 // THIS
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

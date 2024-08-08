@@ -491,9 +491,7 @@ void ReaggregatorMultyThread::do_read() noexcept
 
   if (aggregated_files_.empty())
   {
-    static bool is_read_stoped = false;
-
-    if (!is_read_stoped)
+    if (!is_read_stoped_)
     {
       post_task(
         ThreadID::Calculate,
@@ -506,7 +504,7 @@ void ReaggregatorMultyThread::do_read() noexcept
         Addressee::Calculator);
     }
 
-    is_read_stoped = true;
+    is_read_stoped_ = true;
     return;
   }
 

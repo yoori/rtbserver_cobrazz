@@ -223,7 +223,7 @@ void Regenerator::regenerate(
       std::string line;
       line.reserve(1024);
 
-      unsigned long line_num = 1;
+      std::size_t line_num = 1;
       for (ValueT value; !fstream.eof(); ++line_num)
       {
         line.clear();

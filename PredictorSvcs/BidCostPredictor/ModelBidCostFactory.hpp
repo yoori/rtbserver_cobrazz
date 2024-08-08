@@ -5,8 +5,8 @@
 #include "Logger/Logger.hpp"
 
 // THIS
-#include "ModelFactory.hpp"
-#include "ModelBidCostImpl.hpp"
+#include <PredictorSvcs/BidCostPredictor/ModelFactory.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelBidCostImpl.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

@@ -13,12 +13,13 @@
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/BidCostStat.hpp>
-#include "ActiveObjectObserver.hpp"
-#include "DataModelProvider.hpp"
-#include "LogHelper.hpp"
-#include "Persantage.hpp"
-#include "PoolCollector.hpp"
-#include "ShutdownManager.hpp"
+#include <PredictorSvcs/BidCostPredictor/ActiveObjectObserver.hpp>
+#include <PredictorSvcs/BidCostPredictor/CreativeProvider.hpp>
+#include <PredictorSvcs/BidCostPredictor/DataModelProvider.hpp>
+#include <PredictorSvcs/BidCostPredictor/LogHelper.hpp>
+#include <PredictorSvcs/BidCostPredictor/Persantage.hpp>
+#include <PredictorSvcs/BidCostPredictor/PoolCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -37,6 +38,7 @@ private:
   using Url = std::string_view;
   using UrlHash = std::unordered_map<Url, UrlPtr>;
   using Imps = BidCostHelpCollector::Imps;
+  using CcIdToCategories = CreativeProvider::CcIdToCategories;
 
   struct ReadData final
   {
@@ -73,6 +75,7 @@ public:
   DataModelProviderImpl(
     const Imps max_imps,
     const std::string& input_dir,
+    CreativeProvider* creative_provider,
     Logger* logger);
 
   bool load(BidCostHelpCollector& help_collector) noexcept override;
@@ -118,6 +121,8 @@ private:
 
   const std::string prefix_;
 
+  CcIdToCategories cc_id_to_categories_;
+
   ShutdownManager shutdown_manager_;
 
   ActiveObjectObserver_var observer_;
@@ -131,6 +136,8 @@ private:
   AggregatedFiles aggregated_files_;
   // Read thread
   Persantage persantage_;
+  // Read thread
+  bool is_read_stoped_ = false;
   // Calculate thread
   BidCostHelpCollector bid_cost_collector_;
   // Calculate thread

@@ -15,13 +15,13 @@
 #include <Commons/DelegateTaskGoal.hpp>
 
 #include <LogCommons/BidCostStat.hpp>
-#include "ActiveObjectObserver.hpp"
-#include "LogHelper.hpp"
-#include "Persantage.hpp"
-#include "PoolCollector.hpp"
-#include "Processor.hpp"
-#include "ShutdownManager.hpp"
-#include "Utils.hpp"
+#include <PredictorSvcs/BidCostPredictor/ActiveObjectObserver.hpp>
+#include <PredictorSvcs/BidCostPredictor/LogHelper.hpp>
+#include <PredictorSvcs/BidCostPredictor/Persantage.hpp>
+#include <PredictorSvcs/BidCostPredictor/PoolCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/Processor.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Utils.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -151,6 +151,8 @@ private:
   DayTimestamp current_date_;
   // Read thread
   Persantage persantage_;
+  // Read thread
+  bool is_read_stoped_ = false;
 
   std::vector<Generics::TaskRunner_var> task_runners_;
 

@@ -5,8 +5,9 @@
 #include "ReferenceCounting/AtomicImpl.hpp"
 
 // THIS
-#include "CtrCollector.hpp"
-#include "ModelCtr.hpp"
+#include <PredictorSvcs/BidCostPredictor/CtrCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelCtr.hpp>
+
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -20,14 +21,6 @@ class ModelCtrImpl final :
 public:
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
-  using CtrCollector = LogProcessing::CtrCollector;
-  using CtrKey = LogProcessing::CtrKey;
-  using CtrData = LogProcessing::CtrData;
-  using CtrTraits = LogProcessing::CtrTraits;
-  using TagId = typename ModelCtr::TagId;
-  using Url = typename ModelCtr::Url;
-  using UrlPtr = typename ModelCtr::UrlPtr;
-  using Ctr = typename ModelCtr::Ctr;
 
 public:
   explicit ModelCtrImpl(Logger* logger);
@@ -35,11 +28,11 @@ public:
   Ctr get_ctr(
     const TagId& tag_id,
     const Url& url,
-    const CreativeCategoryId& creative_category_id) const override;
+    const CreativeCategoryIds& creative_category_ids) const;
 
   void set_ctr(
     const TagId& tag_id,
-    const UrlPtr& url,
+    const Url& url,
     const CreativeCategoryId& creative_category_id,
     const Ctr& ctr) override;
 

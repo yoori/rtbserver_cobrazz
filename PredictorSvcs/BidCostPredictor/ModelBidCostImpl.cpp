@@ -16,7 +16,6 @@ namespace PredictorSvcs::BidCostPredictor
 ModelBidCostImpl::ModelBidCostImpl(Logger* logger)
   : logger_(ReferenceCounting::add_ref(logger))
 {
-  collector_.prepare_adding(10000000);
 }
 
 ModelBidCostImpl::Cost ModelBidCostImpl::get_cost(
@@ -25,19 +24,19 @@ ModelBidCostImpl::Cost ModelBidCostImpl::get_cost(
   const WinRate& win_rate,
   const Cost& cur_cost) const
 {
-  Cost min_cost(false, 100000, 0);
-  Cost max_cost(false, 0, 0);
+  Cost min_cost = Cost::MAXIMUM;
+  Cost max_cost = Cost::ZERO;
 
   auto it = win_rates_.lower_bound(
-    std::tuple(tag_id, url, win_rate));
+    std::tuple{tag_id, url, win_rate});
   const auto it_end = std::end(win_rates_);
   while (it != it_end
     && std::get<0>(it->first) == tag_id
     && std::get<1>(it->first) == url)
   {
     const auto& data = it->second;
-    const auto& cost_win = data.cost();
-    const auto& max_cost_win = data.max_cost();
+    const auto& cost_win = data.first;
+    const auto& max_cost_win = data.second;
 
     min_cost = std::min(min_cost, cost_win);
     max_cost = std::max(max_cost, max_cost_win);
@@ -54,21 +53,23 @@ ModelBidCostImpl::Cost ModelBidCostImpl::get_cost(
 
 void ModelBidCostImpl::set_cost(
   const TagId& tag_id,
-  const UrlPtr& url,
+  const Url& url,
   const WinRate& win_rate,
   const Cost& cost,
   const Cost& max_cost)
 {
-  const BidCostKey key(tag_id, url, win_rate);
-  const BidCostData data(cost, max_cost);
-
-  collector_.add(key, data);
-  win_rates_.try_emplace({
+  const auto& data = collector_.add(
     tag_id,
-    *url,
-    win_rate},
+    url,
+    win_rate,
     cost,
     max_cost);
+  win_rates_.try_emplace({
+    data.tag_id,
+    data.url,
+    data.win_rate},
+    data.cost,
+    data.max_cost);
 }
 
 void ModelBidCostImpl::clear() noexcept
@@ -89,7 +90,7 @@ void ModelBidCostImpl::save(const std::string& path) const
 
   try
   {
-    LogHelper<BidCostTraits>::save(path, collector_);
+    collector_.save(path);
 
     std::ostringstream stream;
     stream << FNS
@@ -128,16 +129,16 @@ void ModelBidCostImpl::load(const std::string& path)
     }
 
     clear();
-    LogHelper<BidCostTraits>::load(path, collector_);
+    collector_.load(path);
 
-    for (const auto& [k, v]: collector_)
+    for (const auto& data: collector_)
     {
       win_rates_.try_emplace({
-        k.tag_id(),
-        k.url(),
-        k.win_rate()},
-        v.cost(),
-        v.max_cost());
+        data.tag_id,
+        data.url,
+        data.win_rate},
+        data.cost,
+        data.max_cost);
     }
 
     {

@@ -891,8 +891,9 @@ inline std::ostream& operator<<(
   std::ostream& stream,
   const StringDefHashAdapter& adapter)
 {
+  static const std::string empty("-");
   const auto& str = adapter.str();
-  stream << (str.empty() ? "###" : str);
+  stream << (str.empty() ? empty : str);
   return stream;
 }
 
@@ -900,11 +901,10 @@ inline std::istream& operator>>(
   std::istream& stream,
   StringDefHashAdapter& adapter)
 {
-  static std::string empty("###");
-
+  static const std::string empty("-");
   std::string text;
   stream >> text;
-  if (text.size() == 3 && text == empty)
+  if (text == empty)
   {
     text = std::string();
   }
