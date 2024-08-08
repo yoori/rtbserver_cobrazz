@@ -2,8 +2,8 @@
 #define BIDCOSTPREDICTOR_MODELCTRFACTORY_HPP
 
 // THIS
-#include "ModelCtrImpl.hpp"
-#include "ModelFactory.hpp"
+#include <PredictorSvcs/BidCostPredictor/ModelCtrImpl.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelFactory.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

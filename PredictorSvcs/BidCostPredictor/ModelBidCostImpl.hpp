@@ -6,9 +6,9 @@
 #include <tuple>
 
 // THIS
-#include "ModelBidCost.hpp"
-#include "BidCostCollector.hpp"
-#include "BidCostHelpCollector.hpp"
+#include <PredictorSvcs/BidCostPredictor/ModelBidCost.hpp>
+#include <PredictorSvcs/BidCostPredictor/BidCostCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/BidCostHelpCollector.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -23,16 +23,13 @@ public:
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
   using TagId = typename ModelBidCost::TagId;
-  using Url = typename ModelBidCost::Url;
+  using UrlView = std::string_view;
   using WinRate = typename ModelBidCost::WinRate;
   using Cost = typename ModelBidCost::Cost;
-  using BidCostKey = LogProcessing::BidCostKey;
-  using BidCostData = LogProcessing::BidCostData;
+  using MaxCost = typename ModelBidCost::Cost;
   using WinRates = std::map<
-      std::tuple<TagId, std::string_view, WinRate>,
-      BidCostData>;
-  using BidCostCollector = LogProcessing::BidCostCollector;
-  using BidCostTraits = LogProcessing::BidCostTraits;
+      std::tuple<TagId, UrlView, WinRate>,
+      std::pair<Cost, MaxCost>>;
 
 public:
   explicit ModelBidCostImpl(Logger* logger);
@@ -45,7 +42,7 @@ public:
 
   void set_cost(
     const TagId& tag_id,
-    const UrlPtr& url,
+    const Url& url,
     const WinRate& win_rate,
     const Cost& cost,
     const Cost& max_cost) override;

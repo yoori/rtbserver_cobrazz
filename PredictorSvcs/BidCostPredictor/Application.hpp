@@ -6,7 +6,7 @@
 #include <Generics/Uncopyable.hpp>
 
 // THIS
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

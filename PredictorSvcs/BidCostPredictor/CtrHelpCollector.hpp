@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 // THIS
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -23,17 +23,17 @@ public:
   using TagId = Types::TagId;
   using Url = Types::Url;
   using UrlPtr = Types::UrlPtr;
-  using CcId = Types::CcId;
+  using CreativeCategoryId = Types::CreativeCategoryId;
   using Hash = std::size_t;
 
 public:
   explicit Key(
     const TagId& tag_id,
     const UrlPtr& url,
-    const CcId& cc_id)
+    const CreativeCategoryId& creative_category_id)
     : tag_id_(tag_id),
       url_(url),
-      cc_id_(cc_id)
+      creative_category_id_(creative_category_id)
   {
     calc_hash();
   }
@@ -45,14 +45,9 @@ public:
 
   bool operator==(const Key& rht) const noexcept
   {
-    if (&rht == this)
-    {
-      return true;
-    }
-
     return tag_id_ == rht.tag_id_
       && *url_ == *rht.url_
-      && cc_id_ == rht.cc_id_;
+      && creative_category_id_ == rht.creative_category_id_;
   }
 
   TagId tag_id() const noexcept
@@ -70,9 +65,9 @@ public:
     return url_;
   }
 
-  CcId cc_id() const noexcept
+  CreativeCategoryId creative_category_id() const noexcept
   {
-    return cc_id_;
+    return creative_category_id_;
   }
 
   Hash hash() const noexcept
@@ -85,7 +80,7 @@ private:
   {
     boost::hash_combine(hash_, tag_id_);
     boost::hash_combine(hash_, *url_);
-    boost::hash_combine(hash_, cc_id_);
+    boost::hash_combine(hash_, creative_category_id_);
   }
 
 private:
@@ -93,7 +88,7 @@ private:
 
   UrlPtr url_;
 
-  CcId cc_id_;
+  CreativeCategoryId creative_category_id_;
 
   Hash hash_ = 0;
 };

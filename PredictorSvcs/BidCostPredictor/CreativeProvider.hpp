@@ -14,7 +14,7 @@
 #include <Commons/Postgres/Connection.hpp>
 #include <Commons/Postgres/ConnectionPool.hpp>
 #include <Commons/Postgres/Environment.hpp>
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

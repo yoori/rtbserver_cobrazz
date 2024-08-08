@@ -3,10 +3,11 @@ add_library(BidCostPredictorLib SHARED
   AggregatorMultyThread.cpp
   Application.cpp
   BidCostCollector.cpp
+  BidCostPredictor.cpp
   Configuration.cpp
-  ContainerImpl.cpp
   CreativeProvider.cpp
   CtrCollector.cpp
+  CtrPredictor.cpp
   Daemon.cpp
   DaemonImpl.cpp
   DataModelProviderImpl.cpp
@@ -20,7 +21,6 @@ add_library(BidCostPredictorLib SHARED
   Reaggregator.cpp
   ReaggregatorMultyThread.cpp
   Regenerator.cpp
-  Storage.cpp
   Utils.cpp
 )
 

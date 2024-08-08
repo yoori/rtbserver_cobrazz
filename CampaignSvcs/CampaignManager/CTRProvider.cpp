@@ -1587,7 +1587,7 @@ namespace CampaignSvcs
     }
     else if(model.method == MM_TRIVIAL)
     {
-      model_ctr = calculation_->trivial_eval_ctr_(model);
+      model_ctr = calculation_->trivial_eval_ctr_(model, creative);
     }
     else
     {
@@ -2154,8 +2154,9 @@ namespace CampaignSvcs
   }
 
   RevenueDecimal
-  CTRProvider::Calculation::trivial_eval_ctr_(const Model& model)
-    const
+  CTRProvider::Calculation::trivial_eval_ctr_(
+    const Model& model,
+    const Creative* creative) const
   {
     //static const char* FUN = "CTRProvider::trivial_eval_ctr_()";
 
@@ -2164,7 +2165,8 @@ namespace CampaignSvcs
     // eval ctr by request_params_.tag->tag_id, request_params.referer_hostname
     return model.trivial_predictor->predict(
       request_params_->tag ? request_params_->tag->tag_id : 0,
-      request_params_->referer_hostname);
+      request_params_->referer_hostname,
+      creative->content_categories);
   }
 
   RevenueDecimal
@@ -2511,8 +2513,12 @@ namespace CampaignSvcs
           {
             try
             {
-              std::ifstream model_file_istr(model_file.c_str());
-              model->trivial_predictor = CTR::TrivialPredictor::load(model_file_istr);
+              using CtrPredictor = PredictorSvcs::BidCostPredictor::CtrPredictor;
+              using CtrPredictor_var = PredictorSvcs::BidCostPredictor::CtrPredictor_var;
+
+              CtrPredictor_var ctr_predictor(new CtrPredictor(logger_));
+              ctr_predictor->load(model_file);
+              model->trivial_predictor = ctr_predictor;
             }
             catch(const eh::Exception& ex)
             {

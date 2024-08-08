@@ -9,7 +9,7 @@
 #include <Logger/Logger.hpp>
 
 // THIS
-#include "Utils.hpp"
+#include <PredictorSvcs/BidCostPredictor/Utils.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
