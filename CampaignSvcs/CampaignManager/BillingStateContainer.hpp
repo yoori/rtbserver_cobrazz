@@ -77,7 +77,7 @@ namespace CampaignSvcs
       const CORBACommons::CorbaObjectRefList& billing_server_refs,
       unsigned long max_use_count,
       bool optimize_campaign_ctr)
-      noexcept;
+      /*throw (eh::Exception)*/;
 
     BidCheckResult
     check_available_bid(

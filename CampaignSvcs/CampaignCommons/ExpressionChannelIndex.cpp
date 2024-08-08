@@ -319,30 +319,6 @@ namespace CampaignSvcs
       }
     }
 
-    void print_channel_priority_map(
-      std::ostream& out,
-      ChannelPriorityMap& channel_priority_map)
-    {
-      for(ChannelPriorityMap::const_iterator ch_it =
-            channel_priority_map.begin();
-          ch_it != channel_priority_map.end(); ++ch_it)
-      {
-        out << "(" << ch_it->first.use_count << ", " <<
-          ch_it->first.channel_id << "):" << std::endl;
-        for(ExpressionIndexingUseMap::const_iterator ei_it =
-              ch_it->second->begin();
-            ei_it != ch_it->second->end(); ++ei_it)
-        {
-          out << "  (" << ei_it->first.used_simple_channels_count << ", " <<
-            ei_it->first.channel_id << "): used count = " <<
-            ei_it->second->used_simple_channels.size() << ": ";
-          Algs::print(out, ei_it->second->used_simple_channels.begin(),
-            ei_it->second->used_simple_channels.end());
-          out << std::endl;
-        }
-      }
-    }
-
     void change_expression_channel_priority(
       ChannelPriorityMap& channel_priority_map,
       const SimpleChannelIndexingMap& simple_channel_indexing_map,

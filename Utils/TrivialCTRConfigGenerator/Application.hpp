@@ -24,7 +24,8 @@ protected:
   void
   generate_(
     const String::SubString& input_folder,
-    const String::SubString& output_folder);
+    const String::SubString& output_folder)
+  /*throw(eh::InvalidArgument)*/;
 };
 
 typedef Generics::Singleton<Application_> Application;

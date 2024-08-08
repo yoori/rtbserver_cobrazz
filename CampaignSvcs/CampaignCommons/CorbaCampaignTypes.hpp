@@ -165,7 +165,7 @@ namespace AdServer
 
       delivery_limits.imps = delivery_info.imps_defined ?
         std::optional<unsigned long>(delivery_info.imps) :
-        std::optional<unsigned long>();
+        std::nullopt;
 
       delivery_limits.daily_imps = std::optional<unsigned long>();
       /*
@@ -175,7 +175,7 @@ namespace AdServer
       */
       delivery_limits.clicks = delivery_info.clicks_defined ?
         std::optional<unsigned long>(delivery_info.clicks) :
-        std::optional<unsigned long>();
+        std::nullopt;
 
       delivery_limits.daily_clicks = std::optional<unsigned long>();
       /*

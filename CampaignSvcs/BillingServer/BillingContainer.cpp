@@ -1781,12 +1781,6 @@ namespace CampaignSvcs
       ", clicks = " << confirm_clicks.str() << std::endl;
 #   endif
 
-    const Generics::Time ASYNCH_PERIOD = Generics::Time::ZERO;
-
-    const Generics::Time round_time = Generics::Time(
-      (now - ASYNCH_PERIOD).tv_sec / Generics::Time::ONE_HOUR.tv_sec *
-      Generics::Time::ONE_HOUR.tv_sec);
-
     const Generics::Time adv_tz_now = now + delivery_limits.time_offset;
     const Generics::Time date = adv_tz_now.get_gm_time().get_date();
     const unsigned long hour = adv_tz_now.get_gm_time().tm_hour;

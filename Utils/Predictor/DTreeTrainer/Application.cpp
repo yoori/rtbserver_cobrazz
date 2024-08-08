@@ -774,7 +774,6 @@ Application_::train_dtree_set_(
   SVMImpl_var train_svm;
 
   // train
-  double prev_logloss = 1000000.0;
   std::vector<DTree_var> cur_dtrees;
   std::vector<DTree_var> prev_step_dtrees;
   std::copy(prev_dtrees.begin(), prev_dtrees.end(), std::back_inserter(cur_dtrees));
@@ -999,7 +998,6 @@ Application_::train_dtree_set_(
         "  tree-ext-test-lls = [" << ext_test_losses_ostr.str() << "]" << std::endl;
     }
 
-    prev_logloss = test_logloss;
     prev_step_dtrees = cur_dtrees;
   }
 
@@ -1355,7 +1353,6 @@ Application_::train_sub_forest_(
   std::vector<std::pair<DTree_var, DTreeProp_var> > trees;
 
   unsigned long best_iter_i = 0;
-  double best_train_logloss = 1000000.0;
   double best_test_logloss = 1000000.0;
   //const bool FILL_BUGS_ONCE = true;
   const unsigned long LOSS_ITERATIONS_CHECK = 9;
@@ -1504,7 +1501,6 @@ Application_::train_sub_forest_(
 
       if(test_logloss < best_test_logloss)
       {
-        best_train_logloss = train_logloss;
         best_test_logloss = test_logloss;
         best_iter_i = gi;
         best_trees = trees;

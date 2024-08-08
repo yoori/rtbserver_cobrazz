@@ -86,6 +86,8 @@ public:
 private:
   Logger_var logger_;
 
+  DataBaseManagerPoolPtr db_manager_pool_;
+
   const std::string db_path_;
 
   ColumnFamilyHandle* column_family_handle_ = nullptr;
@@ -95,8 +97,6 @@ private:
   WriteOptions write_options_;
 
   DataBasePtr data_base_;
-
-  DataBaseManagerPoolPtr db_manager_pool_;
 };
 
 } // namespace Internal

@@ -4,6 +4,7 @@
 // automate translate with using google
 // http://code.taobao.org/p/adx_guide/src/trunk/docs/API/tanx-bidding.proto
 
+syntax = "proto2";
 
 package Tanx;
 

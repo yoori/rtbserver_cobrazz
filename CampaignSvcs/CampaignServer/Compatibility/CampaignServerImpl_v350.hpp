@@ -307,12 +307,6 @@ namespace AdServer
         noexcept;
 
       static void
-      convert_bill_stat_(
-        AdServer::CampaignSvcs_v350::BillStatInfo& result_bill_stat,
-        const AdServer::CampaignSvcs_v360::BillStatInfo& bill_stat)
-        /*throw(Exception, eh::Exception)*/;
-
-      static void
       convert_amount_distribution_(
         AdServer::CampaignSvcs_v350::AmountDistributionInfo& result_amount_distribution,
         const AdServer::CampaignSvcs_v360::AmountDistributionInfo& amount_distribution)

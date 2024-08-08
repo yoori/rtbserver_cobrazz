@@ -46,20 +46,6 @@ namespace
     return stats;
   }
 
-  void
-  fill(
-    const std::vector<CORBACommons::StatsValue>& values,
-    CORBACommons::StatsValueSeq& value_seq)
-    noexcept
-  {
-    value_seq.length(values.size());
-
-    for (std::size_t i = 0; i < values.size(); ++i)
-    {
-      value_seq[i] = values[i];
-    }
-  }
-
   std::string
   key_with_index(
     const Generics::Values::Key& key,

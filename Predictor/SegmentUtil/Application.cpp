@@ -581,8 +581,6 @@ Application_::request_profile_(
 
   std::vector<Generics::Time> TIMES(times_order.begin(), times_order.end());
 
-  const Generics::Time MAX_IN_TIMES = *std::max_element(TIMES.begin(), TIMES.end());
-
   std::vector<unsigned long> time_counters(TIMES.size(), 0);
   std::string line;
 

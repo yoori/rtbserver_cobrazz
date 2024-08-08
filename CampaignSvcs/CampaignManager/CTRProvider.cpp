@@ -183,12 +183,6 @@ namespace CampaignSvcs
       hash.add(static_cast<uint32_t>(Generics::BitAlgs::highest_bit_32(imps + 1)));
     }
 
-    DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_size_name_)
-    {
-      hash.add(request_params.tag_sizes.begin()->second->size->protocol_name);
-      //hash.add(request_params.cur_tag_size->size->protocol_name);
-    }
-
     DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_hour_)
     {
       hash.add(static_cast<unsigned char>(request_params.time_hour));
@@ -1131,7 +1125,11 @@ namespace CampaignSvcs
       while(reader.read(&loaded_segment, sizeof(loaded_segment)))
       {
         loaded_segment = htonl(loaded_segment);
-        feature_weights[index++] = *reinterpret_cast<float*>(&loaded_segment);
+        //todo: this line was replaced with next 3 ones
+        // feature_weights[index++] = *reinterpret_cast<float*>(&loaded_segment);
+        float weight;
+        memcpy(&weight, &loaded_segment, sizeof(weight));
+        feature_weights[index++] = weight;
       }
     }
     catch(const AdServer::ProfilingCommons::FileReader::Exception& ex)

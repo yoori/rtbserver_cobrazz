@@ -767,8 +767,8 @@ namespace AdServer
 
     epoll_event ev;
     ev.events = EPOLL_FLAGS |
-      (descriptor_handler_holder->handle_read ? EPOLLIN : 0) |
-      (descriptor_handler_holder->handle_write ? EPOLLOUT : 0);
+      (descriptor_handler_holder->handle_read ? EPOLLIN : static_cast<uint32_t>(0)) |
+      (descriptor_handler_holder->handle_write ? EPOLLOUT : static_cast<uint32_t>(0));
     ev.data.ptr = descriptor_handler_holder;
 
     if(::epoll_ctl(

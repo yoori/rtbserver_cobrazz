@@ -41,8 +41,7 @@ protected:
 
   std::string
   uid_to_sspuid_(
-    const AdServer::Commons::UserId& user_id,
-    const AdServer::Commons::AesEncryptKey& encrypt_key)
+    const AdServer::Commons::UserId& user_id)
     noexcept;
 
   void

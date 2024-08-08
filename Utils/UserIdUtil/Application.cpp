@@ -167,9 +167,6 @@ Application_::uid_to_sspuid_(
       ssp_uid_encrypt_key_buf.get()) + i) ^= source_seed;
   }
 
-  AdServer::Commons::AesEncryptKey ssp_uid_encrypt_key(
-    ssp_uid_encrypt_key_buf.get(), 16);
-
   unsigned long line_i = 0;
   while(!in.eof())
   {
@@ -218,7 +215,7 @@ Application_::uid_to_sspuid_(
       AdServer::Commons::UserId user_id(user_id_b.begin(), user_id_b.end());
 
       out << line_ss.substr(0, prefix_end) <<
-        uid_to_sspuid_(user_id, ssp_uid_encrypt_key) <<
+        uid_to_sspuid_(user_id) <<
         (suffix_begin != String::SubString::NPOS ?
           line_ss.substr(suffix_begin) : String::SubString());
     }
@@ -352,15 +349,13 @@ Application_::sspuid_to_uid_(
 
 std::string
 Application_::uid_to_sspuid_(
-  const AdServer::Commons::UserId& user_id,
-  const AdServer::Commons::AesEncryptKey& encrypt_key)
+  const AdServer::Commons::UserId& user_id)
   noexcept
 {
   const uint32_t CURRENT_SSP_USER_ID_MARKER = 1;
 
   AdServer::Commons::UserId ssp_user_id = user_id;
-  //encrypt_key.encrypt(&*ssp_user_id.begin(), &*user_id.begin());
-  
+
   std::string ssp_user_id_str;
   String::StringManip::base64mod_encode(
     ssp_user_id_str,
@@ -377,7 +372,6 @@ Application_::hex_to_uid_(
   std::istream& in,
   std::ostream& out)
 {
-  unsigned long line_i = 0;
   while(!in.eof())
   {
     std::string line;

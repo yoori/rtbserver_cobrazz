@@ -4,6 +4,8 @@
 // This is the message that Google uses to request bids. A BidRequest
 // includes the ad slot from a single impression.
 //
+syntax = "proto2";
+
 package Google;
 
 message BidRequest {

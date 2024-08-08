@@ -826,24 +826,6 @@ namespace RequestInfoSvcs
       }
       impressions.erase(impressions.begin(), erase_end_it.base());
     }
-
-    void
-    filter_matches(
-      UserTriggerMatchContainer::MatchMap& res_matches,
-      const UserTriggerMatchContainer::Config::ChannelInfoMap& all_channels,
-      const UserTriggerMatchContainer::MatchMap& matches)
-      noexcept
-    {
-      for(UserTriggerMatchContainer::MatchMap::const_iterator mit =
-            matches.begin();
-          mit != matches.end(); ++mit)
-      {
-        if(all_channels.find(mit->first) != all_channels.end())
-        {
-          res_matches.insert(*mit);
-        }
-      }
-    }
   }
 
   UserTriggerMatchContainer::UserTriggerMatchContainer(

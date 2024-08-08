@@ -1,9 +1,10 @@
+#include <boost/bind/bind.hpp>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <boost/bind.hpp>
 
 #include <eh/Errno.hpp>
 

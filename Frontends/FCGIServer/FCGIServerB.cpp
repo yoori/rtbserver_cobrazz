@@ -1,3 +1,5 @@
+#include <boost/bind/bind.hpp>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -5,7 +7,6 @@
 #include <unistd.h>
 #include <deque>
 
-#include <boost/bind.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 
 #include <gears/Errno.hpp>

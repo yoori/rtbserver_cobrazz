@@ -349,7 +349,6 @@ private:
 
   Cache cache_;
 };
-
 } // namespace AdServer::ChannelSvcs
 
 #endif //CHANNELSVCS_CHANNELSERVER_GRPCCHANNELOPERATIONDISTRIBUTOR
