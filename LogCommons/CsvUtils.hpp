@@ -194,8 +194,9 @@ write_optional_or_null_date_as_csv_2(
     write_date_as_csv(os, opt_date.get()) : os << null_value;
 }
 
-inline std::ostream&
-write_not_empty_string_as_csv(std::ostream& os, const std::string& str)
+template<typename OStream>
+inline OStream&
+write_not_empty_string_as_csv(OStream& os, const std::string& str)
 {
   std::string csv_encoded_str;
   using String::StringManip::csv_encode;
@@ -204,26 +205,42 @@ write_not_empty_string_as_csv(std::ostream& os, const std::string& str)
   return os;
 }
 
-inline std::ostream&
+template<typename OStream>
+inline OStream&
 write_string_as_csv(
-  std::ostream& os,
+  OStream& os,
   const std::string& str,
   const char *emptiness_marker = "\"\""
 )
 {
-  return str.empty() ? os << emptiness_marker :
+  if (str.empty())
+  {
+    os << emptiness_marker;
+  }
+  else
+  {
     write_not_empty_string_as_csv(os, str);
+  }
+  return os;
 }
 
-inline std::ostream&
+template<typename OStream>
+inline OStream&
 write_string_as_csv(
-  std::ostream& os,
+  OStream& os,
   const Commons::StringHolder* str,
   const char *emptiness_marker = "\"\""
 )
 {
-  return (!str || str->str().empty()) ? os << emptiness_marker :
+  if (!str || str->str().empty())
+  {
+    os << emptiness_marker;
+  }
+  else
+  {
     write_not_empty_string_as_csv(os, str->str());
+  }
+  return os;
 }
 
 template <class OPTIONAL_STRING_>
@@ -251,10 +268,10 @@ write_optional_string_upper_as_csv(
     (not_present_marker ? os << not_present_marker : os);
 }
 
-template <typename T>
-inline std::ostream&
+template <typename OStream, typename T>
+inline OStream&
 write_list_as_csv(
-  std::ostream& os,
+  OStream& os,
   const T& list,
   const char* separator = "|",
   const char* empty_marker = 0

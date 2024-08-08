@@ -487,7 +487,7 @@ namespace CampaignSvcs
             new_campaign->creatives.swap(creatives);
           }
           new_campaign->timestamp = sysdate;
-          modified_ccgs.insert(std::make_pair(ccg_id, new_campaign));          
+          modified_ccgs.insert(std::make_pair(ccg_id, new_campaign));
         }
       }
 
@@ -613,7 +613,7 @@ namespace CampaignSvcs
   {
     if(delivery_limits.delivery_pacing == 'F')
     {
-      if(delivery_limits.daily_budget.present())
+      if(delivery_limits.daily_budget)
       {
         daily_budget = *delivery_limits.daily_budget;
         return true;
@@ -622,7 +622,7 @@ namespace CampaignSvcs
     else if(delivery_limits.delivery_pacing == 'D' &&
       delivery_limits.date_end != Generics::Time::ZERO)
     {
-      if(delivery_limits.budget.present())
+      if(delivery_limits.budget)
       {
         RevenueDecimal remain_days(
           ((delivery_limits.date_end + time_offset).get_gm_time().get_date() -
@@ -639,9 +639,10 @@ namespace CampaignSvcs
     return false; // unlimited daily budget
   }
 
+  template<typename OStream>
   bool
   CampaignConfigModifier::campaign_is_active_(
-    std::ostream* deactivate_trace_str,
+    OStream* deactivate_trace_str,
     bool& campaign_daily_budget_defined,
     RevenueDecimal& campaign_daily_budget,
     const Generics::Time& now,
@@ -683,7 +684,7 @@ namespace CampaignSvcs
          RevenueDecimal::ZERO);
     }
 
-    if(campaign->campaign_delivery_limits.budget.present() &&
+    if(campaign->campaign_delivery_limits.budget &&
          *campaign->campaign_delivery_limits.budget <= amount)
     {
       if(deactivate_trace_str)
@@ -713,9 +714,10 @@ namespace CampaignSvcs
     return true;
   }
 
+  template<typename OStream>
   bool
   CampaignConfigModifier::ccg_is_active_(
-    std::ostream* deactivate_trace_str,
+    OStream* deactivate_trace_str,
     bool& ccg_daily_budget_defined,
     RevenueDecimal& ccg_daily_budget,
     Generics::Time& today_open_time,
@@ -776,7 +778,7 @@ namespace CampaignSvcs
         // CCG budget check
         if((ccg_daily_budget_defined &&
              daily_amount >= ccg_daily_budget) ||
-           (campaign->ccg_delivery_limits.budget.present() &&
+           (campaign->ccg_delivery_limits.budget &&
              *campaign->ccg_delivery_limits.budget <= amount))
         {
           if(deactivate_trace_str)
@@ -996,12 +998,12 @@ namespace CampaignSvcs
           publisher_amounts.begin();
         pub_it != publisher_amounts.end(); ++pub_it)
     {
-      if((campaign->ccg_delivery_limits.budget.present() &&
+      if((campaign->ccg_delivery_limits.budget &&
          pub_it->second.amount >= RevenueDecimal::mul(
            *campaign->ccg_delivery_limits.budget,
            campaign->max_pub_share,
            Generics::DMR_FLOOR)) ||
-         (campaign->ccg_delivery_limits.daily_budget.present() &&
+         (campaign->ccg_delivery_limits.daily_budget &&
          pub_it->second.daily_amount >= RevenueDecimal::mul(
            *campaign->ccg_delivery_limits.daily_budget,
            campaign->max_pub_share,

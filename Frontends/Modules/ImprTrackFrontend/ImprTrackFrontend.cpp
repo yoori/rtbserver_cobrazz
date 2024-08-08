@@ -183,8 +183,7 @@ namespace ImprTrack
   };
 
   Frontend::Frontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -205,8 +204,7 @@ namespace ImprTrack
         response_factory,
         frontend_config->get().ImprTrackFeConfiguration()->threads(),
         0), // max pending tasks
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::IMPR_TRACK_FRONTEND)
@@ -308,21 +306,13 @@ namespace ImprTrack
           callback(), config_->match_threads(), 0, config_->match_task_limit());
         add_child_object(task_runner_);
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -330,10 +320,7 @@ namespace ImprTrack
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_server_controller_refs;
@@ -550,7 +537,7 @@ namespace ImprTrack
           verify_impression_info.viewability = request_info.viewability;
           verify_impression_info.action_name << request_info.action_name;
 
-          if(request_info.user_id_hash_mod.present())
+          if(request_info.user_id_hash_mod)
           {
             verify_impression_info.user_id_hash_mod.defined = true;
             verify_impression_info.user_id_hash_mod.value =
@@ -603,9 +590,7 @@ namespace ImprTrack
           // resolve actual user id (cookies)
           assert(user_bind_client_.in());
 
-          AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-            grpc_distributor = user_bind_client_->grpc_distributor();
-
+          const auto grpc_distributor = user_bind_client_->grpc_distributor();
           bool is_grpc_success = false;
           if (grpc_distributor)
           {
@@ -622,7 +607,7 @@ namespace ImprTrack
 
                 auto response = grpc_distributor->get_user_id(
                   cookie_external_id_str,
-                  GrpcAlgs::pack_user_id(result_user_id),
+                  result_user_id,
                   request_info.time,
                   Generics::Time::ZERO,
                   true,
@@ -695,7 +680,7 @@ namespace ImprTrack
                       // for sign any uid
                       auto response = grpc_distributor->get_user_id(
                         external_user_id,
-                        String::SubString{},
+                        {},
                         request_info.time,
                         Generics::Time::ZERO,
                         true,
@@ -942,8 +927,7 @@ namespace ImprTrack
         {
           AdServer::UserInfoSvcs::UserInfoMatcher_var
             uim_session = user_info_client_->user_info_session();
-          AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-            grpc_distributor = user_info_client_->grpc_distributor();
+          const auto grpc_distributor = user_info_client_->grpc_distributor();
 
           bool is_grpc_success = false;
           if (grpc_distributor)
@@ -1149,8 +1133,7 @@ namespace ImprTrack
           // save freq caps
           AdServer::UserInfoSvcs::UserInfoMatcher_var
             uim_session = user_info_client_->user_info_session();
-          AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-            grpc_distributor = user_info_client_->grpc_distributor();
+          const auto grpc_distributor = user_info_client_->grpc_distributor();
 
           bool is_grpc_success = false;
           if (grpc_distributor)
@@ -1594,9 +1577,7 @@ namespace ImprTrack
 
     assert(user_bind_client_.in());
 
-    AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-      grpc_distributor = user_bind_client_->grpc_distributor();
-
+    const auto grpc_distributor = user_bind_client_->grpc_distributor();
     bool is_grpc_success = false;
     if (grpc_distributor)
     {
@@ -1612,7 +1593,7 @@ namespace ImprTrack
 
           auto response = grpc_distributor->get_user_id(
             cookie_external_id_str,
-            GrpcAlgs::pack_user_id(cookie_user_id),
+            cookie_user_id,
             now,
             Generics::Time::ZERO,
             true,
@@ -1729,8 +1710,7 @@ namespace ImprTrack
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
-      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-        grpc_distributor = user_info_client_->grpc_distributor();
+      const auto grpc_distributor = user_info_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)

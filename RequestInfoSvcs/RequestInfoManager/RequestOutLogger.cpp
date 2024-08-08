@@ -1253,13 +1253,13 @@ namespace RequestInfoSvcs
         add_data.add(
           CollectorT::DataT::KeyT(
             ri.tag_id,
-            ri.tag_top_offset.present() ?
+            ri.tag_top_offset ?
               OptionalUlong(*ri.tag_top_offset) :
               OptionalUlong(),
-            ri.tag_left_offset.present() ?
+            ri.tag_left_offset ?
               OptionalUlong(*ri.tag_left_offset) :
               OptionalUlong(),
-            ri.tag_visibility.present() ?
+            ri.tag_visibility ?
               OptionalUlong(*ri.tag_visibility) :
               OptionalUlong(),
             ri.test_request),
@@ -2653,7 +2653,8 @@ namespace RequestInfoSvcs
               ri.tag_id,
               ri.ext_tag_id,
               normalize_referer_(ri.referer),
-              RevenueDecimal(cost).ceil(6)
+              RevenueDecimal(cost).ceil(6),
+              ri.cc_id
               ),
             inner_data);
 

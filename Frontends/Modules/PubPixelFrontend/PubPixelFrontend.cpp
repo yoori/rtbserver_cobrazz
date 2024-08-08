@@ -13,6 +13,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 
+#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 
 #include "PubPixelFrontend.hpp"
@@ -37,8 +38,7 @@ namespace PubPixel
   };
 
   Frontend::Frontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     FrontendCommons::HttpResponseFactory* response_factory)
@@ -57,8 +57,7 @@ namespace PubPixel
         response_factory,
         frontend_config->get().PubPixelFeConfiguration()->threads(),
         0), // max pending tasks
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       campaign_managers_(this->logger(), Aspect::PUBPIXEL_FRONTEND)
   {}
@@ -220,48 +219,123 @@ namespace PubPixel
       }
       else
       {
-        AdServer::CampaignSvcs::StringSeq_var pub_pixels_ptr;
-        AdServer::CampaignSvcs::PublisherAccountIdSeq publisher_account_ids;
+        bool is_grpc_success = false;
+        auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+        if (grpc_campaign_manager_pool)
+        {
+          try
+          {
+            std::vector<uint32_t> publisher_account_ids(
+              std::begin(request_info.publisher_account_ids),
+              std::end(request_info.publisher_account_ids));
 
-        CorbaAlgs::fill_sequence(
-          request_info.publisher_account_ids.begin(),
-          request_info.publisher_account_ids.end(),
-          publisher_account_ids);
+            auto get_pub_pixels_response = grpc_campaign_manager_pool->get_pub_pixels(
+              request_info.country ? *request_info.country : std::string(),
+              request_info.user_status,
+              publisher_account_ids);
+            if (!get_pub_pixels_response || get_pub_pixels_response->has_error())
+            {
+              GrpcAlgs::print_grpc_error_response(
+                get_pub_pixels_response,
+                logger(),
+                Aspect::PUBPIXEL_FRONTEND);
+              throw Exception("get_pub_pixels is failed");
+            }
 
-        pub_pixels_ptr =
-          campaign_managers_.get_pub_pixels(
-            request_info.country.present() ? request_info.country->c_str() : "",
-            request_info.user_status,
+            response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
+            if(common_config_->ResponseHeaders().present())
+            {
+              FrontendCommons::add_headers(
+                *(common_config_->ResponseHeaders()),
+                response);
+            }
+
+            const auto& info = get_pub_pixels_response->info();
+            const auto& pub_pixels = info.pub_pixels();
+            if (!pub_pixels.empty())
+            {
+              static const std::string HEAD = "<!DOCTYPE html><html><head><title></title></head><body>";
+              response.get_output_stream().write(HEAD.data(), HEAD.size());
+
+              const auto it_end = std::end(pub_pixels);
+              for (auto it = std::begin(pub_pixels); it != it_end; ++it)
+              {
+                response.get_output_stream().write(it->data(), it->size());
+              }
+
+              static const std::string TAIL = "</body></html>";
+              response.get_output_stream().write(TAIL.data(), TAIL.size());
+            }
+            else
+            {
+              http_status = 204; // HTTP_NO_CONTENT
+            }
+
+            is_grpc_success = true;
+          }
+          catch (const eh::Exception& exc)
+          {
+            is_grpc_success = false;
+            Stream::Error stream;
+            stream << FNS
+                   << exc.what();
+            logger()->error(stream.str(), Aspect::PUBPIXEL_FRONTEND);
+          }
+          catch (...)
+          {
+            is_grpc_success = false;
+            Stream::Error stream;
+            stream << FNS
+                   << "Unknown error";
+            logger()->error(stream.str(), Aspect::PUBPIXEL_FRONTEND);
+          }
+        }
+
+        if (!is_grpc_success)
+        {
+          AdServer::CampaignSvcs::StringSeq_var pub_pixels_ptr;
+          AdServer::CampaignSvcs::PublisherAccountIdSeq publisher_account_ids;
+
+          CorbaAlgs::fill_sequence(
+            request_info.publisher_account_ids.begin(),
+            request_info.publisher_account_ids.end(),
             publisher_account_ids);
 
-        const AdServer::CampaignSvcs::StringSeq& pub_pixels = *pub_pixels_ptr;
+          pub_pixels_ptr =
+            campaign_managers_.get_pub_pixels(
+              request_info.country ? request_info.country->c_str() : "",
+              request_info.user_status,
+              publisher_account_ids);
 
-        response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
-        if(common_config_->ResponseHeaders().present())
-        {
-          FrontendCommons::add_headers(
-            *(common_config_->ResponseHeaders()),
-            response);
-        }
+          const AdServer::CampaignSvcs::StringSeq& pub_pixels = *pub_pixels_ptr;
 
-        if (pub_pixels.length())
-        {
-          static const char HEAD[] = "<!DOCTYPE html><html><head><title></title></head><body>";
-          response.get_output_stream().write(HEAD, sizeof(HEAD) - 1);
-
-          for(CORBA::ULong pixel_i = 0; pixel_i < pub_pixels.length(); ++pixel_i)
+          response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
+          if(common_config_->ResponseHeaders().present())
           {
-            response.get_output_stream().write(
-              pub_pixels[pixel_i].in(),
-              ::strlen(pub_pixels[pixel_i].in()));
+            FrontendCommons::add_headers(
+              *(common_config_->ResponseHeaders()),
+              response);
           }
 
-          static const char TAIL[] = "</body></html>";
-          response.get_output_stream().write(TAIL, sizeof(TAIL) - 1);
-        }
-        else
-        {
-          http_status = 204; // HTTP_NO_CONTENT
+          if (pub_pixels.length())
+          {
+            static const char HEAD[] = "<!DOCTYPE html><html><head><title></title></head><body>";
+            response.get_output_stream().write(HEAD, sizeof(HEAD) - 1);
+
+            for(CORBA::ULong pixel_i = 0; pixel_i < pub_pixels.length(); ++pixel_i)
+            {
+              response.get_output_stream().write(
+                pub_pixels[pixel_i].in(),
+                ::strlen(pub_pixels[pixel_i].in()));
+            }
+
+            static const char TAIL[] = "</body></html>";
+            response.get_output_stream().write(TAIL, sizeof(TAIL) - 1);
+          }
+          else
+          {
+            http_status = 204; // HTTP_NO_CONTENT
+          }
         }
       }
     }

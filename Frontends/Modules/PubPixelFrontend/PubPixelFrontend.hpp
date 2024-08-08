@@ -9,8 +9,6 @@
 #include <Generics/ActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
@@ -20,6 +18,7 @@
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -34,14 +33,12 @@ namespace PubPixel
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     Frontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       FrontendCommons::HttpResponseFactory* response_factory)
@@ -121,8 +118,7 @@ namespace PubPixel
       noexcept;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     // configuration
     Configuration_var frontend_config_;

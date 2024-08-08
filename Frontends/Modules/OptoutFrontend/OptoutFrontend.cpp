@@ -69,8 +69,7 @@ namespace AdServer
    * OptoutFrontend implementation
    */
   OptoutFrontend::OptoutFrontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -90,8 +89,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().OptOutFeConfiguration()->threads(),
         0), // max pending tasks
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::OPTOUT_FRONTEND)
@@ -329,20 +327,75 @@ namespace AdServer
             (request_info.old_oo_type == OO_OUT ? 4 : 5));
         }
 
-        campaign_managers_.verify_opt_operation(
-          request_info.debug_time.tv_sec,
-          request_info.colo_id,
-          verify_referer.c_str(),
-          ver_operation,
-          static_cast<CORBA::ULong>(status),
-          static_cast<CORBA::ULong>(request_info.user_status),
-          request_info.log_as_test,
-          request_info.browser.c_str(),
-          request_info.os.c_str(),
-          request_info.ct.c_str(),
-          request_info.curct.c_str(),
-          request_info.local_aspect,
-          new_user_id);
+        bool is_grpc_success = false;
+        const auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+        if (grpc_campaign_manager_pool)
+        {
+          using OptOperation = AdServer::CampaignSvcs::Proto::OptOperation;
+          OptOperation ver_operation_proto = OptOperation::OO_OUT;
+          switch (ver_operation)
+          {
+            case AdServer::CampaignSvcs::CampaignManager::OO_IN:
+            {
+              ver_operation_proto = OptOperation::OO_IN;
+              break;
+            }
+            case AdServer::CampaignSvcs::CampaignManager::OO_OUT:
+            {
+              ver_operation_proto = OptOperation::OO_OUT;
+              break;
+            }
+            case AdServer::CampaignSvcs::CampaignManager::OO_STATUS:
+            {
+              ver_operation_proto = OptOperation::OO_STATUS;
+              break;
+            }
+            case AdServer::CampaignSvcs::CampaignManager::OO_FORCED_IN:
+            {
+              ver_operation_proto = OptOperation::OO_FORCED_IN;
+              break;
+            }
+            default:
+            {
+              assert(false);
+            }
+          }
+          auto response = grpc_campaign_manager_pool->verify_opt_operation(
+            request_info.debug_time.tv_sec,
+            request_info.colo_id,
+            verify_referer,
+            ver_operation_proto,
+            static_cast<CORBA::ULong>(status),
+            static_cast<CORBA::ULong>(request_info.user_status),
+            request_info.log_as_test,
+            request_info.browser,
+            request_info.os,
+            request_info.ct,
+            request_info.curct,
+            new_user_id);
+          if (response && response->has_info())
+          {
+            is_grpc_success = true;
+          }
+        }
+
+        if (!is_grpc_success)
+        {
+          campaign_managers_.verify_opt_operation(
+            request_info.debug_time.tv_sec,
+            request_info.colo_id,
+            verify_referer.c_str(),
+            ver_operation,
+            static_cast<CORBA::ULong>(status),
+            static_cast<CORBA::ULong>(request_info.user_status),
+            request_info.log_as_test,
+            request_info.browser.c_str(),
+            request_info.os.c_str(),
+            request_info.ct.c_str(),
+            request_info.curct.c_str(),
+            request_info.local_aspect,
+            new_user_id);
+        }
 
         if(stats_)
         {
@@ -436,18 +489,73 @@ namespace AdServer
             verify_referer << LOG_DELIMITER <<
             "0"/*failure*/;
 
-          campaign_managers_.verify_opt_operation(
-            request_info.debug_time.tv_sec,
-            request_info.colo_id,
-            verify_referer.c_str(),
-            ver_operation,
-            0,
-            request_info.log_as_test,
-            request_info.browser.c_str(),
-            request_info.os.c_str(),
-            request_info.ct.c_str(),
-            request_info.curct.c_str(),
-            request_info.local_aspect);
+          bool is_grpc_success = false;
+          const auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+          if (grpc_campaign_manager_pool)
+          {
+            using OptOperation = AdServer::CampaignSvcs::Proto::OptOperation;
+            OptOperation ver_operation_proto = OptOperation::OO_OUT;
+            switch (ver_operation)
+            {
+              case AdServer::CampaignSvcs::CampaignManager::OO_IN:
+              {
+                ver_operation_proto = OptOperation::OO_IN;
+                break;
+              }
+              case AdServer::CampaignSvcs::CampaignManager::OO_OUT:
+              {
+                ver_operation_proto = OptOperation::OO_OUT;
+                break;
+              }
+              case AdServer::CampaignSvcs::CampaignManager::OO_STATUS:
+              {
+                ver_operation_proto = OptOperation::OO_STATUS;
+                break;
+              }
+              case AdServer::CampaignSvcs::CampaignManager::OO_FORCED_IN:
+              {
+                ver_operation_proto = OptOperation::OO_FORCED_IN;
+                break;
+              }
+              default:
+              {
+                assert(false);
+              }
+            }
+            auto response = grpc_campaign_manager_pool->verify_opt_operation(
+              request_info.debug_time.tv_sec,
+              request_info.colo_id,
+              verify_referer,
+              ver_operation_proto,
+              0,
+              0,
+              request_info.log_as_test,
+              request_info.browser,
+              request_info.os,
+              request_info.ct,
+              request_info.curct,
+              AdServer::Commons::UserId{});
+            if (response && response->has_info())
+            {
+              is_grpc_success = true;
+            }
+          }
+
+          if (!is_grpc_success)
+          {
+            campaign_managers_.verify_opt_operation(
+              request_info.debug_time.tv_sec,
+              request_info.colo_id,
+              verify_referer.c_str(),
+              ver_operation,
+              0,
+              request_info.log_as_test,
+              request_info.browser.c_str(),
+              request_info.os.c_str(),
+              request_info.ct.c_str(),
+              request_info.curct.c_str(),
+              request_info.local_aspect);
+          }
 
           logger()->log(
             ostr.str(),

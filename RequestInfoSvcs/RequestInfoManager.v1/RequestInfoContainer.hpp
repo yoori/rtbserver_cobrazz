@@ -1,6 +1,8 @@
 #ifndef _REQUEST_INFO_SVCS_REQUEST_INFO_CONTAINER_IMPL_HPP_
 #define _REQUEST_INFO_SVCS_REQUEST_INFO_CONTAINER_IMPL_HPP_
 
+#include <optional>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -120,16 +122,16 @@ namespace AdServer
             move_operation(false)
         {}
 
-        AdServer::Commons::Optional<RequestInfo> request_info;
-        AdServer::Commons::Optional<ImpressionInfo> impression_info;
-        Commons::Optional<RequestInfo::RequestState> process_request;
+        std::optional<RequestInfo> request_info;
+        std::optional<ImpressionInfo> impression_info;
+        std::optional<RequestInfo::RequestState> process_request;
         bool process_impression;
         bool process_click;
         unsigned long process_actions;
 
         // if rollback_request_info defined it will be used for rollback instead request_info
-        AdServer::Commons::Optional<RequestInfo> rollback_request_info;
-        Commons::Optional<RequestInfo::RequestState> process_fraud_request;
+        std::optional<RequestInfo> rollback_request_info;
+        std::optional<RequestInfo::RequestState> process_fraud_request;
         std::list<RequestInfo::RequestState> process_rollback_impressions;
         std::list<RequestInfo::RequestState> process_rollback_clicks;
 

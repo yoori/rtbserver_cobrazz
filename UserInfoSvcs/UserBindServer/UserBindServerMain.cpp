@@ -14,12 +14,12 @@
 #include "UserBindServer_service.cobrazz.pb.hpp"
 
 // UNIXCOMMONS
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
-#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Grpc/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Config.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 namespace
 {
@@ -55,10 +55,10 @@ void
 UserBindServerApp_::main(int& argc, char** argv)
   noexcept
 {
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
@@ -204,7 +204,7 @@ UserBindServerApp_::main(int& argc, char** argv)
           statistic_storage);
         components_builder->add_http_server(std::move(http_server_builder));
 
-        auto grpc_server_builder = Config::create_grpc_cobrazz_server_builder(
+        auto grpc_server_builder = Config::create_grpc_server_builder(
           logger(),
           config().GrpcServer());
 

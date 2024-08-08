@@ -27,6 +27,7 @@ target_link_libraries(HttpServer
   EchoFrontend
   FrontendsPool
   Generics
+  GrpcCampaignManagerPool
   HTTPServerConfigXSD
   ImprTrackFrontend
   OptoutFrontend

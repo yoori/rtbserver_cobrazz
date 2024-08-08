@@ -4,13 +4,16 @@
 // STD
 #include <atomic>
 
-// THIS
-#include <Commons/DelegateTaskGoal.hpp>
+// UNIXCOMMONS
 #include <Generics/ActiveObject.hpp>
 #include <Generics/TaskRunner.hpp>
-#include <LogCommons/LogCommons.hpp>
 #include <Logger/Logger.hpp>
+
+// THIS
+#include <Commons/DelegateTaskGoal.hpp>
+#include <LogCommons/LogCommons.hpp>
 #include "ActiveObjectObserver.hpp"
+#include "CreativeProvider.hpp"
 #include "ModelEvaluator.hpp"
 #include "ModelFactory.hpp"
 #include "Persantage.hpp"
@@ -18,29 +21,29 @@
 #include "ModelEvaluator.hpp"
 #include "ShutdownManager.hpp"
 
-namespace Aspect
-{
-extern const char* MODEL_EVALUATOR_CTR;
-} // namespace Aspect
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class ModelEvaluatorCtrImpl final:
+class ModelEvaluatorCtrImpl final :
   public ModelEvaluatorCtr,
-  public virtual ReferenceCounting::AtomicImpl
+  public ReferenceCounting::AtomicImpl
 {
-  using Iterator = typename HelpCollector::const_iterator;
+private:
   using TagId = typename ModelCtr::TagId;
   using Url = typename ModelCtr::Url;
-  using Url_var = typename ModelCtr::Url_var;
+  using UrlPtr = typename ModelCtr::UrlPtr;
   using Imps = Types::Imps;
   using Clicks = Types::Clicks;
   using FixedNumber = Types::FixedNumber;
+  using CreativeCategoryId = Types::CreativeCategoryId;
+  using CcIdToCategories = CreativeProvider::CcIdToCategories;
+
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -50,38 +53,38 @@ public:
     const Imps tag_imps,
     DataModelProvider* data_provider,
     ModelCtrFactory* model_factory,
-    Logging::Logger* logger);
-
-  ~ModelEvaluatorCtrImpl() override;
+    Logger* logger,
+    CreativeProvider* creative_provider);
 
   ModelCtr_var evaluate() noexcept override;
 
   void stop() noexcept override;
 
+protected:
+  ~ModelEvaluatorCtrImpl() override = default;
+
 private:
-  void calculate();
+  void calculate(
+    const CtrHelpCollector& collector,
+    const CcIdToCategories& cc_id_to_categories,
+    ModelCtr& model);
 
 private:
   const Imps trust_imps_;
 
   const Imps tag_imps_;
 
-  DataModelProvider_var data_provider_;
+  const DataModelProvider_var data_provider_;
 
-  ModelCtrFactory_var model_factory_;
+  const ModelCtrFactory_var model_factory_;
 
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 
-  HelpCollector collector_;
-
-  ModelCtr_var model_;
-
-  bool is_success_ = false;
+  const CreativeProvider_var creative_provider_;
 
   std::atomic<bool> is_stopped_{false};
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_MODELEVALUATORCTR_HPP

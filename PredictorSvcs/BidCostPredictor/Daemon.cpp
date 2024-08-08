@@ -12,39 +12,64 @@
 
 namespace Aspect
 {
-const char* DAEMON = "DAEMON";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char DAEMON[] = "DAEMON";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 Daemon::Daemon(
   const std::string& pid_path,
   Logging::Logger* logger)
   : pid_path_(pid_path),
-    logger_(ReferenceCounting::add_ref(logger))
+    logger_(ReferenceCounting::add_ref(logger)),
+    pid_setter_(std::make_unique<PidSetter>(pid_path_))
 {
-}
-
-Daemon::~Daemon()
-{
-  wait();
 }
 
 void Daemon::run()
 {
   try
   {
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Start daemon";
+      logger_->info(stream.str(), Aspect::DAEMON);
+    }
+
     start();
     wait();
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Daemon is success stopped";
+      logger_->info(stream.str(), Aspect::DAEMON);
+    }
   }
   catch (const eh::Exception& exc)
   {
     stop();
     wait();
-    throw;
+
+    Stream::Error stream;
+    stream << FNS
+           << "Daemon is failed. Reason : "
+           << exc.what();
+    throw Exception(stream);
+  }
+  catch (...)
+  {
+    stop();
+    wait();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Daemon is failed. Reason : Unknown error";
+    throw Exception(stream);
   }
 }
 
@@ -58,9 +83,8 @@ void Daemon::start()
     if ((pid = fork()) < 0)
     {
       Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Reason: "
-           << "fork is failed";
+      ostr << FNS
+           << "Fork is failed";
       throw Exception(ostr);
     }
     else if (pid != 0)
@@ -76,20 +100,19 @@ void Daemon::start()
     sa.sa_flags = 0;
     if (sigaction(SIGHUP, &sa, NULL) < 0)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Reason : it is impossible to ignore"
-           << " the signal SIGHUP";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "It is impossible to ignore"
+             << " the signal SIGHUP";
+      throw Exception(stream);
     }
 
     if ((pid = fork()) < 0)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Reason: "
-           << "fork is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Fork is failed";
+      throw Exception(stream);
     }
     else if (pid != 0)
     {
@@ -99,23 +122,20 @@ void Daemon::start()
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) == nullptr)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Reason: "
-           << "getcwd is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "getcwd is failed";
+      throw Exception(stream);
     }
 
     if (chdir(cwd) < 0)
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Reason: "
-           << "chdir is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "chdir is failed";
+      throw Exception(stream);
     }
 
-    pid_setter_ = std::make_unique<PidSetter>(pid_path_);
     if (!pid_setter_->set())
     {
       throw Exception("Daemon already running");
@@ -127,41 +147,56 @@ void Daemon::start()
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Can't start Daemon. Reason : "
-         << exc.what();
     stop();
-    throw Exception(ostr);
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't start Daemon. Reason : "
+           << exc.what();
+    throw Exception(stream);
+  }
+  catch (...)
+  {
+    stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't start Daemon. Reason : Unknown error";
+    throw Exception(stream);
   }
 }
 
 void Daemon::stop() noexcept
 {
   if (!is_running_)
+  {
     return;
+  }
 
   try
   {
     const auto pid = ::getpid();
     if (kill(pid, SIGINT) == -1)
     {
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << " function kill is failed";
+      Stream::Error stream;
+      stream << FNS
+             << "Function kill is failed";
       logger_->critical(stream.str(), Aspect::DAEMON);
     }
 
     stop_logic();
   }
   catch(...)
-  {}
+  {
+  }
 }
 
 void Daemon::wait() noexcept
 {
   if (!is_running_)
+  {
     return;
+  }
   is_running_ = false;
 
   try
@@ -176,14 +211,14 @@ void Daemon::wait() noexcept
     int signo = 0;
     if (sigwait(&mask, &signo) != 0)
     {
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
-             << " : sigwait is failed";
+      Stream::Error stream;
+      stream << FNS
+             << "sigwait is failed";
       logger_->critical(stream.str(), Aspect::DAEMON);
     }
     else
     {
-      std::stringstream stream;
+      std::ostringstream stream;
       stream << "Signal=";
       switch (signo)
       {
@@ -211,10 +246,4 @@ void Daemon::wait() noexcept
   }
 }
 
-const char* Daemon::name() noexcept
-{
-  return "BidCostPredictorDaemon";
-}
-
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

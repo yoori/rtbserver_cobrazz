@@ -3,6 +3,8 @@
 
 #include <list>
 #include <vector>
+#include <optional>
+
 #include <Generics/Time.hpp>
 #include <Commons/Algs.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -116,8 +118,9 @@ namespace AdServer
           return lhs;
         }
 
-        std::ostream&
-        print(std::ostream& out, const char* space) const noexcept;
+        template<typename OStream>
+        OStream&
+        print(OStream& out, const char* space) const noexcept;
 
         static RevenueDecimal
         convert_currency(
@@ -231,7 +234,7 @@ namespace AdServer
           check_sys();
           return RevenueDecimal::div(action, currency_rate);
         }
-        
+
         RevenueDecimal
         convert_impression(const RevenueDecimal& currency_rate)
           const /*throw(Exception, RevenueDecimal::Overflow)*/
@@ -262,8 +265,9 @@ namespace AdServer
             Generics::DMR_CEIL);
         }
 
-        std::ostream&
-        print(std::ostream& out, const char* space) const noexcept;
+        template<typename OStream>
+        OStream&
+        print(OStream& out, const char* space) const noexcept;
       };
 
       struct ChannelRevenue
@@ -350,9 +354,9 @@ namespace AdServer
       unsigned long num_shown;
       unsigned long position;
       std::string tag_size;
-      AdServer::Commons::Optional<unsigned long> tag_visibility;
-      AdServer::Commons::Optional<unsigned long> tag_top_offset;
-      AdServer::Commons::Optional<unsigned long> tag_left_offset;
+      std::optional<unsigned long> tag_visibility;
+      std::optional<unsigned long> tag_top_offset;
+      std::optional<unsigned long> tag_left_offset;
 
       std::string client_app;
       std::string client_app_version;
@@ -373,7 +377,7 @@ namespace AdServer
 
       Generics::Time kw_last_page_match;
       Generics::Time kw_last_search_match;
-      
+
       bool disabled_pub_cost_check;
 
       // uses only by RequestActionProcessor
@@ -410,16 +414,18 @@ namespace AdServer
 
       Revenue delta_adv_revenue;
 
-      std::ostream&
-      print(std::ostream& out, const char* space) const
+      template<typename OStream>
+      OStream&
+      print(OStream& out, const char* space) const
         noexcept;
 
       static const char*
       request_state_string(RequestState request_state)
         noexcept;
 
-      static std::ostream&
-      print_request_state(std::ostream& out, RequestState request_state)
+      template<typename OStream>
+      static OStream&
+      print_request_state(OStream& out, RequestState request_state)
         noexcept;
     };
 
@@ -472,7 +478,7 @@ namespace AdServer
       AdServer::Commons::RequestId request_id;
       Generics::Time time;
       bool verify_impression;
-      AdServer::Commons::Optional<PubRevenue> pub_revenue;
+      std::optional<PubRevenue> pub_revenue;
       AdServer::Commons::UserId user_id;
       int viewability; // contains viewabliity from log
 
@@ -495,8 +501,9 @@ namespace AdServer
       std::string order_id;
       RevenueDecimal action_value;
 
-      std::ostream& print(
-        std::ostream& ostr, const char* space = "") const noexcept;
+      template<typename OStream>
+      OStream& print(
+        OStream& ostr, const char* space = "") const noexcept;
     };
 
     typedef std::list<AdvCustomActionInfo> AdvCustomActionInfoList;
@@ -646,8 +653,9 @@ namespace AdServer
         unsigned long ccg_id;
         AdServer::Commons::UserId user_id;
 
-        std::ostream& print(
-          std::ostream& ostr, const char* space = "") const noexcept;
+        template<typename OStream>
+        OStream& print(
+          OStream& ostr, const char* space = "") const noexcept;
       };
 
       struct AdvExActionInfo
@@ -665,8 +673,9 @@ namespace AdServer
         std::string ip_address;
         RevenueDecimal action_value;
 
-        std::ostream& print(
-          std::ostream& ostr, const char* space = "") const noexcept;
+        template<typename OStream>
+        OStream& print(
+          OStream& ostr, const char* space = "") const noexcept;
       };
 
       virtual void process_adv_action(
@@ -848,10 +857,10 @@ namespace AdServer
       return *this;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     RequestInfo::Revenue::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "rate_id: " << rate_id << std::endl <<
@@ -862,10 +871,10 @@ namespace AdServer
       return out;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     RequestInfo::RevenueSys::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       this->RequestInfo::Revenue::print(out, space);
@@ -905,20 +914,20 @@ namespace AdServer
       return "unknown";
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     RequestInfo::print_request_state(
-      std::ostream& out, RequestState request_state)
+      OStream& out, RequestState request_state)
       noexcept
     {
       out << request_state_string(request_state);
       return out;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     RequestInfo::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       std::string add_space(space);
@@ -1015,7 +1024,7 @@ namespace AdServer
         space << "verify_impression: " << verify_impression << std::endl <<
         space << "user_id: " << user_id << std::endl <<
         space << "pub_revenue: ";
-      if(pub_revenue.present())
+      if(pub_revenue)
       {
         out << "revenue_type=" << pub_revenue->revenue_type <<
           ", imp=" << pub_revenue->impression;
@@ -1029,9 +1038,10 @@ namespace AdServer
       return out;
     }
 
-    inline std::ostream&
+    template<typename OStream>
+    inline OStream&
     AdvCustomActionInfo::print(
-      std::ostream& out, const char* space) const
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "time: " << time.get_gm_time() << std::endl <<
@@ -1044,9 +1054,10 @@ namespace AdServer
     }
 
     /* AdvActionProcessor::AdvActionInfo */
-    inline
-    std::ostream& AdvActionProcessor::AdvActionInfo::print(
-      std::ostream& out, const char* space) const
+    template<typename OStream>
+    inline OStream&
+    AdvActionProcessor::AdvActionInfo::print(
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "time: " << time.get_gm_time() << std::endl <<
@@ -1057,9 +1068,10 @@ namespace AdServer
     }
 
     /* AdvActionProcessor::AdvExActionInfo */
-    inline
-    std::ostream& AdvActionProcessor::AdvExActionInfo::print(
-      std::ostream& out, const char* space) const
+    template<typename OStream>
+    inline OStream&
+    AdvActionProcessor::AdvExActionInfo::print(
+      OStream& out, const char* space) const
       noexcept
     {
       out << space << "time: " << time.get_gm_time() << std::endl <<

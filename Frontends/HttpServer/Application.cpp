@@ -1,7 +1,9 @@
 // UNIX_COMMONS
-#include <XMLUtility/StringManip.hpp>
 #include <XMLUtility/Utility.hpp>
-#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
+
+// CONFIG
+#include <xsd/Frontends/FeConfig.hpp>
 
 // THIS
 #include <Commons/ConfigUtils.hpp>
@@ -12,8 +14,8 @@
 #include <Frontends/FrontendCommons/Statistics.hpp>
 #include <Frontends/HttpServer/Handler.hpp>
 #include <Frontends/HttpServer/HttpResponse.hpp>
-#include <xsd/AdServerCommons/AdServerCommons.hpp>
-
+#include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
+#include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
 
 namespace
 {
@@ -189,9 +191,8 @@ void Application::init_http()
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using HttpHandlerConfig = UServerUtils::Http::Server::HandlerConfig;
   using ListenerConfig = UServerUtils::Http::Server::ListenerConfig;
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
 
-  ManagerCoro_var manager;
+  ManagerCoro_var manager_coro;
   try
   {
     ModuleIdArray modules;
@@ -273,14 +274,6 @@ void Application::init_http()
       }
     }
 
-    auto statistics_provider = std::make_shared<
-      UServerUtils::Statistics::CompositeStatisticsProviderImpl<
-        std::shared_mutex>>(logger());
-    auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
-    statistics_provider->add(time_statistics_provider);
-    auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
-    statistics_provider->add(common_counter_statistics_provider);
-
     auto number_scheduler_threads = std::thread::hardware_concurrency();
     if (number_scheduler_threads == 0)
     {
@@ -290,7 +283,7 @@ void Application::init_http()
       throw Exception(stream);
     }
 
-    SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+    SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
       number_scheduler_threads,
       logger());
 
@@ -299,17 +292,34 @@ void Application::init_http()
 
     auto init_func = [
       this,
-      statistics_provider,
       modules = std::move(modules),
       scheduler = std::move(scheduler),
       response_factory = std::move(response_factory)] (
         TaskProcessorContainer& task_processor_container) {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
 
+      auto grpc_channel_operation_pool = create_grpc_channel_operation_pool(
+        scheduler,
+        main_task_processor);
+      auto grpc_campaign_manager_pool = create_grpc_campaign_manager_pool(
+        scheduler,
+        main_task_processor);
+      auto grpc_user_bind_operation_distributor = create_grpc_user_bind_operation_distributor(
+        scheduler,
+        main_task_processor);
+      auto grpc_user_info_operation_distributor = create_grpc_user_info_operation_distributor(
+        scheduler,
+        main_task_processor);
+
+      auto grpc_container = std::make_shared<FrontendCommons::GrpcContainer>();
+      grpc_container->grpc_channel_operation_pool = grpc_channel_operation_pool;
+      grpc_container->grpc_campaign_manager_pool = grpc_campaign_manager_pool;
+      grpc_container->grpc_user_bind_operation_distributor = grpc_user_bind_operation_distributor;
+      grpc_container->grpc_user_info_operation_distributor = grpc_user_info_operation_distributor;
+
       FrontendCommons::Frontend_var frontend(
         new FrontendsPool(
-          main_task_processor,
-          scheduler,
+          grpc_container,
           server_config_->fe_config().data(),
           modules,
           logger(),
@@ -317,6 +327,14 @@ void Application::init_http()
           response_factory.in()));
       frontend_ = frontend;
       frontend_->init();
+
+      auto statistics_provider = std::make_shared<
+        UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+          std::shared_mutex>>(logger());
+      auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
+      statistics_provider->add(time_statistics_provider);
+      auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
+      statistics_provider->add(common_counter_statistics_provider);
 
       ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
       statistics_provider_info.statistics_provider = statistics_provider;
@@ -366,26 +384,24 @@ void Application::init_http()
         handler_config.response_body_stream = true;
 
         const std::string handler_get_name = "HttpHandlerGet_" + std::to_string(number);
-        HttpHandler_var handler_get(
-          new HttpHandler(
-            handler_get_name,
-            handler_config,
-            {},
-            logger(),
-            frontend.in()));
+        HttpHandler_var handler_get = new HttpHandler(
+          handler_get_name,
+          handler_config,
+          {},
+          logger(),
+          frontend.in());
         http_server_builder->add_handler(
           handler_get.in(),
           main_task_processor);
 
         handler_config.method = "POST";
         const std::string handler_post_name = "HttpHandlerPost_" + std::to_string(number);
-        HttpHandler_var handler_post(
-          new HttpHandler(
-            handler_post_name,
-            handler_config,
-            {},
-            logger(),
-            frontend.in()));
+        HttpHandler_var handler_post = new HttpHandler(
+          handler_post_name,
+          handler_config,
+          {},
+          logger(),
+          frontend.in());
         http_server_builder->add_handler(
           handler_post.in(),
           main_task_processor);
@@ -402,12 +418,12 @@ void Application::init_http()
         logger(),
         server_config_->Coroutine());
 
-    manager = new ManagerCoro(
+    manager_coro = new ManagerCoro(
       std::move(task_processor_container_builder),
       std::move(init_func),
       logger());
 
-    add_child_object(manager.in());
+    add_child_object(manager_coro.in());
   }
   catch (const eh::Exception& exc)
   {
@@ -416,6 +432,213 @@ void Application::init_http()
            << exc.what();
     throw Exception(stream);
   }
+}
+
+Application::GrpcChannelOperationPoolPtr
+Application::create_grpc_channel_operation_pool(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  using Host = std::string;
+  using Port = std::size_t;
+  using Endpoint = std::pair<Host, Port>;
+  using Endpoints = std::vector<Endpoint>;
+
+  std::shared_ptr<GrpcChannelOperationPool> grpc_channel_operation_pool;
+  if (server_config_->ChannelGrpcClientPool().enable())
+  {
+    Endpoints endpoints;
+    const auto& endpoints_config = server_config_->ChannelServerEndpointList().Endpoint();
+    for (const auto& endpoint_config : endpoints_config)
+    {
+      endpoints.emplace_back(
+        endpoint_config.host(),
+        endpoint_config.port());
+    }
+
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->ChannelGrpcClientPool());
+    grpc_channel_operation_pool = std::make_shared<GrpcChannelOperationPool>(
+      logger(),
+      task_processor,
+      scheduler,
+      endpoints,
+      config_grpc_data.first,
+      config_grpc_data.second,
+      server_config_->time_duration_grpc_client_mark_bad());
+  }
+
+  return grpc_channel_operation_pool;
+}
+
+Application::GrpcCampaignManagerPoolPtr
+Application::create_grpc_campaign_manager_pool(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  using Endpoints = FrontendCommons::GrpcCampaignManagerPool::Endpoints;
+
+  std::shared_ptr<GrpcCampaignManagerPool> grpc_campaign_manager_pool;
+  if (server_config_->CampaignGrpcClientPool().enable())
+  {
+    Endpoints endpoints;
+    const auto& endpoints_config = server_config_->CampaignManagerEndpointList().Endpoint();
+    for (const auto& endpoint_config : endpoints_config)
+    {
+      if (!endpoint_config.service_index().present())
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Service index not exist in CampaignManagerEndpointList";
+        throw Exception(stream);
+      }
+
+      const std::string host = endpoint_config.host();
+      const std::size_t port = endpoint_config.port();
+      const std::string service_id = *endpoint_config.service_index();
+      endpoints.emplace_back(
+        host,
+        port,
+        service_id);
+    }
+
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->CampaignGrpcClientPool());
+    grpc_campaign_manager_pool = std::make_shared<GrpcCampaignManagerPool>(
+      logger(),
+      task_processor,
+      scheduler,
+      endpoints,
+      config_grpc_data.first,
+      config_grpc_data.second,
+      server_config_->time_duration_grpc_client_mark_bad());
+  }
+
+  return grpc_campaign_manager_pool;
+}
+
+Application::GrpcUserBindOperationDistributor_var
+Application::create_grpc_user_bind_operation_distributor(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  const std::string fe_config_path = server_config_->fe_config();
+  Config::ErrorHandler error_handler;
+  const auto fe_config = xsd::AdServer::Configuration::FeConfiguration(
+    fe_config_path.c_str(),
+    error_handler);
+  if (error_handler.has_errors())
+  {
+    std::string error_string;
+    throw Exception(error_handler.text(error_string));
+  }
+
+  if (!fe_config->CommonFeConfiguration().present())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "CommonFeConfiguration not presented";
+    throw Exception(stream);
+  }
+  const auto& common_fe_config = *fe_config->CommonFeConfiguration();
+
+  GrpcUserBindOperationDistributor_var grpc_user_bind_operation_distributor;
+  if (server_config_->UserBindGrpcClientPool().enable())
+  {
+    using ControllerRefList = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRefList;
+    using ControllerRef = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRef;
+
+    ControllerRefList controller_groups;
+    const auto& user_bind_controller_group = common_fe_config.UserBindControllerGroup();
+    for (auto cg_it = std::begin(user_bind_controller_group);
+         cg_it != std::end(user_bind_controller_group);
+         ++cg_it)
+    {
+      ControllerRef controller_ref_group;
+      Config::CorbaConfigReader::read_multi_corba_ref(
+        *cg_it,
+        controller_ref_group);
+      controller_groups.push_back(controller_ref_group);
+    }
+
+    CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->UserBindGrpcClientPool());
+
+    grpc_user_bind_operation_distributor = new GrpcUserBindOperationDistributor(
+      logger(),
+      task_processor,
+      scheduler,
+      controller_groups,
+      corba_client_adapter.in(),
+      config_grpc_data.first,
+      config_grpc_data.second,
+      Generics::Time::ONE_SECOND);
+  }
+
+  return grpc_user_bind_operation_distributor;
+}
+
+Application::GrpcUserInfoOperationDistributor_var
+Application::create_grpc_user_info_operation_distributor(
+  const SchedulerPtr& scheduler,
+  TaskProcessor& task_processor)
+{
+  const std::string fe_config_path = server_config_->fe_config();
+  Config::ErrorHandler error_handler;
+  const auto fe_config = xsd::AdServer::Configuration::FeConfiguration(
+    fe_config_path.c_str(),
+    error_handler);
+  if (error_handler.has_errors())
+  {
+    std::string error_string;
+    throw Exception(error_handler.text(error_string));
+  }
+
+  if (!fe_config->CommonFeConfiguration().present())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "CommonFeConfiguration not presented";
+    throw Exception(stream);
+  }
+  const auto& common_fe_config = *fe_config->CommonFeConfiguration();
+
+  GrpcUserInfoOperationDistributor_var grpc_user_info_operation_distributor;
+  if (server_config_->UserInfoGrpcClientPool().enable())
+  {
+    using ControllerRefList = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRefList;
+    using ControllerRef = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRef;
+
+    ControllerRefList controller_groups;
+    const auto& user_info_controller_group = common_fe_config.UserInfoManagerControllerGroup();
+    for (auto cg_it = std::begin(user_info_controller_group);
+         cg_it != std::end(user_info_controller_group);
+         ++cg_it)
+    {
+      ControllerRef controller_ref_group;
+      Config::CorbaConfigReader::read_multi_corba_ref(
+        *cg_it,
+        controller_ref_group);
+      controller_groups.push_back(controller_ref_group);
+    }
+
+    CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+    const auto config_grpc_data = Config::create_pool_client_config(
+      server_config_->UserInfoGrpcClientPool());
+
+    grpc_user_info_operation_distributor = new GrpcUserInfoOperationDistributor(
+      logger(),
+      task_processor,
+      scheduler,
+      controller_groups,
+      corba_client_adapter.in(),
+      config_grpc_data.first,
+      config_grpc_data.second,
+      Generics::Time::ONE_SECOND);
+  }
+
+  return grpc_user_info_operation_distributor;
 }
 
 int Application::run(int argc, char** argv)
@@ -428,7 +651,7 @@ int Application::run(int argc, char** argv)
     {
       Stream::Error stream;
       stream << "config file or colocation config file is not specified\n"
-                "usage: FCGIServer <config_file>";
+                "usage: HttpAdServerConfig <config_file>";
       throw Exception(stream);
     }
 

@@ -1,10 +1,12 @@
 // STD
+#include <filesystem>
 #include <regex>
+
+// UNIXCOMMONS
+#include <Logger/Logger.hpp>
 
 // THIS
 #include <LogCommons/LogCommons.hpp>
-#include <Logger/Logger.hpp>
-#include <Logger/StreamLogger.hpp>
 #include "LogHelper.hpp"
 #include "Persantage.hpp"
 #include "Regenerator.hpp"
@@ -12,55 +14,75 @@
 
 namespace Aspect
 {
-const char REGENERATOR[] = "Regenerator";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char REGENERATOR[] = "Regenerator";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 Regenerator::Regenerator(
   const std::string& input_dir,
   const std::string& output_dir,
-  Logging::Logger* logger)
+  Logger* logger)
   : input_dir_(input_dir),
     output_dir_(output_dir),
     prefix_(LogTraits::B::log_base_name()),
     logger_(ReferenceCounting::add_ref(logger))
 {
+  if (!std::filesystem::is_directory(input_dir_))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not exist directory="
+           << input_dir_;
+    throw Exception(stream);
+  }
+
+  if (!std::filesystem::is_directory(output_dir_))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not exist directory="
+           << output_dir_;
+    throw Exception(stream);
+  }
 }
 
-void Regenerator::start()
+std::string Regenerator::name() noexcept
+{
+  return "AggregatorSingleThread";
+}
+
+void Regenerator::activate_object_()
+{
+  thread_ = std::make_unique<std::jthread>([this] () {
+    run();
+  });
+}
+
+void Regenerator::wait_object_()
+{
+  thread_.reset();
+}
+
+void Regenerator::run() noexcept
 {
   try
   {
-    if (!Utils::exist_directory(input_dir_))
     {
-      Stream::Error ostr;
-      ostr << "Not exist directory="
-           << input_dir_;
-      throw Exception(ostr);
+      std::ostringstream stream;
+      stream << FNS
+             << "Regenerator: started";
+      logger_->info(stream.str(), Aspect::REGENERATOR);
     }
 
-    if (!Utils::exist_directory(output_dir_))
-    {
-      Stream::Error ostr;
-      ostr << "Not exist directory="
-           << output_dir_;
-      throw Exception(ostr);
-    }
+    const auto input_files = Utils::get_directory_files(
+      input_dir_,
+      prefix_);
 
-    logger_->info(
-      std::string("Regenerator: started"),
-      Aspect::REGENERATOR);
-
-    auto input_files =
-      Utils::get_directory_files(
-        input_dir_,
-        prefix_);
     ProcessFiles process_files;
-
     const std::regex date_regex("\\d{4}-\\d{2}-\\d{2}");
     for (const auto& file_path : input_files)
     {
@@ -74,46 +96,87 @@ void Regenerator::start()
         DayTimestamp date;
         stream >> date;
 
+        if (!stream)
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << "Not correct name of file";
+          throw Exception(stream);
+        }
+
         process_files.emplace_back(date, file_path);
       }
     }
 
     regenerate(process_files, output_dir_, prefix_);
 
-    logger_->info(
-      std::string("Regenerator: finished"),
-      Aspect::REGENERATOR);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Regenerator completed successfully";
+      logger_->info(stream.str(), Aspect::REGENERATOR);
+    }
   }
-  catch (const eh::Exception& ex)
+  catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": [Fatal error]: Regenerator is failed:"
-         << ex.what();
-    throw Exception(ostr);
+    clear_directory(output_dir_);
+
+    Stream::Error stream;
+    stream << FNS
+           << "Regenerator is failed: "
+           << exc.what();
+    logger_->critical(stream.str(), Aspect::REGENERATOR);
   }
-}
+  catch (...)
+  {
+    clear_directory(output_dir_);
 
-void Regenerator::stop() noexcept
-{
-}
+    Stream::Error stream;
+    stream << FNS
+           << "Regenerator is failed: Unknown error";
+    logger_->critical(stream.str(), Aspect::REGENERATOR);
+  }
 
-void Regenerator::wait() noexcept
-{
-}
-
-const char* Regenerator::name() noexcept
-{
-  return "AggregatorSingleThread";
+  try
+  {
+    deactivate_object();
+  }
+  catch (...)
+  {
+  }
 }
 
 void Regenerator::remove_processed_files(
   const ProcessedFiles& processed_files) noexcept
 {
-  for (const auto& [temp_file_path, result_file_path]: processed_files)
+  for (const auto& [temp_file_path, result_file_path] : processed_files)
   {
     std::remove(temp_file_path.c_str());
     std::remove(result_file_path.c_str());
+  }
+}
+
+void Regenerator::clear_directory(
+  const std::string& directory) noexcept
+{
+  try
+  {
+    for (const auto &entry: std::filesystem::directory_iterator(directory))
+    {
+      if (entry.is_regular_file())
+      {
+        std::filesystem::remove(entry.path());
+      }
+    }
+  }
+  catch (const eh::Exception& exc)
+  {
+    Stream::Error stream;
+    stream << "Can't clear directory="
+           << directory
+           << ". Reason:"
+           << exc.what();
+    logger_->error(stream.str(), Aspect::REGENERATOR);
   }
 }
 
@@ -128,6 +191,14 @@ void Regenerator::regenerate(
   Collector collector;
   for (const auto& file_info : process_files)
   {
+    if (!active())
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Stop regenerate due to interruption";
+      throw Exception(stream);
+    }
+
     collector.clear();
     persantage.increase();
 
@@ -139,13 +210,11 @@ void Regenerator::regenerate(
     std::ifstream fstream(path);
     if (!fstream.is_open())
     {
-      std::stringstream stream;
-      stream << __PRETTY_FUNCTION__
+      Stream::Error stream;
+      stream << FNS
              << ": Can't open file="
              << path;
-      logger_->error(
-        stream.str(),
-        Aspect::REGENERATOR);
+      logger_->error(stream.str(), Aspect::REGENERATOR);
       continue;
     }
 
@@ -161,9 +230,9 @@ void Regenerator::regenerate(
         LogProcessing::read_until_eol(fstream, line, false);
         if (fstream.eof())
         {
-          std::stringstream stream;
-          stream << __PRETTY_FUNCTION__
-                 << ": Malformed file (file must end with an end-of-line character), line "
+          Stream::Error stream;
+          stream << FNS
+                 << "Malformed file (file must end with an end-of-line character), line "
                  << line_num;
           logger_->error(stream.str(), Aspect::REGENERATOR);
           break;
@@ -172,8 +241,8 @@ void Regenerator::regenerate(
         if (!fstream.good())
         {
           std::stringstream stream;
-          stream << __PRETTY_FUNCTION__
-                 << ": Error occure, line "
+          stream << FNS
+                 << "Error occure, line "
                  << line_num;
           logger_->error(stream.str(), Aspect::REGENERATOR);
           break;
@@ -183,8 +252,9 @@ void Regenerator::regenerate(
         if (pos == std::string::npos)
         {
           std::stringstream stream;
-          stream << __PRETTY_FUNCTION__
-                 << ": Bad file=" << path;
+          stream << FNS
+                 << "Bad file="
+                 << path;
           logger_->error(stream.str(), Aspect::REGENERATOR);
           break;
         }
@@ -193,9 +263,9 @@ void Regenerator::regenerate(
         LogProcessing::FixedBufStream<LogProcessing::TabCategory> fbs(line);
         if (!(fbs >> const_cast<Key&>(static_cast<const Key&>(value.first))))
         {
-          std::stringstream stream;
-          stream << __PRETTY_FUNCTION__
-                 << ": Failed to read key from istream (line number = "
+          Stream::Error stream;
+          stream << FNS
+                 << "Failed to read key from istream (line number = "
                  << line_num
                  << ")";
           logger_->error(stream.str(), Aspect::REGENERATOR);
@@ -203,9 +273,10 @@ void Regenerator::regenerate(
         }
         if (!(fbs >> static_cast<Data&>(value.second)))
         {
-          std::stringstream stream;
-          stream << __PRETTY_FUNCTION__
-                 << ": Failed to read data from istream (line number = " << line_num
+          Stream::Error stream;
+          stream << FNS
+                 << "Failed to read data from istream (line number = "
+                 << line_num
                  << ")";
           logger_->error(stream.str(), Aspect::REGENERATOR);
           break;
@@ -242,45 +313,48 @@ void Regenerator::regenerate(
       {
         save_file(
           output_dir,
-          prefix, date,
+          prefix,
+          date,
           collector,
           processed_files);
       }
 
-      for (const auto& [temp_path, result_path]: processed_files)
+      for (const auto& [temp_path, result_path] : processed_files)
       {
         if (std::rename(temp_path.c_str(), result_path.c_str()))
         {
-          Stream::Error ostr;
-          ostr << __PRETTY_FUNCTION__
-               << ": Can't rename from="
-               << temp_path
-               << ", to="
-               << result_path;
-          throw Exception(ostr);
+          Stream::Error stream;
+          stream << FNS
+                 << "Can't rename from="
+                 << temp_path
+                 << ", to="
+                 << result_path;
+          throw Exception(stream);
         }
       }
 
-      std::stringstream stream;
-      stream << "File="
-             << path
-             << ", modificate on files="
-             << processed_files.size();
-      logger_->info(stream.str(),Aspect::REGENERATOR);
+      {
+        std::ostringstream stream;
+        stream << "File="
+               << path
+               << ", modificate on files="
+               << processed_files.size();
+        logger_->info(stream.str(), Aspect::REGENERATOR);
+      }
 
       std::remove(path.c_str());
     }
     catch (const eh::Exception& exc)
     {
-      std::stringstream stream;
+      remove_processed_files(processed_files);
+
+      Stream::Error stream;
       stream << "Can't modificate file="
              << path
              << ", Reason: "
              << exc.what()
              << "\n";
       logger_->error(stream.str(),Aspect::REGENERATOR);
-
-      remove_processed_files(processed_files);
     }
   }
 }
@@ -292,12 +366,13 @@ void Regenerator::save_file(
   Collector& collector,
   ProcessedFiles& processed_files)
 {
-  const auto generated_path =
-    Utils::generate_file_path(output_dir, prefix, date);
+  const auto generated_path = Utils::generate_file_path(
+    output_dir,
+    prefix,
+    date);
   const auto& temp_file_path = generated_path.first;
   LogHelper<LogTraits>::save(temp_file_path, collector);
   processed_files.emplace_back(generated_path);
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

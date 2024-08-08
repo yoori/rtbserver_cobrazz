@@ -1520,7 +1520,7 @@ namespace RequestInfoSvcs
             &match_info.triggered_cpm_expression_channels,
             &match_info.channel_actions);
 
-          match_info.triggered_expression_channels.fill();
+          match_info.triggered_expression_channels.emplace();
           match_info.triggered_expression_channels->assign(
             result_channels.begin(), result_channels.end());
         }

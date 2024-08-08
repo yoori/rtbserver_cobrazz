@@ -17,8 +17,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -37,6 +35,7 @@
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -61,8 +60,7 @@ namespace AdServer
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using AdFeConfiguration = Configuration::FeConfig::AdFeConfiguration_type;
     using PassFeConfiguration = Configuration::FeConfig::PassFeConfiguration_type;
@@ -71,8 +69,7 @@ namespace AdServer
   public:
 
     AdFrontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -199,6 +196,11 @@ namespace AdServer
 
     void
     convert_ccg_keywords_(
+      std::vector<FrontendCommons::GrpcCampaignManagerPool::CCGKeyword>& ccg_keywords,
+      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords) noexcept;
+
+    void
+    convert_ccg_keywords_(
       AdServer::CampaignSvcs::CampaignManager::CCGKeywordSeq& ccg_keywords,
       const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords)
       noexcept;
@@ -274,8 +276,7 @@ namespace AdServer
       const AdServer::CampaignSvcs::ChannelIdArray& hit_channels);
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     /* configuration */
     CommonConfigPtr common_config_;

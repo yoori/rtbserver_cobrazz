@@ -5,7 +5,7 @@
 #include <UserInfoSvcs/UserBindController/UserBindController.hpp>
 
 // UNIX_COMMONS
-#include <UServerUtils/Grpc/Core/Common/Utils.hpp>
+#include <UServerUtils/Grpc/Common/Utils.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -267,10 +267,13 @@ GrpcUserBindOperationDistributor::get_bind_request(
   const String::SubString& request_id,
   const Generics::Time& time) noexcept
 {
-  return do_request<UserBindService_get_bind_request_ClientPool, GetBindRequest, GetBindResponse>(
-    request_id,
-    request_id,
-    time);
+  return do_request<
+    UserBindService_get_bind_request_ClientPool,
+    GetBindRequest,
+    GetBindResponse>(
+      request_id,
+      request_id,
+      time);
 }
 
 GrpcUserBindOperationDistributor::AddBindRequestPtr
@@ -297,17 +300,20 @@ GrpcUserBindOperationDistributor::add_bind_request(
   const AdServer::Commons::ExternalUserIdArray& user_ids,
   const Generics::Time& timestamp) noexcept
 {
-  return do_request<UserBindService_add_bind_request_ClientPool, AddBindRequest, AddBindResponse>(
-    request_id,
-    request_id,
-    user_ids,
-    timestamp);
+  return do_request<
+    UserBindService_add_bind_request_ClientPool,
+    AddBindRequest,
+    AddBindResponse>(
+      request_id,
+      request_id,
+      user_ids,
+      timestamp);
 }
 
 GrpcUserBindOperationDistributor::GetUserIdRequestPtr
 GrpcUserBindOperationDistributor::create_get_user_id_request(
   const String::SubString& external_id,
-  const String::SubString& current_user_id,
+  const AdServer::Commons::UserId& current_user_id,
   const Generics::Time& timestamp,
   const Generics::Time& create_timestamp,
   const bool silent,
@@ -321,7 +327,7 @@ GrpcUserBindOperationDistributor::create_get_user_id_request(
   request->set_generate_user_id(generate_user_id);
   request->set_for_set_cookie(for_set_cookie);
   request->set_create_timestamp(GrpcAlgs::pack_time(create_timestamp));
-  request->set_current_user_id(current_user_id.data(), current_user_id.length());
+  request->set_current_user_id(GrpcAlgs::pack_user_id(current_user_id));
 
   return request;
 }
@@ -329,22 +335,25 @@ GrpcUserBindOperationDistributor::create_get_user_id_request(
 GrpcUserBindOperationDistributor::GetUserIdResponsePtr
 GrpcUserBindOperationDistributor::get_user_id(
   const String::SubString& external_id,
-  const String::SubString& current_user_id,
+  const AdServer::Commons::UserId& current_user_id,
   const Generics::Time& timestamp,
   const Generics::Time& create_timestamp,
   const bool silent,
   const bool generate_user_id,
   const bool for_set_cookie) noexcept
 {
-  return do_request<UserBindService_get_user_id_ClientPool, GetUserIdRequest, GetUserIdResponse>(
-    external_id,
-    external_id,
-    current_user_id,
-    timestamp,
-    create_timestamp,
-    silent,
-    generate_user_id,
-    for_set_cookie);
+  return do_request<
+    UserBindService_get_user_id_ClientPool,
+    GetUserIdRequest,
+    GetUserIdResponse>(
+      external_id,
+      external_id,
+      current_user_id,
+      timestamp,
+      create_timestamp,
+      silent,
+      generate_user_id,
+      for_set_cookie);
 }
 
 GrpcUserBindOperationDistributor::AddUserIdRequestPtr
@@ -367,11 +376,14 @@ GrpcUserBindOperationDistributor::add_user_id(
   const Generics::Time& timestamp,
   const String::SubString& user_id) noexcept
 {
-  return do_request<UserBindService_add_user_id_ClientPool, AddUserIdRequest, AddUserIdResponse>(
-    external_id,
-    external_id,
-    timestamp,
-    user_id);
+  return do_request<
+    UserBindService_add_user_id_ClientPool,
+    AddUserIdRequest,
+    AddUserIdResponse>(
+      external_id,
+      external_id,
+      timestamp,
+      user_id);
 }
 
 } // namespace AdServer::UserInfoSvcs

@@ -235,7 +235,7 @@ public:
     match_info.cost_threshold = RevenueDecimal::ZERO;
     match_info.max_text_ads = 0;
     match_info.colo_id = 1;
-    match_info.triggered_expression_channels.fill();
+    match_info.triggered_expression_channels.emplace();
     return match_info;
   }
 

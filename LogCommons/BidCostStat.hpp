@@ -22,21 +22,24 @@ public:
     ext_tag_id_(),
     url_(),
     cost_(FixedNum::ZERO),
+    cc_id_(),
     hash_()
   {
   }
 
   BidCostStatInnerKey(
-    unsigned long tag_id,
+    const unsigned long tag_id,
     const String::SubString& ext_tag_id,
     const String::SubString& url,
-    const FixedNum& cost
+    const FixedNum& cost,
+    const unsigned long cc_id
   )
   :
     tag_id_(tag_id),
     ext_tag_id_(ext_tag_id.str()),
     url_(url.str()),
-    cost_(cost)
+    cost_(cost),
+    cc_id_(cc_id)
   {
     calc_hash_();
   }
@@ -50,7 +53,7 @@ public:
     return tag_id_ == rhs.tag_id_ &&
       ext_tag_id_.get() == rhs.ext_tag_id_.get() &&
       url_.get() == rhs.url_.get() &&
-      cost_ == rhs.cost_;
+      cost_ == rhs.cost_ && cc_id_ == rhs.cc_id_;
   }
 
   unsigned long tag_id() const
@@ -71,6 +74,11 @@ public:
   const FixedNum& cost() const
   {
     return cost_;
+  }
+
+  unsigned long cc_id() const
+  {
+    return cc_id_;
   }
 
   size_t hash() const
@@ -99,8 +107,8 @@ public:
     (ar
       & tag_id_
       & ext_tag_id_
-      & url_)
-      ^ cost_;
+      & url_
+      & cost_) ^ cc_id_;
   }
   
 private:
@@ -111,12 +119,14 @@ private:
     hash_add(hasher, ext_tag_id_.get());
     hash_add(hasher, url_.get());
     hash_add(hasher, cost_);
+    hash_add(hasher, cc_id_);
   }
 
   unsigned long tag_id_;
   EmptyHolder<Aux_::StringIoWrapper> ext_tag_id_;
   EmptyHolder<Aux_::StringIoWrapper> url_;
   FixedNum cost_;
+  unsigned long cc_id_;
 
   size_t hash_;
 };

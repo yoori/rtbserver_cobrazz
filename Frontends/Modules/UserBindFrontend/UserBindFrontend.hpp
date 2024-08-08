@@ -12,8 +12,6 @@
 #include <Generics/Uuid.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <String/TextTemplate.hpp>
 
@@ -28,6 +26,7 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -51,21 +50,18 @@ namespace AdServer
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
     DECLARE_EXCEPTION(InvalidSource, eh::DescriptiveException);
 
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using UserBindFeConfiguration = Configuration::FeConfig::UserBindFeConfiguration_type;
 
   public:
     UserBindFrontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -135,13 +131,15 @@ namespace AdServer
     typedef std::unique_ptr<UserBindServerPool> UserBindServerPoolPtr;
     typedef UserBindServerPool::ObjectHandlerType UserBindServerHandler;
 
-    struct RedirectRule: public ReferenceCounting::AtomicImpl
+    struct RedirectRule final: public ReferenceCounting::AtomicImpl
     {
-    public:
+      using AllowedParams = std::unordered_map<std::string, std::string>;
+
       bool use_keywords;
       bool passback;
       unsigned long weight;
       bool redirect_empty_uid;
+      AllowedParams allowed_params;
 
       Generics::GnuHashSet<Generics::StringHashAdapter> keywords;
       String::TextTemplate::IStream redirect;
@@ -150,22 +148,18 @@ namespace AdServer
       bool init_bind_request;
 
     protected:
-      virtual
-      ~RedirectRule() noexcept
-      {}
+      ~RedirectRule() override = default;
     };
 
     typedef ReferenceCounting::SmartPtr<RedirectRule> RedirectRule_var;
 
-    class SourceEntity: public ReferenceCounting::AtomicImpl
+    class SourceEntity final: public ReferenceCounting::AtomicImpl
     {
     public:
       std::list<RedirectRule_var> rules;
 
     protected:
-      virtual
-      ~SourceEntity() noexcept
-      {}
+      ~SourceEntity() override = default;
     };
 
     typedef ReferenceCounting::SmartPtr<SourceEntity> SourceEntity_var;
@@ -205,10 +199,11 @@ namespace AdServer
     init_redirect_rule_(
       const String::SubString& redirect,
       const String::SubString* keywords,
-      bool passback,
-      unsigned long weight,
+      const bool passback,
+      const unsigned long weight,
       const String::SubString& location,
-      bool redirect_empty_uid)
+      const bool redirect_empty_uid,
+      RedirectRule::AllowedParams&& allowed_params)
       /*throw(UserBindFrontend::InvalidSource)*/;
 
     static void
@@ -243,8 +238,7 @@ namespace AdServer
       const noexcept;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     // configuration
     CommonConfigPtr common_config_;

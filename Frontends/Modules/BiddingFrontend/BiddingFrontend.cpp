@@ -270,8 +270,7 @@ namespace Bidding
   // Frontend implementation
   //
   Frontend::Frontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -287,14 +286,7 @@ namespace Bidding
         "Bidding::Frontend",
         Aspect::BIDDING_FRONTEND,
         0),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
-      /*
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().BidFeConfiguration()->threads(),
-        frontend_config->get().BidFeConfiguration()->max_pending_tasks()),
-      */
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
@@ -450,18 +442,11 @@ namespace Bidding
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         if(!common_config_->UserBindControllerGroup().empty())
@@ -470,11 +455,7 @@ namespace Bidding
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -629,7 +610,7 @@ namespace Bidding
           {
             skip_external_ids.insert(it->value());
           }
-          
+
           String::SubString skip_ids =
             common_config_->SkipExternalIds()->skip_external_ids();
 
@@ -722,7 +703,7 @@ namespace Bidding
       {
         const auto source_it = sources_.find(it->value);
 
-        if (source_it != sources_.end() && source_it->second.max_bid_time.present())
+        if (source_it != sources_.end() && source_it->second.max_bid_time)
         {
           return *(source_it->second.max_bid_time);
         }
@@ -914,7 +895,7 @@ namespace Bidding
       campaign_match_result;
     AdServer::Commons::UserId user_id;
     GoogleAdSlotContextArray ad_slots_context;
-    
+
     {
       AdServer::CampaignSvcs::CampaignManager::RequestParams&
         request_params(*request_task->request_params());
@@ -946,7 +927,7 @@ namespace Bidding
     // Use only const reference to the RequestParam here.
     const AdServer::CampaignSvcs::CampaignManager::RequestParams&
       request_params(*request_task->request_params);
-    
+
     // Fill response
     if(campaign_match_result)
     {
@@ -982,7 +963,7 @@ namespace Bidding
           CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
 
           Google::BidResponse_Ad* ad = bid_response.add_ad();
-          
+
           for(CORBA::ULong creative_i = 0;
               creative_i < ad_slot_result.selected_creatives.length();
               ++creative_i)
@@ -1007,10 +988,10 @@ namespace Bidding
             Generics::DMR_ROUND);
 
           int64_t max_cpm_micros(google_price.integer<int64_t>());
-          
+
           Google::BidResponse_Ad_AdSlot* r_adslot = ad->add_adslot();
           const GoogleAdSlotContext& ad_slot_context = ad_slots_context[ad_slot_i];
-          
+
           if (ad_slot_context.direct_deal_id &&
             max_cpm_micros >= ad_slot_context.fixed_cpm_micros)
           {
@@ -1023,7 +1004,7 @@ namespace Bidding
           }
 
           r_adslot->set_id(adslot.id());
-          
+
           if(ad_slot_context.width && ad_slot_context.height)
           {
             ad->set_width(ad_slot_context.width);
@@ -1059,7 +1040,7 @@ namespace Bidding
           }
           else if(!ad_slot_context.billing_ids.empty())
           {
-            r_adslot->set_billing_id(*ad_slot_context.billing_ids.begin());            
+            r_adslot->set_billing_id(*ad_slot_context.billing_ids.begin());
           }
 
           // Fill attributes
@@ -1073,7 +1054,7 @@ namespace Bidding
             ad_slot_result.external_visual_categories,
             std::bind1st(
               std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
-         
+
           {
             // buyer_creative_id
             const AdServer::CampaignSvcs::CampaignManager::
@@ -1170,18 +1151,18 @@ namespace Bidding
       catch(const InvalidParamException& ex)
       {
         bad_request = true;
-        
+
         Stream::Error ostr;
         ostr << FUN << ": bad request, " << ex.what() <<
           ", request: '" << bid_request << "'" << ", uri: '" <<
           request_task->uri << "'";
-        
+
         logger()->log(
           ostr.str(),
           Logging::Logger::ERROR,
           Aspect::BIDDING_FRONTEND,
           "ADS-IMPL-7601");
-        
+
         return;
       }
 
@@ -1189,7 +1170,7 @@ namespace Bidding
       {
         return;
       }
-      
+
       if (!process_bid_request_(
         FUN,
         campaign_match_result.out(),
@@ -1208,7 +1189,7 @@ namespace Bidding
     // Use only const reference to the RequestParam here.
     const AdServer::CampaignSvcs::CampaignManager::RequestParams&
       request_params(*request_task->request_params);
-      
+
     if(campaign_match_result)
     {
       if (!consider_campaign_selection_(
@@ -1325,7 +1306,7 @@ namespace Bidding
       catch(const InvalidParamException& ex)
       {
         bad_request = true;
-        
+
         Stream::Error ostr;
         ostr << FUN << ": bad request, " << ex.what() <<
           ", request: '" << bid_request << "'";
@@ -1335,7 +1316,7 @@ namespace Bidding
           Logging::Logger::ERROR,
           Aspect::BIDDING_FRONTEND,
           "ADS-IMPL-7601");
-        
+
         return false;
       }
 
@@ -1362,7 +1343,7 @@ namespace Bidding
     // Use only const reference to the RequestParam here.
     const AdServer::CampaignSvcs::CampaignManager::RequestParams&
       request_params(*request_task->request_params);
-      
+
     if(campaign_match_result)
     {
       if (!consider_campaign_selection_(
@@ -1557,8 +1538,7 @@ namespace Bidding
         {
           AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
             user_bind_client_->user_bind_mapper();
-          FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-            user_bind_client_->grpc_distributor();
+          const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
           auto base_ext_user_id_it = external_user_ids.begin();
 
@@ -1581,7 +1561,7 @@ namespace Bidding
 
                 auto response = grpc_distributor->get_user_id(
                   *ext_user_id_it,
-                  String::SubString{},
+                  {},
                   request_info.current_time,
                   request_info.user_create_time,
                   false,
@@ -1858,7 +1838,7 @@ namespace Bidding
             ref_words,
             String::SubString(request_params.common_info.referer),
             common_module_->segmentor());
-          
+
           if (!ref_words.empty())
           {
             query.first_url_words << ref_words;
@@ -1866,7 +1846,7 @@ namespace Bidding
         }
         catch (const eh::Exception& e)
         {
-          Stream::Error ostr;          
+          Stream::Error ostr;
           ostr << FUN << ": url keywords extracting error: " << e.what();
           logger()->log(ostr.str(),
             Logging::Logger::TRACE,
@@ -2038,8 +2018,7 @@ namespace Bidding
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
-      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-        grpc_distributor = user_info_client_->grpc_distributor();
+      const auto grpc_distributor = user_info_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)
@@ -2485,9 +2464,7 @@ namespace Bidding
         using UcFreqCaps = AdServer::UserInfoSvcs::Types::UcFreqCaps;
         using UcCampaignIds = AdServer::UserInfoSvcs::Types::UcCampaignIds;
 
-        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-          grpc_distributor = user_info_client_->grpc_distributor();
-
+        const auto grpc_distributor = user_info_client_->grpc_distributor();
         if (grpc_distributor)
         {
           bool is_error = false;
@@ -2836,9 +2813,9 @@ namespace Bidding
         ostr << fn << ": CCG Trace of " <<
         request_params.ad_slots[0].debug_ccg <<
           " for request:" << std::endl;
-        
+
         request_task->print_request(ostr);
-        
+
         ostr << std::endl << campaign_match_result->ad_slots[0].debug_info.trace_ccg;
         std::cout << ostr.str() << std::endl;
 
@@ -2866,7 +2843,7 @@ namespace Bidding
     BidRequestTask* request_task) noexcept
   {
     static const char* FUN = "Bidding::Frontend::interrupted_select_campaign_()";
-    
+
     try
     {
       ConstRequestParamsHolder_var
@@ -2977,7 +2954,7 @@ namespace Bidding
         history_match_result.exclude_pubpixel_accounts);
       request_params.campaign_freqs.swap(
         history_match_result.campaign_freqs);
-      
+
       request_params.seq_orders.length(history_match_result.seq_orders.length());
       for(CORBA::ULong seq_order_i = 0;
           seq_order_i != history_match_result.seq_orders.length();
@@ -2990,7 +2967,7 @@ namespace Bidding
         request_params.seq_orders[seq_order_i].imps =
           history_match_result.seq_orders[seq_order_i].imps;
       }
-      
+
       request_params.common_info.coord_location.length(
         history_match_result.geo_data_seq.length());
       for(CORBA::ULong i = 0;
@@ -3150,7 +3127,7 @@ namespace Bidding
       }
 
       if (interrupted)
-      { 
+      {
         request_params.required_passback = false;
       }
       else
@@ -3337,7 +3314,7 @@ namespace Bidding
             {
               bool notice_enabled = false;
               bool need_ipw_extension = request_info.ipw_extension;
-             
+
               // ADSC-10918 Native ads
               if (slot_it->native)
               {
@@ -3356,7 +3333,7 @@ namespace Bidding
                       request_info.native_ads_instantiate_type == SourceTraits::NAIT_ADM_NATIVE
                       );
                   }
-                  
+
                   escaped_creative_body = String::StringManip::json_escape(
                     String::SubString(native_response_ostr.str()));
                 }
@@ -3365,7 +3342,7 @@ namespace Bidding
                 {
                   AdServer::Commons::JsonObject ext_obj(
                     bid_object.add_object(Response::OpenRtb::EXT));
-                  
+
                   fill_native_response_(
                     &ext_obj,
                     *slot_it->native,
@@ -3384,11 +3361,11 @@ namespace Bidding
                 notice_enabled = true;
               }
               else if(!escaped_creative_url.empty())
-              {                
+              {
                 if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL)
                 {
                   AdServer::Commons::JsonObject ext_obj(bid_object.add_object(Response::OpenRtb::EXT));
-                  
+
                   if (need_ipw_extension)
                   {
                     ext_obj.add_escaped_string(
@@ -3446,7 +3423,7 @@ namespace Bidding
                 bid_object.add_escaped_string(Response::OpenRtb::NURL,
                   String::SubString(ad_slot_result.notice_url));
               }
-              
+
               // FIXME: can not find 'bid[attr]' in OpenRTB 2.2/2.3 spec
               print_int_category_seq(
                 bid_object,
@@ -3749,7 +3726,7 @@ namespace Bidding
               bid_object.add_escaped_string(escaped_name,
                 String::SubString(ad_slot_result.tokens[token_i].value));
             }
-            //} // 
+            //} //
           } // if(ad_slot_result.selected_creatives.length() > 0)
         } // for(CORBA::ULong ad_slot_i = 0, ...
       } // close bidset oject and array
@@ -3914,7 +3891,7 @@ namespace Bidding
 
         target_account.max_cpm = limit;
       }
-      
+
       if(account_it->display_billing_id().present())
       {
         target_account.display_billing_id = *(account_it->display_billing_id());
@@ -3951,7 +3928,7 @@ namespace Bidding
     {
       unsigned long account_id = account_ids[i];
       auto account_it = account_traits_.find(account_id);
-      if(account_it != account_traits_.end() && account_it->second->max_cpm.present())
+      if(account_it != account_traits_.end() && account_it->second->max_cpm)
       {
         val = std::min(val, *(account_it->second->max_cpm));
       }
@@ -3973,7 +3950,7 @@ namespace Bidding
 
     if (logger()->log_level() >= Logging::Logger::TRACE)
     {
-      Stream::Error ostr;
+      std::ostringstream ostr;
       ostr << fun << ": request processing timed out(" << timeout << "):"
         << std::endl;
 
@@ -4112,7 +4089,7 @@ namespace Bidding
     {
       return SourceTraits::NAIT_ADM_NATIVE_1_2;
     }
-    
+
     Stream::Error ostr;
     ostr << "unknown native ads instantiate type '" << inst_type_str << "'";
     throw Exception(ostr);

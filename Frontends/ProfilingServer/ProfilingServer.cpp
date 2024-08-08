@@ -553,6 +553,48 @@ namespace Profiling
     add_child_object(manager_coro_);
   }
 
+  ProfilingServer::GrpcUserBindOperationDistributor_var
+  ProfilingServer::create_grpc_user_bind_operation_distributor(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor)
+  {
+    GrpcUserBindOperationDistributor_var grpc_user_bind_operation_distributor;
+    if (config_->UserBindGrpcClientPool().enable())
+    {
+      using ControllerRefList = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRefList;
+      using ControllerRef = AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRef;
+
+      ControllerRefList controller_groups;
+      const auto& user_bind_controller_group = config_->UserBindControllerGroup();
+      for (auto cg_it = std::begin(user_bind_controller_group);
+           cg_it != std::end(user_bind_controller_group);
+           ++cg_it)
+      {
+        ControllerRef controller_ref_group;
+        Config::CorbaConfigReader::read_multi_corba_ref(
+          *cg_it,
+          controller_ref_group);
+        controller_groups.push_back(controller_ref_group);
+      }
+
+      CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+      const auto config_grpc_data = Config::create_pool_client_config(
+        config_->UserBindGrpcClientPool());
+
+      grpc_user_bind_operation_distributor = new GrpcUserBindOperationDistributor(
+        logger(),
+        task_processor,
+        scheduler,
+        controller_groups,
+        corba_client_adapter.in(),
+        config_grpc_data.first,
+        config_grpc_data.second,
+        Generics::Time::ONE_SECOND);
+    }
+
+    return grpc_user_bind_operation_distributor;
+  }
+
   void
   ProfilingServer::init_corba_() /*throw(Exception)*/
   {
@@ -588,9 +630,9 @@ namespace Profiling
             callback()));
       }
 
-      const auto& config_grpc_client = config_->GrpcClientPool();
+      const auto& config_grpc_client = config_->UserBindGrpcClientPool();
       const auto config_grpc_data = Config::create_pool_client_config(
-        config_->GrpcClientPool());
+        config_grpc_client);
 
       if(!config_->UserBindControllerGroup().empty())
       {
@@ -603,30 +645,29 @@ namespace Profiling
           throw Exception(stream);
         }
 
-        SchedulerPtr scheduler = UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+        SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
           number_scheduler_threads,
           logger());
+        auto grpc_user_bind_operation_distributor = create_grpc_user_bind_operation_distributor(
+          scheduler,
+          manager_coro_->get_main_task_processor());
 
         user_bind_client_ = new FrontendCommons::UserBindClient(
           config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          manager_coro_->get_main_task_processor(),
-          scheduler,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_user_bind_operation_distributor.in());
         add_child_object(user_bind_client_);
       }
 
-      user_info_client_ = new FrontendCommons::UserInfoClient(
+      /*user_info_client_ = new FrontendCommons::UserInfoClient(
         config_->UserInfoManagerControllerGroup(),
         corba_client_adapter_.in(),
         logger_callback_holder_.logger(),
         manager_coro_->get_main_task_processor(),
         config_grpc_data.first,
         config_grpc_data.second,
-        config_grpc_client.enable());
+        config_grpc_client.enable());*/
       add_child_object(user_info_client_);
 
       CORBACommons::CorbaObjectRefList campaign_managers_refs;
@@ -826,9 +867,7 @@ namespace Profiling
     }
     else if(user_bind_client_)
     {
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-        grpc_distributor = user_bind_client_->grpc_distributor();
-
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
       bool is_grpc_success = false;
       if (grpc_distributor)
       {
@@ -886,7 +925,7 @@ namespace Profiling
 
                 auto response = grpc_distributor->get_user_id(
                   full_external_user_id,
-                  GrpcAlgs::pack_user_id(match_user_id),
+                  match_user_id,
                   CorbaAlgs::unpack_time(request_params.common_info.time),
                   Generics::Time::ZERO,
                   false,
@@ -1130,9 +1169,7 @@ namespace Profiling
 
     if(user_bind_client_)
     {
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-        grpc_distributor = user_bind_client_->grpc_distributor();
-
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
       bool is_grpc_success = false;
       if (grpc_distributor)
       {
@@ -1147,7 +1184,7 @@ namespace Profiling
               !full_external_user_id.empty() &&
               *full_external_user_id.begin() != '/')
             {
-              Commons::Optional<AdServer::Commons::UserId> internal_user_id;
+              std::optional<AdServer::Commons::UserId> internal_user_id;
 
               if(full_external_user_id.compare(0, 2, "c/") == 0)
               {
@@ -1161,7 +1198,7 @@ namespace Profiling
                 }
               }
 
-              if(!internal_user_id.present() || user_id != *internal_user_id)
+              if(!internal_user_id || user_id != *internal_user_id)
               {
                 auto response = grpc_distributor->add_user_id(
                   full_external_user_id,
@@ -1215,7 +1252,7 @@ namespace Profiling
               !full_external_user_id.empty() &&
               *full_external_user_id.begin() != '/')
             {
-              Commons::Optional<AdServer::Commons::UserId> internal_user_id;
+              std::optional<AdServer::Commons::UserId> internal_user_id;
 
               if(full_external_user_id.compare(0, 2, "c/") == 0)
               {
@@ -1228,7 +1265,7 @@ namespace Profiling
                 {}
               }
 
-              if(!internal_user_id.present() || user_id != *internal_user_id)
+              if(!internal_user_id || user_id != *internal_user_id)
               {
                 AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
                   add_user_request_info;
@@ -1451,7 +1488,7 @@ namespace Profiling
       request_params.common_info.user_status == AdServer::CampaignSvcs::US_TEMPORARY;
     bool match_success = false;
 
-    auto grpc_distributor = user_info_client_->grpc_distributor();
+    const auto grpc_distributor = user_info_client_->grpc_distributor();
     bool is_grpc_success = false;
     if (grpc_distributor)
     {
@@ -1790,8 +1827,7 @@ namespace Profiling
 
     const bool REMOVE_SOURCE_USER_PROFILE = false;
 
-    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-      grpc_distributor = user_info_client_->grpc_distributor();
+    const auto grpc_distributor = user_info_client_->grpc_distributor();
 
     bool merge_success = false;
     bool is_grpc_success = false;

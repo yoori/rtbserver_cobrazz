@@ -4,14 +4,11 @@
 // UNIX_COMMONS
 #include <Logger/Logger.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-
-// USERVER
-#include <userver/engine/task/task_processor.hpp>
 
 // THIS
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 
 namespace AdServer::Echo
@@ -26,15 +23,13 @@ class Frontend final :
 public:
   using HttpResponseFactory = FrontendCommons::HttpResponseFactory;
   using HttpResponseFactory_var = FrontendCommons::HttpResponseFactory_var;
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
-  using TaskProcessor = userver::engine::TaskProcessor;
+  using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
 
 public:
   Frontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logger* logger,
     CommonModule* common_module,
@@ -52,9 +47,7 @@ private:
   void shutdown() noexcept override;
 
 private:
-  TaskProcessor& task_processor_;
-
-  const SchedulerPtr scheduler_;
+  const GrpcContainerPtr grpc_container_;
 
   Logger_var logger_;
 };

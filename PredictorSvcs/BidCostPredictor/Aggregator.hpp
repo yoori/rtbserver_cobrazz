@@ -6,10 +6,13 @@
 #include <map>
 #include <queue>
 #include <vector>
+#include <thread>
 
-// THIS
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
+
+// THIS
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
@@ -18,37 +21,35 @@
 #include "Processor.hpp"
 #include "Utils.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class Aggregator final :
-  public Processor,
-  public virtual ReferenceCounting::AtomicImpl
+class Aggregator final : public Processor
 {
+private:
+  using ThreadPtr = std::unique_ptr<std::jthread>;
   using Path = Utils::Path;
   using ProcessFiles = std::list<Path>;
   using ProcessedFiles = std::list<Path>;
   using GeneratedPath = Utils::GeneratedPath;
   using ResultFiles = std::list<GeneratedPath>;
-
   using Collector = LogProcessing::BidCostStatCollector;
   using LogTraits = LogProcessing::BidCostStatTraits;
   using KeyCollector = LogProcessing::BidCostStatKey;
   using CollectorInner = LogProcessing::BidCostStatInnerCollector;
   using LogInnerTraits = LogProcessing::BidCostStatInnerTraits;
   using KeyCollectorInner = LogProcessing::BidCostStatInnerKey;
-
   using DayTimestamp = LogProcessing::DayTimestamp;
-  using PriorityQueue =
-    std::priority_queue<
-      DayTimestamp,
-      std::vector<DayTimestamp>,
-      std::greater<DayTimestamp>
-    >;
+  using PriorityQueue = std::priority_queue<
+    DayTimestamp,
+    std::vector<DayTimestamp>,
+    std::greater<DayTimestamp>>;
+
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -58,19 +59,20 @@ public:
     const std::size_t dump_max_size,
     const std::string& input_dir,
     const std::string& output_dir,
-    Logging::Logger* logger);
+    Logger* logger);
 
-  ~Aggregator() override = default;
+  std::string name() noexcept override;
 
-  void start() override;
-
-  void stop() noexcept override;
-
-  void wait() noexcept override;
-
-  const char* name() noexcept override;
+protected:
+  ~Aggregator() override;
 
 private:
+  void activate_object_() override;
+
+  void wait_object_() override;
+
+  void run() noexcept;
+
   void aggregate();
 
   void process_files(const ProcessFiles& files);
@@ -100,12 +102,13 @@ private:
 
   const std::string prefix_agg_;
 
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 
   Persantage persantage_;
+
+  ThreadPtr thread_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_AGGREGATOR_HPP

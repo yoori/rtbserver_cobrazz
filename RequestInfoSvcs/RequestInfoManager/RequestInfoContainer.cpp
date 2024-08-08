@@ -49,20 +49,20 @@ namespace RequestInfoSvcs {
   /** profile help methods */
   void
   convert_optional_uint(
-    AdServer::Commons::Optional<unsigned long>& result,
+    std::optional<unsigned long>& result,
     long source)
   {
     result = source >= 0 ?
-      AdServer::Commons::Optional<unsigned long>(source) :
-      AdServer::Commons::Optional<unsigned long>();
+      std::optional<unsigned long>(source) :
+      std::optional<unsigned long>();
   }
 
   void
   fill_optional_uint(
     int32_t& result,
-    const AdServer::Commons::Optional<unsigned long>& source)
+    const std::optional<unsigned long>& source)
   {
-    result = source.present() ? static_cast<long>(*source) : -1;
+    result = source ? static_cast<long>(*source) : -1;
   }
 
   void
@@ -338,7 +338,7 @@ namespace RequestInfoSvcs {
       }
       else
       {
-        impression_info.pub_revenue = AdServer::Commons::Optional<ImpressionInfo::PubRevenue>();
+        impression_info.pub_revenue = std::optional<ImpressionInfo::PubRevenue>();
       }
     }
     else
@@ -362,7 +362,7 @@ namespace RequestInfoSvcs {
       }
       else
       {
-        impression_info.pub_revenue = AdServer::Commons::Optional<ImpressionInfo::PubRevenue>();
+        impression_info.pub_revenue = std::optional<ImpressionInfo::PubRevenue>();
       }
 
       if(request_reader.impression_user_id()[0])
@@ -687,7 +687,7 @@ namespace RequestInfoSvcs {
 
       // fill res_pub_revenue
       {
-        Commons::Optional<RevenueDecimal> override_pub_imp_revenue;
+        std::optional<RevenueDecimal> override_pub_imp_revenue;
         if(!request_writer.notice_imp_revenue().empty())
         {
           override_pub_imp_revenue = RevenueDecimal(request_writer.notice_imp_revenue());
@@ -696,7 +696,7 @@ namespace RequestInfoSvcs {
         if(!request_writer.impression_imp_revenue().empty())
         {
           RevenueDecimal impression_imp_revenue = RevenueDecimal(request_writer.impression_imp_revenue());
-          if(override_pub_imp_revenue.present())
+          if(override_pub_imp_revenue)
           {
             override_pub_imp_revenue = std::min(*override_pub_imp_revenue, impression_imp_revenue);
           }
@@ -706,7 +706,7 @@ namespace RequestInfoSvcs {
           }
         }
 
-        if(override_pub_imp_revenue.present())
+        if(override_pub_imp_revenue)
         {
           res_pub_revenue.impression = std::min(orig_pub_revenue.impression, *override_pub_imp_revenue);
         }
@@ -827,7 +827,7 @@ namespace RequestInfoSvcs {
     )
   {
     // eval final pub amount
-    Commons::Optional<RevenueDecimal> prev_pub_imp_revenue;
+    std::optional<RevenueDecimal> prev_pub_imp_revenue;
     if(!request_writer.notice_imp_revenue().empty())
     {
       prev_pub_imp_revenue = RevenueDecimal(request_writer.notice_imp_revenue());
@@ -836,7 +836,7 @@ namespace RequestInfoSvcs {
     if(!request_writer.impression_imp_revenue().empty())
     {
       RevenueDecimal impression_imp_revenue = RevenueDecimal(request_writer.impression_imp_revenue());
-      if(prev_pub_imp_revenue.present())
+      if(prev_pub_imp_revenue)
       {
         prev_pub_imp_revenue = std::min(*prev_pub_imp_revenue, impression_imp_revenue);
       }
@@ -867,7 +867,7 @@ namespace RequestInfoSvcs {
       }
       else
       {
-        if(prev_pub_imp_revenue.present())
+        if(prev_pub_imp_revenue)
         {
           res_imp_pub_revenue = std::min(res_imp_pub_revenue, *prev_pub_imp_revenue);
         }
@@ -904,7 +904,7 @@ namespace RequestInfoSvcs {
     {
       request_writer.notice_pub_revenue_type() = impression_info.pub_revenue->revenue_type;
       
-      if(impression_info.pub_revenue.present())
+      if(impression_info.pub_revenue)
       {
         request_writer.notice_imp_revenue() = impression_info.pub_revenue->impression.str();
       }
@@ -922,7 +922,7 @@ namespace RequestInfoSvcs {
 
       request_writer.impression_pub_revenue_type() = impression_info.pub_revenue->revenue_type;
 
-      if(impression_info.pub_revenue.present())
+      if(impression_info.pub_revenue)
       {
         request_writer.impression_imp_revenue() = impression_info.pub_revenue->impression.str();
       }
@@ -936,7 +936,7 @@ namespace RequestInfoSvcs {
     // calculate pub_revenue
     if(request_writer.request_done())
     {
-      Commons::Optional<RevenueDecimal> prev_pub_imp_revenue;
+      std::optional<RevenueDecimal> prev_pub_imp_revenue;
       if(!request_writer.notice_imp_revenue().empty())
       {
         prev_pub_imp_revenue = RevenueDecimal(request_writer.notice_imp_revenue());
@@ -945,7 +945,7 @@ namespace RequestInfoSvcs {
       if(!request_writer.impression_imp_revenue().empty())
       {
         RevenueDecimal impression_imp_revenue = RevenueDecimal(request_writer.impression_imp_revenue());
-        if(prev_pub_imp_revenue.present())
+        if(prev_pub_imp_revenue)
         {
           prev_pub_imp_revenue = std::min(*prev_pub_imp_revenue, impression_imp_revenue);
         }
@@ -958,7 +958,7 @@ namespace RequestInfoSvcs {
       // make this step:
       // on notice if cost present
       // on impression always for apply VIVAKI scheme
-      if(prev_pub_imp_revenue.present() && !notice && !request_writer.impression_verified())
+      if(prev_pub_imp_revenue && !notice && !request_writer.impression_verified())
       {
         // override publisher revenue values
         // reset pub_revenue_type for exclude double applying
@@ -2076,7 +2076,7 @@ namespace RequestInfoSvcs {
         );
 
       if(request_processed_on_sender &&
-        request_process_delegate.process_request.present())
+        request_process_delegate.process_request)
       {
         request_process_delegate.process_request = RequestInfo::RS_RESAVE;
       }
@@ -2206,23 +2206,23 @@ namespace RequestInfoSvcs {
     static const char* FUN = "RequestInfoContainer::delegate_processing_()";
 
     if(logger_->log_level() >= Logging::Logger::TRACE &&
-       (request_process_delegate.request_info.present() ||
-        request_process_delegate.rollback_request_info.present()) &&
-       (request_process_delegate.process_request.present() ||
+       (request_process_delegate.request_info ||
+        request_process_delegate.rollback_request_info) &&
+       (request_process_delegate.process_request ||
         request_process_delegate.process_impression ||
         request_process_delegate.process_click ||
         request_process_delegate.process_actions ||
-        request_process_delegate.process_fraud_request.present() ||
+        request_process_delegate.process_fraud_request ||
         !request_process_delegate.process_rollback_impressions.empty() ||
         !request_process_delegate.process_rollback_clicks.empty()))
     {
       Stream::Error ostr;
       ostr << FUN << ": delegate processing for" <<
-        (request_process_delegate.process_request.present() ? " request" : "") <<
+        (request_process_delegate.process_request ? " request" : "") <<
         (request_process_delegate.process_impression ? " impression" : "") <<
         (request_process_delegate.process_click ? " click" : "") <<
         (request_process_delegate.process_actions ? " actions" : "") <<
-        (request_process_delegate.process_fraud_request.present() ?
+        (request_process_delegate.process_fraud_request ?
          (std::string(" ") + RequestInfo::request_state_string(*request_process_delegate.process_fraud_request)) :
          std::string())
         ;
@@ -2240,13 +2240,13 @@ namespace RequestInfoSvcs {
         ostr << " click: " << RequestInfo::request_state_string(*rollback_click_it);
       }
 
-      if(request_process_delegate.request_info.present())
+      if(request_process_delegate.request_info)
       {
         ostr << "Request Info:" << std::endl;
         request_process_delegate.request_info->print(ostr, "  ");
       }
 
-      if(request_process_delegate.rollback_request_info.present())
+      if(request_process_delegate.rollback_request_info)
       {
         ostr << "Rollback Request Info:" << std::endl;
         request_process_delegate.rollback_request_info->print(ostr, "  ");
@@ -2260,9 +2260,9 @@ namespace RequestInfoSvcs {
 
     try
     {
-      if(request_process_delegate.process_request.present())
+      if(request_process_delegate.process_request)
       {
-        assert(request_process_delegate.request_info.present());
+        assert(request_process_delegate.request_info);
 
         request_processor_->process_request(
           *request_process_delegate.request_info,
@@ -2272,7 +2272,7 @@ namespace RequestInfoSvcs {
 
       if(request_process_delegate.process_impression)
       {
-        assert(request_process_delegate.request_info.present());
+        assert(request_process_delegate.request_info);
 
         request_processor_->process_impression(
           *request_process_delegate.request_info,
@@ -2283,7 +2283,7 @@ namespace RequestInfoSvcs {
 
       if(request_process_delegate.process_click)
       {
-        assert(request_process_delegate.request_info.present());
+        assert(request_process_delegate.request_info);
 
         request_processor_->process_click(
           *request_process_delegate.request_info,
@@ -2293,27 +2293,27 @@ namespace RequestInfoSvcs {
 
       for(unsigned long i = 0; i < request_process_delegate.process_actions; ++i)
       {
-        assert(request_process_delegate.request_info.present());
+        assert(request_process_delegate.request_info);
 
         request_processor_->process_action(
           *request_process_delegate.request_info);
       }
 
-      if(request_process_delegate.process_fraud_request.present() ||
+      if(request_process_delegate.process_fraud_request ||
          !request_process_delegate.process_rollback_impressions.empty() ||
          !request_process_delegate.process_rollback_clicks.empty())
       {
-        assert(!request_process_delegate.process_fraud_request.present() ||
+        assert(!request_process_delegate.process_fraud_request ||
             *request_process_delegate.process_fraud_request != RequestInfo::RS_MOVED ||
           (request_process_delegate.process_rollback_impressions.empty() &&
             request_process_delegate.process_rollback_clicks.empty()));
 
         RequestInfo fraud_request_info(
-          request_process_delegate.rollback_request_info.present() ?
+          request_process_delegate.rollback_request_info ?
           *request_process_delegate.rollback_request_info :
           *request_process_delegate.request_info);
 
-        if(request_process_delegate.process_fraud_request.present())
+        if(request_process_delegate.process_fraud_request)
         {
           fraud_request_info.fraud = *request_process_delegate.process_fraud_request; // REVIEW
 
@@ -2348,7 +2348,7 @@ namespace RequestInfoSvcs {
           adv_action_it != request_process_delegate.custom_actions.end();
           ++adv_action_it)
       {
-        assert(request_process_delegate.request_info.present());
+        assert(request_process_delegate.request_info);
 
         request_processor_->process_custom_action(
           *request_process_delegate.request_info,
@@ -2360,7 +2360,7 @@ namespace RequestInfoSvcs {
         request_post_act_it != request_process_delegate.process_post_impression_actions.end();
         ++request_post_act_it)
       {
-        assert(request_process_delegate.request_info.present());
+        assert(request_process_delegate.request_info);
 
         request_processor_->process_request_post_action(
           *request_process_delegate.request_info,
@@ -2380,7 +2380,7 @@ namespace RequestInfoSvcs {
 
       if(request_operation_processor_.in())
       {
-        if(request_process_delegate.move_notice_info.present())
+        if(request_process_delegate.move_notice_info)
         {
           ImpressionInfo imp_info(*request_process_delegate.move_notice_info);
           assert(!imp_info.verify_impression); // notice
@@ -2388,7 +2388,7 @@ namespace RequestInfoSvcs {
           request_operation_processor_->process_impression(imp_info);
         }
         
-        if(request_process_delegate.move_impression_info.present())
+        if(request_process_delegate.move_impression_info)
         {
           ImpressionInfo imp_info(*request_process_delegate.move_impression_info);
           imp_info.user_id = request_process_delegate.move_request_user_id;
@@ -2823,10 +2823,10 @@ namespace RequestInfoSvcs {
           {
             if(!request_reader.notice_received())
             {
-              if(!request_process_delegate.request_info.present())
+              if(!request_process_delegate.request_info)
               {
                 convert_request_reader_to_request_info(
-                  request_process_delegate.request_info.fill(),
+                  request_process_delegate.request_info.emplace(),
                   request_reader);
 
                 request_process_delegate.request_info->request_id =
@@ -3010,12 +3010,12 @@ namespace RequestInfoSvcs {
             // we can't process user_id change if process_impression_buf_
             // called from other processing method,
             // because user_id is equal for this case
-            assert(!request_process_delegate.request_info.present() &&
-              !request_process_delegate.process_request.present() &&
+            assert(!request_process_delegate.request_info &&
+              !request_process_delegate.process_request &&
               !request_process_delegate.process_impression &&
               !request_process_delegate.process_click &&
               request_process_delegate.process_actions == 0 &&
-              !request_process_delegate.process_fraud_request.present() &&
+              !request_process_delegate.process_fraud_request &&
               request_process_delegate.process_rollback_impressions.empty() &&
               request_process_delegate.process_rollback_clicks.empty());
             */
@@ -3043,7 +3043,7 @@ namespace RequestInfoSvcs {
 
             // fill delegate operations
             convert_request_reader_to_request_info(
-              request_process_delegate.request_info.fill(),
+              request_process_delegate.request_info.emplace(),
               request_reader);
             request_process_delegate.request_info->request_id = impression_info.request_id;
             request_process_delegate.request_info->fraud = RequestInfo::RS_RESAVE;
@@ -3057,10 +3057,10 @@ namespace RequestInfoSvcs {
           else if(request_reader.notice_received())
           {
             // fill delegates
-            if(!request_process_delegate.request_info.present())
+            if(!request_process_delegate.request_info)
             {
               convert_request_reader_to_request_info(
-                request_process_delegate.request_info.fill(),
+                request_process_delegate.request_info.emplace(),
                 request_reader);
 
               request_process_delegate.request_info->request_id =
@@ -3138,11 +3138,11 @@ namespace RequestInfoSvcs {
             // we can't process viewablity change if process_impression_buf_
             // called from other processing method,
             // because viewability is equal for this case
-            assert(!request_process_delegate.process_request.present() &&
+            assert(!request_process_delegate.process_request &&
               !request_process_delegate.process_impression &&
               !request_process_delegate.process_click &&
               request_process_delegate.process_actions == 0 &&
-              !request_process_delegate.process_fraud_request.present() &&
+              !request_process_delegate.process_fraud_request &&
               request_process_delegate.process_rollback_impressions.empty() &&
               request_process_delegate.process_rollback_clicks.empty());
 
@@ -3225,13 +3225,13 @@ namespace RequestInfoSvcs {
     // process duplicate impressions
     if(delegate_duplicate_impressions > 0)
     {
-      if(!request_process_delegate.rollback_request_info.present())
+      if(!request_process_delegate.rollback_request_info)
       {
         // use final profile state
         RequestInfoProfileReader request_reader(
           mem_buf->membuf().data(), mem_buf->membuf().size());
         convert_request_reader_to_request_info(
-          request_process_delegate.rollback_request_info.fill(),
+          request_process_delegate.rollback_request_info.emplace(),
           request_reader);
         request_process_delegate.rollback_request_info->request_id =
           impression_info.request_id;
@@ -3339,10 +3339,10 @@ namespace RequestInfoSvcs {
 
           if(request_reader.impression_verified())
           {
-            if(!request_process_delegate.request_info.present())
+            if(!request_process_delegate.request_info)
             {
               convert_request_reader_to_request_info(
-                request_process_delegate.request_info.fill(),
+                request_process_delegate.request_info.emplace(),
                 request_reader);
 
               request_process_delegate.request_info->request_id = request_id;
@@ -3410,13 +3410,13 @@ namespace RequestInfoSvcs {
     // process duplicate clicks
     if(delegate_duplicate_clicks > 0)
     {
-      if(!request_process_delegate.rollback_request_info.present())
+      if(!request_process_delegate.rollback_request_info)
       {
         // use final profile state
         RequestInfoProfileReader request_reader(
           mem_buf->membuf().data(), mem_buf->membuf().size());
         convert_request_reader_to_request_info(
-          request_process_delegate.rollback_request_info.fill(),
+          request_process_delegate.rollback_request_info.emplace(),
           request_reader);
         request_process_delegate.rollback_request_info->request_id = request_id;
       }
@@ -3429,7 +3429,7 @@ namespace RequestInfoSvcs {
     }
 
     assert(delegate_process_action == 0 ||
-      request_process_delegate.request_info.present());
+      request_process_delegate.request_info);
 
     for(unsigned long i = 0; i < delegate_process_action; ++i)
     {
@@ -3499,10 +3499,10 @@ namespace RequestInfoSvcs {
 
           if(request_reader.click_done())
           {
-            if(!request_process_delegate.request_info.present())
+            if(!request_process_delegate.request_info)
             {
               convert_request_reader_to_request_info(
-                request_process_delegate.request_info.fill(),
+                request_process_delegate.request_info.emplace(),
                 request_reader);
 
               request_process_delegate.request_info->request_id =
@@ -3570,10 +3570,10 @@ namespace RequestInfoSvcs {
 
         if(request_reader.request_done())
         {
-          if(!request_process_delegate.request_info.present())
+          if(!request_process_delegate.request_info)
           {
             convert_request_reader_to_request_info(
-              request_process_delegate.request_info.fill(),
+              request_process_delegate.request_info.emplace(),
               request_reader);
 
             request_process_delegate.request_info->request_id =
@@ -3662,10 +3662,10 @@ namespace RequestInfoSvcs {
 
             if(request_reader.impression_verified())
             {
-              if(!request_process_delegate.request_info.present())
+              if(!request_process_delegate.request_info)
               {
                 convert_request_reader_to_request_info(
-                  request_process_delegate.request_info.fill(),
+                  request_process_delegate.request_info.emplace(),
                   request_reader);
 
                 request_process_delegate.request_info->request_id =
@@ -3739,10 +3739,10 @@ namespace RequestInfoSvcs {
 
           if(request_reader.request_done())
           {
-            if(!request_process_delegate.request_info.present())
+            if(!request_process_delegate.request_info)
             {
               convert_request_reader_to_request_info(
-                request_process_delegate.request_info.fill(),
+                request_process_delegate.request_info.emplace(),
                 request_reader);
 
               request_process_delegate.request_info->request_id =

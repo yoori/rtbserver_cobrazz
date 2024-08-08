@@ -6,8 +6,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
@@ -15,6 +13,7 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 namespace AdServer
 {
@@ -25,8 +24,7 @@ namespace AdServer
     public ReferenceCounting::AtomicImpl
   {
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using ContentFeConfiguration = Configuration::FeConfig::ContentFeConfiguration_type;
     using ContentFrontend_var = ReferenceCounting::SmartPtr<ContentFrontend>;
@@ -36,8 +34,7 @@ namespace AdServer
 
   public:
     ContentFrontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       FrontendCommons::HttpResponseFactory* response_factory)
@@ -164,8 +161,7 @@ namespace AdServer
       bool& secure) noexcept;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     Configuration_var frontend_config_;
     CommonConfigPtr common_config_;

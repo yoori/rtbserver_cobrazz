@@ -1,24 +1,25 @@
+// STD
+#include <filesystem>
+#include <regex>
+
 // THIS
 #include "ContainerImpl.h"
 #include "ModelBidCostImpl.hpp"
 #include "ModelCtrImpl.hpp"
 #include "Utils.hpp"
 
-// STD
-#include <regex>
-
 namespace Aspect
 {
-const char CONTAINER[] = "CONTAINER";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+const char CONTAINER[] = "CONTAINER";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 ContainerImpl::ContainerImpl(
-  Logging::Logger* logger,
+  Logger* logger,
   const std::string& bid_cost_model_dir,
   const std::string& ctr_model_dir)
   : logger_(ReferenceCounting::add_ref(logger)),
@@ -34,9 +35,12 @@ void ContainerImpl::initialize()
 {
   try
   {
-    logger_->info(
-      std::string("Start initialize container"),
-      Aspect::CONTAINER);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Start initialize container";
+      logger_->info(stream.str(), Aspect::CONTAINER);
+    }
 
     const auto path_bid_cost_model_file = get_last_file(bid_cost_model_dir_);
     model_bid_cost_->load(path_bid_cost_model_file);
@@ -44,16 +48,27 @@ void ContainerImpl::initialize()
     const auto path_ctr_model_file = get_last_file(ctr_model_dir_);
     model_ctr_->load(path_ctr_model_file);
 
-    logger_->info(
-      std::string("Initialization container is success finished"),
-      Aspect::CONTAINER);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Initialization container is success finished";
+      logger_->info(stream.str(), Aspect::CONTAINER);
+    }
   }
-  catch(const Exception& exc)
+  catch (const Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Initialization container is failed : Reason: "
+    Stream::Error stream;
+    stream << FNS
+           << "Initialization container is failed : Reason: "
            << exc.what();
+    logger_->error(stream.str(), Aspect::CONTAINER);
+    throw;
+  }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Initialization container is failed : Reason: Unknown error";
     logger_->error(stream.str(), Aspect::CONTAINER);
     throw;
   }
@@ -61,60 +76,58 @@ void ContainerImpl::initialize()
 
 std::string ContainerImpl::get_last_file(const std::string& path_dir)
 {
-  if (!Utils::exist_directory(path_dir))
+  if (!std::filesystem::is_directory(path_dir))
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << "Not existing directory="
            << path_dir;
     throw Exception(stream);
   }
 
-  auto directories =
-    Utils::get_directory_files(
-      path_dir,
-      "",
-      Utils::DirInfo::Directory);
+  auto directories = Utils::get_directory_files(
+    path_dir,
+    "",
+    Utils::DirInfo::Directory);
   if (directories.empty())
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << "Directory not contain model directory";
     throw Exception(stream);
   }
 
   const std::regex time_regex("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}");
 
-  auto it_result = std::end(directories);
+  auto result_it = std::end(directories);
   auto it = std::begin(directories);
   auto it_end = std::end(directories);
   for (; it != it_end; ++it)
   {
     if (std::regex_search(*it, time_regex))
     {
-      it_result = it;
+      result_it = it;
     }
   }
 
-  if (it_result == std::end(directories))
+  if (result_it == std::end(directories))
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << "Directory not contain model directory "
            << "with format yyyy:mm:dd hh:mm:ss";
     throw Exception(stream);
   }
 
-  const auto& result_path_directory = *it_result;
-  const auto files =
-    Utils::get_directory_files(
-      result_path_directory,
-      "",
-      Utils::DirInfo::RegularFile);
+  const auto& result_path_directory = *result_it;
+  const auto files = Utils::get_directory_files(
+    result_path_directory,
+    "",
+    Utils::DirInfo::RegularFile);
   if (files.empty())
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            << "Not exist file in directory="
            << result_path_directory;
     throw Exception(stream);
@@ -123,7 +136,7 @@ std::string ContainerImpl::get_last_file(const std::string& path_dir)
   if (files.size() > 1)
   {
     Stream::Error stream;
-    stream << __PRETTY_FUNCTION__
+    stream << FNS
            <<  "Logic error. Number files in the "
            <<  "directory must be equal one";
     throw Exception(stream);
@@ -138,15 +151,22 @@ ContainerImpl::Cost ContainerImpl::get_cost(
   const WinRate& win_rate,
   const Cost& current_cost) const
 {
-  return model_bid_cost_->get_cost(tag_id, url, win_rate, current_cost);
+  return model_bid_cost_->get_cost(
+    tag_id,
+    url,
+    win_rate,
+    current_cost);
 }
 
 ContainerImpl::Ctr ContainerImpl::get_ctr(
   const TagId& tag_id,
-  const Url& url) const
+  const Url& url,
+  const CreativeCategoryId& creative_category_id) const
 {
-  return model_ctr_->get_ctr(tag_id, url);
+  return model_ctr_->get_ctr(
+    tag_id,
+    url,
+    creative_category_id);
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

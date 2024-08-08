@@ -4,7 +4,7 @@
 // UNIXCOMMONS
 #include <Generics/TaskPool.hpp>
 #include <Logger/Logger.hpp>
-#include <UServerUtils/Grpc/Http/Server/HttpHandler.hpp>
+#include <UServerUtils/Http/Server/HttpHandler.hpp>
 
 // THIS
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>

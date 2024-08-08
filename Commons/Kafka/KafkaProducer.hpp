@@ -9,6 +9,7 @@
 #include <Commons/AtomicInt.hpp>
 #include <Commons/DelegateActiveObject.hpp>
 #include <Commons/Kafka/LimitedMTQueue.hpp>
+#include <Stream/MemoryStream.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 
 namespace AdServer
@@ -34,19 +35,23 @@ namespace AdServer
          *
          * @param increment value.
          */
-        StatCounter& operator+=(int val);        
+        StatCounter& operator+=(int val);
 
         /**
          * @brief Reduction of int
          */
         operator int() const;
-        
+
         friend
         std::ostream&
         operator<<(
           std::ostream& os,
           const StatCounter& cnt);
-        
+
+        friend
+        std::pair<int, int>
+        StatCounterPreparePrint(const StatCounter&);
+
       private:
         mutable Algs::AtomicUInt prev_;
         Algs::AtomicUInt current_;
@@ -96,7 +101,7 @@ namespace AdServer
            */
           virtual void
           event_cb(RdKafka::Event& event);
-        
+
         protected:
           ProducerHandler* handler_;
         };
@@ -123,7 +128,7 @@ namespace AdServer
           void
           dr_cb(
             RdKafka::Message &message);
-        
+
         protected:
           ProducerHandler* handler_;
         };
@@ -150,7 +155,7 @@ namespace AdServer
             void *msg_opaque);
         };
 
-        // 
+        //
 
         /**
          * @class StatsObject
@@ -179,7 +184,7 @@ namespace AdServer
           /**
            * @brief Move to disconnected state
            */
-          void consider_disconnect(); // 
+          void consider_disconnect(); //
 
           /**
            * @brief Move to connected state
@@ -187,7 +192,7 @@ namespace AdServer
           void consider_connect();
 
         protected:
-          
+
           /**
            * @brief Main work cycle
            */
@@ -221,7 +226,7 @@ namespace AdServer
          * @brief Producer handler
          */
         class ProducerHandler
-        { 
+        {
         public:
 
           /**
@@ -251,7 +256,7 @@ namespace AdServer
             const char* context,
             const char* error,
             bool disconnected);
-          
+
           /**
            * @brief Notify that everything looks OK on rdkafka side
            */
@@ -293,8 +298,8 @@ namespace AdServer
         };
 
         typedef ::xsd::AdServer::Configuration::KafkaTopic
-           KafkaTopicConfig; 
-        
+           KafkaTopicConfig;
+
       public:
 
         /**
@@ -333,7 +338,7 @@ namespace AdServer
         void push_data(
           const std::string& key,
           const std::string& data) noexcept;
-        
+
         /**
          * @brief Activate objects (start threads)
          */
@@ -386,7 +391,7 @@ namespace AdServer
          */
         void
         work_() noexcept;
-        
+
         /**
          * @brief Termination.
          */
@@ -403,7 +408,7 @@ namespace AdServer
         std::string brokers_;
         const std::string topic_name_;
         ProducerQueue messages_;
-        
+
         // Synchronization
         typedef Sync::Policy::PosixThread SyncPolicy;
         SyncPolicy::Mutex reconnect_lock_;
@@ -419,3 +424,33 @@ namespace AdServer
   }
 }
 
+namespace AdServer::Commons::Kafka
+{
+  inline
+  std::pair<int, int>
+  StatCounterPreparePrint(const StatCounter& cnt)
+  {
+    int current = cnt.current_;
+    int prev = cnt.prev_;
+    cnt.prev_ = current;
+    return {current, prev};
+  }
+}
+
+namespace Stream::MemoryStream
+{
+  template<typename Elem, typename Traits, typename Allocator,
+    typename AllocatorInitializer, const size_t SIZE>
+  struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
+    SIZE, AdServer::Commons::Kafka::StatCounter>
+  {
+    OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
+    operator()(OutputMemoryStream<Elem, Traits, Allocator,
+      AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::Kafka::StatCounter& cnt)
+    {
+      auto [current, prev] = AdServer::Commons::Kafka::StatCounterPreparePrint(cnt);
+      ostr << current - prev << "/" << current;
+      return ostr;
+    }
+  };
+}

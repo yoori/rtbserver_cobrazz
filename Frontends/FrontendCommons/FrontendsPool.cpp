@@ -23,16 +23,14 @@ namespace AdServer
   {
     // FrontendsPool
     FrontendsPool::FrontendsPool(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       const char* config_path,
       const ModuleIdArray& modules,
       Logging::Logger* logger,
       StatHolder* stats,
       FrontendCommons::HttpResponseFactory* response_factory)
       : FrontendCommons::FrontendInterface(response_factory),
-        task_processor_(task_processor),
-        scheduler_(scheduler),
+        grpc_container_(grpc_container),
         config_(new Configuration(config_path)),
         modules_(modules),
         logger_(ReferenceCounting::add_ref(logger)),
@@ -260,8 +258,7 @@ namespace AdServer
       {
         frontends_.emplace_back(
           new Frontend(
-            task_processor_,
-            scheduler_,
+            grpc_container_,
             config_,
             std::forward<T>(params)...));
         frontends_.back()->init();

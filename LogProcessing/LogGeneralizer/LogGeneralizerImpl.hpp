@@ -567,4 +567,20 @@ LogGeneralizerImpl::init_hf_log_proc_info_(
 } // namespace LogProcessing
 } // namespace AdServer
 
+ namespace Stream::MemoryStream
+ {
+   template<typename Elem, typename Traits, typename Allocator,
+     typename AllocatorInitializer, const size_t SIZE>
+   struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
+     SIZE, xsd::AdServer::Configuration::LogUploadType4>
+   {
+     OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
+     operator()(OutputMemoryStream<Elem, Traits, Allocator,
+       AllocatorInitializer, SIZE>& ostr, const xsd::AdServer::Configuration::LogUploadType4& arg)
+     {
+       return ostr << static_cast<const ::xml_schema::string&>(arg);
+     }
+   };
+ }
+
 #endif /* AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_IMPL_HPP */

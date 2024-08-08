@@ -7,6 +7,7 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/Hash.hpp>
 #include <Generics/Hash.hpp>
+#include <Stream/MemoryStream.hpp>
 
 namespace AdServer
 {
@@ -28,7 +29,7 @@ namespace Commons
     StringHolder(const String::SubString& str)
       : str_(str.data(), str.length())
     {}
-    
+
     const std::string*
     operator ->() const noexcept
     {
@@ -73,7 +74,7 @@ namespace Commons
       Generics::Murmur64Hash hash(hash_);
       hash_add(hash, value_->str());
     }
-    
+
     StringHolder_var
     value() const noexcept
     {
@@ -164,6 +165,22 @@ operator <<(std::ostream& os, const AdServer::Commons::ImmutableString& arg)
 {
   os << arg.str();
   return os;
+}
+
+namespace Stream::MemoryStream
+{
+  template<typename Elem, typename Traits, typename Allocator,
+    typename AllocatorInitializer, const size_t SIZE>
+  struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
+    SIZE, AdServer::Commons::ImmutableString>
+  {
+    OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
+    operator()(OutputMemoryStream<Elem, Traits, Allocator,
+      AllocatorInitializer, SIZE>& ostr, const AdServer::Commons::ImmutableString& arg)
+    {
+      return ostr << arg.str();
+    }
+  };
 }
 
 #endif /*COMMONS_STRINGHOLDER_HPP*/

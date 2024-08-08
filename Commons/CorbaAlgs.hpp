@@ -3,6 +3,8 @@
 
 #include <cassert>
 #include <sstream>
+#include <optional>
+
 #include <Generics/Time.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Commons/CorbaTypes.hpp>
@@ -149,7 +151,7 @@ namespace CorbaAlgs
   }
 
   template<typename DecimalType>
-  AdServer::Commons::Optional<DecimalType>
+  std::optional<DecimalType>
   unpack_optional_decimal(const CORBACommons::DecimalInfo& dec)
   {
     if(dec.length())
@@ -157,11 +159,11 @@ namespace CorbaAlgs
       DecimalType ret;
       assert(DecimalType::PACK_SIZE == dec.length());
       ret.unpack(dec.get_buffer());
-      return AdServer::Commons::Optional<DecimalType>(ret);
+      return std::optional<DecimalType>(ret);
     }
     else
     {
-      return AdServer::Commons::Optional<DecimalType>();
+      return std::optional<DecimalType>();
     }
   }
 
@@ -183,10 +185,10 @@ namespace CorbaAlgs
   template<typename DecimalType>
   CORBACommons::OptionalDecimalInfo
   pack_optional_decimal(
-    const AdServer::Commons::Optional<DecimalType>& dec)
+    const std::optional<DecimalType>& dec)
   {
     CORBACommons::OptionalDecimalInfo ret;
-    if(dec.present())
+    if(dec)
     {
       ret.length(DecimalType::PACK_SIZE);
       dec->pack(ret.get_buffer());
@@ -301,9 +303,9 @@ namespace CorbaAlgs
     }
   }
 
-  template<typename SourceSeqType>
+  template<typename OStream, typename SourceSeqType>
   void print_sequence(
-    std::ostream& out,
+    OStream& out,
     const SourceSeqType& source_seq,
     const char* delim = ",")
     /*throw(CORBA::SystemException)*/
@@ -364,9 +366,9 @@ namespace CorbaAlgs
     }
   }
 
-  template<typename SourceSeqType, typename FieldType>
+  template<typename OStream, typename SourceSeqType, typename FieldType>
   void print_sequence_fields(
-    std::ostream& out,
+    OStream& out,
     const SourceSeqType& source_seq,
     FieldType SourceSeqType::value_type::* field1,
     FieldType SourceSeqType::value_type::* field2,

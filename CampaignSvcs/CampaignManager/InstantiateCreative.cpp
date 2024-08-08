@@ -1356,7 +1356,7 @@ namespace AdServer
             passback_imp_url_ostr << "&testrequest=1";
           }
 
-          if(inst_params.user_id_hash_mod.present())
+          if(inst_params.user_id_hash_mod)
           {
             passback_imp_url_ostr << "&" <<
               AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<
@@ -1436,7 +1436,7 @@ namespace AdServer
             passback_imp_url_ostr << "&testrequest=1";
           }
 
-          if(inst_params.user_id_hash_mod.present())
+          if(inst_params.user_id_hash_mod)
           {
             passback_imp_url_ostr << "&" <<
               AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<
@@ -1537,7 +1537,7 @@ namespace AdServer
             inst_params.publisher_account_id;
         }
 
-        if(inst_params.user_id_hash_mod.present())
+        if(inst_params.user_id_hash_mod)
         {
           ostr << "&" << AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<
             *inst_params.user_id_hash_mod;
@@ -1743,7 +1743,7 @@ namespace AdServer
             inst_params.publisher_account_id;
         }
 
-        if(inst_params.user_id_hash_mod.present())
+        if(inst_params.user_id_hash_mod)
         {
           ostr << "&" << AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<
             *inst_params.user_id_hash_mod;
@@ -1900,7 +1900,7 @@ namespace AdServer
       Creative::SizeMap::const_iterator size_it =
         creative->sizes.find(size->size_id);
 
-      Commons::Optional<OptionValue> adimage_url;
+      std::optional<OptionValue> adimage_url;
 
       if(size_it != creative->sizes.end())
       {
@@ -1912,7 +1912,7 @@ namespace AdServer
         }
       }
 
-      if(!adimage_url.present())
+      if(!adimage_url)
       {
         OptionTokenValueMap::const_iterator ad_image_it =
           creative->tokens.find(CreativeTokens::ADIMAGE);
@@ -1922,7 +1922,7 @@ namespace AdServer
         }
       }
 
-      if(adimage_url.present())
+      if(adimage_url)
       {
         OptionTokenValueMap args;
         args[CreativeTokens::RANDOM] = OptionValue(
@@ -1965,7 +1965,7 @@ namespace AdServer
       Creative::SizeMap::const_iterator size_it =
         creative->sizes.find(size->size_id);
 
-      Commons::Optional<OptionValue> adimage_url;
+      std::optional<OptionValue> adimage_url;
 
       if(size_it != creative->sizes.end())
       {
@@ -1977,7 +1977,7 @@ namespace AdServer
         }
       }
 
-      if(!adimage_url.present())
+      if(!adimage_url)
       {
         OptionTokenValueMap::const_iterator ad_image_it =
           creative->tokens.find(CreativeTokens::ADIMAGE);
@@ -1987,7 +1987,7 @@ namespace AdServer
         }
       }
 
-      if(adimage_url.present())
+      if(adimage_url)
       {
         OptionTokenValueMap args;
         args[CreativeTokens::RANDOM] = OptionValue(
@@ -2274,7 +2274,7 @@ namespace AdServer
                   creative_instantiate_.source_rules.find(request_params.source_id.in());
 
                 if(source_rule_it != creative_instantiate_.source_rules.end() &&
-                   source_rule_it->second.click_prefix.present())
+                   source_rule_it->second.click_prefix)
                 {
                   click_url_prefix = *source_rule_it->second.click_prefix;
                 }
@@ -2881,7 +2881,7 @@ namespace AdServer
                   creative_instantiate_.source_rules.find(request_params.source_id());
 
                 if(source_rule_it != creative_instantiate_.source_rules.end() &&
-                   source_rule_it->second.click_prefix.present())
+                   source_rule_it->second.click_prefix)
                 {
                   click_url_prefix = *source_rule_it->second.click_prefix;
                 }
@@ -3278,7 +3278,7 @@ namespace AdServer
             tag_size->size->size_id;
         }
       }
-      if(inst_params.user_id_hash_mod.present())
+      if(inst_params.user_id_hash_mod)
       {
         ostr_click_url << LOCAL_AMP << AdProtocol::USER_ID_DISTRIBUTION_HASH <<
           LOCAL_EQL << *inst_params.user_id_hash_mod;
@@ -3402,7 +3402,7 @@ namespace AdServer
             tag_size->size->size_id;
         }
       }
-      if(inst_params.user_id_hash_mod.present())
+      if(inst_params.user_id_hash_mod)
       {
         ostr_click_url << LOCAL_AMP << AdProtocol::USER_ID_DISTRIBUTION_HASH <<
           LOCAL_EQL << *inst_params.user_id_hash_mod;
@@ -3802,7 +3802,7 @@ namespace AdServer
         url_ostr << "&" << AdProtocol::ENCRYPTED_USER_IP << "=" << encrypted_user_ip;
       }
       
-      if(inst_params.user_id_hash_mod.present())
+      if(inst_params.user_id_hash_mod)
       {
         url_ostr << "&" <<
           AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<
@@ -4229,7 +4229,7 @@ namespace AdServer
        url_ostr << "&" << AdProtocol::ENCRYPTED_USER_IP << "=" << encrypted_user_ip;
      }
 
-     if(inst_params.user_id_hash_mod.present())
+     if(inst_params.user_id_hash_mod)
      {
        url_ostr << "&" <<
                 AdProtocol::USER_ID_DISTRIBUTION_HASH << "=" <<

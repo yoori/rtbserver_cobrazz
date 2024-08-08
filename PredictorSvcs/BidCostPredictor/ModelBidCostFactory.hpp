@@ -1,38 +1,42 @@
 #ifndef BIDCOSTPREDICTOR_MODELBIDCOSTFACTORYIMPL_HPP
 #define BIDCOSTPREDICTOR_MODELBIDCOSTFACTORYIMPL_HPP
 
-// THIS
+// UNIXCOMMONS
 #include "Logger/Logger.hpp"
+
+// THIS
 #include "ModelFactory.hpp"
 #include "ModelBidCostImpl.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class ModelBidCostFactoryImpl :
+class ModelBidCostFactoryImpl final:
   public ModelBidCostFactory,
   public virtual ReferenceCounting::AtomicImpl
 {
 public:
-  ModelBidCostFactoryImpl(Logging::Logger* logger)
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
+public:
+  ModelBidCostFactoryImpl(Logger* logger)
     : logger_(ReferenceCounting::add_ref(logger))
   {
   }
 
   ModelBidCost_var create() override
   {
-    return ModelBidCost_var(new ModelBidCostImpl(logger_));
+    return ModelBidCost_var(new ModelBidCostImpl(logger_.in()));
   }
 
+protected:
   ~ModelBidCostFactoryImpl() override = default;
 
 private:
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif // BIDCOSTPREDICTOR_MODELBIDCOSTFACTORYIMPL_HPP

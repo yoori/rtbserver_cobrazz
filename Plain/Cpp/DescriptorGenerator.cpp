@@ -66,7 +66,7 @@ namespace Cpp
       (*struct_descriptor->fields()->rbegin())->pos() +
       (*struct_descriptor->fields()->rbegin())->descriptor()->fixed_size();
 
-    out_ << offset_ << "  static const unsigned FIXED_SIZE = " <<
+    out_ << offset_ << "  static constexpr unsigned FIXED_SIZE = " <<
       fixed_size << ";" << std::endl << std::endl;
 
     for(Declaration::StructDescriptor::

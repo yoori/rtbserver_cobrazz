@@ -10,8 +10,6 @@
 #include <UserInfoSvcs/UserBindController/GrpcUserBindOperationDistributor.hpp>
 #include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
 
-#include <UServerUtils/Grpc/Manager.hpp>
-
 namespace FrontendCommons
 {
   class UserBindClient final:
@@ -21,27 +19,19 @@ namespace FrontendCommons
   public:
     using UserBindControllerGroupSeq = xsd::AdServer::Configuration::
       CommonFeConfigurationType::UserBindControllerGroup_sequence;
-    using GrpcDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
-    using GrpcDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
-    using ConfigGrpcClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcUserBindOperationDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
+    using GrpcUserBindOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
 
   public:
     explicit UserBindClient(
       const UserBindControllerGroupSeq& user_bind_controller_group,
       const CORBACommons::CorbaClientAdapter* corba_client_adapter,
       Logging::Logger* logger,
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
-      const ConfigGrpcClient& config_grpc_client,
-      const std::size_t timeout_grpc_client,
-      const bool grpc_enable) noexcept;
+      GrpcUserBindOperationDistributor* grpc_distributor) noexcept;
 
-    AdServer::UserInfoSvcs::UserBindMapper*
-    user_bind_mapper() noexcept;
+    AdServer::UserInfoSvcs::UserBindMapper* user_bind_mapper() noexcept;
 
-    GrpcDistributor_var grpc_distributor() noexcept;
+    GrpcUserBindOperationDistributor_var grpc_distributor() noexcept;
 
   protected:
     ~UserBindClient() override = default;
@@ -49,11 +39,10 @@ namespace FrontendCommons
   private:
     AdServer::UserInfoSvcs::UserBindOperationDistributor_var user_bind_mapper_;
 
-    GrpcDistributor_var grpc_distributor_;
+    GrpcUserBindOperationDistributor_var grpc_distributor_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindClient>
-    UserBindClient_var;
+  using UserBindClient_var = ReferenceCounting::SmartPtr<UserBindClient>;
 }
 
 #endif /*USERBINDCLIENT_HPP_*/

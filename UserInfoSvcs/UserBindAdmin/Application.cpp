@@ -1,11 +1,11 @@
 // UNIX_COMMONS
 #include <Generics/AppUtils.hpp>
 #include <Logger/StreamLogger.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 // PROTO
-#include "UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp"
+#include <UserInfoSvcs/UserBindServer/proto/UserBindServer_client.cobrazz.pb.hpp>
 
 // THIS
 #include <Commons/GrpcAlgs.hpp>
@@ -64,15 +64,15 @@ void print_error(const AdServer::UserInfoSvcs::Error& error)
 } // namespace
 
 using namespace Generics::AppUtils;
-using namespace UServerUtils::Grpc::Core::Client;
+using namespace UServerUtils::Grpc::Client;
 using namespace AdServer::UserInfoSvcs;
-using namespace UServerUtils::Grpc;
+using namespace UServerUtils;
 
 void Application::run(int argc, char** argv)
 {
-  using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using ConfigPoolClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
 
   CheckOption opt_help;
   Option<std::string> opt_reference_corba("");
@@ -187,7 +187,7 @@ void Application::run(int argc, char** argv)
   manager_coro->activate_object();
 
   GrpcUserBindOperationDistributor_var grpc_user_bind_distributor;
-  std::unique_ptr<GrpcCobrazzPoolClientFactory> factory;
+  std::unique_ptr<PoolClientFactory> factory;
 
   std::exception_ptr eptr;
   try
@@ -205,8 +205,8 @@ void Application::run(int argc, char** argv)
       controller_ref_group.push_back(ref);
       controller_groups.push_back(controller_ref_group);
 
-      UServerUtils::Grpc::Core::Common::SchedulerPtr scheduler =
-        UServerUtils::Grpc::Core::Common::Utils::create_scheduler(
+      UServerUtils::Grpc::Common::SchedulerPtr scheduler =
+        UServerUtils::Grpc::Common::Utils::create_scheduler(
           3,
           logger.in());
 
@@ -225,7 +225,7 @@ void Application::run(int argc, char** argv)
     else
     {
       config_grpc_client.endpoint = *opt_endpoint_grpc;
-      factory = std::make_unique<GrpcCobrazzPoolClientFactory>(
+      factory = std::make_unique<PoolClientFactory>(
         logger.in(),
         config_grpc_client);
     }
@@ -344,7 +344,7 @@ void Application::run(int argc, char** argv)
       {
         response = grpc_user_bind_distributor->get_user_id(
           external_id,
-          current_user_id,
+          AdServer::Commons::UserId(current_user_id),
           timestamp,
           create_timestamp,
           silent,

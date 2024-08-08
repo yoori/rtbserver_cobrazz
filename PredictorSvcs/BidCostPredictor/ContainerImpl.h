@@ -6,23 +6,24 @@
 #include "ModelBidCost.hpp"
 #include "ModelCtr.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class ContainerImpl :
+class ContainerImpl final :
   public Container,
-  public virtual ReferenceCounting::AtomicImpl
+  public ReferenceCounting::AtomicImpl
 {
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+
 public:
   ContainerImpl(
-    Logging::Logger* logger,
+    Logger* logger,
     const std::string& bid_cost_model_dir,
     const std::string& ctr_model_dir);
-
-  ~ContainerImpl() = default;
 
   Cost get_cost(
     const TagId& tag_id,
@@ -32,7 +33,11 @@ public:
 
   Ctr get_ctr(
     const TagId& tag_id,
-    const Url& url) const override;
+    const Url& url,
+    const CreativeCategoryId& creative_category_id) const override;
+
+protected:
+  ~ContainerImpl() override = default;
 
 private:
   void initialize();
@@ -40,7 +45,7 @@ private:
   std::string get_last_file(const std::string& path_dir);
 
 private:
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
 
   const std::string bid_cost_model_dir_;
 
@@ -51,7 +56,6 @@ private:
   ModelCtr_var model_ctr_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_CONTAINERIMPL_H

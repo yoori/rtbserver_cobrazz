@@ -12,12 +12,13 @@
 // PROTO
 #include "ChannelSvcs/ChannelCommons/proto/ChannelServer_client.cobrazz.pb.hpp"
 
+// THIS
+#include <Commons/GrpcAlgs.hpp>
+
 // UNIXCOMMONS
-#include <GrpcAlgs.hpp>
-#include <Generics/CompositeActiveObject.hpp>
-#include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <UServerUtils/Grpc/CobrazzClientFactory.hpp>
+#include <UServerUtils/Grpc/Client/ConfigPoolCoro.hpp>
+#include <UServerUtils/Grpc/Client/PoolClientFactory.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
 #include <userver/engine/task/task_processor.hpp>
@@ -25,9 +26,9 @@
 namespace AdServer::ChannelSvcs
 {
 
-extern const char* ASPECT_GRPC_CHANNEL_OPERATION_POOL;
+inline constexpr char ASPECT_GRPC_CHANNEL_OPERATION_POOL[] = "GRPC_CHANNEL_OPERATION_POOL";
 
-class GrpcChannelOperationPool final : Generics::Uncopyable
+class GrpcChannelOperationPool final : private Generics::Uncopyable
 {
 private:
   class ClientHolder;
@@ -42,7 +43,7 @@ public:
   using Port = std::size_t;
   using Endpoint = std::pair<Host, Port>;
   using Endpoints = std::vector<Endpoint>;
-  using ConfigPoolClient = UServerUtils::Grpc::Core::Client::ConfigPoolCoro;
+  using ConfigPoolClient = UServerUtils::Grpc::Client::ConfigPoolCoro;
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
   using Time = Generics::Time;
@@ -56,7 +57,9 @@ public:
   using GetCcgTraitsResponse = Proto::GetCcgTraitsResponse;
   using GetCcgTraitsResponsePtr = std::unique_ptr<GetCcgTraitsResponse>;
   using TaskProcessor = userver::engine::TaskProcessor;
-  using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
   explicit GrpcChannelOperationPool(
@@ -66,7 +69,7 @@ public:
     const Endpoints& endpoints,
     const ConfigPoolClient& config_pool_client,
     const std::size_t grpc_client_timeout_ms = 1000,
-    const std::size_t time_duration_client_bad_ms = 30000);
+    const std::size_t time_duration_client_bad_sec = 30);
 
   ~GrpcChannelOperationPool() = default;
 
@@ -128,7 +131,7 @@ private:
   std::atomic<std::size_t> counter_{0};
 };
 
-using GrpcChannelOperationPoolPtr = std::unique_ptr<GrpcChannelOperationPool>;
+using GrpcChannelOperationPoolPtr = std::shared_ptr<GrpcChannelOperationPool>;
 
 class GrpcChannelOperationPool::ClientHolder final : private Generics::Uncopyable
 {
@@ -146,7 +149,7 @@ public:
   using ClientsPtr = std::shared_ptr<Clients>;
 
 private:
-  using Status = UServerUtils::Grpc::Core::Client::Status;
+  using Status = UServerUtils::Grpc::Client::Status;
   using Mutex = std::shared_mutex;
 
 public:
@@ -169,6 +172,13 @@ public:
     }
 
     const Generics::Time now = Generics::Time::get_time_of_day();
+    {
+      std::shared_lock lock(mutex_);
+      if (marked_as_bad_ && now < marked_as_bad_time_ + time_duration_client_bad_)
+      {
+        return true;
+      }
+    }
 
     std::unique_lock lock(mutex_);
     if (marked_as_bad_ && now >= marked_as_bad_time_ + time_duration_client_bad_)
@@ -246,8 +256,7 @@ class GrpcChannelOperationPool::FactoryClientHolder final : private Generics::Un
 public:
   using MatchClient = Proto::ChannelServer_match_ClientPool;
   using GetCcgTraitsClient = Proto::ChannelServer_get_ccg_traits_ClientPool;
-  using GrpcCobrazzPoolClientFactory = UServerUtils::Grpc::GrpcCobrazzPoolClientFactory;
-  using TaskProcessor = GrpcCobrazzPoolClientFactory::TaskProcessor;
+  using GrpcPoolClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
 
 private:
   using Mutex = std::shared_mutex;
@@ -304,7 +313,7 @@ public:
       std::string endpoint = endpoint_stream.str();
       config.endpoint = endpoint;
 
-      UServerUtils::Grpc::GrpcCobrazzPoolClientFactory factory(
+      GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
         config);

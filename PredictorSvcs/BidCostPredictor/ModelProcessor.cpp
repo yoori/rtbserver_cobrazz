@@ -1,5 +1,6 @@
 // STD
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 
 // POSIX
@@ -15,12 +16,12 @@
 
 namespace Aspect
 {
-const char* MODEL_PROCESSOR = "MODEL_PROCESSOR";
+
+inline constexpr char MODEL_PROCESSOR[] = "MODEL_PROCESSOR";
+
 } // namespace Aspect
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 ModelProcessor::ModelProcessor(
@@ -30,11 +31,12 @@ ModelProcessor::ModelProcessor(
   const std::string& ctr_model_dir,
   const std::string& ctr_model_file_name,
   const std::string& ctr_temp_model_dir,
-  const Imps ctr_model_max_imps,
-  const Imps ctr_model_trust_imps,
-  const Imps ctr_model_tag_imps,
+  const Imps& ctr_model_max_imps,
+  const Imps& ctr_model_trust_imps,
+  const Imps& ctr_model_tag_imps,
   const std::string& agg_dir,
-  Logging::Logger* logger)
+  Logger* logger,
+  CreativeProvider* creative_provider)
   : model_dir_(model_dir),
     model_file_name_(model_file_name),
     temp_model_dir_(temp_model_dir),
@@ -42,61 +44,82 @@ ModelProcessor::ModelProcessor(
     ctr_model_file_name_(ctr_model_file_name),
     ctr_temp_model_dir_(ctr_temp_model_dir),
     agg_dir_(agg_dir),
-    logger_(ReferenceCounting::add_ref(logger))
+    logger_(ReferenceCounting::add_ref(logger)),
+    data_provider_(new DataModelProviderImpl(
+      ctr_model_max_imps,
+      agg_dir_,
+      logger_))
 {
-  data_provider_ =
-    DataModelProvider_var(
-      new DataModelProviderImpl(
-        ctr_model_max_imps,
-        agg_dir_,
-        logger_));
-
-  Points points {
+  const Points points {
     Point("0.95"),
     Point("0.75"),
     Point("0.5"),
     Point("0.25")
   };
 
-  ModelBidCostFactory_var bid_cost_model_factory(
-    new ModelBidCostFactoryImpl(logger_));
+  ModelBidCostFactory_var bid_cost_model_factory =
+    new ModelBidCostFactoryImpl(logger_);
+  model_evaluator_bid_cost_ = new ModelEvaluatorBidCostImpl(
+    points,
+    data_provider_,
+    bid_cost_model_factory,
+    logger_);
 
-  model_evaluator_bid_cost_ =
-    ModelEvaluatorBidCost_var(
-      new ModelEvaluatorBidCostImpl(
-        points,
-        data_provider_,
-        bid_cost_model_factory,
-        logger_));
-
-  ModelCtrFactory_var ctr_model_factory(
-    new ModelCtrFactoryImpl(logger_));
-
-  model_evaluator_ctr_ =
-    ModelEvaluatorCtr_var(
-      new ModelEvaluatorCtrImpl(
-        ctr_model_trust_imps,
-        ctr_model_tag_imps,
-        data_provider_,
-        ctr_model_factory,
-        logger_));
+  ModelCtrFactory_var ctr_model_factory = new ModelCtrFactoryImpl(logger_);
+  model_evaluator_ctr_ = new ModelEvaluatorCtrImpl(
+    ctr_model_trust_imps,
+    ctr_model_tag_imps,
+    data_provider_,
+    ctr_model_factory,
+    logger_,
+    creative_provider);
 }
 
-ModelProcessor::~ModelProcessor()
+void ModelProcessor::activate_object_()
 {
-  wait();
+  std::ostringstream stream;
+  stream << FNS
+         << "Start model processor";
+  logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
+
+  thread_ = std::make_unique<std::jthread>([this] () {
+    run();
+  });
 }
 
-void ModelProcessor::start()
+void ModelProcessor::deactivate_object_()
 {
-  if (shutdown_manager_.is_stoped())
+  if (is_calculation_completed.load())
+  {
     return;
+  }
 
+  data_provider_->stop();
+  model_evaluator_bid_cost_->stop();
+  model_evaluator_ctr_->stop();
+}
+
+void ModelProcessor::wait_object_()
+{
+  thread_.reset();
+
+  std::ostringstream stream;
+  stream << FNS
+         << "Model processor is stopped";
+  logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
+}
+
+void ModelProcessor::run() noexcept
+{
   try
   {
-    logger_->info(
-      std::string("Start process bid cost model"),
-      Aspect::MODEL_PROCESSOR);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Start process bid cost model";
+      logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
+    }
+
     auto bid_cost_model = model_evaluator_bid_cost_->evaluate();
     if (bid_cost_model)
     {
@@ -105,37 +128,52 @@ void ModelProcessor::start()
         model_dir_,
         temp_model_dir_,
         model_file_name_);
-      logger_->info(
-        std::string("Process bid cost model is success"),
-        Aspect::MODEL_PROCESSOR);
+
+      std::ostringstream stream;
+      stream << FNS
+             << "Process bid cost model is success";
+      logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
     }
     else
     {
-      if (!is_stopped_.load())
+      if (!active())
       {
-        logger_->critical(
-          std::string("Process bid cost model is failed"),
-          Aspect::MODEL_PROCESSOR);
+        std::ostringstream stream;
+        stream << FNS
+               << "Process bid cost model is failed";
+        logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
       }
     }
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Process bid cost model is failed. Reason: "
+    Stream::Error stream;
+    stream << FNS
+           << "Process bid cost model is failed. Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
   }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Process bid cost model is failed. Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
+  }
 
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
 
   try
   {
-    logger_->info(
-      std::string("Start process ctr model"),
-      Aspect::MODEL_PROCESSOR);
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Start process ctr model";
+      logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
+    }
 
     auto ctr_model = model_evaluator_ctr_->evaluate();
     if (ctr_model)
@@ -145,62 +183,50 @@ void ModelProcessor::start()
         ctr_model_dir_,
         ctr_temp_model_dir_,
         ctr_model_file_name_);
-      logger_->info(
-        std::string("Process ctr model is success"),
-        Aspect::MODEL_PROCESSOR);
+
+      std::ostringstream stream;
+      stream << FNS
+             << "Process ctr model is success";
+      logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
     }
     else
     {
-      if (!is_stopped_.load())
+      if (!active())
       {
-        logger_->critical(
-          std::string("Process ctr model is failed"),
-          Aspect::MODEL_PROCESSOR);
+        std::ostringstream stream;
+        stream << FNS
+               << "Process ctr model is failed";
+        logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
       }
     }
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Process ctr model is failed. Reason: "
+    std::ostringstream stream;
+    stream << FNS
+           << "Process ctr model is failed. Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
   }
+  catch (...)
+  {
+    std::ostringstream stream;
+    stream << FNS
+           << "Process ctr model is failed. Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
+  }
 
-  shutdown_manager_.stop();
+  is_calculation_completed.store(true);
+  try
+  {
+    deactivate_object();
+  }
+  catch (...)
+  {
+  }
 }
 
-void ModelProcessor::wait() noexcept
-{
-  shutdown_manager_.wait();
-}
-
-void ModelProcessor::stop() noexcept
-{
-  logger_->info(
-    std::string("Start stoping model processor"),
-    Aspect::MODEL_PROCESSOR);
-
-  is_stopped_.store(true);
-
-  shutdown_manager_.stop();
-
-  if (data_provider_)
-    data_provider_->stop();
-
-  if (model_evaluator_bid_cost_)
-    model_evaluator_bid_cost_->stop();
-
-  if (model_evaluator_ctr_)
-    model_evaluator_ctr_->stop();
-
-  logger_->info(
-    std::string("model processor is stopped"),
-    Aspect::MODEL_PROCESSOR);
-}
-
-const char* ModelProcessor::name() noexcept
+std::string ModelProcessor::name() noexcept
 {
   return "ModelProcessor";
 }
@@ -214,51 +240,63 @@ bool ModelProcessor::save_model(
   try
   {
     const auto current_time = std::chrono::system_clock::now();
-    const std::string name_dir =
-      serialize_time_point(
-        current_time,
-        "%Y-%m-%d %H:%M:%S");
-    const std::string temp_model_dir =
-      temp_dir + "/" + name_dir;
-    if (mkdir(temp_model_dir.c_str(), 0755))
+    const std::string name_dir = serialize_time_point(
+      current_time,
+      "%Y-%m-%d %H:%M:%S");
+    const std::string temp_model_dir = temp_dir + "/" + name_dir;
+    if (::mkdir(temp_model_dir.c_str(), 0755))
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << "Can't create directory="
-           << temp_model_dir;
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Can't create directory="
+             << temp_model_dir;
+      throw Exception(stream);
     }
-    const std::string temp_file_path =
-      temp_model_dir + "/" + file_name;
+    Utils::CallOnDestroy call_on_destroy([temp_model_dir] () {
+      std::filesystem::remove_all(temp_model_dir);
+    });
+
+    const std::string temp_file_path = temp_model_dir + "/" + file_name;
     model.save(temp_file_path);
 
     const std::string result_model_dir = model_dir + "/" + name_dir;
     if (std::rename(temp_model_dir.c_str(), result_model_dir.c_str()))
     {
-      Stream::Error error;
-      error << __PRETTY_FUNCTION__
-            << " : Can't rename dir="
+      Stream::Error stream;
+      stream << FNS
+            << "Can't rename dir="
             << temp_model_dir
             << " to dir="
             << result_model_dir;
-      throw Exception(error);
+      throw Exception(stream);
     }
-    logger_->info(
-      "Resulting file moved to " + result_model_dir,
-      Aspect::MODEL_PROCESSOR);
+
+    {
+      std::ostringstream stream;
+      stream << FNS
+             << "Resulting file moved to " + result_model_dir;
+      logger_->info(stream.str(), Aspect::MODEL_PROCESSOR);
+    }
 
     return true;
   }
   catch (const eh::Exception& exc)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " Can't save model. Reason: "
+    Stream::Error stream;
+    stream << FNS
+         << "Can't save model. Reason: "
          << exc.what();
-    logger_->critical(ostr.str(), Aspect::MODEL_PROCESSOR);
-
-    return false;
+    logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
   }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Can't save model. Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_PROCESSOR);
+  }
+
+  return false;
 }
 
 std::string ModelProcessor::serialize_time_point(
@@ -266,11 +304,10 @@ std::string ModelProcessor::serialize_time_point(
   const std::string& format)
 {
   const std::time_t tt = std::chrono::system_clock::to_time_t(time);
-  std::tm tm = *std::gmtime(&tt);
+  const std::tm tm = *std::gmtime(&tt);
   std::stringstream stream;
   stream << std::put_time(&tm, format.c_str());
   return stream.str();
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

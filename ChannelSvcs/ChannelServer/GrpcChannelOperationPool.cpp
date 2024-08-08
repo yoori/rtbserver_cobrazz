@@ -1,11 +1,8 @@
 // THIS
 #include "ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp"
 
-
 namespace AdServer::ChannelSvcs
 {
-
-const char* ASPECT_GRPC_CHANNEL_OPERATION_POOL = "ASPECT_GRPC_CHANNEL_OPERATION_POOL";
 
 GrpcChannelOperationPool::GrpcChannelOperationPool(
   Logger* logger,
@@ -14,7 +11,7 @@ GrpcChannelOperationPool::GrpcChannelOperationPool(
   const Endpoints& endpoints,
   const ConfigPoolClient& config_pool_client,
   const std::size_t grpc_client_timeout_ms,
-  const std::size_t time_duration_client_bad_ms)
+  const std::size_t time_duration_client_bad_sec)
   : logger_(ReferenceCounting::add_ref(logger)),
     task_processor_(task_processor),
     scheduler_(scheduler),
@@ -23,7 +20,7 @@ GrpcChannelOperationPool::GrpcChannelOperationPool(
       scheduler_,
       config_pool_client,
       task_processor,
-      Time{static_cast<time_t>(time_duration_client_bad_ms / 1000)})),
+      Time{static_cast<time_t>(time_duration_client_bad_sec)})),
     grpc_client_timeout_ms_(grpc_client_timeout_ms)
 {
   const std::size_t size = endpoints.size();
@@ -33,6 +30,168 @@ GrpcChannelOperationPool::GrpcChannelOperationPool(
     client_holders_.emplace_back(
       factory_client_holder_->create(host, port));
   }
+}
+
+template<class Client, class Request, class Response, class ...Args>
+std::unique_ptr<Response> GrpcChannelOperationPool::do_request(Args&& ...args) noexcept
+{
+  if (client_holders_.empty())
+  {
+    try
+    {
+      Stream::Error stream;
+      stream << FNS
+             << " client_holders is empty";
+      logger_->error(
+        stream.str(),
+        ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+    }
+    catch (...)
+    {
+    }
+
+    return {};
+  }
+
+  const std::size_t size = client_holders_.size();
+  for (std::size_t i = 0; i < size; ++i)
+  {
+    try
+    {
+      const std::size_t number = counter_.fetch_add(
+        1,
+        std::memory_order_relaxed);
+      const auto& client_holder = client_holders_[number % size];
+      if (client_holder->is_bad())
+      {
+        continue;
+      }
+
+      std::unique_ptr<Request> request;
+      if constexpr(std::is_same_v<Request, MatchRequest>)
+      {
+        request = create_match_request(std::forward<Args>(args)...);
+      }
+      else if constexpr(std::is_same_v<Request, GetCcgTraitsRequest>)
+      {
+        request = create_get_ccg_traits_request(std::forward<Args>(args)...);
+      }
+      else
+      {
+        static_assert(GrpcAlgs::AlwaysFalseV<Request>);
+      }
+
+      auto response = client_holder->template do_request<Client, Request, Response>(
+        std::move(request),
+        grpc_client_timeout_ms_);
+      if (!response)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << ": Internal grpc error";
+        logger_->error(
+          stream.str(),
+          ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+
+        continue;
+      }
+
+      const auto data_case = response->data_case();
+      if (data_case == Response::DataCase::kInfo)
+      {
+        return response;
+      }
+      else if (data_case == Response::DataCase::kError)
+      {
+        std::ostringstream stream;
+        stream << FNS
+               << "Error type=";
+
+        const auto& error = response->error();
+        const auto error_type = error.type();
+        switch (error_type)
+        {
+          case Proto::Error_Type::Error_Type_Implementation:
+          {
+            stream << "Implementation";
+            break;
+          }
+          case Proto::Error_Type::Error_Type_NotConfigured:
+          {
+            stream << "NotConfigured";
+            break;
+          }
+          default:
+          {
+            Stream::Error stream;
+            stream << FNS
+                   << ": "
+                   << "Unknown error type";
+            throw Exception(stream);
+          }
+        }
+
+        stream << ", description="
+               << error.description();
+        logger_->error(
+          stream.str(),
+          ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+        return response;
+      }
+      else
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown response type";
+        throw  Exception(stream);
+      }
+    }
+    catch (const eh::Exception& exc)
+    {
+      try
+      {
+        Stream::Error stream;
+        stream << FNS
+               << exc.what();
+        logger_->error(
+          stream.str(),
+          ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+      }
+      catch (...)
+      {
+      }
+    }
+    catch (...)
+    {
+      try
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error";
+        logger_->error(
+          stream.str(),
+          ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+      }
+      catch (...)
+      {
+      }
+    }
+  }
+
+  try
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "max tries is reached";
+    logger_->error(
+      stream.str(),
+      ASPECT_GRPC_CHANNEL_OPERATION_POOL);
+  }
+  catch (...)
+  {
+  }
+
+  return {};
 }
 
 GrpcChannelOperationPool::MatchResponsePtr
@@ -54,8 +213,8 @@ GrpcChannelOperationPool::match(
 {
   return do_request<
     Proto::ChannelServer_match_ClientPool,
-    Proto::MatchRequest,
-    Proto::MatchResponse>(
+    MatchRequest,
+    MatchResponse>(
       request_id,
       first_url,
       first_url_words,
@@ -78,8 +237,8 @@ GrpcChannelOperationPool::get_ccg_traits(
 {
   return do_request<
     Proto::ChannelServer_get_ccg_traits_ClientPool,
-    Proto::GetCcgTraitsRequest,
-    Proto::GetCcgTraitsResponse>(ids);
+    GetCcgTraitsRequest,
+    GetCcgTraitsResponse>(ids);
 }
 
 GrpcChannelOperationPool::MatchRequestPtr

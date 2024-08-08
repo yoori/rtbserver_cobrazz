@@ -3,6 +3,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <optional>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -125,7 +126,7 @@ namespace AdServer
 
       typedef std::map<unsigned long, unsigned long> TriggerChannelMap;
 
-      typedef AdServer::Commons::Optional<unsigned long> UserIdHashMod;
+      typedef std::optional<unsigned long> UserIdHashMod;
 
       struct ActionInfo
       {
@@ -151,7 +152,7 @@ namespace AdServer
           const UserIdHashMod& user_id_hash_mod_val,
           RequestVerificationType verify_type_val,
           RevenueType pub_imp_revenue_type_val,
-          const Commons::Optional<RevenueDecimal>& pub_imp_revenue_val,
+          const std::optional<RevenueDecimal>& pub_imp_revenue_val,
           const AdServer::Commons::UserId& user_id_val,
           const char* referrer_val,
           int viewability_val,
@@ -168,7 +169,7 @@ namespace AdServer
 
         RequestVerificationType verify_type;
         RevenueType pub_imp_revenue_type;
-        Commons::Optional<RevenueDecimal> pub_imp_revenue;
+        std::optional<RevenueDecimal> pub_imp_revenue;
         AdServer::Commons::UserId user_id;
         std::string referrer;
         int viewability;
@@ -198,8 +199,8 @@ namespace AdServer
         UserStatus user_status;
         AdServer::Commons::UserId user_id;
         CCGIdList ccg_ids;
-        AdServer::Commons::Optional<unsigned long> action_id;
-        AdServer::Commons::Optional<unsigned long> device_channel_id;
+        std::optional<unsigned long> action_id;
+        std::optional<unsigned long> device_channel_id;
         std::string order_id;
         RevenueDecimal action_value;
         std::string country;
@@ -248,8 +249,8 @@ namespace AdServer
         AdServer::Commons::UserId household_id;
         AdServer::Commons::UserId user_id;
         AdServer::Commons::UserId merged_user_id;
-        Commons::Optional<AdServer::Commons::UserId> request_user_id;
-        Commons::Optional<AdServer::CampaignSvcs::UserStatus> request_user_status;
+        std::optional<AdServer::Commons::UserId> request_user_id;
+        std::optional<AdServer::CampaignSvcs::UserStatus> request_user_status;
 
         bool fraud;
         bool disable_fraud_detection;
@@ -276,8 +277,8 @@ namespace AdServer
         ChannelIdArray history_channels;
         unsigned long last_platform_channel_id;
 
-        Commons::Optional<unsigned long> full_referer_hash;
-        Commons::Optional<unsigned long> short_referer_hash;
+        std::optional<unsigned long> full_referer_hash;
+        std::optional<unsigned long> short_referer_hash;
         std::string referer;
         std::list<std::string> urls;
         bool profile_referer;
@@ -497,10 +498,10 @@ namespace AdServer
         unsigned long size_id;
         unsigned long site_rate_id;
         std::string ext_tag_id;
-        Commons::Optional<unsigned long> page_load_id;
-        Commons::Optional<unsigned long> tag_visibility;
-        Commons::Optional<unsigned long> tag_top_offset;
-        Commons::Optional<unsigned long> tag_left_offset;
+        std::optional<unsigned long> page_load_id;
+        std::optional<unsigned long> tag_visibility;
+        std::optional<unsigned long> tag_top_offset;
+        std::optional<unsigned long> tag_left_offset;
         unsigned long max_ads;
         std::string tag_size;
         std::set<std::string> tag_sizes;

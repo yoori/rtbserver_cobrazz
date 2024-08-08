@@ -3,7 +3,7 @@
 
 // UNIXCOMMONS
 #include <eh/Exception.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 
 // THIS
 #include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
@@ -186,17 +186,18 @@ bool RocksDBWhithAlternativeProfileMap<Key, KeyAdapter>::remove_profile(
   const Key& key,
   OperationPriority op_priority)
 {
-  bool res = false;
+  bool result = false;
   if (rocksdb_profile_map_)
   {
-    res = rocksdb_profile_map_->remove_profile(key, op_priority);
+    result |= rocksdb_profile_map_->remove_profile(key, op_priority);
   }
 
   if (other_profile_map_)
   {
-    res |= other_profile_map_->remove_profile(key, op_priority);
+    result |= other_profile_map_->remove_profile(key, op_priority);
   }
-  return res;
+
+  return result;
 }
 
 template<class Key, class KeyAdapter>

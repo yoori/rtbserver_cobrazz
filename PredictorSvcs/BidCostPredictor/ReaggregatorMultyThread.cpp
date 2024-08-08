@@ -1,21 +1,21 @@
+// STD
+#include <filesystem>
+#include <regex>
+
 // THIS
 #include <Logger/StreamLogger.hpp>
 #include "LogHelper.hpp"
 #include "ReaggregatorMultyThread.hpp"
-#include "Remover.hpp"
 #include "Utils.hpp"
-
-// STD
-#include <regex>
 
 namespace Aspect
 {
-const char* REAGGREGATOR = "REAGGREGATOR";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char REAGGREGATOR[] = "REAGGREGATOR";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 ReaggregatorMultyThread::ReaggregatorMultyThread(
@@ -26,11 +26,52 @@ ReaggregatorMultyThread::ReaggregatorMultyThread(
     output_dir_(output_dir),
     prefix_(LogTraits::B::log_base_name()),
     logger_(ReferenceCounting::add_ref(logger)),
-    observer_(new ActiveObjectObserver(this)),
     processed_files_(std::make_shared<ProcessedFiles>()),
     persantage_(logger_, Aspect::REAGGREGATOR, 5)
 {
-  for (std::uint8_t i = 1; i <= COUNT_THREADS; ++i)
+  using Severity = Generics::ActiveObjectCallback::Severity;
+
+  if (!std::filesystem::is_directory(input_dir_))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not existing input directory="
+           << input_dir_;
+    throw Exception(stream);
+  }
+
+  if (!std::filesystem::is_directory(output_dir_))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not existing output directory="
+           << output_dir_;
+    throw Exception(stream);
+  }
+
+  observer_ = new ActiveObjectObserver(
+    [this] (
+      const Severity severity,
+      const String::SubString& description,
+      const char* error_code) {
+      if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "ReaggregatorMultyThread stopped due to incorrect operation of queues."
+               << " Reason: "
+               << description;
+        logger_->critical(
+          stream.str(),
+          Aspect::REAGGREGATOR,
+          error_code);
+
+        deactivate_object();
+      }
+    });
+
+  const auto size = static_cast<std::uint8_t>(ThreadID::MAX_NUMBER);
+  for (std::uint8_t i = 0; i < size; ++i)
   {
     task_runners_.emplace_back(new Generics::TaskRunner(observer_, 1));
   }
@@ -40,70 +81,147 @@ ReaggregatorMultyThread::ReaggregatorMultyThread(
 
 ReaggregatorMultyThread::~ReaggregatorMultyThread()
 {
-  shutdown_manager_.stop();
-  observer_->clear_delegate();
-  wait();
+  try
+  {
+    const auto need_remove_files = Utils::get_directory_files(
+      output_dir_,
+      "~");
+    for (const auto& path : need_remove_files)
+    {
+      std::remove(path.c_str());
+    }
+  }
+  catch (...)
+  {
+  }
 }
 
-void ReaggregatorMultyThread::start()
+template<ConceptMemberPtr MemPtr, class ...Args>
+bool ReaggregatorMultyThread::post_task(
+  const ThreadID id,
+  MemPtr mem_ptr,
+  Args&& ...args) noexcept
 {
-  logger_->info(
-    std::string("Reaggregator: started"),
-    Aspect::REAGGREGATOR);
+    try
+    {
+      if (task_runners_.size() <= static_cast<std::size_t>(id))
+      {
+        Stream::Error stream;
+        stream << "Thread id="
+               << static_cast<std::size_t>(id)
+               << " greater than number of threads="
+               << task_runners_.size();
+        throw Exception(stream);
+      }
 
-  if (!Utils::exist_directory(input_dir_))
-  {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Not existing input directory="
-         << input_dir_;
-    throw Exception(ostr);
+      task_runners_[static_cast<std::size_t>(id)]->enqueue_task(
+        AdServer::Commons::make_delegate_task(
+          std::bind(
+            mem_ptr,
+            this,
+            std::forward<Args>(args)...)));
+
+      return true;
+    }
+    catch (const eh::Exception& exc)
+    {
+      deactivate_object();
+
+      Stream::Error stream;
+      stream << FNS
+             << "Can't enqueue_task"
+             << " Reason: "
+             << exc.what();
+      logger_->critical(stream.str(), Aspect::REAGGREGATOR);
+    }
+    catch (...)
+    {
+      deactivate_object();
+
+      Stream::Error stream;
+      stream << FNS
+             << "Can't enqueue_task"
+             << " Reason: Unknown error";
+      logger_->critical(stream.str(), Aspect::REAGGREGATOR);
+    }
+
+    return false;
   }
 
-  if (!Utils::exist_directory(output_dir_))
+void ReaggregatorMultyThread::activate_object_()
+{
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Not existing output directory="
-         << output_dir_;
-    throw Exception(ostr);
+    std::ostringstream stream;
+    stream << FNS
+           << "Reaggregator: started";
+    logger_->info(stream.str(), Aspect::REAGGREGATOR);
   }
-
-  if (task_runners_.empty())
-  {
-    throw Exception("task_runners is empty");
-  }
-
-  is_running_ = true;
 
   try
   {
-    for (auto& task_runner : task_runners_)
+    for (auto& task_runner: task_runners_)
     {
       task_runner->activate_object();
     }
   }
-  catch(const eh::Exception& ex)
+  catch (const eh::Exception &exc)
   {
-    shutdown_manager_.stop();
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << ": Can't init task runner : "
-         << ex.what();
-    throw Exception(ostr);
+    Stream::Error stream;
+    stream << FNS
+           << "Can't init task runner : "
+           << exc.what();
+    throw Exception(stream);
+  }
+  catch (...)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Can't init task runner : Unknown error";
+    throw Exception(stream);
   }
 
-  reaggregate();
+  helper_thread_ = std::make_unique<std::jthread>([this] () {
+    try
+    {
+      reaggregate();
+    }
+    catch (const eh::Exception& exc)
+    {
+      try
+      {
+        deactivate_object();
+      }
+      catch (...)
+      {
+      }
+
+      Stream::Error stream;
+      stream << FNS
+             << "Reaggregator is failed. Reason: "
+             << exc.what();
+      logger_->critical(stream.str(), Aspect::REAGGREGATOR);
+    }
+    catch (...)
+    {
+      try
+      {
+        deactivate_object();
+      }
+      catch (...)
+      {
+      }
+
+      Stream::Error stream;
+      stream << FNS
+             << "Reaggregator is failed. Reason: Unknown error";
+      logger_->critical(stream.str(), Aspect::REAGGREGATOR);
+    }
+  });
 }
 
-void ReaggregatorMultyThread::wait() noexcept
+void ReaggregatorMultyThread::wait_object_()
 {
-  if (!is_running_)
-    return;
-
-  is_running_ = false;
-
-  shutdown_manager_.wait();
+  helper_thread_.reset();
 
   for (auto& task_runner : task_runners_)
   {
@@ -112,7 +230,8 @@ void ReaggregatorMultyThread::wait() noexcept
       task_runner->wait_for_queue_exhausting();
     }
     catch (...)
-    {}
+    {
+    }
 
     try
     {
@@ -120,71 +239,62 @@ void ReaggregatorMultyThread::wait() noexcept
       task_runner->wait_object();
     }
     catch (...)
-    {}
-  }
-
-  for (auto& task_runner : task_runners_)
-  {
-    try
     {
-      task_runner->clear();
     }
-    catch (...)
-    {}
   }
 
   task_runners_.clear();
 
-  if (!is_success_completed_)
   {
-    try
-    {
-        auto need_remove_files =
-                Utils::get_directory_files(
-                        output_dir_,
-                        "~");
-        for (const auto& path : need_remove_files)
-        {
-          std::remove(path.c_str());
-        }
-    }
-    catch (...)
-    {}
+    std::ostringstream stream;
+    stream << FNS
+           << "Reaggregator: is stopped";
+    logger_->info(stream.str(), Aspect::REAGGREGATOR);
   }
 }
 
-void ReaggregatorMultyThread::stop() noexcept
+void ReaggregatorMultyThread::deactivate_object_()
 {
-  shutdown_manager_.stop();
-  logger_->info(
-    std::string("Reaggregator was abborted..."),
-    Aspect::REAGGREGATOR);
+  if (!is_success_completed_.load())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Reaggregator was aborted...";
+    logger_->critical(stream.str(), Aspect::REAGGREGATOR);
+  }
 }
 
-const char* ReaggregatorMultyThread::name() noexcept
+std::string ReaggregatorMultyThread::name() noexcept
 {
   return "Reaggregator";
 }
 
 void ReaggregatorMultyThread::reaggregate()
 {
-  const auto input_files =
-    Utils::get_directory_files(
-      input_dir_,
-      prefix_);
+  const auto input_files = Utils::get_directory_files(
+    input_dir_,
+    prefix_);
 
   const std::regex date_regex("\\d{4}-\\d{2}-\\d{2}");
   for (const auto& file_path : input_files)
   {
     std::smatch date_match;
     if(std::regex_search(file_path, date_match, date_regex)
-       && !date_match.empty())
+      && !date_match.empty())
     {
       std::stringstream stream;
       stream << date_match[0];
 
-      DayTimestamp  date;
+      DayTimestamp date;
       stream >> date;
+
+      if (!stream)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not correct name of file";
+        throw Exception(stream);
+      }
 
       aggregated_files_.emplace(date, file_path);
     }
@@ -194,32 +304,39 @@ void ReaggregatorMultyThread::reaggregate()
 
   if (aggregated_files_.empty())
   {
-    shutdown_manager_.stop();
-    logger_->info(
-      std::string("Everything is already aggregated"),
-      Aspect::REAGGREGATOR);
+    is_success_completed_.store(true);
+
+    std::ostringstream stream;
+    stream << FNS
+           << "Everything is already reaggregated";
+    logger_->info(stream.str(), Aspect::REAGGREGATOR);
+
+    deactivate_object();
     return;
   }
 
   persantage_.set_total_number(aggregated_files_.size());
 
-  logger_->info(
-    "Total file needed to process = "
-    + std::to_string(aggregated_files_.size()),
-    Aspect::REAGGREGATOR);
+  {
+    std::ostringstream stream;
+    stream << FNS
+           << "Total file needed to process = "
+           << aggregated_files_.size();
+    logger_->info(stream.str(), Aspect::REAGGREGATOR);
+  }
 
   current_date_ = aggregated_files_.begin()->first;
 
-  for (int i = 1; i <= 2; ++i)
+  for (int i = 1; i <= 3; i += 1)
   {
     if (!post_task(
       ThreadID::Read,
       &ReaggregatorMultyThread::do_read))
     {
-      Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << " Fatal error: initial read is failed";
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Fatal error: initial read is failed";
+      throw Exception(stream);
     }
   }
 }
@@ -228,13 +345,14 @@ void ReaggregatorMultyThread::remove_unique(
   AggregatedFiles& files)
 {
   if (files.empty())
+  {
     return;
+  }
 
   std::list<DayTimestamp> need_remove;
-
   auto it = files.begin();
   auto it_next = it;
-  auto it_end = files.end();
+  const auto it_end = files.end();
   std::size_t count = 1;
   while (++it_next != it_end)
   {
@@ -246,13 +364,18 @@ void ReaggregatorMultyThread::remove_unique(
     else
     {
       if (count == 1)
+      {
         need_remove.emplace_back(it->first);
+      }
       it = it_next;
       count = 1;
     }
   }
+
   if (count == 1)
+  {
     need_remove.emplace_back(it->first);
+  }
 
   for (const auto& date : need_remove)
   {
@@ -264,8 +387,10 @@ void ReaggregatorMultyThread::do_clean(
   Collector& collector,
   const PoolType poolType) noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
 
   try
   {
@@ -279,7 +404,8 @@ void ReaggregatorMultyThread::do_clean(
     }
   }
   catch (...)
-  {}
+  {
+  }
 }
 
 void ReaggregatorMultyThread::do_write(
@@ -287,15 +413,19 @@ void ReaggregatorMultyThread::do_write(
   Collector& collector,
   const LogProcessing::DayTimestamp& date) noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
 
   post_task(
     ThreadID::Read,
     &ReaggregatorMultyThread::do_read);
 
   if (collector.empty())
+  {
     return;
+  }
 
   ResultFile result_file;
 
@@ -317,10 +447,11 @@ void ReaggregatorMultyThread::do_write(
     const auto& [temp_path, result_path] = result_file;
     if (std::rename(
       temp_path.c_str(),
-      result_path.c_str())) {
+      result_path.c_str()))
+    {
       Stream::Error ostr;
-      ostr << __PRETTY_FUNCTION__
-           << ": Can't rename from="
+      ostr << FNS
+           << "Can't rename from="
            << temp_path
            << ", to="
            << result_path;
@@ -336,9 +467,9 @@ void ReaggregatorMultyThread::do_write(
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << ": Reason:"
+    Stream::Error stream;
+    stream << FNS
+           << "Reason:"
            << "[date="
            << date
            << "] "
@@ -353,12 +484,16 @@ void ReaggregatorMultyThread::do_write(
 
 void ReaggregatorMultyThread::do_read() noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
 
   if (aggregated_files_.empty())
   {
-    if (!is_read_stoped_)
+    static bool is_read_stoped = false;
+
+    if (!is_read_stoped)
     {
       post_task(
         ThreadID::Calculate,
@@ -371,7 +506,7 @@ void ReaggregatorMultyThread::do_read() noexcept
         Addressee::Calculator);
     }
 
-    is_read_stoped_ = true;
+    is_read_stoped = true;
     return;
   }
 
@@ -389,9 +524,9 @@ void ReaggregatorMultyThread::do_read() noexcept
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << ": Can't add file="
+    Stream::Error stream;
+    stream << FNS
+           << "Can't add file="
            << file_path
            << " to collector. Reason: "
            << exc.what();
@@ -403,36 +538,37 @@ void ReaggregatorMultyThread::do_read() noexcept
     return;
   }
 
+  bool need_task_read_in_merge = false;
   const bool need_flush = (date != current_date_);
   if (need_flush)
   {
-    if (!post_task(
+    post_task(
       ThreadID::Calculate,
       &ReaggregatorMultyThread::do_flush,
-      current_date_))
-      return;
+      current_date_);
 
     current_date_ = date;
   }
   else
   {
-    post_task(
-      ThreadID::Read,
-      &ReaggregatorMultyThread::do_read);
+    need_task_read_in_merge = true;
   }
 
   post_task(
     ThreadID::Calculate,
     &ReaggregatorMultyThread::do_merge,
     std::move(temp_collector),
-    file_path);
+    file_path,
+    need_task_read_in_merge);
 }
 
 void ReaggregatorMultyThread::do_flush(
   const LogProcessing::DayTimestamp& date) noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
 
   try
   {
@@ -450,11 +586,10 @@ void ReaggregatorMultyThread::do_flush(
   }
   catch (const eh::Exception& exc)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << ": Can't Flush="
-           << " to collector. Reason: "
-           << exc.what() << "\n";
+    Stream::Error stream;
+    stream << FNS
+           << "Can't Flush to collector. Reason: "
+           << exc.what() << '\n';
 
     for (const auto& path_file : *processed_files_)
     {
@@ -468,10 +603,20 @@ void ReaggregatorMultyThread::do_flush(
 
 void ReaggregatorMultyThread::do_merge(
   Collector& temp_collector,
-  const std::string& file_path) noexcept
+  const std::string& file_path,
+  const bool need_read_task) noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
+
+  if (need_read_task)
+  {
+    post_task(
+      ThreadID::Read,
+      &ReaggregatorMultyThread::do_read);
+  }
 
   try
   {
@@ -487,8 +632,8 @@ void ReaggregatorMultyThread::do_merge(
   catch (const eh::Exception& exc)
   {
     std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << ": Can't add file="
+    stream << FNS
+           << "Can't add file="
            << file_path
            << " to collector. Reason: "
            << exc.what() << "\n"
@@ -501,8 +646,10 @@ void ReaggregatorMultyThread::do_merge(
 void ReaggregatorMultyThread::do_stop(
   const Addressee addresee) noexcept
 {
-  if (shutdown_manager_.is_stoped())
+  if (!active())
+  {
     return;
+  }
 
   if (addresee == Addressee::Calculator)
   {
@@ -513,11 +660,13 @@ void ReaggregatorMultyThread::do_stop(
   }
   else if (addresee == Addressee::Writer)
   {
-    is_success_completed_ = true;
-    shutdown_manager_.stop();
-    logger_->info(
-      std::string("Reaggregator completed successfully"),
-      Aspect::REAGGREGATOR);
+    is_success_completed_.store(true);
+    deactivate_object();
+
+    std::ostringstream stream;
+    stream << FNS
+           << "Reaggregator completed successfully";
+    logger_->info(stream.str(), Aspect::REAGGREGATOR);
   }
 }
 
@@ -528,34 +677,14 @@ void ReaggregatorMultyThread::dump_file(
   Collector& collector,
   ResultFile& result_file)
 {
-  auto generated_path =
-    Utils::generate_file_path(output_dir, prefix, date);
-  const auto& temp_file_path =
-    generated_path.first;
+  auto generated_path = Utils::generate_file_path(
+    output_dir,
+    prefix,
+    date);
+  const auto& temp_file_path = generated_path.first;
 
   LogHelper<LogTraits>::save(temp_file_path, collector);
   result_file = std::move(generated_path);
 }
 
-void ReaggregatorMultyThread::report_error(
-  Severity severity,
-  const String::SubString& description,
-  const char* error_code) noexcept
-{
-  if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
-  {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Aggregator stopped due to incorrect operation of queues."
-           << " Reason: "
-           << description;
-    logger_->critical(
-      stream.str(),
-      Aspect::REAGGREGATOR,
-      error_code);
-  }
-}
-
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

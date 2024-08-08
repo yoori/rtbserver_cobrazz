@@ -162,8 +162,7 @@ namespace Action
   };
 
   Frontend::Frontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -184,8 +183,7 @@ namespace Action
         response_factory,
         frontend_config->get().ActionFeConfiguration()->threads(),
         0), // max pending tasks
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::ACTION_FRONTEND)
@@ -279,21 +277,13 @@ namespace Action
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -304,10 +294,7 @@ namespace Action
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
@@ -780,9 +767,7 @@ namespace Action
         trigger_match_result->matched_channels.url_channels.length() != 0 ||
         trigger_match_result->matched_channels.url_keyword_channels.length() != 0))
       {
-        AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-          grpc_distributor = user_info_client_->grpc_distributor();
-
+        const auto grpc_distributor = user_info_client_->grpc_distributor();
         bool is_grpc_success = false;
         if (grpc_distributor)
         {
@@ -1022,6 +1007,45 @@ namespace Action
           }
         }
 
+        is_grpc_success = false;
+        auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+        if (grpc_campaign_manager_pool)
+        {
+          using ChannelTriggerMatchInfo = FrontendCommons::GrpcCampaignManagerPool::ChannelTriggerMatchInfo;
+
+          std::vector<ChannelTriggerMatchInfo> pkw_channels;
+          const std::size_t size = trigger_match_result->matched_channels.page_channels.length();
+          pkw_channels.reserve(size);
+          for (std::size_t i = 0; i < size; i += 1)
+          {
+            pkw_channels.emplace_back(
+              trigger_match_result->matched_channels.page_channels[i].trigger_channel_id,
+              trigger_match_result->matched_channels.page_channels[i].id);
+          }
+
+          auto response = grpc_campaign_manager_pool->process_match_request(
+            user_id,
+            {},
+            now,
+            {},
+            {},
+            pkw_channels,
+            {},
+            common_config_->colo_id(),
+            {},
+            {},
+            {});
+          if (response && !response->has_error())
+          {
+            is_grpc_success = true;
+          }
+        }
+
+        if (is_grpc_success)
+        {
+          return;
+        }
+
         try
         {
           AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
@@ -1044,7 +1068,6 @@ namespace Action
             Aspect::ACTION_FRONTEND,
             "ADS-ICON-4");
         }
-
       }
     }
     catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
@@ -1177,9 +1200,7 @@ namespace Action
 
         if(user_bind_client_)
         {
-          AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-            grpc_distributor = user_bind_client_->grpc_distributor();
-
+          const auto grpc_distributor = user_bind_client_->grpc_distributor();
           bool is_grpc_success = false;
           if (grpc_distributor)
           {
@@ -1291,9 +1312,7 @@ namespace Action
     // link ifa
     if(user_bind_client_ && !request_info.ifa.empty())
     {
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-        grpc_distributor = user_bind_client_->grpc_distributor();
-
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
       bool is_grpc_success = false;
       if (grpc_distributor)
       {
@@ -1431,7 +1450,7 @@ namespace Action
             this,
             request_info.time,
             match_user_id,
-            (request_info.action_id.present() ? *request_info.action_id : 0),
+            (request_info.action_id ? *request_info.action_id : 0),
               request_info.referer));
         }
         catch (const Generics::TaskRunner::Overflow&)
@@ -1450,11 +1469,164 @@ namespace Action
   {
     static const char* FUN = "Frontend::action_taken_all_()";
 
+    bool is_grpc_success = false;
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      using GeoInfo = FrontendCommons::GrpcCampaignManagerPool::GeoInfo;
+
+      try
+      {
+        const auto& time = request_info.time;
+        const auto& test_request = request_info.test_request;
+        const auto& log_as_test = request_info.log_as_test;
+        const auto& referer = request_info.referer;
+        const auto& order_id = request_info.order_id;
+
+        std::vector<GeoInfo> location;
+        location.emplace_back(
+          request_info.location.country_code,
+          request_info.location.region,
+          request_info.location.city);
+
+        const bool action_value_defined =  request_info.value.has_value();
+        std::string action_value = action_value_defined ? GrpcAlgs::pack_decimal(*request_info.value) : std::string();
+
+        const bool campaign_id_defined = request_info.campaign_id.has_value();
+        const std::uint32_t campaign_id = campaign_id_defined ? *request_info.campaign_id : 0;
+
+        const bool action_id_defined = request_info.action_id.has_value();
+        const std::uint32_t action_id = action_id_defined ? *request_info.action_id : 0;
+
+        std::string ip_hash;
+        std::string peer_ip;
+        if(common_config_->ip_logging_enabled())
+        {
+          FrontendCommons::ip_hash(
+            ip_hash,
+            request_info.peer_ip,
+            common_config_->ip_salt());
+          peer_ip = request_info.peer_ip;
+        }
+
+        const std::vector<std::uint32_t> platform_ids(
+          std::begin(request_info.platform_ids),
+          std::end(request_info.platform_ids));
+
+        const Commons::UserId* verify_user_ids[] = {
+          &request_info.user_id,
+          &request_info.utm_resolved_user_id,
+          &utm_cookie_resolved_user_id
+        };
+        std::set<Commons::UserId> processed_user_ids;
+        const std::size_t verify_user_ids_size =
+          sizeof(verify_user_ids) / sizeof(verify_user_ids[0]);
+        for(std::size_t index = 0; index < verify_user_ids_size; index += 1)
+        {
+          const auto& verify_user_id = *verify_user_ids[index];
+
+          if(!verify_user_id.is_null() &&
+            verify_user_id != AdServer::Commons::PROBE_USER_ID &&
+            processed_user_ids.find(verify_user_id) == processed_user_ids.end())
+          {
+            const auto& user_id = verify_user_id;
+            const auto& user_status = AdServer::CampaignSvcs::US_OPTIN;
+
+            auto response = grpc_campaign_manager_pool->action_taken(
+              time,
+              test_request,
+              log_as_test,
+              campaign_id_defined,
+              campaign_id,
+              action_id_defined,
+              action_id,
+              order_id,
+              action_value_defined,
+              action_value,
+              referer,
+              user_status,
+              user_id,
+              ip_hash,
+              platform_ids,
+              peer_ip,
+              location);
+            if (!response || response->has_error())
+            {
+              throw Exception("action_taken is failed");
+            }
+
+            if (stats_)
+            {
+              stats_->consider_request(test_request, user_status);
+            }
+
+            processed_user_ids.insert(verify_user_id);
+          }
+        }
+
+        if (processed_user_ids.empty())
+        {
+          const auto user_id = Commons::UserId{};
+          const auto user_status = request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT ?
+            AdServer::CampaignSvcs::US_UNDEFINED : AdServer::CampaignSvcs::US_OPTOUT;
+
+          auto response = grpc_campaign_manager_pool->action_taken(
+            time,
+            test_request,
+            log_as_test,
+            campaign_id_defined,
+            campaign_id,
+            action_id_defined,
+            action_id,
+            order_id,
+            action_value_defined,
+            action_value,
+            referer,
+            user_status,
+            user_id,
+            ip_hash,
+            platform_ids,
+            peer_ip,
+            location);
+          if (!response || response->has_error())
+          {
+            throw Exception("action_taken is failed");
+          }
+
+          if (stats_)
+          {
+            stats_->consider_request(test_request, user_status);
+          }
+        }
+
+        is_grpc_success = true;
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << exc.what();
+        logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error";
+        logger()->error(stream.str(), Aspect::ACTION_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+    {
+      return;
+    }
+
     try
     {      
       AdServer::CampaignSvcs::CampaignManager::ActionInfo verify_action_info;
-
-      // verify_action_info.user_id, verify_action_info.user_status must be initialized in loop
 
       verify_action_info.time = CorbaAlgs::pack_time(request_info.time);
       verify_action_info.test_request = request_info.test_request;
@@ -1468,15 +1640,15 @@ namespace Action
       }
 
       verify_action_info.referer << request_info.referer;
-      verify_action_info.action_value_defined = request_info.value.present();
-      if(request_info.value.present())
+      verify_action_info.action_value_defined = request_info.value.has_value();
+      if(request_info.value)
       {
         verify_action_info.action_value = CorbaAlgs::pack_decimal(*request_info.value);
       }
 
       verify_action_info.order_id << request_info.order_id;
     
-      if(request_info.campaign_id.present())
+      if(request_info.campaign_id)
       {
         verify_action_info.campaign_id_defined = true;
         verify_action_info.campaign_id = *request_info.campaign_id;
@@ -1486,7 +1658,7 @@ namespace Action
         verify_action_info.campaign_id_defined = false;
       }
 
-      if(request_info.action_id.present())
+      if(request_info.action_id)
       {
         verify_action_info.action_id_defined = true;
         verify_action_info.action_id = *request_info.action_id;

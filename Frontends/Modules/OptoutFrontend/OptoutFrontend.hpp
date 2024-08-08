@@ -13,8 +13,6 @@
 #include <String/StringManip.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
 
@@ -28,6 +26,7 @@
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "OptoutFrontendStat.hpp"
 #include "RequestInfoFiller.hpp"
@@ -49,14 +48,12 @@ namespace AdServer
     DECLARE_EXCEPTION(RequestFailure, Exception);
 
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using HttpResponse = FrontendCommons::HttpResponse;
 
   public:
     OptoutFrontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -139,8 +136,7 @@ namespace AdServer
       HttpResponse& response) noexcept;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     /* configuration */
     std::string config_file_;

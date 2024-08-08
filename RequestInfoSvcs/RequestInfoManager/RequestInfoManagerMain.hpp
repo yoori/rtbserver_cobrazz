@@ -9,7 +9,7 @@
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include "RequestInfoManager.hpp"
 #include "RequestInfoManagerImpl.hpp"
@@ -20,8 +20,8 @@ class RequestInfoManagerApp_
     public Generics::CompositeActiveObject
 {
 public:
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);

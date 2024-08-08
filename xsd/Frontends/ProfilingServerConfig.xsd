@@ -93,7 +93,7 @@
         minOccurs="1"
         maxOccurs="1"/>
 
-      <xsd:element name="GrpcClientPool"
+      <xsd:element name="UserBindGrpcClientPool"
         type="GrpcClientPoolType"
         minOccurs="1"
         maxOccurs="1"/>

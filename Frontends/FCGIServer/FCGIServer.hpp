@@ -1,7 +1,5 @@
 #pragma once
 
-//#include <limits.h>
-
 #include <eh/Exception.hpp>
 #include <Generics/Singleton.hpp>
 #include <Generics/CompositeActiveObject.hpp>

@@ -31,9 +31,16 @@
       <xsd:element name="Logger" type="ErrorLoggerType"/>
       <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="ChannelServerEndpointList" type="EndpointListType"/>
+      <xsd:element name="CampaignManagerEndpointList" type="EndpointListType"/>
+      <xsd:element name="ChannelGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="CampaignGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="UserBindGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="UserInfoGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
     </xsd:sequence>
 
     <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
+    <xsd:attribute name="time_duration_grpc_client_mark_bad" type="xsd:nonNegativeInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="HttpServerType">
@@ -50,6 +57,18 @@
 
   <xsd:complexType name="ModuleType">
     <xsd:attribute name="name" type="xsd:string" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointType">
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="service_index" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointListType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="EndpointType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
 </xsd:schema>

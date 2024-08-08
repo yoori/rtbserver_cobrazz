@@ -16,8 +16,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Uuid.hpp>
 #include <Sync/PosixLock.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -34,9 +32,7 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
-
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -59,15 +55,13 @@ namespace Instantiate
   {
   public:
     using Exception = FrontendCommons::HTTPExceptions::Exception;
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using AdInstFeConfiguration = Configuration::FeConfig::AdInstFeConfiguration_type;
     using HttpResponse = FrontendCommons::HttpResponse;
 
     Frontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -144,8 +138,7 @@ namespace Instantiate
     instantiate_click_(
       HttpResponse& response,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::InstantiateAdResult*
-        inst_ad_result)
+      const AdServer::Commons::RequestId& request_id)
       /*throw(Exception)*/;
 
     int
@@ -163,8 +156,7 @@ namespace Instantiate
       /*throw(eh::Exception)*/;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     CommonConfigPtr common_config_;
     ConfigPtr config_;

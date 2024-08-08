@@ -1,6 +1,8 @@
 #ifndef CAMPAIGNMANAGER_BIDCOSTPROVIDER_HPP
 #define CAMPAIGNMANAGER_BIDCOSTPROVIDER_HPP
 
+#include <optional>
+
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Hash.hpp>
@@ -102,7 +104,7 @@ namespace CampaignSvcs
       const std::string &file_name = "bid_cost.csv")
       /*throw(Exception)*/;
 
-    AdServer::Commons::Optional<RevenueDecimal>
+    std::optional<RevenueDecimal>
     get_bid_cost(
       const RequestParams& request_params,
       const RevenueDecimal& allowable_lose_win_percentage,

@@ -1,27 +1,20 @@
 #ifndef BIDCOSTPREDICTOR_PROCESSOR_HPP
 #define BIDCOSTPREDICTOR_PROCESSOR_HPP
 
-// THIS
+// UNIXCOMMONS
+#include <Generics/CompositeActiveObject.hpp>
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-class Processor : public virtual ReferenceCounting::Interface
+class Processor : public Generics::CompositeSetActiveObject
 {
 public:
   Processor() = default;
 
-  virtual void start() = 0;
-
-  virtual void stop() noexcept = 0;
-
-  virtual void wait() noexcept = 0;
-
-  virtual const char* name() noexcept = 0;
+  virtual std::string name() noexcept = 0;
 
 protected:
   virtual ~Processor() = default;
@@ -29,7 +22,6 @@ protected:
 
 using Processor_var = ReferenceCounting::SmartPtr<Processor>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_PROCESSOR_HPP

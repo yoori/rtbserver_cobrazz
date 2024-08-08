@@ -13,8 +13,6 @@
 #include <Logger/DistributorLogger.hpp>
 #include <HTTP/Http.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
 #include <ChannelSvcs/ChannelServer/GrpcChannelOperationPool.hpp>
@@ -30,6 +28,7 @@
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -48,15 +47,18 @@ namespace AdServer
     public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
+  private:
+    struct ChannelMatch;
+
   public:
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     ClickFrontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -168,14 +170,12 @@ namespace AdServer
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
-      const String::SubString& peer_ip_val) const
-      noexcept;
+      const std::vector<ChannelMatch>& trigger_match_page_channels,
+      const std::vector<std::uint32_t>& history_match_channels,
+      const String::SubString& peer_ip_val) const noexcept;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     std::string config_file_;
 
@@ -192,7 +192,6 @@ namespace AdServer
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
-    AdServer::ChannelSvcs::GrpcChannelOperationPoolPtr grpc_channel_operation_pool_;
 
     FrontendCommons::UserBindClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;
@@ -218,6 +217,26 @@ namespace AdServer
 //
 namespace AdServer
 {
+
+  struct ClickFrontend::ChannelMatch
+  {
+    ChannelMatch(unsigned long channel_id_val,
+                 unsigned long channel_trigger_id_val)
+      : channel_id(channel_id_val),
+        channel_trigger_id(channel_trigger_id_val)
+    {}
+
+    bool operator<(const ChannelMatch& right) const
+    {
+      return (channel_id < right.channel_id ||
+        (channel_id == right.channel_id &&
+         channel_trigger_id < right.channel_trigger_id));
+    }
+
+    unsigned long channel_id;
+    unsigned long channel_trigger_id;
+  };
+
   inline
   ClickFrontend::~ClickFrontend() noexcept
   {}

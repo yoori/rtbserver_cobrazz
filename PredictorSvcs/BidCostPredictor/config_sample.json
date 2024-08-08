@@ -4,6 +4,13 @@
   "config" : {
     "log_path": "/home/artem_bogdanov/bid_cost_predictor.log",
     "pid_path": "/home/artem_bogdanov/daemon.pid",
+    "pg_connection" : {
+      "host": "postdb00",
+      "port": 5432,
+      "dbname": "stat",
+      "user": "ro",
+      "password": "Q1oL6mm5hPTjnDQ"
+    },
     "model" : {
       "period": 300,
       "input_directory": "/home/artem_bogdanov/BidCostStatAgg",

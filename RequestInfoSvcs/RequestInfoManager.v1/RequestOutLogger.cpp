@@ -1026,13 +1026,13 @@ namespace RequestInfoSvcs
         add_data.add(
           CollectorT::DataT::KeyT(
             ri.tag_id,
-            ri.tag_top_offset.present() ?
+            ri.tag_top_offset ?
               OptionalUlong(*ri.tag_top_offset) :
               OptionalUlong(),
             ri.tag_left_offset.present() ?
               OptionalUlong(*ri.tag_left_offset) :
               OptionalUlong(),
-            ri.tag_visibility.present() ?
+            ri.tag_visibility ?
               OptionalUlong(*ri.tag_visibility) :
               OptionalUlong(),
             ri.test_request),

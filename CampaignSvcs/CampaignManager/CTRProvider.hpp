@@ -1,6 +1,8 @@
 #ifndef CAMPAIGNMANAGER_CTRPROVIDER_HPP
 #define CAMPAIGNMANAGER_CTRPROVIDER_HPP
 
+#include <optional>
+
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Hash.hpp>
@@ -279,7 +281,7 @@ namespace CampaignSvcs
       ModelValue(ModelValue&& init);
 
       // some features can not use Campaign/Creative basic features
-      Commons::Optional<RevenueDecimal> ctr;
+      std::optional<RevenueDecimal> ctr;
 
       // FTRL weight
       float request_features_weight; // ??

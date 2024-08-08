@@ -407,6 +407,23 @@ namespace PlainStorage
     std::ostream& print_(
       std::ostream& ostr, const char* offset = "") const noexcept;
 
+    Stream::Error& print_(
+      Stream::Error& ostr, const char* offset = "") const noexcept;
+
+  private:
+    template<typename OStream>
+    OStream&
+    print_impl_(
+      OStream& ostr, const char* offset) const noexcept;
+
+    template<typename IndexBufElem>
+    void print_exception_(
+      std::ostream& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept;
+
+    template<typename IndexBufElem>
+    void print_exception_(
+      Stream::Error& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept;
+
   protected:
     struct WriteBlockWithPos
     {
@@ -1068,7 +1085,7 @@ namespace PlainStorage
       ostr << FUN << ": Empty index of write blocks";
       throw CorruptedRecord(ostr);
     }
-    
+
     SizeType cur_size = full_size_;
 
     typename WriteBlockWithPosList::iterator erase_it = write_blocks_.end();
@@ -1222,6 +1239,27 @@ namespace PlainStorage
   WriteRecordImpl::print_(std::ostream& ostr, const char* offset)
     const noexcept
   {
+    return print_impl_(ostr, offset);
+  }
+
+  template<typename NextIndexType,
+    typename NextIndexSerializerType, typename SyncPolicyType>
+  Stream::Error&
+  WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteRecordImpl::print_(Stream::Error& ostr, const char* offset)
+    const noexcept
+  {
+    return print_impl_(ostr, offset);
+  }
+
+  template<typename NextIndexType,
+    typename NextIndexSerializerType, typename SyncPolicyType>
+  template<typename OStream>
+  OStream&
+  WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteRecordImpl::print_impl_(OStream& ostr, const char* offset)
+    const noexcept
+  {
     ostr << offset << "this = " << this << std::endl <<
       offset << "full_size = " << full_size_ << std::endl <<
       offset << "block sequence: " << std::endl;
@@ -1280,13 +1318,8 @@ namespace PlainStorage
         Generics::ArrayAutoPtr<unsigned char> index_buf(to_read_index_size);
         it->block->read(next_index_offset, index_buf.get(), to_read_index_size);
 
-        ostr << std::hex << std::setfill('0');
-        for(unsigned long i = 0; i < to_read_index_size; ++i)
-        {
-          ostr << (i != 0 ? " " : "") << "0x" << std::setw(2) <<
-            static_cast<unsigned int>(index_buf[i]);
-        }
-        ostr << "}" << std::dec << std::setw(0);
+        print_exception_(ostr, index_buf.get(), to_read_index_size);
+        ostr << "}";
       }
 
       ostr << "): " << std::endl;
@@ -1295,6 +1328,38 @@ namespace PlainStorage
 
     ostr << std::endl;
     return ostr;
+  }
+
+  template<typename NextIndexType,
+    typename NextIndexSerializerType, typename SyncPolicyType>
+  template<typename IndexBufElem>
+  void
+  WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteRecordImpl::print_exception_(
+    std::ostream& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept
+  {
+    ostr << std::hex << std::setfill('0');
+    for(unsigned long i = 0; i < to_read_index_size; ++i)
+    {
+      ostr << (i != 0 ? " " : "") << "0x" << std::setw(2) <<
+        static_cast<unsigned int>(index_buf[i]);
+    }
+    ostr << std::dec << std::setw(0);
+  }
+
+  template<typename NextIndexType,
+    typename NextIndexSerializerType, typename SyncPolicyType>
+  template<typename IndexBufElem>
+  void
+  WriteRecordLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteRecordImpl::print_exception_(
+    Stream::Error& ostr, const IndexBufElem* index_buf, uint32_t to_read_index_size) const noexcept
+  {
+    for(unsigned long i = 0; i < to_read_index_size; ++i)
+    {
+      ostr << (i != 0 ? " " : "") << "0x" <<
+        Stream::MemoryStream::hex_out(static_cast<unsigned int>(index_buf[i]), false, 2, '0');
+    }
   }
 
   /**

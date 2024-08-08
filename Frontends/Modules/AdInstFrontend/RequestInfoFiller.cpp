@@ -1,3 +1,5 @@
+#include <optional>
+
 #include <String/AsciiStringManip.hpp>
 #include <String/UTF8Case.hpp>
 #include <String/StringManip.hpp>
@@ -391,7 +393,7 @@ namespace Instantiate
         &RequestInfo::coord_location));
     add_processor_(true, true, Request::Context::USER_ID_DISTRIBUTION_HASH,
       new FrontendCommons::NumberParamProcessor<
-        RequestInfo, AdServer::Commons::Optional<unsigned long>, unsigned long>(
+        RequestInfo, std::optional<unsigned long>, unsigned long>(
           &RequestInfo::user_id_hash_mod));
     add_processor_(true, true, Request::Context::USER_ID,
       new FrontendCommons::UuidParamProcessor<RequestInfo>(&RequestInfo::track_user_id));

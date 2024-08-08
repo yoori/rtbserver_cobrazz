@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <optional>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -412,7 +413,7 @@ namespace AdServer
       {
         struct SourceRule
         {
-          Commons::Optional<std::string> click_prefix;
+          std::optional<std::string> click_prefix;
           std::string mime_encoded_click_prefix;
 
           std::string preclick;
@@ -487,7 +488,7 @@ namespace AdServer
         std::string passback_url;
         FreqCapIdSet full_freq_caps;
         bool request_blacklisted;
-        Commons::Optional<RevenueDecimal> pub_imp_revenue;
+        std::optional<RevenueDecimal> pub_imp_revenue;
         std::string tag_size;
         std::string tns_counter_device_type;
         unsigned long publisher_account_id;
@@ -585,7 +586,7 @@ namespace AdServer
       struct InstantiateParams
       {
         InstantiateParams(
-          const AdServer::Commons::Optional<unsigned long>&
+          const std::optional<unsigned long>&
             user_id_hash_mod_val)
           : user_id_hash_mod(user_id_hash_mod_val),
             generate_pubpixel_accounts(false),
@@ -637,7 +638,7 @@ namespace AdServer
           }
         }
 
-        AdServer::Commons::Optional<unsigned long> user_id_hash_mod;
+        std::optional<unsigned long> user_id_hash_mod;
         std::string open_price;
         std::string openx_price;
         std::string liverail_price;

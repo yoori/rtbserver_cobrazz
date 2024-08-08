@@ -1,6 +1,8 @@
 #ifndef JSONPARAMPROCESSOR_HPP
 #define JSONPARAMPROCESSOR_HPP
 
+#include <optional>
+
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -203,7 +205,7 @@ namespace Bidding
       {}
 
       std::string version;
-      Commons::Optional<long> placement;
+      std::optional<long> placement;
       DataList data_assets;
       ImageList image_assets;
       VideoList video_assets;
@@ -230,7 +232,7 @@ namespace Bidding
 
     std::string id;
     AdServer::CampaignSvcs::RevenueDecimal min_cpm_price;
-    Commons::Optional<long> private_auction;
+    std::optional<long> private_auction;
     std::string deal_id;
     DealList deals;
     std::string min_cpm_price_currency_code;
@@ -262,12 +264,12 @@ namespace Bidding
     StringList video_exclude_categories;
 
     // v 2.5 video .placement
-    Commons::Optional<long> video_placement;
+    std::optional<long> video_placement;
 
     // AppNexus specific
-    Commons::Optional<long> slot_id;
-    Commons::Optional<long> site_id;
-    Commons::Optional<long> inventory_source_id;
+    std::optional<long> slot_id;
+    std::optional<long> site_id;
+    std::optional<long> inventory_source_id;
     ULongSet allowed_media_types;
     ULongSet allowed_media_subtypes;
     double predicted_view_rate;
@@ -424,7 +426,7 @@ namespace Bidding
     std::string allyessitetype; //ALLYES specific in site object
 
     // Appnexus specific
-    Commons::Optional<long> selling_member_id;
+    std::optional<long> selling_member_id;
     bool no_flash;
     ULongSet inventory_audits_content_categories; 
 
@@ -512,7 +514,7 @@ namespace Bidding
         }
 
         out << "], min_cpm_price = " << slot_it->min_cpm_price;
-        if (slot_it->private_auction.present())
+        if (slot_it->private_auction)
         {
           out << "private_auction = " << *(slot_it->private_auction) << ",";
         }

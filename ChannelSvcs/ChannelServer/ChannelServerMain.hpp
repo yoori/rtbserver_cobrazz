@@ -6,7 +6,7 @@
 #include <Generics/ActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ProcessControl.hpp>
@@ -25,8 +25,8 @@ public:
   DECLARE_EXCEPTION(InvalidArgument, Exception);
 
 private:
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
 
 public:
   ChannelServerApp_() /*throw(eh::Exception)*/;

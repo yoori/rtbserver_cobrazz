@@ -2,6 +2,8 @@
 #define CAMPAIGNMANAGER_CAMPAIGNSELECTPARAMS_HPP_
 
 #include <string>
+#include <optional>
+
 #include <Commons/Containers.hpp>
 #include <Commons/UserInfoManip.hpp>
 
@@ -90,8 +92,8 @@ namespace CampaignSvcs
     unsigned long down_expand_space;
     unsigned long left_expand_space;
     unsigned long video_min_duration;
-    AdServer::Commons::Optional<unsigned long> video_max_duration;
-    AdServer::Commons::Optional<unsigned long> video_skippable_max_duration;
+    std::optional<unsigned long> video_max_duration;
+    std::optional<unsigned long> video_skippable_max_duration;
     bool video_allow_skippable;
     bool video_allow_unskippable;
     unsigned long random;

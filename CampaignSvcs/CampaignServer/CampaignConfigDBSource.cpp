@@ -3100,37 +3100,37 @@ namespace CampaignSvcs
 
               campaign->ccg_delivery_limits.imps =
                 !rs->is_null(QC_CCG_IMP_TOTAL_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_IMP_TOTAL_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_IMP_TOTAL_LIMIT)) :
+                std::optional<unsigned long>();
               campaign->ccg_delivery_limits.daily_imps =
                 !rs->is_null(QC_CCG_IMP_DAILY_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_IMP_DAILY_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_IMP_DAILY_LIMIT)) :
+                std::optional<unsigned long>();
               campaign->ccg_delivery_limits.clicks =
                 !rs->is_null(QC_CCG_CLICK_TOTAL_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_CLICK_TOTAL_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_CLICK_TOTAL_LIMIT)) :
+                std::optional<unsigned long>();
               campaign->ccg_delivery_limits.daily_clicks =
                 !rs->is_null(QC_CCG_CLICK_DAILY_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_CLICK_DAILY_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CCG_CLICK_DAILY_LIMIT)) :
+                std::optional<unsigned long>();
 
               campaign->campaign_delivery_limits.imps =
                 !rs->is_null(QC_CMP_IMP_TOTAL_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_IMP_TOTAL_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_IMP_TOTAL_LIMIT)) :
+                std::optional<unsigned long>();
               campaign->campaign_delivery_limits.daily_imps =
                 !rs->is_null(QC_CMP_IMP_DAILY_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_IMP_DAILY_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_IMP_DAILY_LIMIT)) :
+                std::optional<unsigned long>();
               campaign->campaign_delivery_limits.clicks =
                 !rs->is_null(QC_CMP_CLICK_TOTAL_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_CLICK_TOTAL_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_CLICK_TOTAL_LIMIT)) :
+                std::optional<unsigned long>();
               campaign->campaign_delivery_limits.daily_clicks =
                 !rs->is_null(QC_CMP_CLICK_DAILY_LIMIT) ?
-                Commons::Optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_CLICK_DAILY_LIMIT)) :
-                Commons::Optional<unsigned long>();
+                std::optional<unsigned long>(rs->get_number<unsigned long>(QC_CMP_CLICK_DAILY_LIMIT)) :
+                std::optional<unsigned long>();
 
               if(!rs->is_null(QC_STAT_CHANNEL_ID))
               {

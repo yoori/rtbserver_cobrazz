@@ -7,7 +7,7 @@
 // UNIXCOMMONS
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
 #include <userver/engine/task/task_processor.hpp>
@@ -16,6 +16,7 @@
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 
 
@@ -33,8 +34,7 @@ namespace AdServer
       public virtual ReferenceCounting::AtomicImpl  
     {
     public:
-      using TaskProcessor = userver::engine::TaskProcessor;
-      using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+      using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -66,8 +66,7 @@ namespace AdServer
        * @param config path
        */
       FrontendsPool(
-        TaskProcessor& task_processor,
-        const SchedulerPtr& scheduler,
+        const GrpcContainerPtr& grpc_container,
         const char* config_path,
         const ModuleIdArray& modules,
         Logging::Logger* logger,
@@ -132,14 +131,20 @@ namespace AdServer
         T&&... params);
 
     private:
-      TaskProcessor& task_processor_;
-      SchedulerPtr scheduler_;
+      const GrpcContainerPtr grpc_container_;
+
       Configuration_var config_;
+
       ModuleIdArray modules_;
+
       Logging::Logger_var logger_;
+
       StatHolder_var stats_;
+
       FrontendCommons::HttpResponseFactory_var http_response_factory_;
+
       CommonModule_var common_module_;
+
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };
   }

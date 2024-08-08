@@ -3,25 +3,26 @@
 
 #include "Utils.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-template<template<class> class Container = std::list>
-class FileCleaner
+class FileCleaner final
 {
 public:
-  FileCleaner(
-    Container<Utils::GeneratedPath>& files)
+  using Files = std::list<Utils::GeneratedPath>;
+
+public:
+  explicit FileCleaner(Files& files)
     : files_(files)
   {
   }
 
   ~FileCleaner()
   {
-    if (!need_clear_)
+    if (is_temp_files_removed_)
+    {
       return;
+    }
 
     for (const auto& [temp_path, result_path] : files_)
     {
@@ -30,9 +31,9 @@ public:
     }
   }
 
-  void clear_temp()
+  void remove_temp_files() noexcept
   {
-    need_clear_ = false;
+    is_temp_files_removed_ = true;
     for (const auto& [temp_path, result_path] : files_)
     {
       std::remove(temp_path.c_str());
@@ -40,12 +41,11 @@ public:
   }
 
 private:
-  bool need_clear_ = true;
+  bool is_temp_files_removed_ = false;
 
-  Container<Utils::GeneratedPath>& files_;
+  Files& files_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_FILECLEANER_HPP

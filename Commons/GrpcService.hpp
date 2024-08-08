@@ -3,7 +3,7 @@
 
 // UNIXCOMMONS
 #include <Logger/Logger.hpp>
-#include <UServerUtils/Grpc/Core/Server/ServiceCoro.hpp>
+#include <UServerUtils/Grpc/Server/ServiceCoro.hpp>
 
 // USERVER
 #include <userver/engine/task/task.hpp>
@@ -28,7 +28,7 @@ class GrpcService final
 public:
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
-  using ReadStatus = UServerUtils::Grpc::Core::Server::ReadStatus;
+  using ReadStatus = UServerUtils::Grpc::Server::ReadStatus;
   using Reader = typename BaseService::Reader;
   using WriterPtr = typename Reader::WriterPtr;
   using Impl_var = ReferenceCounting::SmartPtr<Impl>;
@@ -127,7 +127,7 @@ private:
     std::unique_ptr<Response>&& response,
     Logging::Logger* logger)
   {
-    using WriterStatus = UServerUtils::Grpc::Core::Server::WriterStatus;
+    using WriterStatus = UServerUtils::Grpc::Server::WriterStatus;
 
     const auto write_status = writer->write(std::move(response));
     if (write_status != WriterStatus::Ok)

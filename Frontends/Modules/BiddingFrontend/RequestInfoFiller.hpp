@@ -2,6 +2,7 @@
 #define BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
 
 #include <string>
+#include <optional>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -63,8 +64,8 @@ namespace Bidding
       ERIDRT_EXT_BUZSAPE
     };
 
-    AdServer::Commons::Optional<unsigned long> default_account_id;
-    AdServer::Commons::Optional<AdServer::CampaignSvcs::AdRequestType> request_type;
+    std::optional<unsigned long> default_account_id;
+    std::optional<AdServer::CampaignSvcs::AdRequestType> request_type;
     AdServer::CampaignSvcs::AdInstantiateType instantiate_type;
     NoticeInstantiateType notice_instantiate_type;
     std::string notice_url;
@@ -77,11 +78,11 @@ namespace Bidding
     bool ipw_extension;
     bool truncate_domain;
     std::string seat;
-    AdServer::Commons::Optional<unsigned long> appnexus_member_id;
+    std::optional<unsigned long> appnexus_member_id;
     bool fill_adid;
-    AdServer::Commons::Optional<Generics::Time> max_bid_time;
+    std::optional<Generics::Time> max_bid_time;
     NativeAdsInstantiateType native_ads_instantiate_type;
-    AdServer::Commons::Optional<AdServer::CampaignSvcs::NativeAdsImpressionTrackerType>
+    std::optional<AdServer::CampaignSvcs::NativeAdsImpressionTrackerType>
       native_ads_impression_tracker_type;
     bool skip_ext_category;
     ERIDReturnType erid_return_type;
@@ -142,7 +143,7 @@ namespace Bidding
     bool skip_ccg_keywords;
     std::string search_words;
     std::string seat;
-    AdServer::Commons::Optional<unsigned long> appnexus_member_id;
+    std::optional<unsigned long> appnexus_member_id;
     bool truncate_domain;
     bool ipw_extension;
     std::string format;
@@ -207,7 +208,7 @@ namespace Bidding
           video_billing_id(0)
       {}
 
-      Commons::Optional<CampaignSvcs::RevenueDecimal> max_cpm;
+      std::optional<CampaignSvcs::RevenueDecimal> max_cpm;
       unsigned long display_billing_id;
       unsigned long video_billing_id;
 

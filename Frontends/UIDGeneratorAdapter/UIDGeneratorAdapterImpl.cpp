@@ -44,7 +44,7 @@ namespace Frontends
       return res;
     }
   }
-  
+
   class DMPProfilingSender:
     public ReferenceCounting::AtomicImpl,
     public Generics::SimpleActiveObject
@@ -555,17 +555,20 @@ namespace Frontends
       if(!dmp_request.has_options() || dmp_request.options().need_response())
       {
         // fill response
-        Stream::MemoryStream::OutputMemoryStream<char> ostr(128);
-
         ru::madnet::enrichment::protocol::DmpResponse dmp_response;
         dmp_response.set_id(dmp_request.id());
         dmp_response.set_code(0);
+
+        std::ostringstream ostr;
         dmp_response.SerializeToOstream(&ostr);
 
-        Buf write_buf(ostr.str().size() + 4);
+        std::string strbuf = ostr.str();
+        uint32_t sz = strbuf.size();
+
+        Buf write_buf(sz + 4);
         //*reinterpret_cast<uint32_t*>(write_buf.data()) = htonl(ostr.str().size());
-        *reinterpret_cast<uint32_t*>(write_buf.data()) = ostr.str().size();
-        ::memcpy(write_buf.data() + 4, ostr.str().data(), ostr.str().size());
+        *reinterpret_cast<uint32_t*>(write_buf.data()) = sz;
+        ::memcpy(write_buf.data() + 4, strbuf.data(), strbuf.size());
 
         add_write_buf_(write_buf);
       }
@@ -703,7 +706,7 @@ namespace Frontends
           lp_config.KeywordHitStat().get(),
           (lp_config.log_root() + KEYWORD_HIT_STAT_OUT_DIR).c_str()) :
         LogProcessing::LogFlushTraits());
-    
+
     DescriptorHandlerPoller_var poller = new DescriptorHandlerPoller(
       callback,
       config.Processing().threads(),
@@ -773,7 +776,7 @@ namespace Frontends
     }
 
     Generics::Time next_flush;
-    
+
     try
     {
       next_flush = stat_logger_->flush_if_required();

@@ -12,8 +12,7 @@
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/UserverConfigUtils.hpp>
 
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
 
 #include "ChannelServer_service.cobrazz.pb.hpp"
 
@@ -207,8 +206,8 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
 
 void ChannelServerApp_::init_coro_()
 {
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
 
   // Creating coroutine manager
   auto task_processor_container_builder =
@@ -220,7 +219,7 @@ void ChannelServerApp_::init_coro_()
     auto& main_task_processor = task_processor_container.get_main_task_processor();
     auto components_builder = std::make_unique<ComponentsBuilder>();
 
-    auto grpc_server_builder = Config::create_grpc_cobrazz_server_builder(
+    auto grpc_server_builder = Config::create_grpc_server_builder(
       logger(),
       configuration_->GrpcServer());
 

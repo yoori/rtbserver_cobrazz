@@ -39,6 +39,29 @@ namespace AdServer
   {
   }
 
+  void AcFrontendStat::consider_request(
+    const bool test_request,
+    const AdServer::CampaignSvcs::UserStatus user_status) noexcept
+  {
+    if (test_request)
+    {
+      return;
+    }
+
+    StatData d{
+      user_status == AdServer::CampaignSvcs::US_OPTIN ? 1UL : 0UL,
+      user_status == AdServer::CampaignSvcs::US_OPTOUT ? 1UL : 0UL};
+
+    if (!d.opt_in_user && !d.non_opt_on_user)
+    {
+      return;
+    }
+
+    Sync::PosixGuard lock(mutex_);
+
+    stat_data_ += d;
+  }
+
   void
   AcFrontendStat::consider_request(
     const AdServer::CampaignSvcs::CampaignManager::ActionInfo& request_info)

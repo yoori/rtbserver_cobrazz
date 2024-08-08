@@ -80,9 +80,9 @@ struct SequenceAdapterSelector<CollectorBundleFileGuard_var>
   typedef CollectorBundleFileGuardSequenceAdapter Type;
 };
 
-template <class SEQ_, class SequenceAdapter>
-std::ostream&
-output_sequence(std::ostream &os, const SEQ_ &seq, const char *sep, SequenceAdapter sequence_adapter)
+template <class OStream, class SEQ_, class SequenceAdapter>
+OStream&
+output_sequence(OStream &os, const SEQ_ &seq, const char *sep, SequenceAdapter sequence_adapter)
 {
   typename SEQ_::const_iterator cit(seq.begin());
   if (cit != seq.end())
@@ -1104,9 +1104,9 @@ operator <<(
   return os << object.get();
 }
 
-template <class SEQ_>
-std::ostream&
-output_sequence(std::ostream &os, const SEQ_ &seq, const char *sep)
+template <class OStream, class SEQ_>
+OStream&
+output_sequence(OStream &os, const SEQ_ &seq, const char *sep)
 {
   return Aux_::output_sequence(os, seq, sep,
     typename Aux_::SequenceAdapterSelector<typename SEQ_::value_type>::Type());
@@ -1265,10 +1265,10 @@ inline
 unsigned long
 request_distribution_hash(
   const AdServer::Commons::RequestId& request_id,
-  const AdServer::Commons::Optional<unsigned long>& user_id_distrib_hash
+  const std::optional<unsigned long>& user_id_distrib_hash
 )
 {
-  return user_id_distrib_hash.present() ? *user_id_distrib_hash :
+  return user_id_distrib_hash ? *user_id_distrib_hash :
     AdServer::Commons::uuid_distribution_hash(request_id);
 }
 

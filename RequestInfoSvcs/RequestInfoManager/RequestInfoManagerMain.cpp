@@ -2,12 +2,12 @@
 #include <eh/Exception.hpp>
 #include <CORBACommons/StatsImpl.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Config.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
-#include <UServerUtils/Grpc/Core/Server/Config.hpp>
-#include <UServerUtils/Grpc/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/Grpc/Server/Config.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Config.hpp>
+#include <UServerUtils/Manager.hpp>
 
 // THIS
 #include <Commons/ProcessControlVarsImpl.hpp>
@@ -60,8 +60,8 @@ void
 RequestInfoManagerApp_::main(int& argc, char** argv)
   noexcept
 {
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;

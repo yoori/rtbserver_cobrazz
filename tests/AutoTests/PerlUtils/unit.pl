@@ -196,7 +196,7 @@ public:
     BaseUnit(stat_var, task_name, params_var)
   {};
 
-  virtual \~$new_unit_name() throw()
+  virtual \~$new_unit_name() noexcept
   {};
 
 private:

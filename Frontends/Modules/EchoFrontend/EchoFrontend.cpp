@@ -16,8 +16,7 @@ namespace AdServer::Echo
 {
 
 Frontend::Frontend(
-  TaskProcessor& task_processor,
-  const SchedulerPtr& scheduler,
+  const GrpcContainerPtr& grpc_container,
   Configuration* frontend_config,
   Logger* logger,
   CommonModule* /*common_module*/,
@@ -37,8 +36,7 @@ Frontend::Frontend(
       response_factory,
       frontend_config->get().ActionFeConfiguration()->threads(),
       0),
-    task_processor_(task_processor),
-    scheduler_(scheduler),
+    grpc_container_(grpc_container),
     logger_(ReferenceCounting::add_ref(logger))
 {
 }

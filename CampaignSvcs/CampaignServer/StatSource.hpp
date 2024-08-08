@@ -125,7 +125,8 @@ namespace CampaignSvcs
         CampaignStat&
         operator+=(const CampaignStat& right) noexcept;
 
-        void print(std::ostream& out, const char* offset) const noexcept;
+        template<typename OStream>
+        void print(OStream& out, const char* offset) const noexcept;
       };
 
       typedef std::map<unsigned long, CampaignStat> CampaignStatMap;
@@ -142,7 +143,8 @@ namespace CampaignSvcs
       // check_time must be equal (hours)
       void add(const Stat& stat) noexcept;
 
-      void print(std::ostream& out, const char* offset) const noexcept;
+      template<typename OStream>
+      void print(OStream& out, const char* offset) const noexcept;
 
       typedef std::map<unsigned long, Amount> AccountAmountMap;
 
@@ -393,10 +395,10 @@ namespace CampaignSvcs
     return *this;
   }
 
-  inline
-  void
+  template<typename OStream>
+  inline void
   StatSource::Stat::CampaignStat::print(
-    std::ostream& out, const char* offset) const noexcept
+    OStream& out, const char* offset) const noexcept
   {
     out << offset <<
       "am = " << amount <<
@@ -491,9 +493,9 @@ namespace CampaignSvcs
     sum_collections(campaign_stats, stat.campaign_stats);
   }
 
-  inline
-  void
-  StatSource::Stat::print(std::ostream& out, const char* offset) const
+  template<typename OStream>
+  inline void
+  StatSource::Stat::print(OStream& out, const char* offset) const
     noexcept
   {
     try

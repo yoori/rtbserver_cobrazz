@@ -29,7 +29,7 @@
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 #include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager_s.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 
 #include "CompositeRequestActionProcessor.hpp"
 #include "UserCampaignReachContainer.hpp"

@@ -21,8 +21,6 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/AtomicInt.hpp>
 #include <Commons/Interval.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
@@ -33,6 +31,7 @@
 #include <Frontends/FrontendCommons/UserBindClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "GroupLogger.hpp"
 #include "RequestInfoFiller.hpp"
@@ -66,16 +65,14 @@ namespace Bidding
     friend class AppNexusBidRequestTask;
 
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using BiddingFeConfiguration = Configuration::FeConfig::BidFeConfiguration_type;
 
   public:
     Frontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -372,8 +369,7 @@ namespace Bidding
       bool add_root_native);
     */
   protected:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     // ADSC-10554
     // Interrupted requests queue

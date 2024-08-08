@@ -7,8 +7,8 @@
 #include <unordered_map>
 
 // UNIXCOMMONS
-#include <UServerUtils/Grpc/Statistics/CommonStatisticsProvider.hpp>
-#include <UServerUtils/Grpc/Statistics/TimeStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/CommonStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/TimeStatisticsProvider.hpp>
 
 namespace FrontendCommons
 {

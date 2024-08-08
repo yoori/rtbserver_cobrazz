@@ -5,18 +5,20 @@
 #include "ModelCtrImpl.hpp"
 #include "ModelFactory.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 class ModelCtrFactoryImpl :
   public ModelCtrFactory,
-  public virtual ReferenceCounting::AtomicImpl
+  public ReferenceCounting::AtomicImpl
 {
 public:
-  ModelCtrFactoryImpl(Logging::Logger* logger)
-  : logger_(ReferenceCounting::add_ref(logger))
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
+public:
+  explicit ModelCtrFactoryImpl(Logger* logger)
+    : logger_(ReferenceCounting::add_ref(logger))
   {
   }
 
@@ -25,13 +27,13 @@ public:
     return ModelCtr_var(new ModelCtrImpl(logger_));
   }
 
+protected:
   ~ModelCtrFactoryImpl() override = default;
 
 private:
   Logging::Logger_var logger_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_MODELCTRFACTORY_HPP

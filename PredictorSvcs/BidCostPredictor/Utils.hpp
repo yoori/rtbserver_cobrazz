@@ -3,35 +3,32 @@
 
 // STD
 #include <cstdio>
+#include <functional>
 #include <list>
 #include <memory>
 #include <random>
 #include <string>
 
-// THIS
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
+
+// THIS
 #include <LogCommons/LogCommons.hpp>
 
-namespace AdServer
-{
-namespace LogProcessing
+template<class T>
+concept ConceptMemberPtr = std::is_member_pointer_v<T>;
+
+namespace AdServer::LogProcessing
 {
 
-inline bool operator>(
-  const DayTimestamp& date1,
-  const DayTimestamp& date2)
+inline bool operator>(const DayTimestamp& date1, const DayTimestamp& date2)
 {
   return date1.time() > date2.time();
 }
 
-} // namespace LogProcessing
-} // namespace AdServer
+} // namespace AdServer::LogProcessing
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
-{
-namespace Utils
+namespace PredictorSvcs::BidCostPredictor::Utils
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
@@ -40,7 +37,9 @@ DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 using Path = std::string;
 using Files = std::list<Path>;
-using GeneratedPath = std::pair<Path, Path>;
+using TempFilePath = Path;
+using ResultFilePath = Path;
+using GeneratedPath = std::pair<TempFilePath, ResultFilePath>;
 using VirtualMemory = double;
 using RamMemory = double;
 using Memory = std::pair<VirtualMemory, RamMemory>;
@@ -51,8 +50,31 @@ enum class DirInfo
   Directory
 };
 
-bool exist_directory(
-  const std::string& path_directory) noexcept;
+class CallOnDestroy final
+{
+public:
+  using Callback = std::function<void()>;
+
+public:
+  CallOnDestroy(const Callback& callback)
+    : callback_(callback)
+  {
+  }
+
+  ~CallOnDestroy()
+  {
+    try
+    {
+      callback_();
+    }
+    catch (...)
+    {
+    }
+  }
+
+private:
+  Callback callback_;
+};
 
 Files get_directory_files(
   const Path& path_dir,
@@ -66,8 +88,6 @@ GeneratedPath generate_file_path(
 
 Memory memory_process_usage();
 
-} // namespace Utils
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor::Utils
 
 #endif //BIDCOSTPREDICTOR_UTILS_HPP

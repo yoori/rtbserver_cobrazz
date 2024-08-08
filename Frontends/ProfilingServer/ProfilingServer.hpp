@@ -11,9 +11,9 @@
 #include <Commons/DelegateActiveObject.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Commons/zmq.hpp>
-//#include <Frontends/Modules/AdFrontend/RequestInfo.hpp>
 
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/UserBindClient.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
@@ -22,8 +22,8 @@
 #include <Frontends/ProfilingServer/HashFilter.hpp>
 #include <Frontends/ProfilingServer/ProfilingServerStats.hpp>
 
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 namespace AdServer
 {
@@ -34,11 +34,14 @@ namespace Profiling
     private Generics::CompositeActiveObject
   {
   private:
-    using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-    using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
-    using ManagerCoro = UServerUtils::Grpc::Manager;
-    using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+    using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+    using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+    using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+    using ManagerCoro = UServerUtils::Manager;
+    using ManagerCoro_var = UServerUtils::Manager_var;
+    using TaskProcessor = userver::engine::TaskProcessor;
+    using GrpcUserBindOperationDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
+    using GrpcUserBindOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -140,6 +143,11 @@ namespace Profiling
       const char *filename,
       const char* argv0)
       /*throw(Exception, eh::Exception)*/;
+
+    GrpcUserBindOperationDistributor_var
+    create_grpc_user_bind_operation_distributor(
+      const SchedulerPtr& scheduler,
+      TaskProcessor& task_processor);
 
     void
     init_coroutine_();

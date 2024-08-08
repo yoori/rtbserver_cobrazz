@@ -4,40 +4,41 @@
 // STD
 #include <string>
 
-// THIS
+// UNIXCOMMONS
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+
+// THIS
 #include "CtrCollector.hpp"
 #include "ModelManager.hpp"
 #include "Types.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-namespace Predictor = PredictorSvcs::BidCostPredictor;
+namespace LogProcessing = AdServer::LogProcessing;
 
-class ModelCtr :
-  public virtual ModelManager,
-  public virtual ReferenceCounting::Interface
+class ModelCtr : public ModelManager
 {
 public:
   using TagId = Types::TagId;
   using Url = Types::Url;
-  using Url_var = Types::Url_var;
+  using UrlPtr = Types::UrlPtr;
+  using CreativeCategoryId = Types::CreativeCategoryId;
   using Ctr = typename LogProcessing::CtrData::Ctr;
 
 public:
-  ModelCtr() = default;
+  explicit ModelCtr() = default;
 
   virtual Ctr get_ctr(
     const TagId& tag_id,
-    const Url& url) const = 0;
+    const Url& url,
+    const CreativeCategoryId& creative_category_id) const = 0;
 
   virtual void set_ctr(
     const TagId& tag_id,
-    const Url_var& url,
+    const UrlPtr& url,
+    const CreativeCategoryId& creative_category_id,
     const Ctr& ctr) = 0;
 
   virtual void clear() noexcept = 0;
@@ -48,7 +49,6 @@ protected:
 
 using ModelCtr_var = ReferenceCounting::SmartPtr<ModelCtr>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_MODELCTR_HPP

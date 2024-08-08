@@ -6,7 +6,7 @@
 #include <string>
 
 // UNIXCOMMONS
-#include <UServerUtils/Grpc/Statistics/TimeStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/TimeStatisticsProvider.hpp>
 
 namespace AdServer::UserInfoSvcs
 {

@@ -49,6 +49,11 @@
   <xsl:variable name="reaggregator_period" select="$bidcost-predictor-reaggregator-period"/>
   <xsl:variable name="reaggregator_input_directory" select="concat($workspace-root, $bidcost-predictor-reaggregator-input-directory)"/>
   <xsl:variable name="reaggregator_output_directory" select="concat($workspace-root, $bidcost-predictor-reaggregator-output-directory)"/>
+  <xsl:variable name="pg_host" select="$bidcost-predictor-pg-connection-host"/>
+  <xsl:variable name="pg_port" select="$bidcost-predictor-pg-connection-port"/>
+  <xsl:variable name="pg_dbname" select="$bidcost-predictor-pg-connection-dbname"/>
+  <xsl:variable name="pg_user" select="$bidcost-predictor-pg-connection-user"/>
+  <xsl:variable name="pg_password" select="$bidcost-predictor-pg-connection-password"/>
 
   <xsl:text>{</xsl:text>
 
@@ -74,6 +79,37 @@
     "pid_path" : "</xsl:text>
   <xsl:value-of select="$pid_path"/>
   <xsl:text>",</xsl:text>
+
+  <xsl:text>
+    "pg_connection" : {</xsl:text>
+
+  <xsl:text>
+      "host" : "</xsl:text>
+  <xsl:value-of select="$pg_host"/>
+  <xsl:text>",</xsl:text>
+
+  <xsl:text>
+      "port" : "</xsl:text>
+  <xsl:value-of select="$pg_port"/>
+  <xsl:text>",</xsl:text>
+
+  <xsl:text>
+      "dbname" : "</xsl:text>
+  <xsl:value-of select="$pg_dbname"/>
+  <xsl:text>",</xsl:text>
+
+  <xsl:text>
+      "user" : "</xsl:text>
+  <xsl:value-of select="$pg_user"/>
+  <xsl:text>",</xsl:text>
+
+  <xsl:text>
+      "password" : "</xsl:text>
+  <xsl:value-of select="$pg_password"/>
+  <xsl:text>"</xsl:text>
+
+  <xsl:text>
+    },</xsl:text>
 
   <xsl:text>
     "model" : {</xsl:text>
@@ -208,28 +244,16 @@
 
 
 <xsl:template match="/">
-
   <xsl:variable name="cluster-path" select="$xpath/../.."/>
-
   <xsl:variable name="bidcost-predictor-path" select="$xpath"/>
-
-  <xsl:variable
-    name="colo-config"
-    select="$cluster-path/configuration/cfg:cluster"/>
-
-  <xsl:variable
-    name="env-config"
-    select="$colo-config/cfg:environment"/>
-
-  <xsl:variable
-    name="bidcost-predictor-config"
-    select="$bidcost-predictor-path/configuration/cfg:predictor"/>
+  <xsl:variable name="colo-config" select="$cluster-path/configuration/cfg:cluster"/>
+  <xsl:variable name="env-config" select="$colo-config/cfg:environment"/>
+  <xsl:variable name="bidcost-predictor-config" select="$bidcost-predictor-path/configuration/cfg:predictor"/>
 
   <xsl:call-template name="BidCostPredictorConfigGenerator">
     <xsl:with-param name="env-config" select="$env-config"/>
     <xsl:with-param name="predictor-config" select="$bidcost-predictor-config"/>
   </xsl:call-template>
-  
 </xsl:template>
 
 </xsl:stylesheet>

@@ -217,8 +217,7 @@ namespace AdServer
    *  AdFrontend implementation
    */
   AdFrontend::AdFrontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -239,8 +238,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().AdFeConfiguration()->threads(),
         0), // max pending tasks
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       fe_config_path_(frontend_config->path()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
@@ -355,18 +353,11 @@ namespace AdServer
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          config_grpc_client.enable());
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         if(!common_config_->UserBindControllerGroup().empty())
@@ -375,11 +366,7 @@ namespace AdServer
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            config_grpc_client.enable());
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -761,9 +748,7 @@ namespace AdServer
   {
     static const char* FUN = "AdFrontend::merge_users()";
 
-    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-      grpc_distributor = user_info_client_->grpc_distributor();
-
+    const auto grpc_distributor = user_info_client_->grpc_distributor();
     bool is_grpc_success = false;
     if (grpc_distributor)
     {
@@ -1251,8 +1236,7 @@ namespace AdServer
 
     AdServer::UserInfoSvcs::UserInfoMatcher_var
       uim_session = user_info_client_->user_info_session();
-    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-      grpc_distributor = user_info_client_->grpc_distributor();
+    const auto grpc_distributor = user_info_client_->grpc_distributor();
 
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
 
@@ -1702,9 +1686,7 @@ namespace AdServer
       }
     }
 
-    AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-      grpc_distributor = user_info_client_->grpc_distributor();
-
+    const auto grpc_distributor = user_info_client_->grpc_distributor();
     bool is_grpc_success = false;
     if (grpc_distributor)
     {
@@ -2314,6 +2296,32 @@ namespace AdServer
     }
   }
 
+  void
+  AdFrontend::convert_ccg_keywords_(
+    std::vector<FrontendCommons::GrpcCampaignManagerPool::CCGKeyword>& ccg_keywords,
+    const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords) noexcept
+  {
+    using RevenueDecimal = AdServer::CampaignSvcs::RevenueDecimal;
+    using CTRDecimal = AdServer::CampaignSvcs::CTRDecimal;
+
+    if (src_ccg_keywords)
+    {
+      ccg_keywords.reserve(src_ccg_keywords->length());
+      for (CORBA::ULong i = 0; i < src_ccg_keywords->length(); ++i)
+      {
+        const AdServer::ChannelSvcs::ChannelServerBase::CCGKeyword& src_ccg_kw = (*src_ccg_keywords)[i];
+        ccg_keywords.emplace_back(
+          src_ccg_kw.ccg_keyword_id,
+          src_ccg_kw.ccg_id,
+          src_ccg_kw.channel_id,
+          CorbaAlgs::unpack_decimal<RevenueDecimal>(src_ccg_kw.max_cpc),
+          CorbaAlgs::unpack_decimal<CTRDecimal>(src_ccg_kw.ctr),
+          std::string(src_ccg_kw.click_url),
+          std::string(src_ccg_kw.original_keyword));
+      }
+    }
+  }
+
   bool
   AdFrontend::resolve_cookie_user_id_(
     AdServer::Commons::UserId& resolved_user_id,
@@ -2324,9 +2332,7 @@ namespace AdServer
 
     if(!request_info.client_id.is_null() && user_bind_client_)
     {
-      AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var
-        grpc_distributor = user_bind_client_->grpc_distributor();
-
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
       if (grpc_distributor)
       {
         try
@@ -2336,7 +2342,7 @@ namespace AdServer
 
           auto response = grpc_distributor->get_user_id(
             ext_user_id,
-            GrpcAlgs::pack_user_id(request_info.client_id),
+            request_info.client_id,
             request_info.current_time,
             Generics::Time::ZERO,
             true,
@@ -2466,6 +2472,394 @@ namespace AdServer
     /*throw(Exception)*/
   {
     static const char* FUN = "AdFrontend::request_campaign_manager_()";
+
+    bool is_grpc_success = false;
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      using CoordDecimal = AdServer::CampaignSvcs::CoordDecimal;
+
+      is_grpc_success = true;
+      try
+      {
+        FrontendCommons::GrpcCampaignManagerPool::RequestParams request_params;
+
+        if (trigger_matched_channels)
+        {
+          request_params.trigger_match_result.pkw_channels.reserve(
+            trigger_matched_channels->matched_channels.page_channels.length());
+          request_params.trigger_match_result.skw_channels.reserve(
+            trigger_matched_channels->matched_channels.search_channels.length());
+          request_params.trigger_match_result.url_channels.reserve(
+            trigger_matched_channels->matched_channels.url_channels.length());
+          request_params.trigger_match_result.ukw_channels.reserve(
+            trigger_matched_channels->matched_channels.url_keyword_channels.length());
+
+          auto converter_channel_atom = [] (
+            const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom& atom) {
+            using ChannelTriggerMatchInfo =
+              FrontendCommons::GrpcCampaignManagerPool::ChannelTriggerMatchInfo;
+            return ChannelTriggerMatchInfo(
+              atom.trigger_channel_id,
+              atom.id);
+          };
+
+          std::transform(
+            trigger_matched_channels->matched_channels.page_channels.get_buffer(),
+            trigger_matched_channels->matched_channels.page_channels.get_buffer() +
+              trigger_matched_channels->matched_channels.page_channels.length(),
+            std::back_inserter(request_params.trigger_match_result.pkw_channels),
+            converter_channel_atom);
+          std::transform(
+            trigger_matched_channels->matched_channels.search_channels.get_buffer(),
+            trigger_matched_channels->matched_channels.search_channels.get_buffer() +
+              trigger_matched_channels->matched_channels.search_channels.length(),
+            std::back_inserter(request_params.trigger_match_result.skw_channels),
+            converter_channel_atom);
+          std::transform(
+            trigger_matched_channels->matched_channels.url_channels.get_buffer(),
+            trigger_matched_channels->matched_channels.url_channels.get_buffer() +
+              trigger_matched_channels->matched_channels.url_channels.length(),
+            std::back_inserter(request_params.trigger_match_result.url_channels),
+            converter_channel_atom);
+          std::transform(
+            trigger_matched_channels->matched_channels.url_keyword_channels.get_buffer(),
+            trigger_matched_channels->matched_channels.url_keyword_channels.get_buffer() +
+              trigger_matched_channels->matched_channels.url_keyword_channels.length(),
+            std::back_inserter(request_params.trigger_match_result.ukw_channels),
+            converter_channel_atom);
+          request_params.trigger_match_result.uid_channels.insert(
+            std::end(request_params.trigger_match_result.uid_channels),
+            trigger_matched_channels->matched_channels.uid_channels.get_buffer(),
+            trigger_matched_channels->matched_channels.uid_channels.get_buffer() +
+              trigger_matched_channels->matched_channels.uid_channels.length());
+        }
+
+        request_params.common_info.creative_instantiate_type = std::string_view(
+          instantiate_type.text().data(), instantiate_type.text().size());
+
+        if (request_info.location)
+        {
+          request_params.common_info.location.emplace_back(
+            request_info.location->country,
+            request_info.location->region,
+            request_info.location->city);
+        }
+
+        if (history_match_result)
+        {
+          request_params.common_info.coord_location.reserve(
+            history_match_result->geo_data_seq.length());
+
+          for (CORBA::ULong i = 0; i < history_match_result->geo_data_seq.length(); ++i)
+          {
+            const auto& geo_data = history_match_result->geo_data_seq[i];
+            request_params.common_info.coord_location.emplace_back(
+              CorbaAlgs::unpack_decimal<CoordDecimal>(geo_data.longitude),
+              CorbaAlgs::unpack_decimal<CoordDecimal>(geo_data.latitude),
+              CorbaAlgs::unpack_decimal<CoordDecimal>(geo_data.accuracy));
+          }
+        }
+        else
+        {
+          if (request_info.coord_location)
+          {
+            request_params.common_info.coord_location.emplace_back(
+              request_info.coord_location->longitude,
+              request_info.coord_location->latitude,
+              request_info.coord_location->accuracy);
+          }
+        }
+
+        request_params.common_info.user_id = request_info.user_status != AdServer::CampaignSvcs::US_PROBE ?
+          request_info.client_id : AdServer::Commons::UserId();
+        request_params.common_info.track_user_id = request_params.common_info.user_id;
+
+        request_params.common_info.signed_user_id = request_info.signed_client_id;
+        if (!request_info.temp_client_id.is_null() && !request_info.client_id.is_null())
+        {
+          request_params.merged_user_id = request_info.temp_client_id;
+        }
+
+        request_params.ad_instantiate_type = static_cast<std::uint32_t>(
+          AdServer::CampaignSvcs::AIT_BODY);
+        request_params.fill_track_pixel = false;
+
+        request_params.household_id = request_info.household_client_id;
+
+        // reduce user status values
+        request_params.common_info.user_status = static_cast<std::uint32_t>(
+          request_info.user_status);
+
+        if (request_info.user_status == AdServer::CampaignSvcs::US_OPTIN && (
+          trigger_matched_channels && (
+            trigger_matched_channels->no_track ||
+            trigger_matched_channels->no_adv)))
+        {
+          request_params.common_info.user_status = static_cast<std::uint32_t>(
+            AdServer::CampaignSvcs::US_BLACKLISTED);
+        }
+
+        request_params.client_create_time = CorbaAlgs::unpack_time(history_match_result->create_time);
+        request_params.common_info.full_referer = request_info.referer;
+        request_params.common_info.referer = request_info.allowable_referer;
+        request_params.context_info.full_referer_hash = request_info.full_referer_hash;
+        request_params.context_info.short_referer_hash = request_info.short_referer_hash;
+        request_params.common_info.cohort = request_info.curct;
+        request_params.common_info.peer_ip = request_info.peer_ip;
+        request_params.common_info.random = request_info.random;
+
+        request_params.fraud = history_match_result->fraud_request &&
+          !request_info.disable_fraud_detection;
+        request_params.common_info.test_request = request_info.test_request ||
+          request_info.disable_fraud_detection;
+        request_params.common_info.log_as_test = request_info.log_as_test;
+        request_params.disable_fraud_detection = request_info.disable_fraud_detection;
+        request_params.profiling_available = profiling_available;
+
+        request_params.search_engine_id = request_info.search_engine_id;
+        request_params.page_keywords_present = !request_info.page_words.empty() ||
+          !request_info.full_text_words.empty();
+
+        // sample requests
+        if (((static_cast<double>(request_info.random) * 100.0) / CampaignSvcs::RANDOM_PARAM_MAX)
+          <= common_config_->profiling_log_sampling())
+        {
+          bool added = false;
+          if (!request_info.full_text_words.empty())
+          {
+            request_params.page_keywords = request_info.full_text_words;
+            added = true;
+          }
+          if (!request_info.page_words.empty())
+          {
+            if (added)
+            {
+              request_params.page_keywords = std::string(" ");
+            }
+            request_params.page_keywords = request_info.page_words;
+            added = true;
+          }
+
+          if (!request_info.referer_url_words.empty())
+          {
+            request_params.url_keywords = request_info.referer_url_words;
+          }
+        }
+
+        request_params.common_info.colo_id = request_info.colo_id;
+
+        request_params.common_info.original_url = request_info.original_url;
+        request_params.common_info.request_id = request_info.request_id;
+        request_params.common_info.time = request_info.current_time;
+
+        request_params.common_info.user_agent = request_info.user_agent;
+
+        // fill request_params.context_info
+        request_params.context_info.enabled_notice = false;
+        request_params.context_info.profile_referer = false;
+        request_params.context_info.client = request_info.client_app;
+        request_params.context_info.client_version = request_info.client_app_version;
+        request_params.context_info.web_browser = request_info.web_browser;
+        request_params.context_info.platform_ids.insert(
+          std::end(request_params.context_info.platform_ids),
+          std::begin(request_info.platform_ids),
+          std::end(request_info.platform_ids));
+        request_params.context_info.platform = request_info.platform;
+        request_params.context_info.full_platform = request_info.full_platform;
+        request_params.context_info.page_load_id = request_info.page_load_id;
+        if (common_config_->ip_logging_enabled())
+        {
+          std::string ip_hash;
+          FrontendCommons::ip_hash(ip_hash, request_info.peer_ip, common_config_->ip_salt());
+          request_params.context_info.ip_hash = ip_hash;
+        }
+
+        request_params.full_freq_caps.insert(
+          std::end(request_params.full_freq_caps),
+          history_match_result->full_freq_caps.get_buffer(),
+          history_match_result->full_freq_caps.get_buffer()
+            + history_match_result->full_freq_caps.length());
+
+        request_params.seq_orders.reserve(history_match_result->seq_orders.length());
+        for(CORBA::ULong seq_order_i = 0;
+          seq_order_i != history_match_result->seq_orders.length();
+          ++seq_order_i)
+        {
+          const auto& seq_order = history_match_result->seq_orders[seq_order_i];
+          request_params.seq_orders.emplace_back(
+            seq_order.ccg_id,
+            seq_order.set_id,
+            seq_order.imps);
+        }
+
+        request_params.campaign_freqs.reserve(
+          history_match_result->campaign_freqs.length());
+        std::transform(
+          history_match_result->campaign_freqs.get_buffer(),
+          history_match_result->campaign_freqs.get_buffer()
+            + history_match_result->campaign_freqs.length(),
+          std::back_inserter(request_params.campaign_freqs),
+          [] (const auto& data) {
+            return FrontendCommons::GrpcCampaignManagerPool::CampaignFreq(
+              data.campaign_id,
+              data.imps);
+        });
+
+        // required passback for non profiling requests
+        request_params.common_info.passback_type = request_info.passback_type;
+        request_params.common_info.passback_url = request_info.passback_url;
+        request_params.common_info.security_token = request_info.request_token;
+        request_params.common_info.preclick_url = request_info.preclick_url;
+        request_params.common_info.pub_impr_track_url = request_info.pub_impr_track_url;
+        request_params.common_info.request_type = AdServer::CampaignSvcs::AR_NORMAL;
+        request_params.common_info.hpos = CampaignSvcs::UNDEFINED_PUB_POSITION_BOTTOM;
+        request_params.common_info.set_cookie = true;
+
+        request_params.publisher_site_id = 0;
+        request_params.required_passback = (request_info.tag_id != 0);
+        request_params.preview_ccid = request_info.ccid;
+
+        // fill input channel sequence for CampaignManager
+        request_params.channels.reserve(
+          history_match_result->channels.length() +
+          (trigger_matched_channels?
+            trigger_matched_channels->matched_channels.uid_channels.length(): 0));
+        for (CORBA::ULong i = 0; i < history_match_result->channels.length(); ++i)
+        {
+          request_params.channels.emplace_back(
+            history_match_result->channels[i].channel_id);
+        }
+
+        if (trigger_matched_channels)
+        {
+          for (CORBA::ULong i = 0;
+            i < trigger_matched_channels->matched_channels.uid_channels.length();
+            ++i)
+          {
+            request_params.channels.emplace_back(
+              trigger_matched_channels->matched_channels.uid_channels[i]);
+          }
+        }
+
+        request_params.hid_channels.reserve(history_match_result->hid_channels.length());
+        for (CORBA::ULong i = 0; i < history_match_result->hid_channels.length(); ++i)
+        {
+          request_params.hid_channels.emplace_back(
+            history_match_result->hid_channels[i].channel_id);
+        }
+
+        request_params.exclude_pubpixel_accounts.insert(
+          std::end(request_params.exclude_pubpixel_accounts),
+          history_match_result->exclude_pubpixel_accounts.get_buffer(),
+          history_match_result->exclude_pubpixel_accounts.get_buffer()
+            + history_match_result->exclude_pubpixel_accounts.length());
+
+        convert_ccg_keywords_(request_params.ccg_keywords, ccg_keywords);
+        convert_ccg_keywords_(request_params.hid_ccg_keywords, hid_ccg_keywords);
+
+        request_params.search_words = request_info.search_words;
+        request_params.need_debug_info = debug_sink->require_debug_info();
+        request_params.session_start = CorbaAlgs::unpack_time(history_match_result->session_start);
+        request_params.only_display_ad = false;
+        request_params.profiling_type = AdServer::CampaignSvcs::PT_ALL;
+
+        if (request_info.tag_id)
+        {
+          // initialize slot
+          request_params.ad_slots.emplace_back();
+          auto& ad_slot = request_params.ad_slots.back();
+          ad_slot.format = request_info.format;
+          ad_slot.tag_id = request_info.tag_id;
+          ad_slot.passback =
+            request_info.do_passback ||
+            request_info.passback_by_colocation ||
+            history_match_result->fraud_request ||
+            (trigger_matched_channels &&
+              (trigger_matched_channels->no_track ||
+                trigger_matched_channels->no_adv));
+          ad_slot.ext_tag_id = request_info.ext_tag_id;
+          ad_slot.min_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
+
+          ad_slot.up_expand_space = request_info.up_expand_space ?
+            static_cast<long>(*request_info.up_expand_space) : -1;
+          ad_slot.right_expand_space = request_info.right_expand_space ?
+            static_cast<long>(*request_info.right_expand_space) : -1;
+          ad_slot.down_expand_space = request_info.down_expand_space ?
+            static_cast<long>(*request_info.down_expand_space) : -1;
+          ad_slot.left_expand_space = request_info.left_expand_space ?
+            static_cast<long>(*request_info.left_expand_space) : -1;
+          ad_slot.tag_visibility = request_info.tag_visibility ?
+            static_cast<long>(*request_info.tag_visibility) : -1;
+
+          ad_slot.debug_ccg = request_info.debug_ccg;
+          ad_slot.video_min_duration = 0;
+          ad_slot.video_max_duration = -1;
+          ad_slot.video_skippable_max_duration = -1;
+          ad_slot.video_width = 0;
+          ad_slot.video_height = 0;
+          ad_slot.video_allow_skippable = true;
+          ad_slot.video_allow_unskippable = true;
+        }
+
+        TimeGuard creative_selection_time_metering;
+
+        auto response = grpc_campaign_manager_pool->get_campaign_creative(
+          request_params);
+        if (!response || response->has_error())
+        {
+          throw Exception("get_campaign_creative is failed");
+        }
+        const auto& info_proto = response->info();
+        const auto& request_result_proto = info_proto.request_result();
+
+        assert(request_result_proto.ad_slots().size() ==
+          static_cast<int>(request_params.ad_slots.size()));
+
+        request_time_metering.creative_selection_local_time =
+          GrpcAlgs::unpack_time(request_result_proto.process_time());
+
+        if (request_result_proto.ad_slots().size() > 0)
+        {
+          const auto& ad_slot_proto = request_result_proto.ad_slots()[0];
+
+          if (ad_slot_proto.passback() && ad_slot_proto.passback_url()[0] != 0)
+          {
+            passback_info.url = ad_slot_proto.passback_url();
+          }
+
+          log_as_test |= ad_slot_proto.test_request();
+
+          request_time_metering.creative_selection_time =
+            creative_selection_time_metering.consider();
+
+          request_time_metering.creative_count = ad_slot_proto.selected_creatives().size();
+          request_time_metering.passback = ad_slot_proto.passback();
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: "
+               << exc.what();
+        logger()->emergency(stream.str(), Aspect::AD_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: Unknown error";
+        logger()->emergency(stream.str(), Aspect::AD_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+    {
+      return;
+    }
 
     /* do campaign selection */
     try
@@ -2750,15 +3144,15 @@ namespace AdServer
         ad_slot.min_ecpm = CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
           CampaignSvcs::RevenueDecimal::ZERO);
 
-        ad_slot.up_expand_space = request_info.up_expand_space.present() ?
+        ad_slot.up_expand_space = request_info.up_expand_space ?
           static_cast<long>(*request_info.up_expand_space) : -1;
-        ad_slot.right_expand_space = request_info.right_expand_space.present() ?
+        ad_slot.right_expand_space = request_info.right_expand_space ?
           static_cast<long>(*request_info.right_expand_space) : -1;
-        ad_slot.down_expand_space = request_info.down_expand_space.present() ?
+        ad_slot.down_expand_space = request_info.down_expand_space ?
           static_cast<long>(*request_info.down_expand_space) : -1;
-        ad_slot.left_expand_space = request_info.left_expand_space.present() ?
+        ad_slot.left_expand_space = request_info.left_expand_space ?
           static_cast<long>(*request_info.left_expand_space) : -1;
-        ad_slot.tag_visibility = request_info.tag_visibility.present() ?
+        ad_slot.tag_visibility = request_info.tag_visibility ?
           static_cast<long>(*request_info.tag_visibility) : -1;
 
         ad_slot.debug_ccg = request_info.debug_ccg;
@@ -2881,6 +3275,76 @@ namespace AdServer
   {
     static const char* FUN = "AdFrontend::opt_out_client_()";
 
+    bool is_grpc_success = false;
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      try
+      {
+        FrontendCommons::CookieNameSet remove_cookie_list;
+
+        for(auto it = common_config_->OptOutRemoveCookies().Cookie().begin();
+          it != common_config_->OptOutRemoveCookies().Cookie().end(); ++it)
+        {
+          remove_cookie_list.insert(it->name());
+        }
+
+        cookie_manager_->remove(response, request, cookies, remove_cookie_list);
+
+        cookie_manager_->set(
+          response,
+          request,
+          Request::Cookie::OPTOUT,
+          Request::Cookie::OPTOUT_TRUE_VALUE);
+
+        cookie_manager_->set(
+          response,
+          request,
+          Request::Cookie::OI_PROMPT,
+          Request::Cookie::OI_PROMPT_VALUE);
+
+        auto response = grpc_campaign_manager_pool->verify_opt_operation(
+          request_info.current_time.tv_sec,
+          request_info.colo_id,
+          std::string{},
+          AdServer::CampaignSvcs::Proto::OptOperation::OO_OUT,
+          11,
+          CampaignSvcs::US_OPTOUT,
+          request_info.log_as_test,
+          request_info.web_browser,
+          request_info.full_platform,
+          std::string{},
+          std::string{},
+          AdServer::Commons::UserId{});
+        if (response && response->has_info())
+        {
+          is_grpc_success = true;
+        }
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: "
+               << exc.what();
+        logger()->emergency(stream.str(), Aspect::AD_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Can't do opt out: Unknown error";
+        logger()->emergency(stream.str(), Aspect::AD_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+    {
+      return;
+    }
+
     try
     {
       FrontendCommons::CookieNameSet remove_cookie_list;
@@ -2935,6 +3399,61 @@ namespace AdServer
     noexcept
   {
     static const char* FUN = "AdFrontend::update_colocation_flags()";
+
+    bool is_grpc_success = false;
+    auto grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      try
+      {
+        auto response = grpc_campaign_manager_pool->get_colocation_flags();
+        if (!response || response->has_error())
+        {
+          throw Exception("get_colocation_flags is failed");
+        }
+        const auto& info_proto = response->info();
+        const auto& colocation_flags = info_proto.colocation_flags();
+        const std::size_t size = colocation_flags.size();
+
+        RequestInfoFiller::ColoFlagsMap_var new_colo_flags(
+          new RequestInfoFiller::ColoFlagsMap);
+        for (std::size_t i = 0; i < size; i += 1)
+        {
+          RequestInfoFiller::ColoFlags colo_flags;
+          colo_flags.flags = colocation_flags[i].flags();
+          colo_flags.hid_profile = colocation_flags[i].hid_profile();
+          new_colo_flags->insert(
+            RequestInfoFiller::ColoFlagsMap::value_type(
+              colocation_flags[i].colo_id(),
+              colo_flags));
+        }
+        request_info_filler_->colo_flags(new_colo_flags);
+
+        is_grpc_success = true;
+      }
+      catch (const eh::Exception& exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Can't update colocation flags: "
+               << exc.what();
+        logger()->critical(stream.str(), Aspect::AD_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Can't update colocation flags: Unknown error";
+        logger()->critical(stream.str(), Aspect::AD_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+    {
+      return;
+    }
 
     try
     {

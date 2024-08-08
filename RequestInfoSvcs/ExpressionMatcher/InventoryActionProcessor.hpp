@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <optional>
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -120,7 +121,7 @@ namespace AdServer
         Generics::Time placement_colo_time;
         unsigned long colo_id;
 
-        typedef AdServer::Commons::Optional<ChannelIdVector> ChannelIdVectorOptional;
+        typedef std::optional<ChannelIdVector> ChannelIdVectorOptional;
         ChannelIdVectorOptional triggered_expression_channels; // sorted
         ChannelIdSet triggered_cpm_expression_channels;
         ChannelActionMap channel_actions;
@@ -132,12 +133,13 @@ namespace AdServer
         Commons::ImmutableString country_code;
         RevenueDecimal cost_threshold;
         unsigned long max_text_ads;
-        AdServer::Commons::Optional<AdSlot> display_ad;
+        std::optional<AdSlot> display_ad;
         AdBidSlotList text_ads;
         CampaignSvcs::AuctionType auction_type;
         bool ad_request;
 
-        void print(std::ostream& ostr, const char*) const noexcept;
+        template<typename OStream>
+        void print(OStream& ostr, const char*) const noexcept;
       };
 
     public:
@@ -259,7 +261,8 @@ namespace AdServer
         CampaignSvcs::AuctionType auction_type;
 
       public:
-        void print(std::ostream& ostr, const char* offset) const noexcept;
+        template<typename OStream>
+        void print(OStream& ostr, const char* offset) const noexcept;
 
         bool operator==(const InventoryInfo& right) const noexcept;
 
@@ -271,22 +274,25 @@ namespace AdServer
           const ChannelIdList& lst)
           noexcept;
 
+        template<typename OStream>
         static
-        std::ostream&
+        OStream&
         print_channels_(
-          std::ostream& ostr,
+          OStream& ostr,
           const ChannelIdVector& lst)
           noexcept;
 
-        std::ostream&
+        template<typename OStream>
+        OStream&
         print_channel_counter_map_(
-          std::ostream& ostr,
+          OStream& ostr,
           const ChannelImpCounterVector& chs) const
           noexcept;
 
-        std::ostream&
+        template<typename OStream>
+        OStream&
         print_channel_avg_revenue_map_(
-          std::ostream& ostr,
+          OStream& ostr,
           const ChannelAvgRevenueVector& chs) const
           noexcept;
       };
@@ -336,10 +342,10 @@ namespace AdServer
       }
     }
 
-    inline
-    void
+    template<typename OStream>
+    inline void
     MatchRequestProcessor::MatchInfo::print(
-      std::ostream& ostr, const char* offset) const
+      OStream& ostr, const char* offset) const
       noexcept
     {
       ostr << offset << "user_id: '" << user_id << "'" << std::endl <<
@@ -348,7 +354,7 @@ namespace AdServer
         offset << "tag_size: " << tag_size << std::endl <<
         offset << "country: " << country_code << std::endl <<
         offset << "triggered_expression_channels:";
-      if(triggered_expression_channels.present())
+      if(triggered_expression_channels)
       {
         Algs::print(ostr,
           triggered_expression_channels->begin(), triggered_expression_channels->end());
@@ -358,7 +364,7 @@ namespace AdServer
         triggered_cpm_expression_channels.begin(),
         triggered_cpm_expression_channels.end());
       ostr << offset << "display_ad:";
-      if(display_ad.present())
+      if(display_ad)
       {
         ostr << " [ " << display_ad->avg_revenue << ": ";
         Algs::print(ostr, display_ad->imp_channels.begin(), display_ad->imp_channels.end());
@@ -446,10 +452,10 @@ namespace AdServer
       return ostr;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     InventoryActionProcessor::InventoryInfo::print_channels_(
-      std::ostream& ostr,
+      OStream& ostr,
       const ChannelIdVector& lst)
       noexcept
     {
@@ -457,10 +463,10 @@ namespace AdServer
       return ostr;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     InventoryActionProcessor::InventoryInfo::print_channel_counter_map_(
-      std::ostream& ostr,
+      OStream& ostr,
       const ChannelImpCounterVector& chs) const noexcept
     {
       for(auto ch_it = chs.begin(); ch_it != chs.end(); ++ch_it)
@@ -472,10 +478,10 @@ namespace AdServer
       return ostr;
     }
 
-    inline
-    std::ostream&
+    template<typename OStream>
+    inline OStream&
     InventoryActionProcessor::InventoryInfo::print_channel_avg_revenue_map_(
-      std::ostream& ostr,
+      OStream& ostr,
       const ChannelAvgRevenueVector& chs) const noexcept
     {
       for(auto ch_it = chs.begin(); ch_it != chs.end(); ++ch_it)
@@ -486,10 +492,10 @@ namespace AdServer
       return ostr;
     }
 
-    inline
-    void
+    template<typename OStream>
+    inline void
     InventoryActionProcessor::InventoryInfo::print(
-      std::ostream& ostr, const char* offset) const noexcept
+      OStream& ostr, const char* offset) const noexcept
     {
       ostr << offset << "time: " << time.get_gm_time() << std::endl <<
         offset << "country_code: " << country_code << std::endl <<

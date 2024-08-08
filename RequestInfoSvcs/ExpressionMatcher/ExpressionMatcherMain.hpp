@@ -5,7 +5,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/Manager.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
@@ -20,8 +20,8 @@ public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
 
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
   using Configuration = AdServer::RequestInfoSvcs::ExpressionMatcherImpl::ExpressionMatcherConfig;
 
 public:

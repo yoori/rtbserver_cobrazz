@@ -88,3 +88,14 @@ target_link_libraries(UserIdController
   Commons
   Generics
 )
+
+add_library(GrpcCampaignManagerPool SHARED
+  GrpcCampaignManagerPool.cpp
+)
+
+target_link_libraries(GrpcCampaignManagerPool
+  CampaignManagerProto
+  Commons
+  Generics
+  UServerUtils
+)

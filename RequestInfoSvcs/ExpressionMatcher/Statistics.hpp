@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 // UNIXCOMMONS
-#include <UServerUtils/Grpc/Statistics/CounterStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/CounterStatisticsProvider.hpp>
 
 namespace AdServer::RequestInfoSvcs
 {

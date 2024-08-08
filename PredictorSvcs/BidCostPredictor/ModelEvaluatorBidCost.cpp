@@ -6,12 +6,12 @@
 
 namespace Aspect
 {
-const char* MODEL_EVALUATOR_BID_COST = "MODEL_EVALUATOR_BID_COST";
-}
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+inline constexpr char MODEL_EVALUATOR_BID_COST[] = "MODEL_EVALUATOR_BID_COST";
+
+} // namespace Aspect
+
+namespace PredictorSvcs::BidCostPredictor
 {
 
 ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
@@ -19,105 +19,148 @@ ModelEvaluatorBidCostImpl::ModelEvaluatorBidCostImpl(
   DataModelProvider* data_provider,
   ModelBidCostFactory* model_factory,
   Logging::Logger* logger)
-  : points_(points),
+  : points_(sort_points(points)),
     data_provider_(ReferenceCounting::add_ref(data_provider)),
     model_factory_(ReferenceCounting::add_ref(model_factory)),
     logger_(ReferenceCounting::add_ref(logger)),
-    observer_(new ActiveObjectObserver(this)),
     persantage_(logger_, Aspect::MODEL_EVALUATOR_BID_COST, 5),
-    collector_(1, 1),
-    task_runner_(new Generics::TaskRunner(observer_, 1))
+    collector_(1, 1, 1)
 {
+  using Severity = Generics::ActiveObjectCallback::Severity;
+
+  observer_ = new ActiveObjectObserver(
+    [this] (
+      const Severity severity,
+      const String::SubString& description,
+      const char* error_code) {
+      if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
+      {
+        shutdown_manager_.stop();
+
+        Stream::Error stream;
+        stream << FNS
+               << "ModelEvaluatorBidCost stopped due to incorrect operation of queues."
+               << " Reason: "
+               << description;
+        logger_->critical(
+          stream.str(),
+          Aspect::MODEL_EVALUATOR_BID_COST,
+          error_code);
+      }
+    });
+
+  task_runner_ = new Generics::TaskRunner(observer_.in(), 1);
+  task_runner_->activate_object();
+
   threads_number_ = std::max(8u, std::thread::hardware_concurrency());
   threads_number_ = std::min(36u, threads_number_);
-  task_runner_pool_ = TaskRunner_var(
-    new Generics::TaskRunner(
-      observer_,
-      threads_number_));
+  task_runner_pool_ = new Generics::TaskRunner(
+    observer_,
+    threads_number_);
+  task_runner_pool_->activate_object();
 
-  std::sort(
-    std::begin(points_),
-    std::end(points_),
-    [] (const auto& d1, const auto& d2) {
-      return d1 > d2;
-    });
+  if (!data_provider_)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "data_provider is null";
+    throw Exception(stream);
+  }
+
+  if (!model_factory_)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "model_factory is null";
+    throw Exception(stream);
+  }
+}
+
+ModelEvaluatorBidCostImpl::~ModelEvaluatorBidCostImpl()
+{
+  shutdown_manager_.stop();
+  clear();
 }
 
 ModelBidCost_var ModelEvaluatorBidCostImpl::evaluate() noexcept
 {
   if (shutdown_manager_.is_stoped())
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : shutdown_manager already is stopped";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+    std::ostringstream stream;
+    stream << FNS
+           << "ModelEvaluatorBidCost already is stopped";
+    logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
     return {};
   }
 
-  if (!data_provider_)
+  if (!is_idle_.load())
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : data_provider is null";
+    Stream::Error stream;
+    stream << FNS
+           << "ModelEvaluatorBidCost already is evaluated";
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
     return {};
   }
-
-  if (!model_factory_)
-  {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : model_factory is null";
-    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
-    return {};
-  }
+  is_idle_.store(false);
 
   model_ = model_factory_->create();
   if (!model_)
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : model is null";
+    Stream::Error stream;
+    stream << FNS
+           << "model is null";
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
     return {};
   }
 
   if (!data_provider_->load(collector_))
   {
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : data_provider load collector is failed";
+    Stream::Error stream;
+    stream << FNS
+           << "data_provider load of collector is failed";
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
     return {};
   }
 
   if (collector_.empty())
   {
-    logger_->info(
-      std::string("ModelEvaluatorBidCost: Collector is empty"),
-      Aspect::MODEL_EVALUATOR_BID_COST);
-    return model_;
+    std::ostringstream stream;
+    stream << FNS
+           << "Collector is empty";
+    logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+    return std::move(model_);
   }
 
   try
   {
-    start();
+    run();
   }
   catch (const eh::Exception& exc)
   {
     shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelEvaluatorBidCost is failed"
-           << " : Reason: "
+
+    Stream::Error stream;
+    stream << FNS
+           << "ModelEvaluatorBidCost is failed : "
+           << "Reason: "
            << exc.what();
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
     return {};
   }
+  catch (...)
+  {
+    shutdown_manager_.stop();
 
-  wait();
+    Stream::Error stream;
+    stream << FNS
+           << "ModelEvaluatorBidCost is failed : "
+           << "Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+    return {};
+  }
 
-  if (is_success_)
+  const bool success = wait();
+  if (success)
   {
     return std::move(model_);
   }
@@ -128,121 +171,203 @@ ModelBidCost_var ModelEvaluatorBidCostImpl::evaluate() noexcept
   }
 }
 
-void ModelEvaluatorBidCostImpl::wait() noexcept
+bool ModelEvaluatorBidCostImpl::wait() noexcept
 {
-  if (!is_running_)
-    return;
-
-  is_running_ = false;
-
   shutdown_manager_.wait();
+  return is_evaluation_success_.load();
+}
 
+void ModelEvaluatorBidCostImpl::clear() noexcept
+{
   try
   {
     task_runner_pool_->wait_for_queue_exhausting();
   }
   catch (...)
-  {}
+  {
+  }
 
   try
   {
     task_runner_pool_->deactivate_object();
     task_runner_pool_->wait_object();
-    task_runner_pool_->clear();
   }
   catch (...)
-  {}
+  {
+  }
 
   try
   {
     task_runner_->wait_for_queue_exhausting();
   }
   catch (...)
-  {}
+  {
+  }
 
   try
   {
     task_runner_->deactivate_object();
     task_runner_->wait_object();
-    task_runner_->clear();
   }
   catch (...)
-  {}
+  {
+  }
 
   task_runner_pool_.reset();
   task_runner_.reset();
 }
 
-ModelEvaluatorBidCostImpl::~ModelEvaluatorBidCostImpl()
+template<ConceptMemberPtr MemPtr, class ...Args>
+bool ModelEvaluatorBidCostImpl::post_task(
+  const TaskRunnerID id,
+  MemPtr mem_ptr,
+  Args&& ...args) noexcept
 {
-  shutdown_manager_.stop();
-  observer_->clear_delegate();
-  wait();
+  try
+  {
+    TaskRunner_var task_runner;
+    switch (id)
+    {
+      case TaskRunnerID::Single:
+      {
+        task_runner = task_runner_;
+        break;
+      }
+      case TaskRunnerID::Pool:
+      {
+        task_runner = task_runner_pool_;
+        break;
+      }
+    }
+
+    task_runner->enqueue_task(
+      AdServer::Commons::make_delegate_task(
+        std::bind(
+          mem_ptr,
+          this,
+          std::forward<Args>(args)...)));
+
+    return true;
+  }
+  catch (const eh::Exception& exc)
+  {
+    shutdown_manager_.stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't enqueue_task : "
+           << "Reason: "
+           << exc.what();
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+  }
+  catch (...)
+  {
+    shutdown_manager_.stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Can't enqueue_task:"
+           << "Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+  }
+
+  return false;
 }
 
-void ModelEvaluatorBidCostImpl::start()
+ModelEvaluatorBidCostImpl::Points
+ModelEvaluatorBidCostImpl::sort_points(const Points& points)
 {
-  logger_->info(
-          std::string("ModelEvaluatorBidCost started"),
-          Aspect::MODEL_EVALUATOR_BID_COST);
+  Points result(points);
+  std::sort(
+    std::begin(result),
+    std::end(result),
+    [] (const auto& d1, const auto& d2) {
+      return d1 > d2;
+    });
 
-  is_running_ = true;
+  return result;
+}
 
-  task_runner_pool_->activate_object();
-  task_runner_->activate_object();
-
-  if (!post_task(
-    TaskRunnerID::Single,
-    &ModelEvaluatorBidCostImpl::do_init))
+void ModelEvaluatorBidCostImpl::run()
+{
   {
-    throw Exception("Initial post_task is failed");
+    std::ostringstream stream;
+    stream << FNS
+           << "ModelEvaluatorBidCost started";
+    logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+  }
+
+  if (!post_task(TaskRunnerID::Single, &ModelEvaluatorBidCostImpl::do_init))
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Initial post_task is failed";
+    throw Exception(stream);
   }
 }
 
 void ModelEvaluatorBidCostImpl::stop() noexcept
 {
   shutdown_manager_.stop();
-  logger_->info(
-    std::string("ModelEvaluatorWBidCost was interrupted"),
-    Aspect::MODEL_EVALUATOR_BID_COST);
+
+  std::ostringstream stream;
+  stream << FNS
+         << "ModelEvaluatorBidCost was interrupted";
+  logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
 }
 
 void ModelEvaluatorBidCostImpl::do_init() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   remaining_iterations_ = collector_.size();
   persantage_.set_total_number(remaining_iterations_);
-  iterator_ = std::begin(collector_);
-  const std::size_t count =
-    std::min(static_cast<std::size_t>(threads_number_ * 3), remaining_iterations_);
+  collector_iterator_ = std::begin(collector_);
+  const std::size_t count = std::min(
+    static_cast<std::size_t>(threads_number_ * 3),
+    remaining_iterations_);
   for (std::size_t i = 1; i <= count; ++i)
   {
     post_task(
       TaskRunnerID::Pool,
       &ModelEvaluatorBidCostImpl::do_calculate,
-      iterator_);
-    ++iterator_;
+      collector_iterator_);
+    ++collector_iterator_;
   }
 }
 
-void ModelEvaluatorBidCostImpl::do_calculate(const Iterator it) noexcept
+void ModelEvaluatorBidCostImpl::do_calculate(const Iterator collector_it) noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   try
   {
-    do_calculate_helper(it);
+    do_calculate_helper(collector_it);
   }
   catch (const eh::Exception& exc)
   {
     shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Reason: "
+
+    Stream::Error stream;
+    stream << FNS
+           << "Reason: "
            << exc.what();
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+    return;
+  }
+  catch (...)
+  {
+    shutdown_manager_.stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Reason: Unknown error";
     logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
     return;
   }
@@ -256,27 +381,31 @@ void ModelEvaluatorBidCostImpl::do_calculate(const Iterator it) noexcept
     &ModelEvaluatorBidCostImpl::do_decrease);
 }
 
-void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
+void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator collector_it)
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
-  const auto& top_key = it->first;
-  const auto& cost_dict = *it->second;
+  const auto& top_key = collector_it->first;
+  const auto& cost_dict = *collector_it->second;
   const std::size_t size_cost_dict = cost_dict.size();
 
   long unverified_imps = 0;
   long imps = 0;
-  auto it_begin = cost_dict.rbegin();
-  auto it_end = cost_dict.rend();
-  for (auto it = it_begin; it != it_end; ++it)
+  auto it = cost_dict.rbegin();
+  const auto it_end = cost_dict.rend();
+  for (; it != it_end; ++it)
   {
     const auto& cost_data = it->second;
     unverified_imps += cost_data.unverified_imps();
     imps += cost_data.imps();
 
     if (imps >= TOP_LEVEL_WIN_RATE_MIN_IMPS)
+    {
       break;
+    }
   }
 
   std::optional<FixedNumber> top_level_win_rate;
@@ -295,16 +424,15 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
   }
 
   if (top_level_win_rate
-   && top_level_win_rate->is_nonnegative()
-   && !top_level_win_rate->is_zero())
+    && top_level_win_rate->is_nonnegative()
+    && !top_level_win_rate->is_zero())
   {
     for (const auto& point : points_)
     {
-      const auto check_win_rate =
-        FixedNumber::mul(
-          *top_level_win_rate,
-          point,
-          Generics::DMR_FLOOR);
+      const auto check_win_rate = FixedNumber::mul(
+        *top_level_win_rate,
+        point,
+        Generics::DMR_FLOOR);
       const auto& max_cost = cost_dict.rbegin()->first;
 
       std::optional<FixedNumber> target_cost;
@@ -357,89 +485,79 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator it)
   }
 }
 
-void ModelEvaluatorBidCostImpl::do_decrease() noexcept
-{
-  if (shutdown_manager_.is_stoped())
-    return;
-
-  try
-  {
-    remaining_iterations_ -= 1;
-    if (remaining_iterations_ == 0)
-    {
-      is_success_ = true;
-      shutdown_manager_.stop();
-    }
-
-    persantage_.increase();
-  }
-  catch (...)
-  {
-  }
-}
-
 void ModelEvaluatorBidCostImpl::do_save(
   const TagId& tag_id,
-  const Url_var& url,
+  const UrlPtr& url,
   const FixedNumber& point,
   const FixedNumber& target_cost,
   const FixedNumber& max_cost) noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
   try
   {
-    model_->set_cost(tag_id, url, point, target_cost, max_cost);
+    model_->set_cost(
+      tag_id,
+      url,
+      point,
+      target_cost,
+      max_cost);
   }
   catch (const eh::Exception& exc)
   {
     shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : Reason: "
+
+    Stream::Error stream;
+    stream << FNS
+           << "Reason: "
            << exc.what();
-    logger_->critical(
-      stream.str(),
-      Aspect::MODEL_EVALUATOR_BID_COST);
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+  }
+  catch (...)
+  {
+    shutdown_manager_.stop();
+
+    Stream::Error stream;
+    stream << FNS
+           << "Reason: Unknown error";
+    logger_->critical(stream.str(), Aspect::MODEL_EVALUATOR_BID_COST);
+  }
+}
+
+void ModelEvaluatorBidCostImpl::do_decrease() noexcept
+{
+  if (shutdown_manager_.is_stoped())
+  {
     return;
   }
+
+  remaining_iterations_ -= 1;
+  if (remaining_iterations_ == 0)
+  {
+    is_evaluation_success_.store(true);
+    shutdown_manager_.stop();
+  }
+  persantage_.increase();
 }
 
 void ModelEvaluatorBidCostImpl::do_next_task() noexcept
 {
   if (shutdown_manager_.is_stoped())
+  {
     return;
+  }
 
-  if (iterator_ != std::end(collector_))
+  if (collector_iterator_ != std::end(collector_))
   {
     post_task(
       TaskRunnerID::Pool,
       &ModelEvaluatorBidCostImpl::do_calculate,
-      iterator_);
-    ++iterator_;
+      collector_iterator_);
+    ++collector_iterator_;
   }
 }
 
-void ModelEvaluatorBidCostImpl::report_error(
-  Severity severity,
-  const String::SubString& description,
-  const char* error_code) noexcept
-{
-  if (severity == Severity::CRITICAL_ERROR || severity == Severity::ERROR)
-  {
-    shutdown_manager_.stop();
-    std::stringstream stream;
-    stream << __PRETTY_FUNCTION__
-           << " : ModelEvaluatorBidCost stopped due to incorrect operation of queues."
-           << " Reason: "
-           << description;
-    logger_->critical(
-      stream.str(),
-      Aspect::MODEL_EVALUATOR_BID_COST,
-      error_code);
-  }
-}
-
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

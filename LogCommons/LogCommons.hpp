@@ -1,6 +1,7 @@
 #ifndef AD_SERVER_LOG_PROCESSING_LOG_COMMONS_HPP
 #define AD_SERVER_LOG_PROCESSING_LOG_COMMONS_HPP
 
+#include <optional>
 
 #include <iosfwd>
 #include <memory>
@@ -505,13 +506,158 @@ typedef UuidIoWrapper<RequestId> RequestIdIoWrapper;
 
 using Generics::hash_add;
 
+namespace Internal
+{
+
+template<typename ObjectType>
+class Optional
+{
+public:
+  Optional(): defined_(false), val_() {}
+
+  Optional(const Optional<ObjectType>& val)
+    : defined_(val.defined_),
+      val_(val.val_)
+  {}
+
+  Optional(Optional<ObjectType>&& val)
+    : defined_(val.defined_),
+      val_(std::move(val.val_))
+  {}
+
+  template<typename...Args>
+  explicit Optional(
+    bool defined,
+    Args&&... data)
+    : defined_(defined),
+      val_(std::forward<Args>(data)...)
+  {}
+
+  explicit Optional(const ObjectType& val)
+    : defined_(true),
+      val_(val)
+  {}
+
+  Optional(const ObjectType* val)
+    : defined_(val),
+      val_(val ? *val : ObjectType())
+  {}
+
+  const ObjectType* operator->() const noexcept
+  {
+    return &val_;
+  }
+
+  ObjectType* operator->() noexcept
+  {
+    return &val_;
+  }
+
+  const ObjectType& operator*() const noexcept
+  {
+    return val_;
+  }
+
+  ObjectType& operator*() noexcept
+  {
+    return val_;
+  }
+
+  bool present() const noexcept
+  {
+    return defined_;
+  }
+
+  bool has_value() const noexcept
+  {
+    return defined_;
+  }
+
+  void set(const ObjectType& val)
+  {
+    val_ = val;
+    defined_ = true;
+  }
+
+  Optional& operator=(const ObjectType& val)
+  {
+    set(val);
+    return *this;
+  }
+
+  Optional& operator=(const Optional<ObjectType>& val)
+  {
+    if(val.present())
+    {
+      set(*val);
+    }
+    else
+    {
+      clear();
+    }
+
+    return *this;
+  }
+
+  template<typename RightType>
+  Optional& operator=(const Optional<RightType>& val)
+  {
+    if(val.present())
+    {
+      set(*val);
+    }
+    else
+    {
+      clear();
+    }
+
+    return *this;
+  }
+
+  template<typename RightType>
+  bool operator==(const Optional<RightType>& right) const
+  {
+    return &right == this || (present() == right.present() &&
+                              (!present() || **this == *right));
+  }
+
+  template <typename RightType>
+  bool operator !=(const Optional<RightType>& right) const
+  {
+    return !(*this == right);
+  }
+
+  void clear()
+  {
+    defined_ = false;
+    val_ = ObjectType();
+  }
+
+protected:
+  template <typename CompatibleType>
+  Optional(const CompatibleType& val, bool defined)
+    : defined_(defined), val_(defined ? ObjectType(val) : ObjectType())
+  {}
+
+  void present_(bool new_state) noexcept
+  {
+    defined_ = new_state;
+  }
+
+private:
+  bool defined_;
+
+  ObjectType val_;
+};
+
+} // namespace Internal
+
 template <
   class T_,
-  class VALUE_TYPE_TRAITS_ = Aux_::DefaultOptionalValueTypeTraits<T_>
->
-class OptionalValue : public Commons::Optional<T_>
+  class VALUE_TYPE_TRAITS_ = Aux_::DefaultOptionalValueTypeTraits<T_>>
+class OptionalValue : public Internal::Optional<T_>
 {
-  typedef Commons::Optional<T_> BaseType;
+  typedef Internal::Optional<T_> BaseType;
   typedef OptionalValue<T_, VALUE_TYPE_TRAITS_> Self_;
 
 public:
@@ -535,23 +681,19 @@ public:
   {}
 
   template <typename TYPE_>
-  OptionalValue(const Commons::Optional<TYPE_>& value)
-  :
-    BaseType(value)
+  OptionalValue(const std::optional<TYPE_>& value)
+    : BaseType(value.value_or(T_()), value.has_value())
   {
+    this->present_(!VALUE_TYPE_TRAITS_::is_empty(**this));
   }
 
-  const T_&
-  get() const noexcept
+  const T_& get() const noexcept
   {
-//    assert(present());
     return **this;
   }
 
-  T_&
-  get() noexcept
+  T_& get() noexcept
   {
-//    assert(present());
     return **this;
   }
 
@@ -579,16 +721,14 @@ public:
     return *this;
   }
 
-  void
-  reset()
+  void reset()
   {
     clear();
     BaseType::present_(false);
   }
 
   template <typename Hash>
-  void
-  hash_add(Hash& hash) const noexcept
+  void hash_add(Hash& hash) const noexcept
   {
     if (present())
     {
@@ -598,18 +738,15 @@ public:
 
   template <typename U, typename OVTraits>
   friend std::istream&
-  operator >>(std::istream& is, OptionalValue<U, OVTraits>& ov)
-    /*throw(eh::Exception)*/;
+  operator >>(std::istream& is, OptionalValue<U, OVTraits>& ov);
 
   template <typename U, typename OVTraits>
   friend std::ostream&
-  operator <<(std::ostream& os, const OptionalValue<U, OVTraits>& ov)
-    /*throw(eh::Exception)*/;
+  operator <<(std::ostream& os, const OptionalValue<U, OVTraits>& ov);
 
   template <typename Category, typename U, typename OVTraits>
   friend FixedBufStream<Category>&
-  operator >>(FixedBufStream<Category>&, OptionalValue<U, OVTraits>&)
-    /*throw(eh::Exception)*/;
+  operator >>(FixedBufStream<Category>&, OptionalValue<U, OVTraits>&);
 };
 
 typedef OptionalValue<unsigned long> OptionalUlong;
@@ -664,7 +801,7 @@ user_id_distribution_hash(const AdServer::Commons::UserId& user_id);
 unsigned long
 request_distribution_hash(
   const AdServer::Commons::RequestId& request_id,
-  const AdServer::Commons::Optional<unsigned long>& user_id_distrib_hash
+  const std::optional<unsigned long>& user_id_distrib_hash
 );
 
 unsigned long
@@ -1022,9 +1159,9 @@ search_for_files(
   Logging::Logger *logger = 0
 );
 
-template <class SEQ_>
-std::ostream&
-output_sequence(std::ostream &os, const SEQ_ &seq, const char *sep = ",");
+template <class OStream, class SEQ_>
+OStream&
+output_sequence(OStream &os, const SEQ_ &seq, const char *sep = ",");
 
 void
 parse_string_list(
@@ -1420,7 +1557,7 @@ public:
   get();
 
   virtual ~SafeSequenceGenerator() noexcept = default;
-    
+
 private:
   const unsigned int min_value_;
   const unsigned int diff_;

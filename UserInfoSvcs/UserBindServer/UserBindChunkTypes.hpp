@@ -13,7 +13,7 @@
 #include <Generics/Time.hpp>
 #include <Generics/GnuHashTable.hpp>
 #include <Logger/Logger.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBase.hpp>
+#include <UServerUtils/RocksDB/DataBase.hpp>
 
 // THIS
 #include <Commons/UserInfoManip.hpp>

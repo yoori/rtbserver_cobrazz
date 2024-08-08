@@ -6,48 +6,49 @@
 #include <vector>
 #include <string>
 
-// THIS
+// UNIXCOMMONS
+#include <Generics/Function.hpp>
 #include <Stream/MemoryStream.hpp>
+
+// THIS
 #include "Process.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 Process::Process(
   const std::string& bin_path,
-  const std::vector<std::string>& options)
+  const Options& options)
   : bin_path_(bin_path),
     options_(options)
-{
-}
-
-Process::~Process()
 {
 }
 
 void Process::launch()
 {
   std::lock_guard lock(mutex_);
-  if (is_stopped_)
-    return;
+  if (pid_ != -1)
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Process has already launched";
+    throw Exception(stream);
+  }
 
   pid_ = fork();
   if (pid_ == -1)
   {
-    Stream::Error ostr;
-    ostr << __PRETTY_FUNCTION__
-         << " : Reason : "
-         << "fork is failed";
-    throw Exception(ostr);
+    Stream::Error stream;
+    stream << FNS
+            << "Reason : fork is failed";
+    throw Exception(stream);
   }
   else if (pid_ == 0)
   {
     std::vector<char*> params;
     params.reserve(options_.size() + 2);
     params.emplace_back(const_cast<char*>(bin_path_.c_str()));
-    for (const std::string& str : options_)
+    for (const auto& str : options_)
     {
       params.emplace_back(const_cast<char*>(str.c_str()));
     }
@@ -64,7 +65,9 @@ int Process::wait() noexcept
   {
     std::lock_guard guard(mutex_);
     if (pid_ == -1)
+    {
       return EXIT_SUCCESS;
+    }
     pid = pid_;
   }
 
@@ -92,10 +95,10 @@ int Process::wait() noexcept
 void Process::stop() noexcept
 {
   std::lock_guard guard(mutex_);
-  is_stopped_ = true;
   if (pid_ != -1)
+  {
     kill(pid_, SIGINT);
+  }
 }
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor

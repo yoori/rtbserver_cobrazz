@@ -5,13 +5,14 @@
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Singleton.hpp>
-#include <UServerUtils/Grpc/ComponentsBuilder.hpp>
-#include <UServerUtils/Grpc/Manager.hpp>
+#include <UServerUtils/ComponentsBuilder.hpp>
+#include <UServerUtils/Manager.hpp>
 
 // THIS
-#include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
+#include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
 #include <xsd/Frontends/HttpServerConfig.hpp>
 
 namespace AdServer::Frontends::Http
@@ -24,16 +25,28 @@ class Application final :
 public:
   using ALIVE_STATUS = CORBACommons::IProcessControl::ALIVE_STATUS;
   using Boolean = CORBA::Boolean;
+
+private:
   using CorbaConfig = CORBACommons::CorbaConfig;
   using CorbaServerAdapter_var = CORBACommons::CorbaServerAdapter_var;
   using Frontend_var = FrontendCommons::Frontend_var;
   using StatHolder_var = AdServer::StatHolder_var;
   using ServerConfig = xsd::AdServer::Configuration::ServerConfigType;
   using ServerConfigPtr = std::unique_ptr<ServerConfig>;
-  using ComponentsBuilder = UServerUtils::Grpc::ComponentsBuilder;
-  using ManagerCoro = UServerUtils::Grpc::Manager;
-  using ManagerCoro_var = UServerUtils::Grpc::Manager_var;
-  using TaskProcessorContainer = UServerUtils::Grpc::TaskProcessorContainer;
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using ManagerCoro = UServerUtils::Manager;
+  using ManagerCoro_var = UServerUtils::Manager_var;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+  using GrpcChannelOperationPool = AdServer::ChannelSvcs::GrpcChannelOperationPool;
+  using GrpcChannelOperationPoolPtr = std::shared_ptr<GrpcChannelOperationPool>;
+  using GrpcCampaignManagerPool = FrontendCommons::GrpcCampaignManagerPool;
+  using GrpcCampaignManagerPoolPtr = std::shared_ptr<GrpcCampaignManagerPool>;
+  using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+  using TaskProcessor = userver::engine::TaskProcessor;
+  using GrpcUserBindOperationDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
+  using GrpcUserBindOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
+  using GrpcUserInfoOperationDistributor = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
+  using GrpcUserInfoOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -56,6 +69,22 @@ private:
   void init_corba();
 
   void init_http();
+
+  GrpcChannelOperationPoolPtr create_grpc_channel_operation_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
+
+  GrpcCampaignManagerPoolPtr create_grpc_campaign_manager_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
+
+  GrpcUserBindOperationDistributor_var create_grpc_user_bind_operation_distributor(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
+
+  GrpcUserInfoOperationDistributor_var create_grpc_user_info_operation_distributor(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor);
 
 private:
   CorbaConfig corba_config_;

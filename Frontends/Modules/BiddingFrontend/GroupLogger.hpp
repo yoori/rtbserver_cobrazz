@@ -192,10 +192,7 @@ namespace AdServer
       else
       {
         Stream::Buffer<256> os(buf);
-        os << " 0.";
-        os.width(2);
-        os << std::setfill('0');
-        os << time.tv_usec / 10000;
+        os << " 0." << Stream::MemoryStream::width_out(time.tv_usec / 10000, 2, '0');
       }
 
       Stream::Error ostr;

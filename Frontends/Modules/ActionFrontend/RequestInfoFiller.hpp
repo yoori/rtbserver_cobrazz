@@ -3,6 +3,7 @@
 
 #include <string>
 #include <set>
+#include <optional>
 
 #include <GeoIP/IPMap.hpp>
 #include <Logger/Logger.hpp>
@@ -41,10 +42,10 @@ namespace Action
     GeoIPMapping::IPMapCity2::CityLocation location;
     std::string req_country;
 
-    AdServer::Commons::Optional<unsigned long> campaign_id;
-    AdServer::Commons::Optional<unsigned long> action_id;
+    std::optional<unsigned long> campaign_id;
+    std::optional<unsigned long> action_id;
     std::string order_id;
-    AdServer::Commons::Optional<AdServer::CampaignSvcs::RevenueDecimal> value;
+    std::optional<AdServer::CampaignSvcs::RevenueDecimal> value;
     AdServer::CampaignSvcs::UserStatus user_status;
     std::string referer;
     bool test_request;

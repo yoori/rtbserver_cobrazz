@@ -83,7 +83,7 @@ namespace CampaignSvcs
 
   protected:
     virtual ~CampaignConfigModifier() noexcept {}
-      
+
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
 
@@ -128,9 +128,10 @@ namespace CampaignSvcs
       const Generics::Time& now)
       noexcept;
 
+    template<typename OStream>
     static bool
     campaign_is_active_(
-      std::ostream* deactivate_trace_str,
+      OStream* deactivate_trace_str,
       bool& campaign_daily_budget_defined,
       RevenueDecimal& campaign_daily_budget,
       const Generics::Time& now,
@@ -140,9 +141,10 @@ namespace CampaignSvcs
       const StatSource::Stat& stat)
       noexcept;
 
+    template<typename OStream>
     static bool
     ccg_is_active_(
-      std::ostream* deactivate_trace_str,
+      OStream* deactivate_trace_str,
       bool& ccg_daily_budget_defined,
       RevenueDecimal& ccg_daily_budget,
       Generics::Time& today_open_time,

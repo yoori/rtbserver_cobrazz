@@ -399,8 +399,7 @@ namespace AdServer
   // UserBindFrontend implementation
   //
   UserBindFrontend::UserBindFrontend(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
@@ -421,8 +420,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().UserBindFeConfiguration()->threads(),
         frontend_config->get().UserBindFeConfiguration()->bind_pending_task_limit()),
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       campaign_managers_(this->logger(), Aspect::USER_BIND_FRONTEND),
@@ -518,22 +516,13 @@ namespace AdServer
         */
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        const auto& config_grpc_client = common_config_->GrpcClientPool();
-        const auto config_grpc_data = Config::create_pool_client_config(
-          config_grpc_client);
-        const bool is_grpc_enable = config_grpc_client.enable();
-
         if(!common_config_->UserBindControllerGroup().empty())
         {
           user_bind_client_ = new FrontendCommons::UserBindClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger(),
-            task_processor_,
-            scheduler_,
-            config_grpc_data.first,
-            config_grpc_data.second,
-            is_grpc_enable);
+            grpc_container_->grpc_user_bind_operation_distributor.in());
           add_child_object(user_bind_client_);
         }
 
@@ -541,10 +530,7 @@ namespace AdServer
           common_config_->UserInfoManagerControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          task_processor_,
-          config_grpc_data.first,
-          config_grpc_data.second,
-          is_grpc_enable);
+          grpc_container_->grpc_user_info_operation_distributor.in());
         add_child_object(user_info_client_);
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
@@ -581,6 +567,16 @@ namespace AdServer
             std::string keywords = it->keywords();
             String::SubString keywords_ss(keywords);
 
+            RedirectRule::AllowedParams allowed_params;
+            auto it_redirect_param = it->redirectUrlParam().begin();
+            const auto it_redirect_param_end = it->redirectUrlParam().end();
+            for (; it_redirect_param != it_redirect_param_end; ++it_redirect_param)
+            {
+              allowed_params.try_emplace(
+                it_redirect_param->name(),
+                it_redirect_param->token());
+            }
+
             source->rules.push_back(
               init_redirect_rule_(
                 it->redirect(),
@@ -588,7 +584,8 @@ namespace AdServer
                 it->passback(),
                 it->weight(),
                 it->location(),
-                it->redirect_empty_uid()));
+                it->redirect_empty_uid(),
+                std::move(allowed_params)));
           }
         }
 
@@ -779,8 +776,7 @@ namespace AdServer
     {
       AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
         user_bind_client_->user_bind_mapper();
-      FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-        user_bind_client_->grpc_distributor();
+      const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)
@@ -1090,9 +1086,23 @@ namespace AdServer
         try
         {
           if(redirect_rule.in() && (
-               !request_info.user_id.is_null() || redirect_rule->redirect_empty_uid))
+            !request_info.user_id.is_null() || redirect_rule->redirect_empty_uid))
           {
             String::TextTemplate::Args templ_args;
+
+            const auto& params = request.params();
+            const auto& allowed_params = redirect_rule->allowed_params;
+            if (!allowed_params.empty())
+            {
+              for (const auto& param : params)
+              {
+                const auto it = allowed_params.find(param.name);
+                if (it != std::end(allowed_params))
+                {
+                  templ_args[it->second] = param.value;
+                }
+              }
+            }
 
             // fill params by request
             templ_args[TemplateParams::EXTERNALID] = request_info.external_id;
@@ -1112,14 +1122,14 @@ namespace AdServer
               templ_args[TemplateParams::SIGNEDUID] =
                 common_module_->user_id_controller()->sign(
                   bind_result.result_user_id).str();
-	    }
+            }
 
             if(!request_info.user_id.is_null())
             {
               templ_args[TemplateParams::SIGNEDCOOKIEUID] =
                 common_module_->user_id_controller()->sign(
                   request_info.user_id).str();
-	    }
+            }
 
             std::string ssp_user_id_str;
 
@@ -1340,8 +1350,7 @@ namespace AdServer
             {
               AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
                 user_bind_client_->user_bind_mapper();
-              FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-                user_bind_client_->grpc_distributor();
+             const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
               const std::string cookie_external_id_str =
                 std::string("c/") + result_user_id.to_string();
@@ -1357,7 +1366,7 @@ namespace AdServer
                   is_grpc_success = true;
                   auto response = grpc_distributor->get_user_id(
                     cookie_external_id_str,
-                    GrpcAlgs::pack_user_id(result_user_id),
+                    result_user_id,
                     request_info.time,
                     Generics::Time::ZERO,
                     true,
@@ -1498,8 +1507,7 @@ namespace AdServer
                   {
                     AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
                       user_bind_client_->user_bind_mapper();
-                    FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-                      user_bind_client_->grpc_distributor();
+                    const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
                     const std::string& external_id_str = cur_external_id;
 
@@ -1515,7 +1523,7 @@ namespace AdServer
                         is_grpc_success = true;
                         auto response = grpc_distributor->get_user_id(
                           external_id_str,
-                          String::SubString{},
+                          {},
                           request_info.time,
                           Generics::Time::ZERO,
                           true,
@@ -1695,8 +1703,7 @@ namespace AdServer
                   {
                     AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
                       user_bind_client_->user_bind_mapper();
-                    FrontendCommons::UserBindClient::GrpcDistributor_var grpc_distributor =
-                      user_bind_client_->grpc_distributor();
+                    const auto grpc_distributor = user_bind_client_->grpc_distributor();
 
                     bool invalid_operation = true;
 
@@ -2186,8 +2193,7 @@ namespace AdServer
       // merge merge_user_id into user_id
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
-      AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var
-        grpc_distributor = user_info_client_->grpc_distributor();
+      const auto grpc_distributor = user_info_client_->grpc_distributor();
 
       bool is_grpc_success = false;
       if (grpc_distributor)
@@ -2613,10 +2619,11 @@ namespace AdServer
   UserBindFrontend::init_redirect_rule_(
     const String::SubString& redirect,
     const String::SubString* keywords,
-    bool passback,
-    unsigned long weight,
+    const bool passback,
+    const unsigned long weight,
     const String::SubString& location,
-    bool redirect_empty_uid)
+    const bool redirect_empty_uid,
+    RedirectRule::AllowedParams&& allowed_params)
     /*throw(UserBindFrontend::InvalidSource)*/
   {
     static const char* FUN = "UserBindFrontend::init_redirect_rule_";
@@ -2658,6 +2665,7 @@ namespace AdServer
       redirect_rule->init_bind_request = false;
       redirect_rule->weight = weight;
       redirect_rule->redirect_empty_uid = redirect_empty_uid;
+      redirect_rule->allowed_params = std::move(allowed_params);
 
       {
         String::TextTemplate::Keys keys;

@@ -846,7 +846,7 @@ optional_decimal_to_string(
   AdServer::CampaignSvcs::OptionalRevenueDecimal revenue =
     CorbaAlgs::unpack_optional_decimal<
       AdServer::CampaignSvcs::RevenueDecimal>(optional_decimal_info);
-  return revenue.present() ? revenue->str() : "null";
+  return revenue ? revenue->str() : "null";
 }
 
 std::string

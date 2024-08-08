@@ -37,7 +37,7 @@ namespace RequestInfoSvcs
     operation_writer.time() = impression_info.time.tv_sec;
     operation_writer.request_id() = impression_info.request_id.to_string();
     operation_writer.verify_impression() = impression_info.verify_impression;
-    if(impression_info.pub_revenue.present())
+    if(impression_info.pub_revenue)
     {
       operation_writer.pub_revenue_type() = impression_info.pub_revenue->revenue_type;
       operation_writer.pub_revenue() = impression_info.pub_revenue->impression.str();

@@ -5,34 +5,29 @@
 #include <memory>
 #include <string>
 
-// THIS
-#include <LogCommons/LogCommons.hpp>
+// UNIXCOMMONS
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
+
+// THIS
+#include <LogCommons/LogCommons.hpp>
 #include "ModelManager.hpp"
 #include "Types.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
-namespace LogProcessing = AdServer::LogProcessing;
-namespace Predictor = PredictorSvcs::BidCostPredictor;
-
-class ModelBidCost :
-  public virtual ModelManager,
-  public virtual ReferenceCounting::Interface
+class ModelBidCost : public ModelManager
 {
 public:
   using TagId = Types::TagId;
   using Url = Types::Url;
-  using Url_var = Types::Url_var;
+  using UrlPtr = Types::UrlPtr;
   using WinRate = Types::WinRate;
   using Cost = Types::Cost;
 
 public:
-  ModelBidCost() = default;
+  explicit ModelBidCost() = default;
 
   virtual Cost get_cost(
     const TagId& tag_id,
@@ -42,7 +37,7 @@ public:
 
   virtual void set_cost(
     const TagId& tag_id,
-    const Url_var& url,
+    const UrlPtr& url,
     const WinRate& win_rate,
     const Cost& cost,
     const Cost& max_cost) = 0;
@@ -55,7 +50,6 @@ protected:
 
 using ModelBidCost_var = ReferenceCounting::SmartPtr<ModelBidCost>;
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif // BIDCOSTPREDICTOR_MODEL_BIDCOST_HPP

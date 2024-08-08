@@ -114,7 +114,7 @@ namespace RequestInfoSvcs
 
     unsigned long check_ecpm = 0;
 
-    if(inv_request_info.display_ad.present())
+    if(inv_request_info.display_ad)
     {
       check_ecpm = RevenueDecimal::mul(
         inv_request_info.display_ad->avg_revenue,
@@ -499,7 +499,7 @@ namespace RequestInfoSvcs
         active_channel_list = profile_writer.active_channel_list();
 
       assert(inv_info.active_appear_channels.empty());
-      if (inv_request_info.triggered_expression_channels.present())
+      if (inv_request_info.triggered_expression_channels)
       {
         std::set_difference(
           inv_request_info.triggered_expression_channels->begin(),
@@ -562,7 +562,7 @@ namespace RequestInfoSvcs
 
     ChannelIdVector triggered_expr_holder;
     const ChannelIdVector& triggered_expression_channels =
-      inv_request_info.triggered_expression_channels.present() ?
+      inv_request_info.triggered_expression_channels ?
       *inv_request_info.triggered_expression_channels : triggered_expr_holder;
 
     if(!inv_request_info.tag_size.empty()) // impop
@@ -574,9 +574,9 @@ namespace RequestInfoSvcs
         profile_writer.display_impop_no_imp_channel_list(),
         inv_info.display_appears,
         triggered_expression_channels,
-        inv_request_info.display_ad.present() ?
+        inv_request_info.display_ad ?
           inv_request_info.display_ad->imp_channels : ChannelIdSet(),
-        inv_request_info.display_ad.present() ||
+        inv_request_info.display_ad ||
           !inv_request_info.text_ads.empty());
 
       // TO OPTIMIZE
@@ -595,7 +595,7 @@ namespace RequestInfoSvcs
           triggered_expression_channels,
           text_ad_it != inv_request_info.text_ads.end() ?
             text_ad_it->imp_channels : ChannelIdSet(),
-          inv_request_info.display_ad.present() ||
+          inv_request_info.display_ad ||
             text_ad_it != inv_request_info.text_ads.end());
 
         if(text_ad_it != inv_request_info.text_ads.end())
@@ -687,7 +687,7 @@ namespace RequestInfoSvcs
       }
 
       if(profile_writer.last_daily_processing_time() < request_date.tv_sec &&
-         inv_request_info.triggered_expression_channels.present())
+         inv_request_info.triggered_expression_channels)
       {
         profile_changed = true;
         profile_writer.last_daily_processing_time() =
@@ -1687,14 +1687,14 @@ namespace RequestInfoSvcs
 
     ChannelIdVector triggered_expr_holder;
     const ChannelIdVector& triggered_expression_channels =
-      request_info.triggered_expression_channels.present() ?
+      request_info.triggered_expression_channels ?
       *request_info.triggered_expression_channels : triggered_expr_holder;
 
     if(!request_info.tag_size.empty())
     {
       RevenueDecimal sum_request_revenue = RevenueDecimal::ZERO;
 
-      if(request_info.display_ad.present())
+      if(request_info.display_ad)
       {
         try
         {
@@ -1724,7 +1724,7 @@ namespace RequestInfoSvcs
       }
 
       // impression opportunity
-      if(request_info.display_ad.present())
+      if(request_info.display_ad)
       {
         inv_info.display_imps.imp_channels.reserve(request_info.display_ad->imp_channels.size());
 

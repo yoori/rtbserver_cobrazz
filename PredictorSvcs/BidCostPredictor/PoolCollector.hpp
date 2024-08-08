@@ -5,20 +5,20 @@
 #include <list>
 #include <mutex>
 
-// THIS
-#include "Generics/Uncopyable.hpp"
+// UNIXCOMMONS
+#include <Generics/Uncopyable.hpp>
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 template<class Collector,
-        std::size_t init_size = 500000>
+         std::size_t init_size = 500000>
 class PoolCollector final : private Generics::Uncopyable
 {
 public:
-  PoolCollector() = default;
+  explicit PoolCollector() = default;
+
+  ~PoolCollector() = default;
 
   Collector get_collector()
   {
@@ -52,7 +52,6 @@ private:
   std::list<Collector> collectors_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_POOLCOLLECTOR_HPP

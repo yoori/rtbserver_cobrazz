@@ -315,6 +315,18 @@ namespace PlainStorage
       const char* offset = "")
       const noexcept;
 
+    Stream::Error&
+    print_(Stream::Error& ostr,
+      const char* offset = "")
+      const noexcept;
+
+  private:
+    template<typename OStream>
+    OStream&
+    print_impl_(OStream& ostr,
+      const char* offset)
+      const noexcept;
+
   protected:
     /**
      * Empty virtual destructor
@@ -866,6 +878,35 @@ namespace PlainStorage
     const char* offset)
     const noexcept
   {
+    return print_impl_(ostr, offset);
+  }
+
+  template<
+    typename NextIndexType,
+    typename NextIndexSerializerType,
+    typename SyncPolicyType>
+  Stream::Error&
+  WriteFragmentLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteFragmentImpl::print_(
+    Stream::Error& ostr,
+    const char* offset)
+    const noexcept
+  {
+    return print_impl_(ostr, offset);
+  }
+
+  template<
+    typename NextIndexType,
+    typename NextIndexSerializerType,
+    typename SyncPolicyType>
+  template<typename OStream>
+  OStream&
+  WriteFragmentLayer<NextIndexType, NextIndexSerializerType, SyncPolicyType>::
+  WriteFragmentImpl::print_impl_(
+    OStream& ostr,
+    const char* offset)
+    const noexcept
+  {
     typedef FragmentBlockHead<NextIndexType, NextIndexSerializerType> ActualFBH;
 
     ostr << offset << "#(" << index_.base_index << ", ";
@@ -1137,7 +1178,7 @@ namespace PlainStorage
           fragment_size,
           size + sizeof(u_int32_t),
           safe_block_size);
-        
+
         {
           SizeType check_fragment_size;
           assert(
@@ -1265,7 +1306,7 @@ namespace PlainStorage
           raise(SIGSEGV);
         }
       }
-      
+
 #     endif
     }
     catch(const eh::Exception& ex)
@@ -1465,7 +1506,7 @@ namespace PlainStorage
     SizeType flag_offset = ActualFBH::size() + index.sub_index;
 
     bool use_as_control = false;
-    
+
     {
       typename FragmentAllocateLockMap::WriteGuard block_lock(
         fragment_alloc_locks_.write_lock(index.base_index));
@@ -1606,7 +1647,7 @@ namespace PlainStorage
         ostr << FUN << ": first free reference corrupted";
         throw BaseException(ostr);
       }
-      
+
       for(typename BlockIndex::SubIndex i = result_index + 1;
           i < fragment_count; ++i)
       {

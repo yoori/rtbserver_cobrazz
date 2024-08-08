@@ -900,7 +900,8 @@ namespace RequestInfoSvcs
       tag_request_info.ext_tag_id = req.ext_tag_id();
       tag_request_info.referer = req.referer();
       tag_request_info.urls = req.urls();
-      tag_request_info.referer_hash = req.full_referer_hash();
+      tag_request_info.referer_hash = req.full_referer_hash().has_value() ?
+        std::optional<unsigned long>(*req.full_referer_hash()) : std::optional<unsigned long>();
 
       tag_request_info.user_status = req.user_status();
       tag_request_info.country = req.country();
@@ -909,15 +910,17 @@ namespace RequestInfoSvcs
 
       if(req.opt_in_section().present())
       {
-        tag_request_info.user_id = req.opt_in_section().get().user_id();
-        tag_request_info.ad_shown = req.opt_in_section().get().ad_shown();
+        const auto& opt_in_section = req.opt_in_section().get();
+        tag_request_info.user_id = opt_in_section.user_id();
+        tag_request_info.ad_shown = opt_in_section.ad_shown();
         tag_request_info.user_agent = new Commons::StringHolder(
-          req.opt_in_section().get().user_agent());
+          opt_in_section.user_agent());
         if(!tag_request_info.user_id.is_null())
         {
-          tag_request_info.site_id = req.opt_in_section().get().site_id();
-          tag_request_info.page_load_id = req.opt_in_section().get().page_load_id();
-          tag_request_info.profile_referer = req.opt_in_section().get().profile_referer();
+          tag_request_info.site_id = opt_in_section.site_id();
+          tag_request_info.page_load_id = opt_in_section.page_load_id().present() ?
+            *opt_in_section.page_load_id() : std::optional<unsigned int>();
+          tag_request_info.profile_referer = opt_in_section.profile_referer();
         }
       }
       else

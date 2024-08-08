@@ -221,8 +221,7 @@ namespace AdServer
 
   /* DirectoryModule */
   DirectoryModule::DirectoryModule(
-    TaskProcessor& task_processor,
-    const SchedulerPtr& scheduler,
+    const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     FrontendCommons::HttpResponseFactory* response_factory)
@@ -242,8 +241,7 @@ namespace AdServer
         response_factory,
         frontend_config->get().ContentFeConfiguration()->threads(),
         0), // max pending tasks
-      task_processor_(task_processor),
-      scheduler_(scheduler),
+      grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config))
   {}
 

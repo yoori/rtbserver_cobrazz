@@ -3,62 +3,46 @@
 
 // THIS
 #include <Logger/Logger.hpp>
-#include <UServerUtils/Grpc/TaskProcessorContainerBuilder.hpp>
-#include <UServerUtils/Grpc/CobrazzServerBuilder.hpp>
-#include <UServerUtils/Grpc/Core/Client/ConfigPoolCoro.hpp>
+#include <UServerUtils/Grpc/Client/ConfigPoolCoro.hpp>
+#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
+#include <UServerUtils/TaskProcessorContainerBuilder.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 
 namespace Config
 {
 
 inline
-UServerUtils::Grpc::TaskProcessorContainerBuilderPtr
+UServerUtils::TaskProcessorContainerBuilderPtr
 create_task_processor_container_builder(
   Logging::Logger* logger,
   const xsd::AdServer::Configuration::CoroutineType& coro_config)
 {
-  using CoroPoolConfig =
-    UServerUtils::Grpc::CoroPoolConfig;
-  using EventThreadPoolConfig =
-    UServerUtils::Grpc::EventThreadPoolConfig;
-  using TaskProcessorConfig =
-    UServerUtils::Grpc::TaskProcessorConfig;
-  using OverloadActionType =
-    xsd::AdServer::Configuration::OverloadActionType;
-  using TaskProcessorContainerBuilder =
-    UServerUtils::Grpc::TaskProcessorContainerBuilder;
+  using CoroPoolConfig = UServerUtils::CoroPoolConfig;
+  using EventThreadPoolConfig = UServerUtils::EventThreadPoolConfig;
+  using TaskProcessorConfig = UServerUtils::TaskProcessorConfig;
+  using TaskProcessorContainerBuilder = UServerUtils::TaskProcessorContainerBuilder;
+  using CoroutineType = xsd::AdServer::Configuration::CoroutineType;
+  using MainTaskProcessorType = xsd::AdServer::Configuration::MainTaskProcessorType;
+  using OverloadActionType = xsd::AdServer::Configuration::OverloadActionType;
 
-  const auto& coro_pool =
-    coro_config.CoroPool();
+  const auto& coro_pool = coro_config.CoroPool();
   CoroPoolConfig coro_pool_config;
-  coro_pool_config.initial_size =
-    coro_pool.initial_size();
-  coro_pool_config.max_size =
-    coro_pool.max_size();
-  coro_pool_config.stack_size =
-    coro_pool.stack_size();
+  coro_pool_config.initial_size = coro_pool.initial_size();
+  coro_pool_config.max_size = coro_pool.max_size();
+  coro_pool_config.stack_size = coro_pool.stack_size();
 
-  const auto& event_thread_pool =
-    coro_config.EventThreadPool();
+  const auto& event_thread_pool = coro_config.EventThreadPool();
   EventThreadPoolConfig event_thread_pool_config;
-  event_thread_pool_config.threads =
-    event_thread_pool.number_threads();
-  event_thread_pool_config.thread_name =
-    event_thread_pool.name();
-  event_thread_pool_config.defer_events =
-    event_thread_pool.defer_events();
-  event_thread_pool_config.ev_default_loop_disabled =
-    event_thread_pool.ev_default_loop_disabled();
+  event_thread_pool_config.threads = event_thread_pool.number_threads();
+  event_thread_pool_config.thread_name = event_thread_pool.name();
+  event_thread_pool_config.defer_events = event_thread_pool.defer_events();
+  event_thread_pool_config.ev_default_loop_disabled = event_thread_pool.ev_default_loop_disabled();
 
-  const auto& main_task_processor =
-    coro_config.MainTaskProcessor();
+  const auto& main_task_processor = coro_config.MainTaskProcessor();
   TaskProcessorConfig main_task_processor_config;
-  main_task_processor_config.name =
-    main_task_processor.name();
-  main_task_processor_config.should_guess_cpu_limit =
-    main_task_processor.should_guess_cpu_limit();
-  main_task_processor_config.worker_threads =
-    main_task_processor.number_threads();
+  main_task_processor_config.name = main_task_processor.name();
+  main_task_processor_config.should_guess_cpu_limit = main_task_processor.should_guess_cpu_limit();
+  main_task_processor_config.worker_threads = main_task_processor.number_threads();
 
   switch (main_task_processor.overload_action()) {
     case OverloadActionType::cancel:
@@ -86,15 +70,13 @@ create_task_processor_container_builder(
 }
 
 inline
-UServerUtils::Grpc::GrpcCobrazzServerBuilderPtr
-create_grpc_cobrazz_server_builder(
+UServerUtils::Grpc::Server::ServerBuilderPtr
+create_grpc_server_builder(
   Logging::Logger* logger,
   const xsd::AdServer::Configuration::GrpcServerType& server_config)
 {
-  using ServerConfig =
-    UServerUtils::Grpc::Core::Server::ConfigCoro;
-  using GrpcCobrazzServerBuilder =
-    UServerUtils::Grpc::GrpcCobrazzServerBuilder;
+  using ServerConfig = UServerUtils::Grpc::Server::ConfigCoro;
+  using ServerBuilder = UServerUtils::Grpc::Server::ServerBuilder;
 
   ServerConfig config;
   const auto& num_threads = server_config.num_threads();
@@ -102,7 +84,6 @@ create_grpc_cobrazz_server_builder(
   {
     config.num_threads = *server_config.num_threads();
   }
-
   config.ip = server_config.ip();
   config.port = server_config.port();
 
@@ -113,16 +94,14 @@ create_grpc_cobrazz_server_builder(
     config.channel_args[arg.key()] = arg.value();
   }
 
-  return std::make_unique<GrpcCobrazzServerBuilder>(
-    config,
-    logger);
+  return std::make_unique<ServerBuilder>(config, logger);
 }
 
 inline
 auto create_pool_client_config(
   const xsd::AdServer::Configuration::GrpcClientPoolType& config_client)
 {
-  UServerUtils::Grpc::Core::Client::ConfigPoolCoro config;
+  UServerUtils::Grpc::Client::ConfigPoolCoro config;
 
   std::stringstream stream;
   stream << config_client.ip()

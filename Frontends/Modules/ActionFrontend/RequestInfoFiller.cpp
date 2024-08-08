@@ -1,3 +1,4 @@
+#include <optional>
 
 #include <String/AsciiStringManip.hpp>
 #include <String/UTF8Case.hpp>
@@ -180,19 +181,19 @@ namespace Action
     add_processor_(true, true, Request::Context::CAMPAIGN_ID,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
-        AdServer::Commons::Optional<unsigned long>,
+        std::optional<unsigned long>,
         unsigned long>(
         &RequestInfo::campaign_id));
     add_processor_(true, true, Request::Context::ACTION_ID,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
-        AdServer::Commons::Optional<unsigned long>,
+        std::optional<unsigned long>,
         unsigned long>(
         &RequestInfo::action_id));
     add_processor_(true, true, Request::Context::CONVERSION_ID,
       new FrontendCommons::NumberParamProcessor<
         RequestInfo,
-        AdServer::Commons::Optional<unsigned long>,
+        std::optional<unsigned long>,
         unsigned long>(
         &RequestInfo::action_id));
     add_processor_(true, true, Request::Context::ORDER_ID,
@@ -204,7 +205,7 @@ namespace Action
     add_processor_(true, true, Request::Context::ACTION_VALUE,
       new FrontendCommons::DecimalParamProcessor<
         RequestInfo,
-        AdServer::Commons::Optional<AdServer::CampaignSvcs::RevenueDecimal>,
+        std::optional<AdServer::CampaignSvcs::RevenueDecimal>,
         AdServer::CampaignSvcs::RevenueDecimal>(
           &RequestInfo::value, false));
     add_processor_(false, true, Request::Context::EXTERNAL_ID,
@@ -368,10 +369,10 @@ namespace Action
         }
       }
 
-      if(request_info.value.present() &&
+      if(request_info.value &&
         *request_info.value == AdServer::CampaignSvcs::RevenueDecimal::ZERO)
       {
-        request_info.value.clear();
+        request_info.value.reset();
       }
 
       if(!request_info.req_country.empty())
@@ -470,8 +471,8 @@ namespace Action
       throw Exception(ostr);
     }
 
-    if(!request_info.action_id.present() &&
-       !request_info.campaign_id.present())
+    if(!request_info.action_id &&
+       !request_info.campaign_id)
     {
       throw InvalidParamException("");
     }

@@ -43,7 +43,7 @@ namespace CTR
       operator==(const KeyHashAdapter& right) const;
 
       size_t
-      hash() const throw ();
+      hash() const noexcept;
 
       const unsigned long tag_id;
       const std::string domain;

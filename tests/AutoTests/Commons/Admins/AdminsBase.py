@@ -400,7 +400,7 @@ class Admin:
       print >>strm, "  exists_(exists)"
       print >>strm, "  {}"
       strm.newline()
-      print >>strm, "virtual ~%s_() throw() {}" % self.checker_name
+      print >>strm, "virtual ~%s_() noexcept {}" % self.checker_name
       strm.newline()
       print >>strm, "bool check(bool throw_error = true) throw (CheckFailed, eh::Exception);"
       strm.newline()

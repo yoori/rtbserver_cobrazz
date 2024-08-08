@@ -15,7 +15,7 @@
 #include <Logger/Logger.hpp>
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/Time.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBase.hpp>
+#include <UServerUtils/RocksDB/DataBase.hpp>
 
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>

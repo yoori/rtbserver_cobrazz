@@ -619,7 +619,7 @@ namespace RequestInfoSvcs
       /*throw(MatchRequestProcessor::Exception)*/
     {
       if(!match_info.tag_size.empty() &&
-         match_info.triggered_expression_channels.present() &&
+         match_info.triggered_expression_channels &&
          !match_info.triggered_expression_channels->empty())
       {
         add_record(

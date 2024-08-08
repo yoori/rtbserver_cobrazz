@@ -10,16 +10,17 @@
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
-#include <UServerUtils/Grpc/Core/Common/Scheduler.hpp>
+#include <UServerUtils/Grpc/Common/Scheduler.hpp>
 #include <userver/engine/task/task_processor.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
+#include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/GrpcContainer.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -39,14 +40,12 @@ namespace PassbackPixel
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    using TaskProcessor = userver::engine::TaskProcessor;
-    using SchedulerPtr = UServerUtils::Grpc::Core::Common::SchedulerPtr;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     Frontend(
-      TaskProcessor& task_processor,
-      const SchedulerPtr& scheduler,
+      const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
@@ -110,8 +109,7 @@ namespace PassbackPixel
       noexcept;
 
   private:
-    TaskProcessor& task_processor_;
-    const SchedulerPtr scheduler_;
+    const GrpcContainerPtr grpc_container_;
 
     /* configuration */
     //std::string config_file_;

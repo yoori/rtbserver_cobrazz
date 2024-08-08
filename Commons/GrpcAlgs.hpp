@@ -3,6 +3,8 @@
 
 // STD
 #include <cassert>
+#include <type_traits>
+#include <optional>
 
 // PROTOBUF
 #include <google/protobuf/repeated_field.h>
@@ -80,9 +82,9 @@ inline AdServer::Commons::RequestId unpack_request_id(const std::string& request
   return unpack_user_id(request_id);
 }
 
-template<class RepeatedType, class MemPointerFunction, class ...MemPointersFunction>
+template<class OStream, class RepeatedType, class MemPointerFunction, class ...MemPointersFunction>
 inline void print_repeated_fields(
-  std::ostream& out,
+  OStream& out,
   const char* delim,
   [[maybe_unused]] const char* field_delim,
   const RepeatedType& repeated_value,
@@ -113,9 +115,9 @@ inline void print_repeated_fields(
   }
 }
 
-template<class RepeatedType>
+template<class OStream, class RepeatedType>
 inline void print_repeated(
-  std::ostream& out,
+  OStream& out,
   const char* delim,
   const RepeatedType& repeated_value)
 {
@@ -133,10 +135,10 @@ inline void print_repeated(
 
 template<class DecimalType>
 inline std::string pack_optional_decimal(
-  const AdServer::Commons::Optional<DecimalType>& data)
+  const std::optional<DecimalType>& data)
 {
   std::string result;
-  if (data.present())
+  if (data)
   {
     result.resize(DecimalType::PACK_SIZE);
     data->pack(result.data());
@@ -167,7 +169,7 @@ inline DecimalType unpack_optional_decimal(const std::string& data)
 {
   if (data.empty())
   {
-    return AdServer::Commons::Optional<DecimalType>();
+    return std::optional<DecimalType>();
   }
   else
   {
@@ -204,7 +206,15 @@ void pack_decimal_into_repeated_field(
   seq.Add(buf, buf + EL_NUMBER);
 }
 
-template<class Error>
+template<class E>
+concept ConceptError1 = requires(E e)
+{
+  std::decay_t<decltype(e.type())>::Error_Type_ChunkNotFound;
+  std::decay_t<decltype(e.type())>::Error_Type_NotReady;
+  std::decay_t<decltype(e.type())>::Error_Type_Implementation;
+};
+
+template<ConceptError1 Error>
 void print_grpc_error(
   const Error& error,
   Logging::Logger* logger,
@@ -220,41 +230,90 @@ void print_grpc_error(
       {
         Stream::Error stream;
         stream << FNS
-               << ": Chunk not found.";
-        logger->error(
-          stream.str(),
-          aspect);
+               << "Chunk not found.";
+        logger->error(stream.str(), aspect);
         break;
       }
       case ErrorType::Error_Type_NotReady:
       {
         Stream::Error stream;
         stream << FNS
-               << ": Not ready.";
-        logger->error(
-          stream.str(),
-          aspect);
+               << "Not ready.";
+        logger->error(stream.str(), aspect);
         break;
       }
       case ErrorType::Error_Type_Implementation:
       {
         Stream::Error stream;
         stream << FNS
-               << ": "
                << error.description();
-        logger->error(
-          stream.str(),
-          aspect);
+        logger->error(stream.str(), aspect);
         break;
       }
       default:
       {
         Stream::Error stream;
         stream << FNS
-               << ": Unknown error type";
-        logger->error(
-          stream.str(),
-          aspect);
+               << "Unknown error type";
+        logger->error(stream.str(),aspect);
+      }
+    }
+  }
+  catch (...)
+  {
+  }
+}
+
+template<class E>
+concept ConceptError2 = requires(E e)
+{
+  std::decay_t<decltype(e.type())>::Error_Type_NotReady;
+  std::decay_t<decltype(e.type())>::Error_Type_IncorrectArgument;
+  std::decay_t<decltype(e.type())>::Error_Type_Implementation;
+};
+
+template<ConceptError2 Error>
+void print_grpc_error(
+  const Error& error,
+  Logging::Logger* logger,
+  const char* aspect) noexcept
+{
+  using ErrorType = typename Error::Type;
+
+  try
+  {
+    switch (error.type())
+    {
+      case ErrorType::Error_Type_NotReady:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not ready.";
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      case ErrorType::Error_Type_IncorrectArgument:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not ready.";
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      case ErrorType::Error_Type_Implementation:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << error.description();
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      default:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error type";
+        logger->error(stream.str(), aspect);
       }
     }
   }
@@ -282,10 +341,7 @@ void print_grpc_error_response(
     {
       if (response->has_error())
       {
-        print_grpc_error(
-          response->error(),
-          logger,
-          aspect);
+        print_grpc_error(response->error(), logger, aspect);
       }
     }
   }

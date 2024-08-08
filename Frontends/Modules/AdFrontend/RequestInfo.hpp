@@ -2,6 +2,7 @@
 #define FRONTENDS_ADFRONTEND_REQUESTINFO_HPP_
 
 #include <string>
+#include <optional>
 
 #include <Generics/Time.hpp>
 #include <Generics/Uuid.hpp>
@@ -59,7 +60,7 @@ namespace AdServer
     bool silent_match;
     bool partly_match;
 
-    Commons::Optional<bool> set_uid;
+    std::optional<bool> set_uid;
 
     unsigned long tag_id;
     std::string ext_tag_id;
@@ -120,11 +121,11 @@ namespace AdServer
     int opt_in_cookie;
     unsigned long ccid;
 
-    Commons::Optional<unsigned long> up_expand_space;
-    Commons::Optional<unsigned long> right_expand_space;
-    Commons::Optional<unsigned long> down_expand_space;
-    Commons::Optional<unsigned long> left_expand_space;
-    Commons::Optional<unsigned long> tag_visibility;
+    std::optional<unsigned long> up_expand_space;
+    std::optional<unsigned long> right_expand_space;
+    std::optional<unsigned long> down_expand_space;
+    std::optional<unsigned long> left_expand_space;
+    std::optional<unsigned long> tag_visibility;
     std::string request_token;
     std::string preclick_url;
     std::string pub_impr_track_url;

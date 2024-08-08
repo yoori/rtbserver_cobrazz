@@ -6,6 +6,7 @@
 #include <list>
 #include <Generics/BitAlgs.hpp>
 #include <Generics/Time.hpp>
+#include <Stream/MemoryStream.hpp>
 
 //#define REQUESTINFOCOMMONS_ALGS_DEBUG
 
@@ -688,6 +689,26 @@ operator<<(std::ostream& out, const AdServer::RequestInfoSvcs::IdAppearance& val
     ", counter = " << val.counter << " ]";
 
   return out;
+}
+
+namespace Stream::MemoryStream
+{
+  template<typename Elem, typename Traits, typename Allocator,
+    typename AllocatorInitializer, const size_t SIZE>
+  struct OutputMemoryStreamHelper<Elem, Traits, Allocator, AllocatorInitializer,
+    SIZE, AdServer::RequestInfoSvcs::IdAppearance>
+  {
+    OutputMemoryStream<Elem, Traits, Allocator, AllocatorInitializer, SIZE>&
+    operator()(OutputMemoryStream<Elem, Traits, Allocator,
+      AllocatorInitializer, SIZE>& ostr, const AdServer::RequestInfoSvcs::IdAppearance& val)
+    {
+      ostr << "[ id: " << val.id << ", date = " << val.date.gm_f() <<
+        ", last_appearance_date = " << val.last_appearance_date.gm_f() <<
+        ", counter = " << val.counter << " ]";
+
+      return ostr;
+    }
+  };
 }
 
 #endif

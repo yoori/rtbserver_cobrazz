@@ -3,7 +3,7 @@
 
 // UNIXCOMMONS
 #include <Generics/CompositeActiveObject.hpp>
-#include <UServerUtils/Grpc/RocksDB/DataBaseManagerPool.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 
 // THIS
 #include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
@@ -199,17 +199,18 @@ bool RocksDBWhithLevelAlternativeProfileMap<Key, KeyAdapter, KeySerializer>::rem
   const Key& key,
   OperationPriority op_priority)
 {
-  bool res = false;
+  bool result = false;
   if (rocksdb_profile_map_)
   {
-    res = rocksdb_profile_map_->remove_profile(key, op_priority);
+    result |= rocksdb_profile_map_->remove_profile(key, op_priority);
   }
 
   if (level_profile_map_)
   {
-    res |= level_profile_map_->remove_profile(key, op_priority);
+    result |= level_profile_map_->remove_profile(key, op_priority);
   }
-  return res;
+
+  return result;
 }
 
 template<class Key, class KeyAdapter, class KeySerializer>

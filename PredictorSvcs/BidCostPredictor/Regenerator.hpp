@@ -7,58 +7,59 @@
 #include <utility>
 #include <string>
 #include <string_view>
+#include <thread>
 
 // THIS
 #include <LogCommons/LogCommons.hpp>
-#include <LogCommons/LogCommons.ipp>
 #include "LogHelper.hpp"
 #include "Processor.hpp"
 #include "Utils.hpp"
 
-namespace PredictorSvcs
-{
-namespace BidCostPredictor
+namespace PredictorSvcs::BidCostPredictor
 {
 
 namespace LogProcessing = AdServer::LogProcessing;
 
-class Regenerator final :
-  public Processor,
-  public virtual ReferenceCounting::AtomicImpl
+class Regenerator final : public Processor
 {
+private:
+  using ThreadPtr = std::unique_ptr<std::jthread>;
   using DayTimestamp = LogProcessing::DayTimestamp;
-
   using Path = std::string;
   using FileInfo = std::pair<DayTimestamp, Path>;
   using ProcessFiles = std::list<FileInfo>;
   using GeneratedPath = Utils::GeneratedPath;
   using ProcessedFiles = std::list<GeneratedPath>;
-
   using Collector = LogProcessing::BidCostStatInnerCollector;
   using LogTraits = LogProcessing::BidCostStatInnerTraits;
   using Key = typename Collector::KeyT;
   using Data = typename Collector::DataT;
   using ValueT = typename Collector::ValueT;
 
+public:
+  using Logger = Logging::Logger;
+  using Logger_var = Logging::Logger_var;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
-  Regenerator(
+  explicit Regenerator(
     const std::string& input_dir,
     const std::string& output_dir,
-    Logging::Logger* logger);
+    Logger* logger);
 
+  std::string name() noexcept override;
+
+protected:
   ~Regenerator() override = default;
 
-  void start() override;
-
-  void stop() noexcept override;
-
-  void wait() noexcept override;
-
-  const char* name() noexcept override;
-
 private:
+  void activate_object_() override;
+
+  void wait_object_() override;
+
+  void run() noexcept;
+
   void regenerate(
     const ProcessFiles& process_files,
     const std::string& output_dir,
@@ -74,6 +75,8 @@ private:
   void remove_processed_files(
     const ProcessedFiles& processed_files) noexcept;
 
+  void clear_directory(const std::string& directory) noexcept;
+
 private:
   const std::string input_dir_;
 
@@ -81,10 +84,11 @@ private:
 
   const std::string prefix_;
 
-  Logging::Logger_var logger_;
+  const Logger_var logger_;
+
+  ThreadPtr thread_;
 };
 
-} // namespace BidCostPredictor
-} // namespace PredictorSvcs
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_REGENERATOR_HPP
