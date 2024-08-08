@@ -15,11 +15,11 @@
 #include <DTree/FastFeatureSet.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
+#include <PredictorSvcs/BidCostPredictor/CtrPredictor.hpp>
 
 #include "CampaignSelectParams.hpp"
 #include "CTRFeatureCalculators.hpp"
 #include "XGBoostPredictor.hpp"
-#include "CTRTrivialPredictor.hpp"
 
 namespace AdServer
 {
@@ -221,7 +221,7 @@ namespace CampaignSvcs
       Gears::IntrusivePtr<Vanga::LogRegPredictor<Vanga::DTree> > vanga_predictor;
 
       // Trivial predictor fields
-      CTR::TrivialPredictor_var trivial_predictor;
+      PredictorSvcs::BidCostPredictor::CtrPredictor_var trivial_predictor;
 
     protected:
       virtual ~Model() noexcept
@@ -557,8 +557,9 @@ namespace CampaignSvcs
         /*throw(Overflow)*/;
 
       RevenueDecimal
-      trivial_eval_ctr_(const Model& model)
-        const;
+      trivial_eval_ctr_(
+        const Model& model,
+        const Creative* creative) const;
 
       static RevenueDecimal
       adapt_ctr_(double ctr)

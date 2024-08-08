@@ -14,13 +14,14 @@ namespace PredictorSvcs::BidCostPredictor::Types
 using TagId = unsigned long;
 using Url = std::string;
 using UrlPtr = std::shared_ptr<Url>;
-using Imps = long;
-using Clicks = long;
+using Imps = unsigned long;
+using Clicks = unsigned long;
 using FixedNumber = AdServer::LogProcessing::FixedNumber;
 using Cost = FixedNumber;
 using WinRate = Cost;
-using Point = Types::FixedNumber;
+using Point = FixedNumber;
 using Points = std::vector<Point>;
+using Ctr = FixedNumber;
 using CcId = unsigned long;
 using CreativeCategoryId = unsigned long;
 

@@ -15,8 +15,8 @@
       "period": 300,
       "input_directory": "/home/artem_bogdanov/BidCostStatAgg",
       "bid_cost" : {
-        "output_directory": "/home/artem_bogdanov/model",
-        "temp_directory": "/home/artem_bogdanov/temp/model",
+        "output_directory": "/home/artem_bogdanov/model_bid_cost",
+        "temp_directory": "/home/artem_bogdanov/temp/model_bid_cost",
         "file_name": "bid_cost.csv"
       },
       "ctr" : {

@@ -314,14 +314,10 @@ public:
     *this += range;
   }
 
-  StatCollector& operator=(const StatCollector& collector)
-  {
-    if (map_impl_ != collector.map_impl_)
-    {
-      map_impl_ = collector.map_impl_;
-    }
-    return *this;
-  }
+  StatCollector(const StatCollector&) = default;
+  StatCollector(StatCollector&&) = default;
+  StatCollector& operator=(const StatCollector& collector) = default;
+  StatCollector& operator=(StatCollector&& collector) = default;
 
   bool operator==(const StatCollector& collector) const
   {

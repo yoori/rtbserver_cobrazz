@@ -13,11 +13,11 @@
 
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
-#include "ActiveObjectObserver.hpp"
-#include "Daemon.hpp"
-#include "Process.hpp"
-#include "ShutdownManager.hpp"
-#include "Utils.hpp"
+#include <PredictorSvcs/BidCostPredictor/ActiveObjectObserver.hpp>
+#include <PredictorSvcs/BidCostPredictor/Daemon.hpp>
+#include <PredictorSvcs/BidCostPredictor/Process.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Utils.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

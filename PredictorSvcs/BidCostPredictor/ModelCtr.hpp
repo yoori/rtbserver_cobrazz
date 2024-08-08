@@ -9,9 +9,9 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 
 // THIS
-#include "CtrCollector.hpp"
-#include "ModelManager.hpp"
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/CtrCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -23,21 +23,21 @@ class ModelCtr : public ModelManager
 public:
   using TagId = Types::TagId;
   using Url = Types::Url;
-  using UrlPtr = Types::UrlPtr;
   using CreativeCategoryId = Types::CreativeCategoryId;
-  using Ctr = typename LogProcessing::CtrData::Ctr;
+  using CreativeCategoryIds = std::vector<CreativeCategoryId>;
+  using Ctr = Types::Ctr;
 
 public:
-  explicit ModelCtr() = default;
+  ModelCtr() = default;
 
   virtual Ctr get_ctr(
     const TagId& tag_id,
     const Url& url,
-    const CreativeCategoryId& creative_category_id) const = 0;
+    const CreativeCategoryIds& creative_category_ids) const = 0;
 
   virtual void set_ctr(
     const TagId& tag_id,
-    const UrlPtr& url,
+    const Url& url,
     const CreativeCategoryId& creative_category_id,
     const Ctr& ctr) = 0;
 

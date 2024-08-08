@@ -20,13 +20,14 @@ namespace PredictorSvcs::BidCostPredictor
 DataModelProviderImpl::DataModelProviderImpl(
   const Imps max_imps,
   const std::string& input_dir,
+  CreativeProvider* creative_provider,
   Logger* logger)
   : input_dir_(input_dir),
     logger_(ReferenceCounting::add_ref(logger)),
     prefix_(LogProcessing::BidCostStatInnerTraits::B::log_base_name()),
     persantage_(logger_, Aspect::DATA_PROVIDER, 5),
     bid_cost_collector_(max_imps, 1000000, 1),
-    ctr_collector_(max_imps, 1000000)
+    ctr_collector_(max_imps, 10000000)
 {
   using Severity = Generics::ActiveObjectCallback::Severity;
 
@@ -37,6 +38,12 @@ DataModelProviderImpl::DataModelProviderImpl(
            << "Not existing input directory="
            << input_dir_;
     throw Exception(stream);
+  }
+
+  if (creative_provider)
+  {
+    cc_id_to_categories_.reserve(10000000);
+    creative_provider->load(cc_id_to_categories_);
   }
 
   observer_ = new ActiveObjectObserver(
@@ -67,6 +74,8 @@ DataModelProviderImpl::DataModelProviderImpl(
       new Generics::TaskRunner(observer_, 1));
     task_runners_.back()->activate_object();
   }
+
+  url_hash_.reserve(10000000);
 }
 
 DataModelProviderImpl::~DataModelProviderImpl()
@@ -325,15 +334,14 @@ void DataModelProviderImpl::do_read() noexcept
 
   if (aggregated_files_.empty())
   {
-    static bool is_read_stoped = false;
-    if (!is_read_stoped)
+    if (!is_read_stoped_)
     {
       post_task(
         ThreadID::Calculate,
         &DataModelProviderImpl::do_stop);
     }
 
-    is_read_stoped = true;
+    is_read_stoped_ = true;
     return;
   }
 
@@ -404,8 +412,33 @@ void DataModelProviderImpl::do_calculate(ReadCollectorPtr& temp_collector) noexc
         const auto& cost = key_temp.cost();
         bid_cost_collector_inner.add(cost, data_temp);
 
-        const CtrHelpCollector::Key ctr_key(tag_id, url_ptr, cc_id);
-        ctr_collector_.add(ctr_key, data_temp.imps(), data_temp.clicks());
+        const auto& it_categories = cc_id_to_categories_.find(cc_id);
+        if (it_categories != std::end(cc_id_to_categories_))
+        {
+          const auto& categories = it_categories->second;
+          for (const auto& creative_category_id : categories)
+          {
+            const CtrHelpCollector::Key ctr_key(
+              tag_id,
+              url_ptr,
+              creative_category_id);
+            ctr_collector_.add(
+              ctr_key,
+              data_temp.imps(),
+              data_temp.clicks());
+          }
+        }
+        else
+        {
+          const CtrHelpCollector::Key ctr_key(
+            tag_id,
+            url_ptr,
+            0);
+          ctr_collector_.add(
+            ctr_key,
+            data_temp.imps(),
+            data_temp.clicks());
+        }
       }
     }
   }

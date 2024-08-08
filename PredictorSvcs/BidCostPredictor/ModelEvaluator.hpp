@@ -6,8 +6,8 @@
 #include <ReferenceCounting/SmartPtr.hpp>
 
 // THIS
-#include "ModelBidCost.hpp"
-#include "ModelCtr.hpp"
+#include <PredictorSvcs/BidCostPredictor/ModelBidCost.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelCtr.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

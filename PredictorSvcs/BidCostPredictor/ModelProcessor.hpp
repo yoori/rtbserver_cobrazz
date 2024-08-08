@@ -8,13 +8,13 @@
 
 // THIS
 #include <LogCommons/LogCommons.hpp>
-#include "CreativeProvider.hpp"
-#include "DataModelProvider.hpp"
-#include "ModelCtr.hpp"
-#include "ModelEvaluator.hpp"
-#include "ModelManager.hpp"
-#include "Processor.hpp"
-#include "ShutdownManager.hpp"
+#include <PredictorSvcs/BidCostPredictor/CreativeProvider.hpp>
+#include <PredictorSvcs/BidCostPredictor/DataModelProvider.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelCtr.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelEvaluator.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Processor.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {

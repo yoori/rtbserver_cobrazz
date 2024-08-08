@@ -392,8 +392,8 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator collector_it)
   const auto& cost_dict = *collector_it->second;
   const std::size_t size_cost_dict = cost_dict.size();
 
-  long unverified_imps = 0;
-  long imps = 0;
+  Types::Imps unverified_imps = 0;
+  Types::Imps imps = 0;
   auto it = cost_dict.rbegin();
   const auto it_end = cost_dict.rend();
   for (; it != it_end; ++it)
@@ -438,8 +438,8 @@ void ModelEvaluatorBidCostImpl::do_calculate_helper(const Iterator collector_it)
       std::optional<FixedNumber> target_cost;
       for (std::size_t base_cost_i = 0; base_cost_i < size_cost_dict; ++base_cost_i)
       {
-        long int unverified_imps = 0;
-        long int imps = 0;
+        Types::Imps unverified_imps = 0;
+        Types::Imps imps = 0;
         std::size_t cost_i = base_cost_i;
         for (; cost_i < size_cost_dict; ++cost_i)
         {
@@ -501,7 +501,7 @@ void ModelEvaluatorBidCostImpl::do_save(
   {
     model_->set_cost(
       tag_id,
-      url,
+      *url,
       point,
       target_cost,
       max_cost);

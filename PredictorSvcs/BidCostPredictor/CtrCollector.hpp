@@ -1,202 +1,96 @@
 #ifndef BIDCOSTPREDICTOR_CTRCOLLECTOR_HPP
 #define BIDCOSTPREDICTOR_CTRCOLLECTOR_HPP
 
+// BOOST
+#include <boost/functional/hash.hpp>
+
 // STD
 #include <memory>
 
 // UNIXCOMMONS
 #include <eh/Exception.hpp>
+#include <Generics/Uncopyable.hpp>
 
 // THIS
-#include <LogCommons/LogCommons.hpp>
-#include <LogCommons/LogCommons.ipp>
-#include <LogCommons/StatCollector.hpp>
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
-namespace AdServer::LogProcessing
+namespace PredictorSvcs::BidCostPredictor
 {
 
-namespace Predictor = PredictorSvcs::BidCostPredictor;
-
-class CtrKey final
+class CtrCollector final : private Generics::Uncopyable
 {
 public:
-  using TagId = Predictor::Types::TagId;
-  using Url = Predictor::Types::Url;
-  using UrlPtr = Predictor::Types::UrlPtr;
-  using CreativeCategoryId = Predictor::Types::CreativeCategoryId;
-  using Hash = std::size_t;
+  using TagId = Types::TagId;
+  using Url = Types::Url;
+  using UrlView = std::string_view;
+  using Urls = std::list<Url>;
+  using UrlHashHelper = std::unordered_set<UrlView>;
+  using CreativeCategoryId = Types::CreativeCategoryId;
+  using Ctr = Types::Ctr;
+  using CtrOpt = std::optional<Ctr>;
+  using Key = std::tuple<TagId, UrlView, CreativeCategoryId>;
 
-public:
-  explicit CtrKey()
-  : tag_id_(0),
-    url_(std::make_shared<Url>()),
-    creative_category_id_(0)
+  struct KeyHash final
   {
-  }
-
-  explicit CtrKey(
-    const TagId& tag_id,
-    const Url& url,
-    const CreativeCategoryId& creative_category_id)
-    : tag_id_(tag_id),
-      url_(std::make_shared<Url>(url)),
-      creative_category_id_(creative_category_id)
-  {
-    calc_hash();
-  }
-
-  explicit CtrKey(
-    const TagId& tag_id,
-    const UrlPtr& url,
-    const CreativeCategoryId& creative_category_id)
-    : tag_id_(tag_id),
-      url_(url),
-      creative_category_id_(creative_category_id)
-  {
-    calc_hash();
-  }
-
-  CtrKey(const CtrKey&) = default;
-  CtrKey(CtrKey&&) = default;
-  CtrKey& operator=(const CtrKey&) = default;
-  CtrKey& operator=(CtrKey&&) = default;
-
-  bool operator==(const CtrKey& rht) const
-  {
-    if (&rht == this)
+    std::size_t operator()(const Key& key) const noexcept
     {
-      return true;
+      std::size_t seed = 0;
+      boost::hash_combine(seed, std::get<0>(key));
+      boost::hash_combine(seed, std::get<1>(key));
+      boost::hash_combine(seed, std::get<2>(key));
+      return seed;
     }
-
-    return tag_id_ == rht.tag_id_
-      && *url_ == *rht.url_
-      && creative_category_id_ == rht.creative_category_id_;
-  }
-
-  TagId tag_id() const noexcept
-  {
-    return tag_id_;
-  }
-
-  const Url& url() const noexcept
-  {
-    return *url_;
-  }
-
-  const UrlPtr& url_ptr() const noexcept
-  {
-    return url_;
-  }
-
-  CreativeCategoryId creative_category_id() const noexcept
-  {
-    return creative_category_id_;
-  }
-
-  void invariant() const noexcept
-  {
-  }
-
-  Hash hash() const noexcept
-  {
-    return hash_;
-  }
-
-  template <class ARCHIVE_>
-  void serialize(ARCHIVE_& ar)
-  {
-    (ar & tag_id_ & *url_) ^ creative_category_id_;
-  }
-
-  friend FixedBufStream<TabCategory>& operator>>(
-    FixedBufStream<TabCategory>& is,
-    CtrKey& key);
-
-  friend std::ostream& operator<<(
-    std::ostream& os,
-    const CtrKey& key);
-
-private:
-  void calc_hash()
-  {
-    Generics::Murmur64Hash hasher(hash_);
-    Generics::hash_add(hasher, tag_id_);
-    Generics::hash_add(hasher, *url_);
-    Generics::hash_add(hasher, creative_category_id_);
-  }
-
-private:
-  TagId tag_id_ = 0;
-
-  UrlPtr url_;
-
-  CreativeCategoryId creative_category_id_ = 0;
-
-  Hash hash_ = 0;
-};
-
-class CtrData final
-{
-public:
-  using Ctr = LogProcessing::FixedNumber;
+  };
+  using Map = std::unordered_map<Key, Ctr, KeyHash>;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
-  CtrData() = default;
+  CtrCollector(const std::size_t capacity = 50000000);
 
-  explicit CtrData(const Ctr& ctr)
-    : ctr_(ctr)
-  {
-  }
+  ~CtrCollector() = default;
 
-  ~CtrData() = default;
+  void add(
+    const TagId tag_id,
+    const Url& url,
+    const CreativeCategoryId& creative_category_id,
+    const Ctr& ctr);
 
-  CtrData(const CtrData&) = default;
-  CtrData(CtrData&&) = default;
-  CtrData& operator=(const CtrData&) = default;
-  CtrData& operator=(CtrData&&) = default;
+  CtrOpt get(
+    const TagId tag_id,
+    const Url& url,
+    const CreativeCategoryId& creative_category_id) const;
 
-  const Ctr& ctr() const noexcept
-  {
-    return ctr_;
-  }
+  void save(const std::string& path) const;
 
-  bool is_null() const noexcept
-  {
-    return ctr_.is_zero();
-  }
+  void load(const std::string& path);
 
-  CtrData& operator+=(const CtrData& /*other*/)
-  {
-    Stream::Error ostr;
-    ostr << FNS
-         << " : Reason: Logic error";
-    throw Exception(ostr);
-  }
-
-  template <class ARCHIVE_>
-  void serialize(ARCHIVE_& ar)
-  {
-    ar ^ ctr_;
-  }
-
-  friend FixedBufStream<TabCategory>& operator>>(
-    FixedBufStream<TabCategory>& is,
-    CtrData& data);
-
-  friend std::ostream& operator<<(
-    std::ostream& os,
-    const CtrData& data);
+  void clear() noexcept;
 
 private:
-  Ctr ctr_ = Ctr::ZERO;
+  Urls urls_;
+
+  UrlHashHelper url_hash_helper_;
+
+  Map map_;
 };
 
-using CtrCollector = StatCollector<CtrKey, CtrData, true, true>;
-using CtrTraits = LogDefaultTraits<CtrCollector, false>;
+inline CtrCollector::CtrOpt CtrCollector::get(
+  const TagId tag_id,
+  const Url& url,
+  const CreativeCategoryId& creative_category_id) const
+{
+  const auto it = map_.find(
+    Key{tag_id, std::string_view(url), creative_category_id});
+  if (it != std::end(map_))
+  {
+    return it->second;
+  }
 
-} // namespace AdServer::LogProcessing
+  return {};
+}
+
+
+} // namespace PredictorSvcs::BidCostPredictor
 
 #endif //BIDCOSTPREDICTOR_CTRCOLLECTOR_HPP

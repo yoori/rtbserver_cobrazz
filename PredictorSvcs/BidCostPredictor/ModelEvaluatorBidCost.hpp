@@ -12,13 +12,13 @@
 // THIS
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include "ActiveObjectObserver.hpp"
-#include "DataModelProvider.hpp"
-#include "ModelEvaluator.hpp"
-#include "ModelFactory.hpp"
-#include "Persantage.hpp"
-#include "ShutdownManager.hpp"
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/ActiveObjectObserver.hpp>
+#include <PredictorSvcs/BidCostPredictor/DataModelProvider.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelEvaluator.hpp>
+#include <PredictorSvcs/BidCostPredictor/ModelFactory.hpp>
+#include <PredictorSvcs/BidCostPredictor/Persantage.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -99,9 +99,9 @@ private:
   void do_decrease() noexcept;
 
 public:
-  static constexpr long TOP_LEVEL_WIN_RATE_MIN_IMPS = 50;
+  static constexpr Types::Imps TOP_LEVEL_WIN_RATE_MIN_IMPS = 50;
 
-  static constexpr long LEVEL_WIN_RATE_MIN_IMPS = 50;
+  static constexpr Types::Imps LEVEL_WIN_RATE_MIN_IMPS = 50;
 
 private:
   const Points points_;

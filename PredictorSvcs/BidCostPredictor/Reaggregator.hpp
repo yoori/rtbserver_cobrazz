@@ -10,10 +10,10 @@
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/LogCommons.ipp>
-#include "LogHelper.hpp"
-#include "Persantage.hpp"
-#include "Processor.hpp"
-#include "Utils.hpp"
+#include <PredictorSvcs/BidCostPredictor/LogHelper.hpp>
+#include <PredictorSvcs/BidCostPredictor/Persantage.hpp>
+#include <PredictorSvcs/BidCostPredictor/Processor.hpp>
+#include <PredictorSvcs/BidCostPredictor/Utils.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
