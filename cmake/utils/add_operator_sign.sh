@@ -2,13 +2,11 @@
 
 # files to add operator=
 input_file_hpp=$1
-input_file_cpp=$2
-namespace_name_default=$3
-exclude_string=$4
-class_and_special_namespace=$5
+namespace_name_default=$2
+exclude_string=$3
+class_and_special_namespace=$4
 
 #echo "input_file_hpp: $input_file_hpp"
-#echo "input_file_cpp: $input_file_cpp"
 #echo "namespace_name_default: $namespace_name_default"
 #echo "exclude_string: $exclude_string"
 #echo "class_and_special_namespace: $class_and_special_namespace"
@@ -69,7 +67,6 @@ remove_excluded_classes() {
     local -n exclude_ref="$2"
     local new_classes=()
 
-
     for class in "${classes_ref[@]}"; do
         local exclude=false
         for exclude_class in "${exclude_ref[@]}"; do
@@ -96,40 +93,17 @@ add_if_not_exists_for_1line() {
 
     # Checking for presents in a file add_after
     if ! grep -q "${add_after}" "${file}"; then
-        # writing to a file
-		sed -i "/${first_line}/a ${add_after}" "$file"
-
-#        echo -e "after '${first_line}' \n add '${add_after}' \n"
-#    else
-#        echo -e "'${add_after}' уже существует в файле для класса ${target}.\n"
-    fi
-}
-
-add_if_not_exists_for_2lines() {
-    local first_line="$1"
-    local second_line="$2"
-    local add_after="$3"
-    local file="$4"
-    local for_check="$5"
-    local target="$6"
-
-#	echo ${target}
-
-    # Checking for presents in a file add_after
-    if ! grep -q "${for_check}" "${file}"; then
-        # writing to a file
-		sed -i "/^${first_line}/ { n; /^${second_line}/ s/$/\n${add_after}/ }" ${file}
-
-#        echo -e "after '${first_line}' '${second_line}' \n add '${add_after}' \n"
-#    else
-#        echo -e "'${add_after}' уже существует в файле для класса ${target}.\n"
+      # writing to a file
+		  sed -i "/${first_line}/a ${add_after}" "$file"
+#     echo -e "after '${first_line}' \n add '${add_after}' \n"
+#   else
+#     echo -e "'${add_after}' already presents int the file for class: ${target}.\n"
     fi
 }
 
 #hpp process
-# Инициализация пустого массива
 classes=()
-# Поиск классов в файле
+# find classes in the file
 find_classes "$input_file_hpp" classes
 #echo "classes:"
 #for i in "${classes[@]}"; do
@@ -153,27 +127,8 @@ fi
 for target in "${classes[@]}"; do
 # Creating lines to insert
   first_line="${target} (const ${target} &);"
-  add_after="\    ${target}& operator=(const ${target} &);"
+  add_after="\    ${target}& operator=(const ${target} &) = default;"
 
 # Adding a line if it doesn't already exist
   add_if_not_exists_for_1line "${first_line}" "${add_after}" "${input_file_hpp}" "${target}"
-done
-
-# Iterating by classes arr - adding an ad to .cpp
-for target in "${classes[@]}"; do
-# Creating lines to insert
-  value_map=$(get_value ${target})
-  # check that it was found
-  if [ -z "$value_map" ]; then
-      namespace_to_use="${namespace_name_default}"
-  else
-      namespace_to_use="$value_map"
-  fi
-#  echo "target: $target, namespace_to_use: $namespace_to_use"
-
-  first_line="${namespace_to_use}::${target}::${target} (void)"
-  second_line="{}"
-	add_after="${namespace_to_use}::${target}\& ${namespace_to_use}::${target}::operator=(const ${namespace_to_use}::${target} \&other)\n{\n    ${namespace_to_use}::${target} temp(other);\n    std::swap(*this, temp);\n    return *this;\n}"
-	for_check="${namespace_to_use}::${target}& ${namespace_to_use}::${target}::operator=(const ${namespace_to_use}::${target} &other)"
-  add_if_not_exists_for_2lines "${first_line}" "${second_line}" "${add_after}" "${input_file_cpp}" "${for_check}" "{$target}"
 done

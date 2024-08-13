@@ -143,8 +143,8 @@ function(add_idl _target _idlfile target_dir)
               COMMAND sed -i "'s/if (0 == &_tao_elem)/if (true)/g'" ${OUTPUTC}
 #              COMMAND ${CMAKE_COMMAND} -E echo "done sed"
 
-#              COMMAND ${CMAKE_COMMAND} -E echo "start add_operator_sign.sh for ${OUTPUTHPP} and ${OUTPUTC} with namespace ${namespace_idl} and exclude classes {${exclude_classes}} and special namespace for class {${special_namespace_for_class}}"
-              COMMAND bash ${CMAKE_SOURCE_DIR}/cmake/utils/add_operator_sign.sh ${OUTPUTHPP} ${OUTPUTC} ${namespace_idl} ${exclude_classes} ${special_namespace_for_class}
+#              COMMAND ${CMAKE_COMMAND} -E echo "start add_operator_sign.sh for ${OUTPUTHPP} with namespace ${namespace_idl} and exclude classes {${exclude_classes}} and special namespace for class {${special_namespace_for_class}}"
+              COMMAND bash ${CMAKE_SOURCE_DIR}/cmake/utils/add_operator_sign.sh ${OUTPUTHPP} ${namespace_idl} ${exclude_classes} ${special_namespace_for_class}
 #              COMMAND ${CMAKE_COMMAND} -E echo "done add_operator_sign.sh"
 
               COMMENT "Add IDL. ${_target}. With add_operator_sign.sh"
