@@ -558,8 +558,7 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class BoundContainers :
   public Saver,
-  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>,
-  private Generics::UncopyableTag<BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>>
+  public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -579,6 +578,11 @@ public:
     const RocksdbParamsPtr& rocksdb_params);
 
   ~BoundContainers() override = default;
+
+  BoundContainers(const BoundContainers&) = delete;
+  BoundContainers(BoundContainers&&) = delete;
+  BoundContainers& operator=(const BoundContainers&) = delete;
+  BoundContainers& operator=(BoundContainers&&) = delete;
 
   ContainerPtrT get(
     Value& value,
@@ -634,8 +638,7 @@ template<
   template<typename, typename> class HashTable = USFetchableHashTable>
 class SeenContainers :
   public Saver,
-  public LoaderDelegate<Key, Value>,
-  private Generics::UncopyableTag<SeenContainers<Key, Value, Filter, HashTable>>
+  public LoaderDelegate<Key, Value>
 {
 private:
   static constexpr std::size_t kSize = 2;
@@ -653,6 +656,11 @@ public:
     const std::size_t max_fetch_size,
     const Filter& filter,
     const RocksdbParamsPtr& rocksdb_params);
+
+  SeenContainers(const SeenContainers&) = delete;
+  SeenContainers(SeenContainers&&) = delete;
+  SeenContainers& operator=(const SeenContainers&) = delete;
+  SeenContainers& operator=(SeenContainers&&) = delete;
 
   ~SeenContainers() override = default;
 
@@ -763,8 +771,7 @@ using PortionPtr = std::shared_ptr<Portion>;
 
 class Portions final :
   private LoaderDelegate<HashHashAdapter, SeenUserInfoHolder>,
-  private LoaderDelegate<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder>,
-  private Generics::UncopyableTag<Portions>
+  private LoaderDelegate<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder>
 {
 public:
   using Logger = Logging::Logger;
@@ -793,6 +800,11 @@ public:
     const std::size_t max_fetch_size,
     const FilterDate& filter,
     const LoadFilter& load_filter = [] (const std::size_t) {return true;});
+
+  Portions(const Portions&) = delete;
+  Portions(Portions&&) = delete;
+  Portions& operator=(const Portions&) = delete;
+  Portions& operator=(Portions&&) = delete;
 
   ~Portions() = default;
 

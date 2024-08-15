@@ -388,8 +388,8 @@ GrpcUserBindOperationDistributor::add_user_id(
 
 template<class Client, class Request, class Response, class ...Args>
 std::unique_ptr<Response> GrpcUserBindOperationDistributor::do_request(
-const String::SubString& id,
-Args&& ...args) noexcept
+  const String::SubString& id,
+  Args&& ...args) noexcept
 {
   ChunkId chunk_id = 0;
   for (std::size_t i = 0; i < try_count_; ++i)

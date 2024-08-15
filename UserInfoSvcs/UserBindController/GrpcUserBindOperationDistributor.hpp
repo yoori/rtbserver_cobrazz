@@ -229,9 +229,6 @@ public:
 
   struct Clients final
   {
-    Clients() = default;
-    ~Clients() = default;
-
     GetBindRequestClientPtr get_bind_request_client;
     AddBindRequestClientPtr add_bind_request_client;
     GetUserIdClientPtr get_user_id_client;
