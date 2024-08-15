@@ -21,8 +21,6 @@ create_task_processor_container_builder(
   using EventThreadPoolConfig = UServerUtils::EventThreadPoolConfig;
   using TaskProcessorConfig = UServerUtils::TaskProcessorConfig;
   using TaskProcessorContainerBuilder = UServerUtils::TaskProcessorContainerBuilder;
-  using CoroutineType = xsd::AdServer::Configuration::CoroutineType;
-  using MainTaskProcessorType = xsd::AdServer::Configuration::MainTaskProcessorType;
   using OverloadActionType = xsd::AdServer::Configuration::OverloadActionType;
 
   const auto& coro_pool = coro_config.CoroPool();

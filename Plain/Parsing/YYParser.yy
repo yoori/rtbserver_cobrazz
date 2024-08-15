@@ -8,7 +8,7 @@
   class YYParserAdapter;
 }
 
-%define "parser_class_name" "PlainParser"
+%define parser_class_name {PlainParser}
 %locations
 %parse-param { YYParserAdapter& parse_adapter }
 

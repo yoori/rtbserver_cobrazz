@@ -58,6 +58,16 @@ namespace AdServer
         RevenueDecimal click;
         RevenueDecimal action;
 
+        ~Revenue() = default;
+
+        Revenue(const Revenue& other)
+          : rate_id(other.rate_id),
+            impression(other.impression),
+            click(other.click),
+            action(other.action)
+        {
+        }
+
         Revenue&
         operator=(const Revenue& init)
         {

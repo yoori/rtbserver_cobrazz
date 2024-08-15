@@ -38,7 +38,7 @@ protected:
     const String::SubString& socket_str,
     const Generics::Time& timeout,
     unsigned long max_portion)
-    noexcept;
+    /*throw (eh::Exception)*/;
 
   void
   generate_request_buf_(

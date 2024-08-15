@@ -79,7 +79,7 @@ namespace UserInfoSvcs
     const ControllerRefList& controller_refs,
     const CORBACommons::CorbaClientAdapter* corba_client_adapter,
     const Generics::Time& pool_timeout)
-    noexcept
+    /*throw (eh::Exception)*/
     : callback_(Generics::ActiveObjectCallback_var(
         new Logging::ActiveObjectCallbackImpl(
           logger,
@@ -334,7 +334,8 @@ namespace UserInfoSvcs
   CALL_MATCHER_(USER_ID,, CALL_NAME, return,, ##__VA_ARGS__);
 
 #define CALL_MATCHER_WITH_RETURN(USER_ID, CALL_NAME, ...) \
-  CALL_MATCHER_(USER_ID, return, CALL_NAME,,, ##__VA_ARGS__);
+  CALL_MATCHER_(USER_ID, return, CALL_NAME,,, ##__VA_ARGS__);\
+  return nullptr; // return default value
 
   unsigned long
   UserBindOperationDistributor::partition_index_(

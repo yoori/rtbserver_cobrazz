@@ -5,6 +5,8 @@
 // File contents: baidu exchange service real-time bidding protocol file
 //
 
+syntax = "proto2";
+
 // Original name: baidu_realtime_bidding-0730.proto
 package Baidu;
 

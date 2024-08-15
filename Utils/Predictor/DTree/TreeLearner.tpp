@@ -89,7 +89,7 @@ namespace Vanga
       {
         guard.wait();
 
-        if(tasks_in_progress % 100 == 0 && tasks_in_progress != tasks_in_progress)
+        if(tasks_in_progress % 100 == 0 && tasks_in_progress != prev_tasks_in_progress)
         {
           prev_tasks_in_progress = tasks_in_progress;
           std::cout << "processed " << (all_tasks - tasks_in_progress) << "/" << tasks_in_progress << " features" << std::endl;

@@ -86,7 +86,7 @@ template<class OStream, class RepeatedType, class MemPointerFunction, class ...M
 inline void print_repeated_fields(
   OStream& out,
   const char* delim,
-  const char* field_delim,
+  [[maybe_unused]] const char* field_delim,
   const RepeatedType& repeated_value,
   MemPointerFunction pointer,
   MemPointersFunction ...pointers)

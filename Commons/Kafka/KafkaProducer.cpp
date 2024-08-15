@@ -113,7 +113,7 @@ namespace AdServer
       // Producer::PartitionCallback
       int32_t
       Producer::PartitionCallback::partitioner_cb(
-        const RdKafka::Topic* topic,
+        [[maybe_unused]] const RdKafka::Topic* topic,
         const std::string* key,
         int32_t partition_cnt,
         void*)

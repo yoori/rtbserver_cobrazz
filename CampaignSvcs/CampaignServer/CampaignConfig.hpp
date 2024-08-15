@@ -259,10 +259,10 @@ namespace AdServer
       SizeMap sizes;
       std::string version_id;
       char status;
-      unsigned long order_set_id;
-      unsigned long initial_contract_id;
 
       SystemOptions sys_options;
+      unsigned long initial_contract_id;
+      unsigned long order_set_id;
       CreativeCategorySet categories;
       OptionValueMap tokens;
 

@@ -100,7 +100,8 @@ namespace CampaignSvcs
     BidCostProvider(
       const String::SubString& directory,
       const Generics::Time& config_timestamp,
-      Generics::TaskRunner* task_runner)
+      Generics::TaskRunner* task_runner,
+      const std::string &file_name = "bid_cost.csv")
       /*throw(Exception)*/;
 
     std::optional<RevenueDecimal>

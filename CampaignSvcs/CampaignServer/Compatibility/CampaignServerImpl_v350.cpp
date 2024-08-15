@@ -13,20 +13,6 @@
 
 namespace
 {
-  void
-  copy_price_range_seq(
-    AdServer::CampaignSvcs_v350::PriceRangeSeq& tgt,
-    const AdServer::CampaignSvcs_v360::PriceRangeSeq& src)
-    noexcept
-  {
-    tgt.length(src.length());
-    for(CORBA::ULong i = 0; i < src.length(); ++i)
-    {
-      tgt[i].min = src[i].min;
-      tgt[i].max = src[i].max;
-    }
-  }
-  
   template<class IN, class OUT> 
   void
   copy_deleted_sequence(
@@ -556,10 +542,6 @@ namespace CampaignSvcs
         campaign_server_->get_bill_stat();
       AdServer::CampaignSvcs_v350::BillStatInfo_var result_bill_stat =
         new AdServer::CampaignSvcs_v350::BillStatInfo();
-
-      convert_bill_stat_(
-        result_bill_stat.inout(),
-        bill_stat.in());
 
       return result_bill_stat._retn();
     }
@@ -2095,51 +2077,6 @@ namespace CampaignSvcs
       update_info.delete_app_formats,
       result_update_info.delete_app_formats,
       request_timestamp);
-  }
-
-  void
-  CampaignServerImpl_v350::convert_bill_stat_(
-    AdServer::CampaignSvcs_v350::BillStatInfo& result_bill_stat,
-    const AdServer::CampaignSvcs_v360::BillStatInfo& bill_stat)
-  {
-    /*
-    result_bill_stat.accounts.length(bill_stat.accounts.length());
-
-    for(CORBA::ULong i = 0; i < bill_stat.accounts.length(); ++i)
-    {
-      auto& res_account = result_bill_stat.accounts[i];
-      const auto& account = bill_stat.accounts[i];
-      res_account.account_id = account.account_id;
-      convert_amount_distribution_(
-        res_account.amount_distribution,
-        account.amount_distribution);
-
-    }
-    
-    result_bill_stat.campaigns.length(bill_stat.campaigns.length());
-
-    for(CORBA::ULong i = 0; i < bill_stat.campaigns.length(); ++i)
-    {
-      auto& res_campaign = result_bill_stat.campaigns[i];
-      const auto& campaign = bill_stat.campaigns[i];
-      res_campaign.campaign_id = campaign.campaign_id;
-      convert_amount_distribution_(
-        res_campaign.amount_distribution,
-        campaign.amount_distribution);
-    }
-
-    result_bill_stat.ccgs.length(bill_stat.ccgs.length());
-
-    for(CORBA::ULong i = 0; i < bill_stat.ccgs.length(); ++i)
-    {
-      auto& res_ccg = result_bill_stat.ccgs[i];
-      const auto& ccg = bill_stat.ccgs[i];
-      res_ccg.ccg_id = ccg.ccg_id;
-      convert_amount_distribution_(
-        res_ccg.amount_distribution,
-        ccg.amount_distribution);
-    }
-    */
   }
 
   void
