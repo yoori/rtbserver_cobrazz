@@ -11,8 +11,8 @@
 
 // THIS
 #include <LogCommons/LogCommons.hpp>
-#include "ModelManager.hpp"
-#include "Types.hpp"
+#include <PredictorSvcs/BidCostPredictor/ModelManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Types.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -37,7 +37,7 @@ public:
 
   virtual void set_cost(
     const TagId& tag_id,
-    const UrlPtr& url,
+    const Url& url,
     const WinRate& win_rate,
     const Cost& cost,
     const Cost& max_cost) = 0;

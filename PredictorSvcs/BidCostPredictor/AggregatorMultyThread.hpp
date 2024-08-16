@@ -18,13 +18,13 @@
 #include <Commons/DelegateTaskGoal.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/LogCommons.hpp>
-#include "ActiveObjectObserver.hpp"
-#include "LogHelper.hpp"
-#include "Persantage.hpp"
-#include "PoolCollector.hpp"
-#include "Processor.hpp"
-#include "ShutdownManager.hpp"
-#include "Utils.hpp"
+#include <PredictorSvcs/BidCostPredictor/ActiveObjectObserver.hpp>
+#include <PredictorSvcs/BidCostPredictor/LogHelper.hpp>
+#include <PredictorSvcs/BidCostPredictor/Persantage.hpp>
+#include <PredictorSvcs/BidCostPredictor/PoolCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/Processor.hpp>
+#include <PredictorSvcs/BidCostPredictor/ShutdownManager.hpp>
+#include <PredictorSvcs/BidCostPredictor/Utils.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -146,12 +146,18 @@ private:
   Persantage persantage_;
   // Read thread
   InputFiles input_files_;
+  // Read thread
+  std::size_t count_process_file_ = 0;
+  // Read thread
+  bool is_read_stopped_ = false;
   // Calculate thread
   ProcessedFiles_var processed_files_;
   // Calculate thread
   Collector agg_collector_;
   // Calculate thread
   PriorityQueue priority_queue_;
+  // Calculate thread
+  std::size_t record_count_ = 0;
   // Write thread
   ResultFiles result_files_;
 

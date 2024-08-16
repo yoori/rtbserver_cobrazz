@@ -303,8 +303,6 @@ void AggregatorMultyThread::do_read() noexcept
 {
   using FlushPointer = void(AggregatorMultyThread::*)();
 
-  static std::size_t count_process_file = 0;
-
   if (!active())
   {
     return;
@@ -312,8 +310,7 @@ void AggregatorMultyThread::do_read() noexcept
 
   if (input_files_.empty())
   {
-    static bool is_read_stopped = false;
-    if (!is_read_stopped)
+    if (!is_read_stopped_)
     {
       post_task(
         ThreadID::Calculate,
@@ -325,16 +322,16 @@ void AggregatorMultyThread::do_read() noexcept
         Addressee::Calculator);
     }
 
-    is_read_stopped = true;
+    is_read_stopped_ = true;
     return;
   }
 
-  if (count_process_file == max_process_files_)
+  if (count_process_file_ == max_process_files_)
   {
     post_task(
       ThreadID::Calculate,
       static_cast<FlushPointer>(&AggregatorMultyThread::do_flush));
-    count_process_file = 0;
+    count_process_file_ = 0;
   }
 
   persantage_.increase();
@@ -352,7 +349,7 @@ void AggregatorMultyThread::do_read() noexcept
       &AggregatorMultyThread::do_merge,
       std::move(temp_collector),
       std::move(file_path));
-    count_process_file += 1;
+    count_process_file_ += 1;
   }
   catch (const eh::Exception& exc)
   {
@@ -456,18 +453,16 @@ void AggregatorMultyThread::do_merge(
     return;
   }
 
-  static std::size_t record_count = 0;
-
   try
   {
     const auto count_added = merge(
       temp_collector,
       agg_collector_,
       priority_queue_);
-    record_count += count_added;
+    record_count_ += count_added;
     processed_files_->emplace_back(original_file);
 
-    if (record_count < dump_max_size_)
+    if (record_count_ < dump_max_size_)
     {
       post_task(
         ThreadID::Read,
@@ -476,7 +471,7 @@ void AggregatorMultyThread::do_merge(
     }
 
     bool need_add_read = true;
-    while (record_count >= dump_max_size_)
+    while (record_count_ >= dump_max_size_)
     {
       if (agg_collector_.empty())
       {
@@ -509,7 +504,7 @@ void AggregatorMultyThread::do_merge(
       auto inner_collector = it->second;
       agg_collector_.erase(it);
 
-      record_count -= inner_collector.size();
+      record_count_ -= inner_collector.size();
 
       post_task(
         ThreadID::Write,

@@ -5,33 +5,29 @@
 // THIS
 #include "ModelEvaluatorCtr.hpp"
 
-using TagCreativePair = std::pair<
-  PredictorSvcs::BidCostPredictor::Types::TagId,
-  PredictorSvcs::BidCostPredictor::Types::CreativeCategoryId>;
-
-namespace std
-{
-
-template<>
-struct hash<TagCreativePair>
-{
-  std::size_t operator()(const TagCreativePair& p) const noexcept
-  {
-    std::size_t seed = 0;
-    boost::hash_combine(seed, p.first);
-    boost::hash_combine(seed, p.second);
-    return seed;
-  }
-};
-
-} // namespace std
-
 namespace Aspect
 {
 
 inline constexpr char MODEL_EVALUATOR_CTR[] = "MODEL_EVALUATOR_CTR";
 
 } // namespace Aspect
+
+namespace std
+{
+
+template<>
+struct hash<std::pair<unsigned long, unsigned long>>
+{
+  std::size_t operator()(const std::pair<unsigned long, unsigned long>& value) const noexcept
+  {
+    std::size_t seed = 0;
+    boost::hash_combine(seed, value.first);
+    boost::hash_combine(seed, value.second);
+    return seed;
+  }
+};
+
+} // namespace std
 
 namespace PredictorSvcs::BidCostPredictor
 {
@@ -41,14 +37,12 @@ ModelEvaluatorCtrImpl::ModelEvaluatorCtrImpl(
   const Imps tag_imps,
   DataModelProvider* data_provider,
   ModelCtrFactory* model_factory,
-  Logging::Logger* logger,
-  CreativeProvider* creative_provider)
+  Logger* logger)
   : trust_imps_(trust_imps),
     tag_imps_(tag_imps),
     data_provider_(ReferenceCounting::add_ref(data_provider)),
     model_factory_(ReferenceCounting::add_ref(model_factory)),
-    logger_(ReferenceCounting::add_ref(logger)),
-    creative_provider_(ReferenceCounting::add_ref(creative_provider))
+    logger_(ReferenceCounting::add_ref(logger))
 {
   if (!data_provider_)
   {
@@ -78,12 +72,6 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
              << "ModelEvaluatorCtr already is stopped";
       logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
       return {};
-    }
-
-    CreativeProvider::CcIdToCategories cc_id_to_categories;
-    if (creative_provider_)
-    {
-      creative_provider_->load(cc_id_to_categories);
     }
 
     ModelCtr_var model = model_factory_->create();
@@ -122,7 +110,7 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
       logger_->info(stream.str(), Aspect::MODEL_EVALUATOR_CTR);
     }
 
-    calculate(collector, cc_id_to_categories, *model);
+    calculate(collector, *model);
 
     {
       std::ostringstream stream;
@@ -156,32 +144,34 @@ ModelCtr_var ModelEvaluatorCtrImpl::evaluate() noexcept
 
 void ModelEvaluatorCtrImpl::calculate(
   const CtrHelpCollector& collector,
-  const CcIdToCategories& cc_id_to_categories,
   ModelCtr& model)
 {
   using Data = std::pair<Clicks, Imps>;
+  using HelperTagHash = std::unordered_map<
+    std::pair<TagId, CreativeCategoryId>,
+    Data>;
+
+  HelperTagHash helper_tag_hash;
+  helper_tag_hash.reserve(1000000);
+
+  FixedNumber coef("0.5");
+  const FixedNumber one(false, 1, 0);
 
   std::size_t records_reached_1000_imps = 0;
   std::size_t records_reached_10000_imps = 0;
   std::size_t records_reached_100000_imps = 0;
 
-  const CreativeProvider::CreativeCategoryIds empty_creative_category_ids;
-
-  std::unordered_map<std::pair<TagId, CreativeCategoryId>, Data> helper_tag_hash;
-  helper_tag_hash.reserve(10000000);
-
-  FixedNumber coef("0.5");
-  const FixedNumber one(false, 1, 0);
-
   auto it = collector.begin();
   const auto it_end = collector.end();
   for (; it != it_end; ++it)
   {
-    const auto& cc_id = it->first.cc_id();
-    const auto& tag_id = it->first.tag_id();
-    const auto& url = it->first.url_ptr();
-    const auto& total_clicks = it->second.total_clicks;
-    const auto& total_imps = it->second.total_imps;
+    const auto& key = it->first;
+    const auto& creative_category_id = key.creative_category_id();
+    const auto& tag_id = key.tag_id();
+    const auto& url = key.url_ptr();
+    const auto& data = it->second;
+    const auto& total_clicks = data.total_clicks;
+    const auto& total_imps = data.total_imps;
 
     if (total_imps >= 1000)
     {
@@ -196,11 +186,6 @@ void ModelEvaluatorCtrImpl::calculate(
       records_reached_100000_imps += 1;
     }
 
-    const auto it_creative_categories = cc_id_to_categories.find(cc_id);
-    const auto& creative_categories = it_creative_categories == std::end(cc_id_to_categories) ?
-      empty_creative_category_ids : it_creative_categories->second;
-    auto it_category = std::begin(creative_categories);
-
     std::optional<FixedNumber> ctr;
     if (total_imps >= trust_imps_)
     {
@@ -209,7 +194,7 @@ void ModelEvaluatorCtrImpl::calculate(
         FixedNumber(false, total_imps, 0));
     }
     else if (total_imps > 0 &&
-      (*url == "?" || it_category == std::end(creative_categories)))
+      (*url == "?" || creative_category_id == 0))
     {
       const FixedNumber corr_coef = coef +
         FixedNumber::div(
@@ -226,48 +211,28 @@ void ModelEvaluatorCtrImpl::calculate(
       ctr = FixedNumber::mul(base_ctr, corr_coef, Generics::DMR_CEIL);
     }
 
-    do
+    if (total_imps > 0 && total_imps < tag_imps_)
     {
-      CreativeCategoryId creative_category_id = 0;
-      if (it_category != std::end(creative_categories))
+      auto it = helper_tag_hash.find(std::pair{tag_id, creative_category_id});
+      if (it == helper_tag_hash.end())
       {
-        creative_category_id = *it_category;
+        helper_tag_hash.try_emplace(
+          std::pair{tag_id, creative_category_id},
+          total_clicks,
+          total_imps);
       }
-
-      if (total_imps > 0 && total_imps < tag_imps_)
+      else
       {
-        auto it_helper = helper_tag_hash.find(
-          std::pair{tag_id, creative_category_id});
-        if (it_helper == helper_tag_hash.end())
-        {
-          helper_tag_hash.try_emplace(
-            std::pair{tag_id, creative_category_id},
-            total_clicks,
-            total_imps);
-        }
-        else
-        {
-          auto& data = it_helper->second;
-          data.first += total_clicks;
-          data.second += total_imps;
-        }
-      }
-
-      if (ctr && !ctr->is_zero())
-      {
-        model.set_ctr(
-          tag_id,
-          url,
-          creative_category_id,
-          *ctr);
-      }
-
-      if (it_category != std::end(creative_categories))
-      {
-        ++it_category;
+        auto& data = it->second;
+        data.first += total_clicks;
+        data.second += total_imps;
       }
     }
-    while (it_category != std::end(creative_categories));
+
+    if (ctr && !ctr->is_zero())
+    {
+      model.set_ctr(tag_id, *url, creative_category_id, *ctr);
+    }
   }
 
   {
@@ -290,11 +255,12 @@ void ModelEvaluatorCtrImpl::calculate(
 
   auto it_helper = helper_tag_hash.begin();
   const auto it_helper_end = helper_tag_hash.end();
-  UrlPtr url_replacement(new Url("?"));
+  Url url_replacement("?");
   for (; it_helper != it_helper_end; ++it_helper)
   {
-    const auto& tag_id = it_helper->first.first;
-    const auto& creative_category_id = it_helper->first.second;
+    const auto& key = it_helper->first;
+    const auto& tag_id = key.first;
+    const auto& creative_category_id = key.second;
     const auto& clicks = it_helper->second.first;
     const auto& imps = it_helper->second.second;
 
@@ -313,11 +279,7 @@ void ModelEvaluatorCtrImpl::calculate(
 
       if (!ctr.is_zero())
       {
-        model.set_ctr(
-          tag_id,
-          url_replacement,
-          creative_category_id,
-          ctr);
+        model.set_ctr(tag_id, url_replacement, creative_category_id, ctr);
       }
     }
   }
@@ -340,11 +302,7 @@ void ModelEvaluatorCtrImpl::calculate(
         FixedNumber(false, tag_sum_imps, 0)),
       FixedNumber("0.5"),
       Generics::DMR_FLOOR);
-    model.set_ctr(
-      0,
-      url_replacement,
-      0,
-      default_ctr);
+    model.set_ctr(0, url_replacement, 0, default_ctr);
   }
 }
 

@@ -5,8 +5,8 @@
 #include <ReferenceCounting/Interface.hpp>
 
 // THIS
-#include "BidCostHelpCollector.hpp"
-#include "CtrHelpCollector.hpp"
+#include <PredictorSvcs/BidCostPredictor/BidCostHelpCollector.hpp>
+#include <PredictorSvcs/BidCostPredictor/CtrHelpCollector.hpp>
 
 namespace PredictorSvcs::BidCostPredictor
 {
