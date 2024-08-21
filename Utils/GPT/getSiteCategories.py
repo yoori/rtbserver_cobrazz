@@ -100,9 +100,7 @@ def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_
                     break
 
             except json.JSONDecodeError as json_error:
-                logger.warning(f"Received JSONDecodeError error. Retrying to ask the same data. (retries {retries+1}/{retries_max})")
-
-                logger.error(f"Error converting a string to JSON: {json_error}")
+                logger.warning(f"Received JSONDecodeError error: {json_error}. Retrying to ask the same data. (retries {retries+1}/{retries_max})")
                 retries += 1
                 if retries >= retries_max:
                     logger.error(f"The response could not be converted after {retries_max} attempts.")
@@ -113,13 +111,16 @@ def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_
     return {}
 
 def merge_json(json1, json2):
-    merged = json1.copy()  # copy of a first json
+    merged = json1.copy()
     for key, value in json2.items():
         if key in merged:
-            # merge without dublicates
+            if not isinstance(merged[key], list):
+                merged[key] = [merged[key]]
+            if not isinstance(value, list):
+                value = [value]
+
             merged[key] = list(set(merged[key] + value))
         else:
-            # add from json2
             merged[key] = value
     return merged
 
@@ -151,10 +152,10 @@ def main(websites):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process a list of websites.')
     parser.add_argument('-w','--websites', type=str, required=True, help='Comma-separated list of websites')
-    parser.add_argument('-m', '--maxsize', type=int, default=300, help="Maximum number of characters per subarray")
+    parser.add_argument('-m', '--maxsize', type=int, default=300, help='Maximum number of characters per subarray')
     parser.add_argument('-o', '--output', type=str, default='result.json', help='Result output filename')
     parser.add_argument('-t', '--timeout', type=int, default=300, help='timeout in ms in case of 429 response code or other != 200')
-    parser.add_argument('-a', '--attempts', type=int, default=2, help='how many times will ask for the same data - for collect diffrent range of categories')
+    parser.add_argument('-a', '--attempts', type=int, default=3, help='how many times will ask for the same data - for collect diffrent range of categories')
     parser.add_argument('-r', '--retries', type=int, default=3, help='in case of failure to receive valid data - how many times to retry')
 
     args = parser.parse_args()
