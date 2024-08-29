@@ -343,7 +343,7 @@ Application_::sspuid_to_uid_(
       Stream::Error ostr;
       ostr << "line #" << line_i << " incorrect user id '" <<
         user_id_ss << "': " << ex.what();
-      throw InvalidArgument(ostr);
+      std::cerr << ostr.str() << std::endl;
     }
 
     ++line_i;
@@ -353,7 +353,7 @@ Application_::sspuid_to_uid_(
 std::string
 Application_::uid_to_sspuid_(
   const AdServer::Commons::UserId& user_id,
-  const AdServer::Commons::AesEncryptKey& encrypt_key)
+  const AdServer::Commons::AesEncryptKey& /*encrypt_key*/)
   noexcept
 {
   const uint32_t CURRENT_SSP_USER_ID_MARKER = 1;
@@ -377,7 +377,7 @@ Application_::hex_to_uid_(
   std::istream& in,
   std::ostream& out)
 {
-  unsigned long line_i = 0;
+  //unsigned long line_i = 0;
   while(!in.eof())
   {
     std::string line;
