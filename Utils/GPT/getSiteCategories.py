@@ -56,7 +56,7 @@ def send_message(websites_str):
         "modelUri": "gpt://{}/yandexgpt-lite".format(os.getenv('YANDEX_ACCOUNT_ID')),
         "completionOptions": {
             "stream": False,
-            "temperature": 0.6,
+            "temperature": 0.5,
             "maxTokens": "2000"
         },
         "messages": [
@@ -80,7 +80,7 @@ def send_message(websites_str):
     return response
 
 def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_ms):
-    """Function for sending a request with repeated attempts when receiving 429 errors"""
+    """Function for sending a request with repeated attempts when receiving != 200 response codes"""
     for timeout_attempt in range(timeout_attempts_max):
         retries = 0
         while retries < retries_max:
@@ -151,7 +151,7 @@ def main(websites):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process a list of websites.')
-    parser.add_argument('-w','--websites', type=str, required=True, help='Comma-separated list of websites')
+    parser.add_argument('-w', '--websites', type=str, required=True, help='Comma-separated list of websites')
     parser.add_argument('-m', '--maxsize', type=int, default=300, help='Maximum number of characters per subarray')
     parser.add_argument('-o', '--output', type=str, default='result.json', help='Result output filename')
     parser.add_argument('-t', '--timeout', type=int, default=300, help='timeout in ms in case of 429 response code or other != 200')
