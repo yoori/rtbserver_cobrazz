@@ -15,6 +15,7 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Frontends/FrontendCommons/Statistics.hpp>
 
 #include "PubPixelFrontend.hpp"
 
@@ -177,6 +178,8 @@ namespace PubPixel
     FrontendCommons::HttpResponseWriter_var response_writer)
     noexcept
   {
+    ADD_PUBPIXEL_FRONTEND_COUNTER_STATISTIC(FrontendCommons::PubPixelFrontendStatisticId::PubPixelFrontend_TotalRequests, 1);
+
     const FrontendCommons::HttpRequest& request = request_holder->request();
 
     FrontendCommons::HttpResponse_var response_ptr = create_response();
@@ -228,6 +231,15 @@ namespace PubPixel
             std::vector<uint32_t> publisher_account_ids(
               std::begin(request_info.publisher_account_ids),
               std::end(request_info.publisher_account_ids));
+
+            for (auto publisher_account_id: publisher_account_ids)
+            {
+              ADD_PUBPIXEL_FRONTEND_WITH_LABELS_COUNTER_STATISTIC(
+                FrontendCommons::PubPixelFrontendWithLabelsStatisticId::PubPixelFrontendWithLabels_PublisherRequests,
+                static_cast<int64_t>(publisher_account_id),
+                1
+              );
+            }
 
             auto get_pub_pixels_response = grpc_campaign_manager_pool->get_pub_pixels(
               request_info.country ? *request_info.country : std::string(),

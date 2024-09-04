@@ -211,6 +211,12 @@ namespace Frontends
       statistics_provider->add(time_statistics_provider);
       auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
       statistics_provider->add(common_counter_statistics_provider);
+      auto pubpixel_frontend_counter_statistics_provider =
+        FrontendCommons::get_pubpixel_frontend_counter_statistics_provider();
+      statistics_provider->add(pubpixel_frontend_counter_statistics_provider);
+      auto pubpixel_frontend_with_labels_counter_statistics_provider =
+        FrontendCommons::get_pubpixel_frontend_with_labels_counter_statistics_provider();
+      statistics_provider->add(pubpixel_frontend_with_labels_counter_statistics_provider);
 
       auto init_func = [this, statistics_provider] (TaskProcessorContainer& task_processor_container) {
         auto& main_task_processor = task_processor_container.get_main_task_processor();
