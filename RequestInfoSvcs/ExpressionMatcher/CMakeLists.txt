@@ -28,16 +28,25 @@ add_library(UserTriggerMatchContainer STATIC
 target_link_libraries(UserTriggerMatchContainer
   RequestTriggerMatchProfilePST
   UserTriggerMatchProfilePST
+  UServerUtils
 )
 
 add_library(UserInventoryContainer STATIC
   UserInventoryContainer.cpp
 )
 
+target_link_libraries(UserInventoryContainer
+  UServerUtils
+)
+
 add_dependencies(UserInventoryContainer UserChannelInventoryProfilePST)
 
 add_library(UserColoReachContainer STATIC
   UserColoReachContainer.cpp
+)
+
+target_link_libraries(UserColoReachContainer
+  UServerUtils
 )
 
 add_dependencies(UserColoReachContainer UserChannelInventoryProfilePST )

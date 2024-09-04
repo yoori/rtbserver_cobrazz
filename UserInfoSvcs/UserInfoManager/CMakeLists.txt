@@ -40,6 +40,7 @@ target_link_libraries(UserInfoContainer
   UserHistoryProfileAdapter
   UserOperationProfilesAdapter
   UserOperationProfilesPST
+  UServerUtils
 )
 
 add_executable(UserInfoManager

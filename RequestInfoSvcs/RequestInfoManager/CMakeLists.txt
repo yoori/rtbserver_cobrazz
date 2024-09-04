@@ -13,6 +13,7 @@ target_link_libraries(BillingProcessor
   Commons
   Generics
   RequestProfilePST
+  UServerUtils
 )
 
 add_library(PassbackContainer SHARED
@@ -22,10 +23,11 @@ add_library(PassbackContainer SHARED
 target_link_libraries(PassbackContainer
   Commons
   Generics
+  pcre
   PlainStorage2
   PrivacyFilter
   RequestInfoManagerCompatibility
-  pcre
+  UServerUtils
 )
 
 add_library(RequestInfoContainer SHARED
@@ -87,6 +89,7 @@ target_link_libraries(RequestInfoManager
   UserInfoManagerControllerL
   UserSiteReachContainer
   UserTagRequestMergeContainer
+  UServerUtils
   pcre
 )
 
@@ -132,6 +135,7 @@ add_library(RequestOutLogger STATIC
 
 target_link_libraries(RequestOutLogger
   LogCommons
+  UServerUtils
 )
 
 add_library(TagRequestProfiler STATIC
@@ -158,6 +162,7 @@ add_library(UserCampaignReachContainer STATIC
 target_link_libraries(UserCampaignReachContainer
   LogCommons
   pcre
+  UServerUtils
 )
 
 add_library(UserFraudProtectionContainer STATIC
@@ -166,6 +171,7 @@ add_library(UserFraudProtectionContainer STATIC
 
 target_link_libraries(UserFraudProtectionContainer
   LogCommons
+  UServerUtils
 )
 
 add_library(UserSiteReachContainer STATIC
@@ -174,6 +180,7 @@ add_library(UserSiteReachContainer STATIC
 
 target_link_libraries(UserSiteReachContainer
   LogCommons
+  UServerUtils
 )
 
 add_library(UserTagRequestMergeContainer STATIC
@@ -182,4 +189,5 @@ add_library(UserTagRequestMergeContainer STATIC
 
 target_link_libraries(UserTagRequestMergeContainer
   LogCommons
+  UServerUtils
 )

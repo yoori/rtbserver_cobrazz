@@ -190,9 +190,9 @@ public:
 
     ManagerPoolConfig config;
     config.event_queue_max_size = 10000000;
-    config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
-    config.io_uring_size = 6400;
-    config.number_io_urings = 2 * number_threads;
+    config.io_uring_flags = IORING_SETUP_ATTACH_WQ | IORING_FEAT_FAST_POLL | IOSQE_ASYNC;
+    config.io_uring_size = 1024 * 8;
+    config.number_io_urings = number_threads;
     rocksdb_manager_pool_ = std::make_unique<DataBaseManagerPool>(
       config,
       logger_);
@@ -577,7 +577,7 @@ public:
           block_сache_size_mb,
           path_db,
           expire_time,
-          /*rocksdb::kDefaultColumnFamilyName*/"profile_map"),
+          rocksdb::kDefaultColumnFamilyName),
       write_statistics,
       read_statistics,
       db_size_mb,
@@ -889,14 +889,14 @@ int main(int /*argc*/, char** /*argv*/)
     const std::string value = "value";
     const std::uint32_t db_size_mb = 1024;
     const std::string path_db = "/u03/test/profile_map_test";
-    const Generics::Time expire_time(1000);
+    const Generics::Time expire_time(100000);
 
     // TestType::RocksDb
     const std::size_t number_threads = 300;
 
     // TestType::IoUringRocksDb
-    const std::uint32_t block_сache_size_mb = 1024;
-    const std::size_t number_coroutines = 1000;
+    const std::uint32_t block_сache_size_mb = 256;
+    const std::size_t number_coroutines = 10000;
 
     ReferenceCounting::SmartPtr<Application> application =
       new Application(
