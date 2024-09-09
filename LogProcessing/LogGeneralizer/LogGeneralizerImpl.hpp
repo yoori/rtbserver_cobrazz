@@ -162,6 +162,7 @@ private:
     const CollectorBundleParams bundle_params;
     std::string in_dir;
     std::string out_dir;
+    std::optional<ArchiveParams> archive_params;
     mutable LogProcThreadInfo_var log_proc_thread_info;
   };
 
@@ -353,6 +354,7 @@ private:
   Generics::Planner_var scheduler_;
   std::string in_logs_dir_;
   std::string out_logs_dir_;
+  std::optional<ArchiveParams> archive_params_;
   std::string xsearch_stat_url_;
 
   unsigned long days_to_keep_;
@@ -444,7 +446,7 @@ LogGeneralizerImpl::make_log_processor_(
 {
   return
     new typename Traits::LogProcessorType(
-      p.log_proc_thread_info, p.in_dir, p.out_dir,
+      p.log_proc_thread_info, p.in_dir, p.out_dir, p.archive_params,
       p.bundle_params, proc_stat_impl_, fr_interrupter_);
 }
 
@@ -491,7 +493,7 @@ LogGeneralizerImpl::make_hf_log_processor_(
   return
     new typename Traits::LogProcessorType(
       p.log_proc_thread_info, p.in_dir, p.out_dir,
-      p.bundle_params,
+      p.archive_params, p.bundle_params,
       hits_filter_, proc_stat_impl_, fr_interrupter_);
 }
 
@@ -512,6 +514,7 @@ LogGeneralizerImpl::init_log_proc_info_(
     },
     in_logs_dir_ + LogProcTraits::log_base_name(),
     out_logs_dir_ + LogProcTraits::log_base_name(),
+    archive_params_,
     ProcessingContexts::create<LogProcTraits>(
       log_proc_params, params.in_dir, logger_,
         task_runner_, scheduler_, callback_, proc_stat_impl_)
@@ -546,6 +549,7 @@ LogGeneralizerImpl::init_hf_log_proc_info_(
     },
     in_logs_dir_ + LogProcTraits::log_base_name(),
     out_logs_dir_ + LogProcTraits::log_base_name(),
+    archive_params_,
     ProcessingContexts::create<LogProcTraits>(
       log_proc_params, params.in_dir, logger_,
         task_runner_, scheduler_, callback_, proc_stat_impl_)

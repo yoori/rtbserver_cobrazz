@@ -8,6 +8,7 @@
 #include <eh/Exception.hpp>
 
 // THIS
+#include <LogCommons/ArchiveIfstream.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/LogCommons.hpp>
@@ -48,6 +49,7 @@ struct LogHelper
   using BaseTraits = typename LogTraits::BaseTraits;
   using Collector = typename BaseTraits::CollectorType;
   using DataT = typename Collector::DataT;
+  using ArchiveIfstream = LogProcessing::ArchiveIfstream;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -55,8 +57,18 @@ struct LogHelper
     const std::string& file_path,
     Collector& collector)
   {
-    std::ifstream fstream(file_path);
-    if (!fstream.is_open())
+    std::unique_ptr<std::istream> istream;
+    if (LogProcessing::ArchiveIfstream::is_archive(file_path))
+    {
+      istream = std::make_unique<ArchiveIfstream>(file_path);
+    }
+    else
+    {
+      istream = std::make_unique<std::ifstream>(file_path);
+    }
+    auto& ref_istream = *istream;
+
+    if (!ref_istream)
     {
       Stream::Error stream;
       stream << FNS
@@ -68,7 +80,7 @@ struct LogHelper
     using LogHeader = typename LogTraits::HeaderType;
     LogHeader log_header;
 
-    if (!(fstream >> log_header))
+    if (!(ref_istream >> log_header))
     {
       Stream::Error stream;
       stream << FNS
@@ -88,12 +100,12 @@ struct LogHelper
       throw Exception(stream);
     }
 
-    if (fstream.eof() || fstream.peek() == EOF)
+    if (ref_istream.eof() || ref_istream.peek() == EOF)
     {
       return;
     }
 
-    LogProcessing::LogIoProxy<LogTraits>::load(collector, fstream);
+    LogProcessing::LogIoProxy<LogTraits>::load(collector, ref_istream);
   }
 
   static void save(

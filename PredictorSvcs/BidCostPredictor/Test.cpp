@@ -258,7 +258,8 @@ bool TestAgg::run_test()
     collecor_result.add(date, collector_inner_result);
   }
 
-  LogProcessing::LogIoProxy<LogTraits>::save(collector_file, directory_);
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params = {};
+  LogProcessing::LogIoProxy<LogTraits>::save(collector_file, directory_, archive_params);
   const std::string prefix(LogTraits::B::log_base_name());
   files = Utils::get_directory_files(directory_, prefix);
   if (files.empty())

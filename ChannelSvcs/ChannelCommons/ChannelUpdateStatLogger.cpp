@@ -8,12 +8,13 @@ namespace ChannelSvcs
   ChannelUpdateStatLogger::ChannelUpdateStatLogger(
     unsigned long size,
     unsigned long period,
-    const char* out_dir)
+    const char* out_dir,
+    const std::optional<LogProcessing::ArchiveParams>& archive_params)
     /*throw(eh::Exception)*/ :
       size_(size),
       period_(period),
-      out_dir_(out_dir)
-
+      out_dir_(out_dir),
+      archive_params_(archive_params)
   {
   }
 
@@ -47,7 +48,7 @@ namespace ChannelSvcs
         }
       }
 
-      ColoUpdateStatIoHelper(tmp_collector).save(out_dir_);
+      ColoUpdateStatIoHelper(tmp_collector).save(out_dir_, archive_params_);
     }
     catch (const AdServer::LogProcessing::LogSaver::Exception &ex)
     {

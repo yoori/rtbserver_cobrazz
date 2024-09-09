@@ -26,12 +26,12 @@ struct CsvWrite<LogExtTraits, false, false>
   static
   void
   impl(
-    std::ofstream& ofs,
+    std::ostream& ostream,
     typename LogExtTraits::CollectorType::const_iterator it
   )
     /*throw(eh::Exception)*/
   {
-    LogExtTraits::write_data_as_csv(ofs, *it) << '\n';
+    LogExtTraits::write_data_as_csv(ostream, *it) << '\n';
   }
 };
 
@@ -41,12 +41,12 @@ struct CsvWrite<LogExtTraits, false, true>
   static
   void
   impl(
-    std::ofstream& ofs,
+    std::ostream& ostream,
     typename LogExtTraits::CollectorType::const_iterator it
   )
     /*throw(eh::Exception)*/
   {
-    LogExtTraits::write_as_csv(ofs, it->first, it->second) << '\n';
+    LogExtTraits::write_as_csv(ostream, it->first, it->second) << '\n';
   }
 };
 
@@ -56,14 +56,14 @@ struct CsvWrite<LogExtTraits, true, true>
   static
   void
   impl(
-    std::ofstream& ofs,
+    std::ostream& ostream,
     typename LogExtTraits::CollectorType::const_iterator it
   )
     /*throw(eh::Exception)*/
   {
     for (auto iit = it->second.begin(); iit != it->second.end(); ++iit)
     {
-      LogExtTraits::write_as_csv(ofs, it->first, iit->first, iit->second) << '\n';
+      LogExtTraits::write_as_csv(ostream, it->first, iit->first, iit->second) << '\n';
     }
   }
 };
@@ -78,11 +78,13 @@ public:
 
   SimpleLogCsvSaverImpl(
     CollectorT& collector,
-    const std::string& path
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params
   )
   :
     collector_(collector),
-    path_(path)
+    path_(path),
+    archive_params_(archive_params)
   {
   }
 
@@ -97,6 +99,7 @@ private:
 
   CollectorT& collector_;
   const std::string path_;
+  const std::optional<ArchiveParams> archive_params_;
 };
 
 template <class LogExtTraits>
@@ -114,37 +117,53 @@ SimpleLogCsvSaverImpl<LogExtTraits>::save()
     LogFileNameInfo name_info(LogExtTraits::csv_base_name());
     name_info.format = LogFileNameInfo::LFNF_CSV;
     filenames = make_log_file_name_pair(name_info, path_);
-    std::ofstream ofs(filenames.second.c_str());
-    if (!ofs)
+
     {
-      Stream::Error es;
-      es << __PRETTY_FUNCTION__ << ": Error: "
-         << "Failed to open file '" << filenames.second << '\'';
-      throw CsvException(es);
+      std::unique_ptr<std::ostream> ostream;
+      if (archive_params_)
+      {
+        ostream = std::make_unique<ArchiveOfstream>(
+          filenames.second,
+          *archive_params_);
+      }
+      else
+      {
+        ostream = std::make_unique<std::ofstream>(
+          filenames.second.c_str());
+      }
+      auto& ref_ostream = *ostream;
+
+      if (!ref_ostream)
+      {
+        Stream::Error es;
+        es << __PRETTY_FUNCTION__ << ": Error: "
+           << "Failed to open file '" << filenames.second << '\'';
+        throw CsvException(es);
+      }
+      ref_ostream << LogExtTraits::csv_header() << '\n';
+      if (!ref_ostream)
+      {
+        Stream::Error es;
+        es << __PRETTY_FUNCTION__ <<
+           ": Error: Failed to write log header to file '" <<
+           filenames.second << '\'';
+        throw CsvException(es);
+      }
+      for (auto it = collector_.begin(); it != collector_.end(); ++it)
+      {
+        CsvWrite<LogExtTraits>::impl(ref_ostream, it);
+      }
+      ref_ostream.flush();
+      if (!ref_ostream)
+      {
+        Stream::Error es;
+        es << __PRETTY_FUNCTION__ <<
+           ": Error: Failed to write log data to file '" <<
+           filenames.second << '\'';
+        throw CsvException(es);
+      }
     }
-    ofs << LogExtTraits::csv_header() << '\n';
-    if (!ofs)
-    {
-      Stream::Error es;
-      es << __PRETTY_FUNCTION__ <<
-        ": Error: Failed to write log header to file '" <<
-        filenames.second << '\'';
-      throw CsvException(es);
-    }
-    for (auto it = collector_.begin(); it != collector_.end(); ++it)
-    {
-      CsvWrite<LogExtTraits>::impl(ofs, it);
-    }
-    ofs.flush();
-    if (!ofs)
-    {
-      Stream::Error es;
-      es << __PRETTY_FUNCTION__ <<
-        ": Error: Failed to write log data to file '" <<
-        filenames.second << '\'';
-      throw CsvException(es);
-    }
-    ofs.close();
+
     if (std::rename(filenames.second.c_str(), filenames.first.c_str()))
     {
       eh::throw_errno_exception<CsvException>(__PRETTY_FUNCTION__,
@@ -190,12 +209,14 @@ public:
 
   GenericLogCsvSaverImpl(
     const std::string& path,
+    const std::optional<ArchiveParams>& archive_params,
     CollectorFilterT* collector_filter
   )
     /*throw(Exception)*/
   :
     BaseType(collector_filter),
-    path_(path)
+    path_(path),
+    archive_params_(archive_params)
   {
   }
 
@@ -213,6 +234,7 @@ protected:
 
 private:
   const std::string path_;
+  const std::optional<ArchiveParams> archive_params_;
 };
 
 template <class LogExtTraits>
@@ -238,37 +260,53 @@ GenericLogCsvSaverImpl<LogExtTraits>::save_i_(const CollectorT& collector)
     LogFileNameInfo name_info(LogExtTraits::csv_base_name());
     name_info.format = LogFileNameInfo::LFNF_CSV;
     filenames = make_log_file_name_pair(name_info, path_);
-    std::ofstream ofs(filenames.second.c_str());
-    if (!ofs)
+
     {
-      Stream::Error es;
-      es << __PRETTY_FUNCTION__ << ": Error: "
-         << "Failed to open file '" << filenames.second << '\'';
-      throw CsvException(es);
+      std::unique_ptr<std::ostream> ostream;
+      if (archive_params_)
+      {
+        ostream = std::make_unique<ArchiveOfstream>(
+          filenames.second,
+          *archive_params_);
+      }
+      else
+      {
+        ostream = std::make_unique<std::ofstream>(
+          filenames.second.c_str());
+      }
+      auto& ref_ostream = *ostream;
+
+      if (!ref_ostream)
+      {
+        Stream::Error es;
+        es << __PRETTY_FUNCTION__ << ": Error: "
+           << "Failed to open file '" << filenames.second << '\'';
+        throw CsvException(es);
+      }
+      ref_ostream << LogExtTraits::csv_header() << '\n';
+      if (!ref_ostream)
+      {
+        Stream::Error es;
+        es << __PRETTY_FUNCTION__ <<
+           ": Error: Failed to write log header to file '" <<
+           filenames.second << '\'';
+        throw CsvException(es);
+      }
+      for (auto it = collector.begin(); it != collector.end(); ++it)
+      {
+        CsvWrite<LogExtTraits>::impl(ref_ostream, it);
+      }
+      ref_ostream.flush();
+      if (!ref_ostream)
+      {
+        Stream::Error es;
+        es << __PRETTY_FUNCTION__ <<
+           ": Error: Failed to write log data to file '" <<
+           filenames.second << '\'';
+        throw CsvException(es);
+      }
     }
-    ofs << LogExtTraits::csv_header() << '\n';
-    if (!ofs)
-    {
-      Stream::Error es;
-      es << __PRETTY_FUNCTION__ <<
-        ": Error: Failed to write log header to file '" <<
-        filenames.second << '\'';
-      throw CsvException(es);
-    }
-    for (auto it = collector.begin(); it != collector.end(); ++it)
-    {
-      CsvWrite<LogExtTraits>::impl(ofs, it);
-    }
-    ofs.flush();
-    if (!ofs)
-    {
-      Stream::Error es;
-      es << __PRETTY_FUNCTION__ <<
-        ": Error: Failed to write log data to file '" <<
-        filenames.second << '\'';
-      throw CsvException(es);
-    }
-    ofs.close();
+
     if (std::rename(filenames.second.c_str(), filenames.first.c_str()))
     {
       eh::throw_errno_exception<CsvException>(__PRETTY_FUNCTION__,

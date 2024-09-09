@@ -23,7 +23,10 @@ namespace LogProcessing
     {
       try
       {
-        save_policy_.save(collector_, flush_traits_.out_dir.c_str());
+        save_policy_.save(
+          collector_,
+          flush_traits_.out_dir.c_str(),
+          flush_traits_.archive_params);
       }
       catch (const eh::Exception& ex)
       {
@@ -69,7 +72,10 @@ namespace LogProcessing
 
       if (flush)
       {
-        save_policy_.save(tmp_collector, flush_traits_.out_dir.c_str());
+        save_policy_.save(
+          tmp_collector,
+          flush_traits_.out_dir.c_str(),
+          flush_traits_.archive_params);
       }
 
       return now + flush_traits_.period;
@@ -119,7 +125,10 @@ namespace LogProcessing
   {
     if(!portion_->collector.empty())
     {
-      log_holder_->save_policy_.save(portion_->collector, log_holder_->flush_traits_.out_dir.c_str());
+      log_holder_->save_policy_.save(
+        portion_->collector,
+        log_holder_->flush_traits_.out_dir.c_str(),
+        log_holder_->flush_traits_.archive_params);
     }
 
     portion_ = Portion_var();
@@ -185,7 +194,10 @@ namespace LogProcessing
         {
           if(!(*portion_it)->collector.empty())
           {
-            save_policy_.save((*portion_it)->collector, flush_traits_.out_dir.c_str());
+            save_policy_.save(
+              (*portion_it)->collector,
+              flush_traits_.out_dir.c_str(),
+              flush_traits_.archive_params);
           }
         }        
       }
@@ -317,7 +329,10 @@ namespace LogProcessing
 
       if (flush)
       {
-        Base::save_policy_.save(tmp_collector, Base::flush_traits_.out_dir.c_str());
+        Base::save_policy_.save(
+          tmp_collector,
+          Base::flush_traits_.out_dir.c_str(),
+          Base::flush_traits_.archive_params);
 
         if (skipped_val &&
             logger_ && logger_->log_level() >= Logging::Logger::WARNING)
@@ -516,7 +531,10 @@ namespace LogProcessing
       if (!container_holder_->empty())
       {
         LogHolderPoolObject_var collector = container_holder_->collect();
-        save_policy_.save(collector->collector, flush_traits_.out_dir.c_str());
+        save_policy_.save(
+          collector->collector,
+          flush_traits_.out_dir.c_str(),
+          flush_traits_.archive_params);
       }
     }
     catch (const eh::Exception& ex)
@@ -561,7 +579,10 @@ namespace LogProcessing
         return Generics::Time::ZERO;
       }
 
-      save_policy_.save(collector->collector, flush_traits_.out_dir.c_str());
+      save_policy_.save(
+        collector->collector,
+        flush_traits_.out_dir.c_str(),
+        flush_traits_.archive_params);
 
       return now + flush_traits_.period;
     }

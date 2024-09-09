@@ -41,6 +41,38 @@ namespace Frontends
       res.period = Generics::Time(log_flush_policy.period());
       res.out_dir = log_flush_policy.path().present() ?
         log_flush_policy.path()->c_str() : default_path;
+
+      std::optional<AdServer::LogProcessing::ArchiveParams> archive_params;
+      const auto archive = log_flush_policy.archive();
+      if (archive.present())
+      {
+        switch (*archive)
+        {
+          case xsd::AdServer::Configuration::ArchiveType::value::no_compression:
+            break;
+          case xsd::AdServer::Configuration::ArchiveType::value::gzip_default:
+            archive_params = AdServer::LogProcessing::Archive::gzip_default_compression_params;
+            break;
+          case xsd::AdServer::Configuration::ArchiveType::value::gzip_best_compression:
+            archive_params = AdServer::LogProcessing::Archive::gzip_best_compression_params;
+            break;
+          case xsd::AdServer::Configuration::ArchiveType::value::gzip_best_speed:
+            archive_params = AdServer::LogProcessing::Archive::gzip_best_speed_params;
+            break;
+          case xsd::AdServer::Configuration::ArchiveType::value::bz2_default:
+            archive_params = AdServer::LogProcessing::Archive::bzip2_default_compression_params;
+            break;
+          default:
+          {
+            std::ostringstream stream;
+            stream << FNS
+                   << "Unknown archive type";
+            throw std::runtime_error(stream.str());
+          }
+        }
+      }
+      res.archive_params = archive_params;
+
       return res;
     }
   }

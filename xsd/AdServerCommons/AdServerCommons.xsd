@@ -293,6 +293,7 @@
     <xsd:attribute name="size" type="xsd:positiveInteger" use="optional"/>
     <xsd:attribute name="period" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="path" type="xsd:string" use="optional"/>
+    <xsd:attribute name="archive" type="ArchiveType" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="XsltTokenType">
@@ -484,5 +485,15 @@
     <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="number_background_threads" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
+
+  <xsd:simpleType name="ArchiveType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="no_compression"/>
+      <xsd:enumeration value="gzip_default"/>
+      <xsd:enumeration value="gzip_best_compression"/>
+      <xsd:enumeration value="gzip_best_speed"/>
+      <xsd:enumeration value="bz2_default"/>
+    </xsd:restriction>
+  </xsd:simpleType>
 
 </xsd:schema>

@@ -13,6 +13,7 @@
 #include <LogCommons/ActionRequest.hpp>
 #include <LogCommons/ActionStat.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
+#include <LogCommons/ArchiveIfstream.hpp>
 #include <LogCommons/CcgKeywordStat.hpp>
 #include <LogCommons/CcgStat.hpp>
 #include <LogCommons/ChannelCountStat.hpp>
@@ -1383,11 +1384,23 @@ public:
   virtual void
   load_log(const char* name) /*throw(eh::Exception)*/
   {
+    using ArchiveIfstream = AdServer::LogProcessing::ArchiveIfstream;
+
     CollectorType restored_collector;
 
-    std::ifstream ifs(name);
-    typename LogTraits::HeaderType log_header;
-    if (!(ifs >> log_header))
+    std::unique_ptr<std::istream> istream;
+    if (ArchiveIfstream::is_archive(name))
+    {
+      istream = std::make_unique<ArchiveIfstream>(name);
+    }
+    else
+    {
+      istream = std::make_unique<std::ifstream>(name);
+    }
+    auto& ref_istream = *istream;
+
+     typename LogTraits::HeaderType log_header;
+    if (!(ref_istream >> log_header))
     {
       Stream::Error ostr;
       ostr << "load_log<" << RequestTraits::log_base_name()
@@ -1402,7 +1415,7 @@ public:
         << log_header.version();
       throw Exception(ostr);
     }
-    LogIoProxy<LogTraits>::load(restored_collector, ifs);
+    LogIoProxy<LogTraits>::load(restored_collector, ref_istream);
   }
 
   virtual int
@@ -1872,6 +1885,8 @@ void
 LogIoTester<LogTraits>::test_(CollectorType& collector)
   /*throw(Exception, eh::Exception)*/
 {
+  using ArchiveIfstream = AdServer::LogProcessing::ArchiveIfstream;
+
   if (!print_time.enabled() && (!file_generator_mode || debug.enabled()))
   {
     std::cout << "Testing " << std::setw(40) << std::setfill('.') <<
@@ -1931,9 +1946,21 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
   {
     Generics::ScopedTimer load_timer_abs(load_time_abs);
     Generics::ScopedCPUTimer load_timer(load_time);
-    std::ifstream ifs(it->second.c_str());
+
+    const std::string& file_path = it->second;
+    std::unique_ptr<std::istream> istream;
+    if (ArchiveIfstream::is_archive(file_path))
+    {
+      istream = std::make_unique<ArchiveIfstream>(file_path);
+    }
+    else
+    {
+      istream = std::make_unique<std::ifstream>(file_path);
+    }
+    auto& ref_istream = *istream;
+
     typename LogTraits::HeaderType log_header;
-    if (!(ifs >> log_header))
+    if (!(ref_istream >> log_header))
     {
       Stream::Error ostr;
       ostr << "LogIoTester<" << name()
@@ -1948,7 +1975,7 @@ LogIoTester<LogTraits>::test_(CollectorType& collector)
         << log_header.version();
       throw Exception(ostr);
     }
-    LogIoProxy<LogTraits>::load(restored_collector, ifs);
+    LogIoProxy<LogTraits>::load(restored_collector, ref_istream);
   }
 
   if (collector == restored_collector)

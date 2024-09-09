@@ -12,6 +12,7 @@
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/ArrayAutoPtr.hpp>
+#include <LogCommons/ArchiveOfstream.hpp>
 #include <LogCommons/LogCommons.ipp>
 #include "CollectorBundle.hpp"
 
@@ -837,6 +838,7 @@ template <class Traits>
 class GenericLogIoHelperImpl: public LogIoHelper, private LoadVersionsFacility
 {
   typedef GenericLogIoHelperImpl<Traits> ThisType;
+  typedef AdServer::LogProcessing::ArchiveParams ArchiveParams;
 
 public:
   typedef typename Traits::CollectorType CollectorT;
@@ -861,7 +863,9 @@ public:
 
   virtual
   void
-  save(const std::string& path);
+  save(
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params);
 
 private:
 
@@ -947,11 +951,16 @@ GenericLogIoHelperImpl<Traits>::load(std::istream &is)
 
 template <class Traits>
 void
-GenericLogIoHelperImpl<Traits>::save(const std::string& path)
+GenericLogIoHelperImpl<Traits>::save(
+  const std::string& path,
+  const std::optional<ArchiveParams>& archive_params)
 {
   try
   {
-    LogIoProxy<Traits>::save(collector_, path);
+    LogIoProxy<Traits>::save(
+      collector_,
+      path,
+      archive_params);
   }
   catch (const eh::Exception &ex)
   {
@@ -967,8 +976,13 @@ class GenericLogSaverImplBase: public virtual LogSaver
 protected:
   typedef typename LOG_TYPE_TRAITS_::CollectorType CollectorT;
 
-  GenericLogSaverImplBase(const std::string& path, unsigned long distrib_count = 0)
-    : path_(path), distrib_count_(distrib_count) {}
+  GenericLogSaverImplBase(
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params,
+    unsigned long distrib_count = 0)
+    : path_(path),
+      archive_params_(archive_params),
+      distrib_count_(distrib_count) {}
 
   /*
    * This method saves collector using SaveStrategy-strategy in single output file.
@@ -986,6 +1000,7 @@ protected:
   ~GenericLogSaverImplBase() noexcept {}
 
   const std::string path_;
+  const std::optional<ArchiveParams> archive_params_;
   const unsigned long distrib_count_;
 };
 
@@ -999,8 +1014,9 @@ private:
 public:
   GenericLogSaverImpl(
     typename Base::CollectorT& collector,
-    const std::string& path)
-    : Base(path),
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params)
+    : Base(path, archive_params),
       collector_(collector)
   {}
 
@@ -1028,9 +1044,10 @@ public:
 
   GenericLogSaverImpl(
     const std::string& path,
+    const std::optional<ArchiveParams>& archive_params,
     CollectorFilterT* collector_filter)
     : Base1(collector_filter),
-      Base2(path)
+      Base2(path, archive_params)
   {}
 
   virtual void
@@ -1081,10 +1098,11 @@ public:
 
 DistribLogSaverImpl(
   const std::string& path,
+  const std::optional<ArchiveParams>& archive_params,
   CollectorFilterT* collector_filter,
   unsigned long distrib_count)
   : Base1(collector_filter),
-    Base2(path, distrib_count)
+    Base2(path, archive_params, distrib_count)
   {}
 
   virtual void

@@ -21,7 +21,8 @@ namespace AdServer
       ChannelUpdateStatLogger(
         unsigned long size,
         unsigned long period, 
-        const char* out_dir)
+        const char* out_dir,
+        const std::optional<LogProcessing::ArchiveParams>& archive_params)
         /*throw(eh::Exception)*/;
     protected:
       virtual ~ChannelUpdateStatLogger() noexcept;
@@ -53,6 +54,7 @@ namespace AdServer
       unsigned long size_;
       unsigned long period_;
       std::string out_dir_;
+      std::optional<LogProcessing::ArchiveParams> archive_params_;
     };
 
     typedef

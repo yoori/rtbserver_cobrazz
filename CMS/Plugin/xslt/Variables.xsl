@@ -257,7 +257,9 @@
   select="document('../xsd/CampaignManagement/CampaignManagerAppType.xsd')/xsd:schema/xsd:complexType[
   @name='CampaignManagerStatLoggingType']/xsd:attribute[
   @name='internal_logs_flush_period']/@default"/>
+<xsl:variable name="campaign-manager-flush-loggers-archive" select="'no_compression'"/>
 <xsl:variable name="expression-matcher-flush-logs-period" select="'10'"/>
+<xsl:variable name="expression-matcher-flush-logs-archive" select="'no_compression'"/>
 <xsl:variable name="expression-matcher-activity-flush-logs-period" select="'10'"/>
 <xsl:variable name="expression-matcher-inventory-flush-logs-period"
   select="document('../xsd/LogProcessing/ExpressionMatcherAppType.xsd')/xsd:schema/xsd:complexType[
@@ -274,6 +276,7 @@
 <xsl:variable name="ya-metrika-uploader-check-logs-period" select="'10'"/>
 <xsl:variable name="request-info-manager-check-logs-period" select="'10'"/>
 <xsl:variable name="request-info-manager-flush-logs-period" select="'10'"/>
+<xsl:variable name="request-info-manager-flush-logs-archive" select="'no_compression'"/>
 <xsl:variable name="def-sync-log-content-check-period"
   select="document('../xsd/LogProcessing/SyncLogsAppType.xsd')/xsd:schema/xsd:complexType[
   @name='SyncLogsFileTransferringType']/xsd:attribute[

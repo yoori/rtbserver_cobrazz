@@ -28,6 +28,7 @@
 #include <LogCommons/ResearchWebStat.hpp>
 #include <LogCommons/ResearchProfStat.hpp>
 #include <LogCommons/TagPositionStat.hpp>
+#include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <Commons/GrpcService.hpp>
 #include <Commons/LogReferrerUtils.hpp>
 
@@ -531,6 +532,38 @@ CampaignManagerApp_::read_logger_config(
   logger_params.period = Generics::Time(
     xsd_logger.flush_period().present() ?
     xsd_logger.flush_period().get(): 0);
+
+  std::optional<AdServer::LogProcessing::ArchiveParams> archive_params;
+  const auto archive = xsd_logger.archive();
+  if (archive.present())
+  {
+    switch (*archive)
+    {
+      case xsd::AdServer::Configuration::ArchiveType::value::no_compression:
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::gzip_default:
+        archive_params = AdServer::LogProcessing::Archive::gzip_default_compression_params;
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::gzip_best_compression:
+        archive_params = AdServer::LogProcessing::Archive::gzip_best_compression_params;
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::gzip_best_speed:
+        archive_params = AdServer::LogProcessing::Archive::gzip_best_speed_params;
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::bz2_default:
+        archive_params = AdServer::LogProcessing::Archive::bzip2_default_compression_params;
+        break;
+      default:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown archive type";
+        throw Exception(stream);
+      }
+    }
+  }
+
+  logger_params.archive_params = archive_params;
 }
 
 void
