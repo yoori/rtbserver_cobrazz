@@ -43,8 +43,11 @@ namespace AdServer
     uid_generator_.reset(
       new Generics::SignedUuidGenerator(private_key));
 
+    //ssp_uid_verifier_.reset(
+    //  new Generics::SignedUuidVerifier(ssp_public_key));
+
     ssp_uid_verifier_.reset(
-      new Generics::SignedUuidVerifier(ssp_public_key));
+      new Generics::SignedUuidVerifier(public_key));
 
     ssp_uid_generator_.reset(
       new Generics::SignedUuidGenerator(ssp_private_key));
@@ -109,10 +112,12 @@ namespace AdServer
     KeyType key_type) const
     /*throw(eh::Exception)*/
   {
+    /*
     if (key_type == SSP)
     {
       return ssp_uid_generator_->sign(user_id, CURRENT_SSP_USER_ID_MARKER);
     }
+    */
 
     return uid_generator_->sign(user_id);
   }
@@ -220,6 +225,7 @@ namespace AdServer
   UserIdController::ssp_uuid_string(const Generics::Uuid& ssp_user_id)
     noexcept
   {
+    /*
     std::string ssp_user_id_str;
     String::StringManip::base64mod_encode(
       ssp_user_id_str,
@@ -228,6 +234,8 @@ namespace AdServer
       false,
       CURRENT_SSP_USER_ID_MARKER);
     return ssp_user_id_str;
+    */
+    return ssp_user_id.to_string();
   }
 
   Generics::Uuid
