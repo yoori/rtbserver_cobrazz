@@ -660,6 +660,11 @@
         <xsd:documentation>Defines time policy in seconds for flushing data into the log file.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="archive" type="ArchiveType" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Defines compression type for flushing data into the log file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="CampaignManagerLoggerWithAdRequestAnonymizingType">

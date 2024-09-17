@@ -575,13 +575,14 @@ class LogVersionManager:
   add_current_version_support(
     const LogProcThreadInfo_var& context,
     const CollectorBundleParams& bundle_params,
-    const std::string& dest)
+    const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params)
   {
     if (context->DISTRIB_COUNT > 1)
     {
       typedef typename LOG_TYPE_EXT_TRAITS_::DistribThreadSafeSaverType SaverType;
 
-      SaverType* saver(new SaverType(dest,
+      SaverType* saver(new SaverType(dest, archive_params,
         typename LOG_TYPE_EXT_TRAITS_::CollectorFilterType::SmartPtr(
           new typename LOG_TYPE_EXT_TRAITS_::CollectorFilterType),
         context->DISTRIB_COUNT));
@@ -593,7 +594,7 @@ class LogVersionManager:
     {
       typedef typename LOG_TYPE_EXT_TRAITS_::ThreadSafeSaverType SaverType;
 
-      SaverType* saver(new SaverType(dest,
+      SaverType* saver(new SaverType(dest, archive_params,
         typename LOG_TYPE_EXT_TRAITS_::CollectorFilterType::SmartPtr(
           new typename LOG_TYPE_EXT_TRAITS_::CollectorFilterType)));
 
@@ -608,11 +609,12 @@ public:
   LogVersionManager(
     const LogProcThreadInfo_var& context,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     const CollectorBundleParams& bundle_params
   )
     /*throw(eh::Exception)*/
   {
-    add_current_version_support(context, bundle_params, dest);
+    add_current_version_support(context, bundle_params, dest, archive_params);
     typename BaseType::PreviousVersionAdder add_versions(this);
     Traits::for_each_old(add_versions);
     Traits::add_conversion_support(this);
@@ -663,6 +665,7 @@ public:
   LogVersionManager2(
     const LogProcThreadInfo_var& context,
     const std::string &/* dest */,
+    const std::optional<ArchiveParams>& /*archive_params*/,
     const LogGeneralizerStatMapBundle_var& lgsm_bundle,
     const PostgresConnectionFactoryImpl_var &pg_conn_factory,
     const CollectorBundleParams &bundle_params
@@ -691,12 +694,13 @@ class LogVersionManager9 : public LogVersionManagerBaseImpl<Traits>
     const LogProcThreadInfo_var& context,
     const CollectorBundleParams& bundle_params,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     const LogGeneralizerStatMapBundle_var& lgsm_bundle,
     const PostgresConnectionFactoryImpl_var& pg_conn_factory
   )
   {
     typename Traits::PgCsvSaverType::SmartPtr saver(
-      new typename Traits::PgCsvSaverType(dest, pg_conn_factory,
+      new typename Traits::PgCsvSaverType(dest, archive_params, pg_conn_factory,
         lgsm_bundle,
         typename Traits::CollectorFilterType::SmartPtr(
         new typename Traits::CollectorFilterType)));
@@ -725,13 +729,14 @@ public:
   LogVersionManager9(
     const LogProcThreadInfo_var& context,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     const LogGeneralizerStatMapBundle_var& lgsm_bundle,
     const PostgresConnectionFactoryImpl_var& pg_conn_factory,
     const CollectorBundleParams& bundle_params
   )
   {
-    add_current_version_support(context, bundle_params, dest, lgsm_bundle,
-      pg_conn_factory);
+    add_current_version_support(context, bundle_params, dest,
+      archive_params, lgsm_bundle, pg_conn_factory);
 
     PreviousVersionAdder add_versions(this);
     Traits::for_each_old(add_versions);
@@ -755,11 +760,12 @@ class LogVersionManager3 : public LogVersionManagerBaseImpl<Traits>
   add_current_version_support(
     const LogProcThreadInfo_var& context,
     const CollectorBundleParams& bundle_params,
-    const std::string& dest)
+    const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params)
   {
     typedef typename CsvSaverTraits::ThreadSafeSaverType SaverType;
 
-    SaverType* saver(new SaverType(dest,
+    SaverType* saver(new SaverType(dest, archive_params,
       typename Traits::CollectorFilterType::SmartPtr(
         new typename Traits::CollectorFilterType)));
 
@@ -770,11 +776,12 @@ class LogVersionManager3 : public LogVersionManagerBaseImpl<Traits>
 public:
   LogVersionManager3(
     const LogProcThreadInfo_var& context,
-    const std::string &dest,
+    const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     const CollectorBundleParams &bundle_params
   )
   {
-    add_current_version_support(context, bundle_params, dest);
+    add_current_version_support(context, bundle_params, dest, archive_params);
 
     PreviousVersionAdder add_versions(this);
     CsvSaverTraits::for_each_old(add_versions);
@@ -794,13 +801,14 @@ class LogVersionManager7: public LogVersionManagerBaseImpl<Traits>
     const LogProcThreadInfo_var& context,
     const CollectorBundleParams& bundle_params,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     HitsFilter_var& hits_filter)
   {
     if (context->DISTRIB_COUNT > 1)
     {
       typedef typename Traits::DistribThreadSafeSaverType SaverType;
 
-      SaverType* saver(new SaverType(dest,
+      SaverType* saver(new SaverType(dest, archive_params,
         typename Traits::CollectorFilterType::SmartPtr(
           new typename Traits::CollectorFilterType(hits_filter)),
         context->DISTRIB_COUNT));
@@ -812,7 +820,7 @@ class LogVersionManager7: public LogVersionManagerBaseImpl<Traits>
     {
       typedef typename Traits::ThreadSafeSaverType SaverType;
 
-      SaverType* saver(new SaverType(dest,
+      SaverType* saver(new SaverType(dest, archive_params,
         typename Traits::CollectorFilterType::SmartPtr(
           new typename Traits::CollectorFilterType(hits_filter))));
 
@@ -825,11 +833,12 @@ public:
   LogVersionManager7(
     const LogProcThreadInfo_var& context,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     const CollectorBundleParams& bundle_params,
     HitsFilter_var& hits_filter
   )
   {
-    add_current_version_support(context, bundle_params, dest, hits_filter);
+    add_current_version_support(context, bundle_params, dest, archive_params, hits_filter);
 
     PreviousVersionAdder add_versions(this);
     Traits::for_each_old(add_versions);
@@ -849,12 +858,13 @@ class LogVersionManager8: public LogVersionManagerBaseImpl<Traits>
     const LogProcThreadInfo_var& context,
     const CollectorBundleParams& bundle_params,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     HitsFilter_var& hits_filter
   )
   {
     typedef typename Traits::CsvSaverType SaverType;
     typename SaverType::SmartPtr saver = new SaverType(
-      dest, typename Traits::CollectorFilterType::SmartPtr(
+      dest, archive_params, typename Traits::CollectorFilterType::SmartPtr(
         new typename Traits::CollectorFilterType(hits_filter)));
 
     typename ThreadLogSaverImpl<Traits, SaverType>::SmartPtr
@@ -881,11 +891,12 @@ public:
   LogVersionManager8(
     const LogProcThreadInfo_var& context,
     const std::string& dest,
+    const std::optional<ArchiveParams>& archive_params,
     const CollectorBundleParams& bundle_params,
     HitsFilter_var& hits_filter
   )
   {
-    add_current_version_support(context, bundle_params, dest, hits_filter);
+    add_current_version_support(context, bundle_params, dest, archive_params, hits_filter);
 
     PreviousVersionAdder add_versions(this);
     Traits::for_each_old(add_versions);

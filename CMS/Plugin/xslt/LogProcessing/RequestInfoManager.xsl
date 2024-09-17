@@ -105,6 +105,11 @@
       <xsl:value-of select="$request-info-manager-flush-logs-period"/>
     </xsl:if>
   </xsl:variable>
+  <xsl:variable name="flush-logs-archive"><xsl:value-of select="$stat-config/@flush_archive"/>
+    <xsl:if test="count($stat-config/@flush_archive) = 0">
+      <xsl:value-of select="$request-info-manager-flush-logs-archive"/>
+    </xsl:if>
+  </xsl:variable>
 
   <xsl:variable name="user-action-info-chunks-root"
     select="concat($cache-root, '/', $user-action-dir-name, '/')"/>
@@ -376,41 +381,41 @@
         <xsl:variable name="predictor-service" 
           select="$full-cluster-path//service[@descriptor = $predictor-descriptor]"/>
 
-        <cfg:CreativeStat period="{$flush-logs-period}"/>
-        <cfg:RequestStatsHourlyExtStat period="{$flush-logs-period}"/>
-        <cfg:UserProperties period="{$flush-logs-period}"/>
-        <cfg:ChannelPerformance period="{$flush-logs-period}"/>
-        <cfg:SiteChannelStat period="{$flush-logs-period}"/>
-        <cfg:ExpressionPerformance period="{$flush-logs-period}"/>
-        <cfg:CcgKeywordStat period="{$flush-logs-period}"/>
-        <cfg:CmpStat period="{$flush-logs-period}"/>
-        <cfg:ActionStat period="{$flush-logs-period}"/>
-        <cfg:ChannelImpInventory period="{$flush-logs-period}"/>
-        <cfg:CcgUserStat period="{$flush-logs-period}"/>
-        <cfg:CcUserStat period="{$flush-logs-period}"/>
-        <cfg:CampaignUserStat period="{$flush-logs-period}"/>
-        <cfg:AdvertiserUserStat period="{$flush-logs-period}"/>
-        <cfg:PassbackStat period="{$flush-logs-period}"/>
-        <cfg:SiteUserStat period="{$flush-logs-period}"/>
-        <cfg:SiteReferrerStat period="{$flush-logs-period}"/>
-        <cfg:PageLoadsDailyStat period="{$flush-logs-period}"/>
-        <cfg:TagPositionStat period="{$flush-logs-period}"/>
-        <cfg:CampaignReferrerStat period="{$flush-logs-period}"/>
+        <cfg:CreativeStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:RequestStatsHourlyExtStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:UserProperties period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelPerformance period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:SiteChannelStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ExpressionPerformance period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:CcgKeywordStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:CmpStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ActionStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelImpInventory period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:CcgUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:CcUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:CampaignUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:AdvertiserUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:PassbackStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:SiteUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:SiteReferrerStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:PageLoadsDailyStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:TagPositionStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:CampaignReferrerStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
         <xsl:if test="count($predictor-service)> 0 or count($colo-config/cfg:predictorConfig/cfg:ref)> 0">
-          <cfg:ResearchAction period="{$flush-logs-period}"/>
+          <cfg:ResearchAction period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
           <xsl:if test="$colo-config/cfg:predictorConfig/cfg:researchStat/@enable_bids = '1'
             or  $colo-config/cfg:predictorConfig/cfg:researchStat/@enable_bids = 'true'">
-            <cfg:ResearchBid period="{$flush-logs-period}"/>
+            <cfg:ResearchBid period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
           </xsl:if>
-          <cfg:ResearchImpression period="{$flush-logs-period}"/>
-          <cfg:ResearchClick period="{$flush-logs-period}"/>
-          <cfg:BidCostStat period="{$flush-logs-period}"/>
+          <cfg:ResearchImpression period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+          <cfg:ResearchClick period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+          <cfg:BidCostStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
         </xsl:if>
-        <cfg:RequestOperation chunks_count="24" period="{$flush-logs-period}"/>
-        <cfg:ConsiderAction period="{$flush-logs-period}"/>
-        <cfg:ConsiderClick period="{$flush-logs-period}"/>
-        <cfg:ConsiderImpression period="{$flush-logs-period}"/>
-        <cfg:ConsiderRequest period="{$flush-logs-period}"/>
+        <cfg:RequestOperation chunks_count="24" period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ConsiderAction period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ConsiderClick period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ConsiderImpression period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ConsiderRequest period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
       </cfg:OutLogs>
     </cfg:LogProcessing>
 

@@ -208,6 +208,11 @@
         <xsl:value-of select="$campaign-manager-flush-loggers-period"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="flush-loggers-archive"><xsl:value-of select="$stat-config/@flush_archive"/>
+      <xsl:if test="count($stat-config/@flush_archive) = 0">
+        <xsl:value-of select="$campaign-manager-flush-loggers-archive"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:variable name="flush-internal-loggers-period"><xsl:value-of select="$stat-config/@internal_logs_flush_period"/>
       <xsl:if test="count($stat-config/@internal_logs_flush_period) = 0">
         <xsl:value-of select="$campaign-manager-flush-internal-loggers-period"/>
@@ -458,43 +463,40 @@
       </xsl:attribute>
 
       <xsl:variable name="predictor-service" 
-          select="$full-cluster-path//service[@descriptor = $predictor-descriptor]"/>
-
-      <cfg:ChannelTriggerStat flush_period="{$flush-loggers-period}"/>
-      <cfg:ChannelHitStat flush_period="{$flush-loggers-period}"/>
+        select="$full-cluster-path//service[@descriptor = $predictor-descriptor]"/>
+      <cfg:ChannelTriggerStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:ChannelHitStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       <cfg:RequestBasicChannels adrequest_anonymize="{$adrequest-anonymize}"
-        flush_period="{$flush-internal-loggers-period}">
+        flush_period="{$flush-internal-loggers-period}" archive="{$flush-loggers-archive}">
         <xsl:attribute name="dump_channel_triggers"><xsl:value-of
           select="$colo-config/cfg:channelTriggerImpStats/@enable"/><xsl:if
           test="count($colo-config/cfg:channelTriggerImpStats/@enable) = 0">true</xsl:if></xsl:attribute>
       </cfg:RequestBasicChannels>
-      <cfg:WebStat flush_period="{$flush-loggers-period}"/>
+      <cfg:WebStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       <xsl:if test="count($predictor-service)> 0 or count($colo-config/cfg:predictorConfig/cfg:ref)> 0">
-        <cfg:ResearchWebStat flush_period="{$flush-loggers-period}"/>
-        <cfg:ProfilingResearch flush_period="{$flush-loggers-period}"/>
+        <cfg:ResearchWebStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+        <cfg:ProfilingResearch flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       </xsl:if>
-      <cfg:CreativeStat flush_period="{$flush-loggers-period}"/>
-      <cfg:ActionRequest flush_period="{$flush-loggers-period}"/>
-      <cfg:PassbackStat flush_period="{$flush-loggers-period}"/>
-      <cfg:UserAgentStat flush_period="{$flush-loggers-period}"/>
-
-      <cfg:Request flush_period="{$flush-internal-loggers-period}"/>
-      <cfg:Impression flush_period="{$flush-internal-loggers-period}"/>
-      <cfg:Click flush_period="{$flush-internal-loggers-period}"/>
-      <cfg:AdvertiserAction flush_period="{$flush-internal-loggers-period}"/>
-      <cfg:PassbackImpression flush_period="{$flush-loggers-period}"/>
-
-      <cfg:UserProperties flush_period="{$flush-loggers-period}"/>
-      <cfg:TagRequest flush_period="{$flush-internal-loggers-period}"/>
-      <cfg:CcgStat flush_period="{$flush-loggers-period}"/>
-      <cfg:CcStat flush_period="{$flush-loggers-period}"/>
+      <cfg:CreativeStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:ActionRequest flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:PassbackStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:UserAgentStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:Request flush_period="{$flush-internal-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:Impression flush_period="{$flush-internal-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:Click flush_period="{$flush-internal-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:AdvertiserAction flush_period="{$flush-internal-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:PassbackImpression flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:UserProperties flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:TagRequest flush_period="{$flush-internal-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:CcgStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:CcStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       <xsl:if test="count($colo-config/@enable_search_term_stats) > 0 and (
         $colo-config/@enable_search_term_stats = 'true' or $colo-config/@enable_search_term_stats = '1')">
-        <cfg:SearchTermStat flush_period="{$flush-loggers-period}"/>
+        <cfg:SearchTermStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       </xsl:if>
-      <cfg:SearchEngineStat flush_period="{$flush-loggers-period}"/>
-      <cfg:TagAuctionStat flush_period="{$flush-loggers-period}"/>
-      <cfg:TagPositionStat flush_period="{$flush-loggers-period}"/>
+      <cfg:SearchEngineStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:TagAuctionStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
+      <cfg:TagPositionStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
     </cfg:Logging>
 
     <cfg:IpEncryptConfig>

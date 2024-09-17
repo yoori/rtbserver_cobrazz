@@ -39,7 +39,8 @@ namespace CampaignSvcs
       if (flush)
       {
         ColoUpdateStatIoHelper(tmp_collector).save(
-          colo_update_flush_traits_.out_dir);
+          colo_update_flush_traits_.out_dir,
+          colo_update_flush_traits_.archive_params);
       }
     }
     catch (const AdServer::LogProcessing::LogSaver::Exception &ex)

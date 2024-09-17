@@ -141,10 +141,13 @@ namespace ChannelSvcs
           path = config->log_root();
           PathManip::create_path(path, statistic.path().get().c_str());
         }
+
+        const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params;
         proxy_logger_ = new ChannelUpdateStatLogger(
           size,
           statistic.period(),
-          path.c_str());
+          path.c_str(),
+          archive_params);
       }
     }
     catch(const eh::Exception& e)

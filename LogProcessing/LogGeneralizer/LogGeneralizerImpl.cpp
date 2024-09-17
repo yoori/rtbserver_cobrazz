@@ -68,6 +68,34 @@ LogGeneralizerImpl::LogGeneralizerImpl(
   {
     out_logs_dir_ += "/";
   }
+  const auto archive = config.archive();
+  if (archive.present())
+  {
+    switch (*archive)
+    {
+      case xsd::AdServer::Configuration::ArchiveType::value::no_compression:
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::gzip_default:
+        archive_params_ = AdServer::LogProcessing::Archive::gzip_default_compression_params;
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::gzip_best_compression:
+        archive_params_ = AdServer::LogProcessing::Archive::gzip_best_compression_params;
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::gzip_best_speed:
+        archive_params_ = AdServer::LogProcessing::Archive::gzip_best_speed_params;
+        break;
+      case xsd::AdServer::Configuration::ArchiveType::value::bz2_default:
+        archive_params_ = AdServer::LogProcessing::Archive::bzip2_default_compression_params;
+        break;
+      default:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown archive type";
+        throw Exception(stream);
+      }
+    }
+  }
 
   if (config.DBConnection().present())
   {

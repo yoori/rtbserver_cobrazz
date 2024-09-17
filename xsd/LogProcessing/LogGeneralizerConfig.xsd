@@ -212,6 +212,6 @@
     <xsd:attribute name="input_logs_dir" type="xsd:string" use="required"/>
     <xsd:attribute name="output_logs_dir" type="xsd:string" use="required"/>
     <xsd:attribute name="db_dump_timeout" type="xsd:positiveInteger"/>
-
+    <xsd:attribute name="archive" type="ArchiveType" use="optional"/>
   </xsd:complexType>
 </xsd:schema>

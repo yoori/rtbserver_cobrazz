@@ -133,7 +133,8 @@
 
   <cfg:LogGeneralizerConfig
     input_logs_dir="{$workspace-root}/log/LogGeneralizer/In"
-    output_logs_dir="{$workspace-root}/log/LogGeneralizer/Out">
+    output_logs_dir="{$workspace-root}/log/LogGeneralizer/Out"
+    archive="no_compression">
 
     <xsl:variable name="log-generalizer-port">
       <xsl:value-of select="$log-generalizer-config/cfg:networkParams/@port"/>

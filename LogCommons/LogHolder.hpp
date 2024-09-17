@@ -10,6 +10,7 @@
 #include <Generics/LastPtr.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Sync/SyncPolicy.hpp>
+#include <LogCommons/ArchiveOfstream.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
 
@@ -36,13 +37,16 @@ namespace AdServer
 
       LogFlushTraits(
         const Generics::Time& period_val,
-        const char* out_dir_val)
+        const char* out_dir_val,
+        const std::optional<ArchiveParams>& archive_params_val)
         : period(period_val),
-          out_dir(out_dir_val)
+          out_dir(out_dir_val),
+          archive_params(archive_params_val)
       {}
 
       Generics::Time period;
       std::string out_dir;
+      std::optional<ArchiveParams> archive_params;
     };
 
     template<typename LogTraitsType>
@@ -54,10 +58,10 @@ namespace AdServer
 
       void save(
         typename LogTraitsType::CollectorType& collector,
-        const char* out_dir)
-        /*throw(eh::Exception)*/
+        const char* out_dir,
+        const std::optional<ArchiveParams>& archive_params)
       {
-        IoHelperT(collector).save(out_dir);
+        IoHelperT(collector).save(out_dir, archive_params);
       }
     };
 
@@ -71,8 +75,8 @@ namespace AdServer
 
       void save(
         typename LogTraitsType::CollectorType& collector,
-        const char* out_dir)
-        /*throw(eh::Exception)*/
+        const char* out_dir,
+        const std::optional<ArchiveParams>& archive_params)
       {
         LogIoProxy<LogTraitsType>::save(collector, out_dir, distrib_count_);
       }
@@ -90,10 +94,10 @@ namespace AdServer
 
       void save(
         typename LogTraitsType::CollectorType& collector,
-        const char* out_dir)
-        /*throw(eh::Exception)*/
+        const char* out_dir,
+        const std::optional<ArchiveParams>& archive_params)
       {
-        SimpleLogSaver_var(new CsvSaverT(collector, out_dir))->save();
+        SimpleLogSaver_var(new CsvSaverT(collector, out_dir, archive_params))->save();
       }
     };
 

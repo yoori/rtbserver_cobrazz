@@ -28,6 +28,7 @@
 #include <Commons/Containers.hpp>
 #include <Commons/AtomicInt.hpp>
 
+#include <LogCommons/ArchiveOfstream.hpp>
 #include <LogCommons/CollectorBundleTypeDefs.hpp>
 
 namespace AdServer {
@@ -1327,10 +1328,13 @@ template <class LOG_TYPE_TRAITS_> class LogIoProxy
   typedef ReferenceCounting::SmartPtr<LoaderT> LoaderPtrT;
 
 public:
-  static void save(CollectorT &collector, const std::string &path)
+  static void save(
+    CollectorT& collector,
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params)
     /*throw(eh::Exception)*/
   {
-    SaverPtrT(new SaverT(collector, path))->save();
+    SaverPtrT(new SaverT(collector, path, archive_params))->save();
   }
 
   static void
@@ -1363,7 +1367,9 @@ public:
   load(std::istream& is) = 0;
 
   virtual void
-  save(const std::string& path) = 0;
+  save(
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params) = 0;
 
   virtual
   ~LogIoHelper() noexcept

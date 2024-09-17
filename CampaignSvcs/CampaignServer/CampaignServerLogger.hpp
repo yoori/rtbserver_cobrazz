@@ -17,6 +17,7 @@ namespace AdServer
       unsigned long size;
       unsigned long period;
       std::string out_dir;
+      std::optional<LogProcessing::ArchiveParams> archive_params;
     };
 
     class CampaignServerLogger:

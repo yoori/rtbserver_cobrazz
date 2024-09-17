@@ -176,14 +176,14 @@ LogGeneralizerImpl::init_deferrable_log_proc_info(
     context->log_processor =
       new LogProcessor(
         in_dir, new typename LogProcessor::LogVersionManagerT(
-          context, out_dir, log_generalizer_stat_map_bundle_, pg_conn_factory,
+          context, out_dir, archive_params_, log_generalizer_stat_map_bundle_, pg_conn_factory,
             bundle_params),
         context->logger,
         proc_stat_impl_, fr_interrupter_);
 
     deferred_context->log_processor =
       new DefLogProcessor(
-        deferred_context, def_in_dir, out_dir, pg_conn_factory, bundle_params,
+        deferred_context, def_in_dir, out_dir, archive_params_, pg_conn_factory, bundle_params,
           proc_stat_impl_, fr_interrupter_, log_generalizer_stat_map_bundle_);
   }
   else if (log_proc_params.get().upload_type() == UPLOAD_TYPE_POSTGRES_CSV)
@@ -195,14 +195,14 @@ LogGeneralizerImpl::init_deferrable_log_proc_info(
     context->log_processor =
       new LogProcessor(
         in_dir, new typename LogProcessor::LogVersionManagerT(
-          context, out_dir, log_generalizer_stat_map_bundle_, pg_conn_factory,
+          context, out_dir, archive_params_, log_generalizer_stat_map_bundle_, pg_conn_factory,
             bundle_params),
         context->logger,
         proc_stat_impl_, fr_interrupter_);
 
     deferred_context->log_processor =
       new DefLogProcessor(
-        deferred_context, def_in_dir, out_dir, pg_conn_factory, bundle_params,
+        deferred_context, def_in_dir, out_dir, archive_params_, pg_conn_factory, bundle_params,
           proc_stat_impl_, fr_interrupter_, log_generalizer_stat_map_bundle_);
   }
   else

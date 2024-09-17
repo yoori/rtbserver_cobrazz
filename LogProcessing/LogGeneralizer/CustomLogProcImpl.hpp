@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <Logger/Logger.hpp>
+#include <LogCommons/ArchiveIfstream.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include "LogVersionManager.hpp"
 #include "ProcStatImpl.hpp"
@@ -29,6 +30,7 @@ public:
     const LogProcThreadInfo_var& context,
     const std::string &in_dir,
     const std::string &out_dir,
+    const std::optional<ArchiveParams>& archive_params,
     const PostgresConnectionFactoryImpl_var &pg_conn_factory,
     const CollectorBundleParams &bundle_params,
     const ProcStatImpl_var& proc_stat_impl,
@@ -40,7 +42,7 @@ public:
     proc_stat_(proc_stat_impl),
     lgsm_bundle_(lgsm_bundle),
     log_version_manager_(new LogVersionManagerT(
-      context, out_dir, lgsm_bundle, pg_conn_factory, bundle_params))
+      context, out_dir, archive_params, lgsm_bundle, pg_conn_factory, bundle_params))
   {
     create_file_receiver_(fr_interrupter);
   }
@@ -165,18 +167,30 @@ CustomLogProcessorImpl<LogExtTraits, LogVersionManagerT>::check_and_load()
       file->revert();
       break;
     }
-    std::ifstream ifs(file->full_path().c_str());
-    if (!ifs)
+
+    const auto& file_path = file->full_path();
+    std::unique_ptr<std::istream> istream;
+    if (LogProcessing::ArchiveIfstream::is_archive(file_path))
+    {
+      istream = std::make_unique<ArchiveIfstream>(file_path);
+    }
+    else
+    {
+      istream = std::make_unique<std::ifstream>(file_path);
+    }
+    auto& ref_istream = *istream;
+
+    if (!ref_istream)
     {
       Stream::Error es;
       es << __PRETTY_FUNCTION__ << ": Failed to open file '"
-         << file->full_path() << "'. Skipping ...";
+         << file_path << "'. Skipping ...";
       logger_->error(es.str(), 0, LOG_GEN_IMPL_ERR_CODE_8);
       continue;
     }
     try
     {
-      log_version_manager_->load(ifs, file);
+      log_version_manager_->load(ref_istream, file);
       loaded_timestamp = file_info.timestamp;
     }
     catch (const eh::Exception &ex)

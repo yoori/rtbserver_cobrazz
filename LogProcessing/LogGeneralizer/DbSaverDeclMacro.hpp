@@ -140,6 +140,7 @@ public: \
   \
   LOG_TYPE##PgCsvSaver( \
     const std::string& path, \
+    const std::optional<AdServer::LogProcessing::ArchiveParams>& archive_params, \
     const PostgresConnectionFactoryImpl_var& pg_conn_factory, \
     const OUT_TYPE& output, \
     CollectorFilterT* collector_filter \
@@ -147,6 +148,7 @@ public: \
   : \
     BaseType(collector_filter), \
     path_(path), \
+    archive_params_(archive_params), \
     pg_conn_factory_(pg_conn_factory), \
     output_(output) \
   {} \
@@ -185,16 +187,28 @@ private: \
       LogFileNameInfo name_info(CsvTraits::csv_base_name()); \
       name_info.format = LogFileNameInfo::LFNF_CSV; \
       filenames = make_log_file_name_pair(name_info, path_); \
-      std::ofstream ofs(filenames.second.c_str()); \
-      if (!ofs) \
+      std::unique_ptr<std::ostream> ostream; \
+      if (archive_params_) \
+      { \
+        ostream = std::make_unique<ArchiveOfstream>( \
+          filenames.second, \
+          *archive_params_); \
+      } \
+      else \
+      { \
+        ostream = std::make_unique<std::ofstream>( \
+          filenames.second.c_str()); \
+      } \
+      auto& ref_ostream = *ostream; \
+      if (!ref_ostream) \
       { \
         Stream::Error es; \
         es << __PRETTY_FUNCTION__ << ": Error: " \
            << "Failed to open file '" << filenames.second << '\''; \
         throw CsvException(es); \
       } \
-      ofs << CsvTraits::csv_header() << '\n'; \
-      if (!ofs) \
+      ref_ostream << CsvTraits::csv_header() << '\n'; \
+      if (!ref_ostream) \
       { \
         Stream::Error es; \
         es << __PRETTY_FUNCTION__ << ": Error: Failed to write " \
@@ -207,18 +221,18 @@ private: \
         for (CollectorT::DataT::const_iterator iit = it->second.begin(); \
           iit != it->second.end(); ++iit) \
         { \
-          CsvTraits::write_as_csv(ofs, it->first, iit->first, iit->second) << '\n'; \
+          CsvTraits::write_as_csv(ref_ostream, it->first, iit->first, iit->second) << '\n'; \
         } \
       } \
-      ofs.flush(); \
-      ofs.close(); \
-      if (!ofs) \
+      ref_ostream.flush(); \
+      if (!ref_ostream) \
       { \
         Stream::Error es; \
         es << __PRETTY_FUNCTION__ << ": Error: Failed to write log data " \
           "to file '" << filenames.second << '\''; \
         throw CsvException(es); \
       } \
+      ostream.reset(); \
       if (std::rename(filenames.second.c_str(), filenames.first.c_str())) \
       { \
         Stream::Error es; \
@@ -256,6 +270,7 @@ private: \
   ); \
   \
   const std::string path_; \
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params_; \
   PostgresConnectionFactoryImpl_var pg_conn_factory_; \
   OUT_TYPE output_; \
 }
@@ -282,6 +297,7 @@ public: \
   \
   PREFIX##PgCsvSaver( \
     const std::string& path, \
+    const std::optional<AdServer::LogProcessing::ArchiveParams>& archive_params, \
     const PostgresConnectionFactoryImpl_var& pg_conn_factory, \
     const OUT_TYPE& output, \
     CollectorFilterT* collector_filter \
@@ -289,6 +305,7 @@ public: \
   : \
     BaseType(collector_filter), \
     path_(path), \
+    archive_params_(archive_params), \
     pg_conn_factory_(pg_conn_factory), \
     output_(output) \
   {} \
@@ -329,16 +346,28 @@ private: \
       LogFileNameInfo name_info(CsvTraits::csv_base_name()); \
       name_info.format = LogFileNameInfo::LFNF_CSV; \
       filenames = make_log_file_name_pair(name_info, path_); \
-      std::ofstream ofs(filenames.second.c_str()); \
-      if (!ofs) \
+      std::unique_ptr<std::ostream> ostream; \
+      if (archive_params_) \
+      { \
+        ostream = std::make_unique<ArchiveOfstream>( \
+          filenames.second, \
+          *archive_params_); \
+      } \
+      else \
+      { \
+        ostream = std::make_unique<std::ofstream>( \
+          filenames.second.c_str()); \
+      } \
+      auto& ref_ostream = *ostream; \
+      if (!ref_ostream) \
       { \
         Stream::Error es; \
         es << __PRETTY_FUNCTION__ << ": Error: " \
            << "Failed to open file '" << filenames.second << '\''; \
         throw CsvException(es); \
       } \
-      ofs << CsvTraits::csv_header() << '\n'; \
-      if (!ofs) \
+      ref_ostream << CsvTraits::csv_header() << '\n'; \
+      if (!ref_ostream) \
       { \
         Stream::Error es; \
         es << __PRETTY_FUNCTION__ << ": Error: Failed to write " \
@@ -351,18 +380,18 @@ private: \
         for (CollectorT::DataT::const_iterator iit = it->second.begin(); \
           iit != it->second.end(); ++iit) \
         { \
-          CsvTraits::write_as_csv(ofs, it->first, iit->first, iit->second) << '\n'; \
+          CsvTraits::write_as_csv(ref_ostream, it->first, iit->first, iit->second) << '\n'; \
         } \
       } \
-      ofs.flush(); \
-      ofs.close(); \
-      if (!ofs) \
+      ref_ostream.flush(); \
+      if (!ref_ostream) \
       { \
         Stream::Error es; \
         es << __PRETTY_FUNCTION__ << ": Error: Failed to write log data " \
            << "to file '" << filenames.second << '\''; \
         throw CsvException(es); \
       } \
+      ostream.reset(); \
       if (std::rename(filenames.second.c_str(), filenames.first.c_str())) \
       { \
         Stream::Error es; \
@@ -400,6 +429,7 @@ private: \
   ); \
   \
   const std::string path_; \
+  const std::optional<ArchiveParams> archive_params_; \
   PostgresConnectionFactoryImpl_var pg_conn_factory_; \
   OUT_TYPE output_; \
 }

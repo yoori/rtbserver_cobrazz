@@ -89,6 +89,11 @@
         <xsl:value-of select="$expression-matcher-flush-logs-period"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="flush-logs-archive"><xsl:value-of select="$stat-config/@flush_archive"/>
+      <xsl:if test="count($stat-config/@flush_archive) = 0">
+        <xsl:value-of select="$expression-matcher-flush-logs-archive"/>
+      </xsl:if>
+    </xsl:variable>
     <xsl:variable name="activity-flush-logs-period"><xsl:value-of select="$stat-config/@activity_flush_period"/>
       <xsl:if test="count($stat-config/@activity_flush_period) = 0">
         <xsl:value-of select="$expression-matcher-activity-flush-logs-period"/>
@@ -379,14 +384,14 @@
       </cfg:InLogs>
 
       <cfg:OutLogs log_root="{$out-logs-dir}">
-        <cfg:ChannelInventory period="{$flush-logs-period}"/>
-        <cfg:ChannelImpInventory period="{$flush-logs-period}"/>
-        <cfg:ChannelPriceRange period="{$inventory-flush-logs-period}"/>
-        <cfg:ChannelInventoryActivity period="{$activity-flush-logs-period}"/>
-        <cfg:ChannelPerformance period="{$flush-logs-period}"/>
-        <cfg:ChannelTriggerImpStat period="{$flush-logs-period}"/>
-        <cfg:GlobalColoUserStat period="{$flush-logs-period}"/>
-        <cfg:ColoUserStat period="{$flush-logs-period}"/>
+        <cfg:ChannelInventory period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelImpInventory period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelPriceRange period="{$inventory-flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelInventoryActivity period="{$activity-flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelPerformance period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ChannelTriggerImpStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:GlobalColoUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
+        <cfg:ColoUserStat period="{$flush-logs-period}" archive="{$flush-logs-archive}"/>
       </cfg:OutLogs>
 
       <cfg:ChannelMatcherCache

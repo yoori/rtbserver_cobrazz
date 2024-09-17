@@ -28,8 +28,10 @@ namespace
 int
 request_out_logger_test(const char* tmp_dir)
 {
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params = {};
   AdServer::LogProcessing::LogFlushTraits log_traits;
   log_traits.out_dir = tmp_dir;
+  log_traits.archive_params = archive_params;
 
   Logging::Logger_var logger =
     new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));

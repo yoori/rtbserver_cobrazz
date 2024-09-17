@@ -184,34 +184,47 @@ namespace LogProcessing {
       }
 
       filenames = make_log_file_name_pair(name_info, path_);
-      std::ofstream ofs(filenames.second.c_str());
 
-      if (!ofs)
       {
-        Stream::Error es;
-        es << __PRETTY_FUNCTION__ << ": Error: "
-           << "Failed to open file '" << filenames.second << '\'';
-        throw Exception(es);
-      }
+        std::unique_ptr<std::ostream> ostream;
+        if (archive_params_)
+        {
+          ostream = std::make_unique<ArchiveOfstream>(
+            filenames.second,
+            *archive_params_);
+        }
+        else
+        {
+          ostream = std::make_unique<std::ofstream>(
+            filenames.second.c_str());
+        }
+        auto& ref_ostream = *ostream;
 
-      typename LOG_TYPE_TRAITS_::HeaderType log_header(LOG_TYPE_TRAITS_::current_version());
-      ofs << log_header;
-      if (!ofs)
-      {
-        Stream::Error es;
-        es << __PRETTY_FUNCTION__ << ": Error: Failed to write log header";
-        throw Exception(es);
-      }
+        if (!ref_ostream)
+        {
+          Stream::Error es;
+          es << __PRETTY_FUNCTION__ << ": Error: "
+             << "Failed to open file '" << filenames.second << '\'';
+          throw Exception(es);
+        }
 
-      SaveStrategy().save(ofs, collector);
-      ofs.close();
+        typename LOG_TYPE_TRAITS_::HeaderType log_header(LOG_TYPE_TRAITS_::current_version());
+        ref_ostream << log_header;
+        if (!ref_ostream)
+        {
+          Stream::Error es;
+          es << __PRETTY_FUNCTION__ << ": Error: Failed to write log header";
+          throw Exception(es);
+        }
 
-      if (!ofs)
-      {
-        Stream::Error es;
-        es << __PRETTY_FUNCTION__ << ": Error: Failed to write log data "
-           << "to file '" << filenames.second << '\'';
-        throw Exception(es);
+        SaveStrategy().save(ref_ostream, collector);
+        if (!ref_ostream)
+        {
+          Stream::Error es;
+          es << __PRETTY_FUNCTION__ << ": Error: Failed to write log data "
+             << "to file '" << filenames.second << '\'';
+          throw Exception(es);
+        }
       }
 
       if (rename && std::rename(filenames.second.c_str(), filenames.first.c_str()))
