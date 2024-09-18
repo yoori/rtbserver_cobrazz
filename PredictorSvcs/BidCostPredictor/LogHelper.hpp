@@ -9,6 +9,7 @@
 
 // THIS
 #include <LogCommons/ArchiveIfstream.hpp>
+#include <LogCommons/ArchiveOfstream.hpp>
 #include <LogCommons/BidCostStat.hpp>
 #include <LogCommons/GenericLogIoImpl.hpp>
 #include <LogCommons/LogCommons.hpp>
@@ -50,6 +51,8 @@ struct LogHelper
   using Collector = typename BaseTraits::CollectorType;
   using DataT = typename Collector::DataT;
   using ArchiveIfstream = LogProcessing::ArchiveIfstream;
+  using ArchiveOfstream = LogProcessing::ArchiveOfstream;
+  using ArchiveParams = AdServer::LogProcessing::ArchiveParams;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -108,16 +111,33 @@ struct LogHelper
     LogProcessing::LogIoProxy<LogTraits>::load(collector, ref_istream);
   }
 
-  static void save(
+  static std::string save(
     const std::string& path,
-    const Collector& collector)
+    const Collector& collector,
+    const std::optional<ArchiveParams>& archive_params)
   {
-    std::ofstream fstream(path);
-    if (!fstream.is_open())
+    std::string extension;
+
+    std::unique_ptr<std::ostream> ostream;
+    if (archive_params)
+    {
+      auto archive_ofstream = std::make_unique<ArchiveOfstream>(
+        path,
+        *archive_params);
+      extension = archive_ofstream->file_extension();
+      ostream = std::move(archive_ofstream);
+    }
+    else
+    {
+      ostream = std::make_unique<std::ofstream>(path);
+    }
+    auto& ref_ostream = *ostream;
+
+    if (!ref_ostream)
     {
       Stream::Error stream;
       stream << FNS
-             << "Can't open file="
+             << "Can't create file="
              << path;
       throw Exception(stream);
     }
@@ -125,7 +145,7 @@ struct LogHelper
     using LogHeader = typename LogTraits::HeaderType;
     LogHeader log_header(LogTraits::current_version());
 
-    if (!(fstream << log_header))
+    if (!(ref_ostream << log_header))
     {
       std::remove(path.c_str());
 
@@ -139,18 +159,18 @@ struct LogHelper
 
     if (collector.empty())
     {
-      return;
+      return extension;
     }
 
     try
     {
       if constexpr (Detail::IsCollectorV<DataT>)
       {
-        LogProcessing::PackedSaveStrategy<LogTraits>().save(fstream, collector);
+        LogProcessing::PackedSaveStrategy<LogTraits>().save(ref_ostream, collector);
       }
       else
       {
-        LogProcessing::DefaultSaveStrategy<LogTraits>().save(fstream, collector);
+        LogProcessing::DefaultSaveStrategy<LogTraits>().save(ref_ostream, collector);
       }
     }
     catch (const eh::Exception& exc)
@@ -176,6 +196,8 @@ struct LogHelper
              << "] Reason: Unknown error";
       throw Exception(stream);
     }
+
+    return extension;
   }
 };
 

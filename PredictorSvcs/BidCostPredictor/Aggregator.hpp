@@ -29,6 +29,7 @@ namespace LogProcessing = AdServer::LogProcessing;
 class Aggregator final : public Processor
 {
 private:
+  using ArchiveParams = AdServer::LogProcessing::ArchiveParams;
   using ThreadPtr = std::unique_ptr<std::jthread>;
   using Path = Utils::Path;
   using ProcessFiles = std::list<Path>;
@@ -59,6 +60,7 @@ public:
     const std::size_t dump_max_size,
     const std::string& input_dir,
     const std::string& output_dir,
+    const std::optional<ArchiveParams>& archive_params,
     Logger* logger);
 
   std::string name() noexcept override;
@@ -97,6 +99,8 @@ private:
   const std::string input_dir_;
 
   const std::string output_dir_;
+
+  const std::optional<ArchiveParams> archive_params_;
 
   const std::string prefix_stat_;
 

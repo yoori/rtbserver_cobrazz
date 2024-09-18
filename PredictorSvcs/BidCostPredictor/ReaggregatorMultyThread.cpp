@@ -21,9 +21,11 @@ namespace PredictorSvcs::BidCostPredictor
 ReaggregatorMultyThread::ReaggregatorMultyThread(
   const std::string& input_dir,
   const std::string& output_dir,
+  const std::optional<ArchiveParams>& archive_params,
   Logging::Logger* logger)
   : input_dir_(input_dir),
     output_dir_(output_dir),
+    archive_params_(archive_params),
     prefix_(LogTraits::B::log_base_name()),
     logger_(ReferenceCounting::add_ref(logger)),
     processed_files_(std::make_shared<ProcessedFiles>()),
@@ -681,7 +683,14 @@ void ReaggregatorMultyThread::dump_file(
     date);
   const auto& temp_file_path = generated_path.first;
 
-  LogHelper<LogTraits>::save(temp_file_path, collector);
+  const auto extension = LogHelper<LogTraits>::save(
+    temp_file_path,
+    collector,
+    archive_params_);
+
+  generated_path.first += extension;
+  generated_path.second += extension;
+
   result_file = std::move(generated_path);
 }
 

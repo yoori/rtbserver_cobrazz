@@ -11,6 +11,7 @@
 
 // THIS
 #include <Logger/StreamLogger.hpp>
+#include <LogCommons/ArchiveOfstream.hpp>
 #include "Application.hpp"
 #include "AggregatorMultyThread.hpp"
 #include "Configuration.h"
@@ -114,14 +115,13 @@ int Application::run(int argc, char **argv)
              << configuration;
       logger->info(stream.str(), Aspect::APPLICATION);
 
-      Daemon_var daemon(
-        new DaemonImpl(
-          path_config,
-          pid_path,
-          model_period,
-          agg_period,
-          reagg_period,
-          logger));
+      Daemon_var daemon = new DaemonImpl(
+        path_config,
+        pid_path,
+        model_period,
+        agg_period,
+        reagg_period,
+        logger);
       try
       {
         daemon->run();
@@ -213,11 +213,40 @@ int Application::run(int argc, char **argv)
     }
 
     const std::string& path_config = *it;
-
     const Configuration configuration(path_config);
-    const std::string log_path =
-      configuration.get("config.log_path");
 
+    std::optional<AdServer::LogProcessing::ArchiveParams> archive_params;
+    const std::string archive_string = configuration.get("config.archive");
+    if (archive_string == "gzip_default")
+    {
+      archive_params = AdServer::LogProcessing::Archive::gzip_default_compression_params;
+    }
+    else if (archive_string == "gzip_best_compression")
+    {
+      archive_params = AdServer::LogProcessing::Archive::gzip_best_compression_params;
+    }
+    else if (archive_string == "gzip_best_speed")
+    {
+      archive_params = AdServer::LogProcessing::Archive::gzip_best_speed_params;
+    }
+    else if (archive_string == "bz2_default")
+    {
+      archive_params = AdServer::LogProcessing::Archive::bzip2_default_compression_params;
+    }
+    else
+    {
+      if (archive_string != "no_compression")
+      {
+        Stream::Error stream;
+        stream << "config.archive must be on of "
+                  "{no_compression, gzip_default, "
+                  "gzip_best_compression, gzip_best_speed, "
+                  "bz2_default}";
+        throw Exception(stream);
+      }
+    }
+
+    const std::string log_path = configuration.get("config.log_path");
     std::ofstream ostream(log_path, std::ios::app);
     if (!ostream.is_open())
     {
@@ -295,6 +324,7 @@ int Application::run(int argc, char **argv)
           agg_dump_max_size,
           agg_input_dir,
           agg_output_dir,
+          archive_params,
           logger);
       }
       else if (command == "reaggregate")
@@ -302,6 +332,7 @@ int Application::run(int argc, char **argv)
         processor = new ReaggregatorMultyThread(
           reagg_input_dir,
           reagg_output_dir,
+          archive_params,
           logger);
       }
       else
@@ -445,6 +476,7 @@ int Application::run(int argc, char **argv)
     Processor_var processor = new Regenerator(
       input_directory,
       output_directory,
+      AdServer::LogProcessing::Archive::gzip_default_compression_params,
       logger);
 
     try

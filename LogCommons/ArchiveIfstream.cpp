@@ -52,7 +52,7 @@ ArchiveIfstream::~ArchiveIfstream()
 
 bool ArchiveIfstream::is_archive(const std::string& file_path)
 {
-  const auto extension = std::filesystem::path(file_path);
+  const auto extension = std::filesystem::path(file_path).extension().string();
   return extension == GZIP_EXTENSION || extension == BZ2_EXTENSION;
 }
 

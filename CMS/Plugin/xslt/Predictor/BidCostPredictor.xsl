@@ -30,6 +30,7 @@
   <xsl:variable name="description" select="$bidcost-predictor-description"/>
   <xsl:variable name="log_path" select="concat($workspace-root, $bidcost-predictor-log-path)"/>
   <xsl:variable name="pid_path" select="concat($workspace-root, $bidcost-predictor-pid-path)"/>
+  <xsl:variable name="archive" select="$bidcost-predictor-archive"/>
   <xsl:variable name="model_input_directory" select="concat($workspace-root, $bidcost-predictor-model-input-path)"/>
   <xsl:variable name="model_period" select="$bidcost-predictor-model-period"/>
   <xsl:variable name="model_bid_cost_file_name" select="$bidcost-predictor-model-bid-cost-file-name"/>
@@ -78,6 +79,11 @@
   <xsl:text>
     "pid_path" : "</xsl:text>
   <xsl:value-of select="$pid_path"/>
+  <xsl:text>",</xsl:text>
+
+  <xsl:text>
+    "archive" : "</xsl:text>
+  <xsl:value-of select="$archive"/>
   <xsl:text>",</xsl:text>
 
   <xsl:text>

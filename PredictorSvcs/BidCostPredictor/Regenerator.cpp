@@ -25,9 +25,11 @@ namespace PredictorSvcs::BidCostPredictor
 Regenerator::Regenerator(
   const std::string& input_dir,
   const std::string& output_dir,
+  const std::optional<ArchiveParams>& archive_params,
   Logger* logger)
   : input_dir_(input_dir),
     output_dir_(output_dir),
+    archive_params_(archive_params),
     prefix_(LogTraits::B::log_base_name()),
     logger_(ReferenceCounting::add_ref(logger))
 {
@@ -366,12 +368,19 @@ void Regenerator::save_file(
   Collector& collector,
   ProcessedFiles& processed_files)
 {
-  const auto generated_path = Utils::generate_file_path(
+  auto generated_path = Utils::generate_file_path(
     output_dir,
     prefix,
     date);
   const auto& temp_file_path = generated_path.first;
-  LogHelper<LogTraits>::save(temp_file_path, collector);
+  const auto extension = LogHelper<LogTraits>::save(
+    temp_file_path,
+    collector,
+    archive_params_);
+
+  generated_path.first += extension;
+  generated_path.second += extension;
+
   processed_files.emplace_back(generated_path);
 }
 

@@ -25,11 +25,13 @@ Aggregator::Aggregator(
   const std::size_t dump_max_size,
   const std::string& input_dir,
   const std::string& output_dir,
+  const std::optional<ArchiveParams>& archive_params,
   Logging::Logger* logger)
   : max_process_files_(max_process_files),
     dump_max_size_(dump_max_size),
     input_dir_(input_dir),
     output_dir_(output_dir),
+    archive_params_(archive_params),
     prefix_stat_(LogTraits::B::log_base_name()),
     prefix_agg_(LogInnerTraits::B::log_base_name()),
     logger_(ReferenceCounting::add_ref(logger)),
@@ -292,13 +294,20 @@ void Aggregator::dump_file(
   const CollectorInner& collector,
   ResultFiles& result_files)
 {
-  const auto generated_path = Utils::generate_file_path(
+  auto generated_path = Utils::generate_file_path(
     output_dir,
     prefix,
     date);
   const auto& temp_path = generated_path.first;
 
-  LogHelper<LogInnerTraits>::save(temp_path, collector);
+  const auto extension = LogHelper<LogInnerTraits>::save(
+    temp_path,
+    collector,
+    archive_params_);
+
+  generated_path.first += extension;
+  generated_path.second += extension;
+
   result_files.emplace_back(std::move(generated_path));
 }
 

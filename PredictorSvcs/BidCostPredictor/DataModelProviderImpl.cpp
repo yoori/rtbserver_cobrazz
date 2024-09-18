@@ -495,11 +495,22 @@ DataModelProviderImpl::load(const Path& file_path)
   using LogHeader = typename LogProcessing::BidCostStatInnerTraits::HeaderType;
   using TabCategory = LogProcessing::TabCategory;
   using FixedBufStream = LogProcessing::FixedBufStream<TabCategory>;
+  using ArchiveIfstream = LogProcessing::ArchiveIfstream;
 
   ReadCollectorPtr read_collector = std::make_shared<ReadCollector>();
 
-  std::ifstream stream(file_path);
-  if (!stream)
+  std::unique_ptr<std::istream> istream;
+  if (LogProcessing::ArchiveIfstream::is_archive(file_path))
+  {
+    istream = std::make_unique<ArchiveIfstream>(file_path);
+  }
+  else
+  {
+    istream = std::make_unique<std::ifstream>(file_path);
+  }
+  auto& ref_istream = *istream;
+
+  if (!ref_istream)
   {
     Stream::Error stream;
     stream << FNS
@@ -509,7 +520,7 @@ DataModelProviderImpl::load(const Path& file_path)
   }
 
   LogHeader log_header;
-  if (!(stream >> log_header))
+  if (!(ref_istream >> log_header))
   {
     Stream::Error stream;
     stream << FNS
@@ -519,7 +530,7 @@ DataModelProviderImpl::load(const Path& file_path)
     throw Exception(stream);
   }
 
-  if (stream.eof() || stream.peek() == EOF)
+  if (ref_istream.eof() || ref_istream.peek() == EOF)
   {
     return read_collector;
   }
@@ -527,12 +538,12 @@ DataModelProviderImpl::load(const Path& file_path)
   std::string line;
   line.reserve(1024);
   std::size_t line_num = 0;
-  for (; !stream.eof() && stream.peek() != std::char_traits<char>::eof(); line_num += 1)
+  for (; !ref_istream.eof() && ref_istream.peek() != std::char_traits<char>::eof(); line_num += 1)
   {
     line_num += 1;
     line.clear();
-    LogProcessing::read_until_eol(stream, line, false);
-    if (stream.eof())
+    LogProcessing::read_until_eol(ref_istream, line, false);
+    if (ref_istream.eof())
     {
       Stream::Error stream;
       stream << FNS
@@ -541,7 +552,7 @@ DataModelProviderImpl::load(const Path& file_path)
       throw Exception(stream);
     }
 
-    if (!stream.good())
+    if (!ref_istream.good())
     {
       Stream::Error stream;
       stream << FNS
@@ -570,7 +581,7 @@ DataModelProviderImpl::load(const Path& file_path)
          << line_num
          << ")";
     }
-    fbs.transfer_state(stream);
+    fbs.transfer_state(ref_istream);
 
     read_collector->emplace_back(
       std::move(key),
