@@ -122,9 +122,15 @@ SimpleLogCsvSaverImpl<LogExtTraits>::save()
       std::unique_ptr<std::ostream> ostream;
       if (archive_params_)
       {
-        ostream = std::make_unique<ArchiveOfstream>(
+        auto archive_ofstream = std::make_unique<ArchiveOfstream>(
           filenames.second,
           *archive_params_);
+
+        const auto& file_extension = archive_ofstream->file_extension();
+        filenames.first += file_extension;
+        filenames.second += file_extension;
+
+        ostream = std::move(archive_ofstream);
       }
       else
       {
@@ -265,9 +271,15 @@ GenericLogCsvSaverImpl<LogExtTraits>::save_i_(const CollectorT& collector)
       std::unique_ptr<std::ostream> ostream;
       if (archive_params_)
       {
-        ostream = std::make_unique<ArchiveOfstream>(
+        auto archive_ofstream = std::make_unique<ArchiveOfstream>(
           filenames.second,
           *archive_params_);
+
+        const auto& file_extension = archive_ofstream->file_extension();
+        filenames.first += file_extension;
+        filenames.second += file_extension;
+
+        ostream = std::move(archive_ofstream);
       }
       else
       {

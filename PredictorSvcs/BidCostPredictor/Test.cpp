@@ -258,8 +258,12 @@ bool TestAgg::run_test()
     collecor_result.add(date, collector_inner_result);
   }
 
-  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params = {};
-  LogProcessing::LogIoProxy<LogTraits>::save(collector_file, directory_, archive_params);
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params =
+    AdServer::LogProcessing::Archive::gzip_default_compression_params;
+  LogProcessing::LogIoProxy<LogTraits>::save(
+    collector_file,
+    directory_,
+    archive_params);
   const std::string prefix(LogTraits::B::log_base_name());
   files = Utils::get_directory_files(directory_, prefix);
   if (files.empty())
@@ -273,16 +277,12 @@ bool TestAgg::run_test()
   }
 
   const auto& path = *files.begin();
-
-  std::stringstream stream;
-  stream << directory_
-         << "/"
-         << prefix
-         << ".";
-
+  const auto extension = std::filesystem::path(path).extension().string();
   for (std::size_t i = 1; i < number_files_; ++i)
   {
-    copy_file(path, stream.str() + std::to_string(i));
+    std::string new_file_path = directory_ + "/"
+      + prefix + std::to_string(i) + extension;
+    copy_file(path, new_file_path);
   }
   logger_->info(
     std::string("Test files generation completed successfully"),
@@ -327,7 +327,7 @@ bool TestAgg::run_test()
 
     std::smatch date_match;
     if(std::regex_search(file_path, date_match, date_regex)
-       && !date_match.empty())
+      && !date_match.empty())
     {
       std::stringstream stream;
       stream << date_match[0];
@@ -383,18 +383,23 @@ BOOST_AUTO_TEST_CASE(single_thread)
     }
   }
 
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params =
+    AdServer::LogProcessing::Archive::gzip_default_compression_params;
+
   Processor_var aggregator_processor(
     new Aggregator(
       max_process_files,
       dump_max_size,
       result_directory,
       result_directory,
+      archive_params,
       logger));
 
   Processor_var reaggregator_processor(
     new Reaggregator(
       result_directory,
       result_directory,
+      archive_params,
       logger));
 
   const std::size_t number_dates_per_file = 5;
@@ -432,8 +437,7 @@ BOOST_AUTO_TEST_CASE(multiple_thread)
     throw  Exception(ostr);
   }
 
-  const std::string result_directory =
-  directory + "/" + "agg_reagg";
+  const std::string result_directory = directory + "/" + "agg_reagg";
   if (!std::filesystem::is_directory(result_directory))
   {
     if (mkdir(result_directory.c_str(), 0777) != 0)
@@ -446,18 +450,23 @@ BOOST_AUTO_TEST_CASE(multiple_thread)
     }
   }
 
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params =
+    AdServer::LogProcessing::Archive::gzip_default_compression_params;
+
   Processor_var aggregator_processor(
     new AggregatorMultyThread(
       max_process_files,
       dump_max_size,
       result_directory,
       result_directory,
+      archive_params,
       logger));
 
   Processor_var reaggregator_processor(
     new ReaggregatorMultyThread(
       result_directory,
       result_directory,
+      archive_params,
       logger));
 
   const std::size_t number_dates_per_file = 5;
@@ -627,16 +636,24 @@ BOOST_AUTO_TEST_CASE(provider)
     }
   }
 
-  const std::string prefix(LogTraits::B::log_base_name());
-  const std::string path_originale_file =
-  result_directory + "/" + prefix + ".";
-  LogHelper<LogTraits>::save(path_originale_file, collector_file);
+  const std::optional<AdServer::LogProcessing::ArchiveParams> archive_params =
+    AdServer::LogProcessing::Archive::gzip_default_compression_params;
 
+  const std::string prefix(LogTraits::B::log_base_name());
+  std::string originale_file_path = result_directory + "/" + prefix;
+  const auto extension = LogHelper<LogTraits>::save(
+    originale_file_path,
+    collector_file,
+    archive_params);
+
+  originale_file_path += extension;
   for (std::size_t i = 1; i < number_file; ++i)
   {
+    std::string new_file_path = result_directory + "/"
+      + prefix + std::to_string(i) + extension;
     copy_file(
-      path_originale_file,
-      path_originale_file + std::to_string(i));
+      originale_file_path,
+      new_file_path);
   }
 
   CreativeProvider_var creative_provider(

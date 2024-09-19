@@ -23,6 +23,7 @@ namespace LogProcessing = AdServer::LogProcessing;
 class Reaggregator final : public Processor
 {
 private:
+  using ArchiveParams = AdServer::LogProcessing::ArchiveParams;
   using ThreadPtr = std::unique_ptr<std::jthread>;
   using DayTimestamp = LogProcessing::DayTimestamp;
   using Path = Utils::Path;
@@ -42,6 +43,7 @@ public:
   explicit Reaggregator(
     const std::string& input_dir,
     const std::string& output_dir,
+    const std::optional<ArchiveParams>& archive_params,
     Logger* logger);
 
   std::string name() noexcept override;
@@ -80,6 +82,8 @@ private:
   const std::string input_dir_;
 
   const std::string output_dir_;
+
+  const std::optional<ArchiveParams> archive_params_;
 
   const std::string prefix_;
 

@@ -4,6 +4,7 @@
   "config" : {
     "log_path": "/home/artem_bogdanov/bid_cost_predictor.log",
     "pid_path": "/home/artem_bogdanov/daemon.pid",
+    "archive": "gzip_default",
     "pg_connection" : {
       "host": "postdb00",
       "port": 5432,

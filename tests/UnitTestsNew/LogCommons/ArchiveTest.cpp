@@ -36,7 +36,7 @@ using BidTraits = LogDefaultTraits<BidCostStatInnerCollector, false>;
 using BidCollector = BidTraits::CollectorType;
 
 template<> const char* BidTraits::B::base_name_ = "BidCostAggStat";
-template<> const char* BidTraits::B::signature_ = "BidCostAggStat";;
+template<> const char* BidTraits::B::signature_ = "BidCostAggStat";
 template<> const char* BidTraits::B::current_version_ = "2.5";
 
 } // namespace AdServer::LogProcessing
@@ -179,6 +179,7 @@ TEST(Bzip2, Test)
 TEST(TestGzip, BidCostStat)
 {
   using Traits = AdServer::LogProcessing::BidTraits;
+  using LogHeader = typename Traits::HeaderType;
   using Collector = AdServer::LogProcessing::BidCollector;
   using Key = Collector::KeyT;
   using Data = Collector::DataT;
@@ -206,11 +207,15 @@ TEST(TestGzip, BidCostStat)
   }
 
   {
+    LogHeader log_header(Traits::current_version());
+
     boost::iostreams::gzip_params gzip_params;
     AdServer::LogProcessing::ArchiveOfstream archive_ofstream(
       file_path,
       gzip_params,
       std::ios_base::out | std::ios_base::app | std::ios_base::binary);
+
+    EXPECT_TRUE(archive_ofstream << log_header);
 
     AdServer::LogProcessing::DefaultSaveStrategy<Traits>().save(archive_ofstream, collector);
     EXPECT_TRUE(archive_ofstream);
@@ -221,6 +226,10 @@ TEST(TestGzip, BidCostStat)
       file_path + ".gz");
     EXPECT_TRUE(archive_ifstream);
     std::istream& istream = archive_ifstream;
+
+    LogHeader log_header;
+    EXPECT_TRUE(istream >> log_header);
+    EXPECT_EQ(log_header.version(), Traits::current_version());
 
     Collector result;
     AdServer::LogProcessing::LogIoProxy<Traits>::load(result, istream);
