@@ -458,41 +458,51 @@ std::unique_ptr<Response> GrpcUserBindOperationDistributor::do_request(
       }
       else if (data_case == Response::DataCase::kError)
       {
+        std::ostringstream stream;
+        stream << FNS
+               << "Error type=";
+
         const auto& error = response->error();
         const auto error_type = error.type();
         switch (error_type)
         {
           case Error_Type::Error_Type_NotReady:
           {
+            stream << "NotReady";
             client_container->set_bad();
             break;
           }
           case Error_Type::Error_Type_ChunkNotFound:
           {
+            stream << "ChunkNotFound";
             client_container->set_bad();
             try_to_reresolve_partition(partition_number);
             break;
           }
           case Error_Type::Error_Type_Implementation:
           {
+            stream << "Implementation";
             client_container->set_bad();
             try_to_reresolve_partition(partition_number);
             break;
           }
           default:
           {
-            Stream::Error stream;
-            stream << FNS
-                   << ": "
-                   << "Unknown error type";
-            logger_->error(
-              stream.str(),
-              ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
+            stream << "Unknown error type";
             client_container->set_bad();
             try_to_reresolve_partition(partition_number);
             break;
           }
         }
+
+        stream << ", description="
+               << error.description()
+               << " [id="
+               << id
+               << ", chunk_id="
+               << chunk_id
+               << "]";
+        logger_->error(stream.str(), ASPECT_GRPC_USER_BIND_DISTRIBUTOR);
       }
     }
     catch (const eh::Exception& exc)
