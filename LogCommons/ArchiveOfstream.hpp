@@ -2,6 +2,7 @@
 #define AD_SERVER_LOG_PROCESSING_ARCHIVE_OFSTREAM_HPP
 
 // BOOST
+#include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -32,7 +33,16 @@ extern const Bzip2Params bzip2_default_compression_params;
 
 class ArchiveOfstream final : public boost::iostreams::filtering_ostream
 {
+private:
+  using FileDescriptorSink = boost::iostreams::file_descriptor_sink;
+
 public:
+  enum class WriterType
+  {
+    Ofstream,
+    FileDescriptorSink
+  };
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
@@ -40,25 +50,28 @@ public:
     const std::string& file_path,
     const GzipParams& params,
     const std::ios_base::openmode mode =
-      std::ios_base::out | std::ios_base::app | std::ios_base::binary,
+      std::ios_base::out | std::ios_base::app,
     const std::streamsize buffer_size =
-      boost::iostreams::default_device_buffer_size);
+      boost::iostreams::default_device_buffer_size,
+    const WriterType writer_type = WriterType::FileDescriptorSink) noexcept;
 
   ArchiveOfstream(
     const std::string& file_path,
     const Bzip2Params& params,
     const std::ios_base::openmode mode =
-      std::ios_base::out | std::ios_base::app | std::ios_base::binary,
+      std::ios_base::out | std::ios_base::app,
     const std::streamsize buffer_size =
-      boost::iostreams::default_device_buffer_size);
+      boost::iostreams::default_device_buffer_size,
+    const WriterType writer_type = WriterType::FileDescriptorSink) noexcept;
 
   ArchiveOfstream(
     const std::string& file_path,
     const ArchiveParams& params,
     const std::ios_base::openmode mode =
-      std::ios_base::out | std::ios_base::app | std::ios_base::binary,
+      std::ios_base::out | std::ios_base::app,
     const std::streamsize buffer_size =
-      boost::iostreams::default_device_buffer_size);
+      boost::iostreams::default_device_buffer_size,
+    const WriterType writer_type = WriterType::FileDescriptorSink) noexcept;
 
   ArchiveOfstream(const ArchiveOfstream&) = delete;
   ArchiveOfstream(ArchiveOfstream&&) = delete;
@@ -72,24 +85,25 @@ public:
   const std::string& file_extension() const noexcept;
 
 private:
-  void init(
+  bool init(
     const std::string& file_path,
     const GzipParams& params,
     const std::ios_base::openmode mode,
-    const std::streamsize buffer_size);
+    const std::streamsize buffer_size,
+    const WriterType writer_type) noexcept;
 
-  void init(
+  bool init(
     const std::string& file_path,
     const Bzip2Params& params,
     const std::ios_base::openmode mode,
-    const std::streamsize buffer_size);
+    const std::streamsize buffer_size,
+    const WriterType writer_type) noexcept;
 
-  void open_file(
+  bool open_file(
     const std::string& file_path,
     const std::string_view extension,
-    const std::ios_base::openmode mode);
-
-  void check();
+    const std::ios_base::openmode mode,
+    const WriterType writer_type) noexcept;
 
 private:
   static constexpr std::string_view GZIP_EXTENSION = ".gz";
@@ -99,7 +113,9 @@ private:
 
   std::string file_path_;
 
-  std::ofstream ofstream_;
+  std::unique_ptr<std::ofstream> ofstream_;
+
+  std::unique_ptr<FileDescriptorSink> file_descriptor_sink_;
 };
 
 } // namespace AdServer::LogProcessing

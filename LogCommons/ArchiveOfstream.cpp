@@ -49,47 +49,89 @@ ArchiveOfstream::ArchiveOfstream(
   const std::string& file_path,
   const GzipParams& params,
   const std::ios_base::openmode mode,
-  const std::streamsize buffer_size)
+  const std::streamsize buffer_size,
+  const WriterType writer_type) noexcept
 {
-  init(file_path, params, mode, buffer_size);
+  const bool ok = init(
+    file_path,
+    params,
+    mode,
+    buffer_size,
+    writer_type);
+  if (!ok)
+  {
+    setstate(std::ios_base::failbit);
+  }
 }
 
 ArchiveOfstream::ArchiveOfstream(
   const std::string& file_path,
   const Bzip2Params& params,
   const std::ios_base::openmode mode,
-  const std::streamsize buffer_size)
+  const std::streamsize buffer_size,
+  const WriterType writer_type) noexcept
 {
-  init(file_path, params, mode, buffer_size);
+  const bool ok = init(
+    file_path,
+    params,
+    mode,
+    buffer_size,
+    writer_type);
+  if (!ok)
+  {
+    setstate(std::ios_base::failbit);
+  }
 }
 
 ArchiveOfstream::ArchiveOfstream(
   const std::string& file_path,
   const ArchiveParams& params,
   const std::ios_base::openmode mode,
-  const std::streamsize buffer_size)
+  const std::streamsize buffer_size,
+  const WriterType writer_type) noexcept
 {
   if (const auto* pval = std::get_if<GzipParams>(&params))
   {
-    init(file_path, *pval, mode, buffer_size);
+    const bool ok = init(
+      file_path,
+      *pval,
+      mode,
+      buffer_size,
+      writer_type);
+    if (!ok)
+    {
+      setstate(std::ios_base::failbit);
+    }
   }
   else if (const auto* pval = std::get_if<Bzip2Params>(&params))
   {
-    init(file_path, *pval, mode, buffer_size);
+    const bool ok = init(
+      file_path,
+      *pval,
+      mode,
+      buffer_size,
+      writer_type);
+    if (!ok)
+    {
+      setstate(std::ios_base::failbit);
+    }
   }
   else
   {
-    Stream::Error stream;
-    stream << FNS
-           << "Params has unknown type";
-    throw Exception(stream);
+    setstate(std::ios_base::failbit);
   }
 }
 
 ArchiveOfstream::~ArchiveOfstream()
 {
-  flush();
-  reset();
+  try
+  {
+    flush();
+    reset();
+  }
+  catch (...)
+  {
+  }
 }
 
 const std::string& ArchiveOfstream::file_path() const noexcept
@@ -102,66 +144,128 @@ const std::string& ArchiveOfstream::file_extension() const noexcept
   return file_extension_;
 }
 
-void ArchiveOfstream::init(
+bool ArchiveOfstream::init(
   const std::string& file_path,
   const GzipParams& params,
   const std::ios_base::openmode mode,
-  const std::streamsize buffer_size)
+  const std::streamsize buffer_size,
+  const WriterType writer_type) noexcept
 {
-  open_file(file_path, GZIP_EXTENSION, mode);
+  const bool ok = open_file(
+    file_path,
+    GZIP_EXTENSION,
+    mode,
+    writer_type);
+  if (!ok)
+  {
+    return false;
+  }
 
-  GzipParams result_params = params;
-  result_params.noheader = false;
+  try
+  {
+    GzipParams result_params = params;
+    result_params.noheader = false;
 
-  boost::iostreams::gzip_compressor compressor{result_params, buffer_size};
-  boost::iostreams::filtering_ostream::push(compressor);
-  boost::iostreams::filtering_ostream::push(ofstream_);
+    boost::iostreams::gzip_compressor compressor{result_params, buffer_size};
+    boost::iostreams::filtering_ostream::push(compressor);
 
-  check();
+    if (writer_type == WriterType::Ofstream)
+    {
+      boost::iostreams::filtering_ostream::push(*ofstream_);
+    }
+    else
+    {
+      boost::iostreams::filtering_ostream::push(*file_descriptor_sink_);
+    }
+
+    return true;
+  }
+  catch (...)
+  {
+  }
+
+  return false;
 }
 
-void ArchiveOfstream::init(
+bool ArchiveOfstream::init(
   const std::string& file_path,
   const Bzip2Params& params,
   const std::ios_base::openmode mode,
-  const std::streamsize buffer_size)
+  const std::streamsize buffer_size,
+  const WriterType writer_type) noexcept
 {
-  open_file(file_path, BZ2_EXTENSION, mode);
+  const bool ok = open_file(
+    file_path,
+    BZ2_EXTENSION,
+    mode,
+    writer_type);
+  if (!ok)
+  {
+    return false;
+  }
 
-  boost::iostreams::bzip2_compressor compressor{params, buffer_size};
-  boost::iostreams::filtering_ostream::push(compressor);
-  boost::iostreams::filtering_ostream::push(ofstream_);
+  try
+  {
+    boost::iostreams::bzip2_compressor compressor{params, buffer_size};
+    boost::iostreams::filtering_ostream::push(compressor);
 
-  check();
+    if (writer_type == WriterType::Ofstream)
+    {
+      boost::iostreams::filtering_ostream::push(*ofstream_);
+    }
+    else
+    {
+      boost::iostreams::filtering_ostream::push(*file_descriptor_sink_);
+    }
+
+    return true;
+  }
+  catch (...)
+  {
+  }
+
+  return false;
 }
 
-void ArchiveOfstream::open_file(
+bool ArchiveOfstream::open_file(
   const std::string& file_path,
   const std::string_view extension,
-  const std::ios_base::openmode mode)
+  const std::ios_base::openmode mode,
+  const WriterType writer_type) noexcept
 {
-  file_extension_ = extension;
-  file_path_ = file_path + file_extension_;
-  ofstream_.open(file_path_, mode);
-  if (!ofstream_)
+  try
   {
-    Stream::Error stream;
-    stream << FNS
-           << "Can't open file="
-           << file_path_;
-    throw Exception(stream);
-  }
-}
+    file_extension_ = extension;
+    file_path_ = file_path + file_extension_;
 
-void ArchiveOfstream::check()
-{
-  if (!good())
-  {
-    Stream::Error stream;
-    stream << FNS
-           << "ArchiveIfstream is failed";
-    throw Exception(stream);
+    if (writer_type == WriterType::Ofstream)
+    {
+      ofstream_ = std::make_unique<std::ofstream>(
+        file_path_,
+        mode | std::ios_base::out);
+      if (!ofstream_->good())
+      {
+        return false;
+      }
+    }
+    else
+    {
+      file_descriptor_sink_ = std::make_unique<FileDescriptorSink>(
+        file_path_,
+        mode | std::ios_base::out);
+      if (!file_descriptor_sink_->is_open())
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
+  catch (...)
+  {
+  }
+
+  return false;
 }
 
 } // namespace AdServer::LogProcessing

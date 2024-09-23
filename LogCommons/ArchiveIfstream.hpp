@@ -2,6 +2,7 @@
 #define AD_SERVER_LOG_PROCESSING_ARCHIVE_IFSTREAM_HPP
 
 // BOOST
+#include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
@@ -36,14 +37,24 @@ struct DecompressorParams final
 
 class ArchiveIfstream final : public boost::iostreams::filtering_istream
 {
+private:
+  using FileDescriptorSource = boost::iostreams::file_descriptor_source;
+
 public:
+  enum class ReaderType
+  {
+    Ifstream,
+    FileDescriptorSource
+  };
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 public:
   ArchiveIfstream(
     const std::string& file_path,
     const std::ios_base::openmode mode = std::ios::in,
-    const DecompressorParams& params = DecompressorParams{});
+    const DecompressorParams& params = DecompressorParams{},
+    const ReaderType reader_type = ReaderType::FileDescriptorSource) noexcept;
 
   ArchiveIfstream(const ArchiveIfstream&) = delete;
   ArchiveIfstream(ArchiveIfstream&&) = delete;
@@ -58,7 +69,9 @@ private:
   static constexpr std::string_view GZIP_EXTENSION = ".gz";
   static constexpr std::string_view BZ2_EXTENSION = ".bz2";
 
-  std::ifstream ifstream_;
+  std::unique_ptr<std::ifstream> ifstream_;
+
+  std::unique_ptr<FileDescriptorSource> file_descriptor_source_;
 };
 
 } // namespace AdServer::LogProcessing

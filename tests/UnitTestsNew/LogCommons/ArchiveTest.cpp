@@ -127,6 +127,7 @@ TEST(TestGzip, Test)
       std::string("/tmp/not_existing_file") + ".gz");
     EXPECT_FALSE(archive_ifstream);
   }
+
 }
 
 TEST(Bzip2, Test)
