@@ -44,6 +44,30 @@ namespace ImprTrack
     using namespace xsd::AdServer::Configuration;
   }
 
+  struct ChannelMatch
+  {
+    ChannelMatch(
+      unsigned long channel_id,
+      unsigned long channel_trigger_id)
+      : channel_id(channel_id),
+        channel_trigger_id(channel_trigger_id)
+      {}
+
+    ChannelMatch(const ChannelMatch&) = default;
+    ChannelMatch& operator=(const ChannelMatch&) = default;
+
+    bool operator<(const ChannelMatch& right) const
+    {
+      return
+        (channel_id < right.channel_id ||
+          (channel_id == right.channel_id &&
+            channel_trigger_id < right.channel_trigger_id));
+    }
+
+    unsigned long channel_id;
+    unsigned long channel_trigger_id;
+  };
+
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
@@ -168,8 +192,8 @@ namespace ImprTrack
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const std::vector<ChannelMatch>& trigger_match_result_page_channels,
+      const std::vector<std::uint32_t>& history_match_result_channel_ids,
       const String::SubString& peer_ip_val)
       const noexcept;
 

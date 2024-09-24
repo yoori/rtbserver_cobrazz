@@ -92,26 +92,6 @@ namespace ImprTrack
       RUIT_EXTIDRESOLVE
     };
 
-    struct ChannelMatch
-    {
-      ChannelMatch(unsigned long channel_id_val,
-        unsigned long channel_trigger_id_val)
-        : channel_id(channel_id_val),
-          channel_trigger_id(channel_trigger_id_val)
-      {}
-
-      bool operator<(const ChannelMatch& right) const
-      {
-        return
-          (channel_id < right.channel_id ||
-           (channel_id == right.channel_id &&
-            channel_trigger_id < right.channel_trigger_id));
-      }
-
-      unsigned long channel_id;
-      unsigned long channel_trigger_id;
-    };
-
     struct GetChannelTriggerId
     {
       ChannelMatch
@@ -1524,52 +1504,138 @@ namespace ImprTrack
     const std::vector<CORBA::ULong>& advertiser_ids,
     const String::SubString& peer_ip,
     const std::list<std::string>& // markers
-    )
-    noexcept
+    ) noexcept
   {
     static const char* FUN = "ClickFrontend::match_channels_()";
 
+    std::vector<ChannelMatch> trigger_match_result_page_channels;
+
     // do trigger match
-    AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
-
-    try
+    bool is_grpc_success = false;
+    const auto& grpc_channel_operation_pool = grpc_container_->grpc_channel_operation_pool;
+    if (grpc_channel_operation_pool)
     {
-      AdServer::ChannelSvcs::ChannelServerBase::MatchQuery query;
-      query.non_strict_word_match = false;
-      query.non_strict_url_match = false;
-      query.return_negative = false;
-      query.simplify_page = false;
-      query.statuses[0] = 'A';
-      query.statuses[1] = '\0';
-      query.fill_content = false;
-      std::ostringstream keywords_ostr;
-      keywords_ostr << "poadimp";
-
-      for(auto campaign_id_it = campaign_ids.begin(); campaign_id_it != campaign_ids.end(); ++campaign_id_it)
+      try
       {
-        keywords_ostr << " poadimpc" << *campaign_id_it;
+        std::ostringstream keywords_ostr;
+        keywords_ostr << "poadimp";
+
+        for (auto campaign_id_it = campaign_ids.begin(); campaign_id_it != campaign_ids.end(); ++campaign_id_it)
+        {
+          keywords_ostr << " poadimpc" << *campaign_id_it;
+        }
+
+        for (auto advertiser_id_it = advertiser_ids.begin(); advertiser_id_it != advertiser_ids.end(); ++advertiser_id_it)
+        {
+          keywords_ostr << " poadimpa" << *advertiser_id_it;
+        }
+
+        auto response = grpc_channel_operation_pool->match(
+          {},
+          {},
+          {},
+          {},
+          {},
+          keywords_ostr.str(),
+          {},
+          {},
+          {'A', '\0'},
+          false,
+          false,
+          false,
+          false,
+          false);
+        if (response && response->has_info())
+        {
+          is_grpc_success = true;
+          const auto& info_proto = response->info();
+          const auto& matched_channels_proto = info_proto.matched_channels();
+          const auto& page_channels_proto = matched_channels_proto.page_channels();
+
+          trigger_match_result_page_channels.reserve(page_channels_proto.size());
+          for (const auto& data : page_channels_proto)
+          {
+            trigger_match_result_page_channels.emplace_back(
+              data.id(),
+              data.trigger_channel_id());
+          }
+        }
       }
-      
-      for(auto advertiser_id_it = advertiser_ids.begin(); advertiser_id_it != advertiser_ids.end(); ++advertiser_id_it)
+      catch (const eh::Exception& exc)
       {
-        keywords_ostr << " poadimpa" << *advertiser_id_it;
+        trigger_match_result_page_channels.clear();
+
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << exc.what();
+        logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
       }
+      catch (...)
+      {
+        trigger_match_result_page_channels.clear();
 
-      query.pwords << keywords_ostr.str();
-
-      //std::cerr << "ImprTrack::Frontend: keywords = <" << keywords_ostr.str() << ">" << std::endl;
-      channel_servers_->match(query, trigger_match_result);
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error";
+        logger()->error(stream.str(), Aspect::IMPR_TRACK_FRONTEND);
+      }
     }
-    catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
+
+    if (!is_grpc_success)
     {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": caught ChannelServerSessionPool::Exception: " <<
-        ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::IMPR_TRACK_FRONTEND,
-        "ADS-IMPL-117");
+      try
+      {
+        AdServer::ChannelSvcs::ChannelServerBase::MatchQuery query;
+        query.non_strict_word_match = false;
+        query.non_strict_url_match = false;
+        query.return_negative = false;
+        query.simplify_page = false;
+        query.statuses[0] = 'A';
+        query.statuses[1] = '\0';
+        query.fill_content = false;
+        std::ostringstream keywords_ostr;
+        keywords_ostr << "poadimp";
+
+        for(auto campaign_id_it = campaign_ids.begin(); campaign_id_it != campaign_ids.end(); ++campaign_id_it)
+        {
+          keywords_ostr << " poadimpc" << *campaign_id_it;
+        }
+
+        for(auto advertiser_id_it = advertiser_ids.begin(); advertiser_id_it != advertiser_ids.end(); ++advertiser_id_it)
+        {
+          keywords_ostr << " poadimpa" << *advertiser_id_it;
+        }
+
+        query.pwords << keywords_ostr.str();
+
+        AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
+        channel_servers_->match(query, trigger_match_result);
+
+        const auto& page_channels = trigger_match_result->matched_channels.page_channels;
+        trigger_match_result_page_channels.clear();
+        const std::size_t size = page_channels.length();
+        trigger_match_result_page_channels.reserve(size);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+          const auto& page_channel = page_channels[i];
+          trigger_match_result_page_channels.emplace_back(
+            page_channel.id,
+            page_channel.trigger_channel_id);
+        }
+      }
+      catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
+      {
+        Stream::Error ostr;
+        ostr << FUN <<
+          ": caught ChannelServerSessionPool::Exception: " <<
+          ex.what();
+        logger()->log(ostr.str(),
+          Logging::Logger::EMERGENCY,
+          Aspect::IMPR_TRACK_FRONTEND,
+          "ADS-IMPL-117");
+      }
     }
 
     // resolve actual user id (cookies)
@@ -1578,7 +1644,7 @@ namespace ImprTrack
     assert(user_bind_client_.in());
 
     const auto grpc_distributor = user_bind_client_->grpc_distributor();
-    bool is_grpc_success = false;
+    is_grpc_success = false;
     if (grpc_distributor)
     {
       // resolve cookie user id
@@ -1608,10 +1674,6 @@ namespace ImprTrack
           else
           {
             is_grpc_success = false;
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::IMPR_TRACK_FRONTEND);
           }
         }
       }
@@ -1703,16 +1765,14 @@ namespace ImprTrack
     }
 
     // do history match
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
-
-    if(trigger_match_result.ptr() != 0 &&
-       trigger_match_result->matched_channels.page_channels.length() != 0)
+    std::vector<std::uint32_t> history_match_result_channel_ids;
+    if (!trigger_match_result_page_channels.empty())
     {
       AdServer::UserInfoSvcs::UserInfoMatcher_var
         uim_session = user_info_client_->user_info_session();
       const auto grpc_distributor = user_info_client_->grpc_distributor();
 
-      bool is_grpc_success = false;
+      is_grpc_success = false;
       if (grpc_distributor)
       {
         using ChannelMatchSet = std::set<ChannelMatch>;
@@ -1737,13 +1797,10 @@ namespace ImprTrack
           match_params.publishers_optin_timeout = Generics::Time::ZERO;
 
           ChannelMatchSet page_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.page_channels.get_buffer(),
-            trigger_match_result->matched_channels.page_channels.get_buffer() +
-              trigger_match_result->matched_channels.page_channels.length(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
+          std::copy(
+            std::begin(trigger_match_result_page_channels),
+            std::end(trigger_match_result_page_channels),
+            std::inserter(page_channels, page_channels.end()));
 
           match_params.page_channel_ids.reserve(page_channels.size());
           for (const auto& page_channel : page_channels)
@@ -1769,10 +1826,6 @@ namespace ImprTrack
               match_params);
             if (!response || response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                Aspect::IMPR_TRACK_FRONTEND);
               throw Exception(std::string("match is failed"));
             }
           }
@@ -1785,10 +1838,6 @@ namespace ImprTrack
               match_params);
             if (!response || response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                Aspect::IMPR_TRACK_FRONTEND);
               throw Exception(std::string("match is failed"));
             }
           }
@@ -1832,13 +1881,10 @@ namespace ImprTrack
         
           typedef std::set<ChannelMatch> ChannelMatchSet;
           ChannelMatchSet page_channels;
-
-          std::transform(
-            trigger_match_result->matched_channels.page_channels.get_buffer(),
-            trigger_match_result->matched_channels.page_channels.get_buffer() +
-              trigger_match_result->matched_channels.page_channels.length(),
-            std::inserter(page_channels, page_channels.end()),
-            GetChannelTriggerId());
+          std::copy(
+            std::begin(trigger_match_result_page_channels),
+            std::end(trigger_match_result_page_channels),
+            std::inserter(page_channels, page_channels.end()));
 
           match_params.page_channel_ids.length(page_channels.size());
           CORBA::ULong res_ch_i = 0;
@@ -1860,11 +1906,23 @@ namespace ImprTrack
 
           if (user_id != AdServer::Commons::PROBE_USER_ID)
           {
+            AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
             user_info.user_id = CorbaAlgs::pack_user_id(user_id);
             uim_session->match(
               user_info,
               match_params,
               history_match_result.out());
+
+            if (history_match_result.ptr())
+            {
+              const auto length = history_match_result->channels.length();
+              history_match_result_channel_ids.reserve(length);
+              for (CORBA::ULong i = 0; i < length; ++i)
+              {
+                history_match_result_channel_ids.emplace_back(
+                  history_match_result->channels[i].channel_id);
+              }
+            }
           }
 
           if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
@@ -1917,8 +1975,8 @@ namespace ImprTrack
           request_info,
           user_id,
           now,
-          trigger_match_result,
-          history_match_result,
+          trigger_match_result_page_channels,
+          history_match_result_channel_ids,
           peer_ip);
 
         campaign_managers_.process_match_request(request_info);
@@ -1942,8 +2000,8 @@ namespace ImprTrack
     AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
-    const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
-    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+    const std::vector<ChannelMatch>& trigger_match_result_page_channels,
+    const std::vector<std::uint32_t>& history_match_result_channel_ids,
     const String::SubString& peer_ip_val)
     const noexcept
   {
@@ -1959,28 +2017,22 @@ namespace ImprTrack
     mri.request_time = CorbaAlgs::pack_time(now);
 
     {
-      CORBA::ULong result_len =
-        trigger_match_result->matched_channels.page_channels.length();
+      CORBA::ULong result_len = trigger_match_result_page_channels.size();
       mri.match_info.pkw_channels.length(result_len);
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      for (CORBA::ULong i = 0; i < result_len; ++i)
       {
         mri.match_info.pkw_channels[i].channel_id =
-          trigger_match_result->matched_channels.page_channels[i].id;
+          trigger_match_result_page_channels[i].channel_id;
         mri.match_info.pkw_channels[i].channel_trigger_id =
-          trigger_match_result->matched_channels.page_channels[i].trigger_channel_id;
+          trigger_match_result_page_channels[i].channel_trigger_id;
       }
     }
 
-    if(history_match_result)
+    const CORBA::ULong result_len = history_match_result_channel_ids.size();
+    mri.match_info.channels.length(result_len);
+    for (CORBA::ULong i = 0; i < result_len; ++i)
     {
-      CORBA::ULong result_len =
-        history_match_result->channels.length();
-      mri.match_info.channels.length(result_len);
-      for(CORBA::ULong i = 0; i < result_len; ++i)
-      {
-        mri.match_info.channels[i] =
-          history_match_result->channels[i].channel_id;
-      }
+      mri.match_info.channels[i] = history_match_result_channel_ids[i];
     }
 
     if (!peer_ip_val.empty() && ip_map_.get())
@@ -2006,7 +2058,8 @@ namespace ImprTrack
         }
       }
       catch(const eh::Exception&)
-      {}
+      {
+      }
     }
   }
 }
