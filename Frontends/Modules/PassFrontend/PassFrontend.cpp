@@ -335,10 +335,6 @@ namespace Passback
           if (!response || response->has_error())
           {
             is_grpc_success = false;
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::PASS_FRONTEND);
           }
         }
         catch (const eh::Exception& exc)

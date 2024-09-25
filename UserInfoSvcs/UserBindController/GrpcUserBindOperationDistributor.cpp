@@ -55,6 +55,7 @@ GrpcUserBindOperationDistributor::GrpcUserBindOperationDistributor(
   }
 
   const PartitionNumber size = controller_refs_.size();
+  partition_holders_.reserve(size);
   for (PartitionNumber partition_number = 0;
        partition_number < size;
        ++partition_number)
@@ -395,7 +396,7 @@ std::unique_ptr<Response> GrpcUserBindOperationDistributor::do_request(
   for (std::size_t i = 0; i < try_count_; ++i)
   {
     const PartitionNumber partition_number =
-      (get_partition_number(id) + i) % partition_holders_.size();
+      (get_partition_number(id) + i) % try_count_;
 
     try
     {

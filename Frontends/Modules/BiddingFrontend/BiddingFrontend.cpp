@@ -1577,10 +1577,6 @@ namespace Bidding
                 else
                 {
                   is_grpc_success = false;
-                  GrpcAlgs::print_grpc_error_response(
-                    response,
-                    logger(),
-                    Aspect::BIDDING_FRONTEND);
                 }
               }
             }
@@ -2126,13 +2122,6 @@ namespace Bidding
             request_params.profiling_available = true;
             is_grpc_success = true;
           }
-          else
-          {
-             GrpcAlgs::print_grpc_error_response(
-               response,
-               logger(),
-               Aspect::BIDDING_FRONTEND);
-          }
         }
         catch (const eh::Exception& exc)
         {
@@ -2530,10 +2519,6 @@ namespace Bidding
               if (!response || response->has_error())
               {
                 is_error = true;
-                GrpcAlgs::print_grpc_error_response(
-                  response,
-                  logger(),
-                  Aspect::BIDDING_FRONTEND);
                 break;
               }
             }

@@ -595,10 +595,6 @@ namespace ImprTrack
                   request_info.set_cookie);
                 if (!response || response->has_error())
                 {
-                  GrpcAlgs::print_grpc_error_response(
-                    response,
-                    logger(),
-                    Aspect::IMPR_TRACK_FRONTEND);
                   throw Exception ("get_user_id is failed");
                 }
 
@@ -640,10 +636,6 @@ namespace ImprTrack
                         GrpcAlgs::pack_user_id(result_user_id));
                       if (!response || response->has_error())
                       {
-                        GrpcAlgs::print_grpc_error_response(
-                          response,
-                          logger(),
-                          Aspect::IMPR_TRACK_FRONTEND);
                         throw Exception("add_user_id is failed");
                       }
 
@@ -668,10 +660,6 @@ namespace ImprTrack
                         request_info.set_cookie);
                       if (!response || response->has_error())
                       {
-                        GrpcAlgs::print_grpc_error_response(
-                          response,
-                          logger(),
-                          Aspect::IMPR_TRACK_FRONTEND);
                         throw Exception("get_user_id is failed");
                       }
 
@@ -934,10 +922,6 @@ namespace ImprTrack
                   profiles_request);
               if (!get_user_profile_response || get_user_profile_response->has_error())
               {
-                GrpcAlgs::print_grpc_error_response(
-                  get_user_profile_response,
-                  logger(),
-                  Aspect::IMPR_TRACK_FRONTEND);
                 throw Exception(std::string("get_user_profile is failed"));
               }
 
@@ -978,10 +962,6 @@ namespace ImprTrack
                   merge_user_profiles);
                 if (!merge_response || merge_response->has_error())
                 {
-                  GrpcAlgs::print_grpc_error_response(
-                    merge_response,
-                    logger(),
-                    Aspect::IMPR_TRACK_FRONTEND);
                   throw Exception(std::string("merge is failed"));
                 }
 
@@ -989,10 +969,6 @@ namespace ImprTrack
                   GrpcAlgs::pack_user_id(request_info.current_user_id));
                 if (!remove_user_profile_response || remove_user_profile_response->has_error())
                 {
-                  GrpcAlgs::print_grpc_error_response(
-                    remove_user_profile_response,
-                    logger(),
-                    Aspect::IMPR_TRACK_FRONTEND);
                   throw Exception(std::string("remove_user_profile is failed"));
                 }
               }
@@ -1138,10 +1114,6 @@ namespace ImprTrack
               if (!response || response->has_error())
               {
                 is_grpc_success = false;
-                GrpcAlgs::print_grpc_error_response(
-                  response,
-                  logger(),
-                  Aspect::IMPR_TRACK_FRONTEND);
               }
             }
             catch (const eh::Exception& exc)

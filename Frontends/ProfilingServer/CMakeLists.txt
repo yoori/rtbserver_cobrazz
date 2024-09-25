@@ -31,6 +31,8 @@ target_link_libraries(ProfilingServer
   CreativeTemplateArgs
   DMPProfilingInfoPST
   Generics
+  GrpcCampaignManagerPool
+  GrpcChannelOperationPool
   HashFilter
   KafkaProducer
   ProcessControlVars

@@ -10,9 +10,6 @@
 namespace AdServer::UserInfoSvcs
 {
 
-const char* ASPECT_GRPC_USER_INFO_DISTRIBUTOR =
-  "GRPC_USER_INFO_OPERATION_DISTRIBUTOR";
-
 GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
   Logger* logger,
   TaskProcessor& task_processor,
@@ -54,6 +51,7 @@ GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
   }
 
   const PartitionNumber size = controller_refs_.size();
+  partition_holders_.reserve(size);
   for (PartitionNumber partition_number = 0;
        partition_number < size;
        ++partition_number)
@@ -67,12 +65,9 @@ GrpcUserInfoOperationDistributor::GrpcUserInfoOperationDistributor(
 void GrpcUserInfoOperationDistributor::resolve_partition(
   const PartitionNumber partition_number) noexcept
 {
-  using UserInfoManagerController =
-    AdServer::UserInfoSvcs::UserInfoManagerController;
-  using UserInfoManagerController_var =
-    AdServer::UserInfoSvcs::UserInfoManagerController_var;
-  using UserInfoManagerDescriptionSeq_var =
-    AdServer::UserInfoSvcs::UserInfoManagerDescriptionSeq_var;
+  using UserInfoManagerController = AdServer::UserInfoSvcs::UserInfoManagerController;
+  using UserInfoManagerController_var = AdServer::UserInfoSvcs::UserInfoManagerController_var;
+  using UserInfoManagerDescriptionSeq_var = AdServer::UserInfoSvcs::UserInfoManagerDescriptionSeq_var;
 
   PartitionPtr partition;
 

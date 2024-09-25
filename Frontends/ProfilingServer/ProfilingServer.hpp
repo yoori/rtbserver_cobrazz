@@ -42,6 +42,13 @@ namespace Profiling
     using TaskProcessor = userver::engine::TaskProcessor;
     using GrpcUserBindOperationDistributor = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor;
     using GrpcUserBindOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserBindOperationDistributor_var;
+    using GrpcUserInfoOperationDistributor = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
+    using GrpcUserInfoOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
+    using GrpcChannelOperationPool = AdServer::ChannelSvcs::GrpcChannelOperationPool;
+    using GrpcChannelOperationPoolPtr = std::shared_ptr<GrpcChannelOperationPool>;
+    using GrpcCampaignManagerPool = FrontendCommons::GrpcCampaignManagerPool;
+    using GrpcCampaignManagerPoolPtr = std::shared_ptr<GrpcCampaignManagerPool>;
+    using GrpcContainerPtr = std::shared_ptr<FrontendCommons::GrpcContainer>;
 
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -149,8 +156,24 @@ namespace Profiling
       const SchedulerPtr& scheduler,
       TaskProcessor& task_processor);
 
+    GrpcUserInfoOperationDistributor_var
+    create_grpc_user_info_operation_distributor(
+      const SchedulerPtr& scheduler,
+      TaskProcessor& task_processor);
+
+    GrpcChannelOperationPoolPtr create_grpc_channel_operation_pool(
+      const SchedulerPtr& scheduler,
+      TaskProcessor& task_processor);
+
+    GrpcCampaignManagerPoolPtr create_grpc_campaign_manager_pool(
+      const SchedulerPtr& scheduler,
+      TaskProcessor& task_processor);
+
     void
     init_coroutine_();
+
+    void
+    init_grpc_();
 
     void
     init_corba_() /*throw(Exception)*/;
@@ -173,7 +196,6 @@ namespace Profiling
     void
     rebind_user_id_(
       const AdServer::Commons::UserId& user_id,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const RequestInfo& request_info,
       const String::SubString& resolved_ext_user_id,
       const Generics::Time& time)
@@ -226,6 +248,7 @@ namespace Profiling
 
   private:
     ManagerCoro_var manager_coro_;
+    GrpcContainerPtr grpc_container_;
     CORBACommons::CorbaConfig corba_config_;
     ProfilingServerConfigPtr config_;
     std::unique_ptr<RequestInfoFiller> request_info_filler_;

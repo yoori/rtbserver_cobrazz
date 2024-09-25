@@ -235,10 +235,6 @@ namespace PubPixel
               publisher_account_ids);
             if (!get_pub_pixels_response || get_pub_pixels_response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                get_pub_pixels_response,
-                logger(),
-                Aspect::PUBPIXEL_FRONTEND);
               throw Exception("get_pub_pixels is failed");
             }
 

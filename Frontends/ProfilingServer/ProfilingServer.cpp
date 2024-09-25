@@ -407,6 +407,7 @@ namespace Profiling
 
       register_vars_controller();
       init_coroutine_();
+      init_grpc_();
       init_corba_();
       init_zeromq_();
       activate_object();
@@ -553,6 +554,42 @@ namespace Profiling
     add_child_object(manager_coro_);
   }
 
+  void
+  ProfilingServer::init_grpc_()
+  {
+    auto number_scheduler_threads = std::thread::hardware_concurrency();
+    if (number_scheduler_threads == 0)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "hardware_concurrency is failed";
+      throw Exception(stream);
+    }
+
+    SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
+      number_scheduler_threads,
+      logger());
+
+    auto grpc_channel_operation_pool = create_grpc_channel_operation_pool(
+      scheduler,
+      manager_coro_->get_main_task_processor());
+    auto grpc_campaign_manager_pool = create_grpc_campaign_manager_pool(
+      scheduler,
+      manager_coro_->get_main_task_processor());
+    auto grpc_user_bind_operation_distributor = create_grpc_user_bind_operation_distributor(
+      scheduler,
+      manager_coro_->get_main_task_processor());
+    auto grpc_user_info_operation_distributor = create_grpc_user_info_operation_distributor(
+      scheduler,
+      manager_coro_->get_main_task_processor());
+
+    grpc_container_ = std::make_shared<FrontendCommons::GrpcContainer>();
+    grpc_container_->grpc_channel_operation_pool = grpc_channel_operation_pool;
+    grpc_container_->grpc_campaign_manager_pool = grpc_campaign_manager_pool;
+    grpc_container_->grpc_user_bind_operation_distributor = grpc_user_bind_operation_distributor;
+    grpc_container_->grpc_user_info_operation_distributor = grpc_user_info_operation_distributor;
+  }
+
   ProfilingServer::GrpcUserBindOperationDistributor_var
   ProfilingServer::create_grpc_user_bind_operation_distributor(
     const SchedulerPtr& scheduler,
@@ -567,8 +604,8 @@ namespace Profiling
       ControllerRefList controller_groups;
       const auto& user_bind_controller_group = config_->UserBindControllerGroup();
       for (auto cg_it = std::begin(user_bind_controller_group);
-           cg_it != std::end(user_bind_controller_group);
-           ++cg_it)
+        cg_it != std::end(user_bind_controller_group);
+        ++cg_it)
       {
         ControllerRef controller_ref_group;
         Config::CorbaConfigReader::read_multi_corba_ref(
@@ -593,6 +630,131 @@ namespace Profiling
     }
 
     return grpc_user_bind_operation_distributor;
+  }
+
+  ProfilingServer::GrpcUserInfoOperationDistributor_var
+  ProfilingServer::create_grpc_user_info_operation_distributor(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor)
+  {
+    GrpcUserInfoOperationDistributor_var grpc_user_info_operation_distributor;
+    if (config_->UserInfoGrpcClientPool().enable())
+    {
+      using ControllerRefList = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRefList;
+      using ControllerRef = AdServer::UserInfoSvcs::UserInfoOperationDistributor::ControllerRef;
+
+      ControllerRefList controller_groups;
+      const auto& user_info_controller_group = config_->UserInfoManagerControllerGroup();
+      for (auto cg_it = std::begin(user_info_controller_group);
+           cg_it != std::end(user_info_controller_group);
+           ++cg_it)
+      {
+        ControllerRef controller_ref_group;
+        Config::CorbaConfigReader::read_multi_corba_ref(
+          *cg_it,
+          controller_ref_group);
+        controller_groups.push_back(controller_ref_group);
+      }
+
+      CORBACommons::CorbaClientAdapter_var corba_client_adapter = new CORBACommons::CorbaClientAdapter();
+      const auto config_grpc_data = Config::create_pool_client_config(
+        config_->UserInfoGrpcClientPool());
+
+      grpc_user_info_operation_distributor = new GrpcUserInfoOperationDistributor(
+        logger(),
+        task_processor,
+        scheduler,
+        controller_groups,
+        corba_client_adapter.in(),
+        config_grpc_data.first,
+        config_grpc_data.second,
+        Generics::Time::ONE_SECOND);
+    }
+
+    return grpc_user_info_operation_distributor;
+  }
+
+  ProfilingServer::GrpcChannelOperationPoolPtr
+  ProfilingServer::create_grpc_channel_operation_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor)
+  {
+    using Host = std::string;
+    using Port = std::size_t;
+    using Endpoint = std::pair<Host, Port>;
+    using Endpoints = std::vector<Endpoint>;
+
+    std::shared_ptr<GrpcChannelOperationPool> grpc_channel_operation_pool;
+    if (config_->ChannelGrpcClientPool().enable())
+    {
+      Endpoints endpoints;
+      const auto& endpoints_config = config_->ChannelServerEndpointList().Endpoint();
+      for (const auto& endpoint_config : endpoints_config)
+      {
+        endpoints.emplace_back(
+          endpoint_config.host(),
+          endpoint_config.port());
+      }
+
+      const auto config_grpc_data = Config::create_pool_client_config(
+        config_->ChannelGrpcClientPool());
+      grpc_channel_operation_pool = std::make_shared<GrpcChannelOperationPool>(
+        logger(),
+        task_processor,
+        scheduler,
+        endpoints,
+        config_grpc_data.first,
+        config_grpc_data.second,
+        config_->time_duration_grpc_client_mark_bad());
+    }
+
+    return grpc_channel_operation_pool;
+  }
+
+  ProfilingServer::GrpcCampaignManagerPoolPtr
+  ProfilingServer::create_grpc_campaign_manager_pool(
+    const SchedulerPtr& scheduler,
+    TaskProcessor& task_processor)
+  {
+    using Endpoints = FrontendCommons::GrpcCampaignManagerPool::Endpoints;
+
+    std::shared_ptr<GrpcCampaignManagerPool> grpc_campaign_manager_pool;
+    if (config_->CampaignGrpcClientPool().enable())
+    {
+      Endpoints endpoints;
+      const auto& endpoints_config = config_->CampaignManagerEndpointList().Endpoint();
+      for (const auto& endpoint_config : endpoints_config)
+      {
+        if (!endpoint_config.service_index().present())
+        {
+          Stream::Error stream;
+          stream << FNS
+                 << "Service index not exist in CampaignManagerEndpointList";
+          throw Exception(stream);
+        }
+
+        const std::string host = endpoint_config.host();
+        const std::size_t port = endpoint_config.port();
+        const std::string service_id = *endpoint_config.service_index();
+        endpoints.emplace_back(
+          host,
+          port,
+          service_id);
+      }
+
+      const auto config_grpc_data = Config::create_pool_client_config(
+        config_->CampaignGrpcClientPool());
+      grpc_campaign_manager_pool = std::make_shared<GrpcCampaignManagerPool>(
+        logger(),
+        task_processor,
+        scheduler,
+        endpoints,
+        config_grpc_data.first,
+        config_grpc_data.second,
+        config_->time_duration_grpc_client_mark_bad());
+    }
+
+    return grpc_campaign_manager_pool;
   }
 
   void
@@ -630,45 +792,25 @@ namespace Profiling
             callback()));
       }
 
-      const auto& config_grpc_client = config_->UserBindGrpcClientPool();
-      const auto config_grpc_data = Config::create_pool_client_config(
-        config_grpc_client);
-
       if(!config_->UserBindControllerGroup().empty())
       {
-        auto number_scheduler_threads = std::thread::hardware_concurrency();
-        if (number_scheduler_threads == 0)
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << "hardware_concurrency is failed";
-          throw Exception(stream);
-        }
-
-        SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
-          number_scheduler_threads,
-          logger());
-        auto grpc_user_bind_operation_distributor = create_grpc_user_bind_operation_distributor(
-          scheduler,
-          manager_coro_->get_main_task_processor());
-
         user_bind_client_ = new FrontendCommons::UserBindClient(
           config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
           logger(),
-          grpc_user_bind_operation_distributor.in());
+          grpc_container_->grpc_user_bind_operation_distributor.in());
         add_child_object(user_bind_client_);
       }
 
-      /*user_info_client_ = new FrontendCommons::UserInfoClient(
-        config_->UserInfoManagerControllerGroup(),
-        corba_client_adapter_.in(),
-        logger_callback_holder_.logger(),
-        manager_coro_->get_main_task_processor(),
-        config_grpc_data.first,
-        config_grpc_data.second,
-        config_grpc_client.enable());*/
-      add_child_object(user_info_client_);
+      if (!config_->UserInfoManagerControllerGroup().empty())
+      {
+        user_info_client_ = new FrontendCommons::UserInfoClient(
+          config_->UserInfoManagerControllerGroup(),
+          corba_client_adapter_.in(),
+          logger_callback_holder_.logger(),
+          grpc_container_->grpc_user_info_operation_distributor.in());
+        add_child_object(user_info_client_);
+      }
 
       CORBACommons::CorbaObjectRefList campaign_managers_refs;
       Config::CorbaConfigReader::read_multi_corba_ref(
@@ -775,7 +917,6 @@ namespace Profiling
         {
           rebind_user_id_(
             user_id,
-            request_params,
             request_info,
             resolved_ext_user_id,
             CorbaAlgs::unpack_time(request_params.common_info.time));
@@ -883,10 +1024,6 @@ namespace Profiling
               CorbaAlgs::unpack_time(request_params.common_info.time));
             if (!response || response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                ASPECT);
               throw Exception("get_bind_request is failed");
             }
 
@@ -933,10 +1070,6 @@ namespace Profiling
                   false);
                 if (!response || response->has_error())
                 {
-                  GrpcAlgs::print_grpc_error_response(
-                    response,
-                    logger(),
-                    ASPECT);
                   throw Exception("get_user_id is failed");
                 }
 
@@ -1159,7 +1292,6 @@ namespace Profiling
   void
   ProfilingServer::rebind_user_id_(
     const AdServer::Commons::UserId& user_id,
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams& /*request_params*/,
     const RequestInfo& request_info,
     const String::SubString& resolved_ext_user_id,
     const Generics::Time& time)
@@ -1206,10 +1338,6 @@ namespace Profiling
                   GrpcAlgs::pack_user_id(user_id));
                 if (!response || response->has_error())
                 {
-                  GrpcAlgs::print_grpc_error_response(
-                    response,
-                    logger(),
-                    ASPECT);
                   throw Exception("add_user_id is failed");
                 }
               }
@@ -1622,10 +1750,6 @@ namespace Profiling
         else
         {
           is_grpc_success = false;
-          GrpcAlgs::print_grpc_error_response(
-            response,
-            logger(),
-            ASPECT);
         }
       }
       catch (const eh::Exception& exc)
@@ -1858,10 +1982,6 @@ namespace Profiling
           profiles_request);
         if (!get_user_profile_response || get_user_profile_response->has_error())
         {
-          GrpcAlgs::print_grpc_error_response(
-            get_user_profile_response,
-            logger(),
-            ASPECT);
           throw Exception("get_user_profile is failed");
         }
 
@@ -1880,10 +2000,6 @@ namespace Profiling
           auto response = grpc_distributor->remove_user_profile(merged_uid_info);
           if (!response || response->has_error())
           {
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              ASPECT);
             throw Exception("remove_user_profile is failed");
           }
         }
@@ -1920,10 +2036,6 @@ namespace Profiling
           merge_user_profiles);
         if (!merge_response || merge_response->has_error())
         {
-          GrpcAlgs::print_grpc_error_response(
-              merge_response,
-            logger(),
-            ASPECT);
           throw Exception("merge is failed");
         }
       }

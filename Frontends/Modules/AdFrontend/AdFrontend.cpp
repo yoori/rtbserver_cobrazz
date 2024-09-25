@@ -743,8 +743,7 @@ namespace AdServer
     bool& merge_success,
     Generics::Time& last_request,
     std::string& merge_error_message,
-    const RequestInfo& request_info)
-    noexcept
+    const RequestInfo& request_info) noexcept
   {
     static const char* FUN = "AdFrontend::merge_users()";
 
@@ -794,11 +793,6 @@ namespace AdServer
             profiles_request);
           if (!response || response->has_error())
           {
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::AD_FRONTEND);
-
             if (response)
             {
               merge_error_message = get_merge_error_message(response->error());
@@ -842,11 +836,6 @@ namespace AdServer
               merged_uid_info);
             if (!response || response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                Aspect::AD_FRONTEND);
-
               if (response)
               {
                 merge_error_message = get_merge_error_message(response->error());
@@ -897,11 +886,6 @@ namespace AdServer
           merge_user_profiles);
         if (!response || response->has_error())
         {
-          GrpcAlgs::print_grpc_error_response(
-            response,
-            logger(),
-            Aspect::AD_FRONTEND);
-
           if (response)
           {
             merge_error_message = get_merge_error_message(response->error());
@@ -949,7 +933,9 @@ namespace AdServer
     }
 
     if (is_grpc_success)
+    {
       return;
+    }
 
     merge_success = true;
 
@@ -1388,10 +1374,6 @@ namespace AdServer
         auto response = grpc_distributor->match(user_info, match_params);
         if (!response || response->has_error())
         {
-          GrpcAlgs::print_grpc_error_response(
-            response,
-            logger(),
-            Aspect::AD_FRONTEND);
           throw Exception("match is failed");
         }
 
@@ -1764,10 +1746,6 @@ namespace AdServer
             if (!response || response->has_error())
             {
               is_grpc_success = false;
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                Aspect::AD_FRONTEND);
             }
           }
         }
@@ -2021,7 +1999,6 @@ namespace AdServer
         Aspect::AD_FRONTEND,
         "ADS-IMPL-117");
     }
-
   }
 
   /** AdFrontend::acquire_ad */
@@ -2355,13 +2332,6 @@ namespace AdServer
             common_module_->user_id_controller()->null_blacklisted(resolved_user_id);
 
             return !resolved_user_id.is_null();
-          }
-          else
-          {
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::AD_FRONTEND);
           }
         }
         catch (const eh::Exception& exc)

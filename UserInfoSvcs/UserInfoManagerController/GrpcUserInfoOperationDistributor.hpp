@@ -27,7 +27,8 @@
 namespace AdServer::UserInfoSvcs
 {
 
-extern const char* ASPECT_GRPC_USER_INFO_DISTRIBUTOR;
+inline constexpr char ASPECT_GRPC_USER_INFO_DISTRIBUTOR[] =
+  "GRPC_USER_INFO_OPERATION_DISTRIBUTOR";
 
 namespace Types
 {
@@ -488,7 +489,9 @@ public:
     {
       std::shared_lock lock(mutex_);
       if (!marked_as_bad_)
+      {
         return false;
+      }
     }
 
     Generics::Time now = Generics::Time::get_time_of_day();
@@ -811,7 +814,7 @@ std::unique_ptr<Response> GrpcUserInfoOperationDistributor::do_request(
   for (std::size_t i = 0; i < try_count_; ++i)
   {
     const PartitionNumber partition_number =
-      (get_partition_number(id) + i) % partition_holders_.size();
+      (get_partition_number(id) + i) % try_count_;
 
     try
     {
@@ -823,8 +826,7 @@ std::unique_ptr<Response> GrpcUserInfoOperationDistributor::do_request(
       }
 
       chunk_id = partition->chunk_id(id);
-      auto client_container =
-        partition->get_client_container(chunk_id);
+      auto client_container = partition->get_client_container(chunk_id);
       if (!client_container)
       {
         try_to_reresolve_partition(partition_number);
@@ -891,40 +893,50 @@ std::unique_ptr<Response> GrpcUserInfoOperationDistributor::do_request(
       }
       else if (data_case == Response::DataCase::kError)
       {
+        std::ostringstream stream;
+        stream << FNS
+               << "Error type=";
+
         const auto& error = response->error();
         const auto error_type = error.type();
         switch (error_type)
         {
           case Proto::Error_Type::Error_Type_NotReady:
           {
+            stream << "NotReady";
             client_container->set_bad();
             break;
           }
           case Proto::Error_Type::Error_Type_ChunkNotFound:
           {
+            stream << "ChunkNotFound";
             client_container->set_bad();
             try_to_reresolve_partition(partition_number);
             break;
           }
           case Proto::Error_Type::Error_Type_Implementation:
           {
+            stream << "Implementation";
             client_container->set_bad();
             break;
           }
           default:
           {
-            Stream::Error stream;
-            stream << FNS
-                   << ": "
-                   << "Unknown error type";
-            logger_->error(
-              stream.str(),
-              ASPECT_GRPC_USER_INFO_DISTRIBUTOR);
+            stream << "Unknown error type";
             client_container->set_bad();
             try_to_reresolve_partition(partition_number);
             break;
           }
         }
+
+        stream << ", description="
+               << error.description()
+               << " [id="
+               << id
+               << ", chunk_id="
+               << chunk_id
+               << "]";
+        logger_->error(stream.str(), ASPECT_GRPC_USER_INFO_DISTRIBUTOR);
       }
     }
     catch (const eh::Exception& exc)
@@ -963,6 +975,7 @@ std::unique_ptr<Response> GrpcUserInfoOperationDistributor::do_request(
 
   return {};
 }
+
 } // namespace AdServer::UserInfoSvcs
 
 #endif // USERINFOMANAGERCONTROLLER_GRPCUSERINFOOPERATIONDISTRIBUTOR_HPP

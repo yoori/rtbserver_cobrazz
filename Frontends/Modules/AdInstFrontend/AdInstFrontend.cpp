@@ -574,11 +574,6 @@ namespace
             profiles_request);
           if (!response || response->has_error())
           {
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::AD_INST_FRONTEND);
-
             if (response)
             {
               merge_error_message = get_merge_error_message(response->error());
@@ -615,10 +610,6 @@ namespace
             GrpcAlgs::pack_user_id(request_info.temp_user_id));
           if (!response || response->has_error())
           {
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::AD_INST_FRONTEND);
             if (response)
             {
               merge_error_message = get_merge_error_message(response->error());

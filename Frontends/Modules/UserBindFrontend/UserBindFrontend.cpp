@@ -791,10 +791,6 @@ namespace AdServer
           if (!response || response->has_error())
           {
             is_grpc_success = false;
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::USER_BIND_FRONTEND);
           }
         }
         catch (const eh::Exception& exc)
@@ -1385,10 +1381,6 @@ namespace AdServer
                   else
                   {
                     is_grpc_success = false;
-                    GrpcAlgs::print_grpc_error_response(
-                      response,
-                      logger(),
-                      Aspect::USER_BIND_FRONTEND);
                   }
                 }
                 catch (const eh::Exception& exc)
@@ -1543,10 +1535,6 @@ namespace AdServer
                         else
                         {
                           is_grpc_success = false;
-                          GrpcAlgs::print_grpc_error_response(
-                            response,
-                            logger(),
-                            Aspect::USER_BIND_FRONTEND);
                         }
                       }
                       catch (const eh::Exception& exc)
@@ -1728,10 +1716,6 @@ namespace AdServer
                         else
                         {
                           is_grpc_success = false;
-                          GrpcAlgs::print_grpc_error_response(
-                            response,
-                            logger(),
-                            Aspect::USER_BIND_FRONTEND);
                         }
                       }
                       catch (const eh::Exception& exc)
@@ -2288,10 +2272,6 @@ namespace AdServer
               profiles_request);
             if (!get_user_profile_response || get_user_profile_response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                get_user_profile_response,
-                logger(),
-                Aspect::USER_BIND_FRONTEND);
               throw Exception("get_user_profile is failed");
             }
 
@@ -2313,10 +2293,6 @@ namespace AdServer
                 merge_user_profiles);
               if (!merge_response || merge_response->has_error())
               {
-                GrpcAlgs::print_grpc_error_response(
-                  merge_response,
-                  logger(),
-                  Aspect::USER_BIND_FRONTEND);
                 throw Exception("merge is failed");
               }
 
@@ -2325,10 +2301,6 @@ namespace AdServer
                 GrpcAlgs::pack_user_id(merge_user_id));
               if (!remove_user_profile_response || remove_user_profile_response->has_error())
               {
-                GrpcAlgs::print_grpc_error_response(
-                  remove_user_profile_response,
-                  logger(),
-                  Aspect::USER_BIND_FRONTEND);
                 throw Exception("remove_user_profile is failed");
               }
             }
@@ -2341,10 +2313,6 @@ namespace AdServer
               match_params);
             if (!match_response || match_response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                match_response,
-                logger(),
-                Aspect::USER_BIND_FRONTEND);
               throw Exception("match is failed");
             }
           }

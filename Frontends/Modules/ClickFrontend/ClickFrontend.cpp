@@ -1437,10 +1437,6 @@ namespace AdServer
           else
           {
             is_grpc_success = false;
-            GrpcAlgs::print_grpc_error_response(
-              response,
-              logger(),
-              Aspect::CLICK_FRONTEND);
           }
         }
       }
@@ -1584,10 +1580,6 @@ namespace AdServer
               match_params);
             if (!response || response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                Aspect::CLICK_FRONTEND);
               throw Exception("match is failed");
             }
 
@@ -1610,10 +1602,6 @@ namespace AdServer
               match_params);
             if (!response || response->has_error())
             {
-              GrpcAlgs::print_grpc_error_response(
-                response,
-                logger(),
-                Aspect::CLICK_FRONTEND);
               throw Exception("match is failed");
             }
           }

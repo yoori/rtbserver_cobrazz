@@ -93,7 +93,28 @@
         minOccurs="1"
         maxOccurs="1"/>
 
+      <xsd:element name="ChannelServerEndpointList"
+        type="EndpointListType"/>
+
+      <xsd:element name="CampaignManagerEndpointList"
+        type="EndpointListType"/>
+
+      <xsd:element name="ChannelGrpcClientPool"
+        type="GrpcClientPoolType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
+      <xsd:element name="CampaignGrpcClientPool"
+        type="GrpcClientPoolType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
       <xsd:element name="UserBindGrpcClientPool"
+        type="GrpcClientPoolType"
+        minOccurs="1"
+        maxOccurs="1"/>
+
+      <xsd:element name="UserInfoGrpcClientPool"
         type="GrpcClientPoolType"
         minOccurs="1"
         maxOccurs="1"/>
@@ -115,6 +136,21 @@
     <xsd:attribute name="bind_url_suffix"
       type="xsd:string"
       use="optional"/>
+    <xsd:attribute name="time_duration_grpc_client_mark_bad"
+      type="xsd:nonNegativeInteger"
+      use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointType">
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="service_index" type="xsd:string" use="optional"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointListType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="EndpointType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
 </xsd:schema>
