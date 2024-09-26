@@ -39,6 +39,27 @@ namespace AdServer
     using namespace xsd::AdServer::Configuration;
   }
 
+  struct ChannelMatch
+  {
+    ChannelMatch(
+      unsigned long channel_id_val,
+      unsigned long channel_trigger_id_val)
+      : channel_id(channel_id_val),
+        channel_trigger_id(channel_trigger_id_val)
+    {}
+
+    bool operator<(const ChannelMatch& right) const
+    {
+      return
+        (channel_id < right.channel_id ||
+          (channel_id == right.channel_id &&
+            channel_trigger_id < right.channel_trigger_id));
+    }
+
+    unsigned long channel_id;
+    unsigned long channel_trigger_id;
+  };
+
   class UserBindFrontend;
 
   typedef ReferenceCounting::SmartPtr<UserBindFrontend> UserBindFrontend_var;
@@ -230,8 +251,8 @@ namespace AdServer
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
-      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
+      const std::vector<ChannelMatch>& trigger_match_page_channels,
+      const std::vector<std::uint32_t>& history_match_result_channel_ids,
       const FrontendCommons::Location* location,
       const String::SubString& referer,
       const String::SubString& source)

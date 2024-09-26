@@ -1585,16 +1585,18 @@ namespace ImprTrack
         AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
         channel_servers_->match(query, trigger_match_result);
 
-        const auto& page_channels = trigger_match_result->matched_channels.page_channels;
-        trigger_match_result_page_channels.clear();
-        const std::size_t size = page_channels.length();
-        trigger_match_result_page_channels.reserve(size);
-        for (std::size_t i = 0; i < size; ++i)
+        if (trigger_match_result.ptr())
         {
-          const auto& page_channel = page_channels[i];
-          trigger_match_result_page_channels.emplace_back(
-            page_channel.id,
-            page_channel.trigger_channel_id);
+          const auto& page_channels = trigger_match_result->matched_channels.page_channels;
+          const std::size_t size = page_channels.length();
+          trigger_match_result_page_channels.reserve(size);
+          for (std::size_t i = 0; i < size; ++i)
+          {
+            const auto& page_channel = page_channels[i];
+            trigger_match_result_page_channels.emplace_back(
+              page_channel.id,
+              page_channel.trigger_channel_id);
+          }
         }
       }
       catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
@@ -1988,19 +1990,17 @@ namespace ImprTrack
     mri.user_id = CorbaAlgs::pack_user_id(user_id);
     mri.request_time = CorbaAlgs::pack_time(now);
 
+    CORBA::ULong result_len = trigger_match_result_page_channels.size();
+    mri.match_info.pkw_channels.length(result_len);
+    for (CORBA::ULong i = 0; i < result_len; ++i)
     {
-      CORBA::ULong result_len = trigger_match_result_page_channels.size();
-      mri.match_info.pkw_channels.length(result_len);
-      for (CORBA::ULong i = 0; i < result_len; ++i)
-      {
-        mri.match_info.pkw_channels[i].channel_id =
-          trigger_match_result_page_channels[i].channel_id;
-        mri.match_info.pkw_channels[i].channel_trigger_id =
-          trigger_match_result_page_channels[i].channel_trigger_id;
-      }
+      mri.match_info.pkw_channels[i].channel_id =
+        trigger_match_result_page_channels[i].channel_id;
+      mri.match_info.pkw_channels[i].channel_trigger_id =
+        trigger_match_result_page_channels[i].channel_trigger_id;
     }
 
-    const CORBA::ULong result_len = history_match_result_channel_ids.size();
+    result_len = history_match_result_channel_ids.size();
     mri.match_info.channels.length(result_len);
     for (CORBA::ULong i = 0; i < result_len; ++i)
     {
