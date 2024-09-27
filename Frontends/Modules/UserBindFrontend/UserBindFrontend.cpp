@@ -2640,6 +2640,75 @@ namespace AdServer
       } // uim_session
     } // merge_user_id
 
+    bool is_grpc_success = false;
+    const auto& grpc_campaign_manager_pool = grpc_container_->grpc_campaign_manager_pool;
+    if (grpc_campaign_manager_pool)
+    {
+      using ChannelTriggerMatchInfo = FrontendCommons::GrpcCampaignManagerPool::ChannelTriggerMatchInfo;
+      using GeoInfo = FrontendCommons::GrpcCampaignManagerPool::GeoInfo;
+
+      try
+      {
+        std::vector<ChannelTriggerMatchInfo> pkw_channels;
+        const auto pkw_channels_size = trigger_match_page_channels.size();
+        pkw_channels.reserve(pkw_channels_size);
+        for (const auto& trigger_match_page_channel : trigger_match_page_channels)
+        {
+          pkw_channels.emplace_back(
+            trigger_match_page_channel.channel_trigger_id,
+            trigger_match_page_channel.channel_id);
+        }
+
+        std::vector<GeoInfo> geo_infos;
+        if (location)
+        {
+          geo_infos.emplace_back(
+            location->country,
+            location->region,
+            location->city);
+        }
+
+        auto response = grpc_campaign_manager_pool->process_match_request(
+          result_user_id,
+          {},
+          now,
+          source.str(),
+          history_match_result_channel_ids,
+          pkw_channels,
+          {},
+          common_config_->colo_id(),
+          geo_infos,
+          {},
+          referer.str());
+        if (response && response->has_info())
+        {
+          is_grpc_success = true;
+        }
+      }
+      catch (const eh::Exception &exc)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": "
+               << exc.what();
+        logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+      }
+      catch (...)
+      {
+        is_grpc_success = false;
+        Stream::Error stream;
+        stream << FUN
+               << ": Unknown error";
+        logger()->error(stream.str(), Aspect::USER_BIND_FRONTEND);
+      }
+    }
+
+    if (is_grpc_success)
+    {
+      return;
+    }
+
     try
     {
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
