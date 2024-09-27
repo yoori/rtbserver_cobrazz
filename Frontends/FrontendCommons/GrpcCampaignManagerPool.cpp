@@ -99,6 +99,10 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
     {
       request = create_get_click_url_request(std::forward<Args>(args)...);
     }
+    else if constexpr (std::is_same_v<Request, GetFileRequest>)
+    {
+      request = create_get_file_request(std::forward<Args>(args)...);
+    }
     else
     {
       static_assert(GrpcAlgs::AlwaysFalseV<Request>);
@@ -611,6 +615,21 @@ GrpcCampaignManagerPool::get_click_url(
       log_click,
       ctr,
       tokens);
+}
+
+GrpcCampaignManagerPool::GetFileResponsePtr
+GrpcCampaignManagerPool::get_file(
+  const std::string_view service_id,
+  const std::string& file_name) noexcept
+{
+  using GetFileClient = AdServer::CampaignSvcs::Proto::CampaignManager_get_file_ClientPool;
+
+  return do_request<
+    GetFileClient,
+    GetFileRequest,
+    GetFileResponse>(
+      service_id,
+      file_name);
 }
 
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
@@ -1307,6 +1326,16 @@ GrpcCampaignManagerPool::create_get_click_url_request(
     token_proto->set_value(token.value);
     token_proto->set_name(token.name);
   }
+
+  return request;
+}
+
+GrpcCampaignManagerPool::GetFileRequestPtr
+GrpcCampaignManagerPool::create_get_file_request(
+  const std::string& file_name)
+{
+  auto request = std::make_unique<GetFileRequest>();
+  request->set_file_name(file_name);
 
   return request;
 }

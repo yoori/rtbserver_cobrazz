@@ -467,6 +467,10 @@ public:
   using GetClickUrlRequestPtr = std::unique_ptr<GetClickUrlRequest>;
   using GetClickUrlResponse = AdServer::CampaignSvcs::Proto::GetClickUrlResponse;
   using GetClickUrlResponsePtr = std::unique_ptr<GetClickUrlResponse>;
+  using GetFileRequest = AdServer::CampaignSvcs::Proto::GetFileRequest;
+  using GetFileRequestPtr = std::unique_ptr<GetFileRequest>;
+  using GetFileResponse = AdServer::CampaignSvcs::Proto::GetFileResponse;
+  using GetFileResponsePtr = std::unique_ptr<GetFileResponse>;
   /*using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
   using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
   using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
@@ -502,11 +506,7 @@ public:
   using ProcessAnonymousRequestRequest = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestRequest;
   using ProcessAnonymousRequestRequestPtr = std::unique_ptr<ProcessAnonymousRequestRequest>;
   using ProcessAnonymousRequestResponse = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestResponse;
-  using ProcessAnonymousRequestResponsePtr = std::unique_ptr<ProcessAnonymousRequestResponse>;
-  using GetFileRequest = AdServer::CampaignSvcs::Proto::GetFileRequest;
-  using GetFileRequestPtr = std::unique_ptr<GetFileRequest>;
-  using GetFileResponse = AdServer::CampaignSvcs::Proto::GetFileResponse;
-  using GetFileResponsePtr = std::unique_ptr<GetFileResponse>;*/
+  using ProcessAnonymousRequestResponsePtr = std::unique_ptr<ProcessAnonymousRequestResponse>;*/
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -648,6 +648,10 @@ public:
     const CTRDecimal& ctr,
     const std::vector<TokenInfo>& tokens) noexcept;
 
+  GetFileResponsePtr get_file(
+    const std::string_view service_id,
+    const std::string& file_name) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -770,6 +774,9 @@ private:
     const bool log_click,
     const CTRDecimal& ctr,
     const std::vector<TokenInfo>& tokens);
+
+  GetFileRequestPtr create_get_file_request(
+    const std::string& file_name);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request_service(

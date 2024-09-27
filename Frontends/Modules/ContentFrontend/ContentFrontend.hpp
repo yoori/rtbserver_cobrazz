@@ -106,29 +106,63 @@ namespace AdServer
       public Commons::TextTemplateCacheConfiguration<
         Commons::TextTemplate>::FarUpdater
     {
-      typedef Commons::TextTemplateCacheConfiguration<
-        Commons::TextTemplate> ConfigType;
-      typedef ConfigType::Holder Holder;
-      typedef ConfigType::Exception Exception;
+      using ConfigType = Commons::TextTemplateCacheConfiguration<
+        Commons::TextTemplate>;
+      using Holder = ConfigType::Holder;
+      using Exception = ConfigType::Exception;
+      using GrpcCampaignManagerPool = FrontendCommons::GrpcCampaignManagerPool;
+      using GrpcCampaignManagerPoolPtr = std::shared_ptr<GrpcCampaignManagerPool>;
 
       virtual ~CreativesUpdater() noexcept {}
 
       FrontendCommons::CampaignManagersPool<Exception>& campaign_managers_;
+      GrpcCampaignManagerPoolPtr grpc_campaign_manager_pool_;
     public:
 
-      CreativesUpdater(FrontendCommons::CampaignManagersPool<Exception>& campaign_managers)
-        noexcept
-        : campaign_managers_(campaign_managers)
+      CreativesUpdater(
+        FrontendCommons::CampaignManagersPool<Exception>& campaign_managers,
+        const GrpcCampaignManagerPoolPtr& grpc_campaign_manager_pool) noexcept
+        : campaign_managers_(campaign_managers),
+          grpc_campaign_manager_pool_(grpc_campaign_manager_pool)
       {}
 
       virtual Holder
       far_update(const char* file, const char* service_index) /*throw(Exception)*/
       {
+        String::SubString file_body;
         CORBACommons::OctSeq_var content;
-        campaign_managers_.get_file(file, content, service_index);
+        GrpcCampaignManagerPool::GetFileResponsePtr response;
+
+        bool is_grpc_success = false;
+        if (grpc_campaign_manager_pool_)
+        {
+          try
+          {
+            response = grpc_campaign_manager_pool_->get_file(
+              service_index,
+              file);
+
+            if (response && response->has_info())
+            {
+              auto& info_proto = response->info();
+              const auto& file_proto = info_proto.file();
+              file_body = file_proto;
+              is_grpc_success = true;
+            }
+          }
+          catch (...)
+          {
+          }
+        }
+
+        if (!is_grpc_success)
+        {
+          campaign_managers_.get_file(file, content, service_index);
+          file_body = String::SubString(reinterpret_cast<char*>(content->get_buffer()), content->length());
+        }
+
         try
         {
-          String::SubString file_body(reinterpret_cast<char*>(content->get_buffer()), content->length());
           Generics::Time now = Generics::Time::get_time_of_day();
           return new ConfigType::TextTemplateHolder(
             Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),

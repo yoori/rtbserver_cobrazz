@@ -203,7 +203,10 @@ namespace AdServer
         config_->TemplateCache().size(),
         Generics::Time(config_->TemplateCache().timeout()),
         Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-          Generics::Time::ONE_SECOND, new CreativesUpdater(campaign_managers_)));
+          Generics::Time::ONE_SECOND,
+          new CreativesUpdater(
+            campaign_managers_,
+            grpc_container_->grpc_campaign_manager_pool)));
 
       activate_object();
     }
