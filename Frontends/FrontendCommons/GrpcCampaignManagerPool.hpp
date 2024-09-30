@@ -471,6 +471,10 @@ public:
   using GetFileRequestPtr = std::unique_ptr<GetFileRequest>;
   using GetFileResponse = AdServer::CampaignSvcs::Proto::GetFileResponse;
   using GetFileResponsePtr = std::unique_ptr<GetFileResponse>;
+  using VerifyImpressionRequest = AdServer::CampaignSvcs::Proto::VerifyImpressionRequest;
+  using VerifyImpressionRequestPtr = std::unique_ptr<VerifyImpressionRequest>;
+  using VerifyImpressionResponse = AdServer::CampaignSvcs::Proto::VerifyImpressionResponse;
+  using VerifyImpressionResponsePtr = std::unique_ptr<VerifyImpressionResponse>;
   /*using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
   using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
   using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
@@ -487,10 +491,6 @@ public:
   using GetCategoryChannelsRequestPtr = std::unique_ptr<GetCategoryChannelsRequest>;
   using GetCategoryChannelsResponse = AdServer::CampaignSvcs::Proto::GetCategoryChannelsResponse;
   using GetCategoryChannelsResponsePtr = std::unique_ptr<GetCategoryChannelsResponse>;
-  using VerifyImpressionRequest = AdServer::CampaignSvcs::Proto::VerifyImpressionRequest;
-  using VerifyImpressionRequestPtr = std::unique_ptr<VerifyImpressionRequest>;
-  using VerifyImpressionResponse = AdServer::CampaignSvcs::Proto::VerifyImpressionResponse;
-  using VerifyImpressionResponsePtr = std::unique_ptr<VerifyImpressionResponse>;
   using GetConfigRequest = AdServer::CampaignSvcs::Proto::GetConfigRequest;
   using GetConfigRequestPtr = std::unique_ptr<GetConfigRequest>;
   using GetConfigResponse = AdServer::CampaignSvcs::Proto::GetConfigResponse;
@@ -652,6 +652,20 @@ public:
     const std::string_view service_id,
     const std::string& file_name) noexcept;
 
+  VerifyImpressionResponsePtr verify_impression(
+    const Generics::Time& time,
+    const Generics::Time& bid_time,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::vector<TrackCreativeInfo>& creatives,
+    const std::uint32_t pub_imp_revenue_type,
+    const CTRDecimal& pub_imp_revenue,
+    const std::uint32_t request_type,
+    const std::uint32_t verify_type,
+    const AdServer::Commons::UserId& user_id,
+    const std::string& referer,
+    const std::int32_t viewability,
+    const std::string& action_name) noexcept;
+
 private:
   GetPubPixelsRequestPtr create_get_pub_pixels_request(
     const std::string& country,
@@ -766,7 +780,7 @@ private:
     const std::uint32_t ccg_keyword_id,
     const std::uint32_t creative_id,
     const AdServer::Commons::UserId& match_user_id,
-    const AdServer::Commons::UserId&cookie_user_id,
+    const AdServer::Commons::UserId& cookie_user_id,
     const AdServer::Commons::RequestId& request_id,
     const UserIdHashModInfo& user_id_hash_mod,
     const std::string& relocate,
@@ -777,6 +791,20 @@ private:
 
   GetFileRequestPtr create_get_file_request(
     const std::string& file_name);
+
+  VerifyImpressionRequestPtr create_verify_impression_request(
+    const Generics::Time& time,
+    const Generics::Time& bid_time,
+    const UserIdHashModInfo& user_id_hash_mod,
+    const std::vector<TrackCreativeInfo>& creatives,
+    const std::uint32_t pub_imp_revenue_type,
+    const CTRDecimal& pub_imp_revenue,
+    const std::uint32_t request_type,
+    const std::uint32_t verify_type,
+    const AdServer::Commons::UserId& user_id,
+    const std::string& referer,
+    const std::int32_t viewability,
+    const std::string& action_name);
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request_service(

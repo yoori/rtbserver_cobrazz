@@ -103,6 +103,10 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
     {
       request = create_get_file_request(std::forward<Args>(args)...);
     }
+    else if constexpr (std::is_same_v<Request, VerifyImpressionRequest>)
+    {
+      request = create_verify_impression_request(std::forward<Args>(args)...);
+    }
     else
     {
       static_assert(GrpcAlgs::AlwaysFalseV<Request>);
@@ -630,6 +634,42 @@ GrpcCampaignManagerPool::get_file(
     GetFileResponse>(
       service_id,
       file_name);
+}
+
+GrpcCampaignManagerPool::VerifyImpressionResponsePtr
+GrpcCampaignManagerPool::verify_impression(
+  const Generics::Time& time,
+  const Generics::Time& bid_time,
+  const UserIdHashModInfo& user_id_hash_mod,
+  const std::vector<TrackCreativeInfo>& creatives,
+  const std::uint32_t pub_imp_revenue_type,
+  const CTRDecimal& pub_imp_revenue,
+  const std::uint32_t request_type,
+  const std::uint32_t verify_type,
+  const AdServer::Commons::UserId& user_id,
+  const std::string& referer,
+  const std::int32_t viewability,
+  const std::string& action_name) noexcept
+{
+  using VerifyImpressionClient = AdServer::CampaignSvcs::Proto::CampaignManager_verify_impression_ClientPool;
+
+  return do_request<
+    VerifyImpressionClient,
+    VerifyImpressionRequest,
+    VerifyImpressionResponse>(
+      {},
+      time,
+      bid_time,
+      user_id_hash_mod,
+      creatives,
+      pub_imp_revenue_type,
+      pub_imp_revenue,
+      request_type,
+      verify_type,
+      user_id,
+      referer,
+      viewability,
+      action_name);
 }
 
 GrpcCampaignManagerPool::GetPubPixelsRequestPtr
@@ -1336,6 +1376,54 @@ GrpcCampaignManagerPool::create_get_file_request(
 {
   auto request = std::make_unique<GetFileRequest>();
   request->set_file_name(file_name);
+
+  return request;
+}
+
+GrpcCampaignManagerPool::VerifyImpressionRequestPtr
+GrpcCampaignManagerPool::create_verify_impression_request(
+  const Generics::Time& time,
+  const Generics::Time& bid_time,
+  const UserIdHashModInfo& user_id_hash_mod,
+  const std::vector<TrackCreativeInfo>& creatives,
+  const std::uint32_t pub_imp_revenue_type,
+  const CTRDecimal& pub_imp_revenue,
+  const std::uint32_t request_type,
+  const std::uint32_t verify_type,
+  const AdServer::Commons::UserId& user_id,
+  const std::string& referer,
+  const std::int32_t viewability,
+  const std::string& action_name)
+{
+  auto request = std::make_unique<VerifyImpressionRequest>();
+  auto* const impression_info_proto = request->mutable_impression_info();
+
+  impression_info_proto->set_time(GrpcAlgs::pack_time(time));
+  impression_info_proto->set_bid_time(GrpcAlgs::pack_time(bid_time));
+
+  auto* const user_id_hash_mod_proto = impression_info_proto->mutable_user_id_hash_mod();
+  user_id_hash_mod_proto->set_defined(user_id_hash_mod.value.has_value());
+  user_id_hash_mod_proto->set_value(user_id_hash_mod.value.value_or(0));
+
+  auto* const creatives_proto = impression_info_proto->mutable_creatives();
+  creatives_proto->Reserve(creatives.size());
+  for (const auto& creative : creatives)
+  {
+    auto* const creative_proto = creatives_proto->Add();
+    creative_proto->set_ccid(creative.ccid);
+    creative_proto->set_ccg_keyword_id(creative.ccg_keyword_id);
+    creative_proto->set_request_id(GrpcAlgs::pack_request_id(creative.request_id));
+    creative_proto->set_ctr(GrpcAlgs::pack_decimal(creative.ctr));
+  }
+
+  impression_info_proto->set_pub_imp_revenue_type(pub_imp_revenue_type);
+  impression_info_proto->set_pub_imp_revenue(GrpcAlgs::pack_decimal(pub_imp_revenue));
+  impression_info_proto->set_request_type(request_type);
+  impression_info_proto->set_verify_type(verify_type);
+  impression_info_proto->set_user_id(GrpcAlgs::pack_user_id(user_id));
+  impression_info_proto->set_referer(referer);
+  impression_info_proto->set_viewability(viewability);
+  impression_info_proto->set_action_name(action_name);
 
   return request;
 }
