@@ -44,13 +44,6 @@ namespace AdServer
     };
 
     void
-    flush(
-      const CampaignSvcs::CampaignManager::RequestParams&,
-      CampaignSvcs::CampaignManager::RequestCreativeResult*,
-      const Generics::Time& processing_time)
-      noexcept;
-    
-    void
     add_skipped() noexcept;
 
     void

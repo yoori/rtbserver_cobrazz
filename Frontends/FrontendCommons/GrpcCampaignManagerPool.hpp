@@ -182,8 +182,8 @@ public:
     NativeImageToken(
       const std::string& name,
       const bool required,
-      const std::uint32_t width,
-      const std::uint32_t height)
+      const std::uint32_t width = 0,
+      const std::uint32_t height = 0)
       : name(name),
         required(required),
         width(width),
@@ -250,6 +250,9 @@ public:
 
   struct TriggerMatchResult final
   {
+    TriggerMatchResult() = default;
+    ~TriggerMatchResult() = default;
+
     std::vector<ChannelTriggerMatchInfo> url_channels;
     std::vector<ChannelTriggerMatchInfo> pkw_channels;
     std::vector<ChannelTriggerMatchInfo> skw_channels;
@@ -259,6 +262,9 @@ public:
 
   struct AdSlotInfo final
   {
+    AdSlotInfo() = default;
+    ~AdSlotInfo() = default;
+
     std::uint32_t ad_slot_id = 0;
     std::string format;
     std::uint32_t tag_id = 0;
@@ -289,10 +295,14 @@ public:
     std::vector<NativeImageToken> native_image_tokens;
     std::uint32_t native_ads_impression_tracker_type = 0;
     bool fill_track_html = false;
+    std::vector<TokenInfo> tokens;
   };
 
   struct CommonAdRequestInfo final
   {
+    CommonAdRequestInfo() = default;
+    ~CommonAdRequestInfo() = default;
+
     Generics::Time time;
     AdServer::Commons::RequestId request_id;
     std::string creative_instantiate_type;
@@ -331,6 +341,9 @@ public:
 
   struct ContextAdRequestInfo final
   {
+    ContextAdRequestInfo() = default;
+    ~ContextAdRequestInfo() = default;
+
     bool enabled_notice = false;
     std::string client;
     std::string client_version;
@@ -346,8 +359,11 @@ public:
     std::uint32_t short_referer_hash = 0;
   };
 
-  struct RequestParams final
+  struct RequestParams
   {
+    RequestParams() = default;
+    ~RequestParams() = default;
+
     CommonAdRequestInfo common_info;
     ContextAdRequestInfo context_info;
     std::uint32_t publisher_site_id = 0;
@@ -389,6 +405,9 @@ public:
 
   struct InstantiateAdInfo final
   {
+    InstantiateAdInfo() = default;
+    ~InstantiateAdInfo() = default;
+
     CommonAdRequestInfo common_info;
     std::vector<ContextAdRequestInfo> context_info;
     std::string format;
