@@ -1,7 +1,7 @@
 #ifndef GOOGLEBIDREQUESTTASK_HPP_
 #define GOOGLEBIDREQUESTTASK_HPP_
 
-#include "BidRequestTask.hpp"
+#include <Frontends/Modules/BiddingFrontend/BidRequestTask.hpp>
 
 namespace AdServer
 {
