@@ -1,7 +1,7 @@
 #ifndef APPNEXUSBIDREQUESTTASK_HPP_
 #define APPNEXUSBIDREQUESTTASK_HPP_
 
-#include "BidRequestTask.hpp"
+#include <Frontends/Modules/BiddingFrontend/BidRequestTask.hpp>
 
 namespace AdServer
 {

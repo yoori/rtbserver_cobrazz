@@ -50,7 +50,7 @@ namespace Config
 
 namespace Aspect
 {
-  extern const char BIDDING_FRONTEND[] = "BiddingFrontend";
+  inline constexpr char BIDDING_FRONTEND[] = "BiddingFrontend";
 }
 
 namespace Response
@@ -721,7 +721,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::handle_request_()";
 
-    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_InputRequest)
+    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_InputRequest);
 
     // create task - push it to task runner
     // and push goal for timeout control
@@ -803,7 +803,7 @@ namespace Bidding
       {
         bid_task_count_ += -1;
 
-        DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_SkipRequest)
+        DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_SkipRequest);
 
         {
           MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
@@ -1756,7 +1756,6 @@ namespace Bidding
       // and disable ccg keywords loading for non opt in (US_EXTERNALPROBE actually)
       // if colocation configured to passback for non opt-in
       ExtConfig_var ext_config = get_ext_config_();
-
       if(ext_config.in())
       {
         ExtConfig::ColocationMap::const_iterator colo_it =
@@ -1812,7 +1811,7 @@ namespace Bidding
   {
     static const char* FUN = "Bidding::Frontend::trigger_match_()";
 
-    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_ServerRequest)
+    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_ServerRequest);
 
     if(!request_info.filter_request)
     {
@@ -1999,7 +1998,7 @@ namespace Bidding
 
     typedef std::set<ChannelMatch> ChannelMatchSet;
 
-    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_UserInfoRequest)
+    DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_UserInfoRequest);
 
     Generics::Time start_process_time;
 
@@ -2359,46 +2358,6 @@ namespace Bidding
       logger()->log(ostr.str(),
         Logging::Logger::TRACE,
         Aspect::BIDDING_FRONTEND);
-    }
-  }
-
-  void
-  Frontend::get_ccg_keywords_(
-    AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var& ccg_keywords,
-    const RequestInfo& request_info,
-    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
-    noexcept
-  {
-    static const char* FUN = "Frontend::get_ccg_keywords_()";
-
-    try
-    {
-      if(history_match_result.channels.length() &&
-         !request_info.skip_ccg_keywords &&
-         !request_info.filter_request)
-      {
-        AdServer::ChannelSvcs::ChannelIdSeq channel_ids;
-        channel_ids.length(history_match_result.channels.length());
-
-        for (CORBA::ULong i = 0;
-          i < history_match_result.channels.length(); ++i)
-        {
-          channel_ids[i] = history_match_result.channels[i].channel_id;
-        }
-
-        ccg_keywords = channel_servers_->get_ccg_traits(channel_ids);
-      }
-    }
-    catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": caught ChannelServerSessionPool::Exception: " <<
-        ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-117");
     }
   }
 

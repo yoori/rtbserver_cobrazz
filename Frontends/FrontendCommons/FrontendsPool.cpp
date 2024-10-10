@@ -1,5 +1,6 @@
 #include "FrontendsPool.hpp"
 #include <BiddingFrontend/BiddingFrontend.hpp>
+#include <BiddingFrontendGrpc/BiddingFrontend.hpp>
 #include <DirectoryModule/DirectoryModule.hpp>
 #include <PubPixelFrontend/PubPixelFrontend.hpp>
 #include <ContentFrontend/ContentFrontend.hpp>
@@ -109,12 +110,24 @@ namespace AdServer
         {
           if(*module_it == M_BIDDING)
           {
-            init_frontend<Bidding::Frontend>(
-              fe_config.BidFeConfiguration(),
-              logger_,
-              common_module_,
-              stats_,
-              http_response_factory_.in());
+            if (fe_config.BidFeConfiguration()->grpc_enable())
+            {
+              init_frontend<Bidding::Grpc::Frontend>(
+                fe_config.BidFeConfiguration(),
+                logger_,
+                common_module_,
+                stats_,
+                http_response_factory_.in());
+            }
+            else
+            {
+              init_frontend<Bidding::Frontend>(
+                fe_config.BidFeConfiguration(),
+                logger_,
+                common_module_,
+                stats_,
+                http_response_factory_.in());
+            }
           }
           else if(*module_it == M_PUBPIXEL)
           {

@@ -9,8 +9,8 @@
 
 #include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
 
-#include "BiddingFrontend.hpp"
-#include "Stage.hpp"
+#include <Frontends/Modules/BiddingFrontend/BiddingFrontend.hpp>
+#include <Frontends/Modules/BiddingFrontend/Stage.hpp>
 
 namespace AdServer
 {

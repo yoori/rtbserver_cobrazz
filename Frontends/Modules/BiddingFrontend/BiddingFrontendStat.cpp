@@ -127,33 +127,6 @@ namespace AdServer
   }
 
   // StatHolder
-  
-  void
-  StatHolder::flush(
-    const CampaignManager::RequestParams& request_params,
-    CampaignManager::RequestCreativeResult* campaign_match_result,
-    const Generics::Time& processing_time)
-    noexcept
-  {
-    bool bid = campaign_match_result && campaign_match_result->ad_slots.length();
-    bool google = request_params.common_info.request_type == AR_GOOGLE;
-    bool openrtb = request_params.common_info.request_type == AR_OPENRTB ||
-                   request_params.common_info.request_type == AR_OPENRTB_WITH_CLICKURL;
-    bool other = !openrtb && !google;
-
-    StatData b(google ? 1UL : 0UL,
-               google && bid ? 1UL : 0UL,
-               openrtb ? 1UL : 0UL,
-               openrtb && bid ? 1UL : 0UL,
-               other ? 1UL : 0UL,
-               other && bid ? 1UL : 0UL,
-               processing_time);
-
-    Sync::PosixGuard lock(mutex_);
-
-    stat_data_ += b;
-  }
-
   void
   StatHolder::add_skipped() noexcept
   {

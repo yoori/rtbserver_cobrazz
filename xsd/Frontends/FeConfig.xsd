@@ -292,6 +292,9 @@
       <xsd:element name="Account" type="BidAccountTraitsType" minOccurs="0" maxOccurs="unbounded"/>
     </xsd:sequence>
 
+    <xsd:attribute name="grpc_enable"
+      type="xsd:boolean"
+      use="required"/>
     <xsd:attribute name="threads"
       type="xsd:positiveInteger"
       use="required"/>

@@ -12,7 +12,7 @@ target_link_libraries(FCGIServer
   AdInstFrontend
   AdServerCommonsXSD
   BidRateProvider
-  BiddingFrontend
+  BiddingFrontendGrpc
   CORBACommons
   CTRProvider
   CampaignConfig

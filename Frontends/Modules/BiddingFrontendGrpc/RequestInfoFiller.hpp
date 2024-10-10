@@ -1,37 +1,31 @@
-#ifndef BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
-#define BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
+#ifndef BIDDINGFRONTENDGRPC_REQUESTINFOFILLER_HPP
+#define BIDDINGFRONTENDGRPC_REQUESTINFOFILLER_HPP
 
+// STD
 #include <string>
 #include <optional>
 
-#include <GeoIP/IPMap.hpp>
-#include <Logger/Logger.hpp>
-#include <Generics/Time.hpp>
-#include <Generics/Uuid.hpp>
+// UNIXCOMMONS
 #include <Generics/GnuHashTable.hpp>
-
+#include <Generics/Uuid.hpp>
+#include <Generics/Time.hpp>
+#include <GeoIP/IPMap.hpp>
 #include <HTTP/Http.hpp>
+#include <Logger/Logger.hpp>
 
+// THIS
+#include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <Frontends/FrontendCommons/RequestMatchers.hpp>
-#include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
-#include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
-
 #include <Frontends/CommonModule/CommonModule.hpp>
-
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
-
+#include <Frontends/FrontendCommons/RequestMatchers.hpp>
+#include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
+#include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
 #include <Frontends/Modules/BiddingFrontend/google-bidding.pb.h>
-#include <Frontends/Modules/BiddingFrontend/JsonParamProcessor.hpp>
+#include <Frontends/Modules/BiddingFrontendGrpc/JsonParamProcessor.hpp>
+#include <Frontends/Modules/BiddingFrontendGrpc/AdXmlRequestInfoFiller.hpp>
 
-#include <Frontends/Modules/BiddingFrontend/AdXmlRequestInfoFiller.hpp>
-
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding::Grpc
 {
   struct SourceTraits
   {
@@ -246,7 +240,7 @@ namespace Bidding
 
     void
     fill_by_google_request(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
       GoogleAdSlotContextArray& as_slots_context,
@@ -256,7 +250,7 @@ namespace Bidding
     // OpenRTB, Yandex
     void
     fill_by_openrtb_request(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
       JsonProcessingContext& context,
@@ -265,7 +259,7 @@ namespace Bidding
 
     void
     fill_by_appnexus_request(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
       JsonProcessingContext& context,
@@ -277,18 +271,18 @@ namespace Bidding
 
     void
     init_request_param(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       RequestInfo& request_info) const
       noexcept;
 
     static void
     init_adslot(
-      AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& adslot_info)
+      FrontendCommons::GrpcCampaignManagerPool::AdSlotInfo& adslot_info)
       noexcept;
 
     void
     fill_by_referer(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       std::string& search_words,
       const HTTP::HTTPAddress& referer,
       bool fill_search_words = true,
@@ -298,7 +292,7 @@ namespace Bidding
 
     void
     fill_by_user_agent(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       RequestInfo& request_info,
       String::SubString user_agent,
       bool filter_request,
@@ -309,7 +303,7 @@ namespace Bidding
     void
     fill_by_ip(
       RequestInfo& request_info,
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       String::SubString ip)
       const
       noexcept;
@@ -349,7 +343,7 @@ namespace Bidding
 
     void
     fill_additional_url_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       std::string& search_words,
       const HTTP::HTTPAddress& add_url)
       const
@@ -357,7 +351,7 @@ namespace Bidding
 
     void
     fill_search_words_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       std::string& search_words,
       const HTTP::HTTPAddress& url)
       const
@@ -366,20 +360,20 @@ namespace Bidding
     void
     fill_request_type_(
       RequestInfo& request_info,
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       const std::string& source_id)
       const
       noexcept;
 
     void
     fill_vast_instantiate_type_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       const std::string& source_id) const
       noexcept;
 
     void
     fill_native_instantiate_type_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       const std::string& source_id) const
       noexcept;
 
@@ -396,7 +390,7 @@ namespace Bidding
     verify_user_id_(
       const std::string& signed_user_id,
       const std::string& source_id,
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params)
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params)
       const
       noexcept;
 
@@ -406,7 +400,7 @@ namespace Bidding
 
     void
     select_referer_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      FrontendCommons::GrpcCampaignManagerPool::RequestParams& request_params,
       const JsonProcessingContext& context,
       HTTP::HTTPAddress& referer) const
       /*throw(eh::Exception)*/;
@@ -481,15 +475,11 @@ namespace Bidding
     std::unordered_map<unsigned int, std::string> openrtb_devicetype_mapping_;
     std::unordered_map<unsigned int, std::string> openrtb_video_placement_mapping_;
   };
-}
-}
+} // namespace AdServer::Bidding::Grpc
 
-namespace Request
+namespace Request::Context::Grpc
 {
-  namespace Context
-  {
-    extern const String::SubString SOURCE_ID;
-  }
-}
+  extern const std::string SOURCE_ID;
+} // namespace Request::Context
 
-#endif /*BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_*/
+#endif /*BIDDINGFRONTENDGRPC_REQUESTINFOFILLER_HPP*/
