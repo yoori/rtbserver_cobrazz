@@ -1,26 +1,21 @@
-add_pb(baidu-biddingPB baidu-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
-add_pb(google-biddingPB google-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
-add_pb(tanx-biddingPB tanx-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
-
-add_library(BiddingFrontend SHARED
+add_library(BiddingFrontendGrpc SHARED
+  ../BiddingFrontend/BiddingFrontendStat.cpp
+  ../BiddingFrontend/DAOBidRequestTask.cpp
+  ../BiddingFrontend/KeywordFormatter.cpp
+  ../BiddingFrontend/PlannerPool.cpp
   AdJsonBidRequestTask.cpp
   AdXmlBidRequestTask.cpp
   AdXmlRequestInfoFiller.cpp
   AppNexusBidRequestTask.cpp
   BidRequestTask.cpp
   BiddingFrontend.cpp
-  BiddingFrontendStat.cpp
   ClickStarBidRequestTask.cpp
-  DAOBidRequestTask.cpp
   GoogleBidRequestTask.cpp
-  KeywordFormatter.cpp
   OpenRtbBidRequestTask.cpp
-  PlannerPool.cpp
   RequestInfoFiller.cpp
-  Utils.cpp
 )
 
-target_link_libraries(BiddingFrontend
+target_link_libraries(BiddingFrontendGrpc
   BidRateProvider
   BillStatInfoIDL
   CORBACommons

@@ -322,6 +322,55 @@ void print_grpc_error(
   }
 }
 
+template<class E>
+concept ConceptError3 = requires(E e)
+{
+  std::decay_t<decltype(e.type())>::Error_Type_Implementation;
+  std::decay_t<decltype(e.type())>::Error_Type_NotConfigured;
+};
+
+template<ConceptError3 Error>
+void print_grpc_error(
+  const Error& error,
+  Logging::Logger* logger,
+  const char* aspect) noexcept
+{
+  using ErrorType = typename Error::Type;
+
+  try
+  {
+    switch (error.type())
+    {
+      case ErrorType::Error_Type_NotConfigured:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Not configured.";
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      case ErrorType::Error_Type_Implementation:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << error.description();
+        logger->error(stream.str(), aspect);
+        break;
+      }
+      default:
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "Unknown error type";
+        logger->error(stream.str(), aspect);
+      }
+    }
+  }
+  catch (...)
+  {
+  }
+}
+
 template<class ResponsePtr>
 void print_grpc_error_response(
   const ResponsePtr& response,

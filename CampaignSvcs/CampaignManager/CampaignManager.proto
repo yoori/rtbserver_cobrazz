@@ -122,6 +122,7 @@ message AdSlotInfo
   repeated NativeImageToken native_image_tokens = 28;
   uint32 native_ads_impression_tracker_type = 29;
   bool fill_track_html = 30;
+  repeated TokenInfo tokens = 31;
 }
 
 message CommonAdRequestInfo

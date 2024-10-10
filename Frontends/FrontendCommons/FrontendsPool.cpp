@@ -1,5 +1,5 @@
 #include "FrontendsPool.hpp"
-#include <BiddingFrontend/BiddingFrontend.hpp>
+#include <BiddingFrontendGrpc/BiddingFrontend.hpp>
 #include <DirectoryModule/DirectoryModule.hpp>
 #include <PubPixelFrontend/PubPixelFrontend.hpp>
 #include <ContentFrontend/ContentFrontend.hpp>
