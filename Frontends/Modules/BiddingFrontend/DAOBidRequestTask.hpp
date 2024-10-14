@@ -2,8 +2,8 @@
 #define DAOBIDREQUESTTASK_HPP_
 
 #include <iostream>
-#include "BidRequestTask.hpp"
-#include "OpenRtbBidRequestTask.hpp"
+#include <Frontends/Modules/BiddingFrontend/BidRequestTask.hpp>
+#include <Frontends/Modules/BiddingFrontend/OpenRtbBidRequestTask.hpp>
 
 namespace AdServer
 {

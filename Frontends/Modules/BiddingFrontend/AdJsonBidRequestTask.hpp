@@ -2,7 +2,7 @@
 #define ADJSONBIDREQUESTTASK_HPP_
 
 #include <iostream>
-#include "BidRequestTask.hpp"
+#include <Frontends/Modules/BiddingFrontend/BidRequestTask.hpp>
 
 namespace AdServer
 {

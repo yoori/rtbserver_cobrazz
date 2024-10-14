@@ -1235,6 +1235,14 @@ GrpcCampaignManagerPool::create_get_campaign_creative_request(
 
     ad_slot_proto->set_native_ads_impression_tracker_type(ad_slot.native_ads_impression_tracker_type);
     ad_slot_proto->set_fill_track_html(ad_slot.fill_track_html);
+
+    auto* const tokens_proto = ad_slot_proto->mutable_tokens();
+    for (const auto& token : ad_slot.tokens)
+    {
+      auto* const token_proto = tokens_proto->Add();
+      token_proto->set_name(token.name);
+      token_proto->set_value(token.value);
+    }
   }
 
   request_params_proto->set_required_passback(request_params.required_passback);
