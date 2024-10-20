@@ -1,2 +1,4 @@
 clickhouse-connect
 redis
+argparse
+colorlog
