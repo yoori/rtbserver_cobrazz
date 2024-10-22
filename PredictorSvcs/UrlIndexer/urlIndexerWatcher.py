@@ -315,5 +315,3 @@ if __name__ == "__main__":
     logger.info(f"--------------------------")
 
     main()
-
-    #todo: add logger, add args and make an readme, rewrite comments
