@@ -14,28 +14,30 @@ import argparse
 import logging
 import re
 import signal
+import threading
 
 loggerCH = get_logger('URLindexier ClickHouse', logging.DEBUG)
 loggerRedis = get_logger('URLindexier Redis', logging.DEBUG)
 logger = get_logger('URLindexier', logging.DEBUG)
 
-def signal_handler(sig, frame):
-    print("Получен сигнал завершения, корректно завершаем операции...")
-    # Здесь можно вызвать функции для отката изменений или завершения работы
-    sys.exit(0)
+terminate_flag = threading.Event()
 
-# Регистрируем обработчики сигналов
+def signal_handler(sig, frame):
+    logger.info(f"Received termination signal. Exiting...")
+    terminate_flag.set()
+
+# signal registration
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 
 def parse_time_interval(time_str):
     """
-    Парсит строку формата 'Xd Xh Xm Xs' и возвращает объект timedelta.
+    Parse string in format 'Xd Xh Xm Xs' and returns timedelta.
     """
     pattern = r"(?:(\d+)d)?\s*(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+)s)?"
     match = re.match(pattern, time_str)
     if not match:
-        raise argparse.ArgumentTypeError("Неправильный формат времени. Ожидалось 'Xd Xh Xm Xs'")
+        raise argparse.ArgumentTypeError("Wrong time format. Expected 'Xd Xh Xm Xs'")
 
     days, hours, minutes, seconds = match.groups(default='0')
 
@@ -231,11 +233,11 @@ def askGPT(urls):
         output_file = os.path.join(output_GPT_dir, 'GPTresult.json')
 
     # Run the script with the urls argument
-    env = os.environ.copy()
     # to run getSiteCategories.py it is requared to have this two in env:
     #   env["YANDEX_GPT_API_KEY"] = os.getenv('YANDEX_GPT_API_KEY')
     #   env["YANDEX_ACCOUNT_ID"] = os.getenv('YANDEX_ACCOUNT_ID')
-    result = subprocess.run(['python3', '../../Utils/GPT/getSiteCategories.py', '-w', urls, '-o', output_file], env=env)
+    env = os.environ.copy()
+    result = subprocess.run(['python3', scriptPathGPT, '-w', urls, '-o', output_file], env=env)
 
     if result.returncode == 0:
         try:
@@ -273,14 +275,14 @@ def checkExpiration():
                 logger.error(f"checkExpiration update not ok")
 def main():
     try:
-        while True:
+        while not terminate_flag.is_set():
             if is_table_empty():
                 logger.warn(f"Table is empty - ok, wait utill it will be filled")
             else:
                 checkExpiration()
 
-            logger.info(f"Sleep for {timeoutBetweenChecks_sec} sec")
-            time.sleep(timeoutBetweenChecks_sec)
+            logger.info(f"Sleep for {timeoutBetweenChecks_sec} sec...")
+            terminate_flag.wait(timeoutBetweenChecks_sec)
     finally:
         clientClickHouse.close()
         loggerCH.info(f"connection close")
@@ -295,19 +297,21 @@ if __name__ == "__main__":
     parser.add_argument('--storeGpt', action='store_true', help='true - save all gpt results, false - save only last one')
     parser.add_argument('--checkTimeout', type=int, default=5*60, help='timeout between checks')
     parser.add_argument('--expTime', type=parse_time_interval, default='60d', help="expiration time in time format 'Xd Xh Xm Xs'")
-
+    parser.add_argument('--pathGPT', type=str, default='../../Utils/GPT/getSiteCategories.py', help='path to getSiteCategories.py')
     args = parser.parse_args()
 
-    global output_GPT_dir, isGPTresulteStored, timeoutBetweenChecks_sec, timeOfExpiration
+    global output_GPT_dir, isGPTresulteStored, timeoutBetweenChecks_sec, timeOfExpiration, scriptPathGPT
     output_GPT_dir = args.gptdir
     isGPTresulteStored = args.storeGpt
     timeoutBetweenChecks_sec = args.checkTimeout
     timeOfExpiration = args.expTime
+    scriptPathGPT = args.pathGPT
 
     logger.info(f"output_GPT_dir = {output_GPT_dir}")
     logger.info(f"isGPTresulteStored = {isGPTresulteStored}")
     logger.info(f"timeoutBetweenChecks_sec = {timeoutBetweenChecks_sec}")
     logger.info(f"timeOfExpiration = {timeOfExpiration}")
+    logger.info(f"scriptPathGPT = {scriptPathGPT}")
     logger.info(f"--------------------------")
 
     main()
