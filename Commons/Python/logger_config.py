@@ -4,12 +4,12 @@ import colorlog
 
 def get_logger(name='main', level=logging.INFO):
     """
-    Возвращает настроенный логгер с заданным именем.
+    Returns the configured logger with the specified name.
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
-    if not logger.handlers:  # Чтобы не добавлять обработчики повторно при многократном вызове
+    if not logger.handlers:
         console_handler = colorlog.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
 
