@@ -1,6 +1,0 @@
-@commonmodule_deps@
-
-sources := \
-  CommonModule.cpp
-
-@commonmodule_post@

@@ -12,6 +12,7 @@ target_link_libraries(HttpServer
   AdServerCommonsXSD
   BidRateProvider
   BiddingFrontend
+  BiddingFrontend
   BiddingFrontendGrpc
   CORBACommons
   CTRProvider

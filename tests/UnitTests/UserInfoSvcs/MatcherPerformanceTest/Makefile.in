@@ -1,6 +1,0 @@
-@channelsmatchertestexe_deps@
-
-sources := MatcherPerformanceTest.cpp
-target := MatcherPerformanceTest
-
-include $(top_srcdir)/tests/Test.post.rules

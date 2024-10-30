@@ -1,6 +1,0 @@
-@matchperformancetestexe_deps@
-
-sources := MatchPerformanceTest.cpp
-target := MatchPerformanceTest
-
-include $(top_srcdir)/tests/Test.post.rules

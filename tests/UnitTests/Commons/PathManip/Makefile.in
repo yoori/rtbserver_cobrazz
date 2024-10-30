@@ -1,7 +1,0 @@
-@pathmaniptest_deps@
-
-sources := PathManipTest.cpp
-target := PathManipTest
-
-include $(top_srcdir)/tests/Test.post.rules
-

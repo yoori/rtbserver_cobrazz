@@ -1,8 +1,0 @@
-@clickfrontend_deps@
-
-includes := Frontends/Modules
-
-sources := RequestInfoFiller.cpp \
-  ClickFrontend.cpp
-
-@clickfrontend_post@

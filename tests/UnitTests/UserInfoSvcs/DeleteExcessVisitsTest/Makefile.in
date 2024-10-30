@@ -1,6 +1,0 @@
-@deleteexcessvisitstestexe_deps@
-
-sources := DeleteExcessVisitsTest.cpp
-target := DeleteExcessVisitsTest
-
-include $(top_srcdir)/tests/Test.post.rules

@@ -1,6 +1,0 @@
-@channelcontainertestexe_deps@
-
-sources := ChannelContainerTest.cpp
-target := ChannelContainerTest
-
-include $(top_srcdir)/tests/Test.post.rules

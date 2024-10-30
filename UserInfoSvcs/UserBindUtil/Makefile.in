@@ -1,5 +1,0 @@
-@userbindutilexe_deps@
-sources := Application.cpp 
-
-target := UserBindUtil
-@userbindutilexe_post@
