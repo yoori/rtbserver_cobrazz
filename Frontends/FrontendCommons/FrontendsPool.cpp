@@ -14,6 +14,7 @@
 #include <ClickFrontend/ClickFrontend.hpp>
 #include <ImprTrackFrontend/ImprTrackFrontend.hpp>
 #include <AdFrontend/AdFrontend.hpp>
+#include <AdFrontendGrpc/AdFrontend.hpp>
 #include <EchoFrontend/EchoFrontend.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
 #include <Frontends/HttpServer/HttpResponse.hpp>
@@ -224,11 +225,22 @@ namespace AdServer
           }
           else if(*module_it == M_AD)
           {
-            init_frontend<AdFrontend>(
-              fe_config.AdFeConfiguration(),
-              logger_,
-              common_module_,
-              http_response_factory_.in());
+            if (fe_config.AdFeConfiguration()->grpc_enable())
+            {
+              init_frontend<Grpc::AdFrontend>(
+                fe_config.AdFeConfiguration(),
+                logger_,
+                common_module_,
+                http_response_factory_.in());
+            }
+            else
+            {
+              init_frontend<AdFrontend>(
+                fe_config.AdFeConfiguration(),
+                logger_,
+                common_module_,
+                http_response_factory_.in());
+            }
           }
           else if(*module_it == M_ECHO)
           {

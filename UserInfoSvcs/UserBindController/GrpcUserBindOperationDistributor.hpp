@@ -95,7 +95,7 @@ public:
 
   GetUserIdResponsePtr
   get_user_id(
-    const String::SubString& external_id,
+    const String::SubString& id,
     const AdServer::Commons::UserId& current_user_id,
     const Generics::Time& timestamp,
     const Generics::Time& create_timestamp,
@@ -105,7 +105,7 @@ public:
 
   AddUserIdResponsePtr
   add_user_id(
-    const String::SubString& external_id,
+    const String::SubString& id,
     const Generics::Time& timestamp,
     const String::SubString& user_id) noexcept;
 
@@ -135,7 +135,7 @@ private:
     const Generics::Time& time);
 
   GetUserIdRequestPtr create_get_user_id_request(
-    const String::SubString& external_id,
+    const String::SubString& id,
     const AdServer::Commons::UserId& current_user_id,
     const Generics::Time& timestamp,
     const Generics::Time& create_timestamp,
@@ -144,7 +144,7 @@ private:
     const bool for_set_cookie);
 
   AddUserIdRequestPtr create_add_user_id_request(
-    const String::SubString& external_id,
+    const String::SubString& id,
     const Generics::Time& timestamp,
     const String::SubString& user_id);
 

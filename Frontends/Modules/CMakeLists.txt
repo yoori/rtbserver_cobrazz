@@ -1,5 +1,6 @@
 ADD_SUBDIRECTORY(ActionFrontend)
 ADD_SUBDIRECTORY(AdFrontend)
+ADD_SUBDIRECTORY(AdFrontendGrpc)
 ADD_SUBDIRECTORY(AdInstFrontend)
 ADD_SUBDIRECTORY(BiddingFrontend)
 ADD_SUBDIRECTORY(BiddingFrontendGrpc)

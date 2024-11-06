@@ -471,9 +471,11 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-
     </xsd:sequence>
 
+    <xsd:attribute name="grpc_enable"
+      type="xsd:boolean"
+      use="required"/>
     <xsd:attribute name="session_timeout" type="xsd:positiveInteger" use="required">
        <xsd:annotation>
          <xsd:documentation>

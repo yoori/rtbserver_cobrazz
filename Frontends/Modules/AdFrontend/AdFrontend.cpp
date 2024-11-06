@@ -961,7 +961,7 @@ namespace AdServer
 
       merge_success = false;
 
-      bool merge_temp = request_info.merge_persistent_client_id.is_null();
+      const bool merge_temp = request_info.merge_persistent_client_id.is_null();
 
       CORBACommons::UserIdInfo merged_uid_info = merge_temp ?
         CorbaAlgs::pack_user_id(request_info.temp_client_id) :
