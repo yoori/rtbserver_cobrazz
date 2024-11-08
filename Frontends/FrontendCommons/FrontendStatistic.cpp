@@ -19,8 +19,7 @@ namespace
       Generics::Planner* planner,
       Generics::TaskRunner* task_runner,
       const Generics::Time& update_period,
-      AdServer::FrontendStat& stats_values)
-      noexcept
+      AdServer::FrontendStat& stats_values) noexcept
       : Generics::GoalTask(planner, task_runner),
         logger_(ReferenceCounting::add_ref(logger)),
         update_period_(update_period),
@@ -129,5 +128,4 @@ namespace AdServer
       throw Exception(ostr);
     }
   }
-
 }

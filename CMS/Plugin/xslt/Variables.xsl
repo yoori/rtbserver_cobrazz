@@ -314,6 +314,8 @@
 <xsl:variable name="def-bidding-grpc-enable" select="'true'"/>
 <xsl:variable name="def-bidding-module-threads" select="'1000'"/>
 
+<xsl:variable name="def-ad-frontend-grpc-enable" select="'true'"/>
+
 <xsl:variable name="def-userbind-module-threads" select="'1000'"/>
 <xsl:variable name="def-userbind-module-match-threads" select="'100'"/>
 <xsl:variable name="def-userbind-module-match-task-limit" select="'1000'"/>

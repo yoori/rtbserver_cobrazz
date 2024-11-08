@@ -313,7 +313,7 @@ GrpcUserBindOperationDistributor::add_bind_request(
 
 GrpcUserBindOperationDistributor::GetUserIdRequestPtr
 GrpcUserBindOperationDistributor::create_get_user_id_request(
-  const String::SubString& external_id,
+  const String::SubString& id,
   const AdServer::Commons::UserId& current_user_id,
   const Generics::Time& timestamp,
   const Generics::Time& create_timestamp,
@@ -322,7 +322,7 @@ GrpcUserBindOperationDistributor::create_get_user_id_request(
   const bool for_set_cookie)
 {
   auto request = std::make_unique<GetUserIdRequest>();
-  request->set_id(external_id.data(), external_id.length());
+  request->set_id(id.data(), id.length());
   request->set_timestamp(GrpcAlgs::pack_time(timestamp));
   request->set_silent(silent);
   request->set_generate_user_id(generate_user_id);
@@ -335,7 +335,7 @@ GrpcUserBindOperationDistributor::create_get_user_id_request(
 
 GrpcUserBindOperationDistributor::GetUserIdResponsePtr
 GrpcUserBindOperationDistributor::get_user_id(
-  const String::SubString& external_id,
+  const String::SubString& id,
   const AdServer::Commons::UserId& current_user_id,
   const Generics::Time& timestamp,
   const Generics::Time& create_timestamp,
@@ -347,8 +347,8 @@ GrpcUserBindOperationDistributor::get_user_id(
     UserBindService_get_user_id_ClientPool,
     GetUserIdRequest,
     GetUserIdResponse>(
-      external_id,
-      external_id,
+      id,
+      id,
       current_user_id,
       timestamp,
       create_timestamp,
@@ -359,12 +359,12 @@ GrpcUserBindOperationDistributor::get_user_id(
 
 GrpcUserBindOperationDistributor::AddUserIdRequestPtr
 GrpcUserBindOperationDistributor::create_add_user_id_request(
-  const String::SubString& external_id,
+  const String::SubString& id,
   const Generics::Time& timestamp,
   const String::SubString& user_id)
 {
   auto request = std::make_unique<AddUserIdRequest>();
-  request->set_id(external_id.data(), external_id.length());
+  request->set_id(id.data(), id.length());
   request->set_user_id(user_id.data(), user_id.length());
   request->set_timestamp(GrpcAlgs::pack_time(timestamp));
 
@@ -373,7 +373,7 @@ GrpcUserBindOperationDistributor::create_add_user_id_request(
 
 GrpcUserBindOperationDistributor::AddUserIdResponsePtr
 GrpcUserBindOperationDistributor::add_user_id(
-  const String::SubString& external_id,
+  const String::SubString& id,
   const Generics::Time& timestamp,
   const String::SubString& user_id) noexcept
 {
@@ -381,8 +381,8 @@ GrpcUserBindOperationDistributor::add_user_id(
     UserBindService_add_user_id_ClientPool,
     AddUserIdRequest,
     AddUserIdResponse>(
-      external_id,
-      external_id,
+      id,
+      id,
       timestamp,
       user_id);
 }

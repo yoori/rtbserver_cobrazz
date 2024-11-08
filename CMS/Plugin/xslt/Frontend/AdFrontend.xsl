@@ -888,6 +888,9 @@
 
   <xsl:if test="not(count($request-module) = 0)">
     <cfg:AdFeConfiguration threads="1000" max_pending_tasks="100">
+      <xsl:attribute name="grpc_enable">
+        <xsl:value-of select="$def-ad-frontend-grpc-enable"/>
+      </xsl:attribute>
       <xsl:attribute name="ad_request_profiling">
         <xsl:choose>
           <xsl:when test="$colo-config/cfg:coloParams/@ad_request_profiling =

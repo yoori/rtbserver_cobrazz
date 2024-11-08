@@ -8,6 +8,7 @@ add_executable(HttpServer
 target_link_libraries(HttpServer
   ActionFrontend
   AdFrontend
+  AdFrontendGrpc
   AdInstFrontend
   AdServerCommonsXSD
   BidRateProvider

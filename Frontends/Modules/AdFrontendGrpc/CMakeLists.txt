@@ -1,0 +1,29 @@
+add_library(AdFrontendGrpc SHARED
+  AdFrontend.cpp
+  DebugSink.cpp
+  RequestInfoFiller.cpp
+)
+
+target_link_libraries(AdFrontendGrpc
+  BidRateProvider
+  CORBACommons
+  CTRProvider
+  CampaignConfig
+  CampaignConfigSource
+  CampaignIndex
+  CampaignManagerLogger
+  CommonModule
+  Commons
+  CookieManager
+  CreativeTemplateArgs
+  ExpressionChannelIndex
+  FeConfigXSD
+  FrontendStatistic
+  Geoip
+  HTTP
+  Polyglot
+  ProcessingTemplates
+  RequestMatchers
+  SecToken
+  Stream
+)
