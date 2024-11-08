@@ -1,6 +1,0 @@
-@urlmatcherperformancetestexe_deps@
-
-target := UrlMatcherPerformanceTest
-sources := UrlMatcherPerformanceTest.cpp
-
-include $(top_srcdir)/tests/Test.post.rules

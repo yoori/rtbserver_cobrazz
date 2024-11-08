@@ -1,8 +1,0 @@
-@levelcheckutilexe_deps@
-
-sources := LevelCheckUtil.cpp
-
-target := LevelCheckUtil
-test_arguments := -p $$TEST_TMP_DIR
-
-@levelcheckutilexe_post@

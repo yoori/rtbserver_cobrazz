@@ -1,6 +1,0 @@
-name="HashFilter"
-so_files=HashFilter
-
-osbe_cxx_dep ReferenceCounting
-osbe_cxx_dep ExceptionHandling
-osbe_cxx_dep Sync

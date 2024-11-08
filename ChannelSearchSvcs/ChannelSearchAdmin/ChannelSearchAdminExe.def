@@ -1,8 +1,0 @@
-osbe_cxx_dep ExceptionHandling
-osbe_cxx_dep Generics
-osbe_cxx_dep Logger
-osbe_cxx_dep Commons
-osbe_cxx_dep UtilCommons
-osbe_ccx_dep ChannelControllerStubs
-osbe_cxx_dep ChannelSearchService
-osbe_cxx_dep ChannelSessionFactory

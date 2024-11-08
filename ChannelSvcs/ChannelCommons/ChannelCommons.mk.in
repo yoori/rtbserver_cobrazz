@@ -1,8 +1,0 @@
-@channelcommons_deps@
-sources  := ChannelUtils.cpp ChannelUpdateStatLogger.cpp TriggerParser.cpp 
-
-corba_stub_idls := ChannelCommons.idl
-corba_idl_includes := .
-
-@channelcommons_post@
-

@@ -1,5 +1,0 @@
-name="DMPProfilingInfo"
-so_files=DMPProfilingInfo
-
-osbe_cxx_dep ReferenceCounting
-osbe_cxx_dep ExceptionHandling

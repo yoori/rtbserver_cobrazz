@@ -1,7 +1,0 @@
-@userinfoexchangerproxyconfig_deps@
-sources := 
-includes := .
-xsd_files := UserInfoExchangerProxyConfig.xsd
-xsd_includes := xsd
-
-@userinfoexchangerproxyconfig_post@

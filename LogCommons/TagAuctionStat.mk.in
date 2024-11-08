@@ -1,6 +1,0 @@
-@tagauctionstat_deps@
-sources := TagAuctionStat.cpp
-
-includes := .
-@tagauctionstat_post@
-

@@ -1,6 +1,0 @@
-@channelperformance_deps@
-sources := ChannelPerformance.cpp
-
-includes := .
-@channelperformance_post@
-

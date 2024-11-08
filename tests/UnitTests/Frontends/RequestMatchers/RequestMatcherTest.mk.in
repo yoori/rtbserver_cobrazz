@@ -1,6 +1,0 @@
-@requestmatchertestexe_deps@
-
-target := RequestMatcherTest
-sources := RequestMatcherTest.cpp
-
-include $(top_srcdir)/tests/Test.post.rules

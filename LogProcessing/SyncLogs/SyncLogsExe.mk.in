@@ -1,9 +1,0 @@
-@synclogsexe_deps@
-sources  := \
-  SyncLogsImpl.cpp \
-  SyncLogsMain.cpp
-
-target   := SyncLogs
-includes := .
-
-@synclogsexe_post@

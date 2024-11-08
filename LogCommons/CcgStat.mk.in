@@ -1,6 +1,0 @@
-@ccgstat_deps@
-sources := CcgStat.cpp
-
-includes := .
-@ccgstat_post@
-

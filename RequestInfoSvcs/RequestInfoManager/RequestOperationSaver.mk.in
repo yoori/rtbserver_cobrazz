@@ -1,7 +1,0 @@
-@requestoperationsaver_deps@
-
-sources := RequestOperationSaver.cpp
-
-include $(top_builddir)/Plain/Plain.post.rules
-
-@requestoperationsaver_post@

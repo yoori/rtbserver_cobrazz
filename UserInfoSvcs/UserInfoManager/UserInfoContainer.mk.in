@@ -1,8 +1,0 @@
-@userinfocontainer_deps@
-
-sources := \
-  UserInfoContainer.cpp \
-  UserOperationLoader.cpp \
-  UserOperationSaver.cpp
-
-@userinfocontainer_post@

@@ -1,6 +1,0 @@
-@uidchannelsnapshot_deps@
-
-sources := \
-  UidChannelSnapshot.cpp \
-
-@uidchannelsnapshot_post@

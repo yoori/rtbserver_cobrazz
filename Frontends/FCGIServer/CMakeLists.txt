@@ -9,6 +9,7 @@ add_executable(FCGIServer
 target_link_libraries(FCGIServer
   ActionFrontend
   AdFrontend
+  AdFrontendGrpc
   AdInstFrontend
   AdServerCommonsXSD
   BidRateProvider

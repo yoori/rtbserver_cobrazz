@@ -1,6 +1,0 @@
-@google_deps@
-
-protobuf_sources := \
-  google-bidding.proto
-
-@google_post@

@@ -1,8 +1,0 @@
-@expireprofilemapserializetestexe_deps@
-
-sources := ExpireProfileMapSerializeTest.cpp
-target := ExpireProfileMapSerializeTest
-test_arguments := -p $$TEST_TMP_DIR
-vg_test_arguments := -p $$TEST_TMP_DIR
-
-include $(top_srcdir)/tests/Test.post.rules

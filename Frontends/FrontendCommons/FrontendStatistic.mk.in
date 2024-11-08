@@ -1,7 +1,0 @@
-@frontendstatistic_deps@
-
-sources := FrontendStatistic.cpp
-
-includes :=
-
-@frontendstatistic_post@

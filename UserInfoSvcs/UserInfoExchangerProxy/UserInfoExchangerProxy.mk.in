@@ -1,9 +1,0 @@
-@userinfoexchangerproxyexe_deps@
-
-sources := \
-  UserInfoExchangerProxyMain.cpp \
-  UserInfoExchangerProxyImpl.cpp 
-
-target := UserInfoExchangerProxy
-
-@userinfoexchangerproxyexe_post@

@@ -1,6 +1,0 @@
-@profilingcommons_deps@
-
-sources :=
-includes := .
-
-@profilingcommons_post@

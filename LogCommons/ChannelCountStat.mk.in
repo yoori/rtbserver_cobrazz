@@ -1,5 +1,0 @@
-@channelcountstat_deps@
-sources := ChannelCountStat.cpp
-
-includes := .
-@channelcountstat_post@

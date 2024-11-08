@@ -1,3 +1,0 @@
-name="TagAuctionStat"
-so_files=TagAuctionStat
-osbe_cxx_dep LogCommons

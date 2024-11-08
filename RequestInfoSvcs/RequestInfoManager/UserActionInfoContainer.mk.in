@@ -1,4 +1,0 @@
-@useractioninfocontainer_deps@
-sources := UserActionInfoContainer.cpp
-
-@useractioninfocontainer_post@

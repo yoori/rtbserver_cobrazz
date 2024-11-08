@@ -1,6 +1,0 @@
-name="FCGI"
-so_files=FCGI
-
-osbe_cxx_dep Commons
-osbe_cxx_dep Stream
-osbe_cxx_dep FeConfig

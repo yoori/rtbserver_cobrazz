@@ -1,8 +1,0 @@
-@decodetanxpriceexe_deps@
-sources := DecodeTanxPrice.cpp
-
-includes := .
-
-target := DecodeTanxPrice
-@decodetanxpriceexe_post@
-

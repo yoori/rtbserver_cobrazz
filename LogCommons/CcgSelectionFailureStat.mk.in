@@ -1,6 +1,0 @@
-@ccgselectionfailurestat_deps@
-sources := CcgSelectionFailureStat.cpp
-
-includes := .
-@ccgselectionfailurestat_post@
-

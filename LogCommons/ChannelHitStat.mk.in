@@ -1,6 +1,0 @@
-@channelhitstat_deps@
-sources := ChannelHitStat.cpp
-
-includes := .
-@channelhitstat_post@
-

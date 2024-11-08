@@ -1,6 +1,0 @@
-@passbackstat_deps@
-sources := PassbackStat.cpp
-
-includes := .
-@passbackstat_post@
-

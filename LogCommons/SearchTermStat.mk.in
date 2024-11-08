@@ -1,6 +1,0 @@
-@searchtermstat_deps@
-sources := SearchTermStat.cpp
-
-includes := .
-@searchtermstat_post@
-

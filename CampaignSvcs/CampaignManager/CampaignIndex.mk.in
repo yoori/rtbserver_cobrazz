@@ -1,6 +1,0 @@
-@campaignindex_deps@
-
-sources := CampaignIndex.cpp GeoChannelIndex.cpp
-target := CampaignIndex
-
-@campaignindex_post@

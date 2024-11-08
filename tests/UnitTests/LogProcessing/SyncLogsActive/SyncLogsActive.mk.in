@@ -1,6 +1,0 @@
-@synclogsactivetestexe_deps@
-
-sources := SyncLogsActive.cpp
-target := SyncLogsActiveTest
-
-include $(top_srcdir)/tests/Test.post.rules

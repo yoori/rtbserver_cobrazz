@@ -1,6 +1,0 @@
-@researchwebstat_deps@
-sources := ResearchWebStat.cpp
-
-includes := .
-@researchwebstat_post@
-

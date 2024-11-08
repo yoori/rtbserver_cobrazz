@@ -1,6 +1,0 @@
-@request_deps@
-sources := Request.cpp
-
-includes := .
-@request_post@
-

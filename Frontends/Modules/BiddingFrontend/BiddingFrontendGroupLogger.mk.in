@@ -1,5 +1,0 @@
-@biddingfrontendgrouplogger_deps@
-
-includes := Frontends/NginxModules
-
-@biddingfrontendgrouplogger_post@

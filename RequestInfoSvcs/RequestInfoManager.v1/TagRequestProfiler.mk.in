@@ -1,4 +1,0 @@
-@tagrequestprofiler_deps@
-sources := TagRequestProfiler.cpp
-
-@tagrequestprofiler_post@

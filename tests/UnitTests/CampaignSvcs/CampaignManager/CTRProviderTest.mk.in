@@ -1,6 +1,0 @@
-@ctrprovidertestexe_deps@
-
-sources := CTRProviderTest.cpp
-target := CTRProviderTest
-
-include $(top_srcdir)/tests/Test.post.rules

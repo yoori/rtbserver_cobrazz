@@ -1,5 +1,0 @@
-name="StatsCollectorSkel"
-so_files=StatsCollectorSkel
-osbe_cxx_feature_dep CORBA
-osbe_cxx_dep CORBACommons
-osbe_cxx_dep StatsCollectorStub

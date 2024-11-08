@@ -1,7 +1,0 @@
-@userinfoclustercontrolstubs_deps@
-
-corba_stub_idls := UserInfoClusterControl.idl
-corba_includes := .
-corba_idl_includes := .
-
-@userinfoclustercontrolstubs_post@

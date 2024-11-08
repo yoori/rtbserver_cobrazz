@@ -1,6 +1,0 @@
-@pageloadsdailystat_deps@
-sources := PageLoadsDailyStat.cpp
-
-includes := .
-@pageloadsdailystat_post@
-
