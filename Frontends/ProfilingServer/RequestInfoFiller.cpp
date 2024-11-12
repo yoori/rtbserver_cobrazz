@@ -1,96 +1,57 @@
-#include <algorithm>
+// STD
 #include <functional>
 #include <math.h>
-#include <String/AsciiStringManip.hpp>
-#include <String/UTF8Case.hpp>
+
+// UNIXCOMMONS
+#include <Generics/Hash.hpp>
+#include <HTTP/UrlAddress.hpp>
 #include <String/AsciiStringManip.hpp>
 #include <String/StringManip.hpp>
-#include <Generics/Rand.hpp>
-#include <HTTP/UrlAddress.hpp>
+#include <String/UTF8Case.hpp>
 
+// THIS
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserInfoManip.hpp>
-#include <Commons/CorbaAlgs.hpp>
-
 #include <Frontends/ProfilingServer/DMPProfilingInfo.hpp>
-
-#include "RequestInfoFiller.hpp"
-#include <Generics/Hash.hpp>
+#include <Frontends/ProfilingServer/RequestInfoFiller.hpp>
 
 namespace
 {
   const std::string AES_SOURCE_MARKER("bl2");
 }
 
-namespace AdServer
-{
-namespace Profiling
+namespace AdServer::Profiling
 {
   namespace
   {
-    template<typename Cont>
-    void
-    copy_channels(
-      const Cont& src,
-      AdServer::ChannelSvcs::ChannelServerBase::ChannelAtomSeq& dst)
-      /*throw(eh::Exception)*/
-    {
-      dst.length(src.size());
-      std::size_t i = 0;
-
-      for(auto it = src.begin(); it != src.end(); ++it, ++i)
-      {
-        dst[i].id = (*it).channel_id();
-        dst[i].trigger_channel_id = (*it).channel_trigger_id();
-      }
-    }
-
-    template<typename Cont>
-    void
-    copy_channels(
-      const Cont& src,
-      AdServer::ChannelSvcs::ChannelServerBase::ContentChannelAtomSeq& dst)
-      /*throw(eh::Exception)*/
-    {
-      dst.length(src.size());
-      std::size_t i = 0;
-
-      for(auto it = src.begin(); it != src.end(); ++it, ++i)
-      {
-        dst[i].id = (*it).channel_id();
-        dst[i].weight = (*it).weight();
-      }
-    }
-
-    std::string
-    norm_coord(
+    std::string norm_coord(
       const AdServer::CampaignSvcs::CoordDecimal& coord,
-      int precision) noexcept
+      const int precision) noexcept
     {
       AdServer::CampaignSvcs::CoordDecimal coord_floor = coord;
       coord_floor.floor(precision);
       std::string coord_str = coord_floor.str();
 
       std::size_t dot_pos = coord_str.find('.');
-      if(dot_pos != std::string::npos)
+      if (dot_pos != std::string::npos)
       {
-        int addition_size = precision - (coord_str.size() - dot_pos);
-        if(addition_size > 0)
+        const int addition_size = precision - (coord_str.size() - dot_pos);
+        if (addition_size > 0)
         {
           coord_str += std::string(
             static_cast<std::size_t>(addition_size), '0');
         }
       }
-      else if(precision > 0)
+      else if (precision > 0)
       {
         coord_str += '.';
         coord_str += std::string(
           static_cast<std::size_t>(precision), '0');
       }
 
-      for(auto it = coord_str.begin(); it != coord_str.end(); ++it)
+      for (auto it = coord_str.begin(); it != coord_str.end(); ++it)
       {
-        if(*it == '.')
+        if (*it == '.')
         {
           *it = 'd';
           break;
@@ -100,12 +61,11 @@ namespace Profiling
       return coord_str;
     }
 
-    std::string
-    generate_coord_keyword(
+    std::string generate_coord_keyword(
       const AdServer::CampaignSvcs::CoordDecimal& latitude,
       const AdServer::CampaignSvcs::CoordDecimal& longitude,
-      int lat_precision,
-      int long_precision,
+      const int lat_precision,
+      const int long_precision,
       const String::SubString& precision_str) noexcept
     {
       std::string lat_part = norm_coord(latitude, lat_precision);
@@ -117,10 +77,10 @@ namespace Profiling
 
     String::AsciiStringManip::CharCategory SEP_PERIOD_CATEGORY(".");
 
-    struct GeoPrecision
+    struct GeoPrecision final
     {
       GeoPrecision(
-        unsigned long precision_val)
+        const unsigned long precision_val)
         : precision(precision_val)
       {
         std::ostringstream ostr;
@@ -142,11 +102,10 @@ namespace Profiling
   // RequestInfoFiller
   RequestInfoFiller::RequestInfoFiller(
     Logging::Logger* logger,
-    unsigned long colo_id,
+    const unsigned long colo_id,
     const ExternalUserIdSet& skip_external_ids,
     const String::SubString& bind_url_suffix,
-    bool debug_on)
-    /*throw(eh::Exception)*/
+    const bool debug_on)
     : logger_(ReferenceCounting::add_ref(logger)),
       colo_id_(colo_id),
       skip_external_ids_(skip_external_ids),
@@ -154,21 +113,19 @@ namespace Profiling
       debug_on_(debug_on)
   {}
 
-  typedef const String::AsciiStringManip::Char2Category<'/', '?'>
-    UrlParamMarkersCategory;
+  using UrlParamMarkersCategory =
+    const String::AsciiStringManip::Char2Category<'/', '?'>;
 
   namespace
   {
     UrlParamMarkersCategory URL_PARAM_MARKERS_SYMBOLS;
   }
 
-  void
-  RequestInfoFiller::fill_by_dmp_profiling_info(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+  void RequestInfoFiller::fill_by_dmp_profiling_info(
+    RequestParams& request_params,
     RequestInfo& request_info,
     const DMPProfilingInfoReader& dmp_profiling_info,
-    const Generics::Time& now)
-    noexcept
+    const Generics::Time& now) noexcept
   {
     // === Debug request info ===
 
@@ -177,7 +134,7 @@ namespace Profiling
 
     String::SubString url_substr(url);
 
-    bool debug_by_request_context =
+    const bool debug_by_request_context =
       debug_on_ ||
       ((URL_PARAM_MARKERS_SYMBOLS.find_owned(url_substr.begin(), url_substr.end()) != url_substr.end()) && // ignore requests without params (dns, ...)
       (
@@ -262,40 +219,35 @@ namespace Profiling
       ::strstr(url.c_str(), "googleaid=") != 0
       ));
 
-    if(debug_by_request_context)
+    if (debug_by_request_context)
     {
       Stream::Error ostr;
-      ostr << /*"Request:" << std::endl <<
-        "  version = " << dmp_profiling_info.version() << std::endl <<
-        "  time = " << dmp_profiling_info.time() << std::endl <<
-        "  source = " << dmp_profiling_info.source() << std::endl <<
-        */
-        "  external_user_id = " << dmp_profiling_info.external_user_id() << std::endl <<
-        //"  bind_user_ids = " << dmp_profiling_info.bind_user_ids() << std::endl <<
-        "  url = " << dmp_profiling_info.url() << std::endl
-        /* <<
-        "  keywords = " << dmp_profiling_info.keywords() << std::endl <<
-        "  longitude = " << dmp_profiling_info.longitude() << std::endl <<
-        "  latitude = " << dmp_profiling_info.latitude() << std::endl*/
-        ;
-      std::cerr << ostr.str() << std::endl;
+      ostr << "  external_user_id = "
+           << dmp_profiling_info.external_user_id()
+           << '\n'
+           << "  url = "
+           << dmp_profiling_info.url()
+           << '\n';
+      std::cerr << ostr.str();
     }
 
     // === Debug bind user ids ===
 
-    if(dmp_profiling_info.bind_user_ids()[0])
+    if (dmp_profiling_info.bind_user_ids()[0])
     {
       Stream::Error ostr;
-      ostr << "Request:" << std::endl <<
-        "  bind_user_ids = " << dmp_profiling_info.bind_user_ids() << std::endl;
-      std::cerr << ostr.str() << std::endl;
+      ostr << "Request:"
+           << '\n'
+           << "  bind_user_ids = "
+           << dmp_profiling_info.bind_user_ids();
+      std::cerr << ostr.str();
     }
 
     // fill request info
     std::string original_bind_user_id = dmp_profiling_info.bind_user_ids();
     std::optional<HTTP::BrowserAddress> referer;
 
-    if(dmp_profiling_info.url()[0])
+    if (dmp_profiling_info.url()[0])
     {
       try
       {
@@ -308,7 +260,8 @@ namespace Profiling
             referer = HTTP::BrowserAddress(String::SubString(dmp_profiling_info.url() + 1));
           }
           catch(const eh::Exception&)
-          {}
+          {
+          }
 
           if(!referer)
           {
@@ -318,15 +271,15 @@ namespace Profiling
             referer = HTTP::BrowserAddress(use_url);
           }
 
-          request_params.common_info.referer << referer->url();
+          request_params.common_info.referer = referer->url();
         }
         else
         {
           referer = HTTP::BrowserAddress(String::SubString(dmp_profiling_info.url()));
-          request_params.common_info.referer << referer->url();
+          request_params.common_info.referer = referer->url();
         }
 
-        if(!request_info.keywords.empty())
+        if (!request_info.keywords.empty())
         {
           request_info.keywords += '\n';
         }
@@ -334,19 +287,19 @@ namespace Profiling
         clickstream_kw += '\n';
         request_info.keywords += clickstream_kw;
       }
-      catch(const eh::Exception&)
+      catch (const eh::Exception&)
       {
         // ignore invalid referer value
       }
     }
 
     // unpack bind key from referer if it have required suffix (bind_url_suffix_)
-    if(original_bind_user_id.empty())
+    if (original_bind_user_id.empty())
     {
       const String::SubString host = referer ?
         referer->host() : String::SubString();
 
-      if(bind_url_suffix_.size() < host.size() &&
+      if (bind_url_suffix_.size() < host.size() &&
         host.compare(
           host.size() - bind_url_suffix_.size(),
           bind_url_suffix_.size(),
@@ -357,10 +310,10 @@ namespace Profiling
         //
         String::SubString::SizeType id_block_end_pos = 0;
 
-        while((id_block_end_pos = host.find('.', id_block_end_pos)) !=
+        while ((id_block_end_pos = host.find('.', id_block_end_pos)) !=
           String::SubString::NPOS)
         {
-          if(id_block_end_pos + 1 >= host.size() ||
+          if (id_block_end_pos + 1 >= host.size() ||
             host[id_block_end_pos + 1] != 'x')
           {
             // skip part after first domain without x prefix (query too)
@@ -386,7 +339,7 @@ namespace Profiling
 
     {
       auto sep_pos = request_source.find('/');
-      if(sep_pos != std::string::npos)
+      if (sep_pos != std::string::npos)
       {
         request_source.resize(sep_pos);
       }
@@ -396,13 +349,13 @@ namespace Profiling
     prof_add += request_source;
     prof_add += "prof";
 
-    if(!request_source.empty())
+    if (!request_source.empty())
     {
       prof_add += '\n';
       prof_add += "poadprof";
     }
 
-    if(!request_info.keywords.empty())
+    if (!request_info.keywords.empty())
     {
       request_info.keywords += '\n';
       std::string bln_segment_kw("poadblnsegment");
@@ -412,7 +365,7 @@ namespace Profiling
 
     request_info.keywords += prof_add;
 
-    if(dmp_profiling_info.external_user_id()[0])
+    if (dmp_profiling_info.external_user_id()[0])
     {
       // split user ids
       split_external_user_id_(
@@ -421,14 +374,9 @@ namespace Profiling
         String::SubString(dmp_profiling_info.external_user_id()),
         request_source,
         AES_SOURCE_MARKER);
-
-      /*
-      request_info.bind_user_ids.push_back(
-        request_source + "/" + dmp_profiling_info.external_user_id());
-      */
     }
 
-    if(!original_bind_user_id.empty() && original_bind_user_id[0] == 'r')
+    if (!original_bind_user_id.empty() && original_bind_user_id[0] == 'r')
     {
       request_info.bind_request_id = original_bind_user_id;
     }
@@ -439,12 +387,12 @@ namespace Profiling
         original_bind_user_id);
     }
 
-    if(!request_info.bind_user_ids.empty())
+    if (!request_info.bind_user_ids.empty())
     {
       std::string bind_source_kw;
 
       auto it = request_info.bind_user_ids.begin();
-      if(it != request_info.bind_user_ids.end())
+      if (it != request_info.bind_user_ids.end())
       {
         for(++it; it != request_info.bind_user_ids.end(); ++it)
         {
@@ -463,13 +411,13 @@ namespace Profiling
         bind_add += bind_source_kw;
         bind_add += "bind";
 
-        if(!bind_source_kw.empty())
+        if (!bind_source_kw.empty())
         {
           bind_add += '\n';
           bind_add += "poadbind";
         }
         
-        if(!request_info.keywords.empty())
+        if (!request_info.keywords.empty())
         {
           request_info.keywords += '\n';
         }
@@ -478,7 +426,7 @@ namespace Profiling
       }
     }
 
-    if(dmp_profiling_info.longitude() != 0 || dmp_profiling_info.latitude() != 0)
+    if (dmp_profiling_info.longitude() != 0 || dmp_profiling_info.latitude() != 0)
     {
       try
       {
@@ -504,14 +452,15 @@ namespace Profiling
 
         request_info.coord_location.swap(coord_location);
       }
-      catch(const eh::Exception&)
-      {}
-
-      if(request_info.coord_location.in())
+      catch (const eh::Exception&)
       {
-        for(unsigned long precision_i = 0;
-          precision_i < sizeof(GET_PRECISIONS) / sizeof(GET_PRECISIONS[0]);
-          ++precision_i)
+      }
+
+      if (request_info.coord_location.in())
+      {
+        for (unsigned long precision_i = 0;
+             precision_i < sizeof(GET_PRECISIONS) / sizeof(GET_PRECISIONS[0]);
+             ++precision_i)
         {
           const std::string keyword = generate_coord_keyword(
             request_info.coord_location->latitude,
@@ -520,7 +469,7 @@ namespace Profiling
             GET_PRECISIONS[precision_i].precision,
             GET_PRECISIONS[precision_i].precision_str);
 
-          if(!request_info.keywords.empty())
+          if (!request_info.keywords.empty())
           {
             request_info.keywords += '\n';
           }
@@ -540,45 +489,38 @@ namespace Profiling
     request_params.profiling_type = AdServer::CampaignSvcs::PT_PROFILING_INFO;
     request_params.context_info.enabled_notice = false;
     request_params.context_info.profile_referer = false;
-    // request_params.common_info.signed_user_id; // TO CHECK
-
     request_params.common_info.user_status = AdServer::CampaignSvcs::US_UNDEFINED;
-    request_params.common_info.user_id = CorbaAlgs::pack_user_id(AdServer::Commons::UserId());
-
+    request_params.common_info.user_id = AdServer::Commons::UserId();
     request_params.common_info.track_user_id = request_params.common_info.user_id;
     request_params.common_info.test_request = false;
     request_params.common_info.colo_id = colo_id_;
-
-    request_params.common_info.time = CorbaAlgs::pack_time(now);
-    //request_params.context_info.time = CorbaAlgs::pack_time(Generics::Time(dmp_profiling_info.time()));
+    request_params.common_info.time = now;
     request_params.common_info.set_cookie = false;
   }
 
-  void
-  RequestInfoFiller::split_external_user_id_(
+  void RequestInfoFiller::split_external_user_id_(
     AdServer::Commons::ExternalUserIdArray& bind_user_ids,
     std::string& cohort2,
     const String::SubString& external_user_id,
     const String::SubString& primary_source,
-    const String::SubString& secondary_source)
-    noexcept
+    const String::SubString& secondary_source) noexcept
   {
     String::SubString::SizeType id_block_begin_pos = 0;
     String::SubString::SizeType id_block_end_pos = 0;
     unsigned int block_index = 0;
 
-    while((id_block_end_pos = external_user_id.find(';', id_block_begin_pos)) !=
+    while ((id_block_end_pos = external_user_id.find(';', id_block_begin_pos)) !=
       String::SubString::NPOS)
     {
       String::SubString block(
         external_user_id.begin() + id_block_begin_pos,
         external_user_id.begin() + id_block_end_pos);
 
-      if(!block.empty())
+      if (!block.empty())
       {
-        if(block.find('/') == String::SubString::NPOS)
+        if (block.find('/') == String::SubString::NPOS)
         {
-          if(block_index == 0 || block.size() < 50) // temporary fix for second 64 symbol id
+          if (block_index == 0 || block.size() < 50) // temporary fix for second 64 symbol id
           {
             bind_user_ids.push_back(
               (block_index == 0 ? primary_source : secondary_source).str() + "/" + block.str());
@@ -600,10 +542,9 @@ namespace Profiling
     }
 
     String::SubString block = external_user_id.substr(id_block_begin_pos);
-
-    if(!block.empty())
+    if (!block.empty())
     {
-      if(block.find('/') == String::SubString::NPOS)
+      if (block.find('/') == String::SubString::NPOS)
       {
         bind_user_ids.push_back(
           (block_index == 0 ? primary_source : secondary_source).str() + "/" + block.str());
@@ -614,5 +555,4 @@ namespace Profiling
       }
     }
   }
-}
-}
+} // namespace AdServer::Profiling

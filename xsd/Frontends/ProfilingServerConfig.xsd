@@ -93,21 +93,21 @@
         minOccurs="1"
         maxOccurs="1"/>
 
-      <xsd:element name="ChannelServerEndpointList"
-        type="EndpointListType"/>
-
-      <xsd:element name="CampaignManagerEndpointList"
-        type="EndpointListType"/>
-
       <xsd:element name="ChannelGrpcClientPool"
         type="GrpcClientPoolType"
         minOccurs="1"
         maxOccurs="1"/>
 
+      <xsd:element name="ChannelServerEndpointList"
+        type="EndpointListType"/>
+
       <xsd:element name="CampaignGrpcClientPool"
         type="GrpcClientPoolType"
         minOccurs="1"
         maxOccurs="1"/>
+
+      <xsd:element name="CampaignManagerEndpointList"
+        type="EndpointListType"/>
 
       <xsd:element name="UserBindGrpcClientPool"
         type="GrpcClientPoolType"

@@ -25,7 +25,6 @@ target_link_libraries(ProfilingServer
   CampaignConfig
   CampaignConfigSource
   CampaignIndex
-  CampaignManagerIDL
   CampaignManagerLogger
   Commons
   CreativeTemplateArgs
@@ -39,9 +38,6 @@ target_link_libraries(ProfilingServer
   ProfilingServerConfigXSD
   RequestMatchers
   SecToken
-  UserInfoClusterControlIDL
-  UserInfoManagerControllerIDL
-  UserInfoManagerControllerL
   UtilCommons
   XMLUtility
   zmq
