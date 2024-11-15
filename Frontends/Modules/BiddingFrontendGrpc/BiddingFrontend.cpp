@@ -1019,8 +1019,6 @@ namespace AdServer::Bidding::Grpc
     {
       try
       {
-        auto& grpc_channel_operation_pool = grpc_container_->grpc_channel_operation_pool;
-
         std::string first_url_words;
         try
         {
@@ -1075,19 +1073,15 @@ namespace AdServer::Bidding::Grpc
           }
         }
 
-        std::string pwords;
-        if (keywords)
-        {
-          pwords = keywords;
-        }
-
+        const auto& grpc_channel_operation_pool =
+          grpc_container_->grpc_channel_operation_pool;
         auto response = grpc_channel_operation_pool->match(
           {},                                        // request_id
           request_params.common_info.referer,        // first_url
           first_url_words,                           // first_url_words
           urls,                                      // urls
           urls_words,                                // urls_words
-          pwords,                                    // pwords
+          keywords,                                  // pwords
           request_info.search_words,                 // swords
           GrpcAlgs::pack_user_id(user_id),           // uid
           {'A', '\0'},                               // statuses
@@ -1177,7 +1171,6 @@ namespace AdServer::Bidding::Grpc
       {
         Stream::Error stream;
         stream << FNS
-               << "Caught ChannelServerSessionPool::Exception: "
                << exc.what();
         logger()->log(stream.str(),
           Logging::Logger::EMERGENCY,
@@ -1370,9 +1363,8 @@ namespace AdServer::Bidding::Grpc
 
       if (trigger_match_result)
       {
-        auto* history_matched_channels = history_match_result->mutable_channels();
         const auto& content_channels = trigger_match_result->content_channels();
-
+        auto* history_matched_channels = history_match_result->mutable_channels();
         history_matched_channels->Reserve(content_channels.size());
         for (const auto& content_channel : content_channels)
         {

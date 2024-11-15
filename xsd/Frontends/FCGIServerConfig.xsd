@@ -31,10 +31,10 @@
       <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="Coroutine" type="CoroutineType"/>
       <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
-      <xsd:element name="ChannelServerEndpointList" type="EndpointListType"/>
-      <xsd:element name="CampaignManagerEndpointList" type="EndpointListType"/>
       <xsd:element name="ChannelGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="ChannelServerEndpointList" type="EndpointListType"/>
       <xsd:element name="CampaignGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="CampaignManagerEndpointList" type="EndpointListType"/>
       <xsd:element name="UserBindGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
       <xsd:element name="UserInfoGrpcClientPool" type="GrpcClientPoolType" minOccurs="1" maxOccurs="1"/>
     </xsd:sequence>

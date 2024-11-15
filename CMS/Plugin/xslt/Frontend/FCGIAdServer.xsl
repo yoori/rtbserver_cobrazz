@@ -147,7 +147,7 @@
       num_channels="{$grpc-pool-client-num-channels}"
       num_clients="{$grpc-pool-client-num-clients}"
       timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
+      enable="true">
       <xsl:call-template name="GrpcClientChannelArgList"/>
     </cfg:ChannelGrpcClientPool>
 
@@ -168,7 +168,7 @@
       num_channels="{$grpc-pool-client-num-channels}"
       num_clients="{$grpc-pool-client-num-clients}"
       timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
+      enable="true">
       <xsl:call-template name="GrpcClientChannelArgList"/>
     </cfg:CampaignGrpcClientPool>
 
@@ -186,7 +186,7 @@
       num_channels="{$grpc-pool-client-num-channels}"
       num_clients="{$grpc-pool-client-num-clients}"
       timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
+      enable="true">
       <xsl:call-template name="GrpcClientChannelArgList"/>
     </cfg:UserBindGrpcClientPool>
 
@@ -194,7 +194,7 @@
       num_channels="{$grpc-pool-client-num-channels}"
       num_clients="{$grpc-pool-client-num-clients}"
       timeout="{$grpc-pool-client-timeout}"
-      enable="{$grpc-pool-client-enable}">
+      enable="true">
       <xsl:call-template name="GrpcClientChannelArgList"/>
     </cfg:UserInfoGrpcClientPool>
 
