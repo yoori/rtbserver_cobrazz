@@ -24,21 +24,23 @@ namespace UserInfoSvcs
   // UserBindContainer
   UserBindContainer::UserBindContainer(
     Logging::Logger* logger,
-    unsigned long common_chunks_number,
+    const ExpireTime seen_default_expire_time,
+    const ExpireTime bound_default_expire_time,
+    const ListSourceExpireTime& bound_list_source_expire_time,
+    const unsigned long common_chunks_number,
     const ChunkPathMap& chunk_folders,
     const char* file_prefix,
     const char* bound_file_prefix,
     const Generics::Time& extend_time_period,
     const Generics::Time& bound_extend_time_period,
     const Generics::Time& min_age,
-    bool bind_at_min_age,
-    unsigned long max_bad_event,
-    unsigned long portions_number,
-    bool load_slave,
-    unsigned long partition_index, // instance partition number (first or second part of cluster)
-    unsigned long partitions_number,
+    const bool bind_at_min_age,
+    const unsigned long max_bad_event,
+    const unsigned long portions_number,
+    const bool load_slave,
+    const unsigned long partition_index, // instance partition number (first or second part of cluster)
+    const unsigned long partitions_number,
     const bool enable_two_layer_mode,
-    const std::uint16_t memory_days,
     const std::size_t rocksdb_number_threads,
     const rocksdb::CompactionStyle rocksdb_compaction_style,
     const std::uint32_t rocksdb_block_сache_size_mb,
@@ -58,7 +60,9 @@ namespace UserInfoSvcs
       {
         chunks_[chunk_it->first] = new UserBindTwoLayersChunk(
           logger,
-          memory_days,
+          seen_default_expire_time,
+          bound_default_expire_time,
+          bound_list_source_expire_time,
           chunk_it->second,
           file_prefix,
           bound_file_prefix,

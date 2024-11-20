@@ -7,7 +7,9 @@ namespace AdServer::UserInfoSvcs
 
 UserBindTwoLayersChunk::UserBindTwoLayersChunk(
   Logging::Logger* logger,
-  const std::uint16_t memory_days,
+  const ExpireTime seen_default_expire_time,
+  const ExpireTime bound_default_expire_time,
+  const ListSourceExpireTime& bound_list_source_expire_time,
   const std::string& directory,
   const std::string& seen_name,
   const std::string& bound_name,
@@ -23,6 +25,11 @@ UserBindTwoLayersChunk::UserBindTwoLayersChunk(
   const std::uint32_t rocksdb_block_сache_size_mb,
   const std::uint32_t rocksdb_ttl)
   : logger_(ReferenceCounting::add_ref(logger)),
+    sources_expire_times_(
+      new SourcesExpireTime(
+        seen_default_expire_time,
+        bound_default_expire_time,
+        bound_list_source_expire_time)),
     directory_(directory),
     seen_name_(seen_name),
     bound_name_(bound_name),
@@ -56,13 +63,13 @@ UserBindTwoLayersChunk::UserBindTwoLayersChunk(
     rocksdb_ttl,
     100,
     1000,
-    FilterDate{memory_days},
     std::move(load_filter));
 }
 
 void UserBindTwoLayersChunk::dump()
 {
-  portions_->save();
+  FilterSourceDate filter(sources_expire_times_);
+  portions_->save(filter);
 }
 
 void UserBindTwoLayersChunk::clear_expired(
@@ -106,6 +113,8 @@ UserBindTwoLayersChunk::add_user_id(
     external_id_suffix_hash);
   if (container)
   {
+    previous_user_info.reset_init_day();
+
     ResultHolder result_holder(
       false, // invalid_operation
       true); // user_found
@@ -196,7 +205,7 @@ UserBindTwoLayersChunk::get_user_id(
 
   BoundUserInfoHolder bound_user_info_holder;
 
-  if(get_user_id_bound(
+  if (get_user_id_bound(
     bound_user_info_holder,
     insert_into_bound,
     inserted,
@@ -230,7 +239,7 @@ UserBindTwoLayersChunk::get_user_id(
     for_set_cookie,
     base_time);
 
-  if(insert_into_bound)
+  if (insert_into_bound)
   {
     bound_user_info_holder.user_id =
       AdServer::Commons::UserId::create_random_based();
@@ -313,15 +322,13 @@ UserBindTwoLayersChunk::adapt_user_info(
 
 bool UserBindTwoLayersChunk::modify_at_get(
   SeenUserInfoHolder& user_info,
-  const Commons::UserId& current_user_id,
+  const Commons::UserId& /*current_user_id*/,
   const Generics::Time& now,
   const Generics::Time& base_time,
   const std::optional<Generics::Time> create_time,
-  const bool for_set_cookie,
+  const bool /*for_set_cookie*/,
   const bool silent) const noexcept
 {
-  user_info.reset_init_day();
-
   if (silent)
   {
     return false;
@@ -342,10 +349,8 @@ bool UserBindTwoLayersChunk::modify_at_get(
   const Commons::UserId& current_user_id,
   const Generics::Time& now,
   const bool for_set_cookie,
-  const bool silent) const noexcept
+  const bool /*silent*/) const noexcept
 {
-  user_info.reset_init_day();
-
   if (for_set_cookie)
   {
     if (user_info.flags & BoundUserInfoHolder::BF_SETCOOKIE)
@@ -468,6 +473,8 @@ bool UserBindTwoLayersChunk::get_user_id_bound(
     external_id_suffix);
   if (container)
   {
+    result_user_info.reset_init_day();
+
     found = true;
     insert_into_bound = modify_at_get(
       result_user_info,
@@ -524,7 +531,7 @@ bool UserBindTwoLayersChunk::get_user_id_bound(
 
 bool UserBindTwoLayersChunk::get_user_id_seen(
   SeenUserInfoHolder& result_user_info,
-  bool& insert_into_seen,
+  bool& insert_into_bound,
   bool& inserted,
   ResultHolder& result_holder,
   const PortionPtr& portion,
@@ -537,7 +544,7 @@ bool UserBindTwoLayersChunk::get_user_id_seen(
   const bool for_set_cookie,
   const Generics::Time& base_time)
 {
-  insert_into_seen = false;
+  insert_into_bound = false;
 
   // find user
   bool found = false;
@@ -548,8 +555,10 @@ bool UserBindTwoLayersChunk::get_user_id_seen(
     external_id);
   if (container)
   {
+    result_user_info.reset_init_day();
+
     found = true;
-    insert_into_seen = modify_at_get(
+    insert_into_bound = modify_at_get(
       result_user_info,
       current_user_id,
       now,
@@ -557,9 +566,9 @@ bool UserBindTwoLayersChunk::get_user_id_seen(
       {}, // create_time
       for_set_cookie,
       silent);
-    insert_after = !insert_into_seen;
+    insert_after = !insert_into_bound;
 
-    if(silent || !insert_into_seen)
+    if (silent || !insert_into_bound)
     {
       container->set(external_id, result_user_info);
       return prepare_result_at_get(
@@ -571,7 +580,7 @@ bool UserBindTwoLayersChunk::get_user_id_seen(
     container->erase(external_id);
   }
 
-  if(silent || !insert_after)
+  if (silent || !insert_after)
   {
     return false;
   }
@@ -589,7 +598,7 @@ bool UserBindTwoLayersChunk::get_user_id_seen(
     for_set_cookie,
     silent))
   {
-    insert_into_seen = true;
+    insert_into_bound = true;
     return false;
   }
 

@@ -12,8 +12,11 @@
 #include <Logger/StreamLogger.hpp>
 
 #define private public
+
 // THIS
 #include <UserInfoSvcs/UserBindServer/UserBindChunkTypes.hpp>
+#include <UserInfoSvcs/UserBindServer/UserBindChunk.hpp>
+#include <UserInfoSvcs/UserBindServer/UserBindChunkTwoLayers.hpp>
 #include <UserInfoSvcs/UserBindServer/Utils.hpp>
 
 using namespace AdServer::UserInfoSvcs;
@@ -375,8 +378,19 @@ TEST_F(SaveLoadTest, Test1)
     memory_seen_container->set(external_id2, seen_holder2);
     memory_seen_container->set(external_id3, seen_holder3);
 
-    memory_bound_container->save(file_bound_stream);
-    memory_seen_container->save(file_seen_stream);
+    GenericChunkFileHeader header(
+      ChunkFileHeader::name(),
+      ChunkFileHeader::current_version());
+
+    file_seen_stream << header;
+    file_bound_stream << header;
+
+    memory_bound_container->save(
+      file_bound_stream,
+      SourceFilterWrapper<FilterAlwaysTrue>{FilterAlwaysTrue{}, ""});
+    memory_seen_container->save(
+      file_seen_stream,
+      FilterAlwaysTrue{});
   }
 
   for (int i = 1; i <= 10; ++i)
@@ -426,7 +440,13 @@ TEST_F(SaveLoadTest, Test2)
 {
   {
     std::ofstream file_seen_stream(file_seen_path, std::ios::out | std::ios::trunc);
-    memory_seen_container->save(file_seen_stream);
+
+    GenericChunkFileHeader header(
+      ChunkFileHeader::name(),
+      ChunkFileHeader::current_version());
+    file_seen_stream << header;
+
+    memory_seen_container->save(file_seen_stream, FilterAlwaysTrue{});
   }
 
   {
@@ -438,7 +458,7 @@ TEST_F(SaveLoadTest, Test2)
       file_seen_path,
       *memory_seen_container);
     seen_loader.load();
-SeenUserInfoHolder seen_result;
+    SeenUserInfoHolder seen_result;
     EXPECT_FALSE(memory_seen_container->get(seen_result, external_id1));
   }
 }
@@ -487,8 +507,14 @@ public:
 
   ~FilterDay1() = default;
 
-  template<class Value>
-  bool operator()(const Value& value)
+  bool operator()(const SeenUserInfoHolder& value) const noexcept
+  {
+    return value.init_day() != 1;
+  }
+
+  bool operator()(
+    const BoundUserInfoHolder& value,
+    const std::string&) const noexcept
   {
     return value.init_day() != 1;
   }
@@ -550,11 +576,9 @@ protected:
       BoundContainers<
         StringDefHashAdapter,
         ExternalIdHashAdapter,
-        BoundUserInfoHolder,
-        FilterDay1>>(
+        BoundUserInfoHolder>>(
           1,
           1,
-          FilterDay1{},
           rocksdb_params);
   }
 
@@ -583,8 +607,7 @@ protected:
   BoundContainersPtr<
     StringDefHashAdapter,
     ExternalIdHashAdapter,
-    BoundUserInfoHolder,
-    FilterDay1> bound_containers;
+    BoundUserInfoHolder> bound_containers;
 
   const std::string rocksdb_path = "/tmp/rocksdb_test";
   const std::string file_path = "/tmp/bound_conteiners_test";
@@ -634,16 +657,16 @@ TEST_F(BoundContainersTest, Test)
   }
 
   std::stringstream stream;
-  bound_containers->save(stream);
+  bound_containers->save(stream, FilterDay1{});
 
   {
     auto container = bound_containers->get(result, key_prefix1, key_suffix11);
     EXPECT_TRUE(container);
     EXPECT_EQ(result, bound_holder11);
 
-    auto rocksdb_container = std::dynamic_pointer_cast<
-      RocksdbContainer<ExternalIdHashAdapter, BoundUserInfoHolder>>(container);
-    EXPECT_TRUE(rocksdb_container);
+    auto memory_container = std::dynamic_pointer_cast<
+      MemoryContainer<ExternalIdHashAdapter, BoundUserInfoHolder>>(container);
+    EXPECT_TRUE(memory_container);
 
     EXPECT_EQ(result, bound_holder11);
     EXPECT_TRUE(container->get(result, key_suffix11));
@@ -654,9 +677,9 @@ TEST_F(BoundContainersTest, Test)
     EXPECT_TRUE(container);
     EXPECT_EQ(result, bound_holder12);
 
-    auto rocksdb_container = std::dynamic_pointer_cast<
-      RocksdbContainer<ExternalIdHashAdapter, BoundUserInfoHolder>>(container);
-    EXPECT_TRUE(rocksdb_container);
+    auto memory_container = std::dynamic_pointer_cast<
+      MemoryContainer<ExternalIdHashAdapter, BoundUserInfoHolder>>(container);
+    EXPECT_TRUE(memory_container);
 
     EXPECT_EQ(result, bound_holder12);
     EXPECT_TRUE(container->get(result, key_suffix12));
@@ -704,7 +727,7 @@ TEST_F(BoundContainersTest, Erase)
   {
     bound_containers->set(key_prefix1, key_suffix11, bound_holder11);
     std::stringstream stream;
-    bound_containers->save(stream);
+    bound_containers->save(stream, FilterDay1{});
     bound_containers->erase(key_prefix1, key_suffix11);
     EXPECT_FALSE(bound_containers->get(result, key_prefix1, key_suffix11));
   }
@@ -712,16 +735,18 @@ TEST_F(BoundContainersTest, Erase)
 
 TEST_F(BoundContainersTest, Load)
 {
+  GenericChunkFileHeader header(
+    ChunkFileHeader::name(),
+    ChunkFileHeader::current_version());
+
   {
     auto bound_containers = std::make_shared<
       BoundContainers<
         StringDefHashAdapter,
         ExternalIdHashAdapter,
-        BoundUserInfoHolder,
-        FilterAlwaysTrue>>(
+        BoundUserInfoHolder>>(
           1,
           1,
-          FilterAlwaysTrue{},
           rocksdb_params);
 
     bound_containers->set(key_prefix1, key_suffix11, bound_holder11);
@@ -730,7 +755,9 @@ TEST_F(BoundContainersTest, Load)
     bound_containers->set(key_prefix2, key_suffix22, bound_holder22);
 
     std::ofstream file_bound_stream(file_path, std::ios::out | std::ios::trunc);
-    bound_containers->save(file_bound_stream);
+    file_bound_stream << header;
+
+    bound_containers->save(file_bound_stream, FilterAlwaysTrue{});
   }
 
   {
@@ -738,11 +765,9 @@ TEST_F(BoundContainersTest, Load)
       BoundContainers<
         StringDefHashAdapter,
         ExternalIdHashAdapter,
-        BoundUserInfoHolder,
-        FilterAlwaysTrue>>(
+        BoundUserInfoHolder>>(
           1,
           1,
-          FilterAlwaysTrue{},
           rocksdb_params);
     Loader<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder> loader(
       file_path,
@@ -763,7 +788,8 @@ TEST_F(BoundContainersTest, Load)
     bound_containers->erase(key_prefix1, key_suffix12);
 
     std::ofstream file_bound_stream(file_path, std::ios::out | std::ios::trunc);
-    bound_containers->save(file_bound_stream);
+    file_bound_stream << header;
+    bound_containers->save(file_bound_stream, FilterAlwaysTrue{});
   }
 
   {
@@ -771,11 +797,9 @@ TEST_F(BoundContainersTest, Load)
       BoundContainers<
         StringDefHashAdapter,
         ExternalIdHashAdapter,
-        BoundUserInfoHolder,
-        FilterAlwaysTrue>>(
+        BoundUserInfoHolder>>(
           1,
           1,
-          FilterAlwaysTrue{},
           rocksdb_params);
     Loader<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder> loader(
       file_path,
@@ -828,10 +852,9 @@ protected:
       column_families[0],
       std::make_shared<rocksdb::ReadOptions>(),
       std::make_shared<rocksdb::WriteOptions>());
-    seen_containers = std::make_shared<SeenContainers<HashHashAdapter, SeenUserInfoHolder, FilterDay1>>(
+    seen_containers = std::make_shared<SeenContainers<HashHashAdapter, SeenUserInfoHolder>>(
       1,
       1,
-      FilterDay1{},
       rocksdb_params);
   }
 
@@ -849,7 +872,7 @@ protected:
 
   Logging::Logger_var logger;
   RocksdbParamsPtr rocksdb_params;
-  SeenContainersPtr<HashHashAdapter, SeenUserInfoHolder, FilterDay1> seen_containers;
+  SeenContainersPtr<HashHashAdapter, SeenUserInfoHolder> seen_containers;
 
   const std::string rocksdb_path = "/tmp/rocksdb_test";
   const std::string file_path = "/tmp/seen_conteiners_test";
@@ -888,7 +911,7 @@ SeenUserInfoHolder result;
   }
 
   std::stringstream stream;
-  seen_containers->save(stream);
+  seen_containers->save(stream, FilterDay1{});
 
   {
     auto container = seen_containers->get(result, key1);
@@ -896,9 +919,9 @@ SeenUserInfoHolder result;
     EXPECT_EQ(result, seen_holder1);
     EXPECT_TRUE(container->get(result, key1));
     EXPECT_EQ(result, seen_holder1);
-    auto rocksdb_container = std::dynamic_pointer_cast<
-      RocksdbContainer<HashHashAdapter, SeenUserInfoHolder>>(container);
-    EXPECT_TRUE(rocksdb_container);
+    auto memory_container = std::dynamic_pointer_cast<
+      MemoryContainer<HashHashAdapter, SeenUserInfoHolder>>(container);
+    EXPECT_TRUE(memory_container);
   }
   {
     auto container = seen_containers->get(result, key2);
@@ -926,20 +949,24 @@ SeenUserInfoHolder result;
 
 TEST_F(SeenContainersTest, Load)
 {
+  GenericChunkFileHeader header(
+    ChunkFileHeader::name(),
+    ChunkFileHeader::current_version());
+
   {
     std::ofstream file_seen_stream(file_path, std::ios::out | std::ios::trunc);
+    file_seen_stream << header;
 
     seen_containers->set(key1, seen_holder1);
     seen_containers->set(key2, seen_holder2);
     seen_containers->set(key3, seen_holder3);
-    seen_containers->save(file_seen_stream);
+    seen_containers->save(file_seen_stream, FilterDay1{});
   }
 
   {
-    auto load_seen_containers = std::make_shared<SeenContainers<HashHashAdapter, SeenUserInfoHolder, FilterDay1>>(
+    auto load_seen_containers = std::make_shared<SeenContainers<HashHashAdapter, SeenUserInfoHolder>>(
       1,
       1,
-      FilterDay1{},
       rocksdb_params);
 
     Loader<HashHashAdapter, SeenUserInfoHolder> seen_loader(
@@ -997,7 +1024,8 @@ protected:
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
-      FilterDate(10));
+      [] (const std::size_t) {return true;},
+      true);
   }
 
   std::string directory = "/tmp";
@@ -1060,7 +1088,7 @@ TEST_F(PortionsTest, Load1)
     }
   }
 
-  EXPECT_NO_THROW(portions->save());
+  EXPECT_NO_THROW(portions->save(FilterDate{10}));
   portions.reset();
 
   {
@@ -1077,7 +1105,8 @@ TEST_F(PortionsTest, Load1)
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
-      FilterDate(10));
+      [] (const std::size_t) {return true;},
+      true);
 
     for (const auto& data : bound_datas)
     {
@@ -1152,7 +1181,7 @@ TEST_F(PortionsTest, Load2)
     }
   }
 
-  EXPECT_NO_THROW(portions->save());
+  EXPECT_NO_THROW(portions->save(FilterDate{10}));
   portions.reset();
   remove_directory(directory + "/" + seen_name);
   remove_directory(directory + "/" + bound_name);
@@ -1171,7 +1200,8 @@ TEST_F(PortionsTest, Load2)
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
-      FilterDate(10));
+      [] (const std::size_t) {return true;},
+      true);
 
     for (const auto& data : bound_datas)
     {
@@ -1211,7 +1241,8 @@ TEST_F(PortionsTest, Rocksdb)
     rocksdb_ttl,
     actual_fetch_size,
     max_fetch_size,
-    FilterDate(0));
+    [] (const std::size_t) {return true;},
+    true);
 
   std::list<BoundData> bound_datas;
   std::list<SeenData> seen_datas;
@@ -1254,7 +1285,7 @@ TEST_F(PortionsTest, Rocksdb)
     }
   }
 
-  EXPECT_NO_THROW(portions->save());
+  EXPECT_NO_THROW(portions->save(FilterDate{0}));
   portions.reset();
 
   {
@@ -1271,7 +1302,8 @@ TEST_F(PortionsTest, Rocksdb)
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
-      FilterDate(10));
+      [] (const std::size_t) {return true;},
+      true);
 
     for (const auto& data : bound_datas)
     {
@@ -1299,4 +1331,284 @@ TEST_F(PortionsTest, Rocksdb)
       EXPECT_EQ(result, data.holder);
     }
   }
+}
+
+TEST(Comparison, UserBindChunk)
+{
+  Logging::Logger_var logger =
+    new Logging::OStream::Logger(
+      Logging::OStream::Config(
+        std::cerr,
+        Logging::Logger::EMERGENCY));
+
+  const std::uint16_t seen_default_expire_time = 10;
+  const std::uint16_t bound_default_expire_time = 10;
+  const UserBindTwoLayersChunk::ListSourceExpireTime bound_list_source_expire_time;
+  const std::string directory = "/tmp/test_chunk_two_layers";
+  const std::string seen_name = "seen";
+  const std::string bound_name = "bound";
+  const Generics::Time min_age(1);
+  const bool bind_at_min_age = true;
+  const std::size_t max_bad_event = 100;
+  const bool load_slave = true;
+  const std::size_t portions_number = 10;
+  const std::size_t partition_index = 0;
+  const std::size_t partitions_number = 1;
+  const std::size_t rocksdb_number_threads = 5;
+  const rocksdb::CompactionStyle rocksdb_compaction_style = rocksdb::CompactionStyle::kCompactionStyleLevel;
+  const std::uint32_t rocksdb_block_сache_size_mb = 10;
+  const std::uint32_t rocksdb_ttl = 8640000;
+
+  std::filesystem::remove_all(directory);
+
+  UserBindTwoLayersChunk_var user_bind_chunk_two_layers =
+    new UserBindTwoLayersChunk(
+      logger,
+      seen_default_expire_time,
+      bound_default_expire_time,
+      bound_list_source_expire_time,
+      directory,
+      seen_name,
+      bound_name,
+      min_age,
+      bind_at_min_age,
+      max_bad_event,
+      portions_number,
+      load_slave,
+      partition_index,
+      partitions_number,
+      rocksdb_number_threads,
+      rocksdb_compaction_style,
+      rocksdb_block_сache_size_mb,
+      rocksdb_ttl);
+
+  const std::string file_root = "/tmp/test_chunk";
+  const std::string file_prefix = "seen";
+  const std::string bound_file_prefix = "bound";
+  const Generics::Time extend_time_period(604800);
+  const Generics::Time bound_extend_time_period(7257600);
+
+  std::filesystem::remove_all(file_root);
+  std::filesystem::create_directories(file_root);
+
+  UserBindChunk_var user_bind_chunk =
+    new UserBindChunk(
+      logger,
+      file_root.c_str(),
+      file_prefix.c_str(),
+      bound_file_prefix.c_str(),
+      extend_time_period,
+      bound_extend_time_period,
+      min_age,
+      bind_at_min_age,
+      max_bad_event,
+      portions_number,
+      load_slave,
+      partition_index,
+      partitions_number,
+      1);
+
+  const std::size_t total_number = 3;
+  const std::size_t total_user = 10;
+  const std::size_t total_id_prefix = 5;
+  const std::size_t total_id_suffix = 5;
+  const std::size_t total_day = 10;
+
+  std::list<Generics::Uuid> user_ids;
+  for (std::size_t number = 1; number <= total_number; number += 1)
+  {
+    for (std::size_t user = 1; user <= total_user; user += 1)
+    {
+      const Generics::Uuid user_id = Generics::Uuid::create_random_based();
+      user_ids.emplace_back(user_id);
+      for (std::size_t id_prefix = 1; id_prefix <= total_id_prefix; id_prefix += 1)
+      {
+        for (std::size_t id_suffix = 1; id_suffix <= total_id_suffix; id_suffix += 1)
+        {
+          const std::string external_id = "prefix" + std::to_string(id_prefix) +
+                                          "/" + "suffix" + std::to_string(id_suffix);
+          for (int resave_if_exists = 0; resave_if_exists <= 1; resave_if_exists += 1)
+          {
+            for (int ignore_bad_event = 0; ignore_bad_event <= 1; ignore_bad_event += 1)
+            {
+              Generics::Time now(
+                String::SubString("2010-01-01"),
+                "%Y-%m-%d");
+              for (std::size_t day = 1; day <= total_day; day += 1)
+              {
+                now += Generics::Time::ONE_DAY * 10;
+
+                auto add_user_info = user_bind_chunk->add_user_id(
+                  external_id,
+                  user_id,
+                  now,
+                  resave_if_exists,
+                  ignore_bad_event);
+
+                auto add_user_info_two_layers = user_bind_chunk_two_layers->add_user_id(
+                  external_id,
+                  user_id,
+                  now,
+                  resave_if_exists,
+                  ignore_bad_event);
+
+                EXPECT_EQ(add_user_info.user_id, add_user_info_two_layers.user_id);
+                EXPECT_EQ(add_user_info.min_age_reached, add_user_info_two_layers.min_age_reached);
+                EXPECT_EQ(add_user_info.user_id_generated, add_user_info_two_layers.user_id_generated);
+                EXPECT_EQ(add_user_info.created, add_user_info_two_layers.created);
+                EXPECT_EQ(add_user_info.invalid_operation, add_user_info_two_layers.invalid_operation);
+                EXPECT_EQ(add_user_info.user_found, add_user_info_two_layers.user_found);
+
+                for (int silent = 0; silent <= 1; silent += 1)
+                {
+                  for (int for_set_cookie = 0; for_set_cookie <= 1; for_set_cookie += 1)
+                  {
+                    auto get_user_info = user_bind_chunk->get_user_id(
+                      external_id,
+                      user_id,
+                      now,
+                      silent,
+                      now,
+                      for_set_cookie);
+
+                    auto get_user_info_two_layers = user_bind_chunk_two_layers->get_user_id(
+                      external_id,
+                      user_id,
+                      now,
+                      silent,
+                      now,
+                      for_set_cookie);
+
+                    EXPECT_EQ(get_user_info.user_id, get_user_info_two_layers.user_id);
+                    EXPECT_EQ(get_user_info.min_age_reached, get_user_info_two_layers.min_age_reached);
+                    EXPECT_EQ(get_user_info.user_id_generated, get_user_info_two_layers.user_id_generated);
+                    EXPECT_EQ(get_user_info.created, get_user_info_two_layers.created);
+                    EXPECT_EQ(get_user_info.invalid_operation, get_user_info_two_layers.invalid_operation);
+                    EXPECT_EQ(get_user_info.user_found, get_user_info_two_layers.user_found);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for (std::size_t i = 1; i <= 10; i += 1)
+  {
+    user_ids.emplace_back(Generics::Uuid::create_random_based());
+  }
+
+  std::unordered_map<std::string, Generics::Uuid> generated_uuid;
+  std::unordered_map<std::string, Generics::Uuid> generated_uuid_two_layers;
+
+  for (const auto& user_id : user_ids)
+  {
+    for (std::size_t id_prefix = 1; id_prefix <= total_id_prefix + 3; id_prefix += 1)
+    {
+      for (std::size_t id_suffix = 1; id_suffix <= total_id_suffix + 3; id_suffix += 1)
+      {
+        const std::string external_id = "prefix" + std::to_string(id_prefix) +
+          "/" + "suffix" + std::to_string(id_suffix);
+        Generics::Time now(
+          String::SubString("2010-01-01"),
+          "%Y-%m-%d");
+        for (std::size_t day = 1; day <= total_day + 20; day += 1)
+        {
+          now += Generics::Time::ONE_DAY * 10;
+
+          for (int silent = 0; silent <= 1; silent += 1)
+          {
+            for (int for_set_cookie = 0; for_set_cookie <= 1; for_set_cookie += 1)
+            {
+              auto get_user_info = user_bind_chunk->get_user_id(
+                external_id,
+                user_id,
+                now,
+                silent,
+                now,
+                for_set_cookie);
+
+              auto get_user_info_two_layers = user_bind_chunk_two_layers->get_user_id(
+                external_id,
+                user_id,
+                now,
+                silent,
+                now,
+                for_set_cookie);
+
+              if (get_user_info.user_id_generated)
+              {
+                generated_uuid[external_id] = get_user_info.user_id;
+              }
+
+              if (get_user_info_two_layers.user_id_generated)
+              {
+                generated_uuid_two_layers[external_id] = get_user_info_two_layers.user_id;
+              }
+
+              if (!get_user_info.user_id_generated && !get_user_info_two_layers.user_id_generated)
+              {
+                auto it = generated_uuid.find(external_id);
+                if (it != std::end(generated_uuid))
+                {
+                  EXPECT_EQ(get_user_info.user_id, it->second);
+                }
+
+                auto it_two_layers = generated_uuid_two_layers.find(external_id);
+                if (it_two_layers !=std::end(generated_uuid_two_layers))
+                {
+                  EXPECT_EQ(get_user_info_two_layers.user_id, it_two_layers->second);
+                }
+
+                if (it == std::end(generated_uuid) && it_two_layers ==std::end(generated_uuid_two_layers))
+                {
+                  EXPECT_EQ(get_user_info.user_id, get_user_info_two_layers.user_id);
+                }
+              }
+
+              EXPECT_EQ(get_user_info.min_age_reached, get_user_info_two_layers.min_age_reached);
+              EXPECT_EQ(get_user_info.user_id_generated, get_user_info_two_layers.user_id_generated);
+              EXPECT_EQ(get_user_info.created, get_user_info_two_layers.created);
+              EXPECT_EQ(get_user_info.invalid_operation, get_user_info_two_layers.invalid_operation);
+              EXPECT_EQ(get_user_info.user_found, get_user_info_two_layers.user_found);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+TEST(Filter, Source)
+{
+  std::uint16_t seen_default_expire_time = 5;
+  std::uint16_t bound_default_expire_time = 10;
+
+  SourcesExpireTime::ListSourceExpireTime list_source_expire_time;
+  const std::string source = "Y";
+  const std::uint16_t expire_time = 100;
+  list_source_expire_time.emplace_back(source, expire_time);
+
+  auto sources_expire_time = std::make_shared<SourcesExpireTime>(
+    seen_default_expire_time,
+    bound_default_expire_time,
+    list_source_expire_time);
+
+  FilterSourceDate filter(sources_expire_time);
+
+  SeenUserInfoHolder seen_holder;
+  EXPECT_TRUE(filter(seen_holder));
+  seen_holder.initial_day_ -= seen_default_expire_time + 1;
+  EXPECT_FALSE(filter(seen_holder));
+
+  BoundUserInfoHolder bound_holder;
+  EXPECT_TRUE(filter(bound_holder, ""));
+  bound_holder.initial_day -= bound_default_expire_time + 1;
+  EXPECT_FALSE(filter(bound_holder, ""));
+  EXPECT_TRUE(filter(bound_holder, source));
+
+  bound_holder.initial_day -= expire_time + 1;
+  EXPECT_FALSE(filter(bound_holder, source));
 }

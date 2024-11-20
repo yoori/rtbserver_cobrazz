@@ -34,6 +34,19 @@
     <xsd:attribute name="number_background_threads" type="xsd:positiveInteger" use="optional"/>
   </xsd:complexType>
 
+  <xsd:complexType name="SourceExpireTimeType">
+    <xsd:attribute name="source" type="xsd:string" use="required"/>
+    <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SourcesExpireTimeType">
+    <xsd:sequence>
+      <xsd:element name="BoundSourceExpireTime" type="SourceExpireTimeType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="bound_default_expire_time" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="seen_default_expire_time" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
   <xsd:complexType name="UserBindServerConfigType">
     <xsd:annotation>
       <xsd:documentation>
@@ -134,6 +147,14 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+
+      <xsd:element name="SourcesExpireTime" type="SourcesExpireTimeType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Sources expire time
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
     </xsd:sequence>
 
     <xsd:attribute name="min_age" type="xsd:nonNegativeInteger" use="required"/>
@@ -142,7 +163,6 @@
     <xsd:attribute name="partition_index" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="partitions_number" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="enable_two_layers" type="xsd:boolean" use="required"/>
-    <xsd:attribute name="memory_days" type="xsd:nonNegativeInteger" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserIdBlackListType">

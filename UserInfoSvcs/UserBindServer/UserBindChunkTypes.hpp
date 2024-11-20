@@ -24,6 +24,65 @@
 namespace AdServer::UserInfoSvcs
 {
 
+class ChunkFileHeader final
+{
+public:
+  explicit ChunkFileHeader() = default;
+
+  static std::string_view name() noexcept
+  {
+    return name_;
+  }
+
+  static std::string_view current_version() noexcept
+  {
+    return current_version_;
+  }
+
+private:
+  static constexpr std::string_view name_ = "ChunkTwoLayers";
+
+  static constexpr std::string_view current_version_ = "1.0";
+};
+
+class GenericChunkFileHeader final
+{
+public:
+  GenericChunkFileHeader() = default;
+
+  explicit GenericChunkFileHeader(
+    const std::string_view name,
+    const std::string_view current_version)
+    : name_(name),
+      current_version_(current_version)
+  {
+  }
+
+  const std::string& name() const noexcept
+  {
+    return name_;
+  }
+
+  const std::string& current_version() const noexcept
+  {
+    return current_version_;
+  }
+
+private:
+  friend std::istream& operator>>(
+    std::istream& stream,
+    GenericChunkFileHeader& header);
+
+  friend std::ostream& operator<<(
+    std::ostream& stream,
+    GenericChunkFileHeader& header);
+
+private:
+  std::string name_;
+
+  std::string current_version_;
+};
+
 extern std::uint16_t get_current_day_from_2000();
 
 class SeenUserInfoHolder final
@@ -93,14 +152,6 @@ struct BoundUserInfoHolder final
   std::uint16_t last_bad_event_day = 0;
   std::uint16_t initial_day = 0;
 };
-
-extern std::ostream& operator<<(
-  std::ostream& stream,
-  const BoundUserInfoHolder& holder);
-
-extern std::istream& operator>>(
-  std::istream& stream,
-  BoundUserInfoHolder& holder);
 
 class StringDefHashAdapter final
 {
@@ -290,71 +341,157 @@ private:
   Delegate& delegate_;
 };
 
-class Saver : private Generics::Uncopyable
-{
-public:
-  Saver() = default;
-
-  virtual ~Saver() = default;
-
-  virtual void save(std::ostream& stream) = 0;
-};
-
-using SaverPtr = std::shared_ptr<Saver>;
-
-class FilterDate final
-{
-public:
-  FilterDate(const std::uint16_t number_days)
-   : number_days_(number_days)
-  {
-  }
-
-  template<class Value>
-  bool operator()(const Value& value) noexcept
-  {
-    return current_day < value.init_day() + number_days_;
-  }
-
-private:
-  const std::uint16_t number_days_ = 10;
-
-  const std::uint16_t current_day = get_current_day_from_2000();
-};
-
 class FilterAlwaysTrue final
 {
 public:
   FilterAlwaysTrue() = default;
 
-  template<class Value>
-  bool operator()(const Value& value) noexcept
+  bool operator()(const SeenUserInfoHolder& /*value*/) const noexcept
+  {
+    return true;
+  }
+
+  bool operator()(
+    const BoundUserInfoHolder& /*value*/,
+    const std::string& /*source*/) const noexcept
   {
     return true;
   }
 };
 
+class FilterDate final
+{
+public:
+  explicit FilterDate(const std::uint16_t number_days)
+   : number_days_(number_days)
+  {
+  }
+
+  bool operator()(const SeenUserInfoHolder& value) const noexcept
+  {
+    return current_day_ < value.init_day() + number_days_;
+  }
+
+  bool operator()(
+    const BoundUserInfoHolder& value,
+    const std::string& /*source*/) const noexcept
+  {
+    return current_day_ < value.init_day() + number_days_;
+  }
+
+private:
+  const std::uint16_t number_days_ = 10;
+
+  const std::uint16_t current_day_ = get_current_day_from_2000();
+};
+
+template<class Filter>
+class SourceFilterWrapper final
+{
+public:
+  SourceFilterWrapper(
+    const Filter& filter,
+    const std::string& source)
+    : filter_(filter),
+      source_(source)
+  {
+  }
+
+  bool operator()(const SeenUserInfoHolder& value) const
+  {
+    return filter_(value);
+  }
+
+  bool operator()(const BoundUserInfoHolder& value) const
+  {
+    return filter_(value, source_);
+  }
+
+private:
+  const Filter filter_;
+
+  const std::string source_;
+};
+
+class SourcesExpireTime final
+{
+public:
+  using Source = std::string;
+  using ExpireTime = std::uint16_t;
+  using SourceExpireTime = std::pair<Source, ExpireTime>;
+  using ListSourceExpireTime = std::vector<SourceExpireTime>;
+
+private:
+  using SourcesExpireTimeT = std::unordered_map<std::string, ExpireTime>;
+
+public:
+  explicit SourcesExpireTime(
+    const ExpireTime seen_default_expire_time,
+    const ExpireTime bound_default_expire_time,
+    const ListSourceExpireTime& bound_list_source_expire_time);
+
+  ExpireTime bound_expire_time(
+    const std::string& source) const noexcept;
+
+  ExpireTime seen_default_expire_time() const noexcept;
+
+private:
+  ExpireTime seen_default_expire_time_;
+
+  ExpireTime bound_default_expire_time_;
+
+  SourcesExpireTimeT sources_expire_time_;
+};
+
+using SourcesExpireTimePtr = std::shared_ptr<const SourcesExpireTime>;
+
+class FilterSourceDate final
+{
+public:
+  explicit FilterSourceDate(
+    const SourcesExpireTimePtr& sources_expire_time) noexcept
+    : sources_expire_time_(sources_expire_time),
+      seen_default_number_days_(
+        sources_expire_time_->seen_default_expire_time())
+  {
+  }
+
+  bool operator()(const SeenUserInfoHolder& value) const noexcept
+  {
+    return current_day_ < value.init_day() + seen_default_number_days_;
+  }
+
+  bool operator()(
+    const BoundUserInfoHolder& value,
+    const std::string& source) const noexcept
+  {
+    return current_day_ < value.init_day()
+      + sources_expire_time_->bound_expire_time(source);
+  }
+
+private:
+  const SourcesExpireTimePtr sources_expire_time_;
+
+  const std::uint16_t seen_default_number_days_;
+
+  const std::uint16_t current_day_ = get_current_day_from_2000();
+};
+
 template<
   class Key,
   class Value,
-  class Filter = FilterAlwaysTrue,
   template<typename, typename> class HashTable = USFetchableHashTable>
 class MemoryContainer final
   : public Container<Key, Value>,
-    private LoaderDelegate<Key, Value>,
-    public Saver
+    private LoaderDelegate<Key, Value>
 {
 public:
-  using Fetcher = typename HashTable<Key, Value>::Fetcher<Filter>;
-  using FetchArray = typename HashTable<Key, Value>::FetchArray;
-
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   
 public:
-  MemoryContainer(
+  explicit MemoryContainer(
     const std::size_t actual_fetch_size = 100,
     const std::size_t max_fetch_size = 1000,
-    const Filter& filter = Filter{},
     const FetcherDelegatePtr<Key, Value>& delegate = {});
 
   ~MemoryContainer() override = default;
@@ -375,7 +512,8 @@ public:
 
   bool erase(Key&& key) override;
 
-  void save(std::ostream& stream) override;
+  template<class Filter>
+  void save(std::ostream& stream, const Filter& filter);
 
 private:
   void on_load(Key&& key, Value&& value) override;
@@ -385,8 +523,6 @@ private:
 
   const std::size_t max_fetch_size_;
 
-  const Filter filter_;
-
   const FetcherDelegatePtr<Key, Value> delegate_;
 
   HashTable<Key, Value> hash_table_;
@@ -395,9 +531,8 @@ private:
 template<
   class Key,
   class Value,
-  class Filter = FilterAlwaysTrue,
   template<typename, typename> class HashTable = USFetchableHashTable>
-using MemoryContainerPtr = std::shared_ptr<MemoryContainer<Key, Value, Filter, HashTable>>;
+using MemoryContainerPtr = std::shared_ptr<MemoryContainer<Key, Value, HashTable>>;
 
 struct RocksdbParams final : Generics::Uncopyable
 {
@@ -408,7 +543,7 @@ struct RocksdbParams final : Generics::Uncopyable
   using WriteOptions = rocksdb::WriteOptions;
   using WriteOptionsPtr = std::shared_ptr<WriteOptions>;
 
-  RocksdbParams(
+  explicit RocksdbParams(
     Logger* logger,
     const RocksdbColumnFamilyPtr& column_family,
     const ReadOptionsPtr& read_options,
@@ -507,12 +642,10 @@ public:
   using Logger = Logging::Logger;
   using Logger_var = Logging::Logger_var;
   using ReadOptions = rocksdb::ReadOptions;
-  using ReadOptionsPtr = std::shared_ptr<ReadOptions>;
   using WriteOptions = rocksdb::WriteOptions;
-  using WriteOptionsPtr = std::shared_ptr<WriteOptions>;
 
 public:
-  RocksdbContainerFactory(const RocksdbParamsPtr& rocksdb_params);
+  explicit RocksdbContainerFactory(const RocksdbParamsPtr& rocksdb_params);
 
   ~RocksdbContainerFactory() = default;
 
@@ -554,27 +687,22 @@ template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter = FilterAlwaysTrue,
   template<typename, typename> class HashTable = USFetchableHashTable>
 class BoundContainers :
-  public Saver,
   public LoaderDelegate<std::pair<PrefixKey, SuffixKey>, Value>
 {
 private:
-  static constexpr std::size_t kSize = 2;
-
-  using MemoryContainerT = MemoryContainer<SuffixKey, Value, Filter, HashTable>;
-  using MemoryContainerPtrT = MemoryContainerPtr<SuffixKey, Value, Filter, HashTable>;
+  using MemoryContainerT = MemoryContainer<SuffixKey, Value, HashTable>;
+  using MemoryContainerPtrT = MemoryContainerPtr<SuffixKey, Value, HashTable>;
   using ContainerPtrT = ContainerPtr<SuffixKey, Value>;
   using ContainersHashTable = Generics::GnuHashTable<PrefixKey, MemoryContainerPtrT>;
   using RocksdbContainerFactoryPtrT = RocksdbContainerFactoryPtr<SuffixKey, Value>;
   using RocksdbContainerPtrT = RocksdbContainerPtr<std::pair<PrefixKey, SuffixKey>, Value>;
 
 public:
-  BoundContainers(
+  explicit BoundContainers(
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
-    const Filter& filter,
     const RocksdbParamsPtr& rocksdb_params);
 
   ~BoundContainers() override = default;
@@ -593,26 +721,29 @@ public:
     LRReferenceConcept<PrefixKey> PKey,
     LRReferenceConcept<SuffixKey> SKey,
     LRReferenceConcept<Value> V>
-  void set(
+  ContainerPtrT set(
     PKey&& prefix_key,
     SKey&& suffix_key,
     V&& value);
 
-  bool erase(
+  void erase(
     const PrefixKey& prefix_key,
     const SuffixKey& suffix_key);
 
-  void save(std::ostream& stream) override;
+  template<class Filter>
+  void save(
+    std::ostream& stream,
+    const Filter& filter);
 
 private:
-  void on_load(std::pair<PrefixKey, SuffixKey>&& key, Value&& value);
+  void on_load(
+    std::pair<PrefixKey, SuffixKey>&& key,
+    Value&& value);
 
 private:
   const std::size_t actual_fetch_size_;
 
   const std::size_t max_fetch_size_;
-
-  const Filter filter_;
 
   const RocksdbContainerFactoryPtrT rocksdb_factory_;
 
@@ -627,35 +758,26 @@ template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter = FilterAlwaysTrue,
   template<typename, typename> class HashTable = USFetchableHashTable>
-using BoundContainersPtr = std::shared_ptr<BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>>;
+using BoundContainersPtr = std::shared_ptr<BoundContainers<PrefixKey, SuffixKey, Value, HashTable>>;
 
 template<
   class Key,
   class Value,
-  class Filter = FilterAlwaysTrue,
   template<typename, typename> class HashTable = USFetchableHashTable>
 class SeenContainers :
-  public Saver,
   public LoaderDelegate<Key, Value>
 {
 private:
-  static constexpr std::size_t kSize = 2;
-
-  using MemoryContainerT = MemoryContainer<Key, Value, Filter, HashTable>;
-  using MemoryContainerPtrT = MemoryContainerPtr<Key, Value, Filter, HashTable>;
-  using RocksdbContainerT = RocksdbContainer<Key, Value>;
-  using RocksdbContainerPtrT = RocksdbContainerPtr<Key, Value>;
+  using MemoryContainerT = MemoryContainer<Key, Value, HashTable>;
   using ContainerPtrT = ContainerPtr<Key, Value>;
   using Containers = std::array<ContainerPtrT, 2>;
 
 public:
-  SeenContainers(
+  explicit SeenContainers(
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
-    const Filter& filter,
-    const RocksdbParamsPtr& rocksdb_params);
+    const RocksdbParamsPtr& rocksdb_params = {});
 
   SeenContainers(const SeenContainers&) = delete;
   SeenContainers(SeenContainers&&) = delete;
@@ -671,9 +793,10 @@ public:
     LRReferenceConcept<Value> V>
   void set(K&& key, V&& value);
 
-  bool erase(const Key& key);
+  void erase(const Key& key);
 
-  void save(std::ostream& stream) override;
+  template<class Filter>
+  void save(std::ostream& stream, const Filter& filter);
 
 private:
   void on_load(Key&& key, Value&& value);
@@ -685,52 +808,38 @@ private:
 template<
   class Key,
   class Value,
-  class Filter = FilterAlwaysTrue,
   template<typename, typename> class HashTable = USFetchableHashTable>
-using SeenContainersPtr = std::shared_ptr<SeenContainers<Key, Value, Filter, HashTable>>;
+using SeenContainersPtr = std::shared_ptr<SeenContainers<Key, Value, HashTable>>;
 
 class Portion final
   : private SeenContainers<
              HashHashAdapter,
              SeenUserInfoHolder,
-             FilterDate,
              USFetchableHashTable>,
     private BoundContainers<
              StringDefHashAdapter,
              ExternalIdHashAdapter,
              BoundUserInfoHolder,
-             FilterDate,
              SparseFetchableHashTable>,
     private Generics::UncopyableTag<Portion>
 {
 public:
-  using SeenRocksdbContainerFactory = RocksdbContainerFactory<
-    HashHashAdapter,
-    SeenUserInfoHolder>;
-  using SeenRocksdbContainerFactoryPtr = std::shared_ptr<SeenRocksdbContainerFactory>;
-  using BoundRocksdbContainerFactory = RocksdbContainerFactory<
-    ExternalIdHashAdapter,
-    BoundUserInfoHolder>;
-  using BoundRocksdbContainerFactoryPtr = std::shared_ptr<BoundRocksdbContainerFactory>;
   using SeenContainersT = SeenContainers<
     HashHashAdapter,
     SeenUserInfoHolder,
-    FilterDate,
     USFetchableHashTable>;
   using BoundContainersT = BoundContainers<
     StringDefHashAdapter,
     ExternalIdHashAdapter,
     BoundUserInfoHolder,
-    FilterDate,
     SparseFetchableHashTable>;
 
 public:
-  Portion(
+  explicit Portion(
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
-    const FilterDate& filter,
-    const RocksdbParamsPtr& seen_rocksdb_params,
-    const RocksdbParamsPtr& bound_rocksdb_params);
+    const RocksdbParamsPtr& bound_rocksdb_params,
+    const RocksdbParamsPtr& seen_rocksdb_params);
 
   ~Portion() override = default;
 
@@ -748,7 +857,7 @@ public:
     const StringDefHashAdapter& prefix_key,
     const ExternalIdHashAdapter& suffix_key);
 
-  bool erase_bound(
+  void erase_bound(
     const StringDefHashAdapter& prefix_key,
     const ExternalIdHashAdapter& suffix_key);
 
@@ -761,7 +870,7 @@ public:
     SeenUserInfoHolder& value,
     const HashHashAdapter& key);
 
-  bool erase_seen(const HashHashAdapter& key);
+  void erase_seen(const HashHashAdapter& key);
 
 private:
   friend class Portions;
@@ -775,9 +884,9 @@ class Portions final :
 {
 public:
   using Logger = Logging::Logger;
-  using SeenRocksdbContainerFactoryPtr = Portion::SeenRocksdbContainerFactoryPtr;
-  using BoundRocksdbContainerFactoryPtr = Portion::BoundRocksdbContainerFactoryPtr;
   using LoadFilter = std::function<bool(const std::size_t&)>;
+
+  DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 private:
   using SeenContainersT = Portion::SeenContainersT;
@@ -798,8 +907,8 @@ public:
     const std::uint32_t rocksdb_ttl,
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
-    const FilterDate& filter,
-    const LoadFilter& load_filter = [] (const std::size_t) {return true;});
+    const LoadFilter& load_filter = [] (const std::size_t) {return true;},
+    const bool seen_need_use_rocksdb = false);
 
   Portions(const Portions&) = delete;
   Portions(Portions&&) = delete;
@@ -812,7 +921,8 @@ public:
 
   PortionPtr portion(const std::size_t id_hash) const noexcept;
 
-  void save();
+  template<class Filter>
+  void save(const Filter& filter);
 
 private:
   void on_load(
@@ -847,6 +957,26 @@ using PortionsPtr = std::shared_ptr<Portions>;
 
 namespace AdServer::UserInfoSvcs
 {
+
+inline std::istream& operator>>(
+  std::istream& stream,
+  GenericChunkFileHeader& header)
+{
+  stream >> header.name_
+         >> header.current_version_;
+  return stream;
+}
+
+inline std::ostream& operator<<(
+  std::ostream& stream,
+  GenericChunkFileHeader& header)
+{
+  stream << header.name_
+         << ' '
+         << header.current_version_
+         << '\n';
+  return stream;
+}
 
 inline std::ostream& operator<<(
   std::ostream& stream,
@@ -1168,6 +1298,41 @@ void Loader<Key, Value>::load()
   {
     return;
   }
+
+  GenericChunkFileHeader header;
+  stream >> header;
+
+  if (header.name() != ChunkFileHeader::name())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not correct name in header";
+    throw Exception(stream);
+  }
+
+  if (header.current_version() != ChunkFileHeader::current_version())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not correct version in header";
+    throw Exception(stream);
+  }
+
+  if (stream.fail() || stream.bad())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "file="
+           << file_path_
+           << " is broken";
+    throw Exception(stream);
+  }
+
+  if (stream.peek() == '\n')
+  {
+    stream.get();
+  }
+
   if (stream.eof() || stream.peek() == std::char_traits<char>::eof())
   {
     return;
@@ -1203,19 +1368,52 @@ void Loader<Key, Value>::load()
   }
 }
 
+inline
+SourcesExpireTime::SourcesExpireTime(
+  const ExpireTime seen_default_expire_time,
+  const ExpireTime bound_default_expire_time,
+  const ListSourceExpireTime& bound_list_source_expire_time)
+  : seen_default_expire_time_(seen_default_expire_time),
+    bound_default_expire_time_(bound_default_expire_time)
+{
+  for (const auto& [source, expire_time] : bound_list_source_expire_time)
+  {
+    sources_expire_time_[source] = expire_time;
+  }
+}
+
+inline
+SourcesExpireTime::ExpireTime
+SourcesExpireTime::bound_expire_time(const std::string& source) const noexcept
+{
+  const auto it = sources_expire_time_.find(source);
+  if (it != std::end(sources_expire_time_))
+  {
+    return it->second;
+  }
+  else
+  {
+    return bound_default_expire_time_;
+  }
+}
+
+inline
+SourcesExpireTime::ExpireTime
+SourcesExpireTime::seen_default_expire_time() const noexcept
+{
+  return seen_default_expire_time_;
+}
+
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-MemoryContainer<Key, Value, Filter, HashTable>::MemoryContainer(
+MemoryContainer<Key, Value, HashTable>::MemoryContainer(
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
-  const Filter& filter,
   const FetcherDelegatePtr<Key, Value>& delegate)
   : actual_fetch_size_(actual_fetch_size),
     max_fetch_size_(max_fetch_size),
-    filter_(filter),
     delegate_(delegate)
 {
 }
@@ -1223,9 +1421,10 @@ MemoryContainer<Key, Value, Filter, HashTable>::MemoryContainer(
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-bool MemoryContainer<Key, Value, Filter, HashTable>::get(Value& value, const Key& key)
+bool MemoryContainer<Key, Value, HashTable>::get(
+  Value& value,
+  const Key& key)
 {
   return hash_table_.get(value, key);
 }
@@ -1233,9 +1432,10 @@ bool MemoryContainer<Key, Value, Filter, HashTable>::get(Value& value, const Key
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-bool MemoryContainer<Key, Value, Filter, HashTable>::get(Value& value, Key&& key)
+bool MemoryContainer<Key, Value, HashTable>::get(
+  Value& value,
+  Key&& key)
 {
   return hash_table_.get(value, std::move(key));
 }
@@ -1243,9 +1443,10 @@ bool MemoryContainer<Key, Value, Filter, HashTable>::get(Value& value, Key&& key
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void MemoryContainer<Key, Value, Filter, HashTable>::set(const Key& key, const Value& value)
+void MemoryContainer<Key, Value, HashTable>::set(
+  const Key& key,
+  const Value& value)
 {
   return hash_table_.set(key, value);
 }
@@ -1253,9 +1454,10 @@ void MemoryContainer<Key, Value, Filter, HashTable>::set(const Key& key, const V
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void MemoryContainer<Key, Value, Filter, HashTable>::set(Key&& key, Value&& value)
+void MemoryContainer<Key, Value, HashTable>::set(
+  Key&& key,
+  Value&& value)
 {
   return hash_table_.set(std::move(key), std::move(value));
 }
@@ -1263,9 +1465,10 @@ void MemoryContainer<Key, Value, Filter, HashTable>::set(Key&& key, Value&& valu
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void MemoryContainer<Key, Value, Filter, HashTable>::set(const Key& key, Value&& value)
+void MemoryContainer<Key, Value, HashTable>::set(
+  const Key& key,
+  Value&& value)
 {
   return hash_table_.set(key, std::move(value));
 }
@@ -1273,9 +1476,10 @@ void MemoryContainer<Key, Value, Filter, HashTable>::set(const Key& key, Value&&
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void MemoryContainer<Key, Value, Filter, HashTable>::set(Key&& key, const Value& value)
+void MemoryContainer<Key, Value, HashTable>::set(
+  Key&& key,
+  const Value& value)
 {
   return hash_table_.set(std::move(key), value);
 }
@@ -1283,9 +1487,8 @@ void MemoryContainer<Key, Value, Filter, HashTable>::set(Key&& key, const Value&
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-bool MemoryContainer<Key, Value, Filter, HashTable>::erase(const Key& key)
+bool MemoryContainer<Key, Value, HashTable>::erase(const Key& key)
 {
   return hash_table_.erase(key);
 }
@@ -1293,9 +1496,8 @@ bool MemoryContainer<Key, Value, Filter, HashTable>::erase(const Key& key)
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-bool MemoryContainer<Key, Value, Filter, HashTable>::erase(Key&& key)
+bool MemoryContainer<Key, Value, HashTable>::erase(Key&& key)
 {
   return hash_table_.erase(std::move(key));
 }
@@ -1303,9 +1505,8 @@ bool MemoryContainer<Key, Value, Filter, HashTable>::erase(Key&& key)
 template<
   class Key,
   class Value,
-  class Filter,
   template<class, class> class HashTable>
-void MemoryContainer<Key, Value, Filter, HashTable>::on_load(
+void MemoryContainer<Key, Value, HashTable>::on_load(
   Key&& key,
   Value&& value)
 {
@@ -1315,11 +1516,15 @@ void MemoryContainer<Key, Value, Filter, HashTable>::on_load(
 template<
   class Key,
   class Value,
-  class Filter,
   template<class, class> class HashTable>
-void MemoryContainer<Key, Value, Filter, HashTable>::save(std::ostream& stream)
+template<class Filter>
+void MemoryContainer<Key, Value, HashTable>::save(
+  std::ostream& stream,
+  const Filter& filter)
 {
-  auto fetcher = hash_table_.fetcher(filter_, delegate_);
+  using FetchArray = typename HashTable<Key, Value>::FetchArray;
+
+  auto fetcher = hash_table_.fetcher(filter, delegate_);
   FetchArray values;
   bool is_end = false;
   bool need_white_space = false;
@@ -1443,13 +1648,17 @@ bool RocksdbContainer<Key, Value>::get(Value& value, const Key& key)
 }
 
 template<class Key, class Value>
-bool RocksdbContainer<Key, Value>::get(Value& value, Key&& key)
+bool RocksdbContainer<Key, Value>::get(
+  Value& value,
+  Key&& key)
 {
   return get(value, key);
 }
 
 template<class Key, class Value>
-void RocksdbContainer<Key, Value>::set(const Key& key, const Value& value)
+void RocksdbContainer<Key, Value>::set(
+  const Key& key,
+  const Value& value)
 {
   try
   {
@@ -1503,19 +1712,25 @@ void RocksdbContainer<Key, Value>::set(const Key& key, const Value& value)
 }
 
 template<class Key, class Value>
-void RocksdbContainer<Key, Value>::set(Key&& key, Value&& value)
+void RocksdbContainer<Key, Value>::set(
+  Key&& key,
+  Value&& value)
 {
   set(key, value);
 }
 
 template<class Key, class Value>
-void RocksdbContainer<Key, Value>::set(const Key& key, Value&& value)
+void RocksdbContainer<Key, Value>::set(
+  const Key& key,
+  Value&& value)
 {
   set(key, value);
 }
 
 template<class Key, class Value>
-void RocksdbContainer<Key, Value>::set(Key&& key, const Value& value)
+void RocksdbContainer<Key, Value>::set(
+  Key&& key,
+  const Value& value)
 {
   set(key, value);
 }
@@ -1795,6 +2010,41 @@ void Loader<std::pair<PrefixKey, SuffixKey>, Value>::load()
   {
     return;
   }
+
+  GenericChunkFileHeader header;
+  stream >> header;
+
+  if (header.name() != ChunkFileHeader::name())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not correct name in header";
+    throw Exception(stream);
+  }
+
+  if (header.current_version() != ChunkFileHeader::current_version())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "Not correct version in header";
+    throw Exception(stream);
+  }
+
+  if (stream.fail() || stream.bad())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "file="
+           << file_path_
+           << " is broken";
+    throw Exception(stream);
+  }
+
+  if (stream.peek() == '\n')
+  {
+    stream.get();
+  }
+
   if (stream.eof() || stream.peek() == std::char_traits<char>::eof())
   {
     return;
@@ -1852,16 +2102,13 @@ template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::BoundContainers(
+BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::BoundContainers(
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
-  const Filter& filter,
   const RocksdbParamsPtr& rocksdb_params)
   : actual_fetch_size_(actual_fetch_size),
     max_fetch_size_(max_fetch_size),
-    filter_(filter),
     rocksdb_factory_(std::make_shared<RocksdbContainerFactory<
       SuffixKey,
       Value>>(rocksdb_params)),
@@ -1875,10 +2122,9 @@ template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::ContainerPtrT
-BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::get(
+BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::ContainerPtrT
+BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::get(
   Value& value,
   const PrefixKey& prefix_key,
   const SuffixKey& suffix_key)
@@ -1899,9 +2145,7 @@ BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::get(
   }
   else if (rocksdb_container_->get(value, prefix_key, suffix_key))
   {
-    std::string prefix(prefix_key.str());
-    prefix += '/';
-    return rocksdb_factory_->create(prefix);
+    return set(prefix_key, suffix_key, value);
   }
 
   return {};
@@ -1911,13 +2155,13 @@ template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
 template<
   LRReferenceConcept<PrefixKey> PKey,
   LRReferenceConcept<SuffixKey> SKey,
   LRReferenceConcept<Value> V>
-void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::set(
+BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::ContainerPtrT
+BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::set(
   PKey&& prefix_key,
   SKey&& suffix_key,
   V&& value)
@@ -1940,7 +2184,6 @@ void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::set(
     auto new_memory_container = std::make_shared<MemoryContainerT>(
       actual_fetch_size_,
       max_fetch_size_,
-      filter_,
       rocksdb_factory_->create(prefix_str));
 
     std::unique_lock lock(mutex_);
@@ -1957,15 +2200,16 @@ void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::set(
   memory_container->set(
     std::forward<SKey>(suffix_key),
     std::forward<V>(value));
+
+  return memory_container;
 }
 
 template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-bool BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::erase(
+void BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::erase(
   const PrefixKey& prefix_key,
   const SuffixKey& suffix_key)
 {
@@ -1979,25 +2223,20 @@ bool BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::erase(
     }
   }
 
-  if (memory_container && memory_container->erase(suffix_key))
+  if (memory_container)
   {
-    return true;
-  }
-  else if (rocksdb_container_->erase(prefix_key, suffix_key))
-  {
-    return true;
+    memory_container->erase(suffix_key);
   }
 
-  return false;
+  rocksdb_container_->erase(prefix_key, suffix_key);
 }
 
 template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::on_load(
+void BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::on_load(
   std::pair<PrefixKey, SuffixKey>&& key,
   Value&& value)
 {
@@ -2008,23 +2247,25 @@ template<
   class PrefixKey,
   class SuffixKey,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::save(std::ostream& stream)
+template<class Filter>
+void BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::save(
+  std::ostream& stream,
+  const Filter& filter)
 {
-  using Savers = std::deque<std::pair<PrefixKey, SaverPtr>>;
-  Savers savers;
+  using Containers = std::deque<std::pair<PrefixKey, MemoryContainerPtrT>>;
+  Containers containers;
 
   {
     std::shared_lock lock(mutex_);
     for (const auto& [key, container] : hash_table_)
     {
-      savers.emplace_back(key, container);
+      containers.emplace_back(key, container);
     }
   }
 
   bool need_new_line = false;
-  for (auto& [key, saver] : savers)
+  for (auto& [key, container] : containers)
   {
     if (need_new_line)
     {
@@ -2032,14 +2273,18 @@ void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::save(std::
     }
     stream << key << ' ';
 
+    const auto& key_str = key.str();
+    std::string source(key_str.data(), key_str.size());
+    SourceFilterWrapper<Filter> filter_wrapper(filter, source);
+
     const auto start_position = stream.tellp();
-    saver->save(stream);
+    container->save(stream, filter_wrapper);
     const auto end_position = stream.tellp();
 
     need_new_line = true;
     if (start_position == end_position)
     {
-      stream.seekp(start_position - 1);
+      stream.seekp(start_position - static_cast<std::ostream::pos_type>(1));
     }
   }
 }
@@ -2047,21 +2292,23 @@ void BoundContainers<PrefixKey, SuffixKey, Value, Filter, HashTable>::save(std::
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-SeenContainers<Key, Value, Filter, HashTable>::SeenContainers(
+SeenContainers<Key, Value, HashTable>::SeenContainers(
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
-  const Filter& filter,
   const RocksdbParamsPtr& rocksdb_params)
 {
-  auto rocksdb_container = std::make_shared<RocksdbContainer<Key, Value>>(
-    rocksdb_params,
-    "");
+  std::shared_ptr<RocksdbContainer<Key, Value>> rocksdb_container;
+  if (rocksdb_params)
+  {
+    rocksdb_container = std::make_shared<RocksdbContainer<Key, Value>>(
+      rocksdb_params,
+      "");
+  }
+
   auto memory_container = std::make_shared<MemoryContainerT>(
     actual_fetch_size,
     max_fetch_size,
-    filter,
     rocksdb_container);
   containers_[0] = memory_container;
   containers_[1] = rocksdb_container;
@@ -2070,17 +2317,18 @@ SeenContainers<Key, Value, Filter, HashTable>::SeenContainers(
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-SeenContainers<Key, Value, Filter, HashTable>::ContainerPtrT
-SeenContainers<Key, Value, Filter, HashTable>::get(Value& value, const Key& key)
+SeenContainers<Key, Value, HashTable>::ContainerPtrT
+SeenContainers<Key, Value, HashTable>::get(Value& value, const Key& key)
 {
-  for (std::size_t i = 0; i < kSize; ++i)
+  if (containers_[0]->get(value, key))
   {
-    if (containers_[i]->get(value, key))
-    {
-      return containers_[i];
-    }
+    return containers_[0];
+  }
+  else if (containers_[1] && containers_[1]->get(value, key))
+  {
+    containers_[0]->set(key, value);
+    return containers_[0];
   }
 
   return {};
@@ -2089,12 +2337,11 @@ SeenContainers<Key, Value, Filter, HashTable>::get(Value& value, const Key& key)
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
 template<
   LRReferenceConcept<Key> K,
   LRReferenceConcept<Value> V>
-void SeenContainers<Key, Value, Filter, HashTable>::set(K&& key, V&& value)
+void SeenContainers<Key, Value, HashTable>::set(K&& key, V&& value)
 {
   containers_[0]->set(std::forward<K>(key), std::forward<V>(value));
 }
@@ -2102,38 +2349,34 @@ void SeenContainers<Key, Value, Filter, HashTable>::set(K&& key, V&& value)
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-bool SeenContainers<Key, Value, Filter, HashTable>::erase(const Key& key)
+void SeenContainers<Key, Value, HashTable>::erase(const Key& key)
 {
-  for (std::size_t i = 0; i < kSize; ++i)
+  containers_[0]->erase(key);
+  if (containers_[1])
   {
-    if (containers_[i]->erase(key))
-    {
-      return true;
-    }
+    containers_[1]->erase(key);
   }
-
-  return false;
 }
 
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void SeenContainers<Key, Value, Filter, HashTable>::save(std::ostream& stream)
+template<class Filter>
+void SeenContainers<Key, Value, HashTable>::save(
+  std::ostream& stream,
+  const Filter& filter)
 {
-  auto saver = std::dynamic_pointer_cast<Saver>(containers_[0]);
-  saver->save(stream);
+  auto memory_container = std::dynamic_pointer_cast<MemoryContainerT>(containers_[0]);
+  memory_container->save(stream, filter);
 }
 
 template<
   class Key,
   class Value,
-  class Filter,
   template<typename, typename> class HashTable>
-void SeenContainers<Key, Value, Filter, HashTable>::on_load(
+void SeenContainers<Key, Value, HashTable>::on_load(
   Key&& key,
   Value&& value)
 {
@@ -2163,11 +2406,11 @@ inline auto Portion::get_bound(
   return BoundContainersT::get(value, prefix_key, suffix_key);
 }
 
-inline bool Portion::erase_bound(
+inline void Portion::erase_bound(
   const StringDefHashAdapter& prefix_key,
   const ExternalIdHashAdapter& suffix_key)
 {
-  return BoundContainersT::erase(prefix_key, suffix_key);
+  BoundContainersT::erase(prefix_key, suffix_key);
 }
 
 template<
@@ -2187,9 +2430,112 @@ inline auto Portion::get_seen(
   return SeenContainersT::get(value, key);
 }
 
-inline bool Portion::erase_seen(const HashHashAdapter& key)
+inline void Portion::erase_seen(const HashHashAdapter& key)
 {
-  return SeenContainersT::erase(key);
+  SeenContainersT::erase(key);
+}
+
+template<class Filter>
+void Portions::save(const Filter& filter)
+{
+  const std::string seen_file_path = directory_ + "/" + seen_name_;
+  const std::string temp_seen_file_path = directory_ + "/~" + seen_name_;
+  const std::string bound_file_path = directory_ + "/" + bound_name_;
+  const std::string temp_bound_file_path = directory_ + "/~" + bound_name_;
+
+  std::ofstream file_seen_stream(
+    temp_seen_file_path,
+    std::ios::out | std::ios::trunc);
+  if (!file_seen_stream.is_open())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "can't open file="
+           << temp_seen_file_path;
+  }
+
+  GenericChunkFileHeader header(
+    ChunkFileHeader::name(),
+    ChunkFileHeader::current_version());
+
+  file_seen_stream << header;
+
+  bool need_white_space = false;
+  for (const auto& portion : array_)
+  {
+    if (need_white_space)
+    {
+      file_seen_stream << ' ';
+    }
+    const auto start_position = file_seen_stream.tellp();
+    portion->SeenContainersT::save(file_seen_stream, filter);
+    const auto end_position = file_seen_stream.tellp();
+    if (start_position == end_position)
+    {
+      need_white_space = false;
+    }
+    else
+    {
+      need_white_space = true;
+    }
+  }
+
+  if (file_seen_stream.bad() || file_seen_stream.fail())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "error writing to file="
+           << temp_seen_file_path;
+  }
+
+  file_seen_stream.close();
+  std::filesystem::rename(temp_seen_file_path, seen_file_path);
+
+  std::ofstream file_bound_stream(
+    temp_bound_file_path,
+    std::ios::out | std::ios::trunc);
+  if (!file_bound_stream.is_open())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "can't open file="
+           << temp_bound_file_path;
+  }
+
+  file_bound_stream << header;
+
+  bool need_new_line = false;
+  for (const auto& portion : array_)
+  {
+    if (need_new_line)
+    {
+      file_bound_stream << '\n';
+    }
+    const auto start_position = file_bound_stream.tellp();
+    portion->BoundContainersT::save(file_bound_stream, filter);
+    const auto end_position = file_bound_stream.tellp();
+    if (start_position != end_position)
+    {
+      need_new_line = true;
+    }
+    else
+    {
+      need_new_line = false;
+    }
+  }
+
+  if (file_bound_stream.bad() || file_bound_stream.fail())
+  {
+    Stream::Error stream;
+    stream << FNS
+           << "error writing to file="
+           << temp_bound_file_path;
+  }
+
+  file_bound_stream.close();
+  std::filesystem::rename(
+    temp_bound_file_path,
+    bound_file_path);
 }
 
 } // namespace AdServer::UserInfoSvcs

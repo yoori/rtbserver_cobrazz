@@ -39,11 +39,11 @@ namespace AdServer::UserInfoSvcs
       auto el_it = owner_.all_elements_.begin() + position_;
       auto actual_it = owner_.actual_elements_.begin() + position_;
 
-      while(el_it != owner_.all_elements_.end() &&
+      while (el_it != owner_.all_elements_.end() &&
         local_pos < fetch_actual_size &&
         (max_fetch_size == 0 || local_full_pos < max_fetch_size))
       {
-        if(*actual_it)
+        if (*actual_it)
         {
           auto& element = std::get<HashElement>(*el_it);
           if (filter_(element.value))

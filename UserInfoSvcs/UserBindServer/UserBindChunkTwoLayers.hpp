@@ -20,6 +20,9 @@ class UserBindTwoLayersChunk final :
   public virtual ReferenceCounting::AtomicImpl
 {
 public:
+  using ExpireTime = std::uint16_t;
+  using ListSourceExpireTime = SourcesExpireTime::ListSourceExpireTime;
+
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
 private:
@@ -40,7 +43,9 @@ private:
 public:
   UserBindTwoLayersChunk(
     Logging::Logger* logger,
-    const std::uint16_t memory_days,
+    const ExpireTime seen_default_expire_time,
+    const ExpireTime bound_default_expire_time,
+    const ListSourceExpireTime& bound_list_source_expire_time,
     const std::string& directory,
     const std::string& seen_name,
     const std::string& bound_name,
@@ -153,7 +158,7 @@ private:
 
   bool get_user_id_seen(
     SeenUserInfoHolder& result_user_info,
-    bool& insert_into_seen,
+    bool& insert_into_bound,
     bool& inserted,
     ResultHolder& result_holder,
     const PortionPtr& portion,
@@ -168,6 +173,8 @@ private:
 
 private:
   const Logging::Logger_var logger_;
+
+  const SourcesExpireTimePtr sources_expire_times_;
 
   const std::string directory_;
 
