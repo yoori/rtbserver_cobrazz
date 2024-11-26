@@ -1,4 +1,5 @@
 // STD
+#include <filesystem>
 #include <cassert>
 
 // THIS
@@ -139,11 +140,10 @@ BoundUserInfoHolder::BoundUserInfoHolder() noexcept
 Portion::Portion(
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
-  const FilterDate& filter,
-  const RocksdbParamsPtr& seen_rocksdb_params,
-  const RocksdbParamsPtr& bound_rocksdb_params)
-  : SeenContainersT(actual_fetch_size, max_fetch_size, filter, seen_rocksdb_params),
-    BoundContainersT(actual_fetch_size, max_fetch_size, filter, bound_rocksdb_params)
+  const RocksdbParamsPtr& bound_rocksdb_params,
+  const RocksdbParamsPtr& seen_rocksdb_params)
+  : SeenContainersT(actual_fetch_size, max_fetch_size, seen_rocksdb_params),
+    BoundContainersT(actual_fetch_size, max_fetch_size, bound_rocksdb_params)
 {
 }
 
@@ -160,13 +160,31 @@ Portions::Portions(
   const std::uint32_t rocksdb_ttl,
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
-  const FilterDate& filter,
-  const LoadFilter& load_filter)
+  const LoadFilter& load_filter,
+  const bool seen_need_use_rocksdb)
   : directory_(directory),
     seen_name_(seen_name),
     bound_name_(bound_name),
     load_filter_(load_filter)
 {
+  if (!std::filesystem::exists(directory_))
+  {
+    std::error_code ec;
+    std::filesystem::create_directories(
+      directory_,
+      ec);
+    if (ec)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't create directory="
+             << directory_
+             << ", reason="
+             << ec.message();
+      throw Exception(stream);
+    }
+  }
+
   std::vector<std::string> column_family_names = {
     seen_name + "_rocksdb",
     bound_name + "_rocksdb"
@@ -186,11 +204,16 @@ Portions::Portions(
   write_options->disableWAL = true;
   write_options->sync = false;
 
-  auto seen_rocksdb_params = std::make_shared<RocksdbParams>(
-    logger,
-    column_families[0],
-    read_options,
-    write_options);
+  std::shared_ptr<RocksdbParams> seen_rocksdb_params;
+  if (seen_need_use_rocksdb)
+  {
+    seen_rocksdb_params = std::make_shared<RocksdbParams>(
+      logger,
+      column_families[0],
+      read_options,
+      write_options);
+  }
+
   auto bound_rocksdb_params = std::make_shared<RocksdbParams>(
     logger,
     column_families[1],
@@ -203,9 +226,8 @@ Portions::Portions(
     array_.emplace_back(std::make_shared<Portion>(
       actual_fetch_size,
       max_fetch_size,
-      filter,
-      seen_rocksdb_params,
-      bound_rocksdb_params));
+      bound_rocksdb_params,
+      seen_rocksdb_params));
   }
 
   load();
@@ -227,95 +249,14 @@ std::size_t Portions::portion_index(const std::size_t id_hash) const noexcept
   return ((id_hash & 0xFFFF) ^ ((id_hash >> 16) & 0xFFFF)) % array_.size();
 }
 
-void Portions::save()
-{
-  const std::string seen_file_path = directory_ + "/" + seen_name_;
-  const std::string temp_seen_file_path = directory_ + "/~" + seen_name_;
-  const std::string bound_file_path = directory_ + "/" + bound_name_;
-  const std::string temp_bound_file_path = directory_ + "/~" + bound_name_;
-
-  std::ofstream file_seen_stream(temp_seen_file_path, std::ios::out | std::ios::trunc);
-  if (!file_seen_stream.is_open())
-  {
-    Stream::Error stream;
-    stream << FNS
-           << "can't open file="
-           << temp_seen_file_path;
-  }
-  bool need_white_space = false;
-  for (const auto& portion : array_)
-  {
-    if (need_white_space)
-    {
-      file_seen_stream << ' ';
-    }
-    const auto start_position = file_seen_stream.tellp();
-    portion->SeenContainersT::save(file_seen_stream);
-    const auto end_position = file_seen_stream.tellp();
-    if (start_position == end_position)
-    {
-      need_white_space = false;
-    }
-    else
-    {
-      need_white_space = true;
-    }
-  }
-  if (file_seen_stream.bad() || file_seen_stream.fail())
-  {
-    Stream::Error stream;
-    stream << FNS
-           << "error writing to file="
-           << temp_seen_file_path;
-  }
-  file_seen_stream.close();
-  std::filesystem::rename(temp_seen_file_path, seen_file_path);
-
-  std::ofstream file_bound_stream(temp_bound_file_path, std::ios::out | std::ios::trunc);
-  if (!file_bound_stream.is_open())
-  {
-    Stream::Error stream;
-    stream << FNS
-           << "can't open file="
-           << temp_bound_file_path;
-  }
-  bool need_new_line = false;
-  for (const auto& portion : array_)
-  {
-    if (need_new_line)
-    {
-      file_bound_stream << '\n';
-    }
-    const auto start_position = file_bound_stream.tellp();
-    portion->BoundContainersT::save(file_bound_stream);
-    const auto end_position = file_bound_stream.tellp();
-    if (start_position != end_position)
-    {
-      need_new_line = true;
-    }
-    else
-    {
-      need_new_line = false;
-    }
-  }
-  if (file_bound_stream.bad() || file_bound_stream.fail())
-  {
-    Stream::Error stream;
-    stream << FNS
-           << "error writing to file="
-           << temp_bound_file_path;
-  }
-
-  file_bound_stream.close();
-  std::filesystem::rename(temp_bound_file_path, bound_file_path);
-}
-
 void Portions::load()
 {
   const std::string seen_file_path = directory_ + "/" + seen_name_;
   const std::string bound_file_path = directory_ + "/" + bound_name_;
 
-  Loader<HashHashAdapter, SeenUserInfoHolder> seen_loader(seen_file_path, *this);
+  Loader<HashHashAdapter, SeenUserInfoHolder> seen_loader(
+    seen_file_path,
+    *this);
   seen_loader.load();
   Loader<
     std::pair<

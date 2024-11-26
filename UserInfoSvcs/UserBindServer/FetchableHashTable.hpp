@@ -404,7 +404,6 @@ namespace AdServer::UserInfoSvcs
     DECLARE_EXCEPTION(MaxIndexReached, Exception);
 
     using IndexType = uint32_t;
-    using ThisFetchableHashTable = FetchableHashTable<KeyType, ValueType, HashSetType>;
     using FetchArray = std::vector<std::pair<KeyType, ValueType>>;
 
     class FilterDefault final
@@ -624,7 +623,8 @@ namespace AdServer::UserInfoSvcs
         bucket_count,
         hash_op,
         equal_op)
-    {}
+    {
+    }
   };
 
   template<typename KeyType, typename HashOp, typename EqualOp>
@@ -635,16 +635,19 @@ namespace AdServer::UserInfoSvcs
         bucket_count,
         hash_op,
         equal_op)
-    {}
+    {
+    }
   };
 
   template<typename KeyType, typename ValueType>
   struct USFetchableHashTable final : public FetchableHashTable<KeyType, ValueType, UnorderedSet>
-  {};
+  {
+  };
 
   template<typename KeyType, typename ValueType>
   struct SparseFetchableHashTable final : public FetchableHashTable<KeyType, ValueType, SparseSet>
-  {};
+  {
+  };
 } // namespace AdServer::UserInfoSvcs
 
 #include "FetchableHashTable.tpp"

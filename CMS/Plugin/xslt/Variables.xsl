@@ -599,11 +599,12 @@
 
 <!-- UserBindServer params -->
 <xsl:variable name="def-user-bind-server-two-layers-enable" select="'false'"/>
-<xsl:variable name="def-user-bind-server-memory-days" select="3"/>
 <xsl:variable name="def-user-bind-server-rocksdb-block-cache-size-mb" select="300"/>
 <xsl:variable name="def-user-bind-server-rocksdb-compaction-style" select="'kCompactionStyleLevel'"/>
 <xsl:variable name="def-user-bind-server-rocksdb-number-background-threads" select="10"/>
-<xsl:variable name="def-user-bind-server-rocksdb-expire-time" select="3"/>
+<xsl:variable name="def-user-bind-server-rocksdb-expire-time" select="8640000"/>
+<xsl:variable name="def-user-bind-server-bound-default-expire-time" select="30"/>
+<xsl:variable name="def-user-bind-server-seen-default-expire-time" select="30"/>
 
 <!-- Click frontend params -->
 <xsl:variable name="def-time-duration-grpc-client-mark-bad" select="20"/>

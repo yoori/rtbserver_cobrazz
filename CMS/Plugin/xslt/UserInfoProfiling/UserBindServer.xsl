@@ -92,12 +92,6 @@
       </xsl:if>
     </xsl:attribute>
 
-    <xsl:attribute name="memory_days"><xsl:value-of select="$user-bind-server-config/@memory_days"/>
-      <xsl:if test="count($user-bind-server-config/@memory_days) = 0">
-        <xsl:value-of select="$def-user-bind-server-memory-days"/>
-      </xsl:if>
-    </xsl:attribute>
-
     <!-- start config generation -->
     <!-- check that defined all needed parameters -->
     <cfg:CorbaConfig>
@@ -221,6 +215,15 @@
         <xsl:value-of select="$def-user-bind-server-rocksdb-number-background-threads"/>
       </xsl:attribute>
     </cfg:RocksDBConfig>
+
+    <cfg:SourcesExpireTime>
+      <xsl:attribute name="bound_default_expire_time">
+        <xsl:value-of select="$def-user-bind-server-bound-default-expire-time"/>
+      </xsl:attribute>
+      <xsl:attribute name="seen_default_expire_time">
+        <xsl:value-of select="$def-user-bind-server-seen-default-expire-time"/>
+      </xsl:attribute>
+    </cfg:SourcesExpireTime>
 
   </cfg:UserBindServerConfig>
 

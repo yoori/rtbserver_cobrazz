@@ -32,26 +32,32 @@ namespace UserInfoSvcs
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    typedef std::map<unsigned long, std::string> ChunkPathMap;
+    using ChunkPathMap = std::map<unsigned long, std::string>;
+    using ExpireTime = std::uint16_t;
+    using Source = std::string;
+    using SourceExpireTime = std::pair<Source, ExpireTime>;
+    using ListSourceExpireTime = std::vector<SourceExpireTime>;
 
   public:
     UserBindContainer(
       Logging::Logger* logger,
-      unsigned long common_chunks_number,
+      const ExpireTime seen_default_expire_time,
+      const ExpireTime bound_default_expire_time,
+      const ListSourceExpireTime& bound_list_source_expire_time,
+      const unsigned long common_chunks_number,
       const ChunkPathMap& chunk_folders,
       const char* file_prefix,
       const char* bound_file_prefix,
       const Generics::Time& extend_time_period,
       const Generics::Time& bound_extend_time_period,
       const Generics::Time& min_bind_age,
-      bool bind_at_min_age,
-      unsigned long max_bad_event,
-      unsigned long portions_number,
-      bool load_slave,
-      unsigned long partition_index, // instance partition number (first or second part of cluster)
-      unsigned long partitions_number,
+      const bool bind_at_min_age,
+      const unsigned long max_bad_event,
+      const unsigned long portions_number,
+      const bool load_slave,
+      const unsigned long partition_index, // instance partition number (first or second part of cluster)
+      const unsigned long partitions_number,
       const bool enable_two_layer_mode,
-      const std::uint16_t memory_days,
       const std::size_t rocksdb_number_threads,
       const rocksdb::CompactionStyle rocksdb_compaction_style,
       const std::uint32_t rocksdb_block_сache_size_mb,

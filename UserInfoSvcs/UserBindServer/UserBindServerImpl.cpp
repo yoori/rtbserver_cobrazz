@@ -1,12 +1,10 @@
 #include <list>
-#include <vector>
 #include <iterator>
 
 #include <PrivacyFilter/Filter.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
-#include <Commons/FreqCapManip.hpp>
 
 #include <UserInfoSvcs/UserInfoCommons/Allocator.hpp>
 #include <UserInfoSvcs/UserInfoCommons/Statistics.hpp>
@@ -1017,8 +1015,25 @@ namespace UserInfoSvcs
         rocksdb_compaction_style = rocksdb::kCompactionStyleFIFO;
       }
 
+      const auto& sources_expire_time = user_bind_server_config_.SourcesExpireTime();
+      const auto seen_default_expire_time = sources_expire_time.seen_default_expire_time();
+      const auto bound_default_expire_time = sources_expire_time.bound_default_expire_time();
+
+      UserBindContainer::ListSourceExpireTime bound_list_source_expire_time;
+      bound_list_source_expire_time.reserve(
+        sources_expire_time.BoundSourceExpireTime().size());
+      for (const auto& data : sources_expire_time.BoundSourceExpireTime())
+      {
+        bound_list_source_expire_time.emplace_back(
+          data.source(),
+          data.expire_time());
+      }
+
       UserBindProcessor_var user_bind_processor = new UserBindContainer(
         logger_,
+        seen_default_expire_time,
+        bound_default_expire_time,
+        bound_list_source_expire_time,
         user_bind_server_config_.Storage().common_chunks_number(),
         chunks_,
         user_bind_server_config_.Storage().prefix().c_str(),
@@ -1033,7 +1048,6 @@ namespace UserInfoSvcs
         user_bind_server_config_.partition_index(),
         user_bind_server_config_.partitions_number(),
         user_bind_server_config_.enable_two_layers(),
-        user_bind_server_config_.memory_days(),
         rocksdb_number_background_threads,
         rocksdb_compaction_style,
         rocksdb_config.block_cache_size_mb(),
