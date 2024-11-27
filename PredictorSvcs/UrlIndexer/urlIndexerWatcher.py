@@ -1,10 +1,5 @@
 import os
 import sys
-#add external dependencies: logger_config.py and other
-sys.path.append(os.path.abspath('../../Commons/Python/'))
-from logger_config import get_logger
-
-import time
 import subprocess
 import json
 from datetime import datetime, timedelta
@@ -16,19 +11,26 @@ import re
 import signal
 import threading
 
+# add external dependencies: logger_config.py and other
+sys.path.append(os.path.abspath('../../Commons/Python/'))
+from logger_config import get_logger
+
 loggerCH = get_logger('URLindexier ClickHouse', logging.DEBUG)
 loggerRedis = get_logger('URLindexier Redis', logging.DEBUG)
 logger = get_logger('URLindexier', logging.DEBUG)
 
 terminate_flag = threading.Event()
 
+
 def signal_handler(sig, frame):
-    logger.info(f"Received termination signal. Exiting...")
+    logger.info("Received termination signal. Exiting...")
     terminate_flag.set()
+
 
 # signal registration
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def parse_time_interval(time_str):
     """
@@ -43,6 +45,7 @@ def parse_time_interval(time_str):
 
     return timedelta(days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds))
 
+
 # connect to dbs one time
 clientClickHouse = clickhouse_connect.get_client(
     host='localhost',
@@ -52,6 +55,7 @@ clientClickHouse = clickhouse_connect.get_client(
 )
 clientRedis = redis.Redis(host='localhost', port=6379, db=0)
 
+
 def is_table_empty():
     """
     Check Clickhouse urls table is empty or not
@@ -59,6 +63,7 @@ def is_table_empty():
     initial_check_query = "SELECT COUNT(*) FROM urls"
     initial_result = clientClickHouse.query(initial_check_query)
     return initial_result.result_rows[0][0] == 0
+
 
 def backup(urls):
     """
@@ -85,13 +90,14 @@ def backup(urls):
         loggerRedis.error(f"backup error: {e}")
     return clickhouse_backup, redis_backup
 
+
 def restore(clickhouse_backup, redis_backup, isRestoreRedis=True):
     """
     Restore data for ClickHouse and Redis.
     """
     # ClickHouse
     try:
-        loggerCH.info(f"restore start")
+        loggerCH.info("restore start")
         # Create Case
         update_case = "CASE "
         for url, indexed_date in clickhouse_backup.items():
@@ -103,19 +109,20 @@ def restore(clickhouse_backup, redis_backup, isRestoreRedis=True):
 
         query = f"ALTER TABLE urls UPDATE indexed_date = {update_case} WHERE url IN ('{urls_str}')"
         clientClickHouse.command(query)
-        loggerCH.info(f"restore ok")
+        loggerCH.info("restore ok")
     except Exception as e:
         loggerCH.error(f"restore error: {e}")
 
     if(isRestoreRedis):
         # Redis
-        loggerRedis.info(f"restore start")
+        loggerRedis.info("restore start")
         for url, value in redis_backup.items():
             try:
                 clientRedis.set(url, value)
                 loggerRedis.info(f"restore ok for {url}")
             except Exception as e:
                 loggerRedis.error(f"restore for {url}, error: {e}")
+
 
 def update(data_json_str):
     """
@@ -125,7 +132,7 @@ def update(data_json_str):
 
     clickhouse_backup, redis_backup = backup(data_json_str)
     if not clickhouse_backup or not redis_backup:
-        logger.error(f"Update error - no backup data.")
+        logger.error("Update error - no backup data.")
         return False
 
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -135,7 +142,7 @@ def update(data_json_str):
     update_query = f"ALTER TABLE urls UPDATE indexed_date = '{current_time}' WHERE url IN ('{urls_str}')"
     try:
         clientClickHouse.command(update_query)
-        loggerCH.info(f"update ok.")
+        loggerCH.info("update ok.")
     except Exception as e:
         loggerCH.error(f"update error: {e}")
         restore(clickhouse_backup, redis_backup, isRestoreRedis=False)
@@ -146,12 +153,13 @@ def update(data_json_str):
         for url, values in data_json_str.items():
             values_json = json.dumps(values, ensure_ascii=False)
             clientRedis.set(url, values_json)
-        loggerRedis.info(f"update ok")
+        loggerRedis.info("update ok")
     except Exception as e:
         loggerRedis.error(f"update error: {e}")
         restore(clickhouse_backup, redis_backup)
         return False
     return True
+
 
 def insert(data_json_str):
     """
@@ -165,7 +173,7 @@ def insert(data_json_str):
         insert_query = f"INSERT INTO urls (url, indexed_date) VALUES {', '.join(values)}"
 
         clientClickHouse.command(insert_query)
-        loggerCH.error(f"insert ok")
+        loggerCH.error("insert ok")
     except Exception as e:
         loggerCH.error(f"insert error: {e}")
         return False
@@ -175,11 +183,12 @@ def insert(data_json_str):
         for url, values in data_json_str.items():
             values_json = json.dumps(values, ensure_ascii=False)
             clientRedis.set(url, values_json)
-        loggerRedis(f"insert ok")
+        loggerRedis("insert ok")
     except Exception as e:
         loggerRedis(f"insert error: {e}")
         return False
     return True
+
 
 def update_and_insert(urls, data_json_str):
     """
@@ -191,15 +200,16 @@ def update_and_insert(urls, data_json_str):
     if existing_fields:
         existing_data = {url: data_json_str[url] for url in existing_fields}
         if not update(existing_data):
-            logger.error(f"update error")
+            logger.error("update error")
             return False
 
     if new_fields:
         new_data = {url: data_json_str[url] for url in new_fields}
         if not insert(new_data):
-            logger.error(f"insert error")
+            logger.error("insert error")
             return False
     return True
+
 
 def separateUrls(urls):
     existing_urls = []
@@ -221,6 +231,7 @@ def separateUrls(urls):
         loggerCH(f"error while checking existing fields: {e}")
 
     return existing_urls, new_urls
+
 
 def askGPT(urls):
     """
@@ -251,6 +262,7 @@ def askGPT(urls):
         logger.error(f"script ../../Utils/GPT/getSiteCategories.py return {result.stderr}")
     return None
 
+
 def getExpiredUrls():
     threshold_date = (datetime.now() - timeOfExpiration).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -264,20 +276,23 @@ def getExpiredUrls():
         urls = f"'{urls}'"
     return urls
 
+
 def checkExpiration():
     urls = getExpiredUrls()
-    if urls != None:
+    if urls is not None:
         logger.info(f"Expired URLs: {urls}")
         data_json_str = askGPT(urls)
-        if(data_json_str != None):
+        if data_json_str is not None:
             ok = update(data_json_str)
             if(not ok):
-                logger.error(f"checkExpiration update not ok")
+                logger.error("checkExpiration update not ok")
+
+
 def main():
     try:
         while not terminate_flag.is_set():
             if is_table_empty():
-                logger.warn(f"Table is empty - ok, wait utill it will be filled")
+                logger.warn("Table is empty - ok, wait utill it will be filled")
             else:
                 checkExpiration()
 
@@ -285,19 +300,24 @@ def main():
             terminate_flag.wait(timeoutBetweenChecks_sec)
     finally:
         clientClickHouse.close()
-        loggerCH.info(f"connection close")
+        loggerCH.info("connection close")
 
         clientRedis.close()
-        loggerRedis.info(f"connection close")
+        loggerRedis.info("connection close")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='URLs indexier watcher')
-    parser.add_argument('--gptdir', type=str, default='GPTresults', help='GPT - getSiteCategory.py results folder')
-    parser.add_argument('--storeGpt', action='store_true', help='true - save all gpt results, false - save only last one')
-    parser.add_argument('--checkTimeout', type=int, default=5*60, help='timeout between checks')
-    parser.add_argument('--expTime', type=parse_time_interval, default='60d', help="expiration time in time format 'Xd Xh Xm Xs'")
-    parser.add_argument('--pathGPT', type=str, default='../../Utils/GPT/getSiteCategories.py', help='path to getSiteCategories.py')
+    parser.add_argument('--gptdir', type=str, default='GPTresults',
+                        help='GPT - getSiteCategory.py results folder')
+    parser.add_argument('--storeGpt', action='store_true',
+                        help='true - save all gpt results, false - save only last one')
+    parser.add_argument('--checkTimeout', type=int, default=300,
+                        help='timeout between checks')
+    parser.add_argument('--expTime', type=parse_time_interval, default='60d',
+                        help="expiration time in format 'Xd Xh Xm Xs'")
+    parser.add_argument('--pathGPT', type=str, default='../../Utils/GPT/getSiteCategories.py',
+                        help='path to getSiteCategories.py')
     args = parser.parse_args()
 
     global output_GPT_dir, isGPTresulteStored, timeoutBetweenChecks_sec, timeOfExpiration, scriptPathGPT
@@ -312,6 +332,6 @@ if __name__ == "__main__":
     logger.info(f"timeoutBetweenChecks_sec = {timeoutBetweenChecks_sec}")
     logger.info(f"timeOfExpiration = {timeOfExpiration}")
     logger.info(f"scriptPathGPT = {scriptPathGPT}")
-    logger.info(f"--------------------------")
+    logger.info("--------------------------")
 
     main()
