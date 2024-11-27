@@ -292,7 +292,7 @@ def main():
     try:
         while not terminate_flag.is_set():
             if is_table_empty():
-                logger.warn("Table is empty - ok, wait utill it will be filled")
+                logger.warning("Table is empty - ok, wait until it will be filled")
             else:
                 checkExpiration()
 

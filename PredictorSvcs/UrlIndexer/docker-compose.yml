@@ -8,8 +8,7 @@ services:
       - "9009:9009"  # interface for interclaster
     volumes:
       - ./clickhouse_data:/var/lib/clickhouse  # store data out of container
-    environment:
-      CLICKHOUSE_DB: ursl_store  # db name default
+      - ./querys/clickhouse_create_table.sql:/docker-entrypoint-initdb.d/clickhouse_create_table.sql # init script
 
   redis:
     image: redis:latest
