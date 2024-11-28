@@ -1,16 +1,41 @@
+// STD
 #include <list>
-#include <vector>
-#include <iterator>
 
+// UNIXCOMMONS
 #include <PrivacyFilter/Filter.hpp>
 
+// THIS
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
+#include <CampaignSvcs/BillingServer/BillingContainer.hpp>
+#include <CampaignSvcs/BillingServer/BillingServerImpl.hpp>
 #include <CampaignSvcs/CampaignCommons/CorbaCampaignTypes.hpp>
 #include <CampaignSvcs/CampaignServer/BillStatServerSource.hpp>
 
-#include "BillingContainer.hpp"
-#include "BillingServerImpl.hpp"
+namespace
+{
+  template<class Response>
+  auto create_grpc_response(const std::uint32_t id_request_grpc)
+  {
+    auto response = std::make_unique<Response>();
+    response->set_id_request_grpc(id_request_grpc);
+    return response;
+  }
+
+  template<class Response>
+  auto create_grpc_error_response(
+    const AdServer::CampaignSvcs::Proto::Error_Type error_type,
+    const String::SubString detail,
+    const std::uint32_t id_request_grpc)
+  {
+    auto response = create_grpc_response<Response>(id_request_grpc);
+    auto* error = response->mutable_error();
+    error->set_type(error_type);
+    error->set_description(detail.data(), detail.length());
+    return response;
+  }
+} // namespace
 
 namespace Aspect
 {
@@ -131,6 +156,76 @@ namespace CampaignSvcs
     return nullptr; // unreachable
   }
 
+  BillingServerImpl::CheckAvailableBidResponsePtr
+  BillingServerImpl::check_available_bid(
+    CheckAvailableBidRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      auto billing_accessor = get_accessor_();
+      const auto& request_info = request->request_info();
+
+      BillingProcessor::Bid bid;
+      bid.time = GrpcAlgs::unpack_time(request_info.time());
+      bid.account_id = request_info.account_id();
+      bid.advertiser_id = request_info.advertiser_id();
+      bid.campaign_id = request_info.campaign_id();
+      bid.ccg_id = request_info.ccg_id();
+      bid.ctr = GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.ctr());
+      bid.optimize_campaign_ctr = request_info.optimize_campaign_ctr();
+
+      const BillingProcessor::BidResult res = billing_accessor->check_available_bid(bid);
+
+      auto response = create_grpc_response<Proto::CheckAvailableBidResponse>(
+        id_request_grpc);
+      auto* info = response->mutable_info();
+      auto* return_value = info->mutable_return_value();
+      return_value->set_available(res.available);
+      return_value->set_goal_ctr(GrpcAlgs::pack_decimal(res.goal_ctr));
+
+      return response;
+    }
+    catch (AdServer::CampaignSvcs::BillingServer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.description;
+      auto response = create_grpc_error_response<Proto::CheckAvailableBidResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::CheckAvailableBidResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: Unknown error";
+      auto response = create_grpc_error_response<Proto::CheckAvailableBidResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+  }
+
   bool
   BillingServerImpl::reserve_bid(
     const AdServer::CampaignSvcs::BillingServer::ReserveBidInfo& request_info)
@@ -165,6 +260,74 @@ namespace CampaignSvcs
     }
 
     return false;
+  }
+
+  BillingServerImpl::ReserveBidResponsePtr
+  BillingServerImpl::reserve_bid(
+    ReserveBidRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      auto billing_accessor = get_accessor_();
+      const auto& request_info = request->request_info();
+
+      BillingProcessor::Bid bid;
+      bid.time = GrpcAlgs::unpack_time(request_info.time());
+      bid.account_id = request_info.account_id();
+      bid.advertiser_id = request_info.advertiser_id();
+      bid.campaign_id = request_info.campaign_id();
+      bid.ccg_id = request_info.ccg_id();
+
+      const auto result = billing_accessor->reserve_bid(
+        bid,
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.reserve_budget()));
+
+      auto response = create_grpc_response<Proto::ReserveBidResponse>(
+        id_request_grpc);
+      auto* const info = response->mutable_info();
+      info->set_return_value(result);
+
+      return response;
+    }
+    catch (AdServer::CampaignSvcs::BillingServer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.description;
+      auto response = create_grpc_error_response<Proto::ReserveBidResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ReserveBidResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: Unknown error";
+      auto response = create_grpc_error_response<Proto::ReserveBidResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
   }
 
   AdServer::CampaignSvcs::BillingServer::BidResultInfo*
@@ -229,6 +392,101 @@ namespace CampaignSvcs
     }
 
     return nullptr; // unreachable
+  }
+
+  BillingServerImpl::ConfirmBidResponsePtr
+  BillingServerImpl::confirm_bid(
+    ConfirmBidRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      auto* request_info = request->mutable_request_info();
+
+      BillingProcessor::Bid bid;
+      bid.time = GrpcAlgs::unpack_time(request_info->time());
+      bid.account_id = request_info->account_id();
+      bid.advertiser_id = request_info->advertiser_id();
+      bid.campaign_id = request_info->campaign_id();
+      bid.ccg_id = request_info->ccg_id();
+      bid.ctr = GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info->ctr());
+
+      RevenueDecimal account_spent_budget =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info->account_spent_budget());
+      RevenueDecimal spent_budget =
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info->spent_budget());
+      ImpRevenueDecimal imps = ImpRevenueDecimal(
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info->imps()));
+      ImpRevenueDecimal clicks = ImpRevenueDecimal(
+        GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info->clicks()));
+
+      // reserved_budget
+      auto billing_accessor = get_accessor_();
+      const BillingProcessor::BidResult res = billing_accessor->confirm_bid(
+        account_spent_budget,
+        spent_budget,
+        imps,
+        clicks,
+        bid,
+        request_info->forced());
+
+      // fill remind amounts
+      request_info->set_account_spent_budget(GrpcAlgs::pack_decimal(account_spent_budget));
+      request_info->set_spent_budget(GrpcAlgs::pack_decimal(spent_budget));
+      request_info->set_imps(GrpcAlgs::pack_decimal(compatibility_cast(imps)));
+      request_info->set_clicks(GrpcAlgs::pack_decimal(compatibility_cast(clicks)));
+
+      auto response = create_grpc_response<Proto::ConfirmBidResponse>(
+        id_request_grpc);
+      auto* const info = response->mutable_info();
+
+      auto* return_value = info->mutable_return_value();
+      return_value->set_available(res.available);
+      return_value->set_goal_ctr(GrpcAlgs::pack_decimal(res.goal_ctr));
+
+      info->set_allocated_request_info(
+        request->release_request_info());
+
+      return response;
+    }
+    catch (AdServer::CampaignSvcs::BillingServer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.description;
+      auto response = create_grpc_error_response<Proto::ConfirmBidResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::ConfirmBidResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: Unknown error";
+      auto response = create_grpc_error_response<Proto::ConfirmBidResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
   }
 
   void
@@ -305,6 +563,121 @@ namespace CampaignSvcs
       CORBACommons::throw_desc<AdServer::CampaignSvcs::
         BillingServer::ImplementationException>(
           ostr.str());
+    }
+  }
+
+  BillingServerImpl::AddAmountResponsePtr
+  BillingServerImpl::add_amount(
+    AddAmountRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      const auto& request_seq = request->request_seq();
+      auto billing_accessor = get_accessor_();
+
+      auto response = create_grpc_response<Proto::AddAmountResponse>(
+        id_request_grpc);
+      auto* const info = response->mutable_info();
+      auto* remainder_request_seq = info->mutable_remainder_request_seq();
+      remainder_request_seq->Reserve(request_seq.size());
+
+      std::uint32_t req_i = 0;
+      for (const auto& request_info : request_seq)
+      {
+        BillingProcessor::Bid bid;
+        bid.time = GrpcAlgs::unpack_time(request_info.time());
+        bid.account_id = request_info.account_id();
+        bid.advertiser_id = request_info.advertiser_id();
+        bid.campaign_id = request_info.campaign_id();
+        bid.ccg_id = request_info.ccg_id();
+        bid.ctr = GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.ctr());
+
+        RevenueDecimal account_spent_budget =
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.account_spent_budget());
+        RevenueDecimal spent_budget =
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.spent_budget());
+        ImpRevenueDecimal imps = ImpRevenueDecimal(
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.imps()));
+        ImpRevenueDecimal clicks = ImpRevenueDecimal(
+          GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.clicks()));
+
+        // reserved_budget
+        if (!billing_accessor->confirm_bid(
+          account_spent_budget,
+          spent_budget,
+          imps,
+          clicks,
+          bid,
+          request_info.forced()).available)
+        {
+          auto* const remainder_request_info = remainder_request_seq->Add();
+          remainder_request_info->set_index(req_i);
+
+          auto* confirm_bid = remainder_request_info->mutable_request_info();
+          *confirm_bid = request_info;
+
+          confirm_bid->set_time(request_info.time());
+          confirm_bid->set_account_id(request_info.account_id());
+          confirm_bid->set_advertiser_id(request_info.advertiser_id());
+          confirm_bid->set_campaign_id(request_info.campaign_id());
+          confirm_bid->set_ccg_id(request_info.ccg_id());
+          confirm_bid->set_ctr(request_info.ctr());
+          confirm_bid->set_reserved_budget(request_info.reserved_budget());
+          confirm_bid->set_forced(request_info.forced());
+
+          confirm_bid->set_account_spent_budget(
+            GrpcAlgs::pack_decimal(account_spent_budget));
+          confirm_bid->set_spent_budget(
+            GrpcAlgs::pack_decimal(spent_budget));
+          confirm_bid->set_imps(
+            GrpcAlgs::pack_decimal(compatibility_cast(imps)));
+          confirm_bid->set_clicks(
+            GrpcAlgs::pack_decimal(compatibility_cast(clicks)));
+        }
+
+        req_i += 1;
+      }
+
+      return response;
+    }
+    catch (AdServer::CampaignSvcs::BillingServer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.description;
+      auto response = create_grpc_error_response<Proto::AddAmountResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::AddAmountResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught BillingProcessor::Exception: Unknown error";
+      auto response = create_grpc_error_response<Proto::AddAmountResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+
+      return response;
     }
   }
 

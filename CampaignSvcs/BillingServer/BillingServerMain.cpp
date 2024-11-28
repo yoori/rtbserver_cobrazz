@@ -1,12 +1,15 @@
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
 
-#include <Commons/ProcessControlVarsImpl.hpp>
-
-#include <Commons/CorbaConfig.hpp>
+// THIS
+#include <CampaignSvcs/BillingServer/BillingServerImpl.hpp>
+#include <CampaignSvcs/BillingServer/BillingServerMain.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
-
-#include "BillingServerMain.hpp"
+#include <Commons/GrpcService.hpp>
+#include <Commons/UserverConfigUtils.hpp>
+#include <Commons/ProcessControlVarsImpl.hpp>
 
 namespace
 {
@@ -36,6 +39,79 @@ CORBACommons::IProcessControl::ALIVE_STATUS
 BillingServerApp_::is_alive() /*throw(CORBA::SystemException)*/
 {
   return CORBACommons::ProcessControlImpl::is_alive();
+}
+
+void
+BillingServerApp_::init_coro()
+{
+  using ComponentsBuilder = UServerUtils::ComponentsBuilder;
+  using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+
+  auto task_processor_container_builder =
+    Config::create_task_processor_container_builder(
+      logger(),
+      configuration_->Coroutine());
+
+  auto init_func = [this] (TaskProcessorContainer& task_processor_container) {
+    auto& main_task_processor = task_processor_container.get_main_task_processor();
+    auto components_builder = std::make_unique<ComponentsBuilder>();
+
+    auto grpc_server_builder = Config::create_grpc_server_builder(
+      logger(),
+      configuration_->GrpcServer());
+
+    auto check_available_bid = AdServer::Commons::create_grpc_service<
+      AdServer::CampaignSvcs::Proto::BillingService_check_available_bid_Service,
+      AdServer::CampaignSvcs::BillingServerImpl,
+      &AdServer::CampaignSvcs::BillingServerImpl::check_available_bid>(
+      logger(),
+      billing_server_impl_.in());
+    grpc_server_builder->add_service(
+      check_available_bid.in(),
+      main_task_processor);
+
+    auto reserve_bid = AdServer::Commons::create_grpc_service<
+      AdServer::CampaignSvcs::Proto::BillingService_reserve_bid_Service,
+      AdServer::CampaignSvcs::BillingServerImpl,
+      &AdServer::CampaignSvcs::BillingServerImpl::reserve_bid>(
+      logger(),
+      billing_server_impl_.in());
+    grpc_server_builder->add_service(
+      reserve_bid.in(),
+      main_task_processor);
+
+   auto confirm_bid = AdServer::Commons::create_grpc_service<
+      AdServer::CampaignSvcs::Proto::BillingService_confirm_bid_Service,
+      AdServer::CampaignSvcs::BillingServerImpl,
+      &AdServer::CampaignSvcs::BillingServerImpl::confirm_bid>(
+      logger(),
+      billing_server_impl_.in());
+    grpc_server_builder->add_service(
+      confirm_bid.in(),
+      main_task_processor);
+
+    auto add_amount = AdServer::Commons::create_grpc_service<
+      AdServer::CampaignSvcs::Proto::BillingService_add_amount_Service,
+      AdServer::CampaignSvcs::BillingServerImpl,
+      &AdServer::CampaignSvcs::BillingServerImpl::add_amount>(
+      logger(),
+      billing_server_impl_.in());
+    grpc_server_builder->add_service(
+      add_amount.in(),
+      main_task_processor);
+
+    components_builder->add_grpc_cobrazz_server(
+      std::move(grpc_server_builder));
+
+    return components_builder;
+  };
+
+  manager_coro_ = new ManagerCoro(
+    std::move(task_processor_container_builder),
+    std::move(init_func),
+    logger());
+
+  add_child_object(manager_coro_);
 }
 
 void
@@ -141,6 +217,8 @@ BillingServerApp_::main(int argc, char** argv)
       PROCESS_CONTROL_OBJ_KEY, this);
 
     shutdowner_ = corba_server_adapter_->shutdowner();
+
+    init_coro();
 
     activate_object();
 

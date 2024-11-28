@@ -16,6 +16,7 @@
 
 <xsl:include href="../Functions.xsl"/>
 <xsl:include href="CampaignServersCorbaRefs.xsl"/>
+<xsl:include href="../GrpcChannelArgs.xsl"/>
 
 <xsl:variable name="xpath" select="dyn:evaluate($XPATH)"/>
 <xsl:variable name="out-dir" select="$OUT_DIR"/>
@@ -60,6 +61,13 @@
     <xsl:if test="count($billing-server-config/cfg:networkParams/@port) = 0">
       <xsl:value-of select="$def-billing-server-port"/>
    </xsl:if>
+  </xsl:variable>
+
+  <xsl:variable name="billing-server-grpc-port">
+    <xsl:value-of select="$billing-server-config/cfg:networkParams/@grpc_port"/>
+    <xsl:if test="count($billing-server-config/cfg:networkParams/@grpc_port) = 0">
+      <xsl:value-of select="$def-billing-server-grpc-port"/>
+    </xsl:if>
   </xsl:variable>
 
   <exsl:document href="billingServer.port"
@@ -110,6 +118,31 @@
 
     <cfg:Storage dir="{concat($cache-root, '/BillingServer/Amount')}"
       dump_period="900"/>
+
+    <cfg:Coroutine>
+      <cfg:CoroPool
+        initial_size="{$coro-pool-initial-size}"
+        max_size="{$coro-pool-max-size}"
+        stack_size="{$coro-pool-stack-size}"/>
+      <cfg:EventThreadPool
+        number_threads="{$event-thread-pool-number-threads}"
+        name="{$event-thread-pool-name}"
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
+        defer_events="{$event-thread-pool-defer-events}"/>
+      <cfg:MainTaskProcessor
+        name="{$main-task-processor-name}"
+        number_threads="{$main-task-processor-number-threads}"
+        should_guess_cpu_limit="{$main-task-processor-should-guess-cpu-limit}"
+        overload_action="{$main-task-processor-overload-action}"
+        wait_queue_length_limit="{$main-task-processor-wait-queue-length-limit}"
+        wait_queue_time_limit="{$main-task-processor-wait-queue-time-limit}"
+        sensor_wait_queue_time_limit="{$main-task-processor-sensor-wait-queue-time-limit}"/>
+    </cfg:Coroutine>
+
+    <cfg:GrpcServer ip="{$grpc-server-ip}">
+      <xsl:attribute name="port"><xsl:value-of select="$billing-server-grpc-port"/></xsl:attribute>
+      <xsl:call-template name="GrpcServerChannelArgList"/>
+    </cfg:GrpcServer>
   </cfg:BillingServer>
 
 </xsl:template>
