@@ -1,31 +1,17 @@
 import os
+import sys
+
+#add external dependencies: for logger_config.py and other in this folder
+sys.path.append(os.path.abspath('../../Commons/Python/'))
+from logger_config import get_logger
+
 import requests
 import json
 import time
 import argparse
 import logging
-import colorlog
 
-logger = logging.getLogger('main')
-logger.setLevel(logging.DEBUG)
-
-console_handler = colorlog.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
-
-formatter = colorlog.ColoredFormatter(
-    '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s\n',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    log_colors={
-        'DEBUG': 'cyan',
-        'INFO': 'green',
-        'WARNING': 'yellow',
-        'ERROR': 'red',
-        'CRITICAL': 'bold_red',
-    }
-)
-console_handler.setFormatter(formatter)
-
-logger.addHandler(console_handler)
+logger = get_logger('GPT', logging.DEBUG)
 
 def split_urls_into_chunks(url_string, max_chunk_size):
     # Separating the string by commas and removing spaces
