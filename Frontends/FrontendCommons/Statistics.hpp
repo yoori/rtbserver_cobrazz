@@ -8,6 +8,7 @@
 
 // UNIXCOMMONS
 #include <UServerUtils/Statistics/CommonStatisticsProvider.hpp>
+#include <UServerUtils/Statistics/CounterStatisticsProvider.hpp>
 #include <UServerUtils/Statistics/TimeStatisticsProvider.hpp>
 
 namespace FrontendCommons
@@ -15,6 +16,9 @@ namespace FrontendCommons
 
 extern const std::string time_provider_name;
 extern const std::string common_counter_provider_name;
+
+extern const std::string pubpixel_frontend_counter_provider_name;
+extern const std::string pubpixel_frontend_with_labels_counter_provider_name;
 
 enum class TimeStatisticId
 {
@@ -29,6 +33,18 @@ enum class CounterStatisticId
 {
   BiddingFrontend_Bids,
   UserBind_RequestCount,
+  Max  // should be the last
+};
+
+enum class PubPixelFrontendStatisticId
+{
+  PubPixelFrontend_TotalRequests,
+  Max  // should be the last
+};
+
+enum class PubPixelFrontendWithLabelsStatisticId
+{
+  PubPixelFrontendWithLabels_PublisherRequests,
   Max  // should be the last
 };
 
@@ -88,6 +104,60 @@ inline auto& get_common_counter_statistics_provider()
     std::unordered_map>(common_counter_provider_name, 500);
 }
 
+class PubPixelFrontendStatisticIdConverter final
+{
+private:
+  using Data = std::pair<UServerUtils::Statistics::CounterType, std::string>;
+
+public:
+  PubPixelFrontendStatisticIdConverter() = default;
+
+  ~PubPixelFrontendStatisticIdConverter() = default;
+
+  auto operator()()
+  {
+    const std::map<PubPixelFrontendStatisticId, Data> id_to_name =
+      {   
+        {PubPixelFrontendStatisticId::PubPixelFrontend_TotalRequests, {UServerUtils::Statistics::CounterType::UInt, "pubpixel_requests_total"}}
+      };  
+
+    return id_to_name;
+  }
+};
+
+inline auto& get_pubpixel_frontend_counter_statistics_provider()
+{
+  return UServerUtils::Statistics::get_counter_statistics_provider<
+    PubPixelFrontendStatisticId,
+    PubPixelFrontendStatisticIdConverter>(pubpixel_frontend_counter_provider_name);
+}
+
+class PubPixelFrontendWithLabelsStatisticIdConverter final
+{
+public:
+  PubPixelFrontendWithLabelsStatisticIdConverter() = default;
+
+  ~PubPixelFrontendWithLabelsStatisticIdConverter() = default;
+
+  auto operator()()
+  {
+    const std::map<PubPixelFrontendWithLabelsStatisticId, std::pair<UServerUtils::Statistics::CommonType, std::string>> id_to_name = {
+      {PubPixelFrontendWithLabelsStatisticId::PubPixelFrontendWithLabels_PublisherRequests, {UServerUtils::Statistics::CommonType::UInt, "pubpixel_requests"}}
+    };
+
+    return id_to_name;
+  }
+};
+
+inline auto& get_pubpixel_frontend_with_labels_counter_statistics_provider()
+{
+  return UServerUtils::Statistics::get_common_statistics_provider<
+    PubPixelFrontendWithLabelsStatisticId,
+    PubPixelFrontendWithLabelsStatisticIdConverter,
+    std::shared_mutex,
+    std::unordered_map>(pubpixel_frontend_with_labels_counter_provider_name, 50);
+}
+
 } // namespace FrontendCommons
 
 #define DO_TIME_STATISTIC_FRONTEND(id) \
@@ -95,5 +165,11 @@ inline auto& get_common_counter_statistics_provider()
 
 #define ADD_COMMON_COUNTER_STATISTIC(id, label, value) \
   FrontendCommons::get_common_counter_statistics_provider()->add(id, label, value);
+
+#define ADD_PUBPIXEL_FRONTEND_COUNTER_STATISTIC(id, value) \
+  FrontendCommons::get_pubpixel_frontend_counter_statistics_provider()->add(id, value);
+
+#define ADD_PUBPIXEL_FRONTEND_WITH_LABELS_COUNTER_STATISTIC(id, label, value) \
+  FrontendCommons::get_pubpixel_frontend_with_labels_counter_statistics_provider()->add(id, label, value);
 
 #endif //FRONTENDCOMMONS_STATISTICS_HPP
