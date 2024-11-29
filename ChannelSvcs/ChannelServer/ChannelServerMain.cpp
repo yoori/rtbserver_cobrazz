@@ -43,7 +43,13 @@ void ChannelServerApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   ShutdownGuard guard(shutdown_lock_);
 
-  if(server_impl_.in() != 0)
+  if (manager_coro_)
+  {
+    manager_coro_->deactivate_object();
+    manager_coro_->wait_object();
+  }
+
+  if (server_impl_)
   {
     server_impl_->deactivate_object();
     server_impl_->wait_object();
@@ -252,6 +258,8 @@ void ChannelServerApp_::init_coro_()
       std::move(task_processor_container_builder),
       std::move(init_func),
       logger());
+
+  manager_coro_->activate_object();
 }
 
 void ChannelServerApp_::main(int& argc, char** argv) noexcept
@@ -293,14 +301,12 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
     init_coro_();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
-    // Running coroutine system
-    manager_coro_->activate_object();
+
     // Running orb loop
     corba_server_adapter_->run();
 
     wait();
-    manager_coro_->deactivate_object();
-    manager_coro_->wait_object();
+
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
   }
   catch (const Exception& e)

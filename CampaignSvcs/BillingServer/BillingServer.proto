@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package AdServer.CampaignSvcs.Proto;
+
+option optimize_for = SPEED;
+
+message Error
+{
+  enum Type
+  {
+    NotReady = 0;
+    Implementation = 2;
+  }
+
+  Type type = 1;
+  string description = 2;
+}
+
+message CheckBidInfo
+{
+  bytes time = 2;
+  uint32 account_id = 3;
+  uint32 advertiser_id = 4;
+  uint32 campaign_id = 5;
+  uint32 ccg_id = 6;
+  bytes ctr = 7;
+  bool optimize_campaign_ctr = 8;
+}
+
+message CheckAvailableBidRequest
+{
+  uint32 id_request_grpc = 1;
+  CheckBidInfo request_info = 2;
+}
+
+message BidResultInfo
+{
+  bool available = 1;
+  bytes goal_ctr = 2;
+}
+
+message CheckAvailableBidResponseInfo
+{
+  BidResultInfo return_value = 1;
+}
+
+message CheckAvailableBidResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    CheckAvailableBidResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ReserveBidInfo
+{
+  bytes time = 1;
+  uint32 account_id = 2;
+  uint32 advertiser_id = 3;
+  uint32 campaign_id = 4;
+  uint32 ccg_id = 5;
+  bytes reserve_budget = 6;
+}
+
+message ReserveBidRequest
+{
+  uint32 id_request_grpc = 1;
+  ReserveBidInfo request_info = 2;
+}
+
+message ReserveBidResponseInfo
+{
+  bool return_value = 1;
+}
+
+message ReserveBidResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ReserveBidResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message ConfirmBidInfo
+{
+  bytes time = 1;
+  uint32 account_id = 2;
+  uint32 advertiser_id = 3;
+  uint32 campaign_id = 4;
+  uint32 ccg_id = 5;
+  bytes ctr = 6;
+  bytes account_spent_budget = 7;
+  bytes spent_budget = 8;
+  bytes reserved_budget = 9;
+  bytes imps = 10;
+  bytes clicks = 11;
+  bool forced = 12;
+}
+
+message ConfirmBidRequest
+{
+  uint32 id_request_grpc = 1;
+  ConfirmBidInfo request_info = 2;
+}
+
+message ConfirmBidRefInfo
+{
+  uint32 index = 1;
+  ConfirmBidInfo request_info = 3;
+}
+
+message ConfirmBidResponseInfo
+{
+  BidResultInfo return_value = 1;
+  ConfirmBidInfo request_info = 2;
+}
+
+message ConfirmBidResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    ConfirmBidResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+message AddAmountRequest
+{
+  uint32 id_request_grpc = 1;
+  repeated ConfirmBidInfo request_seq = 2;
+}
+
+message AddAmountResponseInfo
+{
+  repeated ConfirmBidRefInfo remainder_request_seq = 1;
+}
+
+message AddAmountResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    AddAmountResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
+service BillingService
+{
+  rpc check_available_bid(stream CheckAvailableBidRequest) returns (stream CheckAvailableBidResponse) {}
+  rpc reserve_bid(stream ReserveBidRequest) returns (stream ReserveBidResponse) {}
+  rpc confirm_bid(stream ConfirmBidRequest) returns (stream ConfirmBidResponse) {}
+  rpc add_amount(stream AddAmountRequest) returns (stream AddAmountResponse) {}
+}
