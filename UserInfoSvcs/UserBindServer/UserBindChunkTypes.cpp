@@ -141,9 +141,17 @@ Portion::Portion(
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
   const RocksdbParamsPtr& bound_rocksdb_params,
-  const RocksdbParamsPtr& seen_rocksdb_params)
-  : SeenContainersT(actual_fetch_size, max_fetch_size, seen_rocksdb_params),
-    BoundContainersT(actual_fetch_size, max_fetch_size, bound_rocksdb_params)
+  const RocksdbParamsPtr& seen_rocksdb_params,
+  const SourcesExpireTimePtr& sources_expire_time)
+  : SeenContainersT(
+      actual_fetch_size,
+      max_fetch_size,
+      seen_rocksdb_params),
+    BoundContainersT(
+      actual_fetch_size,
+      max_fetch_size,
+      bound_rocksdb_params,
+      sources_expire_time)
 {
 }
 
@@ -160,6 +168,7 @@ Portions::Portions(
   const std::uint32_t rocksdb_ttl,
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
+  const SourcesExpireTimePtr& sources_expire_time,
   const LoadFilter& load_filter,
   const bool seen_need_use_rocksdb)
   : directory_(directory),
@@ -227,7 +236,8 @@ Portions::Portions(
       actual_fetch_size,
       max_fetch_size,
       bound_rocksdb_params,
-      seen_rocksdb_params));
+      seen_rocksdb_params,
+      sources_expire_time));
   }
 
   load();

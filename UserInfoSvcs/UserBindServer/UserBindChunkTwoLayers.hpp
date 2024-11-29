@@ -20,7 +20,7 @@ class UserBindTwoLayersChunk final :
   public virtual ReferenceCounting::AtomicImpl
 {
 public:
-  using ExpireTime = std::uint16_t;
+  using ExpireTime = SourcesExpireTime::ExpireTime;
   using ListSourceExpireTime = SourcesExpireTime::ListSourceExpireTime;
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

@@ -387,7 +387,7 @@ TEST_F(SaveLoadTest, Test1)
 
     memory_bound_container->save(
       file_bound_stream,
-      SourceFilterWrapper<FilterAlwaysTrue>{FilterAlwaysTrue{}, ""});
+      SourceFilterWrapper<FilterAlwaysTrue>{FilterAlwaysTrue{}, {}});
     memory_seen_container->save(
       file_seen_stream,
       FilterAlwaysTrue{});
@@ -514,7 +514,7 @@ public:
 
   bool operator()(
     const BoundUserInfoHolder& value,
-    const std::string&) const noexcept
+    const std::optional<std::uint16_t>&) const noexcept
   {
     return value.init_day() != 1;
   }
@@ -572,6 +572,11 @@ protected:
       std::make_shared<rocksdb::ReadOptions>(),
       std::make_shared<rocksdb::WriteOptions>());
 
+    sources_expire_time = std::make_shared<SourcesExpireTime>(
+      0,
+      0,
+      SourcesExpireTime::ListSourceExpireTime{});
+
     bound_containers = std::make_shared<
       BoundContainers<
         StringDefHashAdapter,
@@ -579,7 +584,8 @@ protected:
         BoundUserInfoHolder>>(
           1,
           1,
-          rocksdb_params);
+          rocksdb_params,
+          sources_expire_time);
   }
 
   BoundUserInfoHolder bound_holder11;
@@ -604,6 +610,7 @@ protected:
 
   Logging::Logger_var logger;
   RocksdbParamsPtr rocksdb_params;
+  SourcesExpireTimePtr sources_expire_time;
   BoundContainersPtr<
     StringDefHashAdapter,
     ExternalIdHashAdapter,
@@ -747,7 +754,8 @@ TEST_F(BoundContainersTest, Load)
         BoundUserInfoHolder>>(
           1,
           1,
-          rocksdb_params);
+          rocksdb_params,
+          sources_expire_time);
 
     bound_containers->set(key_prefix1, key_suffix11, bound_holder11);
     bound_containers->set(key_prefix1, key_suffix12, bound_holder12);
@@ -768,7 +776,8 @@ TEST_F(BoundContainersTest, Load)
         BoundUserInfoHolder>>(
           1,
           1,
-          rocksdb_params);
+          rocksdb_params,
+          sources_expire_time);
     Loader<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder> loader(
       file_path,
       *bound_containers);
@@ -800,7 +809,8 @@ TEST_F(BoundContainersTest, Load)
         BoundUserInfoHolder>>(
           1,
           1,
-          rocksdb_params);
+          rocksdb_params,
+          sources_expire_time);
     Loader<std::pair<StringDefHashAdapter, ExternalIdHashAdapter>, BoundUserInfoHolder> loader(
       file_path,
       *bound_containers);
@@ -1011,6 +1021,11 @@ protected:
         std::cerr,
         Logging::Logger::EMERGENCY));
 
+    sources_expire_time = std::make_shared<SourcesExpireTime>(
+      0,
+      0,
+      SourcesExpireTime::ListSourceExpireTime{});
+
     portions = std::make_shared<Portions>(
       logger.in(),
       portions_number,
@@ -1024,6 +1039,7 @@ protected:
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
+      sources_expire_time,
       [] (const std::size_t) {return true;},
       true);
   }
@@ -1042,6 +1058,7 @@ protected:
   const std::size_t max_fetch_size = 2;
 
   Logging::Logger_var logger;
+  SourcesExpireTimePtr sources_expire_time;
   PortionsPtr portions;
 };
 
@@ -1088,7 +1105,7 @@ TEST_F(PortionsTest, Load1)
     }
   }
 
-  EXPECT_NO_THROW(portions->save(FilterDate{10}));
+  EXPECT_NO_THROW(portions->save(FilterTime{10, 10}));
   portions.reset();
 
   {
@@ -1105,6 +1122,7 @@ TEST_F(PortionsTest, Load1)
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
+      sources_expire_time,
       [] (const std::size_t) {return true;},
       true);
 
@@ -1181,7 +1199,7 @@ TEST_F(PortionsTest, Load2)
     }
   }
 
-  EXPECT_NO_THROW(portions->save(FilterDate{10}));
+  EXPECT_NO_THROW(portions->save(FilterTime{10, 10}));
   portions.reset();
   remove_directory(directory + "/" + seen_name);
   remove_directory(directory + "/" + bound_name);
@@ -1200,6 +1218,7 @@ TEST_F(PortionsTest, Load2)
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
+      sources_expire_time,
       [] (const std::size_t) {return true;},
       true);
 
@@ -1241,6 +1260,7 @@ TEST_F(PortionsTest, Rocksdb)
     rocksdb_ttl,
     actual_fetch_size,
     max_fetch_size,
+    sources_expire_time,
     [] (const std::size_t) {return true;},
     true);
 
@@ -1285,7 +1305,7 @@ TEST_F(PortionsTest, Rocksdb)
     }
   }
 
-  EXPECT_NO_THROW(portions->save(FilterDate{0}));
+  EXPECT_NO_THROW(portions->save(FilterTime{0, 0}));
   portions.reset();
 
   {
@@ -1302,6 +1322,7 @@ TEST_F(PortionsTest, Rocksdb)
       rocksdb_ttl,
       actual_fetch_size,
       max_fetch_size,
+      sources_expire_time,
       [] (const std::size_t) {return true;},
       true);
 
@@ -1579,36 +1600,4 @@ TEST(Comparison, UserBindChunk)
       }
     }
   }
-}
-
-TEST(Filter, Source)
-{
-  std::uint16_t seen_default_expire_time = 5;
-  std::uint16_t bound_default_expire_time = 10;
-
-  SourcesExpireTime::ListSourceExpireTime list_source_expire_time;
-  const std::string source = "Y";
-  const std::uint16_t expire_time = 100;
-  list_source_expire_time.emplace_back(source, expire_time);
-
-  auto sources_expire_time = std::make_shared<SourcesExpireTime>(
-    seen_default_expire_time,
-    bound_default_expire_time,
-    list_source_expire_time);
-
-  FilterSourceDate filter(sources_expire_time);
-
-  SeenUserInfoHolder seen_holder;
-  EXPECT_TRUE(filter(seen_holder));
-  seen_holder.initial_day_ -= seen_default_expire_time + 1;
-  EXPECT_FALSE(filter(seen_holder));
-
-  BoundUserInfoHolder bound_holder;
-  EXPECT_TRUE(filter(bound_holder, ""));
-  bound_holder.initial_day -= bound_default_expire_time + 1;
-  EXPECT_FALSE(filter(bound_holder, ""));
-  EXPECT_TRUE(filter(bound_holder, source));
-
-  bound_holder.initial_day -= expire_time + 1;
-  EXPECT_FALSE(filter(bound_holder, source));
 }

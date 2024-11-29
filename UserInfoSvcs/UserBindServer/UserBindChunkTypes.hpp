@@ -344,6 +344,9 @@ private:
 class FilterAlwaysTrue final
 {
 public:
+  using ExpireTime = std::uint16_t;
+
+public:
   FilterAlwaysTrue() = default;
 
   bool operator()(const SeenUserInfoHolder& /*value*/) const noexcept
@@ -353,34 +356,50 @@ public:
 
   bool operator()(
     const BoundUserInfoHolder& /*value*/,
-    const std::string& /*source*/) const noexcept
+    const std::optional<ExpireTime>& /*source_expire_time*/) const noexcept
   {
     return true;
   }
 };
 
-class FilterDate final
+class FilterTime final
 {
 public:
-  explicit FilterDate(const std::uint16_t number_days)
-   : number_days_(number_days)
+  using ExpireTime = std::uint16_t;
+
+public:
+  explicit FilterTime(
+    const ExpireTime seen_default_expire_time,
+    const ExpireTime bound_default_expire_time)
+    : seen_default_expire_time_(seen_default_expire_time),
+      bound_default_expire_time_(bound_default_expire_time)
   {
   }
 
   bool operator()(const SeenUserInfoHolder& value) const noexcept
   {
-    return current_day_ < value.init_day() + number_days_;
+    return current_day_ < value.init_day() + seen_default_expire_time_;
   }
 
   bool operator()(
     const BoundUserInfoHolder& value,
-    const std::string& /*source*/) const noexcept
+    const std::optional<ExpireTime>& source_expire_time) const noexcept
   {
-    return current_day_ < value.init_day() + number_days_;
+
+    if (source_expire_time)
+    {
+      return current_day_ < value.init_day() + *source_expire_time;
+    }
+    else
+    {
+      return current_day_ < value.init_day() + bound_default_expire_time_;
+    }
   }
 
 private:
-  const std::uint16_t number_days_ = 10;
+  const ExpireTime seen_default_expire_time_;
+
+  const ExpireTime bound_default_expire_time_;
 
   const std::uint16_t current_day_ = get_current_day_from_2000();
 };
@@ -389,11 +408,14 @@ template<class Filter>
 class SourceFilterWrapper final
 {
 public:
+  using ExpireTime = std::optional<std::uint16_t>;
+
+public:
   SourceFilterWrapper(
     const Filter& filter,
-    const std::string& source)
+    const ExpireTime& bound_source_expire_time)
     : filter_(filter),
-      source_(source)
+      bound_source_expire_time_(bound_source_expire_time)
   {
   }
 
@@ -404,13 +426,13 @@ public:
 
   bool operator()(const BoundUserInfoHolder& value) const
   {
-    return filter_(value, source_);
+    return filter_(value, bound_source_expire_time_);
   }
 
 private:
   const Filter filter_;
 
-  const std::string source_;
+  const ExpireTime bound_source_expire_time_;
 };
 
 class SourcesExpireTime final
@@ -430,8 +452,10 @@ public:
     const ExpireTime bound_default_expire_time,
     const ListSourceExpireTime& bound_list_source_expire_time);
 
-  ExpireTime bound_expire_time(
+  std::optional<ExpireTime> source_bound_expire_time(
     const std::string& source) const noexcept;
+
+  ExpireTime bound_default_expire_time() const noexcept;
 
   ExpireTime seen_default_expire_time() const noexcept;
 
@@ -444,38 +468,6 @@ private:
 };
 
 using SourcesExpireTimePtr = std::shared_ptr<const SourcesExpireTime>;
-
-class FilterSourceDate final
-{
-public:
-  explicit FilterSourceDate(
-    const SourcesExpireTimePtr& sources_expire_time) noexcept
-    : sources_expire_time_(sources_expire_time),
-      seen_default_number_days_(
-        sources_expire_time_->seen_default_expire_time())
-  {
-  }
-
-  bool operator()(const SeenUserInfoHolder& value) const noexcept
-  {
-    return current_day_ < value.init_day() + seen_default_number_days_;
-  }
-
-  bool operator()(
-    const BoundUserInfoHolder& value,
-    const std::string& source) const noexcept
-  {
-    return current_day_ < value.init_day()
-      + sources_expire_time_->bound_expire_time(source);
-  }
-
-private:
-  const SourcesExpireTimePtr sources_expire_time_;
-
-  const std::uint16_t seen_default_number_days_;
-
-  const std::uint16_t current_day_ = get_current_day_from_2000();
-};
 
 template<
   class Key,
@@ -703,7 +695,8 @@ public:
   explicit BoundContainers(
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
-    const RocksdbParamsPtr& rocksdb_params);
+    const RocksdbParamsPtr& rocksdb_params,
+    const SourcesExpireTimePtr& sources_expire_time);
 
   ~BoundContainers() override = default;
 
@@ -744,6 +737,8 @@ private:
   const std::size_t actual_fetch_size_;
 
   const std::size_t max_fetch_size_;
+
+  const SourcesExpireTimePtr sources_expire_time_;
 
   const RocksdbContainerFactoryPtrT rocksdb_factory_;
 
@@ -839,7 +834,8 @@ public:
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
     const RocksdbParamsPtr& bound_rocksdb_params,
-    const RocksdbParamsPtr& seen_rocksdb_params);
+    const RocksdbParamsPtr& seen_rocksdb_params,
+    const SourcesExpireTimePtr& sources_expire_time);
 
   ~Portion() override = default;
 
@@ -907,6 +903,7 @@ public:
     const std::uint32_t rocksdb_ttl,
     const std::size_t actual_fetch_size,
     const std::size_t max_fetch_size,
+    const SourcesExpireTimePtr& sources_expire_time,
     const LoadFilter& load_filter = [] (const std::size_t) {return true;},
     const bool seen_need_use_rocksdb = false);
 
@@ -1383,8 +1380,8 @@ SourcesExpireTime::SourcesExpireTime(
 }
 
 inline
-SourcesExpireTime::ExpireTime
-SourcesExpireTime::bound_expire_time(const std::string& source) const noexcept
+std::optional<SourcesExpireTime::ExpireTime>
+SourcesExpireTime::source_bound_expire_time(const std::string& source) const noexcept
 {
   const auto it = sources_expire_time_.find(source);
   if (it != std::end(sources_expire_time_))
@@ -1393,8 +1390,14 @@ SourcesExpireTime::bound_expire_time(const std::string& source) const noexcept
   }
   else
   {
-    return bound_default_expire_time_;
+    return {};
   }
+}
+inline
+SourcesExpireTime::ExpireTime
+SourcesExpireTime::bound_default_expire_time() const noexcept
+{
+  return bound_default_expire_time_;
 }
 
 inline
@@ -2106,9 +2109,11 @@ template<
 BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::BoundContainers(
   const std::size_t actual_fetch_size,
   const std::size_t max_fetch_size,
-  const RocksdbParamsPtr& rocksdb_params)
+  const RocksdbParamsPtr& rocksdb_params,
+  const SourcesExpireTimePtr& sources_expire_time)
   : actual_fetch_size_(actual_fetch_size),
     max_fetch_size_(max_fetch_size),
+    sources_expire_time_(sources_expire_time),
     rocksdb_factory_(std::make_shared<RocksdbContainerFactory<
       SuffixKey,
       Value>>(rocksdb_params)),
@@ -2275,7 +2280,12 @@ void BoundContainers<PrefixKey, SuffixKey, Value, HashTable>::save(
 
     const auto& key_str = key.str();
     std::string source(key_str.data(), key_str.size());
-    SourceFilterWrapper<Filter> filter_wrapper(filter, source);
+    const auto bound_source_expire_time =
+      sources_expire_time_->source_bound_expire_time(source);
+
+    SourceFilterWrapper<Filter> filter_wrapper(
+      filter,
+      bound_source_expire_time);
 
     const auto start_position = stream.tellp();
     container->save(stream, filter_wrapper);

@@ -63,12 +63,19 @@ UserBindTwoLayersChunk::UserBindTwoLayersChunk(
     rocksdb_ttl,
     100,
     1000,
+    sources_expire_times_,
     std::move(load_filter));
 }
 
 void UserBindTwoLayersChunk::dump()
 {
-  FilterSourceDate filter(sources_expire_times_);
+  const auto seen_default_expire_time =
+    sources_expire_times_->seen_default_expire_time();
+  const auto bound_default_expire_time =
+    sources_expire_times_->bound_default_expire_time();
+  FilterTime filter(
+    seen_default_expire_time,
+    bound_default_expire_time);
   portions_->save(filter);
 }
 
