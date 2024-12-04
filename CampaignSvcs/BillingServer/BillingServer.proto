@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package AdServer.CampaignSvcs.Proto;
+package AdServer.CampaignSvcs.Billing.Proto;
 
 option optimize_for = SPEED;
 
