@@ -192,48 +192,50 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       throw Exception(ostr);
     }
 
-    stage = "creating CampaignManager servant";
-
-    AdServer::CampaignSvcs::CampaignManagerLogger_var
-      campaign_manager_logger =
-        new AdServer::CampaignSvcs::CampaignManagerLogger(
-          configuration_.log_params, logger());
-
-    campaign_manager_impl_ =
-      new AdServer::CampaignSvcs::CampaignManagerImpl(
-        *campaign_manager_config_,
-        *domain_config_,
-        callback(),
-        logger(),
-        campaign_manager_logger,
-        configuration_.creative_instantiate,
-        configuration_.campaigns_types.c_str());
-
-    register_vars_controller();
-
-    stage = "Initializing CORBA bindings";
-    corba_server_adapter_->add_binding(
-      CAMPAIGN_MANAGER_OBJ_KEY, campaign_manager_impl_.in());
-
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
-
-    stage = "activating CampaignManagerImpl active object";
-    campaign_manager_impl_->activate_object();
-
     stage = "Creating coroutine manager";
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
         logger(),
         campaign_manager_config_->Coroutine());
 
-    auto init_func = [this] (TaskProcessorContainer& task_processor_container)
+    auto init_func = [this, &stage] (TaskProcessorContainer& task_processor_container)
     {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
-      auto components_builder = std::make_unique<ComponentsBuilder>();
       auto grpc_server_builder = Config::create_grpc_server_builder(
         logger(),
         campaign_manager_config_->GrpcServer());
+      const auto& grpc_scheduler = grpc_server_builder->scheduler();
+
+      stage = "creating CampaignManager servant";
+
+      AdServer::CampaignSvcs::CampaignManagerLogger_var
+        campaign_manager_logger =
+        new AdServer::CampaignSvcs::CampaignManagerLogger(
+          configuration_.log_params, logger());
+
+      campaign_manager_impl_ =
+        new AdServer::CampaignSvcs::CampaignManagerImpl(
+          main_task_processor,
+          grpc_scheduler,
+          *campaign_manager_config_,
+          *domain_config_,
+          callback(),
+          logger(),
+          campaign_manager_logger,
+          configuration_.creative_instantiate,
+          configuration_.campaigns_types.c_str());
+
+      register_vars_controller();
+
+      stage = "Initializing CORBA bindings";
+      corba_server_adapter_->add_binding(
+        CAMPAIGN_MANAGER_OBJ_KEY, campaign_manager_impl_.in());
+
+      corba_server_adapter_->add_binding(
+        PROCESS_CONTROL_OBJ_KEY, this);
+
+      stage = "activating CampaignManagerImpl active object";
+      campaign_manager_impl_->activate_object();
 
       auto get_campaign_creative_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_campaign_creative_Service,
@@ -455,6 +457,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         get_file_service.in(),
         main_task_processor);
 
+      auto components_builder = std::make_unique<ComponentsBuilder>();
       components_builder->add_grpc_cobrazz_server(
         std::move(grpc_server_builder));
 

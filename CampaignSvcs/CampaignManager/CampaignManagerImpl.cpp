@@ -13,6 +13,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Algs.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 
 #include <LogCommons/AdRequestLogger.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
@@ -260,6 +261,8 @@ namespace AdServer
     */
 
     CampaignManagerImpl::CampaignManagerImpl(
+      TaskProcessor& task_processor,
+      const GrpcSchedulerPtr& grpc_scheduler,
       const CampaignManagerConfig& configuration,
       const DomainParser::DomainConfig& domain_config,
       Generics::ActiveObjectCallback* callback,
@@ -382,8 +385,6 @@ namespace AdServer
 
       if (campaign_manager_config_.CountryWhitelist().present())
       {
-
-
         for (auto it = campaign_manager_config_.CountryWhitelist()->Country().begin();
              it != campaign_manager_config_.CountryWhitelist()->Country().end(); ++it)
         {
@@ -423,13 +424,30 @@ namespace AdServer
       {
         try
         {
-          BillingStateContainer_var billing_state_container = new BillingStateContainer(
-            callback_,
-            logger,
-            Config::CorbaConfigReader::read_multi_corba_ref(
-              campaign_manager_config_.Billing()->BillingServerCorbaRef()),
-            100, // max use count
-            campaign_manager_config_.Billing()->optimize_campaign_ctr());
+          GrpcBillingStateContainer::Endpoints endpoints;
+          const auto& endpoints_config =
+            campaign_manager_config_.Billing()->BillingServerEndpointList().Endpoint();
+          for (const auto& endpoint_config : endpoints_config)
+          {
+            endpoints.emplace_back(
+              endpoint_config.host(),
+              endpoint_config.port());
+          }
+
+          const auto config_grpc_client_data = Config::create_pool_client_config(
+            campaign_manager_config_.Billing()->BillingGrpcClientPool());
+
+          GrpcBillingStateContainer_var billing_state_container =
+            new GrpcBillingStateContainer(
+              callback_,
+              logger,
+              100, // max use count
+              campaign_manager_config_.Billing()->optimize_campaign_ctr(),
+              task_processor,
+              grpc_scheduler,
+              endpoints,
+              config_grpc_client_data.first,
+              config_grpc_client_data.second);
 
           if(campaign_manager_config_.Billing()->check_bids())
           {
@@ -6788,7 +6806,7 @@ namespace AdServer
               weighted_campaign_keywords->begin();
             cmp_it != weighted_campaign_keywords->end(); ++cmp_it)
           {
-            const BillingStateContainer::BidCheckResult check_result =
+            const GrpcBillingStateContainer::BidCheckResult check_result =
               check_billing_state_container_->check_available_bid(
                 campaign_select_params.time,
                 cmp_it->campaign->advertiser->bill_account_id(),
@@ -6813,7 +6831,7 @@ namespace AdServer
         if(weighted_campaign.get())
         {
           // clear weighted_campaign if showing not allowed
-          const BillingStateContainer::BidCheckResult check_result =
+          const GrpcBillingStateContainer::BidCheckResult check_result =
             check_billing_state_container_->check_available_bid(
               campaign_select_params.time,
               weighted_campaign->campaign->advertiser->bill_account_id(),
@@ -7281,7 +7299,7 @@ namespace AdServer
               cmp_it != weighted_campaign_keywords->end();
               ++cmp_it)
           {
-            const BillingStateContainer::BidCheckResult check_result =
+            const GrpcBillingStateContainer::BidCheckResult check_result =
               check_billing_state_container_->check_available_bid(
                 campaign_select_params.time,
                 cmp_it->campaign->advertiser->bill_account_id(),
@@ -7306,7 +7324,7 @@ namespace AdServer
         if(weighted_campaign.get())
         {
           // clear weighted_campaign if showing not allowed
-          const BillingStateContainer::BidCheckResult check_result =
+          const GrpcBillingStateContainer::BidCheckResult check_result =
             check_billing_state_container_->check_available_bid(
               campaign_select_params.time,
               weighted_campaign->campaign->advertiser->bill_account_id(),
@@ -10282,7 +10300,7 @@ namespace AdServer
     bool
     CampaignManagerImpl::apply_check_available_bid_result_(
       const Campaign* campaign,
-      const BillingStateContainer::BidCheckResult& check_result,
+      const GrpcBillingStateContainer::BidCheckResult& check_result,
       const RevenueDecimal& ctr)
       noexcept
     {
@@ -10390,7 +10408,7 @@ namespace AdServer
               }
             }
 
-            const BillingStateContainer::BidCheckResult check_result =
+            const GrpcBillingStateContainer::BidCheckResult check_result =
               confirm_billing_state_container_->confirm_bid(
                 now,
                 campaign->advertiser ? campaign->advertiser->bill_account_id() : 0,

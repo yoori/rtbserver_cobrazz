@@ -25,7 +25,7 @@ namespace
 
   template<class Response>
   auto create_grpc_error_response(
-    const AdServer::CampaignSvcs::Proto::Error_Type error_type,
+    const AdServer::CampaignSvcs::Billing::Proto::Error_Type error_type,
     const String::SubString detail,
     const std::uint32_t id_request_grpc)
   {
@@ -177,7 +177,7 @@ namespace CampaignSvcs
 
       const BillingProcessor::BidResult res = billing_accessor->check_available_bid(bid);
 
-      auto response = create_grpc_response<Proto::CheckAvailableBidResponse>(
+      auto response = create_grpc_response<Billing::Proto::CheckAvailableBidResponse>(
         id_request_grpc);
       auto* info = response->mutable_info();
       auto* return_value = info->mutable_return_value();
@@ -192,8 +192,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.description;
-      auto response = create_grpc_error_response<Proto::CheckAvailableBidResponse>(
-        Proto::Error_Type::Error_Type_NotReady,
+      auto response = create_grpc_error_response<Billing::Proto::CheckAvailableBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_NotReady,
         stream.str(),
         id_request_grpc);
 
@@ -205,8 +205,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.what();
-      auto response = create_grpc_error_response<Proto::CheckAvailableBidResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::CheckAvailableBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -217,8 +217,8 @@ namespace CampaignSvcs
       Stream::Error stream;
       stream << FNS
              << "Caught BillingProcessor::Exception: Unknown error";
-      auto response = create_grpc_error_response<Proto::CheckAvailableBidResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::CheckAvailableBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -283,7 +283,7 @@ namespace CampaignSvcs
         bid,
         GrpcAlgs::unpack_decimal<RevenueDecimal>(request_info.reserve_budget()));
 
-      auto response = create_grpc_response<Proto::ReserveBidResponse>(
+      auto response = create_grpc_response<Billing::Proto::ReserveBidResponse>(
         id_request_grpc);
       auto* const info = response->mutable_info();
       info->set_return_value(result);
@@ -296,8 +296,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.description;
-      auto response = create_grpc_error_response<Proto::ReserveBidResponse>(
-        Proto::Error_Type::Error_Type_NotReady,
+      auto response = create_grpc_error_response<Billing::Proto::ReserveBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_NotReady,
         stream.str(),
         id_request_grpc);
 
@@ -309,8 +309,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.what();
-      auto response = create_grpc_error_response<Proto::ReserveBidResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::ReserveBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -321,8 +321,8 @@ namespace CampaignSvcs
       Stream::Error stream;
       stream << FNS
              << "Caught BillingProcessor::Exception: Unknown error";
-      auto response = create_grpc_error_response<Proto::ReserveBidResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::ReserveBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -436,7 +436,7 @@ namespace CampaignSvcs
       request_info->set_imps(GrpcAlgs::pack_decimal(compatibility_cast(imps)));
       request_info->set_clicks(GrpcAlgs::pack_decimal(compatibility_cast(clicks)));
 
-      auto response = create_grpc_response<Proto::ConfirmBidResponse>(
+      auto response = create_grpc_response<Billing::Proto::ConfirmBidResponse>(
         id_request_grpc);
       auto* const info = response->mutable_info();
 
@@ -455,8 +455,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.description;
-      auto response = create_grpc_error_response<Proto::ConfirmBidResponse>(
-        Proto::Error_Type::Error_Type_NotReady,
+      auto response = create_grpc_error_response<Billing::Proto::ConfirmBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_NotReady,
         stream.str(),
         id_request_grpc);
 
@@ -468,8 +468,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.what();
-      auto response = create_grpc_error_response<Proto::ConfirmBidResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::ConfirmBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -480,8 +480,8 @@ namespace CampaignSvcs
       Stream::Error stream;
       stream << FNS
              << "Caught BillingProcessor::Exception: Unknown error";
-      auto response = create_grpc_error_response<Proto::ConfirmBidResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::ConfirmBidResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -576,7 +576,7 @@ namespace CampaignSvcs
       const auto& request_seq = request->request_seq();
       auto billing_accessor = get_accessor_();
 
-      auto response = create_grpc_response<Proto::AddAmountResponse>(
+      auto response = create_grpc_response<Billing::Proto::AddAmountResponse>(
         id_request_grpc);
       auto* const info = response->mutable_info();
       auto* remainder_request_seq = info->mutable_remainder_request_seq();
@@ -647,8 +647,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.description;
-      auto response = create_grpc_error_response<Proto::AddAmountResponse>(
-        Proto::Error_Type::Error_Type_NotReady,
+      auto response = create_grpc_error_response<Billing::Proto::AddAmountResponse>(
+        Billing::Proto::Error_Type::Error_Type_NotReady,
         stream.str(),
         id_request_grpc);
 
@@ -660,8 +660,8 @@ namespace CampaignSvcs
       stream << FNS
              << "Caught BillingProcessor::Exception: "
              << exc.what();
-      auto response = create_grpc_error_response<Proto::AddAmountResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::AddAmountResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 
@@ -672,8 +672,8 @@ namespace CampaignSvcs
       Stream::Error stream;
       stream << FNS
              << "Caught BillingProcessor::Exception: Unknown error";
-      auto response = create_grpc_error_response<Proto::AddAmountResponse>(
-        Proto::Error_Type::Error_Type_Implementation,
+      auto response = create_grpc_error_response<Billing::Proto::AddAmountResponse>(
+        Billing::Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);
 

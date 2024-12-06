@@ -216,18 +216,12 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
 {
   if (client_holders_.empty())
   {
-    try
-    {
-      Stream::Error stream;
-      stream << FNS
-             << "client_holders is empty";
-      logger_->error(
-        stream.str(),
-        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-    }
-    catch (...)
-    {
-    }
+    Stream::Error stream;
+    stream << FNS
+           << "client_holders is empty";
+    logger_->error(
+      stream.str(),
+      ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
 
     return {};
   }
@@ -243,7 +237,7 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
         auto response = do_request_service<Client, Request, Response>(
           client_holder,
           std::forward<Args>(args)...);
-        if (response)
+        if (response && response->has_info())
         {
           return response;
         }
@@ -251,19 +245,13 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
     }
     else
     {
-      try
-      {
-        Stream::Error stream;
-        stream << FNS
-               << "Not existing service_id="
-               << *service_id;
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-      }
-      catch (...)
-      {
-      }
+      Stream::Error stream;
+      stream << FNS
+             << "Not existing service_id="
+             << *service_id;
+      logger_->error(
+        stream.str(),
+        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
     }
   }
 
@@ -282,24 +270,18 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
     auto response = do_request_service<Client, Request, Response>(
       client_holder,
       std::forward<Args>(args)...);
-    if (response)
+    if (response && response->has_info())
     {
       return response;
     }
   }
 
-  try
-  {
-    Stream::Error stream;
-    stream << FNS
-           << "max tries is reached";
-    logger_->error(
-      stream.str(),
-      ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-  }
-  catch (...)
-  {
-  }
+  Stream::Error stream;
+  stream << FNS
+         << "max tries is reached";
+  logger_->error(
+    stream.str(),
+    ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
 
   return {};
 }

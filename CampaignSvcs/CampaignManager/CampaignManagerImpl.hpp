@@ -38,7 +38,7 @@
 #include "CampaignManagerLogger.hpp"
 #include "CampaignConfigSource.hpp"
 #include "PassbackTemplate.hpp"
-#include "BillingStateContainer.hpp"
+#include "GrpcBillingStateContainer.hpp"
 
 #include "CTRProvider.hpp"
 #include "BidCostProvider.hpp"
@@ -79,8 +79,9 @@ namespace AdServer
       struct CreativeParams;
 
     public:
-      using CampaignManagerConfig =
-        xsd::AdServer::Configuration::CampaignManagerType;
+      using GrpcSchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
+      using TaskProcessor = userver::engine::TaskProcessor;
+      using CampaignManagerConfig = xsd::AdServer::Configuration::CampaignManagerType;
       using GetCampaignCreativeRequestPtr = std::unique_ptr<Proto::GetCampaignCreativeRequest>;
       using GetCampaignCreativeResponsePtr = std::unique_ptr<Proto::GetCampaignCreativeResponse>;
       using ProcessMatchRequestRequestPtr = std::unique_ptr<Proto::ProcessMatchRequestRequest>;
@@ -133,6 +134,8 @@ namespace AdServer
        *
        */
       CampaignManagerImpl(
+        TaskProcessor& task_processor,
+        const GrpcSchedulerPtr& grpc_scheduler,
         const CampaignManagerConfig& configuration,
         const DomainParser::DomainConfig& domain_config,
         Generics::ActiveObjectCallback* callback,
@@ -1655,7 +1658,7 @@ namespace AdServer
       bool
       apply_check_available_bid_result_(
         const Campaign* campaign, // change mutable
-        const BillingStateContainer::BidCheckResult& check_result,
+        const GrpcBillingStateContainer::BidCheckResult& check_result,
         const RevenueDecimal& ctr)
         noexcept;
 
@@ -1763,8 +1766,8 @@ namespace AdServer
       TokenToParamMap token_to_parameters_;
 
       CampaignConfigSource_var campaign_config_source_;
-      BillingStateContainer_var check_billing_state_container_;
-      BillingStateContainer_var confirm_billing_state_container_;
+      GrpcBillingStateContainer_var check_billing_state_container_;
+      GrpcBillingStateContainer_var confirm_billing_state_container_;
       ReferenceCounting::PtrHolder<ConstCTRProvider_var> ctr_provider_;
       ReferenceCounting::PtrHolder<ConstCTRProvider_var> conv_rate_provider_;
       ReferenceCounting::PtrHolder<ConstBidCostProvider_var> bid_cost_provider_;

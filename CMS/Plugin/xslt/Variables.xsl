@@ -365,7 +365,7 @@
 <xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 29"/>
 <xsl:variable name="def-user-operation-generator-port" select="$def-range-start + 30"/>
 <xsl:variable name="def-billing-server-port" select="$def-range-start + 31"/>
-  <xsl:variable name="def-billing-server-grpc-port" select="$def-range-start + 231"/>
+<xsl:variable name="def-billing-server-grpc-port" select="$def-range-start + 231"/>
 <xsl:variable name="def-log-generalizer-port" select="$def-range-start + 11"/>
 <!--xsl:variable name="def-log-delivering-port" select="concat($def-range-start, '112')"/-->
 <xsl:variable name="def-sync-logs-port" select="$def-range-start + 12"/>

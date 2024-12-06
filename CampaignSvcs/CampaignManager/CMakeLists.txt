@@ -23,6 +23,7 @@ target_link_libraries(BidRateProvider
   Generics
   HTTP
   ProcessControlIDL
+  UServerUtils
   pcre
   pthread
 )
@@ -113,6 +114,7 @@ add_library(CampaignManagerLogger SHARED
 target_link_libraries(CampaignManagerLogger
   Generics
   LogCommons
+  UServerUtils
 )
 
 add_executable(CampaignManager
@@ -122,6 +124,7 @@ add_executable(CampaignManager
   CampaignSelector.cpp
   ConfigManips.cpp
   CreativeTextGenerator.cpp
+  GrpcBillingStateContainer.cpp
   InstantiateCreative.cpp
   SelectCreative.cpp
 )
@@ -130,6 +133,7 @@ target_link_libraries(CampaignManager
   AdServerCommonsXSD
   BidRateProvider
   BillingServerIDL
+  BillingServerProto
   CORBACommons
   CTRProvider
   CampaignCommonsIDL
