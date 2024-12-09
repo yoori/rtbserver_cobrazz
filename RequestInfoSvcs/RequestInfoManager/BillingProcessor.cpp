@@ -2033,6 +2033,115 @@ namespace RequestInfoSvcs
     return billing_servers_holder_->billing_servers.size();
   }
 
+  BillingProcessor::GrpcBillingServerRequestSender::GrpcBillingServerRequestSender(
+    GrpcBillingManagerPool* grpc_billing_manager_pool) noexcept
+    : grpc_billing_manager_pool_(ReferenceCounting::add_ref(grpc_billing_manager_pool))
+  {
+  }
+
+  void BillingProcessor::GrpcBillingServerRequestSender::send_requests(
+    RequestArray& requests,
+    unsigned long service_index)
+  {
+    using ConfirmBidInfo = GrpcBillingManagerPool::ConfirmBidInfo;
+    try
+    {
+      std::vector<ConfirmBidInfo> request_seq;
+      request_seq.reserve(requests.size());
+      for (const auto& request : requests)
+      {
+        request_seq.emplace_back(
+          request->rounded_time,
+          request->account_id,
+          request->advertiser_id,
+          request->campaign_id,
+          request->ccg_id,
+          request->ctr,
+          request->account_amount,
+          request->amount,
+          RevenueDecimal::ZERO,
+          request->imps,
+          request->clicks,
+          false);
+      }
+
+      auto response = grpc_billing_manager_pool_->add_amount(
+        service_index,
+        request_seq);
+      if (!response)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "GrpcBillingManagerPool internal error";
+        throw  Exception(stream);
+      }
+      if (response->has_error())
+      {
+        const auto& error = response->error();
+        const auto& description = response->error().description();
+        Stream::Error stream;
+        stream << FNS;
+
+        switch (error.type())
+        {
+        case AdServer::CampaignSvcs::Billing::Proto::Error_Type_NotReady:
+          stream << "Not ready";
+          break;
+        case AdServer::CampaignSvcs::Billing::Proto::Error_Type_Implementation:
+          stream << "Implementation";
+          break;
+        default:
+          stream << "Unknown error type";
+        }
+
+        stream << ", description="
+               << description;
+        throw Exception(stream);
+      }
+
+      RequestArray remind_requests;
+      const auto& info = response->info();
+      const auto& remainder_request_seq = info.remainder_request_seq();
+      remind_requests.reserve(remainder_request_seq.size());
+      for (const auto& remainder_request : remainder_request_seq)
+      {
+        const auto& request_info = remainder_request.request_info();
+        Request_var result = new Request(*requests[remainder_request.index()]);
+        result->account_amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          request_info.account_spent_budget());
+        result->amount = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          request_info.spent_budget());
+        result->imps = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          request_info.imps());
+        result->clicks = GrpcAlgs::unpack_decimal<RevenueDecimal>(
+          request_info.clicks());
+        remind_requests.emplace_back(result);
+      }
+
+      requests.swap(remind_requests);
+    }
+    catch (eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Exception caught: "
+             << exc.what();
+      throw RequestSender::ServerUnreachable(stream.str());
+    }
+    catch (...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Exception caught: Unknown error";
+      throw RequestSender::ServerUnreachable(stream.str());
+    }
+  }
+
+  unsigned long BillingProcessor::GrpcBillingServerRequestSender::server_count() const noexcept
+  {
+    return grpc_billing_manager_pool_->size();
+  }
+
   // BillingProcessor impl
   BillingProcessor::BillingProcessor(
     Logging::Logger* logger,
@@ -2260,14 +2369,6 @@ namespace RequestInfoSvcs
     }
 
     return Generics::Time::get_time_of_day() + send_delayed_period_; // reschedule
-  }
-
-  BillingProcessor::RequestSender_var
-  BillingProcessor::init_request_sender_(
-    const CORBACommons::CorbaObjectRefList& billing_server_refs)
-    noexcept
-  {
-    return new BillingServerRequestSender(billing_server_refs);
   }
 
   void

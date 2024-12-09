@@ -329,12 +329,25 @@
   <xsd:complexType name="BillingType">
     <xsd:sequence>
       <xsd:element name="BillingServerCorbaRef" type="MultiCorbaObjectRefType" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="BillingGrpcClientPool" type="GrpcClientPoolType"/>
+      <xsd:element name="BillingServerEndpointList" type="EndpointListType"/>
     </xsd:sequence>
 
     <xsd:attribute name="storage_root" type="xsd:string" use="required"/>
     <xsd:attribute name="dump_period" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="send_delayed_period" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="threads" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointType">
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointListType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="EndpointType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 </xsd:schema>
 

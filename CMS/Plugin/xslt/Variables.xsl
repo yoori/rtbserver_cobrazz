@@ -582,8 +582,8 @@
 <xsl:variable name="grpc-server-ip" select="'0.0.0.0'"/>
 
 <!-- Grpc client pool params -->
-<xsl:variable name="grpc-pool-client-num-channels" select="200"/>
-<xsl:variable name="grpc-pool-client-num-clients" select="200"/>
+<xsl:variable name="grpc-pool-client-num-channels" select="100"/>
+<xsl:variable name="grpc-pool-client-num-clients" select="100"/>
 <xsl:variable name="grpc-pool-client-timeout" select="1500"/>
 <xsl:variable name="grpc-pool-client-enable" select="'false'"/>
 
