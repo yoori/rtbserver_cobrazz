@@ -61,7 +61,7 @@ BillingServerApp_::init_coro()
       configuration_->GrpcServer());
 
     auto check_available_bid = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_check_available_bid_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_check_available_bid_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::check_available_bid>(
       logger(),
@@ -71,7 +71,7 @@ BillingServerApp_::init_coro()
       main_task_processor);
 
     auto reserve_bid = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_reserve_bid_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_reserve_bid_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::reserve_bid>(
       logger(),
@@ -81,7 +81,7 @@ BillingServerApp_::init_coro()
       main_task_processor);
 
    auto confirm_bid = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_confirm_bid_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_confirm_bid_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::confirm_bid>(
       logger(),
@@ -91,7 +91,7 @@ BillingServerApp_::init_coro()
       main_task_processor);
 
     auto add_amount = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_add_amount_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_add_amount_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::add_amount>(
       logger(),

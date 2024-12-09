@@ -494,38 +494,6 @@ public:
   using VerifyImpressionRequestPtr = std::unique_ptr<VerifyImpressionRequest>;
   using VerifyImpressionResponse = AdServer::CampaignSvcs::Proto::VerifyImpressionResponse;
   using VerifyImpressionResponsePtr = std::unique_ptr<VerifyImpressionResponse>;
-  /*using MatchGeoChannelsRequest = AdServer::CampaignSvcs::Proto::MatchGeoChannelsRequest;
-  using MatchGeoChannelsRequestPtr = std::unique_ptr<MatchGeoChannelsRequest>;
-  using MatchGeoChannelsResponse = AdServer::CampaignSvcs::Proto::MatchGeoChannelsResponse;
-  using MatchGeoChannelsResponsePtr = std::unique_ptr<MatchGeoChannelsResponse>;
-  using GetChannelLinksRequest = AdServer::CampaignSvcs::Proto::GetChannelLinksRequest;
-  using GetChannelLinksRequestPtr = std::unique_ptr<GetChannelLinksRequest>;
-  using GetChannelLinksResponse = AdServer::CampaignSvcs::Proto::GetChannelLinksResponse;
-  using GetChannelLinksResponsePtr = std::unique_ptr<GetChannelLinksResponse>;
-  using GetDiscoverChannelsRequest = AdServer::CampaignSvcs::Proto::GetDiscoverChannelsRequest;
-  using GetDiscoverChannelsRequestPtr = std::unique_ptr<GetDiscoverChannelsRequest>;
-  using GetDiscoverChannelsResponse = AdServer::CampaignSvcs::Proto::GetDiscoverChannelsResponse;
-  using GetDiscoverChannelsResponsePtr = std::unique_ptr<GetDiscoverChannelsResponse>;
-  using GetCategoryChannelsRequest = AdServer::CampaignSvcs::Proto::GetCategoryChannelsRequest;
-  using GetCategoryChannelsRequestPtr = std::unique_ptr<GetCategoryChannelsRequest>;
-  using GetCategoryChannelsResponse = AdServer::CampaignSvcs::Proto::GetCategoryChannelsResponse;
-  using GetCategoryChannelsResponsePtr = std::unique_ptr<GetCategoryChannelsResponse>;
-  using GetConfigRequest = AdServer::CampaignSvcs::Proto::GetConfigRequest;
-  using GetConfigRequestPtr = std::unique_ptr<GetConfigRequest>;
-  using GetConfigResponse = AdServer::CampaignSvcs::Proto::GetConfigResponse;
-  using GetConfigResponsePtr = std::unique_ptr<GetConfigResponse>;
-  using TraceCampaignSelectionIndexRequest = AdServer::CampaignSvcs::Proto::TraceCampaignSelectionIndexRequest;
-  using TraceCampaignSelectionIndexRequestPtr = std::unique_ptr<TraceCampaignSelectionIndexRequest>;
-  using TraceCampaignSelectionIndexResponse = AdServer::CampaignSvcs::Proto::TraceCampaignSelectionIndexResponse;
-  using TraceCampaignSelectionIndexResponsePtr = std::unique_ptr<TraceCampaignSelectionIndexResponse>;
-  using GetCampaignCreativeByCcidRequest = AdServer::CampaignSvcs::Proto::GetCampaignCreativeByCcidRequest;
-  using GetCampaignCreativeByCcidRequestPtr = std::unique_ptr<GetCampaignCreativeByCcidRequest>;
-  using GetCampaignCreativeByCcidResponse = AdServer::CampaignSvcs::Proto::GetCampaignCreativeByCcidResponse;
-  using GetCampaignCreativeByCcidResponsePtr = std::unique_ptr<GetCampaignCreativeByCcidResponse>;
-  using ProcessAnonymousRequestRequest = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestRequest;
-  using ProcessAnonymousRequestRequestPtr = std::unique_ptr<ProcessAnonymousRequestRequest>;
-  using ProcessAnonymousRequestResponse = AdServer::CampaignSvcs::Proto::ProcessAnonymousRequestResponse;
-  using ProcessAnonymousRequestResponsePtr = std::unique_ptr<ProcessAnonymousRequestResponse>;*/
 
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -1214,6 +1182,7 @@ public:
       clients->consider_web_operation_client = factory.create<ConsiderWebOperationClient>(task_processor_);
       clients->get_config_client = factory.create<GetConfigClient>(task_processor_);
       clients->trace_campaign_selection_index_client = factory.create<TraceCampaignSelectionIndexClient>(task_processor_);
+      clients->trace_campaign_selection_client = factory.create<TraceCampaignSelectionClient>(task_processor_);
       clients->get_campaign_creative_by_ccid_client = factory.create<GetCampaignCreativeByCcidClient>(task_processor_);
       clients->get_colocation_flags_client = factory.create<GetColocationFlagsClient>(task_processor_);
       clients->get_pub_pixels_client = factory.create<GetPubPixelsClient>(task_processor_);
