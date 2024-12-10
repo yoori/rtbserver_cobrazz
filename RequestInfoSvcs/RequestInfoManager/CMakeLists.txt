@@ -53,6 +53,7 @@ target_link_libraries(RequestInfoManagerIDL
 
 add_executable(RequestInfoManager
   ExpressionMatcherNotifier.cpp
+  GrpcBillingManagerPool.cpp
   RequestInfoManagerImpl.cpp
   RequestInfoManagerMain.cpp
   RequestLogLoader.cpp
@@ -62,6 +63,7 @@ add_executable(RequestInfoManager
 
 target_link_libraries(RequestInfoManager
   BillingProcessor
+  BillingServerProto
   CORBACommons
   CampaignServerIDL
   Commons
@@ -180,6 +182,9 @@ add_library(UserSiteReachContainer STATIC
 
 target_link_libraries(UserSiteReachContainer
   LogCommons
+  UserCampaignReachProfilePST
+  UserChannelInventoryProfilePST
+  UserSiteReachProfilePST
   UServerUtils
 )
 
@@ -189,5 +194,8 @@ add_library(UserTagRequestMergeContainer STATIC
 
 target_link_libraries(UserTagRequestMergeContainer
   LogCommons
+  UserCampaignReachProfilePST
+  UserChannelInventoryProfilePST
+  UserSiteReachProfilePST
   UServerUtils
 )

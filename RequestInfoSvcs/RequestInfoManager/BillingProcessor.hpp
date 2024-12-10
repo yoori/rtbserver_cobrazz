@@ -1,25 +1,26 @@
 #ifndef REQUESTINFOSVCS_REQUESTINFOMANAGER_BILLINGPROCESSOR_HPP
 #define REQUESTINFOSVCS_REQUESTINFOMANAGER_BILLINGPROCESSOR_HPP
 
-#include <eh/Exception.hpp>
-#include <ReferenceCounting/ReferenceCounting.hpp>
-
-#include <Logger/Logger.hpp>
-#include <Generics/Time.hpp>
-#include <Generics/MemBuf.hpp>
+// UNIXCOMMONS
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <Generics/MemBuf.hpp>
+#include <Generics/Time.hpp>
+#include <Logger/Logger.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
+#include <eh/Exception.hpp>
 
-#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
+// THIS
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
+#include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
-
-#include "RequestActionProcessor.hpp"
+#include <RequestInfoSvcs/RequestInfoManager/GrpcBillingManagerPool.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestActionProcessor.hpp>
 
 namespace AdServer
 {
   namespace RequestInfoSvcs
   {
-    class BillingProcessor:
+    class BillingProcessor final:
       public virtual ReferenceCounting::AtomicImpl,
       public virtual Generics::ActiveObject,
       public virtual RequestActionProcessor,
@@ -151,6 +152,25 @@ namespace AdServer
         std::unique_ptr<BillingServerArrayHolder> billing_servers_holder_;
       };
 
+      class GrpcBillingServerRequestSender final: public RequestSender
+      {
+      public:
+        GrpcBillingServerRequestSender(
+          GrpcBillingManagerPool* grpc_billing_manager_pool) noexcept;
+
+        void send_requests(
+          RequestArray& requests,
+          unsigned long service_index) override;
+
+        unsigned long server_count() const noexcept override;
+
+      protected:
+        ~GrpcBillingServerRequestSender() override = default;
+
+      private:
+        GrpcBillingManagerPool_var grpc_billing_manager_pool_;
+      };
+
     public:
       BillingProcessor(
         Logging::Logger* logger,
@@ -207,11 +227,6 @@ namespace AdServer
 
       Generics::Time
       send_delayed_() noexcept;
-
-      virtual RequestSender_var
-      init_request_sender_(
-        const CORBACommons::CorbaObjectRefList& billing_server_refs)
-        noexcept;
 
       static void
       mark_resend_(RequestArray& requests)

@@ -1,47 +1,44 @@
 #ifndef REQUESTINFOSVCS_REQUESTINFOMANAGERIMPL_HPP
 #define REQUESTINFOSVCS_REQUESTINFOMANAGERIMPL_HPP
 
+// STD
 #include <list>
 #include <string>
 
-#include <ReferenceCounting/ReferenceCounting.hpp>
-#include <ReferenceCounting/PtrHolder.hpp>
-
-#include <eh/Exception.hpp>
-
-#include <Logger/Logger.hpp>
+// UNIXCOMMONS
+#include <CORBACommons/CorbaAdapters.hpp>
+#include <CORBACommons/ObjectPool.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Values.hpp>
+#include <Logger/Logger.hpp>
+#include <ReferenceCounting/PtrHolder.hpp>
+#include <ReferenceCounting/ReferenceCounting.hpp>
+#include <eh/Exception.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
-
+// THIS
+#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
+#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <Commons/CorbaConfig.hpp>
-
+#include <RequestInfoSvcs/RequestInfoManager/CompositeRequestActionProcessor.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/ExpressionMatcherNotifier.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/GrpcBillingManagerPool.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoContainer.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager_s.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestLogLoader.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestOperationDistributor.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestOutLogger.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/UserActionInfoContainer.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/UserCampaignReachContainer.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/UserFraudProtectionContainer.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/UserSiteReachContainer.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/UserTagRequestMergeContainer.hpp>
+#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
-
-#include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
-
-#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManager_s.hpp>
-#include <UServerUtils/RocksDB/DataBaseManagerPool.hpp>
-
-#include "CompositeRequestActionProcessor.hpp"
-#include "UserCampaignReachContainer.hpp"
-#include "UserActionInfoContainer.hpp"
-#include "UserFraudProtectionContainer.hpp"
-#include "RequestInfoContainer.hpp"
-#include "UserSiteReachContainer.hpp"
-#include "UserTagRequestMergeContainer.hpp"
-#include "RequestLogLoader.hpp"
-#include "RequestOutLogger.hpp"
-#include "ExpressionMatcherNotifier.hpp"
-#include "RequestOperationDistributor.hpp"
 
 namespace AdServer
 {
@@ -86,6 +83,8 @@ namespace AdServer
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(NotReady, Exception);
 
+      using TaskProcessor = userver::engine::TaskProcessor;
+      using GrpcSchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
       using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
       using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
       using RequestInfoManagerConfig = xsd::AdServer::Configuration::RequestInfoManagerConfigType;
@@ -93,6 +92,7 @@ namespace AdServer
 
     public:
       RequestInfoManagerImpl(
+        TaskProcessor& task_processor,
         Generics::ActiveObjectCallback* callback,
         Logging::Logger* logger,
         const RequestInfoManagerConfig& request_info_manager_config,
@@ -332,11 +332,14 @@ namespace AdServer
         noexcept;
 
     private:
+      TaskProcessor& task_processor_;
       Generics::ActiveObjectCallback_var callback_;
       Logging::Logger_var logger_;
       CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
       const unsigned SERVICE_INDEX_;
       CampaignServerPoolPtr campaign_servers_;
+      GrpcSchedulerPtr grpc_scheduler_;
+      GrpcBillingManagerPool_var grpc_billing_manager_pool_;
 
       /// Callback with fixes Aspect and Code for log records of check_logs()
       Generics::ActiveObjectCallback_var check_logs_callback_;

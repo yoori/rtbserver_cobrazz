@@ -15,7 +15,6 @@
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Logger/Logger.hpp>
-#include <Sync/SyncPolicy.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Scheduler.hpp>
