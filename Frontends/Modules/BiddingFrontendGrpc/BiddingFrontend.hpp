@@ -3,7 +3,6 @@
 
 // UNIXCOMMONS
 #include <eh/Exception.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/AtomicInt.hpp>
 #include <Generics/Statistics.hpp>

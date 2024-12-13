@@ -1512,10 +1512,10 @@ namespace AdServer::Bidding::Grpc
         }
       }
     }
-    catch(const CORBA::Exception& ex)
+    catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Error on writing open rtb response: '" << ex << "'";
+      ostr << FUN << ": Error on writing open rtb response: '" << ex.what() << "'";
       bid_frontend_->logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
 
       throw;

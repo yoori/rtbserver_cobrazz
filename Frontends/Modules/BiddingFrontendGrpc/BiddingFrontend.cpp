@@ -944,7 +944,7 @@ namespace AdServer::Bidding::Grpc
       catch (const eh::Exception& exc)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << exc.what();
+        ostr << FNS << exc.what();
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::BIDDING_FRONTEND,
