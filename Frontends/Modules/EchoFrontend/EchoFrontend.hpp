@@ -21,6 +21,7 @@ class Frontend final :
   public ReferenceCounting::AtomicImpl
 {
 public:
+  using TaskProcessor = userver::engine::TaskProcessor;
   using HttpResponseFactory = FrontendCommons::HttpResponseFactory;
   using HttpResponseFactory_var = FrontendCommons::HttpResponseFactory_var;
   using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
@@ -29,6 +30,7 @@ public:
 
 public:
   Frontend(
+    TaskProcessor& helper_task_processor,
     const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logger* logger,
@@ -47,6 +49,8 @@ private:
   void shutdown() noexcept override;
 
 private:
+  TaskProcessor& helper_task_processor_;
+
   const GrpcContainerPtr grpc_container_;
 
   Logger_var logger_;

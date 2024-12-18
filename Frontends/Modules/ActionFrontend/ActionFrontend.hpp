@@ -46,6 +46,7 @@ namespace Action
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Frontend_var = ReferenceCounting::SmartPtr<Frontend>;
@@ -54,6 +55,7 @@ namespace Action
     static Frontend_var instance;
 
     Frontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -218,6 +220,7 @@ namespace Action
       CookieManagerPtr;
 
   private:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     // configuration

@@ -61,7 +61,7 @@ namespace AdServer::Bidding::Grpc
 
     void set_current_stage(const Stage stage) noexcept;
 
-    Stage get_current_stage();
+    Stage get_current_stage() noexcept;
 
     virtual void print_request(std::ostream& out) const noexcept = 0;
 
@@ -78,9 +78,6 @@ namespace AdServer::Bidding::Grpc
     virtual void write_empty_response(unsigned int code) noexcept = 0;
 
     virtual void clear() noexcept;
-
-  protected:
-    using SyncPolicy = Sync::Policy::PosixThread;
 
   protected:
     virtual ~BidRequestTask() noexcept
@@ -117,7 +114,7 @@ namespace AdServer::Bidding::Grpc
 
     Stage current_stage_ = Stage::Initial;
 
-    std::mutex mutex_current_stage_;
+    userver::engine::Mutex mutex_current_stage_;
 
   private:
     FrontendCommons::HttpResponseWriter_var response_writer_;
@@ -159,17 +156,11 @@ namespace AdServer::Bidding::Grpc
   inline void BidRequestTask::set_current_stage(
     const Stage stage) noexcept
   {
-    try
-    {
-      std::lock_guard lock(mutex_current_stage_);
-      current_stage_ = stage;
-    }
-    catch (...)
-    {
-    }
+    std::lock_guard lock(mutex_current_stage_);
+    current_stage_ = stage;
   }
 
-  inline Stage BidRequestTask::get_current_stage()
+  inline Stage BidRequestTask::get_current_stage() noexcept
   {
     std::lock_guard lock(mutex_current_stage_);
     return current_stage_;

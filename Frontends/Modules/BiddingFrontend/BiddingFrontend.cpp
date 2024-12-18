@@ -270,6 +270,7 @@ namespace Bidding
   // Frontend implementation
   //
   Frontend::Frontend(
+    TaskProcessor& helper_task_processor,
     const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
@@ -286,6 +287,7 @@ namespace Bidding
         "Bidding::Frontend",
         Aspect::BIDDING_FRONTEND,
         0),
+      helper_task_processor_(helper_task_processor),
       grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
@@ -645,7 +647,7 @@ namespace Bidding
           request_timeout_ /= 1000;
         }
 
-        google::protobuf::SetLogHandler(&Frontend::protobuf_log_handler_);
+      google::protobuf::SetLogHandler(&Frontend::protobuf_log_handler_);
 
         control_task_runner_->enqueue_task(
           Generics::Task_var(new UpdateConfigTask(this, control_task_runner_)));

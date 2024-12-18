@@ -51,13 +51,14 @@ namespace AdServer
     struct ChannelMatch;
 
   public:
-    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using TaskProcessor = userver::engine::TaskProcessor;
+    using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using SchedulerPtr = UServerUtils::Grpc::Common::SchedulerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     ClickFrontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -175,6 +176,7 @@ namespace AdServer
       const String::SubString& peer_ip_val) const noexcept;
 
   private:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     std::string config_file_;

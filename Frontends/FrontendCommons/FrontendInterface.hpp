@@ -1,139 +1,81 @@
 #ifndef FRONTENDCOMMONS_FRONTENDINTERFACE_HPP_
 #define FRONTENDCOMMONS_FRONTENDINTERFACE_HPP_
 
-#include <String/SubString.hpp>
+// UNIXCOMMONS
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Stream/MemoryStream.hpp>
+#include <String/SubString.hpp>
 
+// THIS
 #include <xsd/Frontends/FeConfig.hpp>
 #include "FCGI.hpp"
 
 namespace FrontendCommons
 {
-  /**
-   * @class FrontendInterface
-   *
-   * @brief HTTP Frontend interface.
-   */
-  class FrontendInterface :
-    public virtual ReferenceCounting::Interface
+  class FrontendInterface : public virtual ReferenceCounting::Interface
   {
   public:
-    /**
-     * @class Configuration
-     *
-     * @brief Frontend configuration.
-     */
-    class Configuration: public ReferenceCounting::AtomicImpl
+    class Configuration final: public ReferenceCounting::AtomicImpl
     {
     public:
+      using FeConfig = xsd::AdServer::Configuration::FeConfigurationType;
+
       DECLARE_EXCEPTION(InvalidConfiguration, eh::DescriptiveException);
 
-      typedef xsd::AdServer::Configuration::FeConfigurationType FeConfig;
-
-      /**
-       * @brief Constructor.
-       * @param config path
-       */
+    public:
       Configuration(const char* config_path);
 
-      /**
-       * @brief Read config.
-       * Parse config file
-       */
-      void
-      read() /*throw(InvalidConfiguration)*/;
+      void read();
 
-      /**
-       * @brief Get config file path.
-       * @return path
-       */
-      const std::string&
-      path() const;
+      const std::string& path() const;
 
-      /**
-       * @brief Get frontend config.
-       * @return frontend config
-       */
-      const FeConfig&
-      get() const /*throw(InvalidConfiguration)*/;
+      const FeConfig& get() const;
 
     protected:
-      virtual
-      ~Configuration() noexcept
-      {}
+      ~Configuration() override = default;
 
     private:
       const std::string config_path_;
+
       std::unique_ptr<FeConfig> config_;
     };
 
-    typedef ReferenceCounting::SmartPtr<Configuration> Configuration_var;
+    using Configuration_var = ReferenceCounting::SmartPtr<Configuration>;
 
     FrontendInterface(
       FrontendCommons::HttpResponseFactory* response_factory);
 
-    /**
-     * @brief Handle or not URI.
-     * @param uri.
-     */
-    virtual bool
-    will_handle(const String::SubString& uri) noexcept = 0;
+    virtual bool will_handle(
+      const String::SubString& uri) noexcept = 0;
 
-    /**
-     * @brief Handle HTTP request.
-     * @param HTTP request
-     * @param[out] HTTP response
-     */
-    virtual void
-    handle_request(
+    virtual void handle_request(
       FrontendCommons::HttpRequestHolder_var request,
-      FrontendCommons::HttpResponseWriter_var response_writer)
-      noexcept = 0;
+      FrontendCommons::HttpResponseWriter_var response_writer) noexcept = 0;
 
-    /**
-     * @brief Handle HTTP request without params.
-     * @param HTTP request
-     * @param[out] HTTP response
-     */
-    virtual void
-    handle_request_noparams(
+    virtual void handle_request_noparams(
       FrontendCommons::HttpRequestHolder_var request_holder,
-      FrontendCommons::HttpResponseWriter_var response_writer)
-      /*throw(eh::Exception)*/;
+      FrontendCommons::HttpResponseWriter_var response_writer);
 
-    FrontendCommons::HttpResponse_var
-    create_response();
+    FrontendCommons::HttpResponse_var create_response();
 
-    /**
-     * @brief Initialize frontend.
-     */
-    virtual void
-    init() /*throw(eh::Exception)*/ = 0;
+    virtual void init() = 0;
 
-    /**
-     * @brief Shutdown frontend.
-     */
-    virtual void
-    shutdown() noexcept = 0;
-    
+    virtual void shutdown() noexcept = 0;
+
   protected:
-    virtual
-    ~FrontendInterface() noexcept = default;
+    virtual ~FrontendInterface() noexcept = default;
 
-    bool
-    parse_args_(
+    bool parse_args_(
       FrontendCommons::HttpRequestHolder_var request_holder,
-      FrontendCommons::HttpResponseWriter_var response_writer)
-      /*throw(eh::Exception)*/;
+      FrontendCommons::HttpResponseWriter_var response_writer);
 
   private:
     FrontendCommons::HttpResponseFactory_var response_factory_;
   };
 
-  typedef ReferenceCounting::SmartPtr<FrontendInterface> Frontend_var;
-}
+  using Frontend_var = ReferenceCounting::SmartPtr<FrontendInterface>;
+} // namespace FrontendCommons
 
 #include "FrontendInterface.ipp"
 
