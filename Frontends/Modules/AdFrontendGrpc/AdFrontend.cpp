@@ -226,6 +226,7 @@ namespace AdServer::Grpc
   } // namespace
 
   AdFrontend::AdFrontend(
+    TaskProcessor& helper_task_processor,
     const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
@@ -246,6 +247,7 @@ namespace AdServer::Grpc
         response_factory,
         frontend_config->get().AdFeConfiguration()->threads(),
         0), // max pending tasks
+      helper_task_processor_(helper_task_processor),
       grpc_container_(grpc_container),
       fe_config_path_(frontend_config->path()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
