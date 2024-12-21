@@ -26,8 +26,9 @@ jobs:
           sudo apt install docker-compose
           
       - name: Making base cache
-        working-directory: ci
+        working-directory: rtbserver_cobrazz/ci
         run: |
+          pwd
           sh envprep.sh
           exit $?
           
