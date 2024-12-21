@@ -18,7 +18,7 @@ jobs:
       - name: Checkout unixcomms repository
         uses: actions/checkout@v3
         with:
-          repository: https://github.com/yoori/unixcommons_cobrazz.git
+          repository: yoori/unixcommons_cobrazz.git
           
       - name: Set up Docker Compose
         run: |
