@@ -20,6 +20,7 @@ jobs:
         with:
           repository: yoori/unixcommons_cobrazz.git
           ref: main
+          path: unixcommons_cobrazz
           
       - name: Set up Docker Compose
         run: |
