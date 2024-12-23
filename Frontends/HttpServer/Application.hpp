@@ -29,7 +29,6 @@ public:
 private:
   using CorbaConfig = CORBACommons::CorbaConfig;
   using CorbaServerAdapter_var = CORBACommons::CorbaServerAdapter_var;
-  using Frontend_var = FrontendCommons::Frontend_var;
   using StatHolder_var = AdServer::StatHolder_var;
   using ServerConfig = xsd::AdServer::Configuration::ServerConfigType;
   using ServerConfigPtr = std::unique_ptr<ServerConfig>;
@@ -94,8 +93,6 @@ private:
   CorbaServerAdapter_var corba_server_adapter_;
 
   StatHolder_var stats_;
-
-  Frontend_var frontend_;
 };
 
 using Application_var = ReferenceCounting::SmartPtr<Application>;

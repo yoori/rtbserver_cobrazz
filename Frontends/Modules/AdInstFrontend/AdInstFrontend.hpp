@@ -54,6 +54,7 @@ namespace Instantiate
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
@@ -61,6 +62,7 @@ namespace Instantiate
     using HttpResponse = FrontendCommons::HttpResponse;
 
     Frontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -156,6 +158,7 @@ namespace Instantiate
       /*throw(eh::Exception)*/;
 
   private:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     CommonConfigPtr common_config_;

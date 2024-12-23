@@ -16,6 +16,7 @@ namespace AdServer::Echo
 {
 
 Frontend::Frontend(
+  TaskProcessor& helper_task_processor,
   const GrpcContainerPtr& grpc_container,
   Configuration* frontend_config,
   Logger* logger,
@@ -36,6 +37,7 @@ Frontend::Frontend(
       response_factory,
       frontend_config->get().ActionFeConfiguration()->threads(),
       0),
+    helper_task_processor_(helper_task_processor),
     grpc_container_(grpc_container),
     logger_(ReferenceCounting::add_ref(logger))
 {

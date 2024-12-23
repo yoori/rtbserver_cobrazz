@@ -57,6 +57,7 @@ namespace Passback
    * Passback::Frontend implementation
    */
   Frontend::Frontend(
+    TaskProcessor& helper_task_processor,
     const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
@@ -78,6 +79,7 @@ namespace Passback
         response_factory,
         frontend_config->get().PassFeConfiguration()->threads(),
         0), // max pending tasks
+      helper_task_processor_(helper_task_processor),
       grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),

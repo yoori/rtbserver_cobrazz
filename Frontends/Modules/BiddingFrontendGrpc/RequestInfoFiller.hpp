@@ -309,8 +309,6 @@ namespace AdServer::Bidding::Grpc
       noexcept;
 
   protected:
-    typedef Sync::Policy::PosixThread SyncPolicy;
-
     typedef std::unique_ptr<GeoIPMapping::IPMapCity2> IPMapPtr;
 
     typedef Generics::GnuHashTable<Generics::SubStringHashAdapter, std::string>

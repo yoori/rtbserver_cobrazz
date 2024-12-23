@@ -7,6 +7,7 @@
 // UNIXCOMMONS
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <UServerUtils/Component.hpp>
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
@@ -30,11 +31,19 @@ namespace AdServer
      * @brief HTTP frontends pool.
      */
     class FrontendsPool final :
-      public virtual FrontendCommons::FrontendInterface,
-      public virtual ReferenceCounting::AtomicImpl  
+      public FrontendCommons::FrontendInterface,
+      public UServerUtils::Component,
+      public ReferenceCounting::AtomicImpl
     {
     public:
+      using TaskProcessor = userver::engine::TaskProcessor;
       using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
+
+      enum class ServerType
+      {
+        HTTP,
+        FCGI
+      };
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -66,6 +75,8 @@ namespace AdServer
        * @param config path
        */
       FrontendsPool(
+        TaskProcessor& helper_task_processor,
+        const ServerType server_type,
         const GrpcContainerPtr& grpc_container,
         const char* config_path,
         const ModuleIdArray& modules,
@@ -77,48 +88,47 @@ namespace AdServer
        * @brief Handle or not URI.
        * @param uri.
        */
-      virtual bool
-      will_handle(const String::SubString& uri) noexcept;
+      bool will_handle(const String::SubString& uri) noexcept override;
 
       /**
        * @brief Handle HTTP request.
        * @param HTTP request
        * @param[out] HTTP response
        */
-      virtual void
-      handle_request(
+      void handle_request(
         FrontendCommons::HttpRequestHolder_var request_holder,
         FrontendCommons::HttpResponseWriter_var response_writer)
-        noexcept;
+        noexcept override;
 
       /**
        * @brief Handle HTTP request without params.
        * @param HTTP request
        * @param[out] HTTP response
+       * throw(eh::Exception)
        */
-      virtual void
-      handle_request_noparams(
+      void handle_request_noparams(
         FrontendCommons::HttpRequestHolder_var request_holder,
-        FrontendCommons::HttpResponseWriter_var response_writer)
-        /*throw(eh::Exception)*/;
+        FrontendCommons::HttpResponseWriter_var response_writer) override;
 
+    protected:
+      ~FrontendsPool() noexcept override = default;
+
+      void activate_object_() override;
+
+      void deactivate_object_() override;
+
+    private:
       /**
        * @brief Initialize frontend.
+       * throw(eh::Exception)
        */
-      virtual void
-      init() /*throw(eh::Exception)*/;
+      void init() override;
 
       /**
        * @brief Shutdown frontend.
        */
-      virtual void
-      shutdown() noexcept;
+      void shutdown() noexcept override;
 
-    protected:
-      virtual
-      ~FrontendsPool() noexcept = default;
-
-    private:
       /**
        * @brief Init a frontend.
        * @param frontend config
@@ -131,6 +141,10 @@ namespace AdServer
         T&&... params);
 
     private:
+      TaskProcessor& helper_task_processor_;
+
+      const ServerType server_type_;
+
       const GrpcContainerPtr grpc_container_;
 
       Configuration_var config_;
@@ -147,6 +161,8 @@ namespace AdServer
 
       std::vector<FrontendCommons::Frontend_var> frontends_;
     };
+
+    using FrontendsPool_var = ReferenceCounting::SmartPtr<FrontendsPool>;
   }
 }
 
