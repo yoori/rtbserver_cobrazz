@@ -7,12 +7,13 @@
 RES_TMP=build/TMP/
 
 RES_RPMS=build/RPMS/
-#VERSION=6.5.2
-#VERSION=7.6.0
-#VERSION=8.9.1
-VERSION=6.26.1
+VERSION=8.8.1
+RELEASE=4
+DOWNLOAD_VERSION=8.8.1-ssv4
 
 _version=%{VERSION}
+_release=%{RELEASE}
+_download_version=%{DOWNLOAD_VERSION}
 
 rm -rf "$RES_TMP"
 
@@ -31,23 +32,21 @@ sudo yum -y install libzstd-devel zlib-devel || \
 # create folders for RPM build environment
 mkdir -vp  `rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'`
 
-#cp /home/ykuznetsov/rocksdb-6.5.2.tar.gz "`rpm -E %_sourcedir`"/
-
 BIN_RPM_FOLDER=`rpm -E '%_rpmdir/%_arch'`
 
-# download librdkafka source RPM
 ROCKSDB_SPEC_FILE=`rpm -E %_specdir`/rocksdb.spec
 
 cat << 'EOF' > $ROCKSDB_SPEC_FILE
 Name:    rocksdb
 Version: %{_version}
-Release: ssv2%{?dist}
+Release: %{_release}%{?dist}
 Summary: A Persistent Key-Value Store for Flash and RAM Storage
 Group:   Development/Libraries/C and C++
 License: BSD-2-Clause
 URL:     https://github.com/facebook/rocksdb
-#Source0: rocksdb-%{_version}.tar.gz
-Source0: https://github.com/facebook/rocksdb/archive/v%{_version}.tar.gz
+#Source0: https://github.com/facebook/rocksdb/archive/v%{_version}.tar.gz
+Source0: https://github.com/yoori/rocksdb/archive/v%{_download_version}.tar.gz
+
 BuildRequires: autoconf automake libtool curl make
 BuildRequires: gcc-c++
 BuildRequires: libzstd-devel bzip2-devel snappy
@@ -69,13 +68,16 @@ This package contains headers and libraries required to build applications
 using RocksDB.
 
 %prep
-%setup -q -n rocksdb-%{_version}
-
-#%cmake -DWITH_GFLAGS=0
+%setup -q -n rocksdb-%{_download_version}
 
 %build
-PORTABLE=1 make -j6  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0
-#static_lib shared_lib
+export PATH=/opt/rh/gcc-toolset-10/root/usr/bin/:$PATH
+#PORTABLE=1 make -j6 DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0 WITH_TESTS=0
+mkdir build
+pushd build
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_TESTS:BOOL=OFF ..
+cmake --build . -j
+popd
 
 %install
 rm -rf %{buildroot}
@@ -83,8 +85,11 @@ echo 'rm -rf ' %{buildroot}
 mkdir -p %{buildroot}/usr
 echo 'mkdir -p %{buildroot}/usr'
 echo "Install to %{buildroot}/usr"
-DESTDIR=%{buildroot} make install INSTALL_PATH=%{buildroot}
-#mv %{buildroot}/usr/lib %{buildroot}/usr/lib64
+
+#DESTDIR=%{buildroot} make install INSTALL_PATH=%{buildroot}
+pushd build
+cmake --install . --prefix %{buildroot}/usr/
+popd
 
 %clean
 rm -rf %{buildroot}
@@ -93,29 +98,35 @@ rm -rf %{buildroot}
 
 %files -n %{name}
 %defattr(444,root,root)
-%{_libdir}/librocksdb.so*
-%{_libdir}/cmake/*
-#%{_libdir}//pkgconfig/*
+/usr/lib64/librocksdb.so*
+/usr/lib64/cmake/*
+#/usr/lib64/pkgconfig/*
 
 %files -n %{name}-devel
 %defattr(-,root,root)
-%{_includedir}/rocksdb
+/usr/include/rocksdb
+
 %defattr(444,root,root)
-%{_libdir}/*.a
+/usr/lib64/*.a
 
 EOF
-
-
 
 $SUDO_PREFIX yum-builddep -y "$ROCKSDB_SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
 
-spectool --force -g -R --define "_version $VERSION" "$ROCKSDB_SPEC_FILE" || \
+spectool --force -g -R \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  --define "_download_version $DOWNLOAD_VERSION" \
+  "$ROCKSDB_SPEC_FILE" || \
   { echo "can't download rocksdb source RPM" >&2 ; exit 1 ; }
 
-rpmbuild --force -ba --define "_version $VERSION" "$ROCKSDB_SPEC_FILE" || \
+rpmbuild --force -ba \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  --define "_download_version $DOWNLOAD_VERSION" \
+  "$ROCKSDB_SPEC_FILE" || \
   { echo "can't build rocksdbf RPM" >&2 ; exit 1 ; }
 
-# install librdkafka
 cp $BIN_RPM_FOLDER/rocksdb*.rpm $RES_RPMS/
 
