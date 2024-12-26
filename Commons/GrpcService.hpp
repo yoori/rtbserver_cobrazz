@@ -3,6 +3,7 @@
 
 // UNIXCOMMONS
 #include <Logger/Logger.hpp>
+#include <UServerUtils/Grpc/Server/DefaultErrorCreator.hpp>
 #include <UServerUtils/Grpc/Server/ServiceCoro.hpp>
 
 // USERVER
@@ -14,7 +15,42 @@
 namespace AdServer::Commons
 {
 
-constexpr char GRPC_SERVICE_ASPECT[] = "GrpcService";
+namespace Aspect
+{
+
+constexpr char GRPC_SERVICE[] = "GrpcService";
+
+} // namespace Aspect
+
+template<class Request, class Response>
+class DefaultErrorCreator final
+  : public UServerUtils::Grpc::Server::DefaultErrorCreator<Response>
+{
+public:
+  DefaultErrorCreator(const Request& request)
+  {
+    id_request_grpc_ = request.id_request_grpc();
+  }
+
+  ~DefaultErrorCreator() override = default;
+
+  std::unique_ptr<Response> create() noexcept override
+  {
+    static const std::string descritpion =
+      "write was not called due to the coroutine being closed "
+      "or an internal error";
+    auto response = std::make_unique<Response>();
+    response->set_id_request_grpc(id_request_grpc_);
+    auto* error = response->mutable_error();
+    error->set_type(std::decay_t<decltype(error->type())>::Error_Type_Implementation);
+    error->set_description(descritpion);
+
+    return response;
+  }
+
+private:
+  std::uint32_t id_request_grpc_;
+};
 
 template<
   class BaseService,
@@ -30,7 +66,6 @@ public:
   using Logger_var = Logging::Logger_var;
   using ReadStatus = UServerUtils::Grpc::Server::ReadStatus;
   using Reader = typename BaseService::Reader;
-  using WriterPtr = typename Reader::WriterPtr;
   using Impl_var = ReferenceCounting::SmartPtr<Impl>;
 
 public:
@@ -43,8 +78,6 @@ public:
       need_create_new_coroutine_(need_create_new_coroutine)
   {
   }
-
-  ~GrpcService() override = default;
 
   void handle(const Reader& reader) override
   {
@@ -78,16 +111,15 @@ public:
                   {
                     Stream::Error stream;
                     stream << FNS
-                           << ": "
                            << exc.what();
-                    logger->error(stream.str(), GRPC_SERVICE_ASPECT);
+                    logger->error(stream.str(), Aspect::GRPC_SERVICE);
                   }
                   catch (...)
                   {
                     Stream::Error stream;
                     stream << FNS
-                           << ": Unknown error";
-                    logger->error(stream.str(), GRPC_SERVICE_ASPECT);
+                           << "Unknown error";
+                    logger->error(stream.str(), Aspect::GRPC_SERVICE);
                   }
               }).Detach();
           }
@@ -103,14 +135,14 @@ public:
           stream << FNS
                  << ": "
                  << exc.what();
-          logger_->error(stream.str(), GRPC_SERVICE_ASPECT);
+          logger_->error(stream.str(), Aspect::GRPC_SERVICE);
         }
         catch (...)
         {
           Stream::Error stream;
           stream << FNS
-                 << ": Unknown error";
-          logger_->error(stream.str(), GRPC_SERVICE_ASPECT);
+                 << "Unknown error";
+          logger_->error(stream.str(), Aspect::GRPC_SERVICE);
         }
       }
       else if (status == ReadStatus::Finish)
@@ -119,6 +151,18 @@ public:
       }
     }
   }
+
+  typename BaseService::DefaultErrorCreatorPtr default_error_creator(
+    const typename BaseService::Request& request) noexcept override
+  {
+    using Request = typename BaseService::Request;
+    using Response = typename BaseService::Response;
+
+    return std::make_unique<DefaultErrorCreator<Request, Response>>(request);
+  }
+
+protected:
+  ~GrpcService() override = default;
 
 private:
   template<class Writer, class Response>
@@ -134,10 +178,10 @@ private:
     {
       Stream::Error stream;
       stream << FNS
-             << ": Write is failed. Reason: "
+             << "Write is failed. Reason: "
              << (write_status == WriterStatus::RpcClosed ?
                  "rpc already closed" : "internal error");
-      logger->error(stream.str(), GRPC_SERVICE_ASPECT);
+      logger->error(stream.str(), Aspect::GRPC_SERVICE);
     }
   }
 
