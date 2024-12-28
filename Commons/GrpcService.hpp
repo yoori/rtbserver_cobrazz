@@ -72,10 +72,10 @@ public:
   explicit GrpcService(
     Logger* logger,
     Impl* impl,
-    const bool need_create_new_coroutine = true)
+    const bool create_new_coroutine)
     : logger_(ReferenceCounting::add_ref(logger)),
       impl_(ReferenceCounting::add_ref(impl)),
-      need_create_new_coroutine_(need_create_new_coroutine)
+      create_new_coroutine_(create_new_coroutine)
   {
   }
 
@@ -93,7 +93,7 @@ public:
 
         try
         {
-          if (need_create_new_coroutine_)
+          if (create_new_coroutine_)
           {
             auto& current_task_processor = userver::engine::current_task::GetTaskProcessor();
             userver::engine::AsyncNoSpan(
@@ -105,7 +105,10 @@ public:
                   try
                   {
                     auto response = (impl->*ptr_to_mem)(std::move(request));
-                    send_reponse(std::move(writer), std::move(response), logger.in());
+                    send_reponse(
+                      std::move(writer),
+                      std::move(response),
+                      logger.in());
                   }
                   catch (const eh::Exception& exc)
                   {
@@ -126,14 +129,16 @@ public:
           else
           {
             auto response = (impl_->*ptr_to_mem)(std::move(request));
-            send_reponse(std::move(writer), std::move(response), logger_.in());
+            send_reponse(
+              std::move(writer),
+              std::move(response),
+              logger_.in());
           }
         }
         catch (const eh::Exception& exc)
         {
           Stream::Error stream;
           stream << FNS
-                 << ": "
                  << exc.what();
           logger_->error(stream.str(), Aspect::GRPC_SERVICE);
         }
@@ -190,7 +195,7 @@ private:
 
   const Impl_var impl_;
 
-  const bool need_create_new_coroutine_ = true;
+  const bool create_new_coroutine_ = true;
 };
 
 template<
@@ -205,11 +210,17 @@ template<
   class Impl,
   std::unique_ptr<typename BaseService::Response>
   (Impl::*ptr_to_mem)(std::unique_ptr<typename BaseService::Request>&&)>
-auto create_grpc_service(Logging::Logger* logger, Impl* impl)
+auto create_grpc_service(
+  Logging::Logger* logger,
+  Impl* impl,
+  const bool create_new_coroutine)
 {
   using Service = GrpcService<BaseService, Impl, ptr_to_mem>;
   return ReferenceCounting::SmartPtr<Service>(
-    new Service(logger, impl));
+    new Service(
+      logger,
+      impl,
+      create_new_coroutine));
 }
 
 } // namespace AdServer::ChannelSvcs

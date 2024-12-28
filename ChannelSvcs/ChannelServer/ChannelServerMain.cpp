@@ -214,6 +214,7 @@ void ChannelServerApp_::init_coro_()
 {
   using ComponentsBuilder = UServerUtils::ComponentsBuilder;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
 
   // Creating coroutine manager
   auto task_processor_container_builder =
@@ -229,25 +230,31 @@ void ChannelServerApp_::init_coro_()
       logger(),
       configuration_->GrpcServer());
 
+    ServiceMode service_mode = ServiceMode::EventToCoroutine;
+
     auto match_service = AdServer::Commons::create_grpc_service<
       AdServer::ChannelSvcs::Proto::ChannelServer_match_Service,
       AdServer::ChannelSvcs::ChannelServerCustomImpl,
       &AdServer::ChannelSvcs::ChannelServerCustomImpl::match>(
         logger(),
-        server_impl_.in());
+        server_impl_.in(),
+        service_mode != ServiceMode::EventToCoroutine);
     grpc_server_builder->add_service(
       match_service.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
     auto get_ccg_traits_service = AdServer::Commons::create_grpc_service<
       AdServer::ChannelSvcs::Proto::ChannelServer_get_ccg_traits_Service,
       AdServer::ChannelSvcs::ChannelServerCustomImpl,
       &AdServer::ChannelSvcs::ChannelServerCustomImpl::get_ccg_traits>(
         logger(),
-        server_impl_.in());
+        server_impl_.in(),
+        service_mode != ServiceMode::EventToCoroutine);
     grpc_server_builder->add_service(
       get_ccg_traits_service.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
     components_builder->add_grpc_cobrazz_server(std::move(grpc_server_builder));
 

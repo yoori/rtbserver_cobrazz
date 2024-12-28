@@ -149,6 +149,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
   using ManagerCoro_var = UServerUtils::Manager_var;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using CampaignManagerImpl = AdServer::CampaignSvcs::CampaignManagerImpl;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
 
   const char* stage = "beginning main()";
 
@@ -237,225 +238,271 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       stage = "activating CampaignManagerImpl active object";
       campaign_manager_impl_->activate_object();
 
+      ServiceMode service_mode = ServiceMode::EventToCoroutine;
+
       auto get_campaign_creative_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_campaign_creative_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_campaign_creative>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_campaign_creative_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto process_match_request_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_process_match_request_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::process_match_request>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         process_match_request_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto match_geo_channels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_match_geo_channels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::match_geo_channels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         match_geo_channels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto instantiate_ad_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_instantiate_ad_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::instantiate_ad>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         instantiate_ad_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_channel_links_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_channel_links_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_channel_links>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_channel_links_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_discover_channels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_discover_channels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_discover_channels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_discover_channels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_category_channels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_category_channels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_category_channels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_category_channels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_passback_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_consider_passback_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::consider_passback>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         consider_passback_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_passback_track_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_consider_passback_track_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::consider_passback_track>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         consider_passback_track_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_click_url_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_click_url_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_click_url>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_click_url_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto verify_impression_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_verify_impression_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::verify_impression>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         verify_impression_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto action_taken_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_action_taken_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::action_taken>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         action_taken_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto verify_opt_operation_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_verify_opt_operation_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::verify_opt_operation>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         verify_opt_operation_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_web_operation_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_consider_web_operation_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::consider_web_operation>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         consider_web_operation_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_config_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_config_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_config>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_config_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto trace_campaign_selection_index_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_trace_campaign_selection_index_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::trace_campaign_selection_index>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         trace_campaign_selection_index_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto trace_campaign_selection_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_trace_campaign_selection_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::trace_campaign_selection>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         trace_campaign_selection_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_campaign_creative_by_ccid_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_campaign_creative_by_ccid_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_campaign_creative_by_ccid>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_campaign_creative_by_ccid_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_colocation_flags_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_colocation_flags_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_colocation_flags>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_colocation_flags_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_pub_pixels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_pub_pixels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_pub_pixels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_pub_pixels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto process_anonymous_request_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_process_anonymous_request_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::process_anonymous_request>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         process_anonymous_request_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_file_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_file_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_file>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          service_mode != ServiceMode::EventToCoroutine);
       grpc_server_builder->add_service(
         get_file_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto components_builder = std::make_unique<ComponentsBuilder>();
       components_builder->add_grpc_cobrazz_server(
