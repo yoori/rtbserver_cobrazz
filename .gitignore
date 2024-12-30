@@ -1,6 +1,8 @@
 .uuid
 build/
 cmake-build-debug/
+ci/build
+ci/cache
 configure
 autom4te.cache/
 .idea/
