@@ -1,19 +1,19 @@
 #pragma once
 
+// UNIXCOMMONS
 #include <eh/Exception.hpp>
-#include <Generics/Singleton.hpp>
 #include <Generics/CompositeActiveObject.hpp>
-#include <Commons/ProcessControlVarsImpl.hpp>
+#include <Generics/Singleton.hpp>
+
+// THIS
 #include <BiddingFrontend/BiddingFrontendStat.hpp>
+#include <Commons/ProcessControlVarsImpl.hpp>
+#include <FrontendCommons/FrontendInterface.hpp>
 #include <xsd/Frontends/FCGIServerConfig.hpp>
 
-#include <FrontendCommons/FrontendInterface.hpp>
-
-namespace AdServer
+namespace AdServer::Frontends
 {
-namespace Frontends
-{
-  class FCGIServer:
+  class FCGIServer final:
     public AdServer::Commons::ProcessControlVarsLoggerImpl,
     private Generics::CompositeActiveObject
   {
@@ -21,60 +21,37 @@ namespace Frontends
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
   public:
-    FCGIServer() /*throw(eh::Exception)*/;
+    FCGIServer();
 
-    /**
-     * Parses command line, opens config file,
-     * creates corba objects, initialize.
-     */
-    void
-    main(int& argc, char** argv) noexcept;
+    void main(int& argc, char** argv) noexcept;
 
-    //
-    // IDL:CORBACommons/IProcessControl/shutdown:1.0
-    //
-    virtual void
-    shutdown(CORBA::Boolean wait_for_completion)
-      /*throw(CORBA::SystemException)*/;
+    void shutdown(CORBA::Boolean wait_for_completion) override;
 
-    //
-    // IDL:CORBACommons/IProcessControl/is_alive:1.0
-    //
-    virtual CORBACommons::IProcessControl::ALIVE_STATUS
-    is_alive() /*throw(CORBA::SystemException)*/;
+    CORBACommons::IProcessControl::ALIVE_STATUS
+    is_alive() override;
 
   private:
-    typedef xsd::AdServer::Configuration::FCGIServerConfigType
-      FCGIServerConfig;
-
-    typedef std::unique_ptr<FCGIServerConfig> FCGIServerConfigPtr;
+    using FCGIServerConfig = xsd::AdServer::Configuration::FCGIServerConfigType;
+    using FCGIServerConfigPtr = std::unique_ptr<FCGIServerConfig>;
 
   private:
-    virtual
-    ~FCGIServer() noexcept
-    {}
+    ~FCGIServer() override = default;
 
-    void
-    read_config_(
-      const char *filename,
-      const char* argv0)
-      /*throw(Exception, eh::Exception)*/;
+    void read_config_(
+      const char* filename,
+      const char* argv0);
 
-    void
-    init_corba_() /*throw(Exception)*/;
+    void init_corba_();
 
-    void
-    init_fcgi_() /*throw(Exception)*/;
+    void init_fcgi_();
 
   private:
     CORBACommons::CorbaConfig corba_config_;
     FCGIServerConfigPtr config_;
     CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
     StatHolder_var stats_;
-    FrontendCommons::Frontend_var frontend_pool_;
   };
 
-  typedef ReferenceCounting::QualPtr<FCGIServer> FCGIServer_var;
-  typedef Generics::Singleton<FCGIServer, FCGIServer_var> FCGIServerApp;  
-}
-}
+  using FCGIServer_var = ReferenceCounting::QualPtr<FCGIServer>;
+  using FCGIServerApp = Generics::Singleton<FCGIServer, FCGIServer_var>;
+} // namespace AdServer::Frontends

@@ -1,4 +1,5 @@
 add_executable(UnitTestNew
+  Coroutine/CoroutineTest.cpp
   LogCommons/ArchiveTest.cpp
   RequestInfoSvcs/ExpressionMatcher/ChannelMatcherTest.cpp
   UserInfoSvcs/UserBindServer/FetchableHashTableTest.cpp

@@ -156,6 +156,14 @@
     <cfg:Module name="ad"/>
     <cfg:Module name="echo"/>
 
+    <cfg:ChannelGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="true">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:ChannelGrpcClientPool>
+
     <cfg:ChannelServerEndpointList>
       <xsl:for-each select="$channel-servers-path">
         <cfg:Endpoint>
@@ -169,6 +177,14 @@
       </xsl:for-each>
     </cfg:ChannelServerEndpointList>
 
+    <cfg:CampaignGrpcClientPool
+      num_channels="{$grpc-pool-client-num-channels}"
+      num_clients="{$grpc-pool-client-num-clients}"
+      timeout="{$grpc-pool-client-timeout}"
+      enable="true">
+      <xsl:call-template name="GrpcClientChannelArgList"/>
+    </cfg:CampaignGrpcClientPool>
+
     <cfg:CampaignManagerEndpointList>
       <xsl:for-each select="exsl:node-set($campaign-manager-host-grpc-port-set)/host">
         <cfg:Endpoint>
@@ -178,22 +194,6 @@
         </cfg:Endpoint>
       </xsl:for-each>
     </cfg:CampaignManagerEndpointList>
-
-    <cfg:ChannelGrpcClientPool
-      num_channels="{$grpc-pool-client-num-channels}"
-      num_clients="{$grpc-pool-client-num-clients}"
-      timeout="{$grpc-pool-client-timeout}"
-      enable="true">
-      <xsl:call-template name="GrpcClientChannelArgList"/>
-    </cfg:ChannelGrpcClientPool>
-
-    <cfg:CampaignGrpcClientPool
-      num_channels="{$grpc-pool-client-num-channels}"
-      num_clients="{$grpc-pool-client-num-clients}"
-      timeout="{$grpc-pool-client-timeout}"
-      enable="true">
-      <xsl:call-template name="GrpcClientChannelArgList"/>
-    </cfg:CampaignGrpcClientPool>
 
     <cfg:UserBindGrpcClientPool
       num_channels="{$grpc-pool-client-num-channels}"

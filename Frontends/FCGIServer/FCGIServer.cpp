@@ -9,21 +9,18 @@
 #include <UServerUtils/Manager.hpp>
 #include <XMLUtility/Utility.cpp>
 
-// CONFIG
-#include <xsd/Frontends/FeConfig.hpp>
-
 // THIS
+#include <Commons/ConfigUtils.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/ConfigUtils.hpp>
 #include <Commons/UserverConfigUtils.hpp>
-#include <Frontends/FrontendCommons/FrontendsPool.hpp>
 #include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/FrontendsPool.hpp>
 #include <Frontends/FrontendCommons/GrpcContainer.hpp>
 #include <Frontends/FrontendCommons/Statistics.hpp>
 #include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
-#include "Acceptor.hpp"
+#include <xsd/Frontends/FeConfig.hpp>
 #include "AcceptorBoostAsio.hpp"
 #include "FCGIServer.hpp"
 
@@ -32,11 +29,10 @@ namespace
   const char ASPECT[] = "FCGIServer";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
   const char FCGI_SERVER_STATS_OBJ_KEY[] = "FCGIServerStats";
+  const char HELPER_TASK_PROCESSOR_NAME[] = "HelperTaskProcessorName";
 }
 
-namespace AdServer
-{
-namespace Frontends
+namespace AdServer::Frontends
 {
   FCGIServer::FCGIServer() /*throw(eh::Exception)*/
     : AdServer::Commons::ProcessControlVarsLoggerImpl(
@@ -45,35 +41,25 @@ namespace Frontends
   {
   }
 
-  void
-  FCGIServer::shutdown(CORBA::Boolean wait_for_completion)
-    /*throw(CORBA::SystemException)*/
+  void FCGIServer::shutdown(
+    CORBA::Boolean wait_for_completion)
   {
     deactivate_object();
     wait_object();
-
-    if(frontend_pool_)
-    {
-      frontend_pool_->shutdown();
-    }
 
     CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
   }
 
   CORBACommons::IProcessControl::ALIVE_STATUS
-  FCGIServer::is_alive() /*throw(CORBA::SystemException)*/
+  FCGIServer::is_alive()
   {
     return CORBACommons::ProcessControlImpl::is_alive();
   }
 
-  void
-  FCGIServer::read_config_(
+  void FCGIServer::read_config_(
     const char *filename,
     const char* argv0)
-    /*throw(Exception, eh::Exception)*/
   {
-    static const char* FUN = "FCGIServer::read_config()";
-
     try
     {
       Config::ErrorHandler error_handler;
@@ -103,7 +89,9 @@ namespace Frontends
       catch (const xml_schema::parsing &ex)
       {
         Stream::Error ostr;
-        ostr << "Can't parse config file '" << filename << "'. : ";
+        ostr << FNS
+             << "Can't parse config file '"
+             << filename << "'. : ";
         if (error_handler.has_errors())
         {
           std::string error_string;
@@ -118,10 +106,12 @@ namespace Frontends
           config_->CorbaConfig(),
           corba_config_);
       }
-      catch(const eh::Exception &ex)
+      catch (const eh::Exception& exc)
       {
         Stream::Error ostr;
-        ostr << FUN << ": Can't read Corba Config: " << ex.what();
+        ostr << FNS
+             << "Can't read Corba Config: "
+             << exc.what();
         throw Exception(ostr);
       }
 
@@ -130,24 +120,26 @@ namespace Frontends
         logger(Config::LoggerConfigReader::create(
                  config_->Logger(), argv0));
       }
-      catch (const Config::LoggerConfigReader::Exception &ex)
+      catch (const Config::LoggerConfigReader::Exception& exc)
       {
         Stream::Error ostr;
-        ostr << FUN << ": got LoggerConfigReader::Exception: " << ex.what();
+        ostr << FNS
+             << "Got LoggerConfigReader::Exception: "
+             << exc.what();
         throw Exception(ostr);
       }
     }
-    catch (const Exception &ex)
+    catch (const Exception& exc)
     {
       Stream::Error ostr;
-      ostr << FUN << ": got Exception. Invalid configuration: " <<
-        ex.what();
+      ostr << FNS
+           << "Got Exception. Invalid configuration: "
+           << exc.what();
       throw Exception(ostr);
     }
   }
 
-  void
-  FCGIServer::init_corba_() /*throw(Exception)*/
+  void FCGIServer::init_corba_()
   {
     try
     {
@@ -164,17 +156,17 @@ namespace Frontends
       corba_server_adapter_->add_binding(
         FCGI_SERVER_STATS_OBJ_KEY, bidding_frontend_stats_impl.in());
     }
-    catch(const eh::Exception& ex)
+    catch (const eh::Exception& exc)
     {
       Stream::Error ostr;
-      ostr << "FCGIServer::init_corba(): "
-        "Can't init CorbaServerAdapter: " << ex.what();
+      ostr << FNS
+           << "Can't init CorbaServerAdapter: "
+           << exc.what();
       throw Exception(ostr);
     }
   }
 
-  void
-  FCGIServer::init_fcgi_() /*throw(Exception)*/
+  void FCGIServer::init_fcgi_()
   {
     using Host = std::string;
     using Port = std::size_t;
@@ -195,25 +187,20 @@ namespace Frontends
     using GrpcUserInfoOperationDistributor = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor;
     using GrpcUserInfoOperationDistributor_var = AdServer::UserInfoSvcs::GrpcUserInfoOperationDistributor_var;
 
-    static const char* FUN = "FCGIServer::init_fcgi_()";
-
     ManagerCoro_var manager_coro;
+    userver::engine::TaskProcessor* helper_task_processor;
     try
     {
-      auto task_processor_container_builder =
-        Config::create_task_processor_container_builder(
-          logger(),
-          config_->Coroutine());
-      auto statistics_provider = std::make_shared<
-        UServerUtils::Statistics::CompositeStatisticsProviderImpl<
-          std::shared_mutex>>(logger());
-      auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
-      statistics_provider->add(time_statistics_provider);
-      auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
-      statistics_provider->add(common_counter_statistics_provider);
-
-      auto init_func = [this, statistics_provider] (TaskProcessorContainer& task_processor_container) {
+      auto init_func = [this] (TaskProcessorContainer& task_processor_container) {
         auto& main_task_processor = task_processor_container.get_main_task_processor();
+
+        auto statistics_provider = std::make_shared<
+          UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+            std::shared_mutex>>(logger());
+        auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
+        statistics_provider->add(time_statistics_provider);
+        auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
+        statistics_provider->add(common_counter_statistics_provider);
 
         ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
         statistics_provider_info.statistics_provider = statistics_provider;
@@ -248,17 +235,33 @@ namespace Frontends
         return components_builder;
       };
 
+      auto task_processor_container_builder =
+        Config::create_task_processor_container_builder(
+          logger(),
+          config_->Coroutine());
+
+      UServerUtils::TaskProcessorConfig helper_task_processor_config;
+      helper_task_processor_config.name = HELPER_TASK_PROCESSOR_NAME;
+      helper_task_processor_config.overload_action =
+        UServerUtils::TaskProcessorConfig::OverloadAction::Ignore;
+      helper_task_processor_config.worker_threads = 5;
+      task_processor_container_builder->add_task_processor(
+        helper_task_processor_config);
+
       manager_coro = new ManagerCoro(
         std::move(task_processor_container_builder),
         std::move(init_func),
         logger());
+
+      helper_task_processor = &manager_coro->get_task_processor(
+        HELPER_TASK_PROCESSOR_NAME);
 
       add_child_object(manager_coro.in());
     }
     catch (const eh::Exception& exc)
     {
       Stream::Error ostr;
-      ostr << FUN
+      ostr << FNS
            << "Can't initialize coroutine system: "
            << exc.what();
       throw Exception(ostr);
@@ -266,7 +269,7 @@ namespace Frontends
     catch (...)
     {
       Stream::Error ostr;
-      ostr << FUN
+      ostr << FNS
            << "Unknown error";
       throw Exception(ostr);
     }
@@ -275,73 +278,75 @@ namespace Frontends
     {
       FrontendsPool::ModuleIdArray modules;
 
-      for(auto module_it = config_->Module().begin();
+      for (auto module_it = config_->Module().begin();
         module_it != config_->Module().end(); ++module_it)
       {
-        if(module_it->name() == "bidding")
+        if (module_it->name() == "bidding")
         {
           modules.push_back(FrontendsPool::M_BIDDING);
         }
-        else if(module_it->name() == "pubpixel")
+        else if (module_it->name() == "pubpixel")
         {
           modules.push_back(FrontendsPool::M_PUBPIXEL);
         }
-        else if(module_it->name() == "content")
+        else if (module_it->name() == "content")
         {
           modules.push_back(FrontendsPool::M_CONTENT);
         }
-        else if(module_it->name() == "directory")
+        else if (module_it->name() == "directory")
         {
           modules.push_back(FrontendsPool::M_DIRECTORY);
         }
-        else if(module_it->name() == "webstat")
+        else if (module_it->name() == "webstat")
         {
           modules.push_back(FrontendsPool::M_WEBSTAT);
         }
-        else if(module_it->name() == "action")
+        else if (module_it->name() == "action")
         {
           modules.push_back(FrontendsPool::M_ACTION);
         }
-        else if(module_it->name() == "userbind")
+        else if (module_it->name() == "userbind")
         {
           modules.push_back(FrontendsPool::M_USERBIND);
         }
-        else if(module_it->name() == "passback")
+        else if (module_it->name() == "passback")
         {
           modules.push_back(FrontendsPool::M_PASSBACK);
         }
-        else if(module_it->name() == "passbackpixel")
+        else if (module_it->name() == "passbackpixel")
         {
           modules.push_back(FrontendsPool::M_PASSBACKPIXEL);
         }
-        else if(module_it->name() == "optout")
+        else if (module_it->name() == "optout")
         {
           modules.push_back(FrontendsPool::M_OPTOUT);
         }
-        else if(module_it->name() == "nullad")
+        else if (module_it->name() == "nullad")
         {
           modules.push_back(FrontendsPool::M_NULLAD);
         }
-        else if(module_it->name() == "adinst")
+        else if (module_it->name() == "adinst")
         {
           modules.push_back(FrontendsPool::M_ADINST);
         }
-        else if(module_it->name() == "click")
+        else if (module_it->name() == "click")
         {
           modules.push_back(FrontendsPool::M_CLICK);
         }
-        else if(module_it->name() == "imprtrack")
+        else if (module_it->name() == "imprtrack")
         {
           modules.push_back(FrontendsPool::M_IMPRTRACK);
         }
-        else if(module_it->name() == "ad")
+        else if (module_it->name() == "ad")
         {
           modules.push_back(FrontendsPool::M_AD);
         }
         else
         {
           Stream::Error ostr;
-          ostr << "unknown module name '" << module_it->name() << "'";
+          ostr << "unknown module name '"
+               << module_it->name()
+               << "'";
           throw Exception(ostr);
         }
       }
@@ -357,9 +362,10 @@ namespace Frontends
              << "hardware_concurrency is failed";
         throw Exception(ostr);
       }
-      SchedulerPtr scheduler = UServerUtils::Grpc::Common::Utils::create_scheduler(
-        number_scheduler_threads,
-        logger());
+      SchedulerPtr scheduler =
+        UServerUtils::Grpc::Common::Utils::create_scheduler(
+          number_scheduler_threads,
+          logger());
 
       std::shared_ptr<GrpcChannelOperationPool> grpc_channel_operation_pool;
       if (config_->ChannelGrpcClientPool().enable())
@@ -426,7 +432,7 @@ namespace Frontends
       const auto fe_config = xsd::AdServer::Configuration::FeConfiguration(
         fe_config_path.c_str(),
         error_handler);
-      if(error_handler.has_errors())
+      if (error_handler.has_errors())
       {
         std::string error_string;
         throw Exception(error_handler.text(error_string));
@@ -515,54 +521,44 @@ namespace Frontends
       grpc_container->grpc_user_bind_operation_distributor = grpc_user_bind_operation_distributor;
       grpc_container->grpc_user_info_operation_distributor = grpc_user_info_operation_distributor;
 
-      FrontendCommons::Frontend_var frontend_pool = new FrontendsPool(
+      FrontendsPool_var frontend_pool = new FrontendsPool(
+        *helper_task_processor,
+        FrontendsPool::ServerType::FCGI,
         grpc_container,
         fe_config_path.c_str(),
         modules,
         logger(),
         stats_,
         response_factory.in());
-      frontend_pool_ = frontend_pool;
-      frontend_pool_->init();
+      add_child_object(frontend_pool);
 
-      for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
-        ++bind_it)
+      for(auto bind_it = config_->BindSocket().begin();
+          bind_it != config_->BindSocket().end();
+          ++bind_it)
       {
-        /*
-        add_child_object(
-          Generics::ActiveObject_var(
-            new Acceptor(
-              logger(),
-              frontend_pool,
-              callback(),
-              bind_it->bind().data(),
-              bind_it->backlog(),
-              bind_it->accept_threads())));
-        */
         add_child_object(
           Generics::ActiveObject_var(
             new AcceptorBoostAsio(
               logger(),
               frontend_pool,
               callback(),
-              bind_it->bind(), // bind_it->bind().data(),
+              bind_it->bind(),
               bind_it->backlog(),
               bind_it->accept_threads())));
       }
     }
-    catch(const eh::Exception& ex)
+    catch(const eh::Exception& exc)
     {
       Stream::Error ostr;
-      ostr << FUN << ": got Exception: " << ex.what();
+      ostr << FNS
+           << "Got Exception: "
+           << exc.what();
       throw Exception(ostr);
     }
   }
 
-  void
-  FCGIServer::main(int& argc, char** argv) noexcept
+  void FCGIServer::main(int& argc, char** argv) noexcept
   {
-    static const char* FUN = "FCGIServer::main()";
-
     try
     {
       XMLUtility::initialize();
@@ -572,7 +568,10 @@ namespace Frontends
       logger()->sstream(
         Logging::Logger::EMERGENCY,
         ASPECT,
-        "ADS-IMPL-205") << FUN << ": Got eh::Exception: " << ex.what();
+        "ADS-IMPL-205")
+          << FNS
+          << "Got eh::Exception: "
+          << ex.what();
       return;
     }
 
@@ -582,7 +581,7 @@ namespace Frontends
       {
         Stream::Error ostr;
         ostr << "config file or colocation config file is not specified\n"
-          "usage: FCGIServer <config_file>";
+                "usage: FCGIServer <config_file>";
         throw Exception(ostr);
       }
 
@@ -590,11 +589,13 @@ namespace Frontends
       {
         read_config_(argv[1], argv[0]);
       }
-      catch(const eh::Exception& ex)
+      catch(const eh::Exception& exc)
       {
         Stream::Error ostr;
-        ostr << "Can't parse config file '" << argv[1] << "': " <<
-          ex.what();
+        ostr << "Can't parse config file '"
+             << argv[1]
+             << "': "
+             << exc.what();
         throw Exception(ostr);
       }
       catch(...)
@@ -608,38 +609,45 @@ namespace Frontends
       init_corba_();
       init_fcgi_();
       activate_object();
-      logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
+      logger()->sstream(Logging::Logger::NOTICE, ASPECT)
+        << "service started.";
       corba_server_adapter_->run();
 
       wait();
-      logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";
+      logger()->sstream(Logging::Logger::NOTICE, ASPECT)
+        << "service stopped.";
       XMLUtility::terminate();
     }
-    catch (const Exception& e)
+    catch (const Exception& exc)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Got BiddingFCGIServerApp_::Exception: " <<
-        e.what();
+      ostr << FNS
+           << "Got BiddingFCGIServerApp_::Exception: "
+           << exc.what();
       logger()->log(
         ostr.str(),
         Logging::Logger::CRITICAL,
         ASPECT,
         "ADS-IMPL-150");
     }
-    catch (const CORBA::SystemException& e)
+    catch (const CORBA::SystemException& exc)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Got CORBA::SystemException: " << e;
+      ostr << FNS
+           << "Got CORBA::SystemException: "
+           << exc;
       logger()->log(
         ostr.str(),
         Logging::Logger::EMERGENCY,
         ASPECT,
         "ADS-IMPL-150");
     }
-    catch (const eh::Exception& e)
+    catch (const eh::Exception& exc)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Got eh::Exception: " << e.what();
+      ostr << FNS
+           << "Got eh::Exception: "
+           << exc.what();
       logger()->log(ostr.str(),
         Logging::Logger::EMERGENCY,
         ASPECT,
@@ -648,20 +656,19 @@ namespace Frontends
     catch (...)
     {
       Stream::Error ostr;
-      ostr << FUN << ": Got unknown exception";
+      ostr << FNS
+           << "Got unknown exception";
       logger()->log(ostr.str(),
         Logging::Logger::EMERGENCY,
         ASPECT,
         "ADS-IMPL-150");
     }
   }
-} // Frontends
-} // AdServer
+} // namespace AdServer::Frontends
 
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
-  AdServer::Frontends::FCGIServer* app = 0;
+  AdServer::Frontends::FCGIServer* app = nullptr;
 
   try
   {
@@ -671,13 +678,13 @@ main(int argc, char** argv)
   {
     std::cerr << "main(): Critical: Got exception while "
       "creating application object.\n";
-    return -1;
+    return EXIT_FAILURE;
   }
 
   if (app == 0)
   {
     std::cerr << "main(): Critical: got NULL application object.\n";
-    return -1;
+    return EXIT_FAILURE;
   }
 
   try
@@ -686,9 +693,11 @@ main(int argc, char** argv)
   }
   catch(const eh::Exception& ex)
   {
-    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
-    return -1;
+    std::cerr << "Caught eh::Exception: "
+              << ex.what()
+              << "\n";
+    return EXIT_FAILURE;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }

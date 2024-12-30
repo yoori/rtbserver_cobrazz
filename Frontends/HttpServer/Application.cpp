@@ -2,9 +2,6 @@
 #include <XMLUtility/Utility.hpp>
 #include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
 
-// CONFIG
-#include <xsd/Frontends/FeConfig.hpp>
-
 // THIS
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
@@ -16,13 +13,16 @@
 #include <Frontends/HttpServer/HttpResponse.hpp>
 #include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
+#include <xsd/Frontends/FeConfig.hpp>
 
 namespace
 {
 
-const char ASPECT[] = "HttpApplication";
-const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
-const char SERVER_STATS_OBJ_KEY[] = "HttpServerStats";
+inline constexpr char ASPECT[] = "HttpApplication";
+inline constexpr char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
+inline constexpr char SERVER_STATS_OBJ_KEY[] = "HttpServerStats";
+inline constexpr char HELPER_TASK_PROCESSOR_NAME[] = "HelperTaskProcessorName";
+inline constexpr char FRONTENDS_POOL_COMPONENT_NAME[] = "FrontendsPoolComponent";
 
 } // namespace
 
@@ -63,11 +63,6 @@ void Application::shutdown(Boolean wait_for_completion)
 {
   deactivate_object();
   wait_object();
-
-  if (frontend_)
-  {
-    frontend_->shutdown();
-  }
 
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
 }
@@ -297,6 +292,8 @@ void Application::init_http()
       response_factory = std::move(response_factory)] (
         TaskProcessorContainer& task_processor_container) {
       auto& main_task_processor = task_processor_container.get_main_task_processor();
+      auto& helper_task_processor = task_processor_container.get_task_processor(
+        HELPER_TASK_PROCESSOR_NAME);
 
       auto grpc_channel_operation_pool = create_grpc_channel_operation_pool(
         scheduler,
@@ -317,20 +314,9 @@ void Application::init_http()
       grpc_container->grpc_user_bind_operation_distributor = grpc_user_bind_operation_distributor;
       grpc_container->grpc_user_info_operation_distributor = grpc_user_info_operation_distributor;
 
-      FrontendCommons::Frontend_var frontend(
-        new FrontendsPool(
-          grpc_container,
-          server_config_->fe_config().data(),
-          modules,
-          logger(),
-          stats_,
-          response_factory.in()));
-      frontend_ = frontend;
-      frontend_->init();
-
       auto statistics_provider = std::make_shared<
         UServerUtils::Statistics::CompositeStatisticsProviderImpl<
-          std::shared_mutex>>(logger());
+          userver::engine::SharedMutex>>(logger());
       auto time_statistics_provider = FrontendCommons::get_time_statistics_provider();
       statistics_provider->add(time_statistics_provider);
       auto common_counter_statistics_provider = FrontendCommons::get_common_counter_statistics_provider();
@@ -340,11 +326,23 @@ void Application::init_http()
       statistics_provider_info.statistics_provider = statistics_provider;
       statistics_provider_info.statistics_prefix = "cobrazz";
       auto components_builder = std::make_unique<ComponentsBuilder>(statistics_provider_info);
-      auto& statistic_storage = components_builder->get_statistics_storage();
+
+      FrontendsPool_var frontends_pool = new FrontendsPool(
+        helper_task_processor,
+        FrontendsPool::ServerType::HTTP,
+        grpc_container,
+        server_config_->fe_config().data(),
+        modules,
+        logger(),
+        stats_,
+        response_factory.in());
+      components_builder->add_user_component(
+        FRONTENDS_POOL_COMPONENT_NAME,
+        frontends_pool.in());
 
       const auto monitoring_config = server_config_->Monitoring();
       std::optional<ListenerConfig> monitor_listener_config;
-      if(monitoring_config.present())
+      if (monitoring_config.present())
       {
         ListenerConfig config;
         config.port = monitoring_config->port();
@@ -372,6 +370,7 @@ void Application::init_http()
 
         listener_config.handler_defaults = {};
 
+        auto& statistic_storage = components_builder->get_statistics_storage();
         auto http_server_builder = std::make_unique<HttpServerBuilder>(
           logger(),
           server_config,
@@ -389,7 +388,7 @@ void Application::init_http()
           handler_config,
           {},
           logger(),
-          frontend.in());
+          frontends_pool.in());
         http_server_builder->add_handler(
           handler_get.in(),
           main_task_processor);
@@ -401,7 +400,7 @@ void Application::init_http()
           handler_config,
           {},
           logger(),
-          frontend.in());
+          frontends_pool.in());
         http_server_builder->add_handler(
           handler_post.in(),
           main_task_processor);
@@ -417,6 +416,14 @@ void Application::init_http()
       Config::create_task_processor_container_builder(
         logger(),
         server_config_->Coroutine());
+
+    UServerUtils::TaskProcessorConfig helper_task_processor_config;
+    helper_task_processor_config.name = HELPER_TASK_PROCESSOR_NAME;
+    helper_task_processor_config.overload_action =
+      UServerUtils::TaskProcessorConfig::OverloadAction::Ignore;
+    helper_task_processor_config.worker_threads = 5;
+    task_processor_container_builder->add_task_processor(
+      helper_task_processor_config);
 
     manager_coro = new ManagerCoro(
       std::move(task_processor_container_builder),

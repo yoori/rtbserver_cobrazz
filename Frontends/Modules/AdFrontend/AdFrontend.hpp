@@ -60,6 +60,7 @@ namespace AdServer
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using AdFeConfiguration = Configuration::FeConfig::AdFeConfiguration_type;
@@ -69,6 +70,7 @@ namespace AdServer
   public:
 
     AdFrontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -276,6 +278,7 @@ namespace AdServer
       const AdServer::CampaignSvcs::ChannelIdArray& hit_channels);
 
   private:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     /* configuration */
