@@ -78,7 +78,7 @@ namespace AdServer
         const char* out_dir,
         const std::optional<ArchiveParams>& archive_params)
       {
-        LogIoProxy<LogTraitsType>::save(collector, out_dir, distrib_count_);
+        LogIoProxy<LogTraitsType>::save(collector, out_dir, archive_params, distrib_count_);
       }
 
     private:

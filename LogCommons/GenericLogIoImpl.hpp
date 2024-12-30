@@ -1069,8 +1069,9 @@ public:
   DistribLogSaverImpl(
     typename Base::CollectorT& collector,
     const std::string& path,
+    const std::optional<ArchiveParams>& archive_params,
     unsigned long distrib_count)
-    : Base(path, distrib_count),
+    : Base(path, archive_params, distrib_count),
       collector_(collector)
   {}
 

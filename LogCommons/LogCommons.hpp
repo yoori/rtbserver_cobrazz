@@ -1339,8 +1339,9 @@ public:
 
   static void
   save(
-    CollectorT &collector,
-    const std::string &path,
+    CollectorT& collector,
+    const std::string& path,
+    const std::optional<ArchiveParams>& archive_params,
     unsigned long distrib_count
   )
     /*throw(eh::Exception)*/
@@ -1348,7 +1349,7 @@ public:
     typedef typename Detail::DistribSaverImplSelector<LOG_TYPE_TRAITS_, false>::Type SaverT;
     typedef ReferenceCounting::SmartPtr<SaverT> SaverPtrT;
 
-    SaverPtrT(new SaverT(collector, path, distrib_count))->save();
+    SaverPtrT(new SaverT(collector, path, archive_params, distrib_count))->save();
   }
 
   static void load(CollectorT &collector, std::istream &is)
