@@ -30,6 +30,10 @@
   <xsl:param name="user-bind-server-config"/>
 
   <cfg:UserBindServerConfig partition_index="0" partitions_number="1">
+    <xsl:attribute name="number_grpc_helper_threads"><xsl:value-of select="$user-bind-server-config/@number_grpc_helper_threads"/>
+      <xsl:if test="count($user-bind-server-config/@number_grpc_helper_threads) = 0">1000</xsl:if>
+    </xsl:attribute>
+
     <xsl:variable name="config-root"><xsl:value-of select="$env-config/@config_root[1]"/>
       <xsl:if test="count($env-config) = 0"><xsl:value-of select="$def-config-root"/></xsl:if>
     </xsl:variable>

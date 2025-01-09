@@ -133,8 +133,15 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-
     </xsd:sequence>
+
+    <xsd:attribute name="number_grpc_helper_threads" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Pool crutch to solve the problem of blocking operations of the old version.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
 
     <xsd:attribute name="host" type="xsd:string" use="required"/>
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>

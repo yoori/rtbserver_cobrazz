@@ -67,10 +67,13 @@ bool Configuration::exists(const std::string& path) const
       });
 
     auto* pointer = &ptree_;
-    for (const auto& subpath : subpaths) {
+    for (const auto& subpath : subpaths)
+    {
       auto it2 = pointer->find(subpath);
       if (it2 == pointer->not_found())
+      {
         return false;
+      }
       pointer = &it2->second;
     }
 
