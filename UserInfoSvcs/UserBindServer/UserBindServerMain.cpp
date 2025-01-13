@@ -155,6 +155,13 @@ UserBindServerApp_::main(int& argc, char** argv)
 
     add_child_object(user_bind_server_impl_);
 
+    Generics::TaskPool_var task_pool = new Generics::TaskPool(
+      callback(),
+      configuration_->number_grpc_helper_threads(),
+      1024 * 1024 // stack_size
+    );
+    add_child_object(task_pool);
+
     // Creating coroutine manager
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
@@ -167,8 +174,8 @@ UserBindServerApp_::main(int& argc, char** argv)
         std::shared_mutex>>(logger());
     statistics_provider->add(time_statistics_provider);
 
-    auto init_func = [this, statistics_provider] (
-      TaskProcessorContainer& task_processor_container) {
+    auto init_func = [this, statistics_provider, task_pool] (
+      TaskProcessorContainer& task_processor_container) mutable {
         auto& main_task_processor = task_processor_container.get_main_task_processor();
 
         ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
@@ -209,7 +216,8 @@ UserBindServerApp_::main(int& argc, char** argv)
           logger(),
           config().GrpcServer());
 
-      ServiceMode service_mode = ServiceMode::EventToCoroutine;
+        // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
+        ServiceMode service_mode = ServiceMode::EventToCoroutine;
 
         auto get_bind_request_service = AdServer::Commons::create_grpc_service<
           AdServer::UserInfoSvcs::UserBindService_get_bind_request_Service,
@@ -217,7 +225,7 @@ UserBindServerApp_::main(int& argc, char** argv)
           &AdServer::UserInfoSvcs::UserBindServerImpl::get_bind_request>(
             logger(),
             user_bind_server_impl_.in(),
-            service_mode != ServiceMode::EventToCoroutine);
+            task_pool.in());
 
         grpc_server_builder->add_service(
           get_bind_request_service.in(),
@@ -230,7 +238,7 @@ UserBindServerApp_::main(int& argc, char** argv)
           &AdServer::UserInfoSvcs::UserBindServerImpl::add_bind_request>(
           logger(),
           user_bind_server_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
 
         grpc_server_builder->add_service(
           add_bind_request_service.in(),
@@ -243,7 +251,7 @@ UserBindServerApp_::main(int& argc, char** argv)
           &AdServer::UserInfoSvcs::UserBindServerImpl::get_user_id>(
           logger(),
           user_bind_server_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
 
         grpc_server_builder->add_service(
           get_user_id_service.in(),
@@ -256,7 +264,7 @@ UserBindServerApp_::main(int& argc, char** argv)
           &AdServer::UserInfoSvcs::UserBindServerImpl::add_user_id>(
             logger(),
             user_bind_server_impl_.in(),
-            service_mode != ServiceMode::EventToCoroutine);
+            task_pool.in());
 
         grpc_server_builder->add_service(
           add_user_id_service.in(),
@@ -269,7 +277,7 @@ UserBindServerApp_::main(int& argc, char** argv)
           &AdServer::UserInfoSvcs::UserBindServerImpl::get_source>(
             logger(),
             user_bind_server_impl_.in(),
-            service_mode != ServiceMode::EventToCoroutine);
+            task_pool.in());
 
         grpc_server_builder->add_service(
           get_source_service.in(),

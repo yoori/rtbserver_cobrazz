@@ -94,6 +94,10 @@
       <xsl:if test="count($update-config/@max_stat_delay) = 0">604800</xsl:if>
     </xsl:attribute>
 
+    <xsl:attribute name="number_grpc_helper_threads"><xsl:value-of select="$billing-server-config/@number_grpc_helper_threads"/>
+      <xsl:if test="count($billing-server-config/@number_grpc_helper_threads) = 0">1000</xsl:if>
+    </xsl:attribute>
+
     <cfg:CorbaConfig>
       <xsl:attribute name="threading-pool"><xsl:value-of select="$billing-server-config/cfg:threadParams/@min"/>
         <xsl:if test="count($billing-server-config/cfg:threadParams/@min) = 0">200</xsl:if>

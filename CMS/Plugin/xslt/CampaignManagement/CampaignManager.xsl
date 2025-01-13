@@ -283,6 +283,10 @@
     rid_private_key="{concat($config-root, '/rid_private_key.der')}"
     >
 
+    <xsl:attribute name="number_grpc_helper_threads"><xsl:value-of select="$campaign-manager-config/@number_grpc_helper_threads"/>
+      <xsl:if test="count($campaign-manager-config/@number_grpc_helper_threads) = 0">1000</xsl:if>
+    </xsl:attribute>
+
     <!-- check that defined all needed parameters -->
     <xsl:choose>
       <xsl:when test="count($colo-id) = 0">

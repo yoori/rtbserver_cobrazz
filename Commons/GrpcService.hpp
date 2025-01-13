@@ -2,6 +2,7 @@
 #define CHANNELSVCS_CHANNELSERVER_GRPCSERVICE
 
 // UNIXCOMMONS
+#include <Generics/TaskPool.hpp>
 #include <Logger/Logger.hpp>
 #include <UServerUtils/Grpc/Server/DefaultErrorCreator.hpp>
 #include <UServerUtils/Grpc/Server/ServiceCoro.hpp>
@@ -11,6 +12,9 @@
 #include <userver/engine/task/task_processor.hpp>
 #include <userver/engine/async.hpp>
 #include <userver/engine/task/task_with_result.hpp>
+
+// THIS
+#include <Commons/DelegateTaskGoal.hpp>
 
 namespace AdServer::Commons
 {
@@ -67,94 +71,89 @@ public:
   using ReadStatus = UServerUtils::Grpc::Server::ReadStatus;
   using Reader = typename BaseService::Reader;
   using Impl_var = ReferenceCounting::SmartPtr<Impl>;
+  using TaskPool = Generics::TaskPool;
+  using TaskPool_var = Generics::TaskPool_var;
 
 public:
   explicit GrpcService(
     Logger* logger,
     Impl* impl,
-    const bool create_new_coroutine)
+    TaskPool* task_pool)
     : logger_(ReferenceCounting::add_ref(logger)),
       impl_(ReferenceCounting::add_ref(impl)),
-      create_new_coroutine_(create_new_coroutine)
+      task_pool_(ReferenceCounting::add_ref(task_pool))
   {
   }
 
   void handle(const Reader& reader) override
   {
-    while(true)
-    {
-      auto data = reader.read();
-      const auto status = data.status;
+     auto data = reader.read();
+     // only for UServerUtils::Grpc::Server::ServiceMode::EventToCoroutine
+     assert(reader.is_finish());
 
-      if (status == ReadStatus::Read)
-      {
-        auto& request = data.request;
-        auto& writer = data.writer;
+     const auto status = data.status;
+     if (status == ReadStatus::Read)
+     {
+       auto& request = data.request;
+       auto& writer = data.writer;
 
-        try
-        {
-          if (create_new_coroutine_)
-          {
-            auto& current_task_processor = userver::engine::current_task::GetTaskProcessor();
-            userver::engine::AsyncNoSpan(
-              current_task_processor,
-              [request = std::move(request),
-               writer = std::move(writer),
-               impl = impl_,
-               logger = logger_] () mutable {
-                  try
-                  {
-                    auto response = (impl->*ptr_to_mem)(std::move(request));
-                    send_reponse(
-                      std::move(writer),
-                      std::move(response),
-                      logger.in());
-                  }
-                  catch (const eh::Exception& exc)
-                  {
-                    Stream::Error stream;
-                    stream << FNS
-                           << exc.what();
-                    logger->error(stream.str(), Aspect::GRPC_SERVICE);
-                  }
-                  catch (...)
-                  {
-                    Stream::Error stream;
-                    stream << FNS
-                           << "Unknown error";
-                    logger->error(stream.str(), Aspect::GRPC_SERVICE);
-                  }
-              }).Detach();
-          }
-          else
-          {
-            auto response = (impl_->*ptr_to_mem)(std::move(request));
-            send_reponse(
-              std::move(writer),
-              std::move(response),
-              logger_.in());
-          }
-        }
-        catch (const eh::Exception& exc)
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << exc.what();
-          logger_->error(stream.str(), Aspect::GRPC_SERVICE);
-        }
-        catch (...)
-        {
-          Stream::Error stream;
-          stream << FNS
-                 << "Unknown error";
-          logger_->error(stream.str(), Aspect::GRPC_SERVICE);
-        }
-      }
-      else if (status == ReadStatus::Finish)
-      {
-        break;
-      }
-    }
+       try
+       {
+         if (task_pool_)
+         {
+           auto task = Commons::make_delegate_task(
+             [writer = std::move(writer),
+              request = std::move(request),
+              this] () mutable {
+               try
+               {
+                 auto response = (impl_->*ptr_to_mem)(std::move(request));
+                 send_reponse(
+                   std::move(writer),
+                   std::move(response),
+                   logger_.in());
+               }
+               catch (const eh::Exception& exc)
+               {
+                 Stream::Error stream;
+                 stream << FNS
+                        << exc.what();
+                 logger_->error(stream.str(), Aspect::GRPC_SERVICE);
+               }
+               catch (...)
+               {
+                 Stream::Error stream;
+                 stream << FNS
+                        << "Unknown error";
+                 logger_->error(stream.str(), Aspect::GRPC_SERVICE);
+               }
+           });
+           task_pool_->enqueue_task(task.in());
+         }
+         else
+         {
+           auto response = (impl_->*ptr_to_mem)(std::move(request));
+           send_reponse(
+             std::move(writer),
+             std::move(response),
+             logger_.in());
+         }
+       }
+       catch (const eh::Exception& exc)
+       {
+         Stream::Error stream;
+         stream << FNS
+                << exc.what();
+         logger_->error(stream.str(), Aspect::GRPC_SERVICE);
+       }
+       catch (...)
+       {
+         Stream::Error stream;
+         stream << FNS
+                << "Unknown error";
+         logger_->error(stream.str(), Aspect::GRPC_SERVICE);
+       }
+     }
   }
 
   typename BaseService::DefaultErrorCreatorPtr default_error_creator(
@@ -195,7 +194,7 @@ private:
 
   const Impl_var impl_;
 
-  const bool create_new_coroutine_ = true;
+  TaskPool_var task_pool_;
 };
 
 template<
@@ -213,14 +212,14 @@ template<
 auto create_grpc_service(
   Logging::Logger* logger,
   Impl* impl,
-  const bool create_new_coroutine)
+  Generics::TaskPool* task_pool)
 {
   using Service = GrpcService<BaseService, Impl, ptr_to_mem>;
   return ReferenceCounting::SmartPtr<Service>(
     new Service(
       logger,
       impl,
-      create_new_coroutine));
+      task_pool));
 }
 
 } // namespace AdServer::ChannelSvcs

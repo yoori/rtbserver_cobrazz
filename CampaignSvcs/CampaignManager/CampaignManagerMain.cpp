@@ -77,11 +77,8 @@ CampaignManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   ShutdownWriteGuard guard(shutdown_lock_);
 
-  if(campaign_manager_impl_.in() != 0)
-  {
-    campaign_manager_impl_->deactivate_object();
-    campaign_manager_impl_->wait_object();
-  }
+  deactivate_object();
+  wait_object();
 
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
 }
@@ -199,9 +196,18 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         logger(),
         campaign_manager_config_->Coroutine());
 
-    auto init_func = [this, &stage] (TaskProcessorContainer& task_processor_container)
+    Generics::TaskPool_var task_pool = new Generics::TaskPool(
+      callback(),
+      campaign_manager_config_->number_grpc_helper_threads(),
+      1024 * 1024 // stack_size
+    );
+    add_child_object(task_pool.in());
+
+    auto init_func = [this, &stage, task_pool] (
+      TaskProcessorContainer& task_processor_container) mutable
     {
-      auto& main_task_processor = task_processor_container.get_main_task_processor();
+      auto& main_task_processor =
+        task_processor_container.get_main_task_processor();
       auto grpc_server_builder = Config::create_grpc_server_builder(
         logger(),
         campaign_manager_config_->GrpcServer());
@@ -211,8 +217,8 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
 
       AdServer::CampaignSvcs::CampaignManagerLogger_var
         campaign_manager_logger =
-        new AdServer::CampaignSvcs::CampaignManagerLogger(
-          configuration_.log_params, logger());
+          new AdServer::CampaignSvcs::CampaignManagerLogger(
+            configuration_.log_params, logger());
 
       campaign_manager_impl_ =
         new AdServer::CampaignSvcs::CampaignManagerImpl(
@@ -225,6 +231,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
           campaign_manager_logger,
           configuration_.creative_instantiate,
           configuration_.campaigns_types.c_str());
+      add_child_object(campaign_manager_impl_.in());
 
       register_vars_controller();
 
@@ -235,9 +242,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       corba_server_adapter_->add_binding(
         PROCESS_CONTROL_OBJ_KEY, this);
 
-      stage = "activating CampaignManagerImpl active object";
-      campaign_manager_impl_->activate_object();
-
+      // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
       ServiceMode service_mode = ServiceMode::EventToCoroutine;
 
       auto get_campaign_creative_service = AdServer::Commons::create_grpc_service<
@@ -246,7 +251,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_campaign_creative>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_campaign_creative_service.in(),
         main_task_processor,
@@ -258,7 +263,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::process_match_request>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         process_match_request_service.in(),
         main_task_processor,
@@ -270,7 +275,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::match_geo_channels>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         match_geo_channels_service.in(),
         main_task_processor,
@@ -282,7 +287,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::instantiate_ad>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         instantiate_ad_service.in(),
         main_task_processor,
@@ -294,7 +299,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_channel_links>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_channel_links_service.in(),
         main_task_processor,
@@ -306,7 +311,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_discover_channels>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_discover_channels_service.in(),
         main_task_processor,
@@ -318,7 +323,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_category_channels>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_category_channels_service.in(),
         main_task_processor,
@@ -330,7 +335,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::consider_passback>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_passback_service.in(),
         main_task_processor,
@@ -342,7 +347,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::consider_passback_track>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_passback_track_service.in(),
         main_task_processor,
@@ -354,7 +359,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_click_url>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_click_url_service.in(),
         main_task_processor,
@@ -366,7 +371,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::verify_impression>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         verify_impression_service.in(),
         main_task_processor,
@@ -378,7 +383,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::action_taken>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         action_taken_service.in(),
         main_task_processor,
@@ -390,7 +395,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::verify_opt_operation>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         verify_opt_operation_service.in(),
         main_task_processor,
@@ -402,7 +407,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::consider_web_operation>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_web_operation_service.in(),
         main_task_processor,
@@ -414,7 +419,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_config>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_config_service.in(),
         main_task_processor,
@@ -426,7 +431,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::trace_campaign_selection_index>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         trace_campaign_selection_index_service.in(),
         main_task_processor,
@@ -438,7 +443,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::trace_campaign_selection>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         trace_campaign_selection_service.in(),
         main_task_processor,
@@ -450,7 +455,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_campaign_creative_by_ccid>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_campaign_creative_by_ccid_service.in(),
         main_task_processor,
@@ -462,7 +467,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_colocation_flags>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_colocation_flags_service.in(),
         main_task_processor,
@@ -474,7 +479,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_pub_pixels>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_pub_pixels_service.in(),
         main_task_processor,
@@ -486,7 +491,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::process_anonymous_request>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         process_anonymous_request_service.in(),
         main_task_processor,
@@ -498,7 +503,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         &CampaignManagerImpl::get_file>(
           logger(),
           campaign_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_file_service.in(),
         main_task_processor,
@@ -511,32 +516,27 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       return components_builder;
     };
 
-    ManagerCoro_var manager_coro(
-      new ManagerCoro(
-        std::move(task_processor_container_builder),
-        std::move(init_func),
-        logger()));
-
-    stage = "activating coroutine manager";
-    manager_coro->activate_object();
+    ManagerCoro_var manager_coro = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger());
+    add_child_object(manager_coro.in());
 
     stage = "running orb loop";
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service started.";
     corba_server_adapter_->run();
 
-    stage =
-      "waiting while CORBACommons::ProcessControlImpl completes it's tasks";
+    stage = "activate_object";
+    activate_object();
+
+    stage = "waiting while CORBACommons::ProcessControlImpl "
+            "completes it's tasks";
 
     wait();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service stopped.";
-
-    manager_coro->deactivate_object();
-    manager_coro->wait_object();
-
-    campaign_manager_impl_.reset();
   }
   catch (const Exception& e)
   {

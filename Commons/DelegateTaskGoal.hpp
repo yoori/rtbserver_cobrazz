@@ -71,6 +71,10 @@ namespace Commons
       : delegate_(delegate)
     {}
 
+    DelegateTask(Delegate&& delegate)
+      : delegate_(std::move(delegate))
+    {}
+
     virtual void
     execute()
     noexcept
@@ -220,10 +224,11 @@ namespace Commons
 
   template<typename Delegate>
   Generics::Task_var
-  make_delegate_task(const Delegate& delegate)
+  make_delegate_task(Delegate&& delegate)
     /*throw(eh::Exception)*/
   {
-    return new DelegateTask<Delegate>(delegate);
+    return new DelegateTask<Delegate>(
+      std::forward<Delegate>(delegate));
   }
 
   template<typename Delegate>

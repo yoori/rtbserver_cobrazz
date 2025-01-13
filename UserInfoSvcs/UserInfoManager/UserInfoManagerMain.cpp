@@ -189,23 +189,29 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
     add_child_object(user_info_manager_impl_);
 
+    Generics::TaskPool_var task_pool = new Generics::TaskPool(
+      callback(),
+      configuration_->number_grpc_helper_threads(),
+      1024 * 1024 // stack_size
+    );
+    add_child_object(task_pool);
+
     // Creating coroutine manager
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
         logger(),
         config().Coroutine());
 
-    auto init_func = [this] (
-      TaskProcessorContainer& task_processor_container) {
+    auto init_func = [this, task_pool] (
+      TaskProcessorContainer& task_processor_container) mutable {
       auto& main_task_processor =
         task_processor_container.get_main_task_processor();
-      auto components_builder =
-        std::make_unique<ComponentsBuilder>();
 
       auto grpc_server_builder = Config::create_grpc_server_builder(
         logger(),
         config().GrpcServer());
 
+      // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
       ServiceMode service_mode = ServiceMode::EventToCoroutine;
 
       auto get_master_stamp_service = AdServer::Commons::create_grpc_service<
@@ -214,7 +220,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::get_master_stamp>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_master_stamp_service.in(),
         main_task_processor,
@@ -226,7 +232,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::get_user_profile>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_user_profile_service.in(),
         main_task_processor,
@@ -238,7 +244,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::match>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         match_service.in(),
         main_task_processor,
@@ -250,7 +256,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::update_user_freq_caps>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         update_user_freq_caps_service.in(),
         main_task_processor,
@@ -262,7 +268,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::confirm_user_freq_caps>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         confirm_user_freq_caps_service.in(),
         main_task_processor,
@@ -274,7 +280,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::fraud_user>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         fraud_user_service.in(),
         main_task_processor,
@@ -286,7 +292,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::remove_user_profile>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         remove_user_profile_service.in(),
         main_task_processor,
@@ -298,7 +304,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::merge>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         merge_service.in(),
         main_task_processor,
@@ -310,7 +316,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::consider_publishers_optin>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_publishers_optin_service.in(),
         main_task_processor,
@@ -322,7 +328,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::uim_ready>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         uim_ready_service.in(),
         main_task_processor,
@@ -334,7 +340,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::get_progress>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         get_progress_service.in(),
         main_task_processor,
@@ -346,12 +352,13 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         &UserInfoManagerImpl::clear_expired>(
           logger(),
           user_info_manager_impl_.in(),
-          service_mode != ServiceMode::EventToCoroutine);
+          task_pool.in());
       grpc_server_builder->add_service(
         clear_expired_service.in(),
         main_task_processor,
         service_mode);
 
+      auto components_builder = std::make_unique<ComponentsBuilder>();
       components_builder->add_grpc_cobrazz_server(
         std::move(grpc_server_builder));
 

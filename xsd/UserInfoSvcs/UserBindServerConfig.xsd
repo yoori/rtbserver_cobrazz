@@ -157,6 +157,13 @@
       </xsd:element>
     </xsd:sequence>
 
+    <xsd:attribute name="number_grpc_helper_threads" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Pool crutch to solve the problem of blocking operations of the old version.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="min_age" type="xsd:nonNegativeInteger" use="required"/>
     <xsd:attribute name="bind_on_min_age" type="xsd:boolean" use="required"/>
     <xsd:attribute name="max_bad_event" type="xsd:nonNegativeInteger" use="required"/>
