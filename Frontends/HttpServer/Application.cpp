@@ -186,6 +186,7 @@ void Application::init_http()
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using HttpHandlerConfig = UServerUtils::Http::Server::HandlerConfig;
   using ListenerConfig = UServerUtils::Http::Server::ListenerConfig;
+  using SecdistConfig = userver::storages::secdist::SecdistConfig;
 
   ManagerCoro_var manager_coro;
   try
@@ -344,8 +345,11 @@ void Application::init_http()
       std::optional<ListenerConfig> monitor_listener_config;
       if (monitoring_config.present())
       {
+        UServerUtils::Http::Server::PortConfig port_config;
+        port_config.port = monitoring_config->port();
+
         ListenerConfig config;
-        config.port = monitoring_config->port();
+        config.ports.emplace_back(std::move(port_config));
         monitor_listener_config = config;
       }
 
@@ -360,20 +364,26 @@ void Application::init_http()
           server_config.monitor_listener_config = monitor_listener_config;
         }
 
+        UServerUtils::Http::Server::PortConfig port_config;
+        port_config.unix_socket_path = http_server_config.unix_socket_path();
+
         auto& listener_config = server_config.listener_config;
         listener_config.max_connections = http_server_config.max_connections();
-        listener_config.unix_socket_path = http_server_config.unix_socket_path();
+        listener_config.ports.emplace_back(std::move(port_config));
 
         auto& connection_config = listener_config.connection_config;
-        connection_config.keepalive_timeout = std::chrono::seconds{http_server_config.keepalive_timeout_seconds()};
+        connection_config.keepalive_timeout = std::chrono::seconds{
+          http_server_config.keepalive_timeout_seconds()};
         connection_config.in_buffer_size = http_server_config.in_buffer_size();
 
         listener_config.handler_defaults = {};
 
         auto& statistic_storage = components_builder->get_statistics_storage();
+        SecdistConfig sec_dist_config;
         auto http_server_builder = std::make_unique<HttpServerBuilder>(
           logger(),
           server_config,
+          sec_dist_config,
           main_task_processor,
           statistic_storage);
 

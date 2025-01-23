@@ -28,7 +28,7 @@ namespace RequestInfoSvcs
     namespace Aspect
     {
       const char* BILLING_PROCESSOR = "BillingProcessor";
-    };
+    }
   }
 
   //

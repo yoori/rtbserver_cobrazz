@@ -167,7 +167,7 @@ namespace UserInfoSvcs
       Generics::Helper::AutoPtr<SimpleDistribAllocator>,
       Generics::AtExitDestroying::DP_LOUD_COUNTER + 1>
       ExternalIdKeyAllocator;
-  };
+  }
 
   class ExternalIdHashAdapter::EncodingSelector:
     public ReferenceCounting::AtomicImpl
@@ -924,7 +924,7 @@ namespace UserInfoSvcs
       unsigned long len_;
     };
     */
-  };
+  }
 
   ExternalIdHashAdapter::EncodingSelector::
   EncodingSelector() noexcept
@@ -971,7 +971,7 @@ namespace UserInfoSvcs
     encoders_[b20_encoder_->id()] = b20_encoder_;
     encoders_[h96_encoder_->id()] = h96_encoder_;
     encoders_[h20_encoder_->id()] = h20_encoder_;
-  };
+  }
 
   const ExternalIdHashAdapter::EncodingSelector::Encoder*
   ExternalIdHashAdapter::EncodingSelector::
@@ -1090,7 +1090,7 @@ namespace UserInfoSvcs
     }
 
     return default_encoder_;
-  };
+  }
 
   const ExternalIdHashAdapter::EncodingSelector::Encoder*
   ExternalIdHashAdapter::EncodingSelector::
@@ -1100,6 +1100,6 @@ namespace UserInfoSvcs
       encoders_[index];
     assert(ret);
     return ret;
-  };  
-};
-};
+  }
+}
+}

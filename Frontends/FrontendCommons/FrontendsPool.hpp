@@ -11,7 +11,7 @@
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
-#include <userver/engine/task/task_processor.hpp>
+#include <engine/task/task_processor.hpp>
 
 // THIS
 #include <BiddingFrontend/BiddingFrontendStat.hpp>

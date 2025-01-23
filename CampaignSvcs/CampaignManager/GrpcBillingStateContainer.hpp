@@ -23,7 +23,7 @@
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
-#include <userver/engine/task/task_processor.hpp>
+#include <engine/task/task_processor.hpp>
 
 // THIS
 #include <CampaignSvcs/BillingServer/proto/BillingServer_client.cobrazz.pb.hpp>

@@ -569,7 +569,6 @@
 <xsl:variable name="event-thread-pool-number-threads" select="15"/>
 <xsl:variable name="event-thread-pool-name" select="'event-worker'"/>
 <xsl:variable name="event-thread-pool-ev-default-loop-disabled" select="'true'"/>
-<xsl:variable name="event-thread-pool-defer-events" select="'false'"/>
 <xsl:variable name="main-task-processor-name" select="'main_task_processor'"/>
 <xsl:variable name="main-task-processor-number-threads" select="50"/>
 <xsl:variable name="main-task-processor-should-guess-cpu-limit" select="'true'"/>

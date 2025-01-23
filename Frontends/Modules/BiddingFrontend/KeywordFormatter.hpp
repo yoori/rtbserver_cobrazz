@@ -34,7 +34,7 @@ namespace Bidding
     const std::string FULL_NO_ID("rtbnoid");
     const std::string FULL_COPPA("rtbcoppa");
     const std::string VIEWABILITY("viewability");
-  };
+  }
 
   class KeywordFormatter
   {

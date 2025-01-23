@@ -123,7 +123,7 @@ namespace CampaignSvcs
     protected:
       FeatureNameMap feature_names_;
     };
-  };
+  }
 
   class FastFeatureSetHolder;
 

@@ -9,7 +9,7 @@ namespace Aspect
 
 const char BILLING_MANAGER_POOL[] = "GrpcBillingManagerPool";
 
-}; // namespace Aspect
+} // namespace Aspect
 
 GrpcBillingManagerPool::GrpcBillingManagerPool(
   Logger* logger,

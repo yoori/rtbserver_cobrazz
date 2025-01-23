@@ -16,7 +16,7 @@ namespace AdServer::Bidding::Grpc
       namespace Type
       {
         const std::string OCTET_STREAM = "application/octet-stream";
-      };
+      }
 
       // https://storage.googleapis.com/adx-rtb-dictionaries/buyer-declarable-creative-attributes.txt
       namespace Google

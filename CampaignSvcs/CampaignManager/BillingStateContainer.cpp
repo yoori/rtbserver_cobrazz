@@ -9,7 +9,7 @@ namespace CampaignSvcs
   namespace Aspect
   {
     const char BILLING_STATE_CONTAINER[] = "BillingStateContainer";
-  };
+  }
 
   namespace
   {
@@ -19,7 +19,7 @@ namespace CampaignSvcs
     const Generics::Time REENABLE_INDEX_TIME = Generics::Time(10);
 
     const bool DEBUG_BILLING_SERVER_CALL_ = false;
-  };
+  }
 
   class BillingStateContainer::RecheckCCGTask: public Generics::TaskGoal
   {

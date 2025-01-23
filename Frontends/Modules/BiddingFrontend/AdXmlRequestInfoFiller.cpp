@@ -24,7 +24,7 @@ namespace Bidding
       const String::SubString REFERER("ref");
       const String::SubString KEYWORDS("kw");
       const String::SubString CATEGORIES("cat");
-    };
+    }
 
     namespace Tokens
     {
@@ -36,7 +36,7 @@ namespace Bidding
 
     const String::SubString DEFAULT_BIDFLOORCUR_CURRENCY("usd");
     const String::SubString NATIVE_APP_FORMAT("native");
-  };
+  }
 
   struct AdXmlRequestInfoFiller::Context
   {
