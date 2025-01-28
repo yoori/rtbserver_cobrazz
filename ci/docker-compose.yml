@@ -142,7 +142,7 @@ services:
       exit 0;
       "
   rpmbuild:
-  image: oraclelinux:8.7
+    image: oraclelinux:8.7
     container_name: rtbserver_build
     tty: true
     stdin_open: true
@@ -210,4 +210,3 @@ services:
       
       exit 0;
       "
-
