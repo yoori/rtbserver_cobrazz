@@ -186,7 +186,7 @@ services:
       fi;
       
       echo 'Step 4: Installing required packages...';
-      yum install -y ace-tao-devel autoconf boost176-devel bzip2-devel gcc-c++ grpc-plugins http-parser-devel librdkafka-devel pcre-devel protobuf-compiler protobuf-devel selinux-policy xgboost-devel zeromq-devel rocksdb-devel-8.8.1-2.el8 vanga-devel cmake3 gcc-toolset-10 rsync xerces-c-devel libev-devel userver-devel userver-static yaml-cpp-devel jemalloc-devel libevent-devel cryptopp-devel gflags-devel snappy-devel python3 java-1.8.0-openjdk-devel-1:1.8.0.362.b09-2.el8_7 javapackages-tools foros-geoip GeoIP-devel net-snmp-devel-1:5.8-28.0.1.el8 libxml2-devel-2.9.7-15.el8_7.1 xsd flex bison libpq-devel-13.5-1.el8 rapidjson-devel liburing-devel xgboost postgresql94-devel libxslt-devel;
+      yum install -y ace-tao-devel autoconf boost176-devel bzip2-devel gcc-c++ grpc-plugins http-parser-devel librdkafka-devel pcre-devel protobuf-compiler protobuf-devel selinux-policy xgboost-devel zeromq-devel rocksdb-devel-8.8.1-2.el8 vanga-devel cmake3 gcc-toolset-10 rsync xerces-c-devel libev-devel userver-devel userver-static yaml-cpp-devel jemalloc-devel libevent-devel cryptopp-devel gflags-devel snappy-devel python3 java-1.8.0-openjdk-devel-1:1.8.0.362.b09-2.el8_7 javapackages-tools foros-geoip GeoIP-devel net-snmp-devel-1:5.8-28.0.1.el8 libxml2-devel-2.9.7-15.el8_7.1 xsd flex bison libpq-devel-13.5-1.el8 rapidjson-devel liburing-devel xgboost postgresql94-devel libxslt-devel rpmbuild;
       if [ $$? -ne 0 ]; then
           echo 'Step 4 - yum install - failed!';
           exit 104;
