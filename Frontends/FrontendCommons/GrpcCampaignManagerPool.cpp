@@ -50,74 +50,16 @@ GrpcCampaignManagerPool::GrpcCampaignManagerPool(
 template<class Client, class Request, class Response, class ...Args>
 std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
   const ClientHolderPtr& client_holder,
-  Args&& ...args) noexcept
+  const Args& ...args) noexcept
 {
-  try
+  for (std::size_t i = 1; i <= 3; i += 1)
   {
-    std::unique_ptr<Request> request;
-    if constexpr (std::is_same_v<Request, GetPubPixelsRequest>)
-    {
-      request = create_get_pub_pixels_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, ConsiderWebOperationRequest>)
-    {
-      request = create_consider_web_operation_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, ConsiderPassbackTrackRequest>)
-    {
-      request = create_consider_passback_track_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, ConsiderPassbackRequest>)
-    {
-      request = create_consider_passback_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, ActionTakenRequest>)
-    {
-      request = create_action_taken_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, ProcessMatchRequestRequest>)
-    {
-      request = create_process_match_request_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, GetColocationFlagsRequest>)
-    {
-      request = create_get_colocation_flags_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, VerifyOptOperationRequest>)
-    {
-      request = create_verify_opt_operation_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, GetCampaignCreativeRequest>)
-    {
-      request = create_get_campaign_creative_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, InstantiateAdRequest>)
-    {
-      request = create_instantiate_ad_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, GetClickUrlRequest>)
-    {
-      request = create_get_click_url_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, GetFileRequest>)
-    {
-      request = create_get_file_request(std::forward<Args>(args)...);
-    }
-    else if constexpr (std::is_same_v<Request, VerifyImpressionRequest>)
-    {
-      request = create_verify_impression_request(std::forward<Args>(args)...);
-    }
-    else
-    {
-      static_assert(GrpcAlgs::AlwaysFalseV<Request>);
-    }
-
-    auto response = client_holder->template do_request<Client, Request, Response>(
-      std::move(request),
-      grpc_client_timeout_ms_);
+    auto response = try_do_request_service<Client, Request, Response, Args...>(
+      client_holder,
+      args...);
     if (!response)
     {
-      return {};
+      continue;
     }
 
     const auto data_case = response->data_case();
@@ -152,10 +94,8 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
         }
         default:
         {
-          Stream::Error stream;
-          stream << FNS
-                 << "Unknown error type";
-          throw Exception(stream);
+          stream << "Unknown error type";
+          break;
         }
       }
 
@@ -165,6 +105,7 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
         stream.str(),
         ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
 
+      client_holder->set_bad();
       return response;
     }
     else
@@ -172,38 +113,107 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
       Stream::Error stream;
       stream << FNS
              << "Unknown response type";
-      throw Exception(stream);
+      logger_->error(
+        stream.str(),
+        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
+
+      client_holder->set_bad();
+      return response;
     }
+  }
+
+  client_holder->set_bad();
+  return {};
+}
+
+template<class Client, class Request, class Response, class ...Args>
+std::unique_ptr<Response> GrpcCampaignManagerPool::try_do_request_service(
+  const ClientHolderPtr& client_holder,
+  const Args& ...args) noexcept
+{
+  try
+  {
+    std::unique_ptr<Request> request;
+    if constexpr (std::is_same_v<Request, GetPubPixelsRequest>)
+    {
+      request = create_get_pub_pixels_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, ConsiderWebOperationRequest>)
+    {
+      request = create_consider_web_operation_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, ConsiderPassbackTrackRequest>)
+    {
+      request = create_consider_passback_track_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, ConsiderPassbackRequest>)
+    {
+      request = create_consider_passback_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, ActionTakenRequest>)
+    {
+      request = create_action_taken_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, ProcessMatchRequestRequest>)
+    {
+      request = create_process_match_request_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, GetColocationFlagsRequest>)
+    {
+      request = create_get_colocation_flags_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, VerifyOptOperationRequest>)
+    {
+      request = create_verify_opt_operation_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, GetCampaignCreativeRequest>)
+    {
+      request = create_get_campaign_creative_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, InstantiateAdRequest>)
+    {
+      request = create_instantiate_ad_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, GetClickUrlRequest>)
+    {
+      request = create_get_click_url_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, GetFileRequest>)
+    {
+      request = create_get_file_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, VerifyImpressionRequest>)
+    {
+      request = create_verify_impression_request(args...);
+    }
+    else
+    {
+      static_assert(GrpcAlgs::AlwaysFalseV<Request>);
+    }
+
+    auto response = client_holder->template do_request<Client, Request, Response>(
+      std::move(request),
+      grpc_client_timeout_ms_);
+
+    return response;
   }
   catch (const eh::Exception& exc)
   {
-    try
-    {
-      Stream::Error stream;
-      stream << FNS
-             << exc.what();
-      logger_->error(
-        stream.str(),
-        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-    }
-    catch (...)
-    {
-    }
+    Stream::Error stream;
+    stream << FNS
+           << exc.what();
+    logger_->error(
+      stream.str(),
+      ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
   }
   catch (...)
   {
-    try
-    {
-      Stream::Error stream;
-      stream << FNS
-             << "Unknown error";
-      logger_->error(
-        stream.str(),
-        ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
-    }
-    catch (...)
-    {
-    }
+    Stream::Error stream;
+    stream << FNS
+           << "Unknown error";
+    logger_->error(
+      stream.str(),
+      ASPECT_GRPC_CAMPAIGN_MANAGERS_POOL);
   }
 
   return {};
@@ -212,7 +222,7 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request_service(
 template<class Client, class Request, class Response, class ...Args>
 std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
   const std::optional<std::string_view> service_id,
-  Args&& ...args) noexcept
+  const Args& ...args) noexcept
 {
   if (client_holders_.empty())
   {
@@ -236,7 +246,7 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
       {
         auto response = do_request_service<Client, Request, Response>(
           client_holder,
-          std::forward<Args>(args)...);
+          args...);
         if (response && response->has_info())
         {
           return response;
@@ -269,7 +279,7 @@ std::unique_ptr<Response> GrpcCampaignManagerPool::do_request(
 
     auto response = do_request_service<Client, Request, Response>(
       client_holder,
-      std::forward<Args>(args)...);
+      args...);
     if (response && response->has_info())
     {
       return response;
