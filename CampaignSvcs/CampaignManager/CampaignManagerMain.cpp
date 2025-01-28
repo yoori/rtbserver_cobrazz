@@ -77,11 +77,8 @@ CampaignManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   ShutdownWriteGuard guard(shutdown_lock_);
 
-  if(campaign_manager_impl_.in() != 0)
-  {
-    campaign_manager_impl_->deactivate_object();
-    campaign_manager_impl_->wait_object();
-  }
+  deactivate_object();
+  wait_object();
 
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
 }
@@ -149,6 +146,7 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
   using ManagerCoro_var = UServerUtils::Manager_var;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using CampaignManagerImpl = AdServer::CampaignSvcs::CampaignManagerImpl;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
 
   const char* stage = "beginning main()";
 
@@ -192,301 +190,353 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       throw Exception(ostr);
     }
 
-    stage = "creating CampaignManager servant";
-
-    AdServer::CampaignSvcs::CampaignManagerLogger_var
-      campaign_manager_logger =
-        new AdServer::CampaignSvcs::CampaignManagerLogger(
-          configuration_.log_params, logger());
-
-    campaign_manager_impl_ =
-      new AdServer::CampaignSvcs::CampaignManagerImpl(
-        *campaign_manager_config_,
-        *domain_config_,
-        callback(),
-        logger(),
-        campaign_manager_logger,
-        configuration_.creative_instantiate,
-        configuration_.campaigns_types.c_str());
-
-    register_vars_controller();
-
-    stage = "Initializing CORBA bindings";
-    corba_server_adapter_->add_binding(
-      CAMPAIGN_MANAGER_OBJ_KEY, campaign_manager_impl_.in());
-
-    corba_server_adapter_->add_binding(
-      PROCESS_CONTROL_OBJ_KEY, this);
-
-    stage = "activating CampaignManagerImpl active object";
-    campaign_manager_impl_->activate_object();
-
     stage = "Creating coroutine manager";
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
         logger(),
         campaign_manager_config_->Coroutine());
 
-    auto init_func = [this] (TaskProcessorContainer& task_processor_container)
+    Generics::TaskPool_var task_pool = new Generics::TaskPool(
+      callback(),
+      campaign_manager_config_->number_grpc_helper_threads(),
+      1024 * 1024 // stack_size
+    );
+    add_child_object(task_pool.in());
+
+    auto init_func = [this, &stage, task_pool] (
+      TaskProcessorContainer& task_processor_container) mutable
     {
-      auto& main_task_processor = task_processor_container.get_main_task_processor();
-      auto components_builder = std::make_unique<ComponentsBuilder>();
+      auto& main_task_processor =
+        task_processor_container.get_main_task_processor();
       auto grpc_server_builder = Config::create_grpc_server_builder(
         logger(),
         campaign_manager_config_->GrpcServer());
+      const auto& grpc_scheduler = grpc_server_builder->scheduler();
+
+      stage = "creating CampaignManager servant";
+
+      AdServer::CampaignSvcs::CampaignManagerLogger_var
+        campaign_manager_logger =
+          new AdServer::CampaignSvcs::CampaignManagerLogger(
+            configuration_.log_params, logger());
+
+      campaign_manager_impl_ =
+        new AdServer::CampaignSvcs::CampaignManagerImpl(
+          main_task_processor,
+          grpc_scheduler,
+          *campaign_manager_config_,
+          *domain_config_,
+          callback(),
+          logger(),
+          campaign_manager_logger,
+          configuration_.creative_instantiate,
+          configuration_.campaigns_types.c_str());
+      add_child_object(campaign_manager_impl_.in());
+
+      register_vars_controller();
+
+      stage = "Initializing CORBA bindings";
+      corba_server_adapter_->add_binding(
+        CAMPAIGN_MANAGER_OBJ_KEY, campaign_manager_impl_.in());
+
+      corba_server_adapter_->add_binding(
+        PROCESS_CONTROL_OBJ_KEY, this);
+
+      // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
+      ServiceMode service_mode = ServiceMode::EventToCoroutine;
 
       auto get_campaign_creative_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_campaign_creative_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_campaign_creative>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_campaign_creative_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto process_match_request_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_process_match_request_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::process_match_request>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         process_match_request_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto match_geo_channels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_match_geo_channels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::match_geo_channels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         match_geo_channels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto instantiate_ad_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_instantiate_ad_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::instantiate_ad>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         instantiate_ad_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_channel_links_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_channel_links_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_channel_links>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_channel_links_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_discover_channels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_discover_channels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_discover_channels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_discover_channels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_category_channels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_category_channels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_category_channels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_category_channels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_passback_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_consider_passback_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::consider_passback>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_passback_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_passback_track_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_consider_passback_track_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::consider_passback_track>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_passback_track_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_click_url_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_click_url_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_click_url>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_click_url_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto verify_impression_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_verify_impression_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::verify_impression>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         verify_impression_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto action_taken_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_action_taken_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::action_taken>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         action_taken_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto verify_opt_operation_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_verify_opt_operation_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::verify_opt_operation>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         verify_opt_operation_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_web_operation_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_consider_web_operation_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::consider_web_operation>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_web_operation_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_config_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_config_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_config>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_config_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto trace_campaign_selection_index_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_trace_campaign_selection_index_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::trace_campaign_selection_index>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         trace_campaign_selection_index_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto trace_campaign_selection_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_trace_campaign_selection_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::trace_campaign_selection>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         trace_campaign_selection_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_campaign_creative_by_ccid_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_campaign_creative_by_ccid_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_campaign_creative_by_ccid>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_campaign_creative_by_ccid_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_colocation_flags_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_colocation_flags_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_colocation_flags>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_colocation_flags_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_pub_pixels_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_pub_pixels_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_pub_pixels>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_pub_pixels_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto process_anonymous_request_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_process_anonymous_request_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::process_anonymous_request>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         process_anonymous_request_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_file_service = AdServer::Commons::create_grpc_service<
         AdServer::CampaignSvcs::Proto::CampaignManager_get_file_Service,
         CampaignManagerImpl,
         &CampaignManagerImpl::get_file>(
           logger(),
-          campaign_manager_impl_.in());
+          campaign_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_file_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
+      auto components_builder = std::make_unique<ComponentsBuilder>();
       components_builder->add_grpc_cobrazz_server(
         std::move(grpc_server_builder));
 
       return components_builder;
     };
 
-    ManagerCoro_var manager_coro(
-      new ManagerCoro(
-        std::move(task_processor_container_builder),
-        std::move(init_func),
-        logger()));
-
-    stage = "activating coroutine manager";
-    manager_coro->activate_object();
+    ManagerCoro_var manager_coro = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger());
+    add_child_object(manager_coro.in());
 
     stage = "running orb loop";
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service started.";
     corba_server_adapter_->run();
 
-    stage =
-      "waiting while CORBACommons::ProcessControlImpl completes it's tasks";
+    stage = "activate_object";
+    activate_object();
+
+    stage = "waiting while CORBACommons::ProcessControlImpl "
+            "completes it's tasks";
 
     wait();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service stopped.";
-
-    manager_coro->deactivate_object();
-    manager_coro->wait_object();
-
-    campaign_manager_impl_.reset();
   }
   catch (const Exception& e)
   {

@@ -25,8 +25,6 @@ namespace AdServer::Bidding::Grpc
     }
 
     clear();
-
-    bid_frontend_->bid_task_count_ += -1;
   }
 
   bool BidRequestTask::execute_() noexcept

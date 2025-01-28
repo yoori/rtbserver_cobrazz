@@ -40,14 +40,14 @@ namespace CampaignSvcs
   {
   public:
     using BillingServerConfig = xsd::AdServer::Configuration::BillingServerConfigType;
-    using CheckAvailableBidRequestPtr = std::unique_ptr<Proto::CheckAvailableBidRequest>;
-    using CheckAvailableBidResponsePtr = std::unique_ptr<Proto::CheckAvailableBidResponse>;
-    using ReserveBidRequestPtr = std::unique_ptr<Proto::ReserveBidRequest>;
-    using ReserveBidResponsePtr = std::unique_ptr<Proto::ReserveBidResponse>;
-    using ConfirmBidRequestPtr = std::unique_ptr<Proto::ConfirmBidRequest>;
-    using ConfirmBidResponsePtr = std::unique_ptr<Proto::ConfirmBidResponse>;
-    using AddAmountRequestPtr = std::unique_ptr<Proto::AddAmountRequest>;
-    using AddAmountResponsePtr = std::unique_ptr<Proto::AddAmountResponse>;
+    using CheckAvailableBidRequestPtr = std::unique_ptr<Billing::Proto::CheckAvailableBidRequest>;
+    using CheckAvailableBidResponsePtr = std::unique_ptr<Billing::Proto::CheckAvailableBidResponse>;
+    using ReserveBidRequestPtr = std::unique_ptr<Billing::Proto::ReserveBidRequest>;
+    using ReserveBidResponsePtr = std::unique_ptr<Billing::Proto::ReserveBidResponse>;
+    using ConfirmBidRequestPtr = std::unique_ptr<Billing::Proto::ConfirmBidRequest>;
+    using ConfirmBidResponsePtr = std::unique_ptr<Billing::Proto::ConfirmBidResponse>;
+    using AddAmountRequestPtr = std::unique_ptr<Billing::Proto::AddAmountRequest>;
+    using AddAmountResponsePtr = std::unique_ptr<Billing::Proto::AddAmountResponse>;
 
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 

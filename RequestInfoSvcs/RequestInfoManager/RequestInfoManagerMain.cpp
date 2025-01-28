@@ -3,7 +3,6 @@
 #include <CORBACommons/StatsImpl.hpp>
 #include <SNMPAgent/SNMPAgentX.hpp>
 #include <UServerUtils/Grpc/Server/Config.hpp>
-#include <UServerUtils/Grpc/Server/ServerBuilder.hpp>
 #include <UServerUtils/Statistics/CompositeStatisticsProvider.hpp>
 #include <UServerUtils/ComponentsBuilder.hpp>
 #include <UServerUtils/Config.hpp>
@@ -14,12 +13,12 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/ConfigUtils.hpp>
 #include <Commons/UserverConfigUtils.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/Statistics.hpp>
-#include "RequestInfoManagerMain.hpp"
-#include "RequestInfoManagerStats.hpp"
-#include "RequestInfoManagerStatsAgent.hpp"
+#include <RequestInfoSvcs/RequestInfoManager/GrpcBillingManagerPool.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManagerMain.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManagerStats.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManagerStatsAgent.hpp>
 
 namespace
 {
@@ -146,21 +145,59 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
       throw Exception(ostr, "ADS-IMPL-3001");
     }
 
+    AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl_var rim_stats_impl;
+    if (configuration_->SNMPConfig().present())
+    {
+      try
+      {
+        rim_stats_impl =
+          new AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl;
+
+        unsigned snmp_index =
+          configuration_->SNMPConfig().get().index().present() ?
+          configuration_->SNMPConfig().get().index().get() :
+          getpid();
+
+        snmp_stat_provider = new AdServer::RequestInfoSvcs::SNMPStatsImpl(
+          rim_stats_impl, snmp_index,
+          Logging::Logger_var(new Logging::LoggerDefaultHolder(
+            logger(), 0, "ADS-IMPL-?")),
+          "",
+          "RequestInfoManager-MIB:requestInfoManager",
+          configuration_->SNMPConfig().get().mib_dirs().c_str());
+      }
+      catch (const eh::Exception& ex)
+      {
+        logger()->sstream(
+          Logging::Logger::ERROR,
+          ASPECT) << ": Can't init SNMP stats provider: " << ex.what();
+      }
+    }
+
     try
     {
       auto task_processor_container_builder =
         Config::create_task_processor_container_builder(
           logger(),
           config().Coroutine());
-      auto statistics_provider = std::make_shared<
-        UServerUtils::Statistics::CompositeStatisticsProviderImpl<
-          std::shared_mutex>>(logger());
-      auto common_counter_provider =
-        AdServer::RequestInfoSvcs::get_common_counter_statistics_provider();
-      statistics_provider->add(common_counter_provider);
-
-      auto init_func = [this, statistics_provider] (TaskProcessorContainer& task_processor_container) {
+      auto init_func = [this, &rim_stats_impl] (
+        TaskProcessorContainer& task_processor_container) {
         auto& main_task_processor = task_processor_container.get_main_task_processor();
+
+        request_info_manager_impl_ = new AdServer::RequestInfoSvcs::RequestInfoManagerImpl(
+          main_task_processor,
+          callback(),
+          logger(),
+          config(),
+          rim_stats_impl);
+        request_info_manager_impl_->activate_object();
+
+        auto statistics_provider = std::make_shared<
+          UServerUtils::Statistics::CompositeStatisticsProviderImpl<
+            std::shared_mutex>>(logger());
+        auto common_counter_provider =
+          AdServer::RequestInfoSvcs::get_common_counter_statistics_provider();
+        statistics_provider->add(common_counter_provider);
 
         ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
         statistics_provider_info.statistics_provider = statistics_provider;
@@ -199,11 +236,10 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
         return components_builder;
       };
 
-      manager_ = ManagerCoro_var(
-        new ManagerCoro(
-          std::move(task_processor_container_builder),
-          std::move(init_func),
-          logger()));
+      manager_ = new ManagerCoro(
+        std::move(task_processor_container_builder),
+        std::move(init_func),
+        logger());
     }
     catch (const eh::Exception& exc)
     {
@@ -239,43 +275,6 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
-    AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl_var rim_stats_impl;
-    if (configuration_->SNMPConfig().present())
-    {
-      try
-      {
-        rim_stats_impl =
-          new AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl;
-
-        unsigned snmp_index =
-          configuration_->SNMPConfig().get().index().present() ?
-          configuration_->SNMPConfig().get().index().get() :
-          getpid();
-
-        snmp_stat_provider = new AdServer::RequestInfoSvcs::SNMPStatsImpl(
-          rim_stats_impl, snmp_index,
-          Logging::Logger_var(new Logging::LoggerDefaultHolder(
-            logger(), 0, "ADS-IMPL-?")),
-          "",
-          "RequestInfoManager-MIB:requestInfoManager",
-          configuration_->SNMPConfig().get().mib_dirs().c_str());
-      }
-      catch (const eh::Exception& ex)
-      {
-        logger()->sstream(
-          Logging::Logger::ERROR,
-          ASPECT) << ": Can't init SNMP stats provider: " << ex.what();
-      }
-    }
-
-    // Creating user info manager servant
-    request_info_manager_impl_ =
-      new AdServer::RequestInfoSvcs::RequestInfoManagerImpl(
-        callback(),
-        logger(),
-        config(),
-        rim_stats_impl);
-
     typedef CORBACommons::ProcessStatsGen<
       AdServer::RequestInfoSvcs::RequestInfoManagerStatsImpl>
         ProcessStatsImpl;
@@ -296,7 +295,6 @@ RequestInfoManagerApp_::main(int& argc, char** argv)
 
     shutdowner_ = corba_server_adapter_->shutdowner();
 
-    request_info_manager_impl_->activate_object();
     manager_->activate_object();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
     // Running orb loop

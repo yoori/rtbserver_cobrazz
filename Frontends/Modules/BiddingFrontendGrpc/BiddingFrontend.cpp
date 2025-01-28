@@ -92,122 +92,15 @@ namespace AdServer::Bidding::Grpc
     }
   }
 
-  class Frontend::UpdateConfigTask final: public Generics::TaskGoal
-  {
-  public:
-    UpdateConfigTask(
-      Frontend* bid_frontend,
-      Generics::TaskRunner* task_runner)
-      : Generics::TaskGoal(task_runner),
-        bid_frontend_(bid_frontend)
-    {
-    }
-
-    void execute() noexcept override
-    {
-      bid_frontend_->update_config_();
-    }
-
-  protected:
-    ~UpdateConfigTask() override = default;
-
-  private:
-    Frontend* bid_frontend_;
-  };
-
-  class Frontend::FlushStateTask final: public Generics::TaskGoal
-  {
-  public:
-    FlushStateTask(
-      Frontend* bid_frontend,
-      Generics::TaskRunner* task_runner)
-      : Generics::TaskGoal(task_runner),
-        bid_frontend_(bid_frontend)
-    {
-    }
-
-    void execute() noexcept override
-    {
-      bid_frontend_->flush_state_();
-    }
-
-  protected:
-    ~FlushStateTask() override = default;
-
-  private:
-    Frontend* bid_frontend_;
-  };
-
-  class BidRequestInterruptGoal final:
-    public Generics::Goal,
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    BidRequestInterruptGoal(BidRequestTask_var bid_request_task)
-      : bid_request_task_(std::move(bid_request_task))
-    {
-    }
-
-    void deliver() override
-    {
-      bid_request_task_->interrupt();
-    }
-
-  protected:
-    ~BidRequestInterruptGoal() override = default;
-
-  protected:
-    BidRequestTask_var bid_request_task_;
-  };
-
-  class Frontend::InterruptPassbackTask final:
-    public Generics::Task,
-    public ReferenceCounting::AtomicImpl
-  {
-  public:
-    using GrpcCampaignManagerPoolPtr = FrontendCommons::GrpcCampaignManagerPoolPtr;
-
-  public:
-    InterruptPassbackTask(
-      Frontend* frontend,
-      const GrpcCampaignManagerPoolPtr& grpc_campaign_manager,
-      const RequestParamsHolder* request_params)
-      : frontend_(frontend),
-        grpc_campaign_manager_(grpc_campaign_manager),
-        request_params_var_(ReferenceCounting::add_ref(request_params))
-    {
-    }
-
-    void execute() noexcept override
-    {
-      try
-      {
-        frontend_->passback_task_count_ += -1;
-        grpc_campaign_manager_->get_campaign_creative(*request_params_var_);
-      }
-      catch(const eh::Exception&)
-      {
-      }
-    }
-
-  protected:
-    ~InterruptPassbackTask() override = default;
-
-  private:
-    Frontend* frontend_;
-    GrpcCampaignManagerPoolPtr grpc_campaign_manager_;
-    const ConstRequestParamsHolder_var request_params_var_;
-  };
-
   Frontend::Frontend(
+    TaskProcessor& helper_task_processor,
     const GrpcContainerPtr& grpc_container,
     Configuration* frontend_config,
     Logging::Logger* logger,
     CommonModule* common_module,
     StatHolder* stats,
     FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/
-    : FrontendCommons::FrontendInterface(response_factory),
-      GroupLogger(
+    : GroupLogger(
         Logging::Logger_var(
           new Logging::SeveritySelectorLogger(
             logger,
@@ -216,14 +109,13 @@ namespace AdServer::Bidding::Grpc
         "Bidding::Frontend",
         Aspect::BIDDING_FRONTEND,
         0),
+      FrontendCommons::FrontendInterface(response_factory),
+      helper_task_processor_(helper_task_processor),
       grpc_container_(grpc_container),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
-      stats_(ReferenceCounting::add_ref(stats)),
-      bid_task_count_(0),
-      passback_task_count_(0),
-      reached_max_pending_tasks_(0)
+      stats_(ReferenceCounting::add_ref(stats))
   {
     if (!grpc_container_->grpc_campaign_manager_pool)
     {
@@ -258,6 +150,30 @@ namespace AdServer::Bidding::Grpc
     }
   }
 
+  void Frontend::set_ext_config_(ExtConfig* config) noexcept
+  {
+    ExtConfig_var new_config = ReferenceCounting::add_ref(config);
+
+    std::unique_lock lock(ext_config_lock_);
+    ext_config_.swap(new_config);
+  }
+
+  Frontend::ExtConfig_var Frontend::get_ext_config_() noexcept
+  {
+    std::shared_lock lock(ext_config_lock_);
+    return ext_config_;
+  }
+
+  RequestInfoFiller* Frontend::request_info_filler() noexcept
+  {
+    return request_info_filler_.get();
+  }
+
+  Logging::Logger* Frontend::logger() noexcept
+  {
+    return GroupLogger::logger();
+  }
+
   bool Frontend::will_handle(const String::SubString& uri) noexcept
   {
     std::string found_uri;
@@ -283,7 +199,7 @@ namespace AdServer::Bidding::Grpc
            config_->DAOUriList()->Uri(), uri, found_uri));
     }
 
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
+    if (logger()->log_level() >= static_cast<unsigned long>(TraceLevel::MIDDLE))
     {
       Stream::Error ostr;
       ostr << "Bidding::Frontend::will_handle(" << uri <<
@@ -330,49 +246,24 @@ namespace AdServer::Bidding::Grpc
     }
   }
 
-  void Frontend::init() /*throw(eh::Exception)*/
+  void Frontend::init()
   {
     try
     {
       parse_configs_();
 
-      planner_ = new Generics::Planner(callback());
-      add_child_object(planner_);
-
-      task_runner_ = new Generics::TaskPool(
-        callback(),
-        config_->threads(),
-        1024 * 1024 // stack size
-        );
-      add_child_object(task_runner_);
-
-      control_task_runner_ = new Generics::TaskRunner(callback(), 4);
-      add_child_object(control_task_runner_);
-
-      planner_pool_ = new PlannerPool(this->callback(), 16);
-      add_child_object(planner_pool_);
-
-      // ADSC-10554
-      // Interrupted requests queue
-      passback_task_runner_ = new Generics::TaskPool(
-        callback(),
-        config_->interrupted_threads(), // threads
-        0 // stack_size
-        );
-      add_child_object(passback_task_runner_);
-
-      Generics::Planner_var task_scheduler(new Generics::Planner(callback()));
-      add_child_object(task_scheduler);
-
-      // FlushLoggerTask
-      Generics::Time flush_period(config_->flush_period().present() ? *config_->flush_period() : 10);
-      Commons::make_goal_task(
-        std::bind(
-          &Commons::MessagePacker<CellsKey, MessageOut>::dump,
-          group_logger(), Logging::Logger::ERROR, "", ""),
-        control_task_runner_,
-        task_scheduler,
-        flush_period)->schedule(flush_period);
+      Generics::Time flush_period(
+        config_->flush_period().present() ? *config_->flush_period() : 10);
+      background_task_storage_.Detach(userver::engine::CriticalAsyncNoSpan(
+        helper_task_processor_,
+        [this, flush_period = flush_period] () {
+          while (!userver::engine::current_task::ShouldCancel())
+          {
+            group_logger()->dump(Logging::Logger::ERROR, "", "");
+            userver::engine::InterruptibleSleepFor(
+              std::chrono::microseconds(flush_period.microseconds()));
+          }
+        }));
 
       for (auto it = config_->Source().begin();
            it != config_->Source().end();
@@ -561,11 +452,11 @@ namespace AdServer::Bidding::Grpc
 
       google::protobuf::SetLogHandler(&Frontend::protobuf_log_handler_);
 
-      control_task_runner_->enqueue_task(
-        Generics::Task_var(new UpdateConfigTask(this, control_task_runner_)));
-
-      control_task_runner_->enqueue_task(
-        Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
+      background_task_storage_.Detach(userver::engine::CriticalAsyncNoSpan(
+        helper_task_processor_,
+        [this] () {
+          update_config_();
+        }));
 
       activate_object();
     }
@@ -587,13 +478,14 @@ namespace AdServer::Bidding::Grpc
   {
     try
     {
+      background_task_storage_.CancelAndWait();
       deactivate_object();
       wait_object();
       clear();
 
       Stream::Error ostr;
-      ostr << "Bidding::Frontend::shutdown(): frontend terminated (pid = " <<
-        ::getpid() << ").";
+      ostr << "Bidding::Frontend::shutdown(): frontend terminated (pid = "
+           << ::getpid() << ").";
 
       logger()->log(ostr.str(),
         Logging::Logger::INFO,
@@ -601,7 +493,7 @@ namespace AdServer::Bidding::Grpc
 
       common_module_->shutdown();
     }
-    catch(...)
+    catch (...)
     {
     }
   }
@@ -629,8 +521,6 @@ namespace AdServer::Bidding::Grpc
     FrontendCommons::HttpRequestHolder_var request_holder,
     FrontendCommons::HttpResponseWriter_var response_writer) noexcept
   {
-    static const char* FUN = "Bidding::Frontend::handle_request_()";
-
     DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_InputRequest);
 
     const Generics::Time start_process_time = Generics::Time::get_time_of_day();
@@ -640,15 +530,10 @@ namespace AdServer::Bidding::Grpc
     {
       const FrontendCommons::HttpRequest& request = request_holder->request();
 
-      const Generics::Time expire_time(
-        start_process_time + get_request_timeout_(request));
-
       std::string found_uri;
-
       if (FrontendCommons::find_uri(
         config_->GoogleUriList().Uri(), request.uri(), found_uri))
       {
-        // Google request
         request_task = new GoogleBidRequestTask(
           this,
           request_holder,
@@ -703,38 +588,23 @@ namespace AdServer::Bidding::Grpc
           start_process_time);
       }
 
-      const unsigned long cur_task_count =
-        bid_task_count_.exchange_and_add(1) + 1;
-      if (cur_task_count > config_->max_pending_tasks() + config_->threads())
-      {
-        bid_task_count_ += -1;
+      const auto timeout = get_request_timeout_(request).microseconds();
+      auto& task_processor = userver::engine::current_task::GetTaskProcessor();
+      auto task_timeout = userver::engine::AsyncNoSpan(
+        task_processor,
+        [&request_task, &timeout] () {
+          userver::engine::InterruptibleSleepFor(std::chrono::microseconds(timeout));
+          if (!userver::engine::current_task::IsCancelRequested())
+          {
+            request_task->interrupt();
+          }
+        });
 
-        DO_TIME_STATISTIC_FRONTEND(FrontendCommons::TimeStatisticId::BiddingFrontend_SkipRequest);
-
-        {
-          MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
-          reached_max_pending_tasks_ = std::max(
-            reached_max_pending_tasks_, cur_task_count);
-        }
-
-        if (stats_.in())
-        {
-          stats_->add_skipped();
-        }
-
-        request_task->write_empty_response(0);
-      }
-      else
-      {
-        // delegate response writing to task & schedule timeouter
-        Generics::Goal_var interrupt_goal(new BidRequestInterruptGoal(request_task));
-        planner_pool_->schedule(interrupt_goal, expire_time);
-        task_runner_->enqueue_task(request_task);
-      }
+      request_task->execute();
+      task_timeout.SyncCancel();
     }
-    catch (const BidRequestTask::Invalid& e)
+    catch (const BidRequestTask::Invalid& exc)
     {
-      // HTTP_BAD_REQUEST
       if (request_task)
       {
         request_task->write_empty_response(400);
@@ -747,12 +617,14 @@ namespace AdServer::Bidding::Grpc
       }
 
       Stream::Error ostr;
-      ostr << FUN << ": BidRequestTask::Invalid caught: " << e.what();
+      ostr << FNS
+           << "BidRequestTask::Invalid caught: "
+           << exc.what();
       logger()->log(ostr.str(),
         Logging::Logger::INFO,
         Aspect::BIDDING_FRONTEND);
     }
-    catch (const eh::Exception& e)
+    catch (const eh::Exception& exc)
     {
       if (request_task)
       {
@@ -766,7 +638,9 @@ namespace AdServer::Bidding::Grpc
       }
 
       Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << e.what();
+      ostr << FNS
+           << "eh::Exception caught: "
+           << exc.what();
 
       logger()->log(ostr.str(),
         Logging::Logger::EMERGENCY,
@@ -944,7 +818,7 @@ namespace AdServer::Bidding::Grpc
       catch (const eh::Exception& exc)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught CORBA::SystemException: " << exc.what();
+        ostr << FNS << exc.what();
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::BIDDING_FRONTEND,
@@ -1640,46 +1514,34 @@ namespace AdServer::Bidding::Grpc
   void Frontend::interrupted_select_campaign_(
     BidRequestTask* request_task) noexcept
   {
-    static const char* FUN = "Bidding::Frontend::interrupted_select_campaign_()";
-
     try
     {
       ConstRequestParamsHolder_var
         request_params(request_task->request_params());
 
-      unsigned long cur_task_count = passback_task_count_.exchange_and_add(1) + 1;
-      if(cur_task_count > config_->interrupted_max_pending_tasks() + config_->interrupted_threads())
-      {
-        passback_task_count_ += -1;
-      }
-      else
-      {
-        try
-        {
-          passback_task_runner_->enqueue_task(
-            Generics::Task_var(
-              new InterruptPassbackTask(
-                this,
-                grpc_container_->grpc_campaign_manager_pool,
-                request_params)));
-        }
-        catch(...)
-        {
-          passback_task_count_ += -1;
-          throw;
-        }
-      }
+      auto& current_task_processor = userver::engine::current_task::GetTaskProcessor();
+      userver::engine::AsyncNoSpan(
+        current_task_processor,
+        [
+          grpc_campaign_manager = grpc_container_->grpc_campaign_manager_pool,
+          request_params = std::move(request_params)
+        ] () {
+          try
+          {
+            grpc_campaign_manager->get_campaign_creative(*request_params);
+          }
+          catch (...)
+          {
+          }
+        }).Detach();
     }
-    catch(const Generics::TaskRunner::Overflow&)
+    catch (const eh::Exception& exc)
     {
-      // Skip all TaskRunner overflow errors
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": eh::Exception caught: " << ex.what();
-
-      logger()->log(ostr.str(),
+      Stream::Error stream;
+      stream << FNS
+             << "eh::Exception caught: "
+             << exc.what();
+      logger()->log(stream.str(),
         Logging::Logger::EMERGENCY,
         Aspect::BIDDING_FRONTEND,
         "ADS-IMPL-10554");
@@ -1936,100 +1798,54 @@ namespace AdServer::Bidding::Grpc
 
   void Frontend::update_config_() noexcept
   {
-    static const char* FUN = "Frontend::update_config_()";
-
-    try
+    while (!userver::engine::current_task::ShouldCancel())
     {
-      auto& grpc_campaign_manager_pool =
-        grpc_container_->grpc_campaign_manager_pool;
-      auto response = grpc_campaign_manager_pool->get_colocation_flags();
-      if (response && response->has_info())
+      try
       {
-        const auto& info_proto = response->info();
-        const auto& colocation_flags_proto = info_proto.colocation_flags();
-
-        ExtConfig_var new_config(new ExtConfig());
-        for (const auto& colocation_flag : colocation_flags_proto)
+        auto& grpc_campaign_manager_pool =
+          grpc_container_->grpc_campaign_manager_pool;
+        auto response = grpc_campaign_manager_pool->get_colocation_flags();
+        if (response && response->has_info())
         {
-          ExtConfig::Colocation colocation;
-          colocation.flags = colocation_flag.flags();
-          new_config->colocations.insert(
-            ExtConfig::ColocationMap::value_type(
-              colocation_flag.colo_id(),
-              colocation));
+          const auto& info_proto = response->info();
+          const auto& colocation_flags_proto = info_proto.colocation_flags();
+
+          ExtConfig_var new_config(new ExtConfig());
+          for (const auto& colocation_flag: colocation_flags_proto)
+          {
+            ExtConfig::Colocation colocation;
+            colocation.flags = colocation_flag.flags();
+            new_config->colocations.insert(
+              ExtConfig::ColocationMap::value_type(
+                colocation_flag.colo_id(),
+                colocation));
+          }
+
+          set_ext_config_(new_config);
         }
-
-        set_ext_config_(new_config);
+        else
+        {
+          GrpcAlgs::print_grpc_error_response(
+            response,
+            logger(),
+            Aspect::BIDDING_FRONTEND);
+          throw Exception("get_colocation_flags is failed");
+        }
       }
-      else
+      catch (const eh::Exception& exc)
       {
-        GrpcAlgs::print_grpc_error_response(
-          response,
-          logger(),
-          Aspect::BIDDING_FRONTEND);
-        throw Exception("get_colocation_flags is failed");
+        logger()->sstream(
+          Logging::Logger::CRITICAL,
+          Aspect::BIDDING_FRONTEND,
+          "ADS-IMPL-118")
+          << FNS
+          << "Can't update colocation flags, "
+             "caught eh::Exception: "
+          << exc.what();
       }
-    }
-    catch (const eh::Exception& e)
-    {
-      logger()->sstream(Logging::Logger::CRITICAL,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-118") << FUN << ": Can't update colocation flags, "
-        "caught eh::Exception: " << e.what();
-    }
 
-    try
-    {
-      planner_->schedule(
-        Generics::Goal_var(new UpdateConfigTask(this, control_task_runner_)),
-        Generics::Time::get_time_of_day() + common_config_->update_period());
-    }
-    catch (const eh::Exception& ex)
-    {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7605") <<
-        FUN << ": schedule failed: " << ex.what();
-    }
-  }
-
-  void Frontend::flush_state_() noexcept
-  {
-    static const char* FUN = "Frontend::flush_state_()";
-
-    unsigned long reached_max_pending_tasks;
-
-    {
-      MaxPendingSyncPolicy::WriteGuard lock(reached_max_pending_tasks_lock_);
-      reached_max_pending_tasks = reached_max_pending_tasks_;
-      reached_max_pending_tasks_ = 0;
-    }
-
-    if(reached_max_pending_tasks > 0)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": reached max pending tasks: " <<
-        reached_max_pending_tasks;
-
-      logger()->log(ostr.str(),
-        Logging::Logger::WARNING,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7602");
-    }
-
-    try
-    {
-      planner_->schedule(
-        Generics::Goal_var(new FlushStateTask(this, control_task_runner_)),
-        Generics::Time::get_time_of_day() + (
-          config_->flush_period().present() ? *config_->flush_period() : 10));
-    }
-    catch (const eh::Exception& ex)
-    {
-      logger()->sstream(Logging::Logger::EMERGENCY,
-        Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7605") <<
-        FUN << ": schedule failed: " << ex.what();
+      userver::engine::InterruptibleSleepFor(
+        std::chrono::seconds(common_config_->update_period()));
     }
   }
 
@@ -2055,7 +1871,7 @@ namespace AdServer::Bidding::Grpc
     static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
 
     if (level == google::protobuf::LOGLEVEL_ERROR ||
-        level == google::protobuf::LOGLEVEL_FATAL)
+      level == google::protobuf::LOGLEVEL_FATAL)
     {
       Stream::Error ostr;
       ostr << "[libprotobuf " << level_names[level] <<
@@ -2066,14 +1882,14 @@ namespace AdServer::Bidding::Grpc
 
   void Frontend::fill_account_traits_() noexcept
   {
-    for(auto account_it = config_->Account().begin();
-        account_it != config_->Account().end();
-        ++account_it)
+    for (auto account_it = config_->Account().begin();
+         account_it != config_->Account().end();
+         ++account_it)
     {
       RequestInfoFiller::AccountTraits_var& target_account_ptr =
         account_traits_[account_it->account_id()];
 
-      if(!target_account_ptr.in())
+      if (!target_account_ptr.in())
       {
         target_account_ptr = new RequestInfoFiller::AccountTraits();
       }
@@ -2145,8 +1961,9 @@ namespace AdServer::Bidding::Grpc
     if (logger()->log_level() >= Logging::Logger::TRACE)
     {
       std::ostringstream ostr;
-      ostr << fun << ": request processing timed out(" << timeout << "):"
-        << std::endl;
+      ostr << FNS
+           << "request processing timed out(" << timeout << "):"
+           << std::endl;
 
       request_task->print_request(ostr);
 
@@ -2177,7 +1994,7 @@ namespace AdServer::Bidding::Grpc
     BidRequestTask* request_task) noexcept
   {
     request_task->set_current_stage(stage);
-    if(request_task->interrupted())
+    if (request_task->interrupted())
     {
       interrupt_(fun, stage, request_task);
       return true;
@@ -2188,101 +2005,104 @@ namespace AdServer::Bidding::Grpc
 
   AdServer::CampaignSvcs::AdInstantiateType
   Frontend::adapt_instantiate_type_(const std::string& inst_type_str)
-  /*throw(Exception)*/
   {
-    if(inst_type_str == "url")
+    if (inst_type_str == "url")
     {
       return AdServer::CampaignSvcs::AIT_URL;
     }
-    else if(inst_type_str == "nonsecure url")
+    else if (inst_type_str == "nonsecure url")
     {
       return AdServer::CampaignSvcs::AIT_NONSECURE_URL;
     }
-    else if(inst_type_str == "url in body")
+    else if (inst_type_str == "url in body")
     {
       return AdServer::CampaignSvcs::AIT_URL_IN_BODY;
     }
-    else if(inst_type_str == "video url")
+    else if (inst_type_str == "video url")
     {
       return AdServer::CampaignSvcs::AIT_VIDEO_URL;
     }
-    else if(inst_type_str == "nonsecure video url")
+    else if (inst_type_str == "nonsecure video url")
     {
       return AdServer::CampaignSvcs::AIT_VIDEO_NONSECURE_URL;
     }
-    else if(inst_type_str == "video url in body")
+    else if (inst_type_str == "video url in body")
     {
       return AdServer::CampaignSvcs::AIT_VIDEO_URL_IN_BODY;
     }
-    else if(inst_type_str == "body")
+    else if (inst_type_str == "body")
     {
       return AdServer::CampaignSvcs::AIT_BODY;
     }
-    else if(inst_type_str == "script with url")
+    else if (inst_type_str == "script with url")
     {
       return AdServer::CampaignSvcs::AIT_SCRIPT_WITH_URL;
     }
-    else if(inst_type_str == "iframe with url")
+    else if (inst_type_str == "iframe with url")
     {
       return AdServer::CampaignSvcs::AIT_IFRAME_WITH_URL;
     }
-    else if(inst_type_str == "url parameters")
+    else if (inst_type_str == "url parameters")
     {
       return AdServer::CampaignSvcs::AIT_URL_PARAMS;
     }
-    else if(inst_type_str == "encoded url parameters")
+    else if (inst_type_str == "encoded url parameters")
     {
       return AdServer::CampaignSvcs::AIT_DATA_URL_PARAM;
     }
-    else if(inst_type_str == "data parameter value")
+    else if (inst_type_str == "data parameter value")
     {
       return AdServer::CampaignSvcs::AIT_DATA_PARAM_VALUE;
     }
 
     Stream::Error ostr;
-    ostr << "unknown instantiate type '" << inst_type_str << "'";
+    ostr << "unknown instantiate type '"
+         << inst_type_str
+         << "'";
     throw Exception(ostr);
   }
 
   SourceTraits::NativeAdsInstantiateType
   Frontend::adapt_native_ads_instantiate_type_(
-    const std::string& inst_type_str) /*throw(Exception)*/
+    const std::string& inst_type_str)
   {
-    if(inst_type_str == "none")
+    if (inst_type_str == "none")
     {
       return SourceTraits::NAIT_NONE;
     }
-    else if(inst_type_str == "adm")
+    else if (inst_type_str == "adm")
     {
       return SourceTraits::NAIT_ADM;
     }
-    else if(inst_type_str == "adm_native")
+    else if (inst_type_str == "adm_native")
     {
       return SourceTraits::NAIT_ADM_NATIVE;
     }
-    else if(inst_type_str == "ext")
+    else if (inst_type_str == "ext")
     {
       return SourceTraits::NAIT_EXT;
     }
-    else if(inst_type_str == "escape_slash_adm")
+    else if (inst_type_str == "escape_slash_adm")
     {
       return SourceTraits::NAIT_ESCAPE_SLASH_ADM;
     }
-    else if(inst_type_str == "native_as_element-1.2")
+    else if (inst_type_str == "native_as_element-1.2")
     {
       return SourceTraits::NAIT_NATIVE_AS_ELEMENT_1_2;
     }
-    else if(inst_type_str == "adm-1.2")
+    else if (inst_type_str == "adm-1.2")
     {
       return SourceTraits::NAIT_ADM_1_2;
     }
-    else if(inst_type_str == "adm_native-1.2")
+    else if (inst_type_str == "adm_native-1.2")
     {
       return SourceTraits::NAIT_ADM_NATIVE_1_2;
     }
 
     Stream::Error ostr;
-    ostr << "unknown native ads instantiate type '" << inst_type_str << "'";
+    ostr << "unknown native ads instantiate type '"
+         << inst_type_str
+         << "'";
     throw Exception(ostr);
   }
 
@@ -2290,31 +2110,33 @@ namespace AdServer::Bidding::Grpc
   Frontend::adapt_erid_return_type_(
     const std::string& erid_type_str)
   {
-    if(erid_type_str == "single")
+    if (erid_type_str == "single")
     {
       return SourceTraits::ERIDRT_SINGLE;
     }
-    else if(erid_type_str == "array")
+    else if (erid_type_str == "array")
     {
       return SourceTraits::ERIDRT_ARRAY;
     }
-    else if(erid_type_str == "ext0")
+    else if (erid_type_str == "ext0")
     {
       return SourceTraits::ERIDRT_EXT0;
     }
-    else if(erid_type_str == "buzsape")
+    else if (erid_type_str == "buzsape")
     {
       return SourceTraits::ERIDRT_EXT_BUZSAPE;
     }
 
     Stream::Error ostr;
-    ostr << "unknown erid return type '" << erid_type_str << "'";
+    ostr << "unknown erid return type '"
+        << erid_type_str
+        << "'";
     throw Exception(ostr);
   }
 
   AdServer::CampaignSvcs::NativeAdsImpressionTrackerType
   Frontend::adapt_native_ads_impression_tracker_type_(
-    const std::string& imp_type_str) /*throw(Exception)*/
+    const std::string& imp_type_str)
   {
     if (imp_type_str == "imp")
     {
@@ -2332,8 +2154,9 @@ namespace AdServer::Bidding::Grpc
     }
 
     Stream::Error ostr;
-    ostr << "unknown native ads impression tracker type '" <<
-      imp_type_str << "'";
+    ostr << "unknown native ads impression tracker type '"
+         << imp_type_str
+         << "'";
     throw Exception(ostr);
   }
 } // namespace AdServer::Bidding::Grpc

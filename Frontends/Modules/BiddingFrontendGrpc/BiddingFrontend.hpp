@@ -3,7 +3,6 @@
 
 // UNIXCOMMONS
 #include <eh/Exception.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/AtomicInt.hpp>
 #include <Generics/Statistics.hpp>
@@ -14,7 +13,9 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
-#include <Sync/PosixLock.hpp>
+
+// USERVER
+#include <userver/concurrent/background_task_storage.hpp>
 
 // THIS
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -40,11 +41,42 @@ namespace AdServer::Bidding::Grpc
   class Frontend final:
     private FrontendCommons::HTTPExceptions,
     private GroupLogger,
-    public virtual FrontendCommons::FrontendInterface,
+    public FrontendCommons::FrontendInterface,
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
   private:
+    using BackgroundTaskStorage = userver::concurrent::BackgroundTaskStorage;
+    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
+    using BiddingFeConfiguration = Configuration::FeConfig::BidFeConfiguration_type;
+    using CommonConfigPtr = std::unique_ptr<CommonFeConfiguration>;
+    using ConfigPtr = std::unique_ptr<BiddingFeConfiguration>;
+
+    enum class TraceLevel
+    {
+      LOW = Logging::Logger::TRACE,
+      MIDDLE,
+      HIGH
+    };
+
+    struct ExtConfig final: public ReferenceCounting::AtomicImpl
+    {
+      struct Colocation
+      {
+        unsigned long flags;
+      };
+
+      using ColocationMap = std::map<unsigned long, Colocation>;
+
+      ColocationMap colocations;
+
+    protected:
+      ~ExtConfig() override = default;
+    };
+
+    using ExtConfig_var = ReferenceCounting::SmartPtr<ExtConfig>;
+    using BlacklistedTimeIntervals = Commons::IntervalSet<Generics::Time>;
+
     DECLARE_EXCEPTION(NotReadyException, eh::DescriptiveException);
     DECLARE_EXCEPTION(ChunkNotFoundException, eh::DescriptiveException);
     DECLARE_EXCEPTION(ImplementationException, eh::DescriptiveException);
@@ -58,19 +90,19 @@ namespace AdServer::Bidding::Grpc
     friend class AppNexusBidRequestTask;
 
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
-    using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
-    using BiddingFeConfiguration = Configuration::FeConfig::BidFeConfiguration_type;
 
   public:
     Frontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
       CommonModule* common_module,
       StatHolder* stats,
-      FrontendCommons::HttpResponseFactory* response_factory) /*throw(eh::Exception)*/;
+      FrontendCommons::HttpResponseFactory* response_factory);
 
     bool will_handle(const String::SubString& uri) noexcept override;
 
@@ -78,72 +110,19 @@ namespace AdServer::Bidding::Grpc
       FrontendCommons::HttpRequestHolder_var request_holder,
       FrontendCommons::HttpResponseWriter_var response_writer) noexcept override;
 
-    /** Performs initialization for the module child process. */
-    void init() /*throw(eh::Exception)*/ override;
+    void init() override;
 
-    /** Performs shutdown for the module child process. */
     void shutdown() noexcept override;
 
-    RequestInfoFiller* request_info_filler() noexcept
-    {
-      return request_info_filler_.get();
-    }
+    RequestInfoFiller* request_info_filler() noexcept;
 
-    Logging::Logger* logger() noexcept
-    {
-      return GroupLogger::logger();
-    }
+    Logging::Logger* logger() noexcept;
 
   protected:
-    ~Frontend() noexcept override;
+    ~Frontend() override = default;
 
   private:
-    struct TraceLevel
-    {
-      enum
-      {
-        LOW = Logging::Logger::TRACE,
-        MIDDLE,
-        HIGH
-      };
-    };
-
-    typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
-    typedef std::unique_ptr<BiddingFeConfiguration> ConfigPtr;
-
-    class UpdateConfigTask;
-    class FlushStateTask;
-    class InterruptPassbackTask;
-
-    struct ExtConfig final: public ReferenceCounting::AtomicImpl
-    {
-      struct Colocation
-      {
-        unsigned long flags;
-      };
-
-      typedef std::map<unsigned long, Colocation>
-        ColocationMap;
-
-      ColocationMap colocations;
-
-    protected:
-      virtual ~ExtConfig() noexcept {}
-    };
-
-    typedef ReferenceCounting::SmartPtr<ExtConfig>
-      ExtConfig_var;
-
-    typedef Sync::Policy::PosixThreadRW
-      ExtConfigSyncPolicy;
-    typedef Sync::Policy::PosixThread
-      MaxPendingSyncPolicy;
-
-    typedef Commons::IntervalSet<Generics::Time>
-      BlacklistedTimeIntervals;
-
-  private:
-    void parse_configs_() /*throw(Exception)*/;
+    void parse_configs_();
 
     void resolve_user_id_(
       AdServer::Commons::UserId& match_user_id,
@@ -236,20 +215,17 @@ namespace AdServer::Bidding::Grpc
 
     static
     AdServer::CampaignSvcs::AdInstantiateType
-    adapt_instantiate_type_(const std::string& inst_type_str)
-      /*throw(Exception)*/;
+    adapt_instantiate_type_(const std::string& inst_type_str);
 
     static
     SourceTraits::NativeAdsInstantiateType
     adapt_native_ads_instantiate_type_(
-      const std::string& inst_type_str)
-      /*throw(Exception)*/;
+      const std::string& inst_type_str);
 
     static
     AdServer::CampaignSvcs::NativeAdsImpressionTrackerType
     adapt_native_ads_impression_tracker_type_(
-      const std::string& imp_type_str)
-      /*throw(Exception)*/;
+      const std::string& imp_type_str);
 
     static
     SourceTraits::ERIDReturnType
@@ -257,63 +233,38 @@ namespace AdServer::Bidding::Grpc
       const std::string& inst_type_str);
 
   protected:
+    TaskProcessor& helper_task_processor_;
+
     const GrpcContainerPtr grpc_container_;
 
-    // ADSC-10554
-    // Interrupted requests queue
-    Generics::TaskExecutor_var passback_task_runner_;
-    
-    // configuration
+    BackgroundTaskStorage background_task_storage_;
+
     CommonConfigPtr common_config_;
+
     ConfigPtr config_;
+
     Configuration_var frontend_config_;
+
     CommonModule_var common_module_;
+
     unsigned long colo_id_;
+
     SourceMap sources_;
+
     Generics::Time request_timeout_;
+
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
+
     BlacklistedTimeIntervals blacklisted_time_intervals_;
+
     RequestInfoFiller::AccountTraitsById account_traits_;
 
-    Generics::Planner_var planner_;
-    Generics::TaskExecutor_var task_runner_;
-    Generics::TaskRunner_var control_task_runner_;
-    PlannerPool_var planner_pool_;
     StatHolder_var stats_;
 
-    mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;
+    mutable userver::engine::SharedMutex ext_config_lock_;
+
     ExtConfig_var ext_config_;
-
-    Generics::AtomicInt bid_task_count_;
-    Generics::AtomicInt passback_task_count_;
-
-    mutable MaxPendingSyncPolicy::Mutex reached_max_pending_tasks_lock_;
-    unsigned long reached_max_pending_tasks_;
   };
-} // namespace AdServer::Bidding::Grpc
-
-// Inlines
-namespace AdServer::Bidding::Grpc
-{
-  inline
-  Frontend::~Frontend() noexcept
-  {}
-
-  inline
-  void Frontend::set_ext_config_(ExtConfig* config) noexcept
-  {
-    ExtConfig_var new_config = ReferenceCounting::add_ref(config);
-
-    ExtConfigSyncPolicy::WriteGuard lock(ext_config_lock_);
-    ext_config_.swap(new_config);
-  }
-
-  inline
-  Frontend::ExtConfig_var Frontend::get_ext_config_() noexcept
-  {
-    ExtConfigSyncPolicy::ReadGuard lock(ext_config_lock_);
-    return ext_config_;
-  }
 } // namespace AdServer::Bidding::Grpc
 
 #endif // BIDDINGFRONTENDGRPC_BIDDINGFRONTEND_HPP

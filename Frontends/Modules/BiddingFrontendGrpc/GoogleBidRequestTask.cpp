@@ -1,4 +1,5 @@
 // THIS
+#include <Frontends/Modules/BiddingFrontend/google-bidding.pb.h>
 #include <Frontends/Modules/BiddingFrontendGrpc/GoogleBidRequestTask.hpp>
 
 namespace AdServer::Bidding::Grpc
@@ -122,7 +123,7 @@ namespace AdServer::Bidding::Grpc
     void
     fill_google_expanding_attributes(
       Google::BidResponse_Ad* ad,
-      const CORBA::Octet& expanding)
+      const std::uint32_t& expanding)
     {
       if (expanding > 15)
       {
@@ -138,7 +139,7 @@ namespace AdServer::Bidding::Grpc
       }
       else
       {
-        for (short i = 1; i <= expanding; ++i)
+        for (std::uint32_t i = 1; i <= expanding; ++i)
         {
           ::google::protobuf::int32 current =
             Response::Google::CREATIVE_EXPAND_MAP[i];

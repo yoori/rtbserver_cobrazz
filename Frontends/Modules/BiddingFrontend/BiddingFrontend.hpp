@@ -65,6 +65,7 @@ namespace Bidding
     friend class AppNexusBidRequestTask;
 
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
@@ -72,6 +73,7 @@ namespace Bidding
 
   public:
     Frontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -362,6 +364,7 @@ namespace Bidding
       bool add_root_native);
     */
   protected:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     // ADSC-10554

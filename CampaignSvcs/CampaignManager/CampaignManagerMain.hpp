@@ -22,8 +22,9 @@
  * runs orb, creates corba objects, etc.
  * Responsible for general configuration, logging and error handling.
  */
-class CampaignManagerApp_
-  : public AdServer::Commons::ProcessControlVarsLoggerImpl
+class CampaignManagerApp_ final:
+  public AdServer::Commons::ProcessControlVarsLoggerImpl,
+  public Generics::CompositeActiveObject
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

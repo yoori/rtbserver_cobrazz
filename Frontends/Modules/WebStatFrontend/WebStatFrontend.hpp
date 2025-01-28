@@ -39,11 +39,13 @@ namespace WebStat
     public ReferenceCounting::AtomicImpl
   {
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using Exception = FrontendCommons::HTTPExceptions::Exception;
 
   public:
     Frontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -97,6 +99,7 @@ namespace WebStat
       noexcept;
 
   private:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     // configuration

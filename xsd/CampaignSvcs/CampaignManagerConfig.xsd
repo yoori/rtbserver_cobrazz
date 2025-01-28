@@ -133,8 +133,15 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-
     </xsd:sequence>
+
+    <xsd:attribute name="number_grpc_helper_threads" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Pool crutch to solve the problem of blocking operations of the old version.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
 
     <xsd:attribute name="host" type="xsd:string" use="required"/>
     <xsd:attribute name="log_root" type="xsd:string" use="required"/>
@@ -450,6 +457,8 @@
           <xsd:documentation>Defines refs to BillingServer's</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name="BillingGrpcClientPool" type="GrpcClientPoolType"/>
+      <xsd:element name="BillingServerEndpointList" type="EndpointListType"/>
     </xsd:sequence>
     <xsd:attribute name="confirm_bids" type="xsd:boolean" use="required">
       <xsd:annotation>
@@ -681,6 +690,17 @@
         <xsd:attribute name="dump_channel_triggers" type="xsd:boolean" use="required"/>
       </xsd:extension>
     </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointType">
+    <xsd:attribute name="host" type="xsd:string" use="required"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="EndpointListType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="EndpointType" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
   <!-- CampaignManagerLogger ends-->

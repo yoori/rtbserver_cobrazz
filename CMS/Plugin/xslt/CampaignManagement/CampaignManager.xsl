@@ -283,6 +283,10 @@
     rid_private_key="{concat($config-root, '/rid_private_key.der')}"
     >
 
+    <xsl:attribute name="number_grpc_helper_threads"><xsl:value-of select="$campaign-manager-config/@number_grpc_helper_threads"/>
+      <xsl:if test="count($campaign-manager-config/@number_grpc_helper_threads) = 0">1000</xsl:if>
+    </xsl:attribute>
+
     <!-- check that defined all needed parameters -->
     <xsl:choose>
       <xsl:when test="count($colo-id) = 0">
@@ -443,6 +447,28 @@
             <xsl:with-param name="error-prefix" select="'CampaignManager'"/>
           </xsl:call-template>
         </cfg:BillingServerCorbaRef>
+
+        <cfg:BillingGrpcClientPool
+          num_channels="{$grpc-pool-client-num-channels}"
+          num_clients="{$grpc-pool-client-num-clients}"
+          timeout="{$grpc-pool-client-timeout}"
+          enable="true">
+          <xsl:call-template name="GrpcClientChannelArgList"/>
+        </cfg:BillingGrpcClientPool>
+
+        <cfg:BillingServerEndpointList>
+          <xsl:for-each select="$full-cluster-path//service[@descriptor = $billing-server-descriptor]">
+            <cfg:Endpoint>
+              <xsl:attribute name="host"><xsl:value-of select="@host"/></xsl:attribute>
+              <xsl:attribute name="port"><xsl:value-of select="configuration/cfg:billingServer/cfg:networkParams/@grpc_port"/>
+                <xsl:if test="count(configuration/cfg:billingServer/cfg:networkParams/@grpc_port) = 0">
+                  <xsl:value-of select="$def-billing-server-grpc-port"/>
+                </xsl:if>
+              </xsl:attribute>
+            </cfg:Endpoint>
+          </xsl:for-each>
+        </cfg:BillingServerEndpointList>
+
       </cfg:Billing>
     </xsl:if>
 

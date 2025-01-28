@@ -1,9 +1,9 @@
-
 #ifndef AD_CHANNEL_SVCS_SERVER_MAIN_HPP_
 #define AD_CHANNEL_SVCS_SERVER_MAIN_HPP_
 
 #include <eh/Exception.hpp>
 #include <Generics/ActiveObject.hpp>
+#include <Generics/TaskPool.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
 #include <UServerUtils/Manager.hpp>
@@ -17,8 +17,9 @@
 
 #include "ChannelServerImpl.hpp"
 
-class ChannelServerApp_ :
-  public AdServer::Commons::ProcessControlVarsLoggerImpl
+class ChannelServerApp_ final:
+  public AdServer::Commons::ProcessControlVarsLoggerImpl,
+  public Generics::CompositeActiveObject
 {
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -27,6 +28,8 @@ public:
 private:
   using ManagerCoro = UServerUtils::Manager;
   using ManagerCoro_var = UServerUtils::Manager_var;
+  using ShutdownMutex = Sync::PosixMutex;
+  using ShutdownGuard = Sync::PosixGuard;
 
 public:
   ChannelServerApp_() /*throw(eh::Exception)*/;
@@ -73,15 +76,12 @@ private:
 
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
+
   CORBACommons::CorbaConfig corba_config_;
 
-  ManagerCoro_var manager_coro_;
-
   ConfigPtr configuration_;
-  AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;
 
-  typedef Sync::PosixMutex ShutdownMutex;
-  typedef Sync::PosixGuard ShutdownGuard;
+  AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;
 
   ShutdownMutex shutdown_lock_;
 };

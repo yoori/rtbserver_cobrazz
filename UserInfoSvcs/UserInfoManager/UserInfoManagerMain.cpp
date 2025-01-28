@@ -91,6 +91,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
   using ManagerCoro_var = UServerUtils::Manager_var;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
   using UserInfoManagerImpl = AdServer::UserInfoSvcs::UserInfoManagerImpl;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
 
   static const char* FUN = "UserInfoManagerApp_::main()";
   
@@ -188,154 +189,186 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
     add_child_object(user_info_manager_impl_);
 
+    Generics::TaskPool_var task_pool = new Generics::TaskPool(
+      callback(),
+      configuration_->number_grpc_helper_threads(),
+      1024 * 1024 // stack_size
+    );
+    add_child_object(task_pool);
+
     // Creating coroutine manager
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
         logger(),
         config().Coroutine());
 
-    auto init_func = [this] (
-      TaskProcessorContainer& task_processor_container) {
+    auto init_func = [this, task_pool] (
+      TaskProcessorContainer& task_processor_container) mutable {
       auto& main_task_processor =
         task_processor_container.get_main_task_processor();
-      auto components_builder =
-        std::make_unique<ComponentsBuilder>();
 
       auto grpc_server_builder = Config::create_grpc_server_builder(
         logger(),
         config().GrpcServer());
+
+      // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
+      ServiceMode service_mode = ServiceMode::EventToCoroutine;
 
       auto get_master_stamp_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_master_stamp_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::get_master_stamp>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_master_stamp_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_user_profile_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_user_profile_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::get_user_profile>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_user_profile_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto match_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_match_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::match>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         match_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto update_user_freq_caps_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_update_user_freq_caps_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::update_user_freq_caps>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         update_user_freq_caps_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto confirm_user_freq_caps_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_confirm_user_freq_caps_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::confirm_user_freq_caps>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         confirm_user_freq_caps_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto fraud_user_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_fraud_user_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::fraud_user>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         fraud_user_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto remove_user_profile_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_remove_user_profile_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::remove_user_profile>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         remove_user_profile_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto merge_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_merge_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::merge>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         merge_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto consider_publishers_optin_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_consider_publishers_optin_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::consider_publishers_optin>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         consider_publishers_optin_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto uim_ready_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_uim_ready_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::uim_ready>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         uim_ready_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto get_progress_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_progress_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::get_progress>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         get_progress_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
       auto clear_expired_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_clear_expired_Service,
         UserInfoManagerImpl,
         &UserInfoManagerImpl::clear_expired>(
           logger(),
-          user_info_manager_impl_.in());
+          user_info_manager_impl_.in(),
+          task_pool.in());
       grpc_server_builder->add_service(
         clear_expired_service.in(),
-        main_task_processor);
+        main_task_processor,
+        service_mode);
 
+      auto components_builder = std::make_unique<ComponentsBuilder>();
       components_builder->add_grpc_cobrazz_server(
         std::move(grpc_server_builder));
 
       return components_builder;
     };
 
-    ManagerCoro_var manager_coro(
-      new ManagerCoro(
-        std::move(task_processor_container_builder),
-        std::move(init_func),
-        logger()));
+    ManagerCoro_var manager_coro = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger());
 
     add_child_object(manager_coro);
 

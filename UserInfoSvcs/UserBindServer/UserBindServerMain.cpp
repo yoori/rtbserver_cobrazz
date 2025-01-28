@@ -62,6 +62,7 @@ UserBindServerApp_::main(int& argc, char** argv)
   using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
 
   static const char* FUN = "UserBindServerApp_::main()";
   
@@ -154,6 +155,13 @@ UserBindServerApp_::main(int& argc, char** argv)
 
     add_child_object(user_bind_server_impl_);
 
+    Generics::TaskPool_var task_pool = new Generics::TaskPool(
+      callback(),
+      configuration_->number_grpc_helper_threads(),
+      1024 * 1024 // stack_size
+    );
+    add_child_object(task_pool);
+
     // Creating coroutine manager
     auto task_processor_container_builder =
       Config::create_task_processor_container_builder(
@@ -166,8 +174,8 @@ UserBindServerApp_::main(int& argc, char** argv)
         std::shared_mutex>>(logger());
     statistics_provider->add(time_statistics_provider);
 
-    auto init_func = [this, statistics_provider] (
-      TaskProcessorContainer& task_processor_container) {
+    auto init_func = [this, statistics_provider, task_pool] (
+      TaskProcessorContainer& task_processor_container) mutable {
         auto& main_task_processor = task_processor_container.get_main_task_processor();
 
         ComponentsBuilder::StatisticsProviderInfo statistics_provider_info;
@@ -208,60 +216,73 @@ UserBindServerApp_::main(int& argc, char** argv)
           logger(),
           config().GrpcServer());
 
+        // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
+        ServiceMode service_mode = ServiceMode::EventToCoroutine;
+
         auto get_bind_request_service = AdServer::Commons::create_grpc_service<
           AdServer::UserInfoSvcs::UserBindService_get_bind_request_Service,
           AdServer::UserInfoSvcs::UserBindServerImpl,
           &AdServer::UserInfoSvcs::UserBindServerImpl::get_bind_request>(
             logger(),
-            user_bind_server_impl_.in());
+            user_bind_server_impl_.in(),
+            task_pool.in());
 
         grpc_server_builder->add_service(
           get_bind_request_service.in(),
-          main_task_processor);
+          main_task_processor,
+          service_mode);
 
         auto add_bind_request_service = AdServer::Commons::create_grpc_service<
           AdServer::UserInfoSvcs::UserBindService_add_bind_request_Service,
           AdServer::UserInfoSvcs::UserBindServerImpl,
           &AdServer::UserInfoSvcs::UserBindServerImpl::add_bind_request>(
           logger(),
-          user_bind_server_impl_.in());
+          user_bind_server_impl_.in(),
+          task_pool.in());
 
         grpc_server_builder->add_service(
           add_bind_request_service.in(),
-          main_task_processor);
+          main_task_processor,
+          service_mode);
 
         auto get_user_id_service = AdServer::Commons::create_grpc_service<
           AdServer::UserInfoSvcs::UserBindService_get_user_id_Service,
           AdServer::UserInfoSvcs::UserBindServerImpl,
           &AdServer::UserInfoSvcs::UserBindServerImpl::get_user_id>(
           logger(),
-          user_bind_server_impl_.in());
+          user_bind_server_impl_.in(),
+          task_pool.in());
 
         grpc_server_builder->add_service(
           get_user_id_service.in(),
-          main_task_processor);
+          main_task_processor,
+          service_mode);
 
         auto add_user_id_service = AdServer::Commons::create_grpc_service<
           AdServer::UserInfoSvcs::UserBindService_add_user_id_Service,
           AdServer::UserInfoSvcs::UserBindServerImpl,
           &AdServer::UserInfoSvcs::UserBindServerImpl::add_user_id>(
             logger(),
-            user_bind_server_impl_.in());
+            user_bind_server_impl_.in(),
+            task_pool.in());
 
         grpc_server_builder->add_service(
           add_user_id_service.in(),
-          main_task_processor);
+          main_task_processor,
+          service_mode);
 
         auto get_source_service = AdServer::Commons::create_grpc_service<
           AdServer::UserInfoSvcs::UserBindService_get_source_Service,
           AdServer::UserInfoSvcs::UserBindServerImpl,
           &AdServer::UserInfoSvcs::UserBindServerImpl::get_source>(
             logger(),
-            user_bind_server_impl_.in());
+            user_bind_server_impl_.in(),
+            task_pool.in());
 
         grpc_server_builder->add_service(
           get_source_service.in(),
-          main_task_processor);
+          main_task_processor,
+          service_mode);
 
         components_builder->add_grpc_cobrazz_server(
           std::move(grpc_server_builder));
@@ -269,11 +290,10 @@ UserBindServerApp_::main(int& argc, char** argv)
         return components_builder;
       };
 
-    ManagerCoro_var manager_coro(
-      new ManagerCoro(
-        std::move(task_processor_container_builder),
-        std::move(init_func),
-        logger()));
+    ManagerCoro_var manager_coro = new ManagerCoro(
+      std::move(task_processor_container_builder),
+      std::move(init_func),
+      logger());
 
     add_child_object(manager_coro);
 

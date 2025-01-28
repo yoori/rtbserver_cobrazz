@@ -25,6 +25,8 @@ namespace AdServer
   {
     // FrontendsPool
     FrontendsPool::FrontendsPool(
+      TaskProcessor& helper_task_processor,
+      const ServerType server_type,
       const GrpcContainerPtr& grpc_container,
       const char* config_path,
       const ModuleIdArray& modules,
@@ -32,6 +34,8 @@ namespace AdServer
       StatHolder* stats,
       FrontendCommons::HttpResponseFactory* response_factory)
       : FrontendCommons::FrontendInterface(response_factory),
+        helper_task_processor_(helper_task_processor),
+        server_type_(server_type),
         grpc_container_(grpc_container),
         config_(new Configuration(config_path)),
         modules_(modules),
@@ -43,17 +47,25 @@ namespace AdServer
       frontends_.reserve(4);
     }
 
-    bool
-    FrontendsPool::will_handle(const String::SubString&) noexcept
+    void FrontendsPool::activate_object_()
+    {
+      init();
+    }
+
+    void FrontendsPool::deactivate_object_()
+    {
+      shutdown();
+    }
+
+    bool FrontendsPool::will_handle(
+      const String::SubString&) noexcept
     {
       return true;
     }
 
-    void
-    FrontendsPool::handle_request(
+    void FrontendsPool::handle_request(
       FrontendCommons::HttpRequestHolder_var request_holder,
-      FrontendCommons::HttpResponseWriter_var response_writer)
-      noexcept
+      FrontendCommons::HttpResponseWriter_var response_writer) noexcept
     {
       for (auto frontend_it = frontends_.begin();
         frontend_it != frontends_.end(); frontend_it++)
@@ -71,8 +83,7 @@ namespace AdServer
       response_writer->write(404, response);
     }
 
-    void
-    FrontendsPool::handle_request_noparams(
+    void FrontendsPool::handle_request_noparams(
       FrontendCommons::HttpRequestHolder_var request_holder,
       FrontendCommons::HttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/
@@ -93,8 +104,7 @@ namespace AdServer
       response_writer->write(404, response);
     }
 
-    void
-    FrontendsPool::init()
+    void FrontendsPool::init()
       /*throw(eh::Exception)*/
     {
       try
@@ -111,7 +121,7 @@ namespace AdServer
         {
           if(*module_it == M_BIDDING)
           {
-            if (fe_config.BidFeConfiguration()->grpc_enable())
+            if (server_type_ == ServerType::HTTP)
             {
               init_frontend<Bidding::Grpc::Frontend>(
                 fe_config.BidFeConfiguration(),
@@ -255,13 +265,13 @@ namespace AdServer
       catch (const Configuration::InvalidConfiguration& ex)
       {
         Stream::Error ostr;
-        ostr << "Invalid configuration: " << ex.what();
+        ostr << "Invalid configuration: "
+             << ex.what();
         throw Exception(ostr);
       }
     }
 
-    void
-    FrontendsPool::shutdown() noexcept
+    void FrontendsPool::shutdown() noexcept
     {
       for (auto frontend_it = frontends_.begin();
            frontend_it != frontends_.end(); frontend_it++)
@@ -274,8 +284,7 @@ namespace AdServer
     }
 
     template <class Frontend, typename Config, typename ...T>
-    void
-    FrontendsPool::init_frontend(
+    void FrontendsPool::init_frontend(
       const Config& cfg,
       T&&... params)
     { 
@@ -283,6 +292,7 @@ namespace AdServer
       {
         frontends_.emplace_back(
           new Frontend(
+            helper_task_processor_,
             grpc_container_,
             config_,
             std::forward<T>(params)...));

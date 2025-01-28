@@ -107,6 +107,10 @@
     log_root="{concat($workspace-root, '/log/ChannelServer/Out')}"
     service_index="{$SERVICE_ID}">
 
+    <xsl:attribute name="number_grpc_helper_threads"><xsl:value-of select="$channel-server-config/@number_grpc_helper_threads"/>
+      <xsl:if test="count($channel-server-config/@number_grpc_helper_threads) = 0">1000</xsl:if>
+    </xsl:attribute>
+
     <cfg:CorbaConfig>
       <xsl:attribute name="threading-pool"><xsl:value-of select="$channel-server-config/cfg:threadParams/@min"/>
         <xsl:if test="count($channel-server-config/cfg:threadParams/@min) = 0">

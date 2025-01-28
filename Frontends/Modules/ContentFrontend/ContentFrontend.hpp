@@ -24,6 +24,7 @@ namespace AdServer
     public ReferenceCounting::AtomicImpl
   {
   public:
+    using TaskProcessor = userver::engine::TaskProcessor;
     using GrpcContainerPtr = FrontendCommons::GrpcContainerPtr;
     using CommonFeConfiguration = Configuration::FeConfig::CommonFeConfiguration_type;
     using ContentFeConfiguration = Configuration::FeConfig::ContentFeConfiguration_type;
@@ -34,6 +35,7 @@ namespace AdServer
 
   public:
     ContentFrontend(
+      TaskProcessor& helper_task_processor,
       const GrpcContainerPtr& grpc_container,
       Configuration* frontend_config,
       Logging::Logger* logger,
@@ -195,6 +197,7 @@ namespace AdServer
       bool& secure) noexcept;
 
   private:
+    TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;
 
     Configuration_var frontend_config_;

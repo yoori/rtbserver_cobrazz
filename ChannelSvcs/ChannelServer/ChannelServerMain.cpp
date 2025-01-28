@@ -43,17 +43,8 @@ void ChannelServerApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   ShutdownGuard guard(shutdown_lock_);
 
-  if (manager_coro_)
-  {
-    manager_coro_->deactivate_object();
-    manager_coro_->wait_object();
-  }
-
-  if (server_impl_)
-  {
-    server_impl_->deactivate_object();
-    server_impl_->wait_object();
-  }
+  deactivate_object();
+  wait_object();
 
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
 }
@@ -159,6 +150,8 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
   {
     server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(
       logger(), configuration_.get());
+    add_child_object(server_impl_.in());
+
     {
       using namespace AdServer::Commons;
       register_vars_controller();
@@ -189,8 +182,6 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
       PROCESS_STAT_CONTROL_OBJ_KEY, stat_impl.in());
 
     corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-
-    server_impl_->activate_object();
   }
   catch(const AdServer::ChannelSvcs::ChannelServerCustomImpl::Exception& e)
   {
@@ -214,6 +205,14 @@ void ChannelServerApp_::init_coro_()
 {
   using ComponentsBuilder = UServerUtils::ComponentsBuilder;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
+
+  Generics::TaskPool_var task_pool = new Generics::TaskPool(
+    callback(),
+    configuration_->number_grpc_helper_threads(),
+    1024 * 1024 // stack_size
+  );
+  add_child_object(task_pool.in());
 
   // Creating coroutine manager
   auto task_processor_container_builder =
@@ -221,7 +220,7 @@ void ChannelServerApp_::init_coro_()
       logger(),
       configuration_->Coroutine());
 
-  auto init_func = [this] (TaskProcessorContainer& task_processor_container) {
+  auto init_func = [this, task_pool] (TaskProcessorContainer& task_processor_container) mutable {
     auto& main_task_processor = task_processor_container.get_main_task_processor();
     auto components_builder = std::make_unique<ComponentsBuilder>();
 
@@ -229,37 +228,44 @@ void ChannelServerApp_::init_coro_()
       logger(),
       configuration_->GrpcServer());
 
+    // GrpcService only for ServiceMode::EventToCoroutine(optimisation reason)
+    ServiceMode service_mode = ServiceMode::EventToCoroutine;
+
     auto match_service = AdServer::Commons::create_grpc_service<
       AdServer::ChannelSvcs::Proto::ChannelServer_match_Service,
       AdServer::ChannelSvcs::ChannelServerCustomImpl,
       &AdServer::ChannelSvcs::ChannelServerCustomImpl::match>(
         logger(),
-        server_impl_.in());
+        server_impl_.in(),
+        task_pool.in());
     grpc_server_builder->add_service(
       match_service.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
     auto get_ccg_traits_service = AdServer::Commons::create_grpc_service<
       AdServer::ChannelSvcs::Proto::ChannelServer_get_ccg_traits_Service,
       AdServer::ChannelSvcs::ChannelServerCustomImpl,
       &AdServer::ChannelSvcs::ChannelServerCustomImpl::get_ccg_traits>(
         logger(),
-        server_impl_.in());
+        server_impl_.in(),
+        task_pool.in());
     grpc_server_builder->add_service(
       get_ccg_traits_service.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
-    components_builder->add_grpc_cobrazz_server(std::move(grpc_server_builder));
+    components_builder->add_grpc_cobrazz_server(
+      std::move(grpc_server_builder));
 
     return components_builder;
   };
 
-  manager_coro_ = new ManagerCoro(
+  ManagerCoro_var manager_coro = new ManagerCoro(
       std::move(task_processor_container_builder),
       std::move(init_func),
       logger());
-
-  manager_coro_->activate_object();
+  add_child_object(manager_coro.in());
 }
 
 void ChannelServerApp_::main(int& argc, char** argv) noexcept
@@ -299,6 +305,8 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
 
     //Initialization Coroutine system
     init_coro_();
+
+    activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 

@@ -46,13 +46,21 @@ BillingServerApp_::init_coro()
 {
   using ComponentsBuilder = UServerUtils::ComponentsBuilder;
   using TaskProcessorContainer = UServerUtils::TaskProcessorContainer;
+  using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
+
+  Generics::TaskPool_var task_pool = new Generics::TaskPool(
+    callback(),
+    configuration_->number_grpc_helper_threads(),
+    1024 * 1024 // stack_size
+  );
+  add_child_object(task_pool);
 
   auto task_processor_container_builder =
     Config::create_task_processor_container_builder(
       logger(),
       configuration_->Coroutine());
 
-  auto init_func = [this] (TaskProcessorContainer& task_processor_container) {
+  auto init_func = [this, task_pool] (TaskProcessorContainer& task_processor_container) mutable {
     auto& main_task_processor = task_processor_container.get_main_task_processor();
     auto components_builder = std::make_unique<ComponentsBuilder>();
 
@@ -60,45 +68,56 @@ BillingServerApp_::init_coro()
       logger(),
       configuration_->GrpcServer());
 
+    // GrpcService only for ServiceMode::EventToCoroutine(optimisation)
+    ServiceMode service_mode = ServiceMode::EventToCoroutine;
+
     auto check_available_bid = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_check_available_bid_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_check_available_bid_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::check_available_bid>(
       logger(),
-      billing_server_impl_.in());
+      billing_server_impl_.in(),
+      task_pool.in());
     grpc_server_builder->add_service(
       check_available_bid.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
     auto reserve_bid = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_reserve_bid_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_reserve_bid_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::reserve_bid>(
       logger(),
-      billing_server_impl_.in());
+      billing_server_impl_.in(),
+      task_pool.in());
     grpc_server_builder->add_service(
       reserve_bid.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
    auto confirm_bid = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_confirm_bid_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_confirm_bid_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::confirm_bid>(
       logger(),
-      billing_server_impl_.in());
+      billing_server_impl_.in(),
+      task_pool.in());
     grpc_server_builder->add_service(
       confirm_bid.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
     auto add_amount = AdServer::Commons::create_grpc_service<
-      AdServer::CampaignSvcs::Proto::BillingService_add_amount_Service,
+      AdServer::CampaignSvcs::Billing::Proto::BillingService_add_amount_Service,
       AdServer::CampaignSvcs::BillingServerImpl,
       &AdServer::CampaignSvcs::BillingServerImpl::add_amount>(
       logger(),
-      billing_server_impl_.in());
+      billing_server_impl_.in(),
+      task_pool.in());
     grpc_server_builder->add_service(
       add_amount.in(),
-      main_task_processor);
+      main_task_processor,
+      service_mode);
 
     components_builder->add_grpc_cobrazz_server(
       std::move(grpc_server_builder));

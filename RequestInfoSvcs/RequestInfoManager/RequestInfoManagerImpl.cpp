@@ -1,24 +1,24 @@
+// STD
 #include <vector>
 
+// UNIXCOMMONS
 #include <PrivacyFilter/Filter.hpp>
 
+// THIS
 #include <Commons/CorbaAlgs.hpp>
-
-#include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
-
+#include <Commons/LogReferrerUtils.hpp>
+#include <Commons/UserverConfigUtils.hpp>
 #include <RequestInfoSvcs/ExpressionMatcher/ExpressionMatcher.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/BillingProcessor.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/CompositeAdvActionProcessor.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/CompositeTagRequestProcessor.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoContainer.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManagerImpl.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/RequestInfoManagerStats.hpp>
+#include <RequestInfoSvcs/RequestInfoManager/TagRequestProfiler.hpp>
 #include <RequestInfoSvcs/RequestInfoManager/Utils.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
-
-#include <Commons/LogReferrerUtils.hpp>
-
-#include "RequestInfoContainer.hpp"
-#include "TagRequestProfiler.hpp"
-#include "CompositeTagRequestProcessor.hpp"
-#include "CompositeAdvActionProcessor.hpp"
-#include "BillingProcessor.hpp"
-#include "RequestInfoManagerStats.hpp"
-#include "RequestInfoManagerImpl.hpp"
+#include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
 /**
  * At input CampaignManager logs:
@@ -177,12 +177,14 @@ namespace RequestInfoSvcs{
    * RequestInfoManagerImpl
    */
   RequestInfoManagerImpl::RequestInfoManagerImpl(
+    TaskProcessor& task_processor,
     Generics::ActiveObjectCallback* callback,
     Logging::Logger* logger,
     const RequestInfoManagerConfig& request_info_manager_config,
     RequestInfoManagerStatsImpl* rim_stats_impl)
     /*throw(Exception)*/
-    : callback_(ReferenceCounting::add_ref(callback)),
+    : task_processor_(task_processor),
+      callback_(ReferenceCounting::add_ref(callback)),
       logger_(ReferenceCounting::add_ref(logger)),
       SERVICE_INDEX_(request_info_manager_config.service_index()),
       check_logs_callback_(new Logging::ActiveObjectCallbackImpl(
@@ -207,6 +209,63 @@ namespace RequestInfoSvcs{
       RequestInfoManagerConfigType::UserInfoManagerControllerGroup_sequence
       UserInfoManagerControllerGroupSeq;
     const char* stage = "init CorbaClientAdapter";
+
+    try
+    {
+      const std::size_t number_scheduler_threads =
+        std::thread::hardware_concurrency();
+      if (number_scheduler_threads == 0)
+      {
+        Stream::Error stream;
+        stream << FNS
+               << "hardware_concurrency is failed";
+        throw Exception(stream);
+      }
+
+      grpc_scheduler_ = UServerUtils::Grpc::Common::Utils::create_scheduler(
+        number_scheduler_threads,
+        logger_.in());
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't create grpc_scheduler: "
+             << exc.what();
+      throw Exception(stream);
+    }
+
+    try
+    {
+      const auto config_grpc_client_data = Config::create_pool_client_config(
+        request_info_manager_config_.Billing()->BillingGrpcClientPool());
+
+      AdServer::RequestInfoSvcs::GrpcBillingManagerPool::Endpoints endpoints;
+      const auto& endpoints_config =
+        request_info_manager_config_.Billing()->BillingServerEndpointList().Endpoint();
+      for (const auto& endpoint_config : endpoints_config)
+      {
+        endpoints.emplace_back(
+          endpoint_config.host(),
+          endpoint_config.port());
+      }
+
+      grpc_billing_manager_pool_ = new GrpcBillingManagerPool(
+        logger,
+        task_processor,
+        grpc_scheduler_,
+        endpoints,
+        config_grpc_client_data.first,
+        config_grpc_client_data.second);
+    }
+    catch (const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't create grpc_billing_manager_pool: "
+             << exc.what();
+      throw Exception(stream);
+    }
 
     try
     {
@@ -1405,9 +1464,8 @@ namespace RequestInfoSvcs{
         callback_,
         bs_config.storage_root(),
         BillingProcessor::RequestSender_var(
-          new BillingProcessor::BillingServerRequestSender(
-            Config::CorbaConfigReader::read_multi_corba_ref(
-              bs_config.BillingServerCorbaRef()))),
+          new BillingProcessor::GrpcBillingServerRequestSender(
+            grpc_billing_manager_pool_.in())),
         bs_config.threads(), // thread_count
         Generics::Time(bs_config.dump_period()), // dump_period
         Generics::Time(bs_config.send_delayed_period()) // send_delayed_period

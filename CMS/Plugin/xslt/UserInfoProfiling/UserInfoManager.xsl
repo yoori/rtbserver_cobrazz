@@ -102,6 +102,9 @@
     max_freqcap_profile_waiters="8"
     service_index="{$SERVICE_ID}">
 
+    <xsl:attribute name="number_grpc_helper_threads"><xsl:value-of select="$user-info-manager-config/@number_grpc_helper_threads"/>
+      <xsl:if test="count($user-info-manager-config/@number_grpc_helper_threads) = 0">1000</xsl:if>
+    </xsl:attribute>
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
