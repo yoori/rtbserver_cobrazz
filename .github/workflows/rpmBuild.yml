@@ -9,7 +9,7 @@ on:
       - CI
 
 jobs:
-  build:
+  rpmbuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout rtbserver repository
