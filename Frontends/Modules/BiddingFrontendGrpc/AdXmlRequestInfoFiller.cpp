@@ -20,7 +20,7 @@ namespace AdServer::Bidding::Grpc
       const std::string REFERER("ref");
       const std::string KEYWORDS("kw");
       const std::string CATEGORIES("cat");
-    };
+    }
 
     namespace Tokens
     {
@@ -32,7 +32,7 @@ namespace AdServer::Bidding::Grpc
 
     const std::string DEFAULT_BIDFLOORCUR_CURRENCY = "usd";
     const std::string NATIVE_APP_FORMAT = "native";
-  };
+  }
 
   struct AdXmlRequestInfoFiller::Context
   {

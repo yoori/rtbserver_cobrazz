@@ -23,7 +23,7 @@
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
-#include <userver/engine/task/task_processor.hpp>
+#include <engine/task/task_processor.hpp>
 
 // THIS
 #include <CampaignSvcs/BillingServer/proto/BillingServer_client.cobrazz.pb.hpp>
@@ -33,7 +33,7 @@ namespace AdServer::CampaignSvcs
 {
 
 class GrpcBillingStateContainer final:
-  public virtual Generics::CompositeActiveObject,
+  public Generics::CompositeActiveObject,
   public ReferenceCounting::AtomicImpl
 {
 public:
@@ -132,7 +132,6 @@ private:
   using ClientHolderPtr = std::shared_ptr<ClientHolder>;
   using ClientHolders = std::vector<ClientHolderPtr>;
   using FactoryClientHolderPtr = std::unique_ptr<FactoryClientHolder>;
-
   using CheckAvailableBidRequest = AdServer::CampaignSvcs::Billing::Proto::CheckAvailableBidRequest;
   using CheckAvailableBidRequestPtr = std::unique_ptr<CheckAvailableBidRequest>;
   using CheckAvailableBidResponse = AdServer::CampaignSvcs::Billing::Proto::CheckAvailableBidResponse;
@@ -199,12 +198,17 @@ private:
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request_service(
     const ClientHolderPtr& client_holder,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> try_do_request_service(
+    const ClientHolderPtr& client_holder,
+    const Args& ...args) noexcept;
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(
     const std::size_t index,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
 
   CheckAvailableBidRequestPtr create_check_available_bid_request(
     const Generics::Time& time,
@@ -384,21 +388,18 @@ public:
       static_assert(GrpcAlgs::AlwaysFalseV<Client>);
     }
 
-    for (std::size_t i = 1; i <= MaxNumberAttempts; i += 1)
+    auto result = client->write(
+      std::move(request),
+      timeout);
+    if (result.status == Status::Ok)
     {
-      auto result = client->write(std::move(request), timeout);
-      if (result.status == Status::Ok)
-      {
-        return std::move(result.response);
-      }
+      return std::move(result.response);
     }
 
     return {};
   }
 
 private:
-  static constexpr std::size_t MaxNumberAttempts = 5;
-
   const ClientsPtr clients_;
 };
 

@@ -48,12 +48,12 @@ namespace CampaignSvcs
       const String::SubString ALGORITHM_MODEL_FEATURES("features");
       const String::SubString ALGORITHM_MODEL_FEATURES_DIMENSION("features_dimension");
       const String::SubString ALGORITHM_MODEL_FILE("file");
-    };
+    }
 
     const String::SubString JSON_CONFIG_FILE_NAME("config.json");
 
     const String::SubString CTR_CONFIG_FOLDER_NAME_REGEXP("\\d{8}\\.\\d{6}");
-  };
+  }
 
   namespace
   {

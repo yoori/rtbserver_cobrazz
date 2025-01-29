@@ -21,6 +21,8 @@ if(NOT DEFINED UNIXCOMMONS)
   SET(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
 endif()
 
+set(USE_USERVER_PACKAGE FALSE CACHE INTERNAL "")
+
 message(STATUS "Use unixcommons: ${UNIXCOMMONS}")
 set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
 
@@ -56,8 +58,9 @@ find_package(XSD REQUIRED)
 find_package(XercesC REQUIRED)
 find_package(YY REQUIRED)
 find_package(gRPC REQUIRED)
-find_package(gRPC REQUIRED)
-find_package(userver REQUIRED)
+if (${USE_USERVER_PACKAGE})
+  find_package(userver REQUIRED)
+endif()
 
 set(CORBA_INCLUDES ${UNIXCOMMONS}/src/CORBA)
 set(TMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR})

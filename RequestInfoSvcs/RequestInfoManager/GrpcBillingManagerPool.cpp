@@ -9,7 +9,7 @@ namespace Aspect
 
 const char BILLING_MANAGER_POOL[] = "GrpcBillingManagerPool";
 
-}; // namespace Aspect
+} // namespace Aspect
 
 GrpcBillingManagerPool::GrpcBillingManagerPool(
   Logger* logger,
@@ -55,26 +55,16 @@ template<class Client, class Request, class Response, class ...Args>
 std::unique_ptr<Response>
   GrpcBillingManagerPool::do_request_service(
   const ClientHolderPtr& client_holder,
-  Args&& ...args) noexcept
+  const Args& ...args) noexcept
 {
-  try
+  for (std::size_t i = 1; i <= 5; i += 1)
   {
-    std::unique_ptr<Request> request;
-    if constexpr (std::is_same_v<Request, AddAmountRequest>)
-    {
-      request = create_add_amount_request(std::forward<Args>(args)...);
-    }
-    else
-    {
-      static_assert(GrpcAlgs::AlwaysFalseV<Request>);
-    }
-
-    auto response = client_holder->template do_request<Client, Request, Response>(
-      std::move(request),
-      grpc_client_timeout_ms_);
+    auto response = try_do_request_service<Client, Request, Response, Args...>(
+      client_holder,
+      args...);
     if (!response)
     {
-      return {};
+      continue;
     }
 
     const auto data_case = response->data_case();
@@ -107,7 +97,7 @@ std::unique_ptr<Response>
           Stream::Error stream;
           stream << FNS
                  << "Unknown error type";
-          throw Exception(stream);
+          break;
         }
       }
 
@@ -124,8 +114,39 @@ std::unique_ptr<Response>
       Stream::Error stream;
       stream << FNS
              << "Unknown response type";
-      throw Exception(stream);
+      logger_->error(
+        stream.str(),
+        Aspect::BILLING_MANAGER_POOL);
+
+      return response;
     }
+  }
+
+  return {};
+}
+
+template<class Client, class Request, class Response, class ...Args>
+std::unique_ptr<Response> GrpcBillingManagerPool::try_do_request_service(
+  const ClientHolderPtr& client_holder,
+  const Args& ...args) noexcept
+{
+  try
+  {
+    std::unique_ptr<Request> request;
+    if constexpr (std::is_same_v<Request, AddAmountRequest>)
+    {
+      request = create_add_amount_request(args...);
+    }
+    else
+    {
+      static_assert(GrpcAlgs::AlwaysFalseV<Request>);
+    }
+
+    auto response = client_holder->template do_request<Client, Request, Response>(
+      std::move(request),
+      grpc_client_timeout_ms_);
+
+    return response;
   }
   catch (const eh::Exception& exc)
   {
@@ -150,10 +171,9 @@ std::unique_ptr<Response>
 }
 
 template<class Client, class Request, class Response, class ...Args>
-std::unique_ptr<Response>
-GrpcBillingManagerPool::do_request(
+std::unique_ptr<Response> GrpcBillingManagerPool::do_request(
   const std::size_t index,
-  Args&& ...args) noexcept
+  const Args& ...args) noexcept
 {
   if (client_holders_.empty())
   {
@@ -182,7 +202,7 @@ GrpcBillingManagerPool::do_request(
   const auto& client_holder = client_holders_[index];
   auto response = do_request_service<Client, Request, Response>(
     client_holder,
-    std::forward<Args>(args)...);
+    args...);
 
   return response;
 }

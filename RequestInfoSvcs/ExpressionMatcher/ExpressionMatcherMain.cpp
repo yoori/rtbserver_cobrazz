@@ -67,6 +67,7 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
   using HttpServerConfig = UServerUtils::Http::Server::ServerConfig;
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
+  using SecdistConfig = userver::storages::secdist::SecdistConfig;
 
   try
   {
@@ -176,8 +177,11 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
         std::optional<HttpListenerConfig> monitor_listener_config;
         if (monitoring_config.present())
         {
+          UServerUtils::Http::Server::PortConfig port_config;
+          port_config.port = monitoring_config->port();
+
           HttpListenerConfig config;
-          config.port = monitoring_config->port();
+          config.ports.emplace_back(std::move(port_config));
           monitor_listener_config = config;
         }
 
@@ -185,16 +189,22 @@ ExpressionMatcherApp_::main(int& argc, char** argv) noexcept
         server_config.server_name = "HttpExpressionMatcher";
         server_config.monitor_listener_config = monitor_listener_config;
 
+        UServerUtils::Http::Server::PortConfig port_config;
+        port_config.unix_socket_path =
+          "/tmp/http_expression_matcher" + std::to_string(getpid()) + ".sock";
+
         auto& listener_config = server_config.listener_config;
-        listener_config.unix_socket_path = "/tmp/http_expression_matcher" + std::to_string(getpid()) + ".sock";
+        listener_config.ports.emplace_back(std::move(port_config));
         listener_config.handler_defaults = {};
 
         auto& connection_config = listener_config.connection_config;
         connection_config.keepalive_timeout = std::chrono::seconds{10};
 
+        SecdistConfig sec_dist_config;
         auto http_server_builder = std::make_unique<HttpServerBuilder>(
           logger(),
           server_config,
+          sec_dist_config,
           main_task_processor,
           statistic_storage);
         components_builder->add_http_server(std::move(http_server_builder));
