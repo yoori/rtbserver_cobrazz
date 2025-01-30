@@ -211,7 +211,7 @@ TEST(BackgroundTaskStorage, test)
   auto init_func = [] (UServerUtils::TaskProcessorContainer& task_processor_container) {
     auto& main_task_processor = task_processor_container.get_main_task_processor();
 
-    userver::concurrent::BackgroundTaskStorage background_task_storage;
+    userver::concurrent::BackgroundTaskStorage background_task_storage(main_task_processor);
 
     std::vector<userver::engine::TaskWithResult<void>> tasks;
     const std::size_t task_number = 1000;
@@ -220,15 +220,14 @@ TEST(BackgroundTaskStorage, test)
     std::atomic<std::size_t> counter{0};
     for (std::size_t i = 1; i <= task_number; i += 1)
     {
-      background_task_storage.Detach(
-        userver::engine::AsyncNoSpan(
-          main_task_processor,
-          [&counter] () {
-            EXPECT_NO_THROW(userver::engine::InterruptibleSleepFor(std::chrono::seconds(100)));
-            EXPECT_TRUE(userver::engine::current_task::IsCancelRequested());
-            EXPECT_TRUE(userver::engine::current_task::ShouldCancel());
-            counter.fetch_add(1);
-          }));
+      background_task_storage.CriticalAsyncDetach(
+        "test",
+        [&counter] () {
+          EXPECT_NO_THROW(userver::engine::InterruptibleSleepFor(std::chrono::seconds(100)));
+          EXPECT_TRUE(userver::engine::current_task::IsCancelRequested());
+          EXPECT_TRUE(userver::engine::current_task::ShouldCancel());
+          counter.fetch_add(1);
+        });
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));

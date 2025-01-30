@@ -24,7 +24,7 @@ namespace AdServer
   namespace Configuration
   {
     using namespace xsd::AdServer::Configuration;
-  };
+  }
 
   namespace
   {

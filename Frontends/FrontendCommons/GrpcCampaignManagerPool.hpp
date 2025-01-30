@@ -19,7 +19,7 @@
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
 
 // USERVER
-#include <userver/engine/task/task_processor.hpp>
+#include <engine/task/task_processor.hpp>
 
 // THIS
 #include <Commons/GrpcAlgs.hpp>
@@ -796,12 +796,17 @@ private:
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request_service(
     const ClientHolderPtr& client_holder,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> try_do_request_service(
+    const ClientHolderPtr& client_holder,
+    const Args& ...args) noexcept;
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(
     const std::optional<std::string_view> service_id,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
 
 private:
   const Logger_var logger_;
@@ -1040,33 +1045,24 @@ public:
       static_assert(GrpcAlgs::AlwaysFalseV<Client>);
     }
 
-    for (std::size_t i = 1; i <= 5; ++i)
+    auto result = client->write(
+      std::move(request),
+      timeout);
+    if (result.status == Status::Ok)
     {
-      auto result = client->write(std::move(request), timeout);
-      if (result.status == Status::Ok)
-      {
-        return std::move(result.response);
-      }
+      return std::move(result.response);
     }
 
-    set_bad();
     return {};
   }
 
-private:
   void set_bad() noexcept
   {
-    try
-    {
-      const Generics::Time now = Generics::Time::get_time_of_day();
+    const Generics::Time now = Generics::Time::get_time_of_day();
 
-      std::unique_lock lock(mutex_);
-      marked_as_bad_ = true;
-      marked_as_bad_time_ = now;
-    }
-    catch (...)
-    {
-    }
+    std::unique_lock lock(mutex_);
+    marked_as_bad_ = true;
+    marked_as_bad_time_ = now;
   }
 
 private:

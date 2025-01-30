@@ -68,8 +68,6 @@ public:
   using GetUserIdResponsePtr = std::unique_ptr<GetUserIdResponse>;
   using AddUserIdRequestPtr = std::unique_ptr<AddUserIdRequest>;
   using AddUserIdResponsePtr = std::unique_ptr<AddUserIdResponse>;
-  using GetSourceRequestPtr = std::unique_ptr<GetSourceRequest>;
-  using GetSourceResponsePtr = std::unique_ptr<GetSourceResponse>;
 
 public:
   GrpcUserBindOperationDistributor(
@@ -149,9 +147,20 @@ private:
     const String::SubString& user_id);
 
   template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> do_request_service(
+    const PartitionNumber partition_number,
+    const ClientContainerPtr& client_holder,
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> try_do_request_service(
+    const ClientContainerPtr& client_holder,
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(
     const String::SubString& id,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
 
 private:
   const Logger_var logger_;
@@ -312,10 +321,8 @@ public:
     {
       return std::move(result.response);
     }
-    else
-    {
-      return {};
-    }
+
+    return {};
   }
 
 private:
