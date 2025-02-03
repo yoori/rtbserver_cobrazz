@@ -15,6 +15,7 @@ import random
 import shutil
 import flask
 import werkzeug
+import csv
 from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
@@ -63,6 +64,40 @@ def make_keyword(name):
     return r
 
 
+def extract(path):
+    try:
+        if os.path.isfile(path):
+            if path.endswith(".gz"):
+                cmd = ['gunzip', '-df', f'{path}']
+                subprocess.run(cmd)
+        else:
+            for directory, _, files in os.walk(path, True):
+                for file in files:
+                    extract(os.path.join(directory, file))
+    except:
+        pass
+
+class FileAdapterAmber:
+    def get_name(self, filename):
+        return filename
+
+
+class FileAdapterGpm:
+    def __init__(self, dir_path):
+        self.data = {}
+        for _, _, files in os.walk(dir_path, True):
+            for file in files:
+                if file.endswith("taxonomy.csv"):
+                    with open(file, newline='', encoding='utf-8-sig') as csvfile:
+                        reader = csv.DictReader(csvfile, delimiter=';')
+                        for line in reader:
+                            self.data[line['segment_id']] = line
+
+    def get_name(self, filename):
+        number = os.path.basename(filename).split(".")[0]
+        return self.data[number]['name']
+
+
 class Metrics:
     def __init__(self):
         self.uploaded_users = 0
@@ -79,9 +114,19 @@ class UploadDir:
 
 
 class Upload(UploadDir):
-    def __init__(self, service, params):
+    def __init__(self, service, params, dir_info):
         workspace_dir = params["workspace_dir"]
-        super().__init__(params["in_dir"], os.path.join(workspace_dir, "markers"), params["channel_prefix"])
+        super().__init__(dir_info["in_dir"], os.path.join(workspace_dir, "markers"), dir_info["channel_prefix"])
+
+        file_format = dir_info["format"]
+        self.file_adapter = None
+        if file_format == "amber":
+            self.file_adapter = FileAdapterAmber()
+        if file_format == "gpm":
+            self.file_adapter = FileAdapterGpm(dir_info["in_dir"])
+        if self.file_adapter is None:
+            raise RuntimeError(f"Unknown format: {file_format}")
+
         self.service = service
         self.account_id = params["account_id"]
         self.url_segments_dir = params.get("url_segments_dir")
@@ -181,6 +226,7 @@ class Application(Service):
         self.args_parser.add_argument("--private-key-file", help="Private .der key for signing uids.")
         self.args_parser.add_argument("--http-host", help="HTTP endpoint host.")
         self.args_parser.add_argument("--http-port", type=int, help="HTTP endpoint port.")
+        self.args_parser.add_argument("--in-dirs", help="Directories that stores input files.")
 
         self.lock = threading.Lock()
         self.__subprocesses = set()
@@ -197,16 +243,17 @@ class Application(Service):
 
         self.__uploads = {}
 
-        def add_upload(params):
-            name = params["name"]
+        def add_upload(params, dir_info):
+            name = dir_info["format"]
             if name in self.__uploads:
                 raise RuntimeError(f"Upload name duplication: {name}")
-            self.__uploads[name] = Upload(self, params)
+            self.__uploads[name] = Upload(self, params, dir_info)
 
-        if self.params.get("account_id") is not None:
-            add_upload(self.params)
-        for upload in self.config.get("uploads", tuple()):
-            add_upload(upload)
+        for dir_info in self.params["in_dirs"]: 
+            if self.params.get("account_id") is not None:
+                add_upload(self.params, dir_info)
+            for upload in self.config.get("uploads", tuple()):
+                add_upload(upload, dir_info)
 
         self.__upload_threads = self.params["upload_threads"]
 
@@ -289,6 +336,7 @@ class Application(Service):
     async def on_uids_dir(self, pg_cursor, upload, item):
         self.print_(1, f"In dir {item.in_dir}")
         self.print_(1, f"Markers dir {item.markers_dir}")
+        extract(upload.in_dir)
         try:
             with Context(self, in_dir=item.in_dir) as in_dir_ctx:
                 while True:
@@ -305,11 +353,17 @@ class Application(Service):
                         group_info = make_uid_file_group_info(max(
                             in_names_all,
                             key=lambda in_name: os.path.getmtime(os.path.join(item.in_dir, in_name))))
+
+                        if group_info.name.endswith("taxonomy.csv"):
+                            continue
+
+                        filename_alias = upload.file_adapter.get_name(group_info.name)
+
                         reg_marker_name = group_info.name + ".__reg__"
                         keyword = make_keyword(item.channel_prefix.lower() + group_info.name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
                             channel_id = item.channel_prefix + group_info.name.upper()
-                            self.print_(1, f"Registering file group: {reg_marker_name} ({group_info.name}) channel_id {channel_id} account_id {item.account_id} keyword {keyword}")
+                            self.print_(1, f"Registering file group: {reg_marker_name} ({group_info.name} alias \"{filename_alias}\")channel_id {channel_id} account_id {item.account_id} keyword {keyword}")
                             pg_cursor.execute(
                                 SQL_REG_USER,
                                 (channel_id, item.account_id, keyword, keyword, keyword, keyword, keyword))
@@ -330,8 +384,8 @@ class Application(Service):
 
                         for in_name_index, in_name in enumerate(in_names):
                             if in_name_index == 0:
-                                self.print_(1, f"Processing file group: {group_info}")
-                            self.print_(1, f" {in_name_index + 1}) File {in_name}")
+                                self.print_(1, f"Processing file group: {group_info} alias \"{filename_alias}\"")
+                            self.print_(1, f" {in_name_index + 1}) File {in_name} alias \"{filename_alias}\"")
 
                         if len(in_names) > 1:
                             file_groups = {
@@ -357,7 +411,7 @@ class Application(Service):
                                             new_file_group[in_name] = f
                                             if not data:
                                                 f.close()
-                                                self.print_(1, f"Duplicate file: {in_name}")
+                                                self.print_(1, f"Duplicate file: {in_name} alias \"{filename_alias}\"")
                                                 os.remove(os.path.join(item.in_dir, in_name))
                                 file_groups.clear()
                                 new_group_ids = {}
@@ -406,7 +460,7 @@ class Application(Service):
                             try:
                                 file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
                                 self.print_(0, f"Processing...")
-                                with LineReader(self, path=group_info.name, file=file) as f:
+                                with LineReader(self, path=filename_alias, file=file) as f:
                                     await run_lines(f)
                             finally:
                                 with self.lock:
@@ -415,7 +469,7 @@ class Application(Service):
                         self.verify_running()
                         if shp.returncode >= 0:
                             for in_name in in_names:
-                                self.print_(1, f"Done file: {in_name}")
+                                self.print_(1, f"Done file: {in_name} alias \"{filename_alias}\"")
                                 os.remove(os.path.join(item.in_dir, in_name))
 
         except aiohttp.client_exceptions.ClientError as e:
