@@ -64,19 +64,6 @@ def make_keyword(name):
     return r
 
 
-def extract(path):
-    try:
-        if os.path.isfile(path):
-            if path.endswith(".gz"):
-                cmd = ['gunzip', '-df', f'{path}']
-                subprocess.run(cmd)
-        else:
-            for directory, _, files in os.walk(path, True):
-                for file in files:
-                    extract(os.path.join(directory, file))
-    except:
-        pass
-
 class FileAdapterAmber:
     def get_name(self, filename):
         return filename
@@ -249,7 +236,7 @@ class Application(Service):
                 raise RuntimeError(f"Upload name duplication: {name}")
             self.__uploads[name] = Upload(self, params, dir_info)
 
-        for dir_info in self.params["in_dirs"]: 
+        for dir_info in self.params["in_dirs"]:
             if self.params.get("account_id") is not None:
                 add_upload(self.params, dir_info)
             for upload in self.config.get("uploads", tuple()):
@@ -329,6 +316,24 @@ class Application(Service):
             loop.run_until_complete(asyncio.sleep(0.250))
             loop.close()
 
+    def extract(self, path):
+        try:
+            if os.path.isfile(path):
+                if path.endswith(".gz"):
+                    cmd = ['gunzip', '-df', f'{path}']
+                    subprocess.run(cmd)
+            else:
+                for directory, _, files in os.walk(path, True):
+                    for file in files:
+                        self.extract(os.path.join(directory, file))
+        except subprocess.CalledProcessError as e:
+            self.print_(0, f"'gunzip' failed, returned code {e.returncode}")
+            pass
+        except OSError as e:
+            error = str(e)
+            self.print_(0, f"failed to run shell: {error}")
+            pass
+
     async def on_uids(self, upload, pg_cursor):
         for item in upload.get_items():
             await self.on_uids_dir(pg_cursor, upload, item)
@@ -336,7 +341,7 @@ class Application(Service):
     async def on_uids_dir(self, pg_cursor, upload, item):
         self.print_(1, f"In dir {item.in_dir}")
         self.print_(1, f"Markers dir {item.markers_dir}")
-        extract(upload.in_dir)
+        self.extract(upload.in_dir)
         try:
             with Context(self, in_dir=item.in_dir) as in_dir_ctx:
                 while True:
@@ -459,7 +464,7 @@ class Application(Service):
                                 self.__subprocesses.add(shp.pid)
                             try:
                                 file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
-                                self.print_(0, f"Processing...")
+                                self.print_(0, "Processing...")
                                 with LineReader(self, path=filename_alias, file=file) as f:
                                     await run_lines(f)
                             finally:
@@ -572,4 +577,3 @@ class Application(Service):
 if __name__ == "__main__":
     service = Application()
     service.run()
-
