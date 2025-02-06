@@ -103,7 +103,7 @@ def make_keyword(name):
 
 
 class FileAdapterAmber:
-    def get_name(self, filename):
+    def get_alias(self, filename):
         return filename
 
 
@@ -118,7 +118,7 @@ class FileAdapterGpm:
                         for line in reader:
                             self.data[line['segment_id']] = line
 
-    def get_name(self, filename):
+    def get_alias(self, filename):
         number = os.path.basename(filename).split(".")[0]
         return self.data[number]['name']
 
@@ -429,7 +429,7 @@ class Application(Service):
                         if group_info.name.endswith("taxonomy.csv"):
                             continue
 
-                        filename_alias = upload.file_adapter.get_name(
+                        filename_alias = upload.file_adapter.get_alias(
                                 group_info.name)
 
                         reg_marker_name = group_info.name + ".__reg__"
@@ -437,7 +437,7 @@ class Application(Service):
                                                group_info.name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
                             channel_id = (item.channel_prefix +
-                                          group_info.name.upper())
+                                          filename_alias.upper())
                             self.print_(1, "Registering file group: "
                                         f"{reg_marker_name} ({group_info.name}"
                                         f' alias "{filename_alias}") '
@@ -584,7 +584,7 @@ class Application(Service):
                         self.verify_running()
                         if shp.returncode >= 0:
                             for in_name in in_names:
-                                self.print_(1, f"Done file: {in_name} alias"
+                                self.print_(1, f"Done file: {in_name} alias "
                                             f"\"{filename_alias}\"")
                                 os.remove(os.path.join(item.in_dir, in_name))
 
@@ -651,11 +651,15 @@ class Application(Service):
                     in_path = os.path.join(ctx.in_dir, in_name)
                     if ctx.markers.add(in_name, os.path.getmtime(in_path)):
                         self.print_(1, f"Registering URL file: {in_name}")
-                        pg_cursor.execute(SQL_REG_URL, (upload.channel_prefix +
-                                                        in_name.upper(),))
+                        filename_alias = upload.file_adapter.get_alias(in_name)
+                        pg_cursor.execute(
+                                SQL_REG_URL, (upload.channel_prefix +
+                                              filename_alias.upper()))
+                        self.print_(1, filename_alias)
                         channel_id = pg_cursor.fetchone()[0]
                         pg_cursor.execute("COMMIT;")
-                        self.print_(1, f"Uploading URL file: {in_name}")
+                        self.print_(1, f"Uploading URL file: {in_name} alias "
+                                    f"{filename_alias}")
                         with LineReader(self, in_path) as f:
                             for line in f.read_lines():
                                 pg_cursor.execute(SQL_UPLOAD_URL,
