@@ -10,13 +10,11 @@ class LineProgress:
 
     def next_line(self):
         self.index += 1
-        if (self.service.print_line and
-                not self.index % self.service.print_line):
+        if self.service.print_line and not self.index % self.service.print_line:
             self.print_index()
 
     def print_index(self):
-        self.service.print_(self.verbosity, f"Progress {self.name} - "
-                            f"{self.index:,}")
+        self.service.print_(self.verbosity, f"Progress {self.name} - {self.index:,}")
 
 
 class LineFile(File):
@@ -65,3 +63,4 @@ class LineWriter(LineFile):
         self.write(line)
         if progress:
             self.progress.next_line()
+

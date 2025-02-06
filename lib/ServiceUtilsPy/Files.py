@@ -53,7 +53,6 @@ class Files:
             if is_error:
                 f.remove()
             else:
-                path = os.path.join(self.context.out_dir,
-                                    os.path.split(f.path)[1])
-                self.service.print_(0, f"Output file {path}")
+                self.service.print_(0, f"Output file {os.path.join(self.context.out_dir, os.path.split(f.path)[1])}")
                 f.move(self.context.out_dir)
+
