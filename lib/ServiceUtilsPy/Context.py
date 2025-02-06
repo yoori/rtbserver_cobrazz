@@ -7,7 +7,9 @@ from .Markers import Markers
 
 
 class Context:
-    def __init__(self, service, in_dir=None, out_dir=None, markers_dir=None, tmp_dir=None):
+    def __init__(
+            self, service, in_dir=None, out_dir=None, markers_dir=None,
+            tmp_dir=None):
         self.service = service
 
         def make_dir(dir, service_dir):
@@ -22,8 +24,11 @@ class Context:
         self.tmp_dir = make_dir(tmp_dir, service.tmp_dir)
 
         now = datetime.now()
-        self.fname_seed = f"{now.strftime('%Y%m%d')}.{now.strftime('%H%M%S')}.{now.strftime('%f')}.{randint(0, 99999999):08}"
-        self.fname_stamp = ".stamp_" + now.strftime("%Y_%m_%d_%H_%M_%S_") + str(uuid.uuid4())
+        self.fname_seed = (f"{now.strftime('%Y%m%d')}"
+                           f".{now.strftime('%H%M%S')}.{now.strftime('%f')}"
+                           f".{randint(0, 99999999):08}")
+        self.fname_stamp = (".stamp_" + now.strftime("%Y_%m_%d_%H_%M_%S_") +
+                            str(uuid.uuid4()))
 
         self.files = Files(self)
 
@@ -34,7 +39,6 @@ class Context:
 
     def __exit__(self, exc_type, exc_value, traceback):
         is_error = exc_type is not None
-        #self.service.print_(0, f"Finalizing, error={exc_type}...")
+        # self.service.print_(0, f"Finalizing, error={exc_type}...")
         self.files.on_exit(is_error)
         self.markers.on_exit(is_error)
-
