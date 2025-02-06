@@ -16,9 +16,7 @@ add_plugin(".gz", gzip.open)
 
 
 class File:
-    def __init__(
-            self, service, path, mode=None, file=None, remove_on_exit=False,
-            use_plugins=True):
+    def __init__(self, service, path, mode=None, file=None, remove_on_exit=False, use_plugins=True):
         self.service = service
         self.path = path
         self.remove_on_exit = remove_on_exit
@@ -72,3 +70,4 @@ class File:
     def move(self, path):
         self.close()
         shutil.move(self.path, path)
+

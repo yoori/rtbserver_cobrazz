@@ -54,28 +54,17 @@ class Service:
         add_stop_signal("SIGINT")
 
         self.args_parser = argparse.ArgumentParser()
-        self.args_parser.add_argument(
-                "--period", type=float, help="Period between checking files.")
-        self.args_parser.add_argument(
-                "--verbosity", type=int, help="Level of console information.")
-        self.args_parser.add_argument(
-                "--pid-file", help="File with process ID.")
+        self.args_parser.add_argument("--period", type=float, help="Period between checking files.")
+        self.args_parser.add_argument("--verbosity", type=int, help="Level of console information.")
+        self.args_parser.add_argument("--pid-file", help="File with process ID.")
         self.args_parser.add_argument("--config", help="Path to JSON config.")
-        self.args_parser.add_argument(
-                "--print-line", type=int, help="Print each line index.")
-        self.args_parser.add_argument(
-                "--in-dir", help="Directory that stores input files.")
-        self.args_parser.add_argument(
-                "--markers-dir", help="Directory that stores markers.")
-        self.args_parser.add_argument(
-                "--tmp-dir", help="Directory that stores temp files.")
-        self.args_parser.add_argument(
-                "--out-dir", help="Directory that stores output files.")
-        self.args_parser.add_argument(
-                "--log-dir", help="Directory that stores log files.")
-        self.args_parser.add_argument(
-                "--ulimit-files", help="The maximum number of open file "
-                "descriptors.")
+        self.args_parser.add_argument("--print-line", type=int, help="Print each line index.")
+        self.args_parser.add_argument("--in-dir", help="Directory that stores input files.")
+        self.args_parser.add_argument("--markers-dir", help="Directory that stores markers.")
+        self.args_parser.add_argument("--tmp-dir", help="Directory that stores temp files.")
+        self.args_parser.add_argument("--out-dir", help="Directory that stores output files.")
+        self.args_parser.add_argument("--log-dir", help="Directory that stores log files.")
+        self.args_parser.add_argument("--ulimit-files", help="The maximum number of open file descriptors.")
 
     def on_start(self):
         self.args = self.args_parser.parse_args()
@@ -105,8 +94,7 @@ class Service:
 
         if self.log_dir is not None:
             now = datetime.datetime.now()
-            log_fname = (f"{now.strftime('%Y%m%d')}.{now.strftime('%H%M%S')}."
-                         f"{now.strftime('%f')}.{randint(0, 99999999):08}.txt")
+            log_fname = f"{now.strftime('%Y%m%d')}.{now.strftime('%H%M%S')}.{now.strftime('%f')}.{randint(0, 99999999):08}.txt"
             self.log_file = open(os.path.join(self.log_dir, log_fname), "w")
 
         self.pid_file = self.params.get("pid_file")
@@ -122,11 +110,9 @@ class Service:
             try:
                 import resource
                 v = resource.getrlimit(resource.RLIMIT_NOFILE)
-                resource.setrlimit(resource.RLIMIT_NOFILE, (ulimit_files,
-                                                            v[1]))
+                resource.setrlimit(resource.RLIMIT_NOFILE, (ulimit_files, v[1]))
             except ModuleNotFoundError:
-                self.print_(0, "Can't set ulimit_files - module resource not"
-                            "found")
+                self.print_(0, "Can't set ulimit_files - module resource not found")
 
     def on_stop(self):
         if getattr(self, "pid_file", None) is not None:
@@ -135,8 +121,7 @@ class Service:
             try:
                 self.log_file.flush()
             except Exception as e:
-                print(f"Can't flush log file - {e.__class__.__name__}:"
-                      f"{str(e)}")
+                print(f"Can't flush log file - {e.__class__.__name__}:{str(e)}")
             self.log_file.close()
 
     def on_stop_signal(self):
@@ -153,8 +138,7 @@ class Service:
                 text = f"{text.__class__.__name__}:{str(text)}"
             self.print_lock.acquire()
             try:
-                msg = (f"{datetime.datetime.now()} - "
-                       f"{threading.currentThread().name} - {text}")
+                msg = f"{datetime.datetime.now()} - {threading.currentThread().name} - {text}"
                 print(msg, flush=flush)
                 if self.log_file is not None and not self.log_file.closed:
                     try:
@@ -162,8 +146,7 @@ class Service:
                         if flush:
                             self.log_file.flush()
                     except Exception as e:
-                        print(f"Can't write log file - {e.__class__.__name__}"
-                              f":{str(e)}", flush=flush)
+                        print(f"Can't write log file - {e.__class__.__name__}:{str(e)}", flush=flush)
             finally:
                 self.print_lock.release()
 
@@ -191,3 +174,4 @@ class Service:
         for i in range(int(v)):
             yield 0.1
         yield 0.1 * (v - int(v))
+

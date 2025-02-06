@@ -22,8 +22,7 @@ class Markers:
                         self,
                         file,
                         False,
-                        os.path.getmtime(os.path.join(self.context.markers_dir,
-                                                      file)))
+                        os.path.getmtime(os.path.join(self.context.markers_dir, file)))
                 break
 
     def is_added(self, name):
@@ -33,8 +32,7 @@ class Markers:
         try:
             marker = self.__markers[name]
         except KeyError:
-            self.__markers[name] = Marker(self, name, True, time.time()
-                                          if mtime is None else mtime)
+            self.__markers[name] = Marker(self, name, True, time.time() if mtime is None else mtime)
             self.service.print_(0, f"Marker added {name}")
             return True
         if mtime is None or marker.mtime == mtime:
@@ -63,5 +61,5 @@ class Markers:
                     with open(marker.path, "wt"):
                         pass
                     if marker.mtime is not None:
-                        os.utime(marker.path, (os.path.getatime(marker.path),
-                                               marker.mtime))
+                        os.utime(marker.path, (os.path.getatime(marker.path), marker.mtime))
+
