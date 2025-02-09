@@ -28,7 +28,7 @@ set(EVENT_LIBRARIES ${EVENT_LIBRARY} )
 add_definitions(-DLIBNET_LIL_ENDIAN)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(EVENT
+find_package_handle_standard_args(Event
   DEFAULT_MSG
   EVENT_INCLUDE_DIR
   EVENT_LIBRARIES
