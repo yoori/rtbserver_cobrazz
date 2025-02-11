@@ -34,7 +34,7 @@
 #define __open_ssl_ver_req      1.0.1e-42.el7
 %define __open_ssl_ver_req      1.1.1k-7
 %define __vanga_ver_req         1.0.0.20
-%define __rocksdb_ver_req       8.8.1
+%define __rocksdb_ver_req       8.8.1-4
 %define __boost_suffix          176
 
 Name:    foros-server%{?__type:-%__type}
@@ -110,7 +110,7 @@ BuildRequires: bison >= 3.0.4-10
 BuildRequires: zeromq-devel = %__zeromq_ver_req
 BuildRequires: librdkafka-devel = %__librdkafka_ver_req
 BuildRequires: vanga-devel = %__vanga_ver_req
-BuildRequires: rocksdb-devel = %__rocksdb_ver_req
+BuildRequires: rocksdb-devel >= %__rocksdb_ver_req
 Requires: postgresql94-libs >= %{__postgresql_ver_req}
 Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
