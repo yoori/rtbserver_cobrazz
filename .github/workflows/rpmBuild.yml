@@ -1,0 +1,41 @@
+name: ci_rtbserver_rpmbuild
+
+on:
+  push:
+    branches:
+      - CI
+  pull_request:
+    branches:
+      - CI
+
+jobs:
+  rpmbuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout rtbserver repository
+        uses: actions/checkout@v3
+        with:
+          path: rtbserver_cobrazz
+          
+      - name: Checkout unixcomms repository
+        uses: actions/checkout@v3
+        with:
+          repository: yoori/unixcommons_cobrazz.git
+          ref: CI
+          path: unixcommons_cobrazz
+          
+      - name: Set up Docker Compose
+        run: |
+          sudo apt install docker-compose
+          
+      - name: Making base cache
+        working-directory: rtbserver_cobrazz/ci
+        run: |
+          sh envprep.sh
+          exit $?
+          
+      - name: build
+        working-directory: rtbserver_cobrazz/ci
+        run: |
+          docker-compose run rpmbuild;
+          exit $?;

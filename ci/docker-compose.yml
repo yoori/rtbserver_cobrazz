@@ -1,0 +1,212 @@
+services:
+  build:
+    image: oraclelinux:8.7
+    container_name: rtbserver_build
+    tty: true
+    stdin_open: true
+    volumes:
+      - ../../:/app
+      - ./cache/usr:/usr
+      - ./cache/etc:/etc
+      - ./cache/var:/var
+      - ./cache/bin:/bin
+      - ./cache/lib:/lib
+      - ./cache/lib64:/lib64
+      - ./cache/sbin:/sbin
+      - ./cache/opt:/opt
+      
+    working_dir: /app/rtbserver_cobrazz/ci
+    command: |
+      sh -c "
+      pwd
+      echo 'Step 1: Creating yum repository configuration...';
+      printf '[OL8_genius]\\nname=Genius repos $$releasever ($$basearch)\\nbaseurl=http://ui.new-programmatic.com/rpm_repo/$$basearch/\\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle\\ngpgcheck=0\\nenabled=1\\n' > /etc/yum.repos.d/genius.repo;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 1 - Creating yum repository configuration - failed!';
+          exit 101;
+      fi;
+
+      echo 'Step 2: Making yum cache...';
+      yum makecache;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 2 - Making yum cache - failed!';
+          exit 102;
+      fi;
+
+      echo 'Step 3: Disabling PostgreSQL module...';
+      yum list installed postgresql94-devel > /dev/null 2>&1;
+      if [ $$? -ne 0 ]; then
+        yum module disable postgresql -y;
+        if [ $$? -ne 0 ]; then
+          echo 'Step 3 -Disabling PostgreSQL module - failed!';
+          exit 103;
+        fi;
+      fi;
+      
+      echo 'Step 4: Installing required packages...';
+      yum install -y ace-tao-devel autoconf boost176-devel bzip2-devel gcc-c++ grpc-plugins http-parser-devel librdkafka-devel pcre-devel protobuf-compiler protobuf-devel selinux-policy xgboost-devel zeromq-devel rocksdb-devel vanga-devel cmake3 gcc-toolset-10 rsync xerces-c-devel libev-devel userver-devel userver-static yaml-cpp-devel jemalloc-devel libevent-devel cryptopp-devel gflags-devel snappy-devel python3 java-1.8.0-openjdk-devel-1:1.8.0.362.b09-2.el8_7 javapackages-tools foros-geoip GeoIP-devel net-snmp-devel-1:5.8-28.0.1.el8 libxml2-devel-2.9.7-15.el8_7.1 xsd flex bison libpq-devel-13.5-1.el8 rapidjson-devel liburing-devel xgboost postgresql94-devel libxslt-devel httpd-devel apr-devel rpm-build;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 4 - yum install - failed!';
+          exit 104;
+      fi;
+
+      echo 'Step 5: Installing Python packages...';
+      python3 -m pip install protobuf jinja2;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 5 - pip install - failed!';
+          exit 105;
+      fi;
+      
+      echo 'Step 6: Running CMake configuration...';
+      mkdir build 2> /dev/null;
+      cd build;
+      cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../../;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 6 - cmake - failed!';
+          exit 106;
+      fi;
+
+      echo 'Step 7: Building the project...';
+      echo nproc is $$(nproc)
+      make -j2;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 7 - build - failed!';
+          exit 107;
+      fi;
+
+      echo 'Build process completed successfully!';
+      
+      exit 0;
+      "
+  local:
+    image: oraclelinux:8.7
+    container_name: rtbserver_build
+    tty: true
+    stdin_open: true
+    volumes:
+      - ../../:/app
+      - ./cache/usr:/usr
+      - ./cache/etc:/etc
+      - ./cache/var:/var
+      - ./cache/bin:/bin
+      - ./cache/lib:/lib
+      - ./cache/lib64:/lib64
+      - ./cache/sbin:/sbin
+      - ./cache/opt:/opt
+      
+    working_dir: /app/rtbserver_cobrazz/ci
+    command: |
+      sh -c "
+      pwd
+      echo 'Step 1: Creating yum repository configuration...';
+      printf '[OL8_genius]\\nname=Genius repos $$releasever ($$basearch)\\nbaseurl=http://ui.new-programmatic.com/rpm_repo/$$basearch/\\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle\\ngpgcheck=0\\nenabled=1\\n' > /etc/yum.repos.d/genius.repo;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 1 - Creating yum repository configuration - failed!';
+          exit 101;
+      fi;
+
+      echo 'Step 2: Making yum cache...';
+      yum makecache;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 2 - Making yum cache - failed!';
+          exit 102;
+      fi;
+
+      echo 'Step 3: Disabling PostgreSQL module...';
+      yum list installed postgresql94-devel > /dev/null 2>&1;
+      if [ $$? -ne 0 ]; then
+        yum module disable postgresql -y;
+        if [ $$? -ne 0 ]; then
+          echo 'Step 3 -Disabling PostgreSQL module - failed!';
+          exit 103;
+        fi;
+      fi;
+      
+      echo 'Step 4: Installing required packages...';
+      yum install -y ace-tao-devel autoconf boost176-devel bzip2-devel gcc-c++ grpc-plugins http-parser-devel librdkafka-devel pcre-devel protobuf-compiler protobuf-devel selinux-policy xgboost-devel zeromq-devel rocksdb-devel vanga-devel cmake3 gcc-toolset-10 rsync xerces-c-devel libev-devel userver-devel userver-static yaml-cpp-devel jemalloc-devel libevent-devel cryptopp-devel gflags-devel snappy-devel python3 java-1.8.0-openjdk-devel-1:1.8.0.362.b09-2.el8_7 javapackages-tools foros-geoip GeoIP-devel net-snmp-devel-1:5.8-28.0.1.el8 libxml2-devel-2.9.7-15.el8_7.1 xsd flex bison libpq-devel-13.5-1.el8 rapidjson-devel liburing-devel xgboost postgresql94-devel libxslt-devel httpd-devel apr-devel rpm-build;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 4 - yum install - failed!';
+          exit 104;
+      fi;
+
+      echo 'Step 5: Installing Python packages...';
+      python3 -m pip install protobuf jinja2;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 5 - pip install - failed!';
+          exit 105;
+      fi;
+
+      echo 'Without build';
+      tail -f /dev/null
+      
+      exit 0;
+      "
+  rpmbuild:
+    image: oraclelinux:8.7
+    container_name: rtbserver_build
+    tty: true
+    stdin_open: true
+    volumes:
+      - ../../:/app
+      - ./cache/usr:/usr
+      - ./cache/etc:/etc
+      - ./cache/var:/var
+      - ./cache/bin:/bin
+      - ./cache/lib:/lib
+      - ./cache/lib64:/lib64
+      - ./cache/sbin:/sbin
+      - ./cache/opt:/opt
+      
+    working_dir: /app/rtbserver_cobrazz/ci
+    command: |
+      sh -c "
+      pwd
+      echo 'Step 1: Creating yum repository configuration...';
+      printf '[OL8_genius]\\nname=Genius repos $$releasever ($$basearch)\\nbaseurl=http://ui.new-programmatic.com/rpm_repo/$$basearch/\\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle\\ngpgcheck=0\\nenabled=1\\n' > /etc/yum.repos.d/genius.repo;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 1 - Creating yum repository configuration - failed!';
+          exit 101;
+      fi;
+
+      echo 'Step 2: Making yum cache...';
+      yum makecache;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 2 - Making yum cache - failed!';
+          exit 102;
+      fi;
+
+      echo 'Step 3: Disabling PostgreSQL module...';
+      yum list installed postgresql94-devel > /dev/null 2>&1;
+      if [ $$? -ne 0 ]; then
+        yum module disable postgresql -y;
+        if [ $$? -ne 0 ]; then
+          echo 'Step 3 -Disabling PostgreSQL module - failed!';
+          exit 103;
+        fi;
+      fi;
+      
+      echo 'Step 4: Installing required packages...';
+      yum install -y ace-tao-devel autoconf boost176-devel bzip2-devel gcc-c++ grpc-plugins http-parser-devel librdkafka-devel pcre-devel protobuf-compiler protobuf-devel selinux-policy xgboost-devel zeromq-devel rocksdb-devel vanga-devel cmake3 gcc-toolset-10 rsync xerces-c-devel libev-devel userver-devel userver-static yaml-cpp-devel jemalloc-devel libevent-devel cryptopp-devel gflags-devel snappy-devel python3 java-1.8.0-openjdk-devel-1:1.8.0.362.b09-2.el8_7 javapackages-tools foros-geoip GeoIP-devel net-snmp-devel-1:5.8-28.0.1.el8 libxml2-devel-2.9.7-15.el8_7.1 xsd flex bison libpq-devel-13.5-1.el8 rapidjson-devel liburing-devel xgboost postgresql94-devel libxslt-devel apr-devel httpd-devel rpm-build;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 4 - yum install - failed!';
+          exit 104;
+      fi;
+
+      echo 'Step 5: Installing Python packages...';
+      python3 -m pip install protobuf jinja2;
+      if [ $$? -ne 0 ]; then
+          echo 'Step 5 - pip install - failed!';
+          exit 105;
+      fi;
+      
+      echo 'Step 6: Rpm build'
+      cd ../RPM
+      sh buildCi.sh
+      if [ $$? -ne 0 ]; then
+          echo 'Step 6 - Rpm build - failed!';
+          exit 106;
+      fi
+      #tail -f /dev/null
+      
+      exit 0;
+      "
