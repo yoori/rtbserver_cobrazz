@@ -20,7 +20,6 @@ from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
 
-
 SQL_REG_USER = """DO $$DECLARE
   channel_id_val bigint;
   trigger_id_val bigint;
@@ -110,10 +109,11 @@ class FileAdapterAmber:
 class FileAdapterGpm:
     def __init__(self, dir_path):
         self.data = {}
-        for _, _, files in os.walk(dir_path, True):
+        for path, _, files in os.walk(dir_path, True):
             for file in files:
                 if file.endswith("taxonomy.csv"):
-                    with open(file, newline='', encoding='utf-8-sig') as cf:
+                    with open(os.path.join(path, file), newline='',
+                              encoding='utf-8-sig') as cf:
                         reader = csv.DictReader(cf, delimiter=';')
                         for line in reader:
                             self.data[line['segment_id']] = line
@@ -279,6 +279,7 @@ class Application(Service):
         self.__subprocesses = set()
         self.__asyncio_tasks = set()
         self.__http_thread = None
+        self.HTTPConnection = aiohttp.ClientSession
 
     def on_start(self):
         super().on_start()
@@ -411,7 +412,8 @@ class Application(Service):
                     self.verify_running()
                     with Context(
                             self, markers_dir=item.markers_dir) as markers_ctx:
-                        in_names_all = tuple(in_dir_ctx.files.get_in_names())
+                        in_names_all = tuple(in_dir_ctx.files.get_in_names(
+                            lambda f: f.endswith("taxonomy.csv")))
                         with self.lock:
                             upload.metrics_dirty = True
                             item.files_to_upload = len(in_names_all)
@@ -425,9 +427,6 @@ class Application(Service):
                             in_names_all,
                             key=lambda in_name: os.path.getmtime(os.path.join(
                                 item.in_dir, in_name))))
-
-                        if group_info.name.endswith("taxonomy.csv"):
-                            continue
 
                         filename_alias = upload.file_adapter.get_alias(
                                 group_info.name)
@@ -529,7 +528,7 @@ class Application(Service):
                         self.print_(0, f"Unique files count: {len(in_names)}")
 
                         async def run_lines(f):
-                            async with aiohttp.ClientSession() as session:
+                            async with self.HTTPConnection() as session:
                                 tasks = []
                                 loop = asyncio.get_event_loop()
                                 try:
@@ -630,7 +629,7 @@ class Application(Service):
         url = f"{random.choice(self.__upload_url)}/{path}"
         self.print_(3, f"Request url={url} headers={headers} params={params}")
         try:
-            async with session.get(url=url, params=params, headers=headers,
+            async with session.get(url=url, headers=headers, params=params,
                                    ssl=False) as resp:
                 if resp.status != 204:
                     raise aiohttp.client_exceptions.ClientResponseError(
