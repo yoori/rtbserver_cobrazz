@@ -1,0 +1,31 @@
+{
+"ulimit_files": 65,
+"period": 60,
+"upload_wait_time": 1,
+"upload_threads" : 50,
+"pg_host": "postdb00",
+"pg_db": "stat",
+"pg_user": "oix",
+"pg_pass": "68hosnuea5aS5Ex",
+"http_host": "0.0.0.0",
+"http_port": "8013",
+"account_id": 10691,
+"pid_file": "uploader.pid",
+"private_key_file": "/opt/foros/server/share/uuid_keys/private.der",
+"log_dir": "uploader/log/",
+"in_dirs" : [
+{
+"in_dir": "uploader/data/19",
+"format": "gpm",
+"channel_prefix": "RU.TEST.GPM_UPLOAD."
+},
+{
+"in_dir": "uploader/data/66",
+"format": "amber",
+"channel_prefix": "RU.TEST.GPM_UPLOAD."
+}
+],
+"workspace_dir": "uploader/state/",
+"url_segments_dir": "uploader/url_segments/",
+"upload_url": ["http://adfe100:10180"]
+}
