@@ -5,6 +5,7 @@ add_executable(UnitTestNew
   UserInfoSvcs/UserBindServer/FetchableHashTableTest.cpp
   UserInfoSvcs/UserBindServer/UserBindChunkTypesTest.cpp
   UserInfoSvcs/UserInfoContainer/UserInfoContainerTest.cpp
+  PredictorML/PredictorTest.cpp
   test_main.cpp
 )
 
@@ -13,6 +14,7 @@ target_link_libraries(UnitTestNew
   GTest::gtest_main
   ExpressionChannelMatcher
   LogCommons
+  PredictorML
   ProfileMap
   UserBindContainer
   UserInfoContainer
