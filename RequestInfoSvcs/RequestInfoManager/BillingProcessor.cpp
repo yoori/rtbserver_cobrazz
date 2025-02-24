@@ -1,6 +1,5 @@
 #include <Generics/Time.hpp>
 #include <CORBACommons/ObjectPool.hpp>
-#include <PrivacyFilter/Filter.hpp>
 #include <Commons/FileManip.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>

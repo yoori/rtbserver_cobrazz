@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include <Generics/Time.hpp>
-#include <PrivacyFilter/Filter.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserTagRequestMergeProfile.hpp>
 

@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include <Generics/Time.hpp>
-#include <PrivacyFilter/Filter.hpp>
 #include <Generics/DirSelector.hpp>
 #include <Generics/Rand.hpp>
 #include <String/RegEx.hpp>

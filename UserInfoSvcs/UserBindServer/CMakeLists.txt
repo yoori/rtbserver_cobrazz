@@ -22,7 +22,6 @@ target_link_libraries(UserBindContainer
   Commons
   Generics
   LogCommons
-  PrivacyFilter
   ProfileMap
   UServerUtils
 )
@@ -51,7 +50,6 @@ target_link_libraries(UserBindServer
   Commons
   LogCommons
   MessageSaver
-  PrivacyFilter
   ProcessControlVars
   ProfileMap
   UserInfoStatistics

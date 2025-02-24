@@ -25,7 +25,6 @@ target_link_libraries(PassbackContainer
   Generics
   pcre
   PlainStorage2
-  PrivacyFilter
   RequestInfoManagerCompatibility
   UServerUtils
 )
@@ -38,7 +37,6 @@ target_link_libraries(RequestInfoContainer
   Commons
   Generics
   PlainStorage2
-  PrivacyFilter
   ProfileMap
   RequestInfoManagerCompatibility
   pcre
@@ -72,7 +70,6 @@ target_link_libraries(RequestInfoManager
   MessageSaver
   PassbackContainer
   PlainStorage2
-  PrivacyFilter
   ProcessControlVars
   RequestInfoContainer
   RequestInfoManagerConfigXSD
@@ -126,7 +123,6 @@ target_link_libraries(RequestOperationSaver
   LogCommons
   MessageSaver
   PlainStorage3
-  PrivacyFilter
   RequestLogLoader
   UserCampaignReachProfilePST
 )
