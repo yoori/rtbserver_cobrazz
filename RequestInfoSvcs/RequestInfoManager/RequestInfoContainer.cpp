@@ -1,5 +1,4 @@
 #include <Generics/Time.hpp>
-#include <PrivacyFilter/Filter.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <ProfilingCommons/ProfileMap/AsyncRocksDBProfileMap.hpp>
 

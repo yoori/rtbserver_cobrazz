@@ -3,7 +3,6 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <String/StringManip.hpp>
-#include <PrivacyFilter/Filter.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaAlgs.hpp>
 
