@@ -11,8 +11,6 @@ import re
 import signal
 import threading
 
-# add external dependencies: logger_config.py and other
-sys.path.append(os.path.abspath('../../Commons/Python/'))
 from logger_config import get_logger
 
 loggerCH = get_logger('URLindexier ClickHouse', logging.DEBUG)
