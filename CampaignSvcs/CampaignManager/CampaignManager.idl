@@ -306,6 +306,10 @@ module AdServer
         string url_keywords;
 
         string ssp_location;
+
+        string source_country;
+        string source_region;
+        string source_city;
       };
 
       struct AnonymousRequestInfo
