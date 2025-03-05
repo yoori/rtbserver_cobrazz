@@ -516,6 +516,12 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="SSPGeo" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>SSPGeo logger</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="CreativeStat" type="CampaignManagerLoggerType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>CreativeStat logger</xsd:documentation>

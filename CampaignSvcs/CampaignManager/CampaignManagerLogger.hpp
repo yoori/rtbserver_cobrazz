@@ -78,6 +78,7 @@ namespace AdServer
         AdServer::LogProcessing::LogFlushTraits user_agent_stat;
 
         AdServer::LogProcessing::LogFlushTraits prof_research;
+        AdServer::LogProcessing::LogFlushTraits ssp_geo;
         AdServer::LogProcessing::LogFlushTraits web_stat;
         AdServer::LogProcessing::LogFlushTraits research_web_stat;
 
@@ -780,6 +781,10 @@ namespace AdServer
       typedef ReferenceCounting::SmartPtr<ProfilingResearchLogger>
         ProfilingResearchLogger_var;
 
+      class SSPGeoLogger;
+      typedef ReferenceCounting::SmartPtr<SSPGeoLogger>
+          SSPGeoLogger_var;
+
     protected:
       virtual
       ~CampaignManagerLogger() noexcept;
@@ -817,6 +822,7 @@ namespace AdServer
       PassbackStatLogger_var passback_stat_logger_;
       UserAgentStatLogger_var user_agent_stat_logger_;
       ProfilingResearchLogger_var profiling_research_logger_;
+      SSPGeoLogger_var ssp_geo_logger_;
     };
 
     typedef ReferenceCounting::SmartPtr<CampaignManagerLogger>

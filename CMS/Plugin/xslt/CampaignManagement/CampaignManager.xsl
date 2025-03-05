@@ -503,6 +503,7 @@
         <cfg:ResearchWebStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
         <cfg:ProfilingResearch flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       </xsl:if>
+      <cfg:SSPGeo flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       <cfg:CreativeStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       <cfg:ActionRequest flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
       <cfg:PassbackStat flush_period="{$flush-loggers-period}" archive="{$flush-loggers-archive}"/>
