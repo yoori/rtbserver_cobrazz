@@ -310,7 +310,8 @@ namespace Bidding
     fill_by_ip(
       RequestInfo& request_info,
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-      String::SubString ip)
+      String::SubString ip,
+      const JsonProcessingContext* context = nullptr)
       const
       noexcept;
 

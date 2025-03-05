@@ -27,6 +27,7 @@
 #include <LogCommons/WebStat.hpp>
 #include <LogCommons/ResearchWebStat.hpp>
 #include <LogCommons/ResearchProfStat.hpp>
+#include <LogCommons/SSPGeoStat.hpp>
 #include <LogCommons/TagPositionStat.hpp>
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <Commons/GrpcService.hpp>
@@ -814,6 +815,14 @@ CampaignManagerApp_::read_logging_config(
       AdServer::LogProcessing::ResearchProfTraits::log_base_name(),
       config.ProfilingResearch().get(),
       log_params.prof_research);
+  }
+
+  if (config.SSPGeo().present())
+  {
+    read_logger_config(
+      AdServer::LogProcessing::SSPGeoTraits::log_base_name(),
+      config.SSPGeo().get(),
+      log_params.ssp_geo);
   }
 
   log_params.profiling_research_record_limit = config.profiling_research_record_limit();

@@ -4206,11 +4206,11 @@ namespace Bidding
     // Possible IPMatcher and code in CampaignManager not support IPv6
     if (!context.ipv6.empty())
     {
-      fill_by_ip(request_info, request_params, context.ipv6);
+      fill_by_ip(request_info, request_params, context.ipv6, &context);
     }
     else
     {
-      fill_by_ip(request_info, request_params, context.ip);
+      fill_by_ip(request_info, request_params, context.ip, &context);
     }
 
     if(!context.ip.empty())
@@ -5806,7 +5806,8 @@ namespace Bidding
   RequestInfoFiller::fill_by_ip(
     RequestInfo& request_info,
     AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-    String::SubString ip)
+    String::SubString ip,
+    const JsonProcessingContext* context)
     const
     noexcept
   {
@@ -5863,6 +5864,12 @@ namespace Bidding
           request_info.filter_request = true;
         }
       }
+    }
+    if (context)
+    {
+      request_params.source_country << context->ssp_country;
+      request_params.source_region << context->ssp_region;
+      request_params.source_city << context->ssp_city;
     }
   }
 
