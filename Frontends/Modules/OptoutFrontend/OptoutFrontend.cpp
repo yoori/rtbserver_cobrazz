@@ -1,4 +1,3 @@
-
 #include <sstream>
 
 #include <Generics/Time.hpp>
@@ -6,7 +5,6 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <String/StringManip.hpp>
-#include <PrivacyFilter/Filter.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/UserInfoManip.hpp>
 
@@ -304,8 +302,7 @@ namespace AdServer
             ostr << (request_info.oo_operation == OO_OUT ?
                 request_info.user_id.to_string() : new_client_id) <<
               LOG_DELIMITER <<
-              PrivacyFilter::filter(
-                request_info.peer_ip.c_str(), "IP") << LOG_DELIMITER <<
+              request_info.peer_ip << LOG_DELIMITER <<
               request_info.user_agent << LOG_DELIMITER <<
               verify_referer << LOG_DELIMITER <<
               status << LOG_DELIMITER <<
@@ -417,11 +414,8 @@ namespace AdServer
           std::ostringstream dostr;
           dostr << "Debug time: "
             << request_info.debug_time.get_gm_time().format(
-              "%d-%m-%Y %H:%M:%S GMT ")
-            << std::endl
-            << " IP: " << PrivacyFilter::filter(
-              request_info.peer_ip.c_str(), "IP")
-            << std::endl
+              "%d-%m-%Y %H:%M:%S GMT ") << std::endl
+            << " IP: " << request_info.peer_ip << std::endl
             << " User-ID: " << request_info.user_id.to_string() << std::endl
             << " Status: "
             << (request_info.old_oo_type == OO_IN ? 3 :
@@ -485,8 +479,7 @@ namespace AdServer
 
           ostr << (request_info.oo_operation == OO_OUT ?
             request_info.user_id.to_string().c_str() : "") << LOG_DELIMITER <<
-            PrivacyFilter::filter(
-              request_info.peer_ip.c_str(), "IP") << LOG_DELIMITER <<
+            request_info.peer_ip << LOG_DELIMITER <<
             request_info.user_agent << LOG_DELIMITER <<
             verify_referer << LOG_DELIMITER <<
             "0"/*failure*/;

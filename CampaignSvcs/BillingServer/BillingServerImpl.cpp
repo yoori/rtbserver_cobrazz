@@ -1,9 +1,6 @@
 // STD
 #include <list>
 
-// UNIXCOMMONS
-#include <PrivacyFilter/Filter.hpp>
-
 // THIS
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>

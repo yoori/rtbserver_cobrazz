@@ -2,7 +2,6 @@
  * @file UserCampaignReachContainer.cpp
  */
 #include <Generics/Time.hpp>
-#include <PrivacyFilter/Filter.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserCampaignReachProfile.hpp>
 #include <RequestInfoSvcs/RequestInfoCommons/Algs.hpp>
