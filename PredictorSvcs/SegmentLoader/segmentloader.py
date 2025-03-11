@@ -7,28 +7,48 @@ import psycopg2
 from psycopg2 import sql
 from logger_config import get_logger
 
-logger = get_logger('urlIndexWatcher', logging.DEBUG)
-
-db_config = {
-    "dbname": "",
-    "user": "",
-    "password": "",
-    "host": "",
-    "port": ""
-}
-
-connection = psycopg2.connect(**db_config)
+logger = get_logger('urlIndexWatcher', level=logging.DEBUG)
 channel_cache = dict()
+
+def createConnection():
+    required_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    db_config = {
+        "dbname": os.getenv("DB_NAME"),
+        "user": os.getenv("DB_USER"),
+        "password": os.getenv("DB_PASSWORD"),
+        "host": os.getenv("DB_HOST"),
+        "port": os.getenv("DB_PORT")
+    }
+    conn = psycopg2.connect(**db_config)
+    logger.info("Database configuration loaded successfully.")
+    return conn
+
+connection = createConnection();
 
 def execute_query(query, params=(), fetch_one=False, fetch_all=False):
     """Executes a query with automatic resource management."""
     try:
+        logger.debug(f"Executing query: {query} | Params: {params}")
         with connection.cursor() as cursor:
             cursor.execute(query, params)
+
+            if cursor.rowcount == 0:
+                logger.debug("no rows found.")
+                return None
             if fetch_one:
-                return cursor.fetchone()
+                result = cursor.fetchone()
+                logger.debug(f"Fetch one result: {result}")
+                return result
+
             if fetch_all:
-                return cursor.fetchall()
+                result = cursor.fetchall()
+                logger.debug(f"Fetch all result: {result}")
+                return result
+
+            logger.debug("Transaction committed.")
             connection.commit()
     except Exception as e:
         logger.error(f"Database error: {e}")
@@ -38,28 +58,27 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False):
 def initialize_cache(account_id, name_prefix):
     query = """
         SELECT channel_id, name FROM channel 
-        WHERE account_id = %s AND name LIKE %s || '%'
+        WHERE account_id = %s AND name LIKE %s
     """
-    rows = execute_query(query, (account_id, name_prefix), fetch_all=True)
+    logger.debug(f"Initializing cache for account {account_id} with prefix {name_prefix}")
+    rows = execute_query(query, (account_id, name_prefix,), fetch_all=True)
 
     if not rows:
         return {}
 
-    logger.debug("Initializing cache:")
     for ch_id, name in rows:
         logger.debug(f"{name} -> {ch_id}")
         channel_cache[name] = ch_id
-    logger.info(f"Cache initialized with {len(channel_cache)} entries.")
+    logger.info(f"Cache initialized with {len(rows)} entries.")
 
 def get_or_create_channels(account_id, categories):
     if categories:
-        query = sql.SQL("""
-            SELECT adserver.get_taxonomy_channel(%s, %s, 'RU', 'ru')
-        """)
+        query = sql.SQL("""SELECT adserver.get_taxonomy_channel(%s, %s, 'RU', 'ru')""")
 
         result = {}
         for category in categories:
-            channel_id = execute_query(query, (category, account_id), fetch_one=True)
+            logger.debug(f"Fetching channel_id for {category}")
+            channel_id = execute_query(query, (category, account_id,), fetch_one=True)
             if channel_id:
                 result[category] = channel_id[0]
             else:
@@ -104,6 +123,7 @@ def check_channel_triggers(url):
     query = """
         SELECT channel_id FROM channeltriggers WHERE original_trigger = %s;
     """
+    logger.debug(f"Checking channel triggers for URL: {url}")
     rows = execute_query(query, (url,), fetch_all=True)
     existing_channel_ids = set(row[0] for row in rows) if rows else set()
     return existing_channel_ids
@@ -149,7 +169,8 @@ def add_triggers_if_not_exists(url):
                 SELECT * FROM triggers WHERE trigger_type = 'U' AND normalized_trigger = %s AND channel_type = 'A' AND country_code = 'RU'
             )
         """)
-    execute_query(query, (url, url))
+    logger.debug(f"Adding trigger for URL: {url}")
+    execute_query(query, (url, url,))
 
 def get_trigger_id(url):
     query = sql.SQL("""
@@ -184,7 +205,7 @@ def add_channel_triggers(url, channel_ids, trigger_id):
             );
         """
         for channel_id in channel_ids:
-            execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url))
+            execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url,))
 
 def process_urls_category(account_id, url, categories):
     logger.debug(f"Processing URL: {url}, Categories: {categories}")
@@ -200,6 +221,11 @@ def process_urls_category(account_id, url, categories):
 
     delete_channel_triggers(channelid_delete, url)
     add_channel_triggers(url, channelid_add, trigger_id)
+def preprocess_categorys(categorys, prefix):
+    category_with_prefix = []
+    for category in categorys:
+        category_with_prefix.append(prefix + category)
+    return category_with_prefix
 
 def process_file(filePath, account_id, prefix):
     logger.info(f"Processing file: {filePath}")
@@ -210,9 +236,9 @@ def process_file(filePath, account_id, prefix):
         if not isinstance(data, dict):
             logger.error(f"Invalid JSON format {filePath}: Expected a dictionary.")
             return
-
         for url, categorys in data.items():
-            process_urls_category(account_id, url, prefix + categorys)
+            categorys = preprocess_categorys(categorys, prefix)
+            process_urls_category(account_id, url, categorys)
 
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON in {filePath}: {e}")
@@ -265,7 +291,7 @@ def main():
 
     logger.info(f"Using Account ID: {args.account_id}")
     logger.info(f"Using Taxonomy Prefix: \"{args.prefix}\"")
-    logger.info(f"Monitoring folder: {args.folder}, checking every {args.delta} seconds")
+    logger.info(f"Monitoring folder: {args.folder}, checking every {args.interval} seconds")
     logger.info("=================================")
 
     initialize_cache(args.account_id, args.prefix)
