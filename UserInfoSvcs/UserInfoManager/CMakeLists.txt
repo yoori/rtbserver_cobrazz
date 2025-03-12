@@ -33,7 +33,6 @@ target_link_libraries(UserInfoContainer
   LogCommons
   PlainStorage2
   PlainStorage3
-  PrivacyFilter
   UserBaseProfileAdapter
   UserFreqCapProfile
   UserFreqCapProfileAdapter
@@ -60,7 +59,6 @@ target_link_libraries(UserInfoManager
   Commons
   LogCommons
   PlainStorage2
-  PrivacyFilter
   ProcessControlVars
   ProfileMap
   StatsDumper
