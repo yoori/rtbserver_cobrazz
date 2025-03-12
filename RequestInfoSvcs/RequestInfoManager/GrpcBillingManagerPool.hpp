@@ -286,7 +286,7 @@ public:
       GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
-        config_);
+        config);
 
       clients->add_amount_client = factory.create<AddAmountClient>(task_processor_);
 

@@ -468,7 +468,7 @@ public:
       GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
-        config_);
+        config);
 
       clients->check_available_bid_client = factory.create<CheckAvailableBidClient>(task_processor_);
       clients->reserve_bid_client = factory.create<ReserveBidClient>(task_processor_);
