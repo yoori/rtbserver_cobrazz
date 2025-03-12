@@ -7,10 +7,7 @@ import psycopg2
 from psycopg2 import sql
 from logger_config import get_logger
 
-logger = get_logger('urlIndexWatcher', level=logging.DEBUG)
-channel_cache = dict()
-
-def createConnection():
+def create_connection():
     required_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
@@ -23,49 +20,49 @@ def createConnection():
         "port": os.getenv("DB_PORT")
     }
     conn = psycopg2.connect(**db_config)
+    conn.autocommit = False
     logger.info("Database configuration loaded successfully.")
     return conn
 
-connection = createConnection();
-
-def execute_query(query, params=(), fetch_one=False, fetch_all=False):
+def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=False):
     """Executes a query with automatic resource management."""
     try:
         logger.debug(f"Executing query: {query} | Params: {params}")
         with connection.cursor() as cursor:
+            cursor.execute("SET statement_timeout TO %s", (statement_timeout,))
             cursor.execute(query, params)
 
-            if cursor.rowcount == 0:
-                logger.debug("no rows found.")
-                return None
+            result = None
+            # if cursor.rowcount == 0:
+            #     logger.debug("no rows found.")
+
             if fetch_one:
                 result = cursor.fetchone()
                 logger.debug(f"Fetch one result: {result}")
-                return result
 
             if fetch_all:
                 result = cursor.fetchall()
                 logger.debug(f"Fetch all result: {result}")
-                return result
 
-            logger.debug("Transaction committed.")
-            connection.commit()
+            if commit: # DELETE is committed immediately
+                connection.commit()
+                logger.debug("Commit successful.")
+
+            return result
+
     except Exception as e:
         logger.error(f"Database error: {e}")
         connection.rollback()
-        return None
+        raise
 
 def initialize_cache(account_id, name_prefix):
-    query = """
-        SELECT channel_id, name FROM channel 
-        WHERE account_id = %s AND name LIKE %s
-    """
+    query = sql.SQL("""SELECT channel_id, name FROM channel WHERE account_id = %s AND name LIKE %s || '%%' """)
     logger.debug(f"Initializing cache for account {account_id} with prefix {name_prefix}")
     rows = execute_query(query, (account_id, name_prefix,), fetch_all=True)
 
     if not rows:
         return {}
-
+    logger.debug("Cache initialized with:")
     for ch_id, name in rows:
         logger.debug(f"{name} -> {ch_id}")
         channel_cache[name] = ch_id
@@ -78,11 +75,9 @@ def get_or_create_channels(account_id, categories):
         result = {}
         for category in categories:
             logger.debug(f"Fetching channel_id for {category}")
-            channel_id = execute_query(query, (category, account_id,), fetch_one=True)
+            channel_id = execute_query(query, (category, account_id,), fetch_one=True, commit=True)
             if channel_id:
                 result[category] = channel_id[0]
-            else:
-                logger.error(f"Error fetching channel_id for {category}")
         return result
     return {}
 
@@ -90,74 +85,46 @@ def get_or_create_channels(account_id, categories):
 def update_cache(account_id, categories):
     categories_to_add = get_channel_names_not_in_cache(categories)
     if categories_to_add:
+        logger.debug(f"Categories to add to cache: {categories_to_add}")
         new_channels = get_or_create_channels(account_id, categories_to_add)
         channel_cache.update(new_channels)
         logger.debug(f"Updated cache: {new_channels}")
 
-def saveCache(newChannels):
-    if not newChannels:
-        return
-
-    logger.debug("Added to channels cache:")
-    for name, channel_id in newChannels.items():
-        logger.debug(f"{name} -> {channel_id}")
-        channel_cache[name] = channel_id
-
 def get_channel_names_not_in_cache(categories):
-    categorysNotInCache = []
+    categorysNotInCache = set()
     for category in categories:
         if category not in channel_cache.keys():
-            categorysNotInCache.append(category)
+            categorysNotInCache.add(category)
     return categorysNotInCache
 
-def get_channel_ids(categorys):
-    result = []
-    for category in categorys:
+def get_channel_ids(categories):
+    result = set()
+    for category in categories:
         if category in channel_cache.keys():
-            result.append(channel_cache[category])
+            result.add(channel_cache[category])
         else:
             logger.error(f"Category {category} not found in cache")
     return result
 
-def check_channel_triggers(url):
+def get_channelids_for_url(url, prefix):
     query = """
-        SELECT channel_id FROM channeltriggers WHERE original_trigger = %s;
+    SELECT ct.channel_id FROM channeltrigger ct JOIN channel c ON ct.channel_id = c.channel_id
+    WHERE ct.trigger_type = 'U' AND ct.original_trigger = %s AND c.name LIKE %s || '%%'
     """
-    logger.debug(f"Checking channel triggers for URL: {url}")
-    rows = execute_query(query, (url,), fetch_all=True)
+    logger.debug(f"Checking channeltrigger for URL: {url}")
+    rows = execute_query(query, (url,prefix,), fetch_all=True)
     existing_channel_ids = set(row[0] for row in rows) if rows else set()
     return existing_channel_ids
 
-def get_to_del_and_add(existing_channel_Ids, channel_ids):
-    to_add = []
-    to_delete = []
-
-    for ch_id in channel_ids:
-        if ch_id not in existing_channel_Ids:
-            to_add.append(ch_id)
-        else:
-            to_delete.append(ch_id)
+def get_to_del_and_add(existing_channelids, incoming_channelids):
+    logger.debug(f"Existing channel IDs: {existing_channelids}")
+    logger.debug(f"Incoming channel IDs: {incoming_channelids}")
+    to_delete = existing_channelids - incoming_channelids
+    to_add = incoming_channelids - existing_channelids
+    logger.info(f"Channels to delete: {to_delete}")
+    logger.info(f"Channels to add: {to_add}")
 
     return to_delete, to_add
-
-def getChannelIdsFromDB(channelNames, accountId):
-    if not channelNames:
-        return
-
-    channelIds = []
-    for channelName in channelNames:
-        query = sql.SQL("""
-            SELECT adserver.get_taxonomy_channel(%s, %s, 'RU', 'ru')
-        """)
-        try:
-            cursor = connection.cursor()
-            cursor.execute(query, (channelName, accountId))
-            result = cursor.fetchone()
-            channelIds.append(result[0])
-        except Exception as e:
-            logger.error(f"Error fetching channel_id: {e}")
-            return None
-    return channelIds
 
 def add_triggers_if_not_exists(url):
     query = sql.SQL("""
@@ -170,7 +137,7 @@ def add_triggers_if_not_exists(url):
             )
         """)
     logger.debug(f"Adding trigger for URL: {url}")
-    execute_query(query, (url, url,))
+    execute_query(query, (url, url,), commit=True)
 
 def get_trigger_id(url):
     query = sql.SQL("""
@@ -178,54 +145,63 @@ def get_trigger_id(url):
         FROM triggers
         WHERE normalized_trigger = %s and trigger_type = 'U' and country_code = 'RU'and channel_type = 'A'
     """)
-    try:
-        cursor = connection.cursor()
-        cursor.execute(query, (url,))
-        result = cursor.fetchone()
-        return result[0]
-    except Exception as e:
-        logger.error(f"Error fetching trigger_id: {e}")
-        return None
+    rows = execute_query(query, (url, ), fetch_one=True)
+    trigger_id = None
+    if rows:
+        trigger_id = rows[0]
+        logger.info(f"Trigger ID: {trigger_id}")
+    return trigger_id
 
 def delete_channel_triggers(channel_Ids, url):
     if channel_Ids:
+        logger.info(f"Deleting: {url} => {channel_Ids}")
         query = sql.SQL("""
-            DELETE FROM channeltrigger WHERE channel_id IN (%s)
+            DELETE FROM channeltrigger WHERE channel_id in %s
             and original_trigger = %s
         """)
-        execute_query(query, (channel_Ids,url,))
+        execute_query(query, (tuple(channel_Ids),url,), commit=False)
 
 def add_channel_triggers(url, channel_ids, trigger_id):
     if channel_ids:
+        logger.info(f"Add: {url}({trigger_id}) => {channel_ids}")
+
         query = """
-            INSERT INTO channeltriggers (trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
-            SELECT %s, %s, 'A', 'P', 'RU', %s, 'A', false
+            INSERT INTO channeltrigger (trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
+            SELECT %s, %s, 'A', 'U', 'RU', %s, 'A', false
             WHERE NOT EXISTS (
-                SELECT * FROM channeltriggers WHERE trigger_id = %s AND channel_id = %s AND channel_type = 'A' AND trigger_type = 'P' AND country_code = 'RU' AND original_trigger = %s
+                SELECT * FROM channeltrigger WHERE trigger_id = %s AND channel_id = %s AND channel_type = 'A' AND trigger_type = 'P' AND country_code = 'RU' AND original_trigger = %s
             );
         """
         for channel_id in channel_ids:
-            execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url,))
-
-def process_urls_category(account_id, url, categories):
-    logger.debug(f"Processing URL: {url}, Categories: {categories}")
+            logger.debug(f"Adding {url}({trigger_id}) => {channel_id}")
+            execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url,), commit=True)
+def process_urls_category(account_id, url, categories, prefix):
+    logger.info(f"Processing {url} => {categories}")
 
     update_cache(account_id, categories)
-    channel_ids = get_channel_ids(categories)
+    new_channel_ids = get_channel_ids(categories)
 
     add_triggers_if_not_exists(url)
     trigger_id = get_trigger_id(url)
 
-    urls_channel_ids = check_channel_triggers(url)
-    channelid_delete, channelid_add = get_to_del_and_add(urls_channel_ids, channel_ids)
+    existing_channelIds = get_channelids_for_url(url, prefix)
+    channelid_delete, channelid_add = get_to_del_and_add(existing_channelIds, new_channel_ids)
 
     delete_channel_triggers(channelid_delete, url)
     add_channel_triggers(url, channelid_add, trigger_id)
-def preprocess_categorys(categorys, prefix):
-    category_with_prefix = []
-    for category in categorys:
-        category_with_prefix.append(prefix + category)
+
+def remove_duplicates(channelIds):
+    return list(set(channelIds))
+def make_start_with_capital(channelIds):
+    return [x.capitalize() for x in channelIds]
+def add_prefix_to_categories(categories, prefix):
+    category_with_prefix = set()
+    for category in categories:
+        category_with_prefix.add(prefix + category)
     return category_with_prefix
+
+def preprocess_categories(categories, prefix):
+    return add_prefix_to_categories(remove_duplicates(make_start_with_capital(categories)), prefix)
 
 def process_file(filePath, account_id, prefix):
     logger.info(f"Processing file: {filePath}")
@@ -236,10 +212,12 @@ def process_file(filePath, account_id, prefix):
         if not isinstance(data, dict):
             logger.error(f"Invalid JSON format {filePath}: Expected a dictionary.")
             return
-        for url, categorys in data.items():
-            categorys = preprocess_categorys(categorys, prefix)
-            process_urls_category(account_id, url, categorys)
 
+        for url, categories in data.items():
+            categories = preprocess_categories(categories, prefix)
+            process_urls_category(account_id, url, categories, prefix)
+
+        return 0
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON in {filePath}: {e}")
         return 2
@@ -247,7 +225,7 @@ def process_file(filePath, account_id, prefix):
         logger.error(f"Unexpected error processing file {filePath}: {e}")
         return 3
 
-def monitorFolder(folder_path, account_id, prefix, interval):
+def monitor_folder(folder_path, account_id, prefix, interval):
     processed_files = set()
 
     while True:
@@ -266,9 +244,11 @@ def monitorFolder(folder_path, account_id, prefix, interval):
                 file_path = os.path.join(folder_path, file_name)
                 if os.path.isfile(file_path):
                     if not process_file(file_path, account_id, prefix):
-                        logger.warning(f"File {file_name} was not processed successfully. Retrying next time.")
-                    else:
                         processed_files.add(file_name)
+                        logger.info(f"{file_name} processed successfully.")
+                    else:
+                        logger.warning(f"{file_name} not processed successfully. Retrying next time.")
+
             time.sleep(interval)
         except KeyboardInterrupt:
             logger.warning("Monitoring stopped by user.")
@@ -278,11 +258,19 @@ def monitorFolder(folder_path, account_id, prefix, interval):
             time.sleep(interval)
 
 def main():
+    global logger
+    global connection
+    global channel_cache
+    global statement_timeout
+
+    logger = get_logger('urlIndexWatcher', level=logging.INFO)
+
     parser = argparse.ArgumentParser(description="Monitor a folder for new files.")
     parser.add_argument("--folder", default="../UrlIndexer/GPTresults/", help="Path to the folder to monitor")
-    parser.add_argument("--account_id", required=True, help="Account ID for processing")
+    parser.add_argument("--account_id", type=int, required=True, help="Account ID for processing")
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=int, default=30, help="Interval in seconds")
+    parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
     args = parser.parse_args()
 
     if not os.path.isdir(args.folder):
@@ -292,11 +280,16 @@ def main():
     logger.info(f"Using Account ID: {args.account_id}")
     logger.info(f"Using Taxonomy Prefix: \"{args.prefix}\"")
     logger.info(f"Monitoring folder: {args.folder}, checking every {args.interval} seconds")
+    logger.info(f"Statement timeout: {args.statement_timeout} ms")
     logger.info("=================================")
+
+    statement_timeout = args.statement_timeout
+    connection = create_connection()
+    channel_cache = dict()
 
     initialize_cache(args.account_id, args.prefix)
 
-    monitorFolder(args.folder, args.account_id, args.prefix, args.interval)
+    monitor_folder(args.folder, args.account_id, args.prefix, args.interval)
 
 
 if __name__ == "__main__":
