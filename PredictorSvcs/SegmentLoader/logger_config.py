@@ -2,6 +2,7 @@
 import logging
 import colorlog
 
+
 def get_logger(name='main', level=logging.INFO):
     """
     Returns the configured logger with the specified name.

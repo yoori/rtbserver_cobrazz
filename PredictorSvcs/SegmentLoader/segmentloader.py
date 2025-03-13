@@ -7,6 +7,7 @@ import psycopg2
 from psycopg2 import sql
 from logger_config import get_logger
 
+
 def create_connection():
     required_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -23,6 +24,7 @@ def create_connection():
     conn.autocommit = False
     logger.info("Database configuration loaded successfully.")
     return conn
+
 
 def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=False):
     """Executes a query with automatic resource management."""
@@ -44,7 +46,7 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=Fal
                 result = cursor.fetchall()
                 logger.debug(f"Fetch all result: {result}")
 
-            if commit: # DELETE is committed immediately
+            if commit:  # DELETE is committed immediately
                 connection.commit()
                 logger.debug("Commit successful.")
 
@@ -54,6 +56,7 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=Fal
         logger.error(f"Database error: {e}")
         connection.rollback()
         raise
+
 
 def initialize_cache(account_id, name_prefix):
     query = sql.SQL("""SELECT channel_id, name FROM channel WHERE account_id = %s AND name LIKE %s || '%%' """)
@@ -67,6 +70,7 @@ def initialize_cache(account_id, name_prefix):
         logger.debug(f"{name} -> {ch_id}")
         channel_cache[name] = ch_id
     logger.info(f"Cache initialized with {len(rows)} entries.")
+
 
 def get_or_create_channels(account_id, categories):
     if categories:
@@ -90,12 +94,14 @@ def update_cache(account_id, categories):
         channel_cache.update(new_channels)
         logger.debug(f"Updated cache: {new_channels}")
 
+
 def get_channel_names_not_in_cache(categories):
     categorysNotInCache = set()
     for category in categories:
         if category not in channel_cache.keys():
             categorysNotInCache.add(category)
     return categorysNotInCache
+
 
 def get_channel_ids(categories):
     result = set()
@@ -106,15 +112,17 @@ def get_channel_ids(categories):
             logger.error(f"Category {category} not found in cache")
     return result
 
+
 def get_channelids_for_url(url, prefix):
     query = """
     SELECT ct.channel_id FROM channeltrigger ct JOIN channel c ON ct.channel_id = c.channel_id
     WHERE ct.trigger_type = 'U' AND ct.original_trigger = %s AND c.name LIKE %s || '%%'
     """
     logger.debug(f"Checking channeltrigger for URL: {url}")
-    rows = execute_query(query, (url,prefix,), fetch_all=True)
+    rows = execute_query(query, (url, prefix, ), fetch_all=True)
     existing_channel_ids = set(row[0] for row in rows) if rows else set()
     return existing_channel_ids
+
 
 def get_to_del_and_add(existing_channelids, incoming_channelids):
     logger.debug(f"Existing channel IDs: {existing_channelids}")
@@ -126,18 +134,24 @@ def get_to_del_and_add(existing_channelids, incoming_channelids):
 
     return to_delete, to_add
 
+
 def add_triggers_if_not_exists(url):
     query = sql.SQL("""
             INSERT INTO public.triggers (
                 trigger_type, normalized_trigger, qa_status, channel_type, country_code
             )
             SELECT 'U', %s,'A','A','RU'
-            WHERE NOT EXISTS (
-                SELECT * FROM triggers WHERE trigger_type = 'U' AND normalized_trigger = %s AND channel_type = 'A' AND country_code = 'RU'
+             WHERE NOT EXISTS (
+                SELECT * FROM triggers
+                 WHERE trigger_type = 'U'
+                   AND normalized_trigger = %s
+                   AND channel_type = 'A'
+                   AND country_code = 'RU'
             )
         """)
     logger.debug(f"Adding trigger for URL: {url}")
     execute_query(query, (url, url,), commit=True)
+
 
 def get_trigger_id(url):
     query = sql.SQL("""
@@ -152,6 +166,7 @@ def get_trigger_id(url):
         logger.info(f"Trigger ID: {trigger_id}")
     return trigger_id
 
+
 def delete_channel_triggers(channel_Ids, url):
     if channel_Ids:
         logger.info(f"Deleting: {url} => {channel_Ids}")
@@ -159,22 +174,32 @@ def delete_channel_triggers(channel_Ids, url):
             DELETE FROM channeltrigger WHERE channel_id in %s
             and original_trigger = %s
         """)
-        execute_query(query, (tuple(channel_Ids),url,), commit=False)
+        execute_query(query, (tuple(channel_Ids), url, ), commit=False)
+
 
 def add_channel_triggers(url, channel_ids, trigger_id):
     if channel_ids:
         logger.info(f"Add: {url}({trigger_id}) => {channel_ids}")
 
         query = """
-            INSERT INTO channeltrigger (trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
+            INSERT INTO channeltrigger
+            (trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
             SELECT %s, %s, 'A', 'U', 'RU', %s, 'A', false
             WHERE NOT EXISTS (
-                SELECT * FROM channeltrigger WHERE trigger_id = %s AND channel_id = %s AND channel_type = 'A' AND trigger_type = 'P' AND country_code = 'RU' AND original_trigger = %s
+                SELECT * FROM channeltrigger
+                 WHERE trigger_id = %s
+                   AND channel_id = %s
+                   AND channel_type = 'A'
+                   AND trigger_type = 'P'
+                   AND country_code = 'RU'
+                   AND original_trigger = %s
             );
         """
         for channel_id in channel_ids:
             logger.debug(f"Adding {url}({trigger_id}) => {channel_id}")
             execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url,), commit=True)
+
+
 def process_urls_category(account_id, url, categories, prefix):
     logger.info(f"Processing {url} => {categories}")
 
@@ -190,18 +215,25 @@ def process_urls_category(account_id, url, categories, prefix):
     delete_channel_triggers(channelid_delete, url)
     add_channel_triggers(url, channelid_add, trigger_id)
 
+
 def remove_duplicates(channelIds):
     return list(set(channelIds))
+
+
 def make_start_with_capital(channelIds):
     return [x.capitalize() for x in channelIds]
+
+
 def add_prefix_to_categories(categories, prefix):
     category_with_prefix = set()
     for category in categories:
         category_with_prefix.add(prefix + category)
     return category_with_prefix
 
+
 def preprocess_categories(categories, prefix):
     return add_prefix_to_categories(remove_duplicates(make_start_with_capital(categories)), prefix)
+
 
 def process_file(filePath, account_id, prefix):
     logger.info(f"Processing file: {filePath}")
@@ -224,6 +256,7 @@ def process_file(filePath, account_id, prefix):
     except Exception as e:
         logger.error(f"Unexpected error processing file {filePath}: {e}")
         return 3
+
 
 def monitor_folder(folder_path, account_id, prefix, interval):
     processed_files = set()
@@ -256,6 +289,7 @@ def monitor_folder(folder_path, account_id, prefix, interval):
         except Exception as e:
             logger.error(f"Error in monitoring loop: {e}")
             time.sleep(interval)
+
 
 def main():
     global logger
@@ -294,4 +328,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
