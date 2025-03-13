@@ -5867,9 +5867,9 @@ namespace Bidding
     }
     if (context)
     {
-      request_params.source_country = context->ssp_country;
-      request_params.source_region = context->ssp_region;
-      request_params.source_city = context->ssp_city;
+      request_params.source_country << context->ssp_country;
+      request_params.source_region << context->ssp_region;
+      request_params.source_city << context->ssp_city;
     }
   }
 

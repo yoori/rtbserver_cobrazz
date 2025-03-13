@@ -780,6 +780,10 @@ namespace AdServer
       typedef ReferenceCounting::SmartPtr<ProfilingResearchLogger>
         ProfilingResearchLogger_var;
 
+      class SSPGeoLogger;
+      typedef ReferenceCounting::SmartPtr<SSPGeoLogger>
+          SSPGeoLogger_var;
+
     protected:
       virtual
       ~CampaignManagerLogger() noexcept;

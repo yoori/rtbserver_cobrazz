@@ -28,6 +28,7 @@
 #include <LogCommons/WebStat.hpp>
 #include <LogCommons/ResearchWebStat.hpp>
 #include <LogCommons/ResearchProfStat.hpp>
+#include <LogCommons/SSPGeoStat.hpp>
 
 #include <LogCommons/LogHolder.hpp>
 
@@ -1199,6 +1200,137 @@ namespace AdServer
       ~ProfilingResearchLogger() noexcept = default;
     };
 
+
+    /**  SSPGeoLogger */
+    class CampaignManagerLogger::SSPGeoLogger:
+       public virtual AdServer::LogProcessing::LogHolderLimitedDataAdd<
+           AdServer::LogProcessing::SSPGeoTraits,
+           AdServer::LogProcessing::SimpleCsvSavePolicy<
+               AdServer::LogProcessing::SSPGeoTraits>>,
+       public virtual ReferenceCounting::AtomicImpl
+    {
+    public:
+        DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
+
+        ProfilingResearchLogger(
+            Logging::Logger* logger,
+            size_t limit,
+            float sampling,
+            const AdServer::LogProcessing::LogFlushTraits& flush_traits,
+            Commons::LogReferrer::Setting log_referrer_setting)
+            /*throw(Exception)*/
+            : AdServer::LogProcessing::LogHolderLimitedDataAdd<
+                  AdServer::LogProcessing::SSPGeoTraits,
+                  AdServer::LogProcessing::SimpleCsvSavePolicy<
+                      AdServer::LogProcessing::SSPGeoTraits>>
+            (logger, limit, flush_traits),
+            sampling_(static_cast<unsigned long>(
+                sampling * CampaignSvcs::RANDOM_PARAM_MAX / 100.f + 0.5f)),
+            log_referrer_setting_(log_referrer_setting)
+        {}
+
+        void
+        process_request(
+            const CampaignManagerLogger::RequestInfo& request_info)
+        /*throw(Exception)*/
+        {
+            static const char* FUN = "SSPGeoLogger::process_request()";
+            if (request_info.log_as_test || request_info.random >= sampling_)
+            {
+                return;
+            }
+
+            try
+            {
+                // CollectorT::DataT data;
+                // data.time = request_info.time;
+                // data.app = request_info.client_app;
+                // data.colo_id = request_info.colo_id;
+                // user_id_hash(data.hid_hash, request_info.household_id);
+                // data.ip_addr_hash = request_info.ip_hash;
+                // data.referer = Commons::LogReferrer::normalize_referrer(
+                //     request_info.referer, log_referrer_setting_, "");
+                // // check next
+                // data.device_channel_id = request_info.last_platform_channel_id;
+
+                // if(request_info.user_status == US_TEMPORARY)
+                // {
+                //     // data.uid_hash = "";
+                //     user_id_hash(data.tuid_hash, request_info.user_id);
+                // }
+                // else
+                // {
+                //     user_id_hash(data.uid_hash, request_info.user_id);
+                //     user_id_hash(data.tuid_hash, request_info.merged_user_id);
+                // }
+
+                // data.page_keywords = request_info.page_keywords;
+                // data.search_keywords = request_info.search_words;
+                // data.url_keywords = request_info.url_keywords;
+
+                // // In Rprof channels is triggered_channels, not history. See: ADSC-9874
+                // {
+                //     ChannelIdSet tmp; // garantee unique final list.
+
+                //     std::copy(
+                //         request_info.triggered_channels.url_channels.begin(),
+                //         request_info.triggered_channels.url_channels.end(),
+                //         std::inserter(
+                //             tmp,
+                //             tmp.begin()));
+
+                //     std::copy(
+                //         request_info.triggered_channels.page_channels.begin(),
+                //         request_info.triggered_channels.page_channels.end(),
+                //         std::inserter(
+                //             tmp,
+                //             tmp.begin()));
+
+                //     std::copy(
+                //         request_info.triggered_channels.search_channels.begin(),
+                //         request_info.triggered_channels.search_channels.end(),
+                //         std::inserter(
+                //             tmp,
+                //             tmp.begin()));
+
+                //     std::copy(
+                //         request_info.triggered_channels.url_keyword_channels.begin(),
+                //         request_info.triggered_channels.url_keyword_channels.end(),
+                //         std::inserter(
+                //             tmp,
+                //             tmp.begin()));
+
+                //     std::copy(
+                //         request_info.triggered_channels.uid_channels.begin(),
+                //         request_info.triggered_channels.uid_channels.end(),
+                //         std::inserter(
+                //             tmp,
+                //             tmp.begin()));
+
+                //     std::copy(
+                //         tmp.begin(),
+                //         tmp.end(),
+                //         std::inserter(
+                //             data.channel_list,
+                //             data.channel_list.begin()));
+                // }
+
+                add_record(data);
+            }
+            catch (const eh::Exception &ex)
+            {
+                Stream::Error ostr;
+                ostr << FUN << ": eh::Exception caught: " << ex.what();
+                throw Exception(ostr);
+            }
+        }
+
+    protected:
+        unsigned long sampling_;
+        const Commons::LogReferrer::Setting log_referrer_setting_;
+        virtual
+            ~ProfilingResearchLogger() noexcept = default;
+    };
 
     /** ChannelTriggerStatLogger implementation */
     void
