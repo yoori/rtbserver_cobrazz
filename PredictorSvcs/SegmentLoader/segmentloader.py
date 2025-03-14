@@ -206,14 +206,14 @@ def process_urls_category(account_id, url, categories, prefix):
     update_cache(account_id, categories)
     new_channel_ids = get_channel_ids(categories)
 
-    add_triggers_if_not_exists(url)
-    trigger_id = get_trigger_id(url)
-
     existing_channelIds = get_channelids_for_url(url, prefix)
     channelid_delete, channelid_add = get_to_del_and_add(existing_channelIds, new_channel_ids)
 
     delete_channel_triggers(channelid_delete, url)
-    add_channel_triggers(url, channelid_add, trigger_id)
+    if channelid_add:
+        add_triggers_if_not_exists(url)
+        trigger_id = get_trigger_id(url)
+        add_channel_triggers(url, channelid_add, trigger_id)
 
 
 def remove_duplicates(channelIds):
