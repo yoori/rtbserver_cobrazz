@@ -1203,8 +1203,9 @@ namespace AdServer
 
     /**  SSPGeoLogger */
     class CampaignManagerLogger::SSPGeoLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
-        AdServer::LogProcessing::SSPGeoTraits>
+      public virtual AdServer::LogProcessing::LogHolderPoolData<
+        AdServer::LogProcessing::SSPGeoTraits>,
+      public virtual ReferenceCounting::AtomicImpl
     {
     public:
         DECLARE_EXCEPTION(Exception, CampaignManagerLogger::Exception);
@@ -1212,7 +1213,7 @@ namespace AdServer
         SSPGeoLogger(
           const AdServer::LogProcessing::LogFlushTraits& flush_traits)
           /*throw(Exception)*/
-          : AdServer::LogProcessing::LogHolderPool<
+          : AdServer::LogProcessing::LogHolderPoolData<
               AdServer::LogProcessing::SSPGeoTraits>(
                 flush_traits)
         {}
