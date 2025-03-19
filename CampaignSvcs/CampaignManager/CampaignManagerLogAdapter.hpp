@@ -866,6 +866,9 @@ namespace AdServer
         request_info.disable_fraud_detection =
           request_params->disable_fraud_detection;
         request_info.track_passback = request_params->required_passback;
+        request_info.source_country = request_params->source_country;
+        request_info.source_region = request_params->source_region;
+        request_info.source_city = request_params->source_city;
       }
       else
       {
