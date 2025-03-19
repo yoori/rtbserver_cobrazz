@@ -292,6 +292,10 @@ namespace AdServer
         Commons::StringHolder_var page_keywords;
         Commons::StringHolder_var url_keywords;
         unsigned long random;
+
+        std::string source_country;
+        std::string source_region;
+        std::string source_city;
       };
 
       struct AdSelectionInfo

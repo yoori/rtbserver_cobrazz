@@ -1203,8 +1203,10 @@ namespace AdServer
 
     /**  SSPGeoLogger */
     class CampaignManagerLogger::SSPGeoLogger:
-      public virtual AdServer::LogProcessing::LogHolderPoolData<
-        AdServer::LogProcessing::SSPGeoTraits>,
+      public virtual AdServer::LogProcessing::LogHolderPool<
+        AdServer::LogProcessing::SSPGeoTraits,
+        AdServer::LogProcessing::SimpleCsvSavePolicy<
+          AdServer::LogProcessing::SSPGeoTraits> >,
       public virtual ReferenceCounting::AtomicImpl
     {
     public:
@@ -1213,8 +1215,10 @@ namespace AdServer
         SSPGeoLogger(
           const AdServer::LogProcessing::LogFlushTraits& flush_traits)
           /*throw(Exception)*/
-          : AdServer::LogProcessing::LogHolderPoolData<
-              AdServer::LogProcessing::SSPGeoTraits>(
+          : AdServer::LogProcessing::LogHolderPool<
+              AdServer::LogProcessing::SSPGeoTraits,
+              AdServer::LogProcessing::SimpleCsvSavePolicy<
+                AdServer::LogProcessing::SSPGeoTraits> >(
                 flush_traits)
         {}
 
@@ -1226,38 +1230,22 @@ namespace AdServer
           add_record_(request_info);
         }
 
-        void
-        process_anon_request(
-          const CampaignManagerLogger::AnonymousRequestInfo& request_info)
-        /*throw(Exception)*/
-        {
-          add_record_(request_info);
-        }
-
     protected:
         virtual
             ~SSPGeoLogger() noexcept = default;
 
       void
       add_record_(
-        const CampaignManagerLogger::AnonymousRequestInfo& /*request_info*/)
+        const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
       {
-        // if(!request_info.log_as_test &&
-        //     request_info.user_agent.in() &&
-        //     request_info.user_status != US_FOREIGN)
-        // {
-        //   CollectorT::DataT data;
-        //   data.add(
-        //     CollectorT::DataT::KeyT(request_info.user_agent),
-        //     CollectorT::DataT::DataT(
-        //       1,
-        //       request_info.platform_channels.begin(),
-        //       request_info.platform_channels.end(),
-        //       request_info.platforms.begin(),
-        //       request_info.platforms.end()));
-        //   add_record(CollectorT::KeyT(request_info.time), data);
-        // }
+        CollectorT::DataT data;
+        data.add(
+          CollectorT::DataT::DataT(
+            request_info.source_country,
+            request_info.source_region,
+            request_info.source_city));
+        add_record(data);
       }
     };
 
