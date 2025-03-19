@@ -1203,7 +1203,7 @@ namespace AdServer
 
     /**  SSPGeoLogger */
     class CampaignManagerLogger::SSPGeoLogger:
-      public virtual AdServer::LogProcessing::LogHolderPool<
+      public virtual AdServer::LogProcessing::LogHolderPoolData<
         AdServer::LogProcessing::SSPGeoTraits,
         AdServer::LogProcessing::SimpleCsvSavePolicy<
           AdServer::LogProcessing::SSPGeoTraits> >,
@@ -1215,7 +1215,7 @@ namespace AdServer
         SSPGeoLogger(
           const AdServer::LogProcessing::LogFlushTraits& flush_traits)
           /*throw(Exception)*/
-          : AdServer::LogProcessing::LogHolderPool<
+          : AdServer::LogProcessing::LogHolderPoolData<
               AdServer::LogProcessing::SSPGeoTraits,
               AdServer::LogProcessing::SimpleCsvSavePolicy<
                 AdServer::LogProcessing::SSPGeoTraits> >(
@@ -1239,12 +1239,10 @@ namespace AdServer
         const CampaignManagerLogger::RequestInfo& request_info)
       /*throw(Exception)*/
       {
-        CollectorT::DataT data;
-        data.add(
-          CollectorT::DataT::DataT(
-            request_info.source_country,
-            request_info.source_region,
-            request_info.source_city));
+        CollectorT::DataT data(
+          request_info.source_country,
+          request_info.source_region,
+          request_info.source_city);
         add_record(data);
       }
     };
