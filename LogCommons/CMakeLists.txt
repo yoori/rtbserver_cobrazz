@@ -54,6 +54,7 @@ add_library(LogCommons SHARED
   SiteReferrerStat.cpp
   SiteStat.cpp
   SiteUserStat.cpp
+  SSPGeoStat.cpp
   TagAuctionStat.cpp
   TagPositionStat.cpp
   TagRequest.cpp
