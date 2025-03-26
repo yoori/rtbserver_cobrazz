@@ -407,7 +407,8 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         <configuration>
           <userInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <networkParams port="{ $PORT_BASE + 1 }"
-              grpc_port="{$PORT_BASE + 201}" monitoring_port="{$PORT_BASE + 301}"/>
+              grpc_port="{$PORT_BASE + 201}"
+              monitoring_port="{$PORT_BASE + 301}"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams update_period="10"/>
             <profilesCleanupParams life_time="3600" clean_time="00:01"/>
@@ -537,7 +538,9 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <billingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 31 }"/>
+            <networkParams
+              port="{ $PORT_BASE + 31 }"
+              grpc_port="${ $PORT_BASE + 231}"/>
             <logging log_level="7" sys_log="false"/>
           </billingServer>
         </configuration>
@@ -549,7 +552,9 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 7 }"/>
+            <networkParams
+              port="{ $PORT_BASE + 7 }"
+              grpc_port="{ $PORT_BASE + 202 }"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams
               update_period="10"
