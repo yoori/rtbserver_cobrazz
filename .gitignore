@@ -7,3 +7,4 @@ autom4te.cache/
 .idea/
 PredictorML/.ipynb_checkpoints/
 PredictorML/catboost_info/
+CMakeLists.txt.user
