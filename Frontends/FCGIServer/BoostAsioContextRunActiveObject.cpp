@@ -8,7 +8,7 @@ namespace AdServer
     std::shared_ptr<boost::asio::io_service> io_service,
     unsigned long threads)
     /*throw(Gears::Exception)*/
-    : AdServer::Commons::DelegateActiveObject(callback, threads, 128*1024),
+    : AdServer::Commons::DelegateActiveObject(callback, threads),
       io_service_(std::move(io_service))
   {}
 
