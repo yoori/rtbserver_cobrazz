@@ -71,8 +71,6 @@ Requires: nginx = 1:1.22.1
 #Requires: mod_ssl >= 2.2.21.4-1.ssv1
 BuildRequires: libevent-devel = 2.1.8
 Requires: libevent = %__libevent_ver_req
-#BuildRequires: OpenSBE = 1.0.0
-#BuildRequires: OpenSBE-defs >= 1.0.28.0
 %if "%{?__type:%{__type}}%{!?__type:0}" == "central"
 Conflicts: foros-server-remote-debuginfo
 Conflicts: foros-server-central-debuginfo < %{version}
