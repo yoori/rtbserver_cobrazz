@@ -1,7 +1,5 @@
 #include <vector>
 
-#include <PrivacyFilter/Filter.hpp>
-
 #include <Commons/CorbaAlgs.hpp>
 
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>

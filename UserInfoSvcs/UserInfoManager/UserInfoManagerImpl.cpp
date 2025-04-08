@@ -2,8 +2,6 @@
 #include <vector>
 #include <iterator>
 
-#include <PrivacyFilter/Filter.hpp>
-
 #include <Generics/DirSelector.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
@@ -2188,7 +2186,7 @@ namespace UserInfoSvcs
         Stream::Error ostr;
         ostr << "Match request: " << std::endl <<
           "  User id: " <<
-          PrivacyFilter::filter(user_id.to_string().c_str(), "USER_ID") << std::endl <<
+          user_id.to_string() << std::endl <<
           "  current colo id: " << user_info.current_colo_id << std::endl <<
           "  Input search channels: ";
         CorbaAlgs::print_sequence_fields(
@@ -2627,7 +2625,7 @@ namespace UserInfoSvcs
         Stream::Error ostr;
         ostr << "Match request: " << std::endl <<
              "  User id: " <<
-             PrivacyFilter::filter(user_id.to_string().c_str(), "USER_ID") << std::endl <<
+             user_id.to_string() << std::endl <<
              "  current colo id: " << user_info.current_colo_id() << std::endl <<
              "  Input search channels: ";
 

@@ -1,6 +1,5 @@
 #include "UserInventoryContainer.hpp"
 
-#include <PrivacyFilter/Filter.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 
 #include <RequestInfoSvcs/RequestInfoCommons/UserChannelInventoryProfile.hpp>

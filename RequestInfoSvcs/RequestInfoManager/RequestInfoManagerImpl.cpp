@@ -1,9 +1,6 @@
 // STD
 #include <vector>
 
-// UNIXCOMMONS
-#include <PrivacyFilter/Filter.hpp>
-
 // THIS
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/LogReferrerUtils.hpp>

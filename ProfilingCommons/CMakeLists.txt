@@ -12,6 +12,5 @@ target_link_libraries(MessageSaver
   Generics
   LogCommons
   PlainStorage3
-  PrivacyFilter
   UServerUtils
 )
