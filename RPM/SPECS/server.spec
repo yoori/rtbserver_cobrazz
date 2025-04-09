@@ -111,7 +111,7 @@ Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
-BuildRequires: userver-devel
+BuildRequires: userver-devel = 1.0.29
 # userver-devel dependencies workaround:
 BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
@@ -137,7 +137,8 @@ Requires: librdkafka1 = %__librdkafka_ver_req
 Requires: vanga = %__vanga_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 2.1.2
-Requires: cryptopp libatomic libev userver
+Requires: userver = 1.0.29
+Requires: cryptopp libatomic libev
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
 Requires: perl-Devel-GlobalDestruction perl-Devel-LexAlias perl-Devel-StackTrace perl-Dist-CheckConflicts perl-Email-Date-Format
 Requires: perl-Eval-Closure perl-Exception-Class perl-File-Find-Rule perl-HTML-Tree perl-libnetcfg perl-Log-Dispatch perl-Mail-Sendmail
