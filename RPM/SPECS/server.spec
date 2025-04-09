@@ -31,13 +31,13 @@
 %define __librdkafka_ver_req    1.9.2
 #define __open_ssl_ver_req      1.0.1e-42.el7
 %define __open_ssl_ver_req      1.1.1k-7
-%define __vanga_ver_req         1.0.0.20
+%define __vanga_ver_req         1.0.0.21
 %define __rocksdb_ver_req       8.8.1
 %define __boost_suffix          176
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv409%{?dist}
+Release: ssv410%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -159,7 +159,7 @@ Requires: gtest = 1.12.1
 BuildRequires: gtest-devel = 1.12.1
 
 Requires: glibc-all-langpacks
-Requires: foros-pagesense-programmatic
+Requires: foros-pagesense
 
 Provides: perl(Base) perl(Common) perl(TestHTML) perl(TestResultProc) perl(EmailNotifySend) perl(CampaignConfig) perl(CampaignTemplates) perl(DBEntityChecker) perl(PerformanceDB) perl(XMLEncoder)
 
