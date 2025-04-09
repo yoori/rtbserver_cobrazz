@@ -37,15 +37,18 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv410%{?dist}
+Release: ssv415%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
 
 BuildRoot: %{_tmppath}/%{name}-buildroot
 Source0: foros-server-%{version}.tar.gz
+AutoReq: no
 
 %ifnarch noarch
+
+Requires: bash
 
 BuildRequires: cmake3
 BuildRequires: libstdc++
@@ -147,7 +150,8 @@ Requires: perl-Package-Stash-XS perl-PadWalker perl-Params-ValidationCompiler pe
 Requires: perl-Ref-Util-XS perl-Role-Tiny perl-Specio perl-Sub-Exporter-Progressive perl-Sub-Identify perl-Variable-Magic perl-XML-Twig
 Requires: perl-Text-CSV perl-Text-CSV_XS
 Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Rule
-Requires: python36
+BuildRequires: python38
+Requires: python38
 Requires: python3-aiohttp python3-psycopg2
 Requires: python3-minio
 
@@ -251,7 +255,7 @@ pushd %{__product}
 #osbe
 product_root=`pwd`
 cd %{__osbe_build_dir}
-echo "CALL RTBSERVER CMAKE in $(pwd)"
+#export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.8/site-packages/
 cmake -DUNIXCOMMONS=$(pwd)/../unixcommons -DCMAKE_BUILD_TYPE=RelWithDebInfo .
 #${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
 #scl enable devtoolset-8 -- %{__make} %{_smp_mflags}
