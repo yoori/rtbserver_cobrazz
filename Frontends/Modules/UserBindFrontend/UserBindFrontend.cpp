@@ -1069,7 +1069,7 @@ namespace AdServer
             // fill params got by processing
             if(!bind_result.result_user_id.is_null())
             {
-              templ_args[TemplateParams::UNSIGNEDUID] = request_info.result_user_id.to_string();
+              templ_args[TemplateParams::UNSIGNEDUID] = bind_result.result_user_id.to_string();
               templ_args[TemplateParams::SIGNEDUID] =
                 common_module_->user_id_controller()->sign(
                   bind_result.result_user_id).str();
