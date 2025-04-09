@@ -50,6 +50,13 @@ namespace AdServer
             action(RevenueDecimal::ZERO)
         {}
 
+        Revenue(const Revenue& init) noexcept
+          : rate_id(init.rate_id),
+            impression(init.impression),
+            click(init.click),
+            action(init.action)
+        {}
+
         unsigned long rate_id;
 
         RevenueDecimal impression;
