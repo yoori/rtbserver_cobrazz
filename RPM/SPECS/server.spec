@@ -63,10 +63,8 @@ BuildRequires: gcc-c++
 BuildRequires: GeoIP-devel >= %__geoip_ver_req
 Requires: GeoIP >= %__geoip_ver_req
 Requires: foros-geoip >= 1.0.0.0
-#BuildRequires: httpd-devel >= {__apache_ver_req}
-BuildRequires: httpd-devel
-#Requires: httpd = {__apache_ver_req}
-Requires: httpd
+#BuildRequires: httpd-devel
+#Requires: httpd
 Requires: nginx = 1:1.22.1
 #Requires: mod_ssl >= 2.2.21.4-1.ssv1
 BuildRequires: libevent-devel = 2.1.8
@@ -84,15 +82,12 @@ Conflicts: foros-server-remote-debuginfo > %{version}
 BuildRequires: valgrind-devel
 %endif
 BuildRequires: pcre-devel >= 8.42
-#BuildRequires: prelink
 BuildRequires: selinux-policy
 BuildRequires: xerces-c-devel
 BuildRequires: xsd >= 4.1.0
 BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req} lm_sensors-libs
 Requires: net-snmp >= %{__net_snmp_ver_req} lm_sensors-libs
-#Requires: net-snmp-subagent >= 2.1.3.1
-#BuildRequires: java-1.8.0-oracle-devel >= 1.7.0.45
-BuildRequires: java-1.8.0-openjdk-devel
+BuildRequires: java-1.8.0-openjdk-devel-1.8.0.442.b06-2.0.1.el8
 BuildRequires: libxml2-devel = 2.9.7
 BuildRequires: libxslt-devel = 1.1.32
 BuildRequires: make >= 4.2.1
