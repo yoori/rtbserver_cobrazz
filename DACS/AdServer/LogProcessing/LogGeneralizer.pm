@@ -158,6 +158,7 @@ sub start
        "mkdir -p \${log_root}/LogGeneralizer/Out/TagAuctionStat && " .
        "mkdir -p \${log_root}/LogGeneralizer/Out/TagAuctionStat_ && " .
        "mkdir -p \${cache_root}/SearchPhrases && " .
+       "export MALLOC_ARENA_MAX=2 && " .
        "{ " .
          "\${VALGRIND_PREFIX} LogGeneralizer " .
          "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/LogGeneralizerConfig.xml " .
