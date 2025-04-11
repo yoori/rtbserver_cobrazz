@@ -132,11 +132,16 @@ inline float convert_int(const int val)
     throw std::runtime_error(stream.str());
   }
 
-  int hash = GetStringCatFeatureHash(
+  const int hash = GetStringCatFeatureHash(
     buffer,
     result.ptr - buffer);
 
-  return *reinterpret_cast<float*>(&hash);
+  float ret = 0;
+  std::memcpy(
+    &ret,
+    &hash,
+    sizeof(float));
+  return ret;
 }
 
 } // namespace AdServer::PredictorML
