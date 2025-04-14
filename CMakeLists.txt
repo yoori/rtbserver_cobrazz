@@ -23,7 +23,7 @@ if(NOT DEFINED UNIXCOMMONS)
   SET(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
 endif()
 
-set(USE_USERVER_PACKAGE FALSE CACHE INTERNAL "")
+option(USE_USERVER_PACKAGE "Use preinstalled userver package on host" ON)
 
 message(STATUS "Use unixcommons: ${UNIXCOMMONS}")
 set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
