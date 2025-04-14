@@ -1974,7 +1974,7 @@ namespace CampaignSvcs
         delivery_limits,
         now);
 
-    bool add_amount_result;
+    [[maybe_unused]] bool add_amount_result;
 
     {
       StateSyncPolicy::WriteGuard lock(amounts_lock);
@@ -2018,7 +2018,7 @@ namespace CampaignSvcs
         delivery_limits,
         now);
 
-    bool add_amount_result;
+    [[maybe_unused]] bool add_amount_result;
 
     {
       StateSyncPolicy::WriteGuard lock(amounts_lock);
