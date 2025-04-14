@@ -848,8 +848,10 @@ namespace UserInfoSvcs
         {
           assert(0);
         }
-
-        *static_cast<uint32_t*>(buf) = val;
+        else
+        {
+          *static_cast<uint32_t*>(buf) = val;
+        }
       }
 
       virtual unsigned long
