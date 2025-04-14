@@ -707,9 +707,9 @@ Application_::print_user_action_from_file(
 
     UServerUtils::Grpc::RocksDB::Config config;
     config.event_queue_max_size = 10000000;
-    config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
-    config.io_uring_size = 12800;
-    config.number_io_urings = 2 * number_threads;
+    config.io_uring_flags = IORING_SETUP_ATTACH_WQ | IORING_FEAT_FAST_POLL | IOSQE_ASYNC;
+    config.io_uring_size = 1024 * 8;
+    config.number_io_urings = number_threads;
     auto rocksdb_manager_pool = std::make_shared<UServerUtils::Grpc::RocksDB::DataBaseManagerPool>(
       config,
       logger.in());
