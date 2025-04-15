@@ -1,43 +1,21 @@
 add_library(PassPixelFrontend SHARED
- RequestInfoFiller.cpp 
+  RequestInfoFiller.cpp 
   PassPixelFrontend.cpp
 )
 
-
 target_link_libraries(PassPixelFrontend
-
-
-
- Stream
- Geoip
- CORBACommons
-
- Polyglot
-
- Commons
- #ChannelControllerStubs
- ChannelManagerControllerIDL
-# UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
-
-# CampaignManagerStubs
-CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
-
- DomainParser
-# CampaignServerStubs
-StatInfoIDL BillStatInfoIDL CampaignServerIDL
-
-# UserBindServerStubs
-UserBindServerIDL UserBindContainer
-
- RequestMatchers
- FrontendStatistic
- UserIdController
- CommonModule
-
- FeConfigXSD
-FCGI
-
+  Stream
+  Geoip
+  CORBACommons
+  Polyglot
+  Commons
+  CampaignManagerIDL
+  SecToken
+  DomainParser
+  RequestMatchers
+  FrontendStatistic
+  UserIdController
+  CommonModule
+  FCGI
+  FeConfigXSD
 )
-
-#install(TARGETS PassPixelFrontend  DESTINATION ${INSTALL_DIR})

@@ -5,18 +5,11 @@ add_library(ActionFrontend SHARED
 )
 
 target_link_libraries(ActionFrontend
-  BidRateProvider
   CORBACommons
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
   CampaignManagerIDL
-  CampaignManagerLogger
   CommonModule
   Commons
   CookieManager
-  CreativeTemplateArgs
   FCGI
   FeConfigXSD
   FrontendStatistic
