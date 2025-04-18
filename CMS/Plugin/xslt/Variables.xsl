@@ -576,7 +576,7 @@
 <xsl:variable name="segment-uploader-workspace-directory" select="'uploader_state/'"/>
 <xsl:variable name="segment-uploader-url-segments-directory" select="'uploader_url_segments/'"/>
 <xsl:variable name="segment-uploader-upload-url" select="'http://adfe100:10180'"/>
-<xsl:variable name="segment-uploader-input-directory" select="'sftp'"/>
+<xsl:variable name="segment-uploader-input-directory" select="'/opt/foros/server/var/log/UploadSegments/GPM/In/'"/>
 <xsl:variable name="segment-uploader-format" select="'gpm'"/>
 <xsl:variable name="segment-uploader-name" select="'gpm'"/>
 <xsl:variable name="segment-uploader-channel-prefix" select="'RU.BEELINE.GPMD.'"/>
