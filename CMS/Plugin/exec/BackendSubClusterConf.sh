@@ -257,6 +257,15 @@ then
     --out-dir $OUT_DIR \
     --plugin-root $PLUGIN_ROOT
   let "EXIT_CODE|=$?"
+
+  $EXEC/ServiceConf.sh \
+    --services-xpath "$PREDICTOR_XPATH" \
+    --app-xml $APP_XML \
+    --xsl $XSLT_ROOT/Predictor/SegmentUploader.xsl \
+    --out-file SegmentUploader.json \
+    --out-dir $OUT_DIR \
+    --plugin-root $PLUGIN_ROOT
+  let "EXIT_CODE|=$?"
 fi
 
 ## configure SyncLogsServer

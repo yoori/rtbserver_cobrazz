@@ -17,11 +17,13 @@
 {
 "in_dir": "uploader/data/19",
 "format": "gpm",
+"name":"gpm19",
 "channel_prefix": "RU.TEST.GPM_UPLOAD."
 },
 {
 "in_dir": "uploader/data/66",
 "format": "amber",
+"name":"amber66",
 "channel_prefix": "RU.TEST.GPM_UPLOAD."
 }
 ],

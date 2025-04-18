@@ -292,7 +292,7 @@ class Application(Service):
         self.__uploads = {}
 
         def add_upload(params, dir_info):
-            name = dir_info["format"]
+            name = dir_info["name"]
             if name in self.__uploads:
                 raise RuntimeError(f"Upload name duplication: {name}")
             self.__uploads[name] = Upload(self, params, dir_info)
