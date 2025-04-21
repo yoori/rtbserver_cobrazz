@@ -49,7 +49,7 @@ sub start
    "mkdir -p \${cache_root}/Estimation && " .
    "mkdir -p \${cache_root}/RequestTriggerMatch && " .
    "ulimit -n 4096 && " .
-   "export MALLOC_ARENA_MAX=4 && " .
+   "export MALLOC_ARENA_MAX=8 && " .
    "{ " .
      "\${VALGRIND_PREFIX} ExpressionMatcher " .
      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/ExpressionMatcherConfig.xml " .
