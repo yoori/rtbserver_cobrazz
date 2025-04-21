@@ -530,12 +530,14 @@
         <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::DictionaryProvider'"/>
       </xsl:call-template>
 
+      <!--
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
           select="$be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]"/>
         <xsl:with-param name="service-name" select="'be-UserOperationGenerator'"/>
         <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserOperationGenerator'"/>
       </xsl:call-template>
+      -->
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
@@ -2334,7 +2336,7 @@
           <xsl:if test="count($be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]) > 0">
             <xsl:call-template name="AddDependence">
               <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoChecker'"/>
-              <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserOperationGenerator'"/>
+              <!--<xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserOperationGenerator'"/>-->
             </xsl:call-template>
           </xsl:if>
           <xsl:call-template name="AddDependence">
@@ -2430,7 +2432,7 @@
         <xsl:if test="count($be-cluster-path/service[@descriptor = $user-operation-generator-descriptor]) > 0">
           <xsl:call-template name="AddDependence">
             <xsl:with-param name="masters" select="'AdServer::UserInfoSvcs::UserInfoChecker'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserOperationGenerator'"/>
+            <!--<xsl:with-param name="slaves" select= "'AdServer::UserInfoSvcs::UserOperationGenerator'"/>-->
           </xsl:call-template>
         </xsl:if>
       </xsl:if>

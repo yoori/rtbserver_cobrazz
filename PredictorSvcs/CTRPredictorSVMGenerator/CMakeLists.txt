@@ -8,24 +8,15 @@ add_executable(CTRPredictorSVMGenerator
   InputCsvStream.cpp 
   CTRPredictorSVMGeneratorImpl.cpp 
   CTRPredictorSVMGeneratorMain.cpp
-
 )
+
 target_link_libraries(CTRPredictorSVMGenerator
-
- Generics
- Commons
- AdServerCommonsXSD
- XMLUtility
-
- CORBACommons
- ProcessControlVars
- CTRPredictorSVMGeneratorConfigXSD
- CTRGeneratorLib
-
-
+  Generics
+  Commons
+  AdServerCommonsXSD
+  XMLUtility
+  CORBACommons
+  ProcessControlVars
+  CTRPredictorSVMGeneratorConfigXSD
+  CTRGeneratorLib
 )
-
-#install(TARGETS CTRPredictorSVMGenerator  DESTINATION ${INSTALL_DIR})
-
-
-
