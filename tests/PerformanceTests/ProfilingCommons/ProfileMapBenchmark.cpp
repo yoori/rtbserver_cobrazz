@@ -192,7 +192,7 @@ public:
     config.event_queue_max_size = 10000000;
     config.io_uring_flags = IORING_SETUP_ATTACH_WQ | IORING_FEAT_FAST_POLL | IOSQE_ASYNC;
     config.io_uring_size = 1024 * 8;
-    config.number_io_urings = number_threads;
+    config.number_io_urings = 2 * number_threads;
     rocksdb_manager_pool_ = std::make_unique<DataBaseManagerPool>(
       config,
       logger_);
