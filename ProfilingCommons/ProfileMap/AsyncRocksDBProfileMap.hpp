@@ -5,6 +5,7 @@
 #include <optional>
 
 // UNIXCOMMONS
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Uncopyable.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -112,6 +113,7 @@ struct DefaultKeyAdapter
 
 template<class Key, class KeyAdapter = DefaultKeyAdapter>
 class RocksDBProfileMap final:
+  public Generics::CompositeActiveObject,
   public ProfileMap<Key>,
   public ReferenceCounting::AtomicImpl
 {

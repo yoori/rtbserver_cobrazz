@@ -724,12 +724,11 @@ namespace RequestInfoSvcs
     const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
     const char* inv_prefix,
     ProfilingCommons::ProfileMapFactory::Cache* /*cache*/,
-    const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
+    const RocksDBParams& rocksdb_params)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger)),
       days_to_keep_(days_to_keep),
       adrequest_anonymize_(adrequest_anonymize),
-      //expire_time_(expire_time),
       inventory_processor_(ReferenceCounting::add_ref(inv_processor)),
       colo_reach_processor_(ReferenceCounting::add_ref(colo_reach_processor))
   {
@@ -737,27 +736,43 @@ namespace RequestInfoSvcs
 
     try
     {
-      typedef AdServer::ProfilingCommons::OptionalProfileAdapter<UserChannelInventoryProfileAdapter>
-        AdaptUserChannelInventoryProfile;
+      using AdaptUserChannelInventoryProfile = AdServer::ProfilingCommons::OptionalProfileAdapter<
+        UserChannelInventoryProfileAdapter>;
+      using ManagerPoolConfig = UServerUtils::Grpc::RocksDB::Config;
+
+      auto number_threads = std::thread::hardware_concurrency();
+      if (number_threads == 0)
+      {
+        number_threads = 30;
+      }
+
+      ManagerPoolConfig config;
+      config.event_queue_max_size = 10000000;
+      config.io_uring_flags = IORING_SETUP_ATTACH_WQ | IORING_FEAT_FAST_POLL | IOSQE_ASYNC;
+      config.io_uring_size = 1024 * 8;
+      config.number_io_urings = 2 * number_threads;
+      auto rocksdb_manager_pool = std::make_shared<RocksdbManagerPool>(
+        config,
+        logger);
+
+      auto key_adapter = [] (const UserId& key) {
+        return std::string(reinterpret_cast<const char*>(key.begin()), key.size());
+      };
 
       user_map_ = AdServer::ProfilingCommons::ProfileMapFactory::
         open_chunked_map<
           UserId,
-          AdServer::ProfilingCommons::UserIdAccessor,
-          unsigned long (*)(const Generics::Uuid& uuid),
-          AdaptUserChannelInventoryProfile>(
+          unsigned long (*)(const Generics::Uuid& uuid)>(
+            *this,
+            logger_.in(),
+            rocksdb_manager_pool,
+            rocksdb_params,
             common_chunks_number,
             chunk_folders,
             inv_prefix,
-            user_level_map_traits,
-            *this,
-            Generics::ActiveObjectCallback_var(
-              new Logging::ActiveObjectCallbackImpl(
-                logger_,
-                "UserInventoryInfoContainer",
-                "ExpressionMatcher",
-                "ADS-IMPL-4024")),
-            AdServer::Commons::uuid_distribution_hash);
+            AdServer::Commons::uuid_distribution_hash,
+            key_adapter,
+            AdaptUserChannelInventoryProfile{});
     }
     catch(const eh::Exception& ex)
     {
