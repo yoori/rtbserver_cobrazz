@@ -35,23 +35,16 @@ namespace Aspect
   const char USER_BIND_FRONTEND[] = "UserBindFrontend";
 }
 
+namespace UrlPath
+{
+const String::SubString kGetUserId("/get_user_id");
+}
+
 namespace Response
 {
-  /*
-  namespace Header
-  {
-    const char CONTENT_TYPE[] = "Content-Type";
-  }
-
   namespace Type
   {
-    const char TEXT_HTML[] = "text/html";
-  }
-  */
-
-  namespace Parameters
-  {
-    const String::SubString USER_ID("uid");
+    const String::SubString JSON("application/json");
   }
 }
 
@@ -832,7 +825,6 @@ namespace AdServer
       }
 
       UserBind::RequestInfo_var request_info_holder = new UserBind::RequestInfo();
-
       request_info_filler_->fill(
         *request_info_holder,
         request,
@@ -840,9 +832,30 @@ namespace AdServer
 
       const UserBind::RequestInfo& request_info = *request_info_holder;
 
-      //request_info.dump(std::cerr);
-
       FrontendCommons::CORS::set_headers(request, response);
+
+      if (request.uri().substr(0, UrlPath::kGetUserId.size()) == UrlPath::kGetUserId &&
+        (request.uri().size() == UrlPath::kGetUserId.size() ||
+          (request.uri().size() > UrlPath::kGetUserId.size()
+          && request.uri()[UrlPath::kGetUserId.size()] == '?')))
+      {
+        std::ostringstream stream;
+        if (!request_info.user_id.is_null())
+        {
+          stream << "{\"uid\":\""
+                 << request_info.user_id.to_string()
+                 << "\"}";
+        }
+        else
+        {
+          stream << "{}";
+        }
+
+        response.set_content_type(Response::Type::JSON);
+        response.write(stream.str());
+
+        return 200;
+      }
 
       if(!request.secure() &&
          config_->nosecure_redirect().present() && !config_->nosecure_redirect()->empty() &&
