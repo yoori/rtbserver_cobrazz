@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv415%{?dist}
+Release: ssv416%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -119,6 +119,7 @@ BuildRequires: userver-devel = 1.0.29
 BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
 BuildRequires: grpc-plugins = 1.48.1-ssv2
+BuildRequires: jemalloc-devel >= 5.2.1
 
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
@@ -160,8 +161,9 @@ Requires: python3-minio
 BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
 Requires: boost%{__boost_suffix} = 1.76.0
 BuildRequires: xgboost-devel
-Requires: gtest = 1.12.1
+Requires: xgboost
 BuildRequires: gtest-devel = 1.12.1
+Requires: gtest = 1.12.1
 
 Requires: glibc-all-langpacks
 Requires: foros-pagesense
