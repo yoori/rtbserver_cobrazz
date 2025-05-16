@@ -353,7 +353,7 @@ namespace RequestInfoSvcs
       config.event_queue_max_size = 10000000;
       config.io_uring_flags = IORING_SETUP_ATTACH_WQ | IORING_FEAT_FAST_POLL | IOSQE_ASYNC;
       config.io_uring_size = 1024 * 8;
-      config.number_io_urings = number_threads;
+      config.number_io_urings = 2 * number_threads;
       rocksdb_manager_pool_ = std::make_shared<RocksdbManagerPool>(
         config,
         logger());
@@ -565,6 +565,9 @@ namespace RequestInfoSvcs
 
       if(!user_inventory_container_.get().in())
       {
+        const auto inventory_rocksdb_params = AdServer::UserInfoSvcs::fill_rocksdb_map_params(
+          expression_matcher_config_.ChunksConfig());
+
         UserInventoryInfoContainer_var user_inventory_container = new UserInventoryInfoContainer(
           logger(),
           Generics::Time::ONE_DAY * expression_matcher_config_.ChunksConfig().days_to_keep(),
@@ -575,8 +578,7 @@ namespace RequestInfoSvcs
           chunk_inventory_folders,
           expression_matcher_config_.ChunksConfig().chunks_prefix().c_str(),
           profile_cache_,
-          fill_level_map_traits_(expression_matcher_config_.ChunksConfig())
-          );
+          inventory_rocksdb_params);
 
         add_child_object(user_inventory_container, true);
 
