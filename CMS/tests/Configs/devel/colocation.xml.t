@@ -503,9 +503,27 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
             <adFCGINetworkParams port="{ $PORT_BASE + 76 }" monitoring_port="{ $PORT_BASE + 376 }"/>
             <rtbFCGI1NetworkParams port="{ $PORT_BASE + 77 }" monitoring_port="{ $PORT_BASE + 377 }"/>
             <rtbFCGI2NetworkParams port="{ $PORT_BASE + 96 }" monitoring_port="{ $PORT_BASE + 396 }"/>
-            <trackFCGINetworkParams port="{ $PORT_BASE + 95 }" monitoring_port="{ $PORT_BASE + 395 }"/>
+            <rtbFCGI3NetworkParams port="{ $PORT_BASE + 97 }" monitoring_port="{ $PORT_BASE + 397 }"/>
+            <rtbFCGI4NetworkParams port="{ $PORT_BASE + 98 }" monitoring_port="{ $PORT_BASE + 398 }"/>
+            <rtbFCGI5NetworkParams port="{ $PORT_BASE + 100 }" monitoring_port="{ $PORT_BASE + 400 }"/>
+            <rtbFCGI6NetworkParams port="{ $PORT_BASE + 101 }" monitoring_port="{ $PORT_BASE + 401 }"/>
+            <rtbFCGI7NetworkParams port="{ $PORT_BASE + 102 }" monitoring_port="{ $PORT_BASE + 402 }"/>
+            <rtbFCGI8NetworkParams port="{ $PORT_BASE + 103 }" monitoring_port="{ $PORT_BASE + 403 }"/>
+            <rtbFCGI9NetworkParams port="{ $PORT_BASE + 104 }" monitoring_port="{ $PORT_BASE + 404 }"/>
+            <rtbFCGI10NetworkParams port="{ $PORT_BASE + 105 }" monitoring_port="{ $PORT_BASE + 405 }"/>
+            <rtbFCGI11NetworkParams port="{ $PORT_BASE + 106 }" monitoring_port="{ $PORT_BASE + 406 }"/>
+            <rtbFCGI12NetworkParams port="{ $PORT_BASE + 107 }" monitoring_port="{ $PORT_BASE + 407 }"/>
+            <rtbFCGI13NetworkParams port="{ $PORT_BASE + 108 }" monitoring_port="{ $PORT_BASE + 408 }"/>
+            <rtbFCGI14NetworkParams port="{ $PORT_BASE + 109 }" monitoring_port="{ $PORT_BASE + 409 }"/>
+            <rtbFCGI15NetworkParams port="{ $PORT_BASE + 110 }" monitoring_port="{ $PORT_BASE + 410 }"/>
+            <rtbFCGI16NetworkParams port="{ $PORT_BASE + 111 }" monitoring_port="{ $PORT_BASE + 411 }"/>
+
+            <trackFCGI1NetworkParams port="{ $PORT_BASE + 95 }" monitoring_port="{ $PORT_BASE + 395 }"/>
+            <trackFCGI2NetworkParams port="{ $PORT_BASE + 99 }" monitoring_port="{ $PORT_BASE + 399 }"/>
+
             <userBindFCGI1NetworkParams port="{ $PORT_BASE + 78 }" monitoring_port="{ $PORT_BASE + 378 }"/>
             <userBindFCGI2NetworkParams port="{ $PORT_BASE + 94 }" monitoring_port="{ $PORT_BASE + 394 }"/>
+
             <userBindIntFCGINetworkParams port="{ $PORT_BASE + 79 }" monitoring_port="{ $PORT_BASE + 379 }"/>
             <userBindAddFCGINetworkParams port="{ $PORT_BASE + 93 }" monitoring_port="{ $PORT_BASE + 393 }"/>
             <webServerParams max_clients="1000"/>
