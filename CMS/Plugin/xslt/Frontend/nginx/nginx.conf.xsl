@@ -404,8 +404,8 @@ http {
         </xsl:otherwise>
       </xsl:choose>
 
-      <xsl:if test="count(@monitoring_port) != 0">
-           listen <xsl:value-of select="@monitoring_port"/> default_server;
+      <xsl:if test="count(@mon_port) != 0">
+           listen <xsl:value-of select="@mon_port"/> default_server;
       </xsl:if>
 
       server_name <xsl:value-of select="$nginx-domains"/>;
@@ -592,8 +592,8 @@ http {
         </xsl:otherwise>
       </xsl:choose>
 
-      <xsl:if test="count(@monitoring_port) != 0">
-           listen <xsl:value-of select="@monitoring_port"/> default_server;
+      <xsl:if test="count(@mon_port) != 0">
+           listen <xsl:value-of select="@mon_port"/> default_server;
       </xsl:if>
 
       server_name <xsl:value-of select="$nginx-domains"/>;

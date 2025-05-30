@@ -53,8 +53,8 @@
     </xsl:variable>
 
     <xsl:variable name="expression-matcher-mon-port">
-      <xsl:value-of select="$expression-matcher-config/cfg:networkParams/@monitoring_port"/>
-      <xsl:if test="count($expression-matcher-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$expression-matcher-config/cfg:networkParams/@mon_port"/>
+      <xsl:if test="count($expression-matcher-config/cfg:networkParams/@mon_port) = 0">
         <xsl:value-of select="$def-expression-matcher-mon-port"/>
       </xsl:if>
     </xsl:variable>

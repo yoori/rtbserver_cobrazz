@@ -135,8 +135,8 @@
     </xsl:variable>
 
     <xsl:variable name="user-info-manager-mon-port">
-      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@monitoring_port"/>
-      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$user-info-manager-config/cfg:networkParams/@mon_port"/>
+      <xsl:if test="count($user-info-manager-config/cfg:networkParams/@mon_port) = 0">
         <xsl:value-of select="$def-user-info-manager-mon-port"/>
       </xsl:if>
     </xsl:variable>

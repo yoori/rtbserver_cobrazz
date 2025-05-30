@@ -61,8 +61,8 @@
     </xsl:variable>
 
     <xsl:variable name="user-bind-server-mon-port">
-      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>
-      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@mon_port"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@mon_port) = 0">
         <xsl:value-of select="$def-user-bind-server-mon-port"/>
       </xsl:if>
     </xsl:variable>

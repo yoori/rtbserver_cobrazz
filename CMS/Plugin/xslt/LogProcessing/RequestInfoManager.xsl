@@ -77,8 +77,8 @@
   </xsl:variable>
 
   <xsl:variable name="request-info-manager-mon-port">
-    <xsl:value-of select="$request-info-manager-config/cfg:networkParams/@monitoring_port"/>
-    <xsl:if test="count($request-info-manager-config/cfg:networkParams/@monitoring_port) = 0">
+    <xsl:value-of select="$request-info-manager-config/cfg:networkParams/@mon_port"/>
+    <xsl:if test="count($request-info-manager-config/cfg:networkParams/@mon_port) = 0">
       <xsl:value-of select="$def-request-info-manager-mon-port"/>
     </xsl:if>
   </xsl:variable>

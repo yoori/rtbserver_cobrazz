@@ -101,8 +101,8 @@
     </xsl:call-template>
 
     <xsl:variable name="fcgi-adserver-mon-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:adFCGINetworkParams/@monitoring_port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:adFCGINetworkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$fcgi-adserver-config/cfg:adFCGINetworkParams/@mon_port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:adFCGINetworkParams/@mon_port) = 0">
         <xsl:value-of select="$def-fcgi-adserver-mon-port"/>
       </xsl:if>
     </xsl:variable>
