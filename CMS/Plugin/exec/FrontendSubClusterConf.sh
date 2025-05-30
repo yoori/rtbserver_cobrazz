@@ -321,74 +321,58 @@ then
   let "EXIT_CODE|=$?"
 
   # FCGI Track server
-  $EXEC/ServiceConf.sh \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/FCGITrackServer.xsl \
-    --out-file FCGITrackServerConfig.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
+  for TRACK_INDEX in $(seq 1 8)
+  do
+    $EXEC/ServiceConf.sh \
+      --macro "{FCGITRACKSERVER_INDEX}" "$TRACK_INDEX" \
+      --services-xpath "$HTTP_FRONTEND_XPATH" \
+      --app-xml "$APP_XML" \
+      --xsl "$XSLT_ROOT/Frontend/FCGITrackServer.xsl" \
+      --out-file FCGITrackServer${TRACK_INDEX}Config.xml \
+      --out-dir-suffix "$OUT_DIR_SUFFIX" \
+      --out-dir "$OUT_DIR" \
+      --plugin-root "$PLUGIN_ROOT"
 
-  let "EXIT_CODE|=$?"
+    let "EXIT_CODE|=$?"
 
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_trackserver" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --relative-port-xpath "configuration/cfg:frontend/cfg:trackFCGINetworkParams/@port" \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/$DACS_FE_NAME
+    $EXEC/CurrentEnvGen.sh \
+      --service-name "fcgi_trackserver$TRACK_INDEX" \
+      --plugin-root "$PLUGIN_ROOT" \
+      --app-xml "$APP_XML" \
+      --relative-port-xpath "configuration/cfg:frontend/cfg:trackFCGI${TRACK_INDEX}NetworkParams/@port" \
+      --services-xpath "$HTTP_FRONTEND_XPATH" \
+      --out-dir "$OUT_DIR" \
+      --out-file "CurrentEnv/$DACS_FE_NAME"
 
-  let "EXIT_CODE|=$?"
+    let "EXIT_CODE|=$?"
+  done
 
   # RTB FCGI server
-  $EXEC/ServiceConf.sh \
-    --macro "{FCGIRTBSERVER_INDEX}" 1 \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/FCGIRtbServer.xsl \
-    --out-file FCGIRtbServer1Config.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
+  for RTB_INDEX in $(seq 1 16)
+  do
+    $EXEC/ServiceConf.sh \
+      --macro "{FCGIRTBSERVER_INDEX}" "$RTB_INDEX" \
+      --services-xpath "$HTTP_FRONTEND_XPATH" \
+      --app-xml "$APP_XML" \
+      --xsl "$XSLT_ROOT/Frontend/FCGIRtbServer.xsl" \
+      --out-file "FCGIRtbServer${RTB_INDEX}Config.xml" \
+      --out-dir-suffix "$OUT_DIR_SUFFIX" \
+      --out-dir "$OUT_DIR" \
+      --plugin-root "$PLUGIN_ROOT"
 
-  let "EXIT_CODE|=$?"
+    let "EXIT_CODE|=$?"
 
-  $EXEC/ServiceConf.sh \
-    --macro "{FCGIRTBSERVER_INDEX}" 2 \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/Frontend/FCGIRtbServer.xsl \
-    --out-file FCGIRtbServer2Config.xml \
-    --out-dir-suffix "$OUT_DIR_SUFFIX" \
-    --out-dir $OUT_DIR \
-    --plugin-root $PLUGIN_ROOT
+    $EXEC/CurrentEnvGen.sh \
+      --service-name "fcgi_rtbserver$RTB_INDEX" \
+      --plugin-root "$PLUGIN_ROOT" \
+      --app-xml "$APP_XML" \
+      --relative-port-xpath "configuration/cfg:frontend/cfg:rtbFCGI${RTB_INDEX}NetworkParams/@port" \
+      --services-xpath "$HTTP_FRONTEND_XPATH" \
+      --out-dir "$OUT_DIR" \
+      --out-file "CurrentEnv/$DACS_FE_NAME"
 
-  let "EXIT_CODE|=$?"
-
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_rtbserver1" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --relative-port-xpath "configuration/cfg:frontend/cfg:rtbFCGI1NetworkParams/@port" \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/$DACS_FE_NAME
-
-  let "EXIT_CODE|=$?"
-
-  $EXEC/CurrentEnvGen.sh \
-    --service-name "fcgi_rtbserver2" \
-    --plugin-root "$PLUGIN_ROOT" \
-    --app-xml $APP_XML \
-    --relative-port-xpath "configuration/cfg:frontend/cfg:rtbFCGI2NetworkParams/@port" \
-    --services-xpath "$HTTP_FRONTEND_XPATH" \
-    --out-dir $OUT_DIR \
-    --out-file CurrentEnv/$DACS_FE_NAME
-
-  let "EXIT_CODE|=$?"
+    let "EXIT_CODE|=$?"
+  done
 
   # UserBind FCGI server
   $EXEC/ServiceConf.sh \
