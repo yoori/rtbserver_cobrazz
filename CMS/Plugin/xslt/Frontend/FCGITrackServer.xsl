@@ -44,31 +44,31 @@
     <xsl:for-each select="exsl:node-set($socket_arr)/i">
       <cfg:BindSocket>
         <xsl:attribute name="backlog">
-          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@backlog"/>
-          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@backlog) = 0">1000</xsl:if>
+          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@backlog"/>
+          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@backlog) = 0">1000</xsl:if>
         </xsl:attribute>
         <xsl:attribute name="accept_threads">
-          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@accept_threads"/>
-          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@accept_threads) = 0">5</xsl:if>
+          <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@accept_threads"/>
+          <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@accept_threads) = 0">5</xsl:if>
         </xsl:attribute>
         <xsl:attribute name="bind">
-          <xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver',., '.sock')"/>
+          <xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver{FCGITRACKSERVER_INDEX}', '_', . , '.sock')"/>
         </xsl:attribute>
       </cfg:BindSocket>
     </xsl:for-each>
 
     <xsl:variable name="colo-id" select="$colo-config/cfg:coloParams/@colo_id"/>
 
-    <xsl:variable name="fcgi-trackserver-port">
+    <xsl:variable name="fcgi-trackserver{FCGITRACKSERVER_INDEX}-port">
       <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@port"/>
       <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@port) = 0">
-        <xsl:value-of select="$def-fcgi-trackserver-port"/>
+        <xsl:value-of select="$def-fcgi-trackserver{FCGITRACKSERVER_INDEX}-port"/>
       </xsl:if>
     </xsl:variable>
 
-    <exsl:document href="FCGIServer.port"
+    <exsl:document href="FCGIServer{FCGITRACKSERVER_INDEX}.port"
       method="text" omit-xml-declaration="yes"
-      >  ['FCGIServer', <xsl:copy-of select="$fcgi-trackserver-port"/>],</exsl:document>
+      >  ['FCGIServer', <xsl:copy-of select="$fcgi-trackserver{FCGITRACKSERVER_INDEX}-port"/>],</exsl:document>
 
     <xsl:variable name="fcgi-adserver-logging" select="$fcgi-adserver-config/cfg:logging"/>
 
@@ -81,7 +81,7 @@
       </xsl:attribute>
 
       <cfg:Endpoint host="*">
-        <xsl:attribute name="port"><xsl:value-of select="$fcgi-trackserver-port"/></xsl:attribute>
+        <xsl:attribute name="port"><xsl:value-of select="$fcgi-trackserver{FCGITRACKSERVER_INDEX}-port"/></xsl:attribute>
         <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="FCGIServerStats" name="FCGIServerStats"/>
       </cfg:Endpoint>
@@ -89,14 +89,14 @@
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$fcgi-adserver-logging"/>
-      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-trackserver-log-path)"/>
+      <xsl:with-param name="log-file" select="concat($workspace-root, $fcgi-trackserver{FCGITRACKSERVER_INDEX}-log-path)"/>
       <xsl:with-param name="default-log-level" select="$default-fcgiserver-log-level"/>
     </xsl:call-template>
 
     <xsl:variable name="fcgi-trackserver-mon-port">
-      <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGINetworkParams/@mon_port"/>
-      <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGINetworkParams/@mon_port) = 0">
-        <xsl:value-of select="$def-fcgi-trackserver-mon-port"/>
+      <xsl:value-of select="$fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@mon_port"/>
+      <xsl:if test="count($fcgi-adserver-config/cfg:trackFCGI{FCGITRACKSERVER_INDEX}NetworkParams/@mon_port) = 0">
+        <xsl:value-of select="$def-fcgi-trackserver{FCGITRACKSERVER_INDEX}-mon-port"/>
       </xsl:if>
     </xsl:variable>
 
