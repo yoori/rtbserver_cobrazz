@@ -227,19 +227,17 @@ def url_time_update(urls):
 
 def get_unique_domains_from_postgre(urls, chunk_size=1000):
     if not urls:
-        return []
+        return set()
 
     urls_list = list(urls) if isinstance(urls, set) else urls
 
-    existing_urls = []
+    existing_urls = set()
     total_urls = len(urls_list)
     processed = 0
 
     for i in range(0, total_urls, chunk_size):
         chunk = urls_list[i:i + chunk_size]
-
         placeholders = ",".join(["%s"] * len(chunk))
-
         query = f"""
             SELECT url
             FROM gpt_update_time
@@ -247,12 +245,13 @@ def get_unique_domains_from_postgre(urls, chunk_size=1000):
         """
 
         chunk_existing = execute_query(query, tuple(chunk), fetch_all=True)
-        existing_urls.extend([row[0] for row in chunk_existing])
+        existing_urls.update([row[0] for row in chunk_existing])
 
         processed += len(chunk)
         logger.debug(f"Processed {processed}/{total_urls} URLs")
 
-    logger.info(f"Total existing URLs: {len(existing_urls)}")
+    logger.debug(f"existing domains: {existing_urls}")
+    logger.info(f"Len existing domains: {len(existing_urls)}")
     return existing_urls
 
 
@@ -379,7 +378,7 @@ def load_domains_from_clickhouse(last_days):
     for domain, in rows:
         if not domain.isdigit() and '.' in domain:
             unique_domains.add(extract_main_domain(domain))
-    logger.debug(f"uniq domains from clickhouse {len(unique_domains)} ")
+    logger.info(f"load {len(unique_domains)} domains from clickhous for last {last_days} days")
     return unique_domains
 
 def main():
@@ -396,7 +395,7 @@ def main():
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=int, default=30, help="Interval in seconds")
     parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
-    parser.add_argument("--checkDays", type=int, default=1, help="Get domains that was added <checkDays> days ago")
+    parser.add_argument("--checkDays", type=int, default=3, help="Get domains that was added <checkDays> days ago")
     args = parser.parse_args()
 
     if not os.path.isdir(args.folder):
@@ -416,12 +415,11 @@ def main():
 
     # initialize_cache(args.account_id, args.prefix)
     domains_from_ch = load_domains_from_clickhouse(args.checkDays)
-    logger.info(f"load {len(domains_from_ch)} urls for clickhous for last {args.checkDays} days")
+    domains_presents_postgres = get_unique_domains_from_postgre(domains_from_ch)
+    domains_to_process = domains_from_ch - domains_presents_postgres
+    logger.info(f"domains to add : {len(domains_to_process)}")
 
-    presents_domains = get_unique_domains_from_postgre(domains_from_ch)
-    logger.debug(f"domains: {presents_domains}")
-    logger.info(f"presents domains : {len(presents_domains)}")
-    # monitor_folder(args.folder, args.account_id, args.prefix, args.interval)
+# monitor_folder(args.folder, args.account_id, args.prefix, args.interval)
 
 
 if __name__ == "__main__":
