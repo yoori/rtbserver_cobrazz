@@ -3,6 +3,7 @@ import time
 import argparse
 import logging
 import json
+from clickhouse_driver import Client
 from datetime import datetime
 from psycopg2 import sql, connect
 from logger_config import get_logger
@@ -313,6 +314,41 @@ def monitor_folder(folder_path, account_id, prefix, interval):
             logger.error(f"Error in monitoring loop: {e}")
             time.sleep(interval)
 
+def extract_main_domain(domain):
+    domain = domain.lower().replace('www.', '').replace('http://', '').replace('https://', '')
+    parts = domain.split('.')
+
+    # In case of IP-adress or single-component domain (localhost)
+    if len(parts) <= 1 or domain.replace('.', '').isdigit():
+        return domain
+
+    # Special treatment for new gTLDs (as .game, .app, .dev, etc.)
+    # If the TLD is short (2-3 characters), but is not a standard ccTLD
+    if len(parts[-1]) > 2:  # Это новый gTLD (как .game, .app)
+        return f"{parts[-2]}.{parts[-1]}" if len(parts) >= 2 else domain
+
+    # For standard domains (com, net, org, etc.)
+    return '.'.join(parts[-2:])
+
+def load_domains_from_clickhouse(last_days):
+    client = Client('click00')
+    query = """
+        SELECT domain
+        FROM ccgsitereferrerstats
+        WHERE adv_sdate > today() - 3
+        GROUP BY domain
+        HAVING count() = 1
+    """
+    rows = client.execute(query)
+    logger.debug(f"all domains from clickhouse {len(rows)}")
+
+    # Filter and process domains
+    unique_domains = set()
+    for domain, in rows:
+        if not domain.isdigit() and '.' in domain:
+            unique_domains.add(extract_main_domain(domain))
+    logger.debug(f"uniq domains from clickhouse {len(unique_domains)} ")
+    return unique_domains
 
 def main():
     global logger
@@ -328,6 +364,7 @@ def main():
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=int, default=30, help="Interval in seconds")
     parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
+    parser.add_argument("--checkDays", type=int, default=3, help="Get domains that was added <checkDays> days ago")
     args = parser.parse_args()
 
     if not os.path.isdir(args.folder):
@@ -338,6 +375,7 @@ def main():
     logger.info(f"Using Taxonomy Prefix: \"{args.prefix}\"")
     logger.info(f"Monitoring folder: {args.folder}, checking every {args.interval} seconds")
     logger.info(f"Statement timeout: {args.statement_timeout} ms")
+    logger.info(f"Check last days: {args.checkDays}")
     logger.info("=================================")
 
     statement_timeout = args.statement_timeout
@@ -345,8 +383,9 @@ def main():
     channel_cache = dict()
 
     initialize_cache(args.account_id, args.prefix)
-
-    monitor_folder(args.folder, args.account_id, args.prefix, args.interval)
+    load_ch = load_domains_from_clickhouse(args.checkDays)
+    logger.info(f"load {len(load_ch)} urls for clickhous for last {args.checkDays} days")
+    # monitor_folder(args.folder, args.account_id, args.prefix, args.interval)
 
 
 if __name__ == "__main__":
