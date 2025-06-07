@@ -3,8 +3,8 @@ import time
 import argparse
 import logging
 import json
-import psycopg2
-from psycopg2 import sql
+from datetime import datetime
+from psycopg2 import sql, connect
 from logger_config import get_logger
 
 
@@ -20,7 +20,7 @@ def create_connection():
         "host": os.getenv("DB_HOST"),
         "port": os.getenv("DB_PORT")
     }
-    conn = psycopg2.connect(**db_config)
+    conn = connect(**db_config)
     conn.autocommit = False
     logger.info("Database configuration loaded successfully.")
     return conn
@@ -199,6 +199,29 @@ def add_channel_triggers(url, channel_ids, trigger_id):
             logger.debug(f"Adding {url}({trigger_id}) => {channel_id}")
             execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url,), commit=True)
 
+def url_time_insert(urls):
+    now = datetime.now()
+    for url in urls:
+        logger.debug(f"Update time: {url} => {now}")
+
+        query = """
+                INSERT INTO gpt_update_time (url, last_updated)
+                VALUES (%s, %s)
+        """
+        execute_query(query, (url, now,), commit=True)
+
+def url_time_update(urls):
+    now = datetime.now()
+    for url in urls:
+        logger.debug(f"Update time: {url} => {now}")
+
+        query = """
+            UPDATE gpt_update_time
+            SET last_updated = %s
+            WHERE url = %s;
+        """
+        execute_query(query, (url, now,), commit=True)
+
 
 def process_urls_category(account_id, url, categories, prefix):
     logger.info(f"Processing {url} => {categories}")
@@ -297,10 +320,10 @@ def main():
     global channel_cache
     global statement_timeout
 
-    logger = get_logger('urlIndexWatcher', level=logging.INFO)
+    logger = get_logger('urlIndexWatcher', level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(description="Monitor a folder for new files.")
-    parser.add_argument("--folder", default="../UrlIndexer/GPTresults/", help="Path to the folder to monitor")
+    parser.add_argument("--folder", default="../UrlIndexer/GPTresults", help="Path to the folder to monitor")
     parser.add_argument("--account_id", type=int, required=True, help="Account ID for processing")
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=int, default=30, help="Interval in seconds")

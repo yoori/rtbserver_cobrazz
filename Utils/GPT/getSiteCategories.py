@@ -8,6 +8,7 @@ from logger_config import get_logger
 import requests
 import json
 import time
+from datetime import datetime
 import argparse
 import logging
 
@@ -48,9 +49,11 @@ def send_message(websites_str):
         "messages": [
             {
                 "role": "user",
-                "text":"Ты выдаешь ответы в виде json сообщений - {<запрошеный вебсайт>:[<его категории>]}"
+                "text":"Ты выдаешь ответы в формате json сообщений - "
+                       "{<запрошеный вебсайт>:[<его категории>]}"
                        "Не пишешь вступительных слов и не используешь конструкцию command and results."
                        "Каждая категория как отдельный элемент."
+                       "Json должен быть валидным. Вариантs ответов {] и [] является не валидным."
                        f"{{ \"command\": \"какие категории у сайтов {websites_str}?\" }}"
             }
         ]
@@ -86,7 +89,8 @@ def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_
                     break
 
             except json.JSONDecodeError as json_error:
-                logger.warning(f"Received JSONDecodeError error: {json_error}. Retrying to ask the same data. (retries {retries+1}/{retries_max})")
+                logger.error(f"Received JSONDecodeError error: {json_error} for data: {message_result_str}")
+                logger.warning(f"Retrying to ask the same data. (retries {retries+1}/{retries_max})");
                 retries += 1
                 if retries >= retries_max:
                     logger.error(f"The response could not be converted after {retries_max} attempts.")
@@ -110,13 +114,27 @@ def merge_json(json1, json2):
             merged[key] = value
     return merged
 
-def main(websites):
-    websites = args.websites
-    output_file = args.output
+def main(args):
+    json_filename = args.json_file
     max_chunk_size = args.maxsize
     timeout_ms = args.timeout
     attempts_max = args.attempts
     retries_max = args.retries
+    output_dir = args.output_dir
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    if not os.path.exists(json_filename):
+        print(f"File '{json_filename}' not found.")
+        return 1
+
+    with open(json_filename, "r") as f:
+        data = json.load(f)
+
+    now = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+
+    output_file = output_dir + '/' + list(data.keys())[0] + '_' + now + '.json'
+    websites = ", ".join(data[list(data.keys())[0]])
 
     chunks = split_urls_into_chunks(websites, max_chunk_size)
     combined_results_json = {}
@@ -137,9 +155,9 @@ def main(websites):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process a list of websites.')
-    parser.add_argument('-w', '--websites', type=str, required=True, help='Comma-separated list of websites')
+    parser.add_argument('-f', '--json_file', type=str, required=True, help='json named array with websites. example: {<name>:[<url1>,<url2>,...]}')
     parser.add_argument('-m', '--maxsize', type=int, default=300, help='Maximum number of characters per subarray')
-    parser.add_argument('-o', '--output', type=str, default='result.json', help='Result output filename')
+    parser.add_argument('-o', '--output_dir', type=str, default='GPTresults', help='Result output dir')
     parser.add_argument('-t', '--timeout', type=int, default=300, help='timeout in ms in case of 429 response code or other != 200')
     parser.add_argument('-a', '--attempts', type=int, default=3, help='how many times will ask for the same data - for collect diffrent range of categories')
     parser.add_argument('-r', '--retries', type=int, default=3, help='in case of failure to receive valid data - how many times to retry')
