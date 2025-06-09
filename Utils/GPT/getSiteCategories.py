@@ -1,7 +1,7 @@
 import os
 import sys
 
-#add external dependencies: for logger_config.py and other in this folder
+# add external dependencies: for logger_config.py and other in this folder
 sys.path.append(os.path.abspath('../../Commons/Python/'))
 from logger_config import get_logger
 
@@ -11,8 +11,6 @@ import time
 from datetime import datetime
 import argparse
 import logging
-
-logger = get_logger('GPT', logging.DEBUG)
 
 def split_urls_into_chunks(url_string, max_chunk_size):
     # Separating the string by commas and removing spaces
@@ -24,7 +22,7 @@ def split_urls_into_chunks(url_string, max_chunk_size):
         # Check how many characters will be in the subarray with the addition of the current URL
         if len(current_chunk) + len(url) + 2 <= max_chunk_size:  # +2 for ", "
             if current_chunk:
-                current_chunk += ", "  #  add comma before next URL
+                current_chunk += ", "  # add comma before next URL
             current_chunk += url
         else:
             # If the current subarray overflows, add it to the list and start a new one
@@ -36,6 +34,7 @@ def split_urls_into_chunks(url_string, max_chunk_size):
         chunks.append(current_chunk)
 
     return chunks
+
 
 def send_message(websites_str):
     # logger.info(f"get categories for websites:{websites}")
@@ -49,12 +48,12 @@ def send_message(websites_str):
         "messages": [
             {
                 "role": "user",
-                "text":"Ты выдаешь ответы в формате json сообщений - "
-                       "{<запрошеный вебсайт>:[<его категории>]}"
-                       "Не пишешь вступительных слов и не используешь конструкцию command and results."
-                       "Каждая категория как отдельный элемент."
-                       "Json должен быть валидным. Вариантs ответов {] и [] является не валидным."
-                       f"{{ \"command\": \"какие категории у сайтов {websites_str}?\" }}"
+                "text": "Ты выдаешь ответы в формате json сообщений - "
+                        "{<запрошеный вебсайт>:[<его категории>]}"
+                        "Не пишешь вступительных слов и не используешь конструкцию command and results."
+                        "Каждая категория как отдельный элемент."
+                        "Json должен быть валидным. Вариантs ответов {] и [] является не валидным."
+                        f"{{ \"command\": \"какие категории у сайтов {websites_str}?\" }}"
             }
         ]
     }
@@ -67,6 +66,7 @@ def send_message(websites_str):
 
     response = requests.post(url, headers=headers, json=prompt)
     return response
+
 
 def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_ms):
     """Function for sending a request with repeated attempts when receiving != 200 response codes"""
@@ -84,13 +84,14 @@ def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_
                     message_result_json = json.loads(message_result_str)
                     return message_result_json
                 else:
-                    logger.warning(f"Received response.status_code({response.status_code}) != 200. Retrying in {timeout_ms / 1000} seconds... (Attempt {timeout_attempt + 1}/{timeout_attempts_max})")
+                    logger.warning(
+                        f"Received response.status_code({response.status_code}) != 200. Retrying in {timeout_ms / 1000} seconds... (Attempt {timeout_attempt + 1}/{timeout_attempts_max})")
                     time.sleep(timeout_ms / 1000)
                     break
 
             except json.JSONDecodeError as json_error:
                 logger.error(f"Received JSONDecodeError error: {json_error} for data: {message_result_str}")
-                logger.warning(f"Retrying to ask the same data. (retries {retries+1}/{retries_max})");
+                logger.warning(f"Retrying to ask the same data. (retries {retries + 1}/{retries_max})");
                 retries += 1
                 if retries >= retries_max:
                     logger.error(f"The response could not be converted after {retries_max} attempts.")
@@ -99,6 +100,7 @@ def send_message_with_retry(message, retries_max, timeout_attempts_max, timeout_
 
     logger.error(f"Failed to get response after {timeout_attempts_max} attempts")
     return {}
+
 
 def merge_json(json1, json2):
     merged = json1.copy()
@@ -114,7 +116,19 @@ def merge_json(json1, json2):
             merged[key] = value
     return merged
 
+
+# def pastprocess(data_json):
+#     cleaned_results = {
+#         domain.split('?')[0]: values
+#         for domain, values in data_json.items()
+#     }
+#     return cleaned_results
+
+
 def main(args):
+    global logger
+    logger = get_logger('GPT', args.loglevel)
+
     json_filename = args.json_file
     max_chunk_size = args.maxsize
     timeout_ms = args.timeout
@@ -140,17 +154,18 @@ def main(args):
     for attempt in range(attempts_max):
         for i, chunk in enumerate(chunks):
             try:
-                logger.info(f"attempt {attempt +1}/{attempts_max} chunk {i +1}/{len(chunks)}: {chunk}")
-                message_result_json = send_message_with_retry(chunk, retries_max=retries_max, timeout_attempts_max=attempts_max, timeout_ms=timeout_ms)
+                logger.info(f"attempt {attempt + 1}/{attempts_max} chunk {i + 1}/{len(chunks)}: {chunk}")
+                message_result_json = send_message_with_retry(chunk, retries_max=retries_max,
+                                                              timeout_attempts_max=attempts_max, timeout_ms=timeout_ms)
                 combined_results_json = merge_json(combined_results_json, message_result_json)
             except Exception as e:
-                logger.error(f"Exception in chunk{i+1}: {e}")
-
+                logger.error(f"Exception in chunk{i + 1}: {e}")
+    # combined_results_json = pastprocess(combined_results_json) // todo: think about some GPT results bugs
     output_file_path = output_dir + '/' + output_file
     with open(output_file_path, 'w', encoding='utf-8') as f:
         json.dump(combined_results_json, f, ensure_ascii=False, indent=4)
 
-    if(store_gpt_results):
+    if (store_gpt_results):
         now = datetime.now().strftime("%Y-%m-%d-%H%M%S")
         output_file_backup = output_dir + '/' + list(data.keys())[0] + '_' + now + '.json'
         with open(output_file_backup, 'w', encoding='utf-8') as f:
@@ -159,16 +174,23 @@ def main(args):
     logger.debug(f"result:{combined_results_json}")
     logger.info(f"done. Write to a file: {output_file_path}")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process a list of websites.')
-    parser.add_argument('-f', '--json_file', type=str, required=True, help='json named array with websites. example: {<name>:[<url1>,<url2>,...]}')
+    parser.add_argument("-l", "--loglevel", type=str, default="INFO", help="set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+    parser.add_argument('-f', '--json_file', type=str, required=True,
+                        help='json named array with websites. example: {<name>:[<url1>,<url2>,...]}')
     parser.add_argument('-m', '--maxsize', type=int, default=300, help='Maximum number of characters per subarray')
     parser.add_argument('-d', '--output_dir', type=str, default='GPTresults', help='Result output dir')
     parser.add_argument('-o', '--output_file', type=str, default='GPTresult.json', help='Result output file')
-    parser.add_argument('-s', '--storeGpt', action='store_true', help='true - save all gpt results, false - save only last one')
-    parser.add_argument('-t', '--timeout', type=int, default=300, help='timeout in ms in case of 429 response code or other != 200')
-    parser.add_argument('-a', '--attempts', type=int, default=3, help='how many times will ask for the same data - for collect diffrent range of categories')
-    parser.add_argument('-r', '--retries', type=int, default=3, help='in case of failure to receive valid data - how many times to retry')
+    parser.add_argument('-s', '--storeGpt', action='store_true',
+                        help='true - save all gpt results, false - save only last one')
+    parser.add_argument('-t', '--timeout', type=int, default=300,
+                        help='timeout in ms in case of 429 response code or other != 200')
+    parser.add_argument('-a', '--attempts', type=int, default=3,
+                        help='how many times will ask for the same data - for collect diffrent range of categories')
+    parser.add_argument('-r', '--retries', type=int, default=3,
+                        help='in case of failure to receive valid data - how many times to retry')
 
     args = parser.parse_args()
 

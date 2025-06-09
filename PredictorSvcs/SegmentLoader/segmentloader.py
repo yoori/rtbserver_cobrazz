@@ -12,7 +12,7 @@ import re
 import subprocess
 
 
-def create_connection():
+def create_connection_postgres():
     required_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
@@ -26,12 +26,11 @@ def create_connection():
     }
     conn = connect(**db_config)
     conn.autocommit = False
-    logger.info("Database configuration loaded successfully.")
+    logger.info("Postgres connected.")
     return conn
 
 
 def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=False):
-    """Executes a query with automatic resource management."""
     try:
         logger.debug(f"Executing query: {query} | Params: {params}")
         with connection.cursor() as cursor:
@@ -39,18 +38,18 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=Fal
             cursor.execute(query, params)
 
             result = None
-            # if cursor.rowcount == 0:
-            #     logger.debug("no rows found.")
 
-            if fetch_one:
-                result = cursor.fetchone()
-                logger.debug(f"Fetch one result: {result}")
+            if fetch_one and fetch_all:
+                logger.warning("Cannot use both fetch_one and fetch_all simultaneously. fetch_all will be used.")
 
             if fetch_all:
                 result = cursor.fetchall()
                 logger.debug(f"Fetch all result: {result}")
+            elif fetch_one:
+                result = cursor.fetchone()
+                logger.debug(f"Fetch one result: {result}")
 
-            if commit:  # DELETE is committed immediately
+            if commit:  # DELETE is committed immediately(have to not use commit=True)
                 connection.commit()
                 logger.debug("Commit successful.")
 
@@ -300,7 +299,7 @@ def process_file(filePath, account_id, prefix):
     logger.info(f"Processing file: {filePath}")
     try:
         with open(filePath, "r", encoding="utf-8") as f:
-            data = json.load(f)  # Load JSON content
+            data = json.load(f)
 
         if not isinstance(data, dict):
             logger.error(f"Invalid JSON format {filePath}: Expected a dictionary.")
@@ -406,7 +405,7 @@ def askGPT(filename):
             env=env)
     else:
         result = subprocess.run(
-            ['python3', scriptPathGPT, '-f', filename, '-d', output_GPT_dir, '-o', output_GPT_file, ], env=env)
+            ['python3', scriptPathGPT, '-f', filename, '-d', output_GPT_dir, '-o', output_GPT_file, '-l', logLevel ], env=env)
 
     if result.returncode == 0:
         logger.info(f"{filename} processed successfully.")
@@ -451,6 +450,7 @@ def get_urls_for_update(chunkSize):
 
 def main():
     global logger
+    global logLevel
 
     global connection
     global channel_cache
@@ -466,6 +466,7 @@ def main():
     global scriptPathGPT
 
     parser = argparse.ArgumentParser(description="Monitor a folder for new files.")
+    parser.add_argument("--loglevel", type=str, default="INFO", help="set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--account_id", type=int, required=True, help="Account ID for processing")
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=parse_time_interval, default='60d',
@@ -486,21 +487,10 @@ def main():
                         help='path to getSiteCategories.py')
     args = parser.parse_args()
 
-    logger = get_logger('urlIndexWatcher', level=logging.DEBUG)
+    logger = get_logger('urlIndexWatcher', args.loglevel)
 
-    statement_timeout = args.statement_timeout
-    connection = create_connection()
-    # channel_cache = initialize_cache(args.account_id, args.prefix)
-
-    output_GPT_dir = args.gptdir
-    output_GPT_file = args.gptFile
-    isGPTresulteStored = args.storeGpt
-    output_website_dir = args.websitesdir
-    isWebsitesresulteStored = args.storeSites
-    timeoutBetweenChecks_sec = args.checkTimeout
-    timeOfExpiration = args.expTimeDate
-    scriptPathGPT = args.pathGPT
-
+    logger.info("=================================")
+    logger.info(f"Using log level: {args.loglevel}")
     logger.info(f"Using Account ID: {args.account_id}")
     logger.info(f"Using Taxonomy Prefix: \"{args.prefix}\"")
     logger.info(f"Checking every {args.interval} seconds")
@@ -516,6 +506,21 @@ def main():
     logger.info(f"Expiration time: {args.expTimeDate}")
     logger.info(f"Path to getSiteCategories.py: {args.pathGPT}")
     logger.info("=================================")
+
+
+    statement_timeout = args.statement_timeout
+    connection = create_connection_postgres()
+    channel_cache = initialize_cache(args.account_id, args.prefix)
+
+    output_GPT_dir = args.gptdir
+    output_GPT_file = args.gptFile
+    isGPTresulteStored = args.storeGpt
+    output_website_dir = args.websitesdir
+    isWebsitesresulteStored = args.storeSites
+    timeoutBetweenChecks_sec = args.checkTimeout
+    timeOfExpiration = args.expTimeDate
+    scriptPathGPT = args.pathGPT
+    logLevel = args.loglevel.upper()
 
     while True:
         domain_chunks_new = get_domains(args.checkDays, args.chunkSize)
