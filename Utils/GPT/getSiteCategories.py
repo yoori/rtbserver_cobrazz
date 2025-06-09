@@ -121,6 +121,7 @@ def main(args):
     attempts_max = args.attempts
     retries_max = args.retries
     output_dir = args.output_dir
+    store_gpt_results = args.storeGpt
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -130,10 +131,6 @@ def main(args):
 
     with open(json_filename, "r") as f:
         data = json.load(f)
-
-    now = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-
-    output_file = output_dir + '/' + list(data.keys())[0] + '_' + now + '.json'
     websites = ", ".join(data[list(data.keys())[0]])
 
     chunks = split_urls_into_chunks(websites, max_chunk_size)
@@ -148,16 +145,25 @@ def main(args):
             except Exception as e:
                 logger.error(f"Exception in chunk{i+1}: {e}")
 
-    logger.debug(f"result:{combined_results_json}")
-    logger.info(f"done. Write to a file: {output_file}")
+    output_file = output_dir + '/' + 'GPTresults.json'
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(combined_results_json, f, ensure_ascii=False, indent=4)
+
+    if( store_gpt_results):
+        now = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        output_file_backup = output_dir + '/' + list(data.keys())[0] + '_' + now + '.json'
+        with open(output_file_backup, 'w', encoding='utf-8') as f:
+            json.dump(combined_results_json, f, ensure_ascii=False, indent=4)
+
+    logger.debug(f"result:{combined_results_json}")
+    logger.info(f"done. Write to a file: {output_file}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process a list of websites.')
     parser.add_argument('-f', '--json_file', type=str, required=True, help='json named array with websites. example: {<name>:[<url1>,<url2>,...]}')
     parser.add_argument('-m', '--maxsize', type=int, default=300, help='Maximum number of characters per subarray')
     parser.add_argument('-o', '--output_dir', type=str, default='GPTresults', help='Result output dir')
+    parser.add_argument('-s', '--storeGpt', action='store_false', help='true - save all gpt results, false - save only last one')
     parser.add_argument('-t', '--timeout', type=int, default=300, help='timeout in ms in case of 429 response code or other != 200')
     parser.add_argument('-a', '--attempts', type=int, default=3, help='how many times will ask for the same data - for collect diffrent range of categories')
     parser.add_argument('-r', '--retries', type=int, default=3, help='in case of failure to receive valid data - how many times to retry')

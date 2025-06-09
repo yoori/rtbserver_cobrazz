@@ -1,33 +1,27 @@
-from clickhouse_driver import Client
 import json
 import math
 import os
 from urllib.parse import urlparse
 
-CHUNK_SIZE = 1000  # Количество доменов в одном JSON-файле
-OUTPUT_DIR = "domains"  # Папка для сохранения результатов
+CHUNK_SIZE = 1000
+OUTPUT_DIR = "domains"
 
-def extract_main_domain(domain):
-    """Извлекает основной домен (SLD + TLD) с учетом новых gTLD"""
-    # Удаляем возможные www и протоколы
-    domain = domain.lower().replace('www.', '').replace('http://', '').replace('https://', '')
+# def extract_main_domain(domain):
+#     domain = domain.lower().replace('www.', '').replace('http://', '').replace('https://', '')
+#     parts = domain.split('.')
+#
+#     # In case of IP-adress or single-component domain (localhost)
+#     if len(parts) <= 1 or domain.replace('.', '').isdigit():
+#         return domain
+#
+#     # Special treatment for new gTLDs (as .game, .app, .dev, etc.)
+#     # If the TLD is short (2-3 characters), but is not a standard ccTLD
+#     if len(parts[-1]) > 2:  # Это новый gTLD (как .game, .app)
+#         return f"{parts[-2]}.{parts[-1]}" if len(parts) >= 2 else domain
+#
+#     # For standard domains (com, net, org, etc.)
+#     return '.'.join(parts[-2:])
 
-    # Разбиваем на части
-    parts = domain.split('.')
-
-    # Если это IP-адрес или односоставный домен (localhost)
-    if len(parts) <= 1 or domain.replace('.', '').isdigit():
-        return domain
-
-    # Специальная обработка для новых gTLD (как .game, .app, .dev и т.д.)
-    # Если TLD короткий (2-3 символа), но не является стандартным ccTLD
-    if len(parts[-1]) > 2:  # Это новый gTLD (как .game, .app)
-        return f"{parts[-2]}.{parts[-1]}" if len(parts) >= 2 else domain
-
-    # Для стандартных доменов (com, net, org и т.д.)
-    return '.'.join(parts[-2:])
-
-# Создаём папку, если её нет
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 client = Client('click00')
@@ -39,11 +33,11 @@ query = """
     HAVING count() = 1
 """
 
-print("[1/3] Загрузка данных из ClickHouse...")
+print("[1/3] Loading data from ClickHouse...")
 rows = client.execute(query)
-print(f"[2/3] Найдено {len(rows)} доменов")
+print(f"[2/3] Found {len(rows)} domains")
 
-# Фильтруем и обрабатываем домены
+# Filter and process domains
 unique_domains = set()
 
 for domain, in rows:
@@ -51,11 +45,11 @@ for domain, in rows:
         unique_domains.add(extract_main_domain(domain))
 
 total_domains = len(unique_domains)
-print(f"[2/3] Найдено {total_domains} доменов (после обработки)")
+print(f"[2/3] Found {total_domains} domains (after processing)")
 
-# Разбиваем на файлы
+# Split into files
 num_files = math.ceil(total_domains / CHUNK_SIZE)
-print(f"[3/3] Сохранение в {num_files} JSON-файлов...")
+print(f"[3/3] Saving to {num_files} JSON files...")
 
 sorted_domains = sorted(unique_domains)
 for i in range(num_files):
@@ -65,6 +59,6 @@ for i in range(num_files):
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump({"Websites": chunk}, f, ensure_ascii=False, indent=2)
 
-    print(f"  → Сохранён {file_path} ({len(chunk)} доменов)")
+    print(f"  → Saved {file_path} ({len(chunk)} domains)")
 
-print(f"Готово! Результаты в папке '{OUTPUT_DIR}'")
+print(f"Done! Results in folder '{OUTPUT_DIR}'")

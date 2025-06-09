@@ -1,15 +1,17 @@
 import os
-import time
 import argparse
 import logging
 import json
-from tabnanny import check
-
 from clickhouse_driver import Client
-from datetime import datetime
-from psycopg2 import sql, connect
-from logger_config import get_logger
+from datetime import datetime, timedelta
 
+from psycopg2 import sql, connect
+
+from logger_config import get_logger
+import signal
+import threading
+import re
+import subprocess
 
 def create_connection():
     required_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]
@@ -66,14 +68,15 @@ def initialize_cache(account_id, name_prefix):
     logger.debug(f"Initializing cache for account {account_id} with prefix {name_prefix}")
     rows = execute_query(query, (account_id, name_prefix,), fetch_all=True)
 
+    channel_cache = dict()
     if not rows:
-        return {}
+        return channel_cache
     logger.debug("Cache initialized with:")
     for ch_id, name in rows:
         logger.debug(f"{name} -> {ch_id}")
         channel_cache[name] = ch_id
     logger.info(f"Cache initialized with {len(rows)} entries.")
-
+    return channel_cache
 
 def get_or_create_channels(account_id, categories):
     if categories:
@@ -313,38 +316,6 @@ def process_file(filePath, account_id, prefix):
         return 3
 
 
-def monitor_folder(folder_path, account_id, prefix, interval):
-    processed_files = set()
-
-    while True:
-        try:
-            files = set(os.listdir(folder_path))
-            new_files = files - processed_files
-
-            if not new_files:
-                logger.info("No new files detected.")
-                time.sleep(interval)
-                continue
-
-            logger.info(f"New files detected: {new_files}")
-
-            for file_name in new_files:
-                file_path = os.path.join(folder_path, file_name)
-                if os.path.isfile(file_path):
-                    if not process_file(file_path, account_id, prefix):
-                        processed_files.add(file_name)
-                        logger.info(f"{file_name} processed successfully.")
-                    else:
-                        logger.warning(f"{file_name} not processed successfully. Retrying next time.")
-
-            time.sleep(interval)
-        except KeyboardInterrupt:
-            logger.warning("Monitoring stopped by user.")
-            break
-        except Exception as e:
-            logger.error(f"Error in monitoring loop: {e}")
-            time.sleep(interval)
-
 def extract_main_domain(domain):
     domain = domain.lower().replace('www.', '').replace('http://', '').replace('https://', '')
     parts = domain.split('.')
@@ -380,46 +351,152 @@ def load_domains_from_clickhouse(last_days):
             unique_domains.add(extract_main_domain(domain))
     logger.info(f"load {len(unique_domains)} domains from clickhous for last {last_days} days")
     return unique_domains
+def separate_to_chunks(domains, chunk_size):
+    if not domains:
+        return []
+
+    domains_list = list(domains) if isinstance(domains, set) else domains
+    chunks = [domains_list[i:i + chunk_size] for i in range(0, len(domains_list), chunk_size)]
+    logger.debug(f"Separated into {len(chunks)} chunks of size <= {chunk_size}")
+    for i, chunk in enumerate(chunks):
+        logger.debug(f"Chunk {i + 1}: {len(chunk)}")
+    return chunks
+
+def get_domains(checkDays, chunkSize):
+    domains_from_ch = load_domains_from_clickhouse(checkDays)
+    domains_presents_postgres = get_unique_domains_from_postgre(domains_from_ch)
+    new_domains = domains_from_ch - domains_presents_postgres
+    logger.info(f"domains to add : {len(new_domains)}")
+    chunks = separate_to_chunks(new_domains, chunkSize)
+    return chunks
+
+def signal_handler(sig, frame):
+    logger.info("Received termination signal. Exiting...")
+    terminate_flag.set()
+
+# signal registration
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
+
+def parse_time_interval(time_str):
+    """
+    Parse string in format 'Xd Xh Xm Xs' and returns timedelta.
+    """
+    pattern = r"(?:(\d+)d)?\s*(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+)s)?"
+    match = re.match(pattern, time_str)
+    if not match:
+        raise argparse.ArgumentTypeError("Wrong time format. Expected 'Xd Xh Xm Xs'")
+
+    days, hours, minutes, seconds = match.groups(default='0')
+
+    return timedelta(days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds))
+
+
+def askGPT(filename):
+    os.makedirs(output_GPT_dir, exist_ok=True)
+
+    # Run the script with the urls argument
+    # to run getSiteCategories.py it is requared to have this two in env:
+    #   env["YANDEX_GPT_API_KEY"] = os.getenv('YANDEX_GPT_API_KEY')
+    #   env["YANDEX_ACCOUNT_ID"] = os.getenv('YANDEX_ACCOUNT_ID')
+    env = os.environ.copy()
+    result = subprocess.run(['python3', scriptPathGPT, '-f', filename, '-o', output_GPT_dir, '--storeGpt'], env=env)
+
+    if result.returncode == 0:
+        print(f"{filename} processed successfully.")
+    else:
+        print(f"Error processing {filename}: {result.stderr}")
+
+def write_websites_to_file(websites):
+    os.makedirs(output_website_dir, exist_ok=True)
+    data = {"websites": websites}
+    output_file = os.path.join(output_website_dir, 'websites.json')
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    if( isWebsitesresulteStored):
+        output_file_backup = os.path.join(output_website_dir, "websites_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '.json')
+        with open(output_file_backup, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    return output_file
 
 def main():
     global logger
+    global terminate_flag
+
     global connection
     global channel_cache
     global statement_timeout
 
-    logger = get_logger('urlIndexWatcher', level=logging.DEBUG)
+    global output_GPT_dir
+    global isGPTresulteStored
+    global output_website_dir
+    global isWebsitesresulteStored
+    global timeoutBetweenChecks_sec
+    global timeOfExpiration
+    global scriptPathGPT
 
     parser = argparse.ArgumentParser(description="Monitor a folder for new files.")
-    parser.add_argument("--folder", default="../UrlIndexer/GPTresults", help="Path to the folder to monitor")
+    # parser.add_argument("--folder", default="../UrlIndexer/GPTresults", help="Path to the folder to monitor")
     parser.add_argument("--account_id", type=int, required=True, help="Account ID for processing")
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=int, default=30, help="Interval in seconds")
     parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
     parser.add_argument("--checkDays", type=int, default=3, help="Get domains that was added <checkDays> days ago")
+    parser.add_argument("--chunkSize", type=int, default=1000, help="size of chunk for processing domains")
+    parser.add_argument('--gptdir', type=str, default='GPTresults', help='GPT - getSiteCategory.py results folder')
+    parser.add_argument('--storeGpt', action='store_false', help='true - save all gpt results, false - save only last one')
+    parser.add_argument('--websitesdir', type=str, default='websites', help='websites for gpt')
+    parser.add_argument('--storeSites', action='store_false', help='true - save all sites results, false - save only last one')
+    parser.add_argument('--checkTimeout', type=int, default=300, help='timeout between checks')
+    parser.add_argument('--expTime', type=parse_time_interval, default='60d', help="expiration time in format 'Xd Xh Xm Xs'")
+    parser.add_argument('--pathGPT', type=str, default='../../Utils/GPT/getSiteCategories.py', help='path to getSiteCategories.py')
     args = parser.parse_args()
 
-    if not os.path.isdir(args.folder):
-        logger.error(f"The folder '{args.folder}' does not exist.")
-        return 1
+    logger = get_logger('urlIndexWatcher', level=logging.DEBUG)
+    terminate_flag = threading.Event()
 
-    logger.info(f"Using Account ID: {args.account_id}")
-    logger.info(f"Using Taxonomy Prefix: \"{args.prefix}\"")
-    logger.info(f"Monitoring folder: {args.folder}, checking every {args.interval} seconds")
-    logger.info(f"Statement timeout: {args.statement_timeout} ms")
-    logger.info(f"Check last days: {args.checkDays}")
-    logger.info("=================================")
+    # if not os.path.isdir(args.folder):
+    #     logger.error(f"The folder '{args.folder}' does not exist.")
+    #     return 1
 
     statement_timeout = args.statement_timeout
     connection = create_connection()
-    channel_cache = dict()
+    # channel_cache = initialize_cache(args.account_id, args.prefix)
 
-    # initialize_cache(args.account_id, args.prefix)
-    domains_from_ch = load_domains_from_clickhouse(args.checkDays)
-    domains_presents_postgres = get_unique_domains_from_postgre(domains_from_ch)
-    domains_to_process = domains_from_ch - domains_presents_postgres
-    logger.info(f"domains to add : {len(domains_to_process)}")
+    output_GPT_dir = args.gptdir
+    isGPTresulteStored = args.storeGpt
+    output_website_dir = args.websitesdir
+    isWebsitesresulteStored = args.storeSites
+    timeoutBetweenChecks_sec = args.checkTimeout
+    timeOfExpiration = args.expTime
+    scriptPathGPT = args.pathGPT
 
-# monitor_folder(args.folder, args.account_id, args.prefix, args.interval)
+    logger.info(f"Using Account ID: {args.account_id}")
+    logger.info(f"Using Taxonomy Prefix: \"{args.prefix}\"")
+    logger.info(f"Checking every {args.interval} seconds")
+    logger.info(f"Statement timeout: {args.statement_timeout} ms")
+    logger.info(f"Check last days: {args.checkDays}")
+    logger.info(f"Chunk size for processing domains: {args.chunkSize}")
+    logger.info(f"GPT results directory: {args.gptdir}")
+    logger.info(f"Store GPT results: {args.storeGpt}")
+    logger.info(f"Websites directory: {args.websitesdir}")
+    logger.info(f"Store websites results: {args.storeSites}")
+    logger.info(f"Check timeout: {args.checkTimeout} seconds")
+    logger.info(f"Expiration time: {args.expTime}")
+    logger.info(f"Path to getSiteCategories.py: {args.pathGPT}")
+    logger.info("=================================")
+
+    # while True:
+        # domain_chunks = get_domains(args.checkDays, args.chunkSize)
+        # process_domains(domain_chunks, args.account_id, args.prefix)
+        # time.sleep(args.interval)
+
+    domain_chunks = get_domains(args.checkDays, args.chunkSize)
+    for i, domain_chunk in enumerate(domain_chunks):
+        logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
+        domain_filename = write_websites_to_file(domain_chunk)
+        askGPT(domain_filename)
+        # logger.info(f"GPT result for chunk {i + 1}: {result}")
 
 
 if __name__ == "__main__":
