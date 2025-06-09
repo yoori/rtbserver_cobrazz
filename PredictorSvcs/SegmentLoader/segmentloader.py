@@ -418,7 +418,6 @@ def write_websites_to_file(websites):
 def process_domains(domain_chunks, account_id, prefix):
     for i, domain_chunk in enumerate(domain_chunks):
         logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
-        print(domain_chunk)
         domain_filename = write_websites_to_file(domain_chunk)
         # askGPT(domain_filename)
         # process_file(domain_filename, account_id, prefix)
