@@ -571,6 +571,12 @@
 <xsl:variable name="def-rocksdb-number-background-threads-request-trigger-match" select="10"/>
 <xsl:variable name="def-expire-time-request-trigger-match" select="172800"/>
 
+<xsl:variable name="def-is-rocksdb-enable-inventory" select="'true'"/>
+<xsl:variable name="def-rocksdb-block-cache-size-mb-inventory" select="512"/>
+<xsl:variable name="def-rocksdb-compaction-style-inventory" select="'kCompactionStyleLevel'"/>
+<xsl:variable name="def-rocksdb-number-background-threads-inventory" select="10"/>
+<xsl:variable name="def-expire-time-inventory" select="2592000"/>
+
 <xsl:variable name="def-is-rocksdb-enable-request-info" select="'true'"/>
 <xsl:variable name="def-rocksdb-block-cache-size-mb-request-info" select="1024"/>
 <xsl:variable name="def-rocksdb-compaction-style-request-info" select="'kCompactionStyleLevel'"/>

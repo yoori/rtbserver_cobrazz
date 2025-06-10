@@ -85,12 +85,7 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="ChunksConfig" type="ChunksConfigWithDaysToKeepType">
-        <xsd:annotation>
-          <xsd:documentation>
-            inventory chunks config
-          </xsd:documentation>
-        </xsd:annotation>
+      <xsd:element name="ChunksConfig" type="ChunksRocksDBConfigWithDaysToKeepType">
       </xsd:element>
 
       <xsd:element name="TriggerImpsConfig" type="TriggerImpsConfigType" minOccurs="0" maxOccurs="1">
@@ -161,19 +156,6 @@
     <xsd:attribute name="service_host_name" type="xsd:string" use="required"/>
   </xsd:complexType>
 
-  <!--
-  <xsd:complexType name="ChunksConfigType">
-    <xsd:annotation>
-      <xsd:documentation>
-        Description of user info chunks (file pathes, file attributes)
-      </xsd:documentation>
-    </xsd:annotation>
-    <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
-    <xsd:attribute name="chunks_prefix" type="xsd:string" use="required"/>
-    <xsd:attribute name="life_time" type="xsd:positiveInteger" use="required"/>
-  </xsd:complexType>
-  -->
-
   <xsd:complexType name="LevelChunksConfigType">
     <xsd:annotation>
       <xsd:documentation>
@@ -190,9 +172,12 @@
     <xsd:attribute name="expire_time" type="xsd:positiveInteger" use="required"/>
   </xsd:complexType>
 
-  <xsd:complexType name="ChunksConfigWithDaysToKeepType">
+  <xsd:complexType name="ChunksRocksDBConfigWithDaysToKeepType">
     <xsd:complexContent>
-      <xsd:extension base="LevelChunksConfigType">
+      <xsd:extension base="ChunksRocksDBConfigType">
+        <xsd:attribute name="chunks_root" type="xsd:string" use="required"/>
+        <xsd:attribute name="chunks_prefix" type="xsd:string" use="required"/>
+        <xsd:attribute name="chunks_number" type="xsd:positiveInteger" use="optional" default="4"/>
         <xsd:attribute name="days_to_keep" type="xsd:positiveInteger" use="required"/>
       </xsd:extension>
     </xsd:complexContent>
