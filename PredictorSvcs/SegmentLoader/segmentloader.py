@@ -460,7 +460,7 @@ def main():
     parser.add_argument("--loglevel", type=str, default="INFO", help="set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--account_id", type=int, required=True, help="Account ID for processing")
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
-    parser.add_argument("--interval", type=parse_time_interval, default='60d',
+    parser.add_argument("--interval", type=parse_time_interval, default='1d',
                         help="Interval in seconds between bd checks in format 'Xd Xh Xm Xs'")
     parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
     parser.add_argument("--checkDays", type=int, default=3, help="Get domains that was added <checkDays> days ago")
