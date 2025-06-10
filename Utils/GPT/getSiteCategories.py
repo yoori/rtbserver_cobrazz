@@ -124,6 +124,11 @@ def merge_json(json1, json2):
 #     }
 #     return cleaned_results
 
+def clear_file(file_path):
+    with open(file_path, 'w') as f:
+        pass
+    logger.debug(f"File {file_path} cleared.")
+
 
 def main(args):
     global logger
@@ -151,6 +156,8 @@ def main(args):
     chunks = split_urls_into_chunks(websites, max_chunk_size)
     combined_results_json = {}
 
+    output_file_path = os.path.join(output_dir, output_file)
+    clear_file(output_file_path)
     for attempt in range(attempts_max):
         for i, chunk in enumerate(chunks):
             try:
@@ -161,13 +168,12 @@ def main(args):
             except Exception as e:
                 logger.error(f"Exception in chunk{i + 1}: {e}")
     # combined_results_json = pastprocess(combined_results_json) // todo: think about some GPT results bugs
-    output_file_path = output_dir + '/' + output_file
     with open(output_file_path, 'w', encoding='utf-8') as f:
         json.dump(combined_results_json, f, ensure_ascii=False, indent=4)
 
     if (store_gpt_results):
         now = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-        output_file_backup = output_dir + '/' + list(data.keys())[0] + '_' + now + '.json'
+        output_file_backup = os.path.join(output_dir, list(data.keys())[0] + '_' + now + '.json')
         with open(output_file_backup, 'w', encoding='utf-8') as f:
             json.dump(combined_results_json, f, ensure_ascii=False, indent=4)
 

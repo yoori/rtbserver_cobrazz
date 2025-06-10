@@ -205,30 +205,21 @@ def add_channel_triggers(url, channel_ids, trigger_id):
             execute_query(query, (trigger_id, channel_id, url, trigger_id, channel_id, url,), commit=True)
 
 
-def url_time_insert(urls):
+def url_time_upsert(url):
     now = datetime.now()
-    for url in urls:
-        logger.debug(f"Update time: {url} => {now}")
 
-        query = """
-                INSERT INTO gpt_update_time (url, last_updated)
-                VALUES (%s, %s)
-        """
-        execute_query(query, (url, now,), commit=True)
-
-
-def url_time_update(urls):
-    now = datetime.now()
-    for url in urls:
-        logger.debug(f"Update time: {url} => {now}")
-
-        query = """
-            UPDATE gpt_update_time
-            SET last_updated = %s
-            WHERE url = %s;
-        """
-        execute_query(query, (url, now,), commit=True)
-
+    query = """
+        WITH upsert AS (
+            UPDATE gpt_update_time 
+            SET last_updated = %s 
+            WHERE url = %s
+            RETURNING *
+        )
+        INSERT INTO gpt_update_time (url, last_updated)
+        SELECT %s, %s
+        WHERE NOT EXISTS (SELECT 1 FROM upsert);
+    """
+    execute_query(query, (now, url, url, now), commit=True)
 
 def get_unique_domains_from_postgre(urls, chunk_size=1000):
     if not urls:
@@ -308,8 +299,9 @@ def process_file(filePath, account_id, prefix):
         for url, categories in data.items():
             categories = preprocess_categories(categories, prefix)
             process_urls_category(account_id, url, categories, prefix)
-
+            url_time_upsert(url)
         return 0
+
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON in {filePath}: {e}")
         return 2
@@ -340,10 +332,10 @@ def load_domains_from_clickhouse(last_days):
     query = f"""
         SELECT domain
         FROM ccgsitereferrerstats
-        WHERE adv_sdate > today() - {last_days}
+        WHERE adv_sdate < today() - {last_days}
         GROUP BY domain
         HAVING count() = 1
-    """
+    """ # get all domains that were added more than <last_days> days ago
     rows = client.execute(query)
     logger.debug(f"all domains from clickhouse {len(rows)}")
 
@@ -393,7 +385,6 @@ def parse_time_interval(time_str):
 
 def askGPT(filename):
     os.makedirs(output_GPT_dir, exist_ok=True)
-
     # Run the script with the urls argument
     # to run getSiteCategories.py it is requared to have this two in env:
     #   env["YANDEX_GPT_API_KEY"] = os.getenv('YANDEX_GPT_API_KEY')
@@ -432,7 +423,7 @@ def process_domains(domain_chunks, account_id, prefix):
         logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
         domain_filename = write_websites_to_file(domain_chunk)
         askGPT(domain_filename)
-        process_file(domain_filename, account_id, prefix)
+        process_file(os.path.join(output_GPT_dir, output_GPT_file), account_id, prefix)
 
 
 def get_urls_for_update(chunkSize):
@@ -482,7 +473,7 @@ def main():
     parser.add_argument('--storeSites', action='store_false',
                         help='true - save all sites results, false - save only last one')
     parser.add_argument('--checkTimeout', type=int, default=300, help='timeout between checks')
-    parser.add_argument('--expTimeDate', type=int, default='1', help="expiration time in days'")
+    parser.add_argument('--expTimeDate', type=int, default='60', help="expiration time in days'")
     parser.add_argument('--pathGPT', type=str, default='../../Utils/GPT/getSiteCategories.py',
                         help='path to getSiteCategories.py')
     args = parser.parse_args()
