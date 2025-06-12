@@ -257,23 +257,39 @@ def process_urls_category(account_id, url, categories, prefix, isUpdate=False):
         add_channel_triggers(url, channelid_add, trigger_id)
 
 
-def remove_duplicates(channelIds):
-    return list(set(channelIds))
+def remove_duplicates(categorys):
+    return list(set(categorys))
 
 
-def make_start_with_capital(channelIds):
-    return [x.capitalize() for x in channelIds]
+def make_start_with_capital(categorys):
+    formated_category = []
+    for category in categorys:
+        if category is not None:
+            formated_category.append(category.capitalize())
+    return formated_category
 
 
 def add_prefix_to_categories(categories, prefix):
     category_with_prefix = set()
     for category in categories:
-        category_with_prefix.add(prefix + category)
+        if category is not None:
+            category_with_prefix.add(prefix + category)
     return category_with_prefix
+
+def preprocess_url(url):
+    return remove_last_question_mark(url) # gpt sometimes return result with last question mark
 
 
 def preprocess_categories(categories, prefix):
+    if categories is None:
+        categories = ['Неизвестная категория']
     return add_prefix_to_categories(remove_duplicates(make_start_with_capital(categories)), prefix)
+
+
+def remove_last_question_mark(text):
+    if text.endswith('?'):
+        return text[:-1]
+    return text
 
 
 def process_file(filePath, account_id, prefix, isUpdate=False):
@@ -285,8 +301,8 @@ def process_file(filePath, account_id, prefix, isUpdate=False):
         if not isinstance(data, dict):
             logger.error(f"Invalid JSON format {filePath}: Expected a dictionary.")
             return 1
-
         for url, categories in data.items():
+            url = preprocess_url(url)
             categories = preprocess_categories(categories, prefix)
             process_urls_category(account_id, url, categories, prefix, isUpdate=isUpdate)
             url_time_upsert(url)
@@ -377,8 +393,7 @@ def get_domains(chunkSize=1000):
     domains_from_ch = load_domains_from_clickhouse()
     urls_with_date_cache = get_urls_cache()
     new_domains = domains_from_ch - set(urls_with_date_cache.keys())
-    logger.info(f"domain presents: {len(domains_from_ch) - len(new_domains)}")
-    logger.info(f"domains to add: {len(new_domains)}")
+    logger.info(f"add domains: {len(domains_from_ch)} - {len(domains_from_ch) - len(new_domains)} = {len(new_domains)}")
     chunks = separate_to_chunks(new_domains, chunkSize)
     return chunks
 
@@ -497,7 +512,7 @@ def main():
                         help="Get domains that were added <checkDays> days ago. example: last_checked_day: 2025-06-09, 3 days from current date was 2025-06-09 - no need to update")
     parser.add_argument("--chunkSize", type=int, default=1000, help="size of chunk for processing domains")
     parser.add_argument('--gptdir', type=str, default='GPTresults', help='GPT - getSiteCategory.py results folder')
-    parser.add_argument('--gptFile', type=str, default='GPTresult.json', help='GPT - getSiteCategory.py results file')
+    parser.add_argument('--gptFile', type=str, default='GPTresults.json', help='GPT - getSiteCategory.py results file')
     parser.add_argument('--storeGpt', action='store_true',
                         help='true - save all gpt results, false - save only last one')
     parser.add_argument('--websitesdir', type=str, default='websites', help='websites for gpt')
@@ -552,21 +567,21 @@ def main():
     attempts = args.attempts
     messagesize = args.messagesize
 
-    while True:
-        day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
-        logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
-        if last_checked_day >= day_tobe_checked:
-            logger.debug("not need to update domains")
-        else:
-            logger.info("Need to update domains")
-            domain_chunks_new = get_domains(args.chunkSize)
-            process_domains(domain_chunks_new, args.account_id, args.prefix)
-            continue
-
-        domain_chunks_update = get_urls_for_update(args.chunkSize)
-        process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
-
-        time.sleep(args.interval.total_seconds())
+    # while True:
+    # day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
+    # logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
+    # if last_checked_day >= day_tobe_checked:
+    #     logger.debug("not need to update domains")
+    # else:
+    logger.info("Need to update domains")
+    domain_chunks_new = get_domains(args.chunkSize)
+    process_domains(domain_chunks_new, args.account_id, args.prefix)
+    #     continue
+    #
+    # domain_chunks_update = get_urls_for_update(args.chunkSize)
+    # process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
+    #
+    # time.sleep(args.interval.total_seconds())
 
 
 if __name__ == "__main__":
