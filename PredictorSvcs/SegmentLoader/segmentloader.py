@@ -238,14 +238,18 @@ def url_time_upsert(url):
     execute_query(query, (now, url, url, now), commit=True)
 
 
-def process_urls_category(account_id, url, categories, prefix):
+def process_urls_category(account_id, url, categories, prefix, isUpdate=False):
     logger.info(f"Processing {url} => {categories}")
 
     update_cache(account_id, categories)
     new_channel_ids = get_channel_ids(categories)
 
-    existing_channelIds = get_channelids_for_url(url, prefix)
-    channelid_delete, channelid_add = get_to_del_and_add(existing_channelIds, new_channel_ids)
+    if(isUpdate):
+        existing_channelIds = get_channelids_for_url(url, prefix)
+        channelid_delete, channelid_add = get_to_del_and_add(existing_channelIds, new_channel_ids)
+    else: # it is insert(no need to check presents of existing channel ids)
+        channelid_delete = set()
+        channelid_add = new_channel_ids
 
     delete_channel_triggers(channelid_delete, url)
     if channelid_add:
@@ -273,7 +277,7 @@ def preprocess_categories(categories, prefix):
     return add_prefix_to_categories(remove_duplicates(make_start_with_capital(categories)), prefix)
 
 
-def process_file(filePath, account_id, prefix):
+def process_file(filePath, account_id, prefix, isUpdate=False):
     logger.info(f"Processing file: {filePath}")
     try:
         with open(filePath, "r", encoding="utf-8") as f:
@@ -285,7 +289,7 @@ def process_file(filePath, account_id, prefix):
 
         for url, categories in data.items():
             categories = preprocess_categories(categories, prefix)
-            process_urls_category(account_id, url, categories, prefix)
+            process_urls_category(account_id, url, categories, prefix, isUpdate=isUpdate)
             url_time_upsert(url)
         return 0
 
@@ -406,8 +410,8 @@ def askGPT(filename):
         '-d', output_GPT_dir,
         '-o', output_GPT_file,
         '-l', logLevel,
-        '-a', attempts,
-        '-m', messagesize
+        '-a', str(attempts),
+        '-m', str(messagesize)
     ]
     if isGPTresulteStored:
         command.append('--storeGpt')
@@ -434,13 +438,13 @@ def write_websites_to_file(websites):
     return output_file
 
 
-def process_domains(domain_chunks, account_id, prefix):
+def process_domains(domain_chunks, account_id, prefix, isUpdate=False):
     global last_checked_day
     for i, domain_chunk in enumerate(domain_chunks):
         logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
         domain_filename = write_websites_to_file(domain_chunk)
         askGPT(domain_filename)
-        process_file(os.path.join(output_GPT_dir, output_GPT_file), account_id, prefix)
+        process_file(os.path.join(output_GPT_dir, output_GPT_file), account_id, prefix, isUpdate=isUpdate)
 
     next_day = last_checked_day + timedelta(days=1)
     update_last_checked_day(last_checked_day, next_day)
@@ -560,7 +564,7 @@ def main():
             continue
 
         domain_chunks_update = get_urls_for_update(args.chunkSize)
-        process_domains(domain_chunks_update, args.account_id, args.prefix)
+        process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
 
         time.sleep(args.interval.total_seconds())
 
