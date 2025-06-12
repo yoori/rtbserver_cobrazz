@@ -61,7 +61,7 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=Fal
         raise
 
 
-def initialize_channel_cache(account_id, name_prefix):
+def get_channel_cache(account_id, name_prefix):
     logger.debug(f"Initializing cache for account {account_id} with prefix {name_prefix}")
     query = sql.SQL("""SELECT channel_id, name FROM channel WHERE account_id = %s AND name LIKE %s || '%%' """)
     rows = execute_query(query, (account_id, name_prefix,), fetch_all=True)
@@ -76,20 +76,22 @@ def initialize_channel_cache(account_id, name_prefix):
     logger.info(f"Channel cache initialized with {len(rows)} entries.")
     return channel_cache
 
-def initialize_urls_cache():
+
+def get_urls_cache():
     logger.debug("Initializing urls cache")
     query = sql.SQL("""SELECT url, last_updated FROM gpt_update_time""")
     rows = execute_query(query, (), fetch_all=True)
 
-    urls_with_date_cache = dict()
+    cache = dict()
     if not rows:
-        return urls_with_date_cache
+        return cache
     logger.debug("urls_with_date_cache initialized with:")
     for url, date in rows:
         logger.debug(f"{url} -> {date}")
-        channel_cache[url] = date
+        cache[url] = date
     logger.info(f"Urls cache initialized with {len(rows)} entries.")
-    return channel_cache
+    return cache
+
 
 def get_or_create_channels(account_id, categories):
     if categories:
@@ -367,8 +369,10 @@ def update_last_checked_day(prev_date, cur_date):
         """)
     execute_query(query, (cur_date, prev_date,), commit=True)
 
+
 def get_domains(chunkSize=1000):
     domains_from_ch = load_domains_from_clickhouse()
+    urls_with_date_cache = get_urls_cache()
     new_domains = domains_from_ch - set(urls_with_date_cache.keys())
     logger.info(f"domains to add : {len(new_domains)}")
     chunks = separate_to_chunks(new_domains, chunkSize)
@@ -396,14 +400,19 @@ def askGPT(filename):
     #   env["YANDEX_GPT_API_KEY"] = os.getenv('YANDEX_GPT_API_KEY')
     #   env["YANDEX_ACCOUNT_ID"] = os.getenv('YANDEX_ACCOUNT_ID')
     env = os.environ.copy()
+    command = [
+        'python3', scriptPathGPT,
+        '-f', filename,
+        '-d', output_GPT_dir,
+        '-o', output_GPT_file,
+        '-l', logLevel,
+        '-a', attempts,
+        '-m', messagesize
+    ]
     if isGPTresulteStored:
-        result = subprocess.run(
-            ['python3', scriptPathGPT, '-f', filename, '-d', output_GPT_dir, '-o', output_GPT_file, '--storeGpt', ],
-            env=env)
-    else:
-        result = subprocess.run(
-            ['python3', scriptPathGPT, '-f', filename, '-d', output_GPT_dir, '-o', output_GPT_file, '-l', logLevel],
-            env=env)
+        command.append('--storeGpt')
+
+    result = subprocess.run(command, env=env)
 
     if result.returncode == 0:
         logger.info(f"{filename} processed successfully.")
@@ -437,6 +446,7 @@ def process_domains(domain_chunks, account_id, prefix):
     update_last_checked_day(last_checked_day, next_day)
     last_checked_day = next_day
 
+
 def get_urls_for_update(chunkSize):
     query = """
         SELECT url
@@ -458,7 +468,6 @@ def main():
     global statement_timeout
 
     global channel_cache
-    global urls_with_date_cache
     global last_checked_day
 
     global output_GPT_dir
@@ -469,6 +478,8 @@ def main():
     global timeoutBetweenChecks_sec
     global timeOfExpiration
     global scriptPathGPT
+    global attempts
+    global messagesize
 
     parser = argparse.ArgumentParser(description="Monitor a folder for new files.")
     parser.add_argument("--loglevel", type=str, default="INFO",
@@ -478,7 +489,8 @@ def main():
     parser.add_argument("--interval", type=parse_time_interval, default='1d',
                         help="Interval in seconds between bd checks in format 'Xd Xh Xm Xs'")
     parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
-    parser.add_argument("--checkDays", type=int, default=3, help="Get domains that were added <checkDays> days ago. example: last_checked_day: 2025-06-09, 3 days from current date was 2025-06-09 - no need to update")
+    parser.add_argument("--checkDays", type=int, default=3,
+                        help="Get domains that were added <checkDays> days ago. example: last_checked_day: 2025-06-09, 3 days from current date was 2025-06-09 - no need to update")
     parser.add_argument("--chunkSize", type=int, default=1000, help="size of chunk for processing domains")
     parser.add_argument('--gptdir', type=str, default='GPTresults', help='GPT - getSiteCategory.py results folder')
     parser.add_argument('--gptFile', type=str, default='GPTresult.json', help='GPT - getSiteCategory.py results file')
@@ -491,6 +503,8 @@ def main():
     parser.add_argument('--expTimeDate', type=int, default='60', help="expiration time in days'")
     parser.add_argument('--pathGPT', type=str, default='../../Utils/GPT/getSiteCategories.py',
                         help='path to getSiteCategories.py')
+    parser.add_argument('--attempts', type=int, default='3', help="number of attempts to get GPT results")
+    parser.add_argument('--messagesize', type=int, default='300', help="maximum size of message to GPT in characters")
     args = parser.parse_args()
 
     logger = get_logger('urlIndexWatcher', args.loglevel)
@@ -511,13 +525,14 @@ def main():
     logger.info(f"Check timeout: {args.checkTimeout} seconds")
     logger.info(f"Expiration time: {args.expTimeDate}")
     logger.info(f"Path to getSiteCategories.py: {args.pathGPT}")
+    logger.info(f"Attempts to get GPT results: {args.attempts}")
+    logger.info(f"Max message size to GPT: {args.messagesize} characters")
     logger.info("=================================")
 
     statement_timeout = args.statement_timeout
     connection = create_connection_postgres()
 
-    channel_cache = initialize_channel_cache(args.account_id, args.prefix)
-    urls_with_date_cache = initialize_urls_cache()
+    channel_cache = get_channel_cache(args.account_id, args.prefix)
     last_checked_day = get_last_checked_day()
     logger.info("=================================")
 
@@ -530,6 +545,8 @@ def main():
     timeOfExpiration = args.expTimeDate
     scriptPathGPT = args.pathGPT
     logLevel = args.loglevel.upper()
+    attempts = args.attempts
+    messagesize = args.messagesize
 
     while True:
         day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
