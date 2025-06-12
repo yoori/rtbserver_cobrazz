@@ -567,21 +567,21 @@ def main():
     attempts = args.attempts
     messagesize = args.messagesize
 
-    # while True:
-    # day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
-    # logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
-    # if last_checked_day >= day_tobe_checked:
-    #     logger.debug("not need to update domains")
-    # else:
-    logger.info("Need to update domains")
-    domain_chunks_new = get_domains(args.chunkSize)
-    process_domains(domain_chunks_new, args.account_id, args.prefix)
-    #     continue
-    #
-    # domain_chunks_update = get_urls_for_update(args.chunkSize)
-    # process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
-    #
-    # time.sleep(args.interval.total_seconds())
+    while True:
+        day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
+        logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
+        if last_checked_day >= day_tobe_checked:
+            logger.debug("not need to update domains")
+        else:
+            logger.info("Need to update domains")
+            domain_chunks_new = get_domains(args.chunkSize)
+            process_domains(domain_chunks_new, args.account_id, args.prefix)
+            continue
+
+    domain_chunks_update = get_urls_for_update(args.chunkSize)
+    process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
+
+    time.sleep(args.interval.total_seconds())
 
 
 if __name__ == "__main__":
