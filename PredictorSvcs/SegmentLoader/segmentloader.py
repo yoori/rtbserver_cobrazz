@@ -58,7 +58,7 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=Fal
     except Exception as e:
         logger.error(f"Database error: {e}")
         connection.rollback()
-        raise
+        # raise
 
 
 def get_channel_cache(account_id, name_prefix):
@@ -78,7 +78,6 @@ def get_channel_cache(account_id, name_prefix):
 
 
 def get_urls_cache():
-    logger.debug("Initializing urls cache")
     query = sql.SQL("""SELECT url, last_updated FROM gpt_update_time""")
     rows = execute_query(query, (), fetch_all=True)
 
@@ -378,7 +377,8 @@ def get_domains(chunkSize=1000):
     domains_from_ch = load_domains_from_clickhouse()
     urls_with_date_cache = get_urls_cache()
     new_domains = domains_from_ch - set(urls_with_date_cache.keys())
-    logger.info(f"domains to add : {len(new_domains)}")
+    logger.info(f"domain presents: {len(domains_from_ch) - len(new_domains)}")
+    logger.info(f"domains to add: {len(new_domains)}")
     chunks = separate_to_chunks(new_domains, chunkSize)
     return chunks
 
@@ -559,7 +559,7 @@ def main():
             logger.debug("not need to update domains")
         else:
             logger.info("Need to update domains")
-            domain_chunks_new = get_domains()
+            domain_chunks_new = get_domains(args.chunkSize)
             process_domains(domain_chunks_new, args.account_id, args.prefix)
             continue
 
