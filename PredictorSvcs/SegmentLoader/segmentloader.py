@@ -61,21 +61,35 @@ def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=Fal
         raise
 
 
-def initialize_cache(account_id, name_prefix):
-    query = sql.SQL("""SELECT channel_id, name FROM channel WHERE account_id = %s AND name LIKE %s || '%%' """)
+def initialize_channel_cache(account_id, name_prefix):
     logger.debug(f"Initializing cache for account {account_id} with prefix {name_prefix}")
+    query = sql.SQL("""SELECT channel_id, name FROM channel WHERE account_id = %s AND name LIKE %s || '%%' """)
     rows = execute_query(query, (account_id, name_prefix,), fetch_all=True)
 
     channel_cache = dict()
     if not rows:
         return channel_cache
-    logger.debug("Cache initialized with:")
+    logger.debug("channel_cache initialized with:")
     for ch_id, name in rows:
         logger.debug(f"{name} -> {ch_id}")
         channel_cache[name] = ch_id
-    logger.info(f"Cache initialized with {len(rows)} entries.")
+    logger.info(f"Channel cache initialized with {len(rows)} entries.")
     return channel_cache
 
+def initialize_urls_cache():
+    logger.debug("Initializing urls cache")
+    query = sql.SQL("""SELECT url, last_updated FROM gpt_update_time""")
+    rows = execute_query(query, (), fetch_all=True)
+
+    urls_with_date_cache = dict()
+    if not rows:
+        return urls_with_date_cache
+    logger.debug("urls_with_date_cache initialized with:")
+    for url, date in rows:
+        logger.debug(f"{url} -> {date}")
+        channel_cache[url] = date
+    logger.info(f"Urls cache initialized with {len(rows)} entries.")
+    return channel_cache
 
 def get_or_create_channels(account_id, categories):
     if categories:
@@ -221,35 +235,6 @@ def url_time_upsert(url):
     """
     execute_query(query, (now, url, url, now), commit=True)
 
-def get_unique_domains_from_postgre(urls, chunk_size=1000):
-    if not urls:
-        return set()
-
-    urls_list = list(urls) if isinstance(urls, set) else urls
-
-    existing_urls = set()
-    total_urls = len(urls_list)
-    processed = 0
-
-    for i in range(0, total_urls, chunk_size):
-        chunk = urls_list[i:i + chunk_size]
-        placeholders = ",".join(["%s"] * len(chunk))
-        query = f"""
-            SELECT url
-            FROM gpt_update_time
-            WHERE url IN ({placeholders})
-        """
-
-        chunk_existing = execute_query(query, tuple(chunk), fetch_all=True)
-        existing_urls.update([row[0] for row in chunk_existing])
-
-        processed += len(chunk)
-        logger.debug(f"Processed {processed}/{total_urls} URLs")
-
-    logger.debug(f"existing domains: {existing_urls}")
-    logger.info(f"Len existing domains: {len(existing_urls)}")
-    return existing_urls
-
 
 def process_urls_category(account_id, url, categories, prefix):
     logger.info(f"Processing {url} => {categories}")
@@ -327,24 +312,23 @@ def extract_main_domain(domain):
     return '.'.join(parts[-2:])
 
 
-def load_domains_from_clickhouse(last_days):
+def load_domains_from_clickhouse():
     client = Client('click00')
     query = f"""
         SELECT domain
         FROM ccgsitereferrerstats
-        WHERE adv_sdate < today() - {last_days}
+        WHERE adv_sdate = '{str(last_checked_day)}'
         GROUP BY domain
         HAVING count() = 1
-    """ # get all domains that were added more than <last_days> days ago
+    """
     rows = client.execute(query)
-    logger.debug(f"all domains from clickhouse {len(rows)}")
 
     # Filter and process domains
     unique_domains = set()
     for domain, in rows:
         if not domain.isdigit() and '.' in domain:
             unique_domains.add(extract_main_domain(domain))
-    logger.info(f"load {len(unique_domains)} domains from clickhous for last {last_days} days")
+    logger.info(f"load {len(rows)}/{len(unique_domains)}(all/unique) domains from clickhouse for {last_checked_day}")
     return unique_domains
 
 
@@ -360,10 +344,32 @@ def separate_to_chunks(domains, chunk_size):
     return chunks
 
 
-def get_domains(checkDays, chunkSize):
-    domains_from_ch = load_domains_from_clickhouse(checkDays)
-    domains_presents_postgres = get_unique_domains_from_postgre(domains_from_ch)
-    new_domains = domains_from_ch - domains_presents_postgres
+def get_last_checked_day():
+    query = sql.SQL("""
+        SELECT updated_at FROM gpt_processing_tracker
+    """)
+    rows = execute_query(query, (), fetch_one=True)
+    if not rows:
+        logger.error("No last checked day found in gpt_processing_tracker.")
+        exit(6)
+
+    last_checked_day = rows[0]
+    logger.info(f"last_checked_day: {last_checked_day}")
+    return last_checked_day
+
+
+def update_last_checked_day(prev_date, cur_date):
+    query = sql.SQL(
+        """
+            UPDATE gpt_processing_tracker 
+            SET updated_at = %s 
+            WHERE updated_at = %s
+        """)
+    execute_query(query, (cur_date, prev_date,), commit=True)
+
+def get_domains(chunkSize=1000):
+    domains_from_ch = load_domains_from_clickhouse()
+    new_domains = domains_from_ch - set(urls_with_date_cache.keys())
     logger.info(f"domains to add : {len(new_domains)}")
     chunks = separate_to_chunks(new_domains, chunkSize)
     return chunks
@@ -396,7 +402,8 @@ def askGPT(filename):
             env=env)
     else:
         result = subprocess.run(
-            ['python3', scriptPathGPT, '-f', filename, '-d', output_GPT_dir, '-o', output_GPT_file, '-l', logLevel ], env=env)
+            ['python3', scriptPathGPT, '-f', filename, '-d', output_GPT_dir, '-o', output_GPT_file, '-l', logLevel],
+            env=env)
 
     if result.returncode == 0:
         logger.info(f"{filename} processed successfully.")
@@ -419,12 +426,16 @@ def write_websites_to_file(websites):
 
 
 def process_domains(domain_chunks, account_id, prefix):
+    global last_checked_day
     for i, domain_chunk in enumerate(domain_chunks):
         logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
         domain_filename = write_websites_to_file(domain_chunk)
         askGPT(domain_filename)
         process_file(os.path.join(output_GPT_dir, output_GPT_file), account_id, prefix)
 
+    next_day = last_checked_day + timedelta(days=1)
+    update_last_checked_day(last_checked_day, next_day)
+    last_checked_day = next_day
 
 def get_urls_for_update(chunkSize):
     query = """
@@ -444,8 +455,11 @@ def main():
     global logLevel
 
     global connection
-    global channel_cache
     global statement_timeout
+
+    global channel_cache
+    global urls_with_date_cache
+    global last_checked_day
 
     global output_GPT_dir
     global output_GPT_file
@@ -457,13 +471,14 @@ def main():
     global scriptPathGPT
 
     parser = argparse.ArgumentParser(description="Monitor a folder for new files.")
-    parser.add_argument("--loglevel", type=str, default="INFO", help="set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+    parser.add_argument("--loglevel", type=str, default="INFO",
+                        help="set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--account_id", type=int, required=True, help="Account ID for processing")
     parser.add_argument("--prefix", default="Taxonomy.ChatGPT.", help="Prefix for taxonomy")
     parser.add_argument("--interval", type=parse_time_interval, default='1d',
                         help="Interval in seconds between bd checks in format 'Xd Xh Xm Xs'")
     parser.add_argument("--statement_timeout", type=int, default=5000, help="Statement timeout in milliseconds")
-    parser.add_argument("--checkDays", type=int, default=3, help="Get domains that was added <checkDays> days ago")
+    parser.add_argument("--checkDays", type=int, default=3, help="Get domains that were added <checkDays> days ago. example: last_checked_day: 2025-06-09, 3 days from current date was 2025-06-09 - no need to update")
     parser.add_argument("--chunkSize", type=int, default=1000, help="size of chunk for processing domains")
     parser.add_argument('--gptdir', type=str, default='GPTresults', help='GPT - getSiteCategory.py results folder')
     parser.add_argument('--gptFile', type=str, default='GPTresult.json', help='GPT - getSiteCategory.py results file')
@@ -498,10 +513,13 @@ def main():
     logger.info(f"Path to getSiteCategories.py: {args.pathGPT}")
     logger.info("=================================")
 
-
     statement_timeout = args.statement_timeout
     connection = create_connection_postgres()
-    channel_cache = initialize_cache(args.account_id, args.prefix)
+
+    channel_cache = initialize_channel_cache(args.account_id, args.prefix)
+    urls_with_date_cache = initialize_urls_cache()
+    last_checked_day = get_last_checked_day()
+    logger.info("=================================")
 
     output_GPT_dir = args.gptdir
     output_GPT_file = args.gptFile
@@ -514,8 +532,15 @@ def main():
     logLevel = args.loglevel.upper()
 
     while True:
-        domain_chunks_new = get_domains(args.checkDays, args.chunkSize)
-        process_domains(domain_chunks_new, args.account_id, args.prefix)
+        day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
+        logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
+        if last_checked_day >= day_tobe_checked:
+            logger.debug("not need to update domains")
+        else:
+            logger.info("Need to update domains")
+            domain_chunks_new = get_domains()
+            process_domains(domain_chunks_new, args.account_id, args.prefix)
+            continue
 
         domain_chunks_update = get_urls_for_update(args.chunkSize)
         process_domains(domain_chunks_update, args.account_id, args.prefix)
