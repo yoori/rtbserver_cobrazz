@@ -454,6 +454,9 @@ def write_websites_to_file(websites):
 
 
 def process_domains(domain_chunks, account_id, prefix, isUpdate=False):
+    if not domain_chunks:
+        return
+
     global last_checked_day
     for i, domain_chunk in enumerate(domain_chunks):
         logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
@@ -569,19 +572,19 @@ def main():
 
     while True:
         day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
-        logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
+        logger.info(f"{args.checkDays} days from current date was {day_tobe_checked}")
         if last_checked_day >= day_tobe_checked:
-            logger.debug("not need to update domains")
+            logger.info("not need to update domains")
         else:
             logger.info("Need to update domains")
             domain_chunks_new = get_domains(args.chunkSize)
             process_domains(domain_chunks_new, args.account_id, args.prefix)
             continue
 
-    domain_chunks_update = get_urls_for_update(args.chunkSize)
-    process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
+        domain_chunks_update = get_urls_for_update(args.chunkSize)
+        process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
 
-    time.sleep(args.interval.total_seconds())
+        time.sleep(args.interval.total_seconds())
 
 
 if __name__ == "__main__":
