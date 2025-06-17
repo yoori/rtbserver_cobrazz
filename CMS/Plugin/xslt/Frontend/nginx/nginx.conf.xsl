@@ -662,7 +662,7 @@ http {
       }
 
       # UserBind
-      location ~ ^/(userbind|userbind[.]gif|userbind[.]png)$ {
+      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id)$ {
         fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 
