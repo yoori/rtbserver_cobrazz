@@ -101,10 +101,14 @@ def get_or_create_channels(account_id, categories):
             logger.debug(f"Fetching channel_id for {category}")
             channel_id = execute_query(query, (category, account_id,), fetch_one=True, commit=True)
             if channel_id:
+                upsert_channel_params(channel_id[0])
                 result[category] = channel_id[0]
         return result
     return {}
 
+def upsert_channel_params(channel_id):
+    query = sql.SQL("""SELECT adserver.insert_or_update_taxonomy_channel_parameters(%s, 'U', 5184000, 1)""")
+    execute_query(query, (channel_id,), commit=True)
 
 def update_cache(account_id, categories):
     categories_to_add = get_channel_names_not_in_cache(categories)
@@ -457,16 +461,11 @@ def process_domains(domain_chunks, account_id, prefix, isUpdate=False):
     if not domain_chunks:
         return
 
-    global last_checked_day
     for i, domain_chunk in enumerate(domain_chunks):
         logger.info(f"Processing domain chunk {i + 1}/{len(domain_chunks)}")
         domain_filename = write_websites_to_file(domain_chunk)
         askGPT(domain_filename)
         process_file(os.path.join(output_GPT_dir, output_GPT_file), account_id, prefix, isUpdate=isUpdate)
-
-    next_day = last_checked_day + timedelta(days=1)
-    update_last_checked_day(last_checked_day, next_day)
-    last_checked_day = next_day
 
 
 def get_urls_for_update(chunkSize):
@@ -481,6 +480,11 @@ def get_urls_for_update(chunkSize):
     chunks = separate_to_chunks(domains, chunkSize)
     return chunks
 
+def increment_last_checked_day():
+    global last_checked_day
+    next_day = last_checked_day + timedelta(days=1)
+    update_last_checked_day(last_checked_day, next_day)
+    last_checked_day = next_day
 
 def main():
     global logger
@@ -572,18 +576,18 @@ def main():
 
     while True:
         day_tobe_checked = datetime.now().date() - timedelta(days=args.checkDays)
-        logger.info(f"{args.checkDays} days from current date was {day_tobe_checked}")
-        if last_checked_day >= day_tobe_checked:
-            logger.info("not need to update domains")
-        else:
+        logger.debug(f"{args.checkDays} days from current date was {day_tobe_checked}")
+        if last_checked_day < day_tobe_checked:
             logger.info("Need to update domains")
             domain_chunks_new = get_domains(args.chunkSize)
             process_domains(domain_chunks_new, args.account_id, args.prefix)
+            increment_last_checked_day()
             continue
 
+        logger.info("Not need to update domains - Check old domains for update")
         domain_chunks_update = get_urls_for_update(args.chunkSize)
         process_domains(domain_chunks_update, args.account_id, args.prefix, isUpdate=True)
-
+        logger.debug(f"sleep for {args.interval} until the next check...")
         time.sleep(args.interval.total_seconds())
 
 
