@@ -105,6 +105,9 @@ class FileAdapterAmber:
     def get_alias(self, filename):
         return filename
 
+    def get_exts(self):
+        return ("", ".txt", ".uids")
+
 
 class FileAdapterGpm:
     def __init__(self, dir_path):
@@ -121,6 +124,9 @@ class FileAdapterGpm:
     def get_alias(self, filename):
         number = os.path.basename(filename).split(".")[0]
         return self.data[number]['name']
+
+    def get_exts(self):
+        return (".csv")
 
 
 class Metrics:
@@ -201,7 +207,7 @@ UIDFileGroupInfo = collections.namedtuple("UIDFileGroupInfo",
                                           "name need_sign_uids is_stable")
 
 
-def make_uid_file_group_info(in_name):
+def make_uid_file_group_info(in_name, file_adapter):
     basename, ext = os.path.splitext(in_name)
     if ext.startswith(".stamp"):
         basename, ext = os.path.splitext(basename)
@@ -215,7 +221,7 @@ def make_uid_file_group_info(in_name):
     else:
         basename, ext = os.path.splitext(basename)
     return UIDFileGroupInfo(basename + ext,
-                            not signed_uids and ext in ("", ".txt", ".uids"),
+                            not signed_uids and ext in file_adapter.get_exts(),
                             is_stable)
 
 
@@ -426,7 +432,7 @@ class Application(Service):
                         group_info = make_uid_file_group_info(max(
                             in_names_all,
                             key=lambda in_name: os.path.getmtime(os.path.join(
-                                item.in_dir, in_name))))
+                                item.in_dir, in_name))), upload.file_adapter)
 
                         filename_alias = upload.file_adapter.get_alias(
                                 group_info.name)
@@ -455,7 +461,7 @@ class Application(Service):
                         in_names = []
                         for in_name in in_names_all:
                             if group_info != make_uid_file_group_info(
-                                    in_name):
+                                    in_name, upload.file_adapter):
                                 continue
                             in_names.append(in_name)
                         in_names.sort(
