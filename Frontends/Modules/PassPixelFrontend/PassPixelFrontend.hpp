@@ -11,7 +11,7 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <CORBA/CORBACommons/CorbaAdapters.hpp>
 #include <UServerUtils/Grpc/Common/Scheduler.hpp>
-#include <userver/engine/task/task_processor.hpp>
+#include <engine/task/task_processor.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 

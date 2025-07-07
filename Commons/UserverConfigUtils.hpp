@@ -33,7 +33,6 @@ create_task_processor_container_builder(
   EventThreadPoolConfig event_thread_pool_config;
   event_thread_pool_config.threads = event_thread_pool.number_threads();
   event_thread_pool_config.thread_name = event_thread_pool.name();
-  event_thread_pool_config.defer_events = event_thread_pool.defer_events();
   event_thread_pool_config.ev_default_loop_disabled = event_thread_pool.ev_default_loop_disabled();
 
   const auto& main_task_processor = coro_config.MainTaskProcessor();

@@ -61,8 +61,8 @@
     </xsl:variable>
 
     <xsl:variable name="user-bind-server-mon-port">
-      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@monitoring_port"/>
-      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@mon_port"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@mon_port) = 0">
         <xsl:value-of select="$def-user-bind-server-mon-port"/>
       </xsl:if>
     </xsl:variable>
@@ -184,8 +184,7 @@
       <cfg:EventThreadPool
         number_threads="{$event-thread-pool-number-threads}"
         name="{$event-thread-pool-name}"
-        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
-        defer_events="{$event-thread-pool-defer-events}"/>
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"/>
       <cfg:MainTaskProcessor
         name="{$main-task-processor-name}"
         number_threads="{$main-task-processor-number-threads}"

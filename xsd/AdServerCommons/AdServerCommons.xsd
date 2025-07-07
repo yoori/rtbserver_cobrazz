@@ -405,7 +405,6 @@
     <xsd:attribute name="number_threads" type="xsd:positiveInteger" default="10"/>
     <xsd:attribute name="name" type="xsd:string" default="event-worker"/>
     <xsd:attribute name="ev_default_loop_disabled" type="xsd:boolean" default="true"/>
-    <xsd:attribute name="defer_events" type="xsd:boolean" default="false"/>
   </xsd:complexType>
 
   <xsd:simpleType name="OverloadActionType">

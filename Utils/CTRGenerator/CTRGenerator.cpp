@@ -816,7 +816,7 @@ namespace CampaignSvcs
         feature_holders_.push_back(feature_holder);
       }
     }
-  };
+  }
 
   void
   CTRGenerator::calculate(

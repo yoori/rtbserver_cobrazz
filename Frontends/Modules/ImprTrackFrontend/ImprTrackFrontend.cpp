@@ -102,7 +102,7 @@ namespace ImprTrack
         return ChannelMatch(atom.id, atom.trigger_channel_id);
       }
     };
-  };
+  }
 
   class Frontend::MatchChannelsTask:
     public Generics::Task,

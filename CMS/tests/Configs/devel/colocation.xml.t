@@ -310,7 +310,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <expressionMatcher xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 13 }" monitoring_port="{ $PORT_BASE + 313 }"/>
+            <networkParams port="{ $PORT_BASE + 13 }" mon_port="{ $PORT_BASE + 313 }"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams period="10"/>
             <statLogging file_check_period="10" flush_period="10" activity_flush_period="10" inventory_ecpm_flush_period="10"/>
@@ -336,7 +336,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <requestInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 20 }" monitoring_port="{ $PORT_BASE + 320 }"/>
+            <networkParams port="{ $PORT_BASE + 20 }" mon_port="{ $PORT_BASE + 320 }"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <statLogging file_check_period="10" flush_period="30"/>
           </requestInfoManager>
@@ -407,7 +407,8 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         <configuration>
           <userInfoManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <networkParams port="{ $PORT_BASE + 1 }"
-              grpc_port="{$PORT_BASE + 201}" monitoring_port="{$PORT_BASE + 301}"/>
+              grpc_port="{$PORT_BASE + 201}"
+              mon_port="{$PORT_BASE + 301}"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams update_period="10"/>
             <profilesCleanupParams life_time="3600" clean_time="00:01"/>
@@ -474,7 +475,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         <configuration>
           <userBindServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <networkParams port="{$PORT_BASE + 28}"
-              grpc_port="{$PORT_BASE + 228}" monitoring_port="{$PORT_BASE + 328}"/>
+              grpc_port="{$PORT_BASE + 228}" mon_port="{$PORT_BASE + 328}"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
           </userBindServer>
         </configuration>
@@ -499,14 +500,32 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         <configuration>
           <frontend xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <adHttpNetworkParams/>
-            <adFCGINetworkParams port="{ $PORT_BASE + 76 }" monitoring_port="{ $PORT_BASE + 376 }"/>
-            <rtbFCGI1NetworkParams port="{ $PORT_BASE + 77 }" monitoring_port="{ $PORT_BASE + 377 }"/>
-            <rtbFCGI2NetworkParams port="{ $PORT_BASE + 96 }" monitoring_port="{ $PORT_BASE + 396 }"/>
-            <trackFCGINetworkParams port="{ $PORT_BASE + 95 }" monitoring_port="{ $PORT_BASE + 395 }"/>
-            <userBindFCGI1NetworkParams port="{ $PORT_BASE + 78 }" monitoring_port="{ $PORT_BASE + 378 }"/>
-            <userBindFCGI2NetworkParams port="{ $PORT_BASE + 94 }" monitoring_port="{ $PORT_BASE + 394 }"/>
-            <userBindIntFCGINetworkParams port="{ $PORT_BASE + 79 }" monitoring_port="{ $PORT_BASE + 379 }"/>
-            <userBindAddFCGINetworkParams port="{ $PORT_BASE + 93 }" monitoring_port="{ $PORT_BASE + 393 }"/>
+            <adFCGINetworkParams port="{ $PORT_BASE + 76 }" mon_port="{ $PORT_BASE + 376 }"/>
+            <rtbFCGI1NetworkParams port="{ $PORT_BASE + 77 }" mon_port="{ $PORT_BASE + 377 }"/>
+            <rtbFCGI2NetworkParams port="{ $PORT_BASE + 96 }" mon_port="{ $PORT_BASE + 396 }"/>
+            <rtbFCGI3NetworkParams port="{ $PORT_BASE + 97 }" mon_port="{ $PORT_BASE + 397 }"/>
+            <rtbFCGI4NetworkParams port="{ $PORT_BASE + 98 }" mon_port="{ $PORT_BASE + 398 }"/>
+            <rtbFCGI5NetworkParams port="{ $PORT_BASE + 100 }" mon_port="{ $PORT_BASE + 400 }"/>
+            <rtbFCGI6NetworkParams port="{ $PORT_BASE + 101 }" mon_port="{ $PORT_BASE + 401 }"/>
+            <rtbFCGI7NetworkParams port="{ $PORT_BASE + 102 }" mon_port="{ $PORT_BASE + 402 }"/>
+            <rtbFCGI8NetworkParams port="{ $PORT_BASE + 103 }" mon_port="{ $PORT_BASE + 403 }"/>
+            <rtbFCGI9NetworkParams port="{ $PORT_BASE + 104 }" mon_port="{ $PORT_BASE + 404 }"/>
+            <rtbFCGI10NetworkParams port="{ $PORT_BASE + 105 }" mon_port="{ $PORT_BASE + 405 }"/>
+            <rtbFCGI11NetworkParams port="{ $PORT_BASE + 106 }" mon_port="{ $PORT_BASE + 406 }"/>
+            <rtbFCGI12NetworkParams port="{ $PORT_BASE + 107 }" mon_port="{ $PORT_BASE + 407 }"/>
+            <rtbFCGI13NetworkParams port="{ $PORT_BASE + 108 }" mon_port="{ $PORT_BASE + 408 }"/>
+            <rtbFCGI14NetworkParams port="{ $PORT_BASE + 109 }" mon_port="{ $PORT_BASE + 409 }"/>
+            <rtbFCGI15NetworkParams port="{ $PORT_BASE + 110 }" mon_port="{ $PORT_BASE + 410 }"/>
+            <rtbFCGI16NetworkParams port="{ $PORT_BASE + 111 }" mon_port="{ $PORT_BASE + 411 }"/>
+
+            <trackFCGI1NetworkParams port="{ $PORT_BASE + 95 }" mon_port="{ $PORT_BASE + 395 }"/>
+            <trackFCGI2NetworkParams port="{ $PORT_BASE + 99 }" mon_port="{ $PORT_BASE + 399 }"/>
+
+            <userBindFCGI1NetworkParams port="{ $PORT_BASE + 78 }" mon_port="{ $PORT_BASE + 378 }"/>
+            <userBindFCGI2NetworkParams port="{ $PORT_BASE + 94 }" mon_port="{ $PORT_BASE + 394 }"/>
+
+            <userBindIntFCGINetworkParams port="{ $PORT_BASE + 79 }" mon_port="{ $PORT_BASE + 379 }"/>
+            <userBindAddFCGINetworkParams port="{ $PORT_BASE + 93 }" mon_port="{ $PORT_BASE + 393 }"/>
             <webServerParams max_clients="1000"/>
             <debugInfo use_acl="false" show_history_profile="true"/>
             <requestModule>
@@ -537,7 +556,9 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <billingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 31 }"/>
+            <networkParams
+              port="{ $PORT_BASE + 31 }"
+              grpc_port="${ $PORT_BASE + 231}"/>
             <logging log_level="7" sys_log="false"/>
           </billingServer>
         </configuration>
@@ -549,7 +570,9 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         host="{$HOST}">
         <configuration>
           <campaignManager xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="{ $PORT_BASE + 7 }"/>
+            <networkParams
+              port="{ $PORT_BASE + 7 }"
+              grpc_port="{ $PORT_BASE + 202 }"/>
             <logging log_level="{$LOG_LEVEL}" sys_log="{$SYS_LOG}"/>
             <updateParams
               update_period="10"

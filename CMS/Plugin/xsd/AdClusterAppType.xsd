@@ -1022,7 +1022,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger">
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger">
       <xsd:annotation>
         <xsd:documentation>
           Additional port that will be listen with default protocol.
@@ -1153,7 +1153,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger">
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger">
       <xsd:annotation>
         <xsd:documentation>
           Additional port that will be listen with default protocol.

@@ -345,9 +345,20 @@ private:
     const Types::UserProfiles& user_profiles);
 
   template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> do_request_service(
+    const PartitionNumber partition_number,
+    const ClientContainerPtr& client_holder,
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> try_do_request_service(
+    const ClientContainerPtr& client_holder,
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(
     const String::SubString& id,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
 
 private:
   const Logger_var logger_;
@@ -581,10 +592,8 @@ public:
     {
       return std::move(result.response);
     }
-    else
-    {
-      return {};
-    }
+
+    return {};
   }
 
 private:
@@ -804,177 +813,6 @@ public:
 };
 
 using GrpcUserInfoOperationDistributor_var = ReferenceCounting::SmartPtr<GrpcUserInfoOperationDistributor>;
-
-template<class Client, class Request, class Response, class ...Args>
-std::unique_ptr<Response> GrpcUserInfoOperationDistributor::do_request(
-  const String::SubString& id,
-  Args&& ...args) noexcept
-{
-  ChunkId chunk_id = 0;
-  for (std::size_t i = 0; i < try_count_; ++i)
-  {
-    const PartitionNumber partition_number =
-      (get_partition_number(id) + i) % try_count_;
-
-    try
-    {
-      PartitionPtr partition = get_partition(partition_number);
-      if (!partition)
-      {
-        try_to_reresolve_partition(partition_number);
-        continue;
-      }
-
-      chunk_id = partition->chunk_id(id);
-      auto client_container = partition->get_client_container(chunk_id);
-      if (!client_container)
-      {
-        try_to_reresolve_partition(partition_number);
-        continue;
-      }
-
-      if (client_container->is_bad(pool_timeout_))
-      {
-        continue;
-      }
-
-      std::unique_ptr<Request> request;
-      if constexpr (std::is_same_v<Request, Proto::GetUserProfileRequest>)
-      {
-        request = create_get_user_profile_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::UpdateUserFreqCapsRequest>)
-      {
-        request = create_update_user_freq_caps_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::ConfirmUserFreqCapsRequest>)
-      {
-        request = create_confirm_user_freq_caps_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::FraudUserRequest>)
-      {
-        request = create_fraud_user_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::RemoveUserProfileRequest>)
-      {
-        request = create_remove_user_profile_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::ConsiderPublishersOptinRequest>)
-      {
-        request = create_consider_publishers_optin_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::MatchRequest>)
-      {
-        request = create_match_request(std::forward<Args>(args)...);
-      }
-      else if constexpr (std::is_same_v<Request, Proto::MergeRequest>)
-      {
-        request = create_merge_request(std::forward<Args>(args)...);
-      }
-      else
-      {
-        static_assert(GrpcAlgs::AlwaysFalseV<Request>);
-      }
-
-      auto response = client_container->template do_request<Client, Request, Response>(
-        std::move(request),
-        grpc_client_timeout_);
-      if (!response)
-      {
-        client_container->set_bad();
-        try_to_reresolve_partition(partition_number);
-        continue;
-      }
-
-      const auto data_case = response->data_case();
-      if (data_case == Response::DataCase::kInfo)
-      {
-        return response;
-      }
-      else if (data_case == Response::DataCase::kError)
-      {
-        std::ostringstream stream;
-        stream << FNS
-               << "Error type=";
-
-        const auto& error = response->error();
-        const auto error_type = error.type();
-        switch (error_type)
-        {
-          case Proto::Error_Type::Error_Type_NotReady:
-          {
-            stream << "NotReady";
-            client_container->set_bad();
-            break;
-          }
-          case Proto::Error_Type::Error_Type_ChunkNotFound:
-          {
-            stream << "ChunkNotFound";
-            client_container->set_bad();
-            try_to_reresolve_partition(partition_number);
-            break;
-          }
-          case Proto::Error_Type::Error_Type_Implementation:
-          {
-            stream << "Implementation";
-            client_container->set_bad();
-            break;
-          }
-          default:
-          {
-            stream << "Unknown error type";
-            client_container->set_bad();
-            try_to_reresolve_partition(partition_number);
-            break;
-          }
-        }
-
-        stream << ", description="
-               << error.description()
-               << " [id="
-               << id
-               << ", chunk_id="
-               << chunk_id
-               << "]";
-        logger_->error(stream.str(), ASPECT_GRPC_USER_INFO_DISTRIBUTOR);
-      }
-    }
-    catch (const eh::Exception& exc)
-    {
-      try
-      {
-        Stream::Error stream;
-        stream << FNS
-               << ": "
-               << exc.what();
-        logger_->error(
-          stream.str(),
-          ASPECT_GRPC_USER_INFO_DISTRIBUTOR);
-      }
-      catch (...)
-      {
-      }
-    }
-  }
-
-  try
-  {
-    Stream::Error stream;
-    stream << FNS
-           << ": max tries reached for id="
-           << id
-           << " and chunk="
-           << chunk_id;
-    logger_->error(
-      stream.str(),
-      ASPECT_GRPC_USER_INFO_DISTRIBUTOR);
-  }
-  catch (...)
-  {
-  }
-
-  return {};
-}
 
 } // namespace AdServer::UserInfoSvcs
 

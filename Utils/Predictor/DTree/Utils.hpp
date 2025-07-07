@@ -255,7 +255,7 @@ namespace Utils
     const double PRECISION = 0.001;
     const double X_MIN = -100;
     const double X_MAX = 100;
-    const unsigned long MAX_ITERATIONS = 1000;
+    [[maybe_unused]] const unsigned long MAX_ITERATIONS = 1000;
 
     if(unlabeled_sum == 0)
     {

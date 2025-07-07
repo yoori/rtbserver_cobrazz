@@ -1,5 +1,4 @@
 #include <Generics/Time.hpp>
-#include <PrivacyFilter/Filter.hpp>
 
 #include <Commons/Algs.hpp>
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
@@ -106,8 +105,8 @@ namespace UserInfoSvcs
 
     ManagerPoolConfig config;
     config.event_queue_max_size = 10000000;
-    config.io_uring_flags = IORING_SETUP_ATTACH_WQ;
-    config.io_uring_size = 6400;
+    config.io_uring_flags = IORING_SETUP_ATTACH_WQ | IORING_FEAT_FAST_POLL | IOSQE_ASYNC;
+    config.io_uring_size = 1024 * 8;
     config.number_io_urings = 2 * number_threads;
     auto rocksdb_manager_pool = std::make_shared<RocksdbManagerPool>(
       config,
@@ -917,7 +916,7 @@ namespace UserInfoSvcs
           "Merge Tracing: " << std::endl <<
           "Merge to " << (merge_to_additional ? "additional" : "base") <<
           " profile for target user '" <<
-          PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
+          request_params.user_id.to_string() <<
           "' before merging: " << std::endl;
 
         if (target_profile.in())
@@ -1091,7 +1090,7 @@ namespace UserInfoSvcs
 
         tracing_ostr <<
           "Profile for user '" <<
-          PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
+          request_params.user_id.to_string() <<
           "' after merging: " << std::endl;
 
         user_profile_adapter.print(
@@ -1103,7 +1102,7 @@ namespace UserInfoSvcs
 
         tracing_ostr << std::endl <<
           "History profile for user '" <<
-          PrivacyFilter::filter(request_params.user_id.to_string().c_str(), "USER_ID") <<
+          request_params.user_id.to_string() <<
           "' after merging: " << std::endl;
 
         user_profile_adapter.history_print(
@@ -2300,8 +2299,7 @@ namespace UserInfoSvcs
     noexcept
   {
     ostr << "Matching with params: " << std::endl <<
-      "  uid = '" << PrivacyFilter::filter(
-        request_params.user_id.to_string().c_str(), "USER_ID") <<
+      "  uid = '" << request_params.user_id.to_string() <<
       "'" << std::endl <<
       "  current-time = " << request_params.current_time.get_gm_time() <<
         std::endl <<

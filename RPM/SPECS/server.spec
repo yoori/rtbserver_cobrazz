@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv403%{?dist}
+Release: ssv500%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -63,16 +63,12 @@ BuildRequires: gcc-c++
 BuildRequires: GeoIP-devel >= %__geoip_ver_req
 Requires: GeoIP >= %__geoip_ver_req
 Requires: foros-geoip >= 1.0.0.0
-#BuildRequires: httpd-devel >= {__apache_ver_req}
-BuildRequires: httpd-devel
-#Requires: httpd = {__apache_ver_req}
-Requires: httpd
+#BuildRequires: httpd-devel
+#Requires: httpd
 Requires: nginx = 1:1.22.1
 #Requires: mod_ssl >= 2.2.21.4-1.ssv1
 BuildRequires: libevent-devel = 2.1.8
 Requires: libevent = %__libevent_ver_req
-#BuildRequires: OpenSBE = 1.0.0
-#BuildRequires: OpenSBE-defs >= 1.0.28.0
 %if "%{?__type:%{__type}}%{!?__type:0}" == "central"
 Conflicts: foros-server-remote-debuginfo
 Conflicts: foros-server-central-debuginfo < %{version}
@@ -86,15 +82,12 @@ Conflicts: foros-server-remote-debuginfo > %{version}
 BuildRequires: valgrind-devel
 %endif
 BuildRequires: pcre-devel >= 8.42
-#BuildRequires: prelink
 BuildRequires: selinux-policy
 BuildRequires: xerces-c-devel
 BuildRequires: xsd >= 4.1.0
 BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req} lm_sensors-libs
 Requires: net-snmp >= %{__net_snmp_ver_req} lm_sensors-libs
-#Requires: net-snmp-subagent >= 2.1.3.1
-#BuildRequires: java-1.8.0-oracle-devel >= 1.7.0.45
-BuildRequires: java-1.8.0-openjdk-devel
+BuildRequires: java-1.8.0-openjdk-devel-1.8.0.442.b06-2.0.1.el8
 BuildRequires: libxml2-devel = 2.9.7
 BuildRequires: libxslt-devel = 1.1.32
 BuildRequires: make >= 4.2.1
@@ -118,6 +111,7 @@ BuildRequires: userver-devel
 BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
 BuildRequires: grpc-plugins = 1.48.1-ssv2
+BuildRequires: jemalloc-devel >= 5.2.1
 
 Requires: protobuf = %{__protobuf_ver_req}
 Requires: foros-polyglot-dict >= 1.0.0.15-ssv1.el5
@@ -158,7 +152,9 @@ BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
 Requires: boost%{__boost_suffix} = 1.76.0
 BuildRequires: xgboost-devel
 Requires: gtest >= 1.12.1
+Requires: xgboost
 BuildRequires: gtest-devel = 1.12.1
+Requires: gtest = 1.12.1
 
 Requires: glibc-all-langpacks
 Requires: foros-pagesense-programmatic

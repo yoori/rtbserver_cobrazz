@@ -13,6 +13,7 @@ sub start
   my $command =
     "mkdir -p \${log_root}/Predictor && ".
     "mkdir -p \${log_root}/Predictor/ResearchLogs/LibSVM && ".
+    "mkdir -p \${workspace_root}/log/Predictor/SVMGenerator/ && ".
     "{ CTRPredictorSVMGenerator " .
       "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/CTRPredictorSVMGeneratorConfig.xml " .
       " > \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}CTRPredictorSVMGenerator.out 2>&1 & }";

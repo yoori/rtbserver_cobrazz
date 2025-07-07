@@ -16,7 +16,7 @@ namespace Bidding
       namespace Type
       {
         const String::SubString OCTET_STREAM("application/octet-stream");
-      };
+      }
 
       // https://storage.googleapis.com/adx-rtb-dictionaries/buyer-declarable-creative-attributes.txt
       namespace Google

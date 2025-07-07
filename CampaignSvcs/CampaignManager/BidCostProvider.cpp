@@ -30,7 +30,7 @@ namespace CampaignSvcs
         return false;
       }
     }
-  };
+  }
 
   class RemoveConfigTask: public Generics::Task,
     public ReferenceCounting::AtomicImpl

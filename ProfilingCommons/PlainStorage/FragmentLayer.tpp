@@ -1180,7 +1180,7 @@ namespace PlainStorage
           safe_block_size);
 
         {
-          SizeType check_fragment_size;
+          [[maybe_unused]] SizeType check_fragment_size;
           assert(
             eval_fragment_size_(check_fragment_size, size + sizeof(u_int32_t), safe_block_size) ==
               fragment_size_index &&

@@ -40,6 +40,10 @@ namespace AdServer
       public ReferenceCounting::AtomicImpl
     {
     public:
+      using RocksdbManagerPool = UServerUtils::Grpc::RocksDB::DataBaseManagerPool;
+      using RocksdbManagerPoolPtr = std::shared_ptr<RocksdbManagerPool>;
+      using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
+
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
       struct InventoryDailyMatchInfo
@@ -54,7 +58,7 @@ namespace AdServer
       };
 
     public:
-      UserInventoryInfoContainer(
+      explicit UserInventoryInfoContainer(
         Logging::Logger* logger,
         const Generics::Time& days_to_keep,
         InventoryActionProcessor* inv_processor,
@@ -64,7 +68,7 @@ namespace AdServer
         const AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap& chunk_folders,
         const char* invfile_prefix,
         ProfilingCommons::ProfileMapFactory::Cache* cache,
-        const AdServer::ProfilingCommons::LevelMapTraits& user_level_map_traits)
+        const RocksDBParams& add_rocksdb_params)
         /*throw(Exception)*/;
 
       Generics::ConstSmartMemBuf_var

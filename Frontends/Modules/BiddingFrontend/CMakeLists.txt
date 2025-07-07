@@ -21,20 +21,14 @@ add_library(BiddingFrontend SHARED
 )
 
 target_link_libraries(BiddingFrontend
-  BidRateProvider
   BillStatInfoIDL
   CORBACommons
   CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
   CampaignManagerIDL
-  CampaignManagerLogger
   CampaignServerIDL
   ChannelManagerControllerIDL
   CommonModule
   Commons
-  CreativeTemplateArgs
   DomainParser
   FCGI
   FeConfigXSD

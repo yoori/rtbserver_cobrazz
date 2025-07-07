@@ -13,7 +13,7 @@ sub start
   my $command =
     "mkdir -p \${workspace_root}/tmp \${log_root} && " .
     "mkdir -p \${workspace_root}/log/nginx3 && " .
-    "ulimit -n 64000 && " .
+    "ulimit -n 1024000 && " .
     "/usr/sbin/nginx -c \${config_root}/${AdServer::Path::XML_FILE_BASE}$host/conf3/nginx.conf " .
       "-p \${workspace_root}/log/nginx3/ " .
       ">> \${workspace_root}/${AdServer::Path::OUT_FILE_BASE}nginx3.out 2>&1";

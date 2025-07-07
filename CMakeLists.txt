@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_COMPILER  /opt/rh/gcc-toolset-10/root/usr/bin/g++)
 set(CMAKE_C_COMPILER /opt/rh/gcc-toolset-10/root/usr/bin/gcc)
 
@@ -20,6 +22,8 @@ if(NOT DEFINED UNIXCOMMONS)
   message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
   SET(UNIXCOMMONS "${CMAKE_CURRENT_SOURCE_DIR}/../unixcommons_cobrazz")
 endif()
+
+option(USE_USERVER_PACKAGE "Use preinstalled userver package on host" ON)
 
 message(STATUS "Use unixcommons: ${UNIXCOMMONS}")
 set(UNIXCOMMONS_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/unixcommons)
@@ -56,8 +60,8 @@ find_package(XSD REQUIRED)
 find_package(XercesC REQUIRED)
 find_package(YY REQUIRED)
 find_package(gRPC REQUIRED)
-find_package(gRPC REQUIRED)
-find_package(userver REQUIRED)
+include(${UNIXCOMMONS}/cmake/SetupUserver.cmake)
+#include(cmake/SetupUserver.cmake)
 
 set(CORBA_INCLUDES ${UNIXCOMMONS}/src/CORBA)
 set(TMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR})
@@ -86,6 +90,7 @@ ADD_SUBDIRECTORY(LogCommons)
 ADD_SUBDIRECTORY(LogProcessing)
 ADD_SUBDIRECTORY(Plain)
 ADD_SUBDIRECTORY(Predictor)
+ADD_SUBDIRECTORY(PredictorML)
 ADD_SUBDIRECTORY(PredictorSvcs)
 ADD_SUBDIRECTORY(ProfilingCommons)
 ADD_SUBDIRECTORY(RequestInfoSvcs)

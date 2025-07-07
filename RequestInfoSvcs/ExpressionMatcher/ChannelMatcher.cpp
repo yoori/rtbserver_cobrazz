@@ -37,7 +37,7 @@ namespace RequestInfoSvcs
         return result;
       }
     };
-  };
+  }
 
   struct CalculateChannelMatcher::MatchKeyHolder: public ReferenceCounting::AtomicImpl
   {

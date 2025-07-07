@@ -99,7 +99,7 @@ private:
       return;
 
     is_lock_ = false;
-    ftruncate(fd_, 0);
+    [[maybe_unused]] int ftruncate_result = ftruncate(fd_, 0);
     unlock_file(fd_);
   }
 

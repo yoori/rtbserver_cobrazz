@@ -135,12 +135,17 @@ private:
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request_service(
     const ClientHolderPtr& client_holder,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
+
+  template<class Client, class Request, class Response, class ...Args>
+  std::unique_ptr<Response> try_do_request_service(
+    const ClientHolderPtr& client_holder,
+    const Args& ...args) noexcept;
 
   template<class Client, class Request, class Response, class ...Args>
   std::unique_ptr<Response> do_request(
     const std::size_t index,
-    Args&& ...args) noexcept;
+    const Args& ...args) noexcept;
 
   AddAmountRequestPtr create_add_amount_request(
     const std::vector<ConfirmBidInfo>& requests);
@@ -203,13 +208,12 @@ public:
       static_assert(GrpcAlgs::AlwaysFalseV<Client>);
     }
 
-    for (std::size_t i = 1; i <= MaxNumberAttempts; i += 1)
+    auto result = client->write(
+      std::move(request),
+      timeout);
+    if (result.status == Status::Ok)
     {
-      auto result = client->write(std::move(request), timeout);
-      if (result.status == Status::Ok)
-      {
-        return std::move(result.response);
-      }
+      return std::move(result.response);
     }
 
     return {};
@@ -282,7 +286,7 @@ public:
       GrpcPoolClientFactory factory(
         logger_.in(),
         scheduler_,
-        config_);
+        config);
 
       clients->add_amount_client = factory.create<AddAmountClient>(task_processor_);
 

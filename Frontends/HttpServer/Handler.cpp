@@ -114,7 +114,7 @@ HttpHandler::HttpHandler(
 }
 
 void HttpHandler::handle_stream_request(
-  const HttpRequest& request,
+  const HttpRequest& userver_request,
   RequestContext& /*context*/,
   ResponseBodyStream& response_body_stream) const
 {
@@ -122,7 +122,7 @@ void HttpHandler::handle_stream_request(
     FrontendCommons::HttpRequest::Method::RM_GET;
   bool header_only = false;
 
-  const auto& request_method = request.GetMethod();
+  const auto& request_method = userver_request.GetMethod();
   switch (request_method)
   {
     case userver::server::http::HttpMethod::kGet:
@@ -145,15 +145,15 @@ void HttpHandler::handle_stream_request(
 
       throw userver::server::handlers::ClientError{
         userver::server::handlers::ExternalBody{
-        fmt::format("Unsupported method {}", request_method)}};
+          fmt::format("Unsupported method {}", request_method)}};
   }
 
-  const auto& body = request.RequestBody();
-  const auto& uri = request.GetRequestPath();
+  const auto& body = userver_request.RequestBody();
+  const auto& uri = userver_request.GetRequestPath();
   const std::string server_name;
 
   std::string_view query_string;
-  const auto& url = request.GetUrl();
+  const auto& url = userver_request.GetUrl();
   const auto pos = url.find('?', uri.size());
   if (pos != std::string::npos && pos != url.size() - 1)
   {
@@ -163,16 +163,15 @@ void HttpHandler::handle_stream_request(
   }
 
   HTTP::HeaderList headers;
-  const auto& header_names = request.GetHeaderNames();
-  for (const auto& header_name : header_names)
+  const auto& userver_headers = userver_request.GetHeaders();
+  for (const auto& [name, value] : userver_headers)
   {
-    const auto& header_value = request.GetHeader(header_name);
     headers.emplace_back(
-      header_name,
-      header_value);
+      name,
+      value);
   }
 
-  const bool secure = request.HasHeader("https");
+  const bool secure = userver_request.HasHeader("https");
 
   Http::HttpRequest_var request(
     new Http::HttpRequest(
@@ -212,6 +211,7 @@ void HttpHandler::handle_stream_request(
       header.first,
       header.second);
   }
+  response_body_stream.SetEndOfHeaders();
 
   auto& body_chunks = container->body_chunks;
   for (auto& chunk : body_chunks)

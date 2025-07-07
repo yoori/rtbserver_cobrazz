@@ -399,7 +399,7 @@ namespace AdServer
         CORBA::ULong user_status,
         const AdServer::CampaignSvcs::PublisherAccountIdSeq& publisher_account_ids) override;
         /*throw(AdServer::CampaignSvcs::CampaignManager::NotReady,
-          AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/;
+          AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/
 
       GetPubPixelsResponsePtr
       get_pub_pixels(GetPubPixelsRequestPtr&& request);

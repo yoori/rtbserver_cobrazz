@@ -1,0 +1,233 @@
+﻿segment_id;segment_cat;segment_sub_cat;name
+11;Auto;;Auto
+12;Auto;;American cars
+13;Auto;;Auto parts
+14;Auto;;Buying a car
+15;Auto;;Chinese cars
+16;Auto;;European cars
+17;Auto;;Japanese cars
+18;Auto;;Moto
+19;Auto;;Repair, maintenance, services
+20;Auto;;Russian cars
+21;Auto;;South Korean cars
+22;Beauty and self care;;Beauty and self care
+23;Beauty and self care;;Clothes for pregnant women
+24;Beauty and self care;;Cosmetics
+25;Beauty and self care;;Fashion and Style
+26;Beauty and self care;;Hair care
+27;Beauty and self care;;Mens clothes
+28;Beauty and self care;;Self care
+29;Beauty and self care;;Shoes
+30;Beauty and self care;;Skin care
+31;Beauty and self care;;Womens clothes
+32;Business;;Business
+33;Business;;Advertising, marketing, pr
+34;Business;;Audit and consulting
+35;Business;;Business ideas
+36;Business;;Economics and business
+38;Business;;Investment
+40;Business;;Logistics
+41;Business;;Market information
+42;Business;;Marketing and advertising
+43;Business;;Small business owner
+44;Career and education;;Career and education
+45;Career and education;;Distance learning
+46;Career and education;;Education
+47;Career and education;;Higher education
+48;Career and education;;Homework, study tips
+49;Career and education;;Job search
+50;Career and education;;Language learning
+51;Career and education;Occupation;Accounting and Finance
+52;Career and education;Occupation;Business owners
+53;Career and education;Occupation;Construction
+54;Career and education;Occupation;Freelance
+55;Career and education;Occupation;IT
+56;Career and education;Occupation;Manufacturing and Production
+57;Career and education;Occupation;Marketing and Advertising
+58;Career and education;Occupation;Medicine
+59;Career and education;;Preschool education
+60;Career and education;;Programming
+61;Career and education;;School education
+62;Cargo, mail, logistics;;Commercial logistics
+63;Cargo, mail, logistics;;Shipping
+64;Children;;Children
+65;Children;;Pregnancy
+66;Children;;Private schools
+67;Electronics;;Electronics
+68;Electronics;;Computers and accessories
+69;Electronics;;Household appliances
+70;Electronics;;Mobile phones
+71;Electronics;;TV and video
+72;Entertainment and hobbies;;Entertainment and hobbies
+73;Entertainment and hobbies;;Adult content
+74;Entertainment and hobbies;;Board games
+75;Entertainment and hobbies;;Cinema
+76;Entertainment and hobbies;;Cooking
+77;Entertainment and hobbies;;Dating
+78;Entertainment and hobbies;;Entertainment resources
+79;Entertainment and hobbies;;Humor
+80;Entertainment and hobbies;;Literature
+81;Entertainment and hobbies;;Music
+82;Entertainment and hobbies;;Online games
+83;Entertainment and hobbies;;Sci-Fi and fantasy
+84;Entertainment and hobbies;;TV and online cinemas
+85;Entertainment and hobbies;;Virtual and augmented reality
+86;Finance;;Banking
+87;Finance;;Credit cards
+88;Finance;;For business
+89;Finance;;Insurance
+90;Finance;;Investing
+91;Finance;;Loans
+93;Food and drink;;Cooking
+94;Food and drink;;Online shops Food and drink delivery
+95;Food and drink;;Restaurants
+96;Health;;Health
+97;Health;;Allergy
+98;Health;;Antibacterial, antiviral and immunostimulators
+99;Health;;Complementary medicine
+100;Health;;Dentistry
+101;Health;;Diets
+102;Health;;Folk medicine
+103;Health;;Mens health
+104;Health;;Orthopedics and osteopathy
+105;Health;;Psychology, psychiatry, therapy
+106;Health;;Sports and Fitness
+107;Health;;Vitamins
+108;Health;;Womens health
+109;House and cottage;;House and cottage
+110;House and cottage;;Gardening
+111;House and cottage;;Landscape design
+112;House and cottage;;Repair and building materials
+113;News;;News
+114;News;;Politics
+116;News;;Show business
+117;News;;Society
+118;News;;Weather
+119;Online stores;;Babies and kids
+120;Online stores;;Cosmetics, make-up
+121;Online stores;;Discount shoppers
+122;Online stores;;Food and drink
+123;Online stores;;Food and wine
+124;Online stores;;Home and garden
+125;Online stores;;Mens clothing
+126;Online stores;;Shoes
+127;Online stores;;Womens clothing
+128;Pets;;Pets
+129;Pets;;Cats
+130;Pets;;Dogs
+131;Real estate;;Real estate
+132;Real estate;;Apartment purchase and rental
+133;Real estate;;Commercial real estate
+134;Real estate;;Flat rental
+135;Real estate;;Real estate - hot deals
+136;Real estate;;Room rental
+137;Religion and spirituality;;Religion and spirituality
+138;Science and technology;;Science and technology
+139;Services for individuals;;Banks and banking services
+140;Services for individuals;;Legal services
+141;Sports and outdoor activities;;American Football
+142;Sports and outdoor activities;;Basketball
+143;Sports and outdoor activities;;Combat sports
+144;Sports and outdoor activities;;Extreme sports
+145;Sports and outdoor activities;;Figure skating
+146;Sports and outdoor activities;;Fitness and healthy lifestyle
+147;Sports and outdoor activities;;Football
+148;Sports and outdoor activities;;Football fans
+149;Sports and outdoor activities;;Hockey
+150;Sports and outdoor activities;;Hunting and fishing
+151;Sports and outdoor activities;;Sports and active recreation
+152;Sports and outdoor activities;;Tennis
+153;Sports and outdoor activities;;Water sports
+154;Sports and outdoor activities;;Winter sports
+155;Travel;;Travel
+156;Travel;;Air travel
+157;Travel;;Car rental
+158;Travel;;Hotels
+159;Travel;;Travel, vacations, holidays abroad
+160;Travel;;Travel, vacations, holidays in Russia
+161;Travel;;Travel, vacations, holidays self planning
+162;Socdem;Female;Female
+164;Socdem;Female;Female 18-24
+165;Socdem;Female;Female 25-34
+166;Socdem;Female;Female 35-44
+167;Socdem;Female;Female 45+
+168;Socdem;Male;Male
+170;Socdem;Male;Male 18-24
+171;Socdem;Male;Male 25-34
+172;Socdem;Male;Male 35-44
+173;Socdem;Male;Male 45+
+175;Socdem;Age;Age 18-24
+176;Socdem;Age;Age 35-44
+177;Socdem;Age;Age 35-44
+178;Socdem;Age;Age 45+
+184;Purchases OFD;Pharma;Allergy medications
+185;Purchases OFD;Pharma;Asthma medications
+186;Purchases OFD;Pharma;Сough medicines
+187;Purchases OFD;Pharma;Antiviral medications
+188;Purchases OFD;Pharma;Dietary supplements and vitamins
+189;Purchases OFD;Pharma;Goods for sports
+190;Purchases OFD;Pharma;Medicines for womens health
+191;Purchases OFD;Pharma;Products for womens health
+192;Purchases OFD;Pharma;Contact lenses
+193;Purchases OFD;Pharma;Venotonics
+194;Purchases OFD;Pharma;Prescription medications to relieve stress
+195;Purchases OFD;Pharma;Non-prescription medications to relieve stress
+196;Purchases OFD;Pharma;Medications to relieve stress
+197;Purchases OFD;Pharma;Men's health medications
+198;Purchases OFD;Pharma;Condoms
+199;Purchases OFD;Pharma;Medications for the treatment of acne
+200;Purchases OFD;Pharma;Antifungal medications
+201;Purchases OFD;Pharma;Hepaprotectors
+202;Purchases OFD;Pharma;Anti-diarrhea medications
+203;Purchases OFD;Pharma;Products to improve digestion
+204;Purchases OFD;Pharma;Probiotics and prebiotics
+205;Purchases OFD;Pharma;Type 2 diabetics
+206;Purchases OFD;Pharma;Dental hygiene
+207;Purchases OFD;Pharma;Products for the intestines
+208;Purchases OFD;Buying behavior;Premium
+209;Purchases OFD;Buying behavior ;Heavy purchases
+210;Purchases OFD;Buying behavior;Marketplaces
+211;Purchases OFD;Buying behavior;Сlothes and shoes
+212;Purchases OFD;Buying behavior;ECO-friendly consumption
+213;Purchases OFD;Buying behavior;Holiday's and sales promotions
+214;Purchases OFD;Buying behavior;Discount consumption
+215;Purchases OFD;Leisure;Active tourism
+216;Purchases OFD;Leisure;Tours
+217;Purchases OFD;Leisure;Watching TV
+218;Purchases OFD;Leisure;Online movies
+219;Purchases OFD;Leisure;Buyers of tickets for concerts, shows
+220;Purchases OFD;Leisure;Sports broadcasts
+221;Purchases OFD;Leisure;Software for gamers
+222;Purchases OFD;Leisure;Equipment, hardware for gamers
+223;Purchases OFD;Education and work;Small business
+224;Purchases OFD;Education and work;B2B
+225;Purchases OFD;Education and work;Interested in additional education
+227;Purchases OFD;Education and work;Repair and building materials
+228;Purchases OFD;Education and work;Migrants
+230;Purchases OFD;Beauty;Beauty women female
+231;Purchases OFD;Beauty;Beauty salons women female
+231;Purchases OFD;Beauty;Beauty men male
+232;Purchases OFD;Beauty;Shaving products
+233;Purchases OFD;Beauty;Sport nutrition and dietary supplements
+234;Purchases OFD;Beauty;Sport fitness yoga
+235;Purchases OFD;Beauty;Antiperspirants
+236;Purchases OFD;Cats and dogs;Buyers of goods for cats
+237;Purchases OFD;Cats and dogs;Buyers of goods for dogs
+238;Purchases OFD;Home equipment;Dacha owners and country life
+239;Purchases OFD;Home equipment;Smart home devices
+240;Purchases OFD;Home equipment;Interior and home design
+241;Purchases OFD;Home equipment;Premium home appliance buyers
+242;Purchases OFD;Home equipment;Home appliance buyers
+243;Purchases OFD;Food and drink;Online food delivery, groceries
+244;Purchases OFD;Food and drink;Food delivery
+245;Purchases OFD;Food and drink;Fast food restaurants
+246;Purchases OFD;Food and drink;Energy drink buyers
+247;Purchases OFD;Food and drink;Capsules for coffee machines
+248;Purchases OFD;Food and drink;Coffee drinkers
+249;Purchases OFD;Food and drink;Juices and soda
+250;Purchases OFD;Food and drink;Beer and wine, low-alcohol
+251;Purchases OFD;Smokers;Smokers, tobacco
+252;Purchases OFD;Smokers;Electronic cigarettes
+253;Purchases OFD;Auto;Auto, car drivers
+263;Purchases OFD;Pharma;Pharmacy skin care products
+265;Purchases OFD;Parents of children;Family with children, parents

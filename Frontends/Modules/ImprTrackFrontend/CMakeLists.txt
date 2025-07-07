@@ -4,20 +4,13 @@ add_library(ImprTrackFrontend SHARED
 )
 
 target_link_libraries(ImprTrackFrontend
-  BidRateProvider
   BillStatInfoIDL
   CORBACommons
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
   CampaignManagerIDL
-  CampaignManagerLogger
   CampaignServerIDL
   ChannelManagerControllerIDL
   CommonModule
   Commons
-  CreativeTemplateArgs
   DomainParser
   FCGI
   FeConfigXSD
@@ -28,7 +21,6 @@ target_link_libraries(ImprTrackFrontend
   SecToken
   StatInfoIDL
   Stream
-  UserBindContainer
   UserBindServerIDL
   UserIdController
   UserInfoClusterControlIDL

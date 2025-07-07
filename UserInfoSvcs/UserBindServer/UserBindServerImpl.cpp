@@ -1,8 +1,6 @@
 #include <list>
 #include <iterator>
 
-#include <PrivacyFilter/Filter.hpp>
-
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
 

@@ -187,12 +187,19 @@ http {
     upstream fastcgi_rtbbackend {
       <xsl:variable name="rtbbackend_socket_arr">
         <i>1</i><i>2</i><i>3</i><i>4</i>
+        <i>5</i><i>6</i><i>7</i><i>8</i>
+        <i>9</i><i>10</i><i>11</i><i>12</i>
+        <i>13</i><i>14</i><i>15</i><i>16</i>
       </xsl:variable>
       <xsl:for-each select="exsl:node-set($rtbbackend_socket_arr)/i">
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver1_',
-        ., '.sock')"/> max_fails=0;
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver2_',
-        ., '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver', ., '_1',
+        '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver', ., '_2',
+        '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver', ., '_3',
+        '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver', ., '_4',
+        '.sock')"/> max_fails=0;
       </xsl:for-each>
 
       keepalive <xsl:value-of select="$frontend-config/cfg:rtbFCGINetworkParams/@keep_connections"/><xsl:if
@@ -220,10 +227,17 @@ http {
     upstream fastcgi_trackbackend {
       <xsl:variable name="trackbackend_socket_arr">
         <i>1</i><i>2</i><i>3</i><i>4</i>
+        <i>5</i><i>6</i><i>7</i><i>8</i>
       </xsl:variable>
       <xsl:for-each select="exsl:node-set($trackbackend_socket_arr)/i">
-      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver',
-       ., '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver', . , '_1',
+       '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver', . , '_2',
+       '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver', . , '_3',
+       '.sock')"/> max_fails=0;
+      server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_trackserver', . , '_4',
+       '.sock')"/> max_fails=0;
       </xsl:for-each>
 
       keepalive <xsl:value-of select="$frontend-config/cfg:trackFCGINetworkParams/@keep_connections"/><xsl:if
@@ -390,8 +404,8 @@ http {
         </xsl:otherwise>
       </xsl:choose>
 
-      <xsl:if test="count(@monitoring_port) != 0">
-           listen <xsl:value-of select="@monitoring_port"/> default_server;
+      <xsl:if test="count(@mon_port) != 0">
+           listen <xsl:value-of select="@mon_port"/> default_server;
       </xsl:if>
 
       server_name <xsl:value-of select="$nginx-domains"/>;
@@ -446,7 +460,7 @@ http {
       }
 
       # UserBind
-      location ~ ^/(userbind|userbind[.]gif|userbind[.]png)$ {
+      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id)$ {
       #    return 301 https://$host$request_uri;
 
         fastcgi_pass fastcgi_userbindbackend;
@@ -578,8 +592,8 @@ http {
         </xsl:otherwise>
       </xsl:choose>
 
-      <xsl:if test="count(@monitoring_port) != 0">
-           listen <xsl:value-of select="@monitoring_port"/> default_server;
+      <xsl:if test="count(@mon_port) != 0">
+           listen <xsl:value-of select="@mon_port"/> default_server;
       </xsl:if>
 
       server_name <xsl:value-of select="$nginx-domains"/>;
@@ -648,7 +662,7 @@ http {
       }
 
       # UserBind
-      location ~ ^/(userbind|userbind[.]gif|userbind[.]png)$ {
+      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id)$ {
         fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 

@@ -36,6 +36,9 @@ add_library(UserInventoryContainer STATIC
 )
 
 target_link_libraries(UserInventoryContainer
+  CampaignTypes
+  ExpressionMatcherCompatibility
+  UserChannelInventoryProfilePST
   UServerUtils
 )
 
@@ -56,6 +59,10 @@ add_idl(ExpressionMatcherIDL  ExpressionMatcher.idl ${IDL_DIRECTORY}/RequestInfo
 target_link_libraries(ExpressionMatcherIDL
   CORBACommons
   CorbaTypesIDL
+)
+
+add_library(ExpressionMatcherOutLogger STATIC
+  ExpressionMatcherOutLogger.cpp
 )
 
 add_executable(ExpressionMatcher
@@ -83,6 +90,7 @@ target_link_libraries(ExpressionMatcher
   ExpressionChannelMatcher
   ExpressionMatcherCompatibility
   ExpressionMatcherConfigXSD
+  ExpressionMatcherOutLogger
   ExpressionMatcherIDL
   Generics
   LogCommons
@@ -96,7 +104,6 @@ target_link_libraries(ExpressionMatcher
   SNMPAgent
   String
   Sync
-  UserChannelInventoryProfilePST
   UserChannelInventoryProfilePST
   UserColoReachContainer
   UserInfoManagerControllerL

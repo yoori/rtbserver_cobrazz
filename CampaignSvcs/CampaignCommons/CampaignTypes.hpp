@@ -25,7 +25,7 @@ namespace AdServer
       const unsigned long GROSS = 0x10;
       const unsigned long INVOICE_COMMISION = 0x1000;
       const unsigned long AGENCY_PROFIT_BY_PUB_AMOUNT = 0x8000;
-    };
+    }
 
     namespace StringDictionaries
     {

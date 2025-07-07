@@ -466,9 +466,9 @@ namespace CampaignSvcs
   StatSource::Stat::add(const Stat& stat) noexcept
   {
     {
-      Generics::ExtendedTime left_check_time =
+      [[maybe_unused]] const Generics::ExtendedTime left_check_time =
         check_time.get_gm_time();
-      Generics::ExtendedTime right_check_time =
+      [[maybe_unused]] const Generics::ExtendedTime right_check_time =
         stat.check_time.get_gm_time();
 
       assert(Generics::ExtendedTime(

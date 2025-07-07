@@ -112,6 +112,7 @@ namespace AdServer::Bidding::Grpc
       FrontendCommons::FrontendInterface(response_factory),
       helper_task_processor_(helper_task_processor),
       grpc_container_(grpc_container),
+      background_task_storage_(helper_task_processor),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
@@ -254,8 +255,8 @@ namespace AdServer::Bidding::Grpc
 
       Generics::Time flush_period(
         config_->flush_period().present() ? *config_->flush_period() : 10);
-      background_task_storage_.Detach(userver::engine::CriticalAsyncNoSpan(
-        helper_task_processor_,
+      background_task_storage_.CriticalAsyncDetach(
+        "dump_log",
         [this, flush_period = flush_period] () {
           while (!userver::engine::current_task::ShouldCancel())
           {
@@ -263,7 +264,7 @@ namespace AdServer::Bidding::Grpc
             userver::engine::InterruptibleSleepFor(
               std::chrono::microseconds(flush_period.microseconds()));
           }
-        }));
+        });
 
       for (auto it = config_->Source().begin();
            it != config_->Source().end();
@@ -452,11 +453,11 @@ namespace AdServer::Bidding::Grpc
 
       google::protobuf::SetLogHandler(&Frontend::protobuf_log_handler_);
 
-      background_task_storage_.Detach(userver::engine::CriticalAsyncNoSpan(
-        helper_task_processor_,
+      background_task_storage_.CriticalAsyncDetach(
+        "update_config",
         [this] () {
           update_config_();
-        }));
+        });
 
       activate_object();
     }

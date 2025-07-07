@@ -6,46 +6,50 @@ add_executable(FCGIServer
   WorkerStatsObject.cpp
 )
 
+# CampaignIndex
+# CampaignConfigSource
+# CTRProvider
+# BidRateProvider
+# CreativeTemplateArgs
+# CampaignManagerLogger
+# CampaignConfig
+
 target_link_libraries(FCGIServer
+  # modules
   ActionFrontend
   AdFrontend
-  AdFrontendGrpc
-  AdInstFrontend
-  AdServerCommonsXSD
-  BidRateProvider
-  BiddingFrontend
-  BiddingFrontendGrpc
-  CORBACommons
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
-  CampaignManagerIDL
-  CampaignManagerLogger
   ClickFrontend
-  Commons
-  ContentFrontend
-  CreativeTemplateArgs
-  DirectoryModule
+  BiddingFrontend
+  WebStatFrontend
   EchoFrontend
-  FCGI
-  FCGIServerConfigXSD
-  Generics
-  GrpcCampaignManagerPool
+  ContentFrontend
+  AdInstFrontend
+  UserBindFrontend
   ImprTrackFrontend
   OptoutFrontend
   PassFrontend
   PassPixelFrontend
-  ProcessControlVars
   PubPixelFrontend
+  DirectoryModule
+  # modules with grpc impl
+  AdFrontendGrpc
+  BiddingFrontendGrpc
+  # dependencies
+  CORBACommons
+  CampaignManagerIDL
+  Commons
+  FCGI
+  Generics
+  GrpcCampaignManagerPool
+  ProcessControlVars
   RequestMatchers
   SecToken
-  UserBindFrontend
   UserInfoClusterControlIDL
   UserInfoManagerControllerIDL
   UserInfoManagerControllerL
   UtilCommons
-  WebStatFrontend
-  XMLUtility
   boost_system
+  XMLUtility
+  AdServerCommonsXSD
+  FCGIServerConfigXSD
 )

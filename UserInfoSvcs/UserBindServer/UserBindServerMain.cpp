@@ -63,6 +63,7 @@ UserBindServerApp_::main(int& argc, char** argv)
   using HttpListenerConfig = UServerUtils::Http::Server::ListenerConfig;
   using HttpServerBuilder = UServerUtils::Http::Server::HttpServerBuilder;
   using ServiceMode = UServerUtils::Grpc::Server::ServiceMode;
+  using SecdistConfig = userver::storages::secdist::SecdistConfig;
 
   static const char* FUN = "UserBindServerApp_::main()";
   
@@ -189,8 +190,11 @@ UserBindServerApp_::main(int& argc, char** argv)
         std::optional<HttpListenerConfig> monitor_listener_config;
         if (monitoring_config.present())
         {
+          UServerUtils::Http::Server::PortConfig port_config;
+          port_config.port = monitoring_config->port();
+
           HttpListenerConfig config;
-          config.port = monitoring_config->port();
+          config.ports.emplace_back(std::move(port_config));
           monitor_listener_config = config;
         }
 
@@ -198,16 +202,22 @@ UserBindServerApp_::main(int& argc, char** argv)
         server_config.server_name = "HttpUserBindServer";
         server_config.monitor_listener_config = monitor_listener_config;
 
+        UServerUtils::Http::Server::PortConfig port_config;
+        port_config.unix_socket_path =
+          "/tmp/http_user_bind_server" + std::to_string(getpid()) + ".sock";
+
         auto& listener_config = server_config.listener_config;
-        listener_config.unix_socket_path = "/tmp/http_user_bind_server" + std::to_string(getpid()) + ".sock";
+        listener_config.ports.emplace_back(std::move(port_config));
         listener_config.handler_defaults = {};
 
         auto& connection_config = listener_config.connection_config;
         connection_config.keepalive_timeout = std::chrono::seconds{10};
 
+        SecdistConfig sec_dist_config;
         auto http_server_builder = std::make_unique<HttpServerBuilder>(
           logger(),
           server_config,
+          sec_dist_config,
           main_task_processor,
           statistic_storage);
         components_builder->add_http_server(std::move(http_server_builder));

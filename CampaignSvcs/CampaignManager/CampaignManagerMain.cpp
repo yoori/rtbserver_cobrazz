@@ -50,21 +50,6 @@ namespace DefaultValues
   unsigned int UC_FREQ_CAPS_LIFETIME = 60; // 60 seconds
 }
 
-namespace
-{
-  template<typename _T>
-  _T gcd(_T first, _T second)
-  {
-    while (second != 0)
-    {
-      _T t = first % second;
-      first = second;
-      second = t;
-    }
-    return first;
-  }
-}
-
 CampaignManagerApp_::CampaignManagerApp_() /*throw(eh::Exception)*/
   : AdServer::Commons::ProcessControlVarsLoggerImpl(
       "CampaignManagerApp_", ASPECT)
@@ -522,13 +507,13 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
       logger());
     add_child_object(manager_coro.in());
 
+    stage = "activate_object";
+    activate_object();
+
     stage = "running orb loop";
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service started.";
     corba_server_adapter_->run();
-
-    stage = "activate_object";
-    activate_object();
 
     stage = "waiting while CORBACommons::ProcessControlImpl "
             "completes it's tasks";

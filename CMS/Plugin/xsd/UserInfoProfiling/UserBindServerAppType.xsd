@@ -24,7 +24,7 @@
         <xsd:documentation>Grpc port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10328">
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10328">
       <xsd:annotation>
         <xsd:documentation>Monitoring port to accept connections.</xsd:documentation>
       </xsd:annotation>

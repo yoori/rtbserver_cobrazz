@@ -53,8 +53,8 @@
     </xsl:variable>
 
     <xsl:variable name="expression-matcher-mon-port">
-      <xsl:value-of select="$expression-matcher-config/cfg:networkParams/@monitoring_port"/>
-      <xsl:if test="count($expression-matcher-config/cfg:networkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$expression-matcher-config/cfg:networkParams/@mon_port"/>
+      <xsl:if test="count($expression-matcher-config/cfg:networkParams/@mon_port) = 0">
         <xsl:value-of select="$def-expression-matcher-mon-port"/>
       </xsl:if>
     </xsl:variable>
@@ -287,16 +287,15 @@
       * 1024 * 1024 * $em-count div $distrib-count), "#")'/>
     </xsl:variable>
 
-    <cfg:ChunksConfig chunks_prefix = "Inventory_"
-      rw_buffer_size="10485760"
-      rwlevel_max_size="{$rwlevel-max-inventory-size}"
-      max_undumped_size='{format-number($max-inventory-undumped-size
-        * 1024 * 1024, "#")}'
-      max_levels0="20"
+    <cfg:ChunksConfig
+      chunks_prefix="Inventory_"
       chunks_root="{$chunks-root}"
       chunks_number="{$distrib-count}"
       days_to_keep="{$inventory_days_to_keep}"
-      expire_time="2592000"/>
+      block_cache_size_mb="{$def-rocksdb-block-cache-size-mb-inventory}"
+      compaction_style="{$def-rocksdb-compaction-style-inventory}"
+      number_background_threads="{$def-rocksdb-number-background-threads-inventory}"
+      expire_time="{$def-expire-time-inventory}"/>
 
     <xsl:if test="count($colo-config/cfg:channelTriggerImpStats/@enable) = 0 or
       count($colo-config/cfg:channelTriggerImpStats[@enable = 'true']) > 0 or
@@ -414,8 +413,7 @@
       <cfg:EventThreadPool
         number_threads="{$event-thread-pool-number-threads}"
         name="{$event-thread-pool-name}"
-        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
-        defer_events="{$event-thread-pool-defer-events}"/>
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"/>
       <cfg:MainTaskProcessor
         name="{$main-task-processor-name}"
         number_threads="{$main-task-processor-number-threads}"

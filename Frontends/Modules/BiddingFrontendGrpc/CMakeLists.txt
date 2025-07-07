@@ -15,15 +15,8 @@ add_library(BiddingFrontendGrpc SHARED
 )
 
 target_link_libraries(BiddingFrontendGrpc
-  BidRateProvider
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
-  CampaignManagerLogger
   CommonModule
   Commons
-  CreativeTemplateArgs
   DomainParser
   FeConfigXSD
   FrontendStatistic
@@ -34,7 +27,6 @@ target_link_libraries(BiddingFrontendGrpc
   SecToken
   Stream
   UServerUtils
-  UserBindContainer
   UserIdController
   UserInfoManagerControllerL
   baidu-biddingPB

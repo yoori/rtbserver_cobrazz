@@ -6,19 +6,12 @@ add_library(AdFrontend SHARED
 )
 
 target_link_libraries(AdFrontend
-  BidRateProvider
   CORBACommons
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
   CampaignManagerIDL
-  CampaignManagerLogger
   ChannelManagerControllerIDL
   CommonModule
   Commons
   CookieManager
-  CreativeTemplateArgs
   ExpressionChannelIndex
   FCGI
   FeConfigXSD

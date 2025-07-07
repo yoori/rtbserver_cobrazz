@@ -53,8 +53,7 @@
       <cfg:EventThreadPool
         number_threads="{$event-thread-pool-number-threads}"
         name="{$event-thread-pool-name}"
-        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"
-        defer_events="{$event-thread-pool-defer-events}"/>
+        ev_default_loop_disabled="{$event-thread-pool-ev-default-loop-disabled}"/>
       <cfg:MainTaskProcessor
         name="{$main-task-processor-name}"
         number_threads="{$main-task-processor-number-threads}"
@@ -133,8 +132,8 @@
     </xsl:call-template>
 
     <xsl:variable name="http-adserver-mon-port">
-      <xsl:value-of select="$http-adserver-config/cfg:adFCGINetworkParams/@monitoring_port"/>
-      <xsl:if test="count($http-adserver-config/cfg:adFCGINetworkParams/@monitoring_port) = 0">
+      <xsl:value-of select="$http-adserver-config/cfg:adFCGINetworkParams/@mon_port"/>
+      <xsl:if test="count($http-adserver-config/cfg:adFCGINetworkParams/@mon_port) = 0">
         <xsl:value-of select="$def-http-adserver-mon-port"/>
       </xsl:if>
     </xsl:variable>

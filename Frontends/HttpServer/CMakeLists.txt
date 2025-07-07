@@ -6,46 +6,41 @@ add_executable(HttpServer
 )
 
 target_link_libraries(HttpServer
+  # modules
   ActionFrontend
   AdFrontend
-  AdFrontendGrpc
-  AdInstFrontend
-  AdServerCommonsXSD
-  BidRateProvider
   BiddingFrontend
-  BiddingFrontend
-  BiddingFrontendGrpc
-  CORBACommons
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
-  CampaignManagerIDL
-  CampaignManagerLogger
   ClickFrontend
-  Commons
-  ContentFrontend
-  CreativeTemplateArgs
-  DirectoryModule
-  EchoFrontend
-  FrontendsPool
-  Generics
-  GrpcCampaignManagerPool
-  HTTPServerConfigXSD
+  AdInstFrontend
+  WebStatFrontend
+  UserBindFrontend
+  PubPixelFrontend
   ImprTrackFrontend
   OptoutFrontend
   PassFrontend
   PassPixelFrontend
-  ProcessControlVars
-  PubPixelFrontend
+  EchoFrontend
+  ContentFrontend
+  DirectoryModule
+  # modules with grpc impl
+  AdFrontendGrpc
+  BiddingFrontendGrpc
+  # dependencies
+  FrontendsPool
   RequestMatchers
+  CORBACommons
+  GrpcCampaignManagerPool
+  CampaignManagerIDL
+  Commons
+  Generics
+  ProcessControlVars
   SecToken
   UServerUtils
-  UserBindFrontend
   UserInfoClusterControlIDL
   UserInfoManagerControllerIDL
   UserInfoManagerControllerL
   UtilCommons
-  WebStatFrontend
   XMLUtility
+  HTTPServerConfigXSD
+  AdServerCommonsXSD
 )

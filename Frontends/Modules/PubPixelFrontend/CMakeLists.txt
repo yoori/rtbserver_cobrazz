@@ -4,15 +4,9 @@ add_library(PubPixelFrontend SHARED
 )
 
 target_link_libraries(PubPixelFrontend
-  BidRateProvider
   BillStatInfoIDL
   CORBACommons
-  CTRProvider
-  CampaignConfig
-  CampaignConfigSource
-  CampaignIndex
   CampaignManagerIDL
-  CampaignManagerLogger
   CampaignServerIDL
   ChannelManagerControllerIDL
   CommonModule

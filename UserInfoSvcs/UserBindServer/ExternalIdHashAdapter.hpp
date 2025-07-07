@@ -64,8 +64,8 @@ namespace UserInfoSvcs
   private:
     void* data_;
   };  
-};
-};
+}
+}
 
 namespace AdServer
 {
@@ -110,7 +110,7 @@ namespace UserInfoSvcs
   {
     return data_ ? *static_cast<uint32_t*>(data_) : 0;
   }
-};
-};
+}
+}
 
 #endif /*EXTERNAL_ID_HASH_ADAPTER_HPP_*/

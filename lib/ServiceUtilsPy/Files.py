@@ -39,10 +39,12 @@ class Files:
     def get_line_writer(self, *args, **kw):
         return self.__get_file(LineWriter, *args, **kw)
 
-    def get_in_names(self):
+    def get_in_names(self, exclude=None):
         for _, _, files in os.walk(self.context.in_dir, True):
             for file in sorted(files):
                 if file.startswith("."):
+                    continue
+                if exclude and exclude(file):
                     continue
                 self.service.verify_running()
                 yield file
@@ -53,6 +55,7 @@ class Files:
             if is_error:
                 f.remove()
             else:
-                self.service.print_(0, f"Output file {os.path.join(self.context.out_dir, os.path.split(f.path)[1])}")
+                path = os.path.join(self.context.out_dir,
+                                    os.path.split(f.path)[1])
+                self.service.print_(0, f"Output file {path}")
                 f.move(self.context.out_dir)
-

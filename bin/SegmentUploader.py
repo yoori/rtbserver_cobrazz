@@ -15,10 +15,10 @@ import random
 import shutil
 import flask
 import werkzeug
+import csv
 from ServiceUtilsPy.Service import Service, StopService
 from ServiceUtilsPy.Context import Context
 from ServiceUtilsPy.LineIO import LineReader
-
 
 SQL_REG_USER = """DO $$DECLARE
   channel_id_val bigint;
@@ -26,17 +26,41 @@ SQL_REG_USER = """DO $$DECLARE
 BEGIN
   SELECT adserver.get_taxonomy_channel(%s, %s, 'RU', 'ru') INTO channel_id_val;
 
-  PERFORM adserver.insert_or_update_taxonomy_channel_parameters(channel_id_val, 'P', 10368000, 1);
+  PERFORM adserver.insert_or_update_taxonomy_channel_parameters(
+          channel_id_val, 'P', 10368000, 1);
 
-  INSERT INTO triggers (trigger_type, normalized_trigger, qa_status, channel_type, country_code)
+  INSERT INTO triggers (trigger_type, normalized_trigger, qa_status,
+                        channel_type, country_code)
   SELECT 'K', %s, 'A', 'A', 'RU'
-  WHERE NOT EXISTS (SELECT * FROM triggers WHERE trigger_type = 'K' AND normalized_trigger = %s AND channel_type = 'A' AND country_code = 'RU');
+   WHERE NOT EXISTS (
+     SELECT *
+       FROM triggers
+      WHERE trigger_type = 'K'
+        AND normalized_trigger = %s
+        AND channel_type = 'A'
+        AND country_code = 'RU');
 
-  SELECT trigger_id INTO trigger_id_val FROM triggers WHERE trigger_type = 'K' AND normalized_trigger = %s AND channel_type = 'A' AND country_code = 'RU';
+  SELECT trigger_id
+    INTO trigger_id_val
+    FROM triggers
+   WHERE trigger_type = 'K'
+     AND normalized_trigger = %s
+     AND channel_type = 'A'
+     AND country_code = 'RU';
 
-  INSERT INTO channeltrigger(trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
+  INSERT INTO channeltrigger(trigger_id, channel_id, channel_type,
+                             trigger_type, country_code, original_trigger,
+                             qa_status, negative)
   SELECT trigger_id_val, channel_id_val, 'A', 'P', 'RU', %s, 'A', false
-  WHERE NOT EXISTS (SELECT * FROM channeltrigger WHERE trigger_id = trigger_id_val AND channel_id = channel_id_val AND channel_type = 'A' AND trigger_type = 'P' AND country_code = 'RU' AND original_trigger = %s);
+  WHERE NOT EXISTS (
+    SELECT *
+      FROM channeltrigger
+     WHERE trigger_id = trigger_id_val
+       AND channel_id = channel_id_val
+       AND channel_type = 'A'
+       AND trigger_type = 'P'
+       AND country_code = 'RU'
+       AND original_trigger = %s);
 END$$;"""
 
 
@@ -46,13 +70,27 @@ SQL_REG_URL = "SELECT adserver.get_taxonomy_channel(%s, 115, 'RU', 'ru');"
 SQL_UPLOAD_URL = """DO $$DECLARE
   trigger_id_val bigint;
 BEGIN
-  SELECT trigger_id INTO trigger_id_val FROM triggers WHERE trigger_type = 'U' AND
-    normalized_trigger = %s AND channel_type = 'A' AND country_code = 'RU';
+  SELECT trigger_id
+    INTO trigger_id_val
+    FROM triggers
+   WHERE trigger_type = 'U'
+     AND normalized_trigger = %s
+     AND channel_type = 'A'
+     AND country_code = 'RU';
 
-  INSERT INTO channeltrigger(trigger_id, channel_id, channel_type, trigger_type, country_code, original_trigger, qa_status, negative)
+  INSERT INTO channeltrigger(trigger_id, channel_id, channel_type,
+                             trigger_type, country_code, original_trigger,
+                             qa_status, negative)
   SELECT trigger_id_val, %s, 'A', 'U', 'RU', %s, 'A', false
-  WHERE NOT EXISTS (SELECT * FROM channeltrigger WHERE trigger_id = trigger_id_val AND channel_id = %s AND channel_type = 'A' AND
-    trigger_type = 'U' AND country_code = 'RU' AND original_trigger = %s);
+   WHERE NOT EXISTS (
+    SELECT *
+      FROM channeltrigger
+     WHERE trigger_id = trigger_id_val
+       AND channel_id = %s
+       AND channel_type = 'A'
+       AND trigger_type = 'U'
+       AND country_code = 'RU'
+       AND original_trigger = %s);
 END$$;"""
 
 
@@ -61,6 +99,28 @@ def make_keyword(name):
     for c in name:
         r += c if (('a' <= c <= 'z') or ('0' <= c <= '9')) else 'x'
     return r
+
+
+class FileAdapterAmber:
+    def get_alias(self, filename):
+        return filename
+
+
+class FileAdapterGpm:
+    def __init__(self, dir_path):
+        self.data = {}
+        for path, _, files in os.walk(dir_path, True):
+            for file in files:
+                if file.endswith("taxonomy.csv"):
+                    with open(os.path.join(path, file), newline='',
+                              encoding='utf-8-sig') as cf:
+                        reader = csv.DictReader(cf, delimiter=';')
+                        for line in reader:
+                            self.data[line['segment_id']] = line
+
+    def get_alias(self, filename):
+        number = os.path.basename(filename).split(".")[0]
+        return self.data[number]['name']
 
 
 class Metrics:
@@ -79,9 +139,21 @@ class UploadDir:
 
 
 class Upload(UploadDir):
-    def __init__(self, service, params):
+    def __init__(self, service, params, dir_info):
         workspace_dir = params["workspace_dir"]
-        super().__init__(params["in_dir"], os.path.join(workspace_dir, "markers"), params["channel_prefix"])
+        super().__init__(
+                dir_info["in_dir"], os.path.join(workspace_dir, "markers"),
+                dir_info["channel_prefix"])
+
+        file_format = dir_info["format"]
+        self.file_adapter = None
+        if file_format == "amber":
+            self.file_adapter = FileAdapterAmber()
+        if file_format == "gpm":
+            self.file_adapter = FileAdapterGpm(dir_info["in_dir"])
+        if self.file_adapter is None:
+            raise RuntimeError(f"Unknown format: {file_format}")
+
         self.service = service
         self.account_id = params["account_id"]
         self.url_segments_dir = params.get("url_segments_dir")
@@ -125,7 +197,8 @@ class Upload(UploadDir):
             return self.metrics
 
 
-UIDFileGroupInfo = collections.namedtuple("UIDFileGroupInfo", "name need_sign_uids is_stable")
+UIDFileGroupInfo = collections.namedtuple("UIDFileGroupInfo",
+                                          "name need_sign_uids is_stable")
 
 
 def make_uid_file_group_info(in_name):
@@ -141,7 +214,9 @@ def make_uid_file_group_info(in_name):
         is_stable = False
     else:
         basename, ext = os.path.splitext(basename)
-    return UIDFileGroupInfo(basename + ext, not signed_uids and ext in ("", ".txt", ".uids"), is_stable)
+    return UIDFileGroupInfo(basename + ext,
+                            not signed_uids and ext in ("", ".txt", ".uids"),
+                            is_stable)
 
 
 class HTTPThread(threading.Thread):
@@ -167,25 +242,44 @@ class Application(Service):
         super().__init__()
 
         self.args_parser.add_argument("--upload-url", help="URL of server.")
-        self.args_parser.add_argument("--upload-wait-time", type=float, help="Time to wait for upload.")
-        self.args_parser.add_argument("--name", help="Upload name (for metrics).")
-        self.args_parser.add_argument("--account-id", type=int, help="Account ID.")
-        self.args_parser.add_argument("--channel-prefix", help="Filename prefix.")
-        self.args_parser.add_argument("--workspace-dir", help="Folder that stores the state ect.")
-        self.args_parser.add_argument("--url-segments-dir", help="Private .der key for signing uids.")
-        self.args_parser.add_argument("--upload-threads", type=int, help="Maximum count of concurrent requests to update.")
+        self.args_parser.add_argument(
+                "--upload-wait-time", type=float,
+                help="Time to wait for upload.")
+        self.args_parser.add_argument(
+                "--name", help="Upload name (for metrics).")
+        self.args_parser.add_argument(
+                "--account-id", type=int, help="Account ID.")
+        self.args_parser.add_argument(
+                "--channel-prefix", help="Filename prefix.")
+        self.args_parser.add_argument(
+                "--workspace-dir", help="Folder that stores the state ect.")
+        self.args_parser.add_argument(
+                "--url-segments-dir",
+                help="Private .der key for signing uids.")
+        self.args_parser.add_argument(
+                "--upload-threads", type=int,
+                help="Maximum count of concurrent requests to update.")
         self.args_parser.add_argument("--pg-host", help="PostgreSQL hostname.")
         self.args_parser.add_argument("--pg-db", help="PostgreSQL DB name.")
-        self.args_parser.add_argument("--pg-user", help="PostgreSQL user name.")
+        self.args_parser.add_argument(
+                "--pg-user", help="PostgreSQL user name.")
         self.args_parser.add_argument("--pg-pass", help="PostgreSQL password.")
-        self.args_parser.add_argument("--private-key-file", help="Private .der key for signing uids.")
-        self.args_parser.add_argument("--http-host", help="HTTP endpoint host.")
-        self.args_parser.add_argument("--http-port", type=int, help="HTTP endpoint port.")
+        self.args_parser.add_argument(
+                "--private-key-file",
+                help="Private .der key for signing uids.")
+        self.args_parser.add_argument(
+                "--http-host", help="HTTP endpoint host.")
+        self.args_parser.add_argument(
+                "--http-port", type=int,
+                help="HTTP endpoint port.")
+        self.args_parser.add_argument(
+                "--in-dirs", help="Directories that stores input files.")
 
         self.lock = threading.Lock()
         self.__subprocesses = set()
         self.__asyncio_tasks = set()
         self.__http_thread = None
+        self.HTTPConnection = aiohttp.ClientSession
 
     def on_start(self):
         super().on_start()
@@ -197,16 +291,17 @@ class Application(Service):
 
         self.__uploads = {}
 
-        def add_upload(params):
-            name = params["name"]
+        def add_upload(params, dir_info):
+            name = dir_info["format"]
             if name in self.__uploads:
                 raise RuntimeError(f"Upload name duplication: {name}")
-            self.__uploads[name] = Upload(self, params)
+            self.__uploads[name] = Upload(self, params, dir_info)
 
-        if self.params.get("account_id") is not None:
-            add_upload(self.params)
-        for upload in self.config.get("uploads", tuple()):
-            add_upload(upload)
+        for dir_info in self.params["in_dirs"]:
+            if self.params.get("account_id") is not None:
+                add_upload(self.params, dir_info)
+            for upload in self.config.get("uploads", tuple()):
+                add_upload(upload, dir_info)
 
         self.__upload_threads = self.params["upload_threads"]
 
@@ -220,7 +315,9 @@ class Application(Service):
             # initialize metrics before HTTP start
             for upload in self.__uploads.values():
                 upload.get_items()
-            self.__http_thread = HTTPThread(self.__make_http_application(), http_host, self.params["http_port"])
+            self.__http_thread = HTTPThread(
+                    self.__make_http_application(), http_host,
+                    self.params["http_port"])
             self.print_(0, "Starting HTTP server")
             self.__http_thread.start()
 
@@ -268,7 +365,8 @@ class Application(Service):
         pg_connection = None
         try:
             pg_connection = psycopg2.connect(
-                f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' password='{pg_pass}'")
+                f"host='{ph_host}' dbname='{pg_db}' user='{pg_user}' "
+                f"password='{pg_pass}'")
             with pg_connection.cursor() as pg_cursor:
                 loop.run_until_complete(self.on_uids(upload, pg_cursor))
                 loop.run_until_complete(self.on_urls(upload, pg_cursor))
@@ -282,6 +380,24 @@ class Application(Service):
             loop.run_until_complete(asyncio.sleep(0.250))
             loop.close()
 
+    def extract(self, path):
+        try:
+            if os.path.isfile(path):
+                if path.endswith(".gz"):
+                    cmd = ['gunzip', '-df', f'{path}']
+                    subprocess.run(cmd)
+            else:
+                for directory, _, files in os.walk(path, True):
+                    for file in files:
+                        self.extract(os.path.join(directory, file))
+        except subprocess.CalledProcessError as e:
+            self.print_(0, f"'gunzip' failed, returned code {e.returncode}")
+            pass
+        except OSError as e:
+            error = str(e)
+            self.print_(0, f"failed to run shell: {error}")
+            pass
+
     async def on_uids(self, upload, pg_cursor):
         for item in upload.get_items():
             await self.on_uids_dir(pg_cursor, upload, item)
@@ -289,67 +405,97 @@ class Application(Service):
     async def on_uids_dir(self, pg_cursor, upload, item):
         self.print_(1, f"In dir {item.in_dir}")
         self.print_(1, f"Markers dir {item.markers_dir}")
+        self.extract(upload.in_dir)
         try:
             with Context(self, in_dir=item.in_dir) as in_dir_ctx:
                 while True:
                     self.verify_running()
-                    with Context(self, markers_dir=item.markers_dir) as markers_ctx:
-                        in_names_all = tuple(in_dir_ctx.files.get_in_names())
+                    with Context(
+                            self, markers_dir=item.markers_dir) as markers_ctx:
+                        in_names_all = tuple(in_dir_ctx.files.get_in_names(
+                            lambda f: f.endswith("taxonomy.csv")))
                         with self.lock:
                             upload.metrics_dirty = True
                             item.files_to_upload = len(in_names_all)
                         if not in_names_all:
-                            # TODO: fix infinite loop (sleep, possibly os.walk sort by time[not supported by file system], limit by mask)
+                            # TODO: fix infinite loop (sleep, possibly os.walk
+                            #     sort by time[not supported by file system],
+                            #     limit by mask)
                             time.sleep(0.1)
                             break
                         group_info = make_uid_file_group_info(max(
                             in_names_all,
-                            key=lambda in_name: os.path.getmtime(os.path.join(item.in_dir, in_name))))
+                            key=lambda in_name: os.path.getmtime(os.path.join(
+                                item.in_dir, in_name))))
+
+                        filename_alias = upload.file_adapter.get_alias(
+                                group_info.name)
+
                         reg_marker_name = group_info.name + ".__reg__"
-                        keyword = make_keyword(item.channel_prefix.lower() + group_info.name.lower())
+                        keyword = make_keyword(item.channel_prefix.lower() +
+                                               group_info.name.lower())
                         if markers_ctx.markers.add(reg_marker_name):
-                            channel_id = item.channel_prefix + group_info.name.upper()
-                            self.print_(1, f"Registering file group: {reg_marker_name} ({group_info.name}) channel_id {channel_id} account_id {item.account_id} keyword {keyword}")
+                            channel_id = (item.channel_prefix +
+                                          filename_alias.upper())
+                            self.print_(1, "Registering file group: "
+                                        f"{reg_marker_name} ({group_info.name}"
+                                        f' alias "{filename_alias}") '
+                                        f"channel_id {channel_id} account_id "
+                                        f"{item.account_id} keyword {keyword}")
                             pg_cursor.execute(
                                 SQL_REG_USER,
-                                (channel_id, item.account_id, keyword, keyword, keyword, keyword, keyword))
+                                (channel_id, item.account_id, keyword, keyword,
+                                 keyword, keyword, keyword))
                             pg_cursor.execute("COMMIT;")
 
-                        if not markers_ctx.markers.check_mtime_interval(reg_marker_name, self.__upload_wait_time):
+                        if not markers_ctx.markers.check_mtime_interval(
+                                reg_marker_name, self.__upload_wait_time):
                             continue
 
                         in_names = []
                         for in_name in in_names_all:
-                            if group_info != make_uid_file_group_info(in_name):
+                            if group_info != make_uid_file_group_info(
+                                    in_name):
                                 continue
                             in_names.append(in_name)
                         in_names.sort(
-                            key=lambda _: os.path.getmtime(os.path.join(item.in_dir, _)),
+                            key=lambda _: os.path.getmtime(os.path.join(
+                                item.in_dir, _)),
                             reverse=True)
                         in_names = in_names[:12]
 
                         for in_name_index, in_name in enumerate(in_names):
                             if in_name_index == 0:
-                                self.print_(1, f"Processing file group: {group_info}")
-                            self.print_(1, f" {in_name_index + 1}) File {in_name}")
+                                self.print_(1, "Processing file group: "
+                                            f"{group_info} alias "
+                                            f'"{filename_alias}"')
+                            self.print_(1, f" {in_name_index + 1}) File "
+                                        f'{in_name} alias "{filename_alias}"')
 
                         if len(in_names) > 1:
                             file_groups = {
                                 0: dict(
-                                    (in_name, open(os.path.join(item.in_dir, in_name), "rb"))
+                                    (in_name,
+                                     open(os.path.join(item.in_dir, in_name),
+                                          "rb"))
                                     for in_name in in_names)
                             }
                             in_names.clear()
 
                             while file_groups:
                                 new_file_groups = {}
-                                for group_id, file_group in file_groups.items():
+                                for group_id, file_group in (
+                                        file_groups.items()):
                                     for in_name, f in file_group.items():
-                                        data = b"" if len(file_group) == 1 else f.read(8000)
+                                        data = b"" if (
+                                                len(file_group) == 1) else (
+                                                        f.read(8000))
                                         try:
-                                            new_file_group = new_file_groups[(group_id, data)]
+                                            new_file_group = new_file_groups[(
+                                                group_id, data)]
                                         except KeyError:
-                                            new_file_groups[(group_id, data)] = {in_name: f}
+                                            new_file_groups[(
+                                                group_id, data)] = {in_name: f}
                                             if not data:
                                                 f.close()
                                                 in_names.append(in_name)
@@ -357,30 +503,41 @@ class Application(Service):
                                             new_file_group[in_name] = f
                                             if not data:
                                                 f.close()
-                                                self.print_(1, f"Duplicate file: {in_name}")
-                                                os.remove(os.path.join(item.in_dir, in_name))
+                                                self.print_(1, (
+                                                    "Duplicate file: "
+                                                    f"{in_name} alias "
+                                                    f'"{filename_alias}"'))
+                                                os.remove(os.path.join(
+                                                    item.in_dir, in_name))
                                 file_groups.clear()
                                 new_group_ids = {}
-                                for (group_id, data), new_file_group in new_file_groups.items():
+                                for (group_id, data), new_file_group in (
+                                        new_file_groups.items()):
                                     if data:
                                         try:
-                                            new_group_id = new_group_ids[(group_id, data)]
+                                            new_group_id = (
+                                                new_group_ids[(group_id, data)]
+                                                )
                                         except KeyError:
                                             new_group_id = len(new_group_ids)
-                                            new_group_ids[(group_id, data)] = new_group_id
-                                        file_groups[new_group_id] = new_file_group
+                                            new_group_ids[(group_id, data)] = (
+                                                new_group_id)
+                                        file_groups[new_group_id] = (
+                                            new_file_group)
 
                         self.print_(0, f"Unique files count: {len(in_names)}")
 
                         async def run_lines(f):
-                            async with aiohttp.ClientSession() as session:
+                            async with self.HTTPConnection() as session:
                                 tasks = []
                                 loop = asyncio.get_event_loop()
                                 try:
                                     with self.lock:
                                         for i in range(self.__upload_threads):
                                             task = loop.create_task(
-                                                self.on_uids_lines(f, group_info.is_stable, keyword, session, upload))
+                                                self.on_uids_lines(
+                                                    f, group_info.is_stable,
+                                                    keyword, session, upload))
                                             tasks.append(task)
                                             self.__asyncio_tasks.add(task)
                                     for task in tasks:
@@ -393,20 +550,31 @@ class Application(Service):
                                         for task in tasks:
                                             self.__asyncio_tasks.discard(task)
 
-                        in_paths_str = " ".join(os.path.join(item.in_dir, in_name) for in_name in in_names)
+                        in_paths_str = " ".join(os.path.join(item.in_dir,
+                                                             in_name)
+                                                for in_name in in_names)
 
                         if group_info.need_sign_uids:
-                            cmd = ['sh', '-c', f'cat {in_paths_str} | sed -r "s/([^.])$/\\1../" | sort -u --parallel=4 | UserIdUtil sign-uid --private-key-file="{self.__private_key_file}"']
+                            cmd = ['sh', '-c', f'cat {in_paths_str} | '
+                                   'sed -r "s/([^.])$/\\1../" | '
+                                   'sort -u --parallel=4 | '
+                                   'UserIdUtil sign-uid --private-key-file='
+                                   f'"{self.__private_key_file}"']
                         else:
-                            cmd = ['sh', '-c', f'cat {in_paths_str} | sort -u --parallel=4']
+                            cmd = ['sh', '-c', f'cat {in_paths_str} | '
+                                   'sort -u --parallel=4']
 
-                        with subprocess.Popen(cmd, stdout=subprocess.PIPE) as shp:
+                        with subprocess.Popen(cmd,
+                                              stdout=subprocess.PIPE) as shp:
                             with self.lock:
                                 self.__subprocesses.add(shp.pid)
                             try:
-                                file = io.TextIOWrapper(io.BufferedReader(shp.stdout, buffer_size=65536), encoding="utf-8")
-                                self.print_(0, f"Processing...")
-                                with LineReader(self, path=group_info.name, file=file) as f:
+                                file = io.TextIOWrapper(io.BufferedReader(
+                                    shp.stdout, buffer_size=65536),
+                                                        encoding="utf-8")
+                                self.print_(0, "Processing...")
+                                with LineReader(self, path=filename_alias,
+                                                file=file) as f:
                                     await run_lines(f)
                             finally:
                                 with self.lock:
@@ -415,7 +583,8 @@ class Application(Service):
                         self.verify_running()
                         if shp.returncode >= 0:
                             for in_name in in_names:
-                                self.print_(1, f"Done file: {in_name}")
+                                self.print_(1, f"Done file: {in_name} alias "
+                                            f"\"{filename_alias}\"")
                                 os.remove(os.path.join(item.in_dir, in_name))
 
         except aiohttp.client_exceptions.ClientError as e:
@@ -429,7 +598,8 @@ class Application(Service):
             await self.request(
                 session,
                 path="get",
-                headers={"Host": "ad.new-programmatic.com", "Cookie": "uid=" + uid},
+                headers={"Host": "ad.new-programmatic.com",
+                         "Cookie": "uid=" + uid},
                 params={"loc.name": "ru", "referer-kw": keyword})
 
         try:
@@ -447,7 +617,8 @@ class Application(Service):
                         session,
                         path="track.gif",
                         headers={},
-                        params={"xid": "megafon-stableid/" + line, "u": "yUeKE9yKRKSu3bhliRyREA.."},
+                        params={"xid": "megafon-stableid/" + line,
+                                "u": "yUeKE9yKRKSu3bhliRyREA.."},
                         visitor=visitor)
                 with self.lock:
                     upload.metrics.uploaded_users += 1
@@ -458,9 +629,11 @@ class Application(Service):
         url = f"{random.choice(self.__upload_url)}/{path}"
         self.print_(3, f"Request url={url} headers={headers} params={params}")
         try:
-            async with session.get(url=url, params=params, headers=headers, ssl=False) as resp:
+            async with session.get(url=url, headers=headers, params=params,
+                                   ssl=False) as resp:
                 if resp.status != 204:
-                    raise aiohttp.client_exceptions.ClientResponseError(resp.request_info, resp.history)
+                    raise aiohttp.client_exceptions.ClientResponseError(
+                            resp.request_info, resp.history)
                 if visitor is not None:
                     await visitor(resp)
         except aiohttp.client_exceptions.ClientError as e:
@@ -471,18 +644,26 @@ class Application(Service):
             return
 
         try:
-            with Context(self, in_dir=upload.url_segments_dir, markers_dir=upload.url_markers_dir) as ctx:
+            with Context(self, in_dir=upload.url_segments_dir,
+                         markers_dir=upload.url_markers_dir) as ctx:
                 for in_name in ctx.files.get_in_names():
                     in_path = os.path.join(ctx.in_dir, in_name)
                     if ctx.markers.add(in_name, os.path.getmtime(in_path)):
                         self.print_(1, f"Registering URL file: {in_name}")
-                        pg_cursor.execute(SQL_REG_URL, (upload.channel_prefix + in_name.upper(),))
+                        filename_alias = upload.file_adapter.get_alias(in_name)
+                        pg_cursor.execute(
+                                SQL_REG_URL, (upload.channel_prefix +
+                                              filename_alias.upper()))
+                        self.print_(1, filename_alias)
                         channel_id = pg_cursor.fetchone()[0]
                         pg_cursor.execute("COMMIT;")
-                        self.print_(1, f"Uploading URL file: {in_name}")
+                        self.print_(1, f"Uploading URL file: {in_name} alias "
+                                    f"{filename_alias}")
                         with LineReader(self, in_path) as f:
                             for line in f.read_lines():
-                                pg_cursor.execute(SQL_UPLOAD_URL, (line, channel_id, line, channel_id, line))
+                                pg_cursor.execute(SQL_UPLOAD_URL,
+                                                  (line, channel_id, line,
+                                                   channel_id, line))
                                 pg_cursor.execute("COMMIT;")
         except EOFError as e:
             self.print_(0, e)
@@ -499,17 +680,23 @@ class Application(Service):
             if fmt is None:
                 prometheus = []
                 for name, m in mm.items():
-                    prometheus.append(('files_to_upload', name, m.files_to_upload))
+                    prometheus.append(('files_to_upload', name,
+                                       m.files_to_upload))
                 for name, m in mm.items():
-                    prometheus.append(('uploaded_users', name, m.uploaded_users))
-                return "\n".join('{}{{source = "{}"}} {}'.format(*p) for p in prometheus)
+                    prometheus.append(('uploaded_users', name,
+                                       m.uploaded_users))
+                return "\n".join('{}{{source = "{}"}} {}'.format(*p)
+                                 for p in prometheus)
             if fmt == "json":
                 files_to_upload = []
                 uploaded_users = []
                 for name, m in mm.items():
-                    files_to_upload.append({"source": name, "value": m.files_to_upload})
-                    uploaded_users.append({"source": name, "value": m.uploaded_users})
-                return flask.jsonify({"files_to_upload": files_to_upload, "uploaded_users": uploaded_users})
+                    files_to_upload.append({"source": name,
+                                            "value": m.files_to_upload})
+                    uploaded_users.append({"source": name,
+                                           "value": m.uploaded_users})
+                return flask.jsonify({"files_to_upload": files_to_upload,
+                                      "uploaded_users": uploaded_users})
             return "Unknown format", 400
 
         return app
@@ -518,4 +705,3 @@ class Application(Service):
 if __name__ == "__main__":
     service = Application()
     service.run()
-
