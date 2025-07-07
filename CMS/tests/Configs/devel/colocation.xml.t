@@ -558,7 +558,7 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
           <billingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
             <networkParams
               port="{ $PORT_BASE + 31 }"
-              grpc_port="${ $PORT_BASE + 231}"/>
+              grpc_port="{ $PORT_BASE + 231}"/>
             <logging log_level="7" sys_log="false"/>
           </billingServer>
         </configuration>
