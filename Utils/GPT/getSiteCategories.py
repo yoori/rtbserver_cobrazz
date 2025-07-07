@@ -188,7 +188,7 @@ if __name__ == "__main__":
                         help='json named array with websites. example: {<name>:[<url1>,<url2>,...]}')
     parser.add_argument('-m', '--maxsize', type=int, default=300, help='Maximum number of characters per subarray')
     parser.add_argument('-d', '--output_dir', type=str, default='GPTresults', help='Result output dir')
-    parser.add_argument('-o', '--output_file', type=str, default='GPTresult.json', help='Result output file')
+    parser.add_argument('-o', '--output_file', type=str, default='GPTresults.json', help='Result output file')
     parser.add_argument('-s', '--storeGpt', action='store_true',
                         help='true - save all gpt results, false - save only last one')
     parser.add_argument('-t', '--timeout', type=int, default=300,
