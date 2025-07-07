@@ -149,11 +149,6 @@
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
-      <xsd:annotation>
-        <xsd:documentation>Monitoring port to accept connections.</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="ExternalNetworkParamsType">
