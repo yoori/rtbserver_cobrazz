@@ -19,6 +19,11 @@
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10301">
+      <xsd:annotation>
+        <xsd:documentation>Monitoring port.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="UserInfoManagerThreadParamsType">
