@@ -11,8 +11,6 @@ import re
 import signal
 import threading
 
-# add external dependencies: logger_config.py and other
-sys.path.append(os.path.abspath('../../Commons/Python/'))
 from logger_config import get_logger
 
 loggerCH = get_logger('URLindexier ClickHouse', logging.DEBUG)
@@ -241,7 +239,7 @@ def askGPT(urls):
     if(isGPTresulteStored):
         output_file = os.path.join(output_GPT_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '.json')
     else:
-        output_file = os.path.join(output_GPT_dir, 'GPTresult.json')
+        output_file = os.path.join(output_GPT_dir, 'GPTresults.json')
 
     # Run the script with the urls argument
     # to run getSiteCategories.py it is requared to have this two in env:
