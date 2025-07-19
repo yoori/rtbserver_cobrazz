@@ -15,10 +15,21 @@ module CampaignSvcs_v360
 
   typedef sequence<DayAmount> DayAmountSeq;
 
+  typedef sequence<CORBACommons::DecimalInfo> AmountSeq;
+
+  struct DayHourlyAmounts
+  {
+    CORBACommons::TimestampInfo day;
+    AmountSeq hourly_amounts;
+  };
+
+  typedef sequence<DayHourlyAmounts> DayHourlyAmountsSeq;
+
   struct AmountDistributionInfo
   {
     DayAmount prev_days_amount; // .amount = sum amount at interval (-inf, .day]
     DayAmountSeq day_amounts;
+    DayHourlyAmountsSeq day_hourly_amounts;
   };
 
   typedef sequence<AmountDistributionInfo> AmountDistributionSeq;
@@ -43,13 +54,29 @@ module CampaignSvcs_v360
 
   typedef sequence<DayAmountCount> DayAmountCountSeq;
 
+  struct AmountCount
+  {
+    CORBACommons::DecimalInfo amount;
+    CORBACommons::DecimalInfo imps;
+    CORBACommons::DecimalInfo clicks;
+  };
+
+  typedef sequence<AmountCount> AmountCountSeq;
+
+  struct DayHourlyAmountCounts
+  {
+    CORBACommons::TimestampInfo day;
+    AmountCountSeq hourly_amount_counts;
+  };
+
+  typedef sequence<DayHourlyAmountCounts> DayHourlyAmountCountsSeq;
+
   struct AmountCountDistributionInfo
   {
     DayAmountCount prev_days_amount_count; // .amount = sum amount at interval (-inf, .day]
     DayAmountCountSeq day_amount_counts;
+    DayHourlyAmountCountsSeq day_hourly_amount_counts;
   };
-
-  //typedef sequence<AmountCountDistributionInfo> AmountCountDistributionSeq;
 
   struct CampaignAmountDistributionInfo
   {

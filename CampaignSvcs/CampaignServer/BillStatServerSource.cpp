@@ -166,6 +166,35 @@ namespace CampaignSvcs
         CorbaAlgs::unpack_time(day_info.day),
         CorbaAlgs::unpack_decimal<RevenueDecimal>(day_info.amount)));
     }
+
+    auto& day_hourly_amounts = amount_distribution.day_hourly_amounts;
+    const auto& day_hourly_amounts_info = amount_distribution_info.day_hourly_amounts;
+    for(CORBA::ULong i = 0; i < day_hourly_amounts_info.length(); ++i)
+    {
+      auto& day_info = day_hourly_amounts_info[i];
+      if (day_info.hourly_amounts.length() != 24)
+      {
+        std::ostringstream stream;
+        stream << FNS
+               << "hourly_amounts size must be equal 24";
+        logger_->log(
+          stream.str(),
+          Logging::Logger::ERROR,
+          Aspect::BILL_STAT_SERVER_SOURCE,
+          "ADS-IMPL-147");
+        continue;
+      }
+
+      auto& hourly_amounts = day_hourly_amounts[CorbaAlgs::unpack_time(day_info.day)];
+      const auto& hourly_amounts_info = day_info.hourly_amounts;
+      hourly_amounts.reserve(hourly_amounts_info.length());
+      for (CORBA::ULong j = 0; j < hourly_amounts_info.length(); ++j)
+      {
+        const auto& amount_info = hourly_amounts_info[j];
+        hourly_amounts.emplace_back(
+          CorbaAlgs::unpack_decimal<RevenueDecimal>(amount_info));
+      }
+    }
   }
 
   void
@@ -189,7 +218,7 @@ namespace CampaignSvcs
     for(CORBA::ULong i = 0;
       i < amount_count_distribution_info.day_amount_counts.length(); ++i)
     {
-      auto& day_info = amount_count_distribution_info.day_amount_counts[i];
+      const auto& day_info = amount_count_distribution_info.day_amount_counts[i];
       amount_count_distribution.day_amount_counts.insert(std::make_pair(
         CorbaAlgs::unpack_time(day_info.day),
         Stat::AmountCount(
@@ -198,6 +227,40 @@ namespace CampaignSvcs
           CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(day_info.clicks)
           ))
         );
+    }
+
+    auto& day_hourly_amount_counts = amount_count_distribution.day_hourly_amount_counts;
+    const auto& day_hourly_amount_counts_info =
+      amount_count_distribution_info.day_hourly_amount_counts;
+    for(CORBA::ULong i = 0; i < day_hourly_amount_counts_info.length(); ++i)
+    {
+      const auto& day_info = day_hourly_amount_counts_info[i];
+      if (day_info.hourly_amount_counts.length() != 24)
+      {
+        std::ostringstream stream;
+        stream << FNS
+               << "hourly_amount_counts size must be equal 24";
+        logger_->log(
+          stream.str(),
+          Logging::Logger::ERROR,
+          Aspect::BILL_STAT_SERVER_SOURCE,
+          "ADS-IMPL-147");
+        continue;
+      }
+
+      auto& hourly_amount_counts = day_hourly_amount_counts[
+        CorbaAlgs::unpack_time(day_info.day)];
+      const auto& hourly_amount_counts_info = day_info.hourly_amount_counts;
+      hourly_amount_counts.reserve(hourly_amount_counts_info.length());
+      for (CORBA::ULong j = 0; j < hourly_amount_counts_info.length(); ++j)
+      {
+        const auto& amount_count_info = hourly_amount_counts_info[j];
+        hourly_amount_counts.emplace_back(
+          Stat::AmountCount{
+            CorbaAlgs::unpack_decimal<RevenueDecimal>(amount_count_info.amount),
+            CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(amount_count_info.imps),
+            CorbaAlgs::unpack_decimal<ImpRevenueDecimal>(amount_count_info.clicks)});
+      }
     }
   }
 }

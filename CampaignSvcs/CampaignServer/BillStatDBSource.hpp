@@ -40,6 +40,15 @@ namespace CampaignSvcs
     query_db_stats_(const Generics::Time& now)
       /*throw(Exception)*/;
 
+    Stat_var query_day_db_stats_(
+      const Generics::Time& now,
+      Commons::Postgres::Connection* conn);
+
+    void query_hour_db_stats_(
+      const Generics::Time& now,
+      Commons::Postgres::Connection* conn,
+      Stat& stat);
+
   private:
     Logging::Logger_var logger_;
     Commons::Postgres::ConnectionPool_var pg_pool_;

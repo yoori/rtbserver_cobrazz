@@ -185,17 +185,8 @@ namespace CampaignSvcs
 
   BillStatDBSource::Stat_var
   BillStatDBSource::query_db_stats_(const Generics::Time& now)
-    /*throw(Exception)*/
   {
-    static const char* FUN = "BillStatDBSource::query_db_stats_()";
-
-    ExecutionTimeTracer db_stats_timer(
-      FUN,
-      Aspect::BILL_STAT_DB_SOURCE,
-      logger_);
-
     Commons::Postgres::Connection_var connection;
-
     try
     {
       connection = pg_pool_->get_connection();
@@ -204,12 +195,43 @@ namespace CampaignSvcs
     {
       return Stat_var();
     }
-    catch (const Commons::Postgres::Exception& e)
+    catch (const Commons::Postgres::Exception& exc)
     {
-      Stream::Error ostr;
-      ostr << FUN << ": Commons::Postgres::Exception: " << e.what();
-      throw Exception(ostr);
+      Stream::Error stream;
+      stream << FNS
+             << "Commons::Postgres::Exception: "
+             << exc.what();
+      throw Exception(stream);
     }
+
+    auto stat = query_day_db_stats_(
+      now,
+      connection.in());
+    if (!stat)
+    {
+      return stat;
+    }
+
+    query_hour_db_stats_(
+      now,
+      connection.in(),
+      *stat);
+
+    return stat;
+  }
+
+  BillStatDBSource::Stat_var
+  BillStatDBSource::query_day_db_stats_(
+    const Generics::Time& now,
+    Commons::Postgres::Connection* connection)
+    /*throw(Exception)*/
+  {
+    static const char* FUN = "BillStatDBSource::query_day_db_stats_()";
+
+    ExecutionTimeTracer db_stats_timer(
+      FUN,
+      Aspect::BILL_STAT_DB_SOURCE,
+      logger_);
 
     const Generics::Time now_date = now.get_gm_time().get_date();
     const Generics::Time trunc_date = now_date - Generics::Time::ONE_DAY * 60;
@@ -381,6 +403,85 @@ namespace CampaignSvcs
     }
 
     return result;
+  }
+
+  void BillStatDBSource::query_hour_db_stats_(
+    const Generics::Time& now,
+    Commons::Postgres::Connection* connection,
+    Stat& stat)
+  {
+    // This method implements a stub since
+    // hourly distribution data is not available.
+    const auto revenue_decimal_number_hours = RevenueDecimal(false, 24, 0);
+    const auto imp_revenue_number_hours = ImpRevenueDecimal(false, 24, 0);
+    auto& accounts = stat.accounts;
+    for (auto& [_, account] : accounts)
+    {
+      const auto& day_amounts = account.day_amounts;
+      auto& day_hourly_amounts = account.day_hourly_amounts;
+      for (const auto& [day, ammount] : day_amounts)
+      {
+        const auto hour_ammount = RevenueDecimal::div(
+          ammount,
+          revenue_decimal_number_hours);
+        auto& hourly_amounts = day_hourly_amounts[day];
+        hourly_amounts.resize(24, hour_ammount);
+      }
+    }
+
+    auto& campaigns = stat.campaigns;
+    for (auto& [_, campaign] : campaigns)
+    {
+      const auto& day_amount_counts = campaign.day_amount_counts;
+      auto& day_hourly_amount_counts = campaign.day_hourly_amount_counts;
+      for (const auto& [day, amount_count] : day_amount_counts)
+      {
+        const auto hour_ammount = RevenueDecimal::div(
+          amount_count.amount,
+          revenue_decimal_number_hours);
+        const auto hour_imps = ImpRevenueDecimal::div(
+          amount_count.imps,
+          imp_revenue_number_hours);
+        const auto hour_clicks = ImpRevenueDecimal::div(
+          amount_count.clicks,
+          imp_revenue_number_hours);
+
+        auto& hourly_amount_counts = day_hourly_amount_counts[day];
+        hourly_amount_counts.resize(
+          24,
+          BillStatSource::Stat::AmountCount{
+            hour_ammount,
+            hour_imps,
+            hour_clicks});
+      }
+    }
+
+    auto& ccgs = stat.ccgs;
+    for (auto& [_, ccg] : ccgs)
+    {
+      const auto& day_amount_counts = ccg.day_amount_counts;
+      auto& day_hourly_amount_counts = ccg.day_hourly_amount_counts;
+      for (const auto& [day, amount_count] : day_amount_counts)
+      {
+        const auto hour_ammount = RevenueDecimal::div(
+          amount_count.amount,
+          revenue_decimal_number_hours);
+        const auto hour_imps = ImpRevenueDecimal::div(
+          amount_count.imps,
+          imp_revenue_number_hours);
+        const auto hour_clicks = ImpRevenueDecimal::div(
+          amount_count.clicks,
+          imp_revenue_number_hours);
+
+        auto& hourly_amount_counts = day_hourly_amount_counts[day];
+        hourly_amount_counts.resize(
+          24,
+          BillStatSource::Stat::AmountCount{
+            hour_ammount,
+            hour_imps,
+            hour_clicks});
+      }
+    }
   }
 }
 }
