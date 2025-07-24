@@ -918,6 +918,7 @@ namespace ImprTrack
           }
         }
 
+	/*
         // match channels
         if(impression_result_info.ptr() && (
              (!result_user_id.is_null() && !(
@@ -947,6 +948,7 @@ namespace ImprTrack
               ex.what();
           }
         }
+        */
 
         if(request_info.set_cookie &&
           !invalid_bind_operation &&

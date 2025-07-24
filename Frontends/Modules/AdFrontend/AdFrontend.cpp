@@ -1733,6 +1733,8 @@ namespace AdServer
   {
     static const char* FUN = "AdFrontend::resolve_cookie_user_id_()";
 
+    return false;
+    
     if(!request_info.client_id.is_null() && user_bind_client_)
     {
       try

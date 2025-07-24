@@ -126,7 +126,8 @@
 #   * Official English Documentation: http://nginx.org/en/docs/
 #   * Official Russian Documentation: http://nginx.org/ru/docs/
 
-error_log error.log;
+#error_log error.log;
+error_log /dev/null; # disabled, because when nginx starts to write it we have overloaded io and other functionality don't works
 
 # user <xsl:value-of select="concat($user-name,' ',$user-group)"/>;
 worker_processes <xsl:call-template name="GetAttr">
@@ -153,7 +154,8 @@ events {
 <xsl:variable name="ps-data-root" select="concat($config-root-base, '/www/PageSense')"/>
 
 http {
-    error_log error.log;
+    #error_log error.log;
+    error_log /dev/null; # disabled, because when nginx starts to write it we have overloaded io and other functionality don't works
 
     log_not_found off;
 
