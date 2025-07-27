@@ -1,0 +1,28 @@
+{
+    "yandex_account_id": "<...>",
+    "yandex_gpt_api_key": "<...>",
+    "db_name": "<...>",
+    "db_user": "<...>",
+    "db_password": "<...>",
+    "db_host": "<...>",
+    "db_port": "<...>",
+
+    "account_id": 123456,
+
+    "loglevel": "info",
+    "prefix": "Taxonomy.ChatGPT.",
+    "interval": "1d",
+    "statement_timeout": 5000,
+    "checkDays": 3,
+    "chunkSize": 1000,
+    "gptdir": "GPTresults",
+    "gptFile": "GPTresults.json",
+    "websitesdir": "websites",
+    "storeSites": true,
+    "storeGpt": true,
+    "checkTimeout": 300,
+    "expTimeDate": 60,
+    "pathGPT": "../../Utils/GPT/getSiteCategories.py",
+    "attempts": 1,
+    "messagesize": 300
+}
