@@ -502,13 +502,13 @@ namespace AdServer
         const StringSet& countries)
         noexcept;
 
-      static void
+      void
       fill_amount_distribution_(
         AdServer::CampaignSvcs::AmountDistributionInfo& amount_distribution_info,
         const BillStatSource::Stat::AmountDistribution& amount_distribution)
         noexcept;
 
-      static void
+      void
       fill_amount_count_distribution_(
         AdServer::CampaignSvcs::AmountCountDistributionInfo& amount_count_distribution_info,
         const BillStatSource::Stat::AmountCountDistribution& amount_count_distribution)

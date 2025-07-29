@@ -19,8 +19,9 @@ namespace CampaignSvcs
     struct Stat: public ReferenceCounting::AtomicCopyImpl
     {
     public:
-      typedef std::map<Generics::Time, RevenueDecimal>
-        DayToAmountMap;
+      using DayToAmountMap = std::map<Generics::Time, RevenueDecimal>;
+      using HourlyAmounts = std::vector<RevenueDecimal>;
+      using DayToHourlyAmounts = std::map<Generics::Time, HourlyAmounts>;
 
       struct AmountDistribution
       {
@@ -36,6 +37,7 @@ namespace CampaignSvcs
         RevenueDecimal prev_days_amount;
         Generics::Time prev_day;
         DayToAmountMap day_amounts;
+        DayToHourlyAmounts day_hourly_amounts;
       };
 
       struct Account: public AmountDistribution
@@ -65,8 +67,9 @@ namespace CampaignSvcs
         ImpRevenueDecimal clicks;
       };
 
-      typedef std::map<Generics::Time, AmountCount>
-        DayToAmountCountMap;
+      using DayToAmountCountMap = std::map<Generics::Time, AmountCount>;
+      using HourlyAmountCounts = std::vector<AmountCount>;
+      using DayToHourlyAmountCounts = std::map<Generics::Time, HourlyAmountCounts>;
 
       struct AmountCountDistribution
       {
@@ -86,6 +89,7 @@ namespace CampaignSvcs
         ImpRevenueDecimal prev_days_clicks;
         Generics::Time prev_day;
         DayToAmountCountMap day_amount_counts;
+        DayToHourlyAmountCounts day_hourly_amount_counts;
       };
 
       struct Campaign: public AmountCountDistribution

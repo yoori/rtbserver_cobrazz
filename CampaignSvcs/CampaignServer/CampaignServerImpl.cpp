@@ -2289,6 +2289,37 @@ namespace AdServer
         amount_distribution_info.day_amounts[day_i].amount =
           CorbaAlgs::pack_decimal(day_it->second);
       }
+
+      const auto& day_hourly_amounts = amount_distribution.day_hourly_amounts;
+      auto& day_hourly_amounts_info = amount_distribution_info.day_hourly_amounts;
+      day_hourly_amounts_info.length(day_hourly_amounts.size());
+      day_i = 0;
+      for (auto day_it = std::begin(day_hourly_amounts);
+        day_it != std::end(day_hourly_amounts);
+        ++day_it, ++day_i)
+      {
+        const auto& hourly_amounts = day_it->second;
+        if (hourly_amounts.size() != 24)
+        {
+          std::ostringstream stream;
+          stream << FNS
+                 << "hourly_amounts size must be equal 24";
+          logger_->error(
+            stream.str(),
+            Aspect::CAMPAIGN_SERVER,
+            "ADS-IMPL-153");
+          continue;
+        }
+
+        auto& day_info = day_hourly_amounts_info[day_i];
+        day_info.day = CorbaAlgs::pack_time(day_it->first);
+        auto& hourly_amounts_info = day_info.hourly_amounts;
+        hourly_amounts_info.length(hourly_amounts.size());
+        for (std::size_t k = 0; k < hourly_amounts.size(); k += 1)
+        {
+          hourly_amounts_info[k] = CorbaAlgs::pack_decimal(hourly_amounts[k]);
+        }
+      }
     }
 
     void
@@ -2318,6 +2349,41 @@ namespace AdServer
         res_day_amount.amount = CorbaAlgs::pack_decimal(day_it->second.amount);
         res_day_amount.imps = CorbaAlgs::pack_decimal(day_it->second.imps);
         res_day_amount.clicks = CorbaAlgs::pack_decimal(day_it->second.clicks);
+      }
+
+      const auto& day_hourly_amount_counts = amount_count_distribution.day_hourly_amount_counts;
+      auto& day_hourly_amount_counts_info = amount_count_distribution_info.day_hourly_amount_counts;
+      day_hourly_amount_counts_info.length(day_hourly_amount_counts.size());
+      day_i = 0;
+      for (auto day_it = std::begin(day_hourly_amount_counts);
+           day_it != std::end(day_hourly_amount_counts);
+           ++day_it, ++day_i)
+      {
+        const auto& hourly_amount_counts = day_it->second;
+        if (hourly_amount_counts.size() != 24)
+        {
+          std::ostringstream stream;
+          stream << FNS
+                 << "hourly_amount_counts size must be equal 24";
+          logger_->error(
+            stream.str(),
+            Aspect::CAMPAIGN_SERVER,
+            "ADS-IMPL-153");
+          continue;
+        }
+
+        auto& day_info = day_hourly_amount_counts_info[day_i];
+        day_info.day = CorbaAlgs::pack_time(day_it->first);
+        auto& hourly_amount_counts_info = day_info.hourly_amount_counts;
+        hourly_amount_counts_info.length(hourly_amount_counts.size());
+        for (std::size_t k = 0; k < hourly_amount_counts.size(); k += 1)
+        {
+          const auto& amount_counts = hourly_amount_counts[k];
+          auto& amount_counts_info = hourly_amount_counts_info[k];
+          amount_counts_info.amount = CorbaAlgs::pack_decimal(amount_counts.amount);
+          amount_counts_info.clicks = CorbaAlgs::pack_decimal(amount_counts.clicks);
+          amount_counts_info.imps = CorbaAlgs::pack_decimal(amount_counts.imps);
+        }
       }
     }
 
