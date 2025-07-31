@@ -20,6 +20,7 @@ namespace AdServer::Bidding::Grpc
   struct JsonAdSlotProcessingContext
   {
     typedef std::set<std::string> StringSet;
+    typedef Commons::ValueStateHolder<long> LValueStateHolder;
     typedef Commons::ValueStateHolder<unsigned long> ULValueStateHolder;
     typedef Commons::ValueStateHolder<ULongSet> ULSetStateHolder;
 
@@ -253,10 +254,12 @@ namespace AdServer::Bidding::Grpc
     ULSetStateHolder video_playbackmethods;
     ULSetStateHolder video_api;
 
-    ULValueStateHolder video_start_delay;
+    LValueStateHolder video_start_delay;
     ULValueStateHolder video_linearity;
     ULValueStateHolder video_adtype;
 
+    ULValueStateHolder video_skip;
+    ULValueStateHolder video_reward;
 
     StringList video_exclude_categories;
 
