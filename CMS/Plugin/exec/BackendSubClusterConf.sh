@@ -413,6 +413,19 @@ $EXEC/CurrentEnvGen.sh \
 
 let "EXIT_CODE|=$?"
 
+SEGMENTLOADER_DESCR=$BACKEND_CLUSTER/SegmentLoader
+SEGMENTLOADER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$SEGMENTLOADER_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$SEGMENTLOADER_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/PredictorSvcs/SegmentLoader.xsl \
+  --out-file conf/SegmentLoader.conf \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
+
+let "EXIT_CODE|=$?"
+
 ## Configure SubAgent
 SA_CONFIG_XPATH="$CLUSTER_XPATH/../configuration/cfg:cluster/cfg:snmpStats/@enable"
 SUBAGENT_ENABLE_XPATH="$SA_CONFIG_XPATH = 'true' or $SA_CONFIG_XPATH='1'"

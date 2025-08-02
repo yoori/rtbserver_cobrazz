@@ -20,6 +20,9 @@ from logger_config import get_logger
 import re
 import subprocess
 
+def write_pid_file(pid_file_path):
+    with open(pid_file_path, 'w') as f:
+        f.write(str(os.getpid()))
 
 def create_connection_postgres():
     db_config = {
@@ -528,6 +531,7 @@ class Config:
 
     def setDefaults(self):
         defaults = {
+            "pidFilePath": None,
             "loglevel": "INFO",
             "prefix": "Taxonomy.ChatGPT.",
             "interval": "1d",
@@ -569,6 +573,15 @@ def main():
     config = Config(args.config_file)
     logger = get_logger('segmentLoader', config.data['loglevel'])
     config.print()
+
+    current_directory = os.getcwd()
+    logger.info(f"Current working directory: {current_directory}")
+    if( config.data['pidFilePath'] is not None):
+        pid_file = config.data['pidFilePath']
+        logger.info(f"PID file path: {current_directory + '/' + pid_file}")
+        write_pid_file(pid_file)
+    else:
+        logger.warning("PID file path is not set. PID file will not be created.")
 
     connection = create_connection_postgres()
 

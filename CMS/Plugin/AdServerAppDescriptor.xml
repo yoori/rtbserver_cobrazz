@@ -122,6 +122,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="SegmentLoader"
+        configSchema="xsd/PredictorSvcs/SegmentLoader.xsd"
+        minOccurs="0"
+        maxOccurs="1"
+        minHostOccurs="0"
+        maxHostOccurs="1"/>
+
+      <service
         type="DictionaryProvider"
         configSchema="xsd/ChannelServing/DictionaryProviderApp.xsd"
         minOccurs="0"

@@ -1,0 +1,80 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      SegmentLoader Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="LoggingParamsType">
+    <xsd:sequence>
+      <xsd:element name="loglevel" type="xsd:string" minOccurs="0" default="Info">
+        <xsd:annotation>
+          <xsd:documentation>Sets logging level (e.g. "Info", "Debug").</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="DatabaseParamsType">
+    <xsd:sequence>
+      <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="user" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="password" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="host" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="port" type="xsd:string" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="YandexParamsType">
+    <xsd:sequence>
+      <xsd:element name="account_id" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="gpt_api_key" type="xsd:string" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="GPTParamsType">
+    <xsd:sequence>
+      <xsd:element name="prefix" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="gptdir" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="gptFile" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="pathGPT" type="xsd:string" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="SegmentLoaderConfigType">
+    <xsd:sequence>
+      <xsd:element name="pidFilePath" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0"/>
+      <xsd:element name="yandex" type="YandexParamsType" minOccurs="0"/>
+      <xsd:element name="database" type="DatabaseParamsType" minOccurs="0"/>
+      <xsd:element name="gpt" type="GPTParamsType" minOccurs="0"/>
+      <xsd:element name="account_id" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="interval" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="statement_timeout" type="xsd:positiveInteger" minOccurs="0"/>
+      <xsd:element name="checkDays" type="xsd:positiveInteger" minOccurs="0"/>
+      <xsd:element name="chunkSize" type="xsd:positiveInteger" minOccurs="0"/>
+      <xsd:element name="websitesdir" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="storeSites" type="xsd:boolean" minOccurs="0"/>
+      <xsd:element name="storeGpt" type="xsd:boolean" minOccurs="0"/>
+      <xsd:element name="checkTimeout" type="xsd:positiveInteger" minOccurs="0"/>
+      <xsd:element name="expTimeDate" type="xsd:positiveInteger" minOccurs="0"/>
+      <xsd:element name="attempts" type="xsd:positiveInteger" minOccurs="0"/>
+      <xsd:element name="messagesize" type="xsd:positiveInteger" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="SegmentLoader" type="SegmentLoaderConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        SegmentLoader configuration.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+
+</xsd:schema>
