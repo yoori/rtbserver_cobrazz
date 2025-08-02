@@ -386,6 +386,53 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         </configuration>
       </service>
 
+      <service
+        descriptor="AdCluster/BackendSubCluster/SegmentLoader"
+        name="SegmentLoader{$NAME_POSTFIX}"
+        host="{$HOST}">
+        <configuration>
+          <SegmentLoader    xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
+            <pidFilePath>SegmentLoader.pid</pidFilePath>
+            <logging>
+              <loglevel>Info</loglevel>
+            </logging>
+
+            <yandex>
+              <account_id>pass_here</account_id>
+              <gpt_api_key>pass_here</gpt_api_key>
+            </yandex>
+
+            <database>
+              <name>pass_here</name>
+              <user>pass_here</user>
+              <password>pass_here</password>
+              <host>pass_here</host>
+              <port>pass_here</port>
+            </database>
+
+            <gpt>
+              <prefix>Taxonomy.ChatGPT.</prefix>
+              <gptdir>GPTresults</gptdir>
+              <gptFile>GPTresults.json</gptFile>
+              <pathGPT>Utils/GPT/getSiteCategories.py</pathGPT>
+            </gpt>
+
+            <account_id>pass_here</account_id>
+            <interval>1d</interval>
+            <statement_timeout>5000</statement_timeout>
+            <checkDays>3</checkDays>
+            <chunkSize>1000</chunkSize>
+            <websitesdir>websites</websitesdir>
+            <storeSites>true</storeSites>
+            <storeGpt>true</storeGpt>
+            <checkTimeout>300</checkTimeout>
+            <expTimeDate>60</expTimeDate>
+            <attempts>3</attempts>
+            <messagesize>300</messagesize>
+          </SegmentLoader>
+	    </configuration>
+      </service>
+
     </serviceGroup>
 
     <!-- fe -->
