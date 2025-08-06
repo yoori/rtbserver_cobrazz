@@ -12,10 +12,10 @@ sub start
   my $command =
     "mkdir -p \${log_root}/Segmentloader && " .
     "mkdir -p \${workspace_root}run/Utils/GPT && " .
-    "cp -r \${server_root}/Utils/GPT \${workspace_root}run/Utils/GPT && " .
+    "cp -r \${server_bin_root}/bin/getSiteCategories.py \${workspace_root}run/Utils/GPT/ && " .
    "{ " .
      "rm -f \${workspace_root}run/SegmentLoader.pid && ".
-     "\${VALGRIND_PREFIX} \${server_root}/PredictorSvcs/SegmentLoader/Segmentloader.py " .
+     "\${VALGRIND_PREFIX} \${server_bin_root}/bin/Segmentloader.py " .
      "\${config_root}/${AdServer::Path::XML_FILE_BASE}$host/conf/SegmentLoader.conf" .
      " > \${log_root}/Segmentloader/SegmentLoader.out 2>&1 & " .
    "} ";

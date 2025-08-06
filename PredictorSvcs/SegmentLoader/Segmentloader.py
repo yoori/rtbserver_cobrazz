@@ -4,9 +4,13 @@ import os
 import sys
 import argparse
 import logging
+import colorlog
+import re
+import subprocess
 import json
+import signal
 
-from PIL.ExifTags import GPSTAGS
+
 from clickhouse_driver import Client
 from datetime import datetime, timedelta
 import time
@@ -14,11 +18,49 @@ from psycopg2 import sql, connect
 from typing import Any, Dict, List
 from pathlib import Path
 
-from pyparsing import GoToColumn
 
-from logger_config import get_logger
-import re
-import subprocess
+def get_logger(name='main', level="INFO"):
+    """
+    Returns the configured logger with the specified name.
+    """
+    level = level.upper()
+    if level == "DEBUG":
+        logLevel = logging.DEBUG
+    elif level == "INFO":
+        logLevel=logging.INFO
+    elif level == "WARNING":
+        logLevel=logging.WARNING
+    elif level == "ERROR":
+        logLevel=logging.ERROR
+    elif level == "CRITICAL":
+        logLevel=logging.CRITICAL
+    else:
+        raise ValueError(f"Unknown log level: {level}")
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logLevel)
+
+    if not logger.handlers:
+        console_handler = colorlog.StreamHandler()
+        console_handler.setLevel(logging.DEBUG) # Set minimum level for console output(
+        # meaning all messages will be shown higher than DEBUG)
+
+        formatter = colorlog.ColoredFormatter(
+            '%(log_color)s%(asctime)s.%(msecs)03d - %(name)s:%(lineno)d - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            log_colors={
+                'DEBUG': 'cyan',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'bold_red',
+            }
+        )
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+    return logger
+
 
 def write_pid_file(pid_file_path):
     with open(pid_file_path, 'w') as f:
@@ -451,13 +493,29 @@ def askGPT(filename):
     if config.data['storeGpt']:
         command.append('--storeGpt')
 
-    result = subprocess.run(command, env=env)
+    global proc
+    def signal_handler(signum, frame):
+        signal_name = signal.Signals(signum).name
+        logger.debug(f"Received signal: {signal_name} ({signum})")
+        if 'proc' in globals():
+            logger.debug(f"Terminate process {proc.pid})")
+            proc.terminate()
+        sys.exit(0)
 
-    if result.returncode == 0:
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT,  signal_handler)
+    signal.signal(signal.SIGQUIT, signal_handler)
+
+    proc = subprocess.Popen(command, env=env)
+    logger.debug(f"Process started PID: {proc.pid}")
+
+    rc = proc.wait()
+
+    if rc == 0:
         logger.info(f"{filename} processed successfully.")
         return os.path.join(output_dir, output_file)
     else:
-        logger.error(f"Error processing {filename}: {result.stderr}")
+        logger.error(f"Error processing {filename}: {rc}")
         return None
 
 
