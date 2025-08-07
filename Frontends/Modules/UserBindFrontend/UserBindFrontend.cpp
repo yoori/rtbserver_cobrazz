@@ -23,6 +23,9 @@
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
 #include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
 #include <Frontends/FrontendCommons/Statistics.hpp>
+#include <Frontends/Modules/BiddingFrontend/JsonFormatter.hpp>
+#include <Frontends/Modules/UserBindFrontend/UserChannelsHandler.hpp>
+#include <UserInfoSvcs/UserInfoCommons/UserChannelBaseProfile.hpp>
 
 #include "UserBindFrontend.hpp"
 
@@ -40,7 +43,8 @@ namespace Aspect
 
 namespace UrlPath
 {
-const String::SubString kGetUserId("/get_user_id");
+  const String::SubString kGetUserId("/get_user_id");
+  const String::SubString kGetSegments("/segments");
 }
 
 namespace Response
@@ -884,6 +888,16 @@ namespace AdServer
         response.write(stream.str());
 
         return 200;
+      }
+
+      if (request.uri().substr(0, UrlPath::kGetSegments.size()) == UrlPath::kGetSegments &&
+        (request.uri().size() == UrlPath::kGetSegments.size() ||
+          (request.uri().size() > UrlPath::kGetSegments.size()
+          && request.uri()[UrlPath::kGetSegments.size()] == '?')))
+      {
+        return handle_user_channels_request_(
+          request_info,
+          response);
       }
 
       if(!request.secure() &&
@@ -2920,5 +2934,18 @@ namespace AdServer
         throw InvalidSource(ostr);
       }
     }
+  }
+
+  int UserBindFrontend::handle_user_channels_request_(
+    const UserBind::RequestInfo& request_info,
+    FrontendCommons::HttpResponse& response)
+  {
+    UserChannelsHandler handler(
+      grpc_container_,
+      user_info_client_,
+      logger());
+    return handler.handle(
+      request_info,
+      response);
   }
 }

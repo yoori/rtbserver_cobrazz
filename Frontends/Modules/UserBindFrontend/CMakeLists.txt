@@ -1,27 +1,26 @@
 add_library(UserBindFrontend SHARED
-  UserBindFrontend.cpp 
   RequestInfoFiller.cpp
+  UserBindFrontend.cpp
+  UserChannelsHandler.cpp
 )
 
 target_link_libraries(UserBindFrontend
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
-  UserInfoManagerControllerL
-  CampaignManagerIDL
-  UserBindServerIDL
-
-  Stream
   CORBACommons
-  Commons
+  CampaignManagerIDL
+  ChannelManagerControllerIDL
   CommonModule
-  SecToken
+  Commons
   DomainParser
-  RequestMatchers
-  FrontendStatistic
-  UserIdController
-  Geoip
   FCGI
-
   FeConfigXSD
+  FrontendStatistic
+  Geoip
+  RequestMatchers
+  SecToken
+  Stream
+  UserBindServerIDL
+  UserIdController
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  UserInfoManagerControllerL
 )

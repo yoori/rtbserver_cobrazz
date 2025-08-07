@@ -340,5 +340,4 @@ namespace ProfilingCommons
 }
 }
 
-
 #endif /*PROFILINGCOMMONS_TRANSACTIONPROFILEMAP_HPP*/

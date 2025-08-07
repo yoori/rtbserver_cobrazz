@@ -49,6 +49,9 @@ namespace UserBind
       const String::SubString DO_DELETE("delete");
       const String::SubString ADD_USER_ID("au");
       const String::SubString DISABLE_SECURE_REDIRECT("nosecure");
+      const String::SubString CHANNELS_WL("sg_wl");
+      const String::SubString CL_ID("cl_id");
+      const String::SubString SESSION_ID("session_id");
 
       // Used to return back somedata to a sender
       const String::SubString PUSH_DATA[] = {
@@ -57,7 +60,6 @@ namespace UserBind
       };
 
       const String::SubString EXTERNAL_ID("fid");
-
       const String::SubString GOOGLE_ERROR("google_error");
     }
 
@@ -265,11 +267,9 @@ namespace UserBind
     add_processor_(false, true, Request::Context::PASSBACK_URL2,
       new FrontendCommons::UrlParamProcessor<RequestInfo>(
         &RequestInfo::passback_url));
-
     add_processor_(false, true, Request::Context::EXTERNAL_ID,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::external_id));
-
     add_processor_(true, false, Request::Header::REM_HOST,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::peer_ip));
@@ -309,6 +309,20 @@ namespace UserBind
     add_processor_(false, true, Request::Context::DISABLE_SECURE_REDIRECT,
       new FrontendCommons::BoolParamProcessor<RequestInfo>(
         &RequestInfo::disable_secure_redirect));
+    add_processor_(false, true, FrontendCommons::Cookies::CLIENT_ID,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(
+        &RequestInfo::param_user_id));
+    add_processor_(false, true, Request::Context::CL_ID,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(
+        &RequestInfo::cl_id));
+    add_processor_(false, true, Request::Context::SESSION_ID,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(
+        &RequestInfo::session_id));
+    add_processor_(false, true, Request::Context::CHANNELS_WL,
+      new FrontendCommons::NumberContainerParamProcessor<
+        RequestInfo,
+        RequestInfo::ChannelsWl,
+        String::AsciiStringManip::SepComma>(&RequestInfo::channels_wl));
 
     for(unsigned long i = 0;
         i < sizeof(Request::Context::PUSH_DATA) /

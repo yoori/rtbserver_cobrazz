@@ -40,6 +40,7 @@ using CampaignIds = std::vector<std::uint32_t>;
 using UcCampaignIds = std::vector<std::uint32_t>;
 using ExcludePubpixelAccounts = std::vector<std::uint32_t>;
 using PersistentChannelIds = std::vector<std::uint32_t>;
+using WlChannelIds = std::vector<std::uint32_t>;
 
 struct ProfilesRequestInfo final
 {
@@ -208,6 +209,8 @@ public:
   using GetMasterStampResponsePtr = std::unique_ptr<Proto::GetMasterStampResponse>;
   using GetUserProfileRequestPtr = std::unique_ptr<Proto::GetUserProfileRequest>;
   using GetUserProfileResponsePtr = std::unique_ptr<Proto::GetUserProfileResponse>;
+  using GetUserChannelsRequestPtr = std::unique_ptr<Proto::GetUserChannelsRequest>;
+  using GetUserChannelsResponsePtr = std::unique_ptr<Proto::GetUserChannelsResponse>;
   using MatchRequestPtr = std::unique_ptr<Proto::MatchRequest>;
   using MatchResponsePtr = std::unique_ptr<Proto::MatchResponse>;
   using UpdateUserFreqCapsRequestPtr = std::unique_ptr<Proto::UpdateUserFreqCapsRequest>;
@@ -242,6 +245,11 @@ public:
     const String::SubString& user_id,
     const bool temporary,
     const Types::ProfilesRequestInfo& profiles_request_info) noexcept;
+
+  GetUserChannelsResponsePtr get_user_channels(
+    const String::SubString& user_id,
+    const Types::ProfilesRequestInfo& profiles_request_info,
+    const Types::WlChannelIds& wl_channels_ids) noexcept;
 
   UpdateUserFreqCapsResponsePtr update_user_freq_caps(
     const String::SubString& user_id,
@@ -305,6 +313,11 @@ private:
     const String::SubString& user_id,
     const bool temporary,
     const Types::ProfilesRequestInfo& profiles_request_info);
+
+  GetUserChannelsRequestPtr create_get_user_channels_request(
+    const String::SubString& user_id,
+    const Types::ProfilesRequestInfo& profiles_request_info,
+    const Types::WlChannelIds& wl_channels_ids);
 
   UpdateUserFreqCapsRequestPtr create_update_user_freq_caps_request(
     const String::SubString& user_id,
@@ -423,6 +436,10 @@ public:
     Proto::UserInfoManagerService_get_user_profile_ClientPool;
   using GetUserProfileClientPtr =
     Proto::UserInfoManagerService_get_user_profile_ClientPoolPtr;
+  using GetUserChannelsClient =
+    Proto::UserInfoManagerService_get_user_channels_ClientPool;
+  using GetUserChannelsClientPtr =
+    Proto::UserInfoManagerService_get_user_channels_ClientPoolPtr;
   using MatchClient =
     Proto::UserInfoManagerService_match_ClientPool;
   using MatchClientPtr =
@@ -471,6 +488,7 @@ public:
 
     GetMasterStampClientPtr get_master_stamp_client;
     GetUserProfileClientPtr get_user_profile_client;
+    GetUserChannelsClientPtr get_user_channels_client;
     MatchClientPtr match_client;
     UpdateUserFreqCapsClientPtr update_user_freq_caps_client;
     ConfirmUserFreqCapsClientPtr confirm_user_freq_caps_client;
@@ -542,6 +560,10 @@ public:
     {
       client = clients_->get_user_profile_client;
     }
+    else if constexpr (std::is_same_v<Client, GetUserChannelsClient>)
+    {
+      client = clients_->get_user_channels_client;
+    }
     else if constexpr (std::is_same_v<Client, MatchClient>)
     {
       client = clients_->match_client;
@@ -610,18 +632,6 @@ class GrpcUserInfoOperationDistributor::FactoryClientContainer final
   : private Generics::Uncopyable
 {
 public:
-  using GetMasterStampClientPtr = typename ClientContainer::GetMasterStampClientPtr;
-  using GetUserProfileClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using MatchClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using UpdateUserFreqCapsClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using ConfirmUserFreqCapsClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using FraudUserClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using RemoveUserProfileClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using MergeClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using ConsiderPublishersOptinClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using UimReadyClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using GetProgressClientPtr = typename ClientContainer::GetUserProfileClientPtr;
-  using ClearExpiredClientPtr = typename ClientContainer::GetUserProfileClientPtr;
   using GrpcPoolClientFactory = UServerUtils::Grpc::Client::PoolClientFactory;
   using TaskProcessor = userver::engine::TaskProcessor;
 
@@ -689,6 +699,9 @@ public:
           task_processor_);
       clients->get_user_profile_client =
         factory.create<Proto::UserInfoManagerService_get_user_profile_ClientPool>(
+          task_processor_);
+      clients->get_user_channels_client =
+        factory.create<Proto::UserInfoManagerService_get_user_channels_ClientPool>(
           task_processor_);
       clients->match_client =
         factory.create<Proto::UserInfoManagerService_match_ClientPool>(

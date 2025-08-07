@@ -529,6 +529,50 @@ namespace UserInfoSvcs
     return 0; // never reach
   }
 
+  void UserInfoManagerSessionImpl::get_user_channels(
+    const ::CORBACommons::UserIdInfo& user_id,
+    const ::AdServer::UserInfoSvcs::ProfilesRequestInfo& profile_request,
+    const ::AdServer::UserInfoSvcs::WlChannelIdSeq& wl_channel_ids,
+    ::AdServer::UserInfoSvcs::ChannelIdSeq_out channel_ids)
+  {
+    try
+    {
+      return get_user_host_(get_user_host_index_(user_id))->get_user_channels(
+        user_id,
+        profile_request,
+        wl_channel_ids,
+        channel_ids);
+    }
+    catch(const AdServer::UserInfoSvcs::UserInfoManager::NotReady& /*exc*/)
+    {
+      throw;
+    }
+    catch(const AdServer::UserInfoSvcs::UserInfoManager::ImplementationException& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught ImplementationException: "
+             << exc.description;
+      CORBACommons::throw_desc<
+        AdServer::UserInfoSvcs::UserInfoManager::ImplementationException>(
+          stream.str());
+    }
+    catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& exc)
+    {
+      throw;
+    }
+    catch(const CORBA::SystemException& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Caught CORBA::SystemException: "
+             << exc;
+      CORBACommons::throw_desc<
+        AdServer::UserInfoSvcs::UserInfoManager::ImplementationException>(
+          stream.str());
+    }
+  }
+
   CORBA::Boolean
   UserInfoManagerSessionImpl::remove_user_profile(
     const CORBACommons::UserIdInfo& user_id_info)
