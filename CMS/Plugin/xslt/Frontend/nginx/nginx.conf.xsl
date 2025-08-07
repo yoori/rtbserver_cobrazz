@@ -466,7 +466,7 @@ http {
       }
 
       # UserBind
-      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id)$ {
+      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id|segments)$ {
       #    return 301 https://$host$request_uri;
 
         fastcgi_pass fastcgi_userbindbackend;
@@ -668,7 +668,7 @@ http {
       }
 
       # UserBind
-      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id)$ {
+      location ~ ^/(userbind|userbind[.]gif|userbind[.]png|get_user_id|segments)$ {
         fastcgi_pass fastcgi_userbindbackend;
         fastcgi_keep_conn on;
 

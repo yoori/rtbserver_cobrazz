@@ -1806,7 +1806,7 @@ void Application::make_match_query(
     else
     {
       in.uid = CorbaAlgs::pack_user_id(
-        Generics::Uuid(*string_options[OPT_UID].value, false));
+        Generics::Uuid(*string_options[OPT_UID].value, true));
     }
     in.non_strict_word_match =
       check_options[OPT_NS_WORD_H].value.enabled() ||

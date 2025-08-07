@@ -223,7 +223,7 @@ namespace AdServer
         const Generics::Time& now,
         AdServer::ProfilingCommons::OperationPriority op_priority)
         /*throw(ChunkNotFound, Exception)*/;
-      
+
       void dump_colo_users() /*throw(Exception)*/;
 
       bool dispose_user(const UserId& user_id) noexcept;
