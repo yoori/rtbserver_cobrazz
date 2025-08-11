@@ -128,6 +128,8 @@ namespace Request
     const std::string IMP_VIDEO_EXT_ADTYPE = "adtype";
     const std::string IMP_VIDEO_PLACEMENT = "placement"; // v2.5
     const std::string IMP_VIDEO_API = "api";
+    const std::string IMP_VIDEO_SKIP("skip");
+    const std::string IMP_VIDEO_REWARD("reward");
 
     const std::string SITE_DOMAIN = "domain";
     const std::string SITE_PAGE = "page";
@@ -244,6 +246,46 @@ namespace Request
       String::SubString("infeed"),
       String::SubString("interstitial")
     };
+
+    // TEAM-313
+    const String::SubString VIDEO_SKIPS[] =
+    {
+      String::SubString("rtbvideotypeunskip"),
+      String::SubString("rtbvideotypeskip")
+    };
+
+    const String::SubString VIDEO_REWARDS[] =
+    {
+      String::SubString("rtbvideotypenonward"),
+      String::SubString("rtbvideotypereward")
+    };
+
+    const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_ON(1);
+    const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_OFF(2);
+    const String::SubString VIDEO_SOUND_ON("rtbsoundon");
+    const String::SubString VIDEO_SOUND_OFF("rtbsoundoff");
+
+    const String::SubString VIDEO_PLACEMENTS_STREAM_NAMES[] =
+    {
+      String::SubString(""),
+      String::SubString("rtbvideotypeinstream"),
+      String::SubString("rtbvideotypebanner"),
+      String::SubString("rtbvideotypearticle"),
+      String::SubString("rtbvideotypefeed"),
+      String::SubString("rtbvideotypeinterstitial")
+    };
+
+    const std::array<int, 5> VIDEO_PLACEMENTS_OUT_STREAM_INDEXES =
+    {
+      2, 3, 4, 5, 7
+    };
+    const String::SubString VIDEO_TYPE_OUT_STREAM_NAME("rtbvideotypeoutstream");
+
+    const long VIDEO_START_DELAY_TYPE_PRE(0);
+    const long VIDEO_START_DELAY_TYPE_POST(-2);
+    const String::SubString VIDEO_TYPE_PRE("rtbvideotypepre");
+    const String::SubString VIDEO_TYPE_MID("rtbvideotypemid");
+    const String::SubString VIDEO_TYPE_POST("rtbvideotypepost");
 
     // ADSC-10933
     const String::SubString VIDEO_PLAYBACKMETHODS[] =
@@ -2076,7 +2118,7 @@ namespace AdServer::Bidding::Grpc
         JsonAdSlotParamProcessor_var(
           new JsonContextNumberStateParamProcessor<
             JsonAdSlotProcessingContext,
-            JsonAdSlotProcessingContext::ULValueStateHolder>(
+            JsonAdSlotProcessingContext::LValueStateHolder>(
             &JsonAdSlotProcessingContext::video_start_delay)));
 
       video_processor->add_processor(
@@ -2086,6 +2128,22 @@ namespace AdServer::Bidding::Grpc
             JsonAdSlotProcessingContext,
             JsonAdSlotProcessingContext::ULValueStateHolder>(
             &JsonAdSlotProcessingContext::video_linearity)));
+
+      video_processor->add_processor(
+        Request::OpenRtb::IMP_VIDEO_SKIP,
+        JsonAdSlotParamProcessor_var(
+          new JsonContextNumberStateParamProcessor<
+            JsonAdSlotProcessingContext,
+            JsonAdSlotProcessingContext::ULValueStateHolder>(
+            &JsonAdSlotProcessingContext::video_skip)));
+
+      video_processor->add_processor(
+        Request::OpenRtb::IMP_VIDEO_REWARD,
+        JsonAdSlotParamProcessor_var(
+          new JsonContextNumberStateParamProcessor<
+            JsonAdSlotProcessingContext,
+            JsonAdSlotProcessingContext::ULValueStateHolder>(
+            &JsonAdSlotProcessingContext::video_reward)));
 
       video_processor->add_processor(
         Request::OpenRtb::IMP_VIDEO_PLACEMENT,
@@ -4378,6 +4436,76 @@ namespace AdServer::Bidding::Grpc
                 get_value_from_seq(
                   Request::OpenRtb::VIDEO_PLAYBACKMETHODS, *it), false);
             }
+          }
+          // TEAM-313
+          if (std::find(
+                slot_it->video_playbackmethods->begin(),
+                slot_it->video_playbackmethods->end(),
+                Request::OpenRtb::VIDEO_PLAYBACKMETHOD_SOUND_ON)
+              != slot_it->video_playbackmethods->end())
+          {
+            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_ON);
+          }
+          if (std::find(
+                slot_it->video_playbackmethods->begin(),
+                slot_it->video_playbackmethods->end(),
+                Request::OpenRtb::VIDEO_PLAYBACKMETHOD_SOUND_OFF)
+              != slot_it->video_playbackmethods->end())
+          {
+            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_OFF);
+          }
+        }
+
+        // TEAM-313
+        if (!slot_it->video_skip.empty())
+        {
+          kw_fmt.add_dict_keyword(
+            String::SubString(),
+            get_value_from_seq(
+              Request::OpenRtb::VIDEO_SKIPS,
+              *slot_it->video_skip));
+        }
+
+        if (!slot_it->video_reward.empty())
+        {
+          kw_fmt.add_dict_keyword(
+            String::SubString(),
+            get_value_from_seq(
+              Request::OpenRtb::VIDEO_REWARDS,
+              *slot_it->video_reward));
+        }
+
+        if (slot_it->video_placement)
+        {
+          kw_fmt.add_dict_keyword(
+            String::SubString(),
+            get_value_from_seq(
+              Request::OpenRtb::VIDEO_PLACEMENTS_STREAM_NAMES,
+              *slot_it->video_placement));
+
+          if (std::find(
+                Request::OpenRtb::VIDEO_PLACEMENTS_OUT_STREAM_INDEXES.begin(),
+                Request::OpenRtb::VIDEO_PLACEMENTS_OUT_STREAM_INDEXES.end(),
+                *slot_it->video_placement)
+              != Request::OpenRtb::VIDEO_PLACEMENTS_OUT_STREAM_INDEXES.end())
+          {
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_OUT_STREAM_NAME);
+          }
+        }
+
+        if (!slot_it->video_start_delay.empty())
+        {
+          if (*slot_it->video_start_delay == Request::OpenRtb::VIDEO_START_DELAY_TYPE_PRE)
+          {
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_PRE);
+          }
+          else if (*slot_it->video_start_delay > Request::OpenRtb::VIDEO_START_DELAY_TYPE_PRE)
+          {
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_MID);
+          }
+          else if (*slot_it->video_start_delay == Request::OpenRtb::VIDEO_START_DELAY_TYPE_POST)
+          {
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_POST);
           }
         }
 
