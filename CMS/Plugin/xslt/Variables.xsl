@@ -95,6 +95,7 @@
 <xsl:variable name="ya-metrika-uploader-descriptor" select="'AdCluster/BackendSubCluster/YaMetrikaUploader'"/>
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
+<xsl:variable name="SegmentLoader-descriptor" select="'AdCluster/BackendSubCluster/SegmentLoader'"/>
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
 <xsl:variable name="stats-collector-descriptor" select="'AdCluster/BackendSubCluster/StatsCollector'"/>
 

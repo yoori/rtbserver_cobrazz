@@ -445,6 +445,13 @@
         <xsl:with-param name="service-type" select="'AdServer::LogProcessing::YaMetrikaUploader'"/>
       </xsl:call-template>
 
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
+                        select="$be-cluster-path/service[@descriptor = $SegmentLoader-descriptor]"/>
+        <xsl:with-param name="service-name" select="'be-SegmentLoader'"/>
+        <xsl:with-param name="service-type" select="'AdServer::PredictorSvcs::SegmentLoader'"/>
+      </xsl:call-template>
+
       <xsl:if test="$isp-zone = '0'">
         <xsl:call-template name="AddOneOnHostService">
           <xsl:with-param name="serv-path"
