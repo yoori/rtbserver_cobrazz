@@ -1381,6 +1381,7 @@
       <cfg:Uri path="/userbindint"/>
       <cfg:Uri path="/userbindadd"/>
       <cfg:Uri path="/get_user_id"/>
+      <cfg:Uri path="/segments"/>
       <cfg:Uri path="/"/>
     </cfg:UriList>
     <cfg:PixelUriList>

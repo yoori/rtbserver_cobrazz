@@ -90,6 +90,29 @@ message GetUserProfileResponse
   }
 }
 
+message GetUserChannelsRequest
+{
+  uint32 id_request_grpc = 1;
+  bytes user_id = 2;
+  ProfilesRequestInfo profile_request = 3;
+  repeated uint32 wl_channel_ids = 4;
+}
+
+message GetUserChannelsResponseInfo
+{
+  repeated uint32 channels_ids = 4;
+}
+
+message GetUserChannelsResponse
+{
+  uint32 id_request_grpc = 1;
+  oneof data
+  {
+    GetUserChannelsResponseInfo info = 2;
+    Error error = 3;
+  }
+}
+
 message ChannelTriggerMatch
 {
   uint32 channel_id = 1;
@@ -389,6 +412,7 @@ service UserInfoManagerService
 {
   rpc get_master_stamp(stream GetMasterStampRequest) returns (stream GetMasterStampResponse) {}
   rpc get_user_profile(stream GetUserProfileRequest) returns (stream GetUserProfileResponse) {}
+  rpc get_user_channels(stream GetUserChannelsRequest) returns (stream GetUserChannelsResponse) {}
   rpc match(stream MatchRequest) returns (stream MatchResponse) {}
   rpc update_user_freq_caps(stream UpdateUserFreqCapsRequest) returns (stream UpdateUserFreqCapsResponse) {}
   rpc confirm_user_freq_caps(stream ConfirmUserFreqCapsRequest) returns (stream ConfirmUserFreqCapsResponse) {}

@@ -13,6 +13,7 @@ module AdServer
     typedef sequence<unsigned long> FreqCapIdSeq;
     typedef sequence<unsigned long> ExcludePubPixelAccountsSeq;
     typedef sequence<unsigned long> CampaignIdSeq;
+    typedef sequence<unsigned long> WlChannelIdSeq;
 
     struct ProfilesRequestInfo
     {
@@ -173,6 +174,14 @@ module AdServer
         in boolean temporary,
         in ProfilesRequestInfo profile_request,
         out UserProfiles user_profile)
+        raises(NotReady, ImplementationException, ChunkNotFound);
+
+      void
+      get_user_channels(
+        in CORBACommons::UserIdInfo user_info,
+        in ProfilesRequestInfo profile_request,
+        in WlChannelIdSeq wl_channel_ids,
+        out ChannelIdSeq channel_ids)
         raises(NotReady, ImplementationException, ChunkNotFound);
 
       boolean

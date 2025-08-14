@@ -1,6 +1,7 @@
 #include <list>
 #include <vector>
 #include <iterator>
+#include <span>
 
 #include <Generics/DirSelector.hpp>
 
@@ -1646,6 +1647,187 @@ namespace UserInfoSvcs
              << ": Can't get user profile. "
                 "Unknown error";
       auto response = create_grpc_error_response<Proto::GetUserProfileResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+  }
+
+  void UserInfoManagerImpl::get_user_channels(
+    const ::CORBACommons::UserIdInfo& user_id,
+    const ::AdServer::UserInfoSvcs::ProfilesRequestInfo& profile_request,
+    const ::AdServer::UserInfoSvcs::WlChannelIdSeq& wl_channel_ids,
+    ::AdServer::UserInfoSvcs::ChannelIdSeq_out channel_ids)
+  {
+    try
+    {
+      UserInfoContainerAccessor user_info_container = get_user_info_container_(true);
+
+      auto channels = user_info_container->get_user_channels(
+        CorbaAlgs::unpack_user_id(user_id),
+        profile_request.base_profile,
+        profile_request.add_profile,
+        profile_request.history_profile,
+        profile_request.freq_cap_profile,
+        std::span<const AdServer::UserInfoSvcs::WlChannelIdSeq::value_type>(
+          wl_channel_ids.get_buffer(),
+          wl_channel_ids.length()));
+
+      channel_ids = new AdServer::UserInfoSvcs::ChannelIdSeq;
+      const std::size_t size = channels.size();
+      channel_ids->length(size);
+      for (std::size_t i = 0; i < size; i += 1)
+      {
+        channel_ids[i] = channels[i];
+      }
+    }
+    catch(const UserInfoContainer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user channels. "
+                "Caught UserInfoContainer::Exception: "
+             << exc.what();
+      CORBACommons::throw_desc<
+        UserInfoSvcs::UserInfoManager::NotReady>(
+          stream.str());
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user channels. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      CORBACommons::throw_desc<
+        UserInfoSvcs::UserInfoManager::ChunkNotFound>(
+          stream.str());
+    }
+    catch(const UserInfoContainer::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user channels. "
+                "Caught UserInfoContainer::Exception: "
+             << exc.what();
+      CORBACommons::throw_desc<
+        UserInfoSvcs::UserInfoManager::ImplementationException>(
+          stream.str());
+    }
+    catch(const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user profile. "
+                "Caught eh::Exception: "
+             << exc.what();
+      CORBACommons::throw_desc<
+        UserInfoSvcs::UserInfoManager::ImplementationException>(
+          stream.str());
+    }
+    catch(...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user profile. "
+                "Unknown error";
+      CORBACommons::throw_desc<
+        UserInfoSvcs::UserInfoManager::ImplementationException>(
+          stream.str());
+    }
+  }
+
+  UserInfoManagerImpl::GetUserChannelsResponsePtr
+  UserInfoManagerImpl::get_user_channels(GetUserChannelsRequestPtr&& request)
+  {
+    const auto id_request_grpc = request->id_request_grpc();
+    try
+    {
+      UserInfoContainerAccessor user_info_container = get_user_info_container_(true);
+
+      const auto& profile_request = request->profile_request();
+      const auto& wl_channel_ids = request->wl_channel_ids();
+      auto result_channels = user_info_container->get_user_channels(
+        GrpcAlgs::unpack_user_id(request->user_id()),
+        profile_request.base_profile(),
+        profile_request.add_profile(),
+        profile_request.history_profile(),
+        profile_request.freq_cap_profile(),
+        std::span<const std::uint32_t>(
+          wl_channel_ids.data(),
+          wl_channel_ids.size()));
+
+      auto response = create_grpc_response<Proto::GetUserChannelsResponse>(
+        id_request_grpc);
+      auto* response_info = response->mutable_info();
+      auto* response_channels_ids = response_info->mutable_channels_ids();
+      response_channels_ids->Reserve(result_channels.size());
+      response_channels_ids->Add(
+        std::begin(result_channels),
+        std::end(result_channels));
+
+      return response;
+    }
+    catch(const UserInfoContainer::NotReady& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user channels. "
+                "Caught UserInfoContainer::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserChannelsResponse>(
+        Proto::Error_Type::Error_Type_NotReady,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch (const UserInfoContainer::ChunkNotFound& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user channels. "
+                "Caught UserInfoContainer::ChunkNotFound: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserChannelsResponse>(
+        Proto::Error_Type::Error_Type_ChunkNotFound,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const UserInfoContainer::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user channels. "
+                "Caught UserInfoContainer::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserChannelsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(const eh::Exception& exc)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user profile. "
+                "Caught eh::Exception: "
+             << exc.what();
+      auto response = create_grpc_error_response<Proto::GetUserChannelsResponse>(
+        Proto::Error_Type::Error_Type_Implementation,
+        stream.str(),
+        id_request_grpc);
+      return response;
+    }
+    catch(...)
+    {
+      Stream::Error stream;
+      stream << FNS
+             << "Can't get user profile. "
+                "Unknown error";
+      auto response = create_grpc_error_response<Proto::GetUserChannelsResponse>(
         Proto::Error_Type::Error_Type_Implementation,
         stream.str(),
         id_request_grpc);

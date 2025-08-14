@@ -57,7 +57,6 @@ inline std::string pack_user_id(const AdServer::Commons::UserId& user_id)
   return result;
 }
 
-
 inline AdServer::Commons::UserId unpack_user_id(const std::string& user_id)
 {
   if(user_id.empty())

@@ -282,12 +282,37 @@ GrpcUserInfoOperationDistributor::create_get_user_profile_request(
   request->set_user_id(user_id.data(), user_id.length());
   request->set_temporary(temporary);
 
-  Proto::ProfilesRequestInfo profiles_request_info_proto;
-  profiles_request_info_proto.set_add_profile(profiles_request_info.add_profile);
-  profiles_request_info_proto.set_base_profile(profiles_request_info.base_profile);
-  profiles_request_info_proto.set_freq_cap_profile(profiles_request_info.freq_cap_profile);
-  profiles_request_info_proto.set_history_profile(profiles_request_info.history_profile);
-  profiles_request_info_proto.set_pref_profile(profiles_request_info.pref_profile);
+  auto* profile_request = request->mutable_profile_request();
+  profile_request->set_add_profile(profiles_request_info.add_profile);
+  profile_request->set_base_profile(profiles_request_info.base_profile);
+  profile_request->set_freq_cap_profile(profiles_request_info.freq_cap_profile);
+  profile_request->set_history_profile(profiles_request_info.history_profile);
+  profile_request->set_pref_profile(profiles_request_info.pref_profile);
+
+  return request;
+}
+
+GrpcUserInfoOperationDistributor::GetUserChannelsRequestPtr
+GrpcUserInfoOperationDistributor::create_get_user_channels_request(
+  const String::SubString& user_id,
+  const Types::ProfilesRequestInfo& profiles_request_info,
+  const Types::WlChannelIds& wl_channels_ids)
+{
+  auto request = std::make_unique<Proto::GetUserChannelsRequest>();
+  request->set_user_id(user_id.data(), user_id.length());
+
+  auto* profile_request = request->mutable_profile_request();
+  profile_request->set_add_profile(profiles_request_info.add_profile);
+  profile_request->set_base_profile(profiles_request_info.base_profile);
+  profile_request->set_freq_cap_profile(profiles_request_info.freq_cap_profile);
+  profile_request->set_history_profile(profiles_request_info.history_profile);
+  profile_request->set_pref_profile(profiles_request_info.pref_profile);
+
+  auto* wl_channel_ids_request = request->mutable_wl_channel_ids();
+  wl_channel_ids_request->Reserve(wl_channels_ids.size());
+  wl_channel_ids_request->Add(
+    std::begin(wl_channels_ids),
+    std::end(wl_channels_ids));
 
   return request;
 }
@@ -306,6 +331,22 @@ GrpcUserInfoOperationDistributor::get_user_profile(
       user_id,
       temporary,
       profiles_request_info);
+}
+
+GrpcUserInfoOperationDistributor::GetUserChannelsResponsePtr
+GrpcUserInfoOperationDistributor::get_user_channels(
+  const String::SubString& user_id,
+  const Types::ProfilesRequestInfo& profiles_request_info,
+  const Types::WlChannelIds& wl_channels_ids) noexcept
+{
+  return do_request<
+    Proto::UserInfoManagerService_get_user_channels_ClientPool,
+    Proto::GetUserChannelsRequest,
+    Proto::GetUserChannelsResponse>(
+      user_id,
+      user_id,
+      profiles_request_info,
+      wl_channels_ids);
 }
 
 GrpcUserInfoOperationDistributor::UpdateUserFreqCapsRequestPtr
@@ -989,6 +1030,10 @@ std::unique_ptr<Response> GrpcUserInfoOperationDistributor::try_do_request_servi
     if constexpr (std::is_same_v<Request, Proto::GetUserProfileRequest>)
     {
       request = create_get_user_profile_request(args...);
+    }
+    else if constexpr (std::is_same_v<Request, Proto::GetUserChannelsRequest>)
+    {
+      request = create_get_user_channels_request(args...);
     }
     else if constexpr (std::is_same_v<Request, Proto::UpdateUserFreqCapsRequest>)
     {

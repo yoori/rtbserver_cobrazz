@@ -600,6 +600,152 @@ namespace UserInfoSvcs
     }
   }
 
+  UserInfoContainer::ChanelIds
+  UserInfoContainer::get_user_channels(
+    const UserId& user_id,
+    const bool base_profile,
+    const bool add_profile,
+    const bool history_profile,
+    const bool fc_profile,
+    const WlChannelIds& wl_channel_ids)
+  {
+    ChanelIds user_channels;
+    auto channel_adder = [&user_channels] (const std::string_view& profile) {
+      if (profile.empty())
+      {
+        return;
+      }
+
+      const AdServer::UserInfoSvcs::ChannelsProfileReader reader(
+        profile.data(),
+        profile.size());
+
+      const auto page_channels = reader.page_channels().ht_candidates();
+      const auto search_channels = reader.search_channels().ht_candidates();
+      const auto url_channels = reader.url_channels().ht_candidates();
+      const auto url_keyword_channels = reader.url_keyword_channels().ht_candidates();
+
+      user_channels.reserve(
+        user_channels.size() + page_channels.size() +
+        search_channels.size() + url_channels.size() +
+        url_keyword_channels.size());
+
+      std::transform(
+        std::begin(page_channels),
+        std::end(page_channels),
+        std::back_inserter(user_channels),
+        [] (const auto& v) {
+          return v.channel_id();
+        });
+      std::transform(
+        std::begin(search_channels),
+        std::end(search_channels),
+        std::back_inserter(user_channels),
+        [] (const auto& v) {
+          return v.channel_id();
+        });
+      std::transform(
+        std::begin(url_channels),
+        std::end(url_channels),
+        std::back_inserter(user_channels),
+        [] (const auto& v) {
+          return v.channel_id();
+        });
+      std::transform(
+        std::begin(url_keyword_channels),
+        std::end(url_keyword_channels),
+        std::back_inserter(user_channels),
+        [] (const auto& v) {
+          return v.channel_id();
+        });
+    };
+
+    if (base_profile)
+    {
+      auto buffer = base_profiles_->get_profile(user_id);
+      if (buffer && !buffer->membuf().empty())
+      {
+        channel_adder(
+          std::string_view{
+            buffer->membuf().get<char>(),
+            buffer->membuf().size()});
+      }
+    }
+
+    if (add_profile)
+    {
+      auto buffer = add_profiles_->get_profile(user_id);
+      if (buffer && !buffer->membuf().empty())
+      {
+        channel_adder(
+          std::string_view{
+            buffer->membuf().get<char>(),
+            buffer->membuf().size()});
+      }
+    }
+
+    if (history_profile)
+    {
+      auto buffer = history_profiles_->get_profile(user_id);
+      if (buffer && !buffer->membuf().empty())
+      {
+        channel_adder(
+          std::string_view{
+            buffer->membuf().get<char>(),
+            buffer->membuf().size()});
+      }
+    }
+
+    if (fc_profile)
+    {
+      auto buffer = freq_cap_profiles_->get_profile(user_id);
+      if (buffer && !buffer->membuf().empty())
+      {
+        channel_adder(
+          std::string_view{
+            buffer->membuf().get<char>(),
+            buffer->membuf().size()});
+      }
+    }
+
+    std::sort(
+      std::begin(user_channels),
+      std::end(user_channels));
+    user_channels.erase(
+      std::unique(
+        std::begin(user_channels),
+        std::end(user_channels)),
+      std::end(user_channels));
+
+    if (!wl_channel_ids.empty())
+    {
+      std::vector<std::uint32_t> wl_channel_ids_result(
+        std::begin(wl_channel_ids),
+        std::end(wl_channel_ids));
+      std::sort(
+        std::begin(wl_channel_ids_result),
+        std::end(wl_channel_ids_result));
+
+      const std::size_t size = std::min(
+        user_channels.size(),
+        wl_channel_ids_result.size());
+      std::vector<std::uint32_t> intersection;
+      intersection.reserve(size);
+      std::set_intersection(
+        std::begin(wl_channel_ids_result),
+        std::end(wl_channel_ids_result),
+        std::begin(user_channels),
+        std::end(user_channels),
+        std::back_inserter(intersection));
+
+      std::swap(
+        user_channels,
+        intersection);
+    }
+
+    return user_channels;
+  }
+
   bool
   UserInfoContainer::remove_user_profile(const UserId& user_id)
     /*throw(ChunkNotFound, Exception)*/

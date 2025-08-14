@@ -2,6 +2,7 @@
 #define USERINFOSVCS_USERINFOCONTAINER_HPP
 
 #include <list>
+#include <span>
 #include <string>
 
 #include <eh/Exception.hpp>
@@ -66,6 +67,8 @@ namespace AdServer
       using RocksDBParams = AdServer::ProfilingCommons::RocksDB::RocksDBParams;
       using Exception = UserOperationProcessor::Exception;
       using UserIdList = std::list<UserId>;
+      using ChanelIds = std::vector<std::uint32_t>;
+      using WlChannelIds = std::span<const std::uint32_t>;
 
       DECLARE_EXCEPTION(UserIsFraud, Exception);
 
@@ -233,6 +236,14 @@ namespace AdServer
         const Generics::Time& now,
         AdServer::ProfilingCommons::OperationPriority op_priority)
         /*throw(ChunkNotFound, Exception)*/;
+
+      ChanelIds get_user_channels(
+        const UserId& user_id,
+        const bool base_profile,
+        const bool add_profile,
+        const bool history_profile,
+        const bool fc_profile,
+        const WlChannelIds& wl_channel_ids);
       
       void dump_colo_users() /*throw(Exception)*/;
 

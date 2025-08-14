@@ -260,6 +260,10 @@ namespace AdServer
       const String::SubString& source)
       const noexcept;
 
+    int handle_user_channels_request_(
+      const UserBind::RequestInfo& request_info,
+      FrontendCommons::HttpResponse& response);
+
   private:
     TaskProcessor& helper_task_processor_;
     const GrpcContainerPtr grpc_container_;

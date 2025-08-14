@@ -238,6 +238,18 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         main_task_processor,
         service_mode);
 
+      auto get_user_channels_service = AdServer::Commons::create_grpc_service<
+        AdServer::UserInfoSvcs::Proto::UserInfoManagerService_get_user_channels_Service,
+        UserInfoManagerImpl,
+        &UserInfoManagerImpl::get_user_channels>(
+          logger(),
+          user_info_manager_impl_.in(),
+          task_pool.in());
+      grpc_server_builder->add_service(
+        get_user_channels_service.in(),
+        main_task_processor,
+        service_mode);
+
       auto match_service = AdServer::Commons::create_grpc_service<
         AdServer::UserInfoSvcs::Proto::UserInfoManagerService_match_Service,
         UserInfoManagerImpl,

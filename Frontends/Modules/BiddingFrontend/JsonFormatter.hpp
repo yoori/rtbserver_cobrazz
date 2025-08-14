@@ -41,9 +41,9 @@ class JsonObject : private Generics::Uncopyable
 {
 private:
   using StringBuffer = rapidjson::StringBuffer;
-  using StringBufferPtr = std::unique_ptr<StringBuffer>;
+  using StringBufferOpt = std::optional<StringBuffer>;
   using Writer = rapidjson::Writer<StringBuffer>;
-  using WriterPtr = std::unique_ptr<Writer>;
+  using WriterOpt = std::optional<Writer>;
 
   enum ObjectType
   {
@@ -74,8 +74,7 @@ private:
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-  explicit JsonObject(
-    JsonObjectDelegate&& delegate);
+  explicit JsonObject(JsonObjectDelegate&& delegate);
 
   ~JsonObject();
 
@@ -149,9 +148,9 @@ protected:
   void check(const ObjectType required_type);
 
 private:
-  StringBufferPtr buffer_;
+  StringBufferOpt buffer_;
 
-  WriterPtr writer_;
+  WriterOpt writer_;
 
   Writer* ptr_writer_ = nullptr;
 
@@ -203,9 +202,9 @@ JsonObject::JsonObject(
   const bool is_object,
   const std::size_t initial_stack_capacity,
   const std::size_t initial_buffer_capacity)
-  : buffer_(std::make_unique<StringBuffer>(nullptr, initial_buffer_capacity)),
-    writer_(std::make_unique<Writer>(*buffer_, nullptr, initial_stack_capacity)),
-    ptr_writer_(writer_.get()),
+  : buffer_(std::in_place, nullptr, initial_buffer_capacity),
+    writer_(std::in_place, *buffer_, nullptr, initial_stack_capacity),
+    ptr_writer_(&writer_.value()),
     out_string_(&out),
     type_(is_object ? OT_SIMPLE_OBJECT : OT_ARRAY),
     opened_child_object_(0),
@@ -393,8 +392,7 @@ JsonObject& JsonObject::add_number(
       ptr_writer_->Int64(value);
     }
   }
-  else if constexpr (std::is_integral_v<T>
-                  && std::is_unsigned_v<T>)
+  else if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>)
   {
     if constexpr (std::numeric_limits<T>::digits <= std::numeric_limits<unsigned>::digits)
     {
@@ -434,8 +432,7 @@ JsonObject& JsonObject::add(
   {
     ptr_writer_->Bool(value);
   }
-  else if constexpr (std::is_same_v<T, std::string>
-                  || std::is_same_v<T, String::SubString>)
+  else if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, String::SubString>)
   {
     ptr_writer_->String(value.data(), value.length());
   }
@@ -447,8 +444,7 @@ JsonObject& JsonObject::add(
   {
     ptr_writer_->Double(value);
   }
-  else if constexpr (std::is_integral_v<T>
-                  && std::is_signed_v<T>)
+  else if constexpr (std::is_integral_v<T> && std::is_signed_v<T>)
   {
     if constexpr (std::numeric_limits<T>::digits <= std::numeric_limits<int>::digits)
     {
@@ -459,8 +455,7 @@ JsonObject& JsonObject::add(
       ptr_writer_->Int64(value);
     }
   }
-  else if constexpr (std::is_integral_v<T>
-                  && std::is_unsigned_v<T>)
+  else if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>)
   {
     if constexpr (std::numeric_limits<T>::digits <= std::numeric_limits<unsigned>::digits)
     {

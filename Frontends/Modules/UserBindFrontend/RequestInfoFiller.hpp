@@ -17,9 +17,10 @@ namespace UserBind
 {
   struct RequestInfo: public ReferenceCounting::AtomicImpl
   {
+    using ChannelsWl = std::vector<std::uint32_t>;
+
     RequestInfo()
-    :
-      user_status(AdServer::CampaignSvcs::US_UNDEFINED),
+    : user_status(AdServer::CampaignSvcs::US_UNDEFINED),
       passback(false),
       colo_id(0),
       generate_external_id(false),
@@ -37,6 +38,7 @@ namespace UserBind
     Generics::Time time;
     bool passback;
     AdServer::Commons::UserId user_id;
+    std::string param_user_id;
     std::string cohort;
     unsigned long colo_id;
     std::string source_id;
@@ -44,29 +46,25 @@ namespace UserBind
     std::string peer_ip;
     std::string x_peer_ip;//IP from header x-forwarded-for
     std::string passback_url;
-
     std::string short_external_id;
     std::string user_agent;
     std::string referer;
     bool generate_external_id;
     bool secure;
     std::string ssp_id;
-
     std::string external_id;
-
     std::string push_data;
     unsigned long google_error;
-
     AdServer::Commons::UserId add_user_id;
     std::string ga_user_id;
     std::string gclu_user_id;
     std::string ym_user_id;
-
     bool delete_op;
-
     std::string server_host;
-
     bool disable_secure_redirect;
+    std::string session_id;
+    std::string cl_id;
+    ChannelsWl channels_wl;
 
   protected:
     virtual ~RequestInfo() noexcept

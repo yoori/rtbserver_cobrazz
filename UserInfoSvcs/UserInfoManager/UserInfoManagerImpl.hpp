@@ -64,6 +64,8 @@ namespace AdServer
       using GetMasterStampResponsePtr = std::unique_ptr<Proto::GetMasterStampResponse>;
       using GetUserProfileRequestPtr = std::unique_ptr<Proto::GetUserProfileRequest>;
       using GetUserProfileResponsePtr = std::unique_ptr<Proto::GetUserProfileResponse>;
+      using GetUserChannelsRequestPtr = std::unique_ptr<Proto::GetUserChannelsRequest>;
+      using GetUserChannelsResponsePtr = std::unique_ptr<Proto::GetUserChannelsResponse>;
       using MatchRequestPtr = std::unique_ptr<Proto::MatchRequest>;
       using MatchResponsePtr = std::unique_ptr<Proto::MatchResponse>;
       using UpdateUserFreqCapsRequestPtr = std::unique_ptr<Proto::UpdateUserFreqCapsRequest>;
@@ -161,6 +163,15 @@ namespace AdServer
 
       GetUserProfileResponsePtr
       get_user_profile(GetUserProfileRequestPtr&& request);
+
+      void get_user_channels(
+        const ::CORBACommons::UserIdInfo& user_id,
+        const ::AdServer::UserInfoSvcs::ProfilesRequestInfo& profile_request,
+        const ::AdServer::UserInfoSvcs::WlChannelIdSeq& wl_channel_ids,
+        ::AdServer::UserInfoSvcs::ChannelIdSeq_out channel_ids) override;
+
+      GetUserChannelsResponsePtr
+      get_user_channels(GetUserChannelsRequestPtr&& request);
 
       virtual CORBA::Boolean remove_user_profile(
         const CORBACommons::UserIdInfo& user_info)

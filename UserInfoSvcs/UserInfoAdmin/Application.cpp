@@ -18,6 +18,10 @@
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerSessionFactory.hpp>
 #include <UserInfoSvcs/UserInfoExchanger/UserInfoExchanger.hpp>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/exception/all.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include "Application.hpp"
 
 namespace
@@ -32,7 +36,10 @@ namespace
     "\nUsage: \nUserInfoAdmin <command> <command arguments>\n\n"
     "Synopsis 1:\n"
     "UserInfoAdmin match --uid=<user id in base64 format> "
-      "--page-channels=<channel ids separated by ','> "
+      "--page-channels=<channel ids - channel_id1,trigger_channel_id2;channel_id1,trigger_channel_id2;...> "
+      "--search-channels=<channel ids - channel_id1,trigger_channel_id2;channel_id1,trigger_channel_id2;...> "
+      "--url-channels=<channel ids - channel_id1,trigger_channel_id2;channel_id1,trigger_channel_id2;...> "
+      "--persistent-channels=<channel ids - channel_id1,channel_id2,...>"
       "-r[--reference=]<user_info_manager_corba_ref>|"
       "<user_info_manager_controller_corba_ref> "
       "--time=<DD-MM-YYYY:HH-MM-SS> \n\n"
@@ -289,24 +296,41 @@ void Application_::tokenize_channels(
 void Application_::tokenize_channels(
   std::set<ChannelMatch>& matched_channel_ids,
   const String::SubString& matched_channels)
-  /*throw(eh::Exception)*/
 {
-  String::StringManip::Splitter<
-    const String::AsciiStringManip::Char2Category<',', ' '> >
-    input_channels_tokenizer(matched_channels);
-
-  String::SubString channel;
-  while (input_channels_tokenizer.get_token(channel))
+  if (matched_channels.empty())
   {
-    int value;
-    if (!String::StringManip::str_to_int(channel, value))
+    return;
+  }
+
+  std::vector<std::string> pair_ids;
+  boost::split(
+    pair_ids,
+    matched_channels.str(),
+    boost::is_any_of(";"),
+    boost::token_compress_on);
+  for (const auto& pair_id : pair_ids)
+  {
+    std::vector<std::string> ids;
+    boost::split(
+      ids,
+      pair_id,
+      boost::is_any_of(","),
+      boost::token_compress_on);
+    if (ids.size() != 2)
     {
-      value = 0;
+      std::ostringstream ostream;
+      ostream << "There must be exactly two numbers in a pair. Received:"
+              << pair_id;
+      throw std::runtime_error(ostream.str());
     }
+
+    boost::trim(ids[0]);
+    boost::trim(ids[1]);
+
     matched_channel_ids.insert(
       ChannelMatch(
-        static_cast<unsigned long>(value),
-        static_cast<unsigned long>(value)));
+        boost::lexical_cast<unsigned long>(ids[0]),
+        boost::lexical_cast<unsigned long>(ids[1])));
   }
 }
 
@@ -363,23 +387,29 @@ Application_::match_(
 
       ++i;
     }
-    
-/*
-    CorbaAlgs::fill_sequence(
-      matched_page_channel_ids.begin(),
-      matched_page_channel_ids.end(),
-      match_params.page_channel_ids);
 
-    CorbaAlgs::fill_sequence(
-      matched_search_channel_ids.begin(),
-      matched_search_channel_ids.end(),
-      match_params.search_channel_ids);
+    i = 0;
+    match_params.search_channel_ids.length(matched_search_channel_ids.size());
+    for (std::set<ChannelMatch>::const_iterator it = matched_search_channel_ids.begin();
+         it != matched_search_channel_ids.end(); ++it)
+    {
+      match_params.search_channel_ids[i].channel_id = it->channel_id;
+      match_params.search_channel_ids[i].channel_trigger_id = it->channel_trigger_id;
 
-    CorbaAlgs::fill_sequence(
-      matched_url_channel_ids.begin(),
-      matched_url_channel_ids.end(),
-      match_params.url_channel_ids);
-*/
+      ++i;
+    }
+
+    i = 0;
+    match_params.url_channel_ids.length(matched_url_channel_ids.size());
+    for (std::set<ChannelMatch>::const_iterator it = matched_url_channel_ids.begin();
+         it != matched_url_channel_ids.end(); ++it)
+    {
+      match_params.url_channel_ids[i].channel_id = it->channel_id;
+      match_params.url_channel_ids[i].channel_trigger_id = it->channel_trigger_id;
+
+      ++i;
+    }
+
     CorbaAlgs::fill_sequence(
       matched_persistent_channel_ids.begin(),
       matched_persistent_channel_ids.end(),
@@ -391,19 +421,25 @@ Application_::match_(
       std::cout,
       match_params.page_channel_ids,
       &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_id,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id);
+      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id,
+      ";",
+      ",");
     std::cout << std::endl << "  Search: ";
     CorbaAlgs::print_sequence_fields(
       std::cout,
       match_params.search_channel_ids,
       &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_id,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id);
+      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id,
+      ";",
+      ",");
     std::cout << std::endl << "  Url: ";
     CorbaAlgs::print_sequence_fields(
       std::cout,
       match_params.url_channel_ids,
       &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_id,
-      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id);
+      &AdServer::UserInfoSvcs::UserInfoMatcher::ChannelTriggerMatch::channel_trigger_id,
+      ";",
+      ",");
     std::cout << std::endl << "  Persistent: ";
     CorbaAlgs::print_sequence(std::cout, match_params.persistent_channel_ids);
     std::cout << std::endl;;
@@ -420,6 +456,11 @@ Application_::match_(
     }
 
     std::cout << std::endl;
+  }
+  catch (const boost::exception& exc)
+  {
+    std::cerr << "Caught exception: "
+              << boost::diagnostic_information(exc);
   }
   catch(const AdServer::UserInfoSvcs::
         UserInfoMatcher::ImplementationException& e)
