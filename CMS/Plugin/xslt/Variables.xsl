@@ -631,6 +631,30 @@
 <xsl:variable name="bidcost-predictor-pg-connection-user" select="'ro'"/>
 <xsl:variable name="bidcost-predictor-pg-connection-password" select="'Q1oL6mm5hPTjnDQ'"/>
 
+<!-- Segment uploader -->
+<xsl:variable name="segment-uploader-ulimit-files" select="65000"/>
+<xsl:variable name="segment-uploader-period" select="60"/>
+<xsl:variable name="segment-uploader-upload-wait-time" select="1"/>
+<xsl:variable name="segment-uploader-upload-threads" select="1000"/>
+<xsl:variable name="segment-uploader-pg-connection-host" select="'postdb00'"/>
+<xsl:variable name="segment-uploader-pg-connection-dbname" select="'stat'"/>
+<xsl:variable name="segment-uploader-pg-connection-user" select="'oix'"/>
+<xsl:variable name="segment-uploader-pg-connection-password" select="'68hosnuea5aS5Ex'"/>
+<xsl:variable name="segment-uploader-http-host" select="'0.0.0.0'"/>
+<xsl:variable name="segment-uploader-http-port" select="8013"/>
+<xsl:variable name="segment-uploader-account-id" select="10691"/>
+<xsl:variable name="segment-uploader-pid-file" select="'segment_uploader.pid'"/>
+<xsl:variable name="segment-uploader-private-key-file" select="'/opt/foros/server/share/uuid_keys/private.der'"/>
+<xsl:variable name="segment-uploader-log-directory" select="'uploader_log/'"/>
+<xsl:variable name="segment-uploader-workspace-directory" select="'uploader_state/'"/>
+<xsl:variable name="segment-uploader-url-segments-directory" select="'uploader_url_segments/'"/>
+<xsl:variable name="segment-uploader-upload-url" select="'http://adfe100:10180'"/>
+<xsl:variable name="segment-uploader-input-directory" select="'/opt/foros/server/var/log/UploadSegments/GPM/In/'"/>
+<xsl:variable name="segment-uploader-format" select="'gpm'"/>
+<xsl:variable name="segment-uploader-name" select="'gpm'"/>
+<xsl:variable name="segment-uploader-channel-prefix" select="'RU.BEELINE.GPMD.'"/>
+
+
 <!-- Predictor SVM generator defaults -->
 <xsl:variable name="def-svm-generator-port" select="$def-range-start + 69"/>
 <xsl:variable name="predictor-svm-generator-log-path" select="'/log/Predictor/SVMGenerator'"/>
