@@ -4582,7 +4582,7 @@ namespace Bidding
               *slot_it->video_reward));
         }
 
-        if (slot_it->video_placement)
+        if (slot_it->video_placement.has_value())
         {
           kw_fmt.add_dict_keyword(
             String::SubString(),
