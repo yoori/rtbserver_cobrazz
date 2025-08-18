@@ -1,11 +1,14 @@
 
-add_executable(CTRPredictorSVMGenerator
+add_library(CTRPredictorSVMGeneration
   FileGuard.cpp 
   Utils.cpp 
-  CampaignFolder.cpp 
   FeatureContainer.cpp 
   OutputLibSvmStream.cpp 
   InputCsvStream.cpp 
+)
+
+add_executable(CTRPredictorSVMGenerator
+  CampaignFolder.cpp 
   CTRPredictorSVMGeneratorImpl.cpp 
   CTRPredictorSVMGeneratorMain.cpp
 )
@@ -19,4 +22,16 @@ target_link_libraries(CTRPredictorSVMGenerator
   ProcessControlVars
   CTRPredictorSVMGeneratorConfigXSD
   CTRGeneratorLib
+  CTRPredictorSVMGeneration
+)
+
+add_executable(CTRPredictorSVMGenerateUtil
+  CTRPredictorSVMGenerateUtil.cpp 
+)
+
+target_link_libraries(CTRPredictorSVMGenerateUtil
+  Generics
+  Commons
+  CTRGeneratorLib
+  CTRPredictorSVMGeneration
 )

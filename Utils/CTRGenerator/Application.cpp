@@ -12,7 +12,7 @@
 #include <Commons/CsvReader.hpp>
 #include <ProfilingCommons/PlainStorage3/FileWriter.hpp>
 #include <LogCommons/CsvUtils.hpp>
-#include <CampaignSvcs/CampaignManager/XGBoostPredictor.hpp>
+#include <CampaignSvcs/CampaignManager/CTR/XGBoostPredictor.hpp>
 
 #include "CTRGenerator.hpp"
 #include "CalculateParamsFilter.hpp"
@@ -1105,8 +1105,8 @@ Application_::generate_ctr_(
   out.setf(std::ios::fixed, std::ios::floatfield);
   out.precision(17);
   */
-  CTRProvider_var ctr_provider(
-    new CTRProvider(String::SubString(config_dir), Generics::Time::ZERO, nullptr));
+  CTR::CTRProvider_var ctr_provider(
+    new CTR::CTRProvider(String::SubString(config_dir), Generics::Time::ZERO, nullptr));
 
   // parse columns
   CTR::FeatureNameResolver feature_name_resolver;
@@ -1315,12 +1315,12 @@ Application_::generate_ctr_(
 
     {
       // eval ctr
-      CTRProvider::Calculation_var calculation =
+      CTR::CTRProvider::Calculation_var calculation =
         ctr_provider->create_calculation(request_params_ptr);
 
       if(calculation.in())
       {
-        CTRProvider::CalculationContext_var calculation_context =
+        CTR::CTRProvider::CalculationContext_var calculation_context =
           calculation->create_context(request_params.tag->sizes.begin()->second);
 
         ctr = calculation_context->get_ctr(creative);

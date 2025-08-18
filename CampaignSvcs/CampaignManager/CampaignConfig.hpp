@@ -26,7 +26,7 @@
 #include "CreativeTemplate.hpp"
 #include "CreativeTemplateArgs.hpp"
 #include "GeoChannelIndex.hpp"
-#include "GrpcBillingStateContainer.hpp"
+#include "AvailableAndMinCTRSetter.hpp"
 
 namespace AdServer
 {
@@ -826,7 +826,7 @@ namespace CampaignSvcs
     typedef std::set<unsigned long> SiteIdSet;
 
     struct Campaign:
-      public GrpcBillingStateContainer::AvailableAndMinCTRSetter,
+      public AvailableAndMinCTRSetter,
       public virtual ReferenceCounting::AtomicImpl
     {
     public:

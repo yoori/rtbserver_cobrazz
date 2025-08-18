@@ -1,8 +1,15 @@
 include_directories(/opt/foros/vanga/include . ${LIBXML2_INCLUDE_DIR})
 
-add_idl(CampaignManagerIDL CampaignManager.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignManager)
+add_idl(CampaignManagerIDL
+  CampaignManager.idl
+  ${IDL_DIRECTORY}/CampaignSvcs/CampaignManager
+)
 
-target_link_libraries(CampaignManagerIDL CorbaTypesIDL CampaignFreqIDL CampaignCommonsIDL)
+target_link_libraries(CampaignManagerIDL
+  CorbaTypesIDL
+  CampaignFreqIDL
+  CampaignCommonsIDL
+)
 
 include(${UNIXCOMMONS}/src/UServerUtils/Grpc/Generator/GrpcTargets.cmake)
 add_grpc_library(CampaignManagerProto
@@ -28,10 +35,19 @@ target_link_libraries(BidRateProvider
   pthread
 )
 
-add_definitions(-D_REENTRANT -D_USE_OCCI  -DXSD_CXX11)
+add_definitions(-D_REENTRANT -D_USE_OCCI -DXSD_CXX11)
 
 add_library(CTRProvider SHARED
-  CTRProvider.cpp XGBoostPredictor.cpp
+  CTRProvider.cpp
+  CTR/XGBoostPredictor.cpp
+  CTR/XGBoostCTREvaluator.cpp
+  CTR/VangaCTREvaluator.cpp
+  CTR/FTRLCTREvaluator.cpp
+  CTR/TrivialCTREvaluator.cpp
+  CTR/CatBoostCTREvaluator.cpp
+  CTR/Algorithm.cpp
+  CTR/Feature.cpp
+  CTR/FeatureDescriptorResolver.cpp
 )
 
 link_directories(/opt/foros/vanga/lib)
@@ -45,6 +61,7 @@ target_link_libraries(CTRProvider
   PlainStorage3
   pcre
   xgboost
+  catboost::model
 )
 
 add_library(CampaignConfig SHARED
@@ -75,7 +92,8 @@ target_link_libraries(CampaignConfigSource
 )
 
 add_library(CampaignIndex
-  CampaignIndex.cpp GeoChannelIndex.cpp
+  CampaignIndex.cpp
+  GeoChannelIndex.cpp
 )
 
 target_link_libraries(CampaignIndex
@@ -105,7 +123,7 @@ add_library(DomainParser
   DomainParser.cpp
 )
 
-add_dependencies(DomainParser  DomainConfigXSD)
+add_dependencies(DomainParser DomainConfigXSD)
 
 add_library(CampaignManagerLogger SHARED
   CampaignManagerLogger.cpp

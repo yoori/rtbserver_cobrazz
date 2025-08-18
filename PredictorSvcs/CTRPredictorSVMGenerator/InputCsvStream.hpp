@@ -10,60 +10,58 @@
 #include "FeatureContainer.hpp"
 #include "OutputLibSvmStream.hpp"
 
-namespace AdServer
+namespace AdServer::Predictor
 {
-  namespace Predictor
+  /**
+   * Input PRImpression csv stream
+   */
+  class InputCsvStream
   {
+  public:
+    DECLARE_EXCEPTION(ParseError, eh::DescriptiveException);
+
+  public:
+    /**
+     * @brief Constructor.
+     *
+     * @param file object
+     * @param logger
+     */
+    InputCsvStream(const FileObject& file, Logging::Logger* logger);
 
     /**
-     * Input PRImpression csv stream
+     * @brief Destructor.
      */
-    class InputCsvStream
-    {
+    virtual ~InputCsvStream() noexcept;
 
-      DECLARE_EXCEPTION(ParseError, eh::DescriptiveException);
-      
-    public:
+    /**
+     * @brief Process input stream.
+     *
+     * @param libsvm output streams
+     */
+    bool process(OutputLibSvm& lib_svm);
 
-      /**
-       * @brief Constructor.
-       *
-       * @param file object
-       * @param logger
-       */
-      InputCsvStream(
-        const FileObject& file,
-        Logging::Logger* logger);
+    static void
+    process(
+      OutputLibSvm& lib_svm,
+      std::istream& stream,
+      Logging::Logger* logger,
+      const char* file_path);
 
-      /**
-       * @brief Parse csv header.
-       *
-       * @param[out]  feature column list
-       * @return label column index
-       */
-      unsigned long
-      parse_header_(
-        std::istream& stream,
-        FeatureColumns& feature_columns);
-      
-      /**
-       * @brief Process input stream.
-       *
-       * @param libsvm output streams
-       */
-      bool process(
-        OutputLibSvmStreamList& lib_svms);
+  private:
+    /**
+     * @brief Parse csv header.
+     *
+     * @param[out]  feature column list
+     * @return label column index
+     */
+    static unsigned long
+    parse_header_(
+      std::istream& stream,
+      FeatureColumns& feature_columns);
 
-      /**
-       * @brief Destructor.
-       */
-      virtual ~InputCsvStream()
-        noexcept;
-
-    private:
-      FileObject file_;
-      Logging::Logger_var logger_;
-    };
-
-  }
+  private:
+    FileObject file_;
+    Logging::Logger_var logger_;
+  };
 }

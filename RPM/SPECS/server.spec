@@ -47,6 +47,8 @@ Source0: foros-server-%{version}.tar.gz
 
 %ifnarch noarch
 
+BuildRequires: catboost-devel
+Requires: catboost
 BuildRequires: cmake3
 BuildRequires: libstdc++
 Requires: libstdc++

@@ -20,6 +20,7 @@
 #include <Commons/CorbaObject.hpp>
 
 #include <CampaignSvcs/BillingServer/BillingServer.hpp>
+#include "AvailableAndMinCTRSetter.hpp"
 
 namespace AdServer
 {
@@ -36,27 +37,6 @@ namespace CampaignSvcs
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-
-    struct AvailableSetter: public virtual ReferenceCounting::Interface
-    {
-      virtual void
-      set_available(bool available_val) const noexcept = 0;
-    };
-
-    typedef ReferenceCounting::ConstPtr<AvailableSetter> CAvailableSetter_var;
-
-    struct AvailableAndMinCTRSetter: public virtual ReferenceCounting::Interface
-    {
-      friend class BillingStateContainer;
-
-    protected:
-      virtual void
-      set_available(bool available_val, const RevenueDecimal& goal_ctr)
-        const noexcept = 0;
-    };
-
-    typedef ReferenceCounting::ConstPtr<AvailableAndMinCTRSetter>
-      CAvailableAndMinCTRSetter_var;
 
     struct BidCheckResult
     {
