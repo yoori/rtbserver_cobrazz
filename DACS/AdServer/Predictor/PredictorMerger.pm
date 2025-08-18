@@ -11,6 +11,7 @@ sub start
 
   my $command =
     "mkdir -p \${log_root}/Predictor/ResearchLogs/PRImpression && " .
+    "mkdir -p \${log_root}/Predictor/Merger && " .
     "mkdir -p \${workspace_root}/run && " .
     "{ rm -f \${workspace_root}/run/predictor_merger.pid && ".
     "PredictorMerger.pl " .

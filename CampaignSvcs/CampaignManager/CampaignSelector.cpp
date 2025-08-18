@@ -158,8 +158,8 @@ namespace AdServer
     // CampaignSelector
     CampaignSelector::CampaignSelector(
       const CampaignIndex* campaign_selection_index,
-      const CTRProvider* ctr_provider,
-      const CTRProvider* conv_rate_provider)
+      const CTR::CTRProvider* ctr_provider,
+      const CTR::CTRProvider* conv_rate_provider)
       : campaign_selection_index_(campaign_selection_index),
         campaign_config_(campaign_selection_index->configuration()),
         ctr_provider_(ReferenceCounting::add_ref(ctr_provider)),
@@ -169,7 +169,7 @@ namespace AdServer
     RevenueDecimal
     CampaignSelector::campaign_ctr_(
       const Creative*& result_creative,
-      const CTRProvider::CalculationContext* ctr_calculation_context,
+      const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
       const CampaignIndex::ConstCreativePtrList& available_creatives)
       noexcept
     {
@@ -257,7 +257,7 @@ namespace AdServer
     CampaignSelector::campaign_ecpm_(
       RevenueDecimal& ctr,
       const Creative*& result_creative,
-      const CTRProvider::CalculationContext* ctr_calculation_context,
+      const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
       const Campaign* campaign,
       const CampaignIndex::ConstCreativePtrList& available_creatives)
       noexcept
@@ -310,7 +310,7 @@ namespace AdServer
     CampaignSelector::campaign_keyword_ecpm_(
       RevenueDecimal& ctr,
       const Creative*& result_creative,
-      const CTRProvider::CalculationContext* ctr_calculation_context,
+      const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
       const Campaign* campaign,
       const CampaignKeyword* campaign_keyword,
       const CampaignIndex::ConstCreativePtrList& available_creatives)
@@ -553,8 +553,8 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
-      const CTRProvider::Calculation* ctr_calculation,
-      const CTRProvider::Calculation* conv_rate_calculation,
+      const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
       bool check_min_ecpm)
@@ -673,11 +673,11 @@ namespace AdServer
         tag_size_it != request_params.tag_sizes.end();
         ++tag_size_it)
       {
-        CTRProvider::CalculationContext_var ctr_calculation_context =
+        CTR::CTRProvider::CalculationContext_var ctr_calculation_context =
           ctr_calculation->create_context(
             tag_size_it->second);
 
-        CTRProvider::CalculationContext_var conv_rate_calculation_context;
+        CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
         if(conv_rate_calculation)
         {
           conv_rate_calculation_context = conv_rate_calculation->create_context(
@@ -1069,7 +1069,7 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
-      const CTRProvider::CalculationContext* ctr_calculation_context,
+      const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
       const CampaignKeywordMap& matched_keywords,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignCellPtrList& keyword_campaigns,
@@ -1230,8 +1230,8 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
-      const CTRProvider::Calculation* ctr_calculation,
-      const CTRProvider::Calculation* conv_rate_calculation,
+      const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& matched_channels,
       const CampaignIndex::CampaignSelectionCellPtrList& campaign_list,
       const CampaignIndex::CampaignCellPtrList& lost_campaigns)
@@ -1776,7 +1776,7 @@ namespace AdServer
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const Tag::Size* tag_size,
-      const CTRProvider::CalculationContext* ctr_calculation_context,
+      const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
       const CPCKeywordMap& cpc_keyword_map,
       const RevenueDecimal& min_sum_ecpm,
       unsigned long max_keywords,
@@ -2607,8 +2607,8 @@ namespace AdServer
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const Tag::Size* tag_size,
-      const CTRProvider::CalculationContext* ctr_calculation_context,
-      const CTRProvider::CalculationContext* conv_rate_calculation_context)
+      const CTR::CTRProvider::CalculationContext* ctr_calculation_context,
+      const CTR::CTRProvider::CalculationContext* conv_rate_calculation_context)
       const
       noexcept
     {
@@ -2774,8 +2774,8 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
-      const CTRProvider::Calculation* ctr_calculation,
-      const CTRProvider::Calculation* conv_rate_calculation,
+      const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const Tag::SizeMap& tag_sizes,
       const ChannelIdHashSet& matched_channels,
       const CampaignKeywordMap& matched_keywords)
@@ -2892,7 +2892,7 @@ namespace AdServer
                 continue;
               }
 
-              CTRProvider::CalculationContext_var ctr_calculation_context;
+              CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
 
               if(ctr_calculation)
               {
@@ -2900,7 +2900,7 @@ namespace AdServer
                   tag_size_it->second);
               }
 
-              CTRProvider::CalculationContext_var conv_rate_calculation_context;
+              CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
               if(conv_rate_calculation)
               {
                 conv_rate_calculation_context = conv_rate_calculation->create_context(
@@ -3041,8 +3041,8 @@ namespace AdServer
       const CampaignIndex::Key& key,
       const CampaignSelectParams& request_params,
       const Tag* tag,
-      const CTRProvider::Calculation* ctr_calculation,
-      const CTRProvider::Calculation* conv_rate_calculation,
+      const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const Tag::SizeMap& tag_sizes,
       const ChannelIdHashSet& matched_channels,
       const CampaignKeywordMap& matched_keywords,
@@ -3159,14 +3159,14 @@ namespace AdServer
               continue;
             }
 
-            CTRProvider::CalculationContext_var ctr_calculation_context;
+            CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
             if(ctr_calculation)
             {
               ctr_calculation_context = ctr_calculation->create_context(
                 tag_size_it->second);
             }
 
-            CTRProvider::CalculationContext_var conv_rate_calculation_context;
+            CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
             if(conv_rate_calculation)
             {
               conv_rate_calculation_context = conv_rate_calculation->create_context(
@@ -3499,8 +3499,8 @@ namespace AdServer
       const CampaignSelectParams& request_params,
       const Tag* tag,
       const Tag::SizeMap& tag_sizes,
-      const CTRProvider::Calculation* ctr_calculation,
-      const CTRProvider::Calculation* conv_rate_calculation,
+      const CTR::CTRProvider::Calculation* ctr_calculation,
+      const CTR::CTRProvider::Calculation* conv_rate_calculation,
       const ChannelIdHashSet& channels,
       const CampaignKeywordMap& hit_keywords,
       bool collect_lost)
@@ -3602,7 +3602,7 @@ namespace AdServer
           {
             if(tag_size_it->second->max_text_creatives != 0)
             {
-              CTRProvider::CalculationContext_var ctr_calculation_context;
+              CTR::CTRProvider::CalculationContext_var ctr_calculation_context;
 
               if(ctr_calculation)
               {
@@ -3610,7 +3610,7 @@ namespace AdServer
                   tag_size_it->second);
               }
 
-              CTRProvider::CalculationContext_var conv_rate_calculation_context;
+              CTR::CTRProvider::CalculationContext_var conv_rate_calculation_context;
               if(conv_rate_calculation)
               {
                 conv_rate_calculation_context = conv_rate_calculation->create_context(
@@ -3814,8 +3814,8 @@ namespace AdServer
       }
 
       // create ctr calculation context
-      CTRProvider::Calculation_var ctr_calculation;
-      CTRProvider::Calculation_var conv_rate_calculation;
+      CTR::CTRProvider::Calculation_var ctr_calculation;
+      CTR::CTRProvider::Calculation_var conv_rate_calculation;
 
       if(ctr_provider_.in())
       {
@@ -3888,7 +3888,7 @@ namespace AdServer
         }
         else
         {
-          select_result.ctr_calculation = CTRProvider::Calculation_var();
+          select_result.ctr_calculation = CTR::CTRProvider::Calculation_var();
         }
       }
 
@@ -3967,7 +3967,7 @@ namespace AdServer
 
       if(ctr_calculation && select_result.tag_size)
       {
-        CTRProvider::CalculationContext_var ctr_calculation_context =
+        CTR::CTRProvider::CalculationContext_var ctr_calculation_context =
           ctr_calculation->create_context(select_result.tag_size);
 
         if(weighted_campaign.get())

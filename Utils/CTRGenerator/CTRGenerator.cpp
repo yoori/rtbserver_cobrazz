@@ -821,7 +821,7 @@ namespace CampaignSvcs
   void
   CTRGenerator::calculate(
     Calculation& calculation,
-    const CalculateParams& calc_params)
+    const CalculateParams& calc_params) const
   {
     for(FeatureHolderList::const_iterator feature_holder_it =
           feature_holders_.begin();

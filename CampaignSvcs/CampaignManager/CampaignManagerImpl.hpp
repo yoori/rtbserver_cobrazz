@@ -1,4 +1,3 @@
-
 #ifndef _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_IMPL_HPP_
 #define _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_IMPL_HPP_
 
@@ -1203,8 +1202,8 @@ namespace AdServer
       CampaignConfigSource_var campaign_config_source_;
       BillingStateContainer_var check_billing_state_container_;
       BillingStateContainer_var confirm_billing_state_container_;
-      ReferenceCounting::PtrHolder<ConstCTRProvider_var> ctr_provider_;
-      ReferenceCounting::PtrHolder<ConstCTRProvider_var> conv_rate_provider_;
+      ReferenceCounting::PtrHolder<CTR::ConstCTRProvider_var> ctr_provider_;
+      ReferenceCounting::PtrHolder<CTR::ConstCTRProvider_var> conv_rate_provider_;
       ReferenceCounting::PtrHolder<ConstBidCostProvider_var> bid_cost_provider_;
 
       mutable SyncPolicy::Mutex lock_;

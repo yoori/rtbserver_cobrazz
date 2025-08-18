@@ -12,16 +12,15 @@
 #include <DTree/LogRegPredictor.hpp>
 #include <DTree/FastFeatureSet.hpp>
 
+//#include <PredictorSvcs/BidCostPredictor/CtrPredictor.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
+#include <CampaignSvcs/CampaignManager/CTR/Algorithm.hpp>
 
+#include "CTR/CTRFeatureCalculators.hpp"
+#include "CTR/XGBoostPredictor.hpp"
 #include "CampaignSelectParams.hpp"
-#include "CTRFeatureCalculators.hpp"
-#include "XGBoostPredictor.hpp"
-#include "CTRTrivialPredictor.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs::CTR
 {
   using namespace AdInstances;
 
@@ -51,82 +50,26 @@ namespace CampaignSvcs
     Name of Size Type of Creative (Banner, Overlay, Video etc) 3.4+
   */
 
-  namespace CTR
+  class FeatureNameResolver
   {
-    enum BasicFeature
-    {
-      // request level features
-      BF_PUBLISHER_ID = 1,
-      BF_SITE_ID = 2,
-      BF_TAG_ID = 3,
-      BF_ETAG_ID = 4,
-      BF_DOMAIN = 5,
-      BF_URL = 6,
-      BF_HOUR = 7,
-      BF_WEEK_DAY = 8,
-      BF_ISP_ID = 9,
-      BF_COLO_ID = 10,
-      BF_DEVICE_CHANNEL_ID = 11,
-      BF_AFTER_HOUR = 12,
-      BF_VISIBILITY = 13,
-      BF_PREDICTED_VIEWABILITY = 14,
+  public:
+    FeatureNameResolver() noexcept;
 
-      // auction level features
-      BF_AUCTION_LEVEL_FIRST_ID = 50,
-      BF_SIZE_TYPE_ID = 50,
-      BF_SIZE_ID = 51,
+    bool
+    basic_feature_by_name(
+      BasicFeature& basic_feature,
+      const String::SubString& name)
+      const
+      noexcept;
 
-      // candidate level features
-      BF_CANDIDATE_LEVEL_FIRST_ID = 100,
-      BF_ADVERTISER_ID = 100,
-      BF_CAMPAIGN_ID = 101,
-      BF_CCG_ID = 102,
-      BF_CAMPAIGN_FREQ_ID = 105,
-      BF_CAMPAIGN_FREQ_LOG_ID = 106,
+  protected:
+    typedef Generics::GnuHashTable<
+      Generics::SubStringHashAdapter, BasicFeature>
+      FeatureNameMap;
 
-      BF_CREATIVE_LEVEL_FIRST_ID = 130,
-      BF_CREATIVE_ID = 130,
-      BF_CC_ID = 131, // non request feature
-
-      // candidate level, array features
-      BF_ARRAY_REQUEST_LEVEL_FIRST_ID = 150,
-      BF_HISTORY_CHANNELS = 150,
-      BF_GEO_CHANNELS = 151,
-
-      BF_ARRAY_AUCTION_LEVEL_FIRST_ID = 152,
-      BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID = 152,
-      BF_CONTENT_CATEGORIES = 152,
-      BF_VISUAL_CATEGORIES = 153,
-    };
-
-    typedef std::set<BasicFeature> BasicFeatureSet;
-
-    class FeatureNameResolver
-    {
-    public:
-      FeatureNameResolver() noexcept;
-
-      bool
-      basic_feature_by_name(
-        BasicFeature& basic_feature,
-        const String::SubString& name)
-        const
-        noexcept;
-
-    protected:
-      typedef Generics::GnuHashTable<
-        Generics::SubStringHashAdapter, BasicFeature>
-        FeatureNameMap;
-
-    protected:
-      FeatureNameMap feature_names_;
-    };
+  protected:
+    FeatureNameMap feature_names_;
   };
-
-  class FastFeatureSetHolder;
-
-  typedef ReferenceCounting::SmartPtr<FastFeatureSetHolder>
-    FastFeatureSetHolder_var;
 
   class CTRProvider: public ReferenceCounting::AtomicImpl
   {
@@ -139,121 +82,6 @@ namespace CampaignSvcs
     class CalculationContext;
 
   protected:
-    struct Feature
-    {
-      void
-      print(std::ostream& out) const;
-
-      bool
-      operator<(const Feature& right) const;
-
-      CTR::BasicFeatureSet basic_features;
-      std::size_t hash_seed;
-      CTR::FeatureCalculator_var feature_calculator;
-    };
-
-    typedef std::vector<Feature> FeatureArray;
-
-    enum FeatureType
-    {
-      FT_REQUEST = 0,
-      FT_AUCTION,
-      FT_CANDIDATE,
-      FT_MAX
-    };
-
-    enum ModelMethodType
-    {
-      MM_FTRL,
-      MM_XGBOOST,
-      MM_VANGA,
-      MM_TRIVIAL
-    };
-
-    class Model: public ReferenceCounting::AtomicImpl
-    {
-      friend class Calculation;
-      friend class CalculationContext;
-
-    public:
-      Model(unsigned long model_id) noexcept;
-
-      void
-      load_feature_weights(
-        const String::SubString& file)
-        /*throw(InvalidConfig)*/;
-
-    public:
-      const unsigned long model_id;
-      ModelMethodType method;
-      std::string method_name;
-      RevenueDecimal weight;
-
-      // FT_REQUEST: features can be calculated once for request (
-      //   at CTRProvider::create_calculation)
-      // FT_AUCTION: features can be calculated only when know context (tag size)
-      //   but once for all campaigns/creatives
-      // FT_CANDIDATE: features can be calculated only when known candidate - campaign/creative (
-      //   at CalculationContext::get_ctr
-      FeatureArray features[FT_MAX];
-
-      // TODO !!! Fill
-      uint64_t feature_set_indexes[FT_MAX];
-      FeatureType max_feature_type;
-
-      // FTRL specific fields
-      unsigned long dimension;
-      // (sign * m.L1 - m.z[feature]) /
-      //   ((m.beta + m.n[feature]) / m.alpha + m.L2)
-      CTR::FeatureWeightTable feature_weights;
-
-      // XGBoost specific fields
-      CTR::XGBoostPredictorPool_var xgboost_predictor_pool;
-      bool push_hour;
-      bool push_week_day;
-      bool push_campaign_freq;
-      bool push_campaign_freq_log;
-      bool creative_dependent;
-
-      // Vanga fields
-      Gears::IntrusivePtr<Vanga::LogRegPredictor<Vanga::DTree> > vanga_predictor;
-
-      // Trivial predictor fields
-      CTR::TrivialPredictor_var trivial_predictor;
-
-    protected:
-      virtual ~Model() noexcept
-      {}
-    };
-
-    typedef ReferenceCounting::SmartPtr<Model> Model_var;
-
-    typedef std::list<Model_var> ModelList;
-
-    struct Algorithm: public ReferenceCounting::AtomicImpl
-    {
-      friend class Calculation;
-      friend class CalculationContext;
-
-      Algorithm()
-        : threshold(RevenueDecimal::ZERO)
-      {}
-
-      std::string id;
-      unsigned long weight;
-      ModelList models;
-      RevenueDecimal threshold;
-
-    protected:
-      virtual ~Algorithm() noexcept
-      {}
-    };
-
-    typedef ReferenceCounting::SmartPtr<const Algorithm>
-      ConstAlgorithm_var;
-    typedef ReferenceCounting::SmartPtr<Algorithm>
-      Algorithm_var;
-
     typedef std::vector<Algorithm_var>
       AlgorithmArray;
 
@@ -285,7 +113,7 @@ namespace CampaignSvcs
       float request_features_weight; // ??
 
       // XGBoost
-      mutable CTR::XGBoostPredictorPool::Predictor_var xgboost_predictor;
+      mutable XGBoostPredictorPool::Predictor_var xgboost_predictor;
     };
 
     typedef std::list<ModelValue> ModelValueList;
@@ -303,7 +131,7 @@ namespace CampaignSvcs
 
   protected:
     struct HashArrayHolder:
-      public CTR::HashArray,
+      public HashArray,
       public ReferenceCounting::DefaultImpl<>
     {
     protected:
@@ -328,7 +156,7 @@ namespace CampaignSvcs
 
     typedef Generics::GnuHashTable<
       Generics::NumericHashAdapter<unsigned long>,
-      CTR::XGBoostPredictorPool::Predictor_var>
+      XGBoostPredictorPool::Predictor_var>
       ModelXGBoostPredictorMap;
 
   public:
@@ -374,7 +202,7 @@ namespace CampaignSvcs
 
       void
       get_xgb_hashes_i(
-        CTR::HashArray& res,
+        HashArray& res,
         const Creative* creative) const
         noexcept;
 
@@ -448,16 +276,11 @@ namespace CampaignSvcs
         noexcept;
 
     private:
-      static
-      RevenueDecimal
-      eval_ctr_(float weight) /*throw(Overflow)*/;
-
-    private:
       const ReferenceCounting::ConstPtr<Calculation> calculation_;
       const ReferenceCounting::ConstPtr<Tag::Size> tag_size_;
 
       //AlgorithmValueArray algorithm_values_;
-      mutable CTR::HashArray opt_hashes_;
+      mutable HashArray opt_hashes_;
 
       //ModelValueList model_values_;
 
@@ -510,7 +333,7 @@ namespace CampaignSvcs
 
       void
       eval_features_hashes_(
-        CTR::HashArray& hashes,
+        HashArray& hashes,
         const Algorithm& algorithm,
         const Model& model,
         FeatureType feature_type,
@@ -520,6 +343,7 @@ namespace CampaignSvcs
         const
         noexcept;
 
+      /*
       float
       eval_features_weight_(
         const Algorithm& algorithm,
@@ -530,42 +354,40 @@ namespace CampaignSvcs
         const Creative* creative)
         const
         noexcept;
+      */
 
       static RevenueDecimal
-      eval_ctr_(float weight)
-        /*throw(Overflow)*/;
+      eval_ctr_(float weight);
 
+      /*
       RevenueDecimal
       xgboost_eval_ctr_(
         const Model& model,
-        const CTR::HashArray& hashes,
-        const CTR::HashArray* add_hashes1 = 0,
-        const CTR::HashArray* add_hashes2 = 0,
-        const CTR::HashArray* add_hashes3 = 0)
-        const
-        /*throw(Overflow)*/;
+        const HashArray& hashes,
+        const HashArray* add_hashes1 = 0,
+        const HashArray* add_hashes2 = 0,
+        const HashArray* add_hashes3 = 0)
+        const;
 
       RevenueDecimal
       vanga_eval_ctr_(
         const Model& model,
-        const CTR::HashArray& hashes,
-        const CTR::HashArray* add_hashes1 = 0,
-        const CTR::HashArray* add_hashes2 = 0)
-        const
-        /*throw(Overflow)*/;
+        const HashArray& hashes,
+        const HashArray* add_hashes1 = 0,
+        const HashArray* add_hashes2 = 0)
+        const;
 
       RevenueDecimal
-      trivial_eval_ctr_(const Model& model)
-        const;
+      trivial_eval_ctr_(
+        const Model& model,
+        const Creative* creative) const;
+      */
 
       static RevenueDecimal
       adapt_ctr_(double ctr)
         /*throw(Overflow)*/;
 
     protected:
-      typedef ReferenceCounting::SmartPtr<FastFeatureSetHolder>
-        FastFeatureSetHolder_var;
-
       struct FeatureSetLevelHashAdapter
       {
       public:
@@ -606,7 +428,7 @@ namespace CampaignSvcs
       //AlgorithmValueArray algorithm_values_;
 
       // XGBoost
-      mutable CTR::XGBoostPredictorPool::Predictor_var xgboost_predictor_;
+      mutable XGBoostPredictorPool::Predictor_var xgboost_predictor_;
       mutable ModelXGBoostPredictorMap model_xgboost_predictors_;
 
       // XGBoost & Vanga
@@ -709,7 +531,7 @@ namespace CampaignSvcs
       const String::SubString& file_name)
       /*throw(InvalidConfig)*/;
 
-    std::unique_ptr<CTR::HashMap>
+    std::unique_ptr<HashMap>
     load_hash_mapping_(
       const String::SubString& file_name)
       /*throw(InvalidConfig)*/;
@@ -722,11 +544,11 @@ namespace CampaignSvcs
       noexcept;
 
   protected:
-    const CTR::HashArray empty_hash_array_;
+    const HashArray empty_hash_array_;
     const Generics::Time config_timestamp_;
     Generics::TaskRunner_var task_runner_;
 
-    std::unique_ptr<CTR::HashMap> hash_mapping_;
+    std::unique_ptr<HashMap> hash_mapping_;
 
     // alg id(index) => algorithm
     AlgorithmArray ctr_algorithms_;
@@ -749,12 +571,9 @@ namespace CampaignSvcs
     CTRProvider_var;
   typedef ReferenceCounting::SmartPtr<const CTRProvider>
     ConstCTRProvider_var;
-}
-}
+} // namespace AdServer::CampaignSvcs::CTR
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs::CTR
 {
   inline
   CTRProvider::ModelValue::ModelValue(CTRProvider::ModelValue&& init)
@@ -764,7 +583,6 @@ namespace CampaignSvcs
     xgboost_predictor.swap(init.xgboost_predictor);
     //hashes.swap(init.hashes);
   }
-}
 }
 
 #endif /*CAMPAIGNMANAGER_CTRPROVIDER_HPP*/

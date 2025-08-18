@@ -50,6 +50,8 @@ AutoReq: no
 
 Requires: bash
 
+BuildRequires: catboost-devel
+Requires: catboost
 BuildRequires: cmake3
 BuildRequires: libstdc++
 Requires: libstdc++

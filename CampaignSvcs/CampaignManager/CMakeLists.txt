@@ -1,8 +1,15 @@
 include_directories(/opt/foros/vanga/include . ${LIBXML2_INCLUDE_DIR})
 
-add_idl(CampaignManagerIDL CampaignManager.idl ${IDL_DIRECTORY}/CampaignSvcs/CampaignManager)
+add_idl(CampaignManagerIDL
+  CampaignManager.idl
+  ${IDL_DIRECTORY}/CampaignSvcs/CampaignManager
+)
 
-target_link_libraries(CampaignManagerIDL CorbaTypesIDL CampaignFreqIDL CampaignCommonsIDL)
+target_link_libraries(CampaignManagerIDL
+  CorbaTypesIDL
+  CampaignFreqIDL
+  CampaignCommonsIDL
+)
 
 add_library(BidRateProvider SHARED
   BidCostProvider.cpp
@@ -19,10 +26,19 @@ target_link_libraries(BidRateProvider
   HTTP
 )
 
-add_definitions(-D_REENTRANT -D_USE_OCCI  -DXSD_CXX11)
+add_definitions(-D_REENTRANT -D_USE_OCCI -DXSD_CXX11)
 
 add_library(CTRProvider SHARED
-  CTRProvider.cpp XGBoostPredictor.cpp CTRTrivialPredictor.cpp
+  CTRProvider.cpp
+  CTR/XGBoostPredictor.cpp
+  CTR/XGBoostCTREvaluator.cpp
+  CTR/VangaCTREvaluator.cpp
+  CTR/FTRLCTREvaluator.cpp
+  CTR/TrivialCTREvaluator.cpp
+  CTR/CatBoostCTREvaluator.cpp
+  CTR/Algorithm.cpp
+  CTR/Feature.cpp
+  CTR/FeatureDescriptorResolver.cpp
 )
 
 link_directories(/opt/foros/vanga/lib)
@@ -35,6 +51,7 @@ target_link_libraries(CTRProvider
   pcre
   xgboost
   /opt/foros/vanga/lib/libVangaDTree.so
+  catboost::model
 )
 
 add_library(CampaignConfig SHARED
@@ -65,7 +82,8 @@ target_link_libraries(CampaignConfigSource
 )
 
 add_library(CampaignIndex
-  CampaignIndex.cpp GeoChannelIndex.cpp
+  CampaignIndex.cpp
+  GeoChannelIndex.cpp
 )
 
 target_link_libraries(CampaignIndex
@@ -95,7 +113,7 @@ add_library(DomainParser
   DomainParser.cpp
 )
 
-add_dependencies(DomainParser  DomainConfigXSD)
+add_dependencies(DomainParser DomainConfigXSD)
 
 add_library(CampaignManagerLogger SHARED
   CampaignManagerLogger.cpp
@@ -155,5 +173,3 @@ target_link_libraries(CampaignManager
   DomainConfigXSD
   StatInfoIDL
 )
-
-#install(TARGETS CampaignManager CampaignManagerLogger CreativeTemplateArgs CampaignConfig CampaignConfig CTRProvider CampaignManagerIDL BidRateProvider  DESTINATION ${INSTALL_DIR})

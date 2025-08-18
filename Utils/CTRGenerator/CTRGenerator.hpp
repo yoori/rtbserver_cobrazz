@@ -94,7 +94,7 @@ namespace CampaignSvcs
     void
     calculate(
       Calculation& calculation,
-      const CalculateParams& calc_params);
+      const CalculateParams& calc_params) const;
 
     void
     fill_dictionary(

@@ -1,4 +1,3 @@
-
 #ifndef _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_DECLARATIONS_HPP_
 #define _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_DECLARATIONS_HPP_
 
@@ -127,8 +126,8 @@ namespace AdServer
       const Tag* tag;
       const Tag::TagPricing* tag_pricing;
       const Tag::Size* tag_size;
-      CTRProvider::Calculation_var ctr_calculation;
-      CTRProvider::Calculation_var conv_rate_calculation;
+      CTR::CTRProvider::Calculation_var ctr_calculation;
+      CTR::CTRProvider::Calculation_var conv_rate_calculation;
       CampaignSelectionDataList selected_campaigns;
 
       FreqCapIdSet freq_caps;

@@ -281,7 +281,7 @@ namespace CTR
     // fill features
     for(auto it = features.begin(); it != features.end(); ++it)
     {
-      predict_features_.push_back(xgboost::Entry(it->first - 1, it->second));
+      predict_features_.emplace_back(xgboost::Entry(it->first - 1, it->second));
     }
 
     const HashArray* add_f[] = { add_features, add_features2, add_features3 };
