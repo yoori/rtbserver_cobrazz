@@ -9,11 +9,7 @@
 
 #include "CTRFeatureCalculators.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
-{
-namespace CTR
+namespace AdServer::CampaignSvcs::CTR
 {
   class XGBoostPredictorPool: public std::enable_shared_from_this<XGBoostPredictorPool>
   {
@@ -78,8 +74,6 @@ namespace CTR
 
   typedef std::shared_ptr<XGBoostPredictorPool>
     XGBoostPredictorPool_var;
-}
-}
 }
 
 #endif /*XGBOOSTPREDICTOR_HPP_*/

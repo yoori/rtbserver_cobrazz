@@ -3,4 +3,4 @@ ADD_SUBDIRECTORY(CampaignAdmin)
 ADD_SUBDIRECTORY(CampaignCommons)
 ADD_SUBDIRECTORY(CampaignManager)
 ADD_SUBDIRECTORY(CampaignServer)
-
+ADD_SUBDIRECTORY(PredictorTest)

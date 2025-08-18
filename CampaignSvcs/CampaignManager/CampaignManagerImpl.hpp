@@ -1768,8 +1768,8 @@ namespace AdServer
       CampaignConfigSource_var campaign_config_source_;
       GrpcBillingStateContainer_var check_billing_state_container_;
       GrpcBillingStateContainer_var confirm_billing_state_container_;
-      ReferenceCounting::PtrHolder<ConstCTRProvider_var> ctr_provider_;
-      ReferenceCounting::PtrHolder<ConstCTRProvider_var> conv_rate_provider_;
+      ReferenceCounting::PtrHolder<CTR::ConstCTRProvider_var> ctr_provider_;
+      ReferenceCounting::PtrHolder<CTR::ConstCTRProvider_var> conv_rate_provider_;
       ReferenceCounting::PtrHolder<ConstBidCostProvider_var> bid_cost_provider_;
 
       mutable SyncPolicy::Mutex lock_;

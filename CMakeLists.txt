@@ -60,6 +60,7 @@ find_package(XSD REQUIRED)
 find_package(XercesC REQUIRED)
 find_package(YY REQUIRED)
 find_package(gRPC REQUIRED)
+find_package(catboost REQUIRED)
 include(${UNIXCOMMONS}/cmake/SetupUserver.cmake)
 #include(cmake/SetupUserver.cmake)
 
