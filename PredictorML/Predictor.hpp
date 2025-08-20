@@ -5,7 +5,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 // CATBOOST
-#include <catboost/wrapped_calcer.h>
+#include <catboost/model_interface/wrapped_calcer.h>
 
 // UNIXCOMMONS
 #include <eh/Exception.hpp>

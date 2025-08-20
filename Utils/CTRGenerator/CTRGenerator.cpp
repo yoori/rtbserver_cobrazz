@@ -1,9 +1,7 @@
 #include <sstream>
 #include "CTRGenerator.hpp"
 
-namespace AdServer
-{
-namespace CampaignSvcs
+namespace AdServer::CampaignSvcs
 {
   // Index calculations implementation
   // for independence in impl errors,
@@ -813,7 +811,7 @@ namespace CampaignSvcs
 
         feature_holder.feature_calculator = feature_hash_calculator;
 
-        feature_holders_.push_back(feature_holder);
+        feature_holders_.emplace_back(feature_holder);
       }
     }
   }
@@ -1067,5 +1065,4 @@ namespace CampaignSvcs
 
     return res_hash;
   }
-}
 }

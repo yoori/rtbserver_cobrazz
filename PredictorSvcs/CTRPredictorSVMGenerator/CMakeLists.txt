@@ -24,14 +24,3 @@ target_link_libraries(CTRPredictorSVMGenerator
   CTRGeneratorLib
   CTRPredictorSVMGeneration
 )
-
-add_executable(CTRPredictorSVMGenerateUtil
-  CTRPredictorSVMGenerateUtil.cpp 
-)
-
-target_link_libraries(CTRPredictorSVMGenerateUtil
-  Generics
-  Commons
-  CTRGeneratorLib
-  CTRPredictorSVMGeneration
-)

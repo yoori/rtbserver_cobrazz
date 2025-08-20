@@ -1,7 +1,7 @@
 #ifndef CAMPAIGNMANAGER_CTR_CATBOOSTCTREVALUATOR_HPP_
 #define CAMPAIGNMANAGER_CTR_CATBOOSTCTREVALUATOR_HPP_
 
-#include <catboost/wrapped_calcer.h>
+#include <catboost/model_interface/wrapped_calcer.h>
 
 #include "CTREvaluator.hpp"
 

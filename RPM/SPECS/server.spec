@@ -152,9 +152,9 @@ Requires: python3-minio
 #BuildRequires: libicu-devel = 50.2-4
 BuildRequires: boost%{__boost_suffix}-devel = 1.76.0
 Requires: boost%{__boost_suffix} = 1.76.0
-BuildRequires: xgboost-devel
+BuildRequires: xgboost-devel = 2.0.2-ssv4
 Requires: gtest >= 1.12.1
-Requires: xgboost
+Requires: xgboost = 2.0.2-ssv4
 BuildRequires: gtest-devel = 1.12.1
 Requires: gtest = 1.12.1
 

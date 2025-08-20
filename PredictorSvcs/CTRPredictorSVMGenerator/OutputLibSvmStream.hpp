@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <fstream>
+
 #include <Utils/CTRGenerator/CalculateParamsFilter.hpp>
 
 #include "Utils.hpp"
