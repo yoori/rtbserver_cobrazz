@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv426%{?dist}
+Release: ssv427%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -145,6 +145,7 @@ Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 2.1.2
 Requires: userver = 1.0.29
 Requires: cryptopp libatomic libev
+
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
 Requires: perl-Devel-GlobalDestruction perl-Devel-LexAlias perl-Devel-StackTrace perl-Dist-CheckConflicts perl-Email-Date-Format
 Requires: perl-Eval-Closure perl-Exception-Class perl-File-Find-Rule perl-HTML-Tree perl-libnetcfg perl-Log-Dispatch perl-Mail-Sendmail
@@ -153,10 +154,10 @@ Requires: perl-Package-Stash-XS perl-PadWalker perl-Params-ValidationCompiler pe
 Requires: perl-Ref-Util-XS perl-Role-Tiny perl-Specio perl-Sub-Exporter-Progressive perl-Sub-Identify perl-Variable-Magic perl-XML-Twig
 Requires: perl-Text-CSV perl-Text-CSV_XS
 Requires: perl-Text-Template perl-Time-HiRes perl-DateTime perl-Path-Iterator-Rule
-BuildRequires: python38
-Requires: python38
-Requires: python3-aiohttp python3-psycopg2
-Requires: python3-minio
+
+Requires: python3.12
+Requires: python3.12-aiohttp python3.12-psycopg2
+Requires: python3.12-minio python3.12-catboost
 
 #Requires: libicu = 50.2-4
 #BuildRequires: libicu-devel = 50.2-4
