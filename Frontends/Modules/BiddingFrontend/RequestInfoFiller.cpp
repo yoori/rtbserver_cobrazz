@@ -248,42 +248,42 @@ namespace Request
     // TEAM-313
     const String::SubString VIDEO_SKIPS[] =
     {
-      String::SubString("rtbvideotypeunskip"),
-      String::SubString("rtbvideotypeskip")
+      String::SubString("videotypeunskip"),
+      String::SubString("videotypeskip")
     };
 
     const String::SubString VIDEO_REWARDS[] =
     {
-      String::SubString("rtbvideotypenonward"),
-      String::SubString("rtbvideotypereward")
+      String::SubString("videotypenonward"),
+      String::SubString("videotypereward")
     };
 
     const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_ON(1);
     const unsigned long VIDEO_PLAYBACKMETHOD_SOUND_OFF(2);
-    const String::SubString VIDEO_SOUND_ON("rtbsoundon");
-    const String::SubString VIDEO_SOUND_OFF("rtbsoundoff");
+    const String::SubString VIDEO_SOUND_ON("soundon");
+    const String::SubString VIDEO_SOUND_OFF("soundoff");
 
     const String::SubString VIDEO_PLACEMENTS_STREAM_NAMES[] =
     {
       String::SubString(""),
-      String::SubString("rtbvideotypeinstream"),
-      String::SubString("rtbvideotypebanner"),
-      String::SubString("rtbvideotypearticle"),
-      String::SubString("rtbvideotypefeed"),
-      String::SubString("rtbvideotypeinterstitial")
+      String::SubString("videotypeinstream"),
+      String::SubString("videotypebanner"),
+      String::SubString("videotypearticle"),
+      String::SubString("videotypefeed"),
+      String::SubString("videotypeinterstitial")
     };
 
     const std::array<int, 5> VIDEO_PLACEMENTS_OUT_STREAM_INDEXES =
     {
       2, 3, 4, 5, 7
     };
-    const String::SubString VIDEO_TYPE_OUT_STREAM_NAME("rtbvideotypeoutstream");
+    const String::SubString VIDEO_TYPE_OUT_STREAM_NAME("videotypeoutstream");
 
     const long VIDEO_START_DELAY_TYPE_PRE(0);
     const long VIDEO_START_DELAY_TYPE_POST(-2);
-    const String::SubString VIDEO_TYPE_PRE("rtbvideotypepre");
-    const String::SubString VIDEO_TYPE_MID("rtbvideotypemid");
-    const String::SubString VIDEO_TYPE_POST("rtbvideotypepost");
+    const String::SubString VIDEO_TYPE_PRE("videotypepre");
+    const String::SubString VIDEO_TYPE_MID("videotypemid");
+    const String::SubString VIDEO_TYPE_POST("videotypepost");
 
     // ADSC-10933
     const String::SubString VIDEO_PLAYBACKMETHODS[] =
@@ -4543,7 +4543,7 @@ namespace Bidding
                 Request::OpenRtb::VIDEO_PLAYBACKMETHOD_SOUND_ON)
               != slot_it->video_playbackmethods->end())
           {
-            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_ON);
+            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_ON, false);
           }
           if (std::find(
                 slot_it->video_playbackmethods->begin(),
@@ -4551,7 +4551,7 @@ namespace Bidding
                 Request::OpenRtb::VIDEO_PLAYBACKMETHOD_SOUND_OFF)
               != slot_it->video_playbackmethods->end())
           {
-            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_OFF);
+            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_OFF, false);
           }
         }
 
@@ -4562,7 +4562,8 @@ namespace Bidding
             String::SubString(),
             get_value_from_seq(
               Request::OpenRtb::VIDEO_SKIPS,
-              *slot_it->video_skip));
+              *slot_it->video_skip),
+	    false);
         }
 
         if (!slot_it->video_reward.empty())
@@ -4571,7 +4572,8 @@ namespace Bidding
             String::SubString(),
             get_value_from_seq(
               Request::OpenRtb::VIDEO_REWARDS,
-              *slot_it->video_reward));
+              *slot_it->video_reward),
+	    false);
         }
 
         if (slot_it->video_placement)
@@ -4580,7 +4582,8 @@ namespace Bidding
             String::SubString(),
             get_value_from_seq(
               Request::OpenRtb::VIDEO_PLACEMENTS_STREAM_NAMES,
-              *slot_it->video_placement));
+              *slot_it->video_placement),
+	    false);
 
           if (std::find(
                 Request::OpenRtb::VIDEO_PLACEMENTS_OUT_STREAM_INDEXES.begin(),
@@ -4588,7 +4591,7 @@ namespace Bidding
                 *slot_it->video_placement)
               != Request::OpenRtb::VIDEO_PLACEMENTS_OUT_STREAM_INDEXES.end())
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_OUT_STREAM_NAME);
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_OUT_STREAM_NAME, false);
           }
         }
 
@@ -4596,15 +4599,15 @@ namespace Bidding
         {
           if (*slot_it->video_start_delay == Request::OpenRtb::VIDEO_START_DELAY_TYPE_PRE)
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_PRE);
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_PRE, false);
           }
           else if (*slot_it->video_start_delay > Request::OpenRtb::VIDEO_START_DELAY_TYPE_PRE)
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_MID);
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_MID, false);
           }
           else if (*slot_it->video_start_delay == Request::OpenRtb::VIDEO_START_DELAY_TYPE_POST)
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_POST);
+              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_POST, false);
           }
         }
 
