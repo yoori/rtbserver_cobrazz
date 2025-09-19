@@ -337,7 +337,7 @@ then
   done
 
   # RTB FCGI server
-  for RTB_INDEX in $(seq 1 16)
+  for RTB_INDEX in $(seq 1 32)
   do
     $EXEC/ServiceConf.sh \
       --macro "{FCGIRTBSERVER_INDEX}" "$RTB_INDEX" \

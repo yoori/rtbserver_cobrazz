@@ -192,6 +192,10 @@ http {
         <i>5</i><i>6</i><i>7</i><i>8</i>
         <i>9</i><i>10</i><i>11</i><i>12</i>
         <i>13</i><i>14</i><i>15</i><i>16</i>
+        <i>17</i><i>18</i><i>19</i><i>20</i>
+        <i>21</i><i>22</i><i>23</i><i>24</i>
+        <i>25</i><i>26</i><i>27</i><i>28</i>
+        <i>29</i><i>30</i><i>31</i><i>32</i>
       </xsl:variable>
       <xsl:for-each select="exsl:node-set($rtbbackend_socket_arr)/i">
       server unix:<xsl:value-of select="concat($workspace-root,'/run/fcgi_rtbserver', ., '_1',

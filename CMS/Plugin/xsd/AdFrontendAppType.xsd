@@ -559,6 +559,518 @@
     </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:complexType name="RtbFCGI17NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10212">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10312">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI18NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10213">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10313">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI19NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10214">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10314">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI20NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10215">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10315">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI21NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10216">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10316">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI22NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10217">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10317">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI23NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10218">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10318">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI24NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10219">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10319">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI25NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10220">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10320">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI26NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10221">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10321">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI27NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10222">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10322">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI28NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10223">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10323">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI29NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10224">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10324">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI30NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10225">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10325">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI31NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10226">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10326">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="RtbFCGI32NetworkParamsType">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10227">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for CORBA interface.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10327">
+      <xsd:annotation>
+        <xsd:documentation>
+         Port for get monitoring metrics.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="backlog" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>FastCGI socket backlog.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="accept_threads" type="xsd:positiveInteger" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Number of threads that do accept of new connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="keep_connections" type="xsd:positiveInteger" default="800">
+      <xsd:annotation>
+        <xsd:documentation>Minimum number of opened connections.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
   <xsd:complexType name="TrackFCGI1NetworkParamsType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10195">
       <xsd:annotation>
@@ -866,6 +1378,118 @@
         </xsd:annotation>
       </xsd:element>
       <xsd:element name="rtbFCGI16NetworkParams" type="RtbFCGI16NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI17NetworkParams" type="RtbFCGI17NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI18NetworkParams" type="RtbFCGI18NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI19NetworkParams" type="RtbFCGI19NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI20NetworkParams" type="RtbFCGI20NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI21NetworkParams" type="RtbFCGI21NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI22NetworkParams" type="RtbFCGI22NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI23NetworkParams" type="RtbFCGI23NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI24NetworkParams" type="RtbFCGI24NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI25NetworkParams" type="RtbFCGI25NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI26NetworkParams" type="RtbFCGI26NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI27NetworkParams" type="RtbFCGI27NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI28NetworkParams" type="RtbFCGI28NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI29NetworkParams" type="RtbFCGI29NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI30NetworkParams" type="RtbFCGI30NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI31NetworkParams" type="RtbFCGI31NetworkParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+           Network settings for running control.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="rtbFCGI32NetworkParams" type="RtbFCGI32NetworkParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
            Network settings for running control.
