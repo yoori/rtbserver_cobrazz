@@ -76,6 +76,69 @@ namespace UserInfoSvcs
     }
   }
 
+  unsigned long
+  UserInfoManagerSessionImpl::get_user_host_index_(
+    const CORBACommons::UserIdInfo& user_id_info)
+    /*throw(
+      AdServer::UserInfoSvcs::UserInfoManager::NotReady,
+      AdServer::UserInfoSvcs::UserInfoManager::ImplementationException)*/
+  {
+    static const char* FUN = "UserInfoManagerSessionImpl::get_user_host_index_()";
+
+    try
+    {
+      if(!inited_)
+      {
+        init_();
+      }
+
+      /* calculate chunk number for this user */
+
+      if(max_chunk_number_ == 0)
+      {
+        Stream::Error ostr;
+        ostr << FUN << ": Max chunk number = 0.";
+        CORBACommons::throw_desc<
+          AdServer::UserInfoSvcs::UserInfoManager::ImplementationException>(
+            ostr.str());
+      }
+
+      return AdServer::Commons::uuid_distribution_hash(
+        CorbaAlgs::unpack_user_id(user_id_info)) % max_chunk_number_;
+    }
+    catch(const eh::Exception& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": for user_id = '" <<
+        CorbaAlgs::unpack_user_id(user_id_info) << // FIXME: may throw ex::Exception
+        "'. Caught eh::Exception: " << ex.what();
+
+      CORBACommons::throw_desc<
+        AdServer::UserInfoSvcs::UserInfoManager::ImplementationException>(
+          ostr.str());
+    }
+    catch(const AdServer::UserInfoSvcs::UserInfoManager::NotReady&)
+    {
+      throw;
+    }
+    catch(const AdServer::UserInfoSvcs::
+          UserInfoManager::ImplementationException&)
+    {
+      throw;
+    }
+    catch(const CORBA::SystemException& ex)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": Caught CORBA::SystemException: " << ex;
+
+      CORBACommons::throw_desc<
+        AdServer::UserInfoSvcs::UserInfoManager::ImplementationException>(
+          ostr.str());
+    }
+
+    return 0; // never reach
+  }
+
   AdServer::UserInfoSvcs::UserInfoManager*
   UserInfoManagerSessionImpl::get_user_host_(
     unsigned long host_index)

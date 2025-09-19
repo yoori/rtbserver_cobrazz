@@ -17,7 +17,7 @@ namespace UserBind
 {
   struct RequestInfo: public ReferenceCounting::AtomicImpl
   {
-    using ChannelsWl = std::vector<std::uint32_t>;
+    using ChannelsWl = std::unordered_set<std::uint32_t>;
 
     RequestInfo()
     : user_status(AdServer::CampaignSvcs::US_UNDEFINED),
@@ -38,7 +38,6 @@ namespace UserBind
     Generics::Time time;
     bool passback;
     AdServer::Commons::UserId user_id;
-    std::string param_user_id;
     std::string cohort;
     unsigned long colo_id;
     std::string source_id;

@@ -238,7 +238,7 @@ namespace AdServer
 
     int handle_user_channels_request_(
       const UserBind::RequestInfo& request_info,
-      FrontendCommons::HttpResponse& response);
+      FCGI::HttpResponse& response);
 
   private:
     // configuration

@@ -14,6 +14,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/Base32.hpp>
+#include <Commons/JsonFormatter.hpp>
 
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -2350,14 +2351,127 @@ namespace AdServer
 
   int UserBindFrontend::handle_user_channels_request_(
     const UserBind::RequestInfo& request_info,
-    FrontendCommons::HttpResponse& response)
+    FCGI::HttpResponse& response)
   {
-    UserChannelsHandler handler(
-      grpc_container_,
-      user_info_client_,
-      logger());
-    return handler.handle(
-      request_info,
-      response);
+    static const char* FUN = "UserBindFrontend::handle_user_channels_request_()";
+
+    static const String::SubString JSON_SESSION_ID_NAME("session_id");
+    static const String::SubString JSON_CL_ID_NAME("cl_id");
+    static const String::SubString JSON_SEGMENTS_NAME("segments");
+
+    if (request_info.user_id.is_null())
+    {
+      return 400;
+    }
+
+    AdServer::UserInfoSvcs::UserInfoMatcher_var
+      uim_session = user_info_client_->user_info_session();
+
+    if (!uim_session.in())
+    {
+      return 500;
+    }
+
+    try
+    {
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
+      match_params.use_empty_profile = false;
+      match_params.silent_match = false;
+      match_params.no_match = false;
+      match_params.no_result = false;
+      match_params.ret_freq_caps = false;
+      match_params.provide_channel_count = false;
+      match_params.provide_persistent_channels = false;
+      match_params.change_last_request = false;
+      match_params.publishers_optin_timeout = CorbaAlgs::pack_time(Generics::Time::ZERO);
+
+      AdServer::UserInfoSvcs::UserInfo user_info;
+      user_info.user_id = CorbaAlgs::pack_user_id(request_info.user_id);
+      user_info.huser_id = CorbaAlgs::pack_user_id(AdServer::Commons::UserId{});
+      user_info.last_colo_id = request_info.colo_id;
+      user_info.request_colo_id = request_info.colo_id;
+      user_info.current_colo_id = -1;
+      user_info.temporary = false;
+      user_info.time = Generics::Time::get_time_of_day().tv_sec;
+
+      // request match with empty triggered channels - get only actually matched channels
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
+      uim_session->match(user_info, match_params, history_match_result);
+
+      AdServer::UserInfoSvcs::UserInfoMatcher::ChannelWeightSeq& history_matched_channels =
+	history_match_result->channels;
+      // ignore content_channels - it isn't interest here
+      std::vector<unsigned long> return_channel_ids;
+
+      for (CORBA::ULong i = 0; i < history_matched_channels.length(); ++i)
+      {
+        if (request_info.channels_wl.empty() ||
+            request_info.channels_wl.find(history_matched_channels[i].channel_id) !=
+            request_info.channels_wl.end())
+        {
+          return_channel_ids.emplace_back(history_matched_channels[i].channel_id);
+        }
+      }
+
+      std::ostringstream response_string;
+
+      {
+	AdServer::Commons::JsonFormatter root_json(response_string);
+
+	if (!request_info.session_id.empty())
+	{
+	  root_json.add(JSON_SESSION_ID_NAME, request_info.session_id);
+	}
+
+	if (!request_info.cl_id.empty())
+	{
+	  root_json.add(JSON_CL_ID_NAME, request_info.cl_id);
+	}
+
+	{
+	  AdServer::Commons::JsonObject segment_array(root_json.add_array(JSON_SEGMENTS_NAME));
+	  for (const auto& user_channel : return_channel_ids)
+	  {
+	    segment_array.add_number(user_channel);
+	  }
+	}
+      }
+
+      response.set_content_type(Response::Type::JSON);
+      response.write(response_string.str());
+
+      return 200;
+    }
+    catch(const AdServer::UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": caught UserInfoMatcher::ImplementationException: " <<
+	"user_id = '" << request_info.user_id.to_string() << "'; " <<
+	e.description;
+      logger()->log(ostr.str(),
+	Logging::Logger::EMERGENCY,
+	Aspect::USER_BIND_FRONTEND,
+	"ADS-IMPL-7803");
+    }
+    catch(const AdServer::UserInfoSvcs::UserInfoMatcher::NotReady& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": caught UserInfoMatcher::NotReady.";
+      logger()->log(ostr.str(),
+	Logging::Logger::EMERGENCY,
+	Aspect::USER_BIND_FRONTEND,
+	"ADS-IMPL-7804");
+    }
+    catch(const CORBA::SystemException& e)
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": caught CORBA::SystemException: " << e;
+      logger()->log(ostr.str(),
+	Logging::Logger::EMERGENCY,
+	Aspect::USER_BIND_FRONTEND,
+	"ADS-ICON-7800");
+    }
+
+    return 500;
   }
 }

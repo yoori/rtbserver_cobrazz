@@ -309,9 +309,6 @@ namespace UserBind
     add_processor_(false, true, Request::Context::DISABLE_SECURE_REDIRECT,
       new FrontendCommons::BoolParamProcessor<RequestInfo>(
         &RequestInfo::disable_secure_redirect));
-    add_processor_(false, true, FrontendCommons::Cookies::CLIENT_ID,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::param_user_id));
     add_processor_(false, true, Request::Context::CL_ID,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::cl_id));
