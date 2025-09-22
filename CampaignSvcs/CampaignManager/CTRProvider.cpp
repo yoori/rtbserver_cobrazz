@@ -1460,6 +1460,7 @@ namespace AdServer::CampaignSvcs::CTR
         {
           Model_var model(new Model(++global_model_id));
           model->method_name = model_it->method;
+          model->weight = model_it->weight;
 
           if(model_it->method == "ftrl" || model_it->method.empty())
           {
