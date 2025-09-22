@@ -1,0 +1,18 @@
+{
+    "db_name": "<...>",
+    "db_user": "<...>",
+    "db_password": "<...>",
+    "db_host": "<...>",
+    "db_port": "<...>",
+
+    "ch_name": "<...>",
+    "ch_user": "<...>",
+    "ch_password": "<...>",
+    "ch_host": "<...>",
+    "ch_port": "<...>",
+
+    "loglevel": "info",
+
+    "interval": "1d",
+    "statement_timeout": 5000
+}
