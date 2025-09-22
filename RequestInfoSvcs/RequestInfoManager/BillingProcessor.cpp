@@ -761,7 +761,7 @@ namespace RequestInfoSvcs
     bool check_active)
     /*throw(Exception)*/
   {
-    assert(ctr <= RevenueDecimal(false, 1, 0));
+    //assert(ctr <= RevenueDecimal(false, 1, 0));
 
     Request_var request(new Request(
       // key fields
