@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <arpa/inet.h>
+
 #include <Generics/AppUtils.hpp>
 #include <Generics/BitAlgs.hpp>
 #include <xsd/Utils/CTRGeneratorConfig.hpp>

@@ -10,11 +10,6 @@ module AdServer
   {
     typedef CORBACommons::TimestampInfo TimestampInfo;
 
-    module AccountFlags
-    {
-      const unsigned long TEST = 0x01;
-    };
-
     module ChannelFlags
     {
       const unsigned long HIDDEN = 0x04;
@@ -243,19 +238,6 @@ module AdServer
       CTT_NONE,
       CTT_TEXT,
       CTT_XSLT
-    };
-
-    module CampaignFlags
-    {
-      /* mask's for campaign field flags */
-      const unsigned long EXTERNAL = 0x01; // external campaigns support removed
-      const unsigned long TRACK_ACTIONS = 0x10;
-      const unsigned long INCLUDE_SPECIFIC_SITES = 0x200;
-
-      const unsigned long US_OPTIN = 0x1000;
-      const unsigned long US_OPTOUT = 0x2000;
-      const unsigned long US_UNDEFINED = 0x4000;
-      const unsigned long US_NONE = 0x8000;
     };
 
     struct CampaignDeliveryLimitsInfo

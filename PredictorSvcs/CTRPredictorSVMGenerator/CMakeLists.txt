@@ -7,6 +7,13 @@ add_library(CTRPredictorSVMGeneration
   InputCsvStream.cpp 
 )
 
+target_link_libraries(CTRPredictorSVMGeneration
+  Generics
+  Commons
+  AdServerCommonsXSD
+  CTRPredictorSVMGeneratorConfigXSD
+)
+
 add_executable(CTRPredictorSVMGenerator
   CampaignFolder.cpp 
   CTRPredictorSVMGeneratorImpl.cpp 

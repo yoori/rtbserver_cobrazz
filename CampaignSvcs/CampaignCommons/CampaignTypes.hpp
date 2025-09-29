@@ -84,6 +84,23 @@ namespace AdServer
       }
     };
 
+    enum class AccountFlags: unsigned long
+    {
+      TEST = 0x01
+    };
+
+    enum class CampaignFlags: unsigned long
+    {
+      /* mask's for campaign field flags */
+      TRACK_ACTIONS = 0x10,
+      INCLUDE_SPECIFIC_SITES = 0x200,
+
+      US_OPTIN = 0x1000,
+      US_OPTOUT = 0x2000,
+      US_UNDEFINED = 0x4000,
+      US_NONE = 0x8000
+    };
+
     enum NativeAdsImpressionTrackerType
     {
       NAITT_IMP,
@@ -473,6 +490,18 @@ namespace AdServer
     {
       return option_id == right.option_id &&
         value == right.value;
+    }
+
+    inline
+    unsigned long operator&(unsigned long left, CampaignFlags right)
+    {
+      return left & static_cast<unsigned long>(right);
+    }
+
+    inline
+    unsigned long& operator|=(unsigned long& left, CampaignFlags right)
+    {
+      return left |= static_cast<unsigned long>(right);
     }
   }
 }

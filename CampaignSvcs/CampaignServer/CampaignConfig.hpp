@@ -654,7 +654,7 @@ namespace AdServer
 
       bool is_test() const noexcept
       {
-        return flags & AccountFlags::TEST;
+        return flags & static_cast<unsigned long>(AccountFlags::TEST);
       }
 
       bool use_self_budget() const noexcept
