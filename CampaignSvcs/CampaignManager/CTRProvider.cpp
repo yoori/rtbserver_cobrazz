@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cfloat>
 #include <fstream>
 #include <Generics/MMap.hpp>
 #include <Generics/Singleton.hpp>

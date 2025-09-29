@@ -1,3 +1,5 @@
+#include <arpa/inet.h>
+
 #include <ProfilingCommons/PlainStorage3/FileReader.hpp>
 
 #include "FTRLCTREvaluator.hpp"
@@ -40,7 +42,7 @@ namespace AdServer::CampaignSvcs::CTR
 
   RevenueDecimal
   FTRLCTREvaluator::get_ctr(
-    const ModelTraits& model,
+    const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
     const HashArray* request_hashes,

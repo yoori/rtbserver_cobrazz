@@ -89,7 +89,7 @@ namespace AdServer::CampaignSvcs::CTR
 
   RevenueDecimal
   CatBoostCTREvaluator::get_ctr(
-    const ModelTraits& model,
+    const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
     const HashArray* request_hashes,

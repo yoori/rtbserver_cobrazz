@@ -1,3 +1,5 @@
+#include <cfloat>
+
 #include "XGBoostCTREvaluator.hpp"
 
 namespace AdServer::CampaignSvcs::CTR
@@ -9,13 +11,13 @@ namespace AdServer::CampaignSvcs::CTR
 
   RevenueDecimal
   XGBoostCTREvaluator::get_ctr(
-    const ModelTraits& model,
+    const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
     const HashArray* request_hashes,
     const HashArray* auction_hashes,
     const HashArray* candidate_hashes,
-    const HashArray* opt_hashes) const
+    const HashArray* /*opt_hashes*/) const
   {
     XGBoostPredictorPool::Predictor_var xgboost_predictor =
       xgboost_predictor_pool_->get_predictor();

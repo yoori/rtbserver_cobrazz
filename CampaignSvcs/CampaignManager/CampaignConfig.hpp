@@ -18,7 +18,6 @@
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannel.hpp>
 
-#include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelIndex.hpp>
 
@@ -590,7 +589,7 @@ namespace CampaignSvcs
 
       bool is_test() const noexcept
       {
-        return (site->account->flags & AccountFlags::TEST) != 0;
+        return (site->account->flags & static_cast<unsigned long>(AccountFlags::TEST)) != 0;
       }
 
       unsigned long tag_id;
@@ -677,7 +676,7 @@ namespace CampaignSvcs
     public:
       bool is_test() const noexcept
       {
-        return (at_flags & AccountFlags::TEST) ? true : false;
+        return (at_flags & static_cast<unsigned long>(AccountFlags::TEST)) ? true : false;
       }
 
       unsigned long colo_id;
@@ -1401,7 +1400,7 @@ namespace CampaignSvcs
     inline
     bool Campaign::is_test() const noexcept
     {
-      return (account->flags & AccountFlags::TEST) ? true : false;
+      return (account->flags & static_cast<unsigned long>(AccountFlags::TEST)) ? true : false;
     }
 
     inline

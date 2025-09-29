@@ -1,6 +1,7 @@
 #include <fstream>
 #include <deque>
 #include <mutex>
+#include <cfloat>
 
 #include <DTree/SVM.hpp>
 #include <DTree/FastFeatureSet.hpp>
@@ -95,7 +96,7 @@ namespace AdServer::CampaignSvcs::CTR
 
   RevenueDecimal
   VangaCTREvaluator::get_ctr(
-    const ModelTraits& model,
+    const ModelTraits& /*model*/,
     const CampaignSelectParams* /*request_params*/,
     const Creative* /*creative*/,
     const HashArray* request_hashes,
