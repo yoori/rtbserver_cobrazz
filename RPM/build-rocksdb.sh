@@ -8,7 +8,7 @@ RES_TMP=build/TMP/
 
 RES_RPMS=build/RPMS/
 VERSION=8.8.1
-RELEASE=4
+RELEASE=5
 DOWNLOAD_VERSION=8.8.1-ssv4
 
 _version=%{VERSION}
@@ -75,7 +75,7 @@ export PATH=/opt/rh/gcc-toolset-10/root/usr/bin/:$PATH
 #PORTABLE=1 make -j6 DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0 WITH_TESTS=0
 mkdir build
 pushd build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_TESTS:BOOL=OFF ..
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_TESTS:BOOL=OFF -DPORTABLE:BOOL=ON ..
 cmake --build . -j
 popd
 
