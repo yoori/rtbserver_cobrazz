@@ -567,7 +567,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10312">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10312">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -599,7 +599,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10313">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10313">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -631,7 +631,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10314">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10314">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -663,7 +663,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10315">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10315">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -695,7 +695,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10316">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10316">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -727,7 +727,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10317">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10317">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -759,7 +759,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10318">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10318">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -791,7 +791,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10319">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10319">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -823,7 +823,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10320">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10320">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -855,7 +855,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10321">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10321">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -887,7 +887,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10322">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10322">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -919,7 +919,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10323">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10323">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -951,7 +951,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10324">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10324">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -983,7 +983,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10325">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10325">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1015,7 +1015,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10326">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10326">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1047,7 +1047,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="mon_port" type="xsd:positiveInteger" use="optional" default="10327">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10327">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
