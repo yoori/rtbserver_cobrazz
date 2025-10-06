@@ -13,6 +13,7 @@
 
     "loglevel": "info",
 
-    "interval": "1d",
+    "checkDaysSinceNow": 5,
+    "interval": "12h",
     "statement_timeout": 5000
 }
