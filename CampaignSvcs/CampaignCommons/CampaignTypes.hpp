@@ -16,6 +16,7 @@ namespace AdServer
 {
   namespace CampaignSvcs
   {
+    const unsigned long TRUE_CHANNEL_ID = 3;
     const unsigned long MAX_TARGET_USERS_GROUPS = 100;
 
     namespace AccountTypeFlags

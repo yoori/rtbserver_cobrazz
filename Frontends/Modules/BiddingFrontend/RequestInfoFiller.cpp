@@ -1878,7 +1878,7 @@ namespace Bidding
 
       JsonNativeParamProcessor_var asset_processor =
         new JsonAssetProcessor();
-        
+
       native_processor->add_processor(
         Request::OpenRtb::NATIVE_ASSETS,
         JsonNativeParamProcessor_var(
