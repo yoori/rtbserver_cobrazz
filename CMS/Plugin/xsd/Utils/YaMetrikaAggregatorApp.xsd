@@ -1,0 +1,23 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+            elementFormDefault="qualified"
+            xml:lang="en"
+            version="1.0">
+
+    <xsd:annotation>
+      <xsd:documentation>
+        Yandex metrica aggregator configuration file XML schema
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:include schemaLocation="./YaMetrikaAggregatorAppType.xsd"/>
+
+    <xsd:element name="yaMetrikaAggregator" type="YaMetrikaAggregatorConfigType">
+      <xsd:annotation>
+        <xsd:documentation>
+          yaMetrikaAggregator configuration.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:element>
+</xsd:schema>

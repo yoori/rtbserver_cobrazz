@@ -90,6 +90,14 @@
         maxHostOccurs="1"/>
 
       <service
+        type="YaMetrikaAggregator"
+        configSchema="xsd/Utils/YaMetrikaAggregatorApp.xsd"
+        minOccurs="0"
+        maxOccurs="1"
+        minHostOccurs="1"
+        maxHostOccurs="1"/>
+
+      <service
         type="ExpressionMatcher"
         configSchema="xsd/LogProcessing/ExpressionMatcherApp.xsd"
         minOccurs="1"

@@ -93,6 +93,7 @@
 <xsl:variable name="log-generalizer-descriptor" select="'AdCluster/BackendSubCluster/LogGeneralizer'"/>
 <xsl:variable name="stat-uploader-descriptor" select="'AdCluster/BackendSubCluster/StatUploader'"/>
 <xsl:variable name="ya-metrika-uploader-descriptor" select="'AdCluster/BackendSubCluster/YaMetrikaUploader'"/>
+<xsl:variable name="ya-metrika-aggregator-descriptor" select="'AdCluster/BackendSubCluster/YaMetrikaAggregator'"/>
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
 <xsl:variable name="SegmentLoader-descriptor" select="'AdCluster/BackendSubCluster/SegmentLoader'"/>
@@ -370,6 +371,8 @@
 <xsl:variable name="def-user-info-manager-port" select="$def-range-start + 1"/>
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
 <xsl:variable name="def-user-info-manager-grpc-port" select="$def-range-start + 201"/>
+<xsl:variable name="def-user-info-manager-mon-port" select="$def-range-start + 327"/>
+
 <xsl:variable name="def-campaign-manager-grpc-port" select="$def-range-start + 202"/>
 
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
@@ -705,5 +708,24 @@
 
 <!-- Click frontend params -->
 <xsl:variable name="def-time-duration-grpc-client-mark-bad" select="20"/>
+
+<!-- Yandex metrika aggregator params -->
+<xsl:variable name="def-ya-metrika-aggregator-clickhouse-host" select="'clickhouse-host'"/>
+<xsl:variable name="def-ya-metrika-aggregator-clickhouse-port" select="7777"/>
+<xsl:variable name="def-ya-metrika-aggregator-clickhouse-db" select="'clickhouse-db'"/>
+<xsl:variable name="def-ya-metrika-aggregator-clickhouse-user" select="'clickhouse-user'"/>
+<xsl:variable name="def-ya-metrika-aggregator-clickhouse-password" select="'clickhouse-password'"/>
+<xsl:variable name="def-ya-metrika-aggregator-postgres-host" select="'postdb00'"/>
+<xsl:variable name="def-ya-metrika-aggregator-postgres-port" select="5432"/>
+<xsl:variable name="def-ya-metrika-aggregator-postgres-db" select="'stat'"/>
+<xsl:variable name="def-ya-metrika-aggregator-postgres-user" select="'oix'"/>
+<xsl:variable name="def-ya-metrika-aggregator-postgres-password" select="'68hosnuea5aS5Ex'"/>
+<xsl:variable name="def-ya-metrika-aggregator-metrics-window-days" select="5"/>
+<xsl:variable name="def-ya-metrika-aggregator-update-period-hours" select="12"/>
+<xsl:variable name="def-ya-metrika-aggregator-postgres-timeout" select="10000"/>
+<xsl:variable name="def-ya-metrika-aggregator-logging-verbosity" select="1"/>
+<xsl:variable name="def-ya-metrika-aggregator-http-connect-timeout" select="10000"/>
+<xsl:variable name="def-ya-metrika-aggregator-http-limit" select="10000"/>
+<xsl:variable name="def-ya-metrika-aggregator-max-attempts" select="10"/>
 
 </xsl:stylesheet>
