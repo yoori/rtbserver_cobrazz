@@ -3320,6 +3320,7 @@ namespace AdServer
             CorbaAlgs::convert_sequence(
               request_params.context_info.geo_channels,
               triggered_channels);
+	    triggered_channels.emplace(TRUE_CHANNEL_ID);
 
             FreqCapIdSet full_freq_caps;
             std::copy(
@@ -6550,7 +6551,8 @@ namespace AdServer
         ChannelIdHashSet triggered_channels(
           request_params.channels.get_buffer(),
           request_params.channels.get_buffer() + request_params.channels.length());
-        
+        triggered_channels.emplace(TRUE_CHANNEL_ID);
+
         campaign_select_params.user_id =
           CorbaAlgs::unpack_user_id(request_params.common_info.user_id);
         campaign_select_params.country_code =
