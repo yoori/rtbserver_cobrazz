@@ -1,0 +1,173 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Yandex metrica aggregator configuration file XML schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:element name="AdConfiguration" type="AdConfigurationType"/>
+
+  <xsd:complexType name="AdConfigurationType">
+    <xsd:sequence>
+      <xsd:element name="YaMetrikaAggregatorConfig" type="YaMetrikaAggregatorConfigType"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="ClickhouseConfigType">
+    <xsd:attribute name="host" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Hostname.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Port.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="db" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Username.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="password" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Password.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="PostgresConfigType">
+    <xsd:attribute name="host" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Hostname.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Port.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="db" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Database name.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="user" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Username.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="password" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Password.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <xsd:complexType name="HttpConfigType">
+    <xsd:attribute name="connect_timeout" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Connect timeout</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="limit" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>limit items for request</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="max_attempts" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>max request attempts</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <xsd:complexType name="LoggingConfigType">
+    <xsd:attribute name="log_level" type="xsd:nonNegativeInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Log level.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="out_log_dir" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Out log directory.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AggregatorParamsConfigType">
+    <xsd:attribute name="metrics_window_days" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Number of last days for getting yandex metrics.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="update_period_hours" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Yandex Metrika update interval(hours).</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="postgres_timeout" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Postgres timeout(ms)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="pid_path" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Path to pid file</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="YaMetrikaAggregatorConfigType">
+    <xsd:sequence>
+      <xsd:element name="ClickhouseConfig" type="ClickhouseConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Clickhouse parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="PostgresConfig" type="PostgresConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Postgres parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="HttpConfig" type="HttpConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Http parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="LoggingConfig" type="LoggingConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="ParamsConfig" type="AggregatorParamsConfigType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Service parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -447,6 +447,13 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
+          select="$be-cluster-path/service[@descriptor = $ya-metrika-aggregator-descriptor]"/>
+        <xsl:with-param name="service-name" select="'lp-YaMetrikaAggregator'"/>
+        <xsl:with-param name="service-type" select="'AdServer::Utils::YaMetrikaAggregator'"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
                         select="$be-cluster-path/service[@descriptor = $SegmentLoader-descriptor]"/>
         <xsl:with-param name="service-name" select="'be-SegmentLoader'"/>
         <xsl:with-param name="service-type" select="'AdServer::PredictorSvcs::SegmentLoader'"/>
