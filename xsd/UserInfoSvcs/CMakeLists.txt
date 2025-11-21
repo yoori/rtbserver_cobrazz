@@ -1,4 +1,3 @@
-
 add_xsd(UserBindControllerConfigXSD UserBindControllerConfig.xsd ${XSD_DIRECTORY}/xsd/UserInfoSvcs)
 add_xsd(UserBindServerConfigXSD UserBindServerConfig.xsd ${XSD_DIRECTORY}/xsd/UserInfoSvcs)
 add_xsd(UserInfoExchangerConfigXSD UserInfoExchangerConfig.xsd ${XSD_DIRECTORY}/xsd/UserInfoSvcs)

@@ -83,7 +83,7 @@ int UserChannelsHandler::handle(
   UserChannels user_channels;
   auto& grpc_user_info_operation_distributor =
     grpc_container_->grpc_user_info_operation_distributor;
-  if (/*grpc_user_info_operation_distributor*/false)
+  if (grpc_user_info_operation_distributor)
   {
     ProfilesRequestInfoProto profiles_request;
     profiles_request.base_profile = true;

@@ -25,6 +25,7 @@ EXPRESSION_MATCHER_DESCR=$BACKEND_CLUSTER/ExpressionMatcher
 LOG_GENERALIZER_DESCR=$BACKEND_CLUSTER/LogGeneralizer
 STAT_UPLOADER_DESCR=$BACKEND_CLUSTER/StatUploader
 YA_METRIKA_UPLOADER_DESCR=$BACKEND_CLUSTER/YaMetrikaUploader
+YA_METRIKA_AGGREGATOR_DESCR=$BACKEND_CLUSTER/YaMetrikaAggregator
 LOG_PROCESSING_DESCR=$BACKEND_CLUSTER/LogProcessing
 REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
@@ -131,6 +132,19 @@ $EXEC/ServiceConf.sh \
   --app-xml $APP_XML \
   --xsl $XSLT_ROOT/LogProcessing/YaMetrikaUploader.xsl \
   --out-file YaMetrikaUploaderConfig.json \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
+
+let "EXIT_CODE|=$?"
+
+## configure YaMetrikaAggregator
+YA_METRIKA_AGGREGATOR_XPATH="$CLUSTER_XPATH/service[@descriptor = '$YA_METRIKA_AGGREGATOR_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$YA_METRIKA_AGGREGATOR_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/Utils/YaMetrikaAggregator.xsl \
+  --out-file YaMetrikaAggregatorConfig.xml \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT
 
