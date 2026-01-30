@@ -6020,6 +6020,7 @@ namespace Bidding
     const noexcept
   {
     static const size_t UNSIGNED_SSP_USER_ID_LEN = 22;
+    static const size_t UNSIGNED_ALIGNED_SSP_USER_ID_LEN = 24;
 
     if (!signed_user_id.empty())
     {
@@ -6027,7 +6028,8 @@ namespace Bidding
       {
         Generics::Uuid ssp_uid;
         uint8_t ssp_uid_marker;
-        if (signed_user_id.length() == UNSIGNED_SSP_USER_ID_LEN)
+        if (signed_user_id.length() == UNSIGNED_SSP_USER_ID_LEN ||
+          signed_user_id.length() == UNSIGNED_ALIGNED_SSP_USER_ID_LEN)
         {
           std::string ssp_id_buf;
           String::StringManip::base64mod_decode(
