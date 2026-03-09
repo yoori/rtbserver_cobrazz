@@ -2488,7 +2488,7 @@ namespace Bidding
         ostr << fn << ": CCG Trace of " <<
         request_params.ad_slots[0].debug_ccg <<
           " for request:" << std::endl;
-        
+
         request_task->print_request(ostr);
         
         ostr << std::endl << campaign_match_result->ad_slots[0].debug_info.trace_ccg;
