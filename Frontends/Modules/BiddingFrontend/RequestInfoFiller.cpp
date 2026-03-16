@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <functional>
+#include <iomanip>
 #include <math.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
@@ -83,6 +84,9 @@ namespace Request
     const String::SubString IMP_MIN_CPM_PRICE("bidfloor");
     const String::SubString IMP_MIN_CPM_PRICE_CURRENCY_CODE("bidfloorcur");
     const String::SubString IMP_SECURE("secure");
+    const String::SubString IMP_METRIC("metric");
+    const String::SubString IMP_METRIC_TYPE("type");
+    const String::SubString IMP_METRIC_VALUE("value");
 
     // ext
     const String::SubString IMP_EXT("ext");
@@ -1167,9 +1171,8 @@ namespace Bidding
   public:
     JsonBannerParamProcessor()
     {
-      typedef ReferenceCounting::SmartPtr<
-        AdServer::Commons::JsonCompositeParamProcessor<Banner> >
-        JsonCompositeParamProcessor_var;
+      using JsonCompositeParamProcessor_var = ReferenceCounting::SmartPtr<
+        AdServer::Commons::JsonCompositeParamProcessor<Banner> >;
 
       JsonCompositeParamProcessor_var banner_processor =
         new AdServer::Commons::JsonCompositeParamProcessor<
@@ -1368,6 +1371,108 @@ namespace Bidding
  
   protected:
     JsonDealParamProcessor_var deal_processor_;
+  };
+
+  // metric element processor {"type" : "", "value" : 0.5}
+  class JsonImpMetricParamProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
+  {
+    typedef JsonAdSlotProcessingContext::Metric Metric;
+
+    using JsonMetricParamProcessor = AdServer::Commons::JsonParamProcessor<
+      JsonAdSlotProcessingContext::Metric>;
+
+    using JsonMetricParamProcessor_var = ReferenceCounting::SmartPtr<JsonMetricParamProcessor>;
+
+    class JsonMetricValueParamProcessor: public JsonMetricParamProcessor
+    {
+    public:
+      virtual void
+      process(
+	JsonAdSlotProcessingContext::Metric& metric,
+        const JsonValue& value) const
+      {
+        if(value.getTag() == JSON_TAG_STRING)
+        {
+          metric.value = value.toString();
+        }
+        else if(value.getTag() == JSON_TAG_NUMBER)
+        {
+          std::ostringstream ostr;
+          ostr << std::fixed << std::setprecision(3) << value.toNumber();
+          metric.value = ostr.str();
+        }
+      }
+
+    protected:
+      virtual ~JsonMetricValueParamProcessor() noexcept = default;
+    };
+
+  public:
+    JsonImpMetricParamProcessor()
+    {
+      typedef ReferenceCounting::SmartPtr<
+	AdServer::Commons::JsonCompositeParamProcessor<Metric>>
+        JsonMetricCompositeParamProcessor_var;
+
+      JsonMetricCompositeParamProcessor_var metric_processor =
+        new AdServer::Commons::JsonCompositeParamProcessor<Metric>();
+
+      metric_processor->add_processor(
+        Request::OpenRtb::IMP_METRIC_TYPE,
+        JsonMetricParamProcessor_var(
+          new AdServer::Commons::JsonStringParamProcessor<Metric>(
+            &Metric::type)));
+
+      metric_processor->add_processor(
+        Request::OpenRtb::IMP_METRIC_VALUE,
+        JsonMetricParamProcessor_var(
+          new JsonMetricValueParamProcessor()));
+
+      metric_processor_ = metric_processor;
+    }
+
+    virtual void
+    process(
+      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      JsonAdSlotProcessingContext& context,
+      const JsonValue& value) const
+    {
+      if(value.getTag() == JSON_TAG_ARRAY)
+      {
+        for(JsonIterator it = begin(value); it != end(value); ++it)
+        {
+          process_metric_(request_params, context, it->value);
+        }
+      }
+      else
+      {
+        process_metric_(request_params, context, value);
+      }
+    }
+
+  private:
+    void
+    process_metric_(
+      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      JsonAdSlotProcessingContext& context,
+      const JsonValue& value) const
+    {
+      if(value.getTag() != JSON_TAG_OBJECT)
+      {
+        return;
+      }
+
+      JsonAdSlotProcessingContext::Metric metric;
+      metric_processor_->process(metric, value);
+
+      if(!metric.type.empty() && !metric.value.empty())
+      {
+        context.metrics.emplace_back(std::move(metric));
+      }
+    }
+
+  protected:
+    JsonMetricParamProcessor_var metric_processor_;
   };
 
   // segment element processor {"value" : "", "id" : "", "name" : ""}
@@ -2059,6 +2164,11 @@ namespace Bidding
         JsonAdSlotParamProcessor_var(
           new JsonContextBoolParamProcessor<JsonAdSlotProcessingContext>(
             &JsonAdSlotProcessingContext::secure)));
+
+      processor->add_processor(
+        Request::OpenRtb::IMP_METRIC,
+        JsonAdSlotParamProcessor_var(
+          new JsonImpMetricParamProcessor()));
 
       // init imp::ext::type processor
       JsonAdSlotCompositeParamProcessor_var imp_ext_processor =
@@ -4194,6 +4304,22 @@ namespace Bidding
         std::string keyword(std::string("rtbsegment") + norm_keyword_(it->id) + "x" + norm_keyword_(it->value));
         //std::cerr << "keyword : <" << keyword << ">" << std::endl;
         kw_fmt.add_keyword(keyword);
+      }
+    }
+
+    for (auto ad_slot_it = context.ad_slots.begin();
+      ad_slot_it != context.ad_slots.end();
+      ++ad_slot_it)
+    {
+      for (auto metric_it = ad_slot_it->metrics.begin();
+        metric_it != ad_slot_it->metrics.end();
+        ++metric_it)
+      {
+        kw_fmt.add_keyword(
+          std::string("rtbmetric") +
+          norm_keyword_(metric_it->type) +
+          "x" +
+          norm_keyword_(metric_it->value));
       }
     }
 

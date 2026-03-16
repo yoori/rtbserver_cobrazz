@@ -94,7 +94,14 @@ namespace Bidding
       std::string currency_code;
     };
 
+    struct Metric
+    {
+      std::string type;
+      std::string value;
+    };
+
     typedef std::list<Deal> DealList;
+    typedef std::list<Metric> MetricList;
 
     struct Native: public ReferenceCounting::DefaultImpl<>
     {
@@ -228,6 +235,7 @@ namespace Bidding
     Commons::Optional<long> private_auction;
     std::string deal_id;
     DealList deals;
+    MetricList metrics;
     std::string min_cpm_price_currency_code;
 
     bool secure;
@@ -1188,4 +1196,3 @@ namespace Bidding
 }
 
 #endif /*JSONPARAMPROCESSOR_HPP*/
-
