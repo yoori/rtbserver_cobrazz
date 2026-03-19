@@ -290,7 +290,6 @@ public:
 
   bool
   operator ()(const char* full_path, const struct stat&)
-    noexcept
   {
     unsigned long BUF_SIZE = 10*1024*1024;
     String::SubString file_name(

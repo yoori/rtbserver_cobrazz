@@ -1,10 +1,9 @@
 add_library(FrontendServerCommons
-  FrontendsPool.cpp
-  Acceptor.cpp
   FCGIAcceptor.cpp
   Http2Acceptor.cpp
   WorkerStatsObject.cpp
   BoostAsioContextRunActiveObject.cpp
+  Http2Acceptor.cpp
 )
 
 target_link_libraries(FrontendServerCommons
@@ -13,6 +12,7 @@ target_link_libraries(FrontendServerCommons
 
 add_executable(FCGIServer
   FCGIServer.cpp
+  FrontendsPool.cpp
 )
 
 target_link_libraries(FCGIServer

@@ -11,7 +11,7 @@ namespace FrontendCommons
     HandleRequestTask(
       FrontendTaskPool* frontend_task_pool,
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer,
+      FCGI::BaseHttpResponseWriter_var response_writer,
       bool noparams)
       : frontend_task_pool_(frontend_task_pool),
         http_request_(std::move(request_holder)),
@@ -45,7 +45,7 @@ namespace FrontendCommons
   protected:
     FrontendTaskPool* frontend_task_pool_;
     FCGI::HttpRequestHolder_var http_request_;
-    FCGI::HttpResponseWriter_var response_writer_;
+    FCGI::BaseHttpResponseWriter_var response_writer_;
     const bool noparams_;
   };
 
@@ -67,7 +67,7 @@ namespace FrontendCommons
   void
   FrontendTaskPool::push_handle_request_task_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer,
+    FCGI::BaseHttpResponseWriter_var response_writer,
     bool noparams)
     noexcept
   {
@@ -95,7 +95,7 @@ namespace FrontendCommons
   void
   FrontendTaskPool::handle_request(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     push_handle_request_task_(std::move(request_holder), std::move(response_writer), false);
@@ -104,7 +104,7 @@ namespace FrontendCommons
   void
   FrontendTaskPool::handle_request_noparams(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     push_handle_request_task_(std::move(request_holder), std::move(response_writer), true);
@@ -113,7 +113,7 @@ namespace FrontendCommons
   void
   FrontendTaskPool::handle_request_noparams_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     if(parse_args_(request_holder, response_writer))

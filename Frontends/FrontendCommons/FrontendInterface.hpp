@@ -7,7 +7,7 @@
 #include <Stream/MemoryStream.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
-#include "FCGI.hpp"
+#include "HttpResponse.hpp"
 
 namespace FrontendCommons
 {
@@ -86,7 +86,7 @@ namespace FrontendCommons
     virtual void
     handle_request(
       FCGI::HttpRequestHolder_var request,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept = 0;
 
     /**
@@ -97,7 +97,7 @@ namespace FrontendCommons
     virtual void
     handle_request_noparams(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/;
 
     /**
@@ -119,7 +119,7 @@ namespace FrontendCommons
     static bool
     parse_args_(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/;
   };
 

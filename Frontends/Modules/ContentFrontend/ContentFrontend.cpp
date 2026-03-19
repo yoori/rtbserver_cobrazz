@@ -273,7 +273,7 @@ namespace AdServer
   void
   ContentFrontend::handle_request_noparams_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -342,7 +342,7 @@ namespace AdServer
   void
   ContentFrontend::handle_request_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     const FCGI::HttpRequest& request = request_holder->request();

@@ -58,7 +58,7 @@ namespace FrontendCommons
   bool
   FrontendInterface::parse_args_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     /*throw(eh::Exception)*/
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -110,7 +110,7 @@ namespace FrontendCommons
   void
   FrontendInterface::handle_request_noparams(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     /*throw(eh::Exception)*/
   {
     if(parse_args_(request_holder, response_writer))

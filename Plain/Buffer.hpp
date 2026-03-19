@@ -11,6 +11,8 @@ namespace PlainTypes
   public:
     static const unsigned long FIXED_SIZE = 8;
 
+    Buffer() = default;
+
     Buffer(const Buffer& init) = default;
 
     Buffer(Buffer&& init) noexcept = default;

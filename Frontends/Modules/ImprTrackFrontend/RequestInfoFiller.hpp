@@ -7,7 +7,7 @@
 #include <Logger/Logger.hpp>
 
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>

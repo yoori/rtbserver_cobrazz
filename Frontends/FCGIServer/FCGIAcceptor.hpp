@@ -6,28 +6,23 @@
 #include <boost/asio.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 
-#include <Sync/PosixLock.hpp>
-#include <Sync/Condition.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 
-#include <Commons/DelegateActiveObject.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 
 #include "WorkerStatsObject.hpp"
 
-namespace AdServer
+namespace AdServer::Frontends
 {
-namespace Frontends
-{
-  class AcceptorBoostAsio:
+  class FCGIAcceptor:
     public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
-    AcceptorBoostAsio(
+    FCGIAcceptor(
       Logging::Logger* logger,
       FrontendCommons::FrontendInterface* frontend,
       Generics::ActiveObjectCallback* callback,
@@ -63,7 +58,7 @@ namespace Frontends
 
     class AcceptActiveObject;
 
-    class HttpResponseWriterImpl;
+    class FCGIResponseWriter;
 
     typedef Sync::Policy::PosixThread WorkersSyncPolicy;
     typedef std::deque<Worker_var> WorkerArray;
@@ -76,7 +71,7 @@ namespace Frontends
 
   protected:
     virtual
-    ~AcceptorBoostAsio() noexcept;
+    ~FCGIAcceptor() noexcept;
 
     void
     create_accept_stub_();
@@ -87,9 +82,8 @@ namespace Frontends
       const boost::system::error_code& error);
 
   private:
-    Generics::ActiveObjectCallback_var callback_;
-    Logging::Logger_var logger_;
-    FrontendCommons::Frontend_var frontend_;
+    const Logging::Logger_var logger_;
+    const FrontendCommons::Frontend_var frontend_;
 
     WorkerStatsObject_var worker_stats_object_;
     State_var state_;
@@ -97,9 +91,5 @@ namespace Frontends
     //std::shared_ptr<boost::asio::io_service> accept_io_service_;
     std::shared_ptr<boost::asio::io_service> io_service_;
     std::shared_ptr<AcceptorType> acceptor_;
-
-    Generics::AtomicInt accept_ordered_;
-    Generics::AtomicInt shutdown_uniq_;
   };
-}
-}
+} // namespace AdServer::Frontends

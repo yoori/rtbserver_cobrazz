@@ -920,7 +920,7 @@ namespace Action
   void
   Frontend::handle_request_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     static const char* FUN = "Action::Frontend::handle_request()";

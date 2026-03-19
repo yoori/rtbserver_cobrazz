@@ -29,7 +29,7 @@
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -87,13 +87,13 @@ namespace Instantiate
     virtual void
     handle_request_(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
 
     virtual void
     handle_request_noparams_(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */

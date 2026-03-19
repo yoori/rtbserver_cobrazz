@@ -1,12 +1,19 @@
-#include "Http2Acceptor.hpp"
-#include "BoostAsioContextRunActiveObject.hpp"
-
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
 
+#include <boost/asio.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/local/stream_protocol.hpp>
+#include <boost/asio/io_service.hpp>
+
+#include <nghttp2/nghttp2.h>
+
 #include <Stream/MemoryStream.hpp>
-#include <String/SubString.hpp>
+
+#include "BoostAsioContextRunActiveObject.hpp"
+
+#include "Http2Acceptor.hpp"
 
 namespace
 {
@@ -22,10 +29,108 @@ namespace
   };
 }
 
-namespace AdServer
+namespace AdServer::Frontends
 {
-namespace Frontends
-{
+  class Http2Acceptor::Connection:
+    public std::enable_shared_from_this<Http2Acceptor::Connection>
+  {
+  public:
+    using SocketType = boost::asio::ip::tcp::socket;
+
+    Connection(
+      Http2Acceptor* owner,
+      boost::asio::io_service& io_service,
+      unsigned long max_concurrent_streams,
+      unsigned long read_buffer_size);
+
+    ~Connection() noexcept;
+
+    SocketType& socket() noexcept;
+
+    void activate();
+    void deactivate();
+
+    void on_backend_response_(int32_t stream_id, FCGI::HttpResponse_var response);
+
+    struct StreamData;
+
+  private:
+
+    static ssize_t send_callback_(
+      nghttp2_session* session,
+      const uint8_t* data,
+      size_t length,
+      int flags,
+      void* user_data);
+
+    static int on_begin_headers_callback_(
+      nghttp2_session* session,
+      const nghttp2_frame* frame,
+      void* user_data);
+
+    static int on_header_callback_(
+      nghttp2_session* session,
+      const nghttp2_frame* frame,
+      const uint8_t* name,
+      size_t namelen,
+      const uint8_t* value,
+      size_t valuelen,
+      uint8_t flags,
+      void* user_data);
+
+    static ssize_t data_source_read_callback_(
+      nghttp2_session* session,
+      int32_t stream_id,
+      uint8_t* buf,
+      size_t length,
+      uint32_t* data_flags,
+      nghttp2_data_source* source,
+      void* user_data);
+
+    static int on_frame_recv_callback_(
+      nghttp2_session* session,
+      const nghttp2_frame* frame,
+      void* user_data);
+
+    static int on_stream_close_callback_(
+      nghttp2_session* session,
+      int32_t stream_id,
+      uint32_t error_code,
+      void* user_data);
+
+    bool init_http2_();
+    void submit_settings_();
+    void process_request_(int32_t stream_id, StreamData& stream_data);
+    void submit_response_(int32_t stream_id, const Http2Response& response);
+
+    void order_read_();
+    void handle_read_(
+      const boost::system::error_code& error,
+      size_t bytes_transferred);
+
+    void process_http2_data_(const char* data, size_t size);
+    void flush_send_queue_();
+
+    void order_write_();
+    void handle_write_(const boost::system::error_code& error);
+
+    void close_();
+
+  private:
+    Http2Acceptor* owner_;
+    boost::asio::io_service& io_service_;
+    SocketType socket_;
+    nghttp2_session* session_;
+    std::vector<char> read_buf_;
+    size_t preface_received_;
+    std::list<std::vector<char>> send_queue_;
+    bool write_active_;
+    bool close_started_;
+    std::mutex close_lock_;
+    const unsigned long max_concurrent_streams_;
+    std::unordered_map<int32_t, std::shared_ptr<StreamData>> streams_;
+  };
+
   class Http2Response final
   {
   public:
@@ -75,12 +180,12 @@ namespace Frontends
 
   Http2Acceptor::Connection::Connection(
     Http2Acceptor* owner,
-    std::shared_ptr<boost::asio::io_service> io_service,
+    boost::asio::io_service& io_service,
     unsigned long max_concurrent_streams,
     unsigned long read_buffer_size)
     : owner_(owner),
-      io_service_(std::move(io_service)),
-      socket_(*io_service_),
+      io_service_(io_service),
+      socket_(io_service_),
       session_(nullptr),
       read_buf_(read_buffer_size ? read_buffer_size : 64 * 1024),
       preface_received_(0),
@@ -123,7 +228,7 @@ namespace Frontends
   Http2Acceptor::Connection::deactivate()
   {
     auto self = shared_from_this();
-    io_service_->post([self]()
+    io_service_.post([self]()
     {
       self->close_();
     });
@@ -406,40 +511,40 @@ namespace Frontends
     }
   }
 
-
   void
   Http2Acceptor::Connection::on_backend_response_(
     int32_t stream_id,
     FCGI::HttpResponse_var response)
   {
     auto self = shared_from_this();
-    io_service_->post([self, stream_id, response]()
-    {
-      auto it = self->streams_.find(stream_id);
-      if(it == self->streams_.end())
+    io_service_.post(
+      [self, stream_id, response]()
       {
-        return;
-      }
-
-      const auto& stream_data = it->second;
-
-      // map generic HttpResponse to Http2Response
-      stream_data->response.status = response->status();
-      stream_data->response.content_type = TEXT_PLAIN;
-      for(const auto& header : response->headers())
-      {
-        if(header.name == String::SubString(CONTENT_TYPE_HEADER))
+        auto it = self->streams_.find(stream_id);
+        if(it == self->streams_.end())
         {
-          stream_data->response.content_type.assign(
-            header.value.data(),
-            header.value.size());
+          return;
         }
-      }
-      stream_data->response.body = response->body();
 
-      self->submit_response_(stream_id, stream_data->response);
-      self->flush_send_queue_();
-    });
+        const auto& stream_data = it->second;
+
+        // map generic HttpResponse to Http2Response
+        stream_data->response.status = response->status();
+        stream_data->response.content_type = TEXT_PLAIN;
+        for(const auto& header : response->headers())
+        {
+          if(header.name == String::SubString(CONTENT_TYPE_HEADER))
+          {
+            stream_data->response.content_type.assign(
+              header.value.data(),
+              header.value.size());
+          }
+        }
+        stream_data->response.body = response->body();
+
+        self->submit_response_(stream_id, stream_data->response);
+        self->flush_send_queue_();
+      });
   }
 
   void
@@ -726,14 +831,13 @@ namespace Frontends
   {
     auto connection = std::make_shared<Connection>(
       this,
-      io_service_,
+      *io_service_,
       max_concurrent_streams_,
       read_buffer_size_);
 
     acceptor_->async_accept(
       connection->socket(),
-      [this, connection](
-        const boost::system::error_code& error)
+      [this, connection](const boost::system::error_code& error)
       {
         handle_accept_(connection, error);
       });
@@ -783,5 +887,4 @@ namespace Frontends
   {
     return frontend_;
   }
-}
-}
+} // namespace AdServer::Frontends

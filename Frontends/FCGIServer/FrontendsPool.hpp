@@ -6,7 +6,8 @@
 #include <Generics/CompositeMetricsProvider.hpp>
 
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <BiddingFrontend/BiddingFrontendStat.hpp>
+// TO FIX !!! :
+#include <Frontends/Modules/BiddingFrontend/BiddingFrontendStat.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
 namespace AdServer
@@ -73,7 +74,7 @@ namespace AdServer
       virtual void
       handle_request(
         FCGI::HttpRequestHolder_var request_holder,
-        FCGI::HttpResponseWriter_var response_writer)
+        FCGI::BaseHttpResponseWriter_var response_writer)
         noexcept;
 
       /**
@@ -84,7 +85,7 @@ namespace AdServer
       virtual void
       handle_request_noparams(
         FCGI::HttpRequestHolder_var request_holder,
-        FCGI::HttpResponseWriter_var response_writer)
+        FCGI::BaseHttpResponseWriter_var response_writer)
         /*throw(eh::Exception)*/;
 
       /**

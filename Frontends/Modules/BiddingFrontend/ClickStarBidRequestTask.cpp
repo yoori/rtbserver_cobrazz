@@ -47,7 +47,7 @@ namespace Bidding
   ClickStarBidRequestTask::ClickStarBidRequestTask(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer,
+    FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
     : BidRequestTask(

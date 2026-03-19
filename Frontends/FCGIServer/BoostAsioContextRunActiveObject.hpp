@@ -6,7 +6,7 @@
 
 #include <boost/asio.hpp>
 
-namespace AdServer
+namespace AdServer::Frontends
 {
   // BoostAsioContextRunActiveObject
   class BoostAsioContextRunActiveObject: public AdServer::Commons::DelegateActiveObject

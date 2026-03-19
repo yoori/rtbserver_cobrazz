@@ -33,7 +33,7 @@
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -94,7 +94,7 @@ namespace AdServer
     virtual void
     handle_request_(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer) noexcept;
+      FCGI::BaseHttpResponseWriter_var response_writer) noexcept;
 
     /** Performs initialization for the module child process. */
     virtual void

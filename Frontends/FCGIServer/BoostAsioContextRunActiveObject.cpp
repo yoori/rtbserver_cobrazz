@@ -1,6 +1,6 @@
 #include "BoostAsioContextRunActiveObject.hpp"
 
-namespace AdServer
+namespace AdServer::Frontends
 {
   // BoostAsioContextRunActiveObject implementation
   BoostAsioContextRunActiveObject::BoostAsioContextRunActiveObject(

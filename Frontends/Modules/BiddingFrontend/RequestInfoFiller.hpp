@@ -16,7 +16,7 @@
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 
 #include <Frontends/CommonModule/CommonModule.hpp>
 
