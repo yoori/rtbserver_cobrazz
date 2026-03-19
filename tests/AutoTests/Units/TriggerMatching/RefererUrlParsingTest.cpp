@@ -12,7 +12,7 @@ RefererUrlParsingTest::run_test()
   unsigned int tid = fetch_int("Tags/Default");
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.tid(tid).referer_kw("Secret%20trigger");
 
@@ -54,7 +54,7 @@ RefererUrlParsingTest::run_test()
                   "&pid=378d4c38a432f45d274afcdb496cfef4"
                   "&x=%BD%F1%CC%EC%C4%E3%D2%AA%BC%07%B8%F8%CE%D2"
                   "&n2=");
-                                        
+
   client.process_request(request);
 
   FAIL_CONTEXT(

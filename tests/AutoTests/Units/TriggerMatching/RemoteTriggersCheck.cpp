@@ -1,6 +1,6 @@
 #include "RemoteTriggersCheck.hpp"
 #include <set>
- 
+
 REFLECT_UNIT(RemoteTriggersCheck) (
   "TriggerMatching",
   AUTO_TEST_FAST,
@@ -125,7 +125,7 @@ namespace
   };
 }
 
-bool 
+bool
 RemoteTriggersCheck::run_test()
 {
   FAIL_CONTEXT(

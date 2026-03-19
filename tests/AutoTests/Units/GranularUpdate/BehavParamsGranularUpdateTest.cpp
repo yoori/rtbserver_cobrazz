@@ -14,15 +14,15 @@ BehavParamsGranularUpdateTest::run()
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
     "CampaignServer must set in the XML configuration file");
-  
+
   AUTOTEST_CASE(
     empty(),
     "Empty behavioral parameters");
-  
+
   AUTOTEST_CASE(
     assign(),
     "Assign behavioral parameters");
-  
+
   AUTOTEST_CASE(
     change(),
     "Change behavioral parameters");
@@ -30,7 +30,7 @@ BehavParamsGranularUpdateTest::run()
   AUTOTEST_CASE(
     remove(),
     "Remove a behavioral parameter");
-  
+
 //  The case requires specific channel_type
 //  We possibly have to use MACRO channel ('L')
 //  AUTOTEST_CASE(
@@ -40,7 +40,7 @@ BehavParamsGranularUpdateTest::run()
   AUTOTEST_CASE(
     del_param(),
     "Clear behavioral parameters");
-  
+
   return true;
 }
 
@@ -84,7 +84,7 @@ void BehavParamsGranularUpdateTest::assign()
     AutoTest::predicate_checker(
       bp_page->insert()),
     "must insert BehavioralParameters of type 'P'");
-  
+
   bp_search->channel        = channel_id;
   bp_search->minimum_visits = 1;
   bp_search->time_from      = 0;
@@ -134,7 +134,7 @@ void BehavParamsGranularUpdateTest::change()
     AutoTest::predicate_checker(
       bp_page->update()),
     "should update 'bp_page' behav params");
-  
+
   bp_search->time_from = 60;
   bp_search->minimum_visits = 2;
   FAIL_CONTEXT(
@@ -171,7 +171,7 @@ void BehavParamsGranularUpdateTest::remove()
        channel_id(channel_id).
        behav_param_list_id(bp_key_initial))).check(),
    "Initial");
-    
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       bp_search->delet()),
@@ -198,7 +198,7 @@ void BehavParamsGranularUpdateTest::add_list()
     create<ORM::PQ::BehavioralParameters>(fetch_int("LIST/PAGE"));
 
   // it isn't good check, because using internal server key
-  std::string bp_key_initial = "_P0_1200_1_1"; 
+  std::string bp_key_initial = "_P0_1200_1_1";
 
   FAIL_CONTEXT(
    AutoTest::wait_checker(
@@ -209,27 +209,27 @@ void BehavParamsGranularUpdateTest::add_list()
        channel_id(channel_id).
        behav_param_list_id(bp_key_initial))).check(),
    "Initial");
-    
+
   bp_list->name = fetch_string("BPListName");
   bp_list->threshold = 0;
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       bp_list->insert()),
     "should insert behavioral parameters list");
-  
+
   bp_page->channel.null();
   bp_page->behav_params_list_id = bp_list->id();
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       bp_page->update()),
     "should update 'bp_page' behav params");
-  
+
   channel->behav_params_list_id = bp_list->id();
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       channel->update()),
     "should update channel");
-  
+
   ADD_WAIT_CHECKER(
     "Check behav_param_list",
     AutoTest::SimpleChannelChecker(
@@ -249,7 +249,7 @@ void BehavParamsGranularUpdateTest::del_param()
     create<ORM::PQ::BehavioralParameters>(fetch_int("DEL/PAGE"));
 
   // it isn't good check, because using internal server key
-  std::string bp_key_initial = "_P0_1200_1_1"; 
+  std::string bp_key_initial = "_P0_1200_1_1";
 
   FAIL_CONTEXT(
    AutoTest::wait_checker(
@@ -267,7 +267,7 @@ void BehavParamsGranularUpdateTest::del_param()
     AutoTest::predicate_checker(
       channel->update()),
     "should update channel");
-  
+
   ADD_WAIT_CHECKER(
     "Check behav_param_list",
     AutoTest::SimpleChannelChecker(

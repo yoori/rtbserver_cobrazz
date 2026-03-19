@@ -34,7 +34,7 @@ struct UnitDescriptor
   BaseUnitConstructor* constructor;
   UnitDescriptor* next;
   bool dirty;
-  
+
   UnitDescriptor (const char* c,
                   const int g,
                   AutoTestSerialize s,

@@ -1,6 +1,6 @@
 #include <list>
 #include <vector>
-#include <iterator> 
+#include <iterator>
 #include <time.h>
 
 #include <iostream>
@@ -73,18 +73,18 @@ Application_::main(int& argc, char** argv)
           ChannelRulesContainer;
         const ChannelRulesContainer& channels_config =
           test_config->UserInfoContainerTestConfig().ChannelRules();
-        
+
         for (ChannelRulesContainer::const_iterator it = channels_config.begin();
              it != channels_config.end();
              ++it)
         {
           unsigned long ch_id = it->channel_id();
           unsigned long old_len = channels->behav_params.size();
-          
+
           if (ch_id >= old_len)
           {
             channels->behav_params.resize(ch_id + 1);
-            
+
             for (unsigned long i = old_len; i < ch_id + 1; ++i)
             {
               channels->behav_params[i].status = BehavParam::BS_INACTIVE;
@@ -125,21 +125,21 @@ Application_::main(int& argc, char** argv)
       {
         const ChunksConfigType& chunks_config =
           test_config->UserInfoContainerTestConfig().ChunksConfig();
-        
+
         chunks_path = chunks_config.chunks_path();
 
         if (chunks_path[chunks_path.length() - 1] != '/')
         {
           chunks_path += "/";
         }
-        
+
         chunk_files.push_back(chunks_path + chunks_config.base_chunk_file());
         chunk_files.push_back(chunks_path + chunks_config.additional_chunk_file());
         chunk_files.push_back(chunks_path + chunks_config.history_chunk_file());
         chunk_files.push_back(chunks_path + chunks_config.activity_chunk_file());
         chunk_files.push_back(chunks_path + chunks_config.pref_file());
         chunk_files.push_back(chunks_path + chunks_config.wd_imps_file());
-      
+
         for (int i = 0; i < 8; ++i)
         {
           if (!std::ifstream(chunk_files[i].c_str()))
@@ -156,9 +156,9 @@ Application_::main(int& argc, char** argv)
                                             20,
                                             0,
                                             logger_);
-      
+
       user_info_container.channels_config(channels);
-      
+
       user_info_container.set_chunk_info(
         0,
         chunks_path.c_str(),
@@ -172,12 +172,12 @@ Application_::main(int& argc, char** argv)
 
       unsigned long match_users =
         test_config->UserInfoContainerTestConfig().MatchConfig().size();
-      
+
       std::vector<std::string> user_id;
       std::vector<std::string> match_channels;
       std::vector<unsigned long> matches_number;
-      
-      
+
+
       for (unsigned long i = 0; i < match_users; ++i)
       {
         user_id.push_back(
@@ -187,7 +187,7 @@ Application_::main(int& argc, char** argv)
           matches_number.push_back(
             test_config->UserInfoContainerTestConfig().MatchConfig()[i].matches_number());
       }
-      
+
       std::vector<ChannelIdList> matched_channels, result_channels;
       ColoUserId colo_user_id;
       long cust_id = 1, last_colo_id = 1;
@@ -195,13 +195,13 @@ Application_::main(int& argc, char** argv)
 
       matched_channels.resize(match_users);
       result_channels.resize(match_users);
-      
+
       for (unsigned long i = 0; i < match_users; ++i)
       {
         String::StringManip::Splitter<
           const String::AsciiStringManip::Char2Category<',', ' '> >
           input_channels_tokenizer(match_channels[i]);
-      
+
         String::SubString channel;
         while(input_channels_tokenizer.get_token(channel))
         {
@@ -221,11 +221,11 @@ Application_::main(int& argc, char** argv)
           0);
 
         UserInfoContainer::UserAppearance user_app;
-        
+
         for (unsigned long j = 0; j < matches_number[i]; ++j)
         {
           PartlyMatchList partly_match_list;
-          
+
           user_info_container.match(
             request_params,
             last_colo_id,
@@ -250,13 +250,13 @@ Application_::main(int& argc, char** argv)
       ostr << "Can't parse config file '"
            << argv[1] << "'."
            << ": ";
-      
+
       if(error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
       }
-      
+
       throw Exception(ostr);
     }
     catch(const eh::Exception& ex)
@@ -288,6 +288,6 @@ main(int argc, char** argv)
     std::cerr << "main(): Critical: got NULL application object.\n";
     return -1;
   }
-  
+
   app->main(argc, argv);
-}  
+}

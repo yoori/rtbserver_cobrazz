@@ -151,7 +151,7 @@ namespace FrontendCommons
     static const AdServer::CampaignSvcs::CoordDecimal MIN_LON("-180");
     static const AdServer::CampaignSvcs::CoordDecimal MAX_LON("180");
     // accuracy positive integer
-    static const AdServer::CampaignSvcs::CoordDecimal MIN_ACCURACY("0"); 
+    static const AdServer::CampaignSvcs::CoordDecimal MIN_ACCURACY("0");
     // equator length ~  40075 km. maximum accuracy - half of equator length.
     static const AdServer::CampaignSvcs::CoordDecimal MAX_ACCURACY("21000000");
 

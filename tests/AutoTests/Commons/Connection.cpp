@@ -25,10 +25,10 @@ namespace AutoTest
     {
       null(std::string());
     }
-        
+
     IQuery::~IQuery()
     { }
-    
+
     IResult::~IResult()
     { }
 
@@ -63,12 +63,12 @@ namespace AutoTest
     }
 
     // Conn class
-    
+
     Conn::Conn(
       IConn* conn) :
       conn_(conn)
     { }
-    
+
     Conn::~Conn()
     {
       delete conn_;
@@ -128,22 +128,22 @@ namespace AutoTest
     }
 
     // Query class
-    
+
     Query::Query(
       IQuery* query) :
       query_(query)
     { }
-    
+
     Query::~Query()
     {
       delete query_;
     }
-    
+
     Query::operator IQuery&()
     {
       return *query_;
     }
-    
+
     Query::operator const IQuery&() const
     {
       return *query_;
@@ -172,7 +172,7 @@ namespace AutoTest
     {
       query_stream()->flush();
     }
-    
+
     void
     Query::throw_exception(
       const std::string& message)
@@ -185,7 +185,7 @@ namespace AutoTest
       IResult* result) :
       result_(result)
     { }
-    
+
      Result::~Result()
      {
        delete result_;
@@ -200,7 +200,7 @@ namespace AutoTest
     {
       return *result_;
     }
-    
+
     bool
     Result::next()
     {
@@ -228,7 +228,7 @@ namespace AutoTest
       result_->get(value);
       return *this;
     }
-    
+
     Result&
     Result::get(
       unsigned int& value)
@@ -243,14 +243,14 @@ namespace AutoTest
       result_->get(value);
       return *this;
     }
-    
+
     Result& Result::get(
       double& value)
     {
       result_->get(value);
       return *this;
     }
-    
+
     Result&
     Result::get(
       std::string& value)
@@ -258,27 +258,27 @@ namespace AutoTest
       result_->get(value);
       return *this;
     }
-    
+
     Result& Result::get(
       Generics::ExtendedTime& value)
     {
       result_->get(value);
       return *this;
     }
-    
+
     Result& Result::get(
       Generics::Time& value)
     {
       result_->get(value);
       return *this;
     }
-    
+
     Result& Result::get(
       TextField& value)
     {
       result_->get(value);
       return *this;
     }
-    
+
   }
 }

@@ -18,8 +18,8 @@ namespace
 }
 
 NoAdvNoTrackTest::NoAdvNoTrackTest(
-  UnitStat& stat_var, 
-  const char* task_name, 
+  UnitStat& stat_var,
+  const char* task_name,
   XsdParams params_var)
   : BaseUnit(stat_var, task_name, params_var)
 { }
@@ -27,14 +27,14 @@ NoAdvNoTrackTest::NoAdvNoTrackTest(
 NoAdvNoTrackTest::~NoAdvNoTrackTest() noexcept
 { }
 
-bool 
+bool
 NoAdvNoTrackTest::run_test()
 {
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER_CONTROLLER)),
     "UserInfoManagerController need for this test");
-  
+
   // Initialization
   no_track_words = fetch_string ("no_track_words");
   no_track_url_words = fetch_string ("no_track_url_words");
@@ -45,7 +45,7 @@ NoAdvNoTrackTest::run_test()
 
   // Tests
   AdClient client(AdClient::create_user(this));
-  
+
   AUTOTEST_CASE(
     no_adv_case_(client),
     "No Advertisement");
@@ -57,15 +57,15 @@ NoAdvNoTrackTest::run_test()
   AUTOTEST_CASE(
     no_adv_and_no_track_case_(client),
     "No Advertisement and No Track");
-  
+
   AUTOTEST_CASE(
     session_info_case_(),
     "Banned channels and session info");
-  
+
   AUTOTEST_CASE(
     passback_case_(),
     "Banned channels and passback");
-  
+
   return true;
 }
 
@@ -86,7 +86,7 @@ NoAdvNoTrackTest::no_adv_case_(
     FAIL_CONTEXT(
       checker.check(),
       "Check 'NO ADV' effect");
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
@@ -104,7 +104,7 @@ NoAdvNoTrackTest::no_adv_case_(
         tid(fetch_string("Tag")).
         search(no_adv_url_words),
       "0", SpecialEffectsChecker::SE_NO_ADV);
-    
+
     FAIL_CONTEXT(
       checker.check(),
       "Check 'NO ADV' effect");
@@ -124,7 +124,7 @@ NoAdvNoTrackTest::no_adv_case_(
       "Check history channels");
   }
 
-      
+
   {
     add_descr_phrase("No adv by keywords");
 
@@ -134,7 +134,7 @@ NoAdvNoTrackTest::no_adv_case_(
         tid(fetch_string("Tag")).
         ft(no_adv_words),
       "0", SpecialEffectsChecker::SE_NO_ADV);
-    
+
     FAIL_CONTEXT(
       checker.check(),
       "Check 'NO ADV' effect");
@@ -155,7 +155,7 @@ NoAdvNoTrackTest::no_adv_case_(
   }
 
 }
- 
+
 void
 NoAdvNoTrackTest::no_track_case_(
   AdClient& client)
@@ -185,7 +185,7 @@ NoAdvNoTrackTest::no_track_case_(
 
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
-          !checker.client().debug_info.history_channels.size()), 
+          !checker.client().debug_info.history_channels.size()),
         "Check empty history on NO TRACK");
     }
 
@@ -215,8 +215,8 @@ NoAdvNoTrackTest::no_track_case_(
         "Check not profile channel");
     }
   }
-  
-  
+
+
   {
     add_descr_phrase("No track by urls");
 
@@ -242,7 +242,7 @@ NoAdvNoTrackTest::no_track_case_(
 
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
-          !checker.client().debug_info.history_channels.size()), 
+          !checker.client().debug_info.history_channels.size()),
         "Check empty history on NO TRACK");
     }
 
@@ -298,7 +298,7 @@ NoAdvNoTrackTest::no_track_case_(
 
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
-          !checker.client().debug_info.history_channels.size()), 
+          !checker.client().debug_info.history_channels.size()),
         "Check empty history on NO TRACK");
 
     }
@@ -352,7 +352,7 @@ NoAdvNoTrackTest::no_adv_and_no_track_case_(
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        !checker.client().debug_info.history_channels.size()), 
+        !checker.client().debug_info.history_channels.size()),
       "Check empty history on NO TRACK");
   }
 
@@ -388,7 +388,7 @@ NoAdvNoTrackTest::session_info_case_()
 {
   AutoTest::Time now;
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
 
   FAIL_CONTEXT(
@@ -416,8 +416,8 @@ NoAdvNoTrackTest::session_info_case_()
       SpecialEffectsChecker::SE_NO_TRACK |
       SpecialEffectsChecker::SE_NO_ADV).check(),
     "Check 'NO TRACK & NO ADV' effects (10 sec later)");
-  
-  
+
+
   std::string session_start_expected =
     now.get_gm_time().format(TIME_FORMAT);
   std::string last_request_expected =
@@ -427,7 +427,7 @@ NoAdvNoTrackTest::session_info_case_()
     AutoTest::prepare_uid(
       client.get_uid(),
       AutoTest::UUE_ADMIN_PARAMVALUE);
-   
+
   FAIL_CONTEXT(
     BaseProfileChecker(
       this, uid, false,
@@ -449,7 +449,7 @@ NoAdvNoTrackTest::session_info_case_()
       last_request_expected,
       client.debug_info.last_request_time).check(),
     "Check last_request_time");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       session_start_expected,

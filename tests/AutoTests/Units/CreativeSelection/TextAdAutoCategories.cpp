@@ -31,7 +31,7 @@ TextAdAutoCategories::run_test()
       ccid_exp,
       AutoTest::SelectedCreativesCCID(client)).check(),
     "selected_creatives cc_id");
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       actual_cpc_exp,

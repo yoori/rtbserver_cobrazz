@@ -1,10 +1,10 @@
 #ifndef _UNITTEST__WALLEDGARDENTEST_
 #define _UNITTEST__WALLEDGARDENTEST_
- 
-#include <tests/AutoTests/Commons/Common.hpp> 
+
+#include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = AutoTest::ORM;
- 
+
 class WalledGardenTest:
   public BaseDBUnit
 {
@@ -24,7 +24,7 @@ public:
     CT_CPM, // CPM CCG
     CT_CPC  // CPC CCG
   };
-  
+
   struct TestCase
   {
     const char* case_name;
@@ -42,18 +42,18 @@ public:
     CCShownEnum cctype;
     CCGType ccgtype;
   };
-  
-public: 
+
+public:
   WalledGardenTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
-    XsdParams params_var): 
+    UnitStat& stat_var,
+    const char* task_name,
+    XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   {};
 
   virtual ~WalledGardenTest() noexcept
   {};
- 
+
 private:
   typedef ORM::StatsArray<ORM::AdvertiserStatsDaily, 9> AdvStats;
   typedef ORM::StatsArray<ORM::PublisherStatsDaily, 10> PubStats;
@@ -69,7 +69,7 @@ private:
     const TestCase& testcase,
     const CCSelection& creative,
     const CCSelection& non_wg_creative);
- 
+
   void test_case(
     const TestCase& testcase);
 
@@ -79,7 +79,7 @@ private:
 
   template <size_t COUNT>
     void wg_foros_competition_case (
-      const std::string& referer_kw, 
+      const std::string& referer_kw,
       std::string (&ccids)[COUNT]);
 
 private:

@@ -96,7 +96,7 @@ plsql_timeout_test(
         {
           timed_out = true;
         }
-  
+
         Generics::Time fin_time(Generics::Time::get_time_of_day());
 
         if(no_timeout)
@@ -142,7 +142,7 @@ plsql_timeout_test(
             return 1;
           }
         }
-      }    
+      }
     }
 
     if(!no_timeout)
@@ -156,7 +156,7 @@ plsql_timeout_test(
           "BEGIN dbms_lock.sleep(10); END;");
 
         bool timed_out = false;
-  
+
         try
         {
           Generics::Time timeout(15);
@@ -281,7 +281,7 @@ select_plsql_sleep_timeout_test(
   }
   catch(const eh::Exception&)
   {}
-  
+
   return res;
 }
 
@@ -344,7 +344,7 @@ select_timeout_test(
     std::cerr << FUN << ": caught unexpected eh::Exception: " << ex.what() << std::endl;
     res = 1;
   }
-  
+
   return res;
 }
 
@@ -369,7 +369,7 @@ check_timeouts(
       debug_memory);
   }
   catch(const eh::Exception& ex)
-  { 
+  {
     std::cerr << FUN << ": caught unexpected eh::Exception: " << ex.what() << std::endl;
     return 1;
   }
@@ -392,7 +392,7 @@ int
 main(int argc, char** argv)
 {
   int res = 0;
-  
+
   Generics::AppUtils::StringOption opt_ora_server(
     "//oraads/addbads.ocslab.com");
   Generics::AppUtils::StringOption opt_ora_user("ads_3");
@@ -432,7 +432,7 @@ main(int argc, char** argv)
 
   std::cout << "use to connect '" << *opt_ora_server <<
     "' as user '" << *opt_ora_user <<
-    "'." << std::endl; 
+    "'." << std::endl;
 
   res += check_timeouts(
     ConnectionDescription(
@@ -442,7 +442,7 @@ main(int argc, char** argv)
     *opt_loop_num,
     opt_no_timeout.enabled(),
     opt_debug_memory.enabled());
-  
+
   return res;
 }
 

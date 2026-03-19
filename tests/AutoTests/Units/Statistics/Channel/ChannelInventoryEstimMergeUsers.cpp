@@ -1,6 +1,6 @@
 
 #include "ChannelInventoryEstimMergeUsers.hpp"
- 
+
 REFLECT_UNIT(ChannelInventoryEstimMergeUsers) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -13,12 +13,12 @@ namespace {
   typedef ORM::ChannelInventoryEstimStats::Diffs Diffs;
 }
 
-bool 
+bool
 ChannelInventoryEstimMergeUsers::run_test()
 {
 
   base_time = Generics::Time::get_time_of_day();
-  
+
   ORM::StatsArray<ORM::ChannelInventoryEstimStats, 9> stats;
   // Today
   //   H1, level=0.3
@@ -103,7 +103,7 @@ ChannelInventoryEstimMergeUsers::run_test()
   stats[8].description(
     "ChannelInventoryEstimStats.HT#1 - "
     "level 0.4, tomorrow");
- 
+
   stats.select(conn);
 
   // Test cases
@@ -149,9 +149,9 @@ ChannelInventoryEstimMergeUsers::run_test()
       "verification");
 
   }
-  
+
   stats.select(conn);
-  
+
   simple_merging_2();
 
   // second check
@@ -193,7 +193,7 @@ ChannelInventoryEstimMergeUsers::run_test()
                          "verification");
 
   }
- 
+
   return true;
 }
 
@@ -205,7 +205,7 @@ ChannelInventoryEstimMergeUsers::simple_merging_1()
 
   TemporaryAdClient user_temp(
     TemporaryAdClient::create_user(this));
-  
+
   NSLookupRequest merge;
   merge.debug_time = base_time;
 
@@ -225,9 +225,9 @@ ChannelInventoryEstimMergeUsers::simple_merging_1()
       user_temp.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   AdClient user(AdClient::create_user(this));
-  
+
   user.process_request(request);
 
   FAIL_CONTEXT(
@@ -236,16 +236,16 @@ ChannelInventoryEstimMergeUsers::simple_merging_1()
       user.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   user.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       expected,
       user.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   user.merge(user_temp, merge);
   user.process_request(NSLookupRequest().
                        debug_time(base_time + 24*60*60));
@@ -259,7 +259,7 @@ ChannelInventoryEstimMergeUsers::simple_merging_2()
 
   TemporaryAdClient user_temp(
     TemporaryAdClient::create_user(this));
-  
+
   NSLookupRequest merge;
   merge.referer_kw = fetch_string("KWH1");
   merge.debug_time = base_time + 24*60*60;
@@ -275,7 +275,7 @@ ChannelInventoryEstimMergeUsers::simple_merging_2()
   user_temp.process_request(request);
 
   AdClient user(AdClient::create_user(this));
-  
+
   user.process_request(request);
 
   FAIL_CONTEXT(
@@ -284,25 +284,25 @@ ChannelInventoryEstimMergeUsers::simple_merging_2()
       user_temp.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       expected,
       user.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   user.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       expected,
       user.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   user.merge(user_temp, merge);
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       expected,
@@ -360,7 +360,7 @@ void ChannelInventoryEstimMergeUsers::temp_user_lost_history()
   AdClient user(AdClient::create_user(this));
 
   request.debug_time = base_time;
-  
+
   user.process_request(request);
 
   FAIL_CONTEXT(
@@ -372,8 +372,8 @@ void ChannelInventoryEstimMergeUsers::temp_user_lost_history()
 
   user.merge(user_temp,
              NSLookupRequest().
-             debug_time(base_time + 24*60*60));   
-   
+             debug_time(base_time + 24*60*60));
+
 }
 
 // Test 8. Records expiration on merging (session)
@@ -383,12 +383,12 @@ void ChannelInventoryEstimMergeUsers::rotten_channel_on_merging()
 
   TemporaryAdClient user_temp(
     TemporaryAdClient::create_user(this));
-  
+
   {
     NSLookupRequest request;
     request.referer_kw = fetch_string("KWS1");
     request.debug_time = base_time;
-    
+
     std::string expected[] = {
         fetch_string("AdvBPPS1")
     };
@@ -407,7 +407,7 @@ void ChannelInventoryEstimMergeUsers::rotten_channel_on_merging()
     NSLookupRequest request;
     request.referer = fetch_string("URLS1");
     request.debug_time = base_time;
-    
+
     std::string expected[] = {
         fetch_string("AdvBPUS1")
     };
@@ -429,7 +429,7 @@ void ChannelInventoryEstimMergeUsers::rotten_channel_on_merging()
       user_temp.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-    
+
   }
 
 
@@ -437,8 +437,8 @@ void ChannelInventoryEstimMergeUsers::rotten_channel_on_merging()
 
   user.merge(user_temp,
              NSLookupRequest().
-             debug_time(base_time + 3*60*60));   
-  
+             debug_time(base_time + 3*60*60));
+
 }
 
 // Test 9-10. Match_level exceeding on the merging
@@ -448,7 +448,7 @@ void ChannelInventoryEstimMergeUsers::exceed_match_level_on_merging()
 
   TemporaryAdClient user_temp(
       TemporaryAdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.debug_time = base_time;
   request.referer = fetch_string("URLS2");
@@ -468,7 +468,7 @@ void ChannelInventoryEstimMergeUsers::exceed_match_level_on_merging()
       expected,
       user_temp.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
-    "trigger_channels#" + strof(i+1));    
+    "trigger_channels#" + strof(i+1));
   }
 
   AdClient user(AdClient::create_user(this));

@@ -1,6 +1,6 @@
 
 #include "ChangingCreativeWeightsTest.hpp"
- 
+
 REFLECT_UNIT(ChangingCreativeWeightsTest) (
   "NoDBUpdate",
   AUTO_TEST_QUIET
@@ -17,8 +17,8 @@ namespace {
   const unsigned long INFO = Logging::Logger::INFO;
   const unsigned long IMPS_COUNT = 2010;
 }
- 
-bool 
+
+bool
 ChangingCreativeWeightsTest::run()
 {
   unsigned long ccid1 = fetch_int("CCW_CCID1");
@@ -75,7 +75,7 @@ ChangingCreativeWeightsTest::run()
     {
       ++ccid2_imps;
     }
-   
+
     if (i % 2 == 0)
     {
       std::string click_url =
@@ -104,7 +104,7 @@ ChangingCreativeWeightsTest::run()
       ccid1_imps >= 2000 || ccid2_imps >= 2000),
     "one or two creatives must have more "
     "than 2000 impression");
-  
+
 
   const unsigned long weights[] =
   {
@@ -115,7 +115,7 @@ ChangingCreativeWeightsTest::run()
     ccid2_imps && ccid2_imps >= 2000 ?
     ( ccid2_clicks * 10000 / ccid2_imps) : initial_weight
   };
-  
+
   for (size_t i = 0; i < sizeof(ccids)/sizeof(*ccids); ++i)
   {
     add_checker("Creative#" + strof(i+1) + " new weight check",
@@ -126,7 +126,7 @@ ChangingCreativeWeightsTest::run()
             weight(strof(weights[i])).
             status("A"))));
   }
- 
+
   return true;
 }
 

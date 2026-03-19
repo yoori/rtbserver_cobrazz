@@ -91,7 +91,7 @@ namespace Bidding
         ostr.str(),
         Logging::Logger::ERROR,
         Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7601");        
+        "ADS-IMPL-7601");
     }
 
     return false;

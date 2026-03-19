@@ -91,7 +91,7 @@ private:
   };
 
   typedef ReferenceCounting::AssertPtr<ZmqWorker>::Ptr ZmqWorker_var;
- 
+
   class ZmqClient : public AdServer::Commons::DelegateActiveObject
   {
   public:

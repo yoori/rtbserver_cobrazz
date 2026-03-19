@@ -1,42 +1,58 @@
-add_executable(FCGIServer
-  FCGIServer.cpp 
-  Acceptor.cpp 
-  FrontendsPool.cpp 
-  WorkerStatsObject.cpp 
-  AcceptorBoostAsio.cpp 
+add_library(FrontendServerCommons
+  FrontendsPool.cpp
+  Acceptor.cpp
+  FCGIAcceptor.cpp
+  Http2Acceptor.cpp
+  WorkerStatsObject.cpp
   BoostAsioContextRunActiveObject.cpp
 )
-target_link_libraries(FCGIServer
- Generics
- Commons
- AdServerCommonsXSD
- XMLUtility
- CORBACommons
- ProcessControlVars
- RequestMatchers
- #CampaignManagerStubs
- CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
-# UserInfoManagerControllerStubs
- UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
- FCGIServerConfigXSD
- UtilCommons
- BiddingFrontend
- DirectoryModule
- PubPixelFrontend
- ContentFrontend
- WebStatFrontend
- ActionFrontend
- UserBindFrontend
- PassFrontend
- PassPixelFrontend
- OptoutFrontend
- AdInstFrontend
- ClickFrontend
- ImprTrackFrontend
- AdFrontend
- FCGI
- boost_system
 
+target_link_libraries(FrontendServerCommons
+  FCGI
 )
 
-#install(TARGETS FCGIServer  DESTINATION ${INSTALL_DIR})
+add_executable(FCGIServer
+  FCGIServer.cpp
+)
+
+target_link_libraries(FCGIServer
+  ProcessControlVars
+  RequestMatchers
+  CreativeTemplateArgs
+
+  UserInfoManagerControllerCall
+  CampaignManagerIDL
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  CampaignServerIDL
+
+  AdServerCommonsXSD
+  FCGIServerConfigXSD
+
+  BiddingFrontend
+  DirectoryModule
+  PubPixelFrontend
+  ContentFrontend
+  WebStatFrontend
+  ActionFrontend
+  UserBindFrontend
+  PassFrontend
+  PassPixelFrontend
+  OptoutFrontend
+  AdInstFrontend
+  ClickFrontend
+  ImprTrackFrontend
+  AdFrontend
+
+  FCGI
+  UtilCommons
+  FrontendServerCommons
+  Commons
+
+  Generics
+  CORBACommons
+  SecToken
+
+  boost_system
+  nghttp2
+)

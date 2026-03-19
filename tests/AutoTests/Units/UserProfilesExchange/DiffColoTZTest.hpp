@@ -1,24 +1,24 @@
 
 #ifndef _AUTOTEST__DIFFCOLOTZTEST_
 #define _AUTOTEST__DIFFCOLOTZTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
- 
+
+
 class DiffColoTZTest: public BaseUnit
 {
 public:
- 
+
   DiffColoTZTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~DiffColoTZTest() noexcept
   {};
- 
+
 private:
 
   double tz_ofset;
@@ -32,7 +32,7 @@ private:
 
   void local_day_switch();
   void gmt_day_switch();
- 
+
 };
 
 #endif //_AUTOTEST__DIFFCOLOTZTEST_

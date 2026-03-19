@@ -179,7 +179,7 @@ namespace ChannelSvcs
       ch.mark_type(CT_URL_KEYWORDS);
       ch.mark_type(Channel::CT_ACTIVE);
       ch.mark_type(Channel::CT_BLACK_LIST);
-      //mark channel as blacklist for escaping matching on additional urls 
+      //mark channel as blacklist for escaping matching on additional urls
     }
   }
 
@@ -300,7 +300,7 @@ namespace ChannelSvcs
       {
         size_t index_type;
         bool ignore = false;
-        switch(channels[i].behave_info[j].trigger_type) 
+        switch(channels[i].behave_info[j].trigger_type)
         {
           case 'U':
           case 'u':
@@ -343,7 +343,7 @@ namespace ChannelSvcs
   {
     FillChannelIdAdapter(std::vector<unsigned int>& out) noexcept : out_(out){};
     void operator()(
-      const MatchInfoContainerType::value_type& in) 
+      const MatchInfoContainerType::value_type& in)
       noexcept
     {
       out_.push_back(in.second.channel.get_id());
@@ -643,7 +643,7 @@ namespace ChannelSvcs
           ports_,
           data->container_ptr,
           Commons::DEFAULT_MAX_HARD_WORD_SEQ,
-          logger_); 
+          logger_);
         data->merge_size += length * TriggerParser::TriggerParser::WORSE_MULT;
         check_values.erase(channel_id);
         check_ids.erase(channel_id);
@@ -657,7 +657,7 @@ namespace ChannelSvcs
     if(!check_values.empty())
     {//there isn't data in database
       for(auto it = check_values.begin(); it != check_values.end(); ++it)
-      { 
+      {
         check_ids.erase(*it);
         data->progress->set_progess(1);
       }
@@ -692,7 +692,7 @@ namespace ChannelSvcs
       FT_TYPE,
       FT_NEGATIVE
     };
-    
+
     Commons::Postgres::Statement_var stmt =
       new Commons::Postgres::Statement(
       "SELECT "
@@ -718,8 +718,8 @@ namespace ChannelSvcs
       }
       all_loaded = (it == check_ids.end());
       logger_->sstream(Logging::Logger::DEBUG, ASPECT)
-        << "Use update size: " << update_size 
-        << " count id: " << count; 
+        << "Use update size: " << update_size
+        << " count id: " << count;
       stmt->set_array(1, check_values);
     }
 
@@ -785,7 +785,7 @@ namespace ChannelSvcs
           ports_,
           data->container_ptr,
           Commons::DEFAULT_MAX_HARD_WORD_SEQ,
-          logger_); 
+          logger_);
         timer.stop_add(parse_time);
         //Use WORSE_MULT for compatibility to previous versions
         //don't try to count real channel size in contaier
@@ -1307,7 +1307,7 @@ namespace ChannelSvcs
         //don't use master stamp it can stay same, it is bad for slave hosts
         //preserve stamp from central it grows monotonic
 
-        if(data->merge_size != 0 && 
+        if(data->merge_size != 0 &&
            channel_size * TriggerParser::TriggerParser::WORSE_MULT > merge_limit)
         {
           data->need_merge = true;
@@ -1331,7 +1331,7 @@ namespace ChannelSvcs
             0,
             ports_,
             data->container_ptr,
-            Commons::DEFAULT_MAX_HARD_WORD_SEQ, logger_); 
+            Commons::DEFAULT_MAX_HARD_WORD_SEQ, logger_);
           timer.stop_add(parse_time);
           data->merge_size += channel_size * TriggerParser::TriggerParser::WORSE_MULT;
           if(merge_limit < channel_size)
@@ -1402,7 +1402,7 @@ namespace ChannelSvcs
     {
       for(CCGMap::ActiveMap::const_iterator it =
           data->old_ccg_map->active().begin();
-          it != data->old_ccg_map->active().end(); ++it) 
+          it != data->old_ccg_map->active().end(); ++it)
       {
         old_active.insert(old_active.end(), it->second->channel_id);
       }

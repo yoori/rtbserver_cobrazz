@@ -34,7 +34,7 @@ namespace UserInfoSvcs
 
     void
     save_seq(std::ostream& out, const std::vector<std::string>& elements)
-    { 
+    {
       for(auto it = elements.begin(); it != elements.end(); ++it)
       {
         // escape '|' '\n' ESCAPE_CHAR
@@ -76,7 +76,7 @@ namespace UserInfoSvcs
     void
     parse_seq(std::vector<std::string>& res, const String::SubString& line)
     {
-      String::StringManip::Splitter<String::AsciiStringManip::SepBar> tokenizer(line);      
+      String::StringManip::Splitter<String::AsciiStringManip::SepBar> tokenizer(line);
 
       String::SubString token;
       while(tokenizer.get_token(token))
@@ -649,7 +649,7 @@ namespace UserInfoSvcs
                   it_max_time);
             }
           }
-          
+
           while(!file.eof())
           {
             unsigned long portion;

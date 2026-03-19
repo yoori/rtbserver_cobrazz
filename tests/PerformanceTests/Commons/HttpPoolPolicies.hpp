@@ -20,7 +20,7 @@ class HttpPoolPolicy  :  public PoolPolicy,
   static const unsigned REQUEST_QUEUE_SIZE = 10000;
 
   typedef Sync::Condition Condition_;
-  
+
 public:
 
   /**
@@ -43,10 +43,10 @@ public:
   virtual ~HttpPoolPolicy() noexcept;
 
   /**
-   * @brief request constructing 
+   * @brief request constructing
    */
   virtual void request_constructing() /*throw(eh::Exception)*/;
-  
+
   /**
    * @brief request destroying
    */

@@ -21,8 +21,8 @@ typedef AutoTest::AdClient AdClient;
       list).check(),                                         \
     "must have second channel for " #message);
 
- 
-bool 
+
+bool
 MultipleChannelsMatchingTest::run_test()
 {
   std::string required_channel1 = fetch_string("MultipleChannelsMatchingTest/01");
@@ -38,26 +38,26 @@ MultipleChannelsMatchingTest::run_test()
 
   //Request for probe uid
   AdClient client(AdClient::create_user(this));
-  
+
   /////
   client.process_request(request.referer_kw("Test11 Test10"));
-  TEST_APPEARENCES2(required_channel1, required_channel2, 
+  TEST_APPEARENCES2(required_channel1, required_channel2,
                     (client.debug_info.trigger_channels
                      + client.debug_info.trigger_channels),
                     "first part 1");
 
   client.process_request(request.referer_kw("Test10 Test45 Test11"));
-  TEST_APPEARENCES2(required_channel1, required_channel2, 
+  TEST_APPEARENCES2(required_channel1, required_channel2,
                     (client.debug_info.trigger_channels
                      + client.debug_info.trigger_channels),
                     "first part 2");
 
   client.process_request(request.referer_kw("Test12").referer("Test12"));
-  TEST_APPEARENCES2(required_channel3, required_channel4, 
+  TEST_APPEARENCES2(required_channel3, required_channel4,
                     (client.debug_info.trigger_channels
                      + client.debug_info.trigger_channels),
                     "second part");
-  
+
   client.process_request(request.referer_kw("Test13"));
 
   FAIL_CONTEXT(
@@ -66,7 +66,7 @@ MultipleChannelsMatchingTest::run_test()
       client.debug_info.trigger_channels +
         client.debug_info.trigger_channels).check(),
     "forth part");
-  
+
   std::string required_channels[] = {
     required_channel8,
     required_channel9
@@ -79,7 +79,7 @@ MultipleChannelsMatchingTest::run_test()
       client.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "fifth part");
-  
+
   return true;
 }
- 
+

@@ -1,5 +1,5 @@
 #include "DynamicCreativeContentTest.hpp"
- 
+
 REFLECT_UNIT(DynamicCreativeContentTest) (
   "CreativeInstantiation",
   AUTO_TEST_QUIET
@@ -64,7 +64,7 @@ namespace
     };
 
     static const Token TOKENS[TOKEN_COUNT];
-    
+
   public:
     /**
      * @brief Constructor.
@@ -164,7 +164,7 @@ namespace
     NSLookupRequest request_;
     std::string expected_body_;
   };
-  
+
   const BodyChecker::Token BodyChecker::TOKENS[BodyChecker::TOKEN_COUNT] =
   {
     { "##OIXCLICK##", &BodyChecker::foros_click },
@@ -180,14 +180,14 @@ namespace
 }
 
 
-bool 
+bool
 DynamicCreativeContentTest::run_test()
 {
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_global_params().TemplatesIn()),
     "Template destination path must defined in the config");
-  
+
   std::string templatesin = get_global_params().TemplatesIn()->path();
   std::string keyword = fetch_string("Keyword");
   std::string tid = fetch_string("Tag");
@@ -198,7 +198,7 @@ DynamicCreativeContentTest::run_test()
   request.tid         = tid;
   request.referer_kw = keyword;
   request.debug_nofraud = 1;
-  
+
 
   // Restore init
   add_descr_phrase("Initial.");
@@ -227,7 +227,7 @@ DynamicCreativeContentTest::run_test()
 
     add_descr_phrase(CREATIVE_FILES[i].file_name + " file check.");
     AdClient client(AdClient::create_user(this));
-    
+
     std::string file = fetch_string(CREATIVE_FILES[i].file_name);
     AutoTest::CopyCmd(file, dst).exec();
 
@@ -242,9 +242,9 @@ DynamicCreativeContentTest::run_test()
           CREATIVE_FILES[i].no_ads? "0": ccid,
           client.debug_info.ccid))).check(),
         "Check ccid & body#" + strof(i));
-   
+
   }
-  
+
   return true;
 }
 

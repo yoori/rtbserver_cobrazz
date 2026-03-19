@@ -4,11 +4,11 @@
 
 #ifndef _AUTOTEST__OPTOUTMATCHING_
 #define _AUTOTEST__OPTOUTMATCHING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 typedef AutoTest::AdClient AdClient;
-typedef AutoTest::NSLookupRequest NSLookupRequest;  
+typedef AutoTest::NSLookupRequest NSLookupRequest;
 
 class OptoutMatching : public BaseDBUnit
 {
@@ -47,7 +47,7 @@ private:
   void tear_down();
 
   // Helpers
-  void run_case(unsigned int i, unsigned int user, 
+  void run_case(unsigned int i, unsigned int user,
     AdClient& client, NSLookupRequest& request);
 
   void fill_expected(std::list<std::string>& list,

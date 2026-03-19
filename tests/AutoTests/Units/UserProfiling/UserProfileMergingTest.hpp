@@ -1,16 +1,16 @@
 #ifndef _UNITTEST__USERPROFILEMERGINGTEST_
 #define _UNITTEST__USERPROFILEMERGINGTEST_
- 
-#include <tests/AutoTests/Commons/Common.hpp>  
- 
-class UserProfileMergingTest: 
+
+#include <tests/AutoTests/Commons/Common.hpp>
+
+class UserProfileMergingTest:
   public BaseUnit
 {
 
   typedef AutoTest::NSLookupRequest  NSLookupRequest;
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::TemporaryAdClient TemporaryAdClient;
-  
+
 public:
   enum RequestEnum
   {
@@ -22,7 +22,7 @@ public:
   struct ExpectedType
   {
     const char* triggers;
-    const char* history;    
+    const char* history;
   };
 
   struct RequestType
@@ -33,15 +33,15 @@ public:
     ExpectedType expected;
     ExpectedType unexpected;
   };
-  
+
 public:
   UserProfileMergingTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~UserProfileMergingTest() noexcept
   {};
 
@@ -55,7 +55,7 @@ public:
     AdClient& pclient,
     TemporaryAdClient& tclient,
     RequestEnum request_type);
- 
+
 private:
   virtual bool run_test();
 

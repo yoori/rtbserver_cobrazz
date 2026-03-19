@@ -16,7 +16,7 @@ UidTest::uid_installing()
 {
   add_descr_phrase("UID installing");
   AdClient client(AdClient::create_nonoptin_user(this));
-  
+
   client.process_request(
     NSLookupRequest().setuid(1));
 
@@ -35,9 +35,9 @@ UidTest::probe_uid()
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
-    
+
     client.set_probe_uid();
-    
+
     client.process_request(
       NSLookupRequest().setuid(1));
 
@@ -53,10 +53,10 @@ UidTest::probe_uid()
     AdClient client(AdClient::create_undef_user(this));
 
     std::string uid = client.get_uid();
-  
+
     client.process_request(
       NSLookupRequest());
-       
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         uid,
@@ -74,7 +74,7 @@ UidTest::probe_uid()
   }
 }
 
-bool 
+bool
 UidTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(uid_installing());

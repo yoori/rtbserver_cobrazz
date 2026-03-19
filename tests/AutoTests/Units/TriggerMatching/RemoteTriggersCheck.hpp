@@ -1,6 +1,6 @@
 #ifndef AUTOTEST_UNITS_REMOTETRIGGERSCHECK_HPP
 #define AUTOTEST_UNITS_REMOTETRIGGERSCHECK_HPP
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 /*
@@ -9,18 +9,18 @@
  */
 class RemoteTriggersCheck: public BaseUnit
 {
-public: 
+public:
   RemoteTriggersCheck(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~RemoteTriggersCheck() noexcept
   {};
- 
-private: 
+
+private:
   virtual bool run_test();
 };
 

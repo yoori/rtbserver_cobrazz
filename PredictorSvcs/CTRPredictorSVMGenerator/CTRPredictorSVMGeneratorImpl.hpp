@@ -23,7 +23,7 @@ namespace AdServer
      */
     class CTRPredictorSVMGeneratorImpl: public Commons::DelegateActiveObject
     {
-      
+
     public:
 
       /**
@@ -46,7 +46,7 @@ namespace AdServer
         /*throw(eh::Exception)*/;
 
     private:
-      
+
       /**
        * @brief Main working cycle.
        */
@@ -63,7 +63,7 @@ namespace AdServer
        * @brief Process csv files.
        */
       void process_files_() noexcept;
-      
+
     protected:
       /**
        * @brief Destructor.

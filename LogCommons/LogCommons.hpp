@@ -1420,7 +1420,7 @@ public:
   get();
 
   virtual ~SafeSequenceGenerator() noexcept = default;
-    
+
 private:
   const unsigned int min_value_;
   const unsigned int diff_;

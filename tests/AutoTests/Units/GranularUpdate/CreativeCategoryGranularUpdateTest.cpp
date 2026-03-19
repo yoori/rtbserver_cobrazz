@@ -34,7 +34,7 @@ CreativeCategoryGranularUpdateTest::set_up()
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must prisent in the configuration file");
- 
+
 }
 
 bool
@@ -93,11 +93,11 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       category->insert()),
-    description + 
+    description +
       " Cann't insert visual category#" + strof(i+1));
 
     cat_ids.push_back(category->id());
-    
+
     if (category_type != CT_TAGS)
     {
       ORM::ORMRestorer<ORM::PQ::CreativeCategory_Creative>* cc_category =
@@ -107,7 +107,7 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
           cc_category->insert(
             category->id(),
             fetch_int("CREATE/CREATIVE"))),
-        description + 
+        description +
           "Cann't create link to category#" + strof(i+1));
     }
 
@@ -127,7 +127,7 @@ void CreativeCategoryGranularUpdateTest::create_categories_()
   std::ostringstream expected_categories;
 
   std::list<unsigned long>::iterator last = --cat_ids.end();
-  
+
   std::copy(cat_ids.begin(), last,
     std::ostream_iterator<unsigned long>(
       expected_categories, ","));
@@ -226,7 +226,7 @@ void CreativeCategoryGranularUpdateTest::add_tags_exclusion_()
   NSLookupRequest request;
   request.referer_kw = fetch_string("ADDEXCLUSION/KWD");
   request.tid = fetch_string("ADDEXCLUSION/TAG");
-    
+
   AdClient client(AdClient::create_user(this));
 
   FAIL_CONTEXT(
@@ -236,13 +236,13 @@ void CreativeCategoryGranularUpdateTest::add_tags_exclusion_()
 
   ORM::ORMRestorer<ORM::PQ::CreativeCategory_Creative>* cc_category =
     create<ORM::PQ::CreativeCategory_Creative>();
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       cc_category->insert(
         category,
         fetch_int("ADDEXCLUSION/CREATIVE"))),
-    description + 
+    description +
       "Cann't create link to exclusion category");
 
 
@@ -297,7 +297,7 @@ void CreativeCategoryGranularUpdateTest::del_tags_exclusion_()
   NSLookupRequest request;
   request.referer_kw = fetch_string("DELEXCLUSION/KWD");
   request.tid = fetch_string("DELEXCLUSION/TAG");
-    
+
   AdClient client(AdClient::create_user(this));
 
   FAIL_CONTEXT(
@@ -316,11 +316,11 @@ void CreativeCategoryGranularUpdateTest::del_tags_exclusion_()
         pq_conn_,
         category,
         fetch_int("DELEXCLUSION/CREATIVE")));
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       cc_category->delet()),
-    description + 
+    description +
       "Cann't unlink from exclusion category");
 
   {
@@ -343,5 +343,5 @@ void CreativeCategoryGranularUpdateTest::del_tags_exclusion_()
     description + " Request for CC",
     SelectedCreativeChecker(client, request, cc));
 }
- 
- 
+
+

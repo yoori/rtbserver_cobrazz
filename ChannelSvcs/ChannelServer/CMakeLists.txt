@@ -1,10 +1,10 @@
 
 add_library(ChannelContainer SHARED
-  ContainerMatchers.cpp 
-  DictionaryMatcher.cpp 
-  SoftMatcher.cpp 
-  ChannelChunk.cpp 
-  ChannelContainer.cpp 
+  ContainerMatchers.cpp
+  DictionaryMatcher.cpp
+  SoftMatcher.cpp
+  ChannelChunk.cpp
+  ChannelContainer.cpp
   UpdateContainer.cpp
 )
 
@@ -15,11 +15,11 @@ target_link_libraries(ChannelContainer
 )
 
 add_executable(ChannelServer
-  ChannelServerVariant.cpp 
-  ChannelServerImpl.cpp 
-  ChannelServerControlImpl.cpp 
-  ChannelUpdateImpl.cpp 
-  ProcessStatsControl.cpp 
+  ChannelServerVariant.cpp
+  ChannelServerImpl.cpp
+  ChannelServerControlImpl.cpp
+  ChannelUpdateImpl.cpp
+  ProcessStatsControl.cpp
   ChannelServerMain.cpp
 )
 

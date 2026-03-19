@@ -396,7 +396,7 @@ Application_::main(int& argc, char** argv)
     SVMImpl_var test_svm = SVMImpl::load(test_file);
 
     // div to folds
-    
+
 
     if(command == "train-trees")
     {
@@ -728,7 +728,7 @@ Application_::prepare_bags_(
   {
     *bag_it = (*bag_it)->copy(PredictedBoolLabelAddConverter(predictor));
   }
-  
+
   context = TreeLearner<PredictedBoolLabel, UseLogLossGain>::create_context(bags);
 
   std::cout << "bags prepared" << std::endl;
@@ -792,7 +792,7 @@ Application_::train_dtree_set_(
       ext_test_svm,
       train_bags,
       out_of_bag_validate);
-      
+
     // try extend existing trees
     // TODO: SVM for node
     int best_index = -1;
@@ -1201,7 +1201,7 @@ Application_::fill_dtree_prop_(
     }
     res->props["bags"] = ss.str();
   }
-  
+
   return res;
 }
 

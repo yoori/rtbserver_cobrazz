@@ -1,6 +1,6 @@
 
 #include "FraudProtectionFeatureTest.hpp"
- 
+
 REFLECT_UNIT(FraudProtectionFeatureTest) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -11,7 +11,7 @@ namespace
 
   const int IMP_FRAUD_COUNT = 15;
   const int CLICK_FRAUD_COUNT = 10;
-  
+
   namespace ORM = ::AutoTest::ORM;
   typedef GlobalConfig::ServiceList ServiceList;
   typedef ServiceList::const_iterator Service_iterator;
@@ -31,8 +31,8 @@ namespace
 
   enum TestRequestFlags
   {
-    TRF_IMP              = 1,   // User send impression 
-    TRF_CLICK            = 2,   // User send click 
+    TRF_IMP              = 1,   // User send impression
+    TRF_CLICK            = 2,   // User send click
     TRF_ACTION           = 4,   // User send adv_action
     TRF_FRAUD            = 8,   // Request sequence is a fraud
     TRF_NOFRAUD_PARAM    = 16,  // Send debug.no_fraud parameter of the nslookup request
@@ -57,8 +57,8 @@ namespace
       RTE_CPC,
       RTE_CPA
     };
-    
-    
+
+
   public:
     /**
      * @brief Constructor.
@@ -166,7 +166,7 @@ namespace
     int clicks_;
     int actions_;
     double revenue_;
-    RevenueTypeEnum revenue_type_; 
+    RevenueTypeEnum revenue_type_;
   };
 
 
@@ -233,7 +233,7 @@ namespace
     /**
      * @brief Set expected stats.
      *
-     * @param expected stats.     
+     * @param expected stats.
      */
     void set_stats(
       const FraudStats& stats)
@@ -315,7 +315,7 @@ namespace
       stats_(stats)
     {
       unsigned long channelid = test->fetch_int(channel);
-      
+
       fraud_[0].key(
         CMPStats::Key().
         channel_id(channelid).
@@ -435,17 +435,17 @@ FraudProtectionFeatureTest::process_request(
   const AutoTest::Time& dtime)
 {
   std::set<std::string> users;
-  
+
   for (size_t i = 0; i < Count; ++i)
   {
     NSLookupRequest request;
-    request.format      = data[i].format;  
+    request.format      = data[i].format;
     request.tid         = fetch_string(data[i].tid);
     if (data[i].referer_kw)
     {
       request.referer_kw = map_objects(data[i].referer_kw);
     }
-    
+
     if (data[i].flags & TRF_NOFRAUD_PARAM)
     {
       request.debug_nofraud = 1;
@@ -455,12 +455,12 @@ FraudProtectionFeatureTest::process_request(
     {
       request.version  = fetch_string("ClientVersion");
     }
-    
+
     AutoTest::Time debug_time(
       dtime == Generics::Time::ZERO? today: dtime);
 
     debug_time += data[i].time_ofset;
-    
+
     request.debug_time  = debug_time;
 
     for (unsigned long j = 0; j < data[i].count; ++j)
@@ -481,7 +481,7 @@ FraudProtectionFeatureTest::process_request(
         fetch_objects(
           std::inserter(expected_ccs, expected_ccs.begin()),
           data[i].expected_ccs);
-        
+
         if (!(data[i].flags & TRF_SKIP_RIA_CHECKS))
         {
           ADD_WAIT_CHECKER(
@@ -494,13 +494,13 @@ FraudProtectionFeatureTest::process_request(
               RIARequestFraud::Expected().
               fraud(data[i].flags & TRF_FRAUD? "1": "0")));
         }
-        
+
         AutoTest::ConsequenceActionList actions;
 
         AutoTest::Time action_time(
           data[i].flags & TRF_ACTIONS_NOW?
             AutoTest::Time(): debug_time);
-     
+
         // Send impression requests
         if (data[i].flags & TRF_IMP)
         {
@@ -509,7 +509,7 @@ FraudProtectionFeatureTest::process_request(
               AutoTest::TRACK,
               action_time));
         }
-      
+
         // Send click requests
         if (data[i].flags & TRF_CLICK)
         {
@@ -518,7 +518,7 @@ FraudProtectionFeatureTest::process_request(
               AutoTest::CLICK,
               action_time));
         }
-        
+
         // Send action requests
         if (data[i].flags & TRF_ACTION)
         {
@@ -561,7 +561,7 @@ FraudProtectionFeatureTest::process_request(
     {
       auto uid = users.insert(
         AutoTest::prepare_uid(client.get_uid()));
-        
+
       if (uid.second)
       {
         if (data[i].flags & TRF_FRAUD)
@@ -611,7 +611,7 @@ FraudProtectionFeatureTest::process_request(
   }
 }
 
-void 
+void
 FraudProtectionFeatureTest::set_up()
 {
   FAIL_CONTEXT(
@@ -620,10 +620,10 @@ FraudProtectionFeatureTest::set_up()
     "RequestInfoManager must set in the XML configuration file");
 }
 
-bool 
+bool
 FraudProtectionFeatureTest::run()
 {
-  
+
   AUTOTEST_CASE(
     impression_fraud_("IMPFRAUD", false),
     "Impression fraud (no wait)");
@@ -645,7 +645,7 @@ FraudProtectionFeatureTest::run()
     "Mixed display and text");
 
   AdClient cpa_client(AdClient::create_user(this));
-  
+
   AUTOTEST_CASE(
     cpa_part_1_(cpa_client),
     "Clicks condition, actions corrections");
@@ -700,7 +700,7 @@ FraudProtectionFeatureTest::run()
   return true;
 }
 
-void 
+void
 FraudProtectionFeatureTest::tear_down()
 { }
 
@@ -730,7 +730,7 @@ void FraudProtectionFeatureTest::click_fraud_()
       value(fetch_string("ClientVersion")).
       colo_id(1).
       user_status("I"));
-    
+
   stats_user.select(pq_conn_);
 
   ADD_WAIT_CHECKER(
@@ -767,7 +767,7 @@ void FraudProtectionFeatureTest::click_fraud_()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(client, CLICK_FRAUD);
 }
 
@@ -818,11 +818,11 @@ void FraudProtectionFeatureTest::genuine_user_()
       "GENUINE/CHANNEL",
       "GENUINE/CC",
       IMP_FRAUD_COUNT - CLICK_FRAUD_COUNT, TRF_IMP,
-    }    
+    }
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(client, GENUINE_USER);
 }
 
@@ -918,7 +918,7 @@ void FraudProtectionFeatureTest::mixed_()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(client, MIXED);
 }
 
@@ -948,7 +948,7 @@ void FraudProtectionFeatureTest::unconfirmed_imps_()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(client, UNCONFIRMED_IMPS);
 }
 
@@ -993,7 +993,7 @@ void FraudProtectionFeatureTest::cpa_part_1_(
       0,
       "CPA/CHANNEL",
       "CPA/CC",
-      CLICK_FRAUD_COUNT + 1, TRF_CLICK | TRF_ACTION | TRF_FRAUD 
+      CLICK_FRAUD_COUNT + 1, TRF_CLICK | TRF_ACTION | TRF_FRAUD
     }
   };
 
@@ -1009,7 +1009,7 @@ void FraudProtectionFeatureTest::cpa_part_2_(
       FE_GENUINE, 0, 0, 0, 1,
       fetch_float("CPA/CCCPA"),
       FraudStats:: RTE_CPA));
-    
+
   client.process_request(
     NSLookupRequest().
     referer_kw(fetch_string("CPA/KWD")).
@@ -1145,7 +1145,7 @@ void FraudProtectionFeatureTest::ta_no_fraud_()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(client, TA_NO_FRAUD);
 }
 
@@ -1240,7 +1240,7 @@ void FraudProtectionFeatureTest::ta_channel_fraud_()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(client, TA_FRAUD);
 }
 
@@ -1320,7 +1320,7 @@ void FraudProtectionFeatureTest::merging_()
   AdClient fraudster(AdClient::create_user(this));
   process_request(fraudster, IMPRESSION_FRAUD);
   AdClient genuine(AdClient::create_user(this));
-  
+
   TemporaryAdClient temporary1(TemporaryAdClient::create_user(this));
   TemporaryAdClient temporary2(TemporaryAdClient::create_user(this));
 
@@ -1342,7 +1342,7 @@ void FraudProtectionFeatureTest::merging_()
   request.tid = fetch_string("IMPFRAUD/TID");
 
   genuine.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       fetch_string("IMPFRAUD/CC"),
@@ -1371,7 +1371,7 @@ void FraudProtectionFeatureTest::impression_fraud_(
   double channel_cpm = fetch_float(suffix + "/CHANNELCPM");
   unsigned long channel_id = fetch_int(suffix + "/CHANNEL");
   unsigned long cc_id = fetch_int(suffix + "/CC");
-  
+
   unsigned long inactivity_period = fetch_int("UserInactivityPeriod");
   unsigned long fraud_period_1 = 60;
 
@@ -1406,7 +1406,7 @@ void FraudProtectionFeatureTest::impression_fraud_(
       IMP_FRAUD_COUNT + 2;
 
   {
-    ORM::HourlyStats::Diffs diffs[2] = 
+    ORM::HourlyStats::Diffs diffs[2] =
     {
       ORM::HourlyStats::Diffs()
       .imps(impressions)
@@ -1487,10 +1487,10 @@ void FraudProtectionFeatureTest::impression_fraud_(
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(
     client, IMPRESSION_FRAUD, midday);
-  
+
 }
 
 void FraudProtectionFeatureTest::fraud_override_()
@@ -1499,7 +1499,7 @@ void FraudProtectionFeatureTest::fraud_override_()
   Generics::Time midday(
     (today.get_gm_time().format("%d-%m-%Y") +
        ":" + "12-00-01"), "%d-%m-%Y:%H-%M-%S");
-  
+
   double cc_cpm = fetch_float("FRAUDOVERRIDE/CCCPM");
   double channel_cpm = fetch_float("FRAUDOVERRIDE/CHANNELCPM");
   unsigned long channel_id = fetch_int("FRAUDOVERRIDE/CHANNEL");
@@ -1530,7 +1530,7 @@ void FraudProtectionFeatureTest::fraud_override_()
 
   {
     // RequestStatsHourly
-    ORM::HourlyStats::Diffs diffs[2] = 
+    ORM::HourlyStats::Diffs diffs[2] =
     {
       ORM::HourlyStats::Diffs()
       .imps(41)
@@ -1574,7 +1574,7 @@ void FraudProtectionFeatureTest::fraud_override_()
       AutoTest::stats_diff_checker(
           pq_conn_, diffs, cmp_stats));
   }
-  
+
   const FraudProtectionFeatureTest::TestRequest FRAUD_OVERRIDE[] =
   {
     {
@@ -1643,7 +1643,7 @@ void FraudProtectionFeatureTest::fraud_override_()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(
     client, FRAUD_OVERRIDE, midday);
 
@@ -1657,7 +1657,7 @@ void FraudProtectionFeatureTest::reversed_order_fraud_part_1_(
       ":" + "10-01-00"), "%d-%m-%Y:%H-%M-%S");
 
   unsigned long cc = fetch_int("REVERSEDORDER/CC");
-  
+
   ORM::StatsArray<ORM::HourlyStats, 2> stats;
   stats[0].key().
     cc_id(cc).num_shown(1).fraud_correction(false).stimestamp(time);
@@ -1667,7 +1667,7 @@ void FraudProtectionFeatureTest::reversed_order_fraud_part_1_(
 
   // Wait all request processing
   {
-    ORM::HourlyStats::Diffs diffs[2] = 
+    ORM::HourlyStats::Diffs diffs[2] =
     {
       ORM::HourlyStats::Diffs()
       .imps(14)
@@ -1712,10 +1712,10 @@ void FraudProtectionFeatureTest::reversed_order_fraud_part_2_(
   Generics::Time time(
     (today.get_gm_time().format("%d-%m-%Y") +
       ":" + "10-01-00"), "%d-%m-%Y:%H-%M-%S");
-  
+
   unsigned long inactivity_period = fetch_int("UserInactivityPeriod");
   unsigned long fraud_period = 60;
-  
+
   // Fraud request
   client.process_request(
     NSLookupRequest().
@@ -1806,7 +1806,7 @@ void FraudProtectionFeatureTest::delayed_clicks_()
       CLICK_FRAUD_COUNT,
       CLICK_FRAUD_COUNT, 0,
       fetch_float("DELAYEDCLICKS/CHANNELCPM")));
-  
+
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
     rsh_checker);
@@ -1836,9 +1836,9 @@ void FraudProtectionFeatureTest::delayed_clicks_()
       0, 1, TRF_FRAUD
     }
   };
-    
+
   AdClient client(AdClient::create_user(this));
-  
+
   process_request(
     client, DELAYED_CLICKS, time);
 }

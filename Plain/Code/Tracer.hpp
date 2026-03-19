@@ -89,7 +89,7 @@ namespace Code
         offset_ << "{";
       offset_ = offset_ + "  ";
     }
-    
+
     for(Code::ElementList::const_iterator el_it = elem->elements()->begin();
         el_it != elem->elements()->end(); ++el_it)
     {
@@ -136,7 +136,7 @@ namespace Code
         Declaration::StructReader_var struct_reader =
           reader->as_struct_reader();
         assert(struct_reader.in());
-        
+
         generate_reader_(struct_reader);
       }
       else
@@ -220,7 +220,7 @@ namespace Code
 
     *out_ << offset_ << "};" << std::endl;
   }
-  
+
   inline
   void
   Tracer::generate(
@@ -228,7 +228,7 @@ namespace Code
     Code::ElementList* elements) noexcept
   {
     out_ = &out;
-    
+
     for(Code::ElementList::const_iterator el_it =
           elements->begin();
         el_it != elements->end(); ++el_it)

@@ -74,7 +74,7 @@ namespace PassbackPixel
 
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
-    
+
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, PassbackTrackParamProcessor_var>
       PassbackTrackProcessorMap;

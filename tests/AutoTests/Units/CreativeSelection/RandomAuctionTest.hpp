@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__RANDOMAUCTIONTEST_
 #define _AUTOTEST__RANDOMAUCTIONTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class RandomAuctionTest : public BaseDBUnit
 {
@@ -64,13 +64,13 @@ public:
 
 
 protected:
-  
+
   virtual
   void set_up();
-  
+
   virtual
   bool run();
-  
+
   virtual
   void tear_down();
 

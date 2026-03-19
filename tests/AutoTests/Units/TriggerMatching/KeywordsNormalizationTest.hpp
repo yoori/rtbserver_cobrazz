@@ -1,10 +1,10 @@
 
 #ifndef _AUTOTEST__KEYWORDSNORMALIZATIONTEST_
 #define _AUTOTEST__KEYWORDSNORMALIZATIONTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
- 
+
+
 class KeywordsNormalizationTest: public BaseDBUnit
 {
 
@@ -19,18 +19,18 @@ class KeywordsNormalizationTest: public BaseDBUnit
   typedef std::list<ChannelDiff> ChannelDiffs;
 
 public:
- 
+
   KeywordsNormalizationTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   {};
- 
+
   virtual ~KeywordsNormalizationTest() noexcept
   {};
- 
+
 private:
 
   AutoTest::DBC::Conn conn_;
@@ -47,7 +47,7 @@ private:
   bool run();
   void post_condition();
   void tear_down();
- 
+
 };
 
 #endif //_AUTOTEST__KEYWORDSNORMALIZATIONTEST_

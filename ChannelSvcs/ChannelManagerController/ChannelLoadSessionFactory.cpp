@@ -76,7 +76,7 @@ CORBA::ValueBase* ChannelLoadSessionFactoryImpl::create_for_unmarshal()
 void ChannelLoadSessionFactoryImpl::report_error(
     Generics::ActiveObjectCallback::Severity severity,
     const char* description,
-    const char* error_code) 
+    const char* error_code)
     noexcept
 {
   if(callback_)
@@ -84,6 +84,6 @@ void ChannelLoadSessionFactoryImpl::report_error(
     Stream::Error ostr;
     ostr << __func__ << ": " << description;
     callback_->report_error(severity, ostr.str(), error_code);
-  } 
+  }
 }
 

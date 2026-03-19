@@ -542,7 +542,7 @@ namespace FrontendCommons
         if(value != AdServer::Commons::PROBE_USER_ID.to_string() &&
            ((request_info.*field_).is_null() || allow_rewrite_))
         {
-          Generics::SignedUuid uid = 
+          Generics::SignedUuid uid =
             user_id_controller_->verify(value, user_id_type_);
 
           if (!uid.uuid().is_null())
@@ -639,7 +639,7 @@ namespace FrontendCommons
               processors_.find(param_name);
             if(param_it != processors_.end())
             {
-              param_it->second->process(request_info, param_value); 
+              param_it->second->process(request_info, param_value);
             }
             else if(alt_processor_)
             {

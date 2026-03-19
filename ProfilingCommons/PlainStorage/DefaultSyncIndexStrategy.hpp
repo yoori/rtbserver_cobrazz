@@ -111,7 +111,7 @@ namespace PlainStorage
       {
         out << "block_index = (" << block_index << "), offset = " << block_offset;
       }
-      
+
       BlockIndexType block_index;
       SizeType block_offset;
     };
@@ -209,7 +209,7 @@ namespace PlainStorage
     /// Must be empty, (key -> block) pairs stored in posterior KeyBlocks
     WriteBlock_var main_block_;
     bool need_close_;
-    
+
     /// Current KeyBlock in KeyBlock sequence
     WriteBlock_var cur_block_;
     BlockIndexType cur_block_index_;

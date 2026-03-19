@@ -457,7 +457,7 @@ size_t param::size() const {
 }
 
 inline
-const param* 
+const param*
 param::next() const {
   const unsigned char* d = data() + size();
   return (const param*)d;
@@ -624,7 +624,7 @@ message::id() const
 {
   return id_;
 }
-  
+
 inline
 size_t message::size() const {
   if (cur_header_->type) {
@@ -638,7 +638,7 @@ size_t message::capacity() const
 {
   return capacity_ - 40;
 }
-  
+
 inline
 const string_ref message::str() const {
   return string_ref(buf_, size());

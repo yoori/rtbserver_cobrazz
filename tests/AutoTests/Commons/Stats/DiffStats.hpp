@@ -18,7 +18,7 @@ namespace AutoTest
 
       typedef T Self;
       typedef BasicStats<T, Count> Base;
-      
+
     public:
 
       class Diffs;
@@ -29,7 +29,7 @@ namespace AutoTest
        */
       DiffStats(
         const char* description);
-            
+
       /**
        * @brief Print diff.
        * @param output stream.
@@ -37,7 +37,7 @@ namespace AutoTest
        */
 
       static void print_diff(
-        std::ostream& out, 
+        std::ostream& out,
         const stats_diff_type& diff);
 
       static void print_diff(
@@ -51,12 +51,12 @@ namespace AutoTest
        * @param real (current) statistic
        */
       void print_diff(
-        std::ostream& out, 
+        std::ostream& out,
         const stats_diff_type& diff,
         const DiffStats<T, Count>& real) const;
-      
+
       void print_diff(
-        std::ostream& out, 
+        std::ostream& out,
         const Diffs& diff,
         const DiffStats<T, Count>& real) const;
     };

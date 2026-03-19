@@ -104,7 +104,7 @@ namespace AdServer
       //
       virtual void check(
         const ::AdServer::ChannelSvcs::ChannelUpdate_v33::CheckQuery& query,
-        ::AdServer::ChannelSvcs::ChannelUpdate_v33::CheckData_out data) 
+        ::AdServer::ChannelSvcs::ChannelUpdate_v33::CheckData_out data)
         /*throw(AdServer::ChannelSvcs::ImplementationException,
           AdServer::ChannelSvcs::NotConfigured)*/;
 

@@ -128,7 +128,7 @@ namespace ChannelSvcs
           if (lex_lang_it != lexemes_.end())
           {
             std::string lang_str;
-            lang_str = get_lang_str(lang); 
+            lang_str = get_lang_str(lang);
             dict_matcher_->get_lexemes(lang_str.c_str(), lex_lang_it->second);
           }
           ask_lexemes = false;
@@ -186,7 +186,7 @@ namespace ChannelSvcs
       throw Exception(err);
     }
   }
-  
+
   void UpdateContainer::fill_lexemes(
     unsigned short lang,
     const SubStringVector& parts,

@@ -293,7 +293,7 @@ namespace AdServer
       throw Exception(ostr);
     }
 
-    template <class Stream> 
+    template <class Stream>
     inline
     Stream&
     operator>>(Stream& is, AuctionType& auction_type)

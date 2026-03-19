@@ -128,7 +128,7 @@ void DictionaryProviderApp_::init_corba_() /*throw(Exception, CORBA::SystemExcep
 
     shutdowner_ = corba_server_adapter_->shutdowner();
 
-    server_impl_ = 
+    server_impl_ =
       new AdServer::ChannelSvcs::DictionaryProviderImpl(
         logger(), configuration_.get());
 

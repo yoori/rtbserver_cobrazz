@@ -53,7 +53,7 @@ namespace
       /*throw(eh::Exception)*/
     {
       client_.process_request(request_);
-          
+
       if (throw_error &&
         !AutoTest::equal(strof(ccid_), client_.debug_info.ccid))
       {
@@ -98,17 +98,17 @@ void CampaignCreativeUpdate::tear_down()
   add_descr_phrase("Tear down.");
 }
 
-bool 
+bool
 CampaignCreativeUpdate::run()
 {
   update_option_value_();
   add_creative_();
   remove_creative_();
   update_creative_();
-  
+
   return true;
 }
- 
+
 
 void CampaignCreativeUpdate::add_creative_()
 {
@@ -127,7 +127,7 @@ void CampaignCreativeUpdate::add_creative_()
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       creative->insert()),
-    description + 
+    description +
       " Must insert creative");
 
   ORM::ORMRestorer<ORM::PQ::CampaignCreative>* cc =
@@ -139,7 +139,7 @@ void CampaignCreativeUpdate::add_creative_()
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       cc->insert()),
-    description +     
+    description +
       " Must insert CC");
 
   add_checker(
@@ -181,7 +181,7 @@ void CampaignCreativeUpdate::remove_creative_()
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       cc->update()),
-    description + 
+    description +
      "must update CC");
 
   add_checker(
@@ -224,7 +224,7 @@ void CampaignCreativeUpdate::update_creative_()
     create<ORM::PQ::Creative>(creative_id);
 
   creative->size = fetch_int("UPDATECREATIVE/NewSize");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       creative->update()),
@@ -250,7 +250,7 @@ void CampaignCreativeUpdate::update_creative_()
     AutoTest::predicate_checker(
       ctemplate->update()),
     description + " Must update template");
-    
+
   add_checker(
     description,
     CreativeWaitChecker(
@@ -308,7 +308,7 @@ void CampaignCreativeUpdate::update_option_value_()
     AutoTest::equal_checker(
       strof(ccid),
       user.debug_info.ccid).check(),
-    description + 
+    description +
       " Check creative");
 
   ORM::ORMRestorer<ORM::PQ::CreativeOptionValue>* option =
@@ -317,12 +317,12 @@ void CampaignCreativeUpdate::update_option_value_()
         pq_conn_,
         fetch_int("UPDATEOPTION/Creative"),
         fetch_int("UPDATEOPTION/Option")));
-  
+
   option->value = fetch_string("UPDATEOPTION/ExclusionTag");
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       option->update()),
-    description + 
+    description +
       "Must update CreativeOptionValue");
 
   add_checker(

@@ -1,6 +1,6 @@
 #ifndef _AUTOTEST__AVERAGEUSERSCOST_
 #define _AUTOTEST__AVERAGEUSERSCOST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 class AverageUsersCost : public BaseUnit

@@ -50,7 +50,7 @@ namespace
 
     return str_flags;
   }
-  
+
   bool
   match(
     unsigned long campaign_flags,
@@ -92,7 +92,7 @@ namespace AdServer
       : logger_(ReferenceCounting::add_ref(logger)),
         campaign_config_(ReferenceCounting::add_ref(init.campaign_config_))
     {}
-    
+
     /** campaign index functions */
     bool CampaignIndex::index_campaigns(
       IndexingProgress* indexing_progress,
@@ -156,7 +156,7 @@ namespace AdServer
             {
               ostr << " " << *pit;
             }
-            
+
             logger_->log(
               ostr.str(),
               Logging::Logger::TRACE,
@@ -398,7 +398,7 @@ namespace AdServer
 
       return false;
     }
-    
+
     bool
     CampaignIndex::check_categories_(
       const Tag* tag,
@@ -671,7 +671,7 @@ namespace AdServer
         creatives,
         trace_params);
     }
-    
+
     void
     CampaignIndex::index_for_countries_(
       UserStatus user_status,
@@ -957,7 +957,7 @@ namespace AdServer
           tag->tag_id,
           country_code,
           format_it->c_str());
-          
+
         IndexNode& index_node = ordered_campaigns_[key_hash];
 
         if(text_candidate)
@@ -1077,7 +1077,7 @@ namespace AdServer
       /*throw(Exception, eh::Exception)*/
     {
       const Site* site = tag->site;
-      
+
       if(campaign->include_specific_sites() &&
          campaign->sites.find(site->site_id) ==
          campaign->sites.end())
@@ -1088,7 +1088,7 @@ namespace AdServer
             "  <step name=\"site targeting\" passed=\"no\"/>" <<
             std::endl;
         }
-        
+
         return;
       }
       else if(trace_params)
@@ -1107,7 +1107,7 @@ namespace AdServer
             "  <step name=\"tag delivery full exclusion\" passed=\"no\"/>" <<
             std::endl;
         }
-        
+
         return;
       }
       else if(trace_params)
@@ -1126,7 +1126,7 @@ namespace AdServer
             "  <step name=\"publisher accounts exclusion\" passed=\"no\"/>" <<
             std::endl;
         }
-        
+
         return;
       }
       else if(trace_params)
@@ -1183,14 +1183,14 @@ namespace AdServer
               "  <step name=\"creative categories and tag size\""
               " passed=\"yes\">" << std::endl <<
               "     Next creatives available by categories and tag size (ccid):";
-              
+
             for(ConstCreativePtrList::const_iterator cr_it = creatives.begin();
               cr_it != creatives.end();
               ++cr_it)
             {
               trace_params->trace_stream << " " << (*cr_it)->ccid;
             }
-              
+
             trace_params->trace_stream << std::endl << "  </step>" << std::endl;
           }
           else
@@ -1445,7 +1445,7 @@ namespace AdServer
       }
 
       return false;
-    }     
+    }
 
     bool
     CampaignIndex::check_tag_domain_exclusion(
@@ -1542,7 +1542,7 @@ namespace AdServer
           return false;
         }
       }
-      
+
       {
         /* campaign filtering: by weekly run intervals */
         bool res = !check_campaign_time_(campaign, current_time);
@@ -1612,7 +1612,7 @@ namespace AdServer
             (res ? "no" : "yes") << "\"/>" <<
             std::endl;
         }
-        
+
         if(res)
         {
           return false;
@@ -1708,7 +1708,7 @@ namespace AdServer
       return !campaign->fast_channel.in() ||
         campaign->fast_channel->triggered(&matched_channels, 0);
     }
-  
+
     void
     CampaignIndex::filter_creatives(
       const Key& key,
@@ -1743,7 +1743,7 @@ namespace AdServer
       {
         trace_params->trace_stream << "  <step name=\"creatives\">" << std::endl;
       }
-      
+
       for(CreativeList::const_iterator cr_it = campaign_creatives.begin();
           cr_it != campaign_creatives.end();
           ++cr_it)
@@ -1802,7 +1802,7 @@ namespace AdServer
             trace_params->trace_stream << "    <creative ccid=\"" << creative->ccid <<
               "\" passed=\"yes\"/>" << std::endl;
           }
-          
+
           creatives.push_back(creative);
         }
         else if(trace_params)
@@ -2101,7 +2101,7 @@ namespace AdServer
         index_nodes,
         &IndexNode::keyword_campaigns,
         campaign_cell_less_pred);
-      
+
       if(result_lost_wg_campaign_cell_list)
       {
         merge_lists_(
@@ -2142,7 +2142,7 @@ namespace AdServer
       const AdServer::Commons::Optional<unsigned long>& video_max_duration,
       const AdServer::Commons::Optional<unsigned long>& video_skippable_max_duration,
       bool video_allow_skippable,
-      bool video_allow_unskippable,      
+      bool video_allow_unskippable,
       const AllowedDurationSet& allowed_durations,
       const CreativeCategoryIdSet& exclude_categories,
       const CreativeCategoryIdSet& required_categories,
@@ -2286,7 +2286,7 @@ namespace AdServer
         'R',
         (match_status_type >> 4) & ST_TEST_REAL ? 'T' : 'N',
         0 };
-      
+
       return res;
     }
 
@@ -2348,7 +2348,7 @@ namespace AdServer
         ostr << "(" << decode_match_status_type_(it->first.match_status_type) <<
           ", " <<
           it->first.tag_id << ", " <<
-          (it->first.country_code[0] ? it->first.country_code[0] : ' ')<< 
+          (it->first.country_code[0] ? it->first.country_code[0] : ' ')<<
           (it->first.country_code[0] && it->first.country_code[1] ?
             it->first.country_code[1] : ' ') << ", " <<
           it->first.app_format << "): " << std::endl;

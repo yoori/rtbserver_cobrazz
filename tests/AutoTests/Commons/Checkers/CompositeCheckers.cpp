@@ -7,12 +7,12 @@ namespace AutoTest
   namespace Internals
   {
     // Internals::CheckerHolder
-    
+
     CheckerHolder::~CheckerHolder() noexcept
     { }
 
     // Internals::SubCheckersHolder
-  
+
     SubCheckersHolder::~SubCheckersHolder()
       noexcept
     { }
@@ -24,7 +24,7 @@ namespace AutoTest
   }
 
   // OrChecker
-  
+
   OrChecker::~OrChecker() noexcept
   { }
 
@@ -75,7 +75,7 @@ namespace AutoTest
 
 
   // CountChecker
-  
+
   CountChecker::CountChecker(
     size_t events_size,
     size_t sample_size) :
@@ -145,7 +145,7 @@ namespace AutoTest
     return true;
   }
 
-  
+
 
 }
 

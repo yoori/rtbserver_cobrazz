@@ -57,7 +57,7 @@ namespace Frontends
     WorkerArray free_workers_;
 
     WorkersSyncPolicy::Mutex workers_lock_;
-    WorkerArray workers_;    
+    WorkerArray workers_;
 
     Sync::PosixMutex stop_lock_;
     Sync::Conditional stopped_;
@@ -126,7 +126,7 @@ namespace Frontends
   class Acceptor::AcceptActiveObject: public Commons::DelegateActiveObject
   {
     friend class Acceptor::Worker;
-    
+
   public:
     AcceptActiveObject(
       Generics::ActiveObjectCallback* callback,
@@ -517,7 +517,7 @@ namespace Frontends
       sock_ = -1;
       sock_attached_.signal();
     }
-    
+
     {
       Guard lock(rpos_lock_);
       if (rpos_ != rbuf_)

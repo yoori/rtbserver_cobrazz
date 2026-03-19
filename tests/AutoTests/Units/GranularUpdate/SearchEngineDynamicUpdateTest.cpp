@@ -1,5 +1,5 @@
 #include "SearchEngineDynamicUpdateTest.hpp"
- 
+
 REFLECT_UNIT(SearchEngineDynamicUpdateTest) (
   "GranularUpdate",
   AUTO_TEST_SLOW
@@ -27,7 +27,7 @@ SearchEngineDynamicUpdateTest::add_scenario()
   engine->name = fetch_string("ADDENGINE/NAME");
   engine->post_encoding =  fetch_string("ADDENGINE/POST_ENCODING");
   engine->regexp = fetch_string("ADDENGINE/REGEXP");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       engine->insert()),
@@ -69,7 +69,7 @@ SearchEngineDynamicUpdateTest::update_scenario(
 
      (expected.*(diff_setter))(
        "\\Q" + strof(old_value) + "\\E");
-     
+
      FAIL_CONTEXT(
        SearchEngineWaitChecker(
          SearchEngineChecker(
@@ -77,7 +77,7 @@ SearchEngineDynamicUpdateTest::update_scenario(
            engine_id,
            expected)).check(),
        description + " Initial");
-     
+
    }
 
    engine->*(admin_field) = new_value;
@@ -92,7 +92,7 @@ SearchEngineDynamicUpdateTest::update_scenario(
 
      (expected.*(diff_setter))(
        "\\Q" + strof(new_value) + "\\E");
-     
+
      add_checker(
        description,
        SearchEngineWaitChecker(
@@ -136,11 +136,11 @@ SearchEngineDynamicUpdateTest::delete_scenario()
         AutoTest::AEC_NOT_EXISTS)));
 }
 
-bool 
+bool
 SearchEngineDynamicUpdateTest::run()
 {
   NOSTOP_FAIL_CONTEXT(add_scenario());
-  
+
   NOSTOP_FAIL_CONTEXT(
     update_scenario(
       "Update regex.",
@@ -149,7 +149,7 @@ SearchEngineDynamicUpdateTest::run()
       &SearchEngineChecker::Expected::regexp,
       fetch_string("UPDATEREGEX/OLD_REGEXP"),
       fetch_string("UPDATEREGEX/NEW_REGEXP")));
-  
+
   NOSTOP_FAIL_CONTEXT(
     update_scenario(
       "Update encoding.",
@@ -167,7 +167,7 @@ SearchEngineDynamicUpdateTest::run()
       &SearchEngineChecker::Expected::decoding_depth,
       fetch_int("UPDATEDEPTH/OLD_DEPTH"),
       fetch_int("UPDATEDEPTH/NEW_DEPTH")));
-  
+
   NOSTOP_FAIL_CONTEXT(delete_scenario());
 
   return true;

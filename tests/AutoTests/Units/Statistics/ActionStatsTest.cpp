@@ -25,7 +25,7 @@ namespace
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
-  
+
   const int NULL_DATE = -std::numeric_limits<int>::max();
   const double UNUSED_VALUE = -std::numeric_limits<double>::max();
 
@@ -73,7 +73,7 @@ ActionStatsTest::run()
 
   std::list<std::string> imps;
   std::list<std::string> clicks;
-  
+
   AUTOTEST_CASE(
     base_case_part_1_(client, imps, clicks),
     "Base case");
@@ -100,9 +100,9 @@ ActionStatsTest::run()
   AUTOTEST_CASE(
     deleted_action_(),
     "Deleted action");
-  
+
   check();
- 
+
   AUTOTEST_CASE(
     base_case_part_2_(client, imps),
     "Base case");
@@ -170,10 +170,10 @@ ActionStatsTest::initialize_stat_(
         expected.country?
         expected.country: GN).
       imp_date(base_time + expected.imp_ofset);
-    
+
     if (expected.click_ofset != NULL_DATE)
     {
-      stat.key().          
+      stat.key().
         click_date(
           base_time + expected.click_ofset);
     }
@@ -194,7 +194,7 @@ ActionStatsTest::initialize_stat_(
     action_id(fetch_int(expected.action)).
     action_date(base_time).
     order_id(expected.order_id? expected.order_id: "");
-  
+
   if (expected.cc)
   {
     stat.key().cc_id(fetch_int(expected.cc));
@@ -232,7 +232,7 @@ void ActionStatsTest::initialize_stats_(
     Stat stat;
 
     initialize_stat_(stat, expected[i]);
-    
+
     stat.description("#" + strof(i+1));
     stat.select(pq_conn_);
     stats_array.push_back(stat);
@@ -263,12 +263,12 @@ ActionStatsTest::process_conversations_(
 }
 
 
-void 
+void
 ActionStatsTest::base_case_part_1_(
   AdClient& client,
   std::list<std::string>& imps,
   std::list<std::string>& clicks)
-  
+
 {
 
   ActionStats stats;
@@ -323,9 +323,9 @@ ActionStatsTest::base_case_part_1_(
   ar_stats[2].description("#2");
 
   ar_stats.select(pq_conn_);
-  
+
   client.process_request(NSLookupRequest());
-  
+
   client.process_request(
     ActionRequest().
       debug_time(base_time).
@@ -346,7 +346,7 @@ ActionStatsTest::base_case_part_1_(
       loc_name(US).
       format("unit-test-imp").
       debug_time(base_time + 5));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       strof(fetch_int("Base/CCID/1")),
@@ -386,12 +386,12 @@ ActionStatsTest::base_case_part_1_(
       strof(fetch_int("Base/CCID/2")),
       client.debug_info.ccid).check(),
     "must got expected ccid");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       !client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       !client.debug_info.selected_creatives.first().action_adv_url.empty()),
@@ -408,7 +408,7 @@ ActionStatsTest::base_case_part_1_(
       loc_name(US).
       format("unit-test-imp").
       debug_time(base_time));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       strof(fetch_int("Base/CCID/3")),
@@ -439,7 +439,7 @@ ActionStatsTest::base_case_part_1_(
       debug_time(base_time + 10).
       actionid(fetch_int("Base/ACTION/4")).
       country(GB));
-  
+
   client.process_request(
     ActionRequest().
       debug_time(base_time + 10).
@@ -479,7 +479,7 @@ ActionStatsTest::base_case_part_1_(
 };
 
 
-void 
+void
 ActionStatsTest::base_case_part_2_(
   AdClient& client,
   std::list<std::string>& imps)
@@ -507,7 +507,7 @@ ActionStatsTest::base_case_part_2_(
     click_date_set_null();
   stats[1].description("#2");
   stats.select(pq_conn_);
-   
+
   ORM::StatsArray <ActionStats, 3>  unexpected;
   unexpected[0].key().
     action_id(fetch_int("Base/ACTION/2")).
@@ -539,12 +539,12 @@ ActionStatsTest::base_case_part_2_(
   // Navigate to track_pixel_url from first ad-request
   {
     std::string debug_time;
-    
+
     String::StringManip::mime_url_encode(
       (base_time + 7).get_gm_time().format(
         AutoTest::DEBUG_TIME_FORMAT),
       debug_time);
-  
+
     client.process_request(
       imps.front() +
       "&debug-time=" +
@@ -575,12 +575,12 @@ ActionStatsTest::base_case_part_2_(
 
   {
     std::string debug_time;
-    
+
     String::StringManip::mime_url_encode(
       (base_time + 61).get_gm_time().format(
         AutoTest::DEBUG_TIME_FORMAT),
       debug_time);
-  
+
     client.process_request(
       imps.front() +
       "&debug-time=" +
@@ -595,7 +595,7 @@ ActionStatsTest::base_case_part_2_(
       ActionStats::Diffs(2),
       ActionStats::Diffs(1)
     };
-    
+
     ADD_WAIT_CHECKER(
       "ActionStats check",
       AutoTest::stats_diff_checker(
@@ -628,7 +628,7 @@ ActionStatsTest::base_case_part_2_(
 }
 
 
-void 
+void
 ActionStatsTest::base_case_part_3_(
   AdClient& client,
   std::list<std::string>& clicks)
@@ -705,7 +705,7 @@ ActionStatsTest::base_case_part_3_(
       pq_conn_, diffs, stats));
 }
 
-void 
+void
 ActionStatsTest::base_case_part_4_(
   AdClient& client)
 {
@@ -825,12 +825,12 @@ ActionStatsTest::cross_action_()
       fetch_int("CrossAction/ACTION/1")).
     debug_time(base_time+60));
 
-  
+
   ADD_WAIT_CHECKER(
     "ActionStats check",
     AutoTest::stats_each_diff_checker(
       pq_conn_, 1, stats));
-    
+
 }
 
 void
@@ -838,7 +838,7 @@ ActionStatsTest::imp_update_()
 {
   // Stats initialization
   ORM::StatsList<ORM::ActionStats> stats;
-  
+
   const CaseStat case_stats[] =
   {
     { "ImpUpdate/ACTION", "ImpUpdate/CCID",
@@ -910,7 +910,7 @@ ActionStatsTest::text_ads_()
   // Stats initialization
 
   ORM::StatsList<ORM::ActionStats> stats;
-  
+
   const CaseStat case_stats[] =
   {
     { "TextAds/ACTION", "TextAds/CCID/1",
@@ -932,14 +932,14 @@ ActionStatsTest::text_ads_()
     debug_time(base_time));
 
   client.repeat_request();
-  
+
   std::string exp_ccids[] =
   {
     fetch_string("TextAds/CCID/1"),
     fetch_string("TextAds/CCID/2")
   };
 
- 
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -962,7 +962,7 @@ ActionStatsTest::deleted_action_()
 {
   ORM::StatsList<ORM::ActionStats> a_stats;
   ORM::StatsList<ORM::ActionRequests> ar_stats;
-  
+
   const CaseStat case_stats[] =
   {
     { "Deleted/ACTION", 0, 0, 0, 0, 0, 0, 0 }
@@ -991,7 +991,7 @@ ActionStatsTest::deleted_action_()
         fetch_int("Deleted/ACTION")).
       debug_time(base_time));
 
-  
+
   ADD_WAIT_CHECKER(
     "ActionStats check",
     AutoTest::stats_each_diff_checker(
@@ -1043,7 +1043,7 @@ ActionStatsTest::expired_profile_()
 
   std::string request_id(
     client.debug_info.creative_request_id.value());
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::RequestProfileChecker(
@@ -1055,21 +1055,21 @@ ActionStatsTest::expired_profile_()
     "Wait request profile");
 
   AutoTest::AdminsArray<AutoTest::RequestProfileAdmin> admins;
-  
+
   admins.initialize(
     this,
     CTE_ALL,
     STE_REQUEST_INFO_MANAGER,
     "\\" + request_id);
-  
+
   admins.log(AutoTest::Logger::thlog());
 
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       fetch_string("Expired/CCID/1"),
       client.debug_info.ccid).check(),
-    "Check CC#1");  
-    
+    "Check CC#1");
+
   client.process_request(
     NSLookupRequest().referer_kw(
       fetch_string("Expired/KEYWORD/2")).
@@ -1137,7 +1137,7 @@ ActionStatsTest::conversation_value_(
       "Conversation/ACTION/2",
       "Conversation/ACTION/3",
       "Conversation/ACTION/4",
-      "Conversation/ACTION/5", 
+      "Conversation/ACTION/5",
       "Conversation/ACTION/6",
       "Conversation/ACTION/8"
     };
@@ -1156,7 +1156,7 @@ ActionStatsTest::conversation_value_(
     AutoTest::equal_checker(
       fetch_string("Conversation/CCID"),
       client.debug_info.ccid).check(),
-    "Check CC");  
+    "Check CC");
 
   const ConversationAction REQUESTS[] =
   {
@@ -1259,7 +1259,7 @@ ActionStatsTest::conversation_orderid_(
       "Conversation/ACTION/3",
       "Conversation/ACTION/8",
       "Conversation/ACTION/9",
-      "Conversation/ACTION/10", 
+      "Conversation/ACTION/10",
       "Conversation/ACTION/11",
       "Conversation/ACTION/12",
       "Conversation/ACTION/13",
@@ -1286,7 +1286,7 @@ ActionStatsTest::conversation_orderid_(
     { "Conversation/ACTION/12", fetch_string("Conversation/ORDER/1").c_str(), 200 },
     { "Conversation/ACTION/13", fetch_string("Conversation/ORDER/2").c_str(), 200 }
   };
-  
+
   process_conversations_(client, &ConversationRequest::orderid, REQUESTS);
 
   client.process_request(
@@ -1312,7 +1312,7 @@ ActionStatsTest::conversation_orderid_(
           Diff().
             count(1).
             cur_value(0),
-          // Action#7 
+          // Action#7
           Diff().
             count(1).
             cur_value(1),
@@ -1366,7 +1366,7 @@ ActionStatsTest::conversation_orderid_(
             cur_value(2)
         },
         ar_stats));
-  }  
+  }
 }
 
 void

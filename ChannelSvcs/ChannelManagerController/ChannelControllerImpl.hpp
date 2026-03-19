@@ -177,7 +177,7 @@ namespace ChannelSvcs
     static void pack_ref_list_(
       const CORBACommons::CorbaObjectRefList& refs,
       ::AdServer::ChannelSvcs::ChannelServerControl::
-        CorbaObjectRefDefSeq& out) 
+        CorbaObjectRefDefSeq& out)
       /*throw(eh::Exception, CORBACommons::CorbaObjectRef::Exception)*/;
 
     static void pack_load_description_(
@@ -216,7 +216,7 @@ namespace ChannelSvcs
     virtual
     ~ChannelClusterControlImpl() noexcept;
 
-    virtual ::AdServer::ChannelSvcs::ChannelClusterSession* 
+    virtual ::AdServer::ChannelSvcs::ChannelClusterSession*
       get_control_session()
         /*throw(AdServer::ChannelSvcs::ChannelClusterControl::ImplementationException)*/;
 

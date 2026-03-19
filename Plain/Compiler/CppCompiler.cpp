@@ -112,7 +112,7 @@ int main(int argc, char** argv)
         }
         include_guard += upper_out_hpp + "_INCLUDE_GUARD";
       }
-      
+
       std::fstream out_hpp(opt_out_hpp->c_str(), std::fstream::out);
       out_hpp << "#ifndef " << include_guard << std::endl <<
         "#define " << include_guard << std::endl << std::endl;

@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__ZEROCOLLECTORTEST_
 #define _AUTOTEST__ZEROCOLLECTORTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class ZeroCollectorTest :  public BaseDBUnit
 {
@@ -14,7 +14,7 @@ public:
   typedef std::list<Channel> ChannelList;
   typedef std::list<ChannelTrigger> TriggerList;
 
- 
+
 public:
   ZeroCollectorTest(
     UnitStat& stat_var,
@@ -31,7 +31,7 @@ protected:
   void set_up();
   bool run();
   void tear_down();
-  
+
 private:
   ChannelList channels;
   TriggerList triggers;

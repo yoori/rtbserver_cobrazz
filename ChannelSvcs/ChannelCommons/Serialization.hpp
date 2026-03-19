@@ -11,13 +11,13 @@ namespace AdServer
   {
     namespace
     {
-      enum FLAGS: unsigned char 
+      enum FLAGS: unsigned char
       {
         BREAK_POS = 0x00,
         QUOTED_FLAG = 0x01,
         NEXT_BYTE_FLAG = 0x80
       };
-      enum BITS: unsigned char 
+      enum BITS: unsigned char
       {
         EXACT_BIT = 0x01, //exact match
         TYPE_BITS = 0x0E, //type bits
@@ -47,7 +47,7 @@ namespace AdServer
      * 1-3 bits - type of trigger
      * 4 bit - negative
      * #1+ byte flags of parts of trigger, count bytes depends on length of trigger
-     * for every part one bit of quoting, it is used 7 bytes for flag, 
+     * for every part one bit of quoting, it is used 7 bytes for flag,
      * last bit is flag of next byte for flags
      * % parts of trigger splitted by zero
      * */
@@ -91,25 +91,25 @@ namespace AdServer
       static SubStringVector& get_parts(
         const void* data, size_t size, SubStringVector& parts)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static Parts& get_parts(
         const void* data, size_t size, Parts& parts)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static SubStringVector& get_parts(
         const std::string& data, SubStringVector& parts)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static std::string& get_trigger(
         const void* data, size_t size, std::string& trigger)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static std::string& get_trigger(
         const std::string& in_trigger, std::string& trigger)
         /*throw(eh::Exception, BadFormatException)*/;
 
       static size_t get_reserve_size(const void* data) noexcept;
-      
+
       struct OctCorbaAllocator
       {
         OctCorbaAllocator(CORBACommons::OctSeq& oct_seq)
@@ -399,7 +399,7 @@ namespace AdServer
       }
       return trigger;
     }
-    
+
     inline
     std::string& Serialization::get_trigger(
       const std::string& in, std::string& trigger)
@@ -407,7 +407,7 @@ namespace AdServer
     {
       return get_trigger(in.data(), in.size(), trigger);
     }
-    
+
     inline
     size_t Serialization::get_reserve_size(const void* data) noexcept
     {

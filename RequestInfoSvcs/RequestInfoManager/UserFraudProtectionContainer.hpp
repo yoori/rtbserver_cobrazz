@@ -45,7 +45,7 @@ namespace AdServer
       };
 
       typedef ReferenceCounting::SmartPtr<Callback> Callback_var;
-      
+
       struct Config: public ReferenceCounting::AtomicImpl
       {
         struct FraudRule

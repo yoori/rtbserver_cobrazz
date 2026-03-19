@@ -1,7 +1,7 @@
 add_library(PlainCpp SHARED
-  DescriptorGenerator.cpp 
-  ReaderGenerator.cpp 
-  WriterGenerator.cpp 
+  DescriptorGenerator.cpp
+  ReaderGenerator.cpp
+  WriterGenerator.cpp
   Generator.cpp
 )
 

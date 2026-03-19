@@ -68,7 +68,7 @@ target_link_libraries(CampaignConfig
   BillingServerIDL
 )
 
-add_library(CampaignConfigSource 
+add_library(CampaignConfigSource
   CampaignConfigSource.cpp
 )
 
@@ -97,11 +97,11 @@ add_library( CreativeTemplateArgs SHARED
 )
 
 target_link_libraries(CreativeTemplateArgs
- Generics
- Commons
+  Generics
+  Commons
 )
 
-add_library(SecToken 
+add_library(SecToken
   SecToken.cpp
 )
 
@@ -125,13 +125,13 @@ target_link_libraries(CampaignManagerLogger
 )
 
 add_executable(CampaignManager
-  CampaignManagerImpl.cpp 
-  CampaignManagerMain.cpp 
-  InstantiateCreative.cpp 
-  CreativeTextGenerator.cpp 
-  ConfigManips.cpp 
-  SelectCreative.cpp 
-  CampaignSelector.cpp 
+  CampaignManagerImpl.cpp
+  CampaignManagerMain.cpp
+  InstantiateCreative.cpp
+  CreativeTextGenerator.cpp
+  ConfigManips.cpp
+  SelectCreative.cpp
+  CampaignSelector.cpp
   BillingStateContainer.cpp
 )
 

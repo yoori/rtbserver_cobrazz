@@ -150,7 +150,7 @@ namespace AdServer::Predictor
     remove_files(
       output_path_.c_str(), dict_mask_.c_str(), logger_);
     remove_files(
-      output_path_.c_str(), svm_mask_.c_str(), logger_);        
+      output_path_.c_str(), svm_mask_.c_str(), logger_);
   }
 
   void OutputLibSvmSet::write_record(

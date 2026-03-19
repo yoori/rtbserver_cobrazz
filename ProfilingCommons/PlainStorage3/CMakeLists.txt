@@ -1,9 +1,9 @@
 add_library(PlainStorage3 SHARED
-  FileController.cpp 
-  RandomAccessFile.cpp 
-  FileReader.cpp 
-  FileWriter.cpp 
-  LoadingProgressCallbackBase.cpp 
+  FileController.cpp
+  RandomAccessFile.cpp
+  FileReader.cpp
+  FileWriter.cpp
+  LoadingProgressCallbackBase.cpp
   LoadingProgressCallback.cpp
 )
 

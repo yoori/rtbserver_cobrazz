@@ -25,7 +25,7 @@ class TestLayerFactory
 public:
   typedef Sync::Policy::PosixThread SyncPolicy;
   typedef PlainStorage::FileBlockIndex TestBlockIndex;
-  
+
   typedef
     PlainStorage::WriteFragmentLayer<TestBlockIndex>
     WriteFragmentLayerT;
@@ -41,7 +41,7 @@ public:
   typedef
     ReferenceCounting::SmartPtr<WriteCacheLayerT>
     WriteCacheLayer_var;
-    
+
   typedef
     WriteRecordLayer<
       BlockExIndex<TestBlockIndex>,
@@ -55,7 +55,7 @@ public:
 
   typedef LayerFactory<SyncPolicy>::WriteRecordLayerT::NextBlockIndex
     TestIndex;
-  
+
   typedef
     DefaultSyncIndexStrategy<
       std::string, StringSerializer, TestIndex, TestIndexSerializer>
@@ -77,13 +77,13 @@ public:
     try
     {
       default_allocator_ = new DefaultAllocatorLayer(test_layer);
-      cache_layer_ = 
+      cache_layer_ =
         new WriteCacheLayer<TestBlockIndex>(
           test_layer, default_allocator_, 128);
 
       fragment_layer_ =
         new WriteFragmentLayerT(cache_layer_, cache_layer_);
-        
+
       return new WriteRecordLayerT(fragment_layer_, fragment_layer_);
     }
     catch (const BaseException& ex)
@@ -91,7 +91,7 @@ public:
       throw;
     }
   }
-    
+
   WriteRecordLayer_var open(
     TestWriteLayer* test_layer,
     BlockAllocator<TestBlockIndex>* test_allocator)
@@ -101,7 +101,7 @@ public:
     {
       default_allocator_ = ReferenceCounting::add_ref(test_allocator);
 
-      cache_layer_ = 
+      cache_layer_ =
         new WriteCacheLayer<TestBlockIndex>(
           test_layer, default_allocator_, 128);
 

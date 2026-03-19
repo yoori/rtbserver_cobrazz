@@ -1,6 +1,6 @@
 
 #include "OutOfScopeToken.hpp"
- 
+
 REFLECT_UNIT(OutOfScopeToken) (
   "CreativeInstantiation",
   AUTO_TEST_SLOW
@@ -17,12 +17,12 @@ namespace {
 void OutOfScopeToken::set_up()
 {
   add_descr_phrase("Preconditions");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must prisent in the configuration file");
-  
+
   set_creative_option();
 }
 
@@ -46,7 +46,7 @@ OutOfScopeToken::run()
 
   {
     AdClient client(AdClient::create_user(this));
-  
+
     client.process_request(request);
     FAIL_CONTEXT(
       AutoTest::equal_checker(
@@ -82,7 +82,7 @@ OutOfScopeToken::run()
 
   {
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(request);
     FAIL_CONTEXT(
       AutoTest::equal_checker(

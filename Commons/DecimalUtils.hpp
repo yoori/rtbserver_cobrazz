@@ -197,7 +197,7 @@ namespace Commons
     {
       ++cur_pos;
       const bool negative_order = check_negative(str, cur_pos);
-     
+
       Base exponent = 0;
 
       while (cur_pos < str.length() && isdigit(str[cur_pos]))

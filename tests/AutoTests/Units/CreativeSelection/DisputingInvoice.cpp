@@ -28,7 +28,7 @@ DisputingInvoice::set_up()
   clear_stats_();
 
   stat.key().adv_account_id(account_);
-  
+
   stat.select(pq_conn_);
 }
 
@@ -54,7 +54,7 @@ DisputingInvoice::run()
 
   return true;
 }
-  
+
 
 void
 DisputingInvoice::create_invoice_(
@@ -72,7 +72,7 @@ DisputingInvoice::create_invoice_(
         status("A")).check(),
     description +
       " Initial check");
-  
+
   for (size_t i = 0; i < 3; ++i)
   {
     AdClient client(AdClient::create_user(this));
@@ -148,7 +148,7 @@ DisputingInvoice::edit_invoice_(
     description +
       " CCG initial");
 
-  
+
   ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
     create<ORM::PQ::CampaignCreativeGroup>(ccgid_);
 
@@ -215,5 +215,5 @@ DisputingInvoice::clear_stats_()
   ORM::update_display_status(
     this, "account", account_);
 
-  AutoTest::UpdateStats::execute(this);  
+  AutoTest::UpdateStats::execute(this);
 }

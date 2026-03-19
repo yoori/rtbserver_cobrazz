@@ -595,7 +595,7 @@ CampaignManagerApp_::read_logging_config(
       log_params.tag_auction_stat);
   }
 
-  log_params.log_referrer_setting = 
+  log_params.log_referrer_setting =
       AdServer::Commons::LogReferrer::read_log_referrer_settings(
         config.use_referrer_site_referrer_stats());
 }

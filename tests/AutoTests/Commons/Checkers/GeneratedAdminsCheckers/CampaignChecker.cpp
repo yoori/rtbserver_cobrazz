@@ -13,7 +13,7 @@ namespace AutoTest
   CampaignChecker::CampaignChecker(
     BaseUnit* test,
     unsigned long ccg_id,
-    const Expected& expected, 
+    const Expected& expected,
     CampaignAdmin::Modificator expand_channels)
     : test_(test),
       ccg_id_(ccg_id),
@@ -51,7 +51,7 @@ namespace AutoTest
     central_admins.initialize(test_,
       CTE_CENTRAL, STE_CAMPAIGN_MANAGER,
       ccg_id_, expand_channels_);
-    
+
     AdminsArray<CampaignAdmin, CT_ALL> remote_admins;
 
     remote_admins.initialize(test_,

@@ -63,7 +63,7 @@ namespace ChannelSvcs
       UnmergedData() noexcept : index_(0), data_(nullptr) {};
 
       bool empty() const noexcept
-      { 
+      {
         return data_.operator->() == nullptr;
       }
 
@@ -76,7 +76,7 @@ namespace ChannelSvcs
       get_unmered_data(CORBA::ULong& index)
         noexcept;
 
-    private: 
+    private:
       CORBA::ULong index_;
       ::AdServer::ChannelSvcs::ChannelCurrent::UpdateData_var data_;
     };

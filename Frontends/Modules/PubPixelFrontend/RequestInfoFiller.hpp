@@ -67,7 +67,7 @@ namespace PubPixel
 
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
-    
+
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, RequestParamProcessor_var>
       RequestParamProcessorMap;

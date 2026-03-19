@@ -11,20 +11,20 @@
 /**
  * @class SiteUpdateTest
  * @brief Test for site updates
- */ 
+ */
 class SiteUpdateTest: public BaseDBUnit
 {
 public:
   SiteUpdateTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~SiteUpdateTest() noexcept
   { }
- 
+
 private:
 
   AutoTest::Time base_time_;

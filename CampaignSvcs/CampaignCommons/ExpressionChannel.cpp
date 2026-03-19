@@ -74,7 +74,7 @@ namespace CampaignSvcs
       channel->get_cmp_channels(cmp_channels, simple_channels);
     }
   }
-  
+
   void ExpressionChannelHolder::get_all_cmp_channels(
     ExpressionChannelList& cmp_channels)
     /*throw(Exception)*/
@@ -208,7 +208,7 @@ namespace CampaignSvcs
       responded_expr << channel_params_.channel_id;
       return true;
     }
-    
+
     return false;
   }
 
@@ -467,10 +467,10 @@ namespace CampaignSvcs
         status_set,
         matched_channels);
     }
-    
+
     return result;
   }
-  
+
   bool ExpressionChannel::use(
     ChannelUseCountMap& uc_tbl,
     const ChannelIdHashSet& triggered_channels,
@@ -479,7 +479,7 @@ namespace CampaignSvcs
     /*throw(Exception)*/
   {
     bool result = false;
-    
+
     ChannelUseCountMap::iterator it = uc_tbl.find(
       params().channel_id);
 
@@ -492,7 +492,7 @@ namespace CampaignSvcs
           it->second.channel_ids.end(),
           std::inserter(*matched_channels, matched_channels->begin()));
       }
-      
+
       ++it->second.count;
       result = true;
     }
@@ -579,7 +579,7 @@ namespace CampaignSvcs
   {
     return triggered_expression_(responded_expr, expr_, triggered_channels);
   }
-  
+
   bool
   ExpressionChannel::triggered_expression_(
     std::ostream& responded_expr,
@@ -614,12 +614,12 @@ namespace CampaignSvcs
       {
         return false;
       }
-      
+
     case AND_NOT:
       assert(expr.sub_channels.begin() != expr.sub_channels.end());
       end_it = ++expr.sub_channels.begin();
       [[fallthrough]];
-  
+
     case AND:
       {
         std::ostringstream sub_expr;
@@ -631,7 +631,7 @@ namespace CampaignSvcs
           {
             sub_expr << " & ";
           }
-          
+
           if(!triggered_expression_(sub_expr, *ch_it, triggered_channels))
           {
             return false;
@@ -641,7 +641,7 @@ namespace CampaignSvcs
         responded_expr << '(' << sub_expr.str() << ')';
         return true;
       }
-      
+
     case OR:
       {
         std::ostringstream sub_expr;
@@ -665,14 +665,14 @@ namespace CampaignSvcs
 
         responded_expr << (count > 1 ? "(" : "") << sub_expr.str() <<
           (count > 1 ? ")" : "");
-            
+
         return true;
       }
-      
+
     default:
       assert(0);
     }
-    
+
     return true;
   }
 
@@ -699,7 +699,7 @@ namespace CampaignSvcs
         expr.sub_channels.clear();
         return false;
       }
-      
+
       for(Expression::ExpressionList::iterator sit =
             ++expr.sub_channels.begin();
           sit != expr.sub_channels.end(); )
@@ -811,7 +811,7 @@ namespace CampaignSvcs
 
     return expr_ == right->expr_;
   }
-  
+
   void ExpressionChannel::get_all_cmp_channels_(
     ExpressionChannelList& cmp_channels,
     const Expression& expr)
@@ -846,7 +846,7 @@ namespace CampaignSvcs
     {
       Expression::ExpressionList::const_iterator last_it =
         expr.sub_channels.end();
-      
+
       if(expr.op == AND_NOT)
       {
         get_all_cmp_channels_(cmp_channels, *expr.sub_channels.rbegin());
@@ -861,7 +861,7 @@ namespace CampaignSvcs
       }
     }
   }
-  
+
   void ExpressionChannel::get_all_channels_(
     ChannelIdSet& channels,
     const Expression& expr)

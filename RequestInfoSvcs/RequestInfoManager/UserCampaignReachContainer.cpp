@@ -39,7 +39,7 @@ namespace RequestInfoSvcs
     static const char* FUN = "UserCampaignReachContainer::UserCampaignReachContainer()";
 
     Generics::Time extend_time_period_val(extend_time_period);
-    
+
     if(extend_time_period_val == Generics::Time::ZERO)
     {
       extend_time_period_val = std::max(expire_time / 4, Generics::Time(1));
@@ -117,10 +117,10 @@ namespace RequestInfoSvcs
     /*throw(Exception)*/
   {
     static const char* FUN = "UserCampaignReachContainer::process_ad_impression_()";
-    
+
     CampaignReachProcessor::ReachInfo reach_info;
     bool some_appear = false;
-    
+
     try
     {
       Generics::Time date(Algs::round_to_day(request_info.adv_time));
@@ -358,7 +358,7 @@ namespace RequestInfoSvcs
         ex.what();
       throw Exception(ostr);
     }
-    
+
     if(some_appear && !request_info.test_request)
     {
       if(logger_->log_level() >= Logging::Logger::TRACE)
@@ -387,7 +387,7 @@ namespace RequestInfoSvcs
       }
     }
   }
-  
+
   void UserCampaignReachContainer::clear_expired_users()
     /*throw(Exception)*/
   {

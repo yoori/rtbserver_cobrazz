@@ -99,7 +99,7 @@ namespace AdServer
 
       void
       fill_passback_url_from_tag(
-        std::string& passback_url,      
+        std::string& passback_url,
         const CreativeInstantiateRule& creative_instantiate_rule,
         const Tag* tag)
       {
@@ -772,7 +772,7 @@ namespace AdServer
             filtered_request_params.context_info.geo_channels,
             request_result->debug_info.geo_channels);
         }
-        
+
         // Log ads space info
         produce_ads_space_(
           request_params,
@@ -1099,7 +1099,7 @@ namespace AdServer
           ad_slot_context.passback_url,
           rule_it->second,
           tag);
-        
+
         AdSelectionResult ad_selection_result;
         ad_selection_result.tag = tag;
         ad_selection_result.tag_size = tag_size;
@@ -1251,7 +1251,7 @@ namespace AdServer
           );
 
         instantiate_ad_result->request_ids.length(0);
-        
+
         instantiate_ad_result->mime_format <<
           request_result_params.mime_format;
 
@@ -1315,7 +1315,7 @@ namespace AdServer
             request_info.request_user_id = AdServer::Commons::UserId();
             request_info.request_user_status = US_UNDEFINED;
           }
-         
+
           std::copy(geo_channels.begin(),
             geo_channels.end(),
             std::back_inserter(request_info.geo_channels));
@@ -1356,7 +1356,7 @@ namespace AdServer
             AdSlotMinCpm(),
             tag->sizes, // log all sizes, no blacklisting on inst
             instantiate_ad_info.emulate_click);
-         
+
           campaign_manager_logger_->process_ad_request(
             request_info, ad_request_selection_info);
         }
@@ -1472,7 +1472,7 @@ namespace AdServer
         {
           CorbaAlgs::convert_sequence(
             request_params.publisher_account_ids,
-            allowed_publisher_account_ids);          
+            allowed_publisher_account_ids);
         }
 
         for(auto acc_it = allowed_publisher_account_ids.begin();
@@ -1704,7 +1704,7 @@ namespace AdServer
 
       passback |=
         ad_slot_result.selected_creatives.length() == 0;
-      
+
       ad_slot_result.passback = passback;
 
       if (request_params.preview_ccid &&
@@ -2200,10 +2200,10 @@ namespace AdServer
 
       AdSelectionResult ad_selection_result;
       RequestResultParams request_result_params;
-      
+
       request_result_params.request_id =
         CorbaAlgs::unpack_request_id(request_params.common_info.request_id);
-      
+
       Tag::SizeMap tag_sizes;
       if (!ad_slot_context.request_blacklisted)
       {
@@ -2219,7 +2219,7 @@ namespace AdServer
           }
         }
       }
-      
+
       if(tag_sizes.empty())
       {
         ad_slot_context.request_blacklisted = true;
@@ -2578,7 +2578,7 @@ namespace AdServer
 
             auto size_it = it->creative->sizes.find(
               ad_selection_result.tag_size->size->size_id);
-            
+
             if (size_it != it->creative->sizes.end())
             {
               fill_expanding(
@@ -3537,7 +3537,7 @@ namespace AdServer
 
             if(platform_it != config->platforms.end())
             {
-              norm_platform_names.insert(platform_it->second);              
+              norm_platform_names.insert(platform_it->second);
             }
           }
 
@@ -4661,13 +4661,13 @@ namespace AdServer
           {
             throw Exception("Campaign configuration isn't loaded");
           }
-          
+
           WebOperationHash::const_iterator web_it = config->web_operations.find(
             WebOperationKey(
               VAST_APPLICATION,
               VAST_SOURCE,
               VAST_OPERATION));
-          
+
           if(web_it == config->web_operations.end())
           {
             return;
@@ -4676,7 +4676,7 @@ namespace AdServer
           std::string ct(String::StringManip::IntToStr(ad_slot.video_width).str().str());
           ct.push_back('x');
           String::StringManip::IntToStr(ad_slot.video_height).str().append_to(ct);
-          
+
           CampaignManagerLogger::WebOperationInfo web_op;
           web_op.init_by_flags(
             CorbaAlgs::unpack_time(request_params.common_info.time),
@@ -4689,7 +4689,7 @@ namespace AdServer
           web_op.colo_id = colocation->colo_id;
           web_op.tag_id = tag->tag_id;
           web_op.cc_id = 0;
-          
+
           web_op.web_operation_id = web_it->second->id;
           web_op.app = VAST_APPLICATION;
           web_op.source = VAST_SOURCE;
@@ -4882,7 +4882,7 @@ namespace AdServer
       static const char* FUN = "CampaignManagerImpl::fill_ad_slot_min_cpm_()";
 
       assert(tag);
-      
+
       try
       {
         // convert min_ecpm to tag currency
@@ -4929,7 +4929,7 @@ namespace AdServer
         Stream::Error ostr;
         ostr << FUN << ": tag_id = '" << tag->tag_id <<
           "': min_ecpm processing error: " << e.what();
-        
+
         logger_->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::TRAFFICKING_PROBLEM,
@@ -5603,7 +5603,7 @@ namespace AdServer
       record += ',';
       record += peer_ip.str();
       record += ',';
-      
+
       for(CORBA::ULong loc_i = 0; loc_i < location.length(); ++loc_i)
       {
         if(loc_i > 0)

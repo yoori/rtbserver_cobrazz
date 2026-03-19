@@ -43,7 +43,7 @@ namespace ChannelSvcs
    * **********************************************************************/
   struct ChannelVersion_v33_to_v28
   {
-    ::AdServer::ChannelSvcs::ChannelUpdate_v28::ChannelVersion 
+    ::AdServer::ChannelSvcs::ChannelUpdate_v28::ChannelVersion
     operator()(
       const ::AdServer::ChannelSvcs::ChannelUpdate_v33::ChannelVersion& in)
     {
@@ -57,7 +57,7 @@ namespace ChannelSvcs
 
   struct TriggerVersion_v33_to_v28
   {
-    ::AdServer::ChannelSvcs::ChannelUpdate_v28::TriggerVersion 
+    ::AdServer::ChannelSvcs::ChannelUpdate_v28::TriggerVersion
     operator()(
       const ::AdServer::ChannelSvcs::ChannelUpdate_v33::TriggerVersion& in)
     {
@@ -135,7 +135,7 @@ namespace ChannelSvcs
   //
   void ChannelProxyImpl_v28::check(
     const ::AdServer::ChannelSvcs::ChannelUpdate_v28::CheckQuery& query,
-    ::AdServer::ChannelSvcs::ChannelUpdate_v28::CheckData_out data) 
+    ::AdServer::ChannelSvcs::ChannelUpdate_v28::CheckData_out data)
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {

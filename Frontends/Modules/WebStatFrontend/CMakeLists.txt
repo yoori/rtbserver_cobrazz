@@ -1,5 +1,5 @@
 add_library(WebStatFrontend SHARED
-  RequestInfoFiller.cpp 
+  RequestInfoFiller.cpp
   WebStatFrontend.cpp
 )
 
@@ -18,7 +18,7 @@ target_link_libraries(WebStatFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

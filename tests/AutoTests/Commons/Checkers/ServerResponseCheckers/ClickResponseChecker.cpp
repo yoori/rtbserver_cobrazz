@@ -23,7 +23,7 @@ namespace AutoTest
   // ClickResponseChecker class
   const String::RegEx
   ClickResponseChecker::EMPTY_PUB_PRECLICK(String::SubString("^PUBPRECLICK=$"));
-  
+
   const String::RegEx
   ClickResponseChecker::EMPTY_CRCLICK(String::SubString("^CRCLICK=$"));
 
@@ -69,8 +69,8 @@ namespace AutoTest
     std::string got_pub_preclick, got_crclick;
     get_token(body, got_pub_preclick);
     get_token(body, got_crclick);
-    
-  
+
+
     if (client_.req_status() == 200 &&
       exp_pub_preclick_regex_.match(got_pub_preclick) &&
       exp_crclick_regex_.match(got_crclick))

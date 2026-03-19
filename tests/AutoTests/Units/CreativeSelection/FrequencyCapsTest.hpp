@@ -10,7 +10,7 @@ typedef std::vector<std::string> StrVector;
 
 class FrequencyCapsTest: public BaseUnit
 {
-public: 
+public:
   FrequencyCapsTest(
     UnitStat& stat_var,
     const char* task_name,
@@ -18,7 +18,7 @@ public:
     : BaseUnit(stat_var, task_name, params_var),
       time_()
   {};
- 
+
   virtual ~FrequencyCapsTest() noexcept
   {};
 

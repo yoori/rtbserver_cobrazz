@@ -9,7 +9,7 @@ namespace AutoTest
 {
 
   class TanxResponseChecker;
-  
+
   namespace ProtoBuf
   {
     template <>
@@ -25,21 +25,21 @@ namespace AutoTest
       class Expected
       {
         typedef ProtoBuf::ExpectedUtils<Ad> Utils;
-        
+
       public:
-        
+
         /**
          * @brief Default constructor.
          */
         Expected();
-        
+
         /**
          * @brief Copy constructor.
          */
         Expected(
           TanxResponseChecker& checker,
           const Expected& other);
-        
+
         /**
          * @brief Add creative_id to expected.
          *
@@ -48,7 +48,7 @@ namespace AutoTest
         Expected&
         creative_id(
           const std::string& val);
-        
+
         /**
          * @brief Add destination_url to expected.
          *
@@ -57,7 +57,7 @@ namespace AutoTest
         Expected&
         destination_url(
           const std::string& val);
-        
+
         /**
          * @brief Add ad_bid_count_idx to expected.
          *
@@ -66,21 +66,21 @@ namespace AutoTest
         Expected&
         ad_bid_count_idx(
           unsigned long val);
-        
+
         /**
          * @brief Add category to expected.
          * @param val TanX category id.
          */
         Expected&
         category(unsigned long val);
-        
+
         /**
          * @brief Add creative type to expected.
          * @param val TanX creative type id.
          */
         Expected&
         creative_type(unsigned long val);
-        
+
         /**
          * @brief Add creative type to expected.
          * @param val TanX creative type id.
@@ -94,14 +94,14 @@ namespace AutoTest
          */
         Expected&
         category_checked();
-        
+
         /**
          * @brief Add creative type exist checker to expected.
          * @param exist or not.
          */
         Expected&
         creative_type_checked();
-        
+
         ExpValue<std::string> creative_id_;
         ExpValue< std::list<std::string> > destination_url_;
         ExpValue<unsigned long> ad_bid_count_idx_;
@@ -111,7 +111,7 @@ namespace AutoTest
       };
     };
   }
-  
+
   /**
    * @class TanxResponseChecker
    * @brief Tanx response checker.
@@ -121,7 +121,7 @@ namespace AutoTest
   {
 
     typedef ProtoBuf::AdChecker<TanxResponseChecker> Base;
-    
+
   public:
 
     /**

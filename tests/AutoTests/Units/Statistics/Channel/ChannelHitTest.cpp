@@ -64,7 +64,7 @@ ChannelHitTest::run_case(const AutoTest::Time& date,
     for (int i = 0; i < hits_cs; ++i)
     {
       client.process_request(request);
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           expected,
@@ -136,7 +136,7 @@ ChannelHitTest::run_case(const AutoTest::Time& date,
       else
       { request.tid.clear(); }
       client.process_request(request);
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           expected,
@@ -161,7 +161,7 @@ ChannelHitTest::run_case(const AutoTest::Time& date,
       };
 
       client.process_request(request);
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           expected,

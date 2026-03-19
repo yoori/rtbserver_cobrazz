@@ -8,45 +8,45 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = FreqCapProfileAdmin::Expected, CheckType ch = CT_ONE>  
-  class FreqCapProfileChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = FreqCapProfileAdmin::Expected, CheckType ch = CT_ONE>
+  class FreqCapProfileChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      FreqCapProfileChecker_(      
-        BaseUnit* test,      
-        const std::string& uid,      
-        bool temp,      
-        UserInfoSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        uid_(uid),      
-        temp_(temp),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      FreqCapProfileChecker_(
+        BaseUnit* test,
+        const std::string& uid,
+        bool temp,
+        UserInfoSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        uid_(uid),
+        temp_(temp),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~FreqCapProfileChecker_() noexcept {}      
+      virtual ~FreqCapProfileChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      std::string uid_;      
-      bool temp_;      
-      UserInfoSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      std::string uid_;
+      bool temp_;
+      UserInfoSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef FreqCapProfileChecker_<FreqCapProfileAdmin::Expected> FreqCapProfileChecker;  
+  typedef FreqCapProfileChecker_<FreqCapProfileAdmin::Expected> FreqCapProfileChecker;
   typedef FreqCapProfileChecker_<std::string, CT_ONE_NOT_EXPECTED> FreqCapProfileEmptyChecker;
 
 }

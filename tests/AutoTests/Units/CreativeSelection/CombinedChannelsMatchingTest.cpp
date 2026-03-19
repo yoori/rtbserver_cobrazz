@@ -1,6 +1,6 @@
 
 #include "CombinedChannelsMatchingTest.hpp"
- 
+
 REFLECT_UNIT(CombinedChannelsMatchingTest) (
   "CreativeSelection",
   AUTO_TEST_FAST
@@ -13,8 +13,8 @@ namespace
   typedef AutoTest::DebugInfoList    DebugInfoList;
 }
 
- 
-bool 
+
+bool
 CombinedChannelsMatchingTest::run_test()
 {
   NSLookupRequest request;
@@ -48,12 +48,12 @@ CombinedChannelsMatchingTest::run_test()
       "must have " +
       fetch_string("Channel1") +
       " in triggered_expression");
-    
+
     add_descr_phrase("Test 2.2. 1 OR 2");
     request.referer.clear();
     request.referer_kw = fetch_string("KWD3");
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         client.debug_info.
@@ -63,7 +63,7 @@ CombinedChannelsMatchingTest::run_test()
       "must have " +
       fetch_string("Channel2") +
       " in triggered_expression");
-      
+
     request.referer_kw = fetch_string("KWD4");
     client.process_request(request);
     FAIL_CONTEXT(
@@ -75,7 +75,7 @@ CombinedChannelsMatchingTest::run_test()
       "must have " +
       fetch_string("Channel2") +
       " in triggered_expression");
-    
+
     add_descr_phrase("Test 2.3. 1 AND NOT 2");
     request.referer = fetch_string("REF5");
     request.referer_kw = fetch_string("KWD5");
@@ -102,12 +102,12 @@ CombinedChannelsMatchingTest::run_test()
       "must have " +
       fetch_string("Channel3") +
       " in triggered_expression");
-    
- 
+
+
     add_descr_phrase("Test 2.4. 1 OR 2 AND NOT 3");
     request.referer_kw = fetch_string("KWD7");
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         client.debug_info.
@@ -173,7 +173,7 @@ CombinedChannelsMatchingTest::run_test()
       "must have " +
       fetch_string("Channel6") +
       " in triggered_expression");
-    
+
     request.referer_kw = fetch_string("KWD12");
     request.referer = fetch_string("REF12");
     client.process_request(request);

@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__BUDGETOVERRUNSTEST_
 #define _AUTOTEST__BUDGETOVERRUNSTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 class BudgetOverrunsTest: public BaseDBUnit
 {
 public:
@@ -24,22 +24,22 @@ public:
   };
 
   BudgetOverrunsTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~BudgetOverrunsTest() noexcept
   { }
- 
+
 private:
 
   static const TestCase TEST_CASES[];
 
   void process_case(size_t i);
   void campaign_zero_budget();
- 
+
   bool run();
   void post_condition();
   void tear_down();

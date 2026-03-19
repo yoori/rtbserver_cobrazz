@@ -11,7 +11,7 @@ namespace
   {
     TF_CHECK_TRIGGERS = 1 // Check Debug-Info triggers fiels
   };
-  
+
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::ChannelsCheck ChannelsCheck;
 
@@ -44,7 +44,7 @@ ExactKeywordMatching::run_test()
 
   NOSTOP_FAIL_CONTEXT(
     test_group_(client, TEST_2, TF_CHECK_TRIGGERS));
-  
+
   return true;
 }
 
@@ -84,14 +84,14 @@ ExactKeywordMatching::test_case_(
         client.debug_info.trigger_channels.begin(),
         client.debug_info.trigger_channels.end());
     }
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
         test.matched,
         got_channels).check(),
       "Expected trigger_channels#"  + strof(case_idx_));
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,

@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__EXACTKEYWORDMATCHING_
 #define _AUTOTEST__EXACTKEYWORDMATCHING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class ExactKeywordMatching : public BaseUnit
 {
@@ -11,7 +11,7 @@ class ExactKeywordMatching : public BaseUnit
   typedef AutoTest::AdClient AdClient;
 
 public:
-  
+
   struct TestCase
   {
     const char* search;

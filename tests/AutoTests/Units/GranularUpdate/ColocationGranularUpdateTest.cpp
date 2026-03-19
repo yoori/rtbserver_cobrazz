@@ -11,7 +11,7 @@ namespace
   typedef AutoTest::ColocationChecker ColocationChecker;
 }
 
-void 
+void
 ColocationGranularUpdateTest::set_up()
 {
   add_descr_phrase("SetUp");
@@ -22,13 +22,13 @@ ColocationGranularUpdateTest::set_up()
     "CampaignManager must set in the XML configuration file");
 }
 
-void 
+void
 ColocationGranularUpdateTest::tear_down()
 {
   add_descr_phrase("tearDown");
 }
 
-bool 
+bool
 ColocationGranularUpdateTest::run()
 {
   add_colocation();
@@ -49,7 +49,7 @@ void ColocationGranularUpdateTest::add_colocation()
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       colo_->insert()),
-    description + 
+    description +
       " Cann't insert colocation");
 
   FAIL_CONTEXT(
@@ -71,11 +71,11 @@ void ColocationGranularUpdateTest::add_colo_rate()
   add_descr_phrase(description);
 
   colo_->rate.revenue_share = 0.75;
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       colo_->insert_rate()),
-    description + 
+    description +
       " Cann't insert colocation rate");
 
   FAIL_CONTEXT(
@@ -92,12 +92,12 @@ void ColocationGranularUpdateTest::add_colo_rate()
 void ColocationGranularUpdateTest::update_colo_account()
 {
   std::string description("Colocation account update.");
-  add_descr_phrase(description);  
+  add_descr_phrase(description);
   colo_->account =  fetch_int("Account2");
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       colo_->update()),
-    description + 
+    description +
       " Cann't update colocation");
 
   FAIL_CONTEXT(
@@ -118,7 +118,7 @@ void ColocationGranularUpdateTest::deactivate_colo()
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       colo_->update()),
-     description + 
+     description +
        " Cann't update colocation");
 
    FAIL_CONTEXT(

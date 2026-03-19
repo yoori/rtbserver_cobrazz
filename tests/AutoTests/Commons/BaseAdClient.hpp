@@ -1,6 +1,6 @@
 /** $Id$
  * @file BaseAdClient.hpp
- * Ad server client 
+ * Ad server client
  */
 #ifndef __AUTOTESTS_COMMONS_BASEADCLIENT_HPP
 #define __AUTOTESTS_COMMONS_BASEADCLIENT_HPP
@@ -40,7 +40,7 @@ namespace AutoTest
   {
 
     static Logging::Logger_var NULL_LOGGER_;
-    
+
     /**
      * @brief Base url.
      *
@@ -77,12 +77,12 @@ namespace AutoTest
      * and receiving responses from it.
      */
     ClientRequest_var request_;
-    
+
     /**
      * @brief Stored last request.
      */
     ClientRequest_var stored_request_;
-      
+
   public:
 
     enum LoggerType
@@ -169,7 +169,7 @@ namespace AutoTest
      */
     bool
     process_request(
-      const char* request_url, 
+      const char* request_url,
       HTTP::HTTP_Connection::HTTP_Method method =
         HTTP::HTTP_Connection::HM_Get)
       /*throw(Exception, InvalidArgument)*/;
@@ -186,7 +186,7 @@ namespace AutoTest
      */
     bool
     process_request(
-      const std::string& request_url, 
+      const std::string& request_url,
       const std::string& body,
       HTTP::HTTP_Connection::HTTP_Method method =
         HTTP::HTTP_Connection::HM_Get)
@@ -279,8 +279,8 @@ namespace AutoTest
      * @param logger logger for created object.
      */
     BaseAdClient(
-      const char* base_url, 
-      LoggerType log_type) 
+      const char* base_url,
+      LoggerType log_type)
       /*throw(Exception, eh::Exception)*/;
 
     /**
@@ -289,7 +289,7 @@ namespace AutoTest
      * Creates copy of existing object.
      * @param src copied object.
      */
-    BaseAdClient(const BaseAdClient& src) 
+    BaseAdClient(const BaseAdClient& src)
       /*throw(Exception, eh::Exception)*/;
 
     /**
@@ -312,14 +312,14 @@ namespace AutoTest
      */
     LoggerType log_type_;
   };
-    
+
   //
   //   AdClient inlines
   //
   inline
   bool
   BaseAdClient::process_request(
-    const std::string& request_url, 
+    const std::string& request_url,
     const std::string& body,
     HTTP::HTTP_Connection::HTTP_Method method)
     /*throw(Exception, InvalidArgument)*/
@@ -331,33 +331,33 @@ namespace AutoTest
     return process_request(request_url.c_str(), method);
   }
 
-    
-  inline  
-  unsigned int 
+
+  inline
+  unsigned int
   BaseAdClient::req_status() const
     noexcept
   {
     return request_->status();
   }
-    
+
   inline
-  const Generics::Time 
-  BaseAdClient::req_time() const 
+  const Generics::Time
+  BaseAdClient::req_time() const
     noexcept
   {
     return time_;
   }
-    
+
   inline
-  const std::string& 
+  const std::string&
   BaseAdClient::req_response_data() const
     noexcept
   {
       return request_->response_data();
   }
-    
+
   inline
-  Cookie::UnitCookieList& 
+  Cookie::UnitCookieList&
   BaseAdClient::get_cookies()
     noexcept
   {

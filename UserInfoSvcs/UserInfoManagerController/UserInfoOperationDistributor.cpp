@@ -361,7 +361,7 @@ namespace UserInfoSvcs
         merge_success,
         last_request);
     }
-    else 
+    else
     {
       AdServer::UserInfoSvcs::UserInfo temp_uid_info;
       AdServer::UserInfoSvcs::UserInfo temp_hid_info;
@@ -559,7 +559,7 @@ namespace UserInfoSvcs
       request_id,
       exclude_pubpixel_accounts);
   }
-  
+
   void
   UserInfoOperationDistributor::consider_publishers_optin(
     const CORBACommons::UserIdInfo& user_id,
@@ -575,7 +575,7 @@ namespace UserInfoSvcs
       exclude_pubpixel_accounts,
       now);
   }
-  
+
   void
   UserInfoOperationDistributor::clear_expired(
     CORBA::Boolean /*synch*/,

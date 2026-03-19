@@ -5,7 +5,7 @@ REFLECT_UNIT(BadReferersProcessingTest) (
   AUTO_TEST_FAST
 );
 
-bool 
+bool
 BadReferersProcessingTest::run_test()
 {
   add_descr_phrase("Starting https://jira.corp.foros.com/browse/ADSC-359");
@@ -20,7 +20,7 @@ BadReferersProcessingTest::run_test()
     p_ch
   };
   const std::string both[] = {
-    p_ch, 
+    p_ch,
     u_ch
   };
 
@@ -38,7 +38,7 @@ BadReferersProcessingTest::run_test()
       client.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "both channels");
-  
+
 #if 0 // The following tests do not pass in permissive mode.
   add_descr_phrase("Sending request with wrong referer (invalid port) and"
                    " right referer-kw");
@@ -69,7 +69,7 @@ BadReferersProcessingTest::run_test()
                    " and right referer-kw");
   request.referer("http:/U01:80");
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       first,
@@ -103,4 +103,4 @@ BadReferersProcessingTest::run_test()
 
   return true;
 }
- 
+

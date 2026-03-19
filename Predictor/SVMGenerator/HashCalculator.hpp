@@ -449,7 +449,7 @@ public:
       value_path.pop_back();
     }
   }
-  
+
 protected:
   virtual
   ~HashCalculatorDelegateImpl() noexcept = default;

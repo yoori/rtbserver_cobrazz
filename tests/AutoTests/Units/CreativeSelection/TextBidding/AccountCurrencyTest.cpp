@@ -32,7 +32,7 @@ AccountCurrencyTest::run_test()
   ccid_exp.push_back(fetch_string("CC4"));
   ccid_exp.push_back(fetch_string("CC2"));
   ccid_exp.push_back(fetch_string("CC1"));
-  
+
   actual_cpc_exp.push_back(fetch_string("actual_cpc3"));
   actual_cpc_exp.push_back(fetch_string("actual_cpc4"));
   actual_cpc_exp.push_back(fetch_string("actual_cpc2"));

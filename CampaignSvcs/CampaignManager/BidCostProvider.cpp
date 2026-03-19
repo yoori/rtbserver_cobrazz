@@ -198,7 +198,7 @@ namespace CampaignSvcs
     {
       return AdServer::Commons::Optional<RevenueDecimal>();
     }
-    
+
     CostMapping::Key key(request_params.tag_id, request_params.domain);
     auto cost_map_it = cost_mapping_->cost_map.find(key);
     if(cost_map_it == cost_mapping_->cost_map.end())

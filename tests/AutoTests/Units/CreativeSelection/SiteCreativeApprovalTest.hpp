@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__SITECREATIVEAPPROVALTEST_
 #define _AUTOTEST__SITECREATIVEAPPROVALTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class SiteCreativeApprovalTest : public BaseUnit
 {

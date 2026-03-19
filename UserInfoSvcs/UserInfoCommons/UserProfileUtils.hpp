@@ -29,7 +29,7 @@ namespace AdServer
         Table::Column("cohort", Table::Column::TEXT),
 
         Table::Column("persistent_matches", Table::Column::TEXT),
-        
+
         Table::Column("page_ht_candidates", Table::Column::TEXT),
         Table::Column("page_history_matches", Table::Column::TEXT),
         Table::Column("page_history_visits", Table::Column::TEXT),
@@ -51,7 +51,7 @@ namespace AdServer
         Table::Column("url_keyword_session_matches", Table::Column::TEXT),
 
         Table::Column("audience_channels", Table::Column::TEXT),
-        
+
         Table::Column("last_page_triggers", Table::Column::TEXT),
         Table::Column("last_search_triggers", Table::Column::TEXT),
         Table::Column("last_url_triggers", Table::Column::TEXT),
@@ -72,9 +72,9 @@ namespace AdServer
         Table::Column("first_colo_id", Table::Column::NUMBER),
         Table::Column("last_colo_id", Table::Column::NUMBER),
         Table::Column("cohort", Table::Column::TEXT),
-        
+
         Table::Column("persistent_matches", Table::Column::TEXT),
-        
+
         Table::Column("page_ht_candidates", Table::Column::TEXT),
         Table::Column("page_history_matches", Table::Column::TEXT),
         Table::Column("page_history_visits", Table::Column::TEXT),
@@ -84,7 +84,7 @@ namespace AdServer
         Table::Column("search_history_matches", Table::Column::TEXT),
         Table::Column("search_history_visits", Table::Column::TEXT),
         Table::Column("search_session_matches", Table::Column::TEXT),
- 
+
         Table::Column("url_ht_candidates", Table::Column::TEXT),
         Table::Column("url_history_matches", Table::Column::TEXT),
         Table::Column("url_history_visits", Table::Column::TEXT),
@@ -135,23 +135,23 @@ namespace AdServer
             sizeof(PROFILE_EXPANDED_TABLE_COLUMNS) /
             sizeof(PROFILE_EXPANDED_TABLE_COLUMNS[0]) :
             sizeof(PROFILE_TABLE_COLUMNS) / sizeof(PROFILE_TABLE_COLUMNS[0]);
-          
+
           Table table(columns);
-          
+
           for(unsigned long i = 0; i < columns; i++)
           {
             table.column(i, expand ?
                          PROFILE_EXPANDED_TABLE_COLUMNS[i] : PROFILE_TABLE_COLUMNS[i]);
           }
-          
+
           Table::Row row(table.columns());
-          
+
           ChannelsProfileReader reader(profile, size);
 
           std::string space_str(table.value_align() + 3, ' ');
-            
+
           std::ostringstream space_align;
-          
+
           if (align)
           {
             space_align << std::endl << space_str.c_str();
@@ -160,7 +160,7 @@ namespace AdServer
           {
             space_align << " ";
           }
-          
+
           {
             row.add_field(reader.version());
             row.add_field(
@@ -180,7 +180,7 @@ namespace AdServer
             row.add_field(reader.first_colo_id());
             row.add_field(reader.last_colo_id());
             row.add_field(reader.cohort());
-            
+
             std::ostringstream pm_ostr;
             for(PersistentMatchesReader::channel_ids_Container::const_iterator it =
                   reader.persistent_matches().channel_ids().begin();
@@ -190,7 +190,7 @@ namespace AdServer
                 (it == reader.persistent_matches().channel_ids().begin() ?
                  "" : space_align.str().c_str()) << *it;
             }
-            
+
             row.add_field(pm_ostr.str());
             add_channel_info_row(
               row, reader.page_channels(), space_align.str().c_str(), expand);
@@ -206,7 +206,7 @@ namespace AdServer
               reader.audience_channels().begin(),
               reader.audience_channels().end(),
               space_align.str().c_str());
-            
+
             add_last_triggers_row(
               row,
               reader.last_page_triggers().begin(),
@@ -242,7 +242,7 @@ namespace AdServer
           table.dump(ostr);
         }
       }
-      
+
       static void print_history_profile(
         const void* profile,
         unsigned long size,
@@ -255,26 +255,26 @@ namespace AdServer
           unsigned long columns =
             sizeof(HISTORY_PROFILE_TABLE_COLUMNS) /
             sizeof(HISTORY_PROFILE_TABLE_COLUMNS[0]);
-          
+
           Table table(columns);
-          
+
           for(unsigned long i = 0; i < columns; i++)
           {
             table.column(i, HISTORY_PROFILE_TABLE_COLUMNS[i]);
           }
-          
+
           Table::Row row(table.columns());
-          
+
           HistoryUserProfileReader reader(profile, size);
-          
+
           {
             row.add_field(reader.major_version());
             row.add_field(reader.minor_version());
 
             std::string space_str(table.value_align() + 3, ' ');
-            
+
             std::ostringstream space_align;
-            
+
             if (align)
             {
               space_align << std::endl << space_str.c_str();
@@ -283,7 +283,7 @@ namespace AdServer
             {
               space_align << " ";
             }
-            
+
             add_history_info_row(
               row, reader.page_channels(), space_align.str().c_str());
             add_history_info_row(
@@ -293,12 +293,12 @@ namespace AdServer
             add_history_info_row(
               row, reader.url_keyword_channels(), space_align.str().c_str());
           }
-          
+
           table.add_row(row);
           table.dump(ostr);
         }
       }
-      
+
     private:
 
       static void add_history_info_row(
@@ -307,14 +307,14 @@ namespace AdServer
         const char* space_align)
       {
         std::ostringstream ostr;
-        
+
         for(HistoryUserProfileReader::page_channels_Container::const_iterator it =
               rdr.begin(); it != rdr.end(); ++it)
         {
           ostr << (it == rdr.begin() ? "" : space_align) <<
             "[ channel_id = " << (*it).channel_id() <<
             ", days_visits_pairs =";
-          
+
           for(HistoryChannelInfoReader::days_visits_Container::const_iterator dv_it =
                 (*it).days_visits().begin();
               dv_it != (*it).days_visits().end(); ++dv_it)
@@ -322,10 +322,10 @@ namespace AdServer
             ostr << (dv_it == (*it).days_visits().begin() ? " " : ", ") <<
               (*dv_it).days() << ":" << (*dv_it).visits();
           }
-          
+
           ostr << " ]";
         }
-        
+
         row.add_field(ostr.str());
       }
 
@@ -338,7 +338,7 @@ namespace AdServer
       {
         std::ostringstream ostr;
         IteratorType it = it_begin;
-        
+
         while (it != it_end)
         {
           ostr << (it == it_begin ? "" : space_align)
@@ -346,7 +346,7 @@ namespace AdServer
                << ", channel_trigger_id = " << (*it).channel_trigger_id()
                << ", last_match_time = " << Generics::Time((*it).last_match_time()).gm_ft()
                << " ]";
-          
+
           ++it;
         }
 
@@ -362,7 +362,7 @@ namespace AdServer
       {
         std::ostringstream ostr;
         IteratorType it = it_begin;
-        
+
         while (it != it_end)
         {
           AdServer::CampaignSvcs::CoordDecimal latitude;
@@ -371,14 +371,14 @@ namespace AdServer
           longitude.unpack((*it).longitude().get());
           AdServer::CampaignSvcs::AccuracyDecimal accuracy;
           accuracy.unpack((*it).accuracy().get());
-          
+
           ostr << (it == it_begin ? "" : space_align)
                << "[ latitude = " << latitude
                << ", longitude = " << longitude
                << ", accuracy = " << accuracy
                << ", timestamp = " << Generics::Time((*it).timestamp()).gm_ft()
                << " ]";
-          
+
           ++it;
         }
 
@@ -394,20 +394,20 @@ namespace AdServer
       {
         std::ostringstream ostr;
         IteratorType it = it_begin;
-        
+
         while (it != it_end)
         {
           ostr << (it == it_begin ? "" : space_align)
                << "[ channel_id = " << (*it).channel_id()
                << ", time = " << Generics::Time((*it).time()).gm_ft()
                << " ]";
-          
+
           ++it;
         }
 
         row.add_field(ostr.str());
-      } 
-      
+      }
+
       static void add_channel_info_row(
         Table::Row& row,
         const ChannelsInfoReader& rdr,
@@ -425,9 +425,9 @@ namespace AdServer
             ", visits = " << (*it).visits() <<
             ", weight = " << (*it).weight() << " ]";
         }
-        
+
         row.add_field(htc_ostr.str());
-        
+
         std::ostringstream hm_ostr;
         for(ChannelsInfoReader::history_matches_Container::const_iterator it =
               rdr.history_matches().begin();
@@ -437,9 +437,9 @@ namespace AdServer
             "[ channel_id = " << (*it).channel_id() <<
             ", weight = " << (*it).weight() << " ]";
         }
-        
+
         row.add_field(hm_ostr.str());
-        
+
         std::ostringstream hv_ostr;
         for(ChannelsInfoReader::history_visits_Container::const_iterator it =
               rdr.history_visits().begin();
@@ -449,9 +449,9 @@ namespace AdServer
             "[ channel_id = " << (*it).channel_id() <<
             ", visits = " << (*it).visits() << " ]";
         }
-        
+
         row.add_field(hv_ostr.str());
-        
+
         std::ostringstream sm_ostr;
         for(ChannelsInfoReader::session_matches_Container::const_iterator it =
               rdr.session_matches().begin();
@@ -459,7 +459,7 @@ namespace AdServer
         {
           sm_ostr << (it == rdr.session_matches().begin() ? "" : space_align) <<
             "[ channel_id = " << (*it).channel_id() << ", timestamps =";
-          
+
           for(SessionMatchesReader::timestamps_Container::const_iterator ts_it =
                 (*it).timestamps().begin();
               ts_it != (*it).timestamps().end(); ++ts_it)
@@ -467,14 +467,14 @@ namespace AdServer
             sm_ostr << (ts_it == (*it).timestamps().begin() ? " " : ", ") <<
               Generics::Time(*ts_it).gm_ft();
           }
-          
+
           sm_ostr << " ]";
         }
-        
+
         row.add_field(sm_ostr.str());
       }
     };
-    
+
   }   // namespace UserInfoSvcs
 }   // namespace AdServer
 

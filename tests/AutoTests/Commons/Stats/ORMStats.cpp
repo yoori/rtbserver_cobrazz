@@ -41,19 +41,19 @@ namespace AutoTest
       {
         typedef ORMRestorer<PQ::Channel> ORMChannel;
         typedef ReferenceCounting::SmartPtr<ORMChannel> Channel_var;
-        
+
         Channel_var channel =
           new ORMChannel(
             conn, channel_id);
 
         const char UNSUPPORTED_TYPES[] = "KGS";
-        
+
         if (strstr(UNSUPPORTED_TYPES, channel->type.value().c_str()) == 0)
         {
           channel->status = "D";
           result = channel->update(false);
         }
-          
+
         result &=
           SerializeQueryManager::instance().execute(conn, query);
       }
@@ -69,7 +69,7 @@ namespace AutoTest
       int id)
     {
       AutoTest::DBC::Conn conn(test->open_pq());
-      
+
       StatsDB::Query query(
         conn.query(
           "select displaystatus.bulk_update_display_status("
@@ -78,9 +78,9 @@ namespace AutoTest
       query.set(id);
 
       return SerializeQueryManager::instance().execute(
-        conn, query);  
+        conn, query);
     }
-   
+
     Generics::Time
     get_tz_ofset(
       BaseUnit* test,
@@ -120,7 +120,7 @@ namespace AutoTest
     Selectable::Selectable() :
       initial_(false)
     { }
-    
+
     Selectable::~Selectable()
     { }
 
@@ -132,9 +132,9 @@ namespace AutoTest
       initial_ = initial;
       return this->query_select_(connection);
     }
-   
+
     // class OneRowObject
-    
+
     OneRowObject::~OneRowObject ()
     {}
 

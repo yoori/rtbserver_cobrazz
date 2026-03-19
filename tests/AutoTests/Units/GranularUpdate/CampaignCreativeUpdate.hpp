@@ -2,7 +2,7 @@
 #define AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNCREATIVEUPDATE
 
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 namespace ORM = ::AutoTest::ORM;
 
 /**
@@ -13,8 +13,8 @@ class CampaignCreativeUpdate: public BaseDBUnit
 {
 public:
   CampaignCreativeUpdate(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   {};
@@ -23,7 +23,7 @@ public:
   {};
 
 private:
-  
+
   void set_up();
   void tear_down();
   bool run();

@@ -24,7 +24,7 @@ namespace AutoTest
       ProtoBufChecker& checker_;
       T exp_;
       Getter getter_;
-      
+
     public:
       /**
        * @brief Constructor.
@@ -37,7 +37,7 @@ namespace AutoTest
         ProtoBufChecker& checker,
         const T& exp,
         Getter getter);
-      
+
       /**
        * @brief Copy constructor.
        *
@@ -46,12 +46,12 @@ namespace AutoTest
        */
       FieldChecker(
         const FieldChecker& other);
-      
+
       /**
        * @brief Destructor.
        */
       virtual ~FieldChecker() noexcept;
-      
+
       /**
        * @brief Check.
        * @param throw on error flag.
@@ -72,7 +72,7 @@ namespace AutoTest
       ProtoBufChecker& checker_;
       bool exist_;
       Getter getter_;
-      
+
     public:
       /**
        * @brief Constructor.
@@ -85,12 +85,12 @@ namespace AutoTest
         ProtoBufChecker& checker,
         bool exist,
         Getter getter);
-      
+
       /**
        * @brief Destructor.
        */
       virtual ~FieldExistChecker() noexcept;
-      
+
       /**
        * @brief Check.
        * @param throw on error flag.
@@ -156,7 +156,7 @@ namespace AutoTest
         const std::string& name,
         const ExpValue<bool>& val,
         T (Message::*getter)(void) const);
-      
+
     };
 
     template <typename Tag>
@@ -176,7 +176,7 @@ namespace AutoTest
       typedef typename BaseTraits<Tag>::Ad Ad;
       typedef typename BaseTraits<Tag>::Expected Expected;
       typedef typename ::google::protobuf::RepeatedPtrField<Ad>::size_type size_type;
-      
+
     public:
       /**
        * @brief Constructor.
@@ -189,18 +189,18 @@ namespace AutoTest
         const AdClient& client,
         const Expected& expected,
         size_t creative_num);
-      
+
       /**
        * @brief Copy constructor.
        */
       AdChecker(
         const AdChecker& other);
-      
+
       /**
        * @brief Destructor.
        */
       virtual ~AdChecker() noexcept;
-      
+
       /**
        * @brief Check.
        * @param throw on error flag.
@@ -218,11 +218,11 @@ namespace AutoTest
       virtual
       size_type
       ad_size() const = 0;
-    
+
     protected:
-      
+
       friend class ExpectedUtils<Ad>;
-      
+
       CheckerList checkers_;
       Response response_;
       Expected expected_;
@@ -232,7 +232,7 @@ namespace AutoTest
 
    /**
    * @class TypeTraits
-   * @brief RepeatedPtrField specialization 
+   * @brief RepeatedPtrField specialization
    */
   template<typename T>
   struct TypeTraits< google::protobuf::RepeatedPtrField<T> >
@@ -266,7 +266,7 @@ namespace AutoTest
 
   /**
    * @class TypeTraits
-   * @brief RepeatedField specialization 
+   * @brief RepeatedField specialization
    */
   template<typename T>
   struct TypeTraits< google::protobuf::RepeatedField<T> >

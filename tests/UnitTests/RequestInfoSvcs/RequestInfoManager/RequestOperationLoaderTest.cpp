@@ -200,7 +200,7 @@ public:
       etalon_request_profile_->membuf().size()) != 0)
     {
       std::cerr << "change_request_user_id: incorrect request_profile content" <<
-        std::endl;      
+        std::endl;
     }
 
     counter_.change_requests += 1;
@@ -233,7 +233,7 @@ public:
   {
     return request_id_;
   }
-  
+
   const AdServer::Commons::UserId&
   etalon_user_id() const
   {

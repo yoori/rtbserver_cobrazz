@@ -8,14 +8,14 @@ namespace AutoTest
   /**
    * @class NSLookupRequest
    * @brief Presentation of nslookup AdServer request.
-   * 
+   *
    * This class is used to build url of AdServer nslookup request,
    * which is base profiling/advertising request.
    * You can use default parameters for request or set owns.
-   */  
+   */
   class NSLookupRequest : public BaseRequest
   {
-    
+
     /// Base url for nslookup request
     static const char*          BASE_URL;
 
@@ -52,7 +52,7 @@ namespace AutoTest
     /**
      * @brief Constructor.
      *
-     * Creates the NSLookupRequest and sets default values for parameters. 
+     * Creates the NSLookupRequest and sets default values for parameters.
      * @param set_defs this flag tells NSLookupRequest
      * whether or not to set default values for parameters.
      */
@@ -64,12 +64,12 @@ namespace AutoTest
      * @param other request
      */
     NSLookupRequest(const NSLookupRequest& other);
- 
+
     /**
      * @brief Get profiling version of nslookup request
      */
     std::string profiling_url() const;
-  
+
     // request parameters
 
     /**
@@ -86,14 +86,14 @@ namespace AutoTest
      * @brief Represents 'app' param.
      *
      * Application name, can be CP (ContextPlus client)
-     * or PS (PageSense client). 
+     * or PS (PageSense client).
      */
     NSLookupParam app;
 
     /**
      * @brief Represents 'v' (version) param.
      *
-     * Application version string. 
+     * Application version string.
      */
     NSLookupParam version;
 
@@ -103,7 +103,7 @@ namespace AutoTest
      * While processing ad request server produce a random number
      * or takes it from 'random' parameter.
      * This number is used while substituting %%RANDOM%% token.
-     * Parameter is for debugging/testing purposes only. 
+     * Parameter is for debugging/testing purposes only.
      */
     NSLookupParam random;
 
@@ -121,7 +121,7 @@ namespace AutoTest
     /**
      * @brief Represents 'format' param.
      *
-     * Creative format accepted by client. 
+     * Creative format accepted by client.
      */
     NSLookupParam format;
 
@@ -129,28 +129,28 @@ namespace AutoTest
      * @brief Represents 'referer-kw' param.
      *
      * Comma separated list of keywords grabbed from a page
-     * which have triggered an ad request. 
+     * which have triggered an ad request.
      */
     NSLookupParam referer_kw;
 
     /**
      * @brief Represents 'Referer' HTTP header.
      *
-     * URL of a page which have trigered ad request. 
+     * URL of a page which have trigered ad request.
      */
     HeaderParam<NSLookupRequest> referer;
 
     /**
      * @brief Represents 'ft' param.
      *
-     * full text parameter. 
+     * full text parameter.
      */
     NSLookupParam ft;
 
     /**
      * @brief Represents search 'referer' param.
      *
-     * URL of a search which have trigered ad request. 
+     * URL of a search which have trigered ad request.
      */
     HeaderParam <NSLookupRequest, SearchParam> search;
 
@@ -158,7 +158,7 @@ namespace AutoTest
     /**
      * @brief Represents 'muid' param.
      *
-     * User id that will be merged to user with 'uid'. 
+     * User id that will be merged to user with 'uid'.
      */
     NSLookupParam muid;
 
@@ -166,14 +166,14 @@ namespace AutoTest
      * @brief Represents 'tuid' param.
      *
      * Temporary user id. Identifies some navigations sequence
-     * that can be merged into permanent user profile (uid). 
+     * that can be merged into permanent user profile (uid).
      */
     NSLookupParam tuid;
 
     /**
      * @brief Represents 'hid' param.
      *
-     * Household ID. 
+     * Household ID.
      */
     NSLookupParam hid;
 
@@ -209,7 +209,7 @@ namespace AutoTest
      * @brief Represents 'colo' param.
      *
      * If colo defined AdServer log user impression with this value,
-     * else AdServer use value defined in it's configuration. 
+     * else AdServer use value defined in it's configuration.
      */
     NSLookupParam colo;
 
@@ -243,7 +243,7 @@ namespace AutoTest
     /**
      * @brief Represents 'testrequest' param.
      *
-     * If not equal 0 - server don't save any logs. 
+     * If not equal 0 - server don't save any logs.
      */
     NSLookupParam testrequest;
 
@@ -251,7 +251,7 @@ namespace AutoTest
      * @brief Represents 'pb' param.
      *
      * Passback url for client redirection, if creative
-     * cann't shown. Server send URL, linked with Passback frontend, 
+     * cann't shown. Server send URL, linked with Passback frontend,
      * in the Location HTTP-header with unique request id.
      * Client goto passback frontend and redirected to passback url.
      */
@@ -314,15 +314,15 @@ namespace AutoTest
 
     /**
      * @brief Publisher preclick URL from adrequest (mime-decoded).
-     */    
+     */
     NSLookupParam preclick;
-    
+
     /**
      * @brief Represents 'debug.ip' param
-     * 
+     *
      * Emulate client ip address, used for country detect.
      * Is for debugging/testing purposes only.
-     */    
+     */
     NSLookupParam debug_ip;
 
     /**
@@ -330,7 +330,7 @@ namespace AutoTest
      *
      * If not equal to 0 then server will remove
      * user profile with tuid after merging
-     */    
+     */
     NSLookupParam rm_tuid;
   };
 }//namespace AutoTest

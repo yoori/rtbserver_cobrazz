@@ -25,7 +25,7 @@ const std::string& BaseConstraint::error() const
 ConstraintElement::ConstraintElement(const char* name_,
                                      const char* description_,
                                      const unsigned long sampling_size,
-                                     const unsigned long threshold_value) : 
+                                     const unsigned long threshold_value) :
     BaseConstraint(name_, description_),
     sampling_size_(sampling_size),
     threshold_value_(threshold_value), // threshold value in percentage
@@ -59,7 +59,7 @@ void ConstraintElement::push(unsigned long numerator,
             stats_[sampling_end_idx_].denominator << ")";
           throw InvalidSequence(ostr);
         }
-      
+
       // Resize sampling window
       unsigned long index = sampling_begin_idx_;
       while (denominator - stats_[index].denominator > sampling_size_ &&
@@ -71,16 +71,16 @@ void ConstraintElement::push(unsigned long numerator,
         {
           sampling_begin_idx_ = _dec_index(index);
         }
-      
+
       current_denominator_ =
         (denominator - stats_[sampling_begin_idx_].denominator) > sampling_size_ ?
         denominator - stats_[sampling_begin_idx_].denominator : sampling_size_;
-      
+
       // Add element
       sampling_end_idx_ = _incr_index(sampling_end_idx_);
       stats_[sampling_end_idx_].numerator   = numerator;
       stats_[sampling_end_idx_].denominator = denominator;
-      
+
       detect_error();
     }
 }
@@ -89,7 +89,7 @@ void ConstraintElement::detect_error()
 {
   long current_numerator =
     stats_[sampling_end_idx_].numerator - stats_[sampling_begin_idx_].numerator;
-  assert(current_numerator >= 0);  
+  assert(current_numerator >= 0);
   if (static_cast<unsigned long>(current_numerator) * 100 >= threshold_value_ * current_denominator_)
     {
       std::ostringstream ostr;

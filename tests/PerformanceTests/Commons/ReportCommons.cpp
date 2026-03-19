@@ -28,7 +28,7 @@ void print_header(std::ostream& out,
                   unsigned short width)
 {
   out.width((width + strlen(header))/2 );
-  out << std::right << header << std::endl << std::endl; 
+  out << std::right << header << std::endl << std::endl;
 }
 
 // Class DumpInterface
@@ -137,7 +137,7 @@ std::ostream& DumpPerformanceStats::dump_header(std::ostream& out) const
   out.width (INDENTION);
   out << "Average";
   out << std::endl;
-  print_line(out, LINE_LENGTH);  
+  print_line(out, LINE_LENGTH);
   return out;
 }
 

@@ -30,7 +30,7 @@ namespace AutoTest
       const Reflection* reflection = message->GetReflection();
       reflection->ClearField(message, field);
     }
-      
+
     bool empty(
       Message* message,
       const std::string& name)
@@ -43,7 +43,7 @@ namespace AutoTest
           reflection->FieldSize(*message, field) == 0:
             !reflection->HasField(*message, field);
     }
-   
+
     template<> const EnumType::Setter EnumType::setter_ = &Reflection::SetEnum;
     template<> const EnumType::Getter EnumType::getter_ = &Reflection::GetEnum;
     template<> const Int::Setter Int::setter_ = &Reflection::SetInt32;

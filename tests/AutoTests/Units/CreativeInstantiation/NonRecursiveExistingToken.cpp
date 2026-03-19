@@ -1,6 +1,6 @@
 
 #include "NonRecursiveExistingToken.hpp"
- 
+
 REFLECT_UNIT(NonRecursiveExistingToken) (
   "CreativeInstantiation",
   AUTO_TEST_FAST
@@ -11,8 +11,8 @@ namespace {
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::CreativeChecker CreativeChecker;
 }
- 
-bool 
+
+bool
 NonRecursiveExistingToken::run_test()
 {
 
@@ -20,7 +20,7 @@ NonRecursiveExistingToken::run_test()
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager must prisent in the configuration file");
-   
+
   add_descr_phrase("Ensure that Creative#2 (cc_id=" +
                    fetch_string("CC2") +
                    ") status 'C'");
@@ -51,7 +51,7 @@ NonRecursiveExistingToken::run_test()
   request.tid = fetch_string("TAG");
 
   AdClient client(AdClient::create_user(this));
-  
+
   client.process_request(request);
   FAIL_CONTEXT(
     AutoTest::equal_checker(

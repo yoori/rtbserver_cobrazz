@@ -406,7 +406,7 @@ namespace Profiling
     {
       request_info.keywords += '\n';
       std::string bln_segment_kw("poadblnsegment");
-      bln_segment_kw += '\n'; 
+      bln_segment_kw += '\n';
       request_info.keywords += bln_segment_kw;
     }
 
@@ -468,7 +468,7 @@ namespace Profiling
           bind_add += '\n';
           bind_add += "poadbind";
         }
-        
+
         if(!request_info.keywords.empty())
         {
           request_info.keywords += '\n';

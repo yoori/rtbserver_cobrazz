@@ -153,7 +153,7 @@ namespace AdServer
     inline
     DummyChannelServer::FinishTask::FinishTask(
       DummyChannelServer* server_impl,
-      Generics::TaskRunner* task_runner) 
+      Generics::TaskRunner* task_runner)
       noexcept
       : Generics::TaskGoal(task_runner), server_impl_(server_impl)
     {
@@ -169,7 +169,7 @@ namespace AdServer
     {
       server_impl_->finish();
     }
-    
+
   }
 }
 #endif //DUMMY_CHANNEL_SERVER_HPP_

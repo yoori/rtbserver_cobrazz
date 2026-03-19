@@ -1,9 +1,9 @@
 add_library(PlainStorage2 SHARED
 
- File.cpp 
-  FileLayer.cpp 
-  MemLayer.cpp 
-  FragmentLayer.cpp 
+ File.cpp
+  FileLayer.cpp
+  MemLayer.cpp
+  FragmentLayer.cpp
   DefaultAllocatorLayer.cpp
 )
 

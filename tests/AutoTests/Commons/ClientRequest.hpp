@@ -36,7 +36,7 @@ namespace AutoTest
     struct Decoder
     {
       enum Types { T_REQUEST, T_RESPONSE };
-      
+
       virtual
       void
       decode(
@@ -50,7 +50,7 @@ namespace AutoTest
      /**
      * @brief Default constructor.
      */
-    ClientRequest() 
+    ClientRequest()
       /*throw(Exception, eh::Exception)*/;
 
     /**
@@ -86,7 +86,7 @@ namespace AutoTest
      */
     void
     reset_decoder();
-    
+
     /**
      * @brief Set decoder.
      * @param decoder.
@@ -177,17 +177,17 @@ namespace AutoTest
      * @return status code of last response.
      */
     unsigned int status() const noexcept;
-  
+
   protected:
 
     /**
      * @brief Default destructor.
      */
     virtual ~ClientRequest() noexcept;
-    
+
   private:
 
-    
+
     typedef std::unique_ptr<HTTP::HTTP_Connection> HTTP_Connection_var;
 
     /**
@@ -267,27 +267,27 @@ namespace AutoTest
      */
     std::unique_ptr<Decoder> decoder_;
   };
-    
+
   typedef ReferenceCounting::SmartPtr<ClientRequest> ClientRequest_var;
-  
+
   ///////////////////////////////////////////////////////////////////////////////
   // Inlines
   ///////////////////////////////////////////////////////////////////////////////
-  
+
   inline
   unsigned int
   ClientRequest::status() const noexcept
   {
     return status_;
   }
-  
+
   inline
   std::string&
   ClientRequest::request_data() noexcept
   {
     return request_data_;
   }
-  
+
   inline
   std::string&
   ClientRequest::response_data() noexcept
@@ -309,63 +309,63 @@ namespace AutoTest
   {
     decoder_ = std::unique_ptr<Decoder>(new CustomDecoder(decoder));
   }
-  
+
   inline
   HTTP::HTTPAddress
   ClientRequest::address() const /*throw(eh::Exception)*/
   {
     return address_;
   }
-  
+
   inline
   Generics::Time&
   ClientRequest::timeout() noexcept
   {
     return timeout_;
   }
-  
+
   inline
   const Generics::Time&
   ClientRequest::start_time() const noexcept
   {
     return start_time_;
   }
-  
+
   inline
   const Generics::Time&
   ClientRequest::finish_time() const noexcept
   {
     return finish_time_;
   }
-  
+
   inline
   HTTP::HeaderList&
   ClientRequest::request_headers() noexcept
   {
     return request_headers_;
   }
-  
+
   inline
   HTTP::HeaderList&
   ClientRequest::response_headers() noexcept
   {
     return response_headers_;
   }
-  
+
   inline
   unsigned long
   ClientRequest::bytes_out() noexcept
   {
     return bytes_out_;
   }
-  
+
   inline
   unsigned long
   ClientRequest::bytes_in() noexcept
   {
     return bytes_in_;
   }
-  
+
 } // namespace AutoTest
 
 #endif // __AUTOTESTS_COMMONS_BASEREQUEST_HPP

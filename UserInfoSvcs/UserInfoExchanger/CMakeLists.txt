@@ -6,8 +6,8 @@ target_link_libraries(UserInfoExchangerIDL
 )
 
 add_executable(UserInfoExchanger
-  UserInfoExchangerMain.cpp 
-  UserInfoExchangerImpl.cpp 
+  UserInfoExchangerMain.cpp
+  UserInfoExchangerImpl.cpp
   UserInfoExchangePool.cpp
 )
 
@@ -21,7 +21,7 @@ target_link_libraries(UserInfoExchanger
  AdServerCommonsXSD
  UserInfoExchangerConfigXSD
  UserInfoExchangerIDL
- 
+
 )
 
 #install(TARGETS UserInfoExchangerIDL UserInfoExchanger  DESTINATION ${INSTALL_DIR})

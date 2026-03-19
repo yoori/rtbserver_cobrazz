@@ -5,8 +5,8 @@ add_library(UidChannelSnapshot STATIC
 add_dependencies(UidChannelSnapshot UserChannelBaseProfilePST)
 
 add_executable(UserOperationGenerator
-  UserOperationGeneratorImpl.cpp 
-  UserOperationGeneratorMain.cpp 
+  UserOperationGeneratorImpl.cpp
+  UserOperationGeneratorMain.cpp
 )
 target_link_libraries(UserOperationGenerator
   UidChannelSnapshot

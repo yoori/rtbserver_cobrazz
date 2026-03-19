@@ -8,7 +8,7 @@ namespace PlainTypes
 {
   //typedef Generics::TAlloc::AllocOnly<void*, 512> ListAlloc;
   //typedef Generics::TAlloc::ThreadPool<void*, 512> ListAlloc;
-  
+
   /**
    * plain representation:
    *   array<Type>:
@@ -38,7 +38,7 @@ namespace PlainTypes
   };
 
   template<typename ElementType>
-  struct BaseList: public std::list<ElementType, Generics::TAlloc::ThreadPool<ElementType, 512> > 
+  struct BaseList: public std::list<ElementType, Generics::TAlloc::ThreadPool<ElementType, 512> >
   //  struct BaseList: public std::list<ElementType>
   {
     void init_default() noexcept;

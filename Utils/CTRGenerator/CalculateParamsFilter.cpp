@@ -13,14 +13,14 @@ namespace AdServer
   {
 
     // CalculateParamsFiller
-    
+
     const unsigned long CalculateParamsFiller::BF_TIMESTAMP = 900;
     const unsigned long CalculateParamsFiller::BF_LINK = 901;
-    
+
     CalculateParamsFiller::CalculateParamsFiller()
     {
       processors_.resize(1000, CalcParamFiller_var());
-      
+
       processors_[CTR::BF_PUBLISHER_ID] = new CalcParamFillerIntImpl<uint32_t>(
         &CTRGenerator::CalculateParams::publisher_id);
       processors_[CTR::BF_SITE_ID] = new CalcParamFillerIntImpl<uint32_t>(
@@ -59,7 +59,7 @@ namespace AdServer
       processors_[CTR::BF_CC_ID] = new CalcParamFillerIntImpl<uint32_t>(
         &CTRGenerator::CalculateParams::cc_id);
       processors_[CTR::BF_CAMPAIGN_FREQ_ID] = new CampaignFreqFiller();
-      
+
       processors_[CTR::BF_HISTORY_CHANNELS] = new CalcParamFillerIntListImpl(
         &CTRGenerator::CalculateParams::channels);
       processors_[CTR::BF_GEO_CHANNELS] = new CalcParamFillerIntListImpl(
@@ -83,10 +83,10 @@ namespace AdServer
     }
 
     // CampaignFreqFiller
-    
+
     CalculateParamsFiller::CampaignFreqFiller::CampaignFreqFiller()
     { }
-      
+
     void
     CalculateParamsFiller::CampaignFreqFiller::set_value(
       CTRGenerator::CalculateParams& calc_params,
@@ -98,18 +98,18 @@ namespace AdServer
         ostr << "invalid feature value '" << str << "'(expected integer)";
         throw CTRGenerator::InvalidConfig(ostr);
       }
-        
+
       calc_params.campaign_freq_log = Generics::BitAlgs::highest_bit_32(
         calc_params.campaign_freq + 1);
     }
 
     // CalcParamFillerStringImpl
-    
+
     CalculateParamsFiller::CalcParamFillerStringImpl::CalcParamFillerStringImpl(
         std::string CTRGenerator::CalculateParams::* field)
         : field_(field)
     { }
-      
+
     void
     CalculateParamsFiller::CalcParamFillerStringImpl::set_value(
       CTRGenerator::CalculateParams& calc_params,
@@ -119,12 +119,12 @@ namespace AdServer
     }
 
     // CalcParamFillerIntListImpl
-    
+
     CalculateParamsFiller::CalcParamFillerIntListImpl::CalcParamFillerIntListImpl(
       CTRGenerator::IdSet CTRGenerator::CalculateParams::* field)
       : field_(field)
     { }
-      
+
     void
     CalculateParamsFiller::CalcParamFillerIntListImpl::set_value(
       CTRGenerator::CalculateParams& calc_params,
@@ -148,7 +148,7 @@ namespace AdServer
     // CalcParamFillerTimestampImpl
     CalculateParamsFiller::CalcParamFillerTimestampImpl::CalcParamFillerTimestampImpl()
     { }
-      
+
     void
     CalculateParamsFiller::CalcParamFillerTimestampImpl::set_value(
       CTRGenerator::CalculateParams& calc_params,
@@ -171,6 +171,6 @@ namespace AdServer
     {
       calc_params.referer_hash = Generics::CRC::quick(0, str.data(), str.size());
     }
-    
+
   }
 }

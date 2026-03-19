@@ -25,7 +25,7 @@ namespace AdServer
       typedef ReferenceCounting::SmartPtr<Statement> Statement_var;
 
       class Environment;
-      
+
       /** Lob */
       struct Lob
       {
@@ -51,7 +51,7 @@ namespace AdServer
         bool next() /*throw(TimedOut, SqlException, NotSupported)*/;
 
         unsigned long rows_count() const /*throw(SqlException)*/;
-        
+
         bool is_null(unsigned int col_index) const
           /*throw(SqlException, NotSupported)*/;
 
@@ -90,7 +90,7 @@ namespace AdServer
         DecimalType
         get_decimal(unsigned int col_index, bool trunc = true) const
           /*throw(typename DecimalType::Overflow, Exception, SqlException)*/;
-        
+
         Lob get_blob(unsigned int col_index) const
           /*throw(TimedOut, Exception, SqlException, NotSupported)*/;
 
@@ -102,9 +102,9 @@ namespace AdServer
 
         void check_terminated_(const char* fun) const
           /*throw(NotSupported)*/;
-        
+
         unsigned long columns_count_() const /*throw(SqlException)*/;
-        
+
         Generics::Time get_date_(const void*) const
           /*throw(Exception, SqlException, NotSupported)*/;
 
@@ -134,8 +134,8 @@ namespace AdServer
             /*throw(SqlException, eh::Exception)*/;
 
           virtual ~Column() noexcept;
-          
-          Environment* environment;          
+
+          Environment* environment;
           long oci_type;
           unsigned long size;
           unsigned long fetch_size;
@@ -145,7 +145,7 @@ namespace AdServer
           void init_fetch_cells_() /*throw(SqlException)*/;
 
           void clear_fetch_cells_() noexcept;
-        
+
 #ifdef _USE_OCCI
           Generics::ArrayAutoPtr<char> fetch_buffer;
           Generics::ArrayAutoPtr<sb2> indicators;
@@ -155,7 +155,7 @@ namespace AdServer
 
         typedef ReferenceCounting::SmartPtr<Column> Column_var;
         typedef std::vector<Column_var> ColumnList;
-        
+
       private:
         Statement_var statement_;
         ColumnList columns_;
@@ -163,7 +163,7 @@ namespace AdServer
         unsigned long rows_fetched_;
         unsigned long current_row_;
 	bool is_eod_;
-        
+
 #ifdef _USE_OCCI
         mutable OCIHandlePtr<OCIError, OCI_HTYPE_ERROR> error_handle_;
 #endif

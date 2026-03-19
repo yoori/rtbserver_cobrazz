@@ -20,7 +20,7 @@ namespace AdServer
      */
     class FrontendsPool :
       public virtual FrontendCommons::FrontendInterface,
-      public virtual ReferenceCounting::AtomicImpl  
+      public virtual ReferenceCounting::AtomicImpl
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

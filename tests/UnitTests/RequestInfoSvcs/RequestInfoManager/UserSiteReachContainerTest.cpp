@@ -118,7 +118,7 @@ struct TestBase: public ReferenceCounting::AtomicImpl
         Stream::Error ostr;
         ostr << "result size non equal size = " << result.size() <<
           " of standard = " << etalon.size() << ". Result:" << std::endl;
-        
+
         {
           int i = 0;
           for (SiteReachInfoList::const_iterator e_it = result.begin();
@@ -129,9 +129,9 @@ struct TestBase: public ReferenceCounting::AtomicImpl
             e_it->print(ostr, "  ");
           }
         }
-        
+
         ostr << "Etalon:" << std::endl;
-        
+
         {
           int i = 0;
           for (SiteReachInfoList::const_iterator e_it = etalon.begin();
@@ -572,7 +572,7 @@ main(int argc, char* argv[]) noexcept
     {
       result += (*it)->run();
     }
-    
+
     return result;
   }
   catch (const eh::Exception& ex)

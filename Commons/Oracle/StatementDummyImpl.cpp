@@ -98,7 +98,7 @@ namespace Oracle
     const char* /*type*/)
     /*throw(eh::Exception, TimedOut, Exception, SqlException, NotSupported)*/
   {}
-  
+
   void
   Statement::bind_(
     unsigned long /*col_index*/,

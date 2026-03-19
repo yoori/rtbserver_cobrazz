@@ -32,7 +32,7 @@ namespace CampaignSvcs
         aspect_.c_str()) << fun_ <<
         ": " << operation_ << "execution time: " << timer.elapsed_time();
     }
-    
+
   private:
     std::string fun_;
     std::string aspect_;

@@ -21,7 +21,7 @@ public:
    */
   Report(Statistics& stats,
          std::ostream& out);
-  
+
   /**
    * @brief Destructor
    */
@@ -50,7 +50,7 @@ protected:
 class DumpRequestContainerConfStats : public DumpInterface
 {
 public:
- 
+
   /**
    * @brief Constructor.
    * @param statistics ref
@@ -66,9 +66,9 @@ protected:
   /**
    * @brief dump body
    * @param output stream
-   */  
-  virtual std::ostream& dump_body(std::ostream& out) const;  
-  
+   */
+  virtual std::ostream& dump_body(std::ostream& out) const;
+
 private:
   const RequestCounterContainer& container_;
 };
@@ -84,7 +84,7 @@ public:
   static const unsigned short INDENTION = 30;
 
   static const unsigned short LINE_LENGTH = 120;
-  
+
 public:
    /**
    * @brief Constructor.
@@ -102,18 +102,18 @@ protected:
   /**
    * @brief dump header
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_header(std::ostream& out) const;
 
   /**
    * @brief dump body
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_body(std::ostream& out) const;
 
-  
+
 private:
-  const FrontendStatList& items_;   
+  const FrontendStatList& items_;
 };
 
 /**
@@ -125,11 +125,11 @@ class  DumpAdvertisingStats : public DumpInterface
 
 public:
   static const unsigned short INDENTION = 30;
-  
+
   static const unsigned short LINE_LENGTH = 120;
 
 public:
-  
+
    /**
    * @brief Constructor.
    * @param statistics ref
@@ -146,9 +146,9 @@ protected:
   /**
    * @brief dump body
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_body(std::ostream& out) const;
-  
+
 private:
   const AdvertisingStatList& items_;
 
@@ -187,9 +187,9 @@ public:
 
   /**
    * @brief dump
-   */  
+   */
   virtual void dump();
-   
+
 };
 
 /**
@@ -220,9 +220,9 @@ public:
 
   /**
    * @brief dump
-   */  
-  virtual void dump();  
- 
+   */
+  virtual void dump();
+
 };
 
 
@@ -248,14 +248,14 @@ public:
 
   /**
    * @brief dump
-   */  
+   */
   virtual void publish();
 
   /**
    * @brief dump
-   */  
-  virtual void dump();  
- 
+   */
+  virtual void dump();
+
 };
 
 
@@ -282,13 +282,13 @@ public:
 
   /**
    * @brief dump
-   */  
-  virtual void publish();  
+   */
+  virtual void publish();
 
 private:
-  
+
   virtual std::ostream& dump_frontend_footer(std::ostream& out);
- 
+
 };
 
 /**
@@ -297,7 +297,7 @@ private:
  */
 class DumpConfPerformanceStats : public DumpInterface
 {
- 
+
 public:
 
   /**
@@ -318,15 +318,15 @@ protected:
   /**
    * @brief dump header
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_header(std::ostream& out) const;
 
   /**
    * @brief dump body
    * @param output stream
-   */  
-  virtual std::ostream& dump_body(std::ostream& out) const;  
-  
+   */
+  virtual std::ostream& dump_body(std::ostream& out) const;
+
 private:
   const PerformanceStatisticsBase& stats_;
   std::string header_;
@@ -337,7 +337,7 @@ class ConfluenceReport : public Report
 {
 public:
 
-  DECLARE_EXCEPTION(ConfReportError, eh::DescriptiveException);      
+  DECLARE_EXCEPTION(ConfReportError, eh::DescriptiveException);
   /**
    * @brief Constructor.
    * @param statistics ref
@@ -356,7 +356,7 @@ public:
 
   /**
    * @brief dump
-   */  
+   */
   virtual void publish();
 
 private:
@@ -364,7 +364,7 @@ private:
   const ConstraintsContainer& constraints_;
   Generics::Time total_duration_;
   std::ofstream file_;
-  
+
 private:
   bool is_file_exist();
   void dump_header(std::ostream& out);

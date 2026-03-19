@@ -46,7 +46,7 @@ namespace UserInfoSvcs
 
   protected:
     void* data_;
-  };  
+  };
 };
 };
 

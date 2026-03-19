@@ -10,7 +10,7 @@
  * @param array reference to array
  * @return number of elements in array
  */
-template <typename T, size_t Count> 
+template <typename T, size_t Count>
 inline
 size_t countof ( const T (&) [Count] )
 {
@@ -22,7 +22,7 @@ size_t countof ( const T (&) [Count] )
  * @param seq object of enumerated type with size method (STL like)
  * @return number of elements
  */
-template <typename T> 
+template <typename T>
 inline
 size_t countof ( const T& seq )
 {
@@ -31,14 +31,14 @@ size_t countof ( const T& seq )
 
 /**
  * @brief Get start const iterator of array - begin of array.
- * 
+ *
  * Returns const pointer to the first element of array
  * so you can't modify this array using result value.
  * You can use result value only for read purposes.
  * @param array const reference to array
  * @return const pointer to the first element of array
  */
-template <typename T, size_t Count> 
+template <typename T, size_t Count>
 inline
 const T* beginof ( const T (&array) [Count] )
 {
@@ -54,7 +54,7 @@ const T* beginof ( const T (&array) [Count] )
  * @param array pointer to array
  * @return pointer to begin of array
  */
-template <typename T, size_t Count> 
+template <typename T, size_t Count>
 inline
 T* beginof ( T (&array) [Count] )
 {
@@ -71,7 +71,7 @@ T* beginof ( T (&array) [Count] )
  * @param array const pointer to array
  * @return const pointer for the position after the last element
  */
-template <typename T, size_t Count> 
+template <typename T, size_t Count>
 inline
 const T* endof ( const T (&array) [Count] )
 {
@@ -87,7 +87,7 @@ const T* endof ( const T (&array) [Count] )
  * @param array pointer to array
  * @return pointer for the position after the last element
  */
-template <typename T, size_t Count> 
+template <typename T, size_t Count>
 inline
 T* endof ( T (&array) [Count] )
 {
@@ -103,14 +103,14 @@ T* endof ( T (&array) [Count] )
  * @param seq container
  * @return const_iterator for the first element of the container.
  */
-template <typename T> 
+template <typename T>
 inline
 typename T::const_iterator beginof ( const T& seq )
 {
   return seq.begin();
 }
 
-template <typename T> 
+template <typename T>
 inline
 const T* beginof ( const std::initializer_list<T>& seq )
 {
@@ -124,7 +124,7 @@ const T* beginof ( const std::initializer_list<T>& seq )
  * @param seq container
  * @return iterator for the first element of the container
  */
-template <typename T> 
+template <typename T>
 inline
 typename T::iterator beginof ( T& seq )
 {
@@ -140,14 +140,14 @@ typename T::iterator beginof ( T& seq )
  * @return const_iterator for the position after the last element
  * of the container
  */
-template <typename T> 
+template <typename T>
 inline
 typename T::const_iterator endof ( const T& seq )
 {
   return seq.end();
 }
 
-template <typename T> 
+template <typename T>
 inline
 const T* endof ( const std::initializer_list<T>& seq )
 {
@@ -162,7 +162,7 @@ const T* endof ( const std::initializer_list<T>& seq )
  * @param seq container
  * @return iterator for the position after the last element of the container
  */
-template <typename T> 
+template <typename T>
 inline
 typename T::iterator endof ( T& seq )
 {
@@ -192,8 +192,8 @@ namespace AutoTest
         beginof(got));
   }
 
-  template <typename It, typename T> 
-  bool 
+  template <typename It, typename T>
+  bool
   find_in_seq(const T& expected, It it, It end)
     noexcept
   {
@@ -206,17 +206,17 @@ namespace AutoTest
     }
     return false;
   }
-  
-  template <typename Seq, typename T> 
-  bool 
+
+  template <typename Seq, typename T>
+  bool
   find_in_seq(const T& expected, const Seq& seq)
   {
     return find_in_seq(expected, beginof(seq), endof(seq));
   }
 
   // test, expected sequence entry in got sequence
-  template <typename It, typename Seq> 
-  bool 
+  template <typename It, typename Seq>
+  bool
   entry_in_seq (It  it, const It&  end, const Seq& got)
     noexcept
   {
@@ -230,8 +230,8 @@ namespace AutoTest
     return true;
   }
 
-  template <typename Seq1, typename Seq2> 
-  bool 
+  template <typename Seq1, typename Seq2>
+  bool
   entry_in_seq (const Seq1& expected, const Seq2& got)
     noexcept
   {
@@ -240,7 +240,7 @@ namespace AutoTest
 
   // test, expected sequence entry in got sequence
   template <typename It, typename Seq>
-  bool 
+  bool
   not_entry_in_seq(
                    It it,
                    const It& end,
@@ -258,7 +258,7 @@ namespace AutoTest
   }
 
   template <typename Seq1, typename Seq2>
-  bool 
+  bool
   not_entry_in_seq(
                    const Seq1& expected,
                    const Seq2& got)
@@ -285,15 +285,15 @@ namespace AutoTest
   }
 
   template <typename Seq1, typename Seq2>
-  unsigned int 
+  unsigned int
   count_entry_in_seq(const Seq1& expected, const Seq2& got )
     noexcept
   {
     return count_entry_in_seq(beginof(expected), endof(expected), got);
   }
 
-  template <class Seq> 
-  std::string 
+  template <class Seq>
+  std::string
   seq_to_str(const Seq& seq)
     noexcept
   {

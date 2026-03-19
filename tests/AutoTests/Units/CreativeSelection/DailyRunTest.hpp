@@ -3,7 +3,7 @@
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
- 
+
 class DailyRunTest: public BaseUnit
 {
 
@@ -20,28 +20,28 @@ public:
     WD_SUNDAY = 6,
     WD_CURRENT = 7
   };
-  
+
   struct RequestTimeResult
   {
     WeekDays wday;
     const char *time;
     bool have_cc;
   };
-  
+
 public:
- 
+
   DailyRunTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~DailyRunTest() noexcept
   {};
- 
+
 private:
- 
+
   virtual bool run_test();
 
   void process_testcase(

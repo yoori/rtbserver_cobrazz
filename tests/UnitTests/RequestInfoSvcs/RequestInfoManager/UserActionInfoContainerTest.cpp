@@ -44,7 +44,7 @@ no_action_test(
   TestProcessor* act_processor)
 {
   act_processor->clear();
-  
+
   RequestId request_id(generate_request_id());
   UserId user_id(generate_user_id());
 
@@ -318,7 +318,7 @@ bool two_action_before_click_test(
   TestProcessor* act_processor)
 {
   static const char* FUN = "two_action_before_click_test";
-  
+
   act_processor->clear();
 
   RequestId request_id(generate_request_id());
@@ -881,7 +881,7 @@ bool custom_imp_before_two_action_test(
   TestProcessor* act_processor)
 {
   static const char* TEST = "custom_imp_before_two_action_test";
-  
+
   act_processor->clear();
 
   UserId user_id =
@@ -1001,9 +1001,9 @@ bool custom_imp_between_two_action_test(
   TestProcessor* act_processor)
 {
   static const char* TEST = "custom_imp_between_two_action_test";
-  
+
   act_processor->clear();
-  
+
   UserId user_id(generate_user_id());
   RequestId request_id(generate_request_id());
 
@@ -1287,7 +1287,7 @@ bool custom_two_ccid_action_reverse_test(
       ImpressionInfo(),
       RequestActionProcessor::ProcessingState());
   }
-  
+
   {
     AdvActionProcessor::AdvExActionInfo act_ex_info;
     act_ex_info.time = base_time + 5;
@@ -1670,7 +1670,7 @@ main(int argc, char* argv[]) noexcept
 
     bool result = true;
     std::cout << "UserActionInfoContainer test started.." << std::endl;
-    
+
     system(("rm -r " + *root_path + TEST_FOLDER +
       " 2>/dev/null ; mkdir -p " + *root_path + TEST_FOLDER).c_str());
 

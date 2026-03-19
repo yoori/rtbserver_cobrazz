@@ -157,7 +157,7 @@ public:
     return tag_id == rhs.tag_id &&
       domain == rhs.domain;
   }
-  
+
   size_t hash() const
   {
     return hash_;
@@ -229,7 +229,7 @@ Application_::generate_(
       ", imps = " << sum_imps <<
       ", clicks = " << sum_clicks <<
       ", 1000 imp records = " << records_reached_1000_imps <<
-      ", 10k imp records = " << records_reached_10000_imps <<      
+      ", 10k imp records = " << records_reached_10000_imps <<
       std::endl;
 
     std::ifstream istr(file_it->c_str());
@@ -286,7 +286,7 @@ Application_::generate_(
       }
     }
   }
-  
+
   // fetch table
   std::unordered_map<unsigned long, Value> tag_res;
   unsigned long no_data_records = 0;
@@ -378,7 +378,7 @@ Application_::generate_(
   // save global ctr
   std::cout << "Global CTR: "
     " imps = " << tag_sum_imps <<
-    ", clicks = " << tag_sum_clicks <<      
+    ", clicks = " << tag_sum_clicks <<
     std::endl;
 
   const RevenueDecimal DEFAULT_CTR = RevenueDecimal::mul(

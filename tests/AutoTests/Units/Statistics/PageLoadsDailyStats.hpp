@@ -1,15 +1,15 @@
 #ifndef _AUTOTEST__PAGELOADSDAILYSTATS_
 #define _AUTOTEST__PAGELOADSDAILYSTATS_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 namespace ORM = AutoTest::ORM;
 
 class PageLoadsDailyStats : public BaseDBUnit
 {
 
   typedef AutoTest::AdClient AdClient;
-  
+
   struct TagGroupExpected
   {
     const char* site;
@@ -17,7 +17,7 @@ class PageLoadsDailyStats : public BaseDBUnit
     int page_loads;
     int utilized_page_loads;
   };
-  
+
 public:
   PageLoadsDailyStats(
     UnitStat& stat_var,
@@ -33,7 +33,7 @@ public:
 private:
 
   AutoTest::DBC::Conn pq_conn_;
-  
+
   virtual bool run();
   virtual void tear_down() {}
 
@@ -46,7 +46,7 @@ private:
   std::string
   fetch_tag_group(
     const char* tags);
-  
+
   void case01_multiple_tags_in_one_domain();
   void case02_multiple_tags_iframe_eq_page();
   void case03_multiple_tags_iframe_noteq_page();
@@ -65,7 +65,7 @@ private:
   void case14_reverse_logs_delivery_order_part_2(
     AdClient& client);
   void case15_user_statuses();
-  
+
   ORM::StatsList<ORM::PageLoadsDaily> stats;
   std::list<ORM::PageLoadsDaily::Diffs> diffs;
   Generics::Time debug_time;

@@ -1,6 +1,6 @@
 add_library(OptoutFrontend SHARED
-OptoutFrontend.cpp 
-  OptoutFrontendStat.cpp 
+OptoutFrontend.cpp
+  OptoutFrontendStat.cpp
   RequestInfoFiller.cpp
 )
 
@@ -18,7 +18,7 @@ target_link_libraries(OptoutFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

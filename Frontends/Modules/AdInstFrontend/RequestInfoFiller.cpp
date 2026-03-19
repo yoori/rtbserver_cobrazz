@@ -173,7 +173,7 @@ namespace Instantiate
 
         request_info.creatives.push_back(creative_info);
       }
-    }      
+    }
   };
 
   class CreativeIdParamProcessor: public RequestInfoParamProcessor
@@ -196,7 +196,7 @@ namespace Instantiate
 
         request_info.creative_id = creative_id;
       }
-    }      
+    }
   };
 
   class FlagsProcessor: public RequestInfoParamProcessor
@@ -223,7 +223,7 @@ namespace Instantiate
       {
         request_info.set_uid = true;
       }
-      
+
       if(value.find('C') != String::SubString::NPOS ||
         value.find('c') != String::SubString::NPOS)
       {

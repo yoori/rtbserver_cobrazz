@@ -1,5 +1,5 @@
 add_executable(ZmqBalancer
-  ZmqBalancer.cpp 
+  ZmqBalancer.cpp
   ZmqStreamStats.cpp
  )
 

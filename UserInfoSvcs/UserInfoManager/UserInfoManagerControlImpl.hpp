@@ -25,7 +25,7 @@ namespace AdServer
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-      
+
       UserInfoManagerControlImpl(
         UserInfoManagerImpl* user_info_manager_impl)
         /*throw(Exception)*/;
@@ -35,7 +35,7 @@ namespace AdServer
       /** UserInfoManagerControl interface */
       virtual AdServer::UserInfoSvcs::UserInfoManagerStatus status() noexcept;
 
-      virtual void 
+      virtual void
       get_source_info(
         AdServer::UserInfoSvcs::ChunksConfig_out user_info_source)
         /*throw(AdServer::UserInfoSvcs::UserInfoManagerControl::ImplementationException)*/;
@@ -46,9 +46,9 @@ namespace AdServer
       typedef Sync::PosixRWLock Mutex_;
       typedef Sync::PosixRGuard ReadGuard_;
       typedef Sync::PosixWGuard WriteGuard_;
-     
+
       mutable Mutex_ lock_;
-      
+
       Logging::Logger_var logger_;
       UserInfoManagerImpl_var user_info_manager_impl_;
       bool admitted_;

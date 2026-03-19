@@ -18,7 +18,7 @@ namespace AdServer
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-     
+
     public:
       CTRPredictorSVMGenerator() /*throw(eh::Exception)*/;
 
@@ -35,31 +35,31 @@ namespace AdServer
       virtual void
       shutdown(CORBA::Boolean wait_for_completion)
         /*throw(CORBA::SystemException)*/;
-      
+
       //
       // IDL:CORBACommons/IProcessControl/is_alive:1.0
       //
       virtual CORBACommons::IProcessControl::ALIVE_STATUS
       is_alive() /*throw(CORBA::SystemException)*/;
-      
+
     private:
       typedef xsd::AdServer::Configuration::SVMGeneratorConfigurationType SVMGeneratorConfig;
       typedef std::unique_ptr<SVMGeneratorConfig> SVMGeneratorConfigPtr;
-      
+
     private:
       virtual
       ~CTRPredictorSVMGenerator() noexcept
       {}
-      
+
       void
       read_config_(
         const char *filename,
         const char* argv0)
         /*throw(Exception, eh::Exception)*/;
-      
+
       void
       init_corba_() /*throw(Exception)*/;
-      
+
     private:
       CORBACommons::CorbaConfig corba_config_;
       SVMGeneratorConfigPtr config_;

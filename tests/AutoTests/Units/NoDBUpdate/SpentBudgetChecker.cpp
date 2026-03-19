@@ -1,6 +1,6 @@
 
 #include "SpentBudgetChecker.hpp"
- 
+
 namespace AutoTest
 {
   SpentBudgetChecker::SpentBudgetChecker(
@@ -34,7 +34,7 @@ namespace AutoTest
 
     try
     {
-      return 
+      return
         and_checker(
           wait_checker(
             deadline_ != Generics::Time::ZERO
@@ -46,7 +46,7 @@ namespace AutoTest
             AdClient::create_user(test_),
             request_,
             ccid_)).check(throw_error);
-      
+
     }
     catch (const TimeLessChecker::TimeLessCheckFailed&)
     {

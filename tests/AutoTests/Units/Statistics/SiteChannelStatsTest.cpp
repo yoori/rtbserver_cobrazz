@@ -46,7 +46,7 @@ SiteChannelStatsTest::run_test()
   stats.select(conn);
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request1;
   request1.tid(tid1).referer_kw(keyword1);
   std::string expect1[] =
@@ -81,7 +81,7 @@ SiteChannelStatsTest::run_test()
         client.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "BehavioralParams ids");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         1,
@@ -105,20 +105,20 @@ SiteChannelStatsTest::run_test()
     }
 
     client.process_request(request2);
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         expect2,
         client.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "BehavioralParams ids");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         1,
         client.debug_info.selected_creatives.size()).check(),
       "must got 1 creative");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         cc2,
@@ -143,13 +143,13 @@ SiteChannelStatsTest::run_test()
         client.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "BehavioralParams ids");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         1,
         client.debug_info.selected_creatives.size()).check(),
       "must got 1 creative");
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         !client.debug_info.selected_creatives.begin()->click_url.empty()),
@@ -174,7 +174,7 @@ SiteChannelStatsTest::run_test()
       pub_revenue((imps2 * 50) / 1000.0),
     AutoTest::ORM::SiteChannelStats::Diffs(0)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(

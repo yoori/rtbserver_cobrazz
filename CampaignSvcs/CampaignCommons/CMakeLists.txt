@@ -10,7 +10,7 @@ add_library(ExpressionChannel SHARED
   ExpressionChannel.cpp
   )
 
-target_link_libraries(ExpressionChannel 
+target_link_libraries(ExpressionChannel
   Generics
   CORBACommons
   Commons

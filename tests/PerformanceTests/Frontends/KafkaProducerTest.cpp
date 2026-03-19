@@ -77,11 +77,11 @@ main(int argc, char** argv)
     producer->activate_object();
 
     unsigned long i = 0;
-    
+
     while(*opt_repeat? i < *opt_repeat: true)
     {
       Generics::Time start(Generics::Time::get_time_of_day());
-      
+
       for(unsigned long j = 0; j < *opt_sample_size; ++j)
       {
         producer->push_data("key", "data");

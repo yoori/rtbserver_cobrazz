@@ -1,6 +1,6 @@
 
 #include "MaxPublisherShareTest.hpp"
- 
+
 REFLECT_UNIT(MaxPublisherShareTest) (
   "NoDBUpdate",
   AUTO_TEST_SLOW
@@ -63,16 +63,16 @@ MaxPublisherShareTest::checker_call(
     Stream::Error ostr;
     ostr << description  << ":" << std::endl << "  " << e.what();
     throw AutoTest::CheckFailed(ostr);
-  }                                                                 
+  }
 }
 
-bool 
+bool
 MaxPublisherShareTest::run()
 {
 
   AutoTest::Time new_day(
     (AutoTest::Time() + Generics::Time::ONE_DAY).get_gm_time().get_date());
-  
+
   // Don't change case order
   AUTOTEST_CASE(share_expiring_(), EXPIRE_CASE);
   AUTOTEST_CASE(text_static_(), TEXT_CASE);
@@ -80,7 +80,7 @@ MaxPublisherShareTest::run()
   AUTOTEST_CASE(text_daily_part_1_(new_day), TEXT_DAILY_CASE);
 
   FAIL_CONTEXT(check());
-  
+
   if (stat_.db_active())
   {
     AUTOTEST_CASE(increase_share_(), EXPIRE_CASE);
@@ -97,9 +97,9 @@ MaxPublisherShareTest::run()
     AUTOTEST_CASE(increase_budget_(), EXPIRE_CASE);
     AUTOTEST_CASE(text_daily_part_3_(new_day), TEXT_DAILY_CASE);
   }
-  
+
   FAIL_CONTEXT(check());
- 
+
   return true;
 }
 
@@ -110,7 +110,7 @@ MaxPublisherShareTest::share_expiring_()
   add_descr_phrase("Start case");
 
   AdClient client = AdClient::create_user(this);
-  
+
   NSLookupRequest request;
   request.referer_kw(fetch_string("EXPIRE/KEYWORD"));
   request.tid(fetch_string("EXPIRE/TID/1"));
@@ -146,7 +146,7 @@ MaxPublisherShareTest::share_expiring_()
  add_checker(
    description + " Check ccid#2",
    SelectedCreativeChecker(
-     client, request, 0));  
+     client, request, 0));
 }
 
 void
@@ -168,7 +168,7 @@ MaxPublisherShareTest::increase_share_()
     AutoTest::predicate_checker(
       campaign->update()),
     description + " Update maximum publisher share");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       CampaignChecker(
@@ -185,7 +185,7 @@ MaxPublisherShareTest::increase_share_()
     SelectedCreativeChecker(
       client, request, fetch_int("EXPIRE/CC")).check(),
     description + " Check ccid#1");
-    
+
   add_wait_checker(
     description + " Excluded publishers",
     CampaignChecker(
@@ -200,7 +200,7 @@ MaxPublisherShareTest::increase_share_()
  add_checker(
    description + " Check ccid#2",
    SelectedCreativeChecker(
-     client, request, 0));  
+     client, request, 0));
 }
 
 void
@@ -213,7 +213,7 @@ MaxPublisherShareTest::increase_budget_()
   NSLookupRequest request;
   request.referer_kw(fetch_string("EXPIRE/KEYWORD"));
   request.tid(fetch_string("EXPIRE/TID/1"));
-  
+
   ORM::ORMRestorer<ORM::PQ::CampaignCreativeGroup>* ccg =
     create<ORM::PQ::CampaignCreativeGroup>(
       fetch_int("EXPIRE/CCG"));
@@ -241,7 +241,7 @@ MaxPublisherShareTest::increase_budget_()
     SelectedCreativeChecker(
       client, request, fetch_int("EXPIRE/CC")).check(),
     description + " Check ccid#1");
-    
+
   add_wait_checker(
     description + " Excluded publishers",
     CampaignChecker(
@@ -256,7 +256,7 @@ MaxPublisherShareTest::increase_budget_()
  add_checker(
    description + " Check ccid#2",
    SelectedCreativeChecker(
-     client, request, 0));  
+     client, request, 0));
 }
 
 void
@@ -291,7 +291,7 @@ MaxPublisherShareTest::three_sites_part_1_(
       fetch_int("3SITES/CC")).check(),
     description + " Check ccid");
 
-  
+
   add_wait_checker(
     description + " Excluded first publisher",
     AutoTest::and_checker(
@@ -305,7 +305,7 @@ MaxPublisherShareTest::three_sites_part_1_(
           eval_status("A").
           exclude_pub_accounts(
             fetch_string("3SITES/PUBLISHER/1")))));
- 
+
 }
 
 void
@@ -315,7 +315,7 @@ MaxPublisherShareTest::three_sites_part_2_(
   std::string description(
     "MPS For Three Site and Delivery "
     "Pacing: Daily Budget Cap, part#2.");
-  
+
   add_descr_phrase("Start part#2 of the case");
 
   AdClient client = AdClient::create_user(this);
@@ -342,7 +342,7 @@ MaxPublisherShareTest::three_sites_part_2_(
           eval_status("A").
           exclude_pub_accounts(
             map_objects("3SITES/PUBLISHER/1,3SITES/PUBLISHER/2")))));
-  
+
   add_checker(
    description + " Check ccid (site#1)",
    AutoTest::and_checker(
@@ -374,8 +374,8 @@ MaxPublisherShareTest::three_sites_part_2_(
        client,
        NSLookupRequest().
          tid(fetch_string("3SITES/TID/3")).
-         referer_kw(fetch_string("3SITES/KEYWORD")), 0)));  
-  
+         referer_kw(fetch_string("3SITES/KEYWORD")), 0)));
+
 }
 
 void
@@ -440,8 +440,8 @@ MaxPublisherShareTest::text_static_()
       expected_ccids,
       actions),
     description + " Ad request");
-    
- 
+
+
   add_wait_checker(
     description + " Excluded publisher (text#3)",
     CampaignChecker(
@@ -531,7 +531,7 @@ MaxPublisherShareTest::text_dynamic_()
        tid(fetch_string("TEXT/TID/1")).
        referer_kw(
          map_objects("TEXT/KEYWORD/1,TEXT/KEYWORD/2,TEXT/KEYWORD/3")),
-     "TEXT/CC/2"));  
+     "TEXT/CC/2"));
 }
 
 void
@@ -568,7 +568,7 @@ MaxPublisherShareTest::text_daily_part_1_(
           eval_status("A").
           exclude_pub_accounts(
             fetch_string("TEXTDAILY/PUBLISHER/1")))));
-  
+
 }
 
 void
@@ -591,7 +591,7 @@ MaxPublisherShareTest::text_daily_part_2_(
         referer_kw(fetch_string("TEXTDAILY/KEYWORD/1")),
       "TEXTDAILY/CC/1").check(),
     description + " Check ccid");
-  
+
   add_wait_checker(
     description + " Excluded publishers",
     AutoTest::and_checker(
@@ -615,7 +615,7 @@ MaxPublisherShareTest::text_daily_part_2_(
        client,
        NSLookupRequest().
          tid(fetch_string("TEXTDAILY/TID/1")).
-         referer_kw(fetch_string("TEXTDAILY/KEYWORD/1")), 0))); 
+         referer_kw(fetch_string("TEXTDAILY/KEYWORD/1")), 0)));
 }
 
 void
@@ -647,5 +647,5 @@ MaxPublisherShareTest::text_daily_part_3_(
        CampaignChecker::Expected().
          status("A").
          eval_status("A").
-         exclude_pub_accounts("")))); 
+         exclude_pub_accounts(""))));
 }

@@ -2,9 +2,9 @@
 #include<eh/Exception.hpp>
 #include<String/UTF8Case.hpp>
 #include<Commons/Constants.hpp>
-#include"CommonTypes.hpp" 
-#include"ChannelUtils.hpp" 
-#include"Serialization.hpp" 
+#include"CommonTypes.hpp"
+#include"ChannelUtils.hpp"
+#include"Serialization.hpp"
 
 
 namespace AdServer

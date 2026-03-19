@@ -10,7 +10,7 @@ namespace ORM = ::AutoTest::ORM;
 /**
  * @class ChannelStatusTest
  * @brief tests dynamic channels loading
- */ 
+ */
 class ChannelStatusTest
   :public BaseDBUnit
 {
@@ -90,8 +90,8 @@ private:
   bool run();
   void post_condition();
   void tear_down();
-  
-  
+
+
 };
- 
+
 #endif

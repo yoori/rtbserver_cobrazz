@@ -34,12 +34,12 @@ namespace AutoTest
         const HTTP::PersistentCookieDef& cookie,
         const std::string& name) const
       {
-        return name == cookie.name; 
+        return name == cookie.name;
       }
     };
 
     // UnitCookieList
-    
+
     UnitCookieList::~UnitCookieList() noexcept
     { }
 
@@ -60,7 +60,7 @@ namespace AutoTest
       ClientCookieFacility(src)
     {
       expire_();
-      
+
       remove_if(
         std::bind2nd(
           CookieIsNotDomain(),

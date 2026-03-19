@@ -59,10 +59,10 @@ protected:
   ChannelRulesConfigPtr channels_config_;
 
 //  xsd::AdServer::Configuration::ChannelRulesType ch_config_;
-  
-  
+
+
 };
 
 typedef Generics::Singleton<Application_> Application;
 
-#endif 
+#endif

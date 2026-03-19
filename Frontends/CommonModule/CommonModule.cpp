@@ -233,7 +233,7 @@ namespace AdServer
         }
       }
       /*
-      if(common_config->Chinese().present()) 
+      if(common_config->Chinese().present())
       {
         segmentor_ = new Language::Segmentor::Chineese::NlpirSegmentor(
           common_config->Chinese().get().base().c_str());
@@ -265,7 +265,7 @@ namespace AdServer
     try
     {
       scheduler_->clear();
-      
+
       deactivate_object();
       wait_object();
 

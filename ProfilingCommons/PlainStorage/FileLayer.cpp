@@ -283,7 +283,7 @@ namespace PlainStorage
   ReadFileLayer::ReadBlockImpl::~ReadBlockImpl() noexcept
   {
     static const char* FUN = "ReadFileLayer::ReadBlockImpl::~ReadBlockImpl()";
-    
+
     try
     {
       read_file_layer_->read_unresolve_block_(block_index_, content_);
@@ -663,7 +663,7 @@ namespace PlainStorage
     /*throw(Exception)*/
   {
     static const char* FUN = "ReadFileLayer::read_resolve_block_()";
-    
+
     try
     {
       return file_.mmap(

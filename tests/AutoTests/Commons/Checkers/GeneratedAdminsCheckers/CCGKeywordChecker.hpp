@@ -8,43 +8,43 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = CCGKeywordAdmin::Expected>  
-  class CCGKeywordChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = CCGKeywordAdmin::Expected>
+  class CCGKeywordChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      CCGKeywordChecker_(      
-        BaseUnit* test,      
-        unsigned long ccg_keyword_id,      
-        ChannelSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        ccg_keyword_id_(ccg_keyword_id),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      CCGKeywordChecker_(
+        BaseUnit* test,
+        unsigned long ccg_keyword_id,
+        ChannelSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        ccg_keyword_id_(ccg_keyword_id),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~CCGKeywordChecker_() noexcept {}      
+      virtual ~CCGKeywordChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      unsigned long ccg_keyword_id_;      
-      ChannelSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      unsigned long ccg_keyword_id_;
+      ChannelSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef CCGKeywordChecker_<CCGKeywordAdmin::Expected> CCGKeywordChecker;  
-  typedef CCGKeywordChecker_<std::string> CCGKeywordCheckerSimple;  
+  typedef CCGKeywordChecker_<CCGKeywordAdmin::Expected> CCGKeywordChecker;
+  typedef CCGKeywordChecker_<std::string> CCGKeywordCheckerSimple;
 
 }
 

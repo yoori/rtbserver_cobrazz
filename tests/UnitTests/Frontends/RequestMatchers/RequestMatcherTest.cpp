@@ -113,7 +113,7 @@ TEST(PlatformMatcherPerformanceTest)
     std::string short_os;
     std::string os;
     std::set<unsigned long> platform_id_set;
-    
+
     if (platform_matcher->match(&platform_id_set, short_os, os, USER_AGENTS[inx]))
     {
       checksum += (os[2] + short_os[1] + platform_id_set.size());
@@ -207,7 +207,7 @@ TEST(WebBrowserMatcherPerformanceTest)
   {
     const size_t inx = i % examples_size;
     std::string browser;
-    
+
     if (matcher->match(browser, USER_AGENTS[inx]))
     {
       checksum += (browser[1] + browser.size());
@@ -360,7 +360,7 @@ TEST(WebBrowserMatcherDetectionTest)
     ASSERT_TRUE( matcher->match(browser, user_agent) );
     ASSERT_EQUALS( browser, "IE 11.0" );
   }
-  
+
   {
     std::string browser;
     const std::string user_agent("Mozilla/5.0 (MeeGo; NokiaN9) AppleWebKit/534.13 (KHTML, like Gecko) NokiaBrowser/8.5.0 Mobile Safari/534.13");

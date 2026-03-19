@@ -1,6 +1,6 @@
 add_executable(UserInfoExchangerProxy
-  UserInfoExchangerProxyMain.cpp 
-  UserInfoExchangerProxyImpl.cpp 
+  UserInfoExchangerProxyMain.cpp
+  UserInfoExchangerProxyImpl.cpp
 )
 
 target_link_libraries(UserInfoExchangerProxy

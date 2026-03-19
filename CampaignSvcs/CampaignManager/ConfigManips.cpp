@@ -27,7 +27,7 @@ namespace AdServer
       typedef Generics::LastPtr<CampaignIndex> LastCampaignIndex_var;
 
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-      
+
       AdServer::CampaignSvcs::CreativeTemplateType
       adopt_template_type(
         CreativeTemplateFactory::Handler::Type type_val)
@@ -513,7 +513,7 @@ namespace AdServer
           size_info.size_type_id = size_it->second->size_type_id;
           size_info.width = size_it->second->width;
           size_info.height = size_it->second->height;
-          size_info.timestamp = CorbaAlgs::pack_time(size_it->second->timestamp);          
+          size_info.timestamp = CorbaAlgs::pack_time(size_it->second->timestamp);
         }
       }
 
@@ -769,7 +769,7 @@ namespace AdServer
             dtag_it != campaign->exclude_tags.end(); ++dtag_it, ++res_i)
         {
           campaign_info.exclude_tags[res_i].tag_id = dtag_it->first;
-          campaign_info.exclude_tags[res_i].delivery_value = dtag_it->second;          
+          campaign_info.exclude_tags[res_i].delivery_value = dtag_it->second;
         }
       }
 
@@ -786,7 +786,7 @@ namespace AdServer
         }
       }
       result->expression_channels.length(ch_i);
-      
+
       /* fill sites */
       unsigned int len = config->sites.size();
       result->sites.length(len);
@@ -1141,7 +1141,7 @@ namespace AdServer
         {
           geo_coord_channels_count += ch_it->second->channels.size();
         }
-        
+
         result->geo_coord_channels.length(geo_coord_channels_count);
         i = 0;
 

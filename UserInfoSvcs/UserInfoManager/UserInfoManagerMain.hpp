@@ -49,7 +49,7 @@ private:
 
   const AdServer::UserInfoSvcs::UserInfoManagerImpl::UserInfoManagerConfig&
     config() const noexcept;
-  
+
   typedef std::unique_ptr<
     AdServer::UserInfoSvcs::UserInfoManagerImpl::UserInfoManagerConfig>
     ConfigPtr;
@@ -62,9 +62,9 @@ private:
     user_info_manager_impl_;
   AdServer::UserInfoSvcs::UserInfoManagerControlImpl_var
     user_info_manager_control_impl_;
-  
+
   ConfigPtr configuration_;
-  
+
   typedef Sync::PosixMutex ShutdownMutex;
   typedef Sync::PosixGuard ShutdownGuard;
 

@@ -42,7 +42,7 @@ namespace AdServer
         response_info_.insert(Generics::safe_rand());
       }
     }
-    
+
     void DummyChannelServer::set_sources(
         const ::AdServer::ChannelSvcs::
           ChannelServerControl::DBSourceInfo& /*db_info*/,
@@ -219,7 +219,7 @@ void read_number_(
 
 int main(int argc, char* argv[])
 {
-  struct option long_options[] = 
+  struct option long_options[] =
   {
     {"port", required_argument, 0, 'p'},
     {"time", required_argument, 0, 't'},

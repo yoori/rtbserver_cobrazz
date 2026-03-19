@@ -9,16 +9,16 @@
 namespace AutoTest
 {
   DECLARE_EXCEPTION(ShutdownException, eh::DescriptiveException);
-  
+
   class Shutdown_
   {
   public:
 
     Shutdown_();
-    
+
     void set()
       /*throw(eh::Exception)*/;
-    
+
     void wait(
       const Time& timeout)
       /*throw(ShutdownException, eh::Exception)*/;

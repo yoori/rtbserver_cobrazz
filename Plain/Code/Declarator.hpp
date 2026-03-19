@@ -25,7 +25,7 @@ namespace Code
   {
   public:
     DECLARE_EXCEPTION(AlreadyDefined, eh::DescriptiveException);
-    
+
   public:
     Declarator(
       Declaration::Namespace* root_namespace,

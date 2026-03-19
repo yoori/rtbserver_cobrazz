@@ -19,7 +19,7 @@ namespace
   }
 }
 
-bool 
+bool
 StatsHourlyNumShowingTest::run_test()
 {
   set_up();
@@ -38,7 +38,7 @@ StatsHourlyNumShowingTest::run_test()
         diffs_,
         stats_)).check(),
     "RequestStatsHourly: check stats");
-  
+
   return true;
 }
 
@@ -89,7 +89,7 @@ StatsHourlyNumShowingTest::make_requests_(
     }
   }
 }
-  
+
 void
 StatsHourlyNumShowingTest::num_shown_one_case_()
 {
@@ -133,7 +133,7 @@ StatsHourlyNumShowingTest::num_shown_one_case_()
       tid(fetch_string("TID")).
       debug_time(today_),
     ccid_exp);
-   
+
 }
 
 
@@ -192,9 +192,9 @@ StatsHourlyNumShowingTest::num_shown_two_pub_specific_currency_case_()
 {
   std::string description("Non-system currency case.");
   add_descr_phrase(description);
-  
+
   const unsigned int exchange_rate = fetch_int("EXCHANGE_RATE");
-  
+
   std::list<std::string> ccid_exp;
   const char* CC[] =
   {
@@ -244,7 +244,7 @@ StatsHourlyNumShowingTest::num_shown_two_track_imp_case_()
 {
   std::string description("Impression tracking case.");
   add_descr_phrase(description);
-  
+
   //prepare expected data
   std::list<std::string> ccid_exp;
   const char* CC[] =
@@ -256,7 +256,7 @@ StatsHourlyNumShowingTest::num_shown_two_track_imp_case_()
   double pub_amount =
     round_pub_amount(
       fetch_float("PUB_CPM") / (2 * 1000)) * REPEAT_COUNT / 2;
-  
+
   for (size_t i = 0; i < countof(CC); ++i)
   {
     ccid_exp.push_back(fetch_string(CC[i]));

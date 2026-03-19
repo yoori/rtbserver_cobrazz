@@ -82,7 +82,7 @@ namespace Commons
     uint32_t ip_address;
     if (inet_pton(AF_INET, ip, ip_address_buf) != 0)
     {
-      ip_address = ip_address_buf[0];      
+      ip_address = ip_address_buf[0];
     }
     else if(inet_pton(AF_INET6, ip, ip_address_buf) != 0)
     {

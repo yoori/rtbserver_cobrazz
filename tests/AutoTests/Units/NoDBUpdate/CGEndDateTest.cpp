@@ -1,6 +1,6 @@
 
 #include "CGEndDateTest.hpp"
- 
+
 REFLECT_UNIT(CGEndDateTest) (
   "NoDBUpdate",
   AUTO_TEST_QUIET
@@ -22,7 +22,7 @@ CGEndDateTest::process_requests_(
   const TestRequest (&requests)[COUNT])
 {
   add_descr_phrase(description);
-  
+
   for (size_t i = 0; i < COUNT; ++i)
   {
     if (requests[i].ccgid)
@@ -37,7 +37,7 @@ CGEndDateTest::process_requests_(
         description +
         " Check CCG status#" + strof(i+1));
     }
-    
+
     AdClient client = AdClient::create_user(this);
 
     FAIL_CONTEXT(
@@ -72,7 +72,7 @@ CGEndDateTest::gmt_case_()
   unsigned long ccg5= fetch_int("GMT/CCG5");
   unsigned long ccg6= fetch_int("GMT/CCG6");
   unsigned long ccg7= fetch_int("GMT/CCG7");
-  
+
   const TestRequest START_DATE[] =
   {
     { kwd1 , cc1, ccg1, CCG_ACTIVE },
@@ -90,7 +90,7 @@ CGEndDateTest::gmt_case_()
     START_DATE);
 }
 
-bool 
+bool
 CGEndDateTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(gmt_case_());

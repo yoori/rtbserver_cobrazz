@@ -21,11 +21,11 @@ OpenRTBTest::run()
   AUTOTEST_CASE(
     simple_case(),
     "Simple case");
-  
+
   AUTOTEST_CASE(
     auctions_lost(),
     "Auctions lost");
- 
+
   return true;
 }
 
@@ -40,7 +40,7 @@ void OpenRTBTest::simple_case()
   client.process_request(
     UserBindRequest().
       ssp_user_id(client.get_uid()));
-  
+
   client.process_post(
     OpenRTBRequest().
       aid(fetch_int("OPENRTB/ACCOUNT")).
@@ -68,10 +68,10 @@ void OpenRTBTest::auctions_lost()
 
   AutoTest::ORM::StatsList<CcgStats> stats;
   std::list<CcgStatsDiff> diffs;
-  
+
   if (stat_.db_active())
   {
-    const CCGStatsExpected EXPECTED[] = 
+    const CCGStatsExpected EXPECTED[] =
     {
       {"AUCTIONSLOST/CCG1", 1},
       {"AUCTIONSLOST/CCG2", 1}

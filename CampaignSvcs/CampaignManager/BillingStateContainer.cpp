@@ -134,7 +134,7 @@ namespace CampaignSvcs
         nullptr, // switched
         now,
         ccg_id,
-        nullptr, // disabled_indexes 
+        nullptr, // disabled_indexes
         ccg_setter);
 
       if(res_service_index == -1)
@@ -410,7 +410,7 @@ namespace CampaignSvcs
       fill_planned_server_switch_time_(ccg_id, ccg_state, now);
     }
 
-    bool active_index_is_bad = 
+    bool active_index_is_bad =
       disabled_indexes.find(ccg_state.active_index) != disabled_indexes.end();
 
     if(active_index_is_bad ||
@@ -522,7 +522,7 @@ namespace CampaignSvcs
     {}
 
     return false;
-  }  
+  }
 
   void
   BillingStateContainer::fill_planned_server_switch_time_(
@@ -658,7 +658,7 @@ namespace CampaignSvcs
             nullptr, // switched
             now,
             ccg_id,
-            nullptr, // disabled_indexes 
+            nullptr, // disabled_indexes
             nullptr // ccg_setter
             );
 

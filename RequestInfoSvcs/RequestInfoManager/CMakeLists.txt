@@ -46,11 +46,11 @@ target_link_libraries(RequestInfoManagerIDL
 )
 
 add_executable(RequestInfoManager
-  RequestInfoManagerMain.cpp 
-  RequestInfoManagerImpl.cpp 
-  RequestOutLogger.cpp 
+  RequestInfoManagerMain.cpp
+  RequestInfoManagerImpl.cpp
+  RequestOutLogger.cpp
   RequestLogLoader.cpp
-  RequestOperationDistributor.cpp 
+  RequestOperationDistributor.cpp
   ExpressionMatcherNotifier.cpp
 )
 
@@ -69,7 +69,7 @@ target_link_libraries(RequestInfoManager
   PassbackContainer
   RequestInfoContainer
   ExpressionMatcherIDL
-  UserInfoManagerControllerIDL
+  UserInfoManagerControllerCall
   CampaignServerIDL
   LogCommons
 
@@ -86,17 +86,12 @@ target_link_libraries(RequestInfoManager
   UserFraudProtectionContainer
   UserSiteReachContainer
   UserTagRequestMergeContainer
-  UserCampaignReachProfilePST
-  UserChannelInventoryProfilePST
-  UserCampaignReachProfilePST
   PlainStorage2
-  UserCampaignReachProfilePST
-  UserInfoManagerControllerL
 )
 
 add_library(RequestLogLoader SHARED
-  RequestLogLoader.cpp 
-  RequestOperationLoader.cpp 
+  RequestLogLoader.cpp
+  RequestOperationLoader.cpp
   RequestInfoManagerStats.cpp
 )
 
@@ -160,6 +155,7 @@ add_library(UserCampaignReachContainer STATIC
 )
 
 target_link_libraries(UserCampaignReachContainer
+  UserCampaignReachProfilePST
   LogCommons
   pcre
 )
@@ -187,5 +183,3 @@ add_library(UserTagRequestMergeContainer STATIC
 target_link_libraries(UserTagRequestMergeContainer
   LogCommons
 )
-
-#install(TARGETS BillingProcessor PassbackContainer RequestInfoContainer RequestInfoManagerIDL RequestInfoManager RequestLogLoader RequestOperationSaver  DESTINATION ${INSTALL_DIR})

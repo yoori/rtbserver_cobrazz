@@ -271,7 +271,7 @@ namespace AdServer
     {
       ChannelParams channel_params;
       unpack_channel_params(channel_params, channel_info);
-      
+
       if(channel_info.expression.operation == 'S')
       {
         return new SimpleChannel(channel_params);

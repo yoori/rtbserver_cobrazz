@@ -59,10 +59,10 @@ namespace
       "Channel/03"
     }
   };
-  
+
 }
- 
-bool 
+
+bool
 SoftTriggerMatchingTest::run_test()
 {
   AdClient client(AdClient::create_user(this));
@@ -96,4 +96,4 @@ SoftTriggerMatchingTest::run_test()
 
   return true;
 }
- 
+

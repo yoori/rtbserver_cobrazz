@@ -188,7 +188,7 @@ namespace Request
     // regs
     const String::SubString REGS("regs");
     const String::SubString REGS_COPPA("coppa");
-    
+
     // pmp
     const String::SubString PMP("pmp");
     const String::SubString PMP_PRIVATE_AUCTION("private_auction");
@@ -196,7 +196,7 @@ namespace Request
     const String::SubString PMP_DEAL_ID("id");
     const String::SubString PMP_DEAL_CPM_PRICE("bidfloor");
     const String::SubString PMP_DEAL_CURRENCY_CODE("bidfloorcur");
-    
+
 
     // user
     const String::SubString USER_ID("id");
@@ -236,7 +236,7 @@ namespace Request
     const String::SubString DEFAULT_BIDFLOORCUR_CURRENCY("usd");
 
     const String::SubString VIDEO_PLACEMENT_NONE("none");
-    
+
     const String::SubString VIDEO_PLACEMENTS[] =
     {
       String::SubString("unknown"),
@@ -328,7 +328,7 @@ namespace Request
     {
       String::SubString("ADTITLE"),    // supported - title asset
       String::SubString("SPONSORED"),
-      String::SubString("ALTTEXT"),    // supported - Descriptive text associated with the product 
+      String::SubString("ALTTEXT"),    // supported - Descriptive text associated with the product
       String::SubString("RATING"),
       String::SubString("LIKES"),
       String::SubString("DOWNLOADS"),
@@ -349,7 +349,7 @@ namespace Request
       String::SubString("ADIMAGE"),
       String::SubString("ADIMAGE_SQUARE")
     };
-    
+
     const String::SubString NATIVE_PLACEMENTS[] =
     {
       String::SubString("unknown"),
@@ -441,10 +441,10 @@ namespace Bidding
     const String::SubString APPLICATION("google");
     const String::SubString APPLICATION_VERSION("1");
     const String::SubString APP_FORMAT("html");
-    
+
     // https://storage.googleapis.com/adx-rtb-dictionaries/publisher-excludable-creative-attributes.txt
-    // 
-    const google::protobuf::int32 UP_EXPANDING[] = 
+    //
+    const google::protobuf::int32 UP_EXPANDING[] =
     {
       13, // ExpandingDirection: ExpandingUp
       17, // ExpandingDirection: ExpandingUpLeft
@@ -490,10 +490,10 @@ namespace Bidding
     // RichMediaCapabilityType: RichMediaCapabilityFlash
     const ::google::protobuf::int32 CREATIVETYPE_FLASH = 34;
     const String::SubString CREATIVETYPE_FLASH_STR("34");
-    
+
     // RichMediaCapabilityType: RichMediaCapabilityNonSSL
     const ::google::protobuf::int32 NON_SECURE = 48;
-    
+
     const AdServer::CampaignSvcs::ExtRevenueDecimal BIDFLOOR_MULTIPLIER =
       AdServer::CampaignSvcs::ExtRevenueDecimal::div(
         AdServer::CampaignSvcs::ExtRevenueDecimal(false, 100, 0),
@@ -546,7 +546,7 @@ namespace Bidding
     const std::string VIDEO_MIME_MP4("video/mp4");
     const std::string VIDEO_MIME_FLV("video/flv");
     const std::string VIDEO_MIME_MOV("video/mov");
-    
+
     namespace PlatformNames
     {
       const std::string IPAD("ipad");
@@ -563,7 +563,7 @@ namespace Bidding
     {
       return std::tolower(lhs) == std::tolower(rhs);
     }
-    
+
     bool caseless_compare(
       const String::SubString& lhs,
       const String::SubString& rhs)
@@ -618,8 +618,8 @@ namespace Bidding
           seq.begin(), seq.end(), value) != seq.end();
     }
 
- 
-    template <typename T, size_t Count> 
+
+    template <typename T, size_t Count>
     const T&
     get_value_from_seq(
       const T (&array)[Count],
@@ -644,7 +644,7 @@ namespace Bidding
         std::binary_search(
           seq.begin(), seq.end(), value);
     }
-    
+
     template <typename Seq, typename Arg, size_t Size>
     bool test_range_in_set(
       const Seq& seq,
@@ -699,7 +699,7 @@ namespace Bidding
       res_token.width = image_asset.width;
       res_token.height = image_asset.height;
     }
-      
+
     template <typename ResultSeq, typename AssetSeq, size_t DictSize>
     bool
     fill_asset_tokens(
@@ -749,7 +749,7 @@ namespace Bidding
 
     // REQ-3939
     // Player VAST size
-    void 
+    void
     fill_video_size(
       KeywordFormatter& kw_fmt,
       AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot_request,
@@ -853,7 +853,7 @@ namespace Bidding
         reinterpret_cast<const unsigned char*>(bin_idfa.data()),
         bin_idfa.size(),
         false);
-    }  
+    }
   }
 
   void
@@ -1110,7 +1110,7 @@ namespace Bidding
 
       banner_format_processor->add_processor(
         Request::OpenRtb::IMP_BANNER_HEIGHT,
-        JsonBannerFormatParamProcessor_var( 
+        JsonBannerFormatParamProcessor_var(
           new AdServer::Commons::JsonStringParamProcessor<BannerFormat>(
             &BannerFormat::height)));
 
@@ -1183,7 +1183,7 @@ namespace Bidding
 
       banner_processor->add_processor(
         Request::OpenRtb::IMP_BANNER_POS,
-        JsonBannerParamProcessor_var( 
+        JsonBannerParamProcessor_var(
           new AdServer::Commons::JsonStringParamProcessor<Banner>(
             &Banner::pos)));
 
@@ -1294,7 +1294,7 @@ namespace Bidding
   class JsonPmpParamProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
   {
     typedef JsonAdSlotProcessingContext::Deal Deal;
-    
+
     typedef JsonParamProcessor<Deal> JsonDealParamProcessor;
 
     typedef ReferenceCounting::SmartPtr<JsonDealParamProcessor>
@@ -1305,7 +1305,7 @@ namespace Bidding
     {
       typedef ReferenceCounting::SmartPtr<JsonCompositeParamProcessor<Deal> >
         JsonDealCompositeParamProcessor_var;
-      
+
       JsonDealCompositeParamProcessor_var deal_processor =
         new JsonCompositeParamProcessor<
           Deal>();
@@ -1364,11 +1364,11 @@ namespace Bidding
     {
       Deal deal;
       deal_processor_->process(request_params, deal, value);
-      
+
       context.deals.push_back(deal);
     }
 
- 
+
   protected:
     JsonDealParamProcessor_var deal_processor_;
   };
@@ -1585,7 +1585,7 @@ namespace Bidding
         JsonAssetParamProcessor_var(
           new JsonContextNumberParamProcessor<
           Asset, long>(&Asset::id)));
-      
+
       processor_->add_processor(
         Request::OpenRtb::NATIVE_ASSET_REQUIRED,
         JsonAssetParamProcessor_var(
@@ -1618,7 +1618,7 @@ namespace Bidding
     public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Data>
   {
     typedef Native::Data Data;
-    
+
   public:
     JsonNativeTitleProcessor() :
       JsonNativeAssetProcessor<Data>(
@@ -1640,12 +1640,12 @@ namespace Bidding
   };
 
   // Data asset processor
-  
+
   class JsonNativeDataProcessor :
     public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Data>
   {
     typedef Native::Data Data;
-    
+
   public:
     JsonNativeDataProcessor() :
       JsonNativeAssetProcessor<Data>(
@@ -1659,7 +1659,7 @@ namespace Bidding
         JsonAssetParamProcessor_var(
           new JsonContextNumberParamProcessor<
           Data, long>(&Data::data_type)));
-      
+
       data_processor->add_processor(
         Request::OpenRtb::NATIVE_ASSET_DATA_LEN,
         JsonAssetParamProcessor_var(
@@ -1672,9 +1672,9 @@ namespace Bidding
     }
 
   };
-  
+
   // Image asset processor
-  
+
   class JsonNativeImageProcessor :
     public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Image>
   {
@@ -1682,7 +1682,7 @@ namespace Bidding
 
   public:
     JsonNativeImageProcessor()
-      : JsonNativeAssetProcessor<Image>(&Native::image_assets)      
+      : JsonNativeAssetProcessor<Image>(&Native::image_assets)
     {
       JsonAssetCompositeParamProcessor_var image_processor =
         new JsonAssetCompositeParamProcessor();
@@ -1724,7 +1724,7 @@ namespace Bidding
             Image,
             JsonAdSlotProcessingContext::StringSet>(
             &Image::mimes)));
-      
+
       processor_->add_processor(
         Request::OpenRtb::NATIVE_ASSET_IMAGE,
         image_processor);
@@ -1734,7 +1734,7 @@ namespace Bidding
 
 
   // Video asset processor
-  
+
   class JsonNativeVideoProcessor :
     public JsonNativeAssetProcessor<JsonAdSlotProcessingContext::Native::Video>
   {
@@ -1743,7 +1743,7 @@ namespace Bidding
   public:
     JsonNativeVideoProcessor() :
       JsonNativeAssetProcessor<Video>(
-        &Native::video_assets)   
+        &Native::video_assets)
     {
       JsonAssetCompositeParamProcessor_var video_processor =
         new JsonAssetCompositeParamProcessor();
@@ -1779,7 +1779,7 @@ namespace Bidding
             Video,
             JsonAdSlotProcessingContext::ULValueStateHolder>(
             &Video::max_duration)));
-      
+
       processor_->add_processor(
         Request::OpenRtb::NATIVE_ASSET_VIDEO,
         video_processor);
@@ -1794,7 +1794,7 @@ namespace Bidding
     typedef JsonParamProcessor<Native> JsonAssetParamProcessor;
     typedef ReferenceCounting::SmartPtr<JsonAssetParamProcessor>
       JsonAssetParamProcessor_var;
-    
+
     typedef Generics::GnuHashTable<
         Generics::SubStringHashAdapter,
         JsonAssetParamProcessor_var> JsonAssetParamProcessorMap;
@@ -1859,7 +1859,7 @@ namespace Bidding
   class JsonNativeProcessor: public JsonParamProcessor<JsonAdSlotProcessingContext>
   {
     typedef JsonAdSlotProcessingContext::Native Native;
-    
+
     typedef JsonParamProcessor<Native> JsonNativeParamProcessor;
 
     typedef ReferenceCounting::SmartPtr<JsonNativeParamProcessor>
@@ -1918,7 +1918,7 @@ namespace Bidding
     JsonNativeProcessor()
     {
       JsonNativeCompositeParamProcessor_var processor =
-        new JsonNativeCompositeParamProcessor();      
+        new JsonNativeCompositeParamProcessor();
 
       JsonNativeCompositeParamProcessor_var native_processor =
         new JsonNativeCompositeParamProcessor();
@@ -1940,7 +1940,7 @@ namespace Bidding
       processor->add_processor(
         Request::OpenRtb::NATIVE_REQUEST,
         native_processor);
-        
+
       processor_ = processor;
     }
 
@@ -2367,7 +2367,7 @@ namespace Bidding
           JsonAdSlotParamProcessor_var(
             new JsonArrayParamProcessor<JsonAdSlotProcessingContext>(
               deal_processor)));
-        
+
         processor->add_processor(
           Request::OpenRtb::PMP,
           pmp_processor);
@@ -2378,9 +2378,9 @@ namespace Bidding
         processor->add_processor(
           Request::OpenRtb::NATIVE,
           JsonAdSlotParamProcessor_var(
-            new JsonNativeProcessor())); 
+            new JsonNativeProcessor()));
       }
-      
+
       processor_ = processor;
     }
 
@@ -3247,7 +3247,7 @@ namespace Bidding
           JsonRequestParamProcessor_var(
             new JsonArrayParamProcessor<JsonProcessingContext>(
               JsonRequestParamProcessor_var(new JsonUserEidParamProcessor()))));
-        
+
         user_processor->add_processor(Request::OpenRtb::USER_EXT, ext_processor);
       }
 
@@ -3256,16 +3256,16 @@ namespace Bidding
 
     {
       // regs.coppa
-      
+
       JsonCompositeRequestParamProcessor_var regs_processor =
         new JsonCompositeRequestParamProcessor();
-      
+
       regs_processor->add_processor(
         Request::OpenRtb::REGS_COPPA,
         JsonRequestParamProcessor_var(
           new JsonContextBoolParamProcessor<JsonProcessingContext>(
             &JsonProcessingContext::regs_coppa)));
-      
+
       root_processor->add_processor(
         Request::OpenRtb::REGS,
         regs_processor);
@@ -3280,7 +3280,7 @@ namespace Bidding
         JsonRequestParamProcessor_var(
           new JsonContextBoolParamProcessor<JsonProcessingContext>(
             &JsonProcessingContext::test)));
- 
+
       ext_processor->add_processor(
         Request::OpenRtb::EXT_SECURE,
         JsonRequestParamProcessor_var(
@@ -3293,11 +3293,11 @@ namespace Bidding
         ext_udi_processor->add_processor(
           Request::OpenRtb::EXT_IDFA,
           &JsonProcessingContext::ifa);
-      
+
         ext_udi_processor->add_processor(
           Request::OpenRtb::EXT_GAID,
           &JsonProcessingContext::ifa);
-        
+
         ext_processor->add_processor(
           Request::OpenRtb::EXT_UDI,
           ext_udi_processor);
@@ -3422,7 +3422,7 @@ namespace Bidding
     init_request_param(request_params, request_info);
 
     Stream::Stack<16> ip_str;
- 
+
     if (bid_request.has_ip() && bid_request.ip().size() == 3)
     {
       const std::string& ip = bid_request.ip();
@@ -3480,7 +3480,7 @@ namespace Bidding
     {
       const ::Google::BidRequest_UserDemographic& user_demographic =
         bid_request.user_demographic();
-        
+
       if (user_demographic.has_gender() &&
         user_demographic.gender() !=
           ::Google::BidRequest_UserDemographic::UNKNOWN )
@@ -3702,7 +3702,7 @@ namespace Bidding
       {
         ad_slot_request.exclude_categories[res_cat_i++] << Google::CREATIVETYPE_FLASH_STR;
       }
-      
+
       for(int cat_i = 0;
           cat_i < adslot.excluded_sensitive_category_size(); ++cat_i)
       {
@@ -3799,7 +3799,7 @@ namespace Bidding
       else
       {
         ad_slot_request.format << Google::APP_FORMAT;
-        
+
         ad_slot_request.video_min_duration = 0;
         ad_slot_request.video_max_duration = -1;
         ad_slot_request.video_width = 0;
@@ -3827,7 +3827,7 @@ namespace Bidding
               Stream::Error ostr;
               ostr << FUN << "Error in adslot size: width count(" << adslot.width_size() <<
                 ") != height count (" << adslot.height_size() << ")";
-            
+
               logger_->log(
                 ostr.str(),
                 Logging::Logger::NOTICE,
@@ -3885,7 +3885,7 @@ namespace Bidding
         {
           const ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal& deal =
             ad_data.direct_deal(deal_i);
-          
+
           if (
             (deal.deal_type() == ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal::PREFERRED_DEAL ||
               deal.deal_type() == ::Google::BidRequest_AdSlot_MatchingAdData_DirectDeal::PRIVATE_AUCTION) &&
@@ -3904,7 +3904,7 @@ namespace Bidding
       try
       {
         AdServer::CampaignSvcs::RevenueDecimal min_ecpm;
-        
+
         AdServer::CampaignSvcs::narrow_decimal(
           min_ecpm,
           AdServer::CampaignSvcs::ExtRevenueDecimal::mul(
@@ -3922,7 +3922,7 @@ namespace Bidding
           Stream::Error ostr;
           ostr << FUN << "Minimum_cpm_micros='" << min_cpm_bid <<
             "' convertation error:" << e.what();
-            
+
           logger_->log(
             ostr.str(),
             Logging::Logger::NOTICE,
@@ -3934,7 +3934,7 @@ namespace Bidding
 
         ad_slot_request.passback = true;
       }
-      
+
       // Creative expanding
       ad_slot_request.up_expand_space =
         test_range_in_set(
@@ -3965,7 +3965,7 @@ namespace Bidding
         // First Screen
         ad_slot_request.tag_visibility = 100;
       }
-      else 
+      else
       {
         // Other Screen
         ad_slot_request.tag_visibility = 0;
@@ -4805,7 +4805,7 @@ namespace Bidding
           {
             // process api
             std::vector<std::string> excluded_api_categories;
-            
+
             if(slot_it->video_api.fail())
             {
               excluded_api_categories.push_back(CreativeCategory::VPAID1);
@@ -4874,7 +4874,7 @@ namespace Bidding
               Request::OpenRtb::NATIVE_PLACEMENTS,
               slot_it->native->placement.present() ?
                 *slot_it->native->placement: 0), false);
-          
+
           if(ad_slot_request.format[0] == 0)
           {
             ad_slot_request.format << OPENRTB_NATIVE_APP_FORMAT;
@@ -5090,7 +5090,7 @@ namespace Bidding
         ad_slot_request.tag_predicted_viewability = -1;
 
         // REQ-3982 Store direct deal with minimum cpm_price
-        
+
         if (!slot_it->deals.empty())
         {
           std::map<AdServer::CampaignSvcs::RevenueDecimal, std::string> prices;
@@ -5099,7 +5099,7 @@ namespace Bidding
             slot_it->min_cpm_price_currency_code.empty() ?
             Request::OpenRtb::DEFAULT_BIDFLOORCUR_CURRENCY :
             slot_it->min_cpm_price_currency_code;
-          
+
           if (slot_it->min_cpm_price != AdServer::CampaignSvcs::RevenueDecimal::ZERO)
           {
             prices.insert(
@@ -5115,7 +5115,7 @@ namespace Bidding
             {
               prices.insert(
                 std::make_pair(it->cpm_price, it->id));
-            }     
+            }
           }
 
           if (!prices.empty())
@@ -5130,7 +5130,7 @@ namespace Bidding
         }
 
         // Unit is 1.00 / 1000 imps for OpenRTB, 1.00 / 1M for Yandex
-        
+
         const AdServer::CampaignSvcs::RevenueDecimal& min_ecpm_multiplier = (
           request_params.common_info.request_type !=
             AdServer::CampaignSvcs::AR_YANDEX ?
@@ -6270,7 +6270,7 @@ namespace Bidding
       }
     }
 
-    if(referer.url().empty()) 
+    if(referer.url().empty())
     {
       if (!context.site_domain.url().empty())
       {
@@ -6594,7 +6594,7 @@ namespace Bidding
       {
         kw_fmt.add_keyword(std::string("rtblanguage") + norm_keyword_(context->language));
       }
-    }    
+    }
   }
 
   std::string

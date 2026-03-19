@@ -1,5 +1,5 @@
 #include "ChannelImpInventoryTest.hpp"
- 
+
 REFLECT_UNIT(ChannelImpInventoryTest) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -14,7 +14,7 @@ namespace
   const double PRECISION = 0.00001;
 }
 
-void 
+void
 ChannelImpInventoryTest::init_(
   ORM::StatsList<ORM::ChannelImpInventory>& stats,
   std::list<ORM::ChannelImpInventory::Diffs>& diffs,
@@ -24,7 +24,7 @@ ChannelImpInventoryTest::init_(
 
   IntSeq channels;
   fetch_list_(channels, prefix + "/Channels");
- 
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       channels.size() * 2,
@@ -42,7 +42,7 @@ ChannelImpInventoryTest::init_(
         channel_id(channels[i / 2]).
         ccg_type(i % 2? "T": "D").
         colo_id(colo));
-    
+
     stat.description(prefix);
     stat.select(pq_conn_);
     stats.push_back(stat);
@@ -53,28 +53,28 @@ ChannelImpInventoryTest::init_(
     std::string i_str(strof(i));
     diffs.push_back(
       ORM::ChannelImpInventory::Diffs().
-        imps( 
-          ORM::stats_diff_type( 
+        imps(
+          ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-0")), PRECISION)).
-        clicks( 
+        clicks(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-1")), PRECISION)).
-        actions( 
+        actions(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-2")), PRECISION)).
-        revenue( 
+        revenue(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-3")), PRECISION)).
-        impops_user_count( 
+        impops_user_count(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-4")), PRECISION)).
-        imps_user_count( 
+        imps_user_count(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-5")), PRECISION)).
-        imps_value( 
+        imps_value(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-6")), PRECISION)).
-        imps_other( 
+        imps_other(
           ORM::stats_diff_type(
             static_cast<double>(fetch_float(prefix + i_str + "-7")), PRECISION)).
         imps_other_user_count(
@@ -202,7 +202,7 @@ ChannelImpInventoryTest::run()
     colo_case(),
     "Colo id logging (ADSC-7276)");
 
-  return true;  
+  return true;
 }
 
 void
@@ -213,10 +213,10 @@ unsigned long
 ChannelImpInventoryTest::fetch_colo_(const std::string& prefix)
 {
   std::string object_name = prefix + "/COLO";
-  
+
   Locals all_locals = get_local_params();
   size_t locals_len = all_locals.DataElem().size();
-    
+
   for (size_t ind = 0; ind < locals_len; ++ind)
   {
     if (all_locals.DataElem()[ind].Name() == object_name)
@@ -234,7 +234,7 @@ ChannelImpInventoryTest::fetch_colo_(const std::string& prefix)
 
 void
 ChannelImpInventoryTest::fetch_list_(
-  StringSeq& seq, 
+  StringSeq& seq,
   const std::string& prefix)
 {
   DataElemObjectPtr object;
@@ -246,7 +246,7 @@ ChannelImpInventoryTest::fetch_list_(
 
 void
 ChannelImpInventoryTest::fetch_list_(
-  IntSeq& seq, 
+  IntSeq& seq,
   const std::string& prefix)
 {
   DataElemObjectPtr object;
@@ -299,7 +299,7 @@ ChannelImpInventoryTest::check_channels_(
             ") must present in server response: " + prefix);
       }
     }
-  }  
+  }
 }
 
 void
@@ -343,7 +343,7 @@ ChannelImpInventoryTest::check_cretives_(
 
 void
 ChannelImpInventoryTest::do_case_requests_(
-  const std::string& prefix, 
+  const std::string& prefix,
   int flags)
 {
   StringSeq tags;
@@ -353,10 +353,10 @@ ChannelImpInventoryTest::do_case_requests_(
   int colo = fetch_colo_(prefix);
   for (size_t i = 0; i < count_; ++i)
   {
-    AdClient client = (flags & SEND_NO_COOKIES) ? 
+    AdClient client = (flags & SEND_NO_COOKIES) ?
       AdClient::create_nonoptin_user(this)
       : AdClient::create_user(this);
-    
+
     if (flags & SEND_OO_USER)
     {
       client.process_request(AutoTest::OptOutRequest()
@@ -368,7 +368,7 @@ ChannelImpInventoryTest::do_case_requests_(
       if (colo)
         request.colo = colo;
       std::string j_str = strof(j);
-      if (((tags.size() - j) == 1) 
+      if (((tags.size() - j) == 1)
         && (flags & SEND_FORMAT))
       {
         if (flags & SEND_REFERER)
@@ -426,17 +426,17 @@ ChannelImpInventoryTest::do_case_requests_(
       check_channels_(prefix + "/ReqChannels-" + j_str, client);
       check_cretives_(prefix + "/ReqCreatives-" + j_str, client);
     }//for tags
-     
+
     std::string track_pixel_url
       = client.debug_info.track_pixel_url;
     std::string click_url =
       client.debug_info.selected_creatives.size()  == 0 ? "":
       client.debug_info.selected_creatives.first().click_url.value();
-    
+
     std::string action_adv_url =
       client.debug_info.selected_creatives.size() == 0 ? "":
       client.debug_info.selected_creatives.first().action_adv_url.value();
-    
+
     if (flags & SEND_TRACK)
     {
       FAIL_CONTEXT(
@@ -451,7 +451,7 @@ ChannelImpInventoryTest::do_case_requests_(
     }
 
     if (flags & SEND_CLICK)
-    {        
+    {
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           !click_url.empty()),

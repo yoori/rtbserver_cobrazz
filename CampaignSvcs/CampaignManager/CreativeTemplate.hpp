@@ -95,11 +95,11 @@ namespace AdServer
         };
 
         Handler(): type(CTT_NULL) {}
-        
+
         Handler(const char* file_val, Type type_val)
           : file(file_val), type(type_val)
         {}
-        
+
         bool operator<(const Handler& right) const noexcept
         {
           return file < right.file || (file == right.file && type < right.type);
@@ -109,14 +109,14 @@ namespace AdServer
         {
           return file == right.file && type == right.type;
         }
-        
+
         std::string file;
         Type type;
       };
 
       DECLARE_EXCEPTION(InvalidTemplate, eh::DescriptiveException);
       DECLARE_EXCEPTION(ImplementationException, eh::DescriptiveException);
-      
+
       Template* create(const Handler& , State&) const
         /*throw(Template::FileNotExists,
               Template::InvalidTemplate,
@@ -124,7 +124,7 @@ namespace AdServer
 
       bool need_update(const Handler& , const State&) const
         /*throw(Template::InvalidTemplate, ImplementationException)*/;
-        
+
       Template* update(Template*, const Handler& , State&) const
         /*throw(Template::FileNotExists,
               Template::InvalidTemplate,
@@ -140,11 +140,11 @@ namespace AdServer
     {
     protected:
       typedef Sync::Policy::PosixThread SyncPolicy;
-      
+
     public:
       typedef Generics::GnuHashTable<_KEY, _VALUE> KeyMap;
       typedef Generics::GnuHashSet<_KEY> KeySet;
-      
+
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
@@ -157,7 +157,7 @@ namespace AdServer
         const _KEY& key,
         const _VALUE& value)
         /*throw(Exception)*/;
-      
+
       bool exist(const _KEY& key) const noexcept;
 
       Template* get(const _KEY& key) const
@@ -165,7 +165,7 @@ namespace AdServer
 
       Template* get(const _KEY& key, _VALUE& val) const
         /*throw(Template::FileNotExists, Template::InvalidTemplate, Exception)*/;
-      
+
       void assign(const KeySet& key_set, TemplateMap& source_map)
         /*throw(Exception)*/;
 
@@ -173,7 +173,7 @@ namespace AdServer
       {
         return key_map_.size();
       }
-      
+
       const_iterator begin() const
       {
         return key_map_.begin();
@@ -183,13 +183,13 @@ namespace AdServer
       {
         return key_map_.end();
       }
-      
-      iterator begin() 
+
+      iterator begin()
       {
         return key_map_.begin();
       }
 
-      iterator end() 
+      iterator end()
       {
         return key_map_.end();
       }
@@ -203,19 +203,19 @@ namespace AdServer
           : state(init.state),
             templ(init.templ)
         {}
-                
+
         TemplateWithState(
           const typename _FACTORY::State& state_val,
           Template* templ_val)
-          : state(state_val), 
+          : state(state_val),
             templ(ReferenceCounting::add_ref(templ_val))
         {}
-        
+
         typename SyncPolicy::Mutex lock;
         typename _FACTORY::State state;
         Template_var templ;
       };
-      
+
       typedef std::map<_VALUE_HANDLER, TemplateWithState> ValueMap;
 
     protected:
@@ -227,8 +227,8 @@ namespace AdServer
 
       Template* get_(typename ValueMap::iterator& ) const
         /*throw(Template::FileNotExists, Template::InvalidTemplate)*/;
-      
-    protected:  
+
+    protected:
       _FACTORY factory_;
       KeyMap key_map_;
       mutable ValueMap value_map_;
@@ -246,7 +246,7 @@ namespace AdServer
       {
         return hash_;
       }
-      
+
       bool operator==(const CreativeTemplateKey& src) const /* noexcept */;
 
       std::string creative_format;
@@ -308,9 +308,9 @@ namespace AdServer
         creative_size(creative_size_val),
         app_format(app_format_val)
     {
-      hash_ = Generics::CRC::quick(0, creative_format.c_str(), creative_format.size());      
-      hash_ = Generics::CRC::quick(hash_, creative_size.c_str(), creative_size.size());      
-      hash_ = Generics::CRC::quick(hash_, app_format.c_str(), app_format.size());      
+      hash_ = Generics::CRC::quick(0, creative_format.c_str(), creative_format.size());
+      hash_ = Generics::CRC::quick(hash_, creative_size.c_str(), creative_size.size());
+      hash_ = Generics::CRC::quick(hash_, app_format.c_str(), app_format.size());
     }
 
     inline
@@ -334,7 +334,7 @@ namespace AdServer
     TemplateMap<_KEY, _VALUE, _VALUE_HANDLER, _FACTORY>::TemplateMap()
       noexcept
     {}
-  
+
     template<
       typename _KEY,
       typename _VALUE,
@@ -361,7 +361,7 @@ namespace AdServer
         }
       }
     }
-    
+
     template<
       typename _KEY,
       typename _VALUE,
@@ -381,7 +381,7 @@ namespace AdServer
         value_map_.insert(std::make_pair(handler, templ_with_state));
       }
     }
-  
+
     template<
       typename _KEY,
       typename _VALUE,
@@ -395,7 +395,7 @@ namespace AdServer
     {
       insert_(key, handler, TemplateWithState());
     }
-  
+
     template<
       typename _KEY,
       typename _VALUE,
@@ -409,7 +409,7 @@ namespace AdServer
       typename KeyMap::const_iterator it = key_map_.find(key);
       return it != key_map_. end();
     }
-  
+
     template<
       typename _KEY,
       typename _VALUE,
@@ -439,9 +439,9 @@ namespace AdServer
                 value_map_it->first, value_map_it->second.state))
           {
             return ReferenceCounting::add_ref(value_map_it->second.templ);
-          }            
+          }
         }
-        
+
         typename SyncPolicy::WriteGuard lock(value_map_it->second.lock);
 
         if(value_map_it->second.templ.in() == 0)
@@ -454,15 +454,15 @@ namespace AdServer
                   value_map_it->first, value_map_it->second.state))
         {
           value_map_it->second.templ = factory_.update(
-            value_map_it->second.templ, 
+            value_map_it->second.templ,
             value_map_it->first,
             value_map_it->second.state);
         }
-        
+
         return ReferenceCounting::add_ref(value_map_it->second.templ);
       }
     }
-    
+
     template<
       typename _KEY,
       typename _VALUE,

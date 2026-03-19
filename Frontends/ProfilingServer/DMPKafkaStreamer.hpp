@@ -22,21 +22,21 @@ namespace AdServer
     public:
 
       DECLARE_EXCEPTION(ProducerNotFound, eh::DescriptiveException);
-      
+
       enum ProducerType
       {
         PT_UID_GENERATOR,
         PT_CLICK_STREAM,
         PT_GEO
       };
-      
+
       typedef ::xsd::AdServer::Configuration::KafkaTopic
         KafkaTopicConfig;
       typedef ::xsd::AdServer::Configuration::KafkaDMPProfilingStorageType
         KafkaStorageConfig;
       typedef ::xsd::cxx::tree::optional<KafkaTopicConfig>
         KafkaTopicConfig_optional;
-      
+
       typedef const KafkaTopicConfig_optional& (
         KafkaStorageConfig::* GetTopicConfigFunc)() const;
 
@@ -48,7 +48,7 @@ namespace AdServer
 
       static const KafkaProducerDescriptor PRODUCER_DESCRIPTORS[];
 
-      
+
       typedef std::map<ProducerType, Commons::Kafka::Producer_var> ProducerTable;
 
       void register_producers(
@@ -57,7 +57,7 @@ namespace AdServer
         Generics::CompositeActiveObject* owner,
         const KafkaStorageConfig& config);
 
-      void 
+      void
       write_dmp_profiling_info(
         const DMPProfilingInfoReader& dmp_profiling_info,
         const AdServer::Commons::ExternalUserIdArray& bind_user_ids,
@@ -84,5 +84,5 @@ namespace AdServer
     DMPKafkaStreamer_var;
   }
 }
-    
-        
+
+

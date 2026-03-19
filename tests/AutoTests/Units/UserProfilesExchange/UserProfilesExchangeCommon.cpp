@@ -6,7 +6,7 @@ namespace AutoTest
   {
 
     // Class CheckWaitHistoryChannel
-    
+
     CheckWaitHistoryChannel::CheckWaitHistoryChannel (
         AutoTest::AdClient& client,
         unsigned long channel,
@@ -55,7 +55,7 @@ namespace AutoTest
             colo_,
             client_.debug_info.colo_id).check(),
           "must receive expected colo");
-        
+
         if (AutoTest::entry_in_seq(expected_,
               client_.debug_info.history_channels))
         {

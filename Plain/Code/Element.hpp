@@ -32,12 +32,12 @@ namespace Code
 
     virtual void visit_i(const TypeElement*) noexcept;
   };
-  
+
   class Element: public ReferenceCounting::DefaultImpl<>
   {
   public:
     virtual void visited(ElementVisitor* visitor) const noexcept;
-    
+
   protected:
     virtual ~Element() noexcept {}
   };
@@ -51,7 +51,7 @@ namespace Code
   protected:
     virtual ~ElementList() noexcept {}
   };
-  
+
   typedef ReferenceCounting::SmartPtr<ElementList>
     ElementList_var;
 }

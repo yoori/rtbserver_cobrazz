@@ -16,7 +16,7 @@ namespace Code
 
   protected:
     virtual ~IncludeElement() noexcept {}
-    
+
   private:
     std::string file_;
   };
@@ -35,7 +35,7 @@ namespace Code
   {
     return file_.c_str();
   }
-  
+
   inline
   void
   IncludeElement::visited(ElementVisitor* visitor) const noexcept

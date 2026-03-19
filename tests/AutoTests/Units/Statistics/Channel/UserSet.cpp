@@ -32,7 +32,7 @@ namespace AutoTest
         process_request_i(i, request);
       }
     }
-      
+
     void
     UserSet::process_request_i(unsigned long index,
                                const BaseRequest& request)

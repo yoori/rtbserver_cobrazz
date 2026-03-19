@@ -25,12 +25,12 @@
 class Application
 {
 public:
-    
+
   /**
    * Macros defining Application base exception class.
    */
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-  
+
   /**
    * Macros defining InvalidArgument exception class.
    */
@@ -78,9 +78,9 @@ public:
     std::string no_first_name_;
     Generics::Time max_time_;
   };
-    
+
 public:
-    
+
   /**
    * Construct Application object.
    */
@@ -108,7 +108,7 @@ public:
   static Application& instance() /*throw(eh::Exception)*/;
 
 
-  int help(const std::string& topic) const 
+  int help(const std::string& topic) const
     noexcept;
 
   template<class ITER>
@@ -139,10 +139,10 @@ private:
   int smartcheck_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/;
 
-  int ccg_() 
+  int ccg_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/;
 
-  int pos_ccg_() 
+  int pos_ccg_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/;
 
   int ccg_traits_()
@@ -202,7 +202,7 @@ private:
   std::vector<std::string> lexemes_data_;
   Logging::Logger_var logger_;
   Generics::Statistics::Collection_var collection_;
-  CORBA::Object_var obj_ref_; 
+  CORBA::Object_var obj_ref_;
   AdServer::ChannelSvcs::ChannelServer_var channel_server_;
   AdServer::ChannelSvcs::ChannelUpdateBase_v33_var channel_update_;
   AdServer::ChannelSvcs::ChannelServerSession_var channel_session_;
@@ -217,14 +217,14 @@ private:
  * Defines singleton class.
  */
 typedef Generics::Singleton<Application> AppSingleton;
-  
+
 ///////////////////////////////////////////////////////////////////////////////
 // Inlines
 ///////////////////////////////////////////////////////////////////////////////
 
 //
 // Application class
-//  
+//
 inline
 Application&
 Application::instance() /*throw(eh::Exception)*/

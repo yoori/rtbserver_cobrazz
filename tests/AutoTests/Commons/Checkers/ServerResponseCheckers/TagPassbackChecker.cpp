@@ -10,7 +10,7 @@ namespace AutoTest
     url_(),
     pixel_()
   {}
-  
+
   // Mapping, based on pb.unit-test(-imp) template format
   const TagPassbackChecker::PassbackToken
     TagPassbackChecker::TOKENS[TagPassbackChecker::TOKEN_COUNT] =
@@ -31,11 +31,11 @@ namespace AutoTest
       &TagPassbackChecker::Tokens::pixel,
     },
   };
-  
-  
+
+
   TagPassbackChecker::TagPassbackChecker(
     const AdClient& client,
-    const std::string& url) : 
+    const std::string& url) :
     client_(client)
   {
     expected_.url(url);
@@ -43,7 +43,7 @@ namespace AutoTest
 
   TagPassbackChecker::TagPassbackChecker(
     const AdClient& client,
-    const Tokens& expected) : 
+    const Tokens& expected) :
     client_(client),
     expected_(expected)
   {}
@@ -69,10 +69,10 @@ namespace AutoTest
       if (i < TOKEN_COUNT)
       {
         std::string exp((expected_.*(TOKENS[i].get))());
-       
+
         result = exp.empty() ||
           equal(exp, (got_.*(TOKENS[i].get))());
-      
+
         if (!result)
         {
           error << "Invalid passback body (" << TOKENS[i].name <<

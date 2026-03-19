@@ -54,7 +54,7 @@ namespace
     typedef AutoTest::ORM::PQ::ChannelInventory ChannelInventory;
     typedef AutoTest::DBC::IConn Conn;
     typedef AutoTest::ORM::PQ::Channel Channel;
-    
+
   public:
     /**
      * @brief Constructor.
@@ -133,10 +133,10 @@ ZeroCollectorTest::set_up()
 
   active_channels.push_back(fetch_int("Channel/GN"));
   wait_channels.push_back(fetch_int("Channel/RU"));
-  
+
   std::list<int>::iterator active_channel = active_channels.begin();
   std::list<int>::iterator wait_channel = wait_channels.begin();
-  
+
   // Create channels
   for (size_t i = 0; i < countof(CHANNELS); ++i)
   {
@@ -157,7 +157,7 @@ ZeroCollectorTest::set_up()
       c.country_code =
         CHANNELS[i].expected == 'W'?
           "RU": "GN";
-      c.language = 
+      c.language =
         CHANNELS[i].expected == 'W'?
           "ru": "gn";
     }
@@ -222,7 +222,7 @@ ZeroCollectorTest::set_up()
           c.update()),
         "Cann't update channel");
     }
-    
+
     channels.push_back(c);
 
     if (CHANNELS[i].type == 'B' || CHANNELS[i].type == 'D')
@@ -240,7 +240,7 @@ ZeroCollectorTest::set_up()
         "linking trigger with channel");
       triggers.push_back(ch_trigger);
     }
-    
+
     if (CHANNELS[i].status == 'A')
     {
       active_channels.push_back(c.id());
@@ -329,7 +329,7 @@ ZeroCollectorTest::run()
           channel->collected).check());
     }
   }
-  
+
   return true;
 }
 
@@ -343,7 +343,7 @@ ZeroCollectorTest::tear_down()
   {
     NOSTOP_FAIL_CONTEXT(it->delet());
   }
-  
+
   for (ChannelList::iterator it = channels.begin();
        it != channels.end(); ++it)
   {
@@ -352,7 +352,7 @@ ZeroCollectorTest::tear_down()
         pq_conn_.query(
           "DELETE FROM DISCOVERCHANNELSTATE "
           "WHERE CHANNEL_ID = :1"));
-      
+
       query.set(it->id());
       query.update();
     }

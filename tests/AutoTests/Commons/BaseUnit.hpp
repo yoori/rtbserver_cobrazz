@@ -132,7 +132,7 @@ struct UnitStat: public virtual ReferenceCounting::DefaultImpl<>
    * @brief Adserver run in DB active mode.
    */
   bool db_active () const noexcept;
-  
+
 };
 
 typedef ReferenceCounting::SmartPtr<UnitStat> UnitStat_var;
@@ -155,7 +155,7 @@ class BaseUnit
   typedef std::list<DescriptiveChecker> DescriptiveCheckerList;
 
   typedef std::map<std::string, AutoTest::Logger_var> Loggers;
- 
+
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);
@@ -175,7 +175,7 @@ public:
    * @brief Destructor.
    */
   virtual ~BaseUnit() noexcept;
- 
+
   /**
    * @brief Get config.
    * @return config object.
@@ -287,7 +287,7 @@ public:
     const char* obj_names,
     const char* separator  = ",")
     /*throw(Exception)*/;
-  
+
   /**
    * @brief Add description to test log.
    *        Using for mark test parts.
@@ -363,16 +363,16 @@ protected:
 
   /**
    * @brief Add logger by name.
-   * @param logger name.   
+   * @param logger name.
    * @return exists or new logger with name.
    */
   AutoTest::Logger&
   add_logger(
     const std::string& log_name);
-  
+
   /**
    * @brief Get element as float.
-   * @param [out] element float value.   
+   * @param [out] element float value.
    * @param element name.
    */
   void fetch(
@@ -382,7 +382,7 @@ protected:
 
   /**
    * @brief Get element as integer.
-   * @param [out] element integer value.   
+   * @param [out] element integer value.
    * @param element name.
    */
   void fetch(
@@ -392,7 +392,7 @@ protected:
 
   /**
    * @brief Get element as string.
-   * @param [out] element string value.   
+   * @param [out] element string value.
    * @param element name.
    */
   void fetch(
@@ -402,10 +402,10 @@ protected:
 
   /**
    * @brief Get element by container type.
-   * @param container iterator.   
+   * @param container iterator.
    * @param element name.
    */
-  template < 
+  template <
     template <class T, class A> class container,
     template <class T> class allocator,
     class Value>
@@ -442,7 +442,7 @@ protected:
   int timeout_;
 
 private:
-  
+
   XsdParams params_;
   std::ostringstream test_descr_;
   unsigned long descr_counter_;

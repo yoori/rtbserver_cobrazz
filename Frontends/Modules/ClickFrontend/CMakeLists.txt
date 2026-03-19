@@ -1,5 +1,5 @@
 add_library(ClickFrontend SHARED
-RequestInfoFiller.cpp 
+RequestInfoFiller.cpp
   ClickFrontend.cpp
 
 )
@@ -19,7 +19,7 @@ target_link_libraries(ClickFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

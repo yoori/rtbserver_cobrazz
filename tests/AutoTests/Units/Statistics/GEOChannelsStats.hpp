@@ -1,6 +1,6 @@
 #ifndef _AUTOTEST__GEOCHANNELSSTATS_
 #define _AUTOTEST__GEOCHANNELSSTATS_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace DB = AutoTest::DBC;
@@ -9,7 +9,7 @@ class GEOChannelsStats : public BaseUnit
 {
 public:
   typedef AutoTest::AdClient AdClient;
-  
+
 public:
   GEOChannelsStats(
     UnitStat& stat_var,

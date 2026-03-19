@@ -36,7 +36,7 @@ namespace RequestInfoSvcs
     unsigned long action_id;
     unsigned long time;
   };
-  
+
   struct DoneActionReaderLess
   {
     bool operator()(
@@ -77,7 +77,7 @@ namespace RequestInfoSvcs
     {
       return left < right.ccg_id();
     }
-    
+
     bool operator()(const ActionMarkerReader& left, const Key& right) const
     {
       return left.ccg_id() < right.ccg_id ||
@@ -105,7 +105,7 @@ namespace RequestInfoSvcs
       unsigned long time;
       unsigned long action_id;
     };
-    
+
     bool
     operator()(const CustomActionMarkerReader& left, const Key& right) const
     {
@@ -136,7 +136,7 @@ namespace RequestInfoSvcs
       const
     {
       return left < right.ccg_id();
-    }    
+    }
   };
 
   static bool
@@ -147,11 +147,11 @@ namespace RequestInfoSvcs
   {
     unsigned long timeout = action_ignore_time.tv_sec;
     bool ignore_action = false;
-        
+
     if(!done_actions.empty())
     {
       unsigned long action_id = adv_action_info.action_id;
-      
+
       UserActionProfileReader::custom_done_actions_Container::const_iterator
         act_it = std::lower_bound(
           done_actions.begin(),
@@ -199,7 +199,7 @@ namespace RequestInfoSvcs
 
     return ignore_action;
   }
-  
+
   static void
   insert_done_action_(
     UserActionProfileWriter::custom_done_actions_Container& done_actions,
@@ -209,7 +209,7 @@ namespace RequestInfoSvcs
 
     UserActionProfileWriter::custom_done_actions_Container::iterator
       ins_it = done_actions.begin();
-      
+
     for(; ins_it != done_actions.end(); ++ins_it)
     {
       if(action_id < ins_it->action_id() ||
@@ -293,7 +293,7 @@ namespace RequestInfoSvcs
     {
       act_markers = user_profile_reader->action_markers();
     }
-    
+
     update_action_marker(
       user_profile_writer.action_markers(),
       request_info.request_id.to_string().c_str(),
@@ -354,7 +354,7 @@ namespace RequestInfoSvcs
             (*wit).ccg_ids().begin(),
             (*wit).ccg_ids().end(),
             request_info.ccg_id);
-        
+
         if(found)
         {
           AdvCustomActionInfo new_custom_action;
@@ -500,11 +500,11 @@ namespace RequestInfoSvcs
     {
       owner_->process_click_(ri, processing_state);
     }
-    
+
   private:
     UserActionInfoContainer* owner_;
   };
-  
+
   UserActionInfoContainer::UserActionInfoContainer(
     Logging::Logger* logger,
     RequestContainerProcessor* request_container_processor,
@@ -716,7 +716,7 @@ namespace RequestInfoSvcs
     /*throw(AdvActionProcessor::Exception)*/
   {
     static const char* FUN = "UserActionInfoContainer::process_adv_action()";
-    
+
     if(logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
@@ -753,7 +753,7 @@ namespace RequestInfoSvcs
       try
       {
         request_container_processor_->process_action(
-          RequestContainerProcessor::AT_ACTION, 
+          RequestContainerProcessor::AT_ACTION,
           Generics::Time::get_time_of_day(),
           *req_it);
       }
@@ -765,7 +765,7 @@ namespace RequestInfoSvcs
         throw AdvActionProcessor::Exception(ostr);
       }
     }
-    
+
     if(logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;

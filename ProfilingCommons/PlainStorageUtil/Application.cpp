@@ -144,10 +144,10 @@ namespace
     PlainStorage::WriteFragmentLayer<PlainStorage::FileBlockIndex>
     WriteFragmentLayerT;
 
-  typedef ReferenceCounting::SmartPtr<WriteFragmentLayerT> 
+  typedef ReferenceCounting::SmartPtr<WriteFragmentLayerT>
     WriteFragmentLayer_var;
-  
-  typedef 
+
+  typedef
     PlainStorage::WriteRecordLayer<
       BlockExIndex<PlainStorage::FileBlockIndex>,
       ExIndexSerializer<
@@ -215,7 +215,7 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
     std::cout << "FileLayer::CreateTime = " <<
       std::string(static_cast<const char*>(ct.value()), ct.size()) << std::endl;
   }
-  
+
   {
     PlainStorage::ReadBlock_var property_block = file_layer->get_read_block(0);
     Generics::ArrayAutoPtr<char> buf(property_block->size());
@@ -236,7 +236,7 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
         *(reinterpret_cast<uint32_t*>(cursor) + 1);
     }
   }
-  
+
   PlainStorage::DefaultAllocatorLayer_var default_allocator(
     new PlainStorage::DefaultAllocatorLayer(file_layer));
 
@@ -245,7 +245,7 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
 
   WriteRecordLayer_var record_layer(
     new WriteRecordLayerT(fragment_layer, fragment_layer));
-  
+
   {
     /* read index */
     MemIndexMapT_var read_map(new MemIndexMapT(record_layer, record_layer));
@@ -253,7 +253,7 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
     /* get free indexes */
     std::set<PlainStorage::FileBlockIndex> free_indexes;
     std::string allocator_error;
-    
+
     try
     {
       default_allocator->free_indexes_(free_indexes);
@@ -262,9 +262,9 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
     {
       allocator_error = ex.what();
     }
-    
+
     std::cout << "number of keys: " << read_map->size() << std::endl;
-    
+
     std::list<BinKey> keys;
     read_map->copy_keys(keys);
 
@@ -291,7 +291,7 @@ print_block_links(std::ostream& /*out*/, const char* file, bool print_content)
         {
           std::cout << " ERROR this block marked as FREE" << std::endl;
         }
-      
+
         rb->print_(std::cout, "  ");
         */
 
@@ -490,10 +490,10 @@ reset_allocator(const char* target_file)
     ostr << max_block_index;
     const std::string& str = ostr.str();
     PropertyValue prop(str.c_str(), str.length() + 1);
- 
+
     target_file_layer->set_property(
       "DefaultAllocatorLayer.ControlBlockIndex",
-      prop);  
+      prop);
   }
 
   {
@@ -518,7 +518,7 @@ reset_allocator(const char* target_file)
   }
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   int result = 0;
 
@@ -609,7 +609,7 @@ int main(int argc, char* argv[])
         std::cout << "target file not defined. See usage: " << std::endl <<
           USAGE << std::endl;
       }
-      
+
       Generics::AppUtils::Args::CommandList::const_iterator cit =
         commands.begin();
       std::string source_base_path = *++cit;

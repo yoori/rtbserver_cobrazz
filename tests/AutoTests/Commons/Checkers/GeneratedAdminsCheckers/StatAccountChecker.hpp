@@ -8,40 +8,40 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = StatAccountAdmin::Expected>  
-  class StatAccountChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = StatAccountAdmin::Expected>
+  class StatAccountChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      StatAccountChecker_(      
-        BaseUnit* test,      
-        unsigned long id,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        id_(id),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      StatAccountChecker_(
+        BaseUnit* test,
+        unsigned long id,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        id_(id),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~StatAccountChecker_() noexcept {}      
+      virtual ~StatAccountChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      unsigned long id_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      unsigned long id_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef StatAccountChecker_<StatAccountAdmin::Expected> StatAccountChecker;  
-  typedef StatAccountChecker_<std::string> StatAccountCheckerSimple;  
+  typedef StatAccountChecker_<StatAccountAdmin::Expected> StatAccountChecker;
+  typedef StatAccountChecker_<std::string> StatAccountCheckerSimple;
 
 }
 

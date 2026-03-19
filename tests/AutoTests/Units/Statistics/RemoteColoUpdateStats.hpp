@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__REMOTECOLOUPDATESTATS_
 #define _AUTOTEST__REMOTECOLOUPDATESTATS_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class RemoteColoUpdateStats : public BaseUnit
 {

@@ -516,7 +516,7 @@ namespace {
       {0, "HT4Channel"},
       {"HT4BP", 0},
       false
-    }  
+    }
   };
 
   // History channels matching
@@ -663,7 +663,7 @@ namespace {
       {0, "History1Channel"},
       {"History1BP", 0},
       false
-    }    
+    }
   };
 
   // Double optimization
@@ -801,17 +801,17 @@ namespace {
       false
     },
   };
-  
+
 }
- 
-bool 
+
+bool
 HistorySessionTargettingTest::run_test()
 {
- 
+
   AutoTest::Time today_base(
     (base_time.get_gm_time().format("%d-%m-%Y") +
        ":" + "00-00-00").c_str());
-  
+
   AUTOTEST_CASE(
     check(
       SESSION_1,
@@ -895,7 +895,7 @@ HistorySessionTargettingTest::run_test()
       countof(CONTEXT_HT),
       base_time),
     "Context H+T channel");
-  
+
   AUTOTEST_CASE(
     check(
       HT_OPTIMIZE,
@@ -964,7 +964,7 @@ void HistorySessionTargettingTest::check(
 {
   // Create client
   AdClient client(AdClient::create_user(this));
-  
+
   for (size_t i = 0; i < requests_size; ++i)
   {
     NSLookupRequest request;

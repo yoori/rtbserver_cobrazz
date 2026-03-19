@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__PUBLISHERANDADVERTISERTRACKING_
 #define _AUTOTEST__PUBLISHERANDADVERTISERTRACKING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class PublisherAndAdvertiserTracking : public BaseUnit
 {
@@ -24,7 +24,7 @@ public:
     const char* cradvtrackpixel;
     const char* publ_tag_track_pixel;
   };
-  
+
 public:
   PublisherAndAdvertiserTracking(
     UnitStat& stat_var,
@@ -44,7 +44,7 @@ private:
   void set_request_param(
     NSLookupParam& request_param,
     const char* param_name);
-  
+
   void prepare_expected_body(
     std::ostringstream& body,
     const std::string& impression_url,

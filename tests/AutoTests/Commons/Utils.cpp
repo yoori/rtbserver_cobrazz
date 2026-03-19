@@ -36,7 +36,7 @@ namespace AutoTest
     return Generics::Time(String::SubString(gmt_str),
       "%d-%m-%Y:%H-%M-%S").tv_sec;
   }
-  
+
   Comparable::~Comparable() noexcept
   {
   }

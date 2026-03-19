@@ -1,5 +1,5 @@
 add_library(PlainCode SHARED
-  Element.cpp 
+  Element.cpp
   Declarator.cpp
 
 )

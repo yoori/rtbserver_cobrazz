@@ -46,8 +46,8 @@ namespace
       tgt[i].max = src[i].max;
     }
   }
-  
-  template<class IN, class OUT> 
+
+  template<class IN, class OUT>
   void
   copy_deleted_sequence(
     const IN& deleted_id_seq,
@@ -84,7 +84,7 @@ namespace
         expr.sub_channels[i]);
     }
   }
-  
+
   void copy_channel(
     AdServer::CampaignSvcs_v25::ExpressionChannelInfo& result_channel_info,
     const AdServer::CampaignSvcs_v26::ExpressionChannelInfo& channel_info)
@@ -157,7 +157,7 @@ namespace
     const AdServer::CampaignSvcs_v26::BehavParameterSeq& src)
   {
     result.length(src.length());
-    
+
     for(CORBA::ULong bp_el_i = 0; bp_el_i < src.length(); ++bp_el_i)
     {
       const AdServer::CampaignSvcs_v26::BehavParameter& bp_el = src[bp_el_i];
@@ -238,7 +238,7 @@ namespace CampaignSvcs
     convert_behav_params_(result_update_info, update_info, request_timestamp);
 
     convert_colocations_(result_update_info, update_info, request_timestamp);
-       
+
     convert_creative_templates_(result_update_info, update_info, request_timestamp);
 
     convert_currencies_(result_update_info, update_info, request_timestamp);
@@ -248,7 +248,7 @@ namespace CampaignSvcs
     convert_creative_categories_(result_update_info, update_info, request_timestamp);
 
     convert_adv_actions_(result_update_info, update_info, request_timestamp);
-      
+
     convert_keyword_ecpms_(result_update_info, update_info, request_timestamp);
 
     convert_category_channels_(result_update_info, update_info, request_timestamp);
@@ -379,7 +379,7 @@ namespace CampaignSvcs
     /*throw(AdServer::CampaignSvcs_v25::CampaignServer::ImplementationException)*/
   {
     static const char* FUN = "CampaignServerImpl_v25::get_ecpms()";
-      
+
     try
     {
       AdServer::CampaignSvcs_v26::EcpmSeq_var ecpms  =
@@ -615,7 +615,7 @@ namespace CampaignSvcs
 
         result_campaign_info.weekly_run_intervals.length(
           campaign_info.weekly_run_intervals.length());
-      
+
         for(CORBA::ULong wr_i = 0; wr_i < campaign_info.weekly_run_intervals.length();
             ++wr_i)
         {
@@ -819,7 +819,7 @@ namespace CampaignSvcs
       result_update_info.deleted_expression_channels,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_geo_channels_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -889,7 +889,7 @@ namespace CampaignSvcs
     }
     result_ecpms.length(res_i);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_ecpms_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -907,7 +907,7 @@ namespace CampaignSvcs
       result_update_info.deleted_ecpms,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_sites_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1031,7 +1031,7 @@ namespace CampaignSvcs
       result_update_info.deleted_tags,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_frequency_caps_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1090,7 +1090,7 @@ namespace CampaignSvcs
       result_update_info.deleted_simple_channels,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_behav_params_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1128,7 +1128,7 @@ namespace CampaignSvcs
         result_update_info.deleted_behav_params,
         request_timestamp);
     }
-      
+
     /* fill key behav params */
     result_update_info.key_behav_params.length(
       update_info.key_behav_params.length());
@@ -1168,7 +1168,7 @@ namespace CampaignSvcs
 
     result_update_info.deleted_key_behav_params.length(dbp_i);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_colocations_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1213,7 +1213,7 @@ namespace CampaignSvcs
       result_update_info.deleted_colocations,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_creative_templates_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1299,7 +1299,7 @@ namespace CampaignSvcs
 
     result_update_info.currencies.length(res_i);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_campaign_keywords_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1340,7 +1340,7 @@ namespace CampaignSvcs
       result_update_info.deleted_keywords,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_creative_categories_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1401,7 +1401,7 @@ namespace CampaignSvcs
         ++res_i;
       }
     }
-    
+
     result_update_info.adv_actions.length(res_i);
 
     copy_deleted_sequence(
@@ -1409,7 +1409,7 @@ namespace CampaignSvcs
       result_update_info.deleted_adv_actions,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_keyword_ecpms_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1437,7 +1437,7 @@ namespace CampaignSvcs
         ++res_i;
       }
     }
-    
+
     result_update_info.keyword_ecpms.length(res_i);
 
     copy_deleted_sequence(
@@ -1445,7 +1445,7 @@ namespace CampaignSvcs
       result_update_info.deleted_keyword_ecpms,
       request_timestamp);
   }
-  
+
   void
   CampaignServerImpl_v25::convert_category_channels_(
     AdServer::CampaignSvcs_v25::CampaignConfigUpdateInfo& result_update_info,
@@ -1458,7 +1458,7 @@ namespace CampaignSvcs
       update_info.category_channels.length());
 
     CORBA::ULong res_i = 0;
-      
+
     for(CORBA::ULong cat_i = 0;
         cat_i < update_info.category_channels.length(); ++cat_i)
     {
@@ -1496,7 +1496,7 @@ namespace CampaignSvcs
     }
 
     result_update_info.category_channels.length(res_i);
-      
+
     copy_deleted_sequence(
       update_info.deleted_category_channels,
       result_update_info.deleted_category_channels,

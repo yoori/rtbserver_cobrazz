@@ -83,7 +83,7 @@ namespace AdServer
         UpdatingState* updating_state)
         /*throw(Exception, eh::Exception)*/;
 
-      Generics::Time 
+      Generics::Time
       query_db_stamp_(
         Commons::Postgres::Connection* conn)
         /*throw(Exception)*/;
@@ -359,7 +359,7 @@ namespace AdServer
         const AccountMap::ActiveMap& account_map,
         const CreativeDef* creative,
         const CampaignDef* campaign) noexcept;
-       
+
     private:
       Logging::Logger_var logger_;
       unsigned long server_id_;

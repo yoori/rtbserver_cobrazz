@@ -41,7 +41,7 @@ namespace Declaration
     protected:
       virtual ~FieldReaderList() noexcept {}
     };
-    
+
     typedef ReferenceCounting::SmartPtr<FieldReaderList>
       FieldReaderList_var;
 

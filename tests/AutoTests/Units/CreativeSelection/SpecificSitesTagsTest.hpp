@@ -2,17 +2,17 @@
 #define _UNITTEST__SPECIFICSITESTAGSTEST_
 
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 class SpecificSitesTagsTest: public BaseUnit
 {
 public:
- 
+
   SpecificSitesTagsTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
-      XsdParams params_var): 
+      UnitStat& stat_var,
+      const char* task_name,
+      XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)  {};
- 
+
   virtual ~SpecificSitesTagsTest() noexcept
   {};
 
@@ -25,9 +25,9 @@ public:
   void case4();
 
 private:
- 
+
   virtual bool run_test();
- 
+
 };
 
 #endif

@@ -29,7 +29,7 @@ namespace ORM = ::AutoTest::ORM;
 
 //OptOutTest=======================================================================
 
-bool 
+bool
 OptOutLoggingTest::run_test()
 {
 
@@ -67,7 +67,7 @@ void OptOutLoggingTest::non_test_mode_()
     description,
     fetch_int("COLO"),
     EXPECTED);
-  
+
   {
     AdClient client(AdClient::create_nonoptin_user(this));
 
@@ -89,7 +89,7 @@ void OptOutLoggingTest::non_test_mode_()
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
-    
+
     const Request REQUESTS[] =
     {
       {time_, "out", SUCCESS_URL } // status 10
@@ -106,7 +106,7 @@ void OptOutLoggingTest::non_test_mode_()
     AdClient client(AdClient::create_nonoptin_user(this));
 
     client.set_probe_uid();
-    
+
     const Request REQUESTS[] =
     {
       {time_, "in", SUCCESS_URL } // status 11
@@ -118,7 +118,7 @@ void OptOutLoggingTest::non_test_mode_()
       fetch_int("COLO"),
       REQUESTS);
   }
- 
+
 }
 
 void OptOutLoggingTest::test_mode_()
@@ -164,7 +164,7 @@ void OptOutLoggingTest::test_mode_()
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
-    
+
     const Request REQUESTS[] =
     {
       {time_, "out", SUCCESS_URL } // status 10
@@ -211,7 +211,7 @@ void OptOutLoggingTest::account_timezone_()
   for (size_t i = 0; i < countof(ofsets); ++i)
   {
     AdClient client(AdClient::create_nonoptin_user(this));
-    
+
     const Request REQUESTS[] =
     {
       {time + ofsets[i], "in", SUCCESS_URL } // status 11
@@ -236,7 +236,7 @@ void OptOutLoggingTest::process_requests_(
   for (size_t i = 0; i < Count; ++i)
   {
     OptOutRequest request(false);
-    
+
     request.
       op(requests[i].operation).
       colo(colo).
@@ -249,7 +249,7 @@ void OptOutLoggingTest::process_requests_(
     {
       request.testrequest = true;
     }
-    
+
     client.process_request(request);
 
     FAIL_CONTEXT(
@@ -271,23 +271,23 @@ void OptOutLoggingTest::initialize_stats_(
   for (size_t i = 0; i < Count; ++i)
   {
     Stat stat;
-    
+
     stat.key().
       isp_sdate(expects[i].time).
       colo_id(colo).
       operation(std::string(1, expects[i].operation)).
-      status(expects[i].status). 
+      status(expects[i].status).
       test(test? "Y": "N");
 
     stat.description(
       description + " #" + strof(i+1));
 
     stat.select(conn_);
-    
+
     stats_.push_back(stat);
 
     diffs_.push_back(
       Diff().count(expects[i].count));
-  }  
+  }
 }
 

@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__PUBLISHERINVENTORYTEST_
 #define _AUTOTEST__PUBLISHERINVENTORYTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 namespace ORM = AutoTest::ORM;
 namespace DBC = AutoTest::DBC;
 
@@ -30,20 +30,20 @@ typedef ChannelInventoryStat::Diffs ChannelInventoryDiff;
 typedef std::list<ChannelInventoryDiff> ChannelInventoryDiffs;
 
 public:
- 
+
   PublisherInventoryTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     pgconn_(open_pq()),
     debug_time_((AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
         ":" + "00-01-00").c_str())
   { }
- 
+
   virtual ~PublisherInventoryTest() noexcept
   { }
- 
+
 private:
 
   DBC::Conn pgconn_;

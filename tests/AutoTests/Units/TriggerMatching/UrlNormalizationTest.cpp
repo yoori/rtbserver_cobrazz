@@ -1,6 +1,6 @@
 
 #include "UrlNormalizationTest.hpp"
- 
+
 REFLECT_UNIT(UrlNormalizationTest) (
   "TriggerMatching",
   AUTO_TEST_FAST | AUTO_TEST_SLOW
@@ -10,7 +10,7 @@ namespace {
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::ChannelsCheck ChannelsCheck;
-  
+
   struct TestCase
   {
     const char* referer;
@@ -18,7 +18,7 @@ namespace {
     const char* unexpected_channels;
   };
 
-  const TestCase TEST_CASES[] = 
+  const TestCase TEST_CASES[] =
   {
     { "REF1", "Channel1,Channel2,Channel3,Channel4", 0 },
     { "REF2", 0, "Channel1" },
@@ -31,7 +31,7 @@ namespace {
     { "REF9", "Channel1,Channel2,Channel3", 0 },
     { "REF10", "Channel1,Channel2,Channel3", 0 },
     { "REF11", "Channel1", 0 },
-    { "REF12", "Channel1", 0 },    
+    { "REF12", "Channel1", 0 },
     { "REF13", "Channel1", 0 },
     { "REF14", "Channel1", 0 },
     { "REF15", "Channel1", 0 },
@@ -114,12 +114,12 @@ void UrlNormalizationTest::pre_condition()
         : channels_diff[channel_id]);
   }
 }
- 
-bool 
+
+bool
 UrlNormalizationTest::run()
 {
   AdClient client(AdClient::create_user(this));
-  
+
   for (unsigned int i = 0;
        i < sizeof(TEST_CASES)/sizeof(*TEST_CASES);  ++i)
   {
@@ -151,7 +151,7 @@ UrlNormalizationTest::run()
 void UrlNormalizationTest::post_condition()
 {
   add_descr_phrase("Check ChannelTriggerStats table");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(

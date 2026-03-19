@@ -50,7 +50,7 @@ namespace AdServer
       //
       virtual void check(
       const ::AdServer::ChannelSvcs::ChannelUpdate_v28::CheckQuery& query,
-      ::AdServer::ChannelSvcs::ChannelUpdate_v28::CheckData_out data) 
+      ::AdServer::ChannelSvcs::ChannelUpdate_v28::CheckData_out data)
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
 
@@ -77,7 +77,7 @@ namespace AdServer
         /*throw(AdServer::ChannelSvcs::ImplementationException)*/;
 
       Logging::Logger* logger() const noexcept;
-      
+
     protected:
 
       ChannelProxyImpl_var impl_;

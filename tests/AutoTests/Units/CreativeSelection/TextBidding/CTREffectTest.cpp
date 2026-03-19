@@ -63,7 +63,7 @@ void CTREffectTest::process_requests(
               SelectedCreativesCCID(client)).check(),
             "expected ccids check#" + strof(i+1));
         }
-        
+
         if (!requests[i].click_revenue.empty())
         {
           std::list<precisely_number> exp_click_revenue;
@@ -93,13 +93,13 @@ void CTREffectTest::process_requests(
     catch (const eh::Exception&)
     {
       AutoTest::AdminsArray<AutoTest::TagAdmin> admins;
-      
+
       admins.initialize(
         this,
         CTE_ALL,
         STE_CAMPAIGN_MANAGER,
         fetch_int(prefix + requests[i].tag));
-      
+
       admins.log(AutoTest::Logger::thlog());
       throw;
     }
@@ -177,7 +177,7 @@ void CTREffectTest::invalid_ctr_()
     { "Site1/Tag5", &NSL::referer_kw,
       "CTChannel-CPC/CTKeywordCPC,KChannel1-1/KKeyword11", "", "" },
   };
-  
+
   process_requests(REQUESTS, "TagAdjustment/");
 }
 
@@ -245,7 +245,7 @@ void CTREffectTest::negative_ctr_()
       "DChannel-CPC/DKeywordCPC",
       "DisplayCPC/CCID", "" }
   };
-  
+
   process_requests(REQUESTS, "TagAdjustment/");
 }
 
@@ -289,11 +289,11 @@ void CTREffectTest::time_of_week_()
       "TOWCoefficient/KChannel2-2/Keyword22",
       "", ""},
   };
-  
+
   process_requests(REQUESTS);
 }
 
-bool 
+bool
 CTREffectTest::run_test()
 {
   AUTOTEST_CASE(

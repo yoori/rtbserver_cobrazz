@@ -156,7 +156,7 @@ namespace Frontends
         bidding_frontend_stats_impl =
         new AdServer::BiddingFrontendStatsImpl(
           stats_);
-    
+
       corba_server_adapter_->add_binding(
         FCGI_SERVER_STATS_OBJ_KEY, bidding_frontend_stats_impl.in());
     }

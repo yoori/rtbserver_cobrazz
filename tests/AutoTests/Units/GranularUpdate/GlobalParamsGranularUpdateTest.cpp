@@ -65,8 +65,8 @@ void GlobalParamsGranularUpdateTest::Exchange::add_currencies_()
       "FROM CURRENCYEXCHANGERATE)"));
   ORM::ORMValue <int> id(currency_exchange_.id());
   query  <<  id;
-  query.update();    
-  connection_.commit();    
+  query.update();
+  connection_.commit();
 }
 
 void GlobalParamsGranularUpdateTest::Exchange::delete_currencies_()
@@ -81,7 +81,7 @@ void GlobalParamsGranularUpdateTest::Exchange::delete_currencies_()
 
 // GlobalParamsGranularUpdateTest implementation
 
-void 
+void
 GlobalParamsGranularUpdateTest::set_up()
 {
   add_descr_phrase("SetUp");
@@ -101,7 +101,7 @@ GlobalParamsGranularUpdateTest::set_up()
     "Globals initial");
 }
 
-void 
+void
 GlobalParamsGranularUpdateTest::tear_down()
 {
   add_descr_phrase("Tear down");
@@ -136,7 +136,7 @@ void GlobalParamsGranularUpdateTest::check_currency_exchange_()
 
 }
 
-void GlobalParamsGranularUpdateTest::restore_default_values_() 
+void GlobalParamsGranularUpdateTest::restore_default_values_()
 {
   // Restore AdsConfig defaults
   try

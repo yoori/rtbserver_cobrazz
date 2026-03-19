@@ -400,7 +400,7 @@ public:
     no_impops_count_(FixedNum::ZERO, rhs.user_count, FixedNum::ZERO),
     meaningful_data_()
   {}
-	 
+	
   ChannelImpInventoryInnerData&
   operator+= (const OneImpopNoImpUserAppearCounter& rhs)
   {
@@ -457,7 +457,7 @@ public:
 
   explicit
   ChannelImpInventoryInnerData(const ImpOtherImpsAndRevenueCounter& rhs)
-    : 	 
+    : 	
     clicks_(),
     actions_(),
     revenue_(FixedNum::ZERO),

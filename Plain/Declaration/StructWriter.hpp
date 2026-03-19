@@ -26,7 +26,7 @@ namespace Declaration
         noexcept;
 
       const char* name() const noexcept;
-      
+
       StructDescriptor::Field_var descriptor_field() const noexcept;
 
       BaseWriter_var writer() const noexcept;
@@ -56,7 +56,7 @@ namespace Declaration
     protected:
       virtual ~FieldWriterList() noexcept {}
     };
-    
+
     typedef ReferenceCounting::SmartPtr<FieldWriterList>
       FieldWriterList_var;
 
@@ -79,7 +79,7 @@ namespace Declaration
 
   protected:
     virtual ~StructWriter() noexcept {}
-    
+
   private:
     BaseDescriptor_var descriptor_;
     FieldWriterList_var fields_;

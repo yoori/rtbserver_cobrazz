@@ -145,7 +145,7 @@ namespace AutoTest
      * @brief Destructor.
      */
     virtual ~SelectedCreativesChecker() noexcept;
-    
+
     /**
      * @brief Check.
      * @param throw on error flag.
@@ -153,7 +153,7 @@ namespace AutoTest
     bool
     check(bool throw_error = true)
       /*throw(eh::Exception)*/;
-    
+
   private:
     AdClient client_; // client
     NSLookupRequest request_; // test request
@@ -181,19 +181,19 @@ namespace AutoTest
       const char* exp_channels,
       const ChannelsList& got_channels,
       SequenceCheckerEnum check_type = SCE_ENTRY);
-    
+
     /**
      * @brief Destructor.
      */
     virtual ~ChannelsCheck() noexcept;
-    
+
     /**
      * @brief Check.
      * @param throw on error flag.
      */
     bool check(bool throw_error = true)
       /*throw(eh::Exception)*/;
-    
+
   private:
     BaseUnit* test_;                      // test
     std::string exp_channels_;            // expected channels names
@@ -303,7 +303,7 @@ namespace AutoTest
 
     static const size_t S_E_SIZE = 4;
     static const char* S_E_STR[S_E_SIZE];
-    
+
   public:
     enum SpecialEffects
     {
@@ -341,13 +341,13 @@ namespace AutoTest
     bool
     check(bool throw_error = true)
       /*throw(eh::Exception)*/;
-   
+
   private:
 
     std::string
     effects_to_str(
       unsigned long special_effects);
-    
+
     unsigned long special_effects_;
   };
 } //namespace AutoTest

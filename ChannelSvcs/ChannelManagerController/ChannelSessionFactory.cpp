@@ -656,7 +656,7 @@ namespace ChannelSvcs
     }
     return false;
   }
-  
+
   ChannelServerBase::CCGKeywordSeq*
   ChannelServerSessionImpl::get_ccg_traits(
     const ::AdServer::ChannelSvcs::ChannelIdSeq& ids)
@@ -855,7 +855,7 @@ namespace ChannelSvcs
   {
     create_index_();
   }
-  
+
   template<class INDEX, typename ELEM >
   size_t ChannelServerSessionImpl::ResultsAdapter<INDEX, ELEM>::size() const
     noexcept
@@ -962,7 +962,7 @@ namespace ChannelSvcs
         out->content_channels[out_index] = cont_adapter.elem();
         out_index++;
       }
-      cont_adapter.next(); 
+      cont_adapter.next();
     }
     out->content_channels.length(out_index);
   }
@@ -976,7 +976,7 @@ namespace ChannelSvcs
       Stream::Error ostr;
       ostr << "ChannelServerSessionImpl::report_error: : "
            << description;
-      
+
       callback_->report_error(severity, ostr.str(), error_code);
     }
   }
@@ -1007,7 +1007,7 @@ void ChannelServerSessionFactoryImpl::report_error(
     Stream::Error ostr;
     ostr << "ChannelServerSessionFactoryImpl::report_error: : "
          << description;
-    
+
     callback_->report_error(severity, ostr.str(), error_code);
   }
 }

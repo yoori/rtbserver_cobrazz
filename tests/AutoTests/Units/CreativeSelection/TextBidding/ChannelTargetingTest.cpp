@@ -12,15 +12,15 @@ namespace
   typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
   typedef AutoTest::SelectedCreativesActualCPC SelectedCreativesActualCPC;
 }
- 
-bool 
+
+bool
 ChannelTargetingTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(part1());
   NOSTOP_FAIL_CONTEXT(part2());
   return true;
 }
- 
+
 void
 ChannelTargetingTest::part1()
 {
@@ -62,7 +62,7 @@ ChannelTargetingTest::part2()
   request.referer_kw = keyword;
   client.process_request(request);
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccid,

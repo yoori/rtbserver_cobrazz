@@ -185,7 +185,7 @@ namespace AutoTest
        * @brief Default constructor.
        */
       Expected();
-      
+
       /**
        * @brief Set expected Bid.id.
        *
@@ -241,7 +241,7 @@ namespace AutoTest
       Expected&
       adm(const std::string& val);
 
-      
+
       /**
        * @brief Set expected Bid.nurl.
        *
@@ -314,7 +314,7 @@ namespace AutoTest
        */
       Expected&
       cat_exist(bool value);
-      
+
       /**
        * @brief Set expected bid.cat existance
        *
@@ -330,7 +330,7 @@ namespace AutoTest
        */
       Expected&
       attr_exist(bool value);
-      
+
       /**
        * @brief Set expected bid.attr existance
        *
@@ -346,7 +346,7 @@ namespace AutoTest
        */
       Expected&
       ad_ox_cats_exist(bool value);
-      
+
       /**
        * @brief Set expected bid.ad_ox_cats existance
        *
@@ -354,11 +354,11 @@ namespace AutoTest
        */
       Expected&
       ad_ox_cats_checked();
-      
+
     private:
 
       friend class OpenRTBResponseChecker;
-      
+
       ExpValue<std::string> id_;
       ExpValue<std::string> impid_;
       ExpValue<Money> price_;

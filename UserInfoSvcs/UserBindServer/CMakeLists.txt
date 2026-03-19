@@ -8,11 +8,11 @@ target_link_libraries(UserBindServerIDL
 )
 
 add_library(UserBindContainer STATIC
-  ExternalIdHashAdapter.cpp 
-  ChunkUtils.cpp 
-  UserBindContainer.cpp 
-  UserBindChunk.cpp 
-  BindRequestContainer.cpp 
+  ExternalIdHashAdapter.cpp
+  ChunkUtils.cpp
+  UserBindContainer.cpp
+  UserBindChunk.cpp
+  BindRequestContainer.cpp
   BindRequestChunk.cpp
 )
 

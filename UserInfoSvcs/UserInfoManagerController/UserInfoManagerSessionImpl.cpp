@@ -455,7 +455,7 @@ namespace UserInfoSvcs
         }
         else
         {
-          std::min(timestamp, CorbaAlgs::unpack_time(*master_stamp)); 
+          std::min(timestamp, CorbaAlgs::unpack_time(*master_stamp));
         }
       }
       master_stamp = new CORBACommons::TimestampInfo(
@@ -727,7 +727,7 @@ namespace UserInfoSvcs
           ostr.str());
     }
   }
-  
+
   void UserInfoManagerSessionImpl::clear_expired(
     CORBA::Boolean synch,
     const CORBACommons::TimestampInfo& cleanup_time,

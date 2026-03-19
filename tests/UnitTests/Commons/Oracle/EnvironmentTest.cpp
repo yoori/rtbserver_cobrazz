@@ -128,7 +128,7 @@ TestJob<ConnectionCreatorType>::execute() noexcept
     if (barrier_->wait())
     {
       conn1.reset();
-      
+
       controller_->wait_object();
     }
     else
@@ -327,7 +327,7 @@ main(int argc, const char *argv[])
     args.add(
       Generics::AppUtils::equal_name("pwd") ||
       Generics::AppUtils::equal_name("password"),
-      opt_ora_pwd); 
+      opt_ora_pwd);
     args.add(
       Generics::AppUtils::equal_name("threads"),
       opt_threads);

@@ -518,7 +518,7 @@ Application_::generate_svm_(
     load_dictionary_(ccid_to_campaign, cc_to_campaign_dictionary_file_path);
   }
 
-  // load tag dictionary 
+  // load tag dictionary
   std::map<std::string, std::string> tag_to_publisher;
   if(tag_to_publisher_dictionary_file_path[0])
   {
@@ -830,7 +830,7 @@ Application_::generate_xgb_ctr_(
     load_dictionary_(ccid_to_campaign, cc_to_campaign_dictionary_file_path);
   }
 
-  // load tag dictionary 
+  // load tag dictionary
   std::map<std::string, std::string> tag_to_publisher;
   if(tag_to_publisher_dictionary_file_path[0])
   {
@@ -1096,7 +1096,7 @@ Application_::generate_ctr_(
     load_dictionary_(ccid_to_campaign, cc_to_campaign_dictionary_file_path);
   }
 
-  // load tag dictionary 
+  // load tag dictionary
   std::map<std::string, std::string> tag_to_publisher;
   if(tag_to_publisher_dictionary_file_path[0])
   {

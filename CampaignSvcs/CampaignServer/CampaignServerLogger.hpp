@@ -31,7 +31,7 @@ namespace AdServer
         Generics::Time time;
         std::string version;
       };
-      
+
     public:
       CampaignServerLogger(const LogFlushTraits& colo_update_log_params)
         /*throw(Exception)*/;

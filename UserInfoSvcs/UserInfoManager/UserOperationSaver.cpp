@@ -317,7 +317,7 @@ namespace UserInfoSvcs
       new_queue->chunk_id = chunk_i;
       *it = new_queue;
     }
-    
+
     Generics::ActiveObject_var dump_thread = new Dumper(
       callback,
       logger,
@@ -391,7 +391,7 @@ namespace UserInfoSvcs
         channel_match_info.repeat_trigger_timeout.tv_sec;
       match_operation_writer.filter_contextual_triggers() =
         channel_match_info.filter_contextual_triggers ? 1 : 0;
-      
+
       ChannelTriggerMatchWriter cm_writer;
 
       for (ChannelMatchVector::const_iterator it =  matched_channels.page_channels.begin();
@@ -401,7 +401,7 @@ namespace UserInfoSvcs
         cm_writer.channel_trigger_id() = it->channel_trigger_id;
         match_operation_writer.page_channels().push_back(cm_writer);
       }
-      
+
       for (ChannelMatchVector::const_iterator it =  matched_channels.search_channels.begin();
            it != matched_channels.search_channels.end(); ++it)
       {
@@ -409,7 +409,7 @@ namespace UserInfoSvcs
         cm_writer.channel_trigger_id() = it->channel_trigger_id;
         match_operation_writer.search_channels().push_back(cm_writer);
       }
-      
+
       for (ChannelMatchVector::const_iterator it =  matched_channels.url_channels.begin();
            it != matched_channels.url_channels.end(); ++it)
       {
@@ -438,7 +438,7 @@ namespace UserInfoSvcs
         cdw.latitude().alloc(
           AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
         channel_match_info.coord_data.latitude.pack(cdw.latitude().data());
-       
+
         cdw.longitude().alloc(
           AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
         channel_match_info.coord_data.longitude.pack(cdw.longitude().data());
@@ -491,7 +491,7 @@ namespace UserInfoSvcs
       merge_operation_writer.change_last_request() = request_params.change_last_request;
       merge_operation_writer.household() = request_params.household ? 1 : 0;
       merge_operation_writer.request_colo_id() = request_params.request_colo_id;
-      
+
       merge_operation_writer.merge_base_profile().alloc(merge_base_profile.size());
       ::memcpy(
         merge_operation_writer.merge_base_profile().data(),
@@ -545,7 +545,7 @@ namespace UserInfoSvcs
       merge_operation_writer.time() = 0;
       merge_operation_writer.exchange_merge() = 1;
       merge_operation_writer.change_last_request() = 1;
-      
+
       merge_operation_writer.merge_base_profile().alloc(merge_base_profile.size());
       ::memcpy(
         merge_operation_writer.merge_base_profile().data(),

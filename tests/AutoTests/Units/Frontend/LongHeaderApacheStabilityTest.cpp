@@ -245,7 +245,7 @@ LongHeaderApacheStabilityTest::run_test()
       add_descr_phrase("send many headers with the same name");
 
       AdClient client(AdClient::create_user(this));
-      
+
       SameNameHeader header(VALUE_SIZE);
       for(int i = 1; i <= HEADER_COUNT; ++i)
       {

@@ -26,7 +26,7 @@ namespace AdServer
     {
       deactivate_object();
       wait_object();
-      
+
       CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
     }
 
@@ -43,27 +43,27 @@ namespace AdServer
       /*throw(Exception, eh::Exception)*/
     {
       static const char* FUN = "CTRPredictorSVMGenerator::read_config()";
-      
+
       try
       {
         Config::ErrorHandler error_handler;
-        
+
         try
         {
           using namespace xsd::AdServer::Configuration;
-          
+
           std::unique_ptr<SVMGeneratorConfigurationType>
             configuration = SVMGeneratorConfiguration(filename, error_handler);
-          
+
           if (error_handler.has_errors())
           {
             std::string error_string;
             throw Exception(error_handler.text(error_string));
           }
-          
+
           config_.reset(
             new SVMGeneratorConfig(*configuration));
-          
+
           if (error_handler.has_errors())
           {
             std::string error_string;
@@ -73,7 +73,7 @@ namespace AdServer
           // Parse model config
 
           FeatureContainer::instance().init(config_->Model().Feature());
-          
+
         }
         catch (const xml_schema::parsing &ex)
         {
@@ -86,7 +86,7 @@ namespace AdServer
           }
           throw Exception(ostr);
         }
-        
+
         try
         {
           Config::CorbaConfigReader::read_config(
@@ -99,12 +99,12 @@ namespace AdServer
           ostr << FUN << ": Can't read Corba Config: " << ex.what();
           throw Exception(ostr);
         }
-        
+
         try
         {
           logger(Config::LoggerConfigReader::create(
                    config_->Logger(), argv0));
-          
+
         }
         catch (const Config::LoggerConfigReader::Exception &ex)
         {
@@ -121,7 +121,7 @@ namespace AdServer
         throw Exception(ostr);
       }
     }
-    
+
     void
     CTRPredictorSVMGenerator::init_corba_() /*throw(Exception)*/
     {
@@ -145,7 +145,7 @@ namespace AdServer
     CTRPredictorSVMGenerator::main(int& argc, char** argv) noexcept
     {
       static const char* FUN = "CTRPredictorSVMGenerator::main()";
-      
+
       try
       {
         XMLUtility::initialize();
@@ -158,7 +158,7 @@ namespace AdServer
           "ADS-IMPL-205") << FUN << ": Got eh::Exception: " << ex.what();
         return;
       }
-      
+
       try
       {
         if (argc < 2)
@@ -168,7 +168,7 @@ namespace AdServer
             "usage: CTRPredictorSVMGenerator <config_file>";
           throw Exception(ostr);
         }
-        
+
         try
         {
           read_config_(argv[1], argv[0]);
@@ -186,7 +186,7 @@ namespace AdServer
           ostr << "Unknown Exception at parsing of config.";
           throw Exception(ostr);
         }
-        
+
         register_vars_controller();
         init_corba_();
         activate_object();
@@ -200,7 +200,7 @@ namespace AdServer
               config_->output_path().c_str(),
               config_->log_days_to_keep(),
               config_->Model().features_dimension())));
-        
+
         logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
         corba_server_adapter_->run();
         wait();

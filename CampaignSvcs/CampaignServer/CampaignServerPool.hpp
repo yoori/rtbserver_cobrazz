@@ -51,7 +51,7 @@ namespace CampaignSvcs
     const CORBACommons::CorbaClientAdapter* corba_client_adapter,
     CORBACommons::ChoosePolicyType::POLICY_TYPE policy,
     const Generics::Time& bad_period)
-    /*throw(Exception)*/ 
+    /*throw(Exception)*/
   try
     : CORBACommons::ObjectPool<
         AdServer::CampaignSvcs::CampaignServer,

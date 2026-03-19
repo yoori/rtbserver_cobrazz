@@ -722,7 +722,7 @@ RTBWinPriceNotificationTest::allyes_final_()
     { "Allyes/Account", 0, "Allyes/CCIDs/469x61",
       0, 1, 0, display_adv_price, .095, isp_amount(display_adv_price, .095, adv_rate, revenue_share) },
 
-    { "Allyes/Account", 0, "Allyes/CCIDs/470x62", 
+    { "Allyes/Account", 0, "Allyes/CCIDs/470x62",
       0, 1, 1, display_adv_price, .095, isp_amount(display_adv_price, .095, adv_rate, revenue_share) },
 
     { "Allyes/Account", 0, "Global/CCIDs/ChannelText#1",

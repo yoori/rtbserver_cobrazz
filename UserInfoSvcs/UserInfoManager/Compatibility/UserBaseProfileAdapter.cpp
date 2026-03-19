@@ -272,7 +272,7 @@ namespace AdServer
         if (current_version == 6)
         {
           current_version = 7;
-          
+
           UserInfoSvcs_v290::ChannelsProfileWriter writer;
           writer.version() = CURRENT_BASE_PROFILE_VERSION;
 
@@ -310,7 +310,7 @@ namespace AdServer
         if (current_version == 7)
         {
           current_version = 300;
-          
+
           UserInfoSvcs_v300::ChannelsProfileWriter writer;
 
           AdServer::UserInfoSvcs_v290::ChannelsProfileReader profile_reader(
@@ -349,9 +349,9 @@ namespace AdServer
         if (current_version == 300)
         {
           UserInfoSvcs_v301::ChannelsProfileWriter writer;
-          
+
           current_version = 301;
-          
+
           AdServer::UserInfoSvcs_v300::ChannelsProfileReader profile_reader(
             membuf.data(), membuf.size());
           writer.last_request_time() = profile_reader.last_request_time();
@@ -362,7 +362,7 @@ namespace AdServer
           writer.household() = profile_reader.household();
           writer.first_colo_id() = profile_reader.first_colo_id();
           writer.last_colo_id() = profile_reader.last_colo_id();
-          
+
           copy_section(
             writer.search_channels(),
             profile_reader.search_channels());
@@ -388,9 +388,9 @@ namespace AdServer
         if (current_version == 301)
         {
           UserInfoSvcs_v320::ChannelsProfileWriter writer;
-          
+
           current_version = 320;
-          
+
           AdServer::UserInfoSvcs_v301::ChannelsProfileReader profile_reader(
             membuf.data(), membuf.size());
           writer.last_request_time() = profile_reader.last_request_time();
@@ -402,7 +402,7 @@ namespace AdServer
           writer.first_colo_id() = profile_reader.first_colo_id();
           writer.last_colo_id() = profile_reader.last_colo_id();
           writer.cohort() = profile_reader.cohort();
-          
+
           copy_section(
             writer.search_channels(),
             profile_reader.search_channels());
@@ -428,7 +428,7 @@ namespace AdServer
         if (current_version == 320)
         {
           ChannelsProfileWriter writer;
-          
+
           current_version = CURRENT_BASE_PROFILE_VERSION;
           writer.version() = CURRENT_BASE_PROFILE_VERSION;
 
@@ -443,7 +443,7 @@ namespace AdServer
           writer.first_colo_id() = profile_reader.first_colo_id();
           writer.last_colo_id() = profile_reader.last_colo_id();
           writer.cohort() = profile_reader.cohort();
-          
+
           copy_section(
             writer.search_channels(),
             profile_reader.search_channels());
@@ -489,14 +489,14 @@ namespace AdServer
           writer.save(mb.data(), mb.size());
           membuf.assign(mb.data(), mb.size());
         }
-        
+
         if(current_version != CURRENT_BASE_PROFILE_VERSION)
         {
           Stream::Error ostr;
           ostr << FUN << ": incorrect version after adaptation = " << current_version <<
             "\n Profile size = " << membuf.size() <<
             ", the contents of the profile (36 bytes) : ";
-          
+
           unsigned long len = std::min((size_t)36, membuf.size()) >> 2;
           uint32_t* ptr = static_cast<uint32_t*>(membuf.data());
           for (unsigned long i = 0; i < len; ++i)
@@ -505,11 +505,11 @@ namespace AdServer
             {
               ostr << ", ";
             }
-            
+
             ostr << "0x" << std::hex << std::setfill('0') << std::setw(8)
                  << *(ptr + i);
           }
-          
+
           throw Exception(ostr);
         }
 

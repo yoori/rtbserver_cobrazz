@@ -14,35 +14,35 @@ namespace Config
   public:
     ErrorHandler() /*throw(eh::Exception)*/;
     ~ErrorHandler() noexcept;
-    
+
     virtual bool handle (
       std::string const& id,
       unsigned long line,
       unsigned long column,
       severity s,
       std::string const& message);
-    
+
     bool has_errors() const noexcept;
 
     const char* text(std::string& txt) const /*throw(eh::Exception)*/;
-    
+
   private:
     std::ostringstream errors_;
     bool               has_errors_;
   };
-  
+
   inline
   ErrorHandler::ErrorHandler() /*throw(eh::Exception)*/
     : has_errors_(false)
   {
   }
-  
+
   inline
   ErrorHandler::~ErrorHandler() noexcept
   {
   }
 
-  inline  
+  inline
   bool
   ErrorHandler::handle(
     std::string const& id,
@@ -62,8 +62,8 @@ namespace Config
         << std::endl
         << ": \"" << message << "\"" << std::endl << std::endl;
     }
-    
-    return true;          
+
+    return true;
   }
 
   inline
@@ -72,31 +72,31 @@ namespace Config
   {
     return has_errors_;
   }
-  
+
   inline
   const char*
   ErrorHandler::text(std::string& txt) const /*throw(eh::Exception)*/
   {
     if (has_errors_)
-    {        
+    {
       txt = errors_.str();
     }
-      
-    return txt.c_str();      
+
+    return txt.c_str();
   }
 
   DECLARE_EXCEPTION(LoadError, eh::DescriptiveException);
-  
+
   template<typename Ret>
   inline
-  Ret 
+  Ret
   load_helper (Ret (*loader) (const ::std::string&,
 			      ::xsd::cxx::xml::error_handler<char>&,
 			      ::xsd::cxx::tree::flags,
-			      const ::xsd::cxx::tree::properties< char >&), 
-	       const char* file_name, 
+			      const ::xsd::cxx::tree::properties< char >&),
+	       const char* file_name,
 	       ::xsd::cxx::tree::flags flags = 0,
-	       const ::xsd::cxx::tree::properties< char >& properties 
+	       const ::xsd::cxx::tree::properties< char >& properties
 	       = ::xsd::cxx::tree::properties< char > ())
   {
     ErrorHandler error_handler;

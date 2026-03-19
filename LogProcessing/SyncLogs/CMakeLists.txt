@@ -1,11 +1,11 @@
 add_library(SyncLogsLib STATIC
-  Utils.cpp 
-  FileRouter.cpp 
-  RSyncFileRouter.cpp 
-  RouteHelpers.cpp 
-  FeedRouteMover.cpp 
-  FeedRouteProcessor.cpp 
-  FeedRouteGroupProcessor.cpp 
+  Utils.cpp
+  FileRouter.cpp
+  RSyncFileRouter.cpp
+  RouteHelpers.cpp
+  FeedRouteMover.cpp
+  FeedRouteProcessor.cpp
+  FeedRouteGroupProcessor.cpp
   FetchRouteProcessor.cpp
 )
 

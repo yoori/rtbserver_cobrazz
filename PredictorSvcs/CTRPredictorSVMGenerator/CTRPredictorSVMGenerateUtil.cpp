@@ -9,8 +9,8 @@
 #include <String/StringManip.hpp>
 #include <Generics/AppUtils.hpp>
 
-#include "Utils.hpp"                                                                                                                     
-#include "OutputLibSvmStream.hpp"                                                                                                        
+#include "Utils.hpp"
+#include "OutputLibSvmStream.hpp"
 #include "InputCsvStream.hpp"
 
 namespace

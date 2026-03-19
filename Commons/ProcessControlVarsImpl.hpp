@@ -115,7 +115,7 @@ struct SimpleDbStateChanger:
   {
     return object_->get_db_state();
   }
-  
+
 protected:
   virtual
   ~SimpleDbStateChanger() noexcept
@@ -168,7 +168,7 @@ struct DbStateProcessor:
         }
         catch(const DbStateChanger::NotSupported&)
         {//no db connection in this instance
-        } 
+        }
       }
       else
       {

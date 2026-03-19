@@ -17,7 +17,7 @@ namespace AutoTest
 
     static const String::RegEx EMPTY_PUB_PRECLICK;
     static const String::RegEx EMPTY_CRCLICK;
-    
+
     /**
      * @brief Constructor.
      *

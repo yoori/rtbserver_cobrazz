@@ -26,7 +26,7 @@ namespace AdServer
         const Generics::Time& update_period)
         noexcept;
 
-      virtual 
+      virtual
       ~UserInfoManagerStatsImpl() noexcept;
 
       virtual CORBACommons::StatsValueSeq*

@@ -66,7 +66,7 @@ TestFactory::instance() noexcept
 }
 
 void
-TestFactory::register_test(const TestCase& test_case) 
+TestFactory::register_test(const TestCase& test_case)
   /*throw(std::exception)*/
 {
   registered_tests_.insert(test_case);
@@ -91,7 +91,7 @@ TestFactory::run(const std::string& test_name) /*throw(std::exception)*/
       return run_tests_(tests);
     }
   }
-  
+
   std::cout << "Test '" << test_name << "' not found" << std::endl;
   return 1;
 }
@@ -107,7 +107,7 @@ TestFactory::run_tests_(const Tests& tests) /*throw(std::exception)*/
   {
     std::ostringstream oss;
     oss << ci->name << ": ";
-    
+
     const bool result = run_test_(*ci, msg);
     oss << msg;
 
@@ -121,7 +121,7 @@ TestFactory::run_tests_(const Tests& tests) /*throw(std::exception)*/
       std::cerr << oss.str() << std::endl;
     }
   }
-  
+
   if (successed == tests.size())
   {
     std::cout << "OK (" << successed << ")" << std::endl;
@@ -188,11 +188,11 @@ TestFactory::run_test_(const TestCase& test_case, std::string& msg)
 
 std::string
 pretty_file_name(std::string file_name)
-  
+
 /*throw(std::exception)*/{
   const std::string usless_prefix = "UnitTests/";
   const size_t pos = file_name.find(usless_prefix);
-  
+
   if (pos != std::string::npos)
   {
     file_name = file_name.substr(pos + usless_prefix.length());
@@ -236,7 +236,7 @@ usage()
   std::cout << "Usage:\n\tTestApp [test_case]" << std::endl;
   const TestFactory::Tests& tests = TestFactory::instance().available_tests();
   std::cout << "Available test cases:" << std::endl;
-  
+
   for (TestFactory::Tests::const_iterator i = tests.begin();
        i != tests.end(); ++i)
   {
@@ -261,7 +261,7 @@ main_(int argc, const char* const argv[])
       return TestFactory::instance().run(opt);
     }
   }
-  
+
   return TestFactory::instance().run_all();
 }
 
@@ -293,7 +293,7 @@ compare(const double& arg1, const double& arg2)
 
 #define ASSERT_TRUE(cond) if ( !(cond) ) { std::ostringstream oss; oss << "FAILED: " << PRETTY_FILE_NAME \
   << ", line " << __LINE__ << ": actual value of '" << #cond << "' is false"; throw TestFailed(oss.str()); } \
-  
+
 #define ASSERT_FALSE(cond) if ( cond ) { std::ostringstream oss; oss << "FAILED: " << PRETTY_FILE_NAME \
   << ", line " << __LINE__ << ": actual value of '" << #cond << "' is true"; throw TestFailed(oss.str()); } \
 

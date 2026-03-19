@@ -179,9 +179,9 @@ namespace UserInfoSvcs
   {
     static const char* FUN = "OperationRecordFetcher::file_move_back_to_input_dir_()";
 
-    const std::string new_file_name = 
+    const std::string new_file_name =
       AdServer::LogProcessing::restore_log_file_name(info, DIR_);
-    
+
     std::string file_name;
     AdServer::PathManip::split_path(new_file_name.c_str(), 0, &file_name);
     std::string reprocess_path = unprocessed_dir_;
@@ -233,7 +233,7 @@ namespace UserInfoSvcs
         chunk_ids,
         interrupter)
   {}
-  
+
   /** ExternalUserOperationLoader */
   ExternalUserOperationLoader::ExternalUserOperationLoader(
     Generics::ActiveObjectCallback* callback,
@@ -277,7 +277,7 @@ namespace UserInfoSvcs
 
   ExternalUserOperationLoader::~ExternalUserOperationLoader() noexcept
   {}
-  
+
   /** InternalUserOperationLoader */
   InternalUserOperationLoader::InternalUserOperationLoader(
     Generics::ActiveObjectCallback* callback,
@@ -396,7 +396,7 @@ namespace UserInfoSvcs
       uuid,
       audience_channels);
   }
-  
+
   void
   InternalOperationRecordFetcher::read_operation_(
     Generics::SmartMemBuf* smart_mem_buf)
@@ -481,7 +481,7 @@ namespace UserInfoSvcs
 
       coord_data_ptr = &coord_data;
     }
-    
+
     UserOperationProcessor::RequestMatchParams channel_match_params(
       AdServer::Commons::UserId(reader.user_id()),
       Generics::Time(reader.time()),
@@ -499,7 +499,7 @@ namespace UserInfoSvcs
       false,
       reader.change_last_request(),
       reader.household() == 1,
-      coord_data_ptr); 
+      coord_data_ptr);
 
     channel_match_params.no_result = true;
 
@@ -577,7 +577,7 @@ namespace UserInfoSvcs
     UserMergeOperationReader reader(
       smb.in()->membuf().data(),
       smb.in()->membuf().size());
-    
+
     Generics::MemBuf merge_base_profile;
     merge_base_profile.assign(
       reader.merge_base_profile().get(),
@@ -609,7 +609,7 @@ namespace UserInfoSvcs
         false,
         false,
         reader.change_last_request(),
-        reader.household() == 1); 
+        reader.household() == 1);
 
       Generics::MemBuf merge_add_profile;
       merge_add_profile.assign(
@@ -710,9 +710,9 @@ namespace UserInfoSvcs
   {
     UserFreqCapConfirmOperationProfilesAdapter ufc_confirm_profile_adapter;
     Generics::SmartMemBuf_var smb = ufc_confirm_profile_adapter(smart_mem_buf);
-    
+
     std::set<unsigned long> publishers;
-    
+
     UserFreqCapConfirmOperationReader reader(
       smb.in()->membuf().data(),
       smb.in()->membuf().size());
@@ -721,7 +721,7 @@ namespace UserInfoSvcs
       reader.publisher_accounts().begin(),
       reader.publisher_accounts().end(),
       std::inserter(publishers, publishers.begin()));
-    
+
     user_operation_processor_->confirm_freq_caps(
       AdServer::Commons::UserId(reader.user_id()),
       Generics::Time(reader.time()),

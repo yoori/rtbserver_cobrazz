@@ -15,7 +15,7 @@ namespace Bidding
 {
   typedef std::list<std::string> StringList;
   typedef std::set<unsigned long> ULongSet;
-  
+
   struct JsonAdSlotProcessingContext
   {
     typedef std::set<std::string> StringSet;
@@ -88,7 +88,7 @@ namespace Bidding
         cpm_price(AdServer::CampaignSvcs::RevenueDecimal::ZERO),
         currency_code("USD")
       {}
-      
+
       std::string id;
       AdServer::CampaignSvcs::RevenueDecimal cpm_price;
       std::string currency_code;
@@ -112,13 +112,13 @@ namespace Bidding
           : id(0),
             required(false)
         {}
-        
+
         virtual ~Asset() noexcept = default;
-        
+
         long id;
         bool required;
       };
-      
+
       enum DataTypeEnum
       {
         NDTE_TITLE = 0,
@@ -135,7 +135,7 @@ namespace Bidding
         NDTE_DISPLAY_URL = 11,
         NDTE_CTA_TEXT = 12
       };
-      
+
       struct Data: Asset
       {
         Data()
@@ -143,22 +143,22 @@ namespace Bidding
             data_type(NDTE_TITLE),
             len(0)
         {}
-        
+
         long data_type;
         long len;
-        
+
         virtual ~Data() noexcept = default;
       };
 
       typedef std::vector<Data> DataList;
-      
+
       enum ImageTypeEnum
       {
         NITE_ICON = 1,
         NITE_LOGO = 2,
         NITE_MAIN = 3
       };
-      
+
       struct Image : Asset
       {
         Image() :
@@ -174,9 +174,9 @@ namespace Bidding
         {
           return image_type == NITE_MAIN;
         }
-        
+
         virtual ~Image() noexcept = default;
-        
+
         long image_type;
 
         long height;
@@ -195,17 +195,17 @@ namespace Bidding
         Video()
           : Asset()
         {}
-        
+
         ULValueStateHolder min_duration;
         ULValueStateHolder max_duration;
         ULSetStateHolder protocols;
         StringSet mimes;
-        
+
         virtual ~Video() noexcept = default;
       };
 
       typedef std::vector<Video> VideoList;
-      
+
       Native()
         : version("1.1")
       {}
@@ -229,7 +229,7 @@ namespace Bidding
         video(false),
         predicted_view_rate(-1)
     {}
-        
+
     std::string id;
     AdServer::CampaignSvcs::RevenueDecimal min_cpm_price;
     Commons::Optional<long> private_auction;
@@ -278,7 +278,7 @@ namespace Bidding
     ULongSet allowed_media_subtypes;
     double predicted_view_rate;
 
-    // CompositeProcessor->add_processor require ContextType 
+    // CompositeProcessor->add_processor require ContextType
     //   in added object as in parent object.
     //   So inventory_audits_content_categories required in both
     //   JsonProcessingContext and JsonAdSlotProcessingContext
@@ -432,7 +432,7 @@ namespace Bidding
     // Appnexus specific
     Commons::Optional<long> selling_member_id;
     bool no_flash;
-    ULongSet inventory_audits_content_categories; 
+    ULongSet inventory_audits_content_categories;
 
     // ext
     std::string puid1;
@@ -526,7 +526,7 @@ namespace Bidding
         // Print deals
 
         out << " deals = [";
-        
+
         for(JsonAdSlotProcessingContext::DealList::const_iterator deal_it =
               slot_it->deals.begin();
             deal_it != slot_it->deals.end(); ++deal_it)
@@ -591,7 +591,7 @@ namespace Bidding
         }
       }
     }
-      
+
     virtual void
     process(
       AdServer::CampaignSvcs::CampaignManager::
@@ -618,10 +618,10 @@ namespace Bidding
         Generics::ArrayAutoPtr<char> value_holder(value_str.size() + 1);
         char* parse_end;
         strcpy(value_holder.get(), value_str.c_str());
-        
+
         JsonParseStatus status = json_parse(
           value_holder.get(), &parse_end, &root_value, json_allocator);
-        
+
         if (status == JSON_PARSE_OK && root_value.getTag() == JSON_TAG_OBJECT)
         {
           process_value_(request_params, context, root_value);
@@ -892,7 +892,7 @@ namespace Bidding
           if (PARSE_STRING_AS_NUMBER)
           {
             const String::SubString str(value.toString());
-            
+
             if (!str.empty())
             {
               context.*field_ =
@@ -1004,7 +1004,7 @@ namespace Bidding
               try
               {
                 std::string res;
-                String::StringManip::js_unicode_decode(url, res); 
+                String::StringManip::js_unicode_decode(url, res);
                 return res;
               }
               catch(const eh::Exception&)

@@ -15,12 +15,12 @@ protected:
 
   mutable Condition_ condition_;
 
-  
+
 public:
   SecondStartWaiter();
 
   ~SecondStartWaiter();
-  
+
 private:
   Generics::Time second_start_time_;
 };

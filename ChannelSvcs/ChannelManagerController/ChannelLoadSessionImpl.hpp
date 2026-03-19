@@ -13,7 +13,7 @@ namespace ChannelSvcs
 
   /**
    * ChannelLoadSessionImpl
-   * implementation of ChannelLoadSession valuetype 
+   * implementation of ChannelLoadSession valuetype
    */
   class ChannelLoadSessionImpl:
     public virtual OBV_AdServer::ChannelSvcs::ChannelLoadSession
@@ -35,7 +35,7 @@ namespace ChannelSvcs
       /*throw(Exception)*/;
 
     virtual ~ChannelLoadSessionImpl() noexcept;
-      
+
     virtual CORBA::ValueBase* _copy_value();
 
     //
@@ -43,7 +43,7 @@ namespace ChannelSvcs
     //
     virtual void check(
       const ::AdServer::ChannelSvcs::ChannelCurrent::CheckQuery& query,
-      ::AdServer::ChannelSvcs::ChannelCurrent::CheckData_out data) 
+      ::AdServer::ChannelSvcs::ChannelCurrent::CheckData_out data)
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
 

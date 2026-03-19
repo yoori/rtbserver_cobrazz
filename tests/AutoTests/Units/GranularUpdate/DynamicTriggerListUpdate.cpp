@@ -18,8 +18,8 @@ namespace
 }
 
 DynamicTriggerListUpdate::DynamicTriggerListUpdate(
-  UnitStat& stat_var, 
-  const char* task_name, 
+  UnitStat& stat_var,
+  const char* task_name,
   XsdParams params_var)
   : BaseDBUnit(stat_var, task_name, params_var)
 { }
@@ -27,21 +27,21 @@ DynamicTriggerListUpdate::DynamicTriggerListUpdate(
 DynamicTriggerListUpdate::~DynamicTriggerListUpdate() noexcept
 { }
 
-bool 
+bool
 DynamicTriggerListUpdate::run()
 {
   AUTOTEST_CASE(
     change_trigger(),
     "Change trigger");
-  
+
   AUTOTEST_CASE(
     no_adv(),
     "No Advertising");
 
-  AUTOTEST_CASE(  
+  AUTOTEST_CASE(
     no_track(),
     "No Track");
-  
+
   return true;
 }
 
@@ -85,14 +85,14 @@ void DynamicTriggerListUpdate::change_trigger()
   ORM::ORMRestorer<ORM::TriggerChannel>* trigger1 =
     create<ORM::TriggerChannel>(
       fetch_int("CHANGETRIGGER/ChannelTrigger/1"));
-  
+
   ORM::ORMRestorer<ORM::TriggerChannel>* trigger2 =
     create<ORM::TriggerChannel>(
       fetch_int("CHANGETRIGGER/ChannelTrigger/2"));
 
   trigger1->qa_status = "D";
   trigger2->qa_status = "A";
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       trigger1->update() && trigger2->update()),
@@ -103,7 +103,7 @@ void DynamicTriggerListUpdate::change_trigger()
     TriggerChecker(
       this,
       fetch_string("CHANGETRIGGER/Channel"),
-      AutoTest::ChannelManagerController,    
+      AutoTest::ChannelManagerController,
       TriggerChecker::Expected().
         page_word(
           AutoTest::ComparableStringList(
@@ -191,7 +191,7 @@ void DynamicTriggerListUpdate::no_adv()
     // Keyword trigger
     ORM::ORMRestorer<ORM::PQ::Triggers>* trigger =
       create<ORM::PQ::Triggers>();
-    
+
     trigger->trigger_type = "K";
     trigger->normalized_trigger =
       tolower(fetch_string("NOADV/NewWords"));
@@ -202,7 +202,7 @@ void DynamicTriggerListUpdate::no_adv()
       AutoTest::predicate_checker(
         trigger->insert()),
       "Can't insert NO ADV trigger");
-    
+
     ORM::ORMRestorer<ORM::TriggerChannel>* channel_trigger_kwd =
       create<ORM::TriggerChannel>();
 
@@ -224,7 +224,7 @@ void DynamicTriggerListUpdate::no_adv()
     // URL keyword trigger
     ORM::ORMRestorer<ORM::PQ::Triggers>* trigger =
       create<ORM::PQ::Triggers>();
-    
+
     trigger->trigger_type = "K";
     trigger->normalized_trigger =
       tolower(fetch_string("NOADV/NewUrlWords"));
@@ -235,7 +235,7 @@ void DynamicTriggerListUpdate::no_adv()
       AutoTest::predicate_checker(
         trigger->insert()),
       "Can't insert NO ADV trigger");
-    
+
     ORM::ORMRestorer<ORM::TriggerChannel>* channel_trigger_kwd =
       create<ORM::TriggerChannel>();
 
@@ -251,18 +251,18 @@ void DynamicTriggerListUpdate::no_adv()
         channel_trigger_kwd->insert()),
       "Can't insert NO ADV channel trigger");
   }
-  
+
   ORM::ORMRestorer<ORM::TriggerChannel>* channel_trigger_old =
     create<ORM::TriggerChannel>(
       fetch_int("NOADV/ChannelTriggerUrl"));
-  
+
   ORM::ORMRestorer<ORM::TriggerChannel>* channel_trigger_new =
     create<ORM::TriggerChannel>(
       fetch_int("NOADV/ChannelTriggerUrlNew"));
 
   channel_trigger_old->log();
   channel_trigger_new->log();
-  
+
   channel_trigger_old->qa_status = "D";
   channel_trigger_new->qa_status = "A";
 
@@ -277,7 +277,7 @@ void DynamicTriggerListUpdate::no_adv()
     TriggerChecker(
         this,
         fetch_string("NOADV/Channel"),
-        AutoTest::ChannelManagerController,    
+        AutoTest::ChannelManagerController,
         TriggerChecker::Expected().
           channel_id(
             fetch_string("NOADV/Channel")).
@@ -396,8 +396,8 @@ void DynamicTriggerListUpdate::no_track()
     create<ORM::TriggerChannel>(
       fetch_int("NOTRACK/ChannelTriggerKwdNew"));
 
-  channel_trigger_kwd_old->qa_status = "D"; 
-  channel_trigger_kwd_new->qa_status = "A"; 
+  channel_trigger_kwd_old->qa_status = "D";
+  channel_trigger_kwd_new->qa_status = "A";
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
@@ -409,7 +409,7 @@ void DynamicTriggerListUpdate::no_track()
     // URL keyword trigger
     ORM::ORMRestorer<ORM::PQ::Triggers>* trigger =
       create<ORM::PQ::Triggers>();
-    
+
     trigger->trigger_type = "K";
     trigger->normalized_trigger =
       tolower(fetch_string("NOTRACK/NewUrlWords"));
@@ -420,10 +420,10 @@ void DynamicTriggerListUpdate::no_track()
       AutoTest::predicate_checker(
         trigger->insert()),
       "Can't insert NO ADV trigger");
-    
+
     ORM::ORMRestorer<ORM::TriggerChannel>* channel_trigger_kwd =
       create<ORM::TriggerChannel>();
-    
+
     channel_trigger_kwd->trigger_type = "R";
     channel_trigger_kwd->channel_type = "S";
     channel_trigger_kwd->channel_id =  fetch_int("NOTRACK/Channel");
@@ -442,7 +442,7 @@ void DynamicTriggerListUpdate::no_track()
     TriggerChecker(
       this,
       fetch_string("NOTRACK/Channel"),
-      AutoTest::ChannelManagerController,    
+      AutoTest::ChannelManagerController,
       TriggerChecker::Expected().
         channel_id(
           fetch_string("NOTRACK/Channel")).
@@ -491,7 +491,7 @@ void DynamicTriggerListUpdate::no_track()
 }
 
 
-void 
+void
 DynamicTriggerListUpdate::set_up   ()
 {
   add_descr_phrase("Setup.");
@@ -503,7 +503,7 @@ DynamicTriggerListUpdate::set_up   ()
     " ChannelManagerController need for this test.");
 }
 
-void 
+void
 DynamicTriggerListUpdate::tear_down ()
 {
   add_descr_phrase("Tear down.");

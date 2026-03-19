@@ -2,22 +2,22 @@
 #define _UNITTEST__CONTEXTCHANNELSTEST_
 
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 typedef std::list <std::string> ChannelList;
 
 class ContextChannelsTest: public BaseUnit
 {
 public:
- 
+
   ContextChannelsTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
-      XsdParams params_var): 
+      UnitStat& stat_var,
+      const char* task_name,
+      XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     test_client_(AutoTest::AdClient::create_user(this)),
     req_count_(0)
   {};
- 
+
   virtual ~ContextChannelsTest() noexcept
   {};
 protected:
@@ -26,7 +26,7 @@ protected:
 private:
 
   unsigned long req_count_;                     // Client request count
-  
+
   virtual bool run_test();
 
   // test cases

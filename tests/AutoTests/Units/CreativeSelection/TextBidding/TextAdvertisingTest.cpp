@@ -13,7 +13,7 @@ namespace
   typedef AutoTest::SelectedCreativesActualCPC SelectedCreativesActualCPC;
 }
 
-void 
+void
 TextAdvertisingTest::generic_scenario
 (const AutoTest::NSLookupRequest &request,
  const std::vector<std::string> &ccid_exp,
@@ -40,7 +40,7 @@ TextAdvertisingTest::generic_scenario
 }
 
 
-bool 
+bool
 TextAdvertisingTest::run_test()
 {
   add_descr_phrase("ADSC-672");
@@ -49,7 +49,7 @@ TextAdvertisingTest::run_test()
 
   std::string keyword1(get_object_by_name("Keyword1").Value());
   std::string keyword2(get_object_by_name("Keyword2").Value());
-  
+
   const int tid1 = fetch_int("Tag1");
 
   std::vector<std::string> ccid_exp;

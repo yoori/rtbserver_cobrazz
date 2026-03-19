@@ -60,7 +60,7 @@ TextChannelAndKeywordCreativesCompetition::scenario1()
     precisely_number(fetch_float("IMPREV1_2"), 0.001),
     precisely_number(fetch_float("IMPREV1_3"), 0.001)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -112,7 +112,7 @@ TextChannelAndKeywordCreativesCompetition::scenario2()
     precisely_number(fetch_float("IMPREV2_2"), 0.001),
     precisely_number(fetch_float("IMPREV2_3"), 0.001)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -160,7 +160,7 @@ TextChannelAndKeywordCreativesCompetition::scenario3()
     precisely_number(fetch_float("IMPREV3_1"), 0.001),
     precisely_number(fetch_float("IMPREV3_2"), 0.001)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -220,7 +220,7 @@ TextChannelAndKeywordCreativesCompetition::scenario4()
   std::list<precisely_number>
     exp_imp_revenues_reverse(exp_imp_revenues);
   exp_imp_revenues_reverse.reverse();
- 
+
   FAIL_CONTEXT(
     AutoTest::or_checker(
       AutoTest::sequence_checker(

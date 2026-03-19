@@ -48,7 +48,7 @@ namespace AdServer
       virtual ~UserInfoExchangerProxyImpl() noexcept;
 
       /* UserInfoExchangerProxy interface */
-      virtual void 
+      virtual void
       register_users_request(
         const char* customer_id,
         const AdServer::UserInfoSvcs::ColoUsersRequestSeq& users)
@@ -57,13 +57,13 @@ namespace AdServer
 
       virtual void
       receive_users(
-        const char* customer_id, 
+        const char* customer_id,
         AdServer::UserInfoSvcs::UserProfileSeq_out user_profiles,
         const AdServer::UserInfoSvcs::ReceiveCriteria& receive_criteria)
         /*throw(AdServer::UserInfoSvcs::UserInfoExchanger::NotReady,
-              AdServer::UserInfoSvcs::UserInfoExchanger::ImplementationException)*/;  
+              AdServer::UserInfoSvcs::UserInfoExchanger::ImplementationException)*/;
 
-      virtual void 
+      virtual void
       get_users_requests(
         const char* customer_id,
         AdServer::UserInfoSvcs::UserIdSeq_out users)
@@ -94,7 +94,7 @@ namespace AdServer
 
       CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
       AdServer::UserInfoSvcs::UserInfoExchanger_var uie_ref_;
-      
+
     };
 
     typedef

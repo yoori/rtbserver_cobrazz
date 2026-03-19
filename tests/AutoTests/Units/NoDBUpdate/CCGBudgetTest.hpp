@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__PAUSINGCGREACHINGTEST_
 #define _AUTOTEST__PAUSINGCGREACHINGTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace
@@ -9,7 +9,7 @@ namespace
   typedef AutoTest::ORM::PQ::CampaignCreativeGroup CCG;
   typedef AutoTest::ORM::ORMFloat CCG::* CCGMember;
 }
- 
+
 class CCGBudgetTest: public BaseDBUnit
 {
   typedef AutoTest::AdClient AdClient;
@@ -17,7 +17,7 @@ class CCGBudgetTest: public BaseDBUnit
   typedef AutoTest::CampaignChecker CampaignChecker;
 
 public:
-  
+
   enum CaseFlags
   {
     CF_BUDGET_NOT_SPENT = 0x1,  // CCG budget don't spent during test
@@ -30,8 +30,8 @@ public:
   struct TestCase
   {
     std::string description;// Case description
-    std::string prefix;     // Case prefix 
-    unsigned long flags;     
+    std::string prefix;     // Case prefix
+    unsigned long flags;
     unsigned long interval; // Requests time interval (in seconds)
     unsigned long requests; // Count of test requests
                             // (0 used for dynamic calculation)
@@ -41,12 +41,12 @@ public:
 
 public:
   CCGBudgetTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   {}
- 
+
   virtual ~CCGBudgetTest() noexcept
   {}
 
@@ -62,7 +62,7 @@ protected:
   virtual void tear_down();
   virtual bool run();
   virtual void post_condition();
- 
+
 private:
 
   static const TestCase GMT_CASES[];

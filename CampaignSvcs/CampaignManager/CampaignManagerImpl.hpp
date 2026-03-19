@@ -52,7 +52,7 @@ namespace AdServer
       const String::SubString UNSECURE("unsecure"); // always using in the preview mode
       const String::SubString SECURE("secure");
     }
-    
+
     class CampaignManagerImpl :
       public virtual Generics::CompositeActiveObject,
       public virtual CORBACommons::ReferenceCounting::ServantImpl<
@@ -265,7 +265,7 @@ namespace AdServer
         const CORBACommons::UserIdInfo& user_id)
         /*throw(AdServer::CampaignSvcs::CampaignManager::NotReady)*/;
 
-      
+
       virtual void
       consider_web_operation(
         const AdServer::CampaignSvcs::CampaignManager::WebOperationInfo& web_op_info)
@@ -822,7 +822,7 @@ namespace AdServer
         const String::SubString& instantiate_url,
         AdInstantiateType ad_instantiate_type)
         /*throw(CreativeTemplateProblem)*/;
-      
+
       void
       fill_instantiate_url_(
         std::string& instantiate_url,

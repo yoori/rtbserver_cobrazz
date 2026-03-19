@@ -78,7 +78,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
   noexcept
 {
   static const char* FUN = "UserInfoManagerApp_::main()";
-  
+
   try
   {
     static const char* USAGE = "usage: UserInfoManager <config_file>";
@@ -91,14 +91,14 @@ UserInfoManagerApp_::main(int& argc, char** argv)
     }
 
     Config::ErrorHandler error_handler;
-    
+
     try
     {
       /* using xsd namespace */
       using namespace xsd::AdServer::Configuration;
-      
+
       std::string file_name(argv[1]);
-        
+
       std::unique_ptr<AdConfigurationType>
         ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
@@ -107,7 +107,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
-      
+
       configuration_ =
         ConfigPtr(new UserInfoManagerConfigType(
           ad_configuration->UserInfoManagerConfig()));
@@ -118,20 +118,20 @@ UserInfoManagerApp_::main(int& argc, char** argv)
 
       ostr << "Can't parse config file '" << argv[1] << "'."
         ": ";
-      
+
       if(error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
       }
-      
+
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << argv[1] << "': " << e.what();
-      throw Exception(ostr);      
+      throw Exception(ostr);
     }
 
     // Initializing logger
@@ -165,7 +165,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
     // Creating user info manager servant
-    user_info_manager_impl_ = 
+    user_info_manager_impl_ =
       new AdServer::UserInfoSvcs::UserInfoManagerImpl(
         callback(),
         logger(),
@@ -279,7 +279,7 @@ main(int argc, char** argv)
     std::cerr << "main(): Critical: got NULL application object.\n";
     return -1;
   }
-  
+
   app->main(argc, argv);
 }
 

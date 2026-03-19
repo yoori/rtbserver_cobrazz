@@ -241,7 +241,7 @@ namespace ProfilingCommons
       create_transaction_on_get_(create_transaction_on_get)
   {}
 
-  template <typename KeyType>  
+  template <typename KeyType>
   bool
   TransactionProfileMap<KeyType>::check_profile(
     const KeyType& key) const
@@ -250,7 +250,7 @@ namespace ProfilingCommons
     return this->no_add_ref_delegate_map_()->check_profile(key);
   }
 
-  template <typename KeyType>  
+  template <typename KeyType>
   Generics::ConstSmartMemBuf_var
   TransactionProfileMap<KeyType>::get_profile(
     const KeyType& key,
@@ -268,7 +268,7 @@ namespace ProfilingCommons
     }
   }
 
-  template <typename KeyType>  
+  template <typename KeyType>
   void
   TransactionProfileMap<KeyType>::save_profile(
     const KeyType& key,
@@ -290,7 +290,7 @@ namespace ProfilingCommons
     return this->get_transaction(key, false, op_priority)->remove_profile();
   }
 
-  template <typename KeyType>  
+  template <typename KeyType>
   typename TransactionProfileMap<KeyType>::Transaction_var
   TransactionProfileMap<KeyType>::get_transaction(
     const KeyType& key,
@@ -305,7 +305,7 @@ namespace ProfilingCommons
       check_max_waiters);
   }
 
-  template <typename KeyType>  
+  template <typename KeyType>
   Generics::ConstSmartMemBuf_var
   TransactionProfileMap<KeyType>::get_profile_i_(
     const KeyType& key,
@@ -316,7 +316,7 @@ namespace ProfilingCommons
       key, last_access_time);
   }
 
-  template <typename KeyType>  
+  template <typename KeyType>
   void
   TransactionProfileMap<KeyType>::save_profile_i_(
     const KeyType& key,
@@ -328,7 +328,7 @@ namespace ProfilingCommons
     this->no_add_ref_delegate_map_()->save_profile(key, mem_buf, now, op_priority);
   }
 
-  template <typename KeyType>  
+  template <typename KeyType>
   bool
   TransactionProfileMap<KeyType>::remove_profile_i_(
     const KeyType& key,

@@ -42,7 +42,7 @@ UserInfoExchangerProxyApp_::main(int& argc, char** argv)
   noexcept
 {
   const char FUN[] = "UserInfoExchangerProxyApp_::main()";
-  
+
   try
   {
     const char* usage = "usage: UserInfoExchangerProxy <config_file>";
@@ -60,9 +60,9 @@ UserInfoExchangerProxyApp_::main(int& argc, char** argv)
     {
       /* using xsd namespace */
       using namespace xsd::AdServer::Configuration;
-      
+
       std::string file_name(argv[1]);
-        
+
       std::unique_ptr<AdConfigurationType>
         ad_configuration = AdConfiguration(file_name.c_str(), error_handler);
 
@@ -71,7 +71,7 @@ UserInfoExchangerProxyApp_::main(int& argc, char** argv)
         std::string error_string;
         throw Exception(error_handler.text(error_string));
       }
-      
+
       configuration_ =
         ConfigPtr(new UserInfoExchangerProxyConfigType(
           ad_configuration->UserInfoExchangerProxyConfig()));
@@ -84,13 +84,13 @@ UserInfoExchangerProxyApp_::main(int& argc, char** argv)
       ostr << "Can't parse config file '"
         << argv[1] << "'."
         << ": ";
-      
+
       if(error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
       }
-      
+
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
@@ -100,7 +100,7 @@ UserInfoExchangerProxyApp_::main(int& argc, char** argv)
         << argv[1] << "'."
         << ": "
         << e.what();
-      throw Exception(ostr);      
+      throw Exception(ostr);
     }
     catch(...)
     {
@@ -154,7 +154,7 @@ UserInfoExchangerProxyApp_::main(int& argc, char** argv)
     }
 
     // Creating user info manager servant
-    user_info_exchanger_proxy_impl_ = 
+    user_info_exchanger_proxy_impl_ =
       new AdServer::UserInfoSvcs::UserInfoExchangerProxyImpl(
         callback(),
         logger(),
@@ -270,7 +270,7 @@ main(int argc, char** argv)
     std::cerr << "main(): Critical: got NULL application object.\n";
     return -1;
   }
-  
+
   app->main(argc, argv);
-}  
+}
 

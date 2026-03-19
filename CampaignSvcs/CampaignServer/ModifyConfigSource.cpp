@@ -46,7 +46,7 @@ namespace CampaignSvcs
         throw;
       }
       return res;
-    } 
+    }
     catch (const eh::Exception& ex)
     {
       logger_->sstream(

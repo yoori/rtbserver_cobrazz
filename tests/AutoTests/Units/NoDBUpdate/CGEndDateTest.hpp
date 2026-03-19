@@ -1,10 +1,10 @@
 
 #ifndef _AUTOTEST__CGENDDATETEST_
 #define _AUTOTEST__CGENDDATETEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
- 
+
+
 class CGEndDateTest: public BaseUnit
 {
 
@@ -21,21 +21,21 @@ class CGEndDateTest: public BaseUnit
     unsigned long ccgid;
     unsigned short flags;
   };
-  
+
 public:
- 
+
   CGEndDateTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~CGEndDateTest() noexcept
   { }
- 
+
 private:
- 
+
   virtual bool run_test();
 
   // Utils

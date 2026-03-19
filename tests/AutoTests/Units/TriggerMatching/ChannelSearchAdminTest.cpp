@@ -73,10 +73,10 @@ namespace
       "STMT-02-2,STMT-02-1,STMT-03-2,STMT-03-1"
     }
   };
-  
+
 }
 
-bool 
+bool
 ChannelSearchAdminTest::run_test()
 {
 
@@ -93,8 +93,8 @@ ChannelSearchAdminTest::run_test()
   {
     test_case(i, TEST_CASES[i]);
   }
-      
- 
+
+
   return true;
 }
 
@@ -108,7 +108,7 @@ void ChannelSearchAdminTest::test_case(
     get_config().get_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER).address;
   std::string ChannelServer =
     get_config().get_service(CTE_ALL, STE_CHANNEL_SERVER).address;
-  
+
   SearchAdmin admin(ChannelSearchServer, test.phrase);
 
   MatchAdmin(ChannelServer.c_str(),
@@ -116,7 +116,7 @@ void ChannelSearchAdminTest::test_case(
     AutoTest::ChannelServer).log(
       AutoTest::Logger::thlog(),
       Logging::Logger::TRACE);
- 
+
   std::string names_(test.expected_channels);
   String::StringManip::SplitComma tokenizer(names_);
   String::SubString token;
@@ -133,6 +133,6 @@ void ChannelSearchAdminTest::test_case(
           channel_id(fetch_string(token.str()))).check(),
       "search check");
   }
-  
+
 
 }

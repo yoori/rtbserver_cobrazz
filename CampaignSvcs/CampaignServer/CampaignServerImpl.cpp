@@ -238,8 +238,8 @@ namespace AdServer
           }
         }
 
-        bool to_deactivate(const GeoChannelMap::ActiveMap::value_type& value) const   
-        {   
+        bool to_deactivate(const GeoChannelMap::ActiveMap::value_type& value) const
+        {
           return !countries_->empty() &&
                    (countries_->find(value.second->country) == countries_->end());
         }
@@ -2402,7 +2402,7 @@ namespace AdServer
             countries.insert(token.str());
           }
         }
-        
+
         result->currency_exchange_id = config->global_params.currency_exchange_id;
         result->fraud_user_deactivate_period = CorbaAlgs::pack_time(
           config->global_params.fraud_user_deactivate_period);
@@ -3009,7 +3009,7 @@ namespace AdServer
               strchr(settings.channel_statuses, it->second->status) != 0))
           {
             const SimpleChannelDef& in = *it->second;
-            AdServer::CampaignSvcs::CSSimpleChannel& ch_inf = res->simple_channels[i++]; 
+            AdServer::CampaignSvcs::CSSimpleChannel& ch_inf = res->simple_channels[i++];
             ch_inf.channel_id = in.channel_id;
             ch_inf.country_code << in.country;
             ch_inf.status = in.status;
@@ -4069,7 +4069,7 @@ namespace AdServer
 
       return result_bill_stat._retn();
     }
-    
+
     AdServer::CampaignSvcs::DetectorsConfig*
     CampaignServerBaseImpl::detectors(
       const AdServer::CampaignSvcs::TimestampInfo& request_timestamp)
@@ -4528,7 +4528,7 @@ namespace AdServer
     {
       return bill_stat_server_source_;
     }
-    
+
     void CampaignServerProxyImpl::change_db_state(bool /*new_state*/)
       /*throw(Exception)*/
     {

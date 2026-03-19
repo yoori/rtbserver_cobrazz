@@ -66,9 +66,9 @@ TargetingChannelStats::log_profile(
   {
     AutoTest::AdminsArray<AutoTest::InventoryProfileAdmin>
       admins;
-    
+
     admins.initialize(this, CTE_ALL, STE_EXPRESSION_MATCHER, uid);
-    
+
     admins.log(AutoTest::Logger::thlog());
   }
 }
@@ -142,7 +142,7 @@ TargetingChannelStats::initialize_stats_(
     imps(expected.imps).
     clicks(expected.clicks).
     actions(expected.actions).
-    revenue(expected.revenue). 
+    revenue(expected.revenue).
     impops_user_count(1).
     imps_user_count(1).
     imps_other(expected.imp_imp_other).
@@ -157,7 +157,7 @@ TargetingChannelStats::initialize_stats_(
     imps(0).
     clicks(0).
     actions(0).
-    revenue(0). 
+    revenue(0).
     impops_user_count(1).
     imps_user_count(0).
     imps_value(0).
@@ -270,7 +270,7 @@ TargetingChannelStats::add_checkers_(
 {
   UserLogger log_checker(
     this, stats.users);
-    
+
   ADD_WAIT_CHECKER(
     "ChannelInventory",
     AutoTest::fail_checker(
@@ -302,7 +302,7 @@ TargetingChannelStats::add_checkers_(
           stats.imp_inv_text_diffs,
           stats.imp_inv_text)),
       log_checker));
-    
+
   ADD_WAIT_CHECKER(
     "ChannelInventoryByCPM",
     AutoTest::fail_checker(
@@ -313,7 +313,7 @@ TargetingChannelStats::add_checkers_(
             user_count(1),
             stats.inv_by_cpm)),
       log_checker));
-    
+
   ADD_WAIT_CHECKER(
     "ChannelPerformance",
     AutoTest::fail_checker(
@@ -323,8 +323,8 @@ TargetingChannelStats::add_checkers_(
           stats.perf_diffs,
           stats.perf)),
       log_checker));
-    
-    
+
+
   ADD_WAIT_CHECKER(
     "ChannelUsageStats",
     AutoTest::fail_checker(
@@ -334,7 +334,7 @@ TargetingChannelStats::add_checkers_(
           stats.usage_diffs,
           stats.usage)),
       log_checker));
-    
+
   ADD_WAIT_CHECKER(
     "ExpressionPerformance",
     AutoTest::fail_checker(
@@ -365,7 +365,7 @@ TargetingChannelStats::add_checkers_(
           stats.expr_perf_zero)),
       log_checker));
 }
-  
+
 
 void
 TargetingChannelStats::process_case_(
@@ -403,7 +403,7 @@ TargetingChannelStats::process_case_(
 
   // Initialize stats
   double cpm = fetch_float("Other/CPM") / 1000;
- 
+
   ExpectedStats expected =
     {
       // Common
@@ -414,7 +414,7 @@ TargetingChannelStats::process_case_(
       1, cpm, 1, 1 };
 
   StatCollection stats;
-  
+
   initialize_stats_(
     stats,
     fetch_int(prefix + "/Targeting"),
@@ -431,7 +431,7 @@ TargetingChannelStats::process_case_(
   // no imps
   request.tid = fetch_int("NoImp/Tag");
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       "0",
@@ -450,13 +450,13 @@ TargetingChannelStats::process_case_(
     request.referer_kw = fetch_string("Other/KWD");
   }
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       fetch_string("Other/CC"),
       client.debug_info.ccid).check(),
     "Check CC (imps other)");
-  
+
   // imps
   request.referer_kw.clear();
   set_req_param_(request, &NSLookupRequest::referer_kw, prefix + "/KWD");
@@ -497,7 +497,7 @@ TargetingChannelStats::process_case_(
   std::list<std::string> expected_ccs;
   expected_ccs.push_back(
     fetch_string(prefix + "/CC"));
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       expected_ccs, actions));
@@ -589,7 +589,7 @@ TargetingChannelStats::case_all_()
   };
 
   size_t text_size = countof(EXPECTED);
-  
+
   for (size_t i = 0; i < text_size; ++i)
   {
     std::string suffix  = strof(i+1);
@@ -601,7 +601,7 @@ TargetingChannelStats::case_all_()
       EXPECTED[i],
       text_size);
   }
-  
+
   AdClient client(AdClient::create_user(this));
   NSLookupRequest request;
   request.debug_time = now_;
@@ -612,7 +612,7 @@ TargetingChannelStats::case_all_()
   // no imps
   request.tid = fetch_int("ALL/NoImp/Tag");
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       "0",
@@ -624,7 +624,7 @@ TargetingChannelStats::case_all_()
   request.referer_kw = map_objects("ALL/Other/KWD,ALL/KWDB1");
 
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       fetch_string("ALL/Other/CC"),
@@ -666,12 +666,12 @@ TargetingChannelStats::case_all_()
   fetch_objects(
     std::inserter(expected_ccs, expected_ccs.begin()),
     "ALL/CC/1,ALL/CC/2,ALL/CC/3");
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       expected_ccs, actions));
 
   add_checkers_(stats);
-  
+
 }
 

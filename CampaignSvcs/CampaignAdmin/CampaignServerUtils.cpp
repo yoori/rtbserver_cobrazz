@@ -175,7 +175,7 @@ namespace
     Table::Column("daily_amount", Table::Column::TEXT),
     Table::Column("daily_comm_amount", Table::Column::TEXT),
     Table::Column("hourly_amount", Table::Column::TEXT),
-    Table::Column("hourly_comm_amount", Table::Column::TEXT),    
+    Table::Column("hourly_comm_amount", Table::Column::TEXT),
     Table::Column("creatives", Table::Column::TEXT),
     Table::Column("publishers", Table::Column::TEXT),
     Table::Column("tags", Table::Column::TEXT),
@@ -1147,7 +1147,7 @@ void Application::stat(bool account)
                 ccg_stat.prev_hour_amount) << "]";
             row.add_field(hourly_amount_ostr.str());
           }
-        
+
           {
             std::ostringstream hourly_comm_amount_ostr;
             hourly_comm_amount_ostr << "[ " <<

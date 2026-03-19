@@ -164,7 +164,7 @@ void
 ChannelTriggerImpStatsTest::set_up()
 { }
 
-bool 
+bool
 ChannelTriggerImpStatsTest::run()
 {
   AUTOTEST_CASE(
@@ -173,7 +173,7 @@ ChannelTriggerImpStatsTest::run()
       1000,
       0),
     "OnlyImpsCase");
-  
+
   AUTOTEST_CASE(
     do_requests_for_one_trigger_tempo_case_(
       "OnlyImpsCaseTempo",
@@ -262,11 +262,11 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_case_(
   TriggerCounterMap imps_done;
   TriggerCounterMap clicks_done;
   ChannelTriggerSumStats sum_stats;
-  
+
   fetch_stats_(
     triggers_stats, imps_done, sum_stats,
     entity_suffix, impressions_count);
-  
+
   // prepare expected data
   std::list<std::string> exp_ccids;
   exp_ccids.push_back(fetch_string(std::string("CcId/") + entity_suffix));
@@ -334,7 +334,7 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_tempo_case_(
   fetch_stats_(
     triggers_stats, imps_done, sum_stats,
     entity_suffix, impressions_count);
-  
+
   // prepare expected data
   std::list<std::string> exp_ccids;
   exp_ccids.push_back(fetch_string(std::string("CcId/") + entity_suffix));
@@ -370,7 +370,7 @@ ChannelTriggerImpStatsTest::do_requests_for_one_trigger_tempo_case_(
       }
     }
   }
-  
+
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats sum check",
     AutoTest::stats_each_diff_checker(
@@ -438,8 +438,8 @@ ChannelTriggerImpStatsTest::channel_types()
         imps(EXPECTED[i].imps).
         clicks(EXPECTED[i].clicks));
   }
-    
-  
+
+
   AdClient client(AdClient::create_user(this));
 
   client.process_request(

@@ -118,7 +118,7 @@ namespace Bidding
           fn(cat_id);
         }
       }
-    } 
+    }
 
     // Google add expanding attributes util
     void
@@ -144,7 +144,7 @@ namespace Bidding
         {
           ::google::protobuf::int32 current =
             Response::Google::CREATIVE_EXPAND_MAP[i];
-          
+
           if ((i & expanding) == i && current != -1)
           {
             ad->add_attribute(current);
@@ -262,7 +262,7 @@ namespace Bidding
           CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
 
           Google::BidResponse_Ad* ad = bid_response.add_ad();
-          
+
           for(CORBA::ULong creative_i = 0;
               creative_i < ad_slot_result.selected_creatives.length();
               ++creative_i)
@@ -287,10 +287,10 @@ namespace Bidding
             Generics::DMR_ROUND);
 
           int64_t max_cpm_micros(google_price.integer<int64_t>());
-          
+
           Google::BidResponse_Ad_AdSlot* r_adslot = ad->add_adslot();
           const GoogleAdSlotContext& ad_slot_context = ad_slots_context_[ad_slot_i];
-          
+
           if (ad_slot_context.direct_deal_id &&
               max_cpm_micros >= ad_slot_context.fixed_cpm_micros)
           {
@@ -303,7 +303,7 @@ namespace Bidding
           }
 
           r_adslot->set_id(adslot.id());
-          
+
           if(ad_slot_context.width && ad_slot_context.height)
           {
             ad->set_width(ad_slot_context.width);
@@ -339,7 +339,7 @@ namespace Bidding
           }
           else if(!ad_slot_context.billing_ids.empty())
           {
-            r_adslot->set_billing_id(*ad_slot_context.billing_ids.begin());            
+            r_adslot->set_billing_id(*ad_slot_context.billing_ids.begin());
           }
 
           // Fill attributes
@@ -353,7 +353,7 @@ namespace Bidding
             ad_slot_result.external_visual_categories,
             std::bind1st(
               std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
-         
+
           {
             // buyer_creative_id
             const AdServer::CampaignSvcs::CampaignManager::

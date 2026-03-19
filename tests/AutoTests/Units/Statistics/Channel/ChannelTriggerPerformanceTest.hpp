@@ -26,8 +26,8 @@ class ChannelTriggerPerformanceTest: public BaseUnit
 
 public:
   ChannelTriggerPerformanceTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var),
       conn_(open_pq()),
@@ -35,7 +35,7 @@ public:
       default_colo_(fetch_int("DefaultColo")),
       default_tag_(fetch_int("TAG/468x60"))
   {};
- 
+
   virtual ~ChannelTriggerPerformanceTest() noexcept
   {};
 

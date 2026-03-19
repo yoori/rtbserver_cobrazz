@@ -12,22 +12,22 @@ typedef AutoTest::AdClient AdClient;
 * @brief Test for checking tag pricing logic
 */
 
-class TagsTest: 
+class TagsTest:
   public BaseUnit
 {
 public:
- 
+
   TagsTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
-      XsdParams params_var): 
+      UnitStat& stat_var,
+      const char* task_name,
+      XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)  {};
- 
+
   virtual ~TagsTest() noexcept
   {};
 
 private:
- 
+
   virtual bool run_test();
 
   void set_up();
@@ -38,12 +38,12 @@ private:
   void country_us_case();
   void unknown_country_case();
   void cpm_filter_case();
-  
+
   NSLookupRequest request;
   std::string tag_id1;
   std::string tag_id2;
   std::string tag_id3;
-  
+
   std::string siterate_id1;
   std::string siterate_id2;
   std::string siterate_id5;
@@ -55,7 +55,7 @@ private:
   std::string cc_id4;
   std::string cc_id5;
   std::string cc_id6;
- 
+
 };
 
 #endif  // _UNITTEST__TAGSTEST_

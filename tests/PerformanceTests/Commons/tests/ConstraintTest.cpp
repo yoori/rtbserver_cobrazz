@@ -28,7 +28,7 @@ public:
   }
 };
 
-  
+
 void check_sequence(ConstraintElement& constraint,
                     unsigned long numerator,
                     unsigned long denominator)
@@ -60,7 +60,7 @@ int main()
   constraint.push(7, 15); // 5 / 11 < 0.5
   constraint.check();
   assert(constraint.check());
-  
+
   // aggregative rule check - failed
   constraint.push(8, 16); // 6 / 12 = 0.5
   assert(!constraint.check());
@@ -74,12 +74,12 @@ int main()
   constraint.push(13, 31);
   constraint.push(14, 32);
   constraint.push(15, 33);
-  // aggregative rule check - ok  
+  // aggregative rule check - ok
   assert(constraint.check()); // 5 / 13 < 0.5
 
-  // aggregative rule check - failed  
+  // aggregative rule check - failed
   constraint.push(16, 34);
-  constraint.push(18, 36); 
+  constraint.push(18, 36);
   assert(!constraint.check()); // 8 / 16 = 0.5
 
   // wrong sequence testing
@@ -97,8 +97,8 @@ int main()
   constraint.push(23, 36);
 
   assert(!constraint.check()); // 5 / 10 < 0.5
-  
+
   std::cout << "Test was successfully done!" << std::endl;
 
-  return 0;  
+  return 0;
 }

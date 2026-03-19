@@ -1510,7 +1510,7 @@ namespace CampaignSvcs
       const unsigned long cur_hour = (
         now + delivery_limits.time_offset).get_gm_time().tm_hour;
 
-      // 
+      //
       // convert imps/clicks to amount by actual cost's
       CTROptimizer::RateAmountDistribution past_goaled_amount_distribution;
       CTROptimizer::RateAmountDistribution past_free_amount_distribution;
@@ -1949,7 +1949,7 @@ namespace CampaignSvcs
 
     confirmed_amount = confirm_amount - remind_confirm_amount;
     confirmed_imps = confirm_imps - remind_confirm_imps;
-    confirmed_clicks = confirm_clicks - remind_confirm_clicks;    
+    confirmed_clicks = confirm_clicks - remind_confirm_clicks;
 
     return res;
   }
@@ -1969,7 +1969,7 @@ namespace CampaignSvcs
     noexcept
   {
     RevenueDecimal revert_amount = confirm_amount;
-    revert_amount.negate();    
+    revert_amount.negate();
 
     Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
       DeliveryLimitsType>::get_date_in_adv_tz(
@@ -2013,7 +2013,7 @@ namespace CampaignSvcs
     revert_amount.negate();
     revert_imps.negate();
     revert_clicks.negate();
-    
+
 
     Generics::Time adv_tz_now_date = DeliveryLimitsChecker<
       DeliveryLimitsType>::get_date_in_adv_tz(
@@ -2405,7 +2405,7 @@ namespace CampaignSvcs
       if(source_amount)
       {
         auto source_day_it = source_amount->day_amounts.lower_bound(
-          use_source_end_date);      
+          use_source_end_date);
 
         {
           // collect sum amount for replace days and add it to target days
@@ -2467,7 +2467,7 @@ namespace CampaignSvcs
             amount_before += divided_day_amount;
           }
         }
-      } // if(source_amount)      
+      } // if(source_amount)
 
       return !amount_holder.days.empty(); // not all local data expired
     }
@@ -2515,7 +2515,7 @@ namespace CampaignSvcs
       if(source_amount)
       {
         auto source_day_it = source_amount->day_amount_counts.lower_bound(
-          use_source_end_date);      
+          use_source_end_date);
 
         {
           // collect sum amount for replace days and add it to target days
@@ -2619,7 +2619,7 @@ namespace CampaignSvcs
             clicks_before += divided_day_clicks;
           }
         }
-      } // if(source_amount)      
+      } // if(source_amount)
 
       return !amount_holder.days.empty(); // not all local data expired
     }

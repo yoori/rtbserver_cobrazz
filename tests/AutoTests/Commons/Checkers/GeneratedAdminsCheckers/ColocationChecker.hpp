@@ -15,7 +15,7 @@ namespace AutoTest
       typedef ColocationAdmin::Expected Expected;
 
       ColocationChecker(
-        BaseUnit* test,     
+        BaseUnit* test,
         unsigned long colo,
         const Expected& expected,
         AdminExistCheck exists = AEC_EXISTS) :
@@ -33,7 +33,7 @@ namespace AutoTest
 
       BaseUnit* test_;
       unsigned long colo_;
-      Expected expected_;     
+      Expected expected_;
       AdminExistCheck exists_;
 
   };

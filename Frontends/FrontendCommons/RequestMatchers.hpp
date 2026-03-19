@@ -285,7 +285,7 @@ namespace FrontendCommons
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-    
+
     WebBrowserMatcher() noexcept;
 
     bool

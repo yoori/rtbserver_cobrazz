@@ -20,7 +20,7 @@ namespace Oracle
 {
   ResultSet::~ResultSet() noexcept
   {}
-  
+
   void ResultSet::check_terminated_(const char* fun) const
     /*throw(NotSupported)*/
   {

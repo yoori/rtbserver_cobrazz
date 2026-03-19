@@ -366,7 +366,7 @@ namespace ChannelSvcs
   inline
   bool operator==(
     const ChannelServerBase::ChannelAtom& v1,
-    const ChannelServerBase::ChannelAtom& v2) 
+    const ChannelServerBase::ChannelAtom& v2)
   {
     return (v1.id == v2.id && v1.trigger_channel_id == v2.trigger_channel_id);
   }
@@ -374,7 +374,7 @@ namespace ChannelSvcs
   inline
   bool operator<(
     const ChannelServerBase::ChannelAtom& v1,
-    const ChannelServerBase::ChannelAtom& v2) 
+    const ChannelServerBase::ChannelAtom& v2)
   {
     if(v1.id == v2.id)
     {

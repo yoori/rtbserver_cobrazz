@@ -37,7 +37,7 @@ namespace RequestInfoSvcs
     static const char* FUN = "UserSiteReachContainer::UserSiteReachContainer()";
 
     Generics::Time extend_time_period_val(extend_time_period);
-    
+
     if(extend_time_period_val == Generics::Time::ZERO)
     {
       extend_time_period_val = std::max(expire_time / 4, Generics::Time(1));
@@ -86,7 +86,7 @@ namespace RequestInfoSvcs
       throw Exception(ostr);
     }
   }
-  
+
   void UserSiteReachContainer::process_tag_request(
     const TagRequestInfo& tag_request_info)
     /*throw(TagRequestProcessor::Exception)*/
@@ -187,7 +187,7 @@ namespace RequestInfoSvcs
         ex.what();
       throw Exception(ostr);
     }
-    
+
     if(!reach_info.appearance_list.empty())
     {
       if(logger_->log_level() >= Logging::Logger::TRACE)
@@ -215,7 +215,7 @@ namespace RequestInfoSvcs
       }
     }
   }
-  
+
   void UserSiteReachContainer::clear_expired_users()
     /*throw(Exception)*/
   {

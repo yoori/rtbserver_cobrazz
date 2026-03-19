@@ -13,7 +13,7 @@ namespace Declaration
   {
   public:
     DECLARE_EXCEPTION(InvalidName, eh::DescriptiveException);
-    
+
     NamePath(const char* abs_path, bool name_is_local = false)
       /*throw(InvalidName)*/;
 
@@ -35,7 +35,7 @@ namespace Declaration
     typedef std::map<std::string,
       ReferenceCounting::SmartPtr<Namespace> >
       NamespaceMap;
-    
+
   public:
     Namespace(
       const char* name_val = 0,
@@ -63,9 +63,9 @@ namespace Declaration
 
   private:
     virtual ~Namespace() noexcept {}
-    
+
     BaseType_var local_find_type_(const NamePath& name) const noexcept;
-    
+
   private:
     std::string name_;
     Namespace* owner_;

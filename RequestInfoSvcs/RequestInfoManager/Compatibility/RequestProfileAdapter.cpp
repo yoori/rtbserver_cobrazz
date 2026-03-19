@@ -318,7 +318,7 @@ namespace
         request_writer.ctr() = old_request_reader.ctr();
         std::copy(old_request_reader.post_impression_actions().begin(),
           old_request_reader.post_impression_actions().end(),
-          std::back_inserter(request_writer.post_impression_actions()));        
+          std::back_inserter(request_writer.post_impression_actions()));
         request_writer.campaign_freq() = old_request_reader.campaign_freq();
         request_writer.referer_hash() = old_request_reader.url_hash();
         std::copy(old_request_reader.geo_channels().begin(),
@@ -494,7 +494,7 @@ namespace
         request_writer.ctr() = old_request_reader.ctr();
         std::copy(old_request_reader.post_impression_actions().begin(),
           old_request_reader.post_impression_actions().end(),
-          std::back_inserter(request_writer.post_impression_actions()));        
+          std::back_inserter(request_writer.post_impression_actions()));
         request_writer.campaign_freq() = old_request_reader.campaign_freq();
         request_writer.referer_hash() = old_request_reader.referer_hash();
         std::copy(old_request_reader.geo_channels().begin(),
@@ -680,7 +680,7 @@ namespace
         request_writer.ctr() = old_request_reader.ctr();
         std::copy(old_request_reader.post_impression_actions().begin(),
           old_request_reader.post_impression_actions().end(),
-          std::back_inserter(request_writer.post_impression_actions()));        
+          std::back_inserter(request_writer.post_impression_actions()));
         request_writer.campaign_freq() = old_request_reader.campaign_freq();
         request_writer.referer_hash() = old_request_reader.referer_hash();
         std::copy(old_request_reader.geo_channels().begin(),
@@ -1001,7 +1001,7 @@ namespace RequestInfoSvcs
           result_mem_buf = RequestInfoSvcs_v356::convert_to_v360(result_mem_buf->membuf());
           current_version = 360;
         }
- 
+
         if(current_version == 360)
         {
           result_mem_buf = RequestInfoSvcs_v360::convert_to_v361(result_mem_buf->membuf());

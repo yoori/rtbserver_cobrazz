@@ -33,7 +33,7 @@ namespace RequestInfoSvcs
       passback_processor_(ReferenceCounting::add_ref(passback_processor))
   {
     static const char* FUN = "PassbackContainer::PassbackContainer()";
-    
+
     Generics::Time extend_time_period_val(extend_time_period);
 
     if(extend_time_period_val == Generics::Time::ZERO)

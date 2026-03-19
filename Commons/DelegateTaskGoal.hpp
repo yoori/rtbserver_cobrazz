@@ -46,7 +46,7 @@ namespace AdServer
     /**
      * create task that will reexecuted for time returned from delegate
      * execution will be stopped if returned time is ZERO
-     */    
+     */
     template<typename Delegate>
     GoalTask_var
     make_repeating_task(

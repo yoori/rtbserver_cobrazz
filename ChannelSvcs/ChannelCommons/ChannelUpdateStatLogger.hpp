@@ -20,7 +20,7 @@ namespace AdServer
 
       ChannelUpdateStatLogger(
         unsigned long size,
-        unsigned long period, 
+        unsigned long period,
         const char* out_dir)
         /*throw(eh::Exception)*/;
     protected:
@@ -58,7 +58,7 @@ namespace AdServer
     typedef
       ReferenceCounting::SmartPtr<ChannelUpdateStatLogger>
       ChannelUpdateStatLogger_var;
-    
+
   }
 }
 

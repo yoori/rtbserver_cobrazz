@@ -185,17 +185,17 @@ namespace
       {{ "RTB-RON/728x90", EMPTY, 0 }}
     },
     /*24*/
-    { "Special json characters in request: '\' char", 
+    { "Special json characters in request: '\' char",
       BODY, {{ "728x90", 0 }}, "cnt-s-2/iab",
       {{ "RTB-RON/728x90", EMPTY, 0 }}
     },
     /*25*/
-    { "Special json characters in request: 'ы' char", 
+    { "Special json characters in request: 'ы' char",
       BODY, {{ "728x90", 0 }}, "cnt-s-3/iab",
       {{ "RTB-RON/728x90", EMPTY, 0 }}
     },
     /*26*/
-    { "Special json characters in request: '\\n' char", 
+    { "Special json characters in request: '\\n' char",
       BODY, {{ "728x90", 0 }}, "cnt-s-4/iab",
       {{ "RTB-RON/728x90", EMPTY, 0 }}
     },
@@ -249,7 +249,7 @@ namespace
       {{ "RTB-RON/240x400", FIELD_NOT_EXIST, EMPTY }}
     }
   };
-  
+
   const RTBCategoriesMappingTest::RTBTestCase<2> TEST2[] =
   {
     /*1*/
@@ -290,7 +290,7 @@ namespace
        { "RTB/160x600", 1, "cnt-1/allyes" }}
     }
   };
-  
+
   const RTBCategoriesMappingTest::RTBTestCase<3> TEST2_4[] =
   {
     /*4*/
@@ -300,10 +300,10 @@ namespace
       // response
       {{ "RTB-RON/240x400", EMPTY, EMPTY },
        { "RTB/120x240", EMPTY, EMPTY },
-       { "RTB-RON/120x600", EMPTY, EMPTY }} 
-    } 
+       { "RTB-RON/120x600", EMPTY, EMPTY }}
+    }
   };
-  
+
 // a:* - for excluded_ad_category request param filling
 // s:* - for excluded_sensitive_category request param filling
   const RTBCategoriesMappingTest::TanxTestCase TEST3[] =
@@ -705,7 +705,7 @@ RTBCategoriesMappingTest::prepare_checker(
       std::string("CREATIVE/") + test_case.bid.cc_id  + "/TANX");
     expected.creative_id(creative_id);
   }
-  
+
   set_expected_categories(
     test_case.bid.visual_categories,
     expected,
@@ -735,7 +735,7 @@ RTBCategoriesMappingTest::prepare_checker(
     {
       expected.type_exist(false);
     }
-    
+
     if (!test_case.bid.content_categories)
     {
       expected.category_exist(false);
@@ -768,7 +768,7 @@ void RTBCategoriesMappingTest::perform_case_(
     // Prepare request;
     typename Traits::Request request;
     prepare_request(request, cases[i]);
-      
+
     // Send request
     client.process_post(request);
     // Check response
@@ -776,7 +776,7 @@ void RTBCategoriesMappingTest::perform_case_(
     typename Traits::Expected expected;
 
     prepare_checker(expected, cases[i]);
-      
+
     NOSTOP_FAIL_CONTEXT(
       typename Traits::Checker(
         client, expected).check(),
@@ -802,11 +802,11 @@ RTBCategoriesMappingTest::run_test()
   AUTOTEST_CASE(
     perform_case_<RTBTraits>(ALLYES_TEST2),
     "OpenRTB multi-slot requests");
-  
+
   AUTOTEST_CASE(
     perform_case_<RTBTraits>(TEST2_4),
     "OpenRTB multi-slot requests");
-    
+
   AUTOTEST_CASE(
     perform_case_<TanxTraits>(TEST3),
     "TanX categories exclusion");
@@ -818,6 +818,6 @@ RTBCategoriesMappingTest::run_test()
   AUTOTEST_CASE(
     perform_case_<BaiduTraits>(TEST4_2),
     "Baidu categories exclusion");
-  
+
   return true;
 }

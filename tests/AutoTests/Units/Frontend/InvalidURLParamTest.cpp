@@ -19,7 +19,7 @@ namespace
     "abcdefghijklmnopqrstuvwxyz"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "0123456789";
-  
+
   void
   fill_random(std::string &str, size_t count)
   {
@@ -36,7 +36,7 @@ namespace
   string1 \
   string2 \
   string3
-  
+
   enum Service
   {
     SVC_NSLOOKUP,
@@ -221,13 +221,13 @@ namespace
     { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM10000",
       204, 0, 0, 400, true }, //89 post
 
-    { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM10204", 
+    { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM10204",
       204, 0, 0, 400, true }, //90 post
 
-     { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM30500", 
+     { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM30500",
        204, 0, 0, 400, true }, //91 post
-    
-    { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM30684", 
+
+    { SVC_NSLOOKUP, "referer-kw", "=", "?RANDOM30684",
       413, 0, 0, 400, true }, //92 post
   };
 }
@@ -262,12 +262,12 @@ scenario(AutoTest::AdClient &client,
   if (test->header)
   {
     std::string value;
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         client.find_header_value(test->header, value)),
       std::string(test->header) + " not found");
- 
+
     if (test->regexp)
     {
       String::RegEx regexp(String::SubString(test->regexp));
@@ -291,12 +291,12 @@ InvalidURLParamTest::run_test()
   {
 
     // Do not send probe uid request if uid parameter testing, because
-    // client uid sending in cookie have more priority than uid in url 
+    // client uid sending in cookie have more priority than uid in url
     AutoTest::AdClient
       client(strcmp(tests[i].param, "uid") != 0?
          AutoTest::AdClient::create_user(this) :
            AutoTest::AdClient::create_undef_user(this));
-  
+
     const char *service = service_url[tests[i].service];
     std::string url = service;
     std::string value;

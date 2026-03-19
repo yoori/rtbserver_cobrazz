@@ -18,7 +18,7 @@ namespace AutoTest
     referer(this, "Referer"),
     x_forwarded_for(this, "x-Forwarded-For")
   { }
-  
+
   UserBindRequest::UserBindRequest(const UserBindRequest& other) :
     BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     ssp_user_id(this, other.ssp_user_id),

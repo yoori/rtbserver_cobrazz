@@ -8,43 +8,43 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = TriggerAdmin::Expected>  
-  class TriggerChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = TriggerAdmin::Expected>
+  class TriggerChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      TriggerChecker_(      
-        BaseUnit* test,      
-        const std::string& trigger,      
-        ChannelSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        trigger_(trigger),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      TriggerChecker_(
+        BaseUnit* test,
+        const std::string& trigger,
+        ChannelSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        trigger_(trigger),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~TriggerChecker_() noexcept {}      
+      virtual ~TriggerChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      std::string trigger_;      
-      ChannelSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      std::string trigger_;
+      ChannelSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef TriggerChecker_<TriggerAdmin::Expected> TriggerChecker;  
-  typedef TriggerChecker_<std::string> TriggerCheckerSimple;  
+  typedef TriggerChecker_<TriggerAdmin::Expected> TriggerChecker;
+  typedef TriggerChecker_<std::string> TriggerCheckerSimple;
 
 }
 

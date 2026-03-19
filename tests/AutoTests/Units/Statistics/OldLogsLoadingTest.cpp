@@ -1,5 +1,5 @@
 #include "OldLogsLoadingTest.hpp"
- 
+
 REFLECT_UNIT(OldLogsLoadingTest) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -11,7 +11,7 @@ namespace
   namespace ORM = ::AutoTest::ORM;
 }
 
-bool 
+bool
 OldLogsLoadingTest::run_test()
 {
   FAIL_CONTEXT(
@@ -32,20 +32,20 @@ OldLogsLoadingTest::run_test()
 
 void
 OldLogsLoadingTest::case_CreativeStat(
-  AutoTest::DBC::Conn& conn, 
+  AutoTest::DBC::Conn& conn,
   const std::string& login,
   int num)
 {
   std::string n = strof(num);
   std::string dst = login + "CreativeStat/";
-  
+
   std::string file = fetch_string("CreativeStatFile" + n);
   std::string commit_file = fetch_string("CreativeStatCommitFile" + n);
   std::string date = fetch_string("CreativeStatDate" + n);
   const unsigned long cc_id = fetch_int("CreativeStatCC" + n);
   const unsigned long numshown = fetch_int("CreativeStatNumShown" + n);
   const unsigned long imps = fetch_int("CreativeStatImps" + n);
-  
+
   HourlyStats stats;
   stats.key().cc_id(cc_id).num_shown(numshown).stimestamp(date);
   stats.select(conn);

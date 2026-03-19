@@ -130,7 +130,7 @@ namespace {
     }
   };
 
-  
+
 }
 
 void NegativeMatchTest::set_up()
@@ -171,7 +171,7 @@ void NegativeMatchTest::pre_condition()
   diffs_.push_back(Diff().hits(2));
 }
 
-bool 
+bool
 NegativeMatchTest::run()
 {
 
@@ -180,7 +180,7 @@ NegativeMatchTest::run()
       "Simple case#1.",
       TEST_CASES_1),
     "Simple cases");
-  
+
   AUTOTEST_CASE(
     test_group(
       "Simple case#2.",
@@ -192,19 +192,19 @@ NegativeMatchTest::run()
       "Exact triggers#1.",
       EXACT_TRIGGERS_1),
     "Exact triggers");
-  
+
   AUTOTEST_CASE(
     test_group(
       "Exact triggers#2.",
       EXACT_TRIGGERS_2),
     "Exact triggers");
-  
+
   AUTOTEST_CASE(
     test_group(
       "Split page & search#1.",
       SPLIT_1),
     "Separate page and search negative lists");
-  
+
   AUTOTEST_CASE(
     test_group(
       "Split page & search#2.",
@@ -286,14 +286,14 @@ NegativeMatchTest::test_case(
     }
   }
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this, test.matched,
       client.debug_info.trigger_channels).check(),
     description +
       " Expected trigger_channels");
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this, test.unmatched,

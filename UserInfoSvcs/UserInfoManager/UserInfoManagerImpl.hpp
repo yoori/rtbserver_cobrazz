@@ -99,7 +99,7 @@ namespace AdServer
         /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
-      
+
       virtual CORBA::Boolean match(
         const AdServer::UserInfoSvcs::UserInfo& user_info,
         const AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams& match_params,
@@ -147,7 +147,7 @@ namespace AdServer
           AdServer::UserInfoSvcs::UserInfoManager::ImplementationException,
           AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound)*/;
 
-      
+
       virtual void consider_publishers_optin(
         const CORBACommons::UserIdInfo& user_id_info,
         const CORBACommons::IdSeq& exclude_pubpixel_accounts,
@@ -215,7 +215,7 @@ namespace AdServer
       private:
         UserInfoManagerImpl* manager_;
       };
-      
+
       class GetLastColoProfilesTask : public TaskBase
       {
       public:
@@ -268,12 +268,12 @@ namespace AdServer
           noexcept;
 
         virtual void execute() noexcept;
-        
+
       protected:
         UserInfoManagerImpl* user_info_manager_impl_;
         bool reschedule_;
       };
-      
+
       class DeleteOldTemporaryProfilesTask : public TaskBase
       {
       public:
@@ -284,7 +284,7 @@ namespace AdServer
           noexcept;
 
         virtual void execute() noexcept;
-        
+
       protected:
         UserInfoManagerImpl* user_info_manager_impl_;
         bool reschedule_;
@@ -303,7 +303,7 @@ namespace AdServer
           noexcept;
 
         virtual void execute() noexcept;
-        
+
       protected:
         UserInfoManagerImpl* user_info_manager_impl_;
         bool reschedule_;
@@ -369,7 +369,7 @@ namespace AdServer
       void load_user_operations_() noexcept;
 
       void delete_old_profiles_(bool reschedule) noexcept;
-      
+
       void delete_old_temporary_profiles_(bool reschedule) noexcept;
 
       void get_last_colo_profiles_() noexcept;
@@ -389,7 +389,7 @@ namespace AdServer
         ChannelIntervalsPack* cip,
         const ChannelInterval& ci)
         noexcept;
-      
+
       CampaignServerPoolPtr
       resolve_campaign_servers_(
         const CORBACommons::CorbaObjectRefList& campaign_server_refs)
@@ -458,7 +458,7 @@ namespace AdServer
       Generics::Time temp_profile_lifetime_;
 
       Generics::Time repeat_trigger_timeout_;
-      
+
       bool provide_channel_counters_;
 
       mutable SyncPolicy::Mutex colo_lock_;
@@ -503,7 +503,7 @@ namespace AdServer
     {
       manager_->flush_logs_();
     }
-    
+
     inline
     UserInfoManagerImpl::GetLastColoProfilesTask::GetLastColoProfilesTask(
       UserInfoManagerImpl* user_info_manager_impl,

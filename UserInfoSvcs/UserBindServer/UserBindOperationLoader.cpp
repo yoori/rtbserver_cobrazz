@@ -253,7 +253,7 @@ namespace UserInfoSvcs
 
     const std::string new_file_name =
       AdServer::LogProcessing::restore_log_file_name(info, DIR_);
-    
+
     std::string file_name;
     AdServer::PathManip::split_path(new_file_name.c_str(), 0, &file_name);
     std::string reprocess_path = unprocessed_dir_;

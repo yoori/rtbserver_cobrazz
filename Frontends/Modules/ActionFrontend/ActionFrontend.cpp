@@ -1161,7 +1161,7 @@ namespace Action
       {
         assert(0);
       }
-    }    
+    }
   }
 
   void
@@ -1215,7 +1215,7 @@ namespace Action
     static const char* FUN = "Frontend::action_taken_all_()";
 
     try
-    {      
+    {
       AdServer::CampaignSvcs::CampaignManager::ActionInfo verify_action_info;
 
       // verify_action_info.user_id, verify_action_info.user_status must be initialized in loop
@@ -1239,7 +1239,7 @@ namespace Action
       }
 
       verify_action_info.order_id << request_info.order_id;
-    
+
       if(request_info.campaign_id.present())
       {
         verify_action_info.campaign_id_defined = true;

@@ -27,7 +27,7 @@ public:
    * @param is initial benchmark (recreate users)
    * @param frontend type
    * @param request configuration
-   */    
+   */
   BenchmarkConfig(const char* server_,
                   unsigned long size_,
                   ClientType client_type_,
@@ -40,7 +40,7 @@ public:
    * @brief Destructor.
    */
   virtual ~BenchmarkConfig() noexcept;
-  
+
   const std::string server;   // server address
   const unsigned long size;   // benchmark size
   const ClientType client_type;    // client type
@@ -51,7 +51,7 @@ public:
 };
 
 typedef ReferenceCounting::SmartPtr<BenchmarkConfig> BenchmarkConfig_var;
-  
+
 
 /**
 * @class Configuration
@@ -59,7 +59,7 @@ typedef ReferenceCounting::SmartPtr<BenchmarkConfig> BenchmarkConfig_var;
 */
 class Configuration
 {
-  
+
 public:
 
   DECLARE_EXCEPTION(InvalidConfiguration, eh::DescriptiveException);
@@ -67,22 +67,22 @@ public:
   DECLARE_EXCEPTION(InvalidXmlFieldFormat, eh::DescriptiveException);
 
   typedef std::list<BenchmarkConfig_var> BenchmarkList;
-  
+
   // Default threads number for test.
   static const unsigned long  DEFAULT_THREADS_NUMBER = 10;
 
   // List names
   static const char*          URL;              // URL's list name
-  static const char*          REFERER_KW;       // Referer's list name 
+  static const char*          REFERER_KW;       // Referer's list name
   static const char*          FT;               // Full text's list name
-  static const char*          VERSION;          // Version's list name  
-  static const char*          BROWSER;          // Browsers's list name  
-  static const char*          USER_AGENT;       // UserAgent's list name  
-  static const char*          OS;               // OS's list name  
-  static const char*          TID;              // Tid's list name  
-  static const char*          COUNTRY;          // Country's list name  
-  static const char*          FORMAT;           // Format's list name  
-  static const char*          CT_PSWND_COOKIE;  
+  static const char*          VERSION;          // Version's list name
+  static const char*          BROWSER;          // Browsers's list name
+  static const char*          USER_AGENT;       // UserAgent's list name
+  static const char*          OS;               // OS's list name
+  static const char*          TID;              // Tid's list name
+  static const char*          COUNTRY;          // Country's list name
+  static const char*          FORMAT;           // Format's list name
+  static const char*          CT_PSWND_COOKIE;
   static const char*          SIZENOTSUP;
   static const char*          COLO_ID;          // ColoId's list name
 
@@ -92,7 +92,7 @@ public:
    * @brief Constructor.
    *
    * @param config_path Path of the configuration XML-file
-   */    
+   */
   Configuration(const char* config_path);
 
   /**

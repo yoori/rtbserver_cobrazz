@@ -109,7 +109,7 @@ namespace Commons
       {
         Stream::Error err;
         err << "Query to database failed: ("
-          << PQresStatus(status) << ") " 
+          << PQresStatus(status) << ") "
           << PQresultErrorMessage(res_pg.get());
         throw SqlException(err);
       }
@@ -143,7 +143,7 @@ namespace Commons
           }
           cursor_name_.assign(name, 32);
           decl_cursor << "DECLARE " << cursor_name_
-            << (result_format == BINARY_FORMAT ? " BINARY" : "") 
+            << (result_format == BINARY_FORMAT ? " BINARY" : "")
             << " CURSOR FOR " << statement->query() << ";";
           prepare_params_(statement, params_values, params_lens);
           PGresultPtr pg_res(PQgetResult(conn_), PQclear);
@@ -185,7 +185,7 @@ namespace Commons
       {
         cursor_name_.clear();
         Stream::Error err;
-        err << __func__ << ": error on creating cursor, query '" 
+        err << __func__ << ": error on creating cursor, query '"
           << decl_cursor.str() << "': " << e.what();
         throw Postgres::Exception(e);
       }

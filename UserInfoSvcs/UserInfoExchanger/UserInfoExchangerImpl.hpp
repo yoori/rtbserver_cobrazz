@@ -41,7 +41,7 @@ namespace AdServer
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
       DECLARE_EXCEPTION(NotReady, Exception);
-      
+
       typedef xsd::AdServer::Configuration::UserInfoExchangerConfigType
         UserInfoExchangerConfig;
 
@@ -54,7 +54,7 @@ namespace AdServer
       virtual ~UserInfoExchangerImpl() noexcept;
 
       /* UserInfoExchanger interface */
-      virtual void 
+      virtual void
       register_users_request(
         const char* customer_id,
         const AdServer::UserInfoSvcs::ColoUsersRequestSeq& users)
@@ -63,13 +63,13 @@ namespace AdServer
 
       virtual void
       receive_users(
-        const char* customer_id, 
+        const char* customer_id,
         AdServer::UserInfoSvcs::UserProfileSeq_out user_profiles,
         const AdServer::UserInfoSvcs::ReceiveCriteria& receive_criteria)
         /*throw(AdServer::UserInfoSvcs::UserInfoExchanger::NotReady,
           AdServer::UserInfoSvcs::UserInfoExchanger::ImplementationException)*/;
 
-      virtual void 
+      virtual void
       get_users_requests(
         const char* customer_id,
         AdServer::UserInfoSvcs::UserIdSeq_out users)

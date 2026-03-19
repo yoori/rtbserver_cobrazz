@@ -8,13 +8,13 @@ REFLECT_UNIT(UidWithPlusTest) (
 typedef AutoTest::NSLookupRequest  NSLookupRequest;
 typedef AutoTest::AdClient AdClient;
 
-bool 
+bool
 UidWithPlusTest::run_test()
-{  
+{
   add_descr_phrase("Starting <No ADSC, see description>");
-  
+
   add_descr_phrase("Initializing common XML data");
-  
+
   const unsigned long iters_count = fetch_int("RequestsCount");
 
   NSLookupRequest request;
@@ -24,19 +24,19 @@ UidWithPlusTest::run_test()
   request.format("unit-test-imp");
 
   add_descr_phrase("Sending requests");
-  
+
   unsigned long count = iters_count;
-    
+
   bool next = true;
   while (next && count != 0)
   {
     AdClient client(AdClient::create_user(this));
-  
+
     client.process_request(request);
 
     std::string uid1;
     if (!client.get_cookies().find_value("uid", uid1))
-    { 
+    {
       Stream::Error error;
       error << "Server didn't return uid on request: "
             << request.url ();
@@ -68,10 +68,10 @@ UidWithPlusTest::run_test()
     client.process_request(debug_info.track_pixel_url);
     client.process_request(debug_info.click_url);
     client.process_request(debug_info.selected_creatives.first().action_adv_url);
-      
+
     --count;
   }
-  
+
   return true;
 }
 

@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__FRAUDPROTECTIONFEATURETEST_
 #define _AUTOTEST__FRAUDPROTECTIONFEATURETEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 
 
 
@@ -26,16 +26,16 @@ public:
     unsigned long count;
     unsigned long flags;
   };
-  
+
 public:
- 
+
   FraudProtectionFeatureTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~FraudProtectionFeatureTest() noexcept
   { }
 
@@ -44,9 +44,9 @@ protected:
   virtual bool run();
   virtual void set_up();
   virtual void tear_down();
- 
+
 private:
- 
+
   // helper methods
   template<size_t Count>
   void
@@ -54,7 +54,7 @@ private:
     AdClient& client,
     const TestRequest (&data)[Count],
     const AutoTest::Time& dtime = Generics::Time::ZERO);
-  
+
   // Scenario
   void click_fraud_();
   void genuine_user_();

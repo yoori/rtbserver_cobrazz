@@ -4,7 +4,7 @@ REFLECT_UNIT(ActionRequestsTests) (
   "Statistics",
   AUTO_TEST_SLOW
 );
- 
+
 namespace
 {
   const char* const LU = "LU";
@@ -22,7 +22,7 @@ namespace
 
 namespace ORM = AutoTest::ORM;
 
-bool 
+bool
 ActionRequestsTests::run_test()
 {
   AutoTest::DBC::Conn conn(open_pq());
@@ -33,7 +33,7 @@ ActionRequestsTests::run_test()
 }
 
 
-void make_request_series (AdClient& client, 
+void make_request_series (AdClient& client,
                           ActionRequest request,
                           int count)
 {
@@ -44,9 +44,9 @@ void make_request_series (AdClient& client,
 }
 
 void make_request_series (
-  AdClient& client, 
-  int count, 
-  unsigned long action, 
+  AdClient& client,
+  int count,
+  unsigned long action,
   const char* country,
   const AutoTest::Time& debug_time)
 {
@@ -62,9 +62,9 @@ void make_request_series (
 }
 
 void make_request_series (
-  AdClient& client, 
-  int count, 
-  unsigned long action, 
+  AdClient& client,
+  int count,
+  unsigned long action,
   const char* country,
   const char* referer,
   const AutoTest::Time& debug_time)
@@ -84,7 +84,7 @@ void
 ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
 {
   AdClient client(AdClient::create_nonoptin_user(this));
-  
+
   unsigned long tid1  = fetch_int("Tag1");
   unsigned long colo1 = 1;
   unsigned long colo2 = fetch_int("COLO");
@@ -93,7 +93,7 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
   unsigned long action3 = 999999;
 
   std::string keyword1 = fetch_string("Keyword1");
-  
+
   ORM::StatsArray<ORM::ActionRequests, 10> stats;
   stats[0].key().
     colo_id(colo1).
@@ -163,7 +163,7 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
 
   add_descr_phrase("Probe user");
   client.set_probe_uid();
- 
+
   make_request_series(client, 6, action1, UG, base_time);
   make_request_series(client, 5, action2, LU, base_time);
   add_descr_phrase("Persistent user");
@@ -179,7 +179,7 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
     request.debug_time = base_time;
 
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         1,
@@ -209,7 +209,7 @@ ActionRequestsTests::test_part1 (AutoTest::DBC::IConn& conn)
   }
   make_request_series(client, 2, action1, UG, REFERER2, base_time);
   make_request_series(client, 1, action2, LU, base_time);
-  // unexisting action id - oo 
+  // unexisting action id - oo
   make_request_series(client, 1, action3, LU, base_time);
 
   add_descr_phrase("Check table");

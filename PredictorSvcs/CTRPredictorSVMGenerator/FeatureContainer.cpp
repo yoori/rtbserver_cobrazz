@@ -20,7 +20,7 @@ namespace AdServer
           feature_it != feature_seq.end(); ++feature_it)
       {
         AdServer::CampaignSvcs::CTRGenerator::Feature result_feature;
-        
+
         for(FeatureType::BasicFeature_sequence::
               const_iterator basic_feature_it =
               feature_it->BasicFeature().begin();
@@ -35,10 +35,10 @@ namespace AdServer
             ostr << "Invalid basic feature name: '" << basic_feature_it->name() << "'";
             throw Exception(ostr);
           }
-          
+
           result_feature.basic_features.insert(basic_feature);
         }
-        
+
         features_.push_back(result_feature);
       }
     }
@@ -70,13 +70,13 @@ namespace AdServer
         {
           std::string name_lower(*it);
           String::AsciiStringManip::to_lower(name_lower);
-          
+
           AdServer::CampaignSvcs::CTR::BasicFeature basic_feature;
           if(!feature_name_resolver_.basic_feature_by_name(basic_feature, name_lower))
           {
             Stream::Error ostr;
             ostr << "Invalid basic feature name: '" << *it << "'";
-            throw Exception(ostr);            
+            throw Exception(ostr);
           }
           feature_columns[basic_feature] = column_i;
         }

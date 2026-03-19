@@ -8,7 +8,7 @@ namespace UserInfoSvcs{
   /**
    * UserInfoManagerControlImpl
    */
-  
+
   UserInfoManagerControlImpl::UserInfoManagerControlImpl(
     UserInfoManagerImpl* user_info_manager_impl)
     /*throw(Exception)*/
@@ -25,7 +25,7 @@ namespace UserInfoSvcs{
   UserInfoManagerControlImpl::status() noexcept
   {
     ReadGuard_ lock(lock_);
-    
+
     if(admitted_)
     {
       return AdServer::UserInfoSvcs::S_ADMITTED;
@@ -33,8 +33,8 @@ namespace UserInfoSvcs{
 
     return AdServer::UserInfoSvcs::S_READY;
   }
-  
-  void 
+
+  void
   UserInfoManagerControlImpl::get_source_info(
     AdServer::UserInfoSvcs::ChunksConfig_out user_info_source)
     /*throw(AdServer::UserInfoSvcs::UserInfoManagerControl::ImplementationException)*/
@@ -46,13 +46,13 @@ namespace UserInfoSvcs{
       user_info_source = new AdServer::UserInfoSvcs::ChunksConfig();
 
       unsigned long common_chunks_number;
-      
+
       UserInfoManagerImpl::ChunkIdList chunk_ids;
       user_info_manager_impl_->get_controllable_chunks(
         chunk_ids, common_chunks_number);
 
       user_info_source->common_chunks_number = common_chunks_number;
-      
+
       CorbaAlgs::fill_sequence(chunk_ids.begin(),
         chunk_ids.end(), user_info_source->chunk_ids);
     }
@@ -82,7 +82,7 @@ namespace UserInfoSvcs{
     WriteGuard_ lock(lock_);
     admitted_ = true;
   }
-  
+
 } /*UserInfoSvcs*/
 } /*AdServer*/
 

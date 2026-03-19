@@ -106,11 +106,11 @@ struct MatchWrapper
     ChannelMatchMap result;
 
     cm.match(result, time, cid, dict, pmp, pps, session_timeout, false);
-/*    
+/*
     std::cout << "-------------- " << match_ind << std::endl;
     cm.print(base_profile->membuf(), std::cout, "");
     std::cout << "-------------- " << match_ind << std::endl;
-*/    
+*/
     ++match_ind;
 
     if(!compare_channel_match_maps(result, etalon))
@@ -409,7 +409,7 @@ int session_match_test()
   {
     ChannelIntervalsPack_var page = new ChannelIntervalsPack();
     page->short_intervals.insert(
-      
+
       ChannelInterval(Generics::Time(Generics::Time::ZERO), Generics::Time(Generics::Time(60)), 1, 2));
     channel_rules->page_channels[1] = page;
   }
@@ -1323,7 +1323,7 @@ int unique_channels_test()
     ChannelIntervalsPack_var search = new ChannelIntervalsPack();
     search->short_intervals.insert(
       ChannelInterval(Generics::Time::ZERO, Generics::Time(60), 2, 2));
-    
+
     channel_rules->search_channels[i] = search;
      channel_rules->channel_features.insert(
        std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
@@ -1348,7 +1348,7 @@ int unique_channels_test()
 
     channel_rules->search_channels[i] = search;
     channel_rules->channel_features.insert(
-      std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));   
+      std::make_pair(i, ChannelFeatures(i%2 == 0, 0)));
   }
 
   for(unsigned long i = 8; i < 28; ++i)
@@ -1454,7 +1454,7 @@ int main() noexcept
 
   pmp.filter_contextual_triggers = false;
   pmp.repeat_trigger_timeout = Generics::Time::ZERO;
-  
+
   ret += persistent_match_test();
   ret += session_match_test();
   ret += session_match_test_2();

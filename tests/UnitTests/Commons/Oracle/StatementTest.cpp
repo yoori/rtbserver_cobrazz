@@ -14,7 +14,7 @@ struct ConnHolder: public ReferenceCounting::DefaultImpl<>
 {
   virtual ~ConnHolder() noexcept
   {}
-  
+
   Commons::Oracle::Connection_var conn;
 };
 
@@ -45,7 +45,7 @@ namespace
   Generics::AppUtils::Option<unsigned long> opt_execute_timeout;
 
   const char USAGE[] =
-    "Usage:\n" 
+    "Usage:\n"
     "  OracleStatementTest --db=\"location\" -u user -p password -q query -s sql\n"
     "  --db : The location string to identify data base.\n"
     "  -u, --user : The user name.\n"
@@ -134,7 +134,7 @@ main(int argc, char* argv[]) noexcept
         connection->create_statement((*sql).c_str());
 
       sql_statement->execute();
-    }    
+    }
   }
   catch (const eh::Exception& ex)
   {

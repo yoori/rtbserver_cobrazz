@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__OPENRTBTEST_
 #define _AUTOTEST__OPENRTBTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class OpenRTBTest : public BaseDBUnit
 {
@@ -15,7 +15,7 @@ class OpenRTBTest : public BaseDBUnit
     const char* ccg;
     unsigned long auctions_lost;
   };
-  
+
 public:
   OpenRTBTest(
     UnitStat& stat_var,
@@ -34,7 +34,7 @@ private:
 
   void simple_case();
   void auctions_lost();
-    
+
 };
 
 #endif // _AUTOTEST__OPENRTBTEST_

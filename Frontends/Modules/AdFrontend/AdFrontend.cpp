@@ -313,7 +313,7 @@ namespace AdServer
             channel_manager_controller_refs,
             corba_client_adapter_,
             callback()));
-        
+
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
@@ -1402,7 +1402,7 @@ namespace AdServer
 
       request_time_metering.detail_trigger_match_time.resize(
         trigger_matched_channels->match_time.length());
-      
+
       for(size_t i = 0;
           i < request_time_metering.detail_trigger_match_time.size(); i++)
       {
@@ -1433,7 +1433,7 @@ namespace AdServer
         fill_debug_channels_(
           trigger_matched_channels->matched_channels.url_keyword_channels, 'R',  ostr);
         ostr << std::endl;
-        
+
       logger()->log(ostr.str(),
         TraceLevel::MIDDLE,
         Aspect::AD_FRONTEND);
@@ -1734,7 +1734,7 @@ namespace AdServer
     static const char* FUN = "AdFrontend::resolve_cookie_user_id_()";
 
     return false;
-    
+
     if(!request_info.client_id.is_null() && user_bind_client_)
     {
       try
@@ -1997,7 +1997,7 @@ namespace AdServer
         request_info.request_id);
       request_params.common_info.time = CorbaAlgs::pack_time(
         request_info.current_time);
-      
+
       request_params.common_info.user_agent << request_info.user_agent;
 
       // fill request_params.context_info
@@ -2130,7 +2130,7 @@ namespace AdServer
         ad_slot.video_width = 0;
         ad_slot.video_height = 0;
         ad_slot.video_allow_skippable = true;
-        ad_slot.video_allow_unskippable = true;        
+        ad_slot.video_allow_unskippable = true;
       }
 
       TimeGuard creative_selection_time_metering;
@@ -2341,7 +2341,7 @@ namespace AdServer
       result_channel_ids[i].channel_trigger_id = 0;
     }
   }
-  
+
   void AdFrontend::prepare_ui_match_params_(
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams& match_params,
     const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* match_result,

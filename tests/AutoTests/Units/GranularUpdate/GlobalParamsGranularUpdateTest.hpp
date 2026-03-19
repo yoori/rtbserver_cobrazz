@@ -10,26 +10,26 @@ namespace ORM = ::AutoTest::ORM;
 /**
 * @class GlobalParamsGranularUpdateTest
 * @brief Test for global params granular update
-*/ 
- 
+*/
+
 class GlobalParamsGranularUpdateTest: public BaseDBUnit
 {
 public:
   GlobalParamsGranularUpdateTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       currency_exchange_id_(0)
   {};
- 
+
   virtual ~GlobalParamsGranularUpdateTest() noexcept
   {};
 
   void set_up();
   void tear_down();
   bool run();
- 
+
 private:
   /**
    * @class GlobalParamsGranularUpdateTest::Exchange
@@ -79,7 +79,7 @@ private:
     void add_currencies_();
 
     // delete currency exchange rate for existing currencies
-    void delete_currencies_();  
+    void delete_currencies_();
   };
 
 private:
@@ -91,4 +91,4 @@ private:
   std::string frontend_;
 };
 
-#endif 
+#endif

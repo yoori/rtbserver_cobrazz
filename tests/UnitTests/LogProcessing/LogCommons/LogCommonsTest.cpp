@@ -12,16 +12,16 @@ TEST(restore_log_file_name)
   info.random = 1234567890;
 
   ASSERT_EQUALS (
-    restore_log_file_name(info, "/some_path"), 
+    restore_log_file_name(info, "/some_path"),
     "/some_path/Request.20090525.111111.000000.1234567890.1.5555");
 
   info.processed_lines_count = 311;
   ASSERT_EQUALS (
-    restore_log_file_name(info, "/some_path"), 
+    restore_log_file_name(info, "/some_path"),
     "/some_path/Request.20090525.111111.000000.1234567890.1.5555.311");
 
   ASSERT_EQUALS (
-    restore_log_file_name(info, ""), 
+    restore_log_file_name(info, ""),
     "Request.20090525.111111.000000.1234567890.1.5555.311");
 }
 

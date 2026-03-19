@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__TEXTCHANNELCCGS_
 #define _AUTOTEST__TEXTCHANNELCCGS_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class TextChannelCCGs : public BaseUnit
 {

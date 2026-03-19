@@ -26,12 +26,12 @@ namespace Code
 
   protected:
     virtual ~NamespaceElement() noexcept {}
-    
+
   private:
     NamespaceElement* owner_;
     Declaration::Namespace_var namespace_;
     ElementList_var elements_;
-  };  
+  };
 
   typedef ReferenceCounting::SmartPtr<NamespaceElement>
     NamespaceElement_var;

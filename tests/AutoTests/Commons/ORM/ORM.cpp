@@ -13,7 +13,7 @@ namespace AutoTest
     { }
 
     // class ORMString
-    
+
     ORMString::ORMString()
     { }
 
@@ -48,7 +48,7 @@ namespace AutoTest
       _changed = false;
       _null = true;
     }
-    
+
     ORMDate::ORMDate(
       const value_type& value) :
       Base(value)
@@ -57,14 +57,14 @@ namespace AutoTest
     }
 
     // ORMTimestamp class
-    
+
     ORMTimestamp::ORMTimestamp() :
       Base(Generics::Time::ZERO)
     {
       _changed = false;
       _null = true;
     }
-      
+
     ORMTimestamp::ORMTimestamp(
       const value_type& value) :
       Base(value)
@@ -72,7 +72,7 @@ namespace AutoTest
       _null = _value == Generics::Time::ZERO;
     }
 
- 
+
     // ORMObjectMember struct
     IORMValue&
     ORMObjectMember::value(
@@ -90,15 +90,15 @@ namespace AutoTest
       entity_type_(entity_type)
     { }
 
-    
+
     Restorer::~Restorer() noexcept
     { }
-    
+
     void Restorer::restore()
     { }
 
     // class SerializeQueryManager_
-    
+
     SerializeQueryManager_::SerializeQueryManager_()
     { }
 
@@ -144,7 +144,7 @@ namespace AutoTest
     {
       return lock_;
     }
-    
+
     static const char* display_statuses [] =
     {
       "Inactive",
@@ -177,7 +177,7 @@ namespace AutoTest
       "Live - Triggers Need Attention",
       "Live - Channel Target Needs Attention"
     };
-    
+
     int
     get_display_status_id(
       DB::IConn& conn,
@@ -194,7 +194,7 @@ namespace AutoTest
       query.set(display_statuses[status]);
       DB::Result result(query.ask());
       if(result.next())
-      {    
+      {
         result.get(ret);
         return ret;
       }

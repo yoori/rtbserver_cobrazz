@@ -265,7 +265,7 @@ namespace CampaignSvcs
       {
         return commision;
       }
-      
+
       // adapt bid cost
       RevenueDecimal
       adapt_cost(
@@ -1338,7 +1338,7 @@ namespace CampaignSvcs
     {
       const RevenueDecimal CTR_MULTIPLIER = RevenueDecimal(false, 100000, 0);
     }
-    
+
     /** FreqCap class */
     inline
     FreqCap::FreqCap(
@@ -1459,7 +1459,7 @@ namespace CampaignSvcs
       const noexcept
     {
       Algs::AtomicInt mem_barrier(0);
-      available_ = available_val;      
+      available_ = available_val;
       set_min_ctr_goal(goal_ctr);
       mem_barrier += 1;
     }

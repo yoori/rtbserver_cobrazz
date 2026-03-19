@@ -13,7 +13,7 @@ namespace
   typedef AutoTest::RedirectChecker RedirectChecker;
 
   enum OoOperation { OO_IN, OO_OUT, OO_STATUS };
-  
+
   const char* OPTOUT_IN = "in";
   const char* OPTOUT_OUT = "out";
   const char* OPTOUT_STATUS = "status";
@@ -56,7 +56,7 @@ namespace
     case OO_OUT:
       return OPTOUT_OUT;
     default:
-      return OPTOUT_STATUS;        
+      return OPTOUT_STATUS;
     }
   }
 
@@ -77,7 +77,7 @@ namespace
     return prev_operation == current_operation?
       ALREADY_URL: SUCCESS_URL;
   }
-  
+
   enum CaseOption
   {
     CO_PARAM_NAME = 1,  // need get param value by name
@@ -221,10 +221,10 @@ WebStatFrontendProtocolTest::process_(
         key.browser(browser);
       }
       key.test(
-        !request.testrequest.empty() && request.testrequest.raw_str() == "1"); 
+        !request.testrequest.empty() && request.testrequest.raw_str() == "1");
       key.country_sdate(now_);
       key.stimestamp(now_);
-      
+
       ORM::WebStats stat(key);
       stat.description("#" + strof(i+1));
       stat.select(pq_conn_);
@@ -235,7 +235,7 @@ WebStatFrontendProtocolTest::process_(
       tests[i].flags & CO_POST?
       client.process_post(request, true):
           client.process(request , true);
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         tests[i].status,
@@ -246,12 +246,12 @@ WebStatFrontendProtocolTest::process_(
     if (tests[i].flags & CO_CHECK_CORS)
     {
       std::string value;
-      
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           client.find_header_value("Access-Control-Allow-Origin", value)),
         "Check Access-Control-Allow-Origin#" + strof(i+1));
-      
+
       FAIL_CONTEXT(
         AutoTest::equal_checker(
           request.origin.raw_str(),
@@ -304,7 +304,7 @@ WebStatFrontendProtocolTest::oo_cases_()
   AdClient client(AdClient::create_nonoptin_user(this));
 
   OoOperation prev_op = OO_OUT;
-    
+
   for (unsigned int i = 0; i < countof(TEST_CACES); ++i)
   {
     // Prepare user for last 2 cases
@@ -357,7 +357,7 @@ WebStatFrontendProtocolTest::oo_cases_()
           key.browser(BROWSER);
           key.stimestamp(now_);
         }
-    
+
         ORM::WebStats stat(key);
         stat.description("#" + strof(i+1));
         stat.select(pq_conn_);
@@ -374,7 +374,7 @@ WebStatFrontendProtocolTest::oo_cases_()
             prev_op, TEST_CACES[i].operation));
         key.operation(TEST_CACES[i].operation == OO_IN? "I": "O");
         key.test(TEST_CACES[i].testrequest? "Y": "N");
-      
+
         ORM::OptOutStats stat(key);
         stat.description("#" + strof(i+1));
         stat.select(pq_conn_);
@@ -392,7 +392,7 @@ WebStatFrontendProtocolTest::oo_cases_()
     }
 
     OptOutRequest request;
-    
+
     request.
       op(oo_to_str(TEST_CACES[i].operation)).
       testrequest(TEST_CACES[i].testrequest).
@@ -407,8 +407,8 @@ WebStatFrontendProtocolTest::oo_cases_()
     {
       request.ct.not_encode();
     }
-    
-    unsigned long status = 
+
+    unsigned long status =
       client.process(request, true);
 
     if (TEST_CACES[i].operation == OO_STATUS)
@@ -453,9 +453,9 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
 {
 
   AdClient client(AdClient::create_user(this, client_flags));
-  
+
   WebStatsList web_stats;
-  
+
   const CCTagCase CASES[] =
   {
     // #1
@@ -572,7 +572,7 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
 
   for (size_t i = 0; i < countof(CASES); ++i)
   {
-    
+
     std::string curct =
       Generics::Uuid::create_random_based().to_string();
 
@@ -588,7 +588,7 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
     request.src = fetch_string(CASES[i].src);
     request.op = fetch_string(CASES[i].op);
     request.res = CASES[i].res;
-    
+
     client.set_cookie_value("ct", curct.c_str(), false);
 
     FAIL_CONTEXT(
@@ -619,11 +619,11 @@ WebStatFrontendProtocolTest::cc_tag_cases_(
         CASES[i].flags & ccid_log_mask? atoi(CASES[i].cc): 0);
       key.tag_id(
         CASES[i].flags & CCTCE_LOG_TID? atoi(CASES[i].tag): 0);
-      
+
       ORM::WebStats stat(key);
       stat.description("#" + strof(i+1));
       stat.select(pq_conn_);
-      
+
       web_stats.push_back(stat);
     }
   }
@@ -680,7 +680,7 @@ WebStatFrontendProtocolTest::probe_uid()
   client.set_probe_uid();
 
   WebStatsList web_stats;
-  
+
   process_(
     client,
     BASE_CASE,
@@ -715,7 +715,7 @@ WebStatFrontendProtocolTest::res_param(
     { "A", 0, 400, CO_GEN_CURCT },
     {"u", 0, 200, CO_GEN_CURCT}
   };
-  
+
   process_(
     client,
     RES_CASES,
@@ -782,7 +782,7 @@ WebStatFrontendProtocolTest::post_cors(
     { "App/1", 0, 200, CO_GEN_CURCT | CO_CHECK_CORS | CO_PARAM_NAME}
   };
 
-  
+
   process_(
     client,
     POST_CORS_CASES,
@@ -996,10 +996,10 @@ WebStatFrontendProtocolTest::ua_case(
   AdClient& client)
 {
   WebStatsList web_stats;
-  
+
   std::string timestamp(
     now_.get_gm_time().format("%Y%m%d%H%M%S"));
-  
+
   std::string UA(
     "Mozilla/5.0 (Windows NT " + timestamp +
       "; rv:12.0) Gecko/20100101 Firefox/" + timestamp);
@@ -1113,7 +1113,7 @@ WebStatFrontendProtocolTest::run()
        src_param(client),
        "'src' parameter tests");
   }
-  
+
   AUTOTEST_CASE(
     ct_param(),
     "'ct' parameter tests");
@@ -1147,14 +1147,14 @@ WebStatFrontendProtocolTest::run()
     get_config().check_service(CTE_ALL_REMOTE, STE_FRONTEND))
   {
     check();
-    
+
     AUTOTEST_CASE(
       cc_tag_cases_(
         AutoTest::UF_CENTRAL_FRONTEND),
       "Tag and CC case (central)");
-    
+
   }
-    
+
   return true;
 }
 

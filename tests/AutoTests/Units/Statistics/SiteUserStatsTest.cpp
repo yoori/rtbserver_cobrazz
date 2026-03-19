@@ -75,7 +75,7 @@ void SiteUserStatsTest::add_stats_(
     stat.description(description + "#" + strof(i+1));
     stat.select(conn_);
     sum_stats_.push_back(stat);
-    sum_diffs_.push_back(it->second);    
+    sum_diffs_.push_back(it->second);
   }
 }
 
@@ -98,7 +98,7 @@ void SiteUserStatsTest::process_requests_(
 void
 SiteUserStatsTest::check_stats_()
 {
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -217,7 +217,7 @@ SiteUserStatsTest::last_appearance_date_()
   };
 
   add_stats_(description, EXPECTED);
-  
+
   {
     AdClient client(AdClient::create_user(this));
 
@@ -263,7 +263,7 @@ SiteUserStatsTest::non_gmt_timezone_()
   {
     std::string description("Non-GMT timezone test.");
     add_descr_phrase(description);
-    
+
     AutoTest::Time base_time(
       base_time_.get_gm_time().get_date());
 
@@ -296,20 +296,20 @@ SiteUserStatsTest::non_gmt_timezone_()
           1
         }
       };
-    
+
     add_stats_(description, EXPECTED);
-    
+
     AdClient client(
       AdClient::create_user(
         this, AutoTest::UF_FRONTEND_MINOR));
-    
+
     const Request REQUESTS[] =
     {
       { "TZ/TID/1", base_time - DAY + 23 * 60 *60 - tz_ofset.tv_sec},
       { "TZ/TID/1", base_time - DAY + 24 * 60 *60 - tz_ofset.tv_sec},
       { "TZ/TID/1", base_time + 24 * 60 *60 - tz_ofset.tv_sec}
     };
-    
+
     process_requests_(client, REQUESTS);
   }
 }
@@ -494,7 +494,7 @@ SiteUserStatsTest::temporary_user_()
     TemporaryAdClient::create_user(this));
   AdClient persistent(
     AdClient::create_user(this));
-  
+
   temporary.process_request(
     NSLookupRequest().
       referer_kw(fetch_string("KWD")).
@@ -540,7 +540,7 @@ SiteUserStatsTest::non_opted_in_users_()
       0
     }
   };
-    
+
   add_stats_(description, EXPECTED);
 
   AdClient users[] =
@@ -576,12 +576,12 @@ SiteUserStatsTest::run_test()
   check_stats_();
 
   async_part_2_(client);
-  
+
   add_descr_phrase("Check stats#2");
   check_stats_();
 
   async_part_3_(client);
-  
+
   add_descr_phrase("Check stats#3");
   check_stats_();
 

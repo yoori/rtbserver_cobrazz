@@ -18,27 +18,27 @@ namespace AdServer
       tmp_filepath_(filepath_ + "~"),
       check_exist_(check_exist)
     {
-      AdServer::FileManip::rename(filepath_, tmp_filepath_, !check_exist); 
+      AdServer::FileManip::rename(filepath_, tmp_filepath_, !check_exist);
     }
-    
+
     const std::string& FileGuard::filepath() const
     {
         return filepath_;
     }
-      
+
     const std::string& FileGuard::tmp_filepath() const
     {
       return tmp_filepath_;
     }
-      
-    
+
+
     FileGuard::~FileGuard() noexcept
     {
       if (!(check_exist_ && AdServer::FileManip::file_exists(filepath_)))
       {
-        AdServer::FileManip::rename(tmp_filepath_, filepath_, true); 
+        AdServer::FileManip::rename(tmp_filepath_, filepath_, true);
       }
     }
   }
 }
- 
+

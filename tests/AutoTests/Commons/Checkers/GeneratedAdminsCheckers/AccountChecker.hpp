@@ -8,40 +8,40 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = AccountAdmin::Expected>  
-  class AccountChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = AccountAdmin::Expected>
+  class AccountChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      AccountChecker_(      
-        BaseUnit* test,      
-        unsigned long account,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        account_(account),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      AccountChecker_(
+        BaseUnit* test,
+        unsigned long account,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        account_(account),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~AccountChecker_() noexcept {}      
+      virtual ~AccountChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      unsigned long account_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      unsigned long account_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef AccountChecker_<AccountAdmin::Expected> AccountChecker;  
-  typedef AccountChecker_<std::string> AccountCheckerSimple;  
+  typedef AccountChecker_<AccountAdmin::Expected> AccountChecker;
+  typedef AccountChecker_<std::string> AccountCheckerSimple;
 
 }
 

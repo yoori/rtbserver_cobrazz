@@ -192,7 +192,7 @@ namespace UserInfoSvcs{
           Config::CorbaConfigReader::read_corba_ref(
             it->UserInfoManagerStatsRef(), corba_object_ref);
 
-          user_info_manager_host.uim_stats = 
+          user_info_manager_host.uim_stats =
             UserInfoManagerRef::ProcessControlCORBARef(
               corba_client_adapter_, corba_object_ref);
         }

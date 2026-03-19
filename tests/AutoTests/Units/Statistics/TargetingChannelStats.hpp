@@ -1,6 +1,6 @@
 #ifndef __TARGETINGCHANNELSTATS_HPP
 #define __TARGETINGCHANNELSTATS_HPP
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = ::AutoTest::ORM;
@@ -44,9 +44,9 @@ class TargetingChannelStats : public BaseDBUnit
     std::list<ORM::SiteChannelStats::Diffs> site_channel_diffs;
     std::list<std::string> users;
   };
-  
+
 public:
-  
+
   TargetingChannelStats(
     UnitStat& stat_var,
     const char* task_name,
@@ -64,9 +64,9 @@ public:
 protected:
 
   virtual bool run();
-  
+
   virtual void set_up();
-  
+
   virtual void tear_down();
 
 private:
@@ -107,7 +107,7 @@ private:
 
   void
   case_all_();
-  
+
   AutoTest::Time now_;
 
 };

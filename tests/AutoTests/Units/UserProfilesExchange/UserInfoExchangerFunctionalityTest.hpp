@@ -2,7 +2,7 @@
 #define _UNITTEST__USERINFOEXCHANGERFUNCTIONALITYTEST_
 
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 class UserInfoExchangerFunctionalityTest:
   public BaseUnit
 {
@@ -33,19 +33,19 @@ class UserInfoExchangerFunctionalityTest:
   };
 
   typedef std::list<CheckRequest> CheckRequests;
-  
+
 public:
- 
+
   UserInfoExchangerFunctionalityTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
-      XsdParams params_var): 
+      UnitStat& stat_var,
+      const char* task_name,
+      XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
 
   virtual ~UserInfoExchangerFunctionalityTest() noexcept
   {};
- 
+
 private:
   std::string s_channel;
   std::string ht_channel;
@@ -68,7 +68,7 @@ private:
   std::string colo2_id;
 
   CheckRequests requests;
- 
+
   virtual bool run_test();
 
   void part1();
@@ -78,13 +78,13 @@ private:
   void part5_colo1(AdClient& client);
   void part5_colo2(AdClient& client);
   void part5_return_to_colo1(AdClient& client);
-  
+
   void merging_profiles_wait(AdClient& client,
                              const char* frontend_dst,
                              const char* colo_dst,
                              const char* marker_channel_name);
   void verification();
- 
+
 };
 
 #endif // _UNITTEST__USERINFOEXCHANGERFUNCTIONALITYTEST_

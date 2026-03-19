@@ -340,7 +340,7 @@ public:
     const Mediator& data)
   {
     auto ins_res = map_impl_->insert(ValueT(key, DataT()));
-    
+
     if (ins_res.second)
     {
       ins_res.first->second = DataT(data);

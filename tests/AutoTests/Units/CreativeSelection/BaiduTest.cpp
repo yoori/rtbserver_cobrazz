@@ -48,7 +48,7 @@ BaiduTest::base_()
     BaiduRequest().
       id(tid).
       debug_time(now_ - 24*60*60));
- 
+
   rtb.process_post(
     BaiduRequest().
       aid(fetch_int("BASE/ACCOUNT")).

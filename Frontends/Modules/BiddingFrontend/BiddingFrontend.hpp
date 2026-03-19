@@ -379,7 +379,7 @@ namespace Bidding
     // ADSC-10554
     // Interrupted requests queue
     Generics::TaskExecutor_var passback_task_runner_;
-    
+
     // configuration
     CommonConfigPtr common_config_;
     ConfigPtr config_;

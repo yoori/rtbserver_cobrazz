@@ -112,13 +112,13 @@ OptoutMatching::run_case(unsigned int i, unsigned int user, AdClient& client, NS
   request.colo = fetch_string(testcases[i].colo);
 
   client.process_request(request);
-  
+
   std::list<std::string> matched_bps;
   std::list<std::string> unmatched_bps;
-  
+
   std::list<std::string> matched_channels;
   std::list<std::string> unmatched_channels;
-  
+
   switch (behaviour)
   {
   case UB_AllMatch:
@@ -127,7 +127,7 @@ OptoutMatching::run_case(unsigned int i, unsigned int user, AdClient& client, NS
       fill_expected(matched_bps, "BP");
       break;
     }
-    
+
   case UB_NoMatch:
     {
       fill_expected(unmatched_bps, "BP");
@@ -161,14 +161,14 @@ OptoutMatching::run_case(unsigned int i, unsigned int user, AdClient& client, NS
         AutoTest::SCE_ENTRY).check(),
       userDsc[user] +
         ". Matched history_channels check#" + strof(i));
-        
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         unmatched_channels,
         client.debug_info.history_channels,
         AutoTest::SCE_NOT_ENTRY).check(),
       userDsc[user] +
-        ". Unmatched history_channels check#" + strof(i));  
+        ". Unmatched history_channels check#" + strof(i));
   }
 }
 
@@ -272,7 +272,7 @@ void OptoutMatching::fill_expected(std::list<std::string>& list,
 {
 
   std::string prefixes[] = {"PAGE", "SEARCH", "URL"};
-  
+
   if ( !names )
   {
     for (unsigned int i = 0; i < countof(prefixes); ++i)
@@ -289,7 +289,7 @@ void OptoutMatching::fill_expected(std::list<std::string>& list,
     {
       String::StringManip::trim(token);
       list.push_back(fetch_string(token.str()+namesuffix));
-    }    
+    }
   }
 
 

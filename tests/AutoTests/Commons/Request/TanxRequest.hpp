@@ -24,7 +24,7 @@ namespace AutoTest
     /// Base url for all bid requests
     static const char* BASE_URL;
     static const char* DEFAULT_IP;
-    
+
     Tanx::BidRequest bid_request_;
     Tanx::BidRequest_AdzInfo* bid_adzinfo_;
 
@@ -37,11 +37,11 @@ namespace AutoTest
         Types decode_type,
         const std::string& data) const;
     };
-    
+
     Decoder decoder_;
 
   public:
-    
+
     typedef RequestParamSetter<TanxRequest> Member;
 
     /**
@@ -82,7 +82,7 @@ namespace AutoTest
     void
     set_decoder(
       ClientRequest* request) const;
-    
+
     /**
      * @brief Represents 'Content-Type' HTTP header.
      */
@@ -192,7 +192,7 @@ namespace AutoTest
     /**
      * @brief Represents TanxRequest.category.
      *
-     * Publisher's (or flow provider's) website classification. 
+     * Publisher's (or flow provider's) website classification.
      */
     BidParam<TanxRequest, ProtoBuf::UInt> category;
 
@@ -203,7 +203,7 @@ namespace AutoTest
      * For those bidding platforms other than tanx (which is only effective to
      * the DSP of the Alibaba System, and is fixed to be 0 for the third party's DSP),
      * it can set the % FOREIGN_FEEDBACK%% macro in the html_snippet to get the
-     * feedback information of bidding success (if the platform of the other side supports it).     
+     * feedback information of bidding success (if the platform of the other side supports it).
      */
     BidParam<TanxRequest, ProtoBuf::Int> adx_type;
 
@@ -228,7 +228,7 @@ namespace AutoTest
      * @brief Represents TanxRequest.detected_language.
      *
      * Page language.
-     * It uses ISO 639-1 coding standards (2 letter code). 
+     * It uses ISO 639-1 coding standards (2 letter code).
      */
     BidParam<TanxRequest, ProtoBuf::String> detected_language;
 
@@ -253,7 +253,7 @@ namespace AutoTest
      * @brief Represents TanxRequest.tid_version.
      */
     BidParam<TanxRequest, ProtoBuf::UInt> tid_version;
-    
+
     /**
      * @brief Represents TanxRequest.AdzInfo.id
      *
@@ -268,10 +268,10 @@ namespace AutoTest
      *
      * Pid of the current ads space (inside the Alibaba Group).
      * If the flow provider doesn't belong to the Alibaba System,
-     * then this pid will be the flow provider's virtual pid in the Alibaba System. 
+     * then this pid will be the flow provider's virtual pid in the Alibaba System.
      */
     BidParam<TanxRequest, ProtoBuf::String> pid;
-    
+
     /**
      * @brief Represents TanxRequest.AdzInfo.size
      *
@@ -312,7 +312,7 @@ namespace AutoTest
      */
      BidParam<TanxRequest, Adz_Location> adz_location;
   };
-  
+
 }//namespace AutoTest
 
 #endif  // __AUTOTESTS_COMMONS_REQUEST_BIDREQUEST_HPP

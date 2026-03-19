@@ -1,14 +1,14 @@
 #ifndef _AUTOTEST__STATSHOURLYACTIONSTEST_
 #define _AUTOTEST__STATSHOURLYACTIONSTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 namespace ORM = ::AutoTest::ORM;
 
 class StatsHourlyActionsTest : public BaseDBUnit
 {
   typedef ORM::HourlyStats HourlyStats;
-  
+
 public:
   StatsHourlyActionsTest(
     UnitStat& stat_var,

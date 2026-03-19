@@ -3,11 +3,11 @@
 
 namespace AutoTest
 {
-  
+
   namespace ProtoBuf
   {
     // Expected
-    
+
     BaseTraits<BaiduResponseChecker>::Expected::Expected()
     { }
 
@@ -43,32 +43,32 @@ namespace AutoTest
           checker, "type",
           other.type_exist_, &Ad::has_type))
     { }
-    
+
     BaseTraits<BaiduResponseChecker>::Expected&
     BaseTraits<BaiduResponseChecker>::Expected::creative_id(
       unsigned long val)
     {
       creative_id_ = val;
-      
+
       return *this;
     }
-    
+
     BaseTraits<BaiduResponseChecker>::Expected&
     BaseTraits<BaiduResponseChecker>::Expected::target_url(
       const std::string& val)
     {
       target_url_->push_back(val);
       target_url_.is_set(true);
-    
+
       return *this;
     }
-    
+
     BaseTraits<BaiduResponseChecker>::Expected&
     BaseTraits<BaiduResponseChecker>::Expected::advertiser_id(
       unsigned long val)
     {
       advertiser_id_ = val;
-      
+
       return *this;
     }
 
@@ -77,7 +77,7 @@ namespace AutoTest
       int val)
     {
       category_ = val;
-      
+
       return *this;
     }
 
@@ -86,17 +86,17 @@ namespace AutoTest
       bool exist)
     {
       category_exist_ = exist;
-      
+
       return *this;
     }
 
-    
+
     BaseTraits<BaiduResponseChecker>::Expected&
     BaseTraits<BaiduResponseChecker>::Expected::type(
       int val)
     {
       type_ = val;
-      
+
       return *this;
     }
 
@@ -105,11 +105,11 @@ namespace AutoTest
       bool exist)
     {
       type_exist_ = exist;
-      
+
       return *this;
     }
   }
-   
+
   // BaiduResponseChecker
   BaiduResponseChecker::BaiduResponseChecker(
     const AdClient& client,

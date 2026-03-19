@@ -2,7 +2,7 @@
 #include "OptOutTest.hpp"
 #include <eh/Exception.hpp>
 #include <climits>
-#include <stdlib.h> 
+#include <stdlib.h>
 
 REFLECT_UNIT(OptOutTest) (
   "Frontend",
@@ -12,7 +12,7 @@ REFLECT_UNIT(OptOutTest) (
 namespace
 {
   typedef AutoTest::RedirectChecker RedirectChecker;
-  
+
   const int EXPIRE_LIMIT = 60; // in seconds
 
   struct TestCookie : public HTTP::CookieDef
@@ -35,7 +35,7 @@ namespace
       :
       HTTP::CookieDef(cookie)
     { }
-    
+
     bool
     operator==(
       const TestCookie& other) const
@@ -65,7 +65,7 @@ namespace
   }
 
   typedef AutoTest::NSLookupRequest  NSLookupRequest;
-  
+
   // Request wrappers
   class OptOutRequest: public AutoTest::OptOutRequest
   {
@@ -148,7 +148,7 @@ namespace
      */
     virtual ~CookieCheck() noexcept
     {}
-    
+
     /**
      * @brief Check.
      * @param throw on error flag.
@@ -208,7 +208,7 @@ namespace
           break;
         }
       }
-      
+
       if (!result && throw_error)
       {
         throw AutoTest::CheckFailed(error);
@@ -235,17 +235,17 @@ namespace
   };
 }
 
-bool 
+bool
 OptOutTest::run_test()
 {
   AUTOTEST_CASE(
     base_scenario(),
     "Base scenario");
-  
+
   AUTOTEST_CASE(
     optout_status_redirect_scenario(),
     "Redirect on optout requests");
-  
+
   AUTOTEST_CASE(
     incorrect_uid_opt_out_scenario(),
     "Redirect to 'opt_undef_url'");
@@ -253,11 +253,11 @@ OptOutTest::run_test()
   AUTOTEST_CASE(
     client_without_cookes_scenario(),
     "Client without cookies");
-  
+
   AUTOTEST_CASE(
     cookie_expiration(),
     "Opt-out cookie expiration");
-  
+
   return true;
 }
 
@@ -287,10 +287,10 @@ OptOutTest::base_scenario ()
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.has_host_cookies()), 
+      !client.has_host_cookies()),
     "Host cookies shouldn't "
     "return in optout mode");
-  
+
   FAIL_CONTEXT(
     CookieCheck(
       client,
@@ -313,13 +313,13 @@ OptOutTest::base_scenario ()
       client,
       "http://test33.com/").check(),
     "must redirected to 'already_url'");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.has_host_cookies()), 
+      !client.has_host_cookies()),
     "Host cookies shouldn't "
     "return in optout mode");
-  
+
   FAIL_CONTEXT(
     CookieCheck(
       client,
@@ -330,7 +330,7 @@ OptOutTest::base_scenario ()
 
   client.process_request(OptOutRequest("in", "02-01-2006:15-12-12"),
                          "opt_in_request");
-  
+
   FAIL_CONTEXT(
     CookieCheck(
       client,
@@ -369,11 +369,11 @@ OptOutTest::base_scenario ()
       CBE_CookieNotEmpty).check(),
       "uid isn't empty");
   }
-  
+
 }
 
 
-void 
+void
 OptOutTest::optout_status_redirect_scenario()
 {
   AdClient client(AdClient::create_nonoptin_user(this));
@@ -405,7 +405,7 @@ OptOutTest::optout_status_redirect_scenario()
 
   // "Known" user with probe uid request for optout status
   client.set_probe_uid();
-  
+
   client.process_request(OptOutRequest("status").
                          opted_in_url ("testX.com").
                          opted_out_url("testY.com").
@@ -419,7 +419,7 @@ OptOutTest::optout_status_redirect_scenario()
 
   // User with persistent uid request for optout status
   client.process_request(OptOutRequest("in"));
- 
+
   client.process_request(OptOutRequest("status").
                          opted_in_url ("testA.com").
                          opted_out_url("testB.com").
@@ -430,7 +430,7 @@ OptOutTest::optout_status_redirect_scenario()
       client,
       "http://testa.com/").check(),
     "must be redirected to opted_in_url on in" );
- 
+
   // Optout request
   client.process_request(OptOutRequest("out").
                          success_url("test11.com").
@@ -442,7 +442,7 @@ OptOutTest::optout_status_redirect_scenario()
       client,
       "http://test11.com/").check(),
     "must be redirected to success_url on success");
-  
+
   client.process_request(OptOutRequest("status").
                          opted_in_url ("testA.com").
                          opted_out_url("testB.com").
@@ -456,12 +456,12 @@ OptOutTest::optout_status_redirect_scenario()
 
 }
 
-void 
+void
 OptOutTest::incorrect_uid_opt_out_scenario ()
 {
   AdClient client(AdClient::create_user(this));
-  
-  client.set_uid(">:-." + client.get_uid() + ":-("); 
+
+  client.set_uid(">:-." + client.get_uid() + ":-(");
 
   client.process_request(OptOutRequest("status")
                          .opted_in_url ("test_invalid_uid_in.com")
@@ -473,7 +473,7 @@ OptOutTest::incorrect_uid_opt_out_scenario ()
       client,
       "http://test_invalid_uid_undef.com/").check(),
     "opt_undef_url redirection check");
-  
+
 }
 
 void
@@ -493,13 +493,13 @@ OptOutTest::client_without_cookes_scenario()
       client,
       "http://test11.com/").check(),
     "must be redirected to success_url on success");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.has_host_cookies()), 
+      !client.has_host_cookies()),
     "Host cookies shouldn't "
     "return in optout mode");
-  
+
   FAIL_CONTEXT(
     CookieCheck(
       client,
@@ -528,7 +528,7 @@ OptOutTest::cookie_expiration()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   for (size_t i = 0; i < countof(REQUESTS); ++i)
   {
     unsigned int status =
@@ -545,12 +545,12 @@ OptOutTest::cookie_expiration()
         REQUESTS[i].status == OS_INVALID? 400: 200,
         status).check(),
       "Unexpected response status");
-    
+
     if (REQUESTS[i].status == OS_INVALID)
     {
       break;
     }
-    
+
     FAIL_CONTEXT(
       RedirectChecker(
         client,
@@ -567,10 +567,10 @@ OptOutTest::cookie_expiration()
       address);
 
     std::string domain(client.get_domain());
-    
+
     if (REQUESTS[i].status != OS_FAIL)
     {
-      
+
       std::list<TestCookie> got_cookies(
         client_cookies.begin(),
         client_cookies.end());
@@ -619,11 +619,11 @@ OptOutTest::cookie_expiration()
       client.process_request(NSLookupRequest());
 
       HTTP::CookieDefList cookies(false);
-      
+
       cookies.load_from_headers(
         client.get_response_headers(),
         address);
-      
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           cookies.empty()),

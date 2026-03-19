@@ -7,7 +7,7 @@ namespace AdServer
     UserInfoClusterControlImpl::UserInfoClusterControlImpl()
       noexcept
     {}
-    
+
     UserInfoClusterControlImpl::UserInfoClusterControlImpl(
       const CORBACommons::CorbaClientAdapter* corba_client_adapter,
       const UIMRefVector& uims,
@@ -35,7 +35,7 @@ namespace AdServer
           AdServer::UserInfoSvcs::UserInfoManager_var
             user_info_manager =
             AdServer::UserInfoSvcs::UserInfoManager::_narrow(obj.in());
-          
+
           if (!CORBA::is_nil(user_info_manager.in()))
           {
             uims_.push_back(user_info_manager);
@@ -52,7 +52,7 @@ namespace AdServer
         uims_.clear();
       }
     }
-    
+
     UserInfoClusterControlImpl::~UserInfoClusterControlImpl()
       noexcept
     {}
@@ -61,14 +61,14 @@ namespace AdServer
     UserInfoClusterControlImpl::is_alive() noexcept
     {
       bool uim_status = true;
-      
+
       try
       {
         if (uims_.size() == 0)
         {
           return CORBACommons::IProcessControl::AS_NOT_ALIVE;
         }
-        
+
         for (unsigned int i = 0; i < uims_.size(); ++i)
         {
           uim_status = uim_status && uims_[i]->uim_ready();

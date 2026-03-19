@@ -13,7 +13,7 @@ namespace
 }
 
 
-bool 
+bool
 MergingStatusTest::run_test()
 {
   set_up();
@@ -48,7 +48,7 @@ void MergingStatusTest::double_merging()
   std::string merge_header, uid2;
   client.set_uid(uid);
   uid2 = create_temporary_profile();
-  
+
   client.process_request(
     NSLookupRequest().
     tid(fetch_string("TID#1")).
@@ -68,7 +68,7 @@ void MergingStatusTest::double_merging()
     tid(fetch_string("TID#1")).
     tuid(uid2),
     "repeat merging failed");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       client.find_header_value("X-Merge-Failed", merge_header)),
@@ -77,7 +77,7 @@ void MergingStatusTest::double_merging()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       X_MERGE_FAILED,
-      merge_header).check(), 
+      merge_header).check(),
     "Unexpected X-Merging-Failed value");
 }
 
@@ -92,7 +92,7 @@ void MergingStatusTest::unknown_tuid()
     tid(fetch_string("TID#1")).
     tuid(AutoTest::generate_uid()),
     "invalid tuid");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       client.find_header_value("X-Merge-Failed", merge_header)),
@@ -101,7 +101,7 @@ void MergingStatusTest::unknown_tuid()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       X_MERGE_FAILED,
-      merge_header).check(), 
+      merge_header).check(),
     "Unexpected X-Merging-Failed value");
 }
 
@@ -109,7 +109,7 @@ std::string MergingStatusTest::create_temporary_profile()
 {
   TemporaryAdClient tclient(
     TemporaryAdClient::create_user(this));
- 
+
   tclient.process_request(
     NSLookupRequest().
     tid(fetch_string("TID#1")),

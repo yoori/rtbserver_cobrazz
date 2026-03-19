@@ -23,9 +23,9 @@ class UserPropertiesTest: public BaseDBUnit
 
     bool operator<(const PropertyKey &other) const;
   };
-  
+
   typedef std::set<PropertyKey> PropertyKeys;
-  
+
 public:
 
   enum PropertyStatusEnum
@@ -55,20 +55,20 @@ public:
     unsigned long actions;                 // Expected UserProperties.actions
     unsigned long imps_unverified;         // Expected UserProperties.imps_unverified
     unsigned long profiling_requests;      // Expected UserProperties.profiling_requests
-    
+
   };
 
   typedef unsigned long Property::* Counter;
-  
+
 public:
- 
+
   UserPropertiesTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
-      XsdParams params_var): 
+      UnitStat& stat_var,
+      const char* task_name,
+      XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~UserPropertiesTest() noexcept
   { }
 
@@ -78,7 +78,7 @@ protected:
   virtual bool run();
 
   virtual void set_up();
-  
+
   virtual void tear_down();
 
 
@@ -111,9 +111,9 @@ private:
   void app_props_case();
 
   void user_status_case();
-  
+
   void inactive_tag_case();
-  
+
   void no_ads_isp_case();
 
   void probe_case();

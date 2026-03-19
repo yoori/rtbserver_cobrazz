@@ -23,7 +23,7 @@ namespace AutoTest
       ostr << ": " << notes;
     }
   }
-  
+
   void fail(
     const String::SubString& description,
     const char* file_path,

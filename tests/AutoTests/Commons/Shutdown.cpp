@@ -14,9 +14,9 @@ namespace AutoTest
   {
     Sync::ConditionalGuard condition(cond_);
     value_ = true;
-    cond_.broadcast();   
+    cond_.broadcast();
   }
-  
+
   void
   Shutdown_::wait(
     const Time& timeout)
@@ -35,7 +35,7 @@ namespace AutoTest
     return value_;
   }
 
- 
+
 }
 
 

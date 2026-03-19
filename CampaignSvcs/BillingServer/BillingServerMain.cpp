@@ -94,7 +94,7 @@ BillingServerApp_::main(int argc, char** argv)
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << argv[1] << "': " << e.what();
-      throw Exception(ostr);      
+      throw Exception(ostr);
     }
 
     // Initializing logger

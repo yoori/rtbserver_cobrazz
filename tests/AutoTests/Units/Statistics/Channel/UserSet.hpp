@@ -34,7 +34,7 @@ namespace AutoTest
         unsigned long size);
 
       /**
-       * @brief Send requests  from each 
+       * @brief Send requests  from each
        *  user, who have index in range [start_index, stop_index].
        *
        * Sends GET requests to the server
@@ -48,7 +48,7 @@ namespace AutoTest
         unsigned long start_index = 0,
         unsigned long stop_index = 0)
           /*throw(eh::Exception)*/;
-      
+
 
       /**
        * @brief Send request to the server from one
@@ -78,7 +78,7 @@ namespace AutoTest
        * @return collection size
        */
       size_t size() const;
-      
+
     private:
       Users users_;
       void check_index(unsigned long index);

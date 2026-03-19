@@ -54,7 +54,7 @@ namespace AutoTest
        */
       virtual ~Conn();
 
-      
+
       /**
        * @brief Open connection.
        *
@@ -124,7 +124,7 @@ namespace AutoTest
        * @brief Open connection.
        */
       void open_ ();
-      
+
       std::string user_;
       std::string pswd_;
       std::string host_;
@@ -412,15 +412,15 @@ namespace AutoTest
        * @brief Execute query.
        *
        * @return execution status
-       */      
+       */
       int
       update ();
-      
+
       /**
        * @brief throw exception on query.
        *
        * @param error message
-       */      
+       */
       void
       throw_exception(
         const std::string& message);
@@ -429,7 +429,7 @@ namespace AutoTest
        * @brief Get query stream.
        *
        * @return stream
-       */      
+       */
       IBasicQueryStream* query_stream();
 
     protected:
@@ -565,7 +565,7 @@ namespace AutoTest
        */
       PGresult*
       result_set();
-      
+
     protected:
       std::string statement_;
       PGresult* result_set_;

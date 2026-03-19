@@ -123,7 +123,7 @@ namespace AdServer
     UpdateImitator::~UpdateImitator() noexcept
     {
     }
-    
+
     //
     // IDL:AdServer/ChannelSvcs/ChannelProxy/get_count_chunks:1.0
     //
@@ -173,7 +173,7 @@ namespace AdServer
     {
       data = new ChannelCurrent::CheckData;
       ReadGuard_ guard(lock_triggers_);
-      Generics::Time stamp = Generics::Time::get_time_of_day(); 
+      Generics::Time stamp = Generics::Time::get_time_of_day();
       data->first_stamp = CorbaAlgs::pack_time(stamp);
       data->master_stamp = CorbaAlgs::pack_time(stamp);
       data->versions.length(count_channels_);
@@ -198,7 +198,7 @@ namespace AdServer
             AdServer::ChannelSvcs::NotConfigured)*/
     {
       ReadGuard_ guard(lock_triggers_);
-      Generics::Time stamp = Generics::Time::get_time_of_day(); 
+      Generics::Time stamp = Generics::Time::get_time_of_day();
       size_t count_channels = 0;
       switch(alg_)
       {
@@ -499,7 +499,7 @@ int main(int argc, char* argv[])
         *step,
         dump_memory_stats.enabled());
 
-    AdServer::UnitTests::ControlImpl_var proccessor = 
+    AdServer::UnitTests::ControlImpl_var proccessor =
       new AdServer::UnitTests::ControlImpl(
         corba_server_adapter->shutdowner(),
         server.in());

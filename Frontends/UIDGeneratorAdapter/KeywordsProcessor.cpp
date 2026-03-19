@@ -605,7 +605,7 @@ namespace Frontends
       res,
       String::SubString("-"),
       String::SubString("minus"));
-    
+
     String::StringManip::replace(
       res,
       res2,
@@ -855,7 +855,7 @@ namespace Frontends
       new FloatFloorParamProcessor(3, ParamProcessor_var(new NumberPreNormProcessor())));
     add_processor_(
       JOB_LONG_2,
-      new FloatFloorParamProcessor(2, ParamProcessor_var(new NumberPreNormProcessor()))); 
+      new FloatFloorParamProcessor(2, ParamProcessor_var(new NumberPreNormProcessor())));
     add_processor_(
       JOB_LONG_1,
       new FloatFloorParamProcessor(1, ParamProcessor_var(new NumberPreNormProcessor())));
@@ -955,9 +955,9 @@ namespace Frontends
 
     // AGG_HOUSEHOLD
     add_processor_(
-      AVG_M_HOUSEHOLD_INCOME, 
+      AVG_M_HOUSEHOLD_INCOME,
       new Log10ParamProcessor(
-        0, 
+        0,
         ParamProcessor_var(new NumberPreNormProcessor())));
     add_processor_(
       FAMILY_STATUS,
@@ -977,7 +977,7 @@ namespace Frontends
       DEBIT_BANK_NAME,
       new SepParamProcessor<>(ParamProcessor_var(new NormParamProcessor())));
     add_processor_(
-      DEBIT_REFILL_SUM, 
+      DEBIT_REFILL_SUM,
       new SepSumParamProcessor<>(ParamProcessor_var(new Log10ParamProcessor(0))));
     add_processor_(
       ALL_DEBIT_REFILL_SUM,

@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__VISPARAMTEST_
 #define _AUTOTEST__VISPARAMTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class VISParamTest : public BaseUnit
 {

@@ -26,7 +26,7 @@ namespace AutoTest
   { }
 
   OptOutRequest::OptOutRequest(const OptOutRequest& other) :
-    BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),      
+    BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     op(this, other.op),
     debug_time(this, other.debug_time),
     opted_in_url(this, other.opted_in_url),

@@ -3,25 +3,25 @@ add_pb(google-biddingPB google-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/B
 add_pb(tanx-biddingPB tanx-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
 
 add_library(BiddingFrontend SHARED
-  RequestInfoFiller.cpp 
-  AdXmlRequestInfoFiller.cpp 
-  BiddingFrontend.cpp 
-  BiddingFrontendStat.cpp 
-  PlannerPool.cpp 
-  BidRequestTask.cpp 
-  OpenRtbBidRequestTask.cpp 
-  GoogleBidRequestTask.cpp 
-  AppNexusBidRequestTask.cpp 
-  AdXmlBidRequestTask.cpp 
-  AdJsonBidRequestTask.cpp 
-  ClickStarBidRequestTask.cpp 
-  DAOBidRequestTask.cpp 
+  RequestInfoFiller.cpp
+  AdXmlRequestInfoFiller.cpp
+  BiddingFrontend.cpp
+  BiddingFrontendStat.cpp
+  PlannerPool.cpp
+  BidRequestTask.cpp
+  OpenRtbBidRequestTask.cpp
+  GoogleBidRequestTask.cpp
+  AppNexusBidRequestTask.cpp
+  AdXmlBidRequestTask.cpp
+  AdJsonBidRequestTask.cpp
+  ClickStarBidRequestTask.cpp
+  DAOBidRequestTask.cpp
   KeywordFormatter.cpp
   RequestMetricsProvider.cpp
   Utils.cpp
 )
 
-target_link_libraries(BiddingFrontend 
+target_link_libraries(BiddingFrontend
   Stream
   Geoip
   CORBACommons
@@ -32,7 +32,7 @@ target_link_libraries(BiddingFrontend
   #ChannelControllerStubs
   ChannelManagerControllerIDL
   # UserInfoManagerControllerStubs
-  UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerL
+ UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
   # CampaignManagerStubs
   CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex

@@ -48,7 +48,7 @@ namespace AdServer
     bool operator()(const char* full_path, const struct stat&) const
       /*throw(eh::Exception)*/
     {
-      const char* name = Generics::DirSelect::file_name(full_path);        
+      const char* name = Generics::DirSelect::file_name(full_path);
       if(max_file_name < name)
       {
         max_file_name = name;
@@ -338,7 +338,7 @@ namespace AdServer
 
     Directory_var dir;
     std::string full_file_name;
-    
+
     {
       DirAliasMap::const_iterator it = directories_.upper_bound(request.uri().str());
       assert(it != directories_.begin());
@@ -357,7 +357,7 @@ namespace AdServer
       {
         return 403; // Forbidden
       }
-      
+
       full_file_name = dir->root + in_dir_path;
     }
 

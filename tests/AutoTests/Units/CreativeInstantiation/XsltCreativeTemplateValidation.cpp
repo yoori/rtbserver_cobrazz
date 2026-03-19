@@ -10,7 +10,7 @@ namespace
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::SelectedCreativeChecker SelectedCreativeChecker;
-  
+
   struct TestData
   {
     const char* keyword;
@@ -36,12 +36,12 @@ namespace
     },
     {
       "Keyword/05", "Tag/05", 0, "Invalid template XML", 204
-    }, 
+    },
     {
       "Keyword/06", "Tag/06", 0, "Absent namespace", 204
     },
     {
-      "Keyword/07", "Tag/07", 0, "Unknow function call", 204 
+      "Keyword/07", "Tag/07", 0, "Unknow function call", 204
     },
     {
       "Keyword/08", "Tag/08", "Cid/08", "Include", 200
@@ -52,11 +52,11 @@ namespace
   };
 }
 
-bool 
+bool
 XsltCreativeTemplateValidation::run_test()
 {
   AdClient client(AdClient::create_user(this));
-  
+
   for(size_t i = 0; i < countof(TEST_CASES); ++i)
   {
 
@@ -82,4 +82,4 @@ XsltCreativeTemplateValidation::run_test()
 
   return true;
 }
- 
+

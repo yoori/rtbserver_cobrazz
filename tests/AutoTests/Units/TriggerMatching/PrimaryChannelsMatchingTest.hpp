@@ -4,10 +4,10 @@
 
 #ifndef _AUTOTEST__PRIMARYCHANNELSMATCHINGTEST_
 #define _AUTOTEST__PRIMARYCHANNELSMATCHINGTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
- 
+
+
 class PrimaryChannelsMatchingTest: public BaseUnit
 {
 
@@ -25,19 +25,19 @@ public:
   };
 
 public:
- 
+
   PrimaryChannelsMatchingTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~PrimaryChannelsMatchingTest() noexcept
   {};
- 
+
 private:
- 
+
   virtual bool run_test();
 
   template<size_t Count>
@@ -55,7 +55,7 @@ private:
     NSLookupRequest::Member member1,
     NSLookupRequest::Member member2,
     unsigned long flags);
- 
+
 };
 
 #endif //_AUTOTEST__PRIMARYCHANNELSMATCHINGTEST_

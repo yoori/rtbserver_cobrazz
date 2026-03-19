@@ -4,7 +4,7 @@ REFLECT_UNIT(OptOutFreqCapTest) (
   "CreativeSelection",
   AUTO_TEST_FAST
 );
- 
+
 void
 OptOutFreqCapTest::process_testcase(AdClient& test_client)
 {
@@ -20,7 +20,7 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
   //    disabled frequency caps (campaign have reference to frequency
   //    caps with period=0) & enabled action tracking.
   // 4. test that server return creative.
-  
+
   // 5. opted-out user send advertizing request for campaign with
   //    enabled frequency caps (campaign have reference to frequency
   //    caps with period != 0)
@@ -41,7 +41,7 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
       fetch_string("CC-1"),
       test_client.debug_info.ccid).check(),
     "Server has returned not expected ccid");
-  
+
   add_descr_phrase("FreqCaps with period = 0");
   test_client.process_request(NSLookupRequest().
         tid(fetch_string("Tag-2")).
@@ -68,7 +68,7 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
         tid(fetch_string("Tag-3")).
         referer("www.OptOutFreqCapTest.com").
         colo(fetch_string("Colo")));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       "0",
@@ -77,7 +77,7 @@ OptOutFreqCapTest::process_testcase(AdClient& test_client)
 }
 
 
-bool 
+bool
 OptOutFreqCapTest::run_test()
 {
   add_descr_phrase(

@@ -72,7 +72,7 @@ void CreativeTemplateGranularUpdateTest::testcase_add_template()
     AutoTest::predicate_checker(
       creative_template->select()),
     "selecting template");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       template_file1->select()),

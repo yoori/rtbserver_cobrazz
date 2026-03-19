@@ -1347,7 +1347,7 @@ namespace UserInfoSvcs
         AdServer::ProfilingCommons::OP_RUNTIME,
         &ho_info,
         &unique_channels_result);
-      
+
       match_result = new AdServer::UserInfoSvcs::UserInfoManager::MatchResult();
 
       if (!household)
@@ -1388,7 +1388,7 @@ namespace UserInfoSvcs
             CorbaAlgs::pack_decimal<AdServer::CampaignSvcs::AccuracyDecimal>(
               it->accuracy);
         }
-        
+
         if (uie_presents_)
         {
           if (user_info.last_colo_id != placement_colo_id)
@@ -1849,7 +1849,7 @@ namespace UserInfoSvcs
         throw exc;
       }
     }
-    
+
     UserInfoContainerAccessor accessor =
       user_info_container_->get_accessor();
 
@@ -2906,14 +2906,14 @@ namespace UserInfoSvcs
             }
 
             BaseOperationRecordFetcher::ChunkIdSet chunk_ids;
-            
+
             for(AdServer::ProfilingCommons::ProfileMapFactory::ChunkPathMap::
                   const_iterator chunk_it = chunk_folders_.begin();
                 chunk_it != chunk_folders_.end(); ++chunk_it)
             {
               chunk_ids.insert(chunk_it->first);
             }
-            
+
             // init user operations loading
             if(user_info_manager_config_.UserOperationsLoad().present())
             {
@@ -2952,7 +2952,7 @@ namespace UserInfoSvcs
                 Generics::Time(
                   user_info_manager_config_.ExternalUserOperationsLoad()->check_period()),
                   user_info_manager_config_.ExternalUserOperationsLoad()->threads());
-              
+
               add_child_object(external_user_operation_loader_);
             }
           }

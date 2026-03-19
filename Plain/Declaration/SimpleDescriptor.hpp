@@ -23,7 +23,7 @@ namespace Declaration
 
   protected:
     virtual ~SimpleDescriptor() noexcept {}
-    
+
   private:
     bool is_fixed_;
     SizeType fixed_size_;
@@ -46,7 +46,7 @@ namespace Declaration
       is_fixed_(is_fixed_val),
       fixed_size_(fixed_size_val)
   {}
-  
+
   inline
   bool
   SimpleDescriptor::is_fixed() const noexcept

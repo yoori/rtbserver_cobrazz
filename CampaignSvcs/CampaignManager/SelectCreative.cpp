@@ -138,7 +138,7 @@ namespace AdServer
 
       CreativeInstantiateRuleMap::iterator rule_it =
         creative_instantiate_.creative_rules.find(inst_rule);
-      
+
       if(rule_it == creative_instantiate_.creative_rules.end())
       {
         Stream::Error ostr;
@@ -162,7 +162,7 @@ namespace AdServer
       }
 
       bool is_native = ad_slot.format == NATIVE_FORMAT;
-      
+
       if(ad_instantiate_type == AIT_BODY || is_native)
       {
         instantiate_creative_(
@@ -293,7 +293,7 @@ namespace AdServer
             ad_slot_context,
             ad_selection_result.selected_campaigns.front().creative);
 
-          request_result_params.click_params = init_click_params0_( 
+          request_result_params.click_params = init_click_params0_(
             ad_selection_result.selected_campaigns.front().request_id,
             colocation,
             ad_selection_result.selected_campaigns.front().creative,
@@ -358,7 +358,7 @@ namespace AdServer
 
       AdServer::CampaignSvcs::CampaignManager::CreativeSelectDebugInfo*
         creative_debug_info = 0;
-      
+
       if(ad_slot_debug_info)
       {
         ad_slot_debug_info->selected_creatives.length(1);
@@ -422,7 +422,7 @@ namespace AdServer
           ad_slot_debug_info->site_rate_id =
             ad_selection_result.tag_pricing ? ad_selection_result.tag_pricing->site_rate_id : 0;
         }
-        
+
         if(creative_debug_info)
         {
           if(campaign_candidate->track_actions())
@@ -461,7 +461,7 @@ namespace AdServer
           creative_candidate->ccid << ". Caught CreativeInstantiateProblem: " <<
           ex.what();
       }
-      
+
       return false;
     }
 
@@ -490,7 +490,7 @@ namespace AdServer
       }
 
       CORBA::ULong i = 0;
-      
+
       for(CampaignSelector::WeightedCampaignKeywordList::
             const_iterator kw_it = campaign_keywords.begin();
           kw_it != campaign_keywords.end();
@@ -563,7 +563,7 @@ namespace AdServer
             ad_selection_result.selected_campaigns.begin();
 
           CORBA::ULong i = 0;
-          
+
           for(CreativeParamsList::iterator creative_params_it =
                 creative_params_list.begin();
               creative_params_it != creative_params_list.end();
@@ -571,7 +571,7 @@ namespace AdServer
           {
             const Campaign* campaign_candidate = select_params_it->campaign;
             const CreativeParams& creative_params = *creative_params_it;
-            
+
             AdServer::CampaignSvcs::CampaignManager::CreativeSelectDebugInfo&
               creative_debug_info = ad_slot_debug_info->selected_creatives[i];
 
@@ -604,7 +604,7 @@ namespace AdServer
           "Caught CreativeInstantiateProblem: " <<
           ex.what();
       }
-      
+
       return false;
     }
   } // namespace CampaignSvcs

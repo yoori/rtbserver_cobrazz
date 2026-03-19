@@ -15,7 +15,7 @@ namespace AdServer
 namespace Frontends
 {
   class WorkerStatsObject: public Commons::DelegateActiveObject
-  { 
+  {
     static const Generics::Time STATS_TIMEOUT;
 
   public:

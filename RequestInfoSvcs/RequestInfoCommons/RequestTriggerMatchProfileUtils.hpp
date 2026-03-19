@@ -64,7 +64,7 @@ namespace RequestInfoSvcs
       sizeof(REQUEST_TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[0]);
 
     Table table(columns);
-      
+
     for(unsigned long i = 0; i < columns; i++)
     {
       table.column(i, REQUEST_TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[i]);

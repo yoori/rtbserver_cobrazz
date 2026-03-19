@@ -485,7 +485,7 @@ Application_::copy_tree_(const TreeNode* node)
   return new_node;
 }
 */
- 
+
 double
 Application_::eval_gain_(
   unsigned long yes_value_labeled,
@@ -550,8 +550,8 @@ Application_::eval_gain_(
     std::endl;
 # endif
 
-  // new logloss += gain, new logloss = 
-  return new_logloss - old_logloss; // negative, new logloss = old logloss + gain 
+  // new logloss += gain, new logloss =
+  return new_logloss - old_logloss; // negative, new logloss = old logloss + gain
 }
 
 void

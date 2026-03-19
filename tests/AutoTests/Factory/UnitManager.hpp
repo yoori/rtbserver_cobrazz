@@ -27,7 +27,7 @@ class UnitManager
   {
     typedef std::unique_ptr<BaseUnit> BaseUnit_var;
   public:
-    
+
     TaskTest(
       UnitManager* manager,
       UnitDescriptor* descriptor,
@@ -57,7 +57,7 @@ class UnitManager
 
   typedef std::unique_ptr<GlobalConfig> GlobalConfigPtr;
   typedef std::unique_ptr<class xsd::tests::AutoTests::LocalParamsType> LocalsPtr;
-  
+
 public:
   DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidArgument, Exception);

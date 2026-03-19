@@ -23,7 +23,7 @@ namespace ChannelSearchSvcs
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-      
+
     typedef CampaignSvcs::ExpressionChannelHolderMap ChannelMap;
     typedef AdServer::CampaignSvcs::ChannelIdSet ChannelIdSet;
 

@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__URLKEYWORDSDECODING_
 #define _AUTOTEST__URLKEYWORDSDECODING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 class URLKeywordsDecoding : public BaseUnit

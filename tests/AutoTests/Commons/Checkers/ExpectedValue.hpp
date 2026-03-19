@@ -16,7 +16,7 @@ namespace AutoTest
   class ExpValue
   {
   public:
-    
+
     /**
      * @brief Default constructor.
      */
@@ -26,7 +26,7 @@ namespace AutoTest
      * @brief Copy constructor.
      */
     explicit ExpValue(const T& value);
-    
+
     /**
      * @brief Access to original value.
      */
@@ -36,34 +36,34 @@ namespace AutoTest
      * @brief Access to original value.
      */
     const T* operator->() const;
-    
+
     /**
      * @brief Access to original value.
      */
     T* operator->();
-    
+
     /**
      * @brief Assignment operator.
      */
     ExpValue& operator=(
       const T& value);
-   
+
     /**
      * @brief Check value set.
      */
     bool is_set() const;
-    
+
     /**
      * @brief Mark value set.
      */
     void is_set(
       bool is_set);
-    
+
   private:
     T value_;
     bool is_set_;
   };
-  
+
   /**
    * @brief Assignment from stream.
    * @param stream
@@ -72,7 +72,7 @@ namespace AutoTest
   template <typename T>
   std::istream&
   operator >>(std::istream& istr, ExpValue<T>& value);
-  
+
 } //namespace AutoTest
 
 #include "ExpectedValue.tpp"

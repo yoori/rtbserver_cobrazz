@@ -8,14 +8,14 @@ namespace AutoTest
   /**
    * @class UserBindRequest
    * @brief Presentation of userbind AdServer request.
-   * 
+   *
    * This class is used to build url of AdServer userbind request,
    * also known as Cookie Mapping or Cookie Sync.
    * You can use default parameters for request or set owns.
-   */  
+   */
   class UserBindRequest : public BaseRequest
   {
-    
+
     /// Base url for nslookup request
     static const char*          BASE_URL;
 
@@ -23,7 +23,7 @@ namespace AutoTest
 
     typedef RequestParam <UserBindRequest> UserBindParam; //!< Params for UserBindRequest
     typedef RequestParamSetter<UserBindRequest> Member;   //!< UserBindRequest member
-    
+
   public:
     /**
      * @brief Constructor.
@@ -38,7 +38,7 @@ namespace AutoTest
      * @param other request
      */
     UserBindRequest(const UserBindRequest& other);
-    
+
     // request parameters
 
     /**

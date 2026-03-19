@@ -1,6 +1,6 @@
 #ifndef _AUTOTEST__SPECIFICPROFILESABSENT_
 #define _AUTOTEST__SPECIFICPROFILESABSENT_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 class SpecificProfilesAbsent : public BaseUnit

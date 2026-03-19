@@ -125,7 +125,7 @@ namespace AutoTest
     /**
      * @brief Adds command name or others command attributes (keys or arguments).
      *
-     * Use this function to build command line. 
+     * Use this function to build command line.
      * @param cmd pointer to null-terminated string that represents
      * command name or command argument.
      * @return true if adding command is successful, false otherwise.
@@ -331,7 +331,7 @@ namespace AutoTest
      * @param names new names.
      */
     void setup (size_t count, const char* const* names);
-    
+
   public:
 
     /**
@@ -451,7 +451,7 @@ namespace AutoTest
     class Examiner: public BasicExaminer
     {
     protected:
-      
+
       /**
        * @brief Admin command to examine.
        */
@@ -495,9 +495,9 @@ namespace AutoTest
        * @param value field value.
        */
       void set (const char* name, const char* value);
-      
+
     public:
-      
+
       /**
        * @brief Constructor.
        *
@@ -517,7 +517,7 @@ namespace AutoTest
        * @return true if examiner gets all expected values.
        */
       virtual bool examine (std::istream& in);
-      
+
     };
 
     class SingleValueExaminer:
@@ -557,7 +557,7 @@ namespace AutoTest
     /**
      * @brief Make call string for admin using aspect value.
      *
-     * @param aspect_value aspect value 
+     * @param aspect_value aspect value
      */
     void cmd (const std::string& aspect_value)
     {
@@ -620,8 +620,8 @@ namespace AutoTest
      * and all expected values received.
      */
     bool examine(
-      BasicExaminer& examiner, 
-      size_t size, 
+      BasicExaminer& examiner,
+      size_t size,
       const char* const* expects);
 
     bool examine(const char* expects);
@@ -794,9 +794,9 @@ namespace AutoTest
     bool examine(const expects_type1 (&expects)[Count2])
     {
       Examiner examiner(*this);
-      const expects_type1* array1 = 
+      const expects_type1* array1 =
         static_cast<const expects_type1*>(expects);
-      const std::string* array2 = 
+      const std::string* array2 =
         static_cast<const std::string*>(*array1);
       return BaseCmd::examine(examiner,
         Count2,
@@ -868,7 +868,7 @@ namespace AutoTest
 
     bool check_(const std::string& expected) /*const*/
       /*throw(eh::Exception)*/
-   { 
+   {
       return examine(expected.c_str());
     }
 

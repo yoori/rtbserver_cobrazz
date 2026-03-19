@@ -8,7 +8,7 @@ namespace Frontends
   {
     const char WORKER[] = "FCGI::Worker";
   }
-  
+
   const Generics::Time WorkerStatsObject::STATS_TIMEOUT(5l);  // 5 seconds
 
   // WorkerStatsObject impl
@@ -55,7 +55,7 @@ namespace Frontends
       }
 
       logger_->info(ostr.str(), Aspect::WORKER);
-      
+
       {
         WorkerStatsSyncPolicy::WriteGuard lock(worker_cond_lock_);
         workers_condition_.timed_wait(worker_cond_lock_, &STATS_TIMEOUT, true);
@@ -99,7 +99,7 @@ namespace Frontends
     WorkerStatsSyncPolicy::WriteGuard lock(worker_stats_lock_);
     --use_workers_count_;
   }
- 
+
   void
   WorkerStatsObject::eval_max_workers_i_()
   {

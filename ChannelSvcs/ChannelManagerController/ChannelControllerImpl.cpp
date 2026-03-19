@@ -57,7 +57,7 @@ log_chunks(STREAM& ostr, const CONTAINER& chunks, unsigned long count_chunks_)
       ostr << ',';
     }
     ostr << *it;
-  } 
+  }
   ostr << '/' << count_chunks_;
   return ostr;
 }
@@ -266,7 +266,7 @@ void ChannelControllerImpl::calc_proxy_sums_(
       {
         log_chunks(ostr, (*i)->chunks, count_chunks_) << "; check sums "
           << i - it->begin() << "->" << (*i)->check_sum[0] << ':'
-          << (*i)->check_sum[1] << ' '; 
+          << (*i)->check_sum[1] << ' ';
       }
       logger()->log(ostr.str(), Logging::Logger::TRACE, ASPECT);
     }
@@ -679,7 +679,7 @@ ChannelControllerImpl::check_() noexcept
                 continue;
               }
             }
-               
+
             if(check_sum)
             {
               logger()->sstream(Logging::Logger::NOTICE,

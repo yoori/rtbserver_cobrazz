@@ -1,7 +1,7 @@
 
 #include "CCGBudgetTest.hpp"
 #include "SpentBudgetChecker.hpp"
- 
+
 REFLECT_UNIT(CCGBudgetTest) (
   "NoDBUpdate",
   AUTO_TEST_SLOW
@@ -50,7 +50,7 @@ const CCGBudgetTest::TestCase CCGBudgetTest::GMT_CASES[] =
     "DynamicDailyBudget1",
     CCGBudgetTest::CF_BUDGET_DYNAMIC, 0, 0, 0,
     &CCGBudgetTest::increase_budget<&CCG::budget, 10> },
-  
+
   { "CCG channel CPM != 0.",
     "ChannelRate", 0, 0, 0, 0, 0 },
 
@@ -122,7 +122,7 @@ CCGBudgetTest::checker_call(
   {
     FAIL_CONTEXT({throw;}, description);
     return false;
-  }                                                                 
+  }
 }
 
 void CCGBudgetTest::process_case(
@@ -152,14 +152,14 @@ void CCGBudgetTest::process_case(
   {
     FAIL_CONTEXT(
       ccg_checker.check(),
-      test.description + 
-        " Initial check");    
+      test.description +
+        " Initial check");
   }
   else
   {
     FAIL_CONTEXT(
       AutoTest::wait_checker(ccg_checker).check(),
-      test.description + 
+      test.description +
         " Initial check");
 
     // Check that date switched
@@ -227,11 +227,11 @@ void CCGBudgetTest::process_case(
 
     debug_time = start_time + test.debug_time_shift +
       (request_count > 1 ? i * test.interval / (request_count - 1) : 0);
-    
+
     request.debug_time = debug_time;
-    
+
     client.process_request(request);
-    
+
     AutoTest::ConsequenceActionList actions;
 
     std::list<std::string> expected_ccs;
@@ -298,7 +298,7 @@ CCGBudgetTest::process_cases(const TestCase (&cases)[SIZE],
   check();
 }
 
-bool 
+bool
 CCGBudgetTest::run()
 {
   // GMT cases

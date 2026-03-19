@@ -1,6 +1,6 @@
 
 #include "BudgetOverrunsTest.hpp"
- 
+
 REFLECT_UNIT(BudgetOverrunsTest) (
   "NoDBUpdate",
   AUTO_TEST_SLOW
@@ -140,7 +140,7 @@ void BudgetOverrunsTest::process_case(size_t i)
         cc,
         client.debug_info.ccid).check(),
       "server must return expected creative");
-    
+
     if (TEST_CASES[i].flags & TCF_CPC_RATE)
     {
       FAIL_CONTEXT(
@@ -170,7 +170,7 @@ BudgetOverrunsTest::campaign_zero_budget()
       fetch_int("CampaignZeroBudget/CCG"), "0"));
 }
 
-bool 
+bool
 BudgetOverrunsTest::run()
 {
   size_t cases_count = countof(TEST_CASES);
@@ -410,7 +410,7 @@ BudgetOverrunsTest::post_condition()
   for (size_t i = 0; i < countof(TEST_CASES); ++i)
   {
     if (TEST_CASES[i].dynamic_part)
-    { 
+    {
       AUTOTEST_CASE(
         (this->*(TEST_CASES[i].dynamic_part))(TEST_CASES[i].prefix),
         case_name(i));

@@ -19,7 +19,7 @@ namespace AutoTest
     check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/ = 0;
 
-    virtual ~Checker() noexcept 
+    virtual ~Checker() noexcept
     {}
   };
 } //namespace AutoTest

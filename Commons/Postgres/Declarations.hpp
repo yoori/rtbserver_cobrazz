@@ -14,7 +14,7 @@
 #define NUMERIC_SHORT 0x8000
 #define NUMERIC_NAN 0xC000
 #define NBASE 10000
-#define DEC_DIGITS 4 
+#define DEC_DIGITS 4
 
 namespace AdServer
 {

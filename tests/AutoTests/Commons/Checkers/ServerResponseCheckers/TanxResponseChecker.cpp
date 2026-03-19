@@ -6,7 +6,7 @@ namespace AutoTest
   namespace ProtoBuf
   {
     // Expected
-    
+
     BaseTraits<TanxResponseChecker>::Expected::Expected()
     { }
 
@@ -46,7 +46,7 @@ namespace AutoTest
       creative_id_ = val;
       return *this;
     }
-    
+
     BaseTraits<TanxResponseChecker>::Expected&
     BaseTraits<TanxResponseChecker>::Expected::destination_url(
       const std::string& val)
@@ -55,7 +55,7 @@ namespace AutoTest
       destination_url_.is_set(true);
       return *this;
     }
-    
+
     BaseTraits<TanxResponseChecker>::Expected&
     BaseTraits<TanxResponseChecker>::Expected::ad_bid_count_idx(
       unsigned long val)
@@ -72,7 +72,7 @@ namespace AutoTest
       category_.is_set(true);
       return *this;
     }
-    
+
     BaseTraits<TanxResponseChecker>::Expected&
     BaseTraits<TanxResponseChecker>::Expected::creative_type(
       unsigned long val)
@@ -96,7 +96,7 @@ namespace AutoTest
       category_.is_set(true);
       return *this;
     }
-    
+
     BaseTraits<TanxResponseChecker>::Expected&
     BaseTraits<TanxResponseChecker>::Expected::creative_type_checked()
     {
@@ -104,9 +104,9 @@ namespace AutoTest
       return *this;
     }
   }
-    
+
   // TanxResponseChecker
-  
+
   TanxResponseChecker::TanxResponseChecker(
     const AdClient& client,
     const Expected& expected,

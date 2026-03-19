@@ -1,6 +1,6 @@
 
 #include "UnexistingTokenInCreativeOption.hpp"
- 
+
 REFLECT_UNIT(UnexistingTokenInCreativeOption) (
   "CreativeInstantiation",
   AUTO_TEST_SLOW
@@ -46,7 +46,7 @@ UnexistingTokenInCreativeOption::run()
 
   {
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(request);
     FAIL_CONTEXT(
       AutoTest::equal_checker(
@@ -79,11 +79,11 @@ UnexistingTokenInCreativeOption::run()
         fetch_int("CC1"),
         CreativeChecker::Expected().
           status("A"))).check(),
-    "Check creative#1 status");  
-  
+    "Check creative#1 status");
+
   {
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(request);
     FAIL_CONTEXT(
       AutoTest::equal_checker(
@@ -132,5 +132,5 @@ void UnexistingTokenInCreativeOption::set_creative_option()
           status("A"))).check(),
       "Check creative#2 status");
 }
- 
+
 

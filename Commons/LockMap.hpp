@@ -73,7 +73,7 @@ namespace Commons
     typedef ReferenceCounting::SmartPtr<
       GuardHolder<typename SyncPolicyType::WriteGuard> >
       WriteGuard;
-    
+
   public:
     ReadGuard read_lock(const KeyType& key) noexcept;
 
@@ -86,7 +86,7 @@ namespace Commons
     GuardType* get_(const KeyType& key) noexcept
     {
       LockHolder_var holder;
-      
+
       {
         SyncPolicy::WriteGuard guard(map_lock_);
 
@@ -106,7 +106,7 @@ namespace Commons
     }
 
     void close_i_(const KeyType& key) noexcept;
-    
+
   private:
     SyncPolicy::Mutex map_lock_;
     LockHolderMap map_;

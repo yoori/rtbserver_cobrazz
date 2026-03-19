@@ -98,7 +98,7 @@ TestRequestNoDBModeTest::process_case(
   }
 }
 
-bool 
+bool
 TestRequestNoDBModeTest::run()
 {
   for(size_t i = 0; i < countof(CASES); ++i)

@@ -29,7 +29,7 @@ ISPColocationTargeting::process_case(
 
     NSLookupRequest request;
 
-    request.referer_kw = 
+    request.referer_kw =
       map_objects(testcases[i].referer_kw);
     request.tid = fetch_int("TAG");
     if (testcases[i].colo)
@@ -37,7 +37,7 @@ ISPColocationTargeting::process_case(
       request.colo =
         fetch_int(testcases[i].colo);
     }
-  
+
     client.process_request(request);
 
     if (testcases[i].expected_history)
@@ -58,7 +58,7 @@ ISPColocationTargeting::process_case(
         description +
           " Check history#" + strof(i+1));
     }
-  
+
     std::list<std::string> exp_ccids;
 
     if (testcases[i].expected_ccs)
@@ -89,7 +89,7 @@ ISPColocationTargeting::run_test()
       { "COLO/2", "KWD/DISPLAY", "CHANNEL/DISPLAY", 0 },
     };
 
-    NOSTOP_FAIL_CONTEXT(process_case("Display CCG.", CASES));    
+    NOSTOP_FAIL_CONTEXT(process_case("Display CCG.", CASES));
   }
 
   // Text CCG
@@ -107,7 +107,7 @@ ISPColocationTargeting::run_test()
       }
     };
 
-    NOSTOP_FAIL_CONTEXT(process_case("Text CCG.", CASES));    
+    NOSTOP_FAIL_CONTEXT(process_case("Text CCG.", CASES));
   }
 
   // Several colos targeting
@@ -119,7 +119,7 @@ ISPColocationTargeting::run_test()
       { "COLO/3", "KWD/SEVERALCOLOS", "CHANNEL/SEVERALCOLOS", "CC/SEVERALCOLOS2" }
     };
 
-    NOSTOP_FAIL_CONTEXT(process_case("Several colos targeting.", CASES));    
+    NOSTOP_FAIL_CONTEXT(process_case("Several colos targeting.", CASES));
   }
 
   // Deleted colo targeting
@@ -130,9 +130,9 @@ ISPColocationTargeting::run_test()
       { 0, "KWD/DELETEDCOLO", "CHANNEL/DELETEDCOLO", 0 }
     };
 
-    NOSTOP_FAIL_CONTEXT(process_case("Deleted colo targeting.", CASES));    
+    NOSTOP_FAIL_CONTEXT(process_case("Deleted colo targeting.", CASES));
   }
-  
+
   return true;
 }
 

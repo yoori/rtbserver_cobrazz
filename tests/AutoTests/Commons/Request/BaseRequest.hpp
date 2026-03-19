@@ -191,7 +191,7 @@ namespace AutoTest
      * @brief Add new parameter to container.
      *
      * @param parameter.
-     */    
+     */
     virtual void add_param(BaseParam* param);
   };
 
@@ -324,7 +324,7 @@ namespace AutoTest
     RequestType req_type_;      //!< Request type
     HTTP::HeaderList headers_;  //!< Request HTTP headers
   };
-  
+
   /**
    * @class BaseParam
    * @brief Base class for HTTP request's parameters.
@@ -514,7 +514,7 @@ namespace AutoTest
      * @brief Set param value (alias).
      *
      * @param val string representation of param value.
-     */    
+     */
     void set_param_val(const char* val);
 
     template <class T>
@@ -524,7 +524,7 @@ namespace AutoTest
      * @brief Mark parameter as not encoded.
      */
     void not_encode();
-    
+
   protected:
 
     /**
@@ -547,7 +547,7 @@ namespace AutoTest
   {
 
     static const char* SEARCH_URL;
-    
+
   public:
     /**
      * @brief Constructor.
@@ -589,7 +589,7 @@ namespace AutoTest
      * @return raw param value as string
      */
     virtual std::string raw_str() const;
-    
+
   protected:
     /**
      * @brief Set param value.
@@ -659,7 +659,7 @@ namespace AutoTest
      */
 
     virtual bool empty () const;
-    
+
     /**
      * @brief Get param value.
      * @return param value, represented as string.
@@ -695,7 +695,7 @@ namespace AutoTest
      * @param time as string.
      */
     void set_param_val(const char* val);
-    
+
     /**
      * @brief Set param value (alias).
      *
@@ -705,16 +705,16 @@ namespace AutoTest
      * @param val time value
      */
     void set_param_val(const time_t& val);
-    
+
     /**
      * @brief Set param value (alias).
      *
      * Set time as parameter value.
      * Function take a parameter, which is an object of class Generics::Time from UnixCommons.
      * @param val time value
-     */    
+     */
     void set_param_val(const Generics::Time& val);
-    
+
     /**
      * @brief Set param value.
      *
@@ -738,7 +738,7 @@ namespace AutoTest
      * @brief Decrement operator (right).
      */
     TimeParamBase& operator-- ();
-    
+
     /**
      * @brief Decrement operator (left).
      */
@@ -754,7 +754,7 @@ namespace AutoTest
    *
    * This class is used for determining params of any request.
    */
-  template <class Request, class Base = StringParam> 
+  template <class Request, class Base = StringParam>
   class  RequestParam : public Base
   {
   public:
@@ -789,7 +789,7 @@ namespace AutoTest
      * Destructor for RequestParam object.
      */
     virtual ~RequestParam() noexcept;
-    
+
     /**
      * @brief Assignment operator.
      *
@@ -806,7 +806,7 @@ namespace AutoTest
      * @param val assignable value
      * @param encode tells whether or not
      * to encode param value before assignment
-     * @return reference to request which param belongs to 
+     * @return reference to request which param belongs to
      */
     template <class T>
     Request& operator() (const T& val);
@@ -819,7 +819,7 @@ namespace AutoTest
   template <class Request, class Base = StringParam>
   class HeaderParam : public Base
   {
-   
+
   public:
 
     /**
@@ -923,7 +923,7 @@ namespace AutoTest
      * @param val assignable value
      * @param encode tells whether or not
      * to encode param value before assignment
-     * @return reference to request which param belongs to 
+     * @return reference to request which param belongs to
      */
     template <class T>
     Request& operator() (const T& val);
@@ -943,7 +943,7 @@ namespace AutoTest
      * @param val assignable value
      * @param encode tells whether or not
      * to encode param value before assignment
-     * @return reference to request which param belongs to 
+     * @return reference to request which param belongs to
      */
     Request& operator() (const String::SubString& val);
 
@@ -957,7 +957,7 @@ namespace AutoTest
   struct ParamsGenerator
   {
     template<typename... Args>
-    Param* 
+    Param*
     operator()(
       BaseParamsContainer* request,
       Args&&... args);
@@ -983,13 +983,13 @@ namespace AutoTest
       typename Generator = ParamsGenerator<TValue> >
   class ComplexParam:
     public RequestParam<Request, TValue>,
-    virtual public BaseParamsContainer  
+    virtual public BaseParamsContainer
   {
     /**
      * @brief Type of base class.
      */
     typedef RequestParam<Request, TValue> Base;
-    
+
     protected:
 
     typedef ReferenceCounting::SmartPtr<TValue> TValue_var;
@@ -1159,7 +1159,7 @@ namespace AutoTest
      * @brief Add new parameter to container.
      *
      * @param parameter.
-     */    
+     */
     virtual void add_param(BaseParam* param);
 
   };
@@ -1289,11 +1289,11 @@ namespace AutoTest
      */
     virtual
     RequestMemberBase* clone() const;
-    
+
   private:
     Param Request::* member_; //!< Pointer to request's parameter member
   };
-  
+
   /**
    * @class RequestParamSetter
    * @brief Use for settinggs parameters.
@@ -1307,11 +1307,11 @@ namespace AutoTest
      * @brief Default constructor.
      */
     RequestParamSetter(std::nullptr_t member = nullptr);
-    
+
     /**
      * @brief Constructor.
      *
-     * Create setter. 
+     * Create setter.
      * @param pointer to Request member (parameter).
      */
     template <typename Param>

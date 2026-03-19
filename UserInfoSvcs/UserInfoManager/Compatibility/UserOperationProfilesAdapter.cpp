@@ -134,20 +134,20 @@ namespace AdServer
 
       unsigned long version_head_size = UserOperationTypeReader::FIXED_SIZE;
       Generics::MemBuf& membuf = smart_mem_buf->membuf();
-      
+
       if(membuf.size() < version_head_size)
       {
         Stream::Error ostr;
         ostr << FUN << "Corrupt header: size of profile = " << membuf.size();
         throw Exception(ostr);
       }
-      
+
       UserOperationTypeReader version_reader(membuf.data(), version_head_size);
 
       if(version_reader.version() != FC_CONFIRM_OPERATION_PROFILE_VERSION)
       {
         UserFreqCapConfirmOperationWriter ufc_operation_writer;
-        
+
         if (version_reader.version() == 1)
         {
           AdServer::UserInfoSvcs_v340::
@@ -159,7 +159,7 @@ namespace AdServer
 
           ufc_operation_writer.user_id() = old_reader.user_id();
           ufc_operation_writer.time() = old_reader.time();
-          ufc_operation_writer.request_id() = old_reader.request_id();          
+          ufc_operation_writer.request_id() = old_reader.request_id();
         }
         else
         {
@@ -167,7 +167,7 @@ namespace AdServer
           ostr << FUN << "Unknown profile version: " << version_reader.version();
           throw Exception(ostr);
         }
-        
+
         Generics::MemBuf mb(ufc_operation_writer.size());
         ufc_operation_writer.save(mb.data(), mb.size());
         membuf.assign(mb.data(), mb.size());
@@ -184,17 +184,17 @@ namespace AdServer
       OutputContainerType& out)
     {
       ChannelTriggerMatchWriter writer;
-      
+
       while (first != last)
       {
         writer.channel_id() = *first;
         writer.channel_trigger_id() = 0;
         out.push_back(writer);
-        
+
         ++first;
       }
     }
-    
+
     Generics::SmartMemBuf_var
     UserMatchOperationProfilesAdapter::operator()(
       Generics::SmartMemBuf* smart_mem_buf)
@@ -307,7 +307,7 @@ namespace AdServer
           match_operation_writer.household() = 0;
           match_operation_writer.repeat_trigger_timeout() = 0;
           match_operation_writer.filter_contextual_triggers() = 1;
-          
+
           std::copy(
             old_reader.persistent_channels().begin(),
             old_reader.persistent_channels().end(),
@@ -419,7 +419,7 @@ namespace AdServer
             old_reader.repeat_trigger_timeout();
           match_operation_writer.filter_contextual_triggers() =
             old_reader.filter_contextual_triggers();
-          
+
           std::copy(
             old_reader.persistent_channels().begin(),
             old_reader.persistent_channels().end(),
@@ -444,7 +444,7 @@ namespace AdServer
             old_reader.url_keyword_channels().begin(),
             old_reader.url_keyword_channels().end(),
             std::back_inserter(match_operation_writer.url_keyword_channels()));
-        } 
+        }
         else
         {
           Stream::Error ostr;
@@ -504,7 +504,7 @@ namespace AdServer
 
           merge_operation_writer.household() = 0;
           merge_operation_writer.request_colo_id() = 0;
-          
+
           merge_operation_writer.merge_base_profile().assign(
             old_reader.merge_base_profile().get(),
             old_reader.merge_base_profile().size());
@@ -515,7 +515,7 @@ namespace AdServer
 
           merge_operation_writer.merge_history_profile().assign(
             old_reader.merge_history_profile().get(),
-            old_reader.merge_history_profile().size());       
+            old_reader.merge_history_profile().size());
         }
         else if (version_reader.version() == 2)
         {
@@ -533,7 +533,7 @@ namespace AdServer
             ((old_reader.exchange_merge() & 0x80000000) == 0);
           merge_operation_writer.household() = 0;
           merge_operation_writer.request_colo_id() = 0;
-          
+
           merge_operation_writer.merge_base_profile().assign(
             old_reader.merge_base_profile().get(),
             old_reader.merge_base_profile().size());
@@ -560,7 +560,7 @@ namespace AdServer
           merge_operation_writer.change_last_request() = old_reader.change_last_request();
           merge_operation_writer.household() = old_reader.household();
           merge_operation_writer.request_colo_id() = 0;
-          
+
           merge_operation_writer.merge_base_profile().assign(
             old_reader.merge_base_profile().get(),
             old_reader.merge_base_profile().size());
@@ -587,7 +587,7 @@ namespace AdServer
           merge_operation_writer.change_last_request() = old_reader.change_last_request();
           merge_operation_writer.household() = old_reader.household();
           merge_operation_writer.request_colo_id() = old_reader.request_colo_id();
-          
+
           merge_operation_writer.merge_base_profile().assign(
             old_reader.merge_base_profile().get(),
             old_reader.merge_base_profile().size());

@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__CHANNELOVERLAPSTATS_
 #define _AUTOTEST__CHANNELOVERLAPSTATS_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 namespace ORM = AutoTest::ORM;
 
@@ -14,7 +14,7 @@ class ChannelOverlapStats : public BaseUnit
   typedef ORM::StatsList<Stat> Stats;
   typedef ORM::ChannelOverlapUserStats::Diffs Diff;
   typedef std::list<Diff> Diffs;
-  
+
   struct Request
   {
     const char* kwds;
@@ -62,7 +62,7 @@ private:
     const char* channel2,
     unsigned long users,
     unsigned long time_ofset);
-  
+
   template<size_t Count>
   void
   add_stats(
@@ -85,7 +85,7 @@ private:
   void history_tomorrow_case(AdClient& client);
   void daily_proc_case();
   void status_case();
-  
+
   AutoTest::Time now_;
   AutoTest::DBC::Conn conn_;
   Stats stats_;

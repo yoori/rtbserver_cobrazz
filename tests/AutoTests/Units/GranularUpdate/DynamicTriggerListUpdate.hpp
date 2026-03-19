@@ -9,20 +9,20 @@ namespace ORM = ::AutoTest::ORM;
 /**
  * @class ChannelsTestWithDB
  * @brief Test dynamic trigger list update
- */ 
+ */
 class DynamicTriggerListUpdate:
   public BaseDBUnit
 {
- 
+
 public:
- 
+
   DynamicTriggerListUpdate(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var);
- 
+
   virtual ~DynamicTriggerListUpdate() noexcept;
- 
+
 private:
   void set_up    ();
   void tear_down ();

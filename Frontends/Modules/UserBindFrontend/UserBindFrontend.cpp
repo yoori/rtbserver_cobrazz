@@ -170,7 +170,7 @@ namespace
     const String::SubString APPLICATION("adserver");
     const String::SubString SOURCE("userbind");
     const String::SubString OPERATION("mapping");
-    const String::SubString INVALID_MAPPING_OPERATION("invalid-mapping");    
+    const String::SubString INVALID_MAPPING_OPERATION("invalid-mapping");
   }
 }
 
@@ -593,7 +593,7 @@ namespace AdServer
           {
             skip_external_ids.insert(it->value());
           }
-          
+
           String::SubString skip_ids =
             common_config_->SkipExternalIds()->skip_external_ids();
 
@@ -880,7 +880,7 @@ namespace AdServer
           result_url,
           response);
       }
-    
+
       if (request_info.google_error != 0)
       {
         /*
@@ -1034,7 +1034,7 @@ namespace AdServer
             bind_task_count_ += -1;
             throw;
           }
-            
+
           // wait execution
           Sync::ConditionalGuard guard(request_task->cond);
 
@@ -1675,7 +1675,7 @@ namespace AdServer
 
           bind_result_holder.set(bind_result);
         }
-        
+
         std::string ifa_str;
         if(request_info.external_id.compare(0, 4, "ifa/") == 0)
         {
@@ -1832,7 +1832,7 @@ namespace AdServer
         Logging::Logger::EMERGENCY,
         Aspect::USER_BIND_FRONTEND,
         "ADS-IMPL-109");
-    }    
+    }
 
     return http_status;
   }
@@ -1932,7 +1932,7 @@ namespace AdServer
     static const char* FUN = "UserBindFrontend::user_match_()";
 
     const Generics::Time now = Generics::Time::get_time_of_day();
-    
+
     AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
 
     if((!referer.empty() || !keywords.empty()) &&

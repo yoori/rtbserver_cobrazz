@@ -31,7 +31,7 @@ namespace AdServer
       FileObject(const char* filepath);
 
       std::string path;
-      std::string filename;       // basename for filepath 
+      std::string filename;       // basename for filepath
       Generics::Time timestamp;   // timestamp from filename
       Generics::Time last_modify; // modification time
     };
@@ -46,9 +46,9 @@ namespace AdServer
     public:
       typedef std::pair<unsigned long, FileObject> FilePair;
       typedef std::list<FilePair> FileList;
-      
+
     public:
-      
+
       /**
        * @brief Constructor.
        *
@@ -83,7 +83,7 @@ namespace AdServer
        * @brief Destructor.
        */
       virtual ~CampaignFolder() noexcept = default;
-      
+
     private:
       std::string full_path_;
       unsigned long campaign_id_;
@@ -98,7 +98,7 @@ namespace AdServer
       DECLARE_EXCEPTION(InvalidCampaignPath, eh::DescriptiveException);
 
       typedef std::list<CampaignFolder> FolderTable;
-      
+
     public:
 
       /**
@@ -112,7 +112,7 @@ namespace AdServer
         const char* path,
         Generics::Time keep_interval,
         Logging::Logger* logger);
-      
+
       /**
        * @brief Get files.
        *
@@ -130,7 +130,7 @@ namespace AdServer
       std::string path_;
       Generics::Time keep_interval_;
       Logging::Logger_var logger_;
-    };      
+    };
 
     /**
      * @brief Check file has been changed since the last processing.

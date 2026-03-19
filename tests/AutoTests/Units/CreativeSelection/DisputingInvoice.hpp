@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__DISPUTINGINVOICE_
 #define _AUTOTEST__DISPUTINGINVOICE_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = ::AutoTest::ORM;
@@ -42,7 +42,7 @@ private:
   void
   create_invoice_(
     ORM::PQ::Accountfinancialdata* acc_data);
-  
+
   void
   edit_invoice_(
     ORM::PQ::Accountfinancialdata* acc_data);
@@ -50,7 +50,7 @@ private:
   // Utils
   void
   clear_stats_();
-  
+
 };
 
 #endif // _AUTOTEST__DISPUTINGINVOICE_

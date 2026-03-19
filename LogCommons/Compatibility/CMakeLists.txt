@@ -1,7 +1,7 @@
 add_library(RequestCompatibility SHARED
- Request_Base.cpp 
-  Request_v354.cpp 
-  Request_v360.cpp 
+ Request_Base.cpp
+  Request_v354.cpp
+  Request_v360.cpp
   Request_v361.cpp
   Request_v371.cpp
 

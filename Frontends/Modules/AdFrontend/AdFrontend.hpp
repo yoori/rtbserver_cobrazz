@@ -290,7 +290,7 @@ namespace AdServer
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
-    
+
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
     FrontendCommons::UserBindClient_var user_bind_client_;

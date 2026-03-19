@@ -53,7 +53,7 @@ namespace
 namespace
 {
   using namespace AdServer::UserInfoSvcs;
-  
+
   template<typename PlainReaderType, typename IdType>
   struct CommonIdImpressionCmp
   {

@@ -141,7 +141,7 @@ namespace Commons
 
       handle_ = handle;
     }
- 
+
     template<typename Type, unsigned long TypeId>
     Type*
     OCIHandlePtr<Type, TypeId>::release()
@@ -150,14 +150,14 @@ namespace Commons
       handle_ = 0;
       return ret;
     }
-          
+
     template<typename Type, unsigned long TypeId>
     Type*
     OCIHandlePtr<Type, TypeId>::get()
     {
       return handle_;
     }
-          
+
     template<typename Type, unsigned long TypeId>
     Type*&
     OCIHandlePtr<Type, TypeId>::inout()
@@ -281,7 +281,7 @@ namespace Commons
           }
         }
         else
-        {              
+        {
           if((result = OCIObjectFree(
             static_cast<OCIEnv*>(env_handle_),
             static_cast<OCIError*>(error_handle_),

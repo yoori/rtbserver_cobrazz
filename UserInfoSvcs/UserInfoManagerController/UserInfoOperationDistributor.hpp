@@ -107,7 +107,7 @@ namespace UserInfoSvcs
       const CORBACommons::TimestampInfo& now)
       /*throw(AdServer::UserInfoSvcs::UserInfoManager::NotReady,
         AdServer::UserInfoSvcs::UserInfoManager::ImplementationException)*/;
-    
+
     virtual void
     clear_expired(
       CORBA::Boolean synch,

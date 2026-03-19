@@ -45,7 +45,7 @@ namespace ChannelSvcs
      : lang(lang_value), trigger(p_trigger)
     {};
 
-    unsigned short lang; 
+    unsigned short lang;
     const std::string& trigger;
   };
 
@@ -70,7 +70,7 @@ namespace ChannelSvcs
             matcher(data ? ReferenceCounting::add_ref(data) : 0)
         {
         }
-        operator unsigned int () const noexcept {return channel_trigger_id;} 
+        operator unsigned int () const noexcept {return channel_trigger_id;}
 
         unsigned int channel_trigger_id;
         SoftMatcher_var matcher;
@@ -101,7 +101,7 @@ namespace ChannelSvcs
 
     struct UnmergedItem
     {
-      UnmergedItem(unsigned int p_channel_id) noexcept 
+      UnmergedItem(unsigned int p_channel_id) noexcept
         : channel_id(p_channel_id)
       {};
 
@@ -268,7 +268,7 @@ namespace ChannelSvcs
 
     typedef std::map<IdType, SoftMatcher_var> IdMatchers;
     typedef std::map<IdType, IdMatchers> ChannelIdToTrigers;
-    
+
     /* add trigger with existing matching in container
      * and uid channels
      * */
@@ -302,7 +302,7 @@ namespace ChannelSvcs
       const MatchWords match_words[CT_MAX],
       const MatchWords& additional_url_keywords,
       const StringVector& exact_words,
-      const Generics::Uuid& uid, 
+      const Generics::Uuid& uid,
       unsigned int flags,
       TriggerMatchRes& res)
       /*throw(Exception)*/;
@@ -390,7 +390,7 @@ namespace ChannelSvcs
 
     void trace_update_data_(
       const UpdateContainer& add,
-      std::ostream& debug) 
+      std::ostream& debug)
       noexcept;
 
     void add_with_existing_matcher_(
@@ -451,7 +451,7 @@ namespace ChannelSvcs
 
     /* match uid*/
     void match_uid_(
-      const Generics::Uuid& uid, 
+      const Generics::Uuid& uid,
       const ChannelChunkArray& array,
       TriggerMatchRes& res)
       /*throw(Exception)*/;
@@ -505,7 +505,7 @@ namespace ChannelSvcs
       ChannelIdToMatchInfo& info_new,
       ExcludeContainerType &new_ids,
       ExcludeContainerType &up_ids,
-      ExcludeContainerType &rm_ids) 
+      ExcludeContainerType &rm_ids)
       noexcept;
 
     unsigned int choose_word_(
@@ -578,7 +578,7 @@ namespace AdServer
   //
   // ChannelContainerBase class
   //
-  
+
   inline
   ChannelContainerBase::ChannelUpdateData_var
   ChannelContainerBase::get_channel(unsigned long channel_id) const
@@ -635,7 +635,7 @@ namespace AdServer
     return ChannelContainerBase::get_channel(channel_id);
   }
 
-  inline 
+  inline
   void ChannelContainer::get_master(
     Generics::Time& first_master,
     Generics::Time& master,
@@ -647,7 +647,7 @@ namespace AdServer
     longest_update = max_update_;
   }
 
-  inline 
+  inline
   ChannelMatchInfo_var ChannelContainer::get_active() const
     noexcept
   {

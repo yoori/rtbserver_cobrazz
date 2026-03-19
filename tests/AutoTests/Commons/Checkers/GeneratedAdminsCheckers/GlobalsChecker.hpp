@@ -8,37 +8,37 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = GlobalsAdmin::Expected>  
-  class GlobalsChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = GlobalsAdmin::Expected>
+  class GlobalsChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      GlobalsChecker_(      
-        BaseUnit* test,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      GlobalsChecker_(
+        BaseUnit* test,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~GlobalsChecker_() noexcept {}      
+      virtual ~GlobalsChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef GlobalsChecker_<GlobalsAdmin::Expected> GlobalsChecker;  
-  typedef GlobalsChecker_<std::string> GlobalsCheckerSimple;  
+  typedef GlobalsChecker_<GlobalsAdmin::Expected> GlobalsChecker;
+  typedef GlobalsChecker_<std::string> GlobalsCheckerSimple;
 
 }
 

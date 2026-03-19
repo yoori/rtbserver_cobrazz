@@ -56,7 +56,7 @@ unsigned long HttpPoolPolicy::get_connections_count()
 {
   return get_connections_().size();
 }
-  
+
 void HttpPoolPolicy::report_error(
   Generics::ActiveObjectCallback::Severity,
   const String::SubString& description,

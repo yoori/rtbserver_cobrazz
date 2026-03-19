@@ -302,7 +302,7 @@ namespace RequestInfoSvcs {
       request_info.model_conv_rates.push_back(RevenueDecimal(*conv_it));
     }
 
-    request_info.viewability = request_reader.viewability(); 
+    request_info.viewability = request_reader.viewability();
     request_info.self_service_commission = RevenueDecimal(
       request_reader.self_service_commission());
     request_info.adv_commission = RevenueDecimal(
@@ -905,7 +905,7 @@ namespace RequestInfoSvcs {
     if(notice)
     {
       request_writer.notice_pub_revenue_type() = impression_info.pub_revenue->revenue_type;
-      
+
       if(impression_info.pub_revenue.present())
       {
         request_writer.notice_imp_revenue() = impression_info.pub_revenue->impression.str();
@@ -2380,7 +2380,7 @@ namespace RequestInfoSvcs {
           imp_info.user_id = request_process_delegate.move_request_user_id;
           request_operation_processor_->process_impression(imp_info);
         }
-        
+
         if(request_process_delegate.move_impression_info.present())
         {
           ImpressionInfo imp_info(*request_process_delegate.move_impression_info);

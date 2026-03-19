@@ -141,7 +141,7 @@ namespace ChannelSvcs
       }
     }
   }
-  
+
   AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
   DictionaryMatcher::query_dictionary_words_(
     const char* lang,
@@ -160,14 +160,14 @@ namespace ChannelSvcs
       {
         Stream::Error ostr;
         ostr << __func__ << ": NotReady :" << e.description;
-        dictionary_provider.release_bad(ostr.str()); 
+        dictionary_provider.release_bad(ostr.str());
         throw Exception(ostr);
       }
       catch(const ChannelSvcs::ImplementationException& e)
       {
         Stream::Error ostr;
         ostr << __func__ << ": ImplementationException :" << e.description;
-        dictionary_provider.release_bad(ostr.str()); 
+        dictionary_provider.release_bad(ostr.str());
         throw Exception(ostr);
       }
       catch(const CORBA::SystemException& ex)

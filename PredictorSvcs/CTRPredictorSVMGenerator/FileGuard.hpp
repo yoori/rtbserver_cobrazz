@@ -43,12 +43,12 @@ namespace AdServer
        * @return file path
        */
       const std::string& tmp_filepath() const;
-      
+
       /**
        * @brief Destructor.
        */
       virtual ~FileGuard() noexcept;
-      
+
     private:
       std::string filepath_;
       std::string tmp_filepath_;

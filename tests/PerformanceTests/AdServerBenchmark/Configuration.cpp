@@ -56,24 +56,24 @@ void Configuration::read() /*throw(InvalidConfiguration)*/
   Config::ErrorHandler error_handler;
 
   std::unique_ptr<AdServerBenchmarkType> configuration;
-  
+
   try
   {
     configuration = Test(config_path_, error_handler);
-    
+
     if(error_handler.has_errors())
     {
       std::string error_string;
       throw InvalidConfiguration(error_handler.text(error_string));
     }
-    
+
     // read global config
     const GlobalSettingsType& global_config = configuration->GlobalSettings();
-    
+
     // 1. global params
     threads_number_ = global_config.ThreadsNumber();
     std::string server_url = global_config.ServerURL();
-    
+
     // 2. data lists for making requests
     if (global_config.URLsFile().present())
     {

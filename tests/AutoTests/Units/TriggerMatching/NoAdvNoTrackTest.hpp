@@ -11,12 +11,12 @@ class NoAdvNoTrackTest: public BaseUnit
 public:
 
   NoAdvNoTrackTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var);
- 
+
   virtual ~NoAdvNoTrackTest() noexcept;
- 
+
 private:
   std::string no_track_words;
   std::string no_track_url_words;

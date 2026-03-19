@@ -92,11 +92,11 @@ UserPropertiesTest::run()
   AUTOTEST_CASE(
     user_status_case(),
     "User statuses");
-  
+
   AUTOTEST_CASE(
     inactive_tag_case(),
     "Inactive tags");
-  
+
   AUTOTEST_CASE(
     no_ads_isp_case(),
     "ISP.optout_serving = NONE");
@@ -108,7 +108,7 @@ UserPropertiesTest::run()
   AUTOTEST_CASE(
     upvalue_case(),
     "OS & Browser limit");
-  
+
   return true;
 }
 
@@ -171,11 +171,11 @@ UserPropertiesTest::os_browser_case()
       "UserAgent/6", "TID", "KWD1", "CC/02",
       PSE_OPTIN, 70, 35, 14, 3, 70, 0
     },
- 
+
   };
 
   test_case(PROPERTIES,"COLO/OS");
-  
+
 }
 
 void
@@ -202,7 +202,7 @@ UserPropertiesTest::country_case()
   };
 
   test_case(PROPERTIES, "COLO/COUNTRY");
-  
+
 }
 
 void
@@ -223,7 +223,7 @@ UserPropertiesTest::version_case()
   };
 
   test_case(PROPERTIES, "COLO/VERSION");
-    
+
 }
 
 void
@@ -245,7 +245,7 @@ UserPropertiesTest::app_props_case()
   };
 
   test_case(PROPERTIES, "COLO/CLIENT_PROP");
-  
+
 }
 
 void
@@ -419,7 +419,7 @@ void UserPropertiesTest::test_case(
 
   ORM::StatsList<ORM::UserPropertiesStats> stats;
   std::list<ORM::UserPropertiesStats::Diffs> diffs;
-  
+
   // Initialize property keys
   PropertyKeys keys;
   for (unsigned int idx = 0; idx <  PropsSize; idx++)
@@ -474,7 +474,7 @@ void UserPropertiesTest::test_case(
     {
       key.value("");
     }
-        
+
     stat.key( key );
 
     stat.description(
@@ -545,7 +545,7 @@ void UserPropertiesTest::test_case(
         request,
         fetch_string(properties[prop_idx].request_param_value));
     }
-    
+
     const unsigned long counts[] =
     {
       properties[prop_idx].requests - properties[prop_idx].impressions,

@@ -11,7 +11,7 @@ namespace AutoTest
       throw CheckFailed("Fail");
     }
   }
-    
+
   // TimeLessChecker
   TimeLessChecker::TimeLessChecker(const Generics::Time& now_less_then)
     noexcept

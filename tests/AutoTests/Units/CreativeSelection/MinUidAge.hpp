@@ -1,22 +1,22 @@
 
 #ifndef _AUTOTEST__MINUIDAGE_
 #define _AUTOTEST__MINUIDAGE_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class MinUidAge : public BaseUnit
 {
 
   typedef AutoTest::AdClient AdClient;
-  
+
   struct TestCase
   {
     int ofset;
     const char* referer_kw;
     const char* expected_cc;
   };
-  
+
 public:
   MinUidAge(
     UnitStat& stat_var,
@@ -53,10 +53,10 @@ private:
 
   void
   temporary_();
-    
+
   virtual bool run_test();
 
-  
+
 };
 
 #endif // _AUTOTEST__MINUIDAGE_
