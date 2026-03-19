@@ -7,7 +7,7 @@ namespace LogProcessing {
 
 template <> const char* RequestTraits::B::base_name_ = "Request";
 template <> const char* RequestTraits::B::signature_ = "Request";
-template <> const char* RequestTraits::B::current_version_ = "3.7.1";
+template <> const char* RequestTraits::B::current_version_ = "3.7.2";
 
 namespace {
 

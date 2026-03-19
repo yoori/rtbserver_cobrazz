@@ -314,6 +314,10 @@ public:
     *this += range;
   }
 
+  StatCollector(const StatCollector& init)
+    : map_impl_(ReferenceCounting::add_ref(init.map_impl_))
+  {}
+
   StatCollector& operator=(const StatCollector& collector)
   {
     if (map_impl_ != collector.map_impl_)

@@ -695,6 +695,7 @@ namespace RequestInfoSvcs
       request_info.adv_commission = req.adv_commission();
       request_info.pub_cost_coef = req.pub_cost_coef();
       request_info.at_flags = req.at_flags();
+      request_info.additional_info = req.additional_info();
 
       request_processor_->process_request(request_info);
     }

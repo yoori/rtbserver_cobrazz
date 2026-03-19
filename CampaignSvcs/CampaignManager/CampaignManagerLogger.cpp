@@ -2372,7 +2372,8 @@ namespace AdServer
               ad_info.self_service_commission,
               ad_info.adv_commission,
               ad_info.pub_cost_coef,
-              ad_info.at_flags
+              ad_info.at_flags,
+              ""
               );
 
             add_record(data);
@@ -3309,4 +3310,3 @@ namespace AdServer
 
   } // namespace CampaignSvcs
 } // namespace AdServer
-

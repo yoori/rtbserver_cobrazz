@@ -9,6 +9,7 @@
 #include <LogCommons/GenericLogCsvSaverImpl.hpp>
 #include <LogCommons/Compatibility/Request_Base.hpp>
 #include <LogCommons/Compatibility/Request_v361.hpp>
+#include <LogCommons/Compatibility/Request_v371.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 namespace AdServer {
@@ -130,7 +131,8 @@ public:
     const FixedNum& self_service_commission,
     const FixedNum& adv_commission,
     const FixedNum& pub_cost_coef,
-    unsigned long at_flags)
+    unsigned long at_flags,
+    const std::string& additional_info)
     : holder_(new DataHolder(
         time,
         isp_time,
@@ -210,7 +212,8 @@ public:
         self_service_commission,
         adv_commission,
         pub_cost_coef,
-        at_flags
+        at_flags,
+        additional_info
       ))
   {}
 
@@ -294,7 +297,93 @@ public:
         FixedNum::ZERO, // self_service_commission
         FixedNum::ZERO, // adv_commission
         FixedNum::ZERO, // pub_cost_coef
-        0 // at_flags
+        0, // at_flags
+        "" // additional_info
+      ))
+  {}
+
+  RequestData(const RequestData_V_3_7_1& data)
+    : holder_(new DataHolder(
+        data.time(),
+        data.isp_time(),
+        data.pub_time(),
+        data.adv_time(),
+        data.request_id(),
+        data.global_request_id(),
+        data.user_id(),
+        data.household_id(),
+        data.test_request(),
+        data.colo_id(),
+        data.site_id(),
+        data.tag_id(),
+        data.ext_tag_id(),
+        data.publisher_account_id(),
+        data.country_code(),
+        data.ip_address(),
+        data.adv_account_id(),
+        data.advertiser_id(),
+        data.cc_id(),
+        data.cmp_id(),
+        data.ccg_id(),
+        data.delivery_threshold(),
+        data.has_custom_actions(),
+        data.currency_exchange_id(),
+        data.user_props(),
+        data.adv_revenue(),
+        data.pub_revenue(),
+        data.isp_revenue(),
+        data.adv_comm_revenue(),
+        data.adv_payable_comm_amount(),
+        data.pub_comm_revenue(),
+        data.channel_list(),
+        data.history_channel_list(),
+        data.channel_expression(),
+        data.cmp_channel_list(),
+        data.ccg_keyword_id(),
+        data.keyword_id(),
+        data.keyword_page_match(),
+        data.keyword_search_match(),
+        data.num_shown(),
+        data.position(),
+        data.enabled_notice(),
+        data.enabled_impression_tracking(),
+        data.enabled_action_tracking(),
+        data.disable_fraud_detection(),
+        data.walled_garden(),
+        data.ccg_type(),
+        data.user_status(),
+        data.lost_auction_ccgs(),
+        data.geo_channels(),
+        data.device_channel_id(),
+        data.tag_size(),
+        data.size_id(),
+        data.hid_profile(),
+        data.tag_visibility(),
+        data.tag_top_offset(),
+        data.tag_left_offset(),
+        data.ctr_reset_id(),
+        data.campaign_freq(),
+        data.referer(),
+        data.adv_currency_rate(),
+        data.pub_currency_rate(),
+        data.pub_commission(),
+        data.isp_currency_rate(),
+        data.isp_revenue_share(),
+        data.ecpm(),
+        data.floor_cost(),
+        data.ctr_algorithm_id(),
+        data.ctr(),
+        data.full_referer_hash(),
+        data.auction_type(),
+        data.conv_rate_algorithm_id(),
+        data.conv_rate(),
+        data.tag_predicted_viewability(),
+        data.model_ctrs(),
+        data.self_service_commission(),
+        data.adv_commission(),
+        data.pub_cost_coef(),
+        data.at_flags(),
+        ""
       ))
   {}
 
@@ -720,6 +809,12 @@ public:
     return holder_->at_flags;
   }
 
+  const std::string&
+  additional_info() const
+  {
+    return holder_->additional_info.get();
+  }
+
 private:
   struct DataHolder: public ReferenceCounting::AtomicImpl
   {
@@ -804,7 +899,8 @@ private:
       const FixedNum& self_service_commission_val,
       const FixedNum& adv_commission_val,
       const FixedNum& pub_cost_coef_val,
-      unsigned long at_flags_val)
+      unsigned long at_flags_val,
+      const StringIoWrapperOptional& additional_info_val)
       : time(time_val),
         isp_time(isp_time_val),
         pub_time(pub_time_val),
@@ -883,7 +979,8 @@ private:
         self_service_commission(self_service_commission_val),
         adv_commission(adv_commission_val),
         pub_cost_coef(pub_cost_coef_val),
-        at_flags(at_flags_val)
+        at_flags(at_flags_val),
+        additional_info(additional_info_val)
     {}
 
     // compatibility c-tor
@@ -966,7 +1063,8 @@ private:
       const FixedNum& self_service_commission_val,
       const FixedNum& adv_commission_val,
       const FixedNum& pub_cost_coef_val,
-      unsigned long at_flags_val)
+      unsigned long at_flags_val,
+      const StringIoWrapperOptional& additional_info_val)
       : time(time_val),
         isp_time(isp_time_val),
         pub_time(pub_time_val),
@@ -1045,7 +1143,8 @@ private:
         self_service_commission(self_service_commission_val),
         adv_commission(adv_commission_val),
         pub_cost_coef(pub_cost_coef_val),
-        at_flags(at_flags_val)
+        at_flags(at_flags_val),
+        additional_info(additional_info_val)
     {}
 
     bool
@@ -1129,7 +1228,8 @@ private:
         self_service_commission == data.self_service_commission &&
         adv_commission == data.adv_commission &&
         pub_cost_coef == data.pub_cost_coef &&
-        at_flags == data.at_flags;
+        at_flags == data.at_flags &&
+        additional_info.get() == data.additional_info.get();
     }
 
     template <class ARCHIVE_>
@@ -1213,7 +1313,8 @@ private:
       ar & self_service_commission;
       ar & adv_commission;
       ar & pub_cost_coef;
-      ar ^ at_flags;
+      ar & at_flags;
+      ar ^ additional_info;
     }
 
     void invariant() const /*throw(ConstraintViolation)*/
@@ -1334,6 +1435,7 @@ private:
     FixedNum adv_commission;
     FixedNum pub_cost_coef;
     unsigned long at_flags;
+    StringIoWrapperOptional additional_info;
 
 private:
     virtual ~DataHolder() noexcept {}
@@ -1384,37 +1486,16 @@ struct RequestTraits: LogDefaultTraits<RequestCollector, false, false>
   template <class T>
   static void for_each_old(T& obj) /*throw(eh::Exception)*/
   {
-    obj.template support<RequestCollector_V_3_5_4, false>("3.5.4");
-    obj.template support<RequestCollector_V_3_6, false>("3.6");
-    obj.template support<RequestCollector_V_3_6_1, false>("3.6.1");
-    obj.template support<RequestCollector_V_3_6_1, false>("3.7");
+    obj.template support<RequestCollector_V_3_7_1, false>("3.7.1");
   }
 
   static
   const RequestCollector
-  convert_collector(const RequestCollector_V_3_6_1& old_collector)
+  convert_collector(const RequestCollector_V_3_7_1& old_collector)
   {
     RequestCollector collector;
     collector.insert(collector.end(), old_collector.begin(), old_collector.end());
     return collector;
-  }
-
-  static
-  const RequestCollector
-  convert_collector(const RequestCollector_V_3_6& old_collector)
-  {
-    RequestCollector_V_3_6_1 collector_v_3_6_1;
-    collector_v_3_6_1.insert(collector_v_3_6_1.end(), old_collector.begin(), old_collector.end());
-    return convert_collector(collector_v_3_6_1);
-  }
-
-  static
-  const RequestCollector
-  convert_collector(const RequestCollector_V_3_5_4& old_collector)
-  {
-    RequestCollector_V_3_6 collector_v_3_6;
-    collector_v_3_6.insert(collector_v_3_6.end(), old_collector.begin(), old_collector.end());
-    return convert_collector(collector_v_3_6);
   }
 
   typedef GenericLogIoHelperImpl<RequestTraits> IoHelperType;

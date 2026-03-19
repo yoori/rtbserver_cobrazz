@@ -1342,7 +1342,8 @@ int main(int argc, char **argv)
       RequestData::FixedNum("0.1"), // self_service_commission
       RequestData::FixedNum("0.1"), // adv_commission
       RequestData::FixedNum("0.13"), // pub_cost_coef
-      0 // flags
+      0, // flags
+      "" // additional_info
     );
 
     RequestCollector::DataT data2(
@@ -1424,7 +1425,8 @@ int main(int argc, char **argv)
       RequestData::FixedNum("0.1"), // self_service_commission
       RequestData::FixedNum("0.1"), // adv_commission
       RequestData::FixedNum("0.13"), // pub_cost_coef
-      0 // flags
+      0, // flags
+      "" // additional_info
     );
 
 #if LOGIOTEST_PRODUCE_LARGER_FILES
