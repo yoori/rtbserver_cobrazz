@@ -92,7 +92,7 @@ namespace Bidding
     virtual void
     handle_request(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
 
     /** Performs initialization for the module child process. */

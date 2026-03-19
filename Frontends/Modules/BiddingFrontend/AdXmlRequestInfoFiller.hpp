@@ -6,7 +6,7 @@
 #include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 
 namespace AdServer

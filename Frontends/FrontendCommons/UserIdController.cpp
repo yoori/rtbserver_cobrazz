@@ -18,7 +18,7 @@ namespace AdServer
     const char* public_key,
     const char* temp_public_key,
     const char* private_key,
-    const char* ssp_public_key,
+    const char* /*ssp_public_key*/,
     const char* ssp_private_key,
     const String::SubString& ssp_uid_key,
     unsigned long cache_limit,
@@ -109,7 +109,7 @@ namespace AdServer
   Generics::SignedUuid
   UserIdController::sign(
     const AdServer::Commons::UserId& user_id,
-    KeyType key_type) const
+    KeyType /*key_type*/) const
     /*throw(eh::Exception)*/
   {
     /*
@@ -245,7 +245,7 @@ namespace AdServer
     uint8_t /*data_marker*/)
     /*throw(eh::Exception)*/
   {
-    static const char* FUN = "UserIdController::get_by_ssp_user_id()";
+    //static const char* FUN = "UserIdController::get_by_ssp_user_id()";
 
     return ssp_user_id;
 

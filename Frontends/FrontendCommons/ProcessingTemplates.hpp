@@ -17,7 +17,7 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
-#include "FCGI.hpp"
+#include "HttpResponse.hpp"
 
 namespace FrontendCommons
 {

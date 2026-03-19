@@ -3,8 +3,8 @@ add_executable(FCGIEchoServer
 )
 
 target_link_libraries(FCGIEchoServer
-  Generics
-  Commons
   FCGI
   FrontendServerCommons
+  Commons
+  Generics
 )

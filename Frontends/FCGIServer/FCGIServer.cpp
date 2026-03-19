@@ -7,8 +7,8 @@
 
 #include "FCGIServer.hpp"
 #include "FrontendsPool.hpp"
-#include "Acceptor.hpp"
-#include "AcceptorBoostAsio.hpp"
+#include "FCGIAcceptor.hpp"
+#include "Http2Acceptor.hpp"
 
 namespace
 {
@@ -260,26 +260,31 @@ namespace Frontends
       for(auto bind_it = config_->BindSocket().begin(); bind_it != config_->BindSocket().end();
         ++bind_it)
       {
-        /*
         add_child_object(
           Generics::ActiveObject_var(
-            new Acceptor(
-              logger(),
-              frontend_pool,
-              callback(),
-              bind_it->bind().data(),
-              bind_it->backlog(),
-              bind_it->accept_threads())));
-        */
-        add_child_object(
-          Generics::ActiveObject_var(
-            new AcceptorBoostAsio(
+            new FCGIAcceptor(
               logger(),
               frontend_pool,
               callback(),
               bind_it->bind(), // bind_it->bind().data(),
               bind_it->backlog(),
               bind_it->accept_threads())));
+      }
+
+      if(config_->Http2Endpoint().present())
+      {
+        const auto& http2_endpoint = config_->Http2Endpoint().get();
+
+        add_child_object(
+          Generics::ActiveObject_var(
+            new Http2Acceptor(
+              logger(),
+              frontend_pool,
+              http2_endpoint.bind(),
+              http2_endpoint.port(),
+              http2_endpoint.threads(),
+              http2_endpoint.max_concurrent_streams(),
+              http2_endpoint.read_buffer_size())));
       }
 
       frontend_pool_ = frontend_pool;

@@ -206,7 +206,7 @@ namespace AdServer
   void
   ClickFrontend::handle_request_noparams_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     FCGI::HttpRequest& request = request_holder->request();
@@ -556,7 +556,7 @@ namespace AdServer
   void
   ClickFrontend::handle_request_(
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer)
+    FCGI::BaseHttpResponseWriter_var response_writer)
     noexcept
   {
     static const char* FUN = "ClickFrontend::handle_request()";

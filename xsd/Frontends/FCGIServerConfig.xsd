@@ -30,6 +30,7 @@
       <xsd:element name="Logger" type="ErrorLoggerType"/>
       <xsd:element name="Monitoring" type="MonitoringType" minOccurs="0" maxOccurs="1"/>
       <xsd:element name="Module" type="ModuleType" minOccurs="1" maxOccurs="unbounded"/>
+      <xsd:element name="Http2Endpoint" type="Http2EndpointType" minOccurs="0" maxOccurs="1"/>
     </xsd:sequence>
 
     <xsd:attribute name="fe_config" type="xsd:string" default="fe_config.xml"/>
@@ -43,6 +44,14 @@
 
   <xsd:complexType name="MonitoringType">
     <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="Http2EndpointType">
+    <xsd:attribute name="bind" type="xsd:string" default="0.0.0.0"/>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required"/>
+    <xsd:attribute name="threads" type="xsd:positiveInteger" default="4"/>
+    <xsd:attribute name="max_concurrent_streams" type="xsd:positiveInteger" default="100"/>
+    <xsd:attribute name="read_buffer_size" type="xsd:positiveInteger" default="65536"/>
   </xsd:complexType>
 
   <xsd:complexType name="ModuleType">

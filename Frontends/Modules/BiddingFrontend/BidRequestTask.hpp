@@ -47,7 +47,7 @@ namespace Bidding
     BidRequestTask(
       Frontend* bid_frontend,
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer,
+      FCGI::BaseHttpResponseWriter_var response_writer,
       const Generics::Time& start_processing_time)
       /*throw(Invalid)*/;
 
@@ -157,7 +157,7 @@ namespace Bidding
     std::mutex mutex_current_stage_;
 
   private:
-    FCGI::HttpResponseWriter_var response_writer_;
+    FCGI::BaseHttpResponseWriter_var response_writer_;
     bool response_sent_;
   };
 

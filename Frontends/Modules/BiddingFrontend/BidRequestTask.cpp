@@ -7,7 +7,7 @@ namespace Bidding
   BidRequestTask::BidRequestTask(
     Frontend* bid_frontend,
     FCGI::HttpRequestHolder_var request_holder,
-    FCGI::HttpResponseWriter_var response_writer,
+    FCGI::BaseHttpResponseWriter_var response_writer,
     const Generics::Time& start_processing_time)
     /*throw(Invalid)*/
     : bid_frontend_(bid_frontend),
@@ -143,7 +143,7 @@ namespace Bidding
     if(send_response)
     {
       response_writer_->write(code, response);
-      response_writer_ = FCGI::HttpResponseWriter_var();
+      response_writer_ = FCGI::BaseHttpResponseWriter_var();
       response_sent_ = true;
     }
   }

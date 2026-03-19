@@ -45,7 +45,7 @@ namespace AdServer
     void
     FrontendsPool::handle_request(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept
     {
       for (auto frontend_it = frontends_.begin();
@@ -67,7 +67,7 @@ namespace AdServer
     void
     FrontendsPool::handle_request_noparams(
       FCGI::HttpRequestHolder_var request_holder,
-      FCGI::HttpResponseWriter_var response_writer)
+      FCGI::BaseHttpResponseWriter_var response_writer)
       /*throw(eh::Exception)*/
     {
       for (auto frontend_it = frontends_.begin();

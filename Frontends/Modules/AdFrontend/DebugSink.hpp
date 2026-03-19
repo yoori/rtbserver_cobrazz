@@ -9,7 +9,7 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <Frontends/FrontendCommons/FCGI.hpp>
+#include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 #include "AdFrontendStat.hpp"
