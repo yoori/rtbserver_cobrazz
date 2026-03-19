@@ -62,7 +62,7 @@ namespace
       debug_ccg(test->fetch_int(rtb_case.ccg)).
       debug_size(test->fetch_string(rtb_case.size)).
       min_cpm_price(rtb_case.bidfloor);
-    
+
     if (rtb_case.random)
     {
       request.random = rtb_case.random;
@@ -75,7 +75,7 @@ namespace
             test->fetch_string(rtb_case.url);
 
   }
-  
+
   void
   rtb_request(
     BaseUnit* test,
@@ -134,7 +134,7 @@ namespace
       size_t count;
       double probability;
     };
-    
+
   public:
     template <typename Probability, size_t COUNT>
     ProbabilityChecker(
@@ -168,7 +168,7 @@ namespace
       error << "failed conditions:";
 
       size_t i = 0;
-      
+
       for (auto it = counts_.begin(); it != counts_.end(); it++, ++i)
       {
         // confidence intervals for probability:
@@ -183,11 +183,11 @@ namespace
         unsigned long low_limit = (p - sd_part) * sample_size_;
         unsigned long high_limit = (p + sd_part) * sample_size_;
 
-                
+
         AutoTest::Logger::thlog().stream(Logging::Logger::TRACE) <<
           "Condition#" << i+1 << ": "  << low_limit << " < " <<
           it->count << " < " << high_limit;
-        
+
         if ( it->count < low_limit || it->count > high_limit )
         {
           result = false;
@@ -201,7 +201,7 @@ namespace
       {
         throw AutoTest::CheckFailed(error);
       }
-       
+
       return result;
     }
 
@@ -221,7 +221,7 @@ RandomAuctionTest::prepare_checker(
 {
 
   SelectedCreativesCCID got_ccs(client);
-  
+
   OrChecker checker(counter);
   for (size_t i = 0; i < COUNT; ++i)
   {
@@ -302,7 +302,7 @@ RandomAuctionTest::rtb_test_case(
         tokenizer(
           String::SubString(rtb_cases[i].expected),
           String::AsciiStringManip::CharCategory(","));
-      
+
       String::SubString token;
       while(tokenizer.get_token(token))
       {
@@ -311,17 +311,17 @@ RandomAuctionTest::rtb_test_case(
 
         String::RegEx::Result result;
         re.search(result, token);
-          
+
         FAIL_CONTEXT(
           AutoTest::equal_checker(
             3,
             result.size()).check(),
           "Invalid expected format");
-        
+
         RTBExpected e;
         e.ccid = result[1].str();
         e.price = result[2].str();
-        
+
         expected.push_back(e);
       }
     }
@@ -336,7 +336,7 @@ RandomAuctionTest::rtb_test_case(
         this,
         request,
         rtb_cases[i]);
-      
+
       client.process_post(request);
 
       if (expected.empty())
@@ -355,7 +355,7 @@ RandomAuctionTest::rtb_test_case(
               client.req_status())).check(),
             "No content check#" + strof(i+1));
 
-        
+
       }
       else
       {
@@ -366,7 +366,7 @@ RandomAuctionTest::rtb_test_case(
           typename Traits::Checker::Expected expected;
 
           rtb_expected(this, expected, *it);
-          
+
           checker.or_if(
             typename Traits::Checker(
               client,
@@ -475,7 +475,7 @@ RandomAuctionTest::proportional_1()
     { "PROPORTIONAL1/DISP/CC/3", 0.17 },
     { "PROPORTIONAL1/CH/CC/1", 0.5 }
   };
-  
+
   test_case(
     EXPECTED, REQUESTS,
     NSLookupRequest().
@@ -499,7 +499,7 @@ RandomAuctionTest::proportional_2()
     { "PROPORTIONAL2/CH/CC/2,PROPORTIONAL2/CH/CC/1", 0.25 },
     { "PROPORTIONAL2/CH/CC/4,PROPORTIONAL2/CH/CC/1", 0.25 }
   };
-  
+
   test_case(
     EXPECTED, REQUESTS,
     NSLookupRequest().
@@ -557,7 +557,7 @@ RandomAuctionTest::open_rtb_random(
       0, 1, RTCF_SEARCH
     }
   };
-  
+
   rtb_test_case<RTBTraits>(
     client,
     RTBTraits::Request().
@@ -567,7 +567,7 @@ RandomAuctionTest::open_rtb_random(
 
 void
 RandomAuctionTest::open_rtb_secondary(
-  AdClient& client)  
+  AdClient& client)
 {
   // Secondary auctions
   const RTBCase CASES[] =
@@ -593,7 +593,7 @@ RandomAuctionTest::open_rtb_secondary(
       "RTB/CREATIVEID/1/3:1999.99,RTB/CREATIVEID/2/3:2100", 100, RTCF_SEARCH
     }
   };
-  
+
   rtb_test_case<RTBTraits>(
     client,
     RTBTraits::Request().
@@ -602,7 +602,7 @@ RandomAuctionTest::open_rtb_secondary(
 }
 
 void
-RandomAuctionTest::tanx()  
+RandomAuctionTest::tanx()
 {
 
   AdClient client(AdClient::create_nonoptin_user(this));
@@ -622,7 +622,7 @@ RandomAuctionTest::tanx()
       fetch_string("TANX/CC/3/2"),
       client.debug_info.ccid).check(),
     "Precondition check");
-    
+
   const TanxCase CASES[] =
   {
     {
@@ -721,7 +721,7 @@ RandomAuctionTest::run()
 
   {
     AdClient client(AdClient::create_nonoptin_user(this));
-    
+
     AUTOTEST_CASE(
       open_rtb_random(client),
       "Open RTB. Random auction");
@@ -730,7 +730,7 @@ RandomAuctionTest::run()
       open_rtb_secondary(client),
       "Open RTB. Secondary auctions");
   }
-  
+
   AUTOTEST_CASE(
     tanx(),
     "TanX cases");

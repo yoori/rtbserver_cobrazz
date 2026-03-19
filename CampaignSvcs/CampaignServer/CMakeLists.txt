@@ -4,10 +4,19 @@ add_idl(CampaignServerIDL CampaignServer.idl ${IDL_DIRECTORY}/CampaignSvcs/Campa
 
 target_link_libraries(StatInfoIDL CorbaTypesIDL)
 target_link_libraries(BillStatInfoIDL CorbaTypesIDL)
-target_link_libraries(CampaignServerIDL CampaignCommonsIDL  CorbaTypesIDL CampaignServer_v350IDL CampaignCommons_v350IDL BillStatInfo_v350IDL BillStatInfoIDL StatInfoIDL)
+
+target_link_libraries(CampaignServerIDL
+  CampaignCommonsIDL
+  CorbaTypesIDL
+  CampaignServer_v350IDL
+  CampaignCommons_v350IDL
+  BillStatInfo_v350IDL
+  BillStatInfoIDL
+  StatInfoIDL
+)
 
 add_library(BillStatServerSource STATIC
-  BillStatServerSource.cpp 
+  BillStatServerSource.cpp
   BillStatSource.cpp
 )
 
@@ -23,12 +32,12 @@ target_link_libraries(BillStatServerSource
 )
 
 add_library(CampaignConfigModifier STATIC
-  CampaignConfigModifier.cpp 
-  StatLogGeneralizerSource.cpp 
+  CampaignConfigModifier.cpp
+  StatLogGeneralizerSource.cpp
   StatDBSource.cpp
 )
 
-target_link_libraries(CampaignConfigModifier 
+target_link_libraries(CampaignConfigModifier
   Generics
   Commons
   Postgres
@@ -36,13 +45,13 @@ target_link_libraries(CampaignConfigModifier
 )
 
 add_executable(CampaignServer
-  ModifyConfigSource.cpp 
-  CampaignConfigDBSource.cpp 
-  CampaignConfigServerSource.cpp 
-  CampaignServerImpl.cpp 
-  CampaignServerLogger.cpp 
-  CampaignServerMain.cpp 
-  CampaignServerStatValues.cpp 
+  ModifyConfigSource.cpp
+  CampaignConfigDBSource.cpp
+  CampaignConfigServerSource.cpp
+  CampaignServerImpl.cpp
+  CampaignServerLogger.cpp
+  CampaignServerMain.cpp
+  CampaignServerStatValues.cpp
   BillStatDBSource.cpp
 )
 
@@ -74,30 +83,28 @@ target_link_libraries(CampaignServer
   CampaignConfigModifier
   CorbaTypesIDL
   BillingServerIDL
-  Generics ACE Logger Sync 
-  pcre ssl crypto z event 
-  String  
-  xerces-c 
+  Generics ACE Logger Sync
+  pcre ssl crypto z event
+  String
+  xerces-c
   CTROptimizer
 
   BillingServerIDL
   BillStatInfoIDL
   CorbaTypesIDL
-  CampaignServerIDL 
-  CampaignCommonsIDL 
+  CampaignServerIDL
+  CampaignCommonsIDL
   StatInfoIDL
 
-  AdServerCommonsXSD 
-  CampaignServerConfigXSD 
+  AdServerCommonsXSD
+  CampaignServerConfigXSD
   DomainConfigXSD
-  HostDistributionFileXSD 
-    
-  pcre ssl crypto z event  pthread 
-  TAO TAO_AnyTypeCode  TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny TAO_EndpointPolicy TAO_FaultTolerance
-  TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable 
+  HostDistributionFileXSD
+
+  pcre ssl crypto z event  pthread
+  TAO TAO_AnyTypeCode TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny TAO_EndpointPolicy TAO_FaultTolerance
+  TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable
   TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
 )
 
 ADD_SUBDIRECTORY(Compatibility)
-
-#install(TARGETS BillStatInfoIDL StatInfoIDL CampaignServerIDL BillStatServerSource CampaignServer  DESTINATION ${INSTALL_DIR})

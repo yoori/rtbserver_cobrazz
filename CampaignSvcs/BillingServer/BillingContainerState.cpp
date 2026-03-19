@@ -776,6 +776,6 @@ namespace CampaignSvcs
       click_rate_coef,
       noise_ignore_part,
       rate_multiplier);
-  }  
+  }
 }
 }

@@ -107,7 +107,7 @@ namespace AdServer
       read_add_audience_operation_(
         const Generics::MemBuf& mem_buf)
         /*throw(eh::Exception)*/;
-      
+
       void
       read_remove_audience_operation_(
         const Generics::MemBuf& mem_buf)

@@ -11,10 +11,10 @@ namespace
   typedef AutoTest::ClickResponseChecker ClickResponseChecker;
 }
 
-bool 
+bool
 InvalidCookiesTest::run_test()
 {
- 
+
   set_up();
 
   //ATTENTION! Do not break tests sequence
@@ -29,9 +29,9 @@ InvalidCookiesTest::run_test()
   opt_out_test_case();
   invalid_opt_out_status_test_case();
   opt_out_after_crack_test_case();
-  
+
   return true;
-}                      
+}
 
 std::string InvalidCookiesTest::crack_cookie(
   const char* cookie_name,
@@ -91,16 +91,16 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
       std::string("must has") + cookie_name +
       "host cookie");
   }
-      
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(!client.debug_info.track_pixel_url.empty()),
     "must have debug_info.track_pixel_url");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       !client.debug_info.click_url.empty()),
     "must have debug_info.click_url");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       !client.debug_info.selected_creatives.first().action_adv_url.empty()),
@@ -124,7 +124,7 @@ crack_cookie_and_check_serv_behaviour(const char* cookie_name,
     AutoTest::predicate_checker(
       client.find_header_value("Content-Type", header_value)),
     "Content-Type not found");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       "image/gif",
@@ -187,7 +187,7 @@ void InvalidCookiesTest::invalid_base64_uid_test_case()
       client.debug_info.ccid,
       fetch_string("CCID/01")).check(),
     "unexpected ccid");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       client.has_cookie("uid")),
@@ -218,7 +218,7 @@ void InvalidCookiesTest::invalid_base64_uid_test_case()
       client.debug_info.ccid).check(),
     "Check ccid");
 
-  // restore uid  
+  // restore uid
   client.set_cookie_value("uid", old_uid_value.c_str());
 
   ns_request.tid = fetch_string("Tag/01");
@@ -312,11 +312,11 @@ void InvalidCookiesTest::opt_out_test_case()
  // check clearing cookie for adFrontend domain
  FAIL_CONTEXT(
    AutoTest::predicate_checker(
-     !client.has_host_cookies()), 
+     !client.has_host_cookies()),
    "must not has host cookies");
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")), 
+      client.has_domain_cookie("OPTED_OUT", "YES")),
     "must has OPTED_OUT=YES domain cookie");
 }
 
@@ -325,19 +325,19 @@ void InvalidCookiesTest::invalid_opt_out_status_test_case()
   add_descr_phrase("'InvalidCookies' send invalid OPTED_OUT");
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(!client.has_cookie("uid")), 
+    AutoTest::predicate_checker(!client.has_cookie("uid")),
     "must not has uid cookie in opted-out mode");
   client.set_cookie_value("OPTED_OUT", "UNKNOWN");
   client.process_request(AutoTest::OptOutRequest().op("in"));
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      client.has_cookie("uid")), 
+      client.has_cookie("uid")),
     "must has uid cookie in opted-out mode");
 
   std::string uid_value;
-  
+
   client.get_cookie_value("uid", uid_value);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       AutoTest::PROBE_UID,
@@ -352,24 +352,24 @@ void InvalidCookiesTest::opt_out_after_crack_test_case()
 
   client.process_request(optout_request);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(!client.has_host_cookies()), 
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "must not has host cookies");
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")), 
+      client.has_domain_cookie("OPTED_OUT", "YES")),
     "must has OPTED_OUT=YES domain cookie");
   client.process_request(ns_request);
   FAIL_CONTEXT(
-    AutoTest::predicate_checker(!client.has_host_cookies()), 
+    AutoTest::predicate_checker(!client.has_host_cookies()),
     "must not has host cookies");
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      client.has_domain_cookie("OPTED_OUT", "YES")), 
+      client.has_domain_cookie("OPTED_OUT", "YES")),
     "must has OPTED_OUT=YES domain cookie");
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.has_cookie("uid")), 
+      !client.has_cookie("uid")),
     "must not has uid");
 }
 
- 
+

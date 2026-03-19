@@ -11,16 +11,16 @@ namespace AdServer
   {
     const Generics::StringHashAdapter
     ProfilingServerStats::SENT_MESSAGES_COUNT_("sentMessagesCount");
-    
+
     const Generics::StringHashAdapter
     ProfilingServerStats::SENT_MESSAGES_SIZE_("sentMessagesSize");
-    
+
     const Generics::StringHashAdapter
     ProfilingServerStats::FILTERED_MESSAGES_COUNT_("filteredMessagesCount");
-    
+
     const Generics::StringHashAdapter
     ProfilingServerStats::RECEIVED_MESSAGES_COUNT_("recvMessagesCount");
-    
+
     const Generics::StringHashAdapter
     ProfilingServerStats::RECEIVED_MESSAGES_SIZE_("recvMessagesSize");
 
@@ -41,7 +41,7 @@ namespace AdServer
     {
       filtered_messages_count_ += filtered_count;
     }
-    
+
     void
     ProfilingServerStats::add_received_messages(
       unsigned long received_count,
@@ -51,7 +51,7 @@ namespace AdServer
       received_messages_count_ += received_count;
       received_messages_size_ += received_size;
     }
-    
+
     unsigned long
     ProfilingServerStats::filtered_messages() const noexcept
     {
@@ -75,13 +75,13 @@ namespace AdServer
     {
       return streamer_->sent_bytes();
     }
-    
+
     unsigned long
     ProfilingServerStats::received_messages() const noexcept
     {
       return received_messages_count_;
     }
-    
+
     unsigned long
     ProfilingServerStats::received_messages_size() const noexcept
     {

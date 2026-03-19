@@ -319,7 +319,7 @@ namespace FrontendCommons
       std::string::size_type prev_pos = std::string::npos;
 
       HostnameMatcher_var target_matcher = root_matcher_;
-        
+
       do
       {
         std::string::size_type pos =
@@ -559,7 +559,7 @@ namespace FrontendCommons
     /*throw(eh::Exception)*/
   {
     const MatchElement* element = matchers.match(user_agent);
-    
+
     if (element)
     {
       if (platform_ids)
@@ -604,7 +604,7 @@ namespace FrontendCommons
           full_platform->resize(FULL_PLATFORM_MAX_SIZE);
         }
       }
-      
+
       return true;
     }
 
@@ -678,7 +678,7 @@ namespace FrontendCommons
     unsigned long max_priority)
     noexcept
     : user_agent_(user_agent),
-      max_priority_(max_priority), 
+      max_priority_(max_priority),
       matched_element_(0)
   {}
 
@@ -967,7 +967,7 @@ namespace FrontendCommons
       }
     }
   }
-  
+
   bool
   IPMatcher::match(
     MatchResult& result,
@@ -1008,7 +1008,7 @@ namespace FrontendCommons
           {
             result = cohort_mask_it->second;
             return true;
-          } 
+          }
         }
       }
     }

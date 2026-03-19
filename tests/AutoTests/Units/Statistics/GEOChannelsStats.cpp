@@ -226,7 +226,7 @@ GEOChannelsStats::run_test()
     "CPC CC, Only display channel expression.");
 
   expr_perf.select(pq_conn_);
-    
+
   // SiteChannelStats
   ORM::StatsArray<ORM::SiteChannelStats, 3> sitechannel;
   sitechannel[0].key().
@@ -288,7 +288,7 @@ GEOChannelsStats::run_test()
         imps(1).
         clicks(1).
         actions(1).
-        revenue(display_cpa). 
+        revenue(display_cpa).
         impops_user_count(2).
         imps_user_count(1).
         imps_other(2).
@@ -303,7 +303,7 @@ GEOChannelsStats::run_test()
         imps(0).
         clicks(0).
         actions(0).
-        revenue(0). 
+        revenue(0).
         impops_user_count(2).
         imps_user_count(0).
         imps_value(0).
@@ -317,7 +317,7 @@ GEOChannelsStats::run_test()
         imps(1).
         clicks(1).
         actions(0).
-        revenue(display_cpm / 1000). 
+        revenue(display_cpm / 1000).
         impops_user_count(2).
         imps_user_count(1).
         imps_value(display_cpm / 1000).
@@ -333,7 +333,7 @@ GEOChannelsStats::run_test()
         imps(2).
         clicks(2).
         actions(0).
-        revenue(text_cpc1 + text_cpc2). 
+        revenue(text_cpc1 + text_cpc2).
         impops_user_count(2).
         imps_user_count(1).
         imps_value((text_cpc1 + text_cpc2) * TEXT_CTR).
@@ -348,7 +348,7 @@ GEOChannelsStats::run_test()
         imps(0).
         clicks(0).
         actions(0).
-        revenue(0). 
+        revenue(0).
         impops_user_count(1).
         imps_user_count(0).
         imps_value(0).
@@ -363,7 +363,7 @@ GEOChannelsStats::run_test()
         imps(0).
         clicks(0).
         actions(0).
-        revenue(0). 
+        revenue(0).
         impops_user_count(1).
         imps_user_count(0).
         imps_value(0).
@@ -405,7 +405,7 @@ GEOChannelsStats::run_test()
             display_cpm / 1000 +
             text_cpc1 + text_cpc2, 0.001)),
       // 'Aberfoyle' city
-      Diffs(0)        
+      Diffs(0)
     };
 
     FAIL_CONTEXT(
@@ -417,7 +417,7 @@ GEOChannelsStats::run_test()
   {
     // ChannelUsage
     typedef ORM::ChannelUsageStats::Diffs Diffs;
-    
+
     const Diffs diffs[] =
       {
         // 'London, City of' state
@@ -506,7 +506,7 @@ GEOChannelsStats::run_test()
             display_cpa, 0.001)).
         pub_revenue(0)
     };
-    
+
     FAIL_CONTEXT(
       AutoTest::wait_checker(
         AutoTest::stats_diff_checker(

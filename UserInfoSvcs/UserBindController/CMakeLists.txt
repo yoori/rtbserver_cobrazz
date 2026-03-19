@@ -14,13 +14,13 @@ add_library(UserBindControllerStubs SHARED
 target_link_libraries(UserBindControllerStubs
   CORBACommons
   Commons
-  CorbaTypesIDL 
-  UserBindServerIDL 
+  CorbaTypesIDL
+  UserBindServerIDL
   UserBindControllerIDL
 )
 
 add_executable(UserBindController
-  UserBindControllerMain.cpp 
+  UserBindControllerMain.cpp
   UserBindControllerImpl.cpp
 )
 

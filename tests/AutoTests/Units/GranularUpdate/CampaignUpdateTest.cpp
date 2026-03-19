@@ -258,7 +258,7 @@ CampaignUpdateTest::update_channel_case_()
       AutoTest::predicate_checker(
         ccg->update()),
       "updating ccg.channel");
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         ccg->set_display_status(
@@ -375,7 +375,7 @@ void CampaignUpdateTest::change_status_case_()
           status("A").
           eval_status("A")).check(),
       description + " Initial");
-    
+
     campaign->status = "D";
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
@@ -618,7 +618,7 @@ CampaignUpdateTest::change_max_pub_share_case_()
     "Initial");
 
   campaign->max_pub_share = 0.5;
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       campaign->update()),
@@ -631,7 +631,7 @@ CampaignUpdateTest::change_max_pub_share_case_()
         account_id(account_id).
         status("A").
         eval_status("A").
-        max_pub_share(new_max_pub_share)));  
+        max_pub_share(new_max_pub_share)));
 }
 
 void CampaignUpdateTest::set_up()
@@ -649,23 +649,23 @@ CampaignUpdateTest::run()
   AUTOTEST_CASE(
     add_campaign_case_(),
     "Add campaign");
-  
+
   AUTOTEST_CASE(
     currency_change_case_(),
     "Update currency");
-  
+
   AUTOTEST_CASE(
     update_channel_case_(),
     "Update channel");
-  
+
   AUTOTEST_CASE(
     change_status_case_(),
     "Change status");
-  
+
   AUTOTEST_CASE(
     change_date_interval_case_(),
     "Change date interval");
-  
+
   AUTOTEST_CASE(
     change_max_pub_share_case_(),
     "Change campaign max_pub_share");

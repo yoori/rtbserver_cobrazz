@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__BAIDUTEST_
 #define _AUTOTEST__BAIDUTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 class BaiduTest : public BaseDBUnit
 {
 public:

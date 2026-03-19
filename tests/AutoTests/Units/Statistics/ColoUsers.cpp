@@ -75,13 +75,13 @@ ColoUsers::set_up()
   add_descr_phrase("Setup");
 }
 
-void 
+void
 ColoUsers::tear_down()
 {
   add_descr_phrase("Tear down");
 }
 
-bool 
+bool
 ColoUsers::run()
 {
 
@@ -103,12 +103,12 @@ ColoUsers::run()
     "Non-GMT timezone");
 
   AdClient assync_client(AdClient::create_undef_user(this));
-  
+
   TemporaryAdClient assync_temporary(
     TemporaryAdClient::create_user(this));
-  
+
   std::string assync_hid(AutoTest::generate_uid(false));
-  
+
   AUTOTEST_CASE(
     basic_async_part_1_(
       assync_client,
@@ -120,7 +120,7 @@ ColoUsers::run()
   AUTOTEST_CASE(
     big_date_difference_(),
     "Asynchronous logging with big date difference");
-  
+
   AUTOTEST_CASE(
     merge_on_adrequest_(),
     "Merging on adrequest");
@@ -132,11 +132,11 @@ ColoUsers::run()
   AUTOTEST_CASE(
     invalid_merge_(),
     "Merging with non-existing temporary user");
-  
+
   AUTOTEST_CASE(
     optout_(),
     "Non-opted-in users test");
-  
+
   AUTOTEST_CASE(
     non_serialized_(),
     "Non serialized match/merge operations test");
@@ -157,7 +157,7 @@ ColoUsers::run()
       assync_temporary,
       assync_hid),
     "Basic asynchronous logging");
-  
+
   return true;
 }
 
@@ -279,7 +279,7 @@ void ColoUsers::unique_users_stats_()
     created_user_stats,
     created_user_diffs,
     CASE_STATS);
-  
+
   add_stats_(
     global_colo_user_stats,
     global_colo_user_diffs,
@@ -290,7 +290,7 @@ void ColoUsers::unique_users_stats_()
     TemporaryAdClient temporary1(TemporaryAdClient::create_user(this));
     TemporaryAdClient temporary2(TemporaryAdClient::create_user(this));
     TemporaryAdClient temporary3(TemporaryAdClient::create_user(this));
-    
+
     const TestRequest REQUESTS[] =
     {
       { temporary1, -MINUTE, "UNIQUE_USERS/COLO/NON_OPTOUT", 0, 0, 0, 0, 0 },
@@ -588,7 +588,7 @@ void ColoUsers::unique_hids_()
       created_user_stats,
       created_user_diffs,
       CASE_STATS);
-    
+
     add_stats_(
       global_colo_user_stats,
       global_colo_user_diffs,
@@ -676,7 +676,7 @@ ColoUsers::create_and_last_appearance_dates_()
         base_time_ - 30*DAY,
         2,  2,  2, 2
       },
-      
+
       // 4
       {
         "CREATE/COLO/ALL",
@@ -734,7 +734,7 @@ ColoUsers::create_and_last_appearance_dates_()
         base_time_ - 30*DAY,
         1,  1,  1, 1
       },
-      
+
       // 4
       {
         "CREATE/COLO/ALL",
@@ -773,7 +773,7 @@ ColoUsers::create_and_last_appearance_dates_()
       created_user_stats,
       created_user_diffs,
       CASE_STATS);
-    
+
     add_stats_(
       global_colo_user_stats,
       global_colo_user_diffs,
@@ -783,7 +783,7 @@ ColoUsers::create_and_last_appearance_dates_()
   Clients clients(
     3,
     AdClient::create_nonoptin_user(this));
-  
+
   std::generate_n(
     clients.begin(),
     3,
@@ -855,7 +855,7 @@ void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
     {
       // 1
       {
-        
+
         "NON_GMT/COLO/ALL",
         base_time_ - DAY,
         base_time_ - DAY,
@@ -864,7 +864,7 @@ void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
       },
       // 1
       {
-        
+
         "NON_GMT/COLO/ALL",
         base_time_,
         base_time_ - DAY,
@@ -907,7 +907,7 @@ void ColoUsers::non_gmt_timezone_() // see also ADSC-5331
   AdClient client(AdClient::create_undef_user(this));
   TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
   std::string hid(AutoTest::generate_uid(false));
-  
+
   const TestRequest REQUESTS[] =
   {
     { client, 6*HOUR, "NON_GMT/COLO/ALL", "Tags/AD", "Campaign/KEYWORD", hid.c_str(), &temporary, TRF_CHECK_CC },
@@ -965,7 +965,7 @@ ColoUsers::basic_async_part_1_(
       1,  1,  1, 1
     }
   };
-  
+
   add_stats_(
     colo_user_stats,
       colo_user_diffs,
@@ -1053,7 +1053,7 @@ ColoUsers::basic_async_part_2_(
       1,  1,  1, 1
     }
   };
-  
+
   add_stats_(
     colo_user_stats,
       colo_user_diffs,
@@ -1069,7 +1069,7 @@ ColoUsers::basic_async_part_2_(
     global_colo_user_diffs,
     CASE_STATS);
 
-  
+
   const TestRequest REQUESTS[] =
   {
     { client, -30, "BASE_ASSYNC/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 },
@@ -1180,7 +1180,7 @@ void ColoUsers::big_date_difference_()
     global_colo_user_diffs,
     CASE_STATS);
 
-  
+
   AdClient client(AdClient::create_undef_user(this));
   std::string hid(AutoTest::generate_uid(false));
 
@@ -1286,7 +1286,7 @@ ColoUsers::merge_on_adrequest_()
   TemporaryAdClient temporary1(TemporaryAdClient::create_user(this));
   TemporaryAdClient temporary2(TemporaryAdClient::create_user(this));
   std::string hid(AutoTest::generate_uid(false));
-  
+
   const TestRequest REQUESTS[] =
   {
     { temporary1, 0, "AD_MERGE/COLO/ALL", 0, "Keyword", hid.c_str(), 0, 0 },
@@ -1370,13 +1370,13 @@ ColoUsers::create_date_after_merge_()
     AdClient client(AdClient::create_undef_user(this));
     TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
     std::string hid(AutoTest::generate_uid(false));
-  
+
     const TestRequest REQUESTS[] =
     {
       { temporary, -DAY, "CREATE_DATE/COLO/ALL1", 0, 0, hid.c_str(), 0, 0 },
       { client, 0, "CREATE_DATE/COLO/ALL1", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
     };
-    
+
     process_requests_(base_time_, REQUESTS);
   }
 
@@ -1385,14 +1385,14 @@ ColoUsers::create_date_after_merge_()
     AdClient client(AdClient::create_undef_user(this));
     TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
     std::string hid(AutoTest::generate_uid(false));
-  
+
     const TestRequest REQUESTS[] =
     {
       { temporary, -30, "CREATE_DATE/COLO/ALL2", 0, 0, hid.c_str(), 0, 0 },
       { client, 30, "CREATE_DATE/COLO/ALL2", "Tags/DEFAULT", 0, hid.c_str(), 0, 0 },
       { client, 60, "CREATE_DATE/COLO/ALL2", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
     };
-    
+
     process_requests_(
       AutoTest::Time(
         base_time_.get_gm_time().get_date()),
@@ -1469,7 +1469,7 @@ ColoUsers::invalid_merge_()
   AdClient client(AdClient::create_undef_user(this));
   TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
   std::string hid(AutoTest::generate_uid(false));
-  
+
   const TestRequest REQUESTS[] =
   {
     { temporary, 0, "INVALID_MERGE/COLO/ALL", 0, 0, hid.c_str(), 0, 0 },
@@ -1478,7 +1478,7 @@ ColoUsers::invalid_merge_()
     { client, 0, "INVALID_MERGE/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 },
     { client, DAY, "INVALID_MERGE/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 }
   };
-    
+
   process_requests_(
     AutoTest::Time(
       base_time_.get_gm_time().get_date()),
@@ -1514,7 +1514,7 @@ void ColoUsers::optout_()
   GlobalColoUserDiffs global_colo_user_diffs;
   CreatedUserStats created_user_stats;
   CreatedUserDiffs created_user_diffs;
-  
+
   const Expected CASE_STATS[] =
   {
     // 1
@@ -1532,9 +1532,9 @@ void ColoUsers::optout_()
       base_time_,
       ZERO_DATE,
       0, 0, 0, 0
-    } 
+    }
   };
-  
+
   add_stats_(
     colo_user_stats,
       colo_user_diffs,
@@ -1573,7 +1573,7 @@ void ColoUsers::optout_()
     { invalid, 0, "OPTOUT/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 },
     { optin, DAY, "OPTOUT/COLO/ALL", "Tags/DEFAULT", 0, hid.c_str(), &temporary, 0 },
   };
-    
+
   process_requests_(
     AutoTest::Time(
       base_time_.get_gm_time().get_date()),
@@ -1627,7 +1627,7 @@ void ColoUsers::non_serialized_()
       base_time_,
       base_time_,
       1, 1, 0, 1
-    } 
+    }
   };
 
   add_stats_(
@@ -1865,7 +1865,7 @@ void ColoUsers::oo_service_()
         debug_time(base_time_));
 
     TemporaryAdClient temporary(TemporaryAdClient::create_user(this));
-    
+
     const TestRequest REQUESTS[] =
     {
       { client, DAY, "OO/COLO/ALL1", "Tags/DEFAULT", 0, 0, &temporary, 0 }
@@ -1936,7 +1936,7 @@ void ColoUsers::oo_service_()
       pq_conn_,
       global_colo_user_diffs,
       global_colo_user_stats));
-  
+
 }
 
 template<class Stat, class Expected, size_t Count>
@@ -1987,7 +1987,7 @@ ColoUsers::add_stats_(
     stat.description("#" + strof(i+Count+1));
     stat.select(pq_conn_);
     stats.push_back(stat);
-    diffs.push_back(it->second);    
+    diffs.push_back(it->second);
   }
 }
 
@@ -2000,7 +2000,7 @@ ColoUsers::init_stat_(
   stat.key().
     colo_id(fetch_int(expected.colo)).
     isp_sdate(expected.sdate);
-  
+
   if (expected.last_appearance_date != UNDEF_DATE)
   {
     stat.key().last_appearance_date(expected.last_appearance_date);

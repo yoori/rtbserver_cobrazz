@@ -10,20 +10,20 @@ namespace
 
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::AdClient AdClient;
-  
+
   // Special flags
 
   // All creative must shown in the tag
-  const short SHOWALL   = 0xFF; 
+  const short SHOWALL   = 0xFF;
 
   // Walled garden creative mustn't shown
   const short NOTSHOWWG =
     WalledGardenTest::CSE_ALL |
     WalledGardenTest::CSE_OIX |
     WalledGardenTest::CSE_NON_WALLED_GARDEN;
-   
-  
-  const WalledGardenTest::TestCase TEST_CASES[] = 
+
+
+  const WalledGardenTest::TestCase TEST_CASES[] =
   {
     {
       "WG",
@@ -63,7 +63,7 @@ namespace
     }
   };
 
-  const WalledGardenTest::TestCase ADDITIONAL_TEST_CASES[] = 
+  const WalledGardenTest::TestCase ADDITIONAL_TEST_CASES[] =
   {
     {
       "ALL-2",
@@ -97,21 +97,21 @@ namespace
       WalledGardenTest::CSE_OIX,
       WalledGardenTest::CT_CPM
     },
-    {     
+    {
       "KW-ALL",
       "CC-ALL",
       "CC-CPM-ALL",
       WalledGardenTest::CSE_ALL,
       WalledGardenTest::CT_CPM
     },
-    {     
+    {
       "KW-NON-WG",
       "CC-NON-WG",
       "CC-CPM-NON-WG",
       WalledGardenTest::CSE_NON_WALLED_GARDEN,
       WalledGardenTest::CT_CPM
     },
-    {     
+    {
       "KW-NON-WG-2",
       "CC-NON-WG-2",
       "CC-CPM-NON-WG-2",
@@ -136,7 +136,7 @@ bool WalledGardenTest::non_wg_shown(
     (non_wg_creative.ccgtype == CT_CPM? 1000: 1);
 
   bool non_wg_creative_win = rev < non_wg_rev;
-  
+
   return
     // always show instead 'Walled garden' creatives
     // on 'NON walled garden' or 'OIX' tags,
@@ -184,7 +184,7 @@ WalledGardenTest::test_priority(
 
       if (expected_ccid == "0")
       {
-      
+
         FAIL_CONTEXT(
           AutoTest::equal_checker(
             expected_ccid,
@@ -195,7 +195,7 @@ WalledGardenTest::test_priority(
       else
       {
         AutoTest::ConsequenceActionList actions;
-        
+
         // Send click requests
         if (CREATIVES[i].ccgtype == CT_CPC)
         {
@@ -203,11 +203,11 @@ WalledGardenTest::test_priority(
             AutoTest::ConsequenceAction(
               AutoTest::CLICK,today_));
         }
-        
+
         std::list<std::string> expected_ccs;
 
         expected_ccs.push_back(expected_ccid);
-      
+
         FAIL_CONTEXT(
           client.do_ad_requests(
             expected_ccs, actions),
@@ -220,7 +220,7 @@ WalledGardenTest::test_priority(
 
 void
 WalledGardenTest::test_case(const TestCase& testcase)
-  
+
 {
   add_descr_phrase(testcase.description);
   NSLookupRequest request;
@@ -231,20 +231,20 @@ WalledGardenTest::test_case(const TestCase& testcase)
   unsigned long priority_check_index = 0;
   for (size_t i = 0; i < countof(CREATIVES); ++i)
   {
-    AdClient client(AdClient::create_user(this));     
+    AdClient client(AdClient::create_user(this));
     request.referer_kw = fetch_string(CREATIVES[i].kwd);
     client.process_request(request);
 
     if (testcase.flags & CREATIVES[i].cctype)
     {
-         
+
       // Send click requests
       if (CREATIVES[i].ccgtype == CT_CPC)
       {
         AutoTest::ConsequenceActionList actions;
-        
+
         std::list<std::string> expected_ccs;
-        
+
         expected_ccs.push_back(
           fetch_string(CREATIVES[i].ccid));
 
@@ -267,11 +267,11 @@ WalledGardenTest::test_case(const TestCase& testcase)
           std::string(testcase.description) +
             " .Check ccid#" + strof(i+1));
       }
-     
+
     }
     else
     {
-      
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           client.debug_info.selected_creatives.empty()),
@@ -293,7 +293,7 @@ WalledGardenTest::test_case(const TestCase& testcase)
 
 }
 
-bool 
+bool
 WalledGardenTest::run()
 {
   for (size_t i = 0; i < countof(TEST_CASES); ++i)
@@ -312,7 +312,7 @@ WalledGardenTest::run()
     std::string referer_kw =
       fetch_string("KW-WG") + "," +
       fetch_string("KW-OIX");
-    
+
     std::string ccids[] = {
       fetch_string("CC-WG"),
       fetch_string("CC-OIX"),
@@ -328,7 +328,7 @@ WalledGardenTest::run()
     std::string referer_kw =
       fetch_string("KW-WG") + "," +
       fetch_string("KW-ALL");
-    
+
     std::string ccids[] = {
       fetch_string("CC-WG"),
       fetch_string("CC-ALL"),
@@ -344,7 +344,7 @@ WalledGardenTest::run()
     std::string referer_kw =
       fetch_string("KW-WG") + "," +
       fetch_string("KW-ALL-2");
-    
+
     std::string ccids[] = {
       fetch_string("CC-ALL-2"),
       fetch_string("CC-ALL-2"),
@@ -360,7 +360,7 @@ WalledGardenTest::run()
     std::string referer_kw =
       fetch_string("KW-WG-2") + "," +
       fetch_string("KW-NON-WG");
-    
+
     std::string ccids[] = {
       "",
       fetch_string("CC-NON-WG"),
@@ -377,7 +377,7 @@ WalledGardenTest::run()
 template <size_t COUNT>
 void
 WalledGardenTest::wg_foros_competition_case (
-  const std::string& referer_kw, 
+  const std::string& referer_kw,
   std::string (&ccids)[COUNT])
 {
 
@@ -391,26 +391,26 @@ WalledGardenTest::wg_foros_competition_case (
         COUNT,
         countof(TEST_CASES)).check(),
     "Invalid expected ccid sequence");
-  
+
   for (size_t i = 0; i < countof(TEST_CASES); ++i)
   {
     request.tid = fetch_string(std::string("TAG-") + TEST_CASES[i].case_name);
     AdClient client(AdClient::create_user(this));
     client.process_request(request);
-    
+
     if (!ccids[i].empty())
     {
       AutoTest::ConsequenceActionList actions;
-        
+
       // Send click requests
       actions.push_back(
         AutoTest::ConsequenceAction(
           AutoTest::CLICK, today_));
 
       std::list<std::string> expected_ccs;
-      
+
       expected_ccs.push_back(ccids[i]);
-      
+
       FAIL_CONTEXT(
         client.do_ad_requests(
           expected_ccs, actions),
@@ -419,7 +419,7 @@ WalledGardenTest::wg_foros_competition_case (
     }
     else
     {
-     
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           client.debug_info.selected_creatives.empty()),
@@ -539,7 +539,7 @@ WalledGardenTest::post_condition()
   const double cc_cpm_non_wg = fetch_float("CC-CPM-NON-WG");
   const double cc_cpm_non_wg_2 = fetch_float("CC-CPM-NON-WG-2");
   const double cc_cpc_all_2 = fetch_float("CC-CPC-ALL-2");
-  
+
   const AdvDiff advdiff[] =
   {
     AdvDiff().
@@ -604,7 +604,7 @@ WalledGardenTest::post_condition()
   const double tag_cpm_all = fetch_float("TAG-CPM-ALL");
   const double tag_cpm_non_wg = fetch_float("TAG-CPM-NON-WG");
 
-  
+
   const PubDiff pubdiff[] =
   {
     PubDiff().
@@ -630,7 +630,7 @@ WalledGardenTest::post_condition()
       imps(6).
       pub_amount(
         ORM::stats_diff_type(
-          (tag_cpm_all * 6) / 1000, 
+          (tag_cpm_all * 6) / 1000,
           0.001)),
     PubDiff().
       imps(14).

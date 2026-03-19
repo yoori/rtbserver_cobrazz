@@ -10,7 +10,7 @@ namespace AdServer
     struct FreqCap
     {
       FreqCap() noexcept;
-      
+
       FreqCap(
         unsigned long fc_id_val,
         unsigned long lifelimit_val,
@@ -19,9 +19,9 @@ namespace AdServer
         const Generics::Time& window_time_val) noexcept;
 
       bool operator==(const FreqCap& right) const noexcept;
-      
+
       std::ostream& print(std::ostream& out) const noexcept;
-      
+
       unsigned long fc_id;
       unsigned long lifelimit;
       Generics::Time period;

@@ -5,16 +5,16 @@ add_library(HashFilter SHARED
 HashFilter.cpp
 )
 
-target_link_libraries(HashFilter 
+target_link_libraries(HashFilter
     Generics
  Sync
  pthread
 )
 
 add_executable(ProfilingServer
-  DMPKafkaStreamer.cpp 
-  ProfilingServerStats.cpp 
-  ProfilingServer.cpp 
+  DMPKafkaStreamer.cpp
+  ProfilingServerStats.cpp
+  ProfilingServer.cpp
   RequestInfoFiller.cpp
 
 )
@@ -23,7 +23,7 @@ target_link_libraries(ProfilingServer
  Commons
 
  AdServerCommonsXSD
- 
+
  XMLUtility
 
  CORBACommons
@@ -33,7 +33,7 @@ target_link_libraries(ProfilingServer
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
  ProfilingServerConfigXSD
  zmq

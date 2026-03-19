@@ -20,7 +20,7 @@ namespace AdServer
     public:
       ProfilingServerStats(
         DMPKafkaStreamer* streamer) noexcept;
-      
+
       void
       add_filtered_messages(unsigned long filtered_count)
         noexcept;
@@ -30,13 +30,13 @@ namespace AdServer
         unsigned long received_count,
         unsigned long received_size)
         noexcept;
-      
+
       unsigned long
       filtered_messages() const noexcept;
 
       unsigned long
       kafka_errors() const noexcept;
-      
+
       unsigned long
       sent_messages() const noexcept;
 
@@ -45,7 +45,7 @@ namespace AdServer
 
       unsigned long
       received_messages() const noexcept;
-      
+
       unsigned long
       received_messages_size() const noexcept;
 
@@ -62,7 +62,7 @@ namespace AdServer
       static const Generics::StringHashAdapter KAFKA_ERRORS_COUNT_;
 
       ~ProfilingServerStats() noexcept = default;
-        
+
     protected:
       DMPKafkaStreamer_var streamer_;
       Algs::AtomicUInt filtered_messages_count_;

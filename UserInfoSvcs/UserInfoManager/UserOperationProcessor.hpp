@@ -113,7 +113,7 @@ namespace UserInfoSvcs
       const UserId& user_id)
       /*throw(ChunkNotFound, Exception)*/ = 0;
 
-    
+
     virtual
     void fraud_user(
       const UserId& user_id,

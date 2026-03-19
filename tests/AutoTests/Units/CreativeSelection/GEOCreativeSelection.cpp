@@ -11,7 +11,7 @@ namespace
   typedef AutoTest::ChannelsCheck ChannelsCheck;
   typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
 
-  // Display. Ab Lench city. 
+  // Display. Ab Lench city.
   const GEOCreativeSelection::TestRequest DISPLAYCITY1[] =
   {
     {"DisplayKWD", 0, 0, "DisplayChannelBP", 0},
@@ -19,7 +19,7 @@ namespace
      "DisplayCityTID", 0, "DisplayCityCC" }
   };
 
-  // Display. Abberley city. 
+  // Display. Abberley city.
   const GEOCreativeSelection::TestRequest DISPLAYCITY2[] =
   {
     {"DisplayKWD", 0, 0, "DisplayChannelBP", 0},
@@ -27,7 +27,7 @@ namespace
      "DisplayCityTID", 0, "DisplayCityCC" }
   };
 
-  // Display. Elmbridge city. 
+  // Display. Elmbridge city.
   const GEOCreativeSelection::TestRequest DISPLAYCITY3[] =
   {
     {"DisplayKWD", 0, 0, "DisplayChannelBP", 0},
@@ -35,7 +35,7 @@ namespace
      "DisplayCityTID", 0, 0 }
   };
 
-  // Display. Worcestershire state level. 
+  // Display. Worcestershire state level.
   const GEOCreativeSelection::TestRequest DISPLAYSTATE[] =
   {
     {"DisplayKWD", 0, 0, "DisplayChannelBP", 0},
@@ -43,7 +43,7 @@ namespace
      "DisplayStateTID", 0, "DisplayStateCC" }
   };
 
-  // Display. Country level. 
+  // Display. Country level.
   const GEOCreativeSelection::TestRequest DISPLAYCOUNTRY[] =
   {
     {"DisplayKWD", 0, 0, "DisplayChannelBP", 0},
@@ -59,7 +59,7 @@ namespace
      "TextTID", 0,
      "ChannelText-1-CC,ChannelText-2-CC,Text-1-CC,Text-2-CC"}
   };
-  
+
   // Text. Aber city.
   const GEOCreativeSelection::TestRequest TEXTCITY2[] =
   {
@@ -165,7 +165,7 @@ GEOCreativeSelection::run_test()
     testcase(
       "Display. Worcestershire state level.",
       DISPLAYSTATE));
-  
+
   NOSTOP_FAIL_CONTEXT(
     testcase(
       "Display. Country level.",
@@ -195,7 +195,7 @@ GEOCreativeSelection::run_test()
     testcase(
       "Text. Conwy state level.",
       TEXTSTATE3));
-  
+
   NOSTOP_FAIL_CONTEXT(
     testcase(
       "Text. Different state.",
@@ -248,7 +248,7 @@ void GEOCreativeSelection::testcase(
         client.debug_info.trigger_channels).check(),
       description +
         " Expected trigger_channels#" + strof(i+1));
-    
+
     if (requests[i].expected_ccids)
     {
       std::list<std::string> ccids;
@@ -257,12 +257,12 @@ void GEOCreativeSelection::testcase(
       String::StringManip::SplitComma tokenizer(s);
 
       String::SubString token;
-      
+
       while (tokenizer.get_token(token))
       {
         ccids.push_back(fetch_string(token.str()));
       }
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           ccids,
@@ -279,7 +279,7 @@ void GEOCreativeSelection::testcase(
           client.debug_info.ccid).check(),
         description +
         " Expected creatives#" +
-        strof(i+1));    
+        strof(i+1));
     }
   }
 }

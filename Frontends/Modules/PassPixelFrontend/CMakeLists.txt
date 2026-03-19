@@ -1,5 +1,5 @@
 add_library(PassPixelFrontend SHARED
- RequestInfoFiller.cpp 
+ RequestInfoFiller.cpp
   PassPixelFrontend.cpp
 )
 
@@ -18,7 +18,7 @@ target_link_libraries(PassPixelFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

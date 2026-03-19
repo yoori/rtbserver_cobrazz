@@ -38,7 +38,7 @@ namespace
   double isp_ammount(bool gross_cmp)
   {
     double adv_comission = gross_cmp?  ADV_COMMISSION: 0;
-    
+
     return
       (REQ_REVENUE * (1 - adv_comission) - PUB_REVENUE / TAG_CURRENCY) *
       COLO_CURRENCY * REVENUE_SHARE;
@@ -46,11 +46,11 @@ namespace
 
 }
 
-void 
+void
 StatsHourlyLoggingTest::set_up()
 { }
 
-bool 
+bool
 StatsHourlyLoggingTest::run()
 {
 
@@ -78,16 +78,16 @@ StatsHourlyLoggingTest::run()
     stimestamp(target_request_time_);
 
   noimp_stats.select(pq_conn_);
-    
+
   AUTOTEST_CASE(
     case_clicks_actions_noimpressions_part_1(
       noimp_stats, noimp_req_list),
     "Clicks and actions, but no impressions");
-  
+
   AUTOTEST_CASE(
     case_ammounts("TC1"),
     "Ammounts net campaign");
-  
+
   AUTOTEST_CASE(
     case_ammounts("TC2"),
     "Ammounts gross campaign");
@@ -114,7 +114,7 @@ StatsHourlyLoggingTest::run()
   return true;
 }
 
-void 
+void
 StatsHourlyLoggingTest::tear_down()
 { }
 
@@ -133,7 +133,7 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
     stimestamp(target_request_time_);
 
   stats.select(pq_conn_);
-  
+
   AutoTest::NSLookupRequest request;
   request.referer("http://www.act.com");
   request.format("unit-test");
@@ -168,9 +168,9 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        !client.debug_info.click_url.empty()), 
+        !client.debug_info.click_url.empty()),
       "must have debug_info.click_url");
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         !client.debug_info.selected_creatives.first().action_adv_url.empty()),
@@ -208,7 +208,7 @@ StatsHourlyLoggingTest::case_all_counters_imptrack_disabled()
           clicks(REPEAT_COUNT / 3).
           actions(REPEAT_COUNT / 3 / 5)
     };
-    
+
     ADD_WAIT_CHECKER(
       "RequestStatsHourly check",
       AutoTest::stats_diff_checker(
@@ -244,7 +244,7 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_1(
   {
     AdClient client(AdClient::create_user(this));
     client.process_request(request);
-    
+
     std::string imp_url =
       client.debug_info.track_pixel_url.value();
 
@@ -258,7 +258,7 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_1(
       req_list.push_back(req_pair);
     }
   }
-  
+
   {
     const HourlyStats::Diffs diffs[] =
     {
@@ -282,7 +282,7 @@ StatsHourlyLoggingTest::case_clicks_actions_noimpressions_part_2(
   RequestList& req_list)
 {
   stats.select(pq_conn_);
-  
+
   for (RequestList::iterator req_pair = req_list.begin();
        req_pair != req_list.end(); ++req_pair)
   {
@@ -323,7 +323,7 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
     stimestamp(target_request_time_);
 
   stat.select(pq_conn_);
- 
+
   AutoTest::NSLookupRequest request;
   request.referer("http://www.act.com");
   request.format("unit-test"); // no track
@@ -344,7 +344,7 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
 
   for (unsigned int i = 0; i < REPEAT_COUNT / 2; ++i)
   {
-    AdClient client(AdClient::create_user(this));    
+    AdClient client(AdClient::create_user(this));
     FAIL_CONTEXT(
       client.do_ad_requests(
         request, exp_ccids, actions2));
@@ -389,7 +389,7 @@ StatsHourlyLoggingTest::case_ammounts(const std::string& name_prefix)
             pub_amount(ORM::stats_diff_type(PUB_AMOUNT, 0.1)).
             pub_comm_amount(ORM::stats_diff_type(PUB_COMM_AMOUNT, 0.1)).
             isp_amount(ORM::stats_diff_type(isp_ammount(true), 0.1)),
-      stat));  
+      stat));
 }
 
 void
@@ -402,12 +402,12 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
 
   AutoTest::Time hour_later(
     base_time + Generics::Time::ONE_HOUR);
-  
+
   AutoTest::Time day_later(
     base_time + Generics::Time::ONE_DAY);
-  
+
   ORM::StatsArray<HourlyStats, 3> stats;
-  
+
   stats[0].key().
     cc_id(fetch_int("CC Id/6")).
     num_shown(1).
@@ -450,9 +450,9 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
     {
       request.debug_time = base_time;
     }
-    
+
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         exp_ccids,
@@ -461,7 +461,7 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        !client.debug_info.click_url.empty()), 
+        !client.debug_info.click_url.empty()),
       "must have debug_info.click_url");
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
@@ -474,10 +474,10 @@ StatsHourlyLoggingTest::case_with_sdate_tinkling()
 
     std::string action_adv_url = client.debug_info.selected_creatives.first().action_adv_url;
     action_adv_url += "*amp*debug-time*eql*" + request.debug_time.str();
-    
+
     client.process_request(client.debug_info.click_url);
 
-    client.process_request(action_adv_url);     
+    client.process_request(action_adv_url);
   }
 
   {
@@ -520,10 +520,10 @@ StatsHourlyLoggingTest::case_multiple_confirmation_of_creative()
     stimestamp(target_request_time_);
 
   stat.select(pq_conn_);
- 
+
   AutoTest::NSLookupRequest request;
   request.referer("http://www.act.com");
-  request.format("unit-test-imp");    
+  request.format("unit-test-imp");
   request.tid(fetch_string("Tag Id/4"));
   request.referer_kw(fetch_string("Keyword"));
   request.colo(fetch_string("StatsHourlyLoggingTest/Colo"));
@@ -538,7 +538,7 @@ StatsHourlyLoggingTest::case_multiple_confirmation_of_creative()
     client.process_request(request);
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        !client.debug_info.track_pixel_url.empty()), 
+        !client.debug_info.track_pixel_url.empty()),
       "must have debug_info.track_pixel_url");
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
@@ -561,7 +561,7 @@ StatsHourlyLoggingTest::case_multiple_confirmation_of_creative()
   {
     req_pair->first.process_request(req_pair->second);
   }
-  
+
   ADD_WAIT_CHECKER(
     "RequestStatsHourly check",
     AutoTest::stats_diff_checker(
@@ -583,7 +583,7 @@ StatsHourlyLoggingTest::case_template_level_disabled_imptrack()
     stimestamp(target_request_time_);
 
   stat.select(pq_conn_);
-  
+
   AutoTest::NSLookupRequest request;
   request.referer("http://www.act.com");
   request.format("unit-test");
@@ -609,7 +609,7 @@ StatsHourlyLoggingTest::case_template_level_disabled_imptrack()
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        client.debug_info.track_pixel_url.empty()), 
+        client.debug_info.track_pixel_url.empty()),
       "must not have debug_info.track_pixel_url");
   }
 
@@ -637,7 +637,7 @@ StatsHourlyLoggingTest::case_absent_imp_req_id()
 
   AutoTest::NSLookupRequest request;
   request.referer("http://www.act.com");
-  request.format("unit-test-imp");    
+  request.format("unit-test-imp");
   request.tid(fetch_string("Tag Id/5"));
   request.referer_kw(fetch_string("Keyword"));
   request.colo(fetch_string("StatsHourlyLoggingTest/Colo"));
@@ -660,7 +660,7 @@ StatsHourlyLoggingTest::case_absent_imp_req_id()
 
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
-        !client.debug_info.track_pixel_url.empty()), 
+        !client.debug_info.track_pixel_url.empty()),
       "must have debug_info.track_pixel_url");
 
     ImpressionRequest impression;

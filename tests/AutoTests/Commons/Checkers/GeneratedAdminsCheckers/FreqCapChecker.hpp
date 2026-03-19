@@ -8,40 +8,40 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = FreqCapAdmin::Expected>  
-  class FreqCapChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = FreqCapAdmin::Expected>
+  class FreqCapChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      FreqCapChecker_(      
-        BaseUnit* test,      
-        unsigned long freqcap,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        freqcap_(freqcap),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      FreqCapChecker_(
+        BaseUnit* test,
+        unsigned long freqcap,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        freqcap_(freqcap),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~FreqCapChecker_() noexcept {}      
+      virtual ~FreqCapChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      unsigned long freqcap_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      unsigned long freqcap_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef FreqCapChecker_<FreqCapAdmin::Expected> FreqCapChecker;  
-  typedef FreqCapChecker_<std::string> FreqCapCheckerSimple;  
+  typedef FreqCapChecker_<FreqCapAdmin::Expected> FreqCapChecker;
+  typedef FreqCapChecker_<std::string> FreqCapCheckerSimple;
 
 }
 

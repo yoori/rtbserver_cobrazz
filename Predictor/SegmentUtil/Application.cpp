@@ -136,7 +136,7 @@ struct SegmentMatchesConverter
   {
     Profiles::SegmentMatchesWriter res;
     res.segment_id() = segment_id;
-    res.timestamps().push_back(timestamp_.tv_sec);    
+    res.timestamps().push_back(timestamp_.tv_sec);
     return res;
   }
 
@@ -761,7 +761,7 @@ Application_::request_profile_(
         std::make_pair(hash_it->first, name_ostr.str()));
     }
   }
-  
+
   activator->deactivate_object();
   activator->wait_object();
 }

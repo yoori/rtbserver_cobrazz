@@ -3,7 +3,7 @@
 
 namespace Vanga
 {
-  
+
 }
 
 #endif /*LABELMANIP_HPP_*/

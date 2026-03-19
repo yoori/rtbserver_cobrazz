@@ -48,7 +48,7 @@ namespace RequestInfoSvcs
       tag_request_group_info.time = tag_request_info.time;
       tag_request_group_info.colo_id = tag_request_info.colo_id;
       tag_request_group_info.site_id = tag_request_info.site_id;
-      tag_request_group_info.country = tag_request_info.country;      
+      tag_request_group_info.country = tag_request_info.country;
       tag_request_group_info.tags.insert(tag_request_info.tag_id);
       tag_request_group_info.ad_shown = tag_request_info.ad_shown;
       tag_request_group_info.rollback = false;
@@ -61,7 +61,7 @@ namespace RequestInfoSvcs
       UserTagRequestMergeProfileWriter::tag_groups_Container::
         iterator erase_it = tag_groups.begin();
 
-      unsigned long tag_groups_size = tag_groups.size();      
+      unsigned long tag_groups_size = tag_groups.size();
       long count_to_erase = tag_groups_size > KEEP_MAX_GROUPS ?
         KEEP_MAX_GROUPS - tag_groups_size : 0;
 
@@ -244,7 +244,7 @@ namespace RequestInfoSvcs
     static const char* FUN = "UserTagRequestMergeContainer::UserTagRequestMergeContainer()";
 
     Generics::Time extend_time_period_val(extend_time_period);
-    
+
     if(extend_time_period_val == Generics::Time::ZERO)
     {
       extend_time_period_val = expire_time / 4;
@@ -360,7 +360,7 @@ namespace RequestInfoSvcs
       UserMap::Transaction_var transaction =
         user_map_->get_transaction(tag_request_info.user_id);
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
-  
+
       if(mem_buf.in())
       {
         user_profile_writer.init(
@@ -386,9 +386,9 @@ namespace RequestInfoSvcs
       // save profile
       unsigned long sz = user_profile_writer.size();
       Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
-  
+
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
-  
+
       transaction->save_profile(
         Generics::transfer_membuf(new_mem_buf),
         tag_request_info.time);
@@ -400,7 +400,7 @@ namespace RequestInfoSvcs
       throw UserTagRequestMergeContainer::Exception(ostr);
     }
   }
-  
+
   void UserTagRequestMergeContainer::clear_expired()
     /*throw(Exception)*/
   {

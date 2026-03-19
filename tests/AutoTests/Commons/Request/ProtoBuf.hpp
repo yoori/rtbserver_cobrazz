@@ -25,11 +25,11 @@ namespace AutoTest
     get_field(
       const Descriptor* descriptor,
       const std::string& name) /*throw(Exception)*/;
-    
+
     void clear(
       Message* message,
       const std::string& name);
-      
+
     bool empty(
       Message* message,
       const std::string& name);
@@ -45,13 +45,13 @@ namespace AutoTest
       typedef GT NestedType;
       typedef void (Reflection::*Setter)(Message*, const FieldDescriptor*, ST) const;
       typedef GT (Reflection::*Getter)(const Message&, const FieldDescriptor*) const;
-      
+
       static const Setter setter_;
       static const Getter getter_;
 
       /**
        * @brief Set protobuf field value.
-       * @param Protobuf message 
+       * @param Protobuf message
        * @param field name
        * @param value
        */
@@ -64,7 +64,7 @@ namespace AutoTest
 
       /**
        * @brief Get protobuf field value.
-       * @param Protobuf message 
+       * @param Protobuf message
        * @param field name
        */
       GT
@@ -88,7 +88,7 @@ namespace AutoTest
 
       /**
        * @brief Set protobuf enum value.
-       * @param Protobuf message 
+       * @param Protobuf message
        * @param field name
        * @param value
        */
@@ -100,7 +100,7 @@ namespace AutoTest
 
       /**
        * @brief Get protobuf enum value.
-       * @param Protobuf message 
+       * @param Protobuf message
        * @param field name
        */
       T get_value(
@@ -124,13 +124,13 @@ namespace AutoTest
   class BidParam : public BaseParam
   {
     DECLARE_EXCEPTION(NotSupported, eh::DescriptiveException);
-    
+
     typedef google::protobuf::Message Message;
 
   public:
 
     typedef typename Setter::SetterType Type;
-    
+
     /**
      * @brief Constructor.
      * @param request request which this param belongs to
@@ -147,7 +147,7 @@ namespace AutoTest
       const char* name,
       T def,
       bool set_defs = true);
-    
+
     /**
      * @brief Constructor.
      * @param request request which this param belongs to
@@ -169,13 +169,13 @@ namespace AutoTest
       Request* request,
       Message* message,
       const BidParam& other);
-    
+
     /* @brief Destructor.
      *
      * Destructor for BidParam object.
      */
     virtual ~BidParam() noexcept;
-    
+
     /**
      * @brief Clear param value.
      *
@@ -184,34 +184,34 @@ namespace AutoTest
      * and you can assign a new value to this parameter.
      */
     virtual void clear();
-    
+
     /**
      * @brief Check if param value is empty.
      * @return true if param value is empty, false otherwise.
      */
     virtual bool empty() const;
-    
+
     /**
      * @brief Returns param value.
      *
      * Not supported.
      */
     virtual std::string str() const;
-    
+
     /**
      * @brief Returns raw param value (without any encoding).
      *
      * Not supported.
      */
     virtual std::string raw_str() const;
-    
+
     /**
      * @brief Set param value.
      *
      * Not supported.
      */
     virtual void set_param_val(const String::SubString&);
-    
+
     /**
      * @brief Print request parameter.
      *
@@ -227,7 +227,7 @@ namespace AutoTest
       std::ostream& out,
       const char* prefix,
       const char* eql) const;
-    
+
     /**
      * @brief Assignment operator.
      *
@@ -244,7 +244,7 @@ namespace AutoTest
      */
     typename Setter::NestedType
     operator*();
-    
+
     /**
      * @brief Get stored value.
      *
@@ -252,7 +252,7 @@ namespace AutoTest
      */
     typename Setter::NestedType
     get();
-    
+
     /**
      * @brief Assignment operator.
      *
@@ -260,7 +260,7 @@ namespace AutoTest
      * @param val assignable value
      * @param encode tells whether or not
      * to encode param value before assignment
-     * @return reference to request which param belongs to 
+     * @return reference to request which param belongs to
      */
     template <class T>
     Request& operator() (const T& val);
@@ -268,15 +268,15 @@ namespace AutoTest
     /**
      * @brief Get parameter name.
      *
-     * @return reference to request which param belongs to 
+     * @return reference to request which param belongs to
      */
     const std::string& name() const;
-   
+
   private:
-    
+
     template <typename T>
     void set_param_val(T val);
-    
+
   private:
     Message* message_;
   };
@@ -355,7 +355,7 @@ namespace AutoTest
         typename std::enable_if<
           !std::is_integral<typename T::Type>::value>::type* = 0);
     };
-   
+
   public:
     /**
      * @brief Constructor.
@@ -402,7 +402,7 @@ namespace AutoTest
      */
     virtual
     RequestMemberBase* clone() const;
-    
+
   private:
     Param Request::* member_; //!< Pointer to request's parameter member
   };

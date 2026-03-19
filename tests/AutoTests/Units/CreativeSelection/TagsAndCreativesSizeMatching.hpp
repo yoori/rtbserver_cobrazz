@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__TAGSANDCREATIVESSIZEMATCHING_
 #define _AUTOTEST__TAGSANDCREATIVESSIZEMATCHING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 class TagsAndCreativesSizeMatching : public BaseUnit

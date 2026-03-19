@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__ADVERTISERUSERSTATSTEST_
 #define _AUTOTEST__ADVERTISERUSERSTATSTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = AutoTest::ORM;
@@ -18,7 +18,7 @@ class AdvertiserUserStatsTest : public BaseUnit
   typedef CCGStats::Diffs CCGDiff;
   typedef ORM::CCUserStats CCStats;
   typedef CCStats::Diffs CCDiff;
-  
+
   struct Expected
   {
     const char* advertisers;
@@ -50,7 +50,7 @@ class AdvertiserUserStatsTest : public BaseUnit
   typedef const char* Expected::* Entity;
 
   typedef std::list<std::string> RequestList;
-  
+
 public:
   AdvertiserUserStatsTest(
     UnitStat& stat_var,
@@ -69,7 +69,7 @@ private:
   AutoTest::DBC::Conn conn_;
   AutoTest::Time today_;
   RequestList requests_;
-  
+
   // Stats
   ORM::StatsList<AdvStats> adv_stats_;
   ORM::StatsList<AdvStats> adv_sum_stats_;
@@ -166,7 +166,7 @@ private:
 
   AdClient
   async_part_1_();
-  
+
   void
   async_part_2_(
     AdClient& client);

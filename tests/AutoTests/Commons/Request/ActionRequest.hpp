@@ -10,7 +10,7 @@ namespace AutoTest
    * @brief Presentation of action AdServer request.
    *
    * This request is sent when end user
-   * complete an action (purchasing smth. for example). 
+   * complete an action (purchasing smth. for example).
    */
   class ActionRequest : public BaseRequest
   {
@@ -42,21 +42,21 @@ namespace AutoTest
     /**
      * @brief Represents 'cid' param.
      *
-     * Campaign id 
+     * Campaign id
      */
     ActionParam cid;
 
     /**
      * @brief Represents 'actionid' param.
      *
-     * Action id unique identifier. 
+     * Action id unique identifier.
      */
     ActionParam actionid;
 
     /**
      * @brief Represents 'country' param.
      *
-     * Country code of action request. 
+     * Country code of action request.
      */
     ActionParam country;
 
@@ -80,7 +80,7 @@ namespace AutoTest
     /**
      * @brief Represents 'Referer' HTTP header.
      *
-     * URL of a page which have trigered ad request. 
+     * URL of a page which have trigered ad request.
      */
     HeaderParam<ActionRequest> referer;
   };

@@ -10,17 +10,17 @@ typedef AutoTest::ORM::ChannelTriggerStats ChannelTriggerStats;
 typedef ORM::StatsList<ChannelTriggerStats> ChannelTriggerStatsArray;
 typedef std::map<unsigned long, unsigned long> TriggerCounterMap;
 typedef ORM::StatsArray<ChannelTriggerStats, 1> ChannelTriggerSumStats;
- 
+
 class ChannelTriggerImpStatsTest: public BaseDBUnit
 {
 public:
   ChannelTriggerImpStatsTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~ChannelTriggerImpStatsTest() noexcept
   { }
 
@@ -30,7 +30,7 @@ protected:
   virtual bool run();
 
   virtual void set_up();
-  
+
   virtual void tear_down();
 
 private:

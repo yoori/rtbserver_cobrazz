@@ -21,7 +21,7 @@ struct TestObject : public ReferenceCounting::DefaultImpl<>
 
   virtual
   ~TestObject() noexcept {}
-  
+
   bool
   operator ==(const TestObject& right) const
   {
@@ -39,7 +39,7 @@ struct TestObject : public ReferenceCounting::DefaultImpl<>
   {
     return i_;
   }
-  
+
   int i_;
 };
 
@@ -70,7 +70,7 @@ struct TestObjectList:
   insert(const TestObject* obj)
   {
     std::list<TestObject_var>::iterator it = begin();
-    
+
     for (; it != end(); ++it)
     {
       if (*obj < *(*it))
@@ -93,18 +93,18 @@ typedef
 int perf_test()
 {
   int result = 0;
-  
+
   try
   {
     Generics::Timer timer;
-    
+
     SequencePacker_var sequence_packer(
       new SequencePacker<TestObject, TestObjectList>());
 
     TestObjectList_var prev_seq;
 
     timer.start();
-    
+
     for(unsigned long i = 1; i < 1000; ++i)
     {
       prev_seq = sequence_packer->get(
@@ -127,21 +127,21 @@ int perf_test()
 int perf_with_keep_test()
 {
   int result = 0;
-  
+
   try
   {
     Generics::Timer timer;
-    
+
     SequencePacker_var sequence_packer(
       new SequencePacker<TestObject, TestObjectList>());
 
     std::list<TestObjectList_var> seqs;
-    
+
     {
       TestObjectList_var prev_seq;
 
       timer.start();
-    
+
       for(unsigned long i = 1; i < 1000; ++i)
       {
         prev_seq = sequence_packer->get(
@@ -158,7 +158,7 @@ int perf_with_keep_test()
     destroy_timer.start();
     seqs.clear();
     destroy_timer.stop();
-    
+
     std::cout << "Insert of 1000 sequences with keeping: time = " <<
       (timer.elapsed_time() + destroy_timer.elapsed_time()) <<
       ", without destroy time = " << timer.elapsed_time() <<
@@ -181,18 +181,18 @@ main() noexcept
   {
     SequencePacker_var sequence_packer(
       new SequencePacker<TestObject, TestObjectList>());
-  
+
     TestObjectList_var first_seq;
-      
+
     {
       first_seq =
         sequence_packer->get(0, TestObject_var(new TestObject(1)));
-      
+
       TestObjectList_var second_seq =
         sequence_packer->get(first_seq, TestObject_var(new TestObject(2)));
       TestObjectList_var third_seq =
         sequence_packer->get(second_seq, TestObject_var(new TestObject(3)));
-  
+
       {
         TestObjectList_var first_seq_2 =
           sequence_packer->get(0, TestObject_var(new TestObject(1)));
@@ -202,7 +202,7 @@ main() noexcept
         TestObjectList_var third_seq_2 =
           sequence_packer->get(second_seq_2,
             TestObject_var(new TestObject(3)));
-  
+
         if (first_seq.in() != first_seq_2.in() ||
           second_seq.in() != second_seq_2.in())
         {
@@ -213,7 +213,7 @@ main() noexcept
         // erase one sequence and check only leftover 2
         second_seq.reset();
         second_seq_2.reset();
-  
+
         if (sequence_packer->ptrs_size_() != 2 ||
           sequence_packer->size_() != 2)
         {
@@ -236,6 +236,6 @@ main() noexcept
 
   result += perf_test();
   result += perf_with_keep_test();
-  
+
   return result;
 }

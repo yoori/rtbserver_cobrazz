@@ -21,7 +21,7 @@ AdRequestsProfiling::run_test()
     AutoTest::predicate_checker(
       get_config().check_service(CTE_REMOTE1, STE_FRONTEND)),
     "Remote#1.AdFrontend need for this test");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_REMOTE2, STE_FRONTEND)),
@@ -38,7 +38,7 @@ AdRequestsProfiling::run_test()
   NOSTOP_FAIL_CONTEXT(full_text_mode());
 
   NOSTOP_FAIL_CONTEXT(merging());
-   
+
   return true;
 }
 
@@ -52,7 +52,7 @@ void AdRequestsProfiling::basic_case()
     NSLookupRequest match_request;
     match_request.tid = fetch_string("Tag");
     match_request.referer_kw = fetch_string("Keyword1");
-    
+
     client.process_request(match_request);
     client.process_request(match_request);
 
@@ -122,7 +122,7 @@ void AdRequestsProfiling::basic_case()
 
     NSLookupRequest ad_request;
     ad_request.tid = fetch_string("Tag");
-    
+
     client.process_request(ad_request);
 
     FAIL_CONTEXT(
@@ -132,7 +132,7 @@ void AdRequestsProfiling::basic_case()
         AutoTest::SCE_NOT_ENTRY).check(),
       description +
         " Expected history (ad_request_profiling=false)#2");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         "0",
@@ -157,7 +157,7 @@ void AdRequestsProfiling::history_optimization()
     NSLookupRequest().
     referer_kw(fetch_string("Keyword2")).
     debug_time(base_time - 24*60*60));
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
@@ -171,7 +171,7 @@ void AdRequestsProfiling::history_optimization()
     NSLookupRequest().
     tid(fetch_string("Tag")).
     debug_time(base_time));
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
@@ -201,7 +201,7 @@ void AdRequestsProfiling::visit_on_adrequest()
   client.process_request(
     NSLookupRequest().
     referer_kw(fetch_string("Keyword1")));
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
@@ -220,7 +220,7 @@ void AdRequestsProfiling::visit_on_adrequest()
       client.debug_info.ccid).check(),
     description +
       " Expected ccid#1");
-  
+
   client.process_request(
     NSLookupRequest().
     tid(fetch_string("Tag")).
@@ -233,7 +233,7 @@ void AdRequestsProfiling::visit_on_adrequest()
       client.debug_info.history_channels).check(),
     description +
       " Expected history");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       fetch_string("CC"),
@@ -308,7 +308,7 @@ void AdRequestsProfiling::full_text_mode()
       client.debug_info.trigger_channels).check(),
     description +
       " Expected trigger channels");
-  
+
   std::ostringstream ft;
   ft << fetch_string("Keyword1") << std::endl <<
     fetch_string("Keyword2")  << std::endl <<
@@ -353,11 +353,11 @@ void AdRequestsProfiling::merging()
   {
 
     TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
-    
+
     tclient.process_request(
       NSLookupRequest().
-      referer_kw(fetch_string("Keyword4")));  
-    
+      referer_kw(fetch_string("Keyword4")));
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
@@ -365,7 +365,7 @@ void AdRequestsProfiling::merging()
         tclient.debug_info.trigger_channels).check(),
       description +
         " Expected trigger channels#1")
-    
+
       AdClient client(AdClient::create_user(this));
 
       client.process_request(
@@ -394,11 +394,11 @@ void AdRequestsProfiling::merging()
 
   {
     TemporaryAdClient tclient(TemporaryAdClient::create_user(this));
-    
+
     tclient.process_request(
       NSLookupRequest().
-      referer_kw(fetch_string("Keyword4")));  
-    
+      referer_kw(fetch_string("Keyword4")));
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
@@ -406,7 +406,7 @@ void AdRequestsProfiling::merging()
         tclient.debug_info.trigger_channels).check(),
       description +
         " Expected trigger channels#3");
-    
+
       AdClient client(AdClient::create_user(this));
 
       client.merge(
@@ -423,7 +423,7 @@ void AdRequestsProfiling::merging()
         description +
           " Expected history#2");
   }
-  
-  
+
+
 }
 

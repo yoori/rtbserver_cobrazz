@@ -26,12 +26,12 @@ namespace ChannelSvcs
 
   bool Filter::operator()(unsigned int id) noexcept
   {
-    return (std::find(begin_, end_, id % count_) == end_); 
+    return (std::find(begin_, end_, id % count_) == end_);
   }
 
   /**
    * ChannelLoadSessionImpl
-   * implementation of ChannelLoadSession valuetype 
+   * implementation of ChannelLoadSession valuetype
    */
 
   ChannelLoadSessionImpl::ChannelLoadSessionImpl(
@@ -191,7 +191,7 @@ namespace ChannelSvcs
   void
   ChannelLoadSessionImpl::check(
     const ::AdServer::ChannelSvcs::ChannelCurrent::CheckQuery& query,
-    ::AdServer::ChannelSvcs::ChannelCurrent::CheckData_out data) 
+    ::AdServer::ChannelSvcs::ChannelCurrent::CheckData_out data)
     /*throw(AdServer::ChannelSvcs::ImplementationException,
       AdServer::ChannelSvcs::NotConfigured)*/
   {
@@ -484,7 +484,7 @@ namespace ChannelSvcs
           if(value && value->channels.length())
           {
             std::copy(
-                value->channels.get_buffer(), 
+                value->channels.get_buffer(),
                 value->channels.get_buffer() + value->channels.length(),
                 result->channels.get_buffer() + old_length);
             old_length += value->channels.length();
@@ -575,7 +575,7 @@ namespace ChannelSvcs
         channels_id.emplace_back(i);
       }
 
-      debug_in.channel_ids.length(channels_id.size());                                                                             
+      debug_in.channel_ids.length(channels_id.size());
       std::copy(
         channels_id.begin(),
         channels_id.end(),
@@ -638,7 +638,7 @@ namespace ChannelSvcs
       result->source_id = -1;
       for(size_t i = 0; i < len; i++)
       {
-        AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_var& value = 
+        AdServer::ChannelSvcs::ChannelCurrent::PosCCGResult_var& value =
           results[i];
         result->source_id = value->source_id;
         length_of_result[0] += value->keywords.length();

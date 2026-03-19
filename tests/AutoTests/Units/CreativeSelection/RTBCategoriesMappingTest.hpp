@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__RTBCATEGORIESMAPPINGTEST_
 #define _AUTOTEST__RTBCATEGORIESMAPPINGTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class RTBCategoriesMappingTest : public BaseUnit
 {
@@ -15,7 +15,7 @@ class RTBCategoriesMappingTest : public BaseUnit
   typedef AutoTest::OpenRTBResponseChecker OpenRTBResponseChecker;
   typedef AutoTest::TanxResponseChecker TanxResponseChecker;
   typedef AutoTest::BaiduResponseChecker BaiduResponseChecker;
-  
+
 public:
   RTBCategoriesMappingTest(
     UnitStat& stat_var,
@@ -129,7 +129,7 @@ private:
   prepare_request(
     BaiduRequest& request,
     const BaiduTestCase& test_case);
-  
+
   template<typename TestCase>
   void
   prepare_request(
@@ -145,7 +145,7 @@ private:
   prepare_checker(
     BaiduResponseChecker::Expected& expected,
     const BaiduTestCase& test_case);
-  
+
   template<size_t Slots>
   void
   prepare_checker(
@@ -157,7 +157,7 @@ private:
   prepare_checker(
     OpenRTBResponseChecker::ExpectedList& expected,
     const AllyesTestCase<Slots>& test_case);
- 
+
   template<typename Traits, typename CaseType, size_t Cases>
   void
   perform_case_(

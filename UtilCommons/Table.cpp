@@ -293,7 +293,7 @@ bool Table::parse_filter(
 
   if (it)
   {
-    const char* v_it = 0; 
+    const char* v_it = 0;
     relation = RL_EQ;
     switch(*it)
     {
@@ -303,7 +303,7 @@ bool Table::parse_filter(
           relation = Table::RL_NE;
         }
         else if (*(it + 1) == '~')
-        { 
+        {
           relation = Table::RL_NC;
         }
         else
@@ -320,7 +320,7 @@ bool Table::parse_filter(
         }
         else
         {
-          relation = Table::RL_LT;                                                                       
+          relation = Table::RL_LT;
           v_it = it + 1;
         }
         break;
@@ -332,16 +332,16 @@ bool Table::parse_filter(
         }
         else
         {
-          relation = Table::RL_GT;                                                                       
+          relation = Table::RL_GT;
           v_it = it + 1;
         }
         break;
       case '=':
-        relation = Table::RL_EQ;                                               
+        relation = Table::RL_EQ;
         v_it = it + 1;
         break;
       case '~':
-        relation = Table::RL_CN;                                               
+        relation = Table::RL_CN;
         v_it = it + 1;
         break;
     }

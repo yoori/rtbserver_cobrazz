@@ -18,13 +18,13 @@ namespace
   typedef AutoTest::precisely_number precisely_number;
 }
 
-bool 
+bool
 TextAndDisplayCreativesCompetitionTest::run_test()
 {
   AUTOTEST_CASE(
     scenario1(),
     "Display wins Keyword");
-  
+
   AUTOTEST_CASE(
     scenario2(),
     "Keyword wins display");
@@ -43,7 +43,7 @@ TextAndDisplayCreativesCompetitionTest::run_test()
     scenario5(),
     "Display wins channel("
     "channel eCPM less than display eCpm)");
-  
+
   return true;
 }
 
@@ -51,7 +51,7 @@ void
 TextAndDisplayCreativesCompetitionTest::scenario1()
 {
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
   request.referer_kw = fetch_string("KEYWORD_1");
@@ -60,13 +60,13 @@ TextAndDisplayCreativesCompetitionTest::scenario1()
   std::string exp_ccids[] = {
     fetch_string("DISPLAYCC_1")
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
       SelectedCreativesCCID(client)).check(),
     "display ccid check#1");
-  
+
   client.repeat_request ();
 
   FAIL_CONTEXT(
@@ -78,7 +78,7 @@ TextAndDisplayCreativesCompetitionTest::scenario1()
 
 }
 
-void 
+void
 TextAndDisplayCreativesCompetitionTest::scenario2()
 {
   AdClient client(AdClient::create_user(this));
@@ -119,7 +119,7 @@ void
 TextAndDisplayCreativesCompetitionTest::scenario3()
 {
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
   request.referer_kw = fetch_string("KEYWORD_3");
@@ -128,7 +128,7 @@ TextAndDisplayCreativesCompetitionTest::scenario3()
   std::string exp_ccids[] = {
     fetch_string("CHANNELTGTCC3_1")
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -150,7 +150,7 @@ void
 TextAndDisplayCreativesCompetitionTest::scenario4()
 {
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
   request.referer_kw = fetch_string("KEYWORD_4");
@@ -161,7 +161,7 @@ TextAndDisplayCreativesCompetitionTest::scenario4()
     fetch_string("CHANNELTGTCC4_2"),
     fetch_string("CHANNELTGTCC4_3")
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -185,7 +185,7 @@ void
 TextAndDisplayCreativesCompetitionTest::scenario5()
 {
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("TAG");
   request.referer_kw = fetch_string("KEYWORD_5");
@@ -194,7 +194,7 @@ TextAndDisplayCreativesCompetitionTest::scenario5()
   std::string exp_ccids[] = {
     fetch_string("DISPLAYCC_5")
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,

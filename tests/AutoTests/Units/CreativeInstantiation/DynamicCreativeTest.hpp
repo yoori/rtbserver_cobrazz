@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__DYNAMICCREATIVETEST_
 #define _AUTOTEST__DYNAMICCREATIVETEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class DynamicCreativeTest : public BaseUnit
 {
@@ -21,7 +21,7 @@ public:
 private:
 
   virtual bool run_test();
-  
+
   void dcreatives_frontend();
   void token_substitution();
 

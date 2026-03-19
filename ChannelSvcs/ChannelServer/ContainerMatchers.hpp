@@ -20,7 +20,7 @@ namespace ChannelSvcs
     PositiveAtom(unsigned int c_id = 0, unsigned int t_id = 0) noexcept
       : channel_id(c_id), channel_trigger_id(t_id) {};
     bool operator<(const PositiveAtom& cp) const noexcept
-    { 
+    {
       if(channel_id != cp.channel_id)
       {
         return channel_id < cp.channel_id;

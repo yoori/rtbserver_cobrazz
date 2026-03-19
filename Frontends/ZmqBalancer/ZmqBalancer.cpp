@@ -64,7 +64,7 @@ ZmqBalancer_::ZmqWorker::work_() noexcept
     Config::ZmqConfigReader::get_socket_type(config_.type()));
   Config::ZmqConfigReader::set_socket_params(config_, worker);
   worker.connect(address_.c_str());
-  
+
   const int flags = (config_.non_block() ? ZMQ_NOBLOCK : 0);
 
   // Work cycle
@@ -76,7 +76,7 @@ ZmqBalancer_::ZmqWorker::work_() noexcept
       if(dealer.recv(&msg))
       {
         const std::size_t msg_size = msg.size();
-        
+
         if (worker.send(msg, flags))
         {
           stats_->add_sent_messages(1, msg_size);
@@ -137,7 +137,7 @@ ZmqBalancer_::ZmqClient::work_() noexcept
   zmq::socket_t client(
     context_,
     Config::ZmqConfigReader::get_socket_type(config_.type()));
-    
+
   Config::ZmqConfigReader::set_socket_params(config_, client);
 
   for(auto it = config_.Address().begin(); it != config_.Address().end(); ++it)
@@ -343,7 +343,7 @@ ZmqBalancer_::init_zeromq_() /*throw(Exception)*/
         route_config.ConnectSocket().Address().size(),
         router_socketname.c_str());
       add_child_object(client);
-    
+
       // Initialize workers
       {
         const SocketConfig& connect_config = route_config.ConnectSocket();
@@ -364,7 +364,7 @@ ZmqBalancer_::init_zeromq_() /*throw(Exception)*/
           add_child_object(worker);
         }
       }
-    }  
+    }
   }
   catch (const eh::Exception& e)
   {

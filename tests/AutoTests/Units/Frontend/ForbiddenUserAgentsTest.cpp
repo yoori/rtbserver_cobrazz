@@ -11,12 +11,12 @@ namespace
   typedef AutoTest::AdClient AdClient;
 }
 
-bool 
+bool
 ForbiddenUserAgentsTest::run_test()
 {
   const Locals locals = get_local_params();
   const size_t locals_size = locals.DataElem().size();
-  
+
   AdClient client(AdClient::create_nonoptin_user(this));
   NSLookupRequest request;
   {
@@ -45,4 +45,4 @@ ForbiddenUserAgentsTest::run_test()
   }
   return true;
 }
- 
+

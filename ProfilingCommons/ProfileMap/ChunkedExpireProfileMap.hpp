@@ -108,7 +108,7 @@ namespace ProfilingCommons
 
   protected:
     virtual ~ChunkedProfileMap() noexcept {}
-      
+
     BaseProfileMap_var get_chunk_(unsigned long chunk_id) const
       noexcept;
 

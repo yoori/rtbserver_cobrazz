@@ -345,7 +345,7 @@ namespace AdServer
       eval_revenues_on_impression_fin(
         RequestInfoProfileWriter& request_writer,
         RequestInfo* request_info);
-      
+
       void
       eval_revenues_on_impression(
         RequestInfoProfileWriter& request_writer,

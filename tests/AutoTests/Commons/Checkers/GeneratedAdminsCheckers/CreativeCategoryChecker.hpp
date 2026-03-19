@@ -8,40 +8,40 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = CreativeCategoryAdmin::Expected>  
-  class CreativeCategoryChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = CreativeCategoryAdmin::Expected>
+  class CreativeCategoryChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      CreativeCategoryChecker_(      
-        BaseUnit* test,      
-        unsigned long category,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        category_(category),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      CreativeCategoryChecker_(
+        BaseUnit* test,
+        unsigned long category,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        category_(category),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~CreativeCategoryChecker_() noexcept {}      
+      virtual ~CreativeCategoryChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      unsigned long category_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      unsigned long category_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef CreativeCategoryChecker_<CreativeCategoryAdmin::Expected> CreativeCategoryChecker;  
-  typedef CreativeCategoryChecker_<std::string> CreativeCategoryCheckerSimple;  
+  typedef CreativeCategoryChecker_<CreativeCategoryAdmin::Expected> CreativeCategoryChecker;
+  typedef CreativeCategoryChecker_<std::string> CreativeCategoryCheckerSimple;
 
 }
 

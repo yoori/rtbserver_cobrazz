@@ -59,13 +59,13 @@ public:
   enum Relation
   {
     RL_EQ = 0,  //or operation for sequence
-    RL_CN, 
+    RL_CN,
     RL_NG,
-    RL_NL, 
-    
+    RL_NL,
+
     RL_NE = 128,//and operation for sequence
-    RL_NC, 
-    RL_GT, 
+    RL_NC,
+    RL_GT,
     RL_LT,
   };
 
@@ -304,7 +304,7 @@ public:
   bool empty() const noexcept;
 
   unsigned long value_align() const noexcept;
-  
+
   void dump(std::ostream& ostr, const char* prefix = 0) const /*throw(Exception, eh::Exception)*/;
 
   void clear() noexcept;

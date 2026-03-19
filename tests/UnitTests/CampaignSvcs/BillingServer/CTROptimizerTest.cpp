@@ -170,7 +170,7 @@ int main(int argc, char** argv) noexcept
   {
     return 1;
   }
-  
+
   if(parse_rate_amount_distribution(past_free_amount_distribution, *opt_free_hours))
   {
     return 1;

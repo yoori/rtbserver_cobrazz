@@ -65,7 +65,7 @@ namespace AutoTest
     max_video_duration(this, bid_adslot_, "max_video_duration"),
     min_video_duration(this, bid_adslot_, "min_video_duration")
   { }
-  
+
   BaiduRequest::~BaiduRequest() noexcept
   { }
 

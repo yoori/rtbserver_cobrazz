@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__DISPLAYADNETANDGROSSTEST_
 #define _AUTOTEST__DISPLAYADNETANDGROSSTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 namespace ORM = AutoTest::ORM;
 
 /**
@@ -12,17 +12,17 @@ namespace ORM = AutoTest::ORM;
 class DisplayAdNetAndGrossTest: public BaseDBUnit
 {
 public:
- 
+
   DisplayAdNetAndGrossTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~DisplayAdNetAndGrossTest() noexcept
   {};
- 
+
 private:
 
   typedef ORM::StatsArray<ORM::HourlyStats, 5> Stats;

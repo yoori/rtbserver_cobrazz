@@ -161,7 +161,7 @@ namespace AdServer
       parse_configs_();
 
       typedef Configuration::FeConfig::CommonFeConfiguration_type CommonType;
-      
+
       for(CommonType::TemplateRule_sequence::
             const_iterator rule_it =
             common_config_->TemplateRule().begin();
@@ -169,10 +169,10 @@ namespace AdServer
           ++rule_it)
       {
         strings_.push_back(rule_it->name());
-        
+
         TemplateRule& template_rule = template_rules_[
           String::SubString(strings_.back())];
-        
+
         for(CommonType::TemplateRule_type::XsltToken_sequence::
               const_iterator token_it =
               rule_it->XsltToken().begin();
@@ -190,10 +190,10 @@ namespace AdServer
         }
       }
       corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-      
+
       campaign_managers_.resolve(
         *common_config_, corba_client_adapter_);
-      
+
       template_files_ = new Commons::TextTemplateCache(
         config_->TemplateCache().size(),
         Generics::Time(config_->TemplateCache().timeout()),
@@ -209,7 +209,7 @@ namespace AdServer
       throw Exception(ostr);
     }
   }
-  
+
   void
   ContentFrontend::shutdown() noexcept
   {
@@ -279,7 +279,7 @@ namespace AdServer
     FCGI::HttpRequest& request = request_holder->request();
 
     HTTP::ParamList params;
-    
+
     if (!request.args().empty())
     {
       String::StringManip::SplitAmp tokenizer(request.args());
@@ -333,7 +333,7 @@ namespace AdServer
     {
       FCGI::HttpRequest::parse_params(request.body(), params);
     }
-    
+
     request.set_params(std::move(params));
 
     handle_request_(std::move(request_holder), std::move(response_writer));

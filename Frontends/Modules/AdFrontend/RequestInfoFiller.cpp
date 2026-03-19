@@ -247,7 +247,7 @@ namespace AdServer
                   param.value,
                   purify_value,
                   String::SubString("&&", 2),
-                  String::SubString("&", 1)); 
+                  String::SubString("&", 1));
                 param.value = purify_value;
               }
               AdFrontendParamConstrain::apply<RequestFrontendConstrainTraits>(
@@ -256,7 +256,7 @@ namespace AdServer
                 proccessor_.find(param.name);
               if(param_it != proccessor_.end())
               {
-                param_it->second->process(request_info, param.value); 
+                param_it->second->process(request_info, param.value);
               }
               replace_double_amp = false;
               found_eq = false;
@@ -661,7 +661,7 @@ namespace AdServer
       Request::Context::PUBLISHER_IMPRESSION_TRACKING_URL,
       new FrontendCommons::UrlParamProcessor<RequestInfo>(
         &RequestInfo::pub_impr_track_url));
-    
+
     add_processor_(false, true,
       Request::Context::PUBLISHER_PARAMETER,
       new FrontendCommons::StringCheckParamProcessor<
@@ -744,14 +744,14 @@ namespace AdServer
     noexcept
   {
     using namespace std::placeholders;
-   
+
     auto add = std::bind(
       &RequestInfoFiller::add_processor_,
       this,
       headers,
       parameters,
       _1,
-      processor); 
+      processor);
 
     std::for_each(
       names.begin(),
@@ -1002,7 +1002,7 @@ namespace AdServer
             request_info.user_status = AdServer::CampaignSvcs::US_PROBE;
           }
         }
-        else 
+        else
         {
           request_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
         }
@@ -1122,7 +1122,7 @@ namespace AdServer
 
             if(log_referrer_setting_ == Commons::LogReferrer::LR_PATH)
             {
-              request_info.allowable_referer = 
+              request_info.allowable_referer =
                 FrontendCommons::normalize_abs_url(
                   addr,
                   HTTP::HTTPAddress::VW_PROTOCOL |

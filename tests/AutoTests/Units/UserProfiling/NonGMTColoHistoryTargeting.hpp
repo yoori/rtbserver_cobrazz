@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__NONGMTCOLOHISTORYTARGETING_
 #define _AUTOTEST__NONGMTCOLOHISTORYTARGETING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class NonGMTColoHistoryTargeting : public BaseUnit
 {
@@ -25,7 +25,7 @@ public:
     AutoTest::SequenceCheckerEnum trigger_match;
     AutoTest::SequenceCheckerEnum history_match;
   };
-  
+
 public:
   NonGMTColoHistoryTargeting(
     UnitStat& stat_var,

@@ -10,7 +10,7 @@ target_link_libraries(UserInfoManagerIDL
 )
 
 add_library(UserInfoContainer SHARED
-  UserInfoContainer.cpp 
+  UserInfoContainer.cpp
   UserOperationLoader.cpp
   UserOperationSaver.cpp
 
@@ -40,12 +40,12 @@ target_link_libraries(UserInfoContainer
 
 
 add_executable(UserInfoManager
-UserInfoManagerMain.cpp 
-  FileRWStats.cpp 
-  UserInfoManagerImpl.cpp 
-  UserInfoManagerControlImpl.cpp 
-  UserInfoContainer.cpp 
-  UserInfoManagerLogger.cpp 
+UserInfoManagerMain.cpp
+  FileRWStats.cpp
+  UserInfoManagerImpl.cpp
+  UserInfoManagerControlImpl.cpp
+  UserInfoContainer.cpp
+  UserInfoManagerLogger.cpp
   UserInfoManagerStat.cpp
 
 )

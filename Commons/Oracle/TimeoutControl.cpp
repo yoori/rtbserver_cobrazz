@@ -14,7 +14,7 @@ namespace Oracle
     const Generics::Time* timeout) noexcept
     : timeout_(timeout ? *timeout : Generics::Time::ZERO)
   {}
-      
+
   bool
   TimeoutControl::sleep_step() /*throw(Exception, TimedOut)*/
   {
@@ -47,7 +47,7 @@ namespace Oracle
     {
       sleep_time = MAX_SLEEP_TIME;
     }
-        
+
     timespec rem;
     rem.tv_sec = sleep_time.tv_sec;
     rem.tv_nsec = sleep_time.tv_usec * 1000;
@@ -60,7 +60,7 @@ namespace Oracle
       result = ::nanosleep(&req, &rem);
     }
     while(result == -1 && errno == EINTR);
-        
+
     if(result == -1)
     {
       eh::throw_errno_exception<Oracle::Exception>("can't make nanosleep");

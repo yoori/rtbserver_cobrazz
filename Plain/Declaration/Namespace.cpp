@@ -50,7 +50,7 @@ namespace Declaration
 
     return ret;
   }
-  
+
   Namespace::Namespace(
     const char* name_val,
     Namespace* owner_val)
@@ -114,7 +114,7 @@ namespace Declaration
       }
       search_ns = search_ns->owner_;
     }
-    
+
     return BaseType_var();
   }
 
@@ -127,7 +127,7 @@ namespace Declaration
     {
       return type_it->second;
     }
-    
+
     return BaseType_var();
   }
 
@@ -140,7 +140,7 @@ namespace Declaration
     {
       return ns_it->second;
     }
-    
+
     Namespace_var new_ns(new Namespace(name_val, this));
     namespaces_.insert(std::make_pair(name_val, new_ns));
     return new_ns;

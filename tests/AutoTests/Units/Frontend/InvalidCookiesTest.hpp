@@ -8,28 +8,28 @@
  * @class InvalidCookiesTest
  * @brief test for invalid cookies processing
  */
-                                 
+
 class InvalidCookiesTest: public BaseUnit
 {
-  
+
 public:
- 
+
   InvalidCookiesTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     client(AutoTest::AdClient::create_user(this))
   {};
- 
+
   virtual ~InvalidCookiesTest() noexcept
   {};
- 
+
 private:
   AutoTest::AdClient client;
   AutoTest::NSLookupRequest ns_request;
   AutoTest::OptOutRequest   optout_request;
-    
+
   virtual bool run_test();
   //test utils
   std::string crack_cookie(const char *cookie_name,
@@ -44,7 +44,7 @@ private:
                                         bool check_host_cookie_presents = true);
   //test cases
   void set_up();
-  
+
   void invalid_base64_uid_test_case();
   void invalid_uid_test_case();
 

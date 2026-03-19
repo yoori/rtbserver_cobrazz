@@ -21,17 +21,17 @@ namespace Declaration
     public:
       Field(BaseDescriptor* descriptor_val, const char* name_val)
         /*throw(eh::Exception)*/;
-      
+
       Field(const Field& other)
         /*throw(eh::Exception)*/;
-      
+
       const char* name() const noexcept;
 
       BaseDescriptor_var descriptor() const noexcept;
 
     protected:
       virtual ~Field() noexcept {}
-      
+
     private:
       BaseDescriptor_var descriptor_;
       std::string name_;
@@ -46,7 +46,7 @@ namespace Declaration
     protected:
       virtual ~FieldList() noexcept {}
     };
-    
+
     typedef ReferenceCounting::SmartPtr<FieldList>
       FieldList_var;
 
@@ -60,7 +60,7 @@ namespace Declaration
 
     protected:
       virtual ~PosedField() noexcept {}
-      
+
     private:
       unsigned long pos_;
     };
@@ -74,7 +74,7 @@ namespace Declaration
     protected:
       virtual ~PosedFieldList() noexcept {}
     };
-    
+
     typedef ReferenceCounting::SmartPtr<PosedFieldList>
       PosedFieldList_var;
 
@@ -90,7 +90,7 @@ namespace Declaration
     virtual bool is_fixed() const noexcept;
 
     virtual SizeType fixed_size() const noexcept;
-    
+
     virtual StructDescriptor_var as_struct() noexcept;
 
   protected:
@@ -159,7 +159,7 @@ namespace Declaration
   {
     return descriptor_;
   }
-  
+
   inline
   StructDescriptor::StructDescriptor(
     const char* name_val,
@@ -205,7 +205,7 @@ namespace Declaration
 
     return StructDescriptor::PosedField_var();
   }
-  
+
   inline
   bool
   StructDescriptor::is_fixed() const noexcept

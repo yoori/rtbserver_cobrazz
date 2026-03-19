@@ -16,25 +16,25 @@ namespace AutoTest
     {
       typedef ::Baidu::BidResponse Response;
       typedef ::Baidu::BidResponse_Ad Ad;
-      
+
       class Expected
       {
         typedef ProtoBuf::ExpectedUtils<Ad> Utils;
-        
+
       public:
-        
+
         /**
          * @brief Default constructor.
          */
         Expected();
-        
+
         /**
          * @brief Copy constructor.
          */
         Expected(
           BaiduResponseChecker& checker,
           const Expected& other);
-        
+
         /**
          * @brief Add creative_id to expected.
          * @param creative_id.
@@ -43,15 +43,15 @@ namespace AutoTest
          * As a creative ID, uniquely identifies each metadata creative (currently only supports one idea).
          * For dynamic and creative, creative_id uniquely identifies the html snippet.
          *  BES requirements for dynamic creation
-         * Italian materials and win notice url, etc. for review. Creative same same buyer's id 
+         * Italian materials and win notice url, etc. for review. Creative same same buyer's id
          * Only be audited once, after the adoption of no audit.
-         *   buyer should ensure that contain the same ideas and materials 
+         *   buyer should ensure that contain the same ideas and materials
          * The html_snippet the same snippet id, to avoid duplication of audits.
          */
         Expected&
         creative_id(
           unsigned long val);
-        
+
         /**
          * @brief Add target_url to expected.
          * @param target_url.
@@ -65,7 +65,7 @@ namespace AutoTest
         Expected&
         target_url(
           const std::string& val);
-        
+
         /**
          * @brief Add category to expected.
          * @param val Baidu advertiser ID.
@@ -90,7 +90,7 @@ namespace AutoTest
          */
         Expected&
         category_exist(bool exist);
-        
+
         /**
          * @brief Add type to expected.
          * @param val Baidu type id.
@@ -104,9 +104,9 @@ namespace AutoTest
          */
         Expected&
         type_exist(bool exist);
-     
+
       private:
-        
+
         ExpValue<unsigned long> creative_id_;
         ExpValue< std::list<std::string> > target_url_;
         ExpValue<unsigned long> advertiser_id_;
@@ -161,7 +161,7 @@ namespace AutoTest
   };
 
 }
-    
+
 
 
 #endif  // _AUTOTESTS_COMMONS_BAIDURESPONSECHECKER_HPP

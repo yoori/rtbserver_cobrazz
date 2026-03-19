@@ -388,7 +388,7 @@ main(int argc, char* argv[]) noexcept
       ReferenceCounting::SmartPtr<ProfileMap<std::string> > test =
         init_map<StringMap>(root.c_str(), "", Generics::Time(100));
 
-      
+
       for(int i = 0; i < 1000; ++i)
       {
         std::ostringstream id_str;

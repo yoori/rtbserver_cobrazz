@@ -10,7 +10,7 @@ namespace ORM = AutoTest::ORM;
 /**
  * @class ActionStatsTest
  * @brief Test logging into ActionStats table
- */ 
+ */
 class ActionStatsTest:
   public BaseDBUnit
 {
@@ -18,7 +18,7 @@ class ActionStatsTest:
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::ActionRequest ActionRequest;
   typedef AutoTest::ConversationRequest ConversationRequest;
-  
+
   struct ConversationStat
   {
     const char* action;
@@ -48,26 +48,26 @@ class ActionStatsTest:
     int click_ofset;
   };
 
-  
+
 public:
   ActionStatsTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       base_time(
         AutoTest::Time().get_gm_time().format("%d-%m-%Y:%H-00-00"))
   { }
- 
+
   virtual ~ActionStatsTest() noexcept
   { }
- 
+
 protected:
 
   virtual bool run();
 
   virtual void set_up();
-  
+
   virtual void tear_down();
 
 private:
@@ -127,10 +127,10 @@ private:
   void
   base_case_part_4_(
     AdClient& client);
-  
+
   void
   cross_action_();
-  
+
   void
   imp_update_();
 

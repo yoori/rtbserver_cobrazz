@@ -314,7 +314,7 @@ merge_performance_test()
     timer.start();
 
     ChannelsMatcher matcher(base_profile.in(), add_profile.in());
-    
+
     {
       // fill target profile
       for(unsigned long iteration = 0; iteration < ITERATION_COUNT; ++iteration)
@@ -324,7 +324,7 @@ merge_performance_test()
         matcher.match(result, tm, cid, *channel_rules, pmp, pps, session_timeout, false);
       }
     }
-    
+
     {
       // fill source profile
       ChannelsMatcher merge_matcher(merge_base_profile.in(), merge_add_profile.in());

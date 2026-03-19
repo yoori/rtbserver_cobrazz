@@ -11,12 +11,12 @@ public:
    * @param application
    */
   SignalHandler();
-  
+
   /**
    * Destructor.
    */
   ~SignalHandler();
-  
+
   /**
    * Sets exit signal to true.
    * @param _ignored Not used, but required by prototype to match required handler.
@@ -50,13 +50,13 @@ SignalHandler::setupSignalHandlers()
     throw SignalException("Error setting up signal handlers!");
   }
 }
-  
+
 
 int
 main(int argc, const char* argv[])
 {
   int result = 2;
-  
+
   try
   {
     SignalHandler signalHandler;
@@ -79,7 +79,7 @@ main(int argc, const char* argv[])
   catch(const eh::Exception& e)
   {
     std::cerr << "main: eh::Exception exception caught. "
-      ":" << std::endl << e.what() << std::endl;    
+      ":" << std::endl << e.what() << std::endl;
   }
 
   return result;

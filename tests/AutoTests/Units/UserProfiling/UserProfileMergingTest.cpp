@@ -8,7 +8,7 @@ REFLECT_UNIT(UserProfileMergingTest) (
 
 
 namespace
-{  
+{
   const std::string referer = "www.google.com";
   typedef AutoTest::UserInfoAdminLog UserInfoAdmin;
   typedef AutoTest::ChannelsCheck ChannelsCheck;
@@ -98,7 +98,7 @@ namespace
       {"ContextBP,Session2BP", "ContextChannel"}
     }
   };
-  
+
 
   // 'H+T' channel (visits=2).
   const UserProfileMergingTest::RequestType HT_CHANNEL[] =
@@ -252,9 +252,9 @@ namespace
       {"HistoryBP", 0}
     }
   };
-}     
- 
-bool 
+}
+
+bool
 UserProfileMergingTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(
@@ -280,12 +280,12 @@ UserProfileMergingTest::run_test()
       "H+T channel (visits=2).",
       HT_CHANNEL,
       countof(HT_CHANNEL)));
-  
+
   NOSTOP_FAIL_CONTEXT(
     check("Session channel (visits=3).",
       SESSION_CHANNEL_1,
       countof(SESSION_CHANNEL_1)));
-   
+
   NOSTOP_FAIL_CONTEXT(
     check(
       "Session channel (visits=1).",
@@ -321,7 +321,7 @@ void UserProfileMergingTest::check(
   TemporaryAdClient t_client(
     TemporaryAdClient::create_user(this));
   AdClient p_client(AdClient::create_user(this));
-  
+
   for (size_t i = 0; i < requests_size; ++i)
   {
 
@@ -354,7 +354,7 @@ void UserProfileMergingTest::check(
       t_client,
       requests[i].req_type);
 
-    // Check channels 
+    // Check channels
     FAIL_CONTEXT(
       ChannelsCheck(
         this,

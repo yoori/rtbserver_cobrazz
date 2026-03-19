@@ -9,7 +9,7 @@ typedef AutoTest::CreativeChecker CreativeChecker;
 typedef AutoTest::CreativeTemplatesChecker TemplateChecker;
 typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
 
-bool 
+bool
 CreativeFilesPresenceTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(file_not_present_case());
@@ -24,11 +24,11 @@ CreativeFilesPresenceTest::run_test()
   NOSTOP_FAIL_CONTEXT(ADSC_8367());
   return true;
 }
- 
+
 void
 CreativeFilesPresenceTest::file_not_present_case()
 {
-  std::string description("Absent creative file."); 
+  std::string description("Absent creative file.");
   add_descr_phrase(description);
 
   unsigned long cc_id = fetch_int("CCID1");
@@ -40,15 +40,15 @@ CreativeFilesPresenceTest::file_not_present_case()
       status("W")).check(),
     description +
       " Check creative status");
-  
+
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.referer_kw = fetch_string("KEYWORD1");
   request.tid = fetch_string("TID1");
   request.format = "unit-test-imp";
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id),
@@ -61,7 +61,7 @@ CreativeFilesPresenceTest::file_not_present_case()
 void
 CreativeFilesPresenceTest::normal_case()
 {
-  std::string description("Normal case."); 
+  std::string description("Normal case.");
   add_descr_phrase(description);
 
   unsigned long cc_id = fetch_int("CCID2");
@@ -73,15 +73,15 @@ CreativeFilesPresenceTest::normal_case()
         status("A")).check(),
     description +
       " Check creative status");
-  
+
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.referer_kw = fetch_string("KEYWORD2");
   request.tid = fetch_string("TID2");
   request.format = "unit-test-imp";
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id),
@@ -93,7 +93,7 @@ CreativeFilesPresenceTest::normal_case()
 void
 CreativeFilesPresenceTest::url_not_present_case()
 {
-  std::string description("URL option absent."); 
+  std::string description("URL option absent.");
   add_descr_phrase(description);
 
   unsigned long cc_id = fetch_int("CCID3");
@@ -105,7 +105,7 @@ CreativeFilesPresenceTest::url_not_present_case()
         status("W")).check(),
     description +
       " Check creative status");
-  
+
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
 
   AutoTest::NSLookupRequest request;
@@ -113,7 +113,7 @@ CreativeFilesPresenceTest::url_not_present_case()
   request.tid = fetch_string("TID3");
   request.format = "unit-test-imp";
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id),
@@ -126,11 +126,11 @@ CreativeFilesPresenceTest::url_not_present_case()
 void
 CreativeFilesPresenceTest::file_url_present_case()
 {
-  std::string description("URL option & creative file present."); 
+  std::string description("URL option & creative file present.");
   add_descr_phrase(description);
 
   unsigned long cc_id = fetch_int("CCID4");
-  
+
   FAIL_CONTEXT(
     CreativeChecker(
       this, cc_id,
@@ -138,14 +138,14 @@ CreativeFilesPresenceTest::file_url_present_case()
         status("A")).check(),
     description +
       " Check creative status");
-  
+
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
   AutoTest::NSLookupRequest request;
   request.referer_kw = fetch_string("KEYWORD4");
   request.tid = fetch_string("TID4");
   request.format = "unit-test-imp";
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id),
@@ -157,7 +157,7 @@ CreativeFilesPresenceTest::file_url_present_case()
 void
 CreativeFilesPresenceTest::template_file_not_present_case()
 {
-  std::string description("Template file absent."); 
+  std::string description("Template file absent.");
   add_descr_phrase(description);
   unsigned long cc_id = fetch_int("CCID5");
 
@@ -168,7 +168,7 @@ CreativeFilesPresenceTest::template_file_not_present_case()
         creative_format(".*CreativeFilesPresenceTest-5")).check(),
     description +
       " Check creative template");
-  
+
   FAIL_CONTEXT(
     CreativeChecker(
       this, cc_id,
@@ -176,15 +176,15 @@ CreativeFilesPresenceTest::template_file_not_present_case()
         status("A")).check(),
     description +
       " Check creative status");
-  
+
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.referer_kw = fetch_string("KEYWORD5");
   request.tid = fetch_string("TID5");
   request.format = "unit-test-imp";
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id),
@@ -197,7 +197,7 @@ CreativeFilesPresenceTest::template_file_not_present_case()
 void
 CreativeFilesPresenceTest::w_notblock_a_case()
 {
-  std::string description("'W' creative is not block 'A'."); 
+  std::string description("'W' creative is not block 'A'.");
   add_descr_phrase(description);
   unsigned long cc_id_a = fetch_int("CCID6A");
   unsigned long cc_id_w = fetch_int("CCID6W");
@@ -224,7 +224,7 @@ CreativeFilesPresenceTest::w_notblock_a_case()
       " Check creative#2");
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.referer_kw = fetch_string("KEYWORD6");
   request.tid = fetch_string("TID6");
@@ -237,7 +237,7 @@ CreativeFilesPresenceTest::w_notblock_a_case()
       SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid#1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id_w),
@@ -251,9 +251,9 @@ CreativeFilesPresenceTest::w_notblock_a_case()
 void
 CreativeFilesPresenceTest::w_notblock_a_size_format_case()
 {
-  std::string description("'W' template is not block creative."); 
+  std::string description("'W' template is not block creative.");
   add_descr_phrase(description);
-  
+
   unsigned long cc_id = fetch_int("CCID7");
 
   FAIL_CONTEXT(
@@ -275,7 +275,7 @@ CreativeFilesPresenceTest::w_notblock_a_size_format_case()
         status("W")).check(),
     description +
       " Check creative template#2");
-    
+
     FAIL_CONTEXT(
     CreativeChecker(
       this, cc_id,
@@ -291,7 +291,7 @@ CreativeFilesPresenceTest::w_notblock_a_size_format_case()
 
   request.format = "unit-test";
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id),
@@ -314,12 +314,12 @@ CreativeFilesPresenceTest::w_notblock_a_size_format_case()
 void
 CreativeFilesPresenceTest::text_2campaign_case()
 {
-  std::string description("Text. 2nd creative 'W'."); 
+  std::string description("Text. 2nd creative 'W'.");
   add_descr_phrase(description);
-  
+
   unsigned long cc_id1 = fetch_int("CCID8_1");
   unsigned long cc_id2 = fetch_int("CCID8_2");
-  
+
   FAIL_CONTEXT(
     CreativeChecker(
       this, cc_id1,
@@ -337,7 +337,7 @@ CreativeFilesPresenceTest::text_2campaign_case()
       " Check creative#2 status");
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.referer_kw =
     fetch_string("KEYWORD8_1") + "," + fetch_string("KEYWORD8_2");
@@ -352,7 +352,7 @@ CreativeFilesPresenceTest::text_2campaign_case()
       SelectedCreativesCCID(client)).check(),
     description +
       " Check ccid#1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id2),
@@ -365,9 +365,9 @@ CreativeFilesPresenceTest::text_2campaign_case()
 void
 CreativeFilesPresenceTest::text_campaign_case()
 {
-  std::string description("Text. 1st creative 'W'."); 
+  std::string description("Text. 1st creative 'W'.");
   add_descr_phrase(description);
-  
+
   unsigned long cc_id1 = fetch_int("CCID9_1");
   unsigned long cc_id2 = fetch_int("CCID9_2");
 
@@ -388,7 +388,7 @@ CreativeFilesPresenceTest::text_campaign_case()
       " Check creative#2 status");
 
   AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
-  
+
   AutoTest::NSLookupRequest request;
   request.referer_kw = fetch_string("KEYWORD9");
   request.tid = fetch_string("TID9");
@@ -404,7 +404,7 @@ CreativeFilesPresenceTest::text_campaign_case()
       AutoTest::SCE_NOT_ENTRY).check(),
     description +
       " Check ccid#1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       strof(cc_id2),

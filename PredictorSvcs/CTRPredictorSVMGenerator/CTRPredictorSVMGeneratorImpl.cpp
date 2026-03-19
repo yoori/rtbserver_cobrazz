@@ -111,7 +111,7 @@ namespace AdServer::Predictor
                 "': possible locked";
               logger_->log(ostr.str(),
                 Logging::Logger::WARNING,
-                ASPECT); 
+                ASPECT);
             }
           }
         }

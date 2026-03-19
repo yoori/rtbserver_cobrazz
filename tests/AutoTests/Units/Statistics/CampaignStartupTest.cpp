@@ -74,7 +74,7 @@ namespace
             country("ad").
             ecpm(expected_ecpm_)).check(throw_on_error);
     }
-    
+
   private:
     BaseUnit* test_;
     DB::IConn& conn_;
@@ -134,7 +134,7 @@ void CampaignStartupTest::base_scenario()
   stats.key().cc_id(cc_id).num_shown(1).stimestamp(now);
   stats.select(pq_conn_);
 
-  // Make 500 advertising request for campaign 
+  // Make 500 advertising request for campaign
   // and test that server return campaign creative.
   request.referer_kw = fetch_string("KEYWORD");
   request.tid = fetch_string("TID");
@@ -182,7 +182,7 @@ void CampaignStartupTest::base_scenario()
 
   }
 
-  // Make 500 advertising request for campaign 
+  // Make 500 advertising request for campaign
   // and test that server return creative.
   stats.key().cc_id(cc_id).num_shown(1).stimestamp(now);
   stats.select(pq_conn_);
@@ -244,7 +244,7 @@ void CampaignStartupTest::tear_down()
 }
 
 
-bool 
+bool
 CampaignStartupTest::run()
 {
   initial_check();

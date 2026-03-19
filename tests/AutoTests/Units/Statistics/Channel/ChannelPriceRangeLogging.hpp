@@ -19,7 +19,7 @@ class ChannelPriceRangeLogging: public BaseDBUnit
   typedef std::list<Diff> Diffs;
 
 public:
-  
+
   struct UserRequest
   {
     const char* referer_kws;
@@ -41,18 +41,18 @@ public:
     int user_count;
     int impops;
   };
-  
-  
+
+
 public:
 
   ChannelPriceRangeLogging(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var);
-  
+
   virtual ~ChannelPriceRangeLogging() noexcept
   { }
- 
+
 private:
   AutoTest::Time today;
   unsigned long creative_size_id;
@@ -74,20 +74,20 @@ private:
   void
   tag_cpm_part_2(
     AdClient& client);
-  
+
   void
   competitive_ecpm_groups(
     AutoTest::Statistics::UserSet& clients);
-  
+
   void
   move_between_ecpm_groups(
     unsigned int index,
     AutoTest::Statistics::UserSet& clients);
-  
+
   void
   new_day(
     AutoTest::Statistics::UserSet& clients);
-  
+
   void
   day_switching_part_1(
     AdClient& client);
@@ -127,7 +127,7 @@ private:
     const StatKey(&stats)[Count],
     Stats& stats_container,
     Diffs& diffs_container);
-    
+
 };
 
 #endif

@@ -27,7 +27,7 @@ namespace AutoTest
 
       /**
        * @brief Destructor.
-       */      
+       */
       virtual ~IORMValue();
 
       /**
@@ -35,7 +35,7 @@ namespace AutoTest
        *
        * @param result
        * @return result
-       */      
+       */
       virtual DB::Result&
       get(
         DB::Result& result) = 0;
@@ -45,7 +45,7 @@ namespace AutoTest
        *
        * @param query
        * @return query
-       */      
+       */
       virtual DB::Query&  set (DB::Query& query)   = 0;
 
       /**
@@ -84,13 +84,13 @@ namespace AutoTest
        * @return true if null
        */
       bool is_null () const;
-      
+
     protected:
       bool        _changed;
       bool        _null;
     };
 
-    DB::Query& 
+    DB::Query&
     operator<<(
       DB::Query& left,
       IORMValue& value);
@@ -114,26 +114,26 @@ namespace AutoTest
 
       /**
        * @brief Default constructor.
-       */   
+       */
       ORMValue();
 
       /**
        * @brief Constructor.
        *
        * @param value
-       */   
+       */
       explicit ORMValue(const T& value);
 
       /**
        * @brief Copy constructor.
        *
        * @param other ORM value
-       */         
+       */
       ORMValue(const ORMValue& from);
 
       /**
        * @brief Destructor.
-       */   
+       */
       ~ORMValue();
 
       /**
@@ -141,7 +141,7 @@ namespace AutoTest
        *
        * @param value
        * @return ORM value
-       */  
+       */
       ORMValue&
       set(
         const T& value);
@@ -151,7 +151,7 @@ namespace AutoTest
        *
        * @param result
        * @return result
-       */  
+       */
       DB::Result&
       get(
         DB::Result& result);
@@ -163,7 +163,7 @@ namespace AutoTest
        *
        * @param query
        * @return query
-       */  
+       */
       DB::Query&
       set(
         DB::Query& query);
@@ -175,7 +175,7 @@ namespace AutoTest
        *
        * @param query stream
        * @return query stream
-       */  
+       */
       template<typename Q>
       DB::QueryStream<Q>&
       set(
@@ -186,17 +186,17 @@ namespace AutoTest
        *
        * @param value
        * @return ORM value
-       */  
+       */
       ORMValue&
       operator=(
         const T& value);
-      
+
       /**
        * @brief Assignment from ORMValue.
        *
        * @param value
        * @return ORM value
-       */  
+       */
       ORMValue&
       operator=(
         const ORMValue& v);
@@ -206,16 +206,16 @@ namespace AutoTest
        * @brief Get original value.
        *
        * @return value
-       */        
+       */
       const T& value () const;
 
       /**
        * @brief Access to original value.
        *
        * @return value
-       */        
+       */
       const T& operator* () const;
-      
+
     protected:
       T           _value;
     };
@@ -226,13 +226,13 @@ namespace AutoTest
       const ORMValue<T>& val);
 
     template<typename T>
-    DB::Query& 
+    DB::Query&
     operator<<(
       DB::Query& left,
       ORMValue<T>& value);
 
     template<typename Q, typename T>
-    Q& 
+    Q&
     operator<<(
       Q& query,
       ORMValue<T>& value);
@@ -272,14 +272,14 @@ namespace AutoTest
     public:
       /**
        * @brief Default constructor.
-       */   
+       */
       ORMString();
 
       /**
        * @brief Constructor.
        *
        * @param value
-       */ 
+       */
       explicit ORMString(
         const std::string& value);
 
@@ -287,7 +287,7 @@ namespace AutoTest
        * @brief Copy constructor.
        *
        * @param other ORM value
-       */         
+       */
       ORMString(
         const ORMString& from);
 
@@ -296,11 +296,11 @@ namespace AutoTest
        *
        * @param value
        * @return ORM string
-       */  
+       */
       ORMString&
       operator=(
         const char* value);
-      
+
       /**
        * @brief Assignment from const string.
        *
@@ -314,7 +314,7 @@ namespace AutoTest
     const std::string&
     strof();
 
-    DB::Query& 
+    DB::Query&
     operator<<(
       DB::Query& left,
       ORMString& value);
@@ -332,25 +332,25 @@ namespace AutoTest
     class ORMText : public ORMValue<DB::TextField>
     {
       typedef ORMValue<DB::TextField> Base;
-      
+
     public:
-      
+
       /**
        * @brief Default constructor.
-       */   
+       */
       ORMText();
 
       /**
        * @brief Constructor.
        *
        * @param string value for text field
-       */ 
+       */
       explicit ORMText(
         const std::string& value);
 
       /**
        * @brief Make text field empty.
-       */ 
+       */
       void
       set_empty ();
 
@@ -359,14 +359,14 @@ namespace AutoTest
        *
        * @param value
        * @return ORM text
-       */  
+       */
       ORMText&
       operator=(
         const std::string& value);
 
       /**
        * @brief Assignment operator.
-       */  
+       */
       ORMText& operator=(
         const ORMText& v);
 
@@ -376,12 +376,12 @@ namespace AutoTest
     operator<<(
       std::ostream& out,
       const ORMText& val);
-    
+
     std::string
     strof(
       const ORMText&);
 
-    
+
     /**
      * @class ORMDate
      * @brief Implement DB date fields
@@ -393,33 +393,33 @@ namespace AutoTest
     public:
       /**
        * @brief Default constructor.
-       */   
+       */
       ORMDate();
 
       /**
        * @brief Constructor.
        *
        * @param date value
-       */ 
+       */
       explicit ORMDate(
         const value_type& value);
-      
+
       /**
        * @brief Assignment from test time.
        *
        * @param value
        * @return ORM date
-       */  
+       */
       ORMDate&
       operator=(
         const ::AutoTest::Time& value);
-      
+
       /**
        * @brief Assignment from ExtendedTime.
        *
        * @param value
        * @return ORM date
-       */  
+       */
       ORMDate&
       operator=(
         const value_type& value);
@@ -428,7 +428,7 @@ namespace AutoTest
        * @brief Truncate date to day precision.
        *
        * @return ORM date
-       */ 
+       */
       ORMDate&
       trunc();
 
@@ -436,7 +436,7 @@ namespace AutoTest
        * @brief Set date to null (_ must _ be called ).
        *
        * @return ORM date
-       */ 
+       */
       void
       set_null();
 
@@ -444,7 +444,7 @@ namespace AutoTest
        * @brief Set date to now.
        *
        * @return ORM date
-       */ 
+       */
        ORMDate&
        set_now ();
     };
@@ -469,17 +469,17 @@ namespace AutoTest
       typedef ORMValue <Generics::Time> Base;
 
     public:
-      
+
       /**
        * @brief Default constructor.
-       */  
+       */
       ORMTimestamp();
 
       /**
        * @brief Constructor.
        *
        * @param timestamp value
-       */ 
+       */
       explicit ORMTimestamp(
         const value_type& value);
 
@@ -489,7 +489,7 @@ namespace AutoTest
        *
        * @param value
        * @return ORM date
-       */  
+       */
       ORMTimestamp&
       operator=(
         const ::AutoTest::Time& value);
@@ -499,7 +499,7 @@ namespace AutoTest
        *
        * @param value
        * @return ORM date
-       */    
+       */
       ORMTimestamp&
       operator=(
         const value_type& value);
@@ -508,7 +508,7 @@ namespace AutoTest
        * @brief Truncate date to day precision.
        *
        * @return ORM date
-       */ 
+       */
       ORMTimestamp&
         trunc();
 
@@ -516,7 +516,7 @@ namespace AutoTest
        * @brief Set date to null (_ must _ be called ).
        *
        * @return ORM date
-       */ 
+       */
       void
       set_null();
 
@@ -524,7 +524,7 @@ namespace AutoTest
        * @brief Set date to now.
        *
        * @return ORM date
-       */  
+       */
       ORMTimestamp&
       set_now();
     };
@@ -542,7 +542,7 @@ namespace AutoTest
 
     struct postgres_connection {};
 
-    
+
     /**
      * @class ORMObject
      * @brief Implement base class for DB table row
@@ -556,31 +556,31 @@ namespace AutoTest
     public:
 
       typedef ConnectionType Connection;
-      
+
       /**
        * @brief Constructor.
        *
        * @param connection
-       */  
+       */
       explicit ORMObject(
         DB::IConn& connection);
 
       /**
        * @brief Copy constructor.
-       */  
+       */
       ORMObject(
         const ORMObject& obj);
 
       /**
        * @brief Destructor.
-       */  
+       */
       virtual ~ORMObject();
 
       /**
        * @brief Touch row (set VERSION field to now).
        *
        * @return true if success
-       */  
+       */
       virtual
       bool
       touch();
@@ -589,7 +589,7 @@ namespace AutoTest
        * @brief Select row (set VERSION field to now).
        *
        * @return true if success
-       */  
+       */
       virtual
       bool
       select();
@@ -598,7 +598,7 @@ namespace AutoTest
        * @brief Insert row (set VERSION field to now).
        *
        * @return true if success
-       */        
+       */
       virtual
       bool
       insert(
@@ -608,7 +608,7 @@ namespace AutoTest
        * @brief Update row (set VERSION field to now).
        *
        * @return true if success
-       */              
+       */
       virtual
       bool
       update(
@@ -618,7 +618,7 @@ namespace AutoTest
        * @brief Delete row (deactivate or real delete).
        *
        * @return true if success
-       */              
+       */
       virtual
       bool
       del();
@@ -628,17 +628,17 @@ namespace AutoTest
        *
        * @param logger
        * @param severity
-       */    
+       */
       virtual
       void log_in(
-        Logger&, 
+        Logger&,
         unsigned long = Logging::Logger::INFO);
 
       /**
        * @brief Log row to curent logger.
        *
        * @param severity
-       */    
+       */
       void
       log(
         unsigned long severity = Logging::Logger::INFO);
@@ -650,16 +650,16 @@ namespace AutoTest
     /**
      * @class ORMObjectMember
      * @brief Use to access ORMValue by name from ORMObject.
-     */    
+     */
     struct ORMObjectMember
-    { 
+    {
       const char* name;
       IORMValue* member;
-      const char* default_value; 
+      const char* default_value;
 
       /**
        * @brief Get member value.
-       */ 
+       */
       IORMValue&
       value(
         void* object) const;
@@ -694,7 +694,7 @@ namespace AutoTest
 
       /**
        * @brief Restore entity to initial state.
-       */      
+       */
       virtual void restore();
 
     protected:
@@ -702,7 +702,7 @@ namespace AutoTest
 
       /**
        * @brief Destructor.
-       */      
+       */
       virtual ~Restorer() noexcept;
     };
 
@@ -746,14 +746,14 @@ namespace AutoTest
     protected:
       /**
        * @brief Destructor.
-       */      
+       */
       ~ORMRestorer() noexcept;
 
       /**
        * @brief Restore ORM entity to initial state.
-       */  
+       */
       void restore();
-    
+
     protected:
       Entity stored_;
     };
@@ -779,10 +779,10 @@ namespace AutoTest
       typedef Sync::Policy::PosixThread SyncPolicy;
       typedef SyncPolicy::WriteGuard QueryGuard;
       SyncPolicy::Mutex lock_;
-      
+
     public:
       SerializeQueryManager_();
-      
+
       /**
        * @brief Execute query.
        *
@@ -815,7 +815,7 @@ namespace AutoTest
       SyncPolicy::Mutex&
       lock();
     };
-    
+
 
     typedef ReferenceCounting::SmartPtr<SerializeQueryManager_> SerializeQueryManager_var;
     typedef Generics::Singleton<SerializeQueryManager_, SerializeQueryManager_var> SerializeQueryManager;
@@ -831,7 +831,7 @@ namespace AutoTest
       DS_NOT_LIVE_BY_CHANNEL_TARGET = 17,
       DS_NOT_LIVE_BY_OIX = 20
     };
-    
+
     DECLARE_EXCEPTION(NoStatusException, eh::DescriptiveException);
 
     /**

@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__GEOCHANNELSMATCHING_
 #define _AUTOTEST__GEOCHANNELSMATCHING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class GEOChannelsMatching : public BaseUnit
 {
@@ -26,7 +26,7 @@ public:
     const char* expected_channels;
   };
 
-  
+
 public:
   GEOChannelsMatching(
     UnitStat& stat_var,

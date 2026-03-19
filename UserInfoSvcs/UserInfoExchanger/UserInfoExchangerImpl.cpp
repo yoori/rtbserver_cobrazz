@@ -413,7 +413,7 @@ namespace UserInfoSvcs{
 
       ostr
         << "UserInfoExchangerImpl::get_users_requests(): "
-        << "Caught CORBA::SystemException. : " << ex 
+        << "Caught CORBA::SystemException. : " << ex
         << " Input parameters: provider_id = '" << provider_id << "'";
 
       logger_->log(ostr.str(),
@@ -533,7 +533,7 @@ namespace UserInfoSvcs{
       Stream::Error ostr;
 
       ostr << "UserInfoExchangerImpl::send_users(...). "
-        "Caught CORBA::SystemException. : " << ex 
+        "Caught CORBA::SystemException. : " << ex
         << " Input parameters: provider_id = '" << provider_id << "'"
         << " users:";
 

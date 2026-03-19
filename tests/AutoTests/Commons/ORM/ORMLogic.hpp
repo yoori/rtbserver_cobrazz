@@ -24,12 +24,12 @@ namespace AutoTest
     public:
 
       ExpressionChannel (DB::IConn& connection);
-      
+
       ExpressionChannel (
         DB::IConn& connection,
         int account_id,
         const std::string& name);
-      
+
       ExpressionChannel (
         DB::IConn& connection,
         const ORMInt::value_type& id);
@@ -62,14 +62,14 @@ namespace AutoTest
     {
     public:
       TriggerChannel(DB::IConn& connection);
-      
+
       TriggerChannel(
         DB::IConn& connection,
         const ORMInt::value_type& id);
 
       TriggerChannel(
         const TriggerChannel& from);
-      
+
       TriggerChannel&
       operator=(
         const TriggerChannel& from);
@@ -86,7 +86,7 @@ namespace AutoTest
     private:
       PQ::Channel channel_;
     };
-        
+
     /**
      * @class BehavioralChannel
      * @brief Alias for adserver behavioral channel.
@@ -97,7 +97,7 @@ namespace AutoTest
       PQ::BehavioralParameters params;
 
       BehavioralChannel (DB::IConn& connection);
-      
+
       BehavioralChannel (DB::IConn& connection, const ORMInt::value_type& id);
 
       BehavioralChannel (const BehavioralChannel& from);
@@ -107,7 +107,7 @@ namespace AutoTest
       std::string id_with_suffix ();
 
       bool select ();
-      
+
       bool select (const ORMInt::value_type& id);
 
       bool update (bool set_defaults = true);
@@ -115,25 +115,25 @@ namespace AutoTest
       bool update (
         const ORMInt::value_type& id,
         bool set_defaults = true);
-      
+
       bool insert (bool set_defaults = true);
-      
+
       bool delet ();
-      
+
       bool del ();
-      
+
       bool delet (const ORMInt::value_type& id);
-      
+
       bool del (const ORMInt::value_type& id);
-      
+
       bool has_name (const ORMString::value_type& name);
-      
+
       bool select_name (const ORMString::value_type& name);
-      
+
       bool insert_name (
         const std::string& name,
         bool set_defaults = true);
-      
+
     };
 
     /**
@@ -145,7 +145,7 @@ namespace AutoTest
     {
     public:
       DiscoverChannel (DB::IConn& connection);
-      
+
       DiscoverChannel (
         DB::IConn& connection,
         const ORMInt::value_type& id);
@@ -169,7 +169,7 @@ namespace AutoTest
     {
     public:
       SearchChannel (DB::IConn& connection);
-      
+
       SearchChannel (
         DB::IConn& connection,
         int account_id,
@@ -177,8 +177,8 @@ namespace AutoTest
         int minimum_visits,
         int time_from,
         int tme_to);
-      
-     
+
+
       SearchChannel (
         DB::IConn& connection,
         const ORMInt::value_type& id);
@@ -195,7 +195,7 @@ namespace AutoTest
     {
     public:
       PageChannel (DB::IConn& connection);
-      
+
       PageChannel (
         DB::IConn& connection,
         int account_id,
@@ -203,7 +203,7 @@ namespace AutoTest
         int minimum_visits,
         int time_from,
         int tme_to);
-      
+
       PageChannel (
         DB::IConn& connection,
         const ORMInt::value_type& id);

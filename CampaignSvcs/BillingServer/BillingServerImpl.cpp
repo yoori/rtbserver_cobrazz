@@ -37,7 +37,7 @@ namespace CampaignSvcs
       return RevenueDecimal(ImpRevenueDecimal(val).ceil(8).str());
     }
   }
-  
+
   // BillingServerImpl
   BillingServerImpl::BillingServerImpl(
     Generics::ActiveObjectCallback* callback,

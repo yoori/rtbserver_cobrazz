@@ -12,12 +12,12 @@ typedef SessionMatchesWriter::timestamps_Container TimestampList;
 int main()
 {
   int ret = 0;
-  
+
   {
     ChannelIntervalList channel_intervals;
     channel_intervals.insert(ChannelInterval(
       Generics::Time(0), Generics::Time(10), 1, 2));
-    
+
     TimestampList timestamps;
     timestamps.push_back(1);
     timestamps.push_back(2);
@@ -33,7 +33,7 @@ int main()
     etalon.push_back(2);
     etalon.push_back(4);
     etalon.push_back(10);
-    
+
     if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "1. incorrect result:" << std::endl << "  ";
@@ -44,12 +44,12 @@ int main()
       ret += 1;
     }
   }
-  
+
   {
     ChannelIntervalList channel_intervals;
     channel_intervals.insert(ChannelInterval(
       Generics::Time(10), Generics::Time(20), 1, 2));
-    
+
     TimestampList timestamps;
     timestamps.push_back(1);
     timestamps.push_back(4);
@@ -63,7 +63,7 @@ int main()
     etalon.push_back(4);
     etalon.push_back(4);
     etalon.push_back(10);
-    
+
     if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "2. incorrect result:" << std::endl << "  ";
@@ -79,7 +79,7 @@ int main()
     ChannelIntervalList channel_intervals;
     channel_intervals.insert(ChannelInterval(
       Generics::Time(10), Generics::Time(20), 1, 2));
-    
+
     TimestampList timestamps;
     timestamps.push_back(1);
     timestamps.push_back(4);
@@ -94,7 +94,7 @@ int main()
     etalon.push_back(4);
     etalon.push_back(4);
     etalon.push_back(12);
-    
+
     if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "3. incorrect result:" << std::endl << "  ";
@@ -105,12 +105,12 @@ int main()
       ret += 1;
     }
   }
-  
+
   {
     ChannelIntervalList channel_intervals;
     channel_intervals.insert(ChannelInterval(
       Generics::Time(10), Generics::Time(20), 1, 2));
-    
+
     TimestampList timestamps;
     timestamps.push_back(1);
     timestamps.push_back(3);
@@ -122,7 +122,7 @@ int main()
     timestamps.push_back(16);
     timestamps.push_back(16);
     timestamps.push_back(17);
-    
+
     ChannelsMatcher::delete_excess_timestamps_(timestamps, channel_intervals);
 
     TimestampList etalon;
@@ -134,7 +134,7 @@ int main()
     etalon.push_back(16);
     etalon.push_back(16);
     etalon.push_back(17);
-    
+
     if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "4. incorrect result:" << std::endl << "  ";
@@ -150,7 +150,7 @@ int main()
     ChannelIntervalList channel_intervals;
     channel_intervals.insert(ChannelInterval(
       Generics::Time(10), Generics::Time(30), 2, 2));
-    
+
     TimestampList timestamps;
     timestamps.push_back(0);
     timestamps.push_back(1);
@@ -163,7 +163,7 @@ int main()
     timestamps.push_back(3);
     timestamps.push_back(4);
     timestamps.push_back(40);
-    
+
     ChannelsMatcher::delete_excess_timestamps_(timestamps, channel_intervals);
 
     TimestampList etalon;
@@ -176,7 +176,7 @@ int main()
     etalon.push_back(3);
     etalon.push_back(4);
     etalon.push_back(40);
-    
+
     if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "5. incorrect result:" << std::endl << "  ";
@@ -190,17 +190,17 @@ int main()
 
   {
     ChannelIntervalList channel_intervals;
-    
+
     TimestampList timestamps;
     timestamps.push_back(0);
     timestamps.push_back(1);
     timestamps.push_back(1);
     timestamps.push_back(2);
-    
+
     ChannelsMatcher::delete_excess_timestamps_(timestamps, channel_intervals);
 
     TimestampList etalon;
-    
+
     if(timestamps.size() != etalon.size() || !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {
       std::cerr << "6. incorrect result:" << std::endl << "  ";
@@ -222,7 +222,7 @@ int main()
       1275463118,
       1275463123
     };
-    
+
     const unsigned long TS_ETALON_ARRAY[] = {
       1275462988,
       1275462993,
@@ -258,7 +258,7 @@ int main()
       TS_ETALON_ARRAY,
       TS_ETALON_ARRAY + sizeof(TS_ETALON_ARRAY) / sizeof(TS_ETALON_ARRAY[0]),
       std::back_inserter(etalon));
-    
+
     if(timestamps.size() != etalon.size() ||
        !std::equal(timestamps.begin(), timestamps.end(), etalon.begin()))
     {

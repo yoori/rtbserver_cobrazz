@@ -97,7 +97,7 @@ namespace AdServer
         }
         ChannelSvcs::ChannelIdToMatchInfo_var info =
           new ChannelSvcs::ChannelIdToMatchInfo;
-        base->merge(*cont, *info, true); 
+        base->merge(*cont, *info, true);
         base->fill(buffer);
         log_action_("Buffer was filled");
         check_data_of_container_(10, 10 + count_triggers_, buffer, FN);
@@ -131,7 +131,7 @@ namespace AdServer
           10, 10 + count_triggers_, cont.get(), "old_", &empty);
         ChannelSvcs::ChannelIdToMatchInfo_var info =
           new ChannelSvcs::ChannelIdToMatchInfo;
-        base->merge(*cont, *info, true); 
+        base->merge(*cont, *info, true);
         log_action_("1.Container was merged");
         buffer = empty;
         base->fill(buffer);
@@ -140,7 +140,7 @@ namespace AdServer
         unsigned long half_triggers = count_triggers_ / 2;
         create_data_for_container_(
           10, 10 + half_triggers, cont.get(), "new_");
-        base->merge(*cont, *info, true); 
+        base->merge(*cont, *info, true);
         log_action_("2.Container was merged");
         buffer = empty;
         base->fill(buffer);
@@ -150,7 +150,7 @@ namespace AdServer
           10 + half_triggers, 10 + count_triggers_, buffer, FN, "old_");
         create_data_for_container_(
           10 + half_triggers, 10 + count_triggers_, cont.get(), "new_");
-        base->merge(*cont, *info, true); 
+        base->merge(*cont, *info, true);
         log_action_("3.Container was merged");
         buffer = empty;
         base->fill(buffer);
@@ -251,9 +251,9 @@ namespace AdServer
          //log_action_(ostr.str(), 2);
           base->match(
             url_words,
-            ChannelSvcs::MatchUrls(), 
+            ChannelSvcs::MatchUrls(),
             phrases,
-            ChannelSvcs::MatchWords(), 
+            ChannelSvcs::MatchWords(),
             ChannelSvcs::StringVector(),
             Generics::Uuid(),
             MF_ACTIVE, res);
@@ -281,7 +281,7 @@ namespace AdServer
                     trigger_iter != res.end(); trigger_iter++)
                 {
                   err << '\'' << trigger_iter->first << '\'' << " => { ";
-                  const TriggerMatchItem& item = trigger_iter->second; 
+                  const TriggerMatchItem& item = trigger_iter->second;
                   for(TriggerMatchItem::value_type::const_iterator it = item.channel_ids[index].begin();
                       it != item.channel_ids[index].end(); ++it)
                   {
@@ -333,7 +333,7 @@ namespace AdServer
       /*throw(eh::Exception)*/
     {
       UpdateContainer cont(&base, 0);
-      ChannelSvcs::ChannelIdToMatchInfo_var info = 
+      ChannelSvcs::ChannelIdToMatchInfo_var info =
         new ChannelSvcs::ChannelIdToMatchInfo;
       std::set<unsigned short> ports;
       std::map<unsigned long, MergeAtom> atoms;
@@ -381,7 +381,7 @@ namespace AdServer
       {
         cont.add_trigger(it->second);
       }
-      base.merge(cont, *info, true); 
+      base.merge(cont, *info, true);
       log_action_("Container was merged");
     }
 
@@ -401,7 +401,7 @@ namespace AdServer
       {
         {11, "www.url1.com/error", true, false},
         {12, "www.url1.com/path1", true, false},
-        {12, "www.url1.com/path2", true, false} 
+        {12, "www.url1.com/path2", true, false}
       };
       try
       {
@@ -434,7 +434,7 @@ namespace AdServer
         {
           if(it->second->triggers.size() != (it->first - 10))
           {
-            std::cerr 
+            std::cerr
               << FN << "BUG: count url words for id=" << it->first
               << " isn't equal " << it->second->triggers.size() << " != "
               << (it ->first - 10) << "." << std::endl;
@@ -480,7 +480,7 @@ namespace AdServer
         {
           if(it->second->triggers.size() != (it->first - 10) * 2)
           {
-            std::cerr 
+            std::cerr
               << FN << "BUG: count url words for id=" << it->first
               << " isn't equal " << (it->first  - 10) << "." << std::endl;
             return 1;
@@ -1019,7 +1019,7 @@ namespace AdServer
       const char* prefix,
       ResultType& result,
       size_t number,
-      bool negative, 
+      bool negative,
       size_t count)
       /*throw(eh::Exception)*/
     {
@@ -1028,7 +1028,7 @@ namespace AdServer
         size_t id = number * 100 + i * 2 + (negative ? 0 : 1);
         std::ostringstream ostr;
         ostr << (negative ? "minus" : " ") << prefix
-          << "and" << id; 
+          << "and" << id;
         TriggerParser::TriggerParser::parse_word(
           id,//TODO: should be channel id
           id,
@@ -1048,7 +1048,7 @@ namespace AdServer
       ChannelSvcs::SoftTriggerList& result,
       size_t number,
       size_t count_words,
-      bool negative, 
+      bool negative,
       size_t count)
       /*throw(eh::Exception)*/
     {
@@ -1147,7 +1147,7 @@ namespace AdServer
           std::cout << test_names_[i].name;
         }
       }
-      
+
       std::cout << "}, {count chunks => " << count_chunks_ << "},"
         " {count triggers => " << count_triggers_ << "}," <<
         " {count uids => " << count_uids_ << "}," <<
@@ -1195,7 +1195,7 @@ namespace AdServer
 
     void ChannelContainerTest::parse_argc_(int argc, char* argv[]) noexcept
     {
-      struct option long_options[] = 
+      struct option long_options[] =
       {
         {"verbose", no_argument, 0, 'v'},
         {"chunks", required_argument, 0, 'c'},

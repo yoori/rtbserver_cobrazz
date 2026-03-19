@@ -242,7 +242,7 @@ namespace Vanga
 
         tree_it->second.resolved_tree->yes_tree = res_tree_it->second.resolved_tree;
       }
-      
+
       if(tree_it->second.no_tree_id != 0)
       {
         auto res_tree_it = trees.find(tree_it->second.no_tree_id);

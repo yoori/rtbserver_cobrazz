@@ -360,7 +360,7 @@ Application_::uid_to_sspuid_(
 
   AdServer::Commons::UserId ssp_user_id = user_id;
   //encrypt_key.encrypt(&*ssp_user_id.begin(), &*user_id.begin());
-  
+
   std::string ssp_user_id_str;
   String::StringManip::base64mod_encode(
     ssp_user_id_str,

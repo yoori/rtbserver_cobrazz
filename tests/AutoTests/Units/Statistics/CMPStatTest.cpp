@@ -1,6 +1,6 @@
 
 #include "CMPStatTest.hpp"
- 
+
 REFLECT_UNIT(CMPStatTest) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -59,7 +59,7 @@ CMPStatTest::initialize_stats(
     stat.key(key);
     stat.description("#" +strof(i+1));
     stat.select(pq_conn_);
-   
+
     if (
       std::equal(
         case_stats[i].diff.begin(),
@@ -88,13 +88,13 @@ CMPStatTest::send_requests(
        i < Count; ++i)
   {
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(
       AutoTest::NSLookupRequest().
         tid(fetch_string(requests[i].tid)).
           referer_kw(map_objects(requests[i].referer_kws)).
             debug_time(debug_time));
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this, requests[i].channels,
@@ -107,7 +107,7 @@ CMPStatTest::send_requests(
       fetch_objects(
         std::inserter(expected_ccs, expected_ccs.begin()),
         requests[i].ccs);
-    
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           expected_ccs,
@@ -411,7 +411,7 @@ CMPStatTest::base_scenario()
       {
         request.debug_time = debug_time[t];
         client.process_request(request);
-        
+
         FAIL_CONTEXT(
           AutoTest::equal_checker(
             i % 4 == 0?
@@ -419,7 +419,7 @@ CMPStatTest::base_scenario()
                 fetch_string("Base/CC/CPM"),
             client.debug_info.ccid).check(),
           "CPM check CC#" + strof(i+1) + "-" + strof(t+1));
-        
+
         FAIL_CONTEXT(
           AutoTest::predicate_checker(
             !client.debug_info.selected_creatives.first().click_url.empty()),
@@ -444,7 +444,7 @@ CMPStatTest::base_scenario()
       if (i % 2 == 1)
       {
         request.colo = fetch_string("COLO");
-      }       
+      }
       client.process_request(request);
 
 
@@ -454,15 +454,15 @@ CMPStatTest::base_scenario()
           client.debug_info.ccid).check(),
         "Walled garden check CC#" + strof(i+1)
         );
-      
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           !client.debug_info.selected_creatives.first().click_url.empty()),
         "Walled garden check click#" + strof(i+1));
-      
+
       std::string click_url =
         client.debug_info.selected_creatives.first().click_url;
-      
+
       client.process_request(click_url);
     }
 
@@ -476,8 +476,8 @@ CMPStatTest::base_scenario()
       if (i % 2 == 1)
       {
         request.colo = fetch_string("COLO");
-      }       
-      
+      }
+
       client.process_request(request);
 
       FAIL_CONTEXT(
@@ -486,7 +486,7 @@ CMPStatTest::base_scenario()
           client.debug_info.ccid).check(),
         "CPC check CC#" + strof(i+1)
         );
-      
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           !client.debug_info.selected_creatives.first().click_url.empty()),
@@ -501,7 +501,7 @@ CMPStatTest::base_scenario()
       }
     }
   }
-  
+
   ADD_WAIT_CHECKER(
     "CMPStats check",
     AutoTest::stats_diff_checker(
@@ -587,21 +587,21 @@ CMPStatTest::adv_exp_ch_scenario()
       request.tid = fetch_string("AdvExpr/TAG/PUBLISHER");
       request.referer_kw = fetch_string("AdvExpr/KWD/CPM");
       request.debug_time(today);
-      
+
       client.process_request(request);
-      
+
       FAIL_CONTEXT(
         AutoTest::equal_checker(
           fetch_string("AdvExpr/CC/CCG"),
           client.debug_info.ccid).check(),
         "Check CC#" + strof(i+1) + "-1");
-      
-      
+
+
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           !client.debug_info.selected_creatives.first().click_url.empty()),
         "Check click#" + strof(i+1) + "-1");
-      
+
       // Every 3rd iteration click on ad.
       if (i % 3 == 2)
       {
@@ -614,9 +614,9 @@ CMPStatTest::adv_exp_ch_scenario()
       AdClient client(AdClient::create_user(this));
 
       request.referer_kw = fetch_string("AdvExpr/KWD/PRI");
-      
+
       client.process_request(request);
-      
+
       FAIL_CONTEXT(
         AutoTest::equal_checker(
           fetch_string("AdvExpr/CC/CCG"),
@@ -640,7 +640,7 @@ CMPStatTest::adv_exp_ch_scenario()
       AdClient client(AdClient::create_user(this));
 
       request.referer_kw = fetch_string("AdvExpr/KWD/CPC");
-     
+
       client.process_request(request);
 
       FAIL_CONTEXT(
@@ -699,13 +699,13 @@ CMPStatTest::cmp_exp_ch_scenario()
    initialize_stats(stats, diffs, CMP_EXPR);
 
   // Requests
-  
+
   const std::string keyword[2] =
   {
     fetch_string("CmpExpr/KWD/CPM"),
     fetch_string("CmpExpr/KWD/PRI")
   };
-  
+
   for (size_t i = 0; i < ITERS; ++i)
   {
     for (size_t k = 0; k < 2; ++k)
@@ -729,7 +729,7 @@ CMPStatTest::cmp_exp_ch_scenario()
           !client.debug_info.selected_creatives.first().click_url.empty()),
         "Check click#" + strof(i+1) + "-" + strof(k+1));
 
-      
+
       // Every 3rd iteration click on ad.
       if (i % 3 == 2)
       {
@@ -775,7 +775,7 @@ CMPStatTest::pub_exp_ch_scenario()
   initialize_stats(stats, diffs, PUB_EXPR);
 
   // Requests
-  
+
   for (size_t i = 0; i < ITERS; ++i)
   {
     AdClient client(AdClient::create_user(this));
@@ -783,7 +783,7 @@ CMPStatTest::pub_exp_ch_scenario()
     request.tid = fetch_string("PubExpr/TAG/PUBLISHER");
     request.referer_kw =  fetch_string("PubExpr/KWD/CPM");
     request.debug_time(today);
-    
+
     client.process_request(request);
 
     FAIL_CONTEXT(
@@ -796,7 +796,7 @@ CMPStatTest::pub_exp_ch_scenario()
       AutoTest::predicate_checker(
         !client.debug_info.selected_creatives.first().click_url.empty()),
       "Check click#" + strof(i+1));
-      
+
     client.process_request(
       std::string(client.debug_info.selected_creatives.first().click_url));
    }
@@ -879,7 +879,7 @@ CMPStatTest::currency_scenario()
 
 
   // Requests
-  
+
   const Request requests[] =
   {
     {
@@ -960,7 +960,7 @@ CMPStatTest::ta_scenario()
   initialize_stats(stats, diffs, TA);
 
   AdClient client(AdClient::create_user(this));
-    
+
   client.process_request(
     AutoTest::NSLookupRequest().
     tid(fetch_string("TA/TAG/PUBLISHER")).
@@ -1190,7 +1190,7 @@ CMPStatTest::expression_scenario()
   };
 
   send_requests(today, requests);
-  
+
   ADD_WAIT_CHECKER(
     "CMPStats check",
     AutoTest::stats_diff_checker(
@@ -1201,7 +1201,7 @@ void
 CMPStatTest::set_up()
 { }
 
-bool 
+bool
 CMPStatTest::run()
 {
   AUTOTEST_CASE(
@@ -1215,7 +1215,7 @@ CMPStatTest::run()
   AUTOTEST_CASE(
     adv_exp_ch_scenario(),
     "Advertiser expression");
-    
+
   AUTOTEST_CASE(
     cmp_exp_ch_scenario(),
     "CMP expression");
@@ -1223,7 +1223,7 @@ CMPStatTest::run()
   AUTOTEST_CASE(
     currency_scenario(),
     "Currency cases");
-  
+
   AUTOTEST_CASE(
     expression_scenario(),
     "Expression cases");

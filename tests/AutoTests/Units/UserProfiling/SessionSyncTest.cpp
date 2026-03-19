@@ -37,7 +37,7 @@ namespace
       num_(num),
       request_(request)
     { }
-    
+
     //execute this
     virtual void
     execute() noexcept
@@ -63,14 +63,14 @@ namespace
 }
 
 SessionSyncTest::SessionSyncTest(
-  UnitStat& stat_var, 
-  const char* task_name, 
+  UnitStat& stat_var,
+  const char* task_name,
   XsdParams params_var)
   : BaseUnit(stat_var, task_name, params_var),
     callback_(
       new Logging::ActiveObjectCallbackImpl(
         &AutoTest::Logger::thlog()))
-  
+
 { }
 
 bool
@@ -83,7 +83,7 @@ SessionSyncTest::run_test_element(int count,
   validating_request.referer_kw = keyword;
 
   AdClient client(AdClient::create_user(this));
-  
+
   //Request for real uid
   client.process_request(validating_request);
   {
@@ -117,7 +117,7 @@ SessionSyncTest::run_test_element(int count,
         client.req_status()),
       AutoTest::equal_checker(
         200,
-        client.req_status())),      
+        client.req_status())),
     "Invalid HTTP status");
   return true;
 }

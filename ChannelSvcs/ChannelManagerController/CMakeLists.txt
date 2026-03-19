@@ -26,7 +26,7 @@ target_link_libraries(ChannelManagerControllerIDL
 )
 
 add_executable( ChannelController
-    ChannelControllerMain.cpp 
+    ChannelControllerMain.cpp
     ChannelControllerImpl.cpp
 )
 target_link_libraries(ChannelController
@@ -39,9 +39,9 @@ ChannelManagerControllerConfigXSD
 )
 
 add_library(ChannelSessionFactory SHARED
-  ChannelLoadSessionFactory.cpp 
-  ChannelServerSessionFactory.cpp 
-  ChannelSessionFactory.cpp 
+  ChannelLoadSessionFactory.cpp
+  ChannelServerSessionFactory.cpp
+  ChannelSessionFactory.cpp
   ChannelLoadSessionImpl.cpp
 )
 target_link_libraries(ChannelSessionFactory

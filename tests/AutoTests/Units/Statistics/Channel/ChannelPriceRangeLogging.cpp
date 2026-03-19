@@ -16,9 +16,9 @@ namespace
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::Statistics::UserSet UserSet;
   typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
-  
+
   //Test constant
-  const int            REPEAT_COUNT         = 400;   
+  const int            REPEAT_COUNT         = 400;
   const char           COUNTRY_CODE[]       = "GN";
   const char           COUNTRY[]            = "gn";
   const char           LU_CODE[]            = "LU";
@@ -88,7 +88,7 @@ namespace
             SelectedCreativesCCID(users_[i])))
         {
           Stream::Error ostr;
-          ostr << description_ << ". User#" << i << 
+          ostr << description_ << ". User#" << i <<
             ": " << AutoTest::seq_to_str(exp_ccids) <<
             " not equal to " <<
             AutoTest::seq_to_str(SelectedCreativesCCID(users_[i]));
@@ -99,7 +99,7 @@ namespace
     }
 
   private:
-    BaseUnit* test_;          
+    BaseUnit* test_;
     UserSet& users_;
     std::string exp_ccids_;
     std::string description_;
@@ -116,7 +116,7 @@ ChannelPriceRangeLogging::ChannelPriceRangeLogging(
   BaseDBUnit(stat_var, task_name, params_var)
 { }
 
-bool 
+bool
 ChannelPriceRangeLogging::run()
 {
   creative_size_id = fetch_int("CreativeSize/Common");
@@ -127,11 +127,11 @@ ChannelPriceRangeLogging::run()
     "One ECPM group");
 
   AdClient tag_cpm_client(AdClient::create_user(this));
-  
+
   AUTOTEST_CASE(
     tag_cpm_part_1(tag_cpm_client),
     "Tag CPM");
-  
+
   AutoTest::Statistics::UserSet groups_clients;
   groups_clients.initialize(this, 3*REPEAT_COUNT);
 
@@ -166,7 +166,7 @@ ChannelPriceRangeLogging::run()
 //     "Tag Adjustment");
 
   check();
-    
+
   AUTOTEST_CASE(
     one_ecpm_group(),
     "One ECPM group");
@@ -192,7 +192,7 @@ ChannelPriceRangeLogging::run()
 //   AUTOTEST_CASE(
 //     move_between_ecpm_groups(1, groups_clients),
 //     "Competitive ECPM groups");
-  
+
   AUTOTEST_CASE(
     day_switching_part_3(day_switch_client),
     "Expression matcher day switching");
@@ -204,11 +204,11 @@ ChannelPriceRangeLogging::run()
 //     "Competitive ECPM groups");
 
 //   check();
-  
+
 //   AUTOTEST_CASE(
 //     new_day(groups_clients),
 //     "Competitive ECPM groups");
-  
+
   return true;
 }
 
@@ -220,7 +220,7 @@ void ChannelPriceRangeLogging::one_ecpm_group()
 
   AutoTest::Statistics::UserSet clients;
   clients.initialize(this, REPEAT_COUNT);
-  
+
   ORM::StatsArray<ORM::ChannelInventoryByCPMStats, 4> stats;
 
   stats[0].key().
@@ -261,7 +261,7 @@ void ChannelPriceRangeLogging::one_ecpm_group()
     SelectedCreativesCheck(
       this, clients,"ONE_GROUP/CC/Display1",
       "Check CC#1").check());
-   
+
   clients.process_request(
     NSLookupRequest().
       loc_name(COUNTRY).
@@ -280,7 +280,7 @@ void ChannelPriceRangeLogging::one_ecpm_group()
       impops(2*REPEAT_COUNT),
     Diff(REPEAT_COUNT)
   };
-    
+
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
@@ -428,7 +428,7 @@ void ChannelPriceRangeLogging::tag_cpm_part_2(
       fetch_string("TAG_CPM/CC/Display1"),
       client.debug_info.ccid).check(),
     "Check CC");
-  
+
   const Diff diffs[] =
   {
     // Expr#1, ECPM2
@@ -486,7 +486,7 @@ ChannelPriceRangeLogging::competitive_ecpm_groups(
     { today,  default_colo_,  e_channel,    creative_size_id, LU_CODE,      ecpm2,  0, 0 },
     { today,  default_colo_,  b_channel,    creative_size_id, LU_CODE,      ecpm2,  0, 0 }
   };
-  
+
   add_stats(STATS, stats, diffs);
 
   clients.process_request(
@@ -581,7 +581,7 @@ ChannelPriceRangeLogging::move_between_ecpm_groups(
       this, clients,"GROUPS/CC/Display3",
       "Check CC#1",
       index1, index2).check());
-    
+
   clients.process_request(
     NSLookupRequest().
       loc_name(COUNTRY).
@@ -604,7 +604,7 @@ ChannelPriceRangeLogging::move_between_ecpm_groups(
       colo(colo2).
       debug_time(today),
     index1, index2);
-    
+
   FAIL_CONTEXT(
     SelectedCreativesCheck(
       this, clients,"GROUPS/CC/Display7",
@@ -619,7 +619,7 @@ ChannelPriceRangeLogging::move_between_ecpm_groups(
       colo(colo2).
       debug_time(today),
     index1, index2);
- 
+
   FAIL_CONTEXT(
     SelectedCreativesCheck(
       this, clients,"GROUPS/CC/Display6",
@@ -629,7 +629,7 @@ ChannelPriceRangeLogging::move_between_ecpm_groups(
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));  
+      pq_conn_, diffs, stats));
 }
 
 void
@@ -638,7 +638,7 @@ ChannelPriceRangeLogging::new_day(
 {
   std::string tid     = fetch_string("GROUPS/TAG/Display4");
   std::string keyword = fetch_string("GROUPS/Kwd/B1");
-  
+
   AutoTest::Time tomorrow = today + 24*60*60;
 
   ORM::StatsArray<ORM::ChannelInventoryByCPMStats,  4> stats;
@@ -696,7 +696,7 @@ ChannelPriceRangeLogging::new_day(
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
-      pq_conn_, diffs, stats));  
+      pq_conn_, diffs, stats));
 }
 
 void ChannelPriceRangeLogging::day_switching_part_1(
@@ -753,7 +753,7 @@ void ChannelPriceRangeLogging::day_switching_part_2(
 {
   std::string tid1    = fetch_string("DAY_SWITCH/TAG/Display1");
   std::string keyword = fetch_string("DAY_SWITCH/Kwd/B1");
-  
+
   ORM::StatsArray<ORM::ChannelInventoryByCPMStats,  2> stats;
   stats[0].key().
     channel_id(fetch_int("DAY_SWITCH/Expr1")).
@@ -781,19 +781,19 @@ void ChannelPriceRangeLogging::day_switching_part_2(
       fetch_string("DAY_SWITCH/CC/Display1"),
       client.debug_info.ccid).check(),
     "Check CC");
-  
+
   const Diff diffs[] =
   {
     Diff(1),
     Diff(1),
   };
-    
+
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
       pq_conn_, diffs, stats));
 }
-                                               
+
 void ChannelPriceRangeLogging::day_switching_part_3(
   AdClient& client)
 {
@@ -841,7 +841,7 @@ void ChannelPriceRangeLogging::day_switching_part_3(
       fetch_string("DAY_SWITCH/CC/Display2"),
       client.debug_info.ccid).check(),
     "Check CC");
-  
+
   const Diff diffs[] =
   {
     Diff().
@@ -871,7 +871,7 @@ void ChannelPriceRangeLogging::key_variation()
   unsigned long other_size_id = fetch_int("KeyVariation/CreativeSize");
   unsigned long b_channel = fetch_int("KeyVariation/B1");
   unsigned long e_channel = fetch_int("KeyVariation/Expr1");
-  
+
   const StatKey KEY_VARIATION_STATS[] =
   {
     //sdate   colo_id         channel_id  creative_size     country   ECPM  user_count  impops
@@ -951,7 +951,7 @@ void ChannelPriceRangeLogging::currency()
   unsigned long b_channel2 = fetch_int("Currency/B2");
   unsigned long e_channel1 = fetch_int("Currency/Expr1");
   unsigned long e_channel2 = fetch_int("Currency/Expr2");
-  
+
   const StatKey CURRENCY_STATS[] =
   {
     //sdate   colo_id         channel_id  creative_size     country       ECPM  user_count  impops
@@ -964,7 +964,7 @@ void ChannelPriceRangeLogging::currency()
     { today,  default_colo_,  e_channel1, creative_size_id, COUNTRY_CODE, min_ecpm, 0,        0 },
     { today,  default_colo_,  e_channel2, creative_size_id, COUNTRY_CODE, ecpm,     0,        1 },
   };
-  
+
   add_stats(CURRENCY_STATS, stats, diffs);
 
   const  ChannelPriceRangeLogging::UserRequest CURRENCY[] =
@@ -981,7 +981,7 @@ void ChannelPriceRangeLogging::currency()
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
       pq_conn_, diffs, stats));
- 
+
 }
 
 void ChannelPriceRangeLogging::text_advertising()
@@ -1000,7 +1000,7 @@ void ChannelPriceRangeLogging::text_advertising()
   unsigned long b_channel2 = fetch_int("TAChannel/B2");
   unsigned long b_channel_m = fetch_int("TAMixed/B2");
   unsigned long k_channel_m = fetch_int("TAMixed/B1");
-  
+
   const StatKey TEXT_ADVERTISING_STATS[] =
   {
     { today,  default_colo_,  k_channel1,   ta_size_id, COUNTRY_CODE, ecpmText, 0,  0 },
@@ -1019,7 +1019,7 @@ void ChannelPriceRangeLogging::text_advertising()
       COUNTRY, 0, "TAText/BP/B1,TAText/BP/B2",
       "TAText/CC/Text1,TAText/CC/Text2"},
   };
-  
+
   process_requests(TA_TEXT);
 
   const  ChannelPriceRangeLogging::UserRequest TA_CHANNEL[] =
@@ -1044,26 +1044,26 @@ void ChannelPriceRangeLogging::text_advertising()
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
       pq_conn_, diffs, stats));
-  
+
 }
 
 void ChannelPriceRangeLogging::tag_adjustment()
 {
   Stats stats;
   Diffs diffs;
-  
+
   double ecpmAdj = fetch_float("TagAdjustment/ECPM");
   unsigned long channel1 = fetch_int("TagAdjustment/B1");
   unsigned long channel2 = fetch_int("TagAdjustment/B2");
   unsigned long channel3 = fetch_int("TagAdjustment/B3");
-  
+
   const StatKey TAG_ADJUSTMENT_STATS[] =
   {
     { today,  default_colo_, channel1, 0, 0, ecpmAdj, 1,  1 },
     { today,  default_colo_, channel2, 0, 0, ecpmAdj, 1,  1 },
     { today,  default_colo_, channel3, 0, 0, ecpmAdj, 0,  0 }
   };
-  
+
   add_stats(TAG_ADJUSTMENT_STATS, stats, diffs);
 
   const  ChannelPriceRangeLogging::UserRequest TAG_ADJUSTMENT[] =
@@ -1075,9 +1075,9 @@ void ChannelPriceRangeLogging::tag_adjustment()
     { "TagAdjustment/Kwd/B3", "TagAdjustment/TAG/COMMON",
       COUNTRY, 0, "TagAdjustment/BP/B3", "TagAdjustment/CC/Text1"},
   };
-  
+
   process_requests(TAG_ADJUSTMENT);
-  
+
   ADD_WAIT_CHECKER(
     "Check ChannelInventoryByCpm",
     AutoTest::stats_diff_checker(
@@ -1091,7 +1091,7 @@ ChannelPriceRangeLogging::process_requests(
 {
 
   AdClient client(AdClient::create_user(this));
-  
+
   for (size_t i = 0; i < Count; ++i)
   {
     NSLookupRequest request;
@@ -1122,13 +1122,13 @@ ChannelPriceRangeLogging::process_requests(
       fetch_objects(
         std::inserter(expected, expected.begin()),
         requests[i].expected_ccids);
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           expected,
           AutoTest::SelectedCreativesCCID(client)).check(),
         "Check CC#"  + strof(i));
-      
+
     }
     else
     {
@@ -1160,7 +1160,7 @@ ChannelPriceRangeLogging::add_stats(
     {
       stat.key().country_code(stats[i].country_code);
     }
-   
+
     if (stats[i].creative_size)
     {
       stat.key().creative_size_id(stats[i].creative_size);

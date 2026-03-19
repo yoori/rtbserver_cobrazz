@@ -36,8 +36,8 @@ void TokenPrefixesTest::checkBody(
      gotBody).check(),
    "must got expected body");
 }
- 
-bool 
+
+bool
 TokenPrefixesTest::run_test()
 
 {
@@ -57,4 +57,4 @@ void TokenPrefixesTest::tokenPrefixesSimpleFileCase()
 }
 
 
- 
+

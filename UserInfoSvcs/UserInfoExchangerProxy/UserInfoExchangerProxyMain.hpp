@@ -38,7 +38,7 @@ private:
     AdServer::UserInfoSvcs::
     UserInfoExchangerProxyImpl::UserInfoExchangerProxyConfig
     ConfigType;
-  
+
   virtual ~UserInfoExchangerProxyApp_() noexcept{};
 
   const ConfigType& config() const noexcept;
@@ -53,7 +53,7 @@ private:
     user_info_exchanger_proxy_impl_;
 
   ConfigPtr configuration_;
-  
+
   typedef Sync::PosixMutex ShutdownMutex;
   typedef Sync::PosixGuard ShutdownGuard;
 

@@ -429,7 +429,7 @@ namespace FrontendCommons
     else
     {
       res_domain = cookie_params.domain;
-    }    
+    }
   }
 }
 

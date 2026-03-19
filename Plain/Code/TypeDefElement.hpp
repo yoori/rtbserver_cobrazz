@@ -22,7 +22,7 @@ namespace Code
 
   protected:
     virtual ~TypeDefElement() noexcept {}
-    
+
   private:
     std::string type_name_;
     Declaration::BaseType_var base_type_;
@@ -53,7 +53,7 @@ namespace Code
   {
     return base_type_;
   }
-  
+
   inline
   void
   TypeDefElement::visited(ElementVisitor* visitor) const noexcept

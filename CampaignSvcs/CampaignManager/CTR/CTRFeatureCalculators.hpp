@@ -67,7 +67,7 @@ namespace AdServer::CampaignSvcs
     public:
       FeatureCalculatorFinalImplHelper()
         noexcept
-      {}      
+      {}
 
       bool
       hash_index_(

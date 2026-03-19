@@ -5,7 +5,7 @@ REFLECT_UNIT(TagsTest) (
   AUTO_TEST_FAST
 );
 
-bool 
+bool
 TagsTest::run_test()
 {
   set_up();
@@ -16,7 +16,7 @@ TagsTest::run_test()
   NOSTOP_FAIL_CONTEXT(unknown_country_case());
   NOSTOP_FAIL_CONTEXT(cpm_filter_case());
 
-  return true; 
+  return true;
 }
 
 
@@ -27,7 +27,7 @@ void TagsTest::set_up()
   tag_id1 = fetch_string("Tag Id/1");
   tag_id2 = fetch_string("Tag Id/2");
   tag_id3 = fetch_string("Tag Id/3");
-  
+
   siterate_id1    = fetch_string("SiteRate Id/1");
   siterate_id2    = fetch_string("SiteRate Id/2");
   siterate_id_def = fetch_string("SiteRate Id/1/Default");
@@ -39,7 +39,7 @@ void TagsTest::set_up()
   cc_id4 = fetch_string("CCID/4");
   cc_id5 = fetch_string("CCID/5");
   cc_id6 = fetch_string("CCID/6");
- 
+
 }
 
 // May be this case is obsolete
@@ -47,7 +47,7 @@ void TagsTest::empty_country_case()
 {
   add_descr_phrase("Empty country case.");
   AdClient client(AdClient::create_user(this));
-  
+
   request.loc_name.clear();
   client.process_request(request.tid(tag_id1));
 
@@ -68,7 +68,7 @@ void TagsTest::empty_country_case()
       "0",
       client.debug_info.ccid).check(),
     "must got ccid = 0 in response");
- 
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       "0",
@@ -82,11 +82,11 @@ void TagsTest::country_ru_case()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(request.tid(tag_id1).loc_name("ru"));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id1,
-      client.debug_info.tag_id).check(), 
+      client.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
 
   FAIL_CONTEXT(
@@ -98,7 +98,7 @@ void TagsTest::country_ru_case()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       siterate_id1,
-      client.debug_info.site_rate_id).check(), 
+      client.debug_info.site_rate_id).check(),
     "must got site_rate_id = SiteRate Id/1 in response");
 }
 
@@ -109,7 +109,7 @@ void TagsTest::country_us_case()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(request.tid(tag_id3).loc_name("us"));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id3,
@@ -121,7 +121,7 @@ void TagsTest::country_us_case()
       cc_id2,
       client.debug_info.ccid).check(),
     "must got CCID/2 of US CCG in response");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       siterate_id5,
@@ -135,11 +135,11 @@ void TagsTest::unknown_country_case()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(request.tid(tag_id1).loc_name("kr"));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id1,
-      client.debug_info.tag_id).check(), 
+      client.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
 
   FAIL_CONTEXT(
@@ -147,7 +147,7 @@ void TagsTest::unknown_country_case()
       cc_id5,
       client.debug_info.ccid).check(),
     "must got CCID/5 of KR CCG in response");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       siterate_id_def,
@@ -161,7 +161,7 @@ void TagsTest::cpm_filter_case()
   AdClient client(AdClient::create_user(this));
 
   client.process_request(request.tid(tag_id2).loc_name("ru"));
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id2,
@@ -173,7 +173,7 @@ void TagsTest::cpm_filter_case()
       "0",
       client.debug_info.ccid).check(),
     "must got ccid = 0 in response");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       "0",

@@ -369,7 +369,7 @@ namespace WebStat
         new SignedRequestIdParamProcessor(
           &RequestInfo::global_request_id, request_id_verifier_.get()));
     }
- 
+
     add_processor_(true, false, Request::Header::USER_AGENT,
       new FrontendCommons::StringParamProcessor<RequestInfo>(&RequestInfo::user_agent));
     add_processor_(true, false, Request::Header::FCGI_USER_AGENT,

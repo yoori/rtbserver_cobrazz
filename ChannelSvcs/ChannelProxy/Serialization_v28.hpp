@@ -14,7 +14,7 @@ namespace AdServer
 
 #define BREAK_POS_V28 0x00
 #define QUOTED_FLAG_V28 0x01
-#define NEXT_BYTE_FLAG_V28 0x80 
+#define NEXT_BYTE_FLAG_V28 0x80
 
 #define EXACT_BIT_V28 0x01 //exact match
 #define TYPE_BITS_V28 0x06 //type bits
@@ -59,20 +59,20 @@ namespace AdServer
       static Parts& get_parts(
         const void* data, size_t size, Parts& parts)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static void get_parts(const std::string& data, SubStringVector& parts)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static std::string& get_trigger(
         const void* data, size_t size, std::string& trigger)
         /*throw(eh::Exception, BadFormatException)*/;
-      
+
       static std::string& get_trigger(
         const std::string& in_trigger, std::string& trigger)
         /*throw(eh::Exception, BadFormatException)*/;
 
       static size_t get_reserve_size(const void* data) noexcept;
-      
+
       struct OctCorbaAllocator
       {
         OctCorbaAllocator(CORBACommons::OctSeq& oct_seq)
@@ -213,7 +213,7 @@ namespace AdServer
       /*throw(eh::Exception)*/
     {
       serialize(
-        parts, type, exact, negative, StringAllocator(result), result); 
+        parts, type, exact, negative, StringAllocator(result), result);
     }
 
     inline
@@ -338,7 +338,7 @@ namespace AdServer
       }
       return trigger;
     }
-    
+
     inline
     std::string& Serialization::get_trigger(
       const std::string& in, std::string& trigger)
@@ -346,7 +346,7 @@ namespace AdServer
     {
       return get_trigger(in.data(), in.size(), trigger);
     }
-    
+
     inline
     size_t Serialization::get_reserve_size(const void* data) noexcept
     {

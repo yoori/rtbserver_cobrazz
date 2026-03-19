@@ -41,17 +41,17 @@ struct TestBlock
     {
       return !(*this == right);
     }
-    
+
     Op op;
     unsigned long pos;
     unsigned long size;
   };
-  
+
   typedef std::list<OpHolder> OpHolderList;
 
   TestBlock(SizeType sz): sz_(sz)
   {}
-  
+
   void
   read(SizeType pos, void* /*buffer*/, SizeType sz)
   {
@@ -65,9 +65,9 @@ struct TestBlock
     {
       return false;
     }
-    
+
     OpHolderList::const_iterator right_it = ops.begin();
-    
+
     for (OpHolderList::const_iterator it = ops_.begin();
       it != ops_.end(); ++it, ++right_it)
     {
@@ -94,13 +94,13 @@ struct TestBlock
     }
     return ostr;
   }
-  
+
   bool
   operator ==(const TestBlock& right) const
   {
     return check_ops(right.ops_);
   }
-  
+
   SizeType
   size() const
   {
@@ -117,7 +117,7 @@ struct EraseTestBlock
       : id_(id), sz_(sz), avail_size_(avail_size)
   {
   }
-    
+
   void
   read(SizeType pos, void* /*buffer*/, SizeType sz)
   {
@@ -131,7 +131,7 @@ struct EraseTestBlock
     std::cout << "write into #" << id_ << ": pos=" << pos
               << " sz=" << sz << std::endl;
   }
-  
+
   SizeType
   size() const
   {
@@ -164,7 +164,7 @@ struct TestPosedBlock
     : pos(pos_val), data_offset(do_val), block(blk)
   {
   }
-    
+
   SizeType pos;
   SizeType data_offset;
   _T* block;
@@ -192,12 +192,12 @@ struct Less
   }
 };
 
-  
+
 int
 main()
 {
   int result = 0;
-  
+
   typedef std::vector<TestPosedBlock<TestBlock> > BList1;
 
   {
@@ -214,7 +214,7 @@ main()
     TestBlock::OpHolderList ops1;
     ops1.push_back(TestBlock::OpHolder(TestBlock::OP_READ, 7, 3));
     bool res = b1->check_ops(ops1);
-    
+
     TestBlock::OpHolderList ops2;
     ops2.push_back(TestBlock::OpHolder(TestBlock::OP_READ, 2, 8));
     res &= b2->check_ops(ops2);
@@ -237,12 +237,12 @@ main()
 
     result += (res ? 0 : 1);
   }
-  
-/*  
+
+/*
   {
     std::cout << "==== erase_excess_blocks ====" << std::endl;
     EraseTestBlock* rest = 0;
-    
+
     BList2 blist;
     blist.push_back(TestPosedBlock<EraseTestBlock>(0, 4,
       new EraseTestBlock(0, 4, 4)));
@@ -255,10 +255,10 @@ main()
 
     const int OLD_SIZE = 98*2 + 28;
     const int NEW_SIZE = 98*2 + 100;
-    
+
     std::cout << "erase_excess_blocks: old-size=" << OLD_SIZE
       << ", new-size=" << NEW_SIZE << std::endl;
-    
+
     std::cout
       << "result: "
       << PlainStorage::erase_excess_blocks<BList2, EraseTestBlock*>(

@@ -157,7 +157,7 @@ namespace ProfilingCommons
     };
 
     struct LevelHolderPtrLess;
-    
+
     typedef ReferenceCounting::SmartPtr<LevelHolder> LevelHolder_var;
     typedef std::vector<LevelHolder_var> LevelHolderArray;
 

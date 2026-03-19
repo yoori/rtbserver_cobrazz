@@ -17,7 +17,7 @@ class ChannelInventoryTest:
   typedef std::list<Diff> Diffs;
 
 public:
-  
+
   struct UserRequest
   {
     int time_ofset;
@@ -25,13 +25,13 @@ public:
     const char* expected_triggers;
     const char* expected_history;
   };
-  
-public: 
+
+public:
   ChannelInventoryTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var);
- 
+
   virtual ~ChannelInventoryTest() noexcept
   {};
 
@@ -75,7 +75,7 @@ private:
 
   // ADSC-4582
   // Unordered (by time) sequence
-  // of requests 
+  // of requests
   void late_request_1(AdClient& client);
   void late_request_2(AdClient& client);
 

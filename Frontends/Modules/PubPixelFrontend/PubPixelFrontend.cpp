@@ -123,14 +123,14 @@ namespace PubPixel
     try
     {
       parse_config_();
-      
+
       request_info_filler_.reset(new RequestInfoFiller(
         logger(),
         common_config_->GeoIP().present() ?
         common_config_->GeoIP()->path().c_str() : 0));
 
       corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-      
+
       campaign_managers_.resolve(
         *common_config_, corba_client_adapter_);
 

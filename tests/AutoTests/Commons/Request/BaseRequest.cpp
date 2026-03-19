@@ -42,35 +42,35 @@ namespace AutoTest
   Time::Time() noexcept :
     Generics::Time(Generics::Time::get_time_of_day())
   { }
-  
+
   Time::Time(const timeval& time) noexcept :
     Generics::Time(time)
   { }
-  
+
   Time::Time(
     time_t time_sec,
     suseconds_t usec) noexcept :
     Generics::Time(time_sec, usec)
   { }
-  
+
   Time::Time(
     const std::string& value)
     /*throw(InvalidArgument, Exception, eh::Exception)*/ :
     Generics::Time(String::SubString(value), DEBUG_TIME_FORMAT)
   { }
-  
+
   Time::Time(
     const char* value)
     /*throw(InvalidArgument, Exception, eh::Exception)*/ :
     Generics::Time(String::SubString(value), DEBUG_TIME_FORMAT)
   { }
-  
+
   Time::Time(
     const String::SubString& value)
     /*throw(InvalidArgument, Exception, eh::Exception)*/ :
     Generics::Time(value, DEBUG_TIME_FORMAT)
   { }
-    
+
   Time::Time(
     const Time& t) noexcept :
     Generics::Time(t)
@@ -140,7 +140,7 @@ namespace AutoTest
   BaseParamsContainer::BaseParamsContainer() :
     params_(0)
   { }
-  
+
   BaseParamsContainer::~BaseParamsContainer() noexcept
   { }
 
@@ -160,7 +160,7 @@ namespace AutoTest
 
   BaseRequest::~BaseRequest() noexcept
   { }
-  
+
   std::ostream& BaseRequest::print (std::ostream& out) const
   {
     out << url_;
@@ -246,7 +246,7 @@ namespace AutoTest
       ENCODED_SEPARATOR: ENCODED_PREFIX;
   }
 
-  
+
   const char* BaseRequest::eql() const
   {
     return req_type_ == BaseRequest::RT_NOT_ENCODED?
@@ -270,7 +270,7 @@ namespace AutoTest
 
   BaseParam::~BaseParam() noexcept
   { }
-  
+
   bool
   BaseParam::print(
     std::ostream& out,

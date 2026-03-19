@@ -29,7 +29,7 @@ namespace Frontends
   {
     const char WORKER[] = "FCGI::Worker";
   }
-  
+
   // State
   struct AcceptorBoostAsio::State: public ReferenceCounting::AtomicImpl
   {
@@ -351,7 +351,7 @@ namespace Frontends
               &Connection::handle_write,
               shared_from_this(),
               boost::asio::placeholders::error));
-          
+
         }
       }
       else

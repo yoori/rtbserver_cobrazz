@@ -23,7 +23,7 @@ namespace UnitTests
       const unsigned int ENCODEPRICE_LENGTH = 4;
       const unsigned int CRC_LENGTH = 4;
       const unsigned int KEY_LENGTH = 16;
-      const unsigned int ALL_LENGTH = VERSION_LENGTH + BIDID_LENGTH + 
+      const unsigned int ALL_LENGTH = VERSION_LENGTH + BIDID_LENGTH +
         ENCODEPRICE_LENGTH + CRC_LENGTH;
       const unsigned int VERSION_OFFSITE = 0;
       const unsigned int BIDID_OFFSITE = VERSION_OFFSITE + VERSION_LENGTH;

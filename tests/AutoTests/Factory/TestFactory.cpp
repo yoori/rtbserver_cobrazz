@@ -1,4 +1,4 @@
-#include <algorithm> 
+#include <algorithm>
 #include <functional>
 #include "TestFactory.hpp"
 
@@ -16,7 +16,7 @@ namespace TestFactory
       return g2 & g1;
     }
   };
-    
+
   struct IsTrue : public std::unary_function<bool,bool>
   {
     bool operator() (
@@ -34,7 +34,7 @@ namespace TestFactory
     SerializedPred(int serialized_mode) :
       serialized_mode_(serialized_mode)
     { }
-    
+
     bool operator() (
       const UnitDescriptor* u) const
     {
@@ -51,7 +51,7 @@ namespace TestFactory
   {
     typedef typename std::equal_to<MemberType> EqualTo;
     typedef typename std::set<MemberType> List;
-    
+
   public:
     IsPred(
       const List& list,
@@ -92,7 +92,7 @@ namespace TestFactory
       list_(list),
       mode_(mode)
     { }
-      
+
     bool operator() (
       const UnitDescriptor* u) const
     {
@@ -172,7 +172,7 @@ namespace TestFactory
       {
         return false;
       }
-      
+
       return
         (GroupUnaryPred(
            groups_,
@@ -201,10 +201,10 @@ namespace TestFactory
       units_.push_back(i);
     }
   }
-  
+
   TestFactory::~TestFactory() noexcept
   { }
-  
+
   void
   TestFactory::filter(
     const StringList& exclude_tests,
@@ -240,5 +240,5 @@ namespace TestFactory
   {
     return units_;
   }
- 
+
 }

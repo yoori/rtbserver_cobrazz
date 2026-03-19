@@ -5,23 +5,23 @@
 
 namespace DB = AutoTest::DBC;
 namespace ORM = AutoTest::ORM;
- 
+
 class StatsHourlyNumShowingTest: public BaseUnit
 {
   typedef AutoTest::NSLookupRequest NSLookupRequest;
-  
+
 public:
   StatsHourlyNumShowingTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var) :
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   { }
- 
+
   virtual ~StatsHourlyNumShowingTest() noexcept
   { }
- 
+
 private:
   virtual bool run_test();
 

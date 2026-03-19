@@ -5,7 +5,7 @@ REFLECT_UNIT(SpecificProfilesAbsent) (
   "UserProfiling",
   AUTO_TEST_SLOW);
 
-namespace 
+namespace
 {
 
   enum CorbaRefOptEnum
@@ -37,7 +37,7 @@ namespace
      * @param admin - admin to use
      * @param command - command to ask
      * @param service - service corba object name
-     * @param UUID. 
+     * @param UUID.
      * @param address manager object address.
      * @param controller - corba reference option switch
      * @param user - uid option switch
@@ -57,7 +57,7 @@ namespace
      * @param admin - admin to use
      * @param command - command to ask
      * @param service - service corba object name
-     * @param UUID. 
+     * @param UUID.
      * @param address manager object address.
      * @param controller - corba reference option switch
      * @param user - uid option switch
@@ -144,12 +144,12 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
 
   GlobalConfig::Service service
     = get_config().get_service(CTE_ALL, STE_FRONTEND);
-  
-  std::string uid = 
-    service.remote ? "AAAAAAAAAAAAAAAAAAAAAA.." 
+
+  std::string uid =
+    service.remote ? "AAAAAAAAAAAAAAAAAAAAAA.."
     : AutoTest::PROBE_UID;
 
-  
+
   add_descr_phrase("Scenario#1. Prepare");
 
   Generics::Time target_request_time = Generics::Time::get_time_of_day();
@@ -160,7 +160,7 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
   add_descr_phrase("Scenario#1. Prepare stats");
 
   AutoTest::DBC::Conn pq_conn(open_pq());
-  
+
   ORM::StatsArray<HourlyStats, 2> stats_hs;
   stats_hs[0].key(
     HourlyStats::Key().
@@ -203,10 +203,10 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
 
   request.referer(fetch_string("Keyword1"));
   client.process_request(request, "Ad request1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
-      fetch_string("Channel1") + "U", 
+      fetch_string("Channel1") + "U",
       client.debug_info.trigger_channels).check(),
     "must match first channel");
 
@@ -215,13 +215,13 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
 
   FAIL_CONTEXT(
     AutoTest::entry_checker(
-      fetch_string("Channel2") + "U", 
+      fetch_string("Channel2") + "U",
       client.debug_info.trigger_channels).check(),
     "must match second channel");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
-      fetch_string("CCId2"), 
+      fetch_string("CCId2"),
       client.debug_info.ccid).check(),
     "must match second channel");
 
@@ -255,7 +255,7 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
       impops_no_imp(1),
     ORM::ChannelImpInventory::Diffs().
       imps_other(1).
-      impops_no_imp(0),    
+      impops_no_imp(0),
   };
 
   FAIL_CONTEXT(
@@ -403,7 +403,7 @@ void SpecificProfilesAbsent::case_for_non_opted_in_users()
 }
 
 //////////////////// implementation ///////////////
-namespace 
+namespace
 {
   void
   ProfileAdminCmd::make_cmd (const char* admin,
@@ -419,17 +419,17 @@ namespace
     add_cmd_i(command);
     switch (user)
     {
-    case UIOE_User : 
+    case UIOE_User :
       {
         add_cmd_i(std::string("--uid=") + uuid);
         break;
       }
-    case UIOE_Temp : 
+    case UIOE_Temp :
       {
         add_cmd_i(std::string("--tuid=") + uuid);
         break;
       }
-    case UIOE_None : 
+    case UIOE_None :
       {
         add_cmd_i(uuid);
         break;
@@ -437,21 +437,21 @@ namespace
     }
     switch (controller)
     {
-    case CROE_Controller : 
+    case CROE_Controller :
       {
-        add_cmd_i(std::string("-r orbaloc::") 
+        add_cmd_i(std::string("-r orbaloc::")
                   +  address + "/" + service);
         break;
       }
     case CROE_Manager :
       {
-        add_cmd_i(std::string("-r corbaloc::") 
+        add_cmd_i(std::string("-r corbaloc::")
                   +  address + "/" + service);
         break;
       }
     case CROE_Ref :
       {
-        add_cmd_i(std::string("-r corbaloc::") 
+        add_cmd_i(std::string("-r corbaloc::")
                   +  address + "/" + service);
         break;
       }

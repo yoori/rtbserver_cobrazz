@@ -50,7 +50,7 @@ PassbackStatsTest::process_and_check_passback(
     "Client must be redirected to original passback URL");
 }
 
-bool 
+bool
 PassbackStatsTest::run_test()
 {
   // Get default colo_id from server;
@@ -123,13 +123,13 @@ PassbackStatsTest::log_pb_profile(
   {
     AutoTest::AdminsArray<AutoTest::PassbackProfileAdmin>
       admins;
-    
+
     admins.initialize(
       this,
       CTE_ALL,
       STE_REQUEST_INFO_MANAGER,
       request_id);
-    
+
     admins.log(AutoTest::Logger::thlog());
   }
 }
@@ -156,7 +156,7 @@ void PassbackStatsTest::scenario1(
 
     requests_.push_back(
       client.debug_info.request_id.value().c_str());
-    
+
     process_and_check_passback(client, std::string(), same_id ? 2 : 1);
   }
 
@@ -342,7 +342,7 @@ PassbackStatsTest::scenario6()
   {
     request.debug_time = today;
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(request);
 
     std::string redirect_url;
@@ -351,7 +351,7 @@ PassbackStatsTest::scenario6()
       AutoTest::predicate_checker(
         client.find_header_value("Location", redirect_url)),
       "Client must be redirected to passback frontend");
-    
+
     if (i % 3 == 2)
     {
       request.debug_time = tomorrow;
@@ -396,7 +396,7 @@ PassbackStatsTest::scenario7()
     request.colo.clear();
 
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(request);
     process_and_check_passback(client);
 

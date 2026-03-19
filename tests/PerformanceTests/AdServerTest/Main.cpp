@@ -29,11 +29,11 @@ int main (int argc, char** argv)
   catch (eh::Exception& e)
     {
       std::cerr << "Exception:" << e.what() << std::endl;
-      exit(1);      
+      exit(1);
     }
   catch (...)
     {
       std::cerr << "Unexpected exception" << std::endl;
-      exit(1);      
+      exit(1);
     }
 }

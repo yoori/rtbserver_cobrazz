@@ -1,4 +1,4 @@
-#include<Commons/Postgres/SqlStream.hpp> 
+#include<Commons/Postgres/SqlStream.hpp>
 #include<String/AsciiStringManip.hpp>
 #include<iostream>
 
@@ -40,7 +40,7 @@ namespace Commons
       //escaping of string if necessary
       const char* c_str = str.data();
       const char* c_str_end = c_str + str.size();
-      const char* esc_sym = EscapedCategory.find_owned(c_str, c_str_end); 
+      const char* esc_sym = EscapedCategory.find_owned(c_str, c_str_end);
       if(esc_sym != c_str_end)
       {
         do
@@ -52,7 +52,7 @@ namespace Commons
           }
           stream_ << '\\' << *esc_sym;
           c_str = esc_sym + 1;
-          esc_sym = EscapedCategory.find_owned(c_str, c_str_end); 
+          esc_sym = EscapedCategory.find_owned(c_str, c_str_end);
         } while(esc_sym < c_str_end);
         if (c_str < c_str_end)
         {
@@ -63,7 +63,7 @@ namespace Commons
       {
         stream_ << str;
       }
-      stream_ << "\\\""; 
+      stream_ << "\\\"";
     }
 
     void SqlStream::set_null() /*throw(eh::Exception)*/

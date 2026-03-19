@@ -20,7 +20,7 @@ namespace UserInfoSvcs
   public:
     struct SeqOrder
     {
-      SeqOrder() 
+      SeqOrder()
       {}
 
       SeqOrder(
@@ -92,13 +92,13 @@ namespace UserInfoSvcs
     consider_publishers_optin(
       const std::set<unsigned long>& publisher_account_ids,
       const Generics::Time& timestamp) noexcept;
-    
+
       void
     get_optin_publishers(
       std::list<unsigned long>& optin_publishers,
       const Generics::Time& time)
       /*throw(eh::Exception)*/;
-    
+
     void
     print(
       std::ostream& out,

@@ -56,7 +56,7 @@ namespace
     "lexemes",
     "commands"
   };
-  const char *HELP[] = 
+  const char *HELP[] =
   {
     "\nUsage:ChannelAdmin command [options]\n"
     "See details: ChannelAdmin help [topic]\n"
@@ -411,7 +411,7 @@ namespace
     OPT_STRING_MAX
   };
 
-  static Option<Generics::AppUtils::StringOption > string_options[] = 
+  static Option<Generics::AppUtils::StringOption > string_options[] =
   {
     { OPT_IDS, "channels", "i", Generics::AppUtils::StringOption() },
     { OPT_REFERENCE, "reference", "r", Generics::AppUtils::StringOption() },
@@ -435,7 +435,7 @@ namespace
     OPT_ULONG_MAX
   };
 
-  static Option<Generics::AppUtils::Option<unsigned long> > ulong_options[] = 
+  static Option<Generics::AppUtils::Option<unsigned long> > ulong_options[] =
   {
     { OPT_FIRST, "first", "n", Generics::AppUtils::Option<unsigned long>(1) },
     { OPT_LIMIT, "limit", "m",  Generics::AppUtils::Option<unsigned long>(10000) },
@@ -446,7 +446,7 @@ namespace
 int main(int argc, char** argv)
 {
   int ret_value = -100;
-  
+
   try
   {
     Application& app = Application::instance();
@@ -461,12 +461,12 @@ int main(int argc, char** argv)
   catch(const eh::Exception& e)
   {
     std::cerr << "ChannelAdmin: eh::Exception exception caught. "
-      ":" << e.what() << std::endl;    
+      ":" << e.what() << std::endl;
   }
   catch(const CORBA::SystemException& e)
   {
     std::cerr << "ChannelAdmin: eh::Exception exception caught. "
-      ": " << e << std::endl;    
+      ": " << e << std::endl;
   }
   catch(...)
   {
@@ -479,7 +479,7 @@ Application::Application() /*throw(Application::Exception, eh::Exception)*/:
   use_session_(false),
   date_(0)
 {
-  logger_ = 
+  logger_ =
     new Logging::OStream::Logger(Logging::OStream::Config(std::cout));
   adapter_ = new CORBACommons::CorbaClientAdapter;
 }
@@ -516,7 +516,7 @@ void Application::init_update_interface_() /*throw(InvalidArgument)*/
       AdServer::ChannelSvcs::ChannelManagerController::_narrow(obj_ref_.in());
     if(CORBA::is_nil(manager.in()))
     {
-      throw InvalidArgument("_narrow return nil reference"); 
+      throw InvalidArgument("_narrow return nil reference");
     }
     Generics::ActiveObjectCallback_var callback(
       new Logging::ActiveObjectCallbackImpl(logger_.in()));
@@ -621,7 +621,7 @@ void Application::init_server_interface_() /*throw(InvalidArgument)*/
 
     if(CORBA::is_nil(manager.in()))
     {
-      throw InvalidArgument("_narrow return nil reference"); 
+      throw InvalidArgument("_narrow return nil reference");
     }
     Generics::ActiveObjectCallback_var callback(
       new Logging::ActiveObjectCallbackImpl(logger_.in()));
@@ -682,14 +682,14 @@ void Application::init_server_interface_() /*throw(InvalidArgument)*/
     catch(const CORBACommons::CorbaClientAdapter::Exception& e)
     {
       Stream::Error ostr;
-      ostr << "Failed to resolve channel server reference." 
+      ostr << "Failed to resolve channel server reference."
         " CorbaClientAdapter::Exception: " << e.what();
       throw InvalidArgument(ostr);
     }
     catch(const CORBA::SystemException& e)
     {
       Stream::Error ostr;
-      ostr << "Failed to resolve channel server reference." 
+      ostr << "Failed to resolve channel server reference."
         " CORBA::SystemException: " << e;
       throw InvalidArgument(ostr);
     }
@@ -874,7 +874,7 @@ void Application::deactivate_objects()
 }
 
 int
-Application::help(const std::string& topic) const 
+Application::help(const std::string& topic) const
   noexcept
 {
   size_t i = 0;
@@ -1029,7 +1029,7 @@ int Application::smartcheck_()
     table->column(2, "version");
     for(size_t i=0;i<result->versions.length();i++)
     {
-      AdServer::ChannelSvcs::ChannelCurrent::ChannelVersion& 
+      AdServer::ChannelSvcs::ChannelCurrent::ChannelVersion&
         cur = result->versions[i];
       row.clear();
       row.add_field(cur.id);
@@ -1339,7 +1339,7 @@ void Application::print_ccg_deleted_(
     size_t i = 0;
     do
     {
-      stamp = CorbaAlgs::unpack_time(deleted[i].stamp); 
+      stamp = CorbaAlgs::unpack_time(deleted[i].stamp);
       row.add_field(deleted[i].id);
       row.add_field(stamp.get_gm_time().format("%Y-%m-%d-%H:%M:%S"));
       table->add_row(row);
@@ -1399,7 +1399,7 @@ int Application::pos_ccg_()
       channels_id_.emplace_back(i);
     }
   }
-  
+
   in.channel_ids.length(channels_id_.size());
   std::copy(
     channels_id_.begin(),
@@ -1599,14 +1599,14 @@ int Application::lexemes_()
   catch(const CORBACommons::CorbaClientAdapter::Exception& e)
   {
     Stream::Error ostr;
-    ostr << "Failed to resolve dictionary provider reference." 
+    ostr << "Failed to resolve dictionary provider reference."
       " CorbaClientAdapter::Exception: " << e.what();
     throw InvalidArgument(ostr);
   }
   catch(const CORBA::SystemException& e)
   {
     Stream::Error ostr;
-    ostr << FN << "failed to resolve dictionary provider reference." 
+    ostr << FN << "failed to resolve dictionary provider reference."
       " CORBA::SystemException: " << e;
     throw InvalidArgument(ostr);
   }
@@ -1633,7 +1633,7 @@ int Application::lexemes_()
     words[i] << lexemes_data_[i];
   }
   ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq_var res =
-    service->get_lexemes(lang.c_str(), words); 
+    service->get_lexemes(lang.c_str(), words);
   table.reset(new Table(count_lexemes_fields));
   for(size_t i = 0; i < count_lexemes_fields; i++)
   {
@@ -1791,7 +1791,7 @@ void Application::make_match_query(
   T2& res)
   /*throw(Exception)*/
 {
-  AdServer::ChannelSvcs::ChannelServerBase::MatchQuery in; 
+  AdServer::ChannelSvcs::ChannelServerBase::MatchQuery in;
   try
   {
     Generics::Uuid uid;
@@ -1900,7 +1900,7 @@ int Application::match_()
   {
     if (use_session_)
     {
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result_1; 
+      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result_1;
       AdServer::ChannelSvcs::ChannelIdSeq empty;
       make_match_query<
         AdServer::ChannelSvcs::ChannelServerSession,
@@ -1925,7 +1925,7 @@ int Application::match_()
     }
     else
     {
-      AdServer::ChannelSvcs::ChannelServer::MatchResult_var result_2; 
+      AdServer::ChannelSvcs::ChannelServer::MatchResult_var result_2;
       make_match_query<
         AdServer::ChannelSvcs::ChannelServer,
         AdServer::ChannelSvcs::ChannelServer::MatchResult_var>(

@@ -1,7 +1,7 @@
 
 #include "TempProfileMergingTest.hpp"
 #include "UserProfilesExchangeCommon.hpp"
- 
+
 REFLECT_UNIT(TempProfileMergingTest) (
   "UserProfilesExchange",
   AUTO_TEST_SLOW
@@ -15,8 +15,8 @@ namespace
   typedef AutoTest::TemporaryAdClient TemporaryAdClient;
   typedef AutoTest::UserProfilesExchange::CheckWaitHistoryChannel CheckWaitHistoryChannel;
 }
- 
-bool 
+
+bool
 TempProfileMergingTest::run_test()
 {
   FAIL_CONTEXT(
@@ -38,7 +38,7 @@ TempProfileMergingTest::run_test()
 
   colo1_id = fetch_string("Colo/1");
   colo2_id = fetch_string("Colo/2");
- 
+
   merge_on_colo_change();
   merge_before_get_profile();
   return true;
@@ -82,10 +82,10 @@ void TempProfileMergingTest::merge_on_colo_change()
   {
     AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
-    NSLookupRequest request; 
+    NSLookupRequest request;
     request.referer_kw = fetch_string("KeywordS2") + "," +
         fetch_string("KeywordHT2");
-    
+
     client.process_request(request);
 
     {
@@ -100,13 +100,13 @@ void TempProfileMergingTest::merge_on_colo_change()
           client.debug_info.history_channels,
           AutoTest::SCE_ENTRY).check(),
         "history");
-      
+
     }
 
     client.change_base_url(remote1.c_str());
 
     client.merge(tclient);
-    
+
     {
       std::string expected[] = {
         fetch_string("Channel/S1"),
@@ -189,11 +189,11 @@ void TempProfileMergingTest::merge_before_get_profile()
 
   {
     AdClient client(AdClient::create_user(this,AutoTest::UF_FRONTEND_MINOR));
-    
-    NSLookupRequest request; 
+
+    NSLookupRequest request;
     request.referer_kw = fetch_string("KeywordS2") + "," +
         fetch_string("KeywordHT2");
-    
+
     client.process_request(request);
 
     {
@@ -214,9 +214,9 @@ void TempProfileMergingTest::merge_before_get_profile()
 
     // Exchange request
     client.process_request(NSLookupRequest());
-        
+
     client.merge(tclient);
-    
+
     {
       std::string expected[] = {
         fetch_string("Channel/S1"),

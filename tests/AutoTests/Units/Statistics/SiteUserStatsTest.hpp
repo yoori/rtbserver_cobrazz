@@ -1,6 +1,6 @@
 #ifndef _AUTOTEST__SITEUSERSTATSTEST_
 #define _AUTOTEST__SITEUSERSTATSTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = AutoTest::ORM;
@@ -10,7 +10,7 @@ class SiteUserStatsTest : public BaseUnit
 {
 
   typedef AutoTest::AdClient AdClient;
-  
+
   struct Expected
   {
     const char* site;
@@ -25,7 +25,7 @@ class SiteUserStatsTest : public BaseUnit
     const char* tag;
     AutoTest::Time time;
   };
-  
+
   typedef ORM::SiteUserStats SiteUserStat;
   typedef ORM::StatsList<SiteUserStat> SiteUserStats;
   typedef SiteUserStat::Diffs Diff;
@@ -65,33 +65,33 @@ private:
   // cases
   void
   unique_users_stats_();
-  
+
   void
   last_appearance_date_();
-  
+
   void
   non_gmt_timezone_();
-  
+
   void
   colo_logging_();
-  
+
   AdClient
   async_part_1_();
-  
+
   void
   async_part_2_(
     AdClient& client);
-  
+
   void
   async_part_3_(
     AdClient& client);
-  
+
   void
   temporary_user_();
-  
+
   void
   non_opted_in_users_();
-  
+
   virtual bool run_test();
 
   SiteUserStats stats_;

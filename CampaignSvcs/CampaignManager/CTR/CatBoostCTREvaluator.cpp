@@ -59,7 +59,7 @@ namespace AdServer::CampaignSvcs::CTR
         res = std::make_shared<Buf>();
         res->resize(buf_size_, 0.0);
       }
-      
+
       return res;
     }
 

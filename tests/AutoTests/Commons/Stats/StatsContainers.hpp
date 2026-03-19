@@ -76,7 +76,7 @@ namespace ORM
     public StatsContainerWrapper<FixedArray<ValueType, SIZE> >
   {
   public:
-    
+
     // print difference: (*this)[i] + diff[i] ? real[i]
     template<typename DiffType>
     void print_diff(
@@ -107,7 +107,7 @@ namespace ORM
     public StatsContainerWrapper<std::list<ValueType> >
   {
   public:
-    
+
     template<typename StatsDiffContainerType, typename StatsContainerType>
     void print_diff(
       std::ostream& out,

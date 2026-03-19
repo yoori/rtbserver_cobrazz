@@ -12,7 +12,7 @@ namespace Oracle
   {
     return 0;
   }
-  
+
   unsigned long ResultSet::rows_count() const /*throw(SqlException)*/
   {
     return 0;
@@ -46,14 +46,14 @@ namespace Oracle
 
   void ResultSet::Column::clear_fetch_cells_() noexcept
   {}
-  
+
   Generics::Time
   ResultSet::get_date_(const void* /*buf*/) const
     /*throw(Exception, SqlException, NotSupported)*/
   {
     return Generics::Time();
   }
-  
+
   Generics::Time
   ResultSet::get_datetime_(const void* /*buf*/) const
     /*throw(Exception, SqlException, NotSupported)*/
@@ -81,7 +81,7 @@ namespace Oracle
   {
     return 0;
   }
-  
+
   int
   ResultSet::get_int(unsigned int /*ind*/) const
     /*throw(InvalidValue, SqlException, NotSupported)*/
@@ -95,7 +95,7 @@ namespace Oracle
   {
     return 0;
   }
-  
+
   int64_t
   ResultSet::get_int64(unsigned int /*ind*/) const
     /*throw(InvalidValue, SqlException, NotSupported)*/
@@ -136,7 +136,7 @@ namespace Oracle
     /*throw(TimedOut, Exception, SqlException, NotSupported)*/
   {
     return Lob("", 0, false);
-  }  
+  }
 
   void
   ResultSet::check_column_index_(unsigned long /*ind*/) const

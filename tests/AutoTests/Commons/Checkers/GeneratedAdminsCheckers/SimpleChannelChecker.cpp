@@ -1,14 +1,14 @@
 
 #include <tests/AutoTests/Commons/Admins/AdminsContainer.hpp>
 #include "SimpleChannelChecker.hpp"
-          
+
 #include <tests/AutoTests/Commons/Stats/ORMStats.hpp>
 
 namespace AutoTest
 {
-  bool  
-  SimpleChannelChecker::check(bool throw_error)  
-    /*throw(CheckFailed, eh::Exception)*/  
+  bool
+  SimpleChannelChecker::check(bool throw_error)
+    /*throw(CheckFailed, eh::Exception)*/
   {
     AdminExistCheck remote_exists =
       !expected_.has_status() ||
@@ -53,6 +53,6 @@ namespace AutoTest
           remote_exists == AEC_EXISTS? expected_: Expected(),
           remote_exists).
             check(throw_error));
-        
-  }  
+
+  }
 }

@@ -190,11 +190,11 @@ void run_case(
   }
 
   std::vector<int> imps(triggers_in_channel, 0);
-  std::vector<int> clicks(triggers_in_channel, 0); 
+  std::vector<int> clicks(triggers_in_channel, 0);
   std::vector<int> real_imps(triggers_in_channel, 0);
   std::vector<int> real_clicks(triggers_in_channel, 0);
   std::vector<int> excess_imps(triggers_in_channel, 0);
-  std::vector<int> excess_clicks(triggers_in_channel, 0);  
+  std::vector<int> excess_clicks(triggers_in_channel, 0);
   int all_imps = 0;
   int all_clicks = 0;
 
@@ -257,7 +257,7 @@ void run_case(
     out << "all logged (c=" << all_clicks << ",i=" << all_imps <<
       ")" << std::endl;
   }
-  
+
   std::vector<int> approximated_imps(triggers_in_channel, 0);
   std::vector<int> approximated_clicks(triggers_in_channel, 0);
 

@@ -5,7 +5,7 @@ REFLECT_UNIT(PublisherInventoryRequestTest) (
   AUTO_TEST_FAST
 );
 
-bool 
+bool
 PublisherInventoryRequestTest::run_test()
 {
   std::string tag_inv = fetch_string("TAG_INV");

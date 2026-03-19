@@ -21,7 +21,7 @@ namespace RequestInfoSvcs
   date_month_trunc(const Generics::Time& time)
   {
     Generics::ExtendedTime date_day_ex(time.get_gm_time());
-    
+
     return Generics::ExtendedTime(
       date_day_ex.tm_year + 1900,
       date_day_ex.tm_mon + 1,

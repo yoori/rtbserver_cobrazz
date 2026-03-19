@@ -102,7 +102,7 @@ public:
       & url_)
       ^ cost_;
   }
-  
+
 private:
   void calc_hash_()
   {

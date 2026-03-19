@@ -111,7 +111,7 @@ namespace FrontendCommons
      */
     virtual void
     shutdown() noexcept = 0;
-    
+
   protected:
     virtual
     ~FrontendInterface() noexcept = default;

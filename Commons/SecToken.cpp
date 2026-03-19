@@ -135,7 +135,7 @@ namespace AdServer
       std::size_t tokenWords = PlainTextToken::size / sizeof(uint32_t);
 
       uint32_t buf[tokenWords];
-      
+
       key.decrypt(buf, encrypted_buf.data());
 
       uint32_t crc = Generics::CRC::quick(
@@ -151,7 +151,7 @@ namespace AdServer
       if (buf[tokenWords - 1] == crc)
       {
         uint32_t addr;
-        
+
         if (inet_pton(AF_INET, ip_addr.data(), &addr))
         {
           return buf[0] == Generics::CRC::quick(0, &addr, sizeof(addr)) &&
@@ -161,7 +161,7 @@ namespace AdServer
 
       return false;
     }
-    
+
   }
 }
 

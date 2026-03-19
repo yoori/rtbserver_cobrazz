@@ -437,7 +437,7 @@ namespace CampaignSvcs
       //   ChannelPriority(with simple_channel_id) =>
       //   ExpressionIndexingUsePriority(with expr channel_id) => ExpressionIndexing
       //
-      // 
+      //
       for(ChannelIdSet::const_iterator sch_it =
             disappeared_simple_channels.begin();
           sch_it != disappeared_simple_channels.end();
@@ -962,7 +962,7 @@ namespace CampaignSvcs
         const unsigned long channel_id = simple_channel->params().channel_id;
         ExpressionChannelMatch& expr_channel_match = init_match_cell_(
           channels_, channel_id);
-        
+
         if(FILTER_CHANNELS.is_owned(simple_channel->params().type))
         {
           insert_if_not_exists(

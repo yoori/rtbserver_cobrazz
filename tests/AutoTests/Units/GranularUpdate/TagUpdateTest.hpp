@@ -6,20 +6,20 @@
 /**
  * @class TagUpdateTest
  * @brief Test for tag updates
- */ 
+ */
 class TagUpdateTest: public BaseDBUnit
 {
 public:
   TagUpdateTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~TagUpdateTest() noexcept
   {};
- 
+
 private:
 
   unsigned long other_size_type_;

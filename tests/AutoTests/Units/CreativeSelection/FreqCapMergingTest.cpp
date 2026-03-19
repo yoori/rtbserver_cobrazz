@@ -108,7 +108,7 @@ namespace
   };
 }
 
-bool 
+bool
 FreqCapMergingTest::run_test()
 {
 
@@ -121,7 +121,7 @@ FreqCapMergingTest::run_test()
     check(
       "Frequency caps expired on merge.",
       FC_EXPIRED_ON_MERGE));
-  
+
   return true;
 }
 
@@ -134,7 +134,7 @@ void FreqCapMergingTest::check(
   AdClient pclient(AdClient::create_user(this));
   TemporaryAdClient tclient(
     TemporaryAdClient::create_user(this));
-  
+
   AutoTest::Time time;
   for (unsigned long i=0; i < COUNT; ++i)
   {
@@ -170,14 +170,14 @@ void FreqCapMergingTest::check(
     }
 
     std::string expected_ccid = requests[i].expected_ccid?
-      fetch_string(requests[i].expected_ccid): "0";      
+      fetch_string(requests[i].expected_ccid): "0";
 
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         expected_ccid,
         client->debug_info.ccid).check(),
       description +
-        " Check ccid#" +strof(i));    
+        " Check ccid#" +strof(i));
   }
 }
 

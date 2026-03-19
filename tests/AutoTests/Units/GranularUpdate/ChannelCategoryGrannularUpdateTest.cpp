@@ -17,13 +17,13 @@ ChannelCategoryGrannularUpdateTest::set_up()
 {
   add_descr_phrase("Setup started.");
 }
- 
-bool 
+
+bool
 ChannelCategoryGrannularUpdateTest::run()
 {
   add_category();
   deactivate_category();
-  
+
   return true;
 }
 
@@ -78,7 +78,7 @@ ChannelCategoryGrannularUpdateTest::deactivate_category()
     AutoTest::predicate_checker(
       category->update(false)),
    "must deactivate channel category");
- 
+
  add_checker(
    description,
    ChannelCategoryWaitChecker(

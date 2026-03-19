@@ -6,8 +6,8 @@ target_link_libraries(ChannelSearchServiceIDL
 )
 
 add_executable(ChannelSearchService
- ChannelMatcher.cpp 
-  ChannelSearchServiceMain.cpp 
+ ChannelMatcher.cpp
+  ChannelSearchServiceMain.cpp
   ChannelSearchServiceImpl.cpp
 )
 target_link_libraries(ChannelSearchService

@@ -1,6 +1,6 @@
 
 #include "StatProfilesExpirationTest.hpp"
- 
+
 REFLECT_UNIT(StatProfilesExpirationTest) (
   "Statistics",
   AUTO_TEST_SLOW,
@@ -146,7 +146,7 @@ StatProfilesExpirationTest::run()
 
   request.referer_kw = kw_text;
   ukeyword_user1.process_request(request, "user keyword profile gen for user 1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       k_channel,
@@ -159,7 +159,7 @@ StatProfilesExpirationTest::run()
     get_gm_time().
     format(AutoTest::DEBUG_TIME_FORMAT);
   request_user2.process_request(request, "request profile gen for user 2");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       cc_disp,
@@ -168,13 +168,13 @@ StatProfilesExpirationTest::run()
 
   request.referer_kw = kw_text;
   ukeyword_user2.process_request(request, "user keyword profile gen for user 2");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       k_channel,
       ukeyword_user2.debug_info.trigger_channels).check(),
     "must get expected channel in trigger_channels debug_info header");
-  
+
   request.referer_kw = kw_disp;
 
   // Passback info profiles generation
@@ -217,7 +217,7 @@ StatProfilesExpirationTest::run()
       cc_text,
       rkeyword_user1.debug_info.ccid).check(),
     "must got expected ccid");
-  
+
   request.referer_kw.clear();
   request.referer = fetch_string("URL");
   request.pl = PAGE_LOAD_ID;
@@ -255,7 +255,7 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   em_user1.process_request(request,
     "inventory, estimation and user trigger match profiles gen for user 1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       channel_id,
@@ -268,7 +268,7 @@ StatProfilesExpirationTest::run()
     format(AutoTest::DEBUG_TIME_FORMAT);
   em_user2.process_request(request,
     "inventory, estimation and user trigger match profiles gen for user 2");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       channel_id,

@@ -37,7 +37,7 @@ namespace AdServer
     typedef std::map<
       unsigned long,
       CategoryIdList,
-      std::less<unsigned long>, 
+      std::less<unsigned long>,
       Generics::TAlloc::AllocOnly<
         std::map<unsigned long, CategoryIdList>::value_type, 256, true> >
       CategoryMap;
@@ -213,11 +213,11 @@ namespace AdServer
         : discover(discover_val),
           threshold(threshold_val)
       {}
-      
+
       bool discover;
       unsigned long threshold;
     };
-    
+
     typedef ReferenceCounting::SmartPtr<ChannelIntervalsPack>
       ChannelIntervalsPack_var;
 
@@ -244,7 +244,7 @@ namespace AdServer
       ChannelsHashMap search_channels;
       ChannelsHashMap url_channels;
       ChannelsHashMap url_keyword_channels;
-      
+
       CategoryMap channel_categories;
       ChannelFeaturesMap channel_features;
 

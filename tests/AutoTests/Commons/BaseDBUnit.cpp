@@ -33,7 +33,7 @@ bool BaseDBUnit::run_test()
     safe_tear_down ();
     throw;
   }
-  restorers_.clear();  
+  restorers_.clear();
   tear_down ();
   return ret;
 }
@@ -47,7 +47,7 @@ void BaseDBUnit::safe_tear_down()
   }
   catch (const eh::Exception& e)
   {
-    AutoTest::Logger::thlog().log(e.what(), Logging::Logger::ERROR); 
+    AutoTest::Logger::thlog().log(e.what(), Logging::Logger::ERROR);
     stat_.error += e.what();
   }
   catch(...)
@@ -55,11 +55,11 @@ void BaseDBUnit::safe_tear_down()
     AutoTest::Logger::thlog().log("Unknown exception",
       Logging::Logger::ERROR);
   }
-  
+
 }
 
-BaseDBUnit::BaseDBUnit(UnitStat& stat_var, 
-                       const char* task_name, 
+BaseDBUnit::BaseDBUnit(UnitStat& stat_var,
+                       const char* task_name,
                        XsdParams params_var) :
   BaseUnit(stat_var, task_name, params_var),
   pq_conn_(open_pq())
@@ -67,7 +67,7 @@ BaseDBUnit::BaseDBUnit(UnitStat& stat_var,
 
 BaseDBUnit::~BaseDBUnit() noexcept
 {
-  try 
+  try
   {
     restorers_.clear();
     pq_conn_.close();

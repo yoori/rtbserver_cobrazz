@@ -491,11 +491,11 @@ Application_::main(int& argc, char** argv)
       }
     }
   }
-  
+
   auto command_it = commands.begin();
   std::string command = *command_it;
   ++command_it;
-  
+
   if(command == "correlate")
   {
     if(command_it == commands.end())

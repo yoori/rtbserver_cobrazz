@@ -1,20 +1,17 @@
 add_executable(UserInfoAdmin
-    Application.cpp
+  Application.cpp
 )
+
 target_link_libraries(UserInfoAdmin
- Generics
- CORBACommons
+  Generics
+  CORBACommons
 
- UtilCommons
- ChannelMatcher
- UserFreqCapProfile
+  UtilCommons
+  ChannelMatcher
+  UserFreqCapProfile
 
- UserInfoManagerIDL
- UserInfoManagerControlIDL
- UserInfoManagerControllerIDL
- UserInfoExchangerIDL
-    UserInfoManagerControllerL
-
+  UserInfoManagerIDL
+  UserInfoManagerControlIDL
+  UserInfoExchangerIDL
+  UserInfoManagerControllerCall
 )
-
-#install(TARGETS UserInfoAdmin DESTINATION ${INSTALL_DIR})

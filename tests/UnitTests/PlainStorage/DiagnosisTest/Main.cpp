@@ -1,5 +1,5 @@
 // @file DiagnosisTest/Main.cpp
- 
+
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -12,8 +12,8 @@
 #include <ProfilingCommons/PlainStorage/RecordLayer.hpp>
 #include <ProfilingCommons/PlainStorage/DefaultAllocatorLayer.hpp>
 
-#include "../TestCommons/TestLayer.hpp" 
-#include "../TestCommons/TestLayerFactory.hpp" 
+#include "../TestCommons/TestLayer.hpp"
+#include "../TestCommons/TestLayerFactory.hpp"
 
 unsigned long
 check_sum(const void* buf, unsigned long sz)
@@ -44,7 +44,7 @@ read_test(MapType& test_map, const char* key, u_int32_t check_sum_val)
   {
     return false;
   }
-  
+
   u_int32_t cs = check_sum(rb->membuf().data(), rb->membuf().size());
   return cs == check_sum_val;
 }
@@ -53,14 +53,14 @@ void
 diagnosis_map(const char* NAME)
 {
   std::cout << "** " << NAME << " (initialize)" << std::endl;
-  
+
   ReferenceCounting::SmartPtr<TestWriteLayer> diagnosis_layer(
     new TestWriteLayer(false, &std::cout));
   ReferenceCounting::SmartPtr<TestBlockAllocator> diagnosis_allocator(
     new TestBlockAllocator(diagnosis_layer, &std::cout));
-  
+
   TestLayerFactory factory;
-  
+
   TestLayerFactory::WriteRecordLayer_var record_layer =
     factory.open(diagnosis_layer, diagnosis_allocator);
 
@@ -83,14 +83,14 @@ void
 large_diagnosis_map(const char* NAME)
 {
   std::cout << "** " << NAME << " (initialize)" << std::endl;
-  
+
   ReferenceCounting::SmartPtr<TestWriteLayer> diagnosis_layer(
     new TestWriteLayer(false, &std::cout));
   ReferenceCounting::SmartPtr<TestBlockAllocator> diagnosis_allocator(
     new TestBlockAllocator(diagnosis_layer, &std::cout));
-  
+
   TestLayerFactory factory;
-  
+
   TestLayerFactory::WriteRecordLayer_var record_layer =
     factory.open(diagnosis_layer, diagnosis_allocator);
 
@@ -113,14 +113,14 @@ void
 fragment_diagnosis_map(const char* NAME)
 {
   std::cout << "** " << NAME << " (initialize)" << std::endl;
-  
+
   ReferenceCounting::SmartPtr<TestWriteLayer> diagnosis_layer(
     new TestWriteLayer(false, &std::cout));
   ReferenceCounting::SmartPtr<TestBlockAllocator> diagnosis_allocator(
     new TestBlockAllocator(diagnosis_layer, &std::cout));
-  
+
   TestLayerFactory factory;
-  
+
   TestLayerFactory::WriteRecordLayer_var record_layer =
     factory.open(diagnosis_layer, diagnosis_allocator);
 
@@ -145,18 +145,18 @@ fragment_diagnosis_map(const char* NAME)
   std::cout << "** " << NAME << " (scenario fin)" << std::endl;
 }
 
-void 
+void
 diagnosis_insert_erase(const char* NAME)
 {
   std::cout << "** " << NAME << " (initialize)" << std::endl;
-  
+
   ReferenceCounting::SmartPtr<TestWriteLayer> diagnosis_layer(
     new TestWriteLayer(false, &std::cout));
   ReferenceCounting::SmartPtr<TestBlockAllocator> diagnosis_allocator(
     new TestBlockAllocator(diagnosis_layer, &std::cout));
-  
+
   TestLayerFactory factory;
-  
+
   TestLayerFactory::WriteRecordLayer_var record_layer =
     factory.open(diagnosis_layer, diagnosis_allocator);
 

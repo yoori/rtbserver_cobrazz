@@ -207,7 +207,7 @@ namespace Action
     add_processor_(false, true, Request::Context::EXTERNAL_ID,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::external_user_id));
-    
+
     add_processor_(true, true, Request::Context::TEST_REQUEST,
       new FrontendCommons::TestRequestParamProcessor<RequestInfo>());
     add_processor_(false, true, Request::Context::IP_ADDRESS,

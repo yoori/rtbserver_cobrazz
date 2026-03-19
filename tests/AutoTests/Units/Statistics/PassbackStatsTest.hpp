@@ -2,39 +2,39 @@
 
 #ifndef _AUTOTEST__PASSBACKSTATSTEST_
 #define _AUTOTEST__PASSBACKSTATSTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 
 namespace DB = AutoTest::DBC;
 namespace ORM = AutoTest::ORM;
 
-       
+
 /**
  * @class PassbackStatsTest
  * @brief PassbackStats logging test
  */
- 
+
 class PassbackStatsTest: public BaseUnit
 {
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::ORM::PassbackStats PassbackStats;
-  
+
 public:
- 
+
   PassbackStatsTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq()),
     today(Generics::Time::get_time_of_day())
   { }
- 
+
   virtual ~PassbackStatsTest() noexcept
   { }
- 
+
 private:
   DB::Conn  conn_;
   NSLookupRequest request;
@@ -64,10 +64,10 @@ private:
   void scenario6();
   void scenario7();
   void scenario8();
- 
+
   ORM::StatsList<PassbackStats> stats_;
   std::list<PassbackStats::Diffs> diffs_;
   std::list<std::string> requests_;
 };
- 
+
 #endif //_AUTOTEST__PASSBACKSTATSTEST_

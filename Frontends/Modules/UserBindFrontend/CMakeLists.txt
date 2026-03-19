@@ -1,5 +1,5 @@
 add_library(UserBindFrontend SHARED
-UserBindFrontend.cpp 
+UserBindFrontend.cpp
   RequestInfoFiller.cpp
 )
 
@@ -18,7 +18,7 @@ target_link_libraries(UserBindFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

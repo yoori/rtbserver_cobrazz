@@ -188,7 +188,7 @@ namespace CampaignSvcs
         ex.what();
       throw Exception(ostr);
     }
-    
+
     // fill campaign level stats
     try
     {
@@ -281,7 +281,7 @@ namespace CampaignSvcs
         ccg_stat.cur_hour_amount = RevenueDecimal::ZERO;
         ccg_stat.cur_hour_comm_amount = RevenueDecimal::ZERO;
         ccg_stat.prev_hour_amount = RevenueDecimal::ZERO;
-        ccg_stat.prev_hour_comm_amount = RevenueDecimal::ZERO;        
+        ccg_stat.prev_hour_comm_amount = RevenueDecimal::ZERO;
         ccg_stat.impressions = rs->get_decimal<ImpRevenueDecimal>(POS_IMPRESSIONS);
         ccg_stat.clicks = rs->get_decimal<ImpRevenueDecimal>(POS_CLICKS);
         ccg_stat.actions = rs->get_decimal<ImpRevenueDecimal>(POS_ACTIONS);
@@ -473,7 +473,7 @@ namespace CampaignSvcs
 
         ccg_stat.tag_stats[
           rs->get_number<unsigned int>(POS_TAG_ID)] = tag_stat;
-        
+
         // fill real hour amounts
         ccg_stat.prev_hour_amount += rs->get_decimal<RevenueDecimal>(
           POS_PREV_ADV_AMOUNT);

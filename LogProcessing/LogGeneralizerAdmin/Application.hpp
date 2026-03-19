@@ -22,13 +22,13 @@ public:
   static Application* instance() /*throw(eh::Exception)*/;
 
 private:
-  typedef AdServer::LogProcessing::LogGeneralizer::NotSupported 
+  typedef AdServer::LogProcessing::LogGeneralizer::NotSupported
     LogGeneralizerNotSupported;
 
-  typedef AdServer::LogProcessing::LogGeneralizer::ImplementationException 
+  typedef AdServer::LogProcessing::LogGeneralizer::ImplementationException
     LogGeneralizerImplementationException;
 
-  typedef AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted 
+  typedef AdServer::LogProcessing::LogGeneralizer::CollectionNotStarted
     LogGeneralizerCollectionNotStarted;
 
   typedef AdServer::LogProcessing::StatInfo_var StatInfo_var;

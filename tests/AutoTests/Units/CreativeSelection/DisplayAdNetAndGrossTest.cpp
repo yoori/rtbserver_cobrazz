@@ -1,5 +1,5 @@
 #include "DisplayAdNetAndGrossTest.hpp"
- 
+
 REFLECT_UNIT(DisplayAdNetAndGrossTest) (
   "CreativeSelection",
   AUTO_TEST_FAST | AUTO_TEST_SLOW
@@ -8,7 +8,7 @@ REFLECT_UNIT(DisplayAdNetAndGrossTest) (
 typedef AutoTest::NSLookupRequest  NSLookupRequest;
 typedef AutoTest::AdClient AdClient;
 
-bool 
+bool
 DisplayAdNetAndGrossTest::run()
 {
   NOSTOP_FAIL_CONTEXT(case_net_campaign_win());
@@ -39,7 +39,7 @@ DisplayAdNetAndGrossTest::case_net_campaign_win()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id,
-      user.debug_info.tag_id).check(), 
+      user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/1 in response");
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -69,7 +69,7 @@ DisplayAdNetAndGrossTest::case_gross_campaign_win()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id,
-      user.debug_info.tag_id).check(), 
+      user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/2 in response");
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -83,7 +83,7 @@ DisplayAdNetAndGrossTest::case_net_campaign_win_with_commission()
 {
   add_descr_phrase("case 3. eCPM Campaign GROSS < eCPM Campaign NET(Commission on)");//ecpm = 400
   // ( 10 / 2) * (1 - 0.3) = ecpm = 350
-  // (8 / 2 )  = ecp = 400 
+  // (8 / 2 )  = ecp = 400
   AdClient user(AdClient::create_user(this));
 
   std::string tag_id = fetch_string("Tag Id/3");
@@ -99,7 +99,7 @@ DisplayAdNetAndGrossTest::case_net_campaign_win_with_commission()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id,
-      user.debug_info.tag_id).check(), 
+      user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/3 in response");
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -130,7 +130,7 @@ DisplayAdNetAndGrossTest::case_publisher_commission()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id1,
-      user.debug_info.tag_id).check(), 
+      user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/4/1 in response");
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -142,7 +142,7 @@ DisplayAdNetAndGrossTest::case_publisher_commission()
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       tag_id2,
-      user.debug_info.tag_id).check(), 
+      user.debug_info.tag_id).check(),
     "must got tag_id = Tag Id/4/2 in response");
   FAIL_CONTEXT(
     AutoTest::equal_checker(

@@ -41,7 +41,7 @@ namespace Commons
       OCIError* oci_error_handler = 0,
       const char* query = 0)
       noexcept;
-        
+
     void throw_oci_error(
       const char* fun,
       const char* oci_op,
@@ -58,7 +58,7 @@ namespace Commons
       const char* query = 0)
       /*throw(SqlException)*/;
 #endif
-      
+
     void throw_type_error(
       const char* fun,
       unsigned long pos,

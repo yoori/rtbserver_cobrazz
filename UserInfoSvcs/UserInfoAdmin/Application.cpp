@@ -61,7 +61,7 @@ namespace
       "--keys-dir=<path to key directory> --persistent\n\n"
     "UserInfoAdmin get-config-timestamp "
     "(-r[--reference=]<user_info_manager_corba_ref>) \n\n";
-  
+
   const unsigned long PRINT_BASE = 0x01;
   const unsigned long PRINT_ADD = 0x02;
   const unsigned long PRINT_HISTORY = 0x04;
@@ -105,9 +105,9 @@ Application_::get_profile_(
     if (profiles_request.base_profile)
     {
       const CORBACommons::OctSeq& base_profile = user_profile->base_user_profile;
-      
+
       std::cout << "Base profile:" << std::endl;
-      
+
       if(print_plain)
       {
         print_plain_(
@@ -116,7 +116,7 @@ Application_::get_profile_(
           base_profile.length(),
           " ");
       }
-      
+
       ChannelsMatcher::print(
         base_profile.get_buffer(),
         base_profile.length(),
@@ -128,9 +128,9 @@ Application_::get_profile_(
     if (profiles_request.add_profile)
     {
       const CORBACommons::OctSeq& add_profile = user_profile->add_user_profile;
-      
+
       std::cout << "Additional profile:" << std::endl;
-      
+
       if (print_plain)
       {
         print_plain_(
@@ -139,7 +139,7 @@ Application_::get_profile_(
           add_profile.length(),
           " ");
       }
-      
+
       ChannelsMatcher::print(
         add_profile.get_buffer(),
         add_profile.length(),
@@ -147,13 +147,13 @@ Application_::get_profile_(
         print_expand,
         print_align);
     }
-    
+
     if (profiles_request.history_profile)
     {
       const CORBACommons::OctSeq& history_profile = user_profile->history_user_profile;
-      
+
       std::cout << "History profile:" << std::endl;
-      
+
       if (print_plain)
       {
         print_plain_(
@@ -162,7 +162,7 @@ Application_::get_profile_(
           history_profile.length(),
           " ");
       }
-      
+
       ChannelsMatcher::history_print(
         history_profile.get_buffer(),
         history_profile.length(),
@@ -181,7 +181,7 @@ Application_::get_profile_(
   catch(const AdServer::UserInfoSvcs::
         UserInfoMatcher::NotReady& e)
   {
-    std::cerr << "Caught UserInfoMatcher::NotReady. :" << 
+    std::cerr << "Caught UserInfoMatcher::NotReady. :" <<
       e.description << std::endl;
   }
   catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
@@ -247,7 +247,7 @@ Application_::print_freq_cap_profile_(
   catch(const AdServer::UserInfoSvcs::
         UserInfoMatcher::NotReady& e)
   {
-    std::cerr << "Caught UserInfoMatcher::NotReady. :" << 
+    std::cerr << "Caught UserInfoMatcher::NotReady. :" <<
       e.description << std::endl;
   }
   catch(const AdServer::UserInfoSvcs::UserInfoManager::ChunkNotFound& e)
@@ -350,7 +350,7 @@ Application_::match_(
     match_params.no_result = false;
     match_params.publishers_optin_timeout =
       CorbaAlgs::pack_time(Generics::Time::ZERO);
-    
+
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
 
     unsigned long i = 0;
@@ -363,7 +363,7 @@ Application_::match_(
 
       ++i;
     }
-    
+
 /*
     CorbaAlgs::fill_sequence(
       matched_page_channel_ids.begin(),
@@ -384,7 +384,7 @@ Application_::match_(
       matched_persistent_channel_ids.begin(),
       matched_persistent_channel_ids.end(),
       match_params.persistent_channel_ids);
-    
+
     std::cout << "matching for user_id='" << user_id << "'" << std::endl <<
       "Input Channels: " << std::endl << "  Page: ";
     CorbaAlgs::print_sequence_fields(
@@ -407,7 +407,7 @@ Application_::match_(
     std::cout << std::endl << "  Persistent: ";
     CorbaAlgs::print_sequence(std::cout, match_params.persistent_channel_ids);
     std::cout << std::endl;;
-    
+
     user_info_matcher->match(user_info, match_params, match_result);
 
     std::cout << "Output Channels: ";
@@ -446,7 +446,7 @@ Application_::match_(
     std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
   }
 }
-          
+
 void
 Application_::remove_user_profile_(
   AdServer::UserInfoSvcs::UserInfoMatcher* user_info_matcher,
@@ -527,7 +527,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::CheckOption opt_plain;
   Generics::AppUtils::CheckOption opt_expand;
   Generics::AppUtils::CheckOption opt_align;
-  
+
   Generics::AppUtils::Option<std::string> opt_user_id;
   Generics::AppUtils::Option<std::string> opt_temp_user_id;
   Generics::AppUtils::Option<std::string> opt_ui_exchanger_ref;
@@ -538,7 +538,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::Option<std::string> opt_matched_search_channels("");
   Generics::AppUtils::Option<std::string> opt_matched_url_channels("");
   Generics::AppUtils::Option<std::string> opt_matched_persistent_channels("");
-  
+
   Generics::AppUtils::Option<unsigned long> opt_provider_id;
   Generics::AppUtils::Option<std::string> opt_customer_id;
   Generics::AppUtils::Option<std::string> opt_user_info;
@@ -551,7 +551,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::Args args(-1);
 
   Generics::AppUtils::Option<unsigned long> opt_portion;
-  
+
   args.add(
     Generics::AppUtils::equal_name("help") ||
     Generics::AppUtils::short_name("h"),
@@ -571,7 +571,7 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::equal_name("align") ||
     Generics::AppUtils::short_name("a"),
     opt_align);
-  
+
   args.add(
     Generics::AppUtils::equal_name("user-id") ||
     Generics::AppUtils::equal_name("uid") ||
@@ -612,9 +612,9 @@ Application_::main(int& argc, char** argv)
   args.add(Generics::AppUtils::equal_name("time"), opt_time);
   args.add(Generics::AppUtils::equal_name("sync"), opt_sync);
   args.add(Generics::AppUtils::equal_name("portion"), opt_portion);
-  
+
   args.parse(argc - 1, argv + 1);
- 
+
   const Generics::AppUtils::Args::CommandList& commands = args.commands();
 
   if(commands.empty() || opt_help.enabled() || *commands.begin() == "help")
@@ -637,7 +637,7 @@ Application_::main(int& argc, char** argv)
     {
       const char* unix_commons_env = getenv("unix_commons_root");
       keys_dir = unix_commons_env ? unix_commons_env : "/opt/foros/server";
-      keys_dir += "/share/uuid_keys"; 
+      keys_dir += "/share/uuid_keys";
     }
 
     keys_dir += opt_persistent.enabled() ? "/private.der" : "/private_temp.der";
@@ -727,7 +727,7 @@ Application_::main(int& argc, char** argv)
         throw Exception(ostr);
       }
     }
-    
+
     if(command != "delete-old-profiles" &&
        command != "get-config-timestamp" &&
        !opt_user_id.installed() && !opt_temp_user_id.installed())
@@ -743,7 +743,7 @@ Application_::main(int& argc, char** argv)
     AdServer::Commons::UserId temp_user_id =
       !opt_temp_user_id->empty() ? AdServer::Commons::UserId(opt_temp_user_id->c_str()) :
       AdServer::Commons::UserId();
-    
+
     if(command == "print")
     {
       get_profile_(
@@ -848,7 +848,7 @@ Application_::main(int& argc, char** argv)
       {
         throw Exception("user_id or provider_id isn't presented");
       }
-      
+
       if(command == "request")
       {
         std::cout << "Request user info. " << std::endl;
@@ -962,7 +962,7 @@ Application_::main(int& argc, char** argv)
         {
           throw Exception("user-info or user-history-info undefined");
         }
-        
+
         /* wait for user request */
         try
         {

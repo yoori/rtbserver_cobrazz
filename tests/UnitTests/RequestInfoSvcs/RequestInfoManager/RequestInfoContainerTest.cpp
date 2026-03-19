@@ -326,7 +326,7 @@ namespace
       const ProcessingState& processing_state)
     {
       const RevenueDecimal& expected_pub_imp_revenue =
-        (ri.expression == "TEST-ABSOLUTE" ? PUB_IMP_REVENUE : PUB_SHARE_REVENUE); // 0.3, 
+        (ri.expression == "TEST-ABSOLUTE" ? PUB_IMP_REVENUE : PUB_SHARE_REVENUE); // 0.3,
       const RevenueDecimal& expected_pub_imp_sys_revenue =
         (ri.expression == "TEST-ABSOLUTE" ? PUB_IMP_SYS_REVENUE : PUB_SHARE_SYS_REVENUE); // 0.1,
 

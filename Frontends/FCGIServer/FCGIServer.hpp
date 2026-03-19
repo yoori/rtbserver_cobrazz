@@ -80,6 +80,6 @@ namespace Frontends
   };
 
   typedef ReferenceCounting::QualPtr<FCGIServer> FCGIServer_var;
-  typedef Generics::Singleton<FCGIServer, FCGIServer_var> FCGIServerApp;  
+  typedef Generics::Singleton<FCGIServer, FCGIServer_var> FCGIServerApp;
 }
 }

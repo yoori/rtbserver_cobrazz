@@ -41,7 +41,7 @@ namespace AutoTest
         Types decode_type,
         const std::string& data) const;
     };
-    
+
     Decoder decoder_;
 
   public:
@@ -84,7 +84,7 @@ namespace AutoTest
     void
     set_decoder(
       ClientRequest* request) const;
-    
+
     /**
      * @brief Represents 'Content-Type' HTTP header.
      */
@@ -189,7 +189,7 @@ namespace AutoTest
      * If you come from Android devices, it is the package's full name
      */
     BidParam<BaiduRequest, ProtoBuf::String> app_bundle_id;
-    
+
     /**
      * @brief Represents BaiduRequest.adslot.slot_visibility.
      * Placement
@@ -213,7 +213,7 @@ namespace AutoTest
      * Publishers set the reserve price, the unit divided
      */
     BidParam<BaiduRequest, ProtoBuf::Int> minimum_cpm;
-    
+
     /**
      * @brief Represents BaiduRequest.adslot.max_video_duration.
      * The maximum length of video ads

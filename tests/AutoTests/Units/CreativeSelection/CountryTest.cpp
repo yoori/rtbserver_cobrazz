@@ -53,8 +53,8 @@ CountryTest::process_testcase(AdClient& test_client, const char *cc_id)
   }
 }
 
- 
-bool 
+
+bool
 CountryTest::run_test()
 {
   add_descr_phrase("Starting"

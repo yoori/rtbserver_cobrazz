@@ -82,7 +82,7 @@ protected:
   {}
 
 private:
-  // MT version 
+  // MT version
   mutable Sync::PosixMutex mutex_gmt_;
   mutable Sync::PosixMutex mutex_isp_;
 
@@ -153,7 +153,7 @@ struct TestBase : public ReferenceCounting::AtomicImpl
 
       if(check_etalon_gmt)
       {
-        // gmt (GlobalColoUserStat) check 
+        // gmt (GlobalColoUserStat) check
         const ColoReachInfoList& gmt_result = reach_processor->result_gmt();
         compare_list(gmt_etalon, gmt_result, "colo reach GMT");
       }

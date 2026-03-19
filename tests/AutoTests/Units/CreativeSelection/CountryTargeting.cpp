@@ -81,7 +81,7 @@ namespace
       true
     }
   };
-  
+
 }
 
 bool
@@ -110,7 +110,7 @@ CountryTargeting::run_test()
       fetch_objects(
         std::inserter(expected_ccs, expected_ccs.begin()),
         TEST_CASES[i].exp_ccs);
-    
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           expected_ccs,
@@ -127,7 +127,7 @@ CountryTargeting::run_test()
         " Check CCs");
     }
   }
-  
+
   return true;
 }
 

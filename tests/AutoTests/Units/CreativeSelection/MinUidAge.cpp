@@ -78,7 +78,7 @@ MinUidAge::uid_age_()
       client.debug_info.history_channels).check(),
     "Check history");
 
-  const TestCase TESTCASES[] = 
+  const TestCase TESTCASES[] =
   {
     {1, 0, 0},
     {12*60*60, 0, "CC/MINAGE_24"},
@@ -94,7 +94,7 @@ MinUidAge::boundary_values_()
   {
     AdClient client(AdClient::create_user(this));
 
-    const TestCase TESTCASES[] = 
+    const TestCase TESTCASES[] =
     {
       {0, "KWD/MINAGE_0", "CC/MINAGE_0"}
     };
@@ -105,7 +105,7 @@ MinUidAge::boundary_values_()
   {
     AdClient client(AdClient::create_user(this));
 
-    const TestCase TESTCASES[] = 
+    const TestCase TESTCASES[] =
     {
       {0, "KWD/MINAGE_10000,KWD/MINAGE_0", "CC/MINAGE_0"},
       {2*365*24*60*60, "KWD/MINAGE_10000,KWD/MINAGE_0", "CC/MINAGE_10000"},
@@ -132,7 +132,7 @@ MinUidAge::non_optin_()
 
   for (size_t i = 0; i < sizeof(clients)/sizeof(*clients); ++i)
   {
-    const TestCase TESTCASES[] = 
+    const TestCase TESTCASES[] =
     {
       {0, "KWD/NONOPTIN", "CC/NONOPTIN"}
     };
@@ -188,11 +188,11 @@ MinUidAge::temporary_()
       client.debug_info.ccid).check(),
     "Check CC (after merging)");
 
-  const TestCase TESTCASES[] = 
+  const TestCase TESTCASES[] =
   {
     {static_cast<int>((now - base_time_).tv_sec) + 60*60, 0, 0},
     {static_cast<int>((now - base_time_).tv_sec) + 90*60, 0, "CC/TEMPORARY"}
-  };    
+  };
 
   process_case(client, TESTCASES);
 }
@@ -203,7 +203,7 @@ MinUidAge::run_test()
   AUTOTEST_CASE(
     uid_age_(),
     "UID age test");
-  
+
   AUTOTEST_CASE(
     boundary_values_(),
     "Boundary values");
@@ -211,11 +211,11 @@ MinUidAge::run_test()
   AUTOTEST_CASE(
     non_optin_(),
     "Not opted-in users");
-  
+
   AUTOTEST_CASE(
     temporary_(),
     "Temporary user test");
-  
+
   return true;
 }
 

@@ -133,7 +133,7 @@ namespace AdServer
       bool operator==(const AppFormatDef& right) const noexcept;
 
     protected:
-      virtual ~AppFormatDef() noexcept 
+      virtual ~AppFormatDef() noexcept
       {}
     };
 
@@ -2080,7 +2080,7 @@ namespace AdServer
         start_user_group_id == right.start_user_group_id &&
         end_user_group_id == right.end_user_group_id &&
         max_pub_share == right.max_pub_share &&
-        ctr_reset_id == right.ctr_reset_id && 
+        ctr_reset_id == right.ctr_reset_id &&
         mode == right.mode &&
         seq_set_rotate_imps == right.seq_set_rotate_imps &&
         delivery_coef == right.delivery_coef &&

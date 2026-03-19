@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__RTBWINPRICENOTIFICATIONTEST_
 #define _AUTOTEST__RTBWINPRICENOTIFICATIONTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 class RTBWinPriceNotificationTest : public BaseDBUnit

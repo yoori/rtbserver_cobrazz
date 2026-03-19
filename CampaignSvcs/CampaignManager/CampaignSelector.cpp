@@ -685,7 +685,7 @@ namespace AdServer
         }
 
         // fetch unknown_ctr_campaign_candidates
-        // filter creatives by ctr with known size 
+        // filter creatives by ctr with known size
         for(CTRWeightedCampaignHolderList::iterator wit =
               unknown_ctr_campaign_candidates.begin();
             wit != unknown_ctr_campaign_candidates.end();
@@ -1203,7 +1203,7 @@ namespace AdServer
             current_ecpm = default_campaign_ecpm_(tag, *ch_text_campaign_it);
             current_ctr = (*ch_text_campaign_it)->ctr;
           }
-          
+
           result_campaign_candidates.push_back(
             WeightedCampaignKeyword(
               tag,
@@ -1788,7 +1788,7 @@ namespace AdServer
       tag_sizes.insert(std::make_pair(
         tag_size->size->size_id, ReferenceCounting::add_ref(tag_size)));
 
-      CPCKeywordCreativeMap filtered_cpc_keyword_map;      
+      CPCKeywordCreativeMap filtered_cpc_keyword_map;
       unsigned long selected_keywords = 0;
 
       // removing multiple ads from same accounts filters
@@ -1940,7 +1940,7 @@ namespace AdServer
         RevenueDecimal non_first_bidders_actual_ecpm_sum(RevenueDecimal::ZERO);
         RevenueDecimal second_bidder_actual_ecpm(RevenueDecimal::ZERO);
         unsigned long bidder_number = 0;
-        
+
         CPCKeywordCreativeMap::reverse_iterator cit =
           filtered_cpc_keyword_map.rbegin();
 
@@ -1962,7 +1962,7 @@ namespace AdServer
             if(bidder_number > 0)
             {
               ++selected_keywords;
-            
+
               // actual_cpc : one click cost in account currency
               RevenueDecimal actual_cpc(RevenueDecimal::ZERO);
               RevenueDecimal actual_ecpm(RevenueDecimal::ZERO); // system currency
@@ -2224,7 +2224,7 @@ namespace AdServer
 
       return false;
     }
-    
+
     void
     CampaignSelector::cross_campaigns_with_keywords_(
       const CampaignIndex::Key& key,

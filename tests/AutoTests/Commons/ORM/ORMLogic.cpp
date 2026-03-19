@@ -75,7 +75,7 @@ namespace AutoTest
     { }
 
     // class TriggerChannel
-       
+
     TriggerChannel::TriggerChannel (
       DB::IConn& connection) :
       PQ::Channeltrigger(connection),
@@ -94,7 +94,7 @@ namespace AutoTest
       PQ::Channeltrigger(from),
       channel_(from.channel_)
     { }
-    
+
     TriggerChannel&
     TriggerChannel::operator=(
       const TriggerChannel& from)
@@ -117,13 +117,13 @@ namespace AutoTest
       return PQ::Channeltrigger::select(id) &&
         channel_.select(channel_id.value());
     }
-    
+
     bool
     TriggerChannel::update(
       bool set_defaults)
     {
       bool result = PQ::Channeltrigger::update(set_defaults);
-      
+
       channel_.triggers_version.set_now();
 
       return result && channel_.update(false);
@@ -137,7 +137,7 @@ namespace AutoTest
 
       channel_.select(channel_id.value());
       channel_.triggers_version.set_now();
-     
+
       return
         result && channel_.update(false);
     }
@@ -146,17 +146,17 @@ namespace AutoTest
     TriggerChannel::del ()
     {
       bool result = PQ::Channeltrigger::del();
-      
+
       channel_.triggers_version.set_now();
 
       return result && channel_.update(false);
     }
-    
+
     bool
     TriggerChannel::del (const ORMInt::value_type& id)
     {
       bool result = PQ::Channeltrigger::del(id);
-     
+
       channel_.triggers_version.set_now();
 
       return  result && channel_.update(false);
@@ -166,18 +166,18 @@ namespace AutoTest
     TriggerChannel::delet ()
     {
       select();
-     
+
       channel_.triggers_version.set_now();
-     
+
       return PQ::Channeltrigger::delet() && channel_.update(false);
     }
-    
+
     bool
     TriggerChannel::delet (
       const ORMInt::value_type& id)
     {
       select(id);
-     
+
       channel_.triggers_version.set_now();
 
       return PQ::Channeltrigger::delet(id) && channel_.update(false);
@@ -211,11 +211,11 @@ namespace AutoTest
       PQ::Channel(from),
       params(from.params)
     { }
-    
+
     BehavioralChannel&
     BehavioralChannel::operator= (const BehavioralChannel& from)
-    { 
-      PQ::Channel::operator=(from); 
+    {
+      PQ::Channel::operator=(from);
       params = from.params;
       return *this;
     }
@@ -243,7 +243,7 @@ namespace AutoTest
       return PQ::Channel::update(set_defaults) ||
         params.update_channel(id(), set_defaults);
     }
-    
+
     bool BehavioralChannel::update (
       const ORMInt::value_type& id,
       bool set_defaults)
@@ -251,7 +251,7 @@ namespace AutoTest
       return PQ::Channel::update(id, set_defaults) ||
         params.update_channel(id, set_defaults);
     }
-    
+
     bool BehavioralChannel::insert (bool set_defaults)
     {
       return PQ::Channel::insert(set_defaults) &&
@@ -270,13 +270,13 @@ namespace AutoTest
         PQ::Channel::del();
     }
 
-    bool BehavioralChannel::delet  (const ORMInt::value_type& id)      
+    bool BehavioralChannel::delet  (const ORMInt::value_type& id)
     {
       return params.delet_channel(id) &&
         PQ::Channel::delet(id);
     }
 
-    bool BehavioralChannel::del  (const ORMInt::value_type& id)      
+    bool BehavioralChannel::del  (const ORMInt::value_type& id)
     {
       return params.del_channel(id) &&
         PQ::Channel::del(id);
@@ -310,7 +310,7 @@ namespace AutoTest
       DB::IConn& connection):
       BehavioralChannel(connection)
     { }
-      
+
     DiscoverChannel::DiscoverChannel (
       DB::IConn& connection,
       const ORMInt::value_type& id) :
@@ -330,7 +330,7 @@ namespace AutoTest
     {
       id_ = id;
       delet_stats_();
-      return BehavioralChannel::delet(id);      
+      return BehavioralChannel::delet(id);
     }
 
     void DiscoverChannel::delet_stats_()
@@ -365,11 +365,11 @@ namespace AutoTest
       account          = _account_id;
       status           = "A";
       qa_status        = "A";
-      
+
       params.minimum_visits   = _minimum_visits;
       params.time_from        = _time_from;
       params.time_to          = _time_to;
-      params.trigger_type     = "S"; //search trigger type 
+      params.trigger_type     = "S"; //search trigger type
     }
 
     SearchChannel::SearchChannel (
@@ -400,20 +400,20 @@ namespace AutoTest
       account          = _account_id;
       status           = "A";
       qa_status        = "A";
-      
+
       params.minimum_visits   = _minimum_visits;
       params.time_from        = _time_from;
       params.time_to          = _time_to;
       params.trigger_type     = "P"; //page trigger type
     }
-    
+
     PageChannel::PageChannel (
       DB::IConn& connection)
       : BehavioralChannel(connection)
     {
       status           = "A";
       qa_status        = "A";
-      
+
       params.minimum_visits   = 0;
       params.time_from        = 0;
       params.time_to          = DEFAULT_TIME_TO;
@@ -645,5 +645,5 @@ namespace AutoTest
       rate.log_in(logger, severity);
     }
   }
- 
+
 }

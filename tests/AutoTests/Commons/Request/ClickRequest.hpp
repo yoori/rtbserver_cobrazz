@@ -11,7 +11,7 @@ namespace AutoTest
    * @brief Presentation of click AdServer request.
    *
    * This request is sent when end user
-   * make click on advertising 
+   * make click on advertising
    */
   class ClickRequest : public BaseRequest
   {
@@ -51,21 +51,21 @@ namespace AutoTest
     /**
      * @brief Represents 'ccid' param.
      *
-     * Campaign creative id 
+     * Campaign creative id
      */
     ClickParam ccid;
 
     /**
      * @brief Represents 'uid' param.
      *Country code of action request
-     * UID - user id. 
+     * UID - user id.
      */
     ClickParam uid;
 
     /**
      * @brief Represents 'requestid' param.
      *
-     * Click request id. 
+     * Click request id.
      */
     ClickParam requestid;
 

@@ -1,5 +1,5 @@
 add_library(PubPixelFrontend SHARED
- RequestInfoFiller.cpp 
+ RequestInfoFiller.cpp
   PubPixelFrontend.cpp
 )
 
@@ -18,7 +18,7 @@ target_link_libraries(PubPixelFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

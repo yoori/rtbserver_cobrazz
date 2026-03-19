@@ -194,7 +194,7 @@ namespace AdServer
     protected:
       struct RequestPool;
 
-      typedef ReferenceCounting::SmartPtr<RequestPool> RequestPool_var;  
+      typedef ReferenceCounting::SmartPtr<RequestPool> RequestPool_var;
 
       class Sender;
 

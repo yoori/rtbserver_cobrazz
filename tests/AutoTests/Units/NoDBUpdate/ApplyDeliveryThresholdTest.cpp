@@ -1,6 +1,6 @@
 
 #include "ApplyDeliveryThresholdTest.hpp"
- 
+
 REFLECT_UNIT(ApplyDeliveryThresholdTest) (
   "NoDBUpdate",
   AUTO_TEST_SLOW
@@ -12,10 +12,10 @@ namespace {
   typedef AutoTest::CampaignChecker CampaignChecker;
 
   const char ASPECT[] = "ApplyDeliveryThresholdTest";
-  const unsigned long INFO = Logging::Logger::INFO;  
+  const unsigned long INFO = Logging::Logger::INFO;
 }
- 
-bool 
+
+bool
 ApplyDeliveryThresholdTest::run_test()
 {
   unsigned long ccg_id = fetch_int("ATR_CCGID");
@@ -54,7 +54,7 @@ ApplyDeliveryThresholdTest::run_test()
         client.debug_info.ccid).check(),
       "must return test CG ccid");
   }
-  
+
   add_descr_phrase("Check changed state");
 
   FAIL_CONTEXT(AutoTest::wait_checker(
@@ -88,12 +88,12 @@ ApplyDeliveryThresholdTest::run_test()
 
   AutoTest::Logger::thlog().stream(INFO, ASPECT) << "Creative cases: " <<
     creative_prc << "%";
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       creative_prc > 1 && creative_prc < 99),
     "Must return creative in ~50% cases");
-  
+
   return true;
 }
 

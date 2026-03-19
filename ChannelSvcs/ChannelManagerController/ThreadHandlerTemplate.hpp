@@ -205,7 +205,7 @@ namespace Protected
       << ". : " << descr;
     set_exception(num, ostr);
   }
-    
+
   template<class CALLER>
   CallTask<CALLER>::CallTask(const CALLER& caller) noexcept
     : caller_(caller)

@@ -78,7 +78,7 @@ namespace ImprTrack
   {
     const String::SubString APPLICATION("adserver");
     const String::SubString SOURCE("imprtrack");
-    const String::SubString INVALID_MAPPING_OPERATION("invalid-mapping");    
+    const String::SubString INVALID_MAPPING_OPERATION("invalid-mapping");
   }
 
   namespace
@@ -535,7 +535,7 @@ namespace ImprTrack
           {
             verify_impression_info.user_id_hash_mod.defined = false;
           }
-          
+
           verify_impression_info.creatives.length(request_info.request_ids.size());
           CORBA::ULong ri = 0;
           RequestInfo::CreativeList::const_iterator cr_it =
@@ -1233,7 +1233,7 @@ namespace ImprTrack
       {
         keywords_ostr << " poadimpc" << *campaign_id_it;
       }
-      
+
       for(auto advertiser_id_it = advertiser_ids.begin(); advertiser_id_it != advertiser_ids.end(); ++advertiser_id_it)
       {
         keywords_ostr << " poadimpa" << *advertiser_id_it;
@@ -1350,7 +1350,7 @@ namespace ImprTrack
         match_params.filter_contextual_triggers = false;
         match_params.publishers_optin_timeout =
           CorbaAlgs::pack_time(Generics::Time::ZERO);
-        
+
         typedef std::set<ChannelMatch> ChannelMatchSet;
         ChannelMatchSet page_channels;
 

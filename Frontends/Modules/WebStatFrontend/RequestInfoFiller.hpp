@@ -98,7 +98,7 @@ namespace WebStat
 
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
-    
+
     typedef Generics::GnuHashTable<
       Generics::SubStringHashAdapter, RequestInfoParamProcessor_var>
       ParamProcessorMap;

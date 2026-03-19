@@ -35,7 +35,7 @@ public:
   const unsigned long failed_percentage;    // percentage of failed response (invalid status or timed-out)
   const unsigned long prolonged_percentage; // percentage of prolonged (duration > intended_time) response
   const unsigned long sampling_size;        // sample for check conditions
-  
+
 };
 
 typedef ReferenceCounting::SmartPtr<ConstraintConfig> ConstraintConfig_var;
@@ -47,7 +47,7 @@ typedef ReferenceCounting::SmartPtr<ConstraintConfig> ConstraintConfig_var;
  */
 class RequestConfig
 {
-    
+
 public:
 
   /**
@@ -56,7 +56,7 @@ public:
    * @param _constraint constraint for request.
    * @param _url Base URL for request.
    * @param _method HTTP-method for request.
-   */  
+   */
   RequestConfig(ConstraintConfig* _constraint,
                 const char* _url = "",
                 const char* _method = "");
@@ -85,7 +85,7 @@ public:
   const std::string url;                  // request base URL
   const std::string method;               // HTTP-method using for request
   const ConstraintConfig_var constraint;  // constraint for request.
-  
+
 protected:
   SelectorPolicyList parameters_;         // parameters selector
   SelectorPolicyList headers_;            // headers selector
@@ -112,7 +112,7 @@ public:
    * @param _constraint constraint for request.
    * @param request XML-presentation of request config.
    * @param request_lists access to parameters/headers/cookies values.
-   */  
+   */
   ParamsRequestConfig(ConstraintConfig* _constraint,
                       const RequestType& request,
                       const RequestLists& request_lists)

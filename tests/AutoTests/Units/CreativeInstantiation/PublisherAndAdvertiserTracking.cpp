@@ -135,14 +135,14 @@ PublisherAndAdvertiserTracking::run_test()
       exp_body,
       client.debug_info.track_pixel_url,
       TestCases[i]);
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         exp_body.str(),
         client.req_response_data()).check(),
       "creative check#" + strof(i+1));
   }
-  
+
   return true;
 }
 

@@ -1,6 +1,6 @@
 
 #include "UrlTriggerTypeTest.hpp"
- 
+
 REFLECT_UNIT(UrlTriggerTypeTest) (
   "TriggerMatching",
   AUTO_TEST_FAST
@@ -23,10 +23,10 @@ namespace {
     { 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0 },
     { 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0 }
   };
-      
+
 }
 
-bool 
+bool
 UrlTriggerTypeTest::run_test()
 {
   AdClient client(AdClient::create_user(this));
@@ -55,14 +55,14 @@ UrlTriggerTypeTest::run_test()
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         unmatched,
-        client.debug_info.trigger_channels, 
+        client.debug_info.trigger_channels,
         AutoTest::SCE_NOT_ENTRY).check(),
       "channels shouldn't match");
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         matched,
-        client.debug_info.trigger_channels, 
+        client.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "page channel should match");
   }

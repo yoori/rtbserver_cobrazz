@@ -39,7 +39,7 @@ namespace Declaration
   struct BaseType: public virtual ReferenceCounting::Interface
   {
     BaseType(const char* name_val);
-    
+
     const char* name() const; // local name
 
     virtual BaseDescriptor_var as_descriptor() noexcept;
@@ -52,7 +52,7 @@ namespace Declaration
 
   protected:
     virtual ~BaseType() noexcept {}
-    
+
   private:
     std::string name_;
   };

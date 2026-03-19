@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__CHANNELINVENTORYESTIMSTATSTEST_
 #define _AUTOTEST__CHANNELINVENTORYESTIMSTATSTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 #include "UserSet.hpp"
 
@@ -18,7 +18,7 @@ class ChannelInventoryEstimStatsTest: public BaseUnit
 
 
   static const unsigned int USERS_COUNT = 25;
-  
+
 protected:
 
 
@@ -32,22 +32,22 @@ public:
     const char* exp_trigger_channels;
   };
 
-  
+
 public:
- 
+
   ChannelInventoryEstimStatsTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn(open_pq())
   {};
- 
+
   virtual ~ChannelInventoryEstimStatsTest() noexcept
   {};
- 
+
 private:
- 
+
   virtual bool run_test();
 
   // Helper functions
@@ -104,7 +104,7 @@ private:
   void test_different_colo_();
 
   Generics::Time base_time;
-  
+
   DB::Conn conn;
 
   AutoTest::Statistics::UserSet users;
@@ -112,5 +112,5 @@ private:
   ORM::StatsArray<ORM::ChannelInventoryEstimStats, 10> dsc_stats_;
 
 };
- 
+
 #endif //_AUTOTEST__CHANNELINVENTORYESTIMSTATSTEST_

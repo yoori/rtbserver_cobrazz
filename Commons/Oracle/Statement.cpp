@@ -76,7 +76,7 @@ namespace Oracle
 
     return 0;
   }
-  
+
   /** SqlStream */
   void SqlStream::set_int(int val) /*throw(SqlException)*/
   {

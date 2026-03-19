@@ -10,7 +10,7 @@ namespace
   typedef AutoTest::ChannelsCheck ChannelsCheck;
   typedef AutoTest::InventoryProfileChecker InventoryProfileChecker;
 
-  const AutoTest::Time UNDEF_DATE = Generics::Time::ZERO - 1; 
+  const AutoTest::Time UNDEF_DATE = Generics::Time::ZERO - 1;
 
   namespace ORM = AutoTest::ORM;
 
@@ -127,7 +127,7 @@ ChannelInventoryTest::run()
   // 1st step
   AdClient base_user(AdClient::create_user(this));
   AUTOTEST_CASE(base_scenario_1(base_user), BASE_SCENARIO);
-  
+
   AdClient active_user1(AdClient::create_user(this, yesterday - 1)),
            active_user2(AdClient::create_user(this, yesterday - 1));
   Stats active_today_stats;
@@ -140,7 +140,7 @@ ChannelInventoryTest::run()
       active_today_diffs),
     ACTIVE_USERS);
 
-  
+
   AUTOTEST_CASE(daily_processing(), "Daily processing");
 
   AdClient delayed_user(AdClient::create_user(this, yesterday - 1));
@@ -151,7 +151,7 @@ ChannelInventoryTest::run()
 
   TemporaryAdClient merge_temp_user(TemporaryAdClient::create_user(this));
   AdClient merge_user(AdClient::create_user(this));
-  // Use current time in this case, 
+  // Use current time in this case,
   // to reduce the likelihood of temporary
   // profile removing by delete-old-profiles procedure.
   // By default, temp_profile_lifetime = 30 mins
@@ -348,7 +348,7 @@ ChannelInventoryTest::active_users_1(AdClient& user1, AdClient& /*user2*/,
   };
 
   Stats yesterday_stats;
-  Diffs yesterday_diffs;  
+  Diffs yesterday_diffs;
   fill_expected_stats_(YESTERDAY_STATISTIC, yesterday_stats, yesterday_diffs);
 
   // We must select today stats before any requests
@@ -385,7 +385,7 @@ ChannelInventoryTest::active_users_2(AdClient& user1, AdClient& user2,
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       ProfileChecker(user1, this)).check());
-    
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       ProfileChecker(user2, this)).check());

@@ -16,7 +16,7 @@ namespace AutoTest
   std::string
   get_logger_name(
     const std::string& description);
-  
+
   /**
    * @class Logger
    * @brief Base logging class for AdServer AutoTests.
@@ -62,7 +62,7 @@ namespace AutoTest
      * @return Returns current trace level.
      */
     unsigned long log_level() noexcept;
-    
+
     /**
      * Clears list of loggers
      */
@@ -213,7 +213,7 @@ namespace AutoTest
   private:
 
     static Sync::Key<Logger> key_;
-    
+
     /**
      * @brief Initializing.
      *

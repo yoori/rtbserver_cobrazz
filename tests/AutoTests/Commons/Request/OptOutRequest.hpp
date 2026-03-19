@@ -48,7 +48,7 @@ namespace AutoTest
      * @brief Represents 'debug-time' param.
      *
      * Determines time of OptOut request.
-     * Parameter is for debugging/testing purposes only. 
+     * Parameter is for debugging/testing purposes only.
      */
     RequestParam <OptOutRequest, TimeParam> debug_time;
 
@@ -64,7 +64,7 @@ namespace AutoTest
      * @brief Represents 'opted_out_url' param.
      *
      * Used only for op=status : specifies URL request should be redirected
-     * if user is opted out. 
+     * if user is opted out.
      */
     OptOutParam opted_out_url;
 
@@ -72,7 +72,7 @@ namespace AutoTest
      * @brief Represents 'opt_undef_url' param.
      *
      * Used only for op=status : specifies URL request should be redirected
-     * if user isn't opted out and hasn't uid. 
+     * if user isn't opted out and hasn't uid.
      */
     OptOutParam opt_undef_url;
 
@@ -88,7 +88,7 @@ namespace AutoTest
      * @brief Represents 'success_url' param.
      *
      * Specifies URL request should be redirected
-     * on successfull setting opt out of type specified. 
+     * on successfull setting opt out of type specified.
      */
     OptOutParam success_url;
 
@@ -126,7 +126,7 @@ namespace AutoTest
      * Specifies URL request should be redirected on any failure.
      */
     OptOutParam fail_url;
-    
+
     /**
      * @brief Represents 'User-Agent' HTTP header.
      */

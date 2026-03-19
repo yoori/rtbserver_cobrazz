@@ -715,7 +715,7 @@ namespace UserInfoSvcs
         ::memcpy(buf, d.data(), d.size());
         char* cbuf = static_cast<char*>(buf);
         cbuf[15] = text[25];
-        cbuf[16] = text[26];        
+        cbuf[16] = text[26];
       }
 
       virtual unsigned long
@@ -951,7 +951,7 @@ namespace UserInfoSvcs
     {
       return uint_encoder_;
     }
-    
+
     if(text.size() == 36 && text[8] == '-' && text[13] == '-' &&
        text[18] == '-' && text[23] == '-')
     {
@@ -1067,6 +1067,6 @@ namespace UserInfoSvcs
       encoders_[index];
     assert(ret);
     return ret;
-  };  
+  };
 };
 };

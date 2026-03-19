@@ -44,7 +44,7 @@ namespace AdServer
       UIMVector uims_;
       std::vector<std::string> hosts_;
     };
-    
+
     typedef ReferenceCounting::SmartPtr<UserInfoClusterControlImpl>
       UserInfoClusterControlImpl_var;
 

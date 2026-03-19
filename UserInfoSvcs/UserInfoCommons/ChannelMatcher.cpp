@@ -41,7 +41,7 @@ namespace AdServer
         ret.visits() = left.visits() + right.visits();
         return ret;
       }
-    };    
+    };
 
     struct ChannelIdLess
     {
@@ -100,11 +100,11 @@ namespace AdServer
         ret.channel_id() = left.channel_id();
         ret.channel_trigger_id() = left.channel_trigger_id();
         ret.last_match_time() = std::max(left.last_match_time(), right.last_match_time());
-        
+
         return ret;
-      }      
+      }
     };
-    
+
     struct HistoryChannelInfoMerge
     {
       HistoryChannelInfoWriter operator()(
@@ -126,7 +126,7 @@ namespace AdServer
         return ret;
       }
     };
-    
+
     struct HistoryChannelInfoFilter
     {
       HistoryChannelInfoFilter(const ChannelsHashMap& channels)
@@ -143,7 +143,7 @@ namespace AdServer
 
     private:
       const ChannelsHashMap& channels_;
-    };    
+    };
 
     struct ExistChannelFilter
     {
@@ -161,7 +161,7 @@ namespace AdServer
 
     private:
       const ChannelsHashMap& channels_;
-    };    
+    };
 
     struct HistoryVisitsMerge
     {
@@ -175,7 +175,7 @@ namespace AdServer
         ret.channel_id() = left.channel_id();
         ret.visits() = left.visits() + right.visits();
         return ret;
-      }      
+      }
     };
 
     struct SessionMatchesMerge
@@ -202,7 +202,7 @@ namespace AdServer
     {
       SessionMatchesFilter() noexcept
       {}
-      
+
       bool operator()(const SessionMatchesWriter& obj) const
         /*throw(eh::Exception)*/
       {
@@ -219,7 +219,7 @@ namespace AdServer
         : channels_(channels),
           now_(now.tv_sec)
       {}
-      
+
       SessionMatchesWriter operator()(const SessionMatchesWriter& obj) const
         /*throw(eh::Exception)*/
       {
@@ -253,7 +253,7 @@ namespace AdServer
           }
         }
       }
-      
+
     private:
       const ChannelsHashMap& channels_;
       long now_;
@@ -265,13 +265,13 @@ namespace AdServer
       HistoryChannelInfoCleaner(const ChannelsHashMap& channels)
         : channels_(channels)
       {}
-      
+
       HistoryChannelInfoWriter
       operator()(const HistoryChannelInfoWriter& writer)
       {
         HistoryChannelInfoWriter ret;
         ret.channel_id() = writer.channel_id();
-        
+
         ChannelsHashMap::const_iterator cit = channels_.find(writer.channel_id());
 
         if (cit != channels_.end())
@@ -292,7 +292,7 @@ namespace AdServer
             }
           }
         }
-        
+
         return ret;
       }
 
@@ -306,7 +306,7 @@ namespace AdServer
       HistoryChannelInfoHistoryVisitsMerge(unsigned long days_offset)
         : days_offset_(days_offset)
       {}
-      
+
       HistoryChannelInfoWriter
       operator()(
         const HistoryChannelInfoReader& left,
@@ -341,7 +341,7 @@ namespace AdServer
 
         return ret;
       }
-      
+
     private:
       unsigned long days_offset_;
     };
@@ -359,7 +359,7 @@ namespace AdServer
       {
         return ret;
       }
-      
+
       HistoryChannelInfoWriter
       operator()(const HistoryChannelInfoReader& reader) const
         noexcept
@@ -390,7 +390,7 @@ namespace AdServer
       {
         HistoryChannelInfoWriter ret;
         ret.channel_id() = right.channel_id();
-        
+
         DaysVisitsWriter dvw;
         dvw.days() = days_offset_;
         dvw.visits() = right.visits();
@@ -402,7 +402,7 @@ namespace AdServer
     private:
       unsigned long days_offset_;
     };
-      
+
     class AudienceChannelConverter
     {
     public:
@@ -446,7 +446,7 @@ namespace AdServer
     /** ChannelsMatcher */
     ChannelsMatcher::ChannelsMatcher()
     {}
-    
+
     ChannelsMatcher::ChannelsMatcher(
       Generics::SmartMemBuf* base_profile,
       Generics::SmartMemBuf* add_profile) noexcept
@@ -465,7 +465,7 @@ namespace AdServer
       static const char* FUN = "ChannelsMatcher::unique_channels()";
 
       AllUniqueChannels uniq_ids;
-      
+
       try
       {
         collect_channel_ids_(base_profile, dictionary, uniq_ids);
@@ -483,7 +483,7 @@ namespace AdServer
           ex.what();
         throw InvalidProfileException(ostr);
       }
-      
+
       ucr.init(uniq_ids);
     }
 
@@ -509,13 +509,13 @@ namespace AdServer
 
       return false;
     }
-    
+
     Generics::Time
     ChannelsMatcher::last_request() const
       /*throw(InvalidProfileException)*/
     {
       static const char* FUN = "ChannelsMatcher::last_request()";
-      
+
       if (base_profile_->membuf().empty())
       {
         return Generics::Time::ZERO;
@@ -546,7 +546,7 @@ namespace AdServer
       /*throw(InvalidProfileException)*/
     {
       static const char* FUN = "ChannelsMatcher::create_time()";
-      
+
       if (base_profile_->membuf().empty())
       {
         return Generics::Time::ZERO;
@@ -585,7 +585,7 @@ namespace AdServer
           ChannelsProfileReader rdr(
             add_profile_->membuf().data(),
             add_profile_->membuf().size());
-          
+
           return Generics::Time(rdr.session_start());
         }
         else if (!base_profile_->membuf().empty())
@@ -593,7 +593,7 @@ namespace AdServer
           ChannelsProfileReader rdr(
             base_profile_->membuf().data(),
             base_profile_->membuf().size());
-          
+
           return Generics::Time(rdr.session_start());
         }
       }
@@ -642,7 +642,7 @@ namespace AdServer
         writer.household() = 0;
         writer.first_colo_id() = UNKNOWN_COLO_ID;
         writer.last_colo_id() = UNKNOWN_COLO_ID;
-        
+
         resave = true;
       }
 
@@ -667,7 +667,7 @@ namespace AdServer
         gdw.latitude().alloc(
           AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
         coord_data.latitude.pack(gdw.latitude().data());
-       
+
         gdw.longitude().alloc(
           AdServer::CampaignSvcs::CoordDecimal::PACK_SIZE);
         coord_data.longitude.pack(gdw.longitude().data());
@@ -699,7 +699,7 @@ namespace AdServer
 
       return res;
     }
-    
+
     template <typename _T1, typename _T2>
     void
     ChannelsMatcher::merge_geo_data_(
@@ -723,12 +723,12 @@ namespace AdServer
           {
             base_it = base_geo_data.end();
             add_it = add_geo_data.end();
-            
+
             break;
           }
-          
+
           res_geo_data.push_back(*base_it);
-          
+
           ++base_it;
           ++geo_data_count;
         }
@@ -739,12 +739,12 @@ namespace AdServer
           {
             base_it = base_geo_data.end();
             add_it = add_geo_data.end();
-            
+
             break;
           }
-          
+
           res_geo_data.push_back(*add_it);
-          
+
           ++add_it;
           ++geo_data_count;
         }
@@ -755,10 +755,10 @@ namespace AdServer
           {
             base_it = base_geo_data.end();
             add_it = add_geo_data.end();
-            
+
             break;
           }
-          
+
           if (read_coord_((*base_it).latitude().get()) ==
               read_coord_((*add_it).latitude().get()) &&
               read_coord_((*base_it).longitude().get()) ==
@@ -773,7 +773,7 @@ namespace AdServer
             {
               res_geo_data.push_back(*add_it);
             }
-            
+
             ++base_it;
             ++add_it;
             ++geo_data_count;
@@ -781,25 +781,25 @@ namespace AdServer
           else
           {
             res_geo_data.push_back(*base_it);
-            
+
             ++base_it;
             ++geo_data_count;
           }
         }
       }
-      
+
       while (base_it != base_geo_data.end() && geo_data_count < MAX_GEO_DATA)
       {
         res_geo_data.push_back(*base_it);
-        
+
         ++base_it;
         ++geo_data_count;
       }
-      
+
       while (add_it != add_geo_data.end() && geo_data_count < MAX_GEO_DATA)
       {
         res_geo_data.push_back(*add_it);
-        
+
         ++add_it;
         ++geo_data_count;
       }
@@ -833,7 +833,7 @@ namespace AdServer
             res_geo_data.push_back(new_geo_data);
             ++geo_data_count;
           }
-          
+
           new_geo_data_inserted = true;
         }
 
@@ -855,13 +855,13 @@ namespace AdServer
           break;
         }
       }
-      
+
       if (!new_geo_data_inserted && geo_data_count < MAX_GEO_DATA)
       {
         res_geo_data.push_back(new_geo_data);
       }
     }
-    
+
     bool
     ChannelsMatcher::merge_triggers_section_(
       ChannelIdVector& result_filtered_channels,
@@ -888,14 +888,14 @@ namespace AdServer
         while (match_it != triggered_channels.end())
         {
           ChannelsHashMap::const_iterator cit = channels.find(match_it->channel_id);
-          
+
           if (cit != channels.end())
           {
             result_channels_set.insert(match_it->channel_id);
 
             res = true;
           }
-          
+
           ++match_it;
         }
       }
@@ -911,13 +911,13 @@ namespace AdServer
             {
               last_triggers.push_back(*rdr_it);
             }
-            
+
             ++rdr_it;
           }
           else if (*rdr_it == *match_it)
           {
             ChannelsHashMap::const_iterator cit = channels.find((*rdr_it).channel_id());
-            
+
             if (cit != channels.end())
             {
               if ((*rdr_it).channel_trigger_id() != 0)
@@ -929,27 +929,27 @@ namespace AdServer
                   time_offset >= (*rdr_it).last_match_time() ?
                   now.tv_sec :
                   (*rdr_it).last_match_time();
-                
+
                 last_triggers.push_back(wr);
               }
-              
+
               if ((!filter_contextual_triggers && cit->second->contextual) ||
                   time_offset >= (*rdr_it).last_match_time() ||
                   match_it->channel_trigger_id == 0)
               {
                 result_channels_set.insert(match_it->channel_id);
-                
+
                 res = true;
               }
             }
-            
+
             ++match_it;
             ++rdr_it;
           }
           else
           {
             ChannelsHashMap::const_iterator cit = channels.find(match_it->channel_id);
-            
+
             if (cit != channels.end())
             {
               if (!cit->second->contextual && match_it->channel_trigger_id != 0)
@@ -958,19 +958,19 @@ namespace AdServer
                 wr.channel_id() = match_it->channel_id;
                 wr.channel_trigger_id() = match_it->channel_trigger_id;
                 wr.last_match_time() = now.tv_sec;
-                
+
                 last_triggers.push_back(wr);
               }
-              
+
               result_channels_set.insert(match_it->channel_id);
-              
+
               res = true;
             }
-            
+
             ++match_it;
           }
         }
-        
+
         while (rdr_it != last_triggers_rdr.end())
         {
           if (channels.find((*rdr_it).channel_id()) != channels.end() &&
@@ -978,14 +978,14 @@ namespace AdServer
           {
             last_triggers.push_back(*rdr_it);
           }
-          
+
           ++rdr_it;
         }
-        
+
         while (match_it != triggered_channels.end())
         {
           ChannelsHashMap::const_iterator cit = channels.find(match_it->channel_id);
-          
+
           if (cit != channels.end())
           {
             if (!cit->second->contextual && match_it->channel_trigger_id != 0)
@@ -994,21 +994,21 @@ namespace AdServer
               wr.channel_id() = match_it->channel_id;
               wr.channel_trigger_id() = match_it->channel_trigger_id;
               wr.last_match_time() = now.tv_sec;
-              
+
               last_triggers.push_back(wr);
             }
-            
+
             result_channels_set.insert(match_it->channel_id);
-            
+
             res = true;
           }
-          
+
           ++match_it;
         }
       }
-      
+
       result_filtered_channels.assign(result_channels_set.begin(), result_channels_set.end());
-      
+
       return res;
     }
 
@@ -1037,7 +1037,7 @@ namespace AdServer
         ChannelsProfileReader::last_search_triggers_Container last_search_triggers;
         ChannelsProfileReader::last_url_triggers_Container last_url_triggers;
         ChannelsProfileReader::last_url_keyword_triggers_Container last_url_keyword_triggers;
-        
+
         res |= merge_triggers_section_(
           result_filtered_channels.page_channels,
           result_profile_triggers.last_page_triggers(),
@@ -1049,7 +1049,7 @@ namespace AdServer
           now,
           repeat_trigger_timeout,
           filter_contextual_triggers);
-        
+
         res |= merge_triggers_section_(
           result_filtered_channels.search_channels,
           result_profile_triggers.last_search_triggers(),
@@ -1061,7 +1061,7 @@ namespace AdServer
           now,
           repeat_trigger_timeout,
           filter_contextual_triggers);
-        
+
         res |= merge_triggers_section_(
           result_filtered_channels.url_channels,
           result_profile_triggers.last_url_triggers(),
@@ -1085,7 +1085,7 @@ namespace AdServer
           now,
           repeat_trigger_timeout,
           filter_contextual_triggers);
-        
+
         return res;
       }
       catch (const eh::Exception& ex)
@@ -1094,7 +1094,7 @@ namespace AdServer
         ostr << FUN << ": Attempt to match invalid profile: " << ex.what();
         throw InvalidProfileException(ostr);
       }
-      
+
       return false;
     }
 
@@ -1111,7 +1111,7 @@ namespace AdServer
       {
         return;
       }
-      
+
       try
       {
         // if profile expired by last request, clear its content
@@ -1181,7 +1181,7 @@ namespace AdServer
         {
           writer.init(
             base_profile_->membuf().data(),
-            base_profile_->membuf().size());          
+            base_profile_->membuf().size());
         }
 
         writer.audience_channels().swap(new_audience_channels);
@@ -1202,7 +1202,7 @@ namespace AdServer
       /*throw(InvalidProfileException)*/
     {
       static const char* FUN = "ChannelsMatcher::remove_audience_channels()";
-      
+
       if (audience_channels.empty() || base_profile_->membuf().size() == 0)
       {
         return;
@@ -1247,7 +1247,7 @@ namespace AdServer
               new_audience_channels.push_back(*w_it);
               ++w_it;
             }
-            
+
             ++c_it;
           }
         }
@@ -1289,7 +1289,7 @@ namespace AdServer
       ChannelsInfoReader base_url_channels(0, 0);
       ChannelsInfoReader base_url_keyword_channels(0, 0);
       ChannelsProfileReader::audience_channels_Container base_audience_channels;
-      
+
       PersistentMatchesReader base_persistent_matches(0, 0);
 
       ChannelsProfileReader::geo_data_Container base_geo_data;
@@ -1306,7 +1306,7 @@ namespace AdServer
       if (base_profile_->membuf().size() != 0)
       {
         base_exists = true;
-        
+
         ChannelsProfileReader base_rdr(
           base_profile_->membuf().data(),
           base_profile_->membuf().size());
@@ -1321,7 +1321,7 @@ namespace AdServer
         base_search_channels = base_rdr.search_channels();
         base_url_channels = base_rdr.url_channels();
         base_url_keyword_channels = base_rdr.url_keyword_channels();
-        
+
         base_persistent_matches = base_rdr.persistent_matches();
         base_household = base_rdr.household();
 
@@ -1332,7 +1332,7 @@ namespace AdServer
         base_geo_data = base_rdr.geo_data();
 
         base_audience_channels = base_rdr.audience_channels();
-        
+
         if (!no_result_)
         {
           for (ChannelsProfileReader::audience_channels_Container::const_iterator it =
@@ -1349,14 +1349,14 @@ namespace AdServer
           }
         }
       }
-      
+
       Generics::Time current_time(
         std::max(static_cast<uint32_t>(now.tv_sec),
                  base_last_request_time));
-      
+
       properties.fraud_request =
         now.tv_sec <= base_ignore_fraud_time;
-      
+
       ChannelsProfileWriter upw;
       upw.version() = CURRENT_BASE_PROFILE_VERSION;
       upw.create_time() = 0;
@@ -1364,7 +1364,7 @@ namespace AdServer
       upw.ignore_fraud_time() = 0;
       upw.last_request_time() = current_time.tv_sec;
       upw.session_start() = 0;
-      
+
       /* fill result profile */
       ChannelsProfileWriter res_upw;
       res_upw.version() = CURRENT_BASE_PROFILE_VERSION;
@@ -1773,7 +1773,7 @@ namespace AdServer
            properties.geo_data_list.push_back(geo_res);
          }
        }
-       
+
        if (!match_to_add)
        {
          base_profile_->membuf().alloc(res_upw.size());
@@ -2055,9 +2055,9 @@ namespace AdServer
        catch (const eh::Exception& ex)
        {
          Stream::Error ostr;
-         ostr << "Attempt to match invalid profile: " << ex.what();        
+         ostr << "Attempt to match invalid profile: " << ex.what();
          throw Exception(ostr);
-       } 
+       }
      }
 
      void ChannelsMatcher::match_section_(
@@ -2124,9 +2124,9 @@ namespace AdServer
        catch (const eh::Exception& ex)
        {
          Stream::Error ostr;
-         ostr << "Attempt to match invalid profile: " << ex.what();        
+         ostr << "Attempt to match invalid profile: " << ex.what();
          throw Exception(ostr);
-       }  
+       }
      }
 
      void ChannelsMatcher::fill_channels_results_(
@@ -2315,7 +2315,7 @@ namespace AdServer
            other_base_rdr = temp_base_rdr;
          }
 
- /*        
+ /*
          Generics::MemBuf base = base_profile_->membuf();
          if (base.empty())
          {
@@ -2348,7 +2348,7 @@ namespace AdServer
              other_base.data(), empty_base_profile_writer.size());
          }
  */
-         ChannelsProfileWriter result_profile_writer; 
+         ChannelsProfileWriter result_profile_writer;
          result_profile_writer.version() = CURRENT_BASE_PROFILE_VERSION;
          result_profile_writer.create_time() = base_create_time;
          result_profile_writer.history_time() =
@@ -2461,9 +2461,9 @@ namespace AdServer
        catch (const eh::Exception& ex)
        {
          Stream::Error ostr;
-         ostr << FUN << ": Attempt to merge invalid profiles: " << ex.what();        
+         ostr << FUN << ": Attempt to merge invalid profiles: " << ex.what();
          throw InvalidProfileException(ostr);
-       }  
+       }
      }
 
      bool ChannelsMatcher::need_history_optimization(
@@ -2577,7 +2577,7 @@ namespace AdServer
        bool* first_today_history_optimization)
      {
        ChannelsProfileReader rdr(
-         base_profile_->membuf().data(), 
+         base_profile_->membuf().data(),
          base_profile_->membuf().size());
 
        Generics::Time current_time(
@@ -2745,7 +2745,7 @@ namespace AdServer
            it != hciw.end(); ++it)
       {
         unsigned long weight = history_matched_(*it, channels);
-        
+
         if (weight != 0)
         {
           HistoryMatchesWriter hmw;
@@ -2770,7 +2770,7 @@ namespace AdServer
       /*throw(InvalidProfileException)*/
     {
       static const char* FUN = "ChannelsMatcher::need_history_optimization_()";
-      
+
       try
       {
         if (!profile->membuf().empty())
@@ -2794,7 +2794,7 @@ namespace AdServer
         Stream::Error ostr;
         ostr << FUN << ": Attempt to match invalid profile: " << ex.what();
         throw InvalidProfileException(ostr);
-      }  
+      }
 
       return false;
     }
@@ -2863,7 +2863,7 @@ namespace AdServer
         }
       }
       */
-      
+
       return res;
     }
 
@@ -2886,7 +2886,7 @@ namespace AdServer
            it != cit->second->today_long_intervals.end(); ++it)
       {
         unsigned long found_visits = 0;
-        
+
         for (HistoryChannelInfoWriter::days_visits_Container::const_iterator d_it =
                hciw.days_visits().begin();
              d_it != hciw.days_visits().end(); ++d_it)
@@ -2945,7 +2945,7 @@ namespace AdServer
         {
           add_weight_(result_channels, channel_id, c_it->second->weight);
         }
-         
+
         if (!c_it->second->short_intervals.empty())
         {
           SessionMatchesWriter smw;
@@ -2954,7 +2954,7 @@ namespace AdServer
 
           ciw.session_matches().push_back(smw);
         }
-  
+
         if (!c_it->second->long_intervals.empty() ||
             !c_it->second->today_long_intervals.empty())
         {
@@ -2969,7 +2969,7 @@ namespace AdServer
           const ChannelIntervalList& tli_list = c_it->second->today_long_intervals;
           ciw.ht_candidates().reserve(ciw.ht_candidates().size() + tli_list.size());
 
-          for (ChannelIntervalList::const_iterator ci_it = tli_list.begin(); 
+          for (ChannelIntervalList::const_iterator ci_it = tli_list.begin();
                ci_it != tli_list.end(); ++ci_it)
           {
             HTCandidatesWriter htcw;
@@ -2977,7 +2977,7 @@ namespace AdServer
             htcw.req_visits() = ci_it->min_visits - 1;
             htcw.visits() = 1;
             htcw.weight() = htcw.req_visits() == 0 ? ci_it->weight : 0;
-            
+
             ciw.ht_candidates().push_back(htcw);
           }
         }
@@ -3015,12 +3015,12 @@ namespace AdServer
       /*throw(InvalidProfileException)*/
     {
       static const char* FUN = "ChannelsMatcher::merge_<>()";
-      
+
       try
       {
         bool base_exists = base != 0;
         bool add_exists = add != 0;
-        
+
         upw.last_request_time() = std::max(
           base ? base->last_request_time() : 0,
           add ? add->last_request_time() : 0);
@@ -3032,7 +3032,7 @@ namespace AdServer
         ChannelsInfoReader base_url_channels(0, 0);
         ChannelsInfoReader base_url_keyword_channels(0, 0);
         ChannelsProfileReader::audience_channels_Container base_audience_channels;
-        
+
         PersistentMatchesReader base_persistent_channels(0, 0);
 
         ChannelsProfileReader::last_page_triggers_Container base_last_page_triggers;
@@ -3049,9 +3049,9 @@ namespace AdServer
           base_search_channels = base->search_channels();
           base_url_channels = base->url_channels();
           base_url_keyword_channels = base->url_keyword_channels();
-          
+
           base_audience_channels = base->audience_channels();
-          
+
           base_persistent_channels = base->persistent_matches();
 
           base_last_page_triggers = base->last_page_triggers();
@@ -3103,36 +3103,36 @@ namespace AdServer
             base_audience_channels.end(),
             std::back_inserter(upw.audience_channels()));
         }
-        
+
         merge_persistent_channels_(
           upw.persistent_matches(),
           base_exists ? &base_persistent_channels : 0,
           add_exists ? &add_persistent_channels : 0);
-        
+
         merge_channels_info_(
-          upw.page_channels(), 
-          channels.page_channels, 
+          upw.page_channels(),
+          channels.page_channels,
           now,
           base_exists ? &base_page_channels : 0,
           add_exists ? &add_page_channels : 0);
 
         merge_channels_info_(
-          upw.url_channels(), 
-          channels.url_channels, 
+          upw.url_channels(),
+          channels.url_channels,
           now,
           base_exists ? &base_url_channels : 0,
           add_exists ? &add_url_channels : 0);
 
         merge_channels_info_(
-          upw.url_keyword_channels(), 
-          channels.url_keyword_channels, 
+          upw.url_keyword_channels(),
+          channels.url_keyword_channels,
           now,
           base_exists ? &base_url_keyword_channels : 0,
           add_exists ? &add_url_keyword_channels : 0);
 
         merge_channels_info_(
-          upw.search_channels(), 
-          channels.search_channels, 
+          upw.search_channels(),
+          channels.search_channels,
           now,
           base_exists ? &base_search_channels : 0,
           add_exists ? &add_search_channels : 0);
@@ -3356,7 +3356,7 @@ namespace AdServer
           prev_channel_id = (*base_it).channel_id();
           tli_count = 0;
         }
-        
+
         if ((*base_it).channel_id() < (*add_it).channel_id())
         {
           if (channels.find((*base_it).channel_id()) != channels.end())
@@ -3379,17 +3379,17 @@ namespace AdServer
         {
           unsigned long channel_id = (*add_it).channel_id();
           ChannelsHashMap::const_iterator c_it = channels.find(channel_id);
-          
+
           if (c_it != channels.end())
           {
-            ChannelIntervalList::const_iterator ci_it = 
+            ChannelIntervalList::const_iterator ci_it =
               c_it->second->today_long_intervals.begin();
 
             if (tli_count < c_it->second->today_long_intervals.size())
             {
               std::advance(ci_it, tli_count);
 
-              int visits = static_cast<int>((*base_it).req_visits()) + 
+              int visits = static_cast<int>((*base_it).req_visits()) +
                 (*add_it).req_visits() - ci_it->min_visits;
 
               HTCandidatesWriter htc;
@@ -3442,7 +3442,7 @@ namespace AdServer
       ColumnProfilePrint::print_profile(
         mb.data(), mb.size(), ostr, print_expand, print_align);
     }
-    
+
     void ChannelsMatcher::history_print(
       const void* profile,
       unsigned long size,
@@ -3451,7 +3451,7 @@ namespace AdServer
       noexcept
     {
       static const char* FUN = "ChannelsMatcher::history_print()";
-      
+
       try
       {
         if (size == 0)
@@ -3480,7 +3480,7 @@ namespace AdServer
       noexcept
     {
       static const char* FUN = "ChannelsMatcher::print()";
-      
+
       try
       {
         if (size == 0)

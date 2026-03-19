@@ -1,6 +1,6 @@
 #ifndef _AUTOTEST__PAUSINGCAMPAIGNREACHINGTEST_
 #define _AUTOTEST__PAUSINGCAMPAIGNREACHINGTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 /**
@@ -12,8 +12,8 @@ class CampaignBudgetTest: public BaseDBUnit
 public:
 
   CampaignBudgetTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   {}

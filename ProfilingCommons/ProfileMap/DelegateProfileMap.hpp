@@ -95,7 +95,7 @@ namespace ProfilingCommons
   {
     return profile_map_->wait_preconditions(key, op_priority);
   }
-  
+
   template<typename KeyType>
   bool
   DelegateProfileMap<KeyType>::
@@ -116,7 +116,7 @@ namespace ProfilingCommons
   {
     profile_map_->save_profile(key, mem_buf, now, priority);
   }
-  
+
   template<typename KeyType>
   bool
   DelegateProfileMap<KeyType>::

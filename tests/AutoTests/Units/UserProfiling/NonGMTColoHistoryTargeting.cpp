@@ -225,7 +225,7 @@ NonGMTColoHistoryTargeting::get_time(
   case GTE_SAME_DAY:
     return midnight + tz_ofset + 30*60;
   case GTE_TZ_HIGH:
-    return midnight + 24*60*60 - tz_ofset + 30*60;      
+    return midnight + 24*60*60 - tz_ofset + 30*60;
   case GTE_GMT_HIGH:
     return midnight - tz_ofset + 30*60;
   }

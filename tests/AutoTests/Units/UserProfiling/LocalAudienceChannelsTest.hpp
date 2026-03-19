@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__LOCALAUDIENCECHANNELSTEST_
 #define _AUTOTEST__LOCALAUDIENCECHANNELSTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class LocalAudienceChannelsTest: public BaseUnit
 {
@@ -20,7 +20,7 @@ public:
 
 private:
 
-  
+
 
   bool run_test();
 

@@ -24,12 +24,12 @@ namespace
     { "TAG/4", false },
     { "TAG/5", true },
     { "TAG/6", false },
-    { "TAG/7", false }, 
+    { "TAG/7", false },
     { "TAG/8", false },
     { "TAG/9", true },
     { "TAG/10", false }
   };
-  
+
 }
 
 bool

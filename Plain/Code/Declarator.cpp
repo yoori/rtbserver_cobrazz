@@ -165,7 +165,7 @@ namespace Code
   {
     return current_namespace_;
   }
-  
+
   Declaration::StructDescriptor_var
   Declarator::declare_struct(
     const char* name,

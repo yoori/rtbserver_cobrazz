@@ -35,7 +35,7 @@ void ChannelTriggerStatsTest::add_stats_(
         channel_trigger_id(
           fetch_int(expected[i].channel_trigger_id)).
         sdate(now_));
-     
+
     stat.description("#" + strof(i+1));
     stat.select(pq_conn_);
 
@@ -98,7 +98,7 @@ ChannelTriggerStatsTest::set_up()
 bool
 ChannelTriggerStatsTest::run()
 {
-  
+
   AUTOTEST_CASE(
     no_tid_case_(),
     "Requests without tid param");
@@ -110,11 +110,11 @@ ChannelTriggerStatsTest::run()
   AUTOTEST_CASE(
     url_kwd_(),
     "Separate Page, Search and URL keyword lists");
-  
+
   AUTOTEST_CASE(
     adsc_6348_(),
     "ADSC-6348");
-  
+
   AUTOTEST_CASE(
     adsc_7962_(),
     "ADSC-7962");
@@ -130,10 +130,10 @@ void ChannelTriggerStatsTest::no_tid_case_()
 {
   Stats stats;
   Diffs diffs;
-  
+
   ChannelTriggerRequest requests[] =
   {
-    // colo tid ccid referer_kw referer search ft 
+    // colo tid ccid referer_kw referer search ft
     { 0, 0, 0, "NoTid/PageTrigger", 0, 0, 0 },
     { 0, 0, 0, 0, 0, "NoTid/SearchTrigger", 0 },
     { 0, 0, 0, 0, "NoTid/UrlTrigger", 0, 0 }
@@ -168,7 +168,7 @@ void ChannelTriggerStatsTest::with_ad_case_()
 
   ChannelTriggerRequest requests[] =
   {
-    // colo tid ccid referer_kw referer search ft 
+    // colo tid ccid referer_kw referer search ft
     { colo_id, tag_id, cc_id, "WithAd/PageTrigger", 0, 0, 0 },
     { colo_id, tag_id, cc_id, 0, 0, "WithAd/SearchTrigger", 0 },
     { colo_id, tag_id, cc_id, 0, "WithAd/UrlTrigger", 0, 0 }
@@ -232,21 +232,21 @@ void ChannelTriggerStatsTest::url_kwd_()
       "URLKWD/Channel/P,URLKWD/Channel/S,URLKWD/Channel/R",
       client.debug_info.trigger_channels).check(),
     "Expected trigger_channels check");
-  
+
   ADD_WAIT_CHECKER(
     "ChannelTriggerStats check",
     AutoTest::stats_diff_checker(
-        pq_conn_, diffs, stats));  
+        pq_conn_, diffs, stats));
 }
 
 void ChannelTriggerStatsTest::adsc_6348_()
 {
   Stats stats;
   Diffs diffs;
-  
+
   ChannelTriggerRequest requests[] =
   {
-    // colo tid ccid referer_kw referer search ft      
+    // colo tid ccid referer_kw referer search ft
     { 0, 0, 0, "ADSC-6348/PageTrigger", 0, 0, 0 }
   };
 
@@ -270,10 +270,10 @@ void ChannelTriggerStatsTest::adsc_7962_()
 {
   Stats stats;
   Diffs diffs;
-  
+
   ChannelTriggerRequest requests[] =
   {
-    // colo tid ccid referer_kw referer search ft 
+    // colo tid ccid referer_kw referer search ft
     {
       0, 0, 0, 0, 0, "ADSC-7962/KEYWORD",
       "ADSC-7962/KEYWORD\nADSC-7962/TEXT1\nADSC-7962/TEXT2" },

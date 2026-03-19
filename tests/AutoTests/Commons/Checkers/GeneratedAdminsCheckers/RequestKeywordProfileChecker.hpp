@@ -10,39 +10,39 @@
 namespace AutoTest
 {
   template<typename ExpectedType, CheckType ch = CT_ONE>
-  class RequestKeywordProfileChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
-            
+  class RequestKeywordProfileChecker_:
+    public AutoTest::Checker
+  {
+    public:
+
       typedef ExpectedType Expected;
 
-      RequestKeywordProfileChecker_(      
-        BaseUnit* test,      
-        const std::string& requestid,      
-        RequestInfoSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        requestid_(requestid),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
-            
-      virtual ~RequestKeywordProfileChecker_() noexcept {}      
-            
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
-            
-    private:    
-            
-      BaseUnit* test_;      
-      std::string requestid_;      
-      RequestInfoSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
-            
-  };  
+      RequestKeywordProfileChecker_(
+        BaseUnit* test,
+        const std::string& requestid,
+        RequestInfoSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        requestid_(requestid),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
+
+      virtual ~RequestKeywordProfileChecker_() noexcept {}
+
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
+
+    private:
+
+      BaseUnit* test_;
+      std::string requestid_;
+      RequestInfoSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
+
+  };
 
   typedef RequestKeywordProfileChecker_<RequestKeywordProfileAdmin::Expected> RequestKeywordProfileChecker;
   typedef RequestKeywordProfileChecker_<std::string, CT_ONE_NOT_EXPECTED> RequestKeywordProfileEmptyChecker;

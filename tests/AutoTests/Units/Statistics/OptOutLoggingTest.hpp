@@ -18,7 +18,7 @@ class OptOutLoggingTest: public BaseUnit
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::ORM::OptOutStats Stat;
   typedef Stat::Diffs Diff;
-  
+
   struct Request
   {
     AutoTest::Time time;
@@ -33,20 +33,20 @@ class OptOutLoggingTest: public BaseUnit
     unsigned short status;
     unsigned long  count;
   };
-  
+
 public:
- 
+
   OptOutLoggingTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
-      XsdParams params_var): 
+      UnitStat& stat_var,
+      const char* task_name,
+      XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn_(open_pq())
   { }
- 
+
   virtual ~OptOutLoggingTest() noexcept
   { }
- 
+
 private:
 
   AutoTest::DBC::Conn conn_;
@@ -59,7 +59,7 @@ private:
   void non_test_mode_();
   void test_mode_();
   void account_timezone_();
-  
+
   template <size_t Count>
   void process_requests_(
     const std::string& description,

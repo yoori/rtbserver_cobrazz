@@ -18,7 +18,7 @@ void
 ChannelsGrannularUpdateTest::set_up()
 {
   add_descr_phrase("Setup");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CHANNEL_SEARCH_SERVER)),
@@ -98,11 +98,11 @@ ChannelsGrannularUpdateTest::page_channel()
     AutoTest::predicate_checker(
       chp.insert()),
     "Must insert page channel");
-  
+
   create_trigger(&chp, "Keyword1");
 
-  std::string page_id(strof(chp.id())); 
-  
+  std::string page_id(strof(chp.id()));
+
   ADD_WAIT_CHECKER(
     "Search admin check",
     ChannelSearchChecker(
@@ -139,7 +139,7 @@ ChannelsGrannularUpdateTest::search_channel()
 
   create_trigger(&chs, "Keyword3");
 
-  std::string search_id(strof(chs.id())); 
+  std::string search_id(strof(chs.id()));
 
   ADD_WAIT_CHECKER(
     "Search admin check",
@@ -151,7 +151,7 @@ ChannelsGrannularUpdateTest::search_channel()
         channel_id(search_id)));
 
   ADD_WAIT_CHECKER(
-    "Match check",      
+    "Match check",
     MatchChecker(this,
       NSLookupRequest().
         search(fetch_string("Keyword3")),
@@ -172,23 +172,23 @@ ChannelsGrannularUpdateTest::expression_channel()
       che.insert()),
     "Must create expression channel");
 
-  std::string expr_id(strof(che.id())); 
+  std::string expr_id(strof(che.id()));
 
   ADD_WAIT_CHECKER(
-    "Search admin check",      
+    "Search admin check",
     ChannelSearchChecker(
       this,
       fetch_string("Keyword1"),
       AutoTest::ChannelSearch,
       AutoTest::ChannelSearchAdmin::Expected().
         channel_id(expr_id)));
-  
+
   std::string regexp =
     "\\(\\[" + strof(chp.id()) + "\\] & "  +
     "\\[" + strof(chs.id()) + "\\]\\)";
 
   ADD_WAIT_CHECKER(
-    "Expression admin check",   
+    "Expression admin check",
     ExpressionChannelChecker(
       this,
       che.id(),
@@ -196,7 +196,7 @@ ChannelsGrannularUpdateTest::expression_channel()
         channel_id(strof(che.id())).
         expression(regexp).
         status("A")));
-  
+
 }
 
 void
@@ -206,7 +206,7 @@ ChannelsGrannularUpdateTest::delete_channel_expression()
      std::string regexp =
        "\\(\\[" + fetch_string("Channel2") + "\\] \\| "  +
        "\\[" + fetch_string("Channel3") + "\\]\\)";
-  
+
      FAIL_CONTEXT(
        AutoTest::wait_checker(
          ExpressionChannelChecker(
@@ -224,14 +224,14 @@ ChannelsGrannularUpdateTest::delete_channel_expression()
 
   channel->status = "D";
   channel->display_status_id = 5; // 5 = Deleted
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       channel->update()),
     "Must update channel state");
 
   ADD_WAIT_CHECKER(
-    "Search channel deleted",     
+    "Search channel deleted",
     ExpressionChannelChecker(
       this,
       fetch_int("Channel3"),
@@ -245,7 +245,7 @@ ChannelsGrannularUpdateTest::delete_channel_expression()
      "\\(\\[" + fetch_string("Channel2") + "\\] \\| NULL\\)";
 
   ADD_WAIT_CHECKER(
-    "Expression changed",     
+    "Expression changed",
     ExpressionChannelChecker(
       this,
       fetch_int("Expr"),
@@ -274,14 +274,14 @@ ChannelsGrannularUpdateTest::channel_rate_change()
     create<ORM::PQ::Channelrate>(fetch_int("Channel4Rate"));
 
   rate->cpm = 5;
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       rate->update()),
     "Must update channel rate");
-  
+
   ADD_WAIT_CHECKER(
-    "Rate changed",     
+    "Rate changed",
     ExpressionChannelChecker(
       this,
       fetch_int("Channel4"),
@@ -297,7 +297,7 @@ ChannelsGrannularUpdateTest::run()
   AUTOTEST_CASE(
     page_channel(),
     "Page channel");
-  
+
   AUTOTEST_CASE(
     search_channel(),
     "Search channel");
@@ -305,11 +305,11 @@ ChannelsGrannularUpdateTest::run()
   AUTOTEST_CASE(
     expression_channel(),
     "Expression channel");
-  
+
   AUTOTEST_CASE(
     delete_channel_expression(),
     "Delete channel of expression");
-  
+
   AUTOTEST_CASE(
     channel_rate_change(),
     "Channel rate change");

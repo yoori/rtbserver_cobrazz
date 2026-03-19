@@ -1,12 +1,12 @@
 #ifndef _AUTOTEST__OPTOUTADVERTISING_
 #define _AUTOTEST__OPTOUTADVERTISING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class OptoutAdvertising : public BaseUnit
 {
-  
+
 public:
 
   struct TestCase {
@@ -18,7 +18,7 @@ public:
   };
 
   typedef AutoTest::NSLookupRequest NSLookupRequest;
-  
+
 public:
   OptoutAdvertising(
     UnitStat& stat_var,
@@ -41,7 +41,7 @@ private:
     const NSLookupRequest& base_request);
 
   void optout_click_and_impression();
-  
+
 };
 
 #endif // _AUTOTEST__OPTOUTADVERTISING_

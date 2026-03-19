@@ -11,7 +11,7 @@
  */
 class BenchmarkBase
 {
-  
+
 public:
 
   DECLARE_EXCEPTION(NotSupported, eh::DescriptiveException);
@@ -102,7 +102,7 @@ public:
     BenchmarkStorage* storage,
     HttpInterface* pool,
     Logging::Logger* logger);
-  
+
   /**
    * @brief Destructor
    *
@@ -122,7 +122,7 @@ protected:
    * @brief Send request from storage
    */
   virtual void send_storage_request();
-  
+
 };
 
 
@@ -138,7 +138,7 @@ public:
    * @brief Constructor
    *
    * @param Application
-   * @param Benchmark size (in requests) 
+   * @param Benchmark size (in requests)
    * @param Opted out benchmark
    * @param request config
    * @param logger
@@ -148,7 +148,7 @@ public:
     BenchmarkStorage* storage,
     HttpInterface* pool,
     Logging::Logger* logger);
-  
+
   /**
    * @brief Destructor
    *

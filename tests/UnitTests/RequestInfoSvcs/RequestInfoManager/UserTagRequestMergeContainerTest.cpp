@@ -120,7 +120,7 @@ struct TestBase: public ReferenceCounting::AtomicImpl
         Stream::Error ostr;
         ostr << "result size non equal size = " << result.size() <<
           " of standard = " << etalon.size() << ". Result:" << std::endl;
-        
+
         {
           int i = 0;
           for (TagRequestGroupProcessor::TagRequestGroupInfoList::
@@ -132,9 +132,9 @@ struct TestBase: public ReferenceCounting::AtomicImpl
             e_it->print(ostr, "  ");
           }
         }
-        
+
         ostr << "Etalon:" << std::endl;
-        
+
         {
           int i = 0;
           for(TagRequestGroupProcessor::TagRequestGroupInfoList::
@@ -850,7 +850,7 @@ int main(int argc, char* argv[]) noexcept
     {
       result += (*it)->run();
     }
-    
+
     return result;
   }
   catch (const eh::Exception& ex)

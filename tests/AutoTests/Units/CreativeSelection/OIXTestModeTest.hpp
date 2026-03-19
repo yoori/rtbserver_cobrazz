@@ -4,27 +4,27 @@
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = AutoTest::ORM;
- 
+
 /**
  * @class OIXTestModeTest
  * @brief Test for OIX test mode
  */
 class OIXTestModeTest: public BaseDBUnit
 {
-public: 
+public:
   OIXTestModeTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       now_((Generics::Time::get_time_of_day().
         get_gm_time().format("%d-%m-%Y:%H-") +
           "00-00").c_str())
   {};
- 
+
   virtual ~OIXTestModeTest() noexcept
   {};
- 
+
 private:
 
   AutoTest::Time now_;

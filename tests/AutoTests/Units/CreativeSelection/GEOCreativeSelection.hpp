@@ -1,14 +1,14 @@
 #ifndef _AUTOTEST__GEOCREATIVESELECTION_
 #define _AUTOTEST__GEOCREATIVESELECTION_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class GEOCreativeSelection : public BaseUnit
 {
 public:
   typedef AutoTest::NSLookupRequest NSLookupRequest;
-  
+
   struct TestRequest
   {
     const char* keyword;
@@ -17,7 +17,7 @@ public:
     const char* expected_channels;
     const char* expected_ccids;
   };
-      
+
 public:
   GEOCreativeSelection(
     UnitStat& stat_var,
@@ -38,7 +38,7 @@ private:
   void testcase(
     const std::string& description,
     const TestRequest (&requests)[COUNT]);
-  
+
   void set_param(
     NSLookupRequest::NSLookupParam& param,
     const char* param_name,

@@ -1,6 +1,6 @@
 
 #include "PrimaryChannelsMatchingTest.hpp"
- 
+
 REFLECT_UNIT(PrimaryChannelsMatchingTest) (
   "TriggerMatching",
   AUTO_TEST_FAST
@@ -12,12 +12,12 @@ namespace
   {
     TF_CHECK_TRIGGERS = 1 // Check Debug-Info triggers fiels
   };
-  
-  
+
+
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::ChannelsCheck ChannelsCheck;
 
-  
+
 
   const PrimaryChannelsMatchingTest::TestCase SIMPLE_CASES[] =
   {
@@ -99,7 +99,7 @@ namespace
     {
       "Url kwd match.",
       "REF14", 0, "BP6", 0,
-      
+
     },
     {
       "Hard triggers matching on "
@@ -108,8 +108,8 @@ namespace
     }
   };
 }
- 
-bool 
+
+bool
 PrimaryChannelsMatchingTest::run_test()
 {
   AUTOTEST_CASE(
@@ -140,7 +140,7 @@ PrimaryChannelsMatchingTest::run_test()
       &NSLookupRequest::referer,
       &NSLookupRequest::referer_kw),
     "Url keyword case");
-  
+
   return true;
 }
 
@@ -191,7 +191,7 @@ PrimaryChannelsMatchingTest::test_case(
       client.debug_info.trigger_channels.begin(),
       client.debug_info.trigger_channels.end());
   }
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
@@ -199,7 +199,7 @@ PrimaryChannelsMatchingTest::test_case(
       got_channels).check(),
     test.description +
       " Expected trigger_channels");
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,

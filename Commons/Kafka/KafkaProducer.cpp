@@ -1,7 +1,7 @@
 /* $Id: KafkaProducer.cpp 185978 2020-07-04 00:12:49Z jurij_kuznecov $
 * @file KafkaProducer.cpp
 * @author Artem V. Nikitin (artem_nikitin@ocslab.com)
-* Kafka producer 
+* Kafka producer
 */
 
 #include "KafkaProducer.hpp"
@@ -21,20 +21,20 @@ namespace AdServer
     namespace Kafka
     {
       // class StatCounter
-      
+
       StatCounter::StatCounter() :
         prev_(0),
         current_(0)
       { }
-        
-          
+
+
       StatCounter&
       StatCounter::operator+=(int val)
       {
         current_ += val;
         return *this;
       }
-      
+
       StatCounter::operator int() const
       {
         return current_;
@@ -51,14 +51,14 @@ namespace AdServer
         os << current - prev << "/" << current;
         return os;
       }
-     
+
       // Producer::EventCb
       Producer::EventCallback::EventCallback(
         ProducerHandler* handler)
         noexcept :
         handler_(handler)
       {}
-          
+
       void
       Producer::EventCallback::event_cb(
         RdKafka::Event& event)
@@ -74,7 +74,7 @@ namespace AdServer
             FUN, event.str().c_str(),
             event.err() == RdKafka::ERR__ALL_BROKERS_DOWN);
         }
-        
+
         break;
 
         // info events
@@ -146,7 +146,7 @@ namespace AdServer
           topic_conf_(RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC))
       {
         static const char* FUN = "Kafka::Producer::ProducerHandler::ProducerHandler";
-        
+
         try
         {
           std::string error_str;
@@ -198,7 +198,7 @@ namespace AdServer
       {
         owner_->stats_->consider_connect();
       }
-            
+
       void
       Producer::ProducerHandler::process_error(
         const char* context,
@@ -211,14 +211,14 @@ namespace AdServer
         }
         owner_->process_error_(context, error);
       }
-      
+
       int
       Producer::ProducerHandler::poll(
         int timeout_ms)
       {
         return producer_->poll(timeout_ms);
       }
-      
+
       int
       Producer::ProducerHandler::flush(
         int timeout_ms)
@@ -270,7 +270,7 @@ namespace AdServer
         Generics::ActiveObjectCallback* callback) :
         Commons::DelegateActiveObject(callback, 1),
         disconnected(false),
-        owner_(owner) 
+        owner_(owner)
       { }
 
       void
@@ -283,7 +283,7 @@ namespace AdServer
           {
             SyncPolicy::ReadGuard lock(lock_);
             condition_.timed_wait(lock_, &STATS_TIMEOUT, true);
-            
+
             Stream::Error ostr;
             ostr << FUN << ": '" << owner_->topic_name_ <<
               "' producer stat: " << std::endl <<
@@ -319,16 +319,16 @@ namespace AdServer
           disconnected = true;
         }
       }
-      
+
       void
       Producer::StatsObject::terminate_() noexcept
       {
         SyncPolicy::WriteGuard lock(lock_);
         condition_.broadcast();
       }
-      
+
       // class Producer
-      
+
       Producer::Producer(
         Logging::Logger* logger,
         Generics::ActiveObjectCallback* callback,
@@ -340,7 +340,7 @@ namespace AdServer
           messages_(config.message_queue_size()),
           stats_(new StatsObject(this, callback))
       {}
-      
+
       Producer::Producer(
         Logging::Logger* logger,
         Generics::ActiveObjectCallback* callback,
@@ -402,7 +402,7 @@ namespace AdServer
               &RECONNECT_TIMEOUT,
               true);
           }
-          
+
           stats_->reconnect += 1;
         }
       }
@@ -421,7 +421,7 @@ namespace AdServer
           logger_->log(ostr.str(), Logging::Logger::ERROR);
         }
       }
-        
+
       void
       Producer::produce_(ProducerHandler& handler)
       {
@@ -445,7 +445,7 @@ namespace AdServer
 
         handler.poll();
       }
-      
+
       void
       Producer::terminate_() noexcept
       {
@@ -475,13 +475,13 @@ namespace AdServer
         return stats_->error_overflow +
           stats_->error_exception;
       }
-      
+
       unsigned long
       Producer::sent() const
       {
         return stats_->sent;
       }
-      
+
       unsigned long
       Producer::sent_bytes() const
       {

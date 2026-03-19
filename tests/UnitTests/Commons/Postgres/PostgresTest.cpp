@@ -65,7 +65,7 @@ namespace AdServer
   namespace UnitTests
   {
 
-    class ConnectionActionTask: public Generics::TaskGoal 
+    class ConnectionActionTask: public Generics::TaskGoal
     {
     public:
       ConnectionActionTask(
@@ -80,7 +80,7 @@ namespace AdServer
 
     private:
       virtual ~ConnectionActionTask() noexcept {};
-      PostgresTest *test_; 
+      PostgresTest *test_;
       Commons::Postgres::Environment* env_;
     };
 
@@ -261,7 +261,7 @@ namespace AdServer
 
     void PostgresTest::log_(const char* message, unsigned int level) noexcept
     {
-      file_logger_->log(String::SubString(message), level); 
+      file_logger_->log(String::SubString(message), level);
     }
 
     void PostgresTest::generate_record_(Record& rec) noexcept
@@ -579,7 +579,7 @@ namespace AdServer
         log_("Create function test_obj_func");
         res = con->execute_query(sql_create_obj_func);
         log_("Create statement for test_obj_func");
-        AdServer::Commons::Postgres::Statement_var stm = 
+        AdServer::Commons::Postgres::Statement_var stm =
           new AdServer::Commons::Postgres::Statement(sql_exec_obj_func);
         Commons::Postgres::ObjectVector objs;
         init_objs_(objs);
@@ -626,7 +626,7 @@ namespace AdServer
         do
         {
           log_("Create statement", LEVEL_HIGH);
-          AdServer::Commons::Postgres::Statement_var stm = 
+          AdServer::Commons::Postgres::Statement_var stm =
             new AdServer::Commons::Postgres::Statement(sql_8);
           fractional = 0;
           stm->set_value(1, TestDecimal2(false, whole, fractional));
@@ -647,7 +647,7 @@ namespace AdServer
           }
         } while(whole < 100000000);
         log_("Try to select values from table PostgressTestTable");
-        AdServer::Commons::Postgres::Statement_var stm = 
+        AdServer::Commons::Postgres::Statement_var stm =
           new AdServer::Commons::Postgres::Statement(sql_3);
         res = con->execute_statement(stm, false, Commons::Postgres::BINARY_FORMAT);
         log_("The values selected", LEVEL_HIGH);
@@ -700,7 +700,7 @@ namespace AdServer
       AdServer::Commons::Postgres::Connection* con) noexcept
     {
       log_("Execute performance query in 'row-by-row' mode");
-      AdServer::Commons::Postgres::Statement_var stm = 
+      AdServer::Commons::Postgres::Statement_var stm =
         new AdServer::Commons::Postgres::Statement(sql_query_performance);
       Generics::Timer timer;
       timer.start();
@@ -720,7 +720,7 @@ namespace AdServer
       AdServer::Commons::Postgres::Connection* con) noexcept
     {
       log_("Execute performance query in 'full fetch' mode");
-      AdServer::Commons::Postgres::Statement_var stm = 
+      AdServer::Commons::Postgres::Statement_var stm =
         new AdServer::Commons::Postgres::Statement(sql_query_performance);
       Generics::Timer timer;
       timer.start();
@@ -743,7 +743,7 @@ namespace AdServer
       {
         file_logger_->sstream(LEVEL_MIDDLE)
           << "Execute performance query in 'cursor(" << i << ")' mode";
-        AdServer::Commons::Postgres::Statement_var stm = 
+        AdServer::Commons::Postgres::Statement_var stm =
           new AdServer::Commons::Postgres::Statement(sql_query_performance);
         Generics::Timer timer;
         timer.start();
@@ -772,7 +772,7 @@ namespace AdServer
           mes << "Created connection to '" << database_ << '\'';
           log_(mes.str().c_str());
         }
-        
+
         query_perf_one_row(con);
         query_perf_all_row(con);
         query_perf_cursor(con);
@@ -895,7 +895,7 @@ namespace AdServer
         res = con->execute_query(sql_2);
         log_("The values inserted");
         log_("Create statement", LEVEL_HIGH);
-        AdServer::Commons::Postgres::Statement_var stm = 
+        AdServer::Commons::Postgres::Statement_var stm =
           new AdServer::Commons::Postgres::Statement(sql_3);
         res = con->execute_statement(stm);
         res.reset();//destroy res, only after this possible to make a new query in async mode
@@ -908,13 +908,13 @@ namespace AdServer
       }
       catch(AdServer::Commons::Postgres::SqlException& e)
       {
-        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE) 
+        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE)
           << e.what() << std::endl;
         ret_value = error;
       }
       catch(const eh::Exception& e)
       {
-        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE) 
+        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE)
           << "Error on connection actions '"
           << database_ << "' :" << e.what() << std::endl;
         ret_value = error;
@@ -951,13 +951,13 @@ namespace AdServer
       }
       catch(AdServer::Commons::Postgres::SqlException& e)
       {
-        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE) 
+        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE)
           << e.what() << std::endl;
         ret_value = error;
       }
       catch(const eh::Exception& e)
       {
-        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE) 
+        file_logger_->sstream(error ? LEVEL_ERROR : LEVEL_MIDDLE)
           << "Error on dropping " << table << " table: "
           << e.what() << std::endl;
         ret_value = error;
@@ -970,7 +970,7 @@ namespace AdServer
       try
       {
         log_("Creating environment");
-        Commons::Postgres::Environment_var env = 
+        Commons::Postgres::Environment_var env =
           new Commons::Postgres::Environment(database_.c_str());
         log_("Creating connection");
         Commons::Postgres::Connection_var con = env->create_connection();
@@ -978,7 +978,7 @@ namespace AdServer
       }
       catch(const eh::Exception& e)
       {
-        file_logger_->sstream(LEVEL_ERROR) 
+        file_logger_->sstream(LEVEL_ERROR)
           << "Error on testing environment '"
           << database_ << "' :" << e.what();
       }
@@ -991,7 +991,7 @@ namespace AdServer
       try
       {
         log_("Creating environment");
-        Commons::Postgres::Environment_var env = 
+        Commons::Postgres::Environment_var env =
           new Commons::Postgres::Environment(database_.c_str());
         log_("Creating connection pool");
         Commons::Postgres::ConnectionPool_var pool =
@@ -1011,7 +1011,7 @@ namespace AdServer
           {
             log_("Try to get a new connection on deactive pool");
             con = pool->get_connection();
-            file_logger_->sstream(LEVEL_ERROR) 
+            file_logger_->sstream(LEVEL_ERROR)
               << "success getting connection  on deactive pool ";
             return 1;
           }
@@ -1034,7 +1034,7 @@ namespace AdServer
       }
       catch(const eh::Exception& e)
       {
-        file_logger_->sstream(LEVEL_ERROR) 
+        file_logger_->sstream(LEVEL_ERROR)
           << "Error on testing pool '"
           << database_ << "' :" << e.what();
         res = 1;
@@ -1048,7 +1048,7 @@ namespace AdServer
       const char* /*error_code*/) noexcept
     {
       const std::string& str = description.str();
-      log_(str.c_str(), 0); 
+      log_(str.c_str(), 0);
     }
 
     void ConnectionActionTask::execute() noexcept
@@ -1088,7 +1088,7 @@ namespace AdServer
           con->execute_query(sql_1);
         log_("Try to insert values into table PostgressTestTable");
         log_("Create statement", LEVEL_HIGH);
-        AdServer::Commons::Postgres::Statement_var stm = 
+        AdServer::Commons::Postgres::Statement_var stm =
           new AdServer::Commons::Postgres::Statement(sql_5);
         Record rec, rec_result;
         generate_record_(rec);
@@ -1098,7 +1098,7 @@ namespace AdServer
           err << "Generating values: '" << rec.string_value
             << "', " << rec.int_value << ", " << rec.num_value
             << ", " << rec.date_value << ", " << rec.time_value
-            << ", " << rec.timestamp_value << ", " << rec.char_value 
+            << ", " << rec.timestamp_value << ", " << rec.char_value
             << ", " << rec.defnum_value << ".";
           log_(err.str().str().c_str(), LEVEL_HIGH);
         }
@@ -1131,13 +1131,13 @@ namespace AdServer
           date_from_timestamp = res->get_date(6);
           time_from_timestamp = res->get_time(6);
           calc_time = rec_result.timestamp_value - Generics::Time(
-            (rec_result.timestamp_value.tv_sec / 86400) * 86400); 
+            (rec_result.timestamp_value.tv_sec / 86400) * 86400);
           rec_result.char_value = res->get_char(7);
           rec_result.defnum_value = res->get_decimal<TestDecimal2>(8);
           if(rec.string_value != rec_result.string_value)
           {
             Stream::Error err;
-            err << "String values isn't equal: '" << rec.string_value 
+            err << "String values isn't equal: '" << rec.string_value
               << "' != '" << rec_result.string_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1145,7 +1145,7 @@ namespace AdServer
           if(rec.int_value != rec_result.int_value)
           {
             Stream::Error err;
-            err << "Integer values isn't equal: '" << rec.int_value 
+            err << "Integer values isn't equal: '" << rec.int_value
               << "' != '" << rec_result.int_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1153,7 +1153,7 @@ namespace AdServer
           if(rec.num_value != rec_result.num_value)
           {
             Stream::Error err;
-            err << "Decimal values isn't equal: '" << rec.num_value 
+            err << "Decimal values isn't equal: '" << rec.num_value
               << "' != '" << rec_result.num_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1161,7 +1161,7 @@ namespace AdServer
           if(rec.date_value != rec_result.date_value)
           {
             Stream::Error err;
-            err << "Date values isn't equal: '" << rec.date_value 
+            err << "Date values isn't equal: '" << rec.date_value
               << "' != '" << rec_result.date_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1169,7 +1169,7 @@ namespace AdServer
           if(rec.time_value != rec_result.time_value)
           {
             Stream::Error err;
-            err << "Time values isn't equal: '" << rec.time_value 
+            err << "Time values isn't equal: '" << rec.time_value
               << "' != '" << rec_result.time_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1179,7 +1179,7 @@ namespace AdServer
           {
             Stream::Error err;
             err << "Date in timestamp values isn't equal date: '"
-              << rec_result.timestamp_value 
+              << rec_result.timestamp_value
               << "' != '" << date_from_timestamp << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1188,7 +1188,7 @@ namespace AdServer
           {
             Stream::Error err;
             err << "Time in timestamp values isn't equal time: '"
-              << calc_time 
+              << calc_time
               << "' != '" << time_from_timestamp << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1196,7 +1196,7 @@ namespace AdServer
           if(rec.timestamp_value != rec_result.timestamp_value)
           {
             Stream::Error err;
-            err << "Timestamp values isn't equal: '" << rec.timestamp_value 
+            err << "Timestamp values isn't equal: '" << rec.timestamp_value
               << "' != '" << rec_result.timestamp_value << "', Postgres epoche is '"
               << POSTGRES_EPOCH_DATE << '\'';
             log_(err.str().str().c_str(), 0);
@@ -1205,7 +1205,7 @@ namespace AdServer
           if(rec.char_value != rec_result.char_value)
           {
             Stream::Error err;
-            err << "Char values isn't equal: '" << rec.char_value 
+            err << "Char values isn't equal: '" << rec.char_value
               << "' != '" << rec_result.char_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1213,7 +1213,7 @@ namespace AdServer
           if(rec.int_value != rec_result.int_value)
           {
             Stream::Error err;
-            err << "String values isn't equal: '" << rec.int_value 
+            err << "String values isn't equal: '" << rec.int_value
               << "' != '" << rec_result.int_value << '\'';
             log_(err.str().str().c_str(), 0);
             ret_value |= 1;
@@ -1230,7 +1230,7 @@ namespace AdServer
         }
         if (count_records != 1)
         {
-          file_logger_->sstream(LEVEL_ERROR) 
+          file_logger_->sstream(LEVEL_ERROR)
             << "Unexpected count of rows " << res->rows() << " in resultset";
         }
         log_("Try to insert second record into table PostgressTestTable");
@@ -1245,7 +1245,7 @@ namespace AdServer
         }
         if (count_records != 2)
         {
-          file_logger_->sstream(LEVEL_ERROR) 
+          file_logger_->sstream(LEVEL_ERROR)
             << "Unexpected count of rows " << res->rows() << " in resultset";
         }
         drop_table_(con);
@@ -1274,7 +1274,7 @@ namespace AdServer
         task_runner->activate_object();
 
         log_("Creating environment");
-        Commons::Postgres::Environment_var env = 
+        Commons::Postgres::Environment_var env =
           new Commons::Postgres::Environment(database_.c_str());
         log_("Creating connection pool");
         Commons::Postgres::ConnectionPool_var pool =
@@ -1328,7 +1328,7 @@ namespace AdServer
         return 1;
       }
     }
-    
+
   }
 }
 

@@ -10,7 +10,7 @@ namespace
 
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::ChannelsCheck ChannelsCheck;
-  
+
   const unsigned int REQUEST_SIZE = 2;
 
   struct UrlChannelCase
@@ -365,7 +365,7 @@ namespace
       MultiLangChannelMatching::KCE_USE_KN | MultiLangChannelMatching::KCE_USE_FT
     }
   };
-  
+
   const MultiLangChannelMatching::KeywordChannelCase LINGJOIN_CENTRAL[] =
   {
     {
@@ -400,12 +400,12 @@ namespace
   };
 }
 
-bool 
+bool
 MultiLangChannelMatching::run_test()
 {
   {
     AdClient client(AdClient::create_user(this));
-    
+
     AUTOTEST_CASE(
       keyword_channels(client, SIMPLE_CASES),
       "Simple cases");
@@ -443,7 +443,7 @@ MultiLangChannelMatching::run_test()
     AdClient client(
       AdClient::create_user(
         this, AutoTest::UF_FRONTEND_MINOR));
-    
+
     AUTOTEST_CASE(
       keyword_channels(client, LINGJOIN_REMOTE),
       "Lingjoin remote");
@@ -490,7 +490,7 @@ MultiLangChannelMatching::keyword_channels(
       request.kn = 1;
     }
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
@@ -498,7 +498,7 @@ MultiLangChannelMatching::keyword_channels(
         client.debug_info.trigger_channels).check(),
       tests[i].description +
         " Expected trigger_channels check");
-    
+
     if (tests[i].expected_search_phrase)
     {
       FAIL_CONTEXT(
@@ -520,8 +520,8 @@ MultiLangChannelMatching::keyword_channels(
         tests[i].description +
             " Unexpected trigger_channels check");
     }
-   
-  }  
+
+  }
 }
 
 void
@@ -545,5 +545,5 @@ MultiLangChannelMatching::url_channels()
         client.debug_info.trigger_channels).check(),
       URL_CASES[i].description +
           " Expected trigger_channels check");
-  }  
+  }
 }

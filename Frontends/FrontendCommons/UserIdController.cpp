@@ -6,7 +6,7 @@ namespace
     AdServer::Commons::PROBE_USER_ID);
   Generics::SignedUuidProbe null_generator{
     Generics::Uuid()};
-  const std::string PROBE_USER_ID_STR = 
+  const std::string PROBE_USER_ID_STR =
     AdServer::Commons::PROBE_USER_ID.to_string();
   const uint32_t CURRENT_SSP_USER_ID_MARKER = 1;
 }
@@ -145,7 +145,7 @@ namespace AdServer
     bool data_expected)
     /*throw(eh::Exception)*/
   {
-    if (PROBE_USER_ID_STR == uid_str) 
+    if (PROBE_USER_ID_STR == uid_str)
     {
       return probe_generator.construct();
     }

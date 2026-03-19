@@ -47,7 +47,7 @@ namespace Commons
 
   protected:
     std::string RequestInfoType::* field_;
-  };  
+  };
 
   // JsonNumberParamProcessor
   template<typename RequestInfoType, typename NumberType>

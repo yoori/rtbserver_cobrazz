@@ -18,7 +18,7 @@ struct SessSiteTimeoutsTest::Request
 };
 
 namespace
-{     
+{
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::TemporaryAdClient TemporaryAdClient;
   typedef AutoTest::NSLookupRequest NSLookupRequest;
@@ -158,16 +158,16 @@ namespace
       0, 0, 0, 1
     }
   };
-  
+
 
 }
 
-bool 
+bool
 SessSiteTimeoutsTest::run_test()
 {
   no_track = fetch_string("no_track_words").c_str();
   no_adv = fetch_string("no_adv_words").c_str();
-  
+
   AUTOTEST_CASE(
     testcase(NOADS_TIMEOUT),
     "Site with noads_timeout.");
@@ -237,7 +237,7 @@ void SessSiteTimeoutsTest::testcase(
       FAIL_CONTEXT(
         checker.check(),
         "Ccid check#" + strof(i));
-    
+
       FAIL_CONTEXT(
         AutoTest::equal_checker(
           exp_tag,
@@ -262,7 +262,7 @@ void SessSiteTimeoutsTest::merge_users()
   persistent1.process_request(request);
   persistent2.process_request(request);
 
-  // Temporary user creation  
+  // Temporary user creation
   TemporaryAdClient temporary1(
     TemporaryAdClient::create_user(this));
   TemporaryAdClient temporary2(
@@ -283,7 +283,7 @@ void SessSiteTimeoutsTest::merge_users()
 
   request.debug_time = now + SESSION_TIMEOUT + 1;
   persistent4.merge(temporary3, request);
-  
+
   request.debug_time = now + 2*SESSION_TIMEOUT - 1;
   persistent1.merge(temporary1, request);
   persistent3.merge(temporary2, request);

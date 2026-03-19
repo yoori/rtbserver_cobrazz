@@ -28,7 +28,7 @@ namespace Declaration
   {
   public:
     BaseDescriptor(const char* name_val);
-    
+
     virtual SimpleDescriptor_var as_simple() noexcept;
 
     virtual StructDescriptor_var as_struct() noexcept;

@@ -306,7 +306,7 @@ namespace AutoTest
       }
       return true;
     }
-  }  
+  }
 
   // OpenRTBResponse
 
@@ -424,7 +424,7 @@ namespace AutoTest
     Generics::ArrayAutoPtr<char> body_holder(body.length() + 1);
     char* parse_end;
     strcpy(body_holder.get(), body.c_str());
-    
+
     status_ = json_parse(
       body_holder.get(), &parse_end, &root_value, json_allocator);
 
@@ -436,7 +436,7 @@ namespace AutoTest
 
   OpenRTBResponse::~OpenRTBResponse()
   { }
-  
+
   // OpenRTBCid
   OpenRTBCid::OpenRTBCid(AdClient& client) :
     OpenRTBResponse(client.req_response_data()),
@@ -497,7 +497,7 @@ namespace AutoTest
           expected_.size() << "(expected) != " << response_.bids().size() << "(got))";
         throw CheckFailed(err);
       }
-      return false;      
+      return false;
     }
     ExpectedList::const_iterator
       e_it = expected_.begin(),

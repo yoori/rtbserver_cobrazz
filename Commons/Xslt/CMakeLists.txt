@@ -1,7 +1,7 @@
 include_directories(${LIBXML2_INCLUDE_DIRS})
 
 
-add_executable(XslTransformAdmin 
+add_executable(XslTransformAdmin
     XslTransformAdmin.cpp
 )
 target_link_libraries(XslTransformAdmin
@@ -9,7 +9,7 @@ XslTransformer Generics pthread
 )
 
 add_library(XslTransformer STATIC
-    LibxsltTransformer.cpp 
+    LibxsltTransformer.cpp
     XslTransformer.cpp
 
 )

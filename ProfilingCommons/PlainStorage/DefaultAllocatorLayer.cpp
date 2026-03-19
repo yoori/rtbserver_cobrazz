@@ -11,7 +11,7 @@ namespace PlainStorage
     // number of blocks that will be allocated if all blocks is used >= 2
     const unsigned long ALLOCATE_PORTION = 100;
   }
-  
+
   namespace
   {
     const char DEFAULT_ALLOCATOR_CONTROL_INDEX_PROP_NAME[] =

@@ -37,14 +37,14 @@ class NewFileChecker
     FileCollector(std::set<std::string>& res_val)
       : res(res_val)
     {}
-    
+
     bool
     operator ()(const char* full_path, const struct stat&) noexcept
     {
       res.insert(full_path);
       return true;
     }
-    
+
     std::set<std::string>& res;
   };
 
@@ -65,7 +65,7 @@ public:
   {
     std::set<std::string> current_state;
     FileCollector coll(current_state);
-    
+
     Generics::DirSelect::directory_selector(
       target_path_.c_str(),
       coll,
@@ -86,7 +86,7 @@ public:
   std::string target_path_;
   std::set<std::string> first_state_;
 };
-  
+
 int
 user_info_map_test()
 {
@@ -153,7 +153,7 @@ user_info_map_test()
       }
     }
   }
-  */  
+  */
   {
     /* create record in past & test expired clearing functionality */
     system(("rm -r " + *root_path + TEST_FOLDER_EXPIRE +
@@ -170,7 +170,7 @@ user_info_map_test()
 
     NewFileChecker file_checker(
       (*root_path + TEST_FOLDER_EXPIRE).c_str());
-    
+
     {
       Generics::SmartMemBuf_var buf(new Generics::SmartMemBuf);
       Generics::MemBuf arr(5);
@@ -198,14 +198,14 @@ user_info_map_test()
         << std::endl;
     }
   }
-  
+
   return 0;
 }
 
 bool
 init(int& argc, char**& argv) /*throw(eh::Exception)*/
 {
-  using namespace Generics::AppUtils; 
+  using namespace Generics::AppUtils;
   Args args;
   CheckOption opt_help;
 
@@ -227,7 +227,7 @@ init(int& argc, char**& argv) /*throw(eh::Exception)*/
   }
   return true;
 }
-  
+
 int
 main(int argc, char* argv[]) noexcept
 {

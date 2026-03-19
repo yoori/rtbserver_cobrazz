@@ -112,7 +112,7 @@ namespace
     //   ChannelUsageStatsTotal
     //       last_use  colo_id channel_id   imps  clicks actions revenue
     //     2 day later    1     channel#2   +600     +0    +0      +60
-    //     2 day later    1     channel#4   +600     +0    +0      +24 
+    //     2 day later    1     channel#4   +600     +0    +0      +24
     //     2 day later    1    expression#2 +600     +0    +0      +60
     //     2 day later    1    expression#3 +600     +0    +0      +24
     //   ChannelUsageStatsHourly
@@ -141,7 +141,7 @@ namespace
     //   ChannelUsageStatsTotal
     //       last_use  colo_id channel_id   imps  clicks actions revenue
     //     3 day later    1     channel#1   +300     +0    +0      +42
-    //     3 day later    1     channel#2   +300     +0    +0      +30 
+    //     3 day later    1     channel#2   +300     +0    +0      +30
     //     3 day later    1     channel#3   +300     +0    +0      +12
     //     3 day later    1     channel#4   +300     +0    +0      +12
     //     3 day later    1    expression#2 +300     +0    +0      +30
@@ -172,7 +172,7 @@ namespace
        0,
        false
     }
-   
+
   };
 
   /**
@@ -244,7 +244,7 @@ namespace
   {
     return cpa * actions / exchange_rate;
   }
-}  
+}
 
 
 bool
@@ -347,11 +347,11 @@ ExpressionChannelPerformancesTest::base_scenario()
     cc_id(tacc2).
     sdate(currentDate + 72*60*60);
   exprs[7].description("ExpressionPerformance. Expression#3. "
-    "Text CCG. Composite expressions.");  
+    "Text CCG. Composite expressions.");
   exprs.select(conn);
 
 
-  // ChannelUsageStatsTotal rows 
+  // ChannelUsageStatsTotal rows
   ORM::StatsArray<ORM::ChannelPerformance, 8> channels;
   // last_use = last request debug_time
   channels[0].key().
@@ -509,7 +509,7 @@ ExpressionChannelPerformancesTest::base_scenario()
     "Text CCG. One triggers for each CCGs.");
   usage[16].key().
     channel_id(fetch_int("ExpressionId/03")).
-    ccg_id(taccg2).    
+    ccg_id(taccg2).
     colo_id(1).
     sdate(currentDate +  48*60*60);
   usage[16].description("ChannelUsageStatsHourly. Expression#3. "
@@ -628,7 +628,7 @@ ExpressionChannelPerformancesTest::base_scenario()
     // Total result on last request debug_time
     const ORM::ChannelPerformance::Diffs diffs[] =
     {
-      // Channel#1 
+      // Channel#1
       ORM::ChannelPerformance::Diffs().
         imps(
           TestData[0].iter_count / 2 +
@@ -786,7 +786,7 @@ ExpressionChannelPerformancesTest::base_scenario()
               TestData[4].iter_count),
             0.1))
     };
-    
+
     FAIL_CONTEXT(
       AutoTest::wait_checker(
         AutoTest::stats_diff_checker(
@@ -794,7 +794,7 @@ ExpressionChannelPerformancesTest::base_scenario()
         "ChannelUsageStatsTotal check");
 
   }
-  
+
   {
     add_descr_phrase("Check ChannelUsageStatsHourly table");
     const ORM::ChannelUsageStats::Diffs diffs[] =
@@ -1228,7 +1228,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
           clicks(clicks.size()).
           actions(
             actions.size() +
-            /* confirmed actions from loop#1 */ 
+            /* confirmed actions from loop#1 */
             clicks.size() / 5),
         exprs)).check(),
     "ExpressionPerformance latecomer clicks & actions check");
@@ -1242,7 +1242,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
           clicks(clicks.size()).
           actions(
             actions.size() +
-            /* confirmed actions from loop#1 */ 
+            /* confirmed actions from loop#1 */
             clicks.size() / 5).
           revenue(
             ORM::stats_diff_type(
@@ -1263,7 +1263,7 @@ ExpressionChannelPerformancesTest::latecomer_requests()
           clicks(clicks.size()).
           actions(
             actions.size() +
-            /* confirmed actions from loop#1 */ 
+            /* confirmed actions from loop#1 */
             clicks.size() / 5).
           revenue(
             ORM::stats_diff_type(
@@ -1292,14 +1292,14 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
   for (unsigned int i = 0; i < test.iter_count; ++i)
   {
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(request);
 
 
     std::string imp_url = client.debug_info.track_pixel_url;
     std::string click_url = client.debug_info.click_url;
     std::string action_url = client.debug_info.action_adv_url;
-    
+
     FAIL_CONTEXT(
       SelectedCreativesCheck(
         client,
@@ -1321,26 +1321,26 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
       else if (test.store_urls)
       {
         impressions.push_back(RequestPair(client, imp_url));
-        
+
         if (i % 3 != 2)
         {
-          clicks.push_back(RequestPair(client, click_url));          
+          clicks.push_back(RequestPair(client, click_url));
         }
 
         if (i % 5 != 4)
         {
-          actions.push_back(RequestPair(client, action_url));          
+          actions.push_back(RequestPair(client, action_url));
         }
       }
     }
-    
+
     if (test.check_url & CUE_Click)
     {
       FAIL_CONTEXT(
         AutoTest::predicate_checker(
           !click_url.empty()),
         "must have valid click_url");
-         
+
       if (i % 3 == 2)
       {
         client.process_request(click_url, "Click");
@@ -1353,13 +1353,13 @@ ExpressionChannelPerformancesTest::test_case(const TestDescription& test)
         AutoTest::predicate_checker(
           !action_url.empty()),
         "must have valid action_adv_url");
-      
+
       if (i % 5 == 4)
       {
         client.process_request(action_url, "Action");
       }
     }
-  }  
+  }
 }
 
 template <class ParamType>

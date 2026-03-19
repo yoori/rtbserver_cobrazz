@@ -7,7 +7,7 @@ REFLECT_UNIT(SpecificSitesTagsTest) (
 
 typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
 
-bool 
+bool
 SpecificSitesTagsTest::run_test()
 {
   NOSTOP_FAIL_CONTEXT(case1());
@@ -23,12 +23,12 @@ SpecificSitesTagsTest::case1()
   std::string cc_id1 = get_object_by_name("CC Id/1").Value();
   NSLookupRequest request;
   request.referer = "act.com";
-  request.referer_kw = fetch_string("KEYWORD1");  
+  request.referer_kw = fetch_string("KEYWORD1");
   request.tid = fetch_string("Tag Id/1");
 
-  AdClient test_client = AdClient::create_user(this);  
+  AdClient test_client = AdClient::create_user(this);
   test_client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       cc_id1,
@@ -38,7 +38,7 @@ SpecificSitesTagsTest::case1()
 
 void
 SpecificSitesTagsTest::case2()
-{  
+{
   std::string cc_id1 = get_object_by_name("CC Id/1").Value();
   NSLookupRequest request;
   request.referer = "act.com";
@@ -47,7 +47,7 @@ SpecificSitesTagsTest::case2()
 
   AdClient test_client = AdClient::create_user(this);
   test_client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       cc_id1,
@@ -55,7 +55,7 @@ SpecificSitesTagsTest::case2()
       AutoTest::SCE_NOT_ENTRY).check(),
     "must not got expected ccid 1 - KEYWORD 1 - Tag 2");
 }
- 
+
 void
 SpecificSitesTagsTest::case3()
 {
@@ -67,7 +67,7 @@ SpecificSitesTagsTest::case3()
 
   AdClient test_client = AdClient::create_user(this);
   test_client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       cc_id2,

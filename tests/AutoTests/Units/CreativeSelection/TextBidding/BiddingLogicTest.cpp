@@ -13,9 +13,9 @@ namespace
   typedef AutoTest::SelectedCreativesActualCPC SelectedCreativesActualCPC;
 }
 
-bool 
+bool
 BiddingLogicTest::run_test()
-{ 
+{
   NOSTOP_FAIL_CONTEXT(scenario1 ());
   NOSTOP_FAIL_CONTEXT(scenario2 ());
   NOSTOP_FAIL_CONTEXT(scenario3 ());
@@ -28,12 +28,12 @@ BiddingLogicTest::run_test()
   return true;
 }
 
-void 
+void
 BiddingLogicTest::scenario1 ()
 {
   add_descr_phrase("'BiddingLogicTest' Filtering by tag eCPM (one winner)");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("Tag01");
   request.referer_kw = fetch_string("Key02");
@@ -42,7 +42,7 @@ BiddingLogicTest::scenario1 ()
   std::string exp_ccids[] = {
     fetch_string("CC01")
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -50,12 +50,12 @@ BiddingLogicTest::scenario1 ()
     "selected_creatives ccid");
 }
 
-void 
+void
 BiddingLogicTest::scenario2 ()
 {
   add_descr_phrase("'BiddingLogicTest' Filtering by tag eCPM (two winners)");
   AdClient client(AdClient::create_user(this));
- 
+
   NSLookupRequest request;
   request.tid         = fetch_string("Tag01");
   request.referer_kw = fetch_string("Key03");
@@ -72,12 +72,12 @@ BiddingLogicTest::scenario2 ()
     "selected_creatives ccid");
 }
 
-void 
+void
 BiddingLogicTest::scenario3 ()
 {
   add_descr_phrase("'BiddingLogicTest' Filtering by account");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("Tag02");
   request.referer_kw = fetch_string("Key01") + "," + fetch_string("Key01");
@@ -93,7 +93,7 @@ BiddingLogicTest::scenario3 ()
     "selected_creatives ccid");
 }
 
-void 
+void
 BiddingLogicTest::scenario4 ()
 {
   add_descr_phrase("'BiddingLogicTest' eCPM group");
@@ -118,7 +118,7 @@ BiddingLogicTest::scenario4 ()
       fetch_string("CC03"),
       SelectedCreativesCCID(client)).check(),
     "ccid must entry to selected_creatives");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       fetch_string("CC05"),
@@ -126,7 +126,7 @@ BiddingLogicTest::scenario4 ()
     "ccid must entry to selected_creatives");
 }
 
-void 
+void
 BiddingLogicTest::scenario5 ()
 {
   add_descr_phrase("'BiddingLogicTest' MIN ECPM from display campain CPM");
@@ -149,12 +149,12 @@ BiddingLogicTest::scenario5 ()
 }
 
 
-void 
+void
 BiddingLogicTest::scenario6 ()
 {
   add_descr_phrase("'BiddingLogicTest' Filtering by campaign (M)");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("Tag03");
   request.referer_kw = fetch_string("Key06");
@@ -188,12 +188,12 @@ BiddingLogicTest::scenario6 ()
     "selected_creatives ccid first variant");
 }
 
-void 
+void
 BiddingLogicTest::scenario7 ()
 {
   add_descr_phrase("'BiddingLogicTest' Filtering by advertiser (A)");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("Tag03");
   request.referer_kw = fetch_string("Key07");
@@ -215,12 +215,12 @@ BiddingLogicTest::scenario7 ()
     "selected_creatives ccid");
 }
 
-void 
+void
 BiddingLogicTest::scenario8 ()
 {
   add_descr_phrase("'BiddingLogicTest' Filtering by account (O)");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("Tag03");
   request.referer_kw = fetch_string("Key08");
@@ -242,13 +242,13 @@ BiddingLogicTest::scenario8 ()
     "selected_creatives ccid");
 }
 
-void 
+void
 BiddingLogicTest::scenario9 ()
 {
   add_descr_phrase("'BiddingLogicTest' One winner "
                    "(tag with cpm = 0 and margin = 0");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("TagNoMargin");
   request.referer_kw = fetch_string("Key02");

@@ -96,7 +96,7 @@ namespace CampaignSvcs
         result,
         max_depth_ - 1);
     }
-    
+
   private:
     const TokenProcessorMap& token_processors_;
     const TokenSet& insert_restrictions_;

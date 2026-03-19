@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__REQUESTTOKENSSUBSTITUTION_
 #define _AUTOTEST__REQUESTTOKENSSUBSTITUTION_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class RequestTokensSubstitution : public BaseUnit
 {
@@ -13,7 +13,7 @@ public:
     CE_SIMPLE,
     CE_SIMPLE_AGENCY
   };
-  
+
 public:
   RequestTokensSubstitution(
     UnitStat& stat_var,

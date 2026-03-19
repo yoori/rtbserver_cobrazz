@@ -1,12 +1,12 @@
 
 #ifndef _AUTOTEST__FREQCAPMERGINGTEST_
 #define _AUTOTEST__FREQCAPMERGINGTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 /**
  * @class FreqCapMergingTest
- * @brief Test that persistent client's frequency caps policy 
+ * @brief Test that persistent client's frequency caps policy
  * isn't remove after merging with temporary client
  */
 class FreqCapMergingTest: public BaseUnit
@@ -19,7 +19,7 @@ public:
     RE_PERSISTENT,
     RE_MERGE
   };
-      
+
   struct TestRequest
   {
     unsigned long time_ofset;
@@ -29,11 +29,11 @@ public:
     const char* expected_history;
     const char* expected_ccid;
   };
-  
+
 public:
   FreqCapMergingTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var)
   {};
@@ -49,5 +49,5 @@ private:
     const std::string& description,
     const TestRequest (&requests)[COUNT]);
 };
- 
+
 #endif //_AUTOTEST__FREQCAPMERGINGTEST_

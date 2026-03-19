@@ -144,7 +144,7 @@ namespace AdServer
 
         end_pos = start_pos;
       }
-      
+
       if(skip_parts != 0)
       {
         return false;

@@ -50,13 +50,13 @@ int check_parse() noexcept
   ChannelCont channels;
 
   ExpressionChannel::Expression etalon;
-  
+
   ChannelParams simple_channel_params_1;
   simple_channel_params_1.common_params = new ChannelParams::CommonParams;
   simple_channel_params_1.channel_id = 1;
   simple_channel_params_1.status = 'A';
   SimpleChannel_var simple_channel_1(new SimpleChannel(simple_channel_params_1));
-  
+
   ChannelParams simple_channel_params_2;
   simple_channel_params_2.common_params = new ChannelParams::CommonParams;
   simple_channel_params_2.channel_id = 2;
@@ -73,7 +73,7 @@ int check_parse() noexcept
   ex_channel_params.status = 'A';
   ExpressionChannelBase_var ch = parse_for_channel(
     "1 | 2", ex_channel_params, channels);
-  
+
   if(channels.find(1) == channels.end() ||
      channels.find(2) == channels.end())
   {
@@ -94,7 +94,7 @@ int check_parse() noexcept
       std::cerr << std::endl;
     }
   }
-  
+
   {
     ChannelIdHashSet tr_channels;
     tr_channels.insert(1);
@@ -106,7 +106,7 @@ int check_parse() noexcept
       std::cerr << std::endl;
     }
   }
-  
+
   {
     ChannelIdSet triggered_named_channels;
     ChannelIdHashSet tr_channels;
@@ -124,7 +124,7 @@ int check_parse() noexcept
       std::cerr << " instead 1, 3" << std::endl;
     }
   }
-  
+
   return 0;
 }
 
@@ -136,12 +136,12 @@ int check_parse_2() noexcept
   simple_channel_params_1.channel_id = 11;
   simple_channel_params_1.status = 'A';
   SimpleChannel_var simple_channel_1(new SimpleChannel(simple_channel_params_1));
-  
+
   ChannelParams simple_channel_params_2;
   simple_channel_params_2.channel_id = 22;
   simple_channel_params_2.status = 'A';
   SimpleChannel_var simple_channel_2(new SimpleChannel(simple_channel_params_2));
-  
+
   ChannelParams simple_channel_params_3;
   simple_channel_params_3.channel_id = 33;
   simple_channel_params_3.status = 'A';
@@ -154,19 +154,19 @@ int check_parse_2() noexcept
     sub_etalon.op = ExpressionChannel::OR;
     sub_etalon.sub_channels.push_back(ExpressionChannel::Expression(simple_channel_1));
     sub_etalon.sub_channels.push_back(ExpressionChannel::Expression(simple_channel_2));
-    
+
     etalon.op = ExpressionChannel::AND;
     etalon.sub_channels.push_back(sub_etalon);
     etalon.sub_channels.push_back(ExpressionChannel::Expression(simple_channel_3));
   }
-  
+
   ChannelParams ex_channel_params;
   ex_channel_params.channel_id = 1;
   ex_channel_params.status = 'A';
   ExpressionChannelBase_var ch = parse_for_channel(
     " ( ( ( ( ( 11 ) ) | ( ( 22 ) ) ) & ( ( ( 33 ) ) ) ) )",
     ex_channel_params, channels);
-  
+
   if(channels.find(11) == channels.end() ||
      channels.find(22) == channels.end() ||
      channels.find(33) == channels.end())
@@ -196,7 +196,7 @@ int check_parse_2() noexcept
       std::cerr << std::endl;
     }
   }
-  
+
   {
     ChannelIdHashSet tr_channels;
     tr_channels.insert(11);
@@ -249,7 +249,7 @@ check_parse_invalid() noexcept
 int check_tree_construct()
 {
   ChannelCont channels;
-  
+
   {
     ChannelParams ch_params;
     ch_params.channel_id = 1;
@@ -257,7 +257,7 @@ int check_tree_construct()
       "2 | 3", ch_params, channels);
     channels[1] = ExpressionChannelHolder_var(new ExpressionChannelHolder(ch));
   }
-  
+
   {
     ChannelParams ch_params;
     ch_params.channel_id = 2;
@@ -625,7 +625,7 @@ check_fast_channel()
     timer.stop();
     std::cout << "Time1: " << timer.elapsed_time() << (res ? " (matched)" : " (not matched)") << std::endl;
   }
-  
+
   {
     bool res;
     Generics::CPUTimer timer;
@@ -822,7 +822,7 @@ int main(int argc, char** argv)
 
   //check_fast_channel();
   check_fast_channel2();
-  
+
   //check_rand_spoof_fast_channel();
 
   /*

@@ -1,6 +1,6 @@
 
 #include "KeywordsNormalizationTest.hpp"
- 
+
 REFLECT_UNIT(KeywordsNormalizationTest) (
   "TriggerMatching",
   AUTO_TEST_FAST | AUTO_TEST_SLOW
@@ -31,7 +31,7 @@ namespace
     NSLookupRequest::Member member;
   };
 
-  const RequestParameter PARAMS[] = 
+  const RequestParameter PARAMS[] =
   {
     { "KW", &NSLookupRequest::referer_kw },
     { "KWW", &NSLookupRequest::referer_kw },
@@ -39,7 +39,7 @@ namespace
     { "FT", &NSLookupRequest::ft }
   };
 
- 
+
   const TestCase TEST_CASES[] =
   {
     { "Page1", "Search1", 0}, // 1
@@ -81,7 +81,7 @@ namespace
     // ADSC-6723
     { "Page1,Search1,Page2,Search2", 0, 0}    // 31
   };
- 
+
 }
 
 void KeywordsNormalizationTest::set_up()
@@ -192,12 +192,12 @@ void KeywordsNormalizationTest::pre_condition()
   }
 }
 
-bool 
+bool
 KeywordsNormalizationTest::run()
 {
 
   AdClient client(AdClient::create_user(this));
- 
+
   for (unsigned int i = 0;
        i < sizeof(TEST_CASES) /
            sizeof(*TEST_CASES); ++i)
@@ -215,14 +215,14 @@ KeywordsNormalizationTest::run()
         PARAMS[p].member(
           request,
           fetch_string(PARAMS[p].name + strof(i+1)));
-          
+
       }
       catch (const InvalidArgument&)
       {
         // Error mean no keyword for this case, skip it
       }
     }
-    
+
     request.kn = TEST_CASES[i].flags & TF_USE_KN;
     client.process_request(request);
 
@@ -233,7 +233,7 @@ KeywordsNormalizationTest::run()
         client.debug_info.trigger_channels).check(),
       description +
         ". Expected trigger_channels");
-  
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,

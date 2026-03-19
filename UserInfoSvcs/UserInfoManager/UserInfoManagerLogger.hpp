@@ -25,7 +25,7 @@ namespace AdServer
             adv_channel_count(0),
             discover_channel_count(0)
         {}
-        
+
         unsigned long colo_id;
         Generics::Time isp_date;
         unsigned long adv_channel_count;
@@ -38,7 +38,7 @@ namespace AdServer
       UserInfoManagerLogger(
         const AdServer::LogProcessing::LogFlushTraits& flush_traits)
         /*throw(Exception)*/;
-      
+
       virtual ~UserInfoManagerLogger() noexcept;
 
       void process_history_optimization(
@@ -50,11 +50,11 @@ namespace AdServer
       typedef
         ReferenceCounting::SmartPtr<HistoryOptimizationStatLogger>
         HistoryOptimizationStatLogger_var;
-      
+
     private:
       HistoryOptimizationStatLogger_var history_optimization_stat_logger_;
 
-    private:  
+    private:
       unsigned long power2align_(unsigned long value) noexcept;
     };
 

@@ -1,5 +1,5 @@
 #include "PublisherInventoryTest.hpp"
- 
+
 REFLECT_UNIT(PublisherInventoryTest) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -144,7 +144,7 @@ PublisherInventoryTest::base_scenario(AutoTest::AdClient& client,
   request.debug_time =  moscow_today;
   if (colo_id) {
     request.colo = colo_id;}
-  
+
   for (size_t i = 0; i < ITERS; ++i)
   {
     request.referer_kw = keyword1;
@@ -226,13 +226,13 @@ PublisherInventoryTest::ta_campaigns_scenario()
   add_publisher_inventory_stat(
     description.c_str(), tag_id,
     cpm, ITERS, 0, ITERS * cpm / 1000);
-  
+
   add_publisher_inventory_stat(
     description.c_str(), tag_id,
     0, 0, ITERS, 0);
 
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.referer_kw = keyword + "," + display_keyword;
   request.debug_time = debug_time_;
@@ -349,14 +349,14 @@ PublisherInventoryTest::virtual_scenario()
   add_publisher_inventory_stat(description.c_str(), tag2, 0, 0, 0, 0);
 
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.referer_kw = keyword;
   request.tid = tag2;
   request.debug_time = debug_time_;
   client.process_request(request);
 //  request.debug_time = debug_time_;
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       cc,
@@ -456,7 +456,7 @@ PublisherInventoryTest::billing_stats_logging()
   NSLookupRequest request;
   request.debug_time = debug_time_;
   request.tag_inv = 0;
- 
+
   request.tid = norate_tag;
   client.process_request(request,
     "Test 4.1 Inventory tag with undefined site rate (tag.inv = 0)");
@@ -509,7 +509,7 @@ void PublisherInventoryTest::non_billing_stats_logging()
   add_site_user_stat_(description.c_str(), inv_site, 1, true, Generics::Time::ZERO);
   add_site_user_stat_(description.c_str(), marker_site, 1, true, Generics::Time::ZERO);
   add_site_user_stat_(description.c_str(), adv_site, 1, true, Generics::Time::ZERO);
-  add_site_user_stat_(description.c_str(), adv_site, 1); 
+  add_site_user_stat_(description.c_str(), adv_site, 1);
   add_channel_inv_stat_(description.c_str(), channel1, 2, 1, 1);
   add_channel_inv_stat_(description.c_str(), marker_ch, 1, 1, 1);
   add_channel_inv_stat_(description.c_str(), channel2, 1, 1, 1);
@@ -527,13 +527,13 @@ void PublisherInventoryTest::non_billing_stats_logging()
   {
     AdClient client(AdClient::create_user(this));
     client.process_request(request, "tag_inv = 0 from inventory tag");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         strof(channel1),
         client.debug_info.history_channels).check(),
       "server must return expected history channels");
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         client.debug_info.selected_creatives.empty()),
@@ -541,13 +541,13 @@ void PublisherInventoryTest::non_billing_stats_logging()
 
     request.tag_inv = 1;
     client.process_request(request, "tag_inv = 1 from inventory tag");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         strof(channel1),
         client.debug_info.history_channels).check(),
       "server must return expected history channels");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         cc1,
@@ -561,7 +561,7 @@ void PublisherInventoryTest::non_billing_stats_logging()
       referer_kw(marker_kw).
       debug_time(debug_time_).
       tid(marker_tag), "marker request");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         strof(marker_ch),
@@ -576,13 +576,13 @@ void PublisherInventoryTest::non_billing_stats_logging()
     request.tag_inv = 1;
     AdClient client(AdClient::create_user(this));
     client.process_request(request, "tag_inv = 1 from advertising tag");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         strof(channel2),
         client.debug_info.history_channels).check(),
       "server must return expected history channels");
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         client.debug_info.selected_creatives.empty()),
@@ -591,13 +591,13 @@ void PublisherInventoryTest::non_billing_stats_logging()
     request.tag_inv = 0;
     request.debug_time = tomorrow;
     client.process_request(request, "tag_inv = 0 from advertising tag");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         strof(channel2),
         client.debug_info.history_channels).check(),
       "server must return expected history channels");
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         cc2,
@@ -680,7 +680,7 @@ PublisherInventoryTest::run_test()
   pub_adv_commission_scenario(fetch_int("GROSSCampaignsCase/GrossPublisher/TAG_ID"), pub_rate_);
   pub_adv_commission_scenario(fetch_int("GROSSCampaignsCase/NetPublisher/TAG_ID"));
   virtual_scenario();
-  
+
   no_impression_scenario();
   billing_stats_logging();
   non_billing_stats_logging();

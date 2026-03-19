@@ -91,7 +91,7 @@ divide_file_to_chunks(
         {
           Stream::Error ostr;
           ostr << " Can't convert hash value to number: '" << external_id << "'";
-          throw Exception(ostr);          
+          throw Exception(ostr);
         }
       }
       else
@@ -385,7 +385,7 @@ merge(const char* destination_dir, const StringList& src_files)
 }
 
 int
-main(int argc, char* argv[]) 
+main(int argc, char* argv[])
 {
   int result = 0;
 
@@ -444,7 +444,7 @@ main(int argc, char* argv[])
       if(!opt_chunks_number.installed())
       {
         std::cout << "chunks-number is required for divide-to-chunks" <<
-          std::endl;        
+          std::endl;
       }
 
       HashType hash_type = HT_STRING;

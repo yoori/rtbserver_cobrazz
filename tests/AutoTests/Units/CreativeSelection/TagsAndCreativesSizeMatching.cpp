@@ -45,7 +45,7 @@ void TagsAndCreativesSizeMatching::same_type_diff_sizes()
     AutoTest::equal_checker(
       "0",
       client.debug_info.ccid).check(),
-    "Check CC");  
+    "Check CC");
 }
 
 
@@ -56,7 +56,7 @@ void TagsAndCreativesSizeMatching::actual_size()
   const size_t requests = 50;
 
   CountChecker counter(2, requests);
-  
+
   for (size_t i = 0; i < requests; ++i)
   {
     client.process_request(
@@ -111,9 +111,9 @@ void TagsAndCreativesSizeMatching::max_ads()
   AdClient client(AdClient::create_user(this));
 
   const size_t requests = 50;
-  
+
   CountChecker counter(3, requests);
-  
+
   for (size_t i = 0; i < requests; ++i)
   {
     client.process_request(
@@ -165,7 +165,7 @@ TagsAndCreativesSizeMatching::zero_max_ads()
     AutoTest::equal_checker(
       fetch_string("ZEROMAXADS/CC/2"),
       client.debug_info.ccid).check(),
-    "Check CC");  
+    "Check CC");
 }
 
 void
@@ -174,9 +174,9 @@ TagsAndCreativesSizeMatching::multi_creatives_ccg()
   AdClient client(AdClient::create_user(this));
 
   const size_t requests = 100;
-  
+
   CountChecker counter(2, requests);
-  
+
   for (size_t i = 0; i < requests; ++i)
   {
     client.process_request(
@@ -221,7 +221,7 @@ TagsAndCreativesSizeMatching::display_vs_text()
   {
 
     AdClient client(AdClient::create_user(this));
-    
+
     client.process_request(
       NSLookupRequest().
         referer_kw(fetch_string(CASES[i].keyword)).
@@ -294,7 +294,7 @@ TagsAndCreativesSizeMatching::rtb()
             src(CASES[i].src).
             aid(fetch_string("RTB/ACCOUNT")).
             type(20));
-      
+
       OpenRTBResponseChecker ad_checker(
         client,
         OpenRTBResponseChecker::Expected().
@@ -322,7 +322,7 @@ TagsAndCreativesSizeMatching::rtb()
           client,
           OpenRTBResponseChecker::Expected().
              nurl(".*&ad=" + map_objects(CASES[i].ccs) + ".*"));
-          
+
         FAIL_CONTEXT(
           cc_checker.check(),
           "Check bid.nurl.ccids");
@@ -339,7 +339,7 @@ TagsAndCreativesSizeMatching::rtb()
                 nurl(".*&tsid=" + *it + "&.*")));
         }
 
-       
+
         FAIL_CONTEXT(
           tsid_checker.check(),
           "Check bid.nurl.tsid");
@@ -383,7 +383,7 @@ TagsAndCreativesSizeMatching::run_test()
   AUTOTEST_CASE(
     same_type_diff_sizes(),
     "Same type and different sizes");
-  
+
   AUTOTEST_CASE(
     actual_size(),
     "Actual tag size");
@@ -415,7 +415,7 @@ TagsAndCreativesSizeMatching::run_test()
   AUTOTEST_CASE(
     rtb(),
     "RTB request");
-  
+
   return true;
 }
 

@@ -682,7 +682,7 @@ namespace
     Table::Column("options", Table::Column::TEXT),
     Table::Column("timestamp", Table::Column::TEXT),
   };
-  
+
   const Table::Column COUNTRIES_TABLE_COLUMNS[] =
   {
     Table::Column("country_code", Table::Column::TEXT),

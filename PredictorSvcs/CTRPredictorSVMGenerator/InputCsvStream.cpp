@@ -44,7 +44,7 @@ namespace
     {
       return fd_;
     }
-    
+
     ~FileLock() noexcept
     {
       if (fd_ != -1)
@@ -56,7 +56,7 @@ namespace
         ::close(fd_);
       }
     }
-      
+
   private:
     int fd_;
     bool locked_;
@@ -75,7 +75,7 @@ namespace AdServer::Predictor
   unsigned long InputCsvStream::parse_header_(
     std::istream& stream,
     FeatureColumns& feature_columns)
-  {  
+  {
     std::string feature_columns_str;
     std::getline(stream, feature_columns_str);
 
@@ -97,7 +97,7 @@ namespace AdServer::Predictor
 
     if (file_lock.try_lock())
     {
-      __gnu_cxx::stdio_filebuf<char> filebuf(file_lock.fd(), std::ios::in); 
+      __gnu_cxx::stdio_filebuf<char> filebuf(file_lock.fd(), std::ios::in);
       std::istream stream(&filebuf);
 
       process(lib_svm, stream, logger_, file_.path.c_str());

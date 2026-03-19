@@ -1,6 +1,6 @@
 
 #include "BannedChAdReqProfDisabling.hpp"
- 
+
 REFLECT_UNIT(BannedChAdReqProfDisabling) (
   "TriggerMatching",
   AUTO_TEST_FAST
@@ -12,17 +12,17 @@ namespace {
   typedef AutoTest::BaseProfileChecker BaseProfileChecker;
   typedef AutoTest::SpecialEffectsChecker SpecialEffectsChecker;
 }
- 
-bool 
+
+bool
 BannedChAdReqProfDisabling::run_test()
 {
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_USER_INFO_MANAGER_CONTROLLER, 1)),
     "UserInfoManagerController with special "
     "configuration need for this test");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_FRONTEND, 1)),
@@ -34,20 +34,20 @@ BannedChAdReqProfDisabling::run_test()
       get_config().get_service(CTE_ALL, STE_FRONTEND, 1).remote),
     "AdFrontend with special "
     "configuration need for this test");
-  
+
   AdClient client(
     AdClient::create_user(
       this, AutoTest::UF_FRONTEND_MINOR));
-  
+
   std::string no_track_words      = fetch_string ("no_track_words");
   std::string no_track_urls       = fetch_string ("no_track_urls");
   std::string no_adv_words        = fetch_string ("no_adv_words");
   std::string no_adv_urls         = fetch_string ("no_adv_urls");
-  
+
   NSLookupRequest request;
 
   add_descr_phrase("tid request & NO ADV");
-  
+
   request.referer = no_adv_urls + "/advertising.html";
   request.tid = fetch_string("Tag");
 
@@ -145,9 +145,9 @@ BannedChAdReqProfDisabling::run_test()
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.debug_info.history_channels.size()), 
+      !client.debug_info.history_channels.size()),
     "history_channels must be empty");
-   
+
   return true;
 }
 

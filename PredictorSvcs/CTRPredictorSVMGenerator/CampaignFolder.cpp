@@ -112,31 +112,31 @@ namespace AdServer
         std::find_if(file_list.begin(), file_list.end(),
           std::bind(
             check_file_is_changed, _1, output_path)) != file_list.end();
-        
+
     }
 
-    
+
     // FileObject
 
     FileObject::FileObject(const char* filepath) :
       path(filepath),
       filename(Generics::DirSelect::file_name(filepath))
     {
-      
+
       get_log_time(filename, timestamp);
-      
+
       struct stat fs;
-      
+
       if(::stat(filepath, &fs) < 0)
       {
         Stream::Error ostr;
         ostr << "Failed stat: '" << filepath << "'";
         throw InvalidFile(ostr);
       }
-      
+
       last_modify.set(fs.st_mtime);
     }
-    
+
 
 
     // class CampaignFolder
@@ -156,7 +156,7 @@ namespace AdServer
         Generics::DirSelect::DSF_EXCEPTION_ON_OPEN);
 
       file_list_.sort(LogTimeCompare());
-      
+
       using namespace std::placeholders;
       file_list_.remove_if(
         std::bind(check_file_obsolete, keep_interval, _1));
@@ -167,7 +167,7 @@ namespace AdServer
     {
       return file_list_;
     }
-    
+
     void
     CampaignFolder::move_file_to_list(
       Generics::Time timestamp,
@@ -179,10 +179,10 @@ namespace AdServer
         file_list_.pop_front();
       }
     }
-    
+
 
     // CampaignFoldersContainer
-    
+
     CampaignFoldersContainer::CampaignFoldersContainer(
       const char* path,
       Generics::Time keep_interval,
@@ -193,7 +193,7 @@ namespace AdServer
     {
 
       static const char* FUN = "CampaignFoldersContainer::CampaignFoldersContainer";
-      
+
       FileList folder_list;
 
       Generics::DirSelect::directory_selector(
@@ -202,7 +202,7 @@ namespace AdServer
         "[1-9]*",
         Generics::DirSelect::DSF_DONT_RESOLVE_LINKS |
         Generics::DirSelect::DSF_ALL_FILES);
-      
+
       std::list<CampaignFolder> campaign_folder_list;
       for (auto it = folder_list.begin(); it != folder_list.end(); ++it)
       {
@@ -235,7 +235,7 @@ namespace AdServer
           ASPECT);
       }
     }
-      
+
     void CampaignFoldersContainer::get_files(
       CampaignFolder::FileList& file_pairs)
     {
@@ -257,7 +257,7 @@ namespace AdServer
           *std::max_element(
             file_timestamps.begin(),
             file_timestamps.end()));
-        
+
         // Get files
         for (FolderTable::iterator it = campaign_folder_list_.begin();
              it != campaign_folder_list_.end(); ++it)
@@ -276,6 +276,6 @@ namespace AdServer
   }
 }
 
-    
+
 
 

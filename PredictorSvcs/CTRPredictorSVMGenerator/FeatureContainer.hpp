@@ -21,20 +21,20 @@ namespace AdServer
     typedef std::vector<std::string> FeatureNames;
 
     /**
-     * Features container 
+     * Features container
      */
     class FeatureContainer_:
           public ReferenceCounting::AtomicImpl
     {
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
-      
+
     public:
       typedef xsd::AdServer::Configuration::SVMGeneratorConfigurationType SVMGeneratorConfig;
       typedef SVMGeneratorConfig::Model_type::Feature_sequence FeatureSeq;
       typedef SVMGeneratorConfig::Model_type::Feature_type FeatureType;
-      
+
     public:
-      
+
       /**
        * @brief Initialize contaner.
        *
@@ -42,7 +42,7 @@ namespace AdServer
        */
       void init(
         const FeatureSeq& feature_seq) /*throw(eh::Exception)*/;
-      
+
       /**
        * @brief Resolve features.
        *
@@ -74,7 +74,7 @@ namespace AdServer
       AdServer::CampaignSvcs::CTR::FeatureNameResolver feature_name_resolver_;
     };
 
-    typedef ReferenceCounting::QualPtr<FeatureContainer_> FeatureContainer_var;  
+    typedef ReferenceCounting::QualPtr<FeatureContainer_> FeatureContainer_var;
     typedef Generics::Singleton<FeatureContainer_, FeatureContainer_var>
       FeatureContainer;
   }

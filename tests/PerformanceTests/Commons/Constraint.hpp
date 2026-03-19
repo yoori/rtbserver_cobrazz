@@ -33,7 +33,7 @@ protected:
 
 class ConstraintElement : public BaseConstraint
 {
- 
+
   struct PercentagePair
   {
     unsigned long numerator;
@@ -41,22 +41,22 @@ class ConstraintElement : public BaseConstraint
   };
 
 public:
-  
+
   DECLARE_EXCEPTION(InvalidSequence, eh::DescriptiveException);
-  
+
 public:
   ConstraintElement(const char* name_,
                     const char* description_,
                     const unsigned long sampling_size,
                     const unsigned long threshold_value);
-  
+
   virtual ~ConstraintElement() noexcept;
-  
+
   virtual void push(unsigned long numerator,
                     unsigned long denominator) /*throw(InvalidSequence)*/;
-  
+
   bool check();
-  
+
 private:
   unsigned long sampling_size_;
   unsigned long threshold_value_;
@@ -79,7 +79,7 @@ typedef std::list <Constraint_var> ConstraintsList;
 
 class ConstraintsContainer : public BaseConstraint
 {
-   
+
 public:
   ConstraintsContainer(const char* name_,
                        const char* description_);
@@ -89,7 +89,7 @@ public:
   void register_constraint(Constraint_var& constraint);
 
   bool check();
-    
+
 private:
   ConstraintsList constraints_;
 };

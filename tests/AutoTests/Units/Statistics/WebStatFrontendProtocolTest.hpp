@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__WEBSTATFRONTENDPROTOCOLTEST_
 #define _AUTOTEST__WEBSTATFRONTENDPROTOCOLTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 namespace ORM = AutoTest::ORM;
 
 class WebStatFrontendProtocolTest : public BaseDBUnit
@@ -25,17 +25,17 @@ class WebStatFrontendProtocolTest : public BaseDBUnit
   {
 
     typedef AutoTest::RequestParam<WebStatRequest> WebStatParam;
-    
+
     /// Base url for all webwise requests
     static const char*          BASE_URL;
 
- 
+
   public:
 
     /**
      * @brief Constructor.
      *
-     * Creates the WebStatRequest. 
+     * Creates the WebStatRequest.
      */
     explicit WebStatRequest();
 
@@ -101,7 +101,7 @@ class WebStatFrontendProtocolTest : public BaseDBUnit
     /**
      * @brief Represents 'time' param.
      *
-     * Request time, used for tests 
+     * Request time, used for tests
      */
     AutoTest::RequestParam <WebStatRequest,AutoTest::TimeParam> time;
 
@@ -138,7 +138,7 @@ class WebStatFrontendProtocolTest : public BaseDBUnit
     CCTCE_NO_LOG_OS = 32,
     CCTCE_NO_LOG_BROWSER = 64,
     CCTCE_NO_LOG_HOUR = 128,
-    
+
     CCTCE_LOG_CCID = CCTCE_LOG_CCID_REMOTE | CCTCE_LOG_CCID_CENTRAL,
     CCTCE_NO_LOG_ALL =
       CCTCE_NO_LOG_CT | CCTCE_NO_LOG_CURCT | CCTCE_NO_LOG_OS |
@@ -154,7 +154,7 @@ public:
     unsigned long status;
     unsigned long flags;
   };
-  
+
 public:
   WebStatFrontendProtocolTest(
     UnitStat& stat_var,
@@ -164,21 +164,21 @@ public:
   { }
 
   virtual ~WebStatFrontendProtocolTest() noexcept
-  { } 
+  { }
 
 private:
 
   AutoTest::Time now_;
-  
+
   virtual void
   pre_condition();
-  
+
   virtual bool
   run();
-  
+
   virtual void
   post_condition();
-  
+
   virtual void
   tear_down();
 

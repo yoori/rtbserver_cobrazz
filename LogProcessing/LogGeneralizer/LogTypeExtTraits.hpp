@@ -116,7 +116,7 @@ namespace LogProcessing
         true,
         LogTraits::is_nested>::Type
         ThreadSafeSaverType;
- 
+
       typedef typename Detail::DistribSaverImplSelector<
         BaseLogTraitsHelper,
         true,

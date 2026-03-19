@@ -57,7 +57,7 @@ namespace AdServer
     ch.id = 1;
     ch.set_status('A');
     ch.mark_type(ChannelSvcs::CT_PAGE);
-    container_.merge(upcont, *info, true, 0, Generics::Time::ZERO); 
+    container_.merge(upcont, *info, true, 0, Generics::Time::ZERO);
   }
 
   void Application::write_result_(std::ostream& os) noexcept
@@ -67,7 +67,7 @@ namespace AdServer
       os << it->second << std::endl;
     }
   }
-  
+
   int Application::compary_triggers_(
     const Language::Trigger::Trigger& trigger_view,
     const Language::Trigger::Trigger& trigger_view2) noexcept
@@ -184,7 +184,7 @@ namespace AdServer
           {
             throw Exception("Unexpected size of channel id in result");
           }
-          auto& data = res.begin()->second; 
+          auto& data = res.begin()->second;
           if(data.trigger_ids[ChannelSvcs::CT_PAGE].size() != 1)
           {//over covering
             auto best = it->first;
@@ -202,7 +202,7 @@ namespace AdServer
                 int cmp = compary_triggers_(trigger_view, trigger_view2);
                 if(cmp == 1)
                 {
-                  std::cerr << "The trigger '" << triggers_[best] 
+                  std::cerr << "The trigger '" << triggers_[best]
                     << "' is more common, remove trigger '"
                     << triggers_[*res_it] << "'" << std::endl;
                   if(*res_it != cur)
@@ -212,7 +212,7 @@ namespace AdServer
                 }
                 else if(cmp == 2)
                 {
-                  std::cerr << "The trigger '" << triggers_[*res_it] 
+                  std::cerr << "The trigger '" << triggers_[*res_it]
                     << "' is more common, remove trigger '"
                     << triggers_[best] << "'" << std::endl;
                   trigger_view.trigger.swap(trigger_view2.trigger);
@@ -226,8 +226,8 @@ namespace AdServer
                 }
                 else if(cmp == -1)
                 {
-                  std::cerr << "The trigger '" << triggers_[*res_it] 
-                    << "' is dublicate '" << triggers_[best] 
+                  std::cerr << "The trigger '" << triggers_[*res_it]
+                    << "' is dublicate '" << triggers_[best]
                     << "', remove it" << std::endl;
                   if(*res_it != cur)
                   {
@@ -251,7 +251,7 @@ namespace AdServer
             {
               std::cerr << "Expect matching '" << it->second << "', got '"
                 << triggers_[data.trigger_ids[ChannelSvcs::CT_PAGE].front()]
-                << "'" << std::endl; 
+                << "'" << std::endl;
             }
             ++it;
           }

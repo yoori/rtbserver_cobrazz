@@ -36,7 +36,7 @@ UnitStat::~UnitStat() noexcept
 {}
 
 Generics::Time UnitStat::duration () const
-{ 
+{
   return start_time !=
     Generics::Time::ZERO? stop_time - start_time:
       Generics::Time::ZERO;
@@ -100,7 +100,7 @@ void UnitStat::dump_error ()
     std::cout.flush();
   }
 }
- 
+
 //
 //  BaseUnit class
 //
@@ -121,7 +121,7 @@ BaseUnit::BaseUnit(
   AutoTest::Logger::thlog(add_logger(task_name));
   timeout_key_.set_data(&timeout_);
 }
-  
+
 BaseUnit::~BaseUnit()
   noexcept
 {
@@ -141,11 +141,11 @@ BaseUnit::~BaseUnit()
   }
 }
 
-void 
-BaseUnit::execute() 
+void
+BaseUnit::execute()
   noexcept
 {
-  try 
+  try
   {
     try
     {
@@ -193,8 +193,8 @@ BaseUnit::execute()
   { }
 }
 
-void 
-BaseUnit::add_descr_phrase(const String::SubString& phrase) 
+void
+BaseUnit::add_descr_phrase(const String::SubString& phrase)
   /*throw(Exception)*/
 {
   try
@@ -213,7 +213,7 @@ BaseUnit::add_descr_phrase(const String::SubString& phrase)
   }
 }
 
-void 
+void
 BaseUnit::add_descr_phrase(const char* phrase)
   /*throw(Exception)*/
 {
@@ -228,10 +228,10 @@ BaseUnit::get_object_by_name(const std::string& obj_name)
   {
     Locals all_locals = params_.get_local_params();
     size_t locals_len = all_locals.DataElem().size();
-    
+
     for (size_t ind = 0; ind < locals_len; ++ind)
     {
-      if (all_locals.DataElem()[ind].Name() == obj_name) 
+      if (all_locals.DataElem()[ind].Name() == obj_name)
         return all_locals.DataElem()[ind];
     }
   }
@@ -242,7 +242,7 @@ BaseUnit::get_object_by_name(const std::string& obj_name)
           << ": " << e.what();
     throw Exception(error);
   }
-  
+
   Stream::Error error;
   error << "BaseUnit::get_object_by_name(). "
         << "Error: Got unexpected object name = " << obj_name;
@@ -254,12 +254,12 @@ BaseUnit::fetch_int(const char* obj_name)
   /*throw(Exception)*/
 {
   unsigned long buffer;
-  
+
   try
   {
     Stream::Parser istr(get_object_by_name(obj_name).Value());
     istr >> buffer;
-    
+
     if (istr.bad() || istr.fail())
     {
       Stream::Error error;
@@ -279,7 +279,7 @@ BaseUnit::fetch_int(const char* obj_name)
           << ": " << e.what();
     throw Exception(error);
   }
-  
+
   return buffer;
 }
 
@@ -288,12 +288,12 @@ BaseUnit::fetch_float(const char* obj_name)
   /*throw(Exception)*/
 {
   long double buffer;
-  
+
   try
   {
     Stream::Parser istr(get_object_by_name(obj_name).Value());
     istr >> buffer;
-    
+
     if (istr.bad() || istr.fail())
     {
       Stream::Error error;
@@ -313,31 +313,31 @@ BaseUnit::fetch_float(const char* obj_name)
           << ": " << e.what();
     throw Exception(error);
   }
-  
+
   return buffer;
 }
 
 bool
 BaseUnit::next_list_item(DataElemObjectPtr& res, const std::string& list_name)
   /*throw(Exception, InvalidArgument)*/
-{  
+{
   try
   {
     Locals all_locals = params_.get_local_params();
-    unsigned long locals_len = all_locals.DataElem().size();    
-    std::map<std::string, unsigned long>::iterator cur_list_it = 
+    unsigned long locals_len = all_locals.DataElem().size();
+    std::map<std::string, unsigned long>::iterator cur_list_it =
       xml_lists_.find(list_name);
-    
+
     if (cur_list_it == xml_lists_.end())
     {
       unsigned long ind = 0;
-      
+
       for (ind = 0; ind < locals_len; ++ind)
       {
         if (all_locals.DataElem()[ind].Name() == list_name)
           break;
       }
-      
+
       if (ind == locals_len)
       {
         Stream::Error error;
@@ -345,30 +345,30 @@ BaseUnit::next_list_item(DataElemObjectPtr& res, const std::string& list_name)
               << "Got unexpected object name = " << list_name;
         throw InvalidArgument(error);
       }
-      
+
       if (all_locals.DataElem()[ind + 1].Name() == list_name + "End")
         return false;
-        
+
       cur_list_it = xml_lists_.insert(std::pair<std::string, unsigned long>(
                                                                             list_name, ind)).first;
     }
-    
+
     ++cur_list_it->second;
-    
+
     if (cur_list_it->second == locals_len)
     {
       Stream::Error error;
-      error << "BaseUnit::next_list_item(...). Error: list '"      
+      error << "BaseUnit::next_list_item(...). Error: list '"
             << list_name << "' is not properly ended.";
       throw InvalidArgument(error);
     }
-    
+
     if (all_locals.DataElem()[cur_list_it->second].Name() == list_name + "End")
     {
       xml_lists_.erase(cur_list_it);
       return false;
     }
-    
+
     res = &all_locals.DataElem()[cur_list_it->second];
     return true;
   }
@@ -404,11 +404,11 @@ BaseUnit::map_objects(
     }
     try
     {
-      value += fetch_string(token.str()); 
+      value += fetch_string(token.str());
     }
     catch (const BaseUnit::InvalidArgument&)
     {
-      value += token.str(); 
+      value += token.str();
     }
   }
   return value;
@@ -442,7 +442,7 @@ BaseUnit::add_logger(
 
   AutoTest::Logger* logger =
     new AutoTest::Logger(log_name.c_str());
-  
+
   loggers_[log_name] = logger;
 
   return *logger;
@@ -500,7 +500,7 @@ void BaseUnit::check(bool clear_checkers)  /*throw(eh::Exception)*/
         case_ok = false;
         // Empty logger - fail case sign (for multipart cases)
         // AUTOTEST_CASE don't run case with empty logger.
-        // loggers_.size() == 1, mean that test don't use case logic. 
+        // loggers_.size() == 1, mean that test don't use case logic.
         if (loggers_.size() > 1)
         {
           case_logger.clear_loggers();

@@ -1,7 +1,7 @@
 
 #include "DiffColoTZTest.hpp"
 #include "UserProfilesExchangeCommon.hpp"
- 
+
 REFLECT_UNIT(DiffColoTZTest) (
   "UserProfilesExchange",
   AUTO_TEST_SLOW
@@ -19,7 +19,7 @@ namespace
       // Different days in test colocations (current fo one, nex for over)
       TTC_DIFF_DAY,
       // Same next day in both test colocations
-      TTC_NEXT_DAY    
+      TTC_NEXT_DAY
   };
 
   Generics::ExtendedTime get_test_date(TestTimeCases tcase,
@@ -37,7 +37,7 @@ namespace
   }
 }
 
-bool 
+bool
 DiffColoTZTest::run_test()
 {
   tz_ofset = fetch_float("TZOfset");
@@ -121,13 +121,13 @@ DiffColoTZTest::local_day_switch()
         client.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "must have expected channel in trigger_channels");
-    
+
   }
   client.change_base_url(remote1.c_str());
   request.referer_kw = fetch_string("KeywordHT1");
   request.debug_time = get_test_date(TTC_DIFF_DAY, today, tz_ofset);;
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       fetch_string("BP/HT1"),
@@ -135,7 +135,7 @@ DiffColoTZTest::local_day_switch()
     "must have expected channel in trigger_channels");
 
   request.referer_kw.clear();
-  
+
   FAIL_CONTEXT(
     CheckWaitHistoryChannel(
       client,
@@ -170,7 +170,7 @@ void
 DiffColoTZTest::gmt_day_switch()
 {
   add_descr_phrase("Test 5.2. Switch day in test colocations");
-  
+
   AdClient client(AdClient::create_user(this, AutoTest::UF_FRONTEND_MINOR));
 
   NSLookupRequest request;
@@ -187,7 +187,7 @@ DiffColoTZTest::gmt_day_switch()
         colo2_id,
         client.debug_info.colo_id).check(),
       "must receive Colo#2");
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         expected,
@@ -210,7 +210,7 @@ DiffColoTZTest::gmt_day_switch()
   request.debug_time = get_test_date(TTC_NEXT_DAY, today, tz_ofset);
 
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       fetch_string("BP/HT2"),
@@ -218,7 +218,7 @@ DiffColoTZTest::gmt_day_switch()
     "must have expected channel in trigger_channels");
 
   request.referer_kw.clear();
-  
+
   FAIL_CONTEXT(
     CheckWaitHistoryChannel(
       client,
@@ -227,7 +227,7 @@ DiffColoTZTest::gmt_day_switch()
       colo_req_timeout,
       request).check(),
     "Check session channel in adjacent colo history");
-  
+
   client.process_request(request);
 
   FAIL_CONTEXT(
@@ -240,10 +240,10 @@ DiffColoTZTest::gmt_day_switch()
   {
     request.referer_kw = fetch_string("KeywordHT2");
     client.process_request(request);
-    
+
     std::string expected[] = { fetch_string("Channel/C"),
                                fetch_string("Channel/HT2") };
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         expected,
@@ -251,6 +251,6 @@ DiffColoTZTest::gmt_day_switch()
         AutoTest::SCE_ENTRY).check(),
       "must have expected channel in history");
   }
-  
+
 }
 

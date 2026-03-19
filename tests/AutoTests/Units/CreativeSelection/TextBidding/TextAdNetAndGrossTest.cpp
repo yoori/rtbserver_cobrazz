@@ -13,8 +13,8 @@ namespace
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
 }
- 
-bool 
+
+bool
 TextAdNetAndGrossTest::run()
 {
   NOSTOP_FAIL_CONTEXT(case_tag_with_and_without_commission());
@@ -74,10 +74,10 @@ TextAdNetAndGrossTest::case_competition()
 {
   //competition 1 < 2, ordered
   {
-    std::vector<std::string> exp_ccids;      
+    std::vector<std::string> exp_ccids;
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/2"));
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/1"));
-    
+
     AdClient client(AdClient::create_user(this));
     NSLookupRequest request;
     request.referer_kw(fetch_string("KEYWORD/COMPETITION/1") + " " +
@@ -97,7 +97,7 @@ TextAdNetAndGrossTest::case_competition()
     std::vector<std::string> exp_ccids;
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/3"));
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/1"));
-    
+
     AdClient client(AdClient::create_user(this));
     NSLookupRequest request;
     request.referer_kw(fetch_string("KEYWORD/COMPETITION/1") + " " +
@@ -122,10 +122,10 @@ TextAdNetAndGrossTest::case_competition()
   }
   //competition 1 < 2, ordered
   {
-    std::vector<std::string> exp_ccids;      
+    std::vector<std::string> exp_ccids;
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/2"));
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/1"));
-    
+
     AdClient client(AdClient::create_user(this));
     NSLookupRequest request;
     request.referer_kw(fetch_string("KEYWORD/COMPETITION/1") + " " +
@@ -145,7 +145,7 @@ TextAdNetAndGrossTest::case_competition()
     std::vector<std::string> exp_ccids;
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/3"));
     exp_ccids.push_back(fetch_string("CCID/COMPETITION/1"));
-    
+
     AdClient client(AdClient::create_user(this));
     NSLookupRequest request;
     request.referer_kw(fetch_string("KEYWORD/COMPETITION/1") + " " +
@@ -190,7 +190,7 @@ TextAdNetAndGrossTest::case_publisher_commission()
         1,
         SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         ccid1,
@@ -215,7 +215,7 @@ TextAdNetAndGrossTest::case_publisher_commission()
   // sub case 2 without commision - show in tag1 and show in tag2
 
   std::string ccid2 = fetch_string("CCID/PUBLISHER-COMMISSION/2");
-  
+
   {
     AdClient client(AdClient::create_user(this));
     NSLookupRequest request;
@@ -231,7 +231,7 @@ TextAdNetAndGrossTest::case_publisher_commission()
         1,
         SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         ccid2,
@@ -247,13 +247,13 @@ TextAdNetAndGrossTest::case_publisher_commission()
     client.process_request(request);
     request.tid(fetch_string("TAG/PUBLISHER-COMMISSION/2"));
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         1,
         SelectedCreativesCCID(client).size()).check(),
       "selected_creatives size");
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         ccid2,
@@ -306,7 +306,7 @@ void
 TextAdNetAndGrossTest::post_condition()
 {
   typedef ORM::HourlyStats::Diffs Diffs;
-  
+
   const Diffs diffs[6] =
   {
     // case tag with and without commission
@@ -365,7 +365,7 @@ TextAdNetAndGrossTest::post_condition()
       pub_amount(0.053).
       pub_comm_amount(0.0353333)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(

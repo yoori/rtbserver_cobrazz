@@ -19,7 +19,7 @@ namespace Declaration
 
   protected:
     virtual ~BaseArrayTemplate() noexcept {}
-    
+
     virtual CompleteTemplateDescriptor_var
     create_template_descriptor_(
       const char* name,

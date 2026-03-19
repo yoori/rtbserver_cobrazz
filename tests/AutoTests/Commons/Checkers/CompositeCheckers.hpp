@@ -47,7 +47,7 @@ namespace AutoTest
 
     typedef ReferenceCounting::SmartPtr<CheckerHolder>
       CheckerHolder_var;
-    
+
     /**
      * @class CheckerHolderImpl
      * @brief Checker holder implementation
@@ -66,7 +66,7 @@ namespace AutoTest
       /**
        * @brief Clone held checker
        * @return copy of held checker
-       */     
+       */
       virtual CheckerHolder_var
       clone() const noexcept;
 
@@ -74,7 +74,7 @@ namespace AutoTest
        * @brief test checker
        * @param throw on error flag
        * @return true - OK, false - check FAIL
-       */      
+       */
       bool
       check(
         bool throw_error = true)
@@ -176,7 +176,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     bool check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
@@ -209,7 +209,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     bool check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
@@ -276,7 +276,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     bool check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
@@ -320,7 +320,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     virtual
     bool
     check(bool throw_error = true)
@@ -329,7 +329,7 @@ namespace AutoTest
     /**
      * @brief Get counters
      * @return events array
-     */  
+     */
     const std::vector<unsigned long>& counts() const;
 
   private:
@@ -337,7 +337,7 @@ namespace AutoTest
     size_t sample_size_;
   };
 
-  
+
   /**
    * @class AndChecker
    * @brief Conjunction predicate implementation
@@ -361,7 +361,7 @@ namespace AutoTest
      * @brief Destructor
      */
     virtual ~AndChecker() noexcept;
-   
+
     /**
      * @brief add another sub checkers
      * @param sub checkers
@@ -375,7 +375,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     bool check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
   };
@@ -409,7 +409,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     bool check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
@@ -446,7 +446,7 @@ namespace AutoTest
      * @brief test checker
      * @param throw on error flag
      * @return true - OK, false - check FAIL
-     */  
+     */
     bool check(bool throw_error = true)
       /*throw(CheckFailed, eh::Exception)*/;
 
@@ -462,7 +462,7 @@ namespace AutoTest
    * @param checker
    * @param wait timeout
    * @param interval between adjacent checks
-   */  
+   */
   template<typename SubCheckerType>
   WaitChecker<SubCheckerType>
   wait_checker(
@@ -536,7 +536,7 @@ namespace AutoTest
   NotChecker<SubCheckerType>
   not_checker(
     const SubCheckerType& checker);
-  
+
 }
 
 #include "CompositeCheckers.tpp"

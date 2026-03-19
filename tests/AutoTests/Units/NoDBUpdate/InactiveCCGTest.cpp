@@ -1,6 +1,6 @@
 
 #include "InactiveCCGTest.hpp"
- 
+
 REFLECT_UNIT(InactiveCCGTest) (
   "NoDBUpdate",
   AUTO_TEST_QUIET
@@ -12,8 +12,8 @@ namespace
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::CampaignChecker CampaignChecker;
 }
- 
-bool 
+
+bool
 InactiveCCGTest::run_test()
 {
   unsigned long ccgid = fetch_int("IC_CCGID");

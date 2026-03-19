@@ -1,6 +1,6 @@
 
 #include "BrokenRequestTest.hpp"
- 
+
 REFLECT_UNIT(BrokenRequestTest) (
   "TriggerMatching",
   AUTO_TEST_FAST
@@ -43,8 +43,8 @@ BrokenRequestTest::test_case(
         ". Expected trigger_channels check");
   }
 }
- 
-bool 
+
+bool
 BrokenRequestTest::run_test()
 {
   AdClient client(AdClient::create_user(this));
@@ -57,7 +57,7 @@ BrokenRequestTest::run_test()
         referer_kw(fetch_string("KWD1")).
         referer(fetch_string("REF1")),
       "Channel1,Channel2"));
-  
+
   NOSTOP_FAIL_CONTEXT(
     test_case(
       "Broken referrer",

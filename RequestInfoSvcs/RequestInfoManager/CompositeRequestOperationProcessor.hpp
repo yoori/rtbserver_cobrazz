@@ -42,7 +42,7 @@ namespace RequestInfoSvcs
       const AdServer::Commons::RequestId& request_id,
       const AdServer::RequestInfoSvcs::RequestPostActionInfo& request_post_action_info)
       /*throw(Exception)*/;
-    
+
     virtual void
     change_request_user_id(
       const AdServer::Commons::UserId& new_user_id,

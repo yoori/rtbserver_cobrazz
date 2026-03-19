@@ -1,6 +1,6 @@
 
 #include "AbsentProfileTest.hpp"
- 
+
 REFLECT_UNIT(AbsentProfileTest) (
   "UserProfilesExchange",
   AUTO_TEST_SLOW
@@ -15,7 +15,7 @@ namespace
 
   // 15 minutes need UserInfoExchanger to mark profile as absent
   static const unsigned long MAX_WAIT_TIME = 900;
-  
+
   class WaitAdditionalProfileEmpty: public AutoTest::Checker
   {
   public:
@@ -55,7 +55,7 @@ namespace
         test_,
         expected_channels_.c_str(),
         client_.debug_info.history_channels).check(true);
-      
+
       return result;
     }
 
@@ -66,7 +66,7 @@ namespace
   };
 }
 
-bool 
+bool
 AbsentProfileTest::run_test()
 {
 
@@ -84,7 +84,7 @@ AbsentProfileTest::run_test()
   NSLookupRequest request;
 
   add_descr_phrase("Send request with \"unknown\" uid");
-  
+
   request.referer_kw = fetch_string("Keyword1");
   AutoTest::Time today;
   request.debug_time = today;
@@ -108,7 +108,7 @@ AbsentProfileTest::run_test()
   client.process_request(request);
 
   AutoTest::AdminsArray<AutoTest::UserInfoAdminLog> admin;
-  
+
   admin.initialize(
     this, CTE_ALL,
     STE_USER_INFO_MANAGER_CONTROLLER,
@@ -116,7 +116,7 @@ AbsentProfileTest::run_test()
       client.get_uid(),
       AutoTest::UUE_ADMIN_PARAMVALUE).c_str(),
     AutoTest::UserInfoManagerController);
-  
+
   admin.log(AutoTest::Logger::thlog());
 
   FAIL_CONTEXT(
@@ -136,25 +136,25 @@ AbsentProfileTest::run_test()
 
   {
     add_descr_phrase("Wait NOT empty additional profile");
-    
+
     std::string uid = AutoTest::prepare_uid(
       client.get_uid(),
       AutoTest::UUE_ADMIN_PARAMVALUE);
 
     std::string time2_st = (today+1).get_gm_time().format("%Y-%m-%d %H:%M:%S");
-    
+
     std::string page_session_matches =
       "\\[ channel_id = " + fetch_string("Channel/S1") + ", timestamps = " +
       time2_st + " \\] "
       "\\[ channel_id = " + fetch_string("Channel/S2") + ", timestamps = " +
       time2_st + " \\]";
-    
+
     std::string page_ht_candidates =
       "\\[ channel_id = "  + fetch_string("Channel/HT1") + ", req_visits = 1, "
       "visits = 1, weight = 0 \\] "
       "\\[ channel_id = "  + fetch_string("Channel/HT2") + ", req_visits = 0, "
       "visits = 1, weight = 1 \\]";
-    
+
     std::string page_history_visits =
       "\\[ channel_id = "  + fetch_string("Channel/HT1") + ", visits = 1 \\] "
       "\\[ channel_id = "  + fetch_string("Channel/HT2") + ", visits = 1 \\] "
@@ -197,7 +197,7 @@ AbsentProfileTest::run_test()
   client.process_request(
     NSLookupRequest().
       debug_time(AutoTest::Time() + 24*60*60));
-    
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,

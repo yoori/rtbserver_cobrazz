@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__SUBAGENTTEST_
 #define _AUTOTEST__SUBAGENTTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class SubAgentTest : public BaseUnit
 {

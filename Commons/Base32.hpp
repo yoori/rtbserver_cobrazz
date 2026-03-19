@@ -219,7 +219,7 @@ namespace Commons
     res.append(out_buf, out_buf + r * 5 / 8);
 
     return true;
-  }  
+  }
 }
 }
 

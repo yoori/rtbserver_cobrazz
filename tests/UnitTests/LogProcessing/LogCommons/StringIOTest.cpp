@@ -18,14 +18,14 @@ empty_separated_string()
    *  UserProperties is the part of Request log.
    *  Where we read value: UserPropertiesList (separated from other by \t
    *  and each element in UserPropertiesList separated by Comma
-   *  see: 3.5.0 LogCommons.ipp: 
+   *  see: 3.5.0 LogCommons.ipp:
    *  InputArchive::operator &
    *  operator >>(std::istream& is, std::list<ValueType>& values)
    *  So all test cases with ',' '\t' in TestCase::in below
    *  wrong and impossible in real files IMO.
    *  Such as broke Request log format
    *  Switched off in ADSC-9944
-  */ 
+  */
 
   struct TestCase
   {
@@ -102,7 +102,7 @@ empty_separated_string()
         << up.first.size()
         << ", second: '" << static_cast<std::string>(up.second) << "':"
         << up.second.size() << std::endl;
-      std::cerr << "Expected: " 
+      std::cerr << "Expected: "
         << "first: '" << static_cast<std::string>(READ_MUST_FAIL[i].first) << "':"
         << static_cast<std::string>(READ_MUST_FAIL[i].first).size()
         << ", second: '" << static_cast<std::string>(READ_MUST_FAIL[i].second) << "':"
@@ -125,7 +125,7 @@ empty_separated_string()
         << up.first.size()
         << ", second: '" << static_cast<std::string>(up.second) << "':"
         << up.second.size() << std::endl;
-      std::cerr << "Expected: " 
+      std::cerr << "Expected: "
         << "first: '" << static_cast<std::string>(VALID[i].first) << "':"
         << static_cast<std::string>(VALID[i].first).size()
         << ", second: '" << static_cast<std::string>(VALID[i].second) << "':"

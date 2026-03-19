@@ -39,7 +39,7 @@ namespace RequestInfoSvcs
         return left < Generics::Time(right.time());
       }
     };
-      
+
     void
     add_user_motion(
       UserFraudProtectionProfileWriter::requests_Container& motions,
@@ -48,7 +48,7 @@ namespace RequestInfoSvcs
     {
       UserFraudProtectionProfileWriter::requests_Container::reverse_iterator mit =
         motions.rbegin();
-      
+
       for(; mit != motions.rend(); ++mit)
       {
         if(mit->time() <= time.tv_sec)
@@ -56,15 +56,15 @@ namespace RequestInfoSvcs
           break;
         }
       }
-      
+
       std::string rid_str = request_id.to_string();
-          
+
       UserMotionWriter new_motion;
       new_motion.request_id() = rid_str;
       new_motion.time() = time.tv_sec;
       motions.insert(mit.base(), new_motion);
     }
-    
+
     void
     clear_excess_motions(
       UserFraudProtectionProfileWriter::requests_Container& motions,
@@ -72,7 +72,7 @@ namespace RequestInfoSvcs
     {
       UserFraudProtectionProfileWriter::requests_Container::iterator mit =
         motions.begin();
-      
+
       for(; mit != motions.end(); ++mit)
       {
         if(mit->time() >= max_time.tv_sec)
@@ -101,10 +101,10 @@ namespace RequestInfoSvcs
           break;
         }
       }
-      
+
       UserFraudProtectionProfileWriter::requests_Container::
         reverse_iterator rit = end_it;
-      
+
       for(; rit != motions.rend(); ++rit)
       {
         if(Generics::Time(rit->time()) < min_time)
@@ -263,7 +263,7 @@ namespace RequestInfoSvcs
                 // current request is left bound
                 fraud_end_time = std::max(
                   fraud_end_time,
-                  (now < left_it_time ? now : left_it_time) + rule_it->period);                  
+                  (now < left_it_time ? now : left_it_time) + rule_it->period);
 
                 break;
               }
@@ -303,7 +303,7 @@ namespace RequestInfoSvcs
     static const char* FUN = "UserFraudProtectionContainer::UserFraudProtectionContainer()";
 
     Generics::Time extend_time_period_val(extend_time_period);
-    
+
     if(extend_time_period_val == Generics::Time::ZERO)
     {
       extend_time_period_val = expire_time / 4;
@@ -358,7 +358,7 @@ namespace RequestInfoSvcs
     /*throw(RequestActionProcessor::Exception)*/
   {
     static const char* FUN = "UserFraudProtectionContainer::process_impression()";
-    
+
     if(request_info.user_id == AdServer::Commons::PROBE_USER_ID ||
       request_info.user_id == OPTOUT_USER_ID ||
       request_info.user_id.is_null() ||
@@ -393,7 +393,7 @@ namespace RequestInfoSvcs
       ostr << FUN << ": caught eh::Exception: " << ex.what();
       throw RequestActionProcessor::Exception(ostr);
     }
-    
+
     if(user_deactivate_time != Generics::Time::ZERO &&
        callback_.in())
     {
@@ -471,7 +471,7 @@ namespace RequestInfoSvcs
     {
       callback_->detected_fraud_user(request_info.user_id, user_deactivate_time);
     }
-    
+
     if(logger_->log_level() >= Logging::Logger::TRACE)
     {
       Stream::Error ostr;
@@ -480,7 +480,7 @@ namespace RequestInfoSvcs
 
       logger_->log(ostr.str(),
         Logging::Logger::TRACE,
-        Aspect::USER_FRAUD_PROTECTION_CONTAINER);      
+        Aspect::USER_FRAUD_PROTECTION_CONTAINER);
     }
   }
 
@@ -494,7 +494,7 @@ namespace RequestInfoSvcs
     static const char* FUN = "UserFraudProtectionContainer::process_impression_trans_()";
 
     user_deactivate_time = Generics::Time::ZERO;
-    
+
     Config_var config = get_config_();
 
     try
@@ -505,7 +505,7 @@ namespace RequestInfoSvcs
       ProfileMap::Transaction_var transaction =
         user_map_->get_transaction(request_info.user_id);
       Generics::ConstSmartMemBuf_var mem_buf = transaction->get_profile();
-  
+
       if(mem_buf.in())
       {
         user_profile_writer.init(
@@ -587,9 +587,9 @@ namespace RequestInfoSvcs
       /* save profile */
       unsigned long sz = user_profile_writer.size();
       Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
-  
+
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
-  
+
       transaction->save_profile(
         Generics::transfer_membuf(new_mem_buf),
         request_info.time);
@@ -612,7 +612,7 @@ namespace RequestInfoSvcs
     static const char* FUN = "UserFraudProtectionContainer::process_click_trans_()";
 
     user_deactivate_time = Generics::Time::ZERO;
-    
+
     Config_var config = get_config_();
 
     try
@@ -658,7 +658,7 @@ namespace RequestInfoSvcs
             user_profile_reader->clicks(),
             config->click_rules);
         }
-      
+
         clear_excess_motions(
           user_profile_writer.requests(),
           request_info.time - config->imp_rules.max_period());
@@ -690,13 +690,13 @@ namespace RequestInfoSvcs
 
       add_user_motion(user_profile_writer.clicks(),
         request_info.request_id, request_info.time);
-      
+
       /* save profile */
       unsigned long sz = user_profile_writer.size();
       Generics::SmartMemBuf_var new_mem_buf(new Generics::SmartMemBuf(sz));
-  
+
       user_profile_writer.save(new_mem_buf->membuf().data(), sz);
-  
+
       transaction->save_profile(
         Generics::transfer_membuf(new_mem_buf),
         request_info.time);

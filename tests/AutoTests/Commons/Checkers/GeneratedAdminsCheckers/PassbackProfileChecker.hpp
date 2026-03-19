@@ -10,39 +10,39 @@
 namespace AutoTest
 {
   template<typename ExpectedType, CheckType ch = CT_ONE>
-  class PassbackProfileChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
-            
+  class PassbackProfileChecker_:
+    public AutoTest::Checker
+  {
+    public:
+
       typedef ExpectedType Expected;
 
-      PassbackProfileChecker_(      
-        BaseUnit* test,      
-        const std::string& requestid,      
-        RequestInfoSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        requestid_(requestid),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
-            
-      virtual ~PassbackProfileChecker_() noexcept {}      
-            
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
-            
-    private:    
-            
-      BaseUnit* test_;      
-      std::string requestid_;      
-      RequestInfoSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
-            
-  };  
+      PassbackProfileChecker_(
+        BaseUnit* test,
+        const std::string& requestid,
+        RequestInfoSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        requestid_(requestid),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
+
+      virtual ~PassbackProfileChecker_() noexcept {}
+
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
+
+    private:
+
+      BaseUnit* test_;
+      std::string requestid_;
+      RequestInfoSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
+
+  };
 
   typedef PassbackProfileChecker_<PassbackProfileAdmin::Expected> PassbackProfileChecker;
   typedef PassbackProfileChecker_<std::string, CT_ONE_NOT_EXPECTED> PassbackProfileEmptyChecker;

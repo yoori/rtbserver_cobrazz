@@ -20,7 +20,7 @@ namespace AutoTest
   const char* NSLookupRequest::DEBUG_INFO_DEFAULT = "header";
 
   const char* NSLookupRequest::DEFAULT_COUNTRY = "gn";
-  
+
   NSLookupRequest::NSLookupRequest(bool set_defs) :
     BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     debug_info(this, "require-debug-info", DEBUG_INFO_DEFAULT, true),
@@ -57,7 +57,7 @@ namespace AutoTest
     debug_ip(this, "debug.ip"),
     rm_tuid(this, "rm-muid")
   { }
-  
+
   NSLookupRequest::NSLookupRequest(const NSLookupRequest& other) :
     BaseRequest(BASE_URL, BaseRequest::RT_ENCODED),
     debug_info(this, other.debug_info),

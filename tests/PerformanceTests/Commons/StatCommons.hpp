@@ -48,7 +48,7 @@ struct AdvertiserResponse
    * advertising request
    */
   unsigned long trigger_channels_count;
-  
+
   /**
    * @brief History channels size
    *
@@ -99,7 +99,7 @@ struct AdvertiserResponse
    * true - if request is optout
    */
   bool optout;
-  
+
 
   /**
    * @brief Constructor.
@@ -136,7 +136,7 @@ struct AdvertiserResponse
 
   /**
    * @brief Pointer to class member.
-   */  
+   */
   typedef AdvertiserResponse AdvertiserResponse::* Member;
 
 };
@@ -148,7 +148,7 @@ typedef std::unique_ptr<AdvertiserResponse> AdvertiserResponse_var;
  * @struct Simple counter
  * @brief Implement simple request counter
  */
-class Counter 
+class Counter
 {
 protected:
 
@@ -158,46 +158,46 @@ protected:
 public:
   /**
    * @brief Default constructor.
-   */  
+   */
   Counter();
 
   /**
    * @brief Destructor
-   */  
+   */
   virtual ~Counter() noexcept;
 
   /**
    * @brief Increment counter
    * @param increment value
-   */  
+   */
   virtual void incr(unsigned long increment = INCREMENT);
 
   /**
    * @brief Reset counter diff
    *
    * Using when start new second
-   */  
+   */
   virtual void reset();
 
   /**
    * @brief Percentage
    *
    * @return 0 in this class
-   */  
+   */
   virtual double percentage() const;
 
   /**
    * @brief Total
    *
    * @return total counts ov events
-   */  
+   */
   virtual unsigned long get() const;
 
   /**
    * @brief Diffs
    *
    * @return counts ov events between 2 resets
-   */  
+   */
   virtual unsigned long diff() const;
 
 protected:
@@ -216,7 +216,7 @@ public:
 
   /**
    * @brief Constructor.
-   */  
+   */
   Average() :
     sum_(0),
     size_(0)
@@ -226,7 +226,7 @@ public:
   /**
    * @brief Push new value.
    * @param value
-   */  
+   */
   void push(const T& val)
   {
     sum_ += val;
@@ -235,7 +235,7 @@ public:
 
   /**
    * @brief Get average value.
-   */  
+   */
   T get() const
   {
     if (!size_) return static_cast<T>(0);
@@ -247,7 +247,7 @@ public:
     size_ = 0;
     sum_ = static_cast<T>(0);
   }
-  
+
 private:
 
   T sum_;
@@ -265,18 +265,18 @@ public:
   /**
    * @brief Constructor.
    * @param master counter
-   */  
+   */
   SlaveCounter(Counter* master);
 
   /**
    * @brief Destructor.
-   */  
+   */
   ~SlaveCounter() noexcept;
 
   /**
    * @brief Percentage.
    * @return percentage of master counter
-   */  
+   */
   double percentage() const;
 
 protected:
@@ -294,12 +294,12 @@ public:
   /**
    * @brief Constructor.
    * @param master counter
-   */  
+   */
   ConstraintableCounter(Counter* master);
 
   /**
    * @brief Destructor.
-   */  
+   */
   ~ConstraintableCounter() noexcept;
 
   /**
@@ -311,7 +311,7 @@ public:
   /**
    * @brief Increment counter
    * @param increment value
-   */  
+   */
   void incr(unsigned long increment = INCREMENT);
 
 private:
@@ -330,48 +330,48 @@ public:
 
   /**
    * @brief Default constructor.
-   */  
+   */
   PerformanceItem();
 
   /**
    * @brief Destructor.
-   */  
+   */
   ~PerformanceItem() noexcept;
 
   /**
    * @brief push duration.
    * @param time duration.
-   */  
+   */
   void push(const Generics::Time& time);
 
   /**
    * @brief Get max duration.
    * @param max duration.
-   */  
+   */
   const Generics::Time& max() const;
 
   /**
    * @brief Get min duration.
    * @param min duration.
-   */  
+   */
   const Generics::Time& min() const;
 
   /**
    * @brief Get average duration.
    * @param average duration.
-   */  
+   */
   Generics::Time average() const;
 
   /**
    * @brief Reset.
-   */  
+   */
   void reset();
 
 private:
   Generics::Time max_;
   Generics::Time min_;
   Average <Generics::Time> average_;
-  
+
 };
 
 typedef ReferenceCounting::SmartPtr<PerformanceItem> PerformanceItem_var;
@@ -391,12 +391,12 @@ public:
   /**
    * @brief Get performance items dictionary.
    * @param items dictionary (name => performance item).
-   */    
+   */
   const ItemList& items() const;
 
   /**
    * @brief Reset all items.
-   */    
+   */
   void reset();
 
 protected:
@@ -408,7 +408,7 @@ protected:
    * @brief Get item by name.
    * @param name
    * @return performance item.
-   */    
+   */
   PerformanceItem_var get_item(const char* item_name);
 };
 
@@ -429,13 +429,13 @@ template <class T> class PerformanceStatistics : public PerformanceStatisticsBas
   typedef typename DataMapType::iterator dt_iterator;
   typedef typename DataMapType::value_type dt_value_type;
   typedef typename DataMapType::size_type  dt_size_type;
- 
+
 public:
 
   /**
    * @brief Push response .
    * @param response
-   */    
+   */
   void  push(const T* response)
   {
     if (response)
@@ -448,7 +448,7 @@ public:
       }
     }
   }
- 
+
 protected:
   DataMapType data_map;
 };
@@ -460,10 +460,10 @@ protected:
 class AdvPerformanceStats : public PerformanceStatistics<AdvertiserResponse>
 {
 public:
-  
+
   /**
    * @brief Default constructor.
-   */  
+   */
   AdvPerformanceStats();
 };
 
@@ -476,44 +476,44 @@ class RangeStats
 public:
   /**
    * @brief Default constructor.
-   */  
+   */
   RangeStats();
 
   /**
    * @brief Push.
    * @param value
-   */  
+   */
   void push(long value);
 
   /**
    * @brief Reset.
-   */  
+   */
   void reset();
 
   /**
    * @brief Get value.
    * @return current value.
-   */  
+   */
   long get() const;
 
   /**
    * @brief Get max value.
    * @return max value.
-   */  
+   */
   long max() const;
 
   /**
    * @brief Get min value.
    * @return min value.
-   */  
+   */
   long min() const;
 
   /**
    * @brief Get average value.
    * @return average value.
-   */  
+   */
   const Average <long>& average() const;
- 
+
 private:
   long max_;
   long min_;

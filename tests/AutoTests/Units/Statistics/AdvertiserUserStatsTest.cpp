@@ -1,5 +1,5 @@
 
-#include <algorithm> 
+#include <algorithm>
 #include "AdvertiserUserStatsTest.hpp"
 
 REFLECT_UNIT(AdvertiserUserStatsTest) (
@@ -30,7 +30,7 @@ namespace
         MAX_LAST_APPEARANCE_DIFF :
        AutoTest::days(adv_sdate - last_appearance_date))) * unique_users;
   }
-  
+
 }
 
 template <class Stats>
@@ -122,7 +122,7 @@ AdvertiserUserStatsTest::initialize_all_stats_(
     adv_diffs_, expected,
     &Expected::advertisers,
     colo);
-  
+
   initialize_stats_(
     description,
     cmp_stats_,
@@ -130,7 +130,7 @@ AdvertiserUserStatsTest::initialize_all_stats_(
     expected,
     &Expected::campaigns,
     colo);
-  
+
   initialize_stats_(
     description,
     ccg_stats_,
@@ -138,7 +138,7 @@ AdvertiserUserStatsTest::initialize_all_stats_(
     expected,
     &Expected::ccgs,
     colo);
-  
+
   initialize_stats_(
     description,
     cc_stats_,
@@ -181,13 +181,13 @@ AdvertiserUserStatsTest::log_request_(
   std::string request_id)
 {
   AutoTest::AdminsArray<AutoTest::RequestProfileAdmin> admins;
-  
+
   admins.initialize(
     this,
     CTE_ALL,
     STE_REQUEST_INFO_MANAGER,
     "\\" + request_id);
-  
+
   admins.log(AutoTest::Logger::thlog());
 }
 
@@ -215,13 +215,13 @@ AdvertiserUserStatsTest::process_requests_(
     {
       request.colo = colo;
     }
-    
+
     client.process_request(request);
 
     if (requests[i].expected_ccs)
     {
       std::list<std::string> expected_ccs;
-      
+
       fetch_objects(
         std::inserter(expected_ccs, expected_ccs.begin()),
         requests[i].expected_ccs);
@@ -230,7 +230,7 @@ AdvertiserUserStatsTest::process_requests_(
         AutoTest::sequence_checker(
           expected_ccs,
           AutoTest::SelectedCreativesCCID(client)).check(),
-        description + 
+        description +
           " Check creatives#" + strof(i+1));
 
       requests_.push_back(
@@ -242,7 +242,7 @@ AdvertiserUserStatsTest::process_requests_(
         AutoTest::equal_checker(
           "0",
           client.debug_info.ccid).check(),
-        description + 
+        description +
           " Check creatives#" + strof(i+1));
     }
     if (strcmp(requests[i].format, "unit-test-imp") == 0)
@@ -250,7 +250,7 @@ AdvertiserUserStatsTest::process_requests_(
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         !client.debug_info.track_pixel_url.empty()),
-      description + 
+      description +
         " Check traclk pixel url# " + strof(i+1));
     }
   }
@@ -266,7 +266,7 @@ AdvertiserUserStatsTest::check_stats_()
         adv_diffs_,
         adv_stats_)).check(),
     "AdvertiserUserStats test");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -274,7 +274,7 @@ AdvertiserUserStatsTest::check_stats_()
         cmp_diffs_,
         cmp_stats_)).check(),
     "CampaignUserStats test");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -282,7 +282,7 @@ AdvertiserUserStatsTest::check_stats_()
         ccg_diffs_,
         ccg_stats_)).check(),
     "CCGUserStats test");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -299,9 +299,9 @@ AdvertiserUserStatsTest::check_stats_()
   cmp_diffs_.clear();
   ccg_diffs_.clear();
   cc_diffs_.clear();
-    
+
   // Check agregated stats
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -309,7 +309,7 @@ AdvertiserUserStatsTest::check_stats_()
         adv_sum_diffs_,
         adv_sum_stats_)).check(),
     "AdvertiserUserStats aggregation test");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -317,7 +317,7 @@ AdvertiserUserStatsTest::check_stats_()
         cmp_sum_diffs_,
         cmp_sum_stats_)).check(),
     "CampaignUserStats aggregation test");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -325,7 +325,7 @@ AdvertiserUserStatsTest::check_stats_()
         ccg_sum_diffs_,
         ccg_sum_stats_)).check(),
     "CCGUserStats aggregation test");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
@@ -358,7 +358,7 @@ AdvertiserUserStatsTest::run_test()
     AdClient client2(big_date_diff_part_1_());
     colo_();
     temporary_user_();
-    
+
     add_descr_phrase("Check stats#1");
     check_stats_();
 
@@ -369,15 +369,15 @@ AdvertiserUserStatsTest::run_test()
     check_stats_();
 
     async_part_3_(client1);
-    
+
     add_descr_phrase("Check stats#3");
     check_stats_();
-    
+
     return true;
   }
   catch (const eh::Exception&)
   {
-    add_descr_phrase("Log requests by RIA.");    
+    add_descr_phrase("Log requests by RIA.");
     std::for_each(
       requests_.begin(),
       requests_.end(),
@@ -394,7 +394,7 @@ AdvertiserUserStatsTest::base_()
 {
   std::string description("Ordered and unordered sequence.");
   add_descr_phrase(description);
-  
+
   const Expected EXPECTED[] =
   {
     {
@@ -461,14 +461,14 @@ AdvertiserUserStatsTest::base_()
       1, 1, 0
     }
   };
-  
+
   initialize_all_stats_(description, EXPECTED);
-  
+
   const SumExpected SUM_EXPECTED[] =
   {
     {
       4,
-      static_cast<int>(sum_change(today_, Generics::Time::ZERO, 1) + 
+      static_cast<int>(sum_change(today_, Generics::Time::ZERO, 1) +
         sum_change(today_ + 1 * DAY, today_, 1) +
         sum_change(today_ + 10 * DAY, today_ + 1 * DAY, 1) +
         sum_change(today_ + 50 * DAY, today_ + 19 * DAY, 1))
@@ -480,7 +480,7 @@ AdvertiserUserStatsTest::base_()
         sum_change(today_, Generics::Time::ZERO, 1))
     }
   };
-  
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -509,7 +509,7 @@ AdvertiserUserStatsTest::base_()
     "BASE/CC/",
     &ORM::CCUserStats::Key::cc_id,
     SUM_EXPECTED);
-  
+
   const Request BASE_REQUESTS[] =
   {
     // Ordered sequence
@@ -528,7 +528,7 @@ AdvertiserUserStatsTest::base_()
 
   AdClient client(AdClient::create_user(this));
   process_requests_(client, description, BASE_REQUESTS, today_);
-  
+
 }
 
 void
@@ -606,7 +606,7 @@ AdvertiserUserStatsTest::unique_users_()
       today_ + DAY,
       1, 0, 1
     },
-    
+
     // Request 9
     {
       "UNIQUE/Account/Adv1",
@@ -635,7 +635,7 @@ AdvertiserUserStatsTest::unique_users_()
       today_ + 2*DAY,
       1, 0, 1
     },
-    
+
     // Request 10 & 11
     {
       "UNIQUE/Account/Adv1",
@@ -656,7 +656,7 @@ AdvertiserUserStatsTest::unique_users_()
       today_ + 3*DAY,
       0, 0, 0
     },
-    
+
     // Request 12
     {
       "UNIQUE/Account/Adv1",
@@ -677,7 +677,7 @@ AdvertiserUserStatsTest::unique_users_()
       today_ + 4*DAY,
       0, 0, 0
     },
-    
+
     //  Request 13
     {
       0, 0, 0,
@@ -686,7 +686,7 @@ AdvertiserUserStatsTest::unique_users_()
       today_ + 4*DAY,
       1, 0, 1
     },
-    
+
     // Request 14
     {
       0,
@@ -704,12 +704,12 @@ AdvertiserUserStatsTest::unique_users_()
       0,
       today_,
       today_ + 4*DAY,
-      0, 1, 0 
-    }, 
+      0, 1, 0
+    },
   };
 
   initialize_all_stats_(description, EXPECTED);
-  
+
   const SumExpected SUM_EXPECTED[] =
   {
     { 0, 0 },
@@ -723,7 +723,7 @@ AdvertiserUserStatsTest::unique_users_()
     "UNIQUE/Account/Agency",
     &ORM::AdvertiserUserStats::Key::adv_account_id,
     SUM_EXPECTED);
-      
+
   const Request UNIQUE_REQUESTS[] =
   {
      // 1
@@ -767,7 +767,7 @@ AdvertiserUserStatsTest::last_usage_()
 {
   std::string description("Last appearance date.");
   add_descr_phrase(description);
-   
+
   const Expected EXPECTED[] =
   {
     {
@@ -825,7 +825,7 @@ AdvertiserUserStatsTest::last_usage_()
       1, 0, 1
     }
   };
-  
+
   initialize_all_stats_(description, EXPECTED);
 
   const SumExpected SUM_EXPECTED[] =
@@ -833,7 +833,7 @@ AdvertiserUserStatsTest::last_usage_()
     { 0, 0 },
     { 0, 0 }
   };
-   
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -842,8 +842,8 @@ AdvertiserUserStatsTest::last_usage_()
     &ORM::AdvertiserUserStats::Key::adv_account_id,
     SUM_EXPECTED);
 
-  
-  
+
+
   const Request LAST_USAGE_REQUESTS_USER_1[] =
   {
     {"LASTUSAGE/KWD/Display1", "LASTUSAGE/Tag", -32 * DAY, "unit-test", "LASTUSAGE/CC/Display1"},
@@ -938,14 +938,14 @@ AdvertiserUserStatsTest::timezones_()
     { 0, 0 },
     { 0, 0 }
   };
-   
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
     adv_sum_diffs_,
     "TZ/Account/Agency",
     &ORM::AdvertiserUserStats::Key::adv_account_id,
-    SUM_EXPECTED);  
+    SUM_EXPECTED);
 
   const Request TZ_REQUESTS[] =
   {
@@ -959,7 +959,7 @@ AdvertiserUserStatsTest::timezones_()
 
   AdClient client(AdClient::create_user(this));
   process_requests_(client, description, TZ_REQUESTS, base_time);
-  
+
 }
 
 AdvertiserUserStatsTest::AdClient
@@ -999,7 +999,7 @@ AdvertiserUserStatsTest::async_part_1_()
   {
     { 0, 0 }
   };
-   
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -1097,7 +1097,7 @@ AdvertiserUserStatsTest::async_part_2_(
   {
     { 0, 0 }
   };
-   
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -1149,7 +1149,7 @@ AdvertiserUserStatsTest::async_part_3_(
     { 0, 0 },
     { 0, 0 }
   };
-   
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -1173,7 +1173,7 @@ AdvertiserUserStatsTest::async_part_3_(
     "ASYNC/CCG/",
     &ORM::CCGUserStats::Key::ccg_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     cc_sum_stats_,
@@ -1185,7 +1185,7 @@ AdvertiserUserStatsTest::async_part_3_(
 
   const Request REQUESTS[] =
   {
-    // Today 00:00:30   
+    // Today 00:00:30
     {"ASYNC/KWD/1", "ASYNC/Tag", 30, "unit-test", "ASYNC/CC/1"},
     // Today 00:00:40
     {"ASYNC/KWD/2", "ASYNC/Tag", 40, "unit-test", "ASYNC/CC/2"},
@@ -1196,7 +1196,7 @@ AdvertiserUserStatsTest::async_part_3_(
   process_requests_(
     client, description,
     REQUESTS, base_time);
-  
+
 }
 
 
@@ -1238,14 +1238,14 @@ AdvertiserUserStatsTest::big_date_diff_part_1_()
   };
 
   initialize_all_stats_(description, EXPECTED);
-  
+
   const Request BIG_DIFF_REQUESTS_1[] =
   {
     {"BIGDIFF/KWD/1", "BIGDIFF/Tag", -60 * DAY, "unit-test", "BIGDIFF/CC/1"},
     {"BIGDIFF/KWD/1", "BIGDIFF/Tag", -40 * DAY, "unit-test", "BIGDIFF/CC/1"},
     {"BIGDIFF/KWD/1", "BIGDIFF/Tag", 0, "unit-test", "BIGDIFF/CC/1"}
   };
-  
+
   AdClient client(AdClient::create_user(this));
   process_requests_(client, description, BIG_DIFF_REQUESTS_1, today_);
 
@@ -1296,7 +1296,7 @@ AdvertiserUserStatsTest::big_date_diff_part_2_(
   {
     {"BIGDIFF/KWD/1", "BIGDIFF/Tag", -9 * DAY, "unit-test", "BIGDIFF/CC/1"}
   };
-  
+
   process_requests_(client, description, BIG_DIFF_REQUESTS_2, today_);
 }
 
@@ -1332,7 +1332,7 @@ AdvertiserUserStatsTest::colo_()
     remote_2?
       fetch_int("REMOTE_COLO"): fetch_int("DEFAULT_COLO"));
 
- 
+
   const SumExpected SUM_EXPECTED[] =
   {
     {
@@ -1348,7 +1348,7 @@ AdvertiserUserStatsTest::colo_()
     "COLO/Campaign/",
     &ORM::CampaignUserStats::Key::campaign_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     ccg_sum_stats_,
@@ -1356,7 +1356,7 @@ AdvertiserUserStatsTest::colo_()
     "COLO/CCG/",
     &ORM::CCGUserStats::Key::ccg_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     cc_sum_stats_,
@@ -1370,12 +1370,12 @@ AdvertiserUserStatsTest::colo_()
     {"COLO/KWD/1", "COLO/Tag", 12*60*60, "unit-test", "COLO/CC/1"},
   };
 
-  
+
   AdClient client(
     AdClient::create_user(
       this,
       remote_2? AutoTest::UF_FRONTEND_MINOR: 0));
-  
+
   process_requests_(
     client,
     description,
@@ -1418,7 +1418,7 @@ AdvertiserUserStatsTest::temporary_user_()
   {
     { 0, 0 }
   };
-   
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -1452,7 +1452,7 @@ AdvertiserUserStatsTest::temporary_user_()
   {
     {0, "TEMP/Tag", 0, "unit-test", "TEMP/CC/1"}
   };
-    
+
   AdClient persistent(AdClient::create_user(this));
   process_requests_(
     persistent, description + " Before merging.",
@@ -1482,7 +1482,7 @@ AdvertiserUserStatsTest::optout_users_()
     "OPTOUT/Account/Agency",
     &ORM::AdvertiserUserStats::Key::adv_account_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     adv_sum_stats_,
@@ -1490,7 +1490,7 @@ AdvertiserUserStatsTest::optout_users_()
     "OPTOUT/Account/Adv",
     &ORM::AdvertiserUserStats::Key::adv_account_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     cmp_sum_stats_,
@@ -1498,7 +1498,7 @@ AdvertiserUserStatsTest::optout_users_()
     "OPTOUT/Campaign/",
     &ORM::CampaignUserStats::Key::campaign_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     ccg_sum_stats_,
@@ -1506,7 +1506,7 @@ AdvertiserUserStatsTest::optout_users_()
     "OPTOUT/CCG/",
     &ORM::CCGUserStats::Key::ccg_id,
     SUM_EXPECTED);
-  
+
   initialize_sum_stats_(
     description,
     cc_sum_stats_,

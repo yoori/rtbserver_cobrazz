@@ -448,7 +448,7 @@ namespace Cpp
     generate_swap_impl_(
       struct_writer->name(),
       struct_descriptor);
-      
+
     generate_accessors_impl_(struct_writer);
   }
 
@@ -501,7 +501,7 @@ namespace Cpp
         break;
       }
     }
-      
+
     /* c-tor(bool init_defaults = false) */
     out_ << offset_ << "inline" << std::endl <<
       offset_ << class_name << "::" << class_name <<
@@ -549,7 +549,7 @@ namespace Cpp
       offset_ << "{" << std::endl <<
       offset_ << "  const unsigned char* buf_ptr = static_cast<const unsigned char*>(buf);" <<
         std::endl;
-    
+
     Utils::fetch_fields_with_fixed_sum(
       *fields, FieldInitImplOps(out_, (offset_ + "  ").c_str()));
 
@@ -599,7 +599,7 @@ namespace Cpp
       offset_ << class_name << "::dyn_size_() const" << std::endl <<
       offset_ << "{" << std::endl <<
       offset_ << "  return ";
-    
+
     {
       bool first_dyn_field = true;
       for(Declaration::StructDescriptor::PosedFieldList::

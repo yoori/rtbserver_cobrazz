@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__ISPCOLOCATIONTARGETING_
 #define _AUTOTEST__ISPCOLOCATIONTARGETING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class ISPColocationTargeting : public BaseUnit
 {
@@ -14,7 +14,7 @@ class ISPColocationTargeting : public BaseUnit
     const char* expected_history;
     const char* expected_ccs;
   };
-  
+
 public:
   ISPColocationTargeting(
     UnitStat& stat_var,
@@ -35,7 +35,7 @@ private:
   process_case(
     const std::string& description,
     const TestCase(&testcases)[Count]);
-  
+
 };
 
 #endif // _AUTOTEST__ISPCOLOCATIONTARGETING_

@@ -219,7 +219,7 @@ namespace ChannelSvcs
         {
           comp_length = std::min(length, postfix.length());
         }
-        else if((it->matcher->exact() && 
+        else if((it->matcher->exact() &&
           (!match_exact || length != postfix.length())) ||
           length < postfix.length())
         {//doesn't match
@@ -246,7 +246,7 @@ namespace ChannelSvcs
   }
 
   void ChannelChunk::match_uid(
-    const Generics::Uuid& uid, 
+    const Generics::Uuid& uid,
     TriggerMatchRes& res) const
     /*throw(eh::Exception)*/
   {
@@ -286,7 +286,7 @@ namespace ChannelSvcs
 
           if(negative)
           {
-            item.flags |= TriggerMatchItem::TMI_NEGATIVE; 
+            item.flags |= TriggerMatchItem::TMI_NEGATIVE;
           }
           else if(!(item.flags & TriggerMatchItem::TMI_NEGATIVE))
           {
@@ -494,7 +494,7 @@ namespace ChannelSvcs
     vec.emplace(ins_it, entity);
   }
 
-  /* merge 2 sequences to one exclude elements from second sequence 
+  /* merge 2 sequences to one exclude elements from second sequence
   * if functor pred isn't true */
   template <
   class InputIterator1, class InputIterator2,
@@ -619,7 +619,7 @@ namespace ChannelSvcs
           else
           {
             res_it->resize(old_it->size());
-            auto vec_it = copy_if(old_it->begin(), old_it->end(), res_it->begin(), rem_pred); 
+            auto vec_it = copy_if(old_it->begin(), old_it->end(), res_it->begin(), rem_pred);
             res_it->resize(vec_it - res_it->begin());
             if(!res_it->empty())
             {
@@ -659,7 +659,7 @@ namespace ChannelSvcs
         {
           res_it->resize(old_it->size());
           auto vec_it = copy_if(
-            old_it->begin(), old_it->end(), res_it->begin(), rem_pred); 
+            old_it->begin(), old_it->end(), res_it->begin(), rem_pred);
           res_it->resize(vec_it - res_it->begin());
           if(!res_it->empty())
           {
@@ -697,7 +697,7 @@ namespace ChannelSvcs
         value = new TriggerAtom;
         value->swap(new_vec);
       }
-      else 
+      else
       {
         TriggerAtom_var temp = new TriggerAtom;
         const TriggerAtom& src_vec = *res_it->second;
@@ -788,7 +788,7 @@ namespace ChannelSvcs
         UidAtom_var uid_atom = new UidAtom();
         uid_atom->resize(old_channels.size() + channels.size());
         if (removed_uid_channels.empty())
-        {//merge 
+        {//merge
           std::merge(
             old_channels.begin(),
             old_channels.end(),

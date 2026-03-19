@@ -8,7 +8,7 @@ namespace AdServer
 {
   namespace UserInfoSvcs
   {
-    const unsigned long PREF_GET_OPERATION_PROFILE_VERSION = 1; 
+    const unsigned long PREF_GET_OPERATION_PROFILE_VERSION = 1;
     const unsigned long FRAUD_OPERATION_PROFILE_VERSION = 1;
     const unsigned long MATCH_OPERATION_PROFILE_VERSION = 340;
     const unsigned long MERGE_OPERATION_PROFILE_VERSION = 350;
@@ -44,7 +44,7 @@ namespace AdServer
         InputIterator first,
         InputIterator last,
         OutputContainerType& out);
-      
+
       Generics::SmartMemBuf_var
       operator()(Generics::SmartMemBuf* smart_mem_buf) /*throw(Exception)*/;
     };

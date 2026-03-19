@@ -239,7 +239,7 @@ namespace AdServer
 
       Generics::Time time_offset() const noexcept;
       Generics::Time master_stamp() const noexcept;
-      
+
       UserStat get_stats() const /*throw(eh::Exception)*/;
 
       void delete_old_profiles(
@@ -353,7 +353,7 @@ namespace AdServer
       mutable SyncPolicy::Mutex config_lock_;
       Generics::Time time_offset_;
       Generics::Time master_stamp_;
-      
+
       ChannelDictionary_var channels_config_;
       FreqCapConfig_var freq_cap_config_;
 
@@ -394,7 +394,7 @@ namespace UserInfoSvcs
 
     time_offset_ = time_offset;
     master_stamp_ = master_stamp;
-    
+
     channels_config_ = ReferenceCounting::add_ref(channels_config);
     freq_cap_config_ = ReferenceCounting::add_ref(freq_cap_config);
   }

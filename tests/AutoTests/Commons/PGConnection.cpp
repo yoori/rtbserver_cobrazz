@@ -9,7 +9,7 @@ namespace AutoTest
 {
   namespace PQ
   {
-    namespace 
+    namespace
     {
       //some stuff from catalog/pg_type.h
 #define BOOLOID     16
@@ -34,7 +34,7 @@ namespace AutoTest
       const Oid numeric_oid = NUMERICOID;
       const Oid timestamp_oid = TIMESTAMPOID;
       const Oid date_oid = DATEOID;
-  
+
       const Oid name_oid = NAMEOID;
       const Oid char_oid = CHAROID;
       const Oid bool_oid = BOOLOID;
@@ -49,7 +49,7 @@ namespace AutoTest
         signed short sign;
         signed short dscale;
       };
-      
+
       static const int DEC_DIGITS = 4;
 
       template<bool is_signed>
@@ -59,7 +59,7 @@ namespace AutoTest
       {
         return 1;
       }
-    
+
       template<>
       int
       get_sign<true>(
@@ -71,7 +71,7 @@ namespace AutoTest
         }
         return 1;
       }
-      
+
       template<>
       int
       get_sign<false>(
@@ -90,7 +90,7 @@ namespace AutoTest
         int scale;
 
       public:
-        
+
         bignum(
           unsigned long l = 0) :
           sign(false),
@@ -101,7 +101,7 @@ namespace AutoTest
           vals[0] = l & 0xffff;
           vals[1] = l >> 16;
         }
-        
+
         bignum(
           char* ptr) :
           sign(false),
@@ -123,7 +123,7 @@ namespace AutoTest
             *this += ntohs(data[i]);
           }
         }
-        
+
         bignum&
         operator *=(
           unsigned short multi)
@@ -140,7 +140,7 @@ namespace AutoTest
           }
           return *this;
         }
-        
+
         bignum&
         operator +=(
           unsigned short added)
@@ -172,7 +172,7 @@ namespace AutoTest
           ret *= get_sign<std::numeric_limits<T>::is_signed>(sign);
           return ret;
         }
-        
+
         void dump(
           unsigned char* mem,
           size_t num )
@@ -185,7 +185,7 @@ namespace AutoTest
             mem[i++]=0;
         }
       };
-      
+
       // Utils
       double
       getFloat(
@@ -241,7 +241,7 @@ namespace AutoTest
         }
         return 0;
       }
-      
+
       double getFloat(
         Oid oid,
         int len,
@@ -304,7 +304,7 @@ namespace AutoTest
     }
 
     // Conn class
-    
+
     Conn::Conn()
       : connection_(0)
     { }
@@ -330,7 +330,7 @@ namespace AutoTest
     void
     Conn::open_()
     {
-      connection_ = PQsetdbLogin(host_.c_str(), 0, 0, 0, 
+      connection_ = PQsetdbLogin(host_.c_str(), 0, 0, 0,
         db_.c_str(), user_.c_str(), pswd_.c_str());
       if (PQstatus(connection_) != CONNECTION_OK)
       {
@@ -366,7 +366,7 @@ namespace AutoTest
       }
       open_(user, pswd, host, db);
     }
-    
+
     void
     Conn::open()
     {
@@ -398,7 +398,7 @@ namespace AutoTest
       }
       catch (...) {}
     }
-    
+
     QueryTuple
     Conn::query(
       const std::string& statm)
@@ -412,11 +412,11 @@ namespace AutoTest
 
         if (found > 0 and statement[found - 1] == ':')
             continue; // '::' used in postgress arrays
-        
+
         while(
           std::isalnum(
             statement[found + name_sz + 1])) name_sz++;
-        
+
         if (name_sz)
         {
           statement.replace(
@@ -473,7 +473,7 @@ namespace AutoTest
         values_type values = (values_type)alloca(sizeof(const char*)*sz);
         for(unsigned int i = 0; i < sz; ++i)
         {
-          if(lengths_[i] == 0) 
+          if(lengths_[i] == 0)
             values[i] = 0;
           else
             values[i] = &buffer_[0] + values_[i];
@@ -481,7 +481,7 @@ namespace AutoTest
         res = PQexecParams(connection_,
           statement_.c_str(),
           sz,
-          &oids_[0], 
+          &oids_[0],
           values,
           &lengths_[0],
           0,
@@ -500,7 +500,7 @@ namespace AutoTest
       }
 
       ExecStatusType pq_status = PQresultStatus(res);
-      
+
       if(pq_status != PGRES_TUPLES_OK &&
          pq_status != PGRES_COMMAND_OK)
       {
@@ -552,7 +552,7 @@ namespace AutoTest
       }
       catch(...) {}
     }
-    
+
     void
     Result::get(
       int& value)
@@ -610,8 +610,8 @@ namespace AutoTest
       Oid oid = PQftype(result_set_, value_index_);
       int len = PQgetlength(result_set_, row_index_, value_index_);
       char* ptr = PQgetvalue(result_set_, row_index_, value_index_++);
-      if(oid == name_oid || oid == char_oid 
-        || oid == text_oid || oid == varchar_oid || oid == character_oid) 
+      if(oid == name_oid || oid == char_oid
+        || oid == text_oid || oid == varchar_oid || oid == character_oid)
       {
         value = std::string(ptr, len);
       }
@@ -661,7 +661,7 @@ namespace AutoTest
     {
       throw Exception("Text operation not supported");
     }
-    
+
     PGresult*
     Result::result_set()
     {
@@ -671,7 +671,7 @@ namespace AutoTest
     // BasicQueryStream implementation
     BasicQueryStream::BasicQueryStream()
     { }
-    
+
     void
     BasicQueryStream::set_string_(
       Oid type_oid,
@@ -686,7 +686,7 @@ namespace AutoTest
       values_.push_back(sz);
       unsigned int len = str_value.size() + 1;
       buffer_.resize(sz + len);
-      memcpy(&buffer_[sz], str_value.c_str(), len);      
+      memcpy(&buffer_[sz], str_value.c_str(), len);
     }
 
     template<typename ValueType>
@@ -862,12 +862,12 @@ namespace AutoTest
       {
         return false;
       }
-      
+
       ++row_index_;
       value_index_ = 0;
       return true;
     }
-    
+
     bool
     Result::is_null()
     {

@@ -1,6 +1,6 @@
 
 #include "OutOfScopeRecursiveSub.hpp"
- 
+
 REFLECT_UNIT(OutOfScopeRecursiveSub) (
   "CreativeInstantiation",
   AUTO_TEST_FAST
@@ -13,15 +13,15 @@ namespace {
   const unsigned short TRY_COUNT = 4;
 }
 
- 
-bool 
+
+bool
 OutOfScopeRecursiveSub::run_test()
 {
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CAMPAIGN_MANAGER)),
     "CampaignManager");
-   
+
   add_descr_phrase("Ensure that Creative#2 status 'C'");
 
   FAIL_CONTEXT(
@@ -31,7 +31,7 @@ OutOfScopeRecursiveSub::run_test()
       CreativeChecker::Expected().
         status("C")).check(),
     "Check creative#2 status");
-      
+
   add_descr_phrase("Ensure that Creative#1 status 'A'");
 
   FAIL_CONTEXT(
@@ -59,7 +59,7 @@ OutOfScopeRecursiveSub::run_test()
         client.debug_info.ccid).check(),
       "must return creative#1");
   }
- 
+
   return true;
 }
 

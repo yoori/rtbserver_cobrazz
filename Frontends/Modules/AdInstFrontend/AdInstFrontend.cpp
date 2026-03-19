@@ -652,7 +652,7 @@ namespace Instantiate
             inst_ad_result->request_ids[0];
         }
         click_info.referer << request_info.referer;
-        
+
         CORBA::Boolean got_click_url = false;
         got_click_url = campaign_managers_.get_click_url(
           click_info,
@@ -844,7 +844,7 @@ namespace Instantiate
           ++request_id_it;
         }
       }
-      
+
       if(!request_info.temp_user_id.is_null() &&
          !request_info.user_id.is_null())
       {
@@ -874,17 +874,17 @@ namespace Instantiate
 
         response.get_output_stream().write(
           response_body.c_str(), response_body.length());
-          
+
         if(logger()->log_level() >= TraceLevel::MIDDLE)
         {
           Stream::Error ostr;
           ostr << FUN << ": response:" << std::endl << response_body;
-            
+
           logger()->log(ostr.str(),
             TraceLevel::MIDDLE,
             Aspect::AD_INST_FRONTEND);
         }
-          
+
         return 200;
       }
     }

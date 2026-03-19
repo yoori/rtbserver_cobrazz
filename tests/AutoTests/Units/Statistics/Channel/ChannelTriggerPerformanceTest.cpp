@@ -38,7 +38,7 @@ void ChannelTriggerPerformanceTest::add_stats(
     if (stats[i].trigger_type)
     { key.trigger_type(stats[i].trigger_type); }
     if (stats[i].channel_trigger_id)
-    { 
+    {
       key.channel_trigger_id(
         fetch_int(prefix + "/" + stats[i].channel_id +
           "/TRIGGERS/" + stats[i].channel_trigger_id));
@@ -153,7 +153,7 @@ void ChannelTriggerPerformanceTest::reason_of_impression_()
     "server must return not empty click_url");
 
   client.process_request(
-    client.debug_info.selected_creatives.first().click_url);  
+    client.debug_info.selected_creatives.first().click_url);
 
 }
 
@@ -608,7 +608,7 @@ void ChannelTriggerPerformanceTest::asynchronous_logging_()
 
     client.process_request(NSLookupRequest().tid(default_tag_).
       debug_time(today_ + 1));
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         fetch_string("Test#2.7/Campaign/CCID"),
@@ -682,7 +682,7 @@ void ChannelTriggerPerformanceTest::asynchronous_logging_()
   }
 }
 
-bool 
+bool
 ChannelTriggerPerformanceTest::run_test()
 {
   add_descr_phrase("Run");

@@ -16,7 +16,7 @@ namespace
     std::string prefix;
     RequestTokensSubstitution::CreativeEnum creative;
     bool empty_tokens;
-  }; 
+  };
 
   // dynamic creative service request params
   const char CLICK[] = "c";
@@ -220,12 +220,12 @@ RequestTokensSubstitution::run_test()
     request.tid = fetch_string(TESTS[i].prefix + "/TAG");
     request.referer_kw = fetch_string(TESTS[i].prefix + "/KWD");
     client.process_request(request);
-        
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         fetch_string(TESTS[i].prefix + "/CC"),
         client.debug_info.ccid).check(),
-      TESTS[i].prefix + 
+      TESTS[i].prefix +
         " Unexpected ccid.");
 
     std::string adv_resources_path("/");

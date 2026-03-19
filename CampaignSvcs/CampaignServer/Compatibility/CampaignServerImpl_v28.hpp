@@ -139,7 +139,7 @@ namespace AdServer
         const AdServer::CampaignSvcs_v281::CampaignConfigUpdateInfo& update_info,
         const Generics::Time& request_timestamp)
         noexcept;
-      
+
       void convert_campaigns_(
         AdServer::CampaignSvcs_v28::CampaignConfigUpdateInfo& result_update_info,
         const AdServer::CampaignSvcs_v281::CampaignConfigUpdateInfo& update_info,

@@ -608,7 +608,7 @@ namespace AdServer
       get_stat()
         /*throw(AdServer::CampaignSvcs::CampaignServer::NotSupport,
           AdServer::CampaignSvcs::CampaignServer::NotReady)*/;
- 
+
     protected:
       virtual
       ~CampaignServerImpl() noexcept;

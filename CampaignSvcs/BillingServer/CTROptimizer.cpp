@@ -667,7 +667,7 @@ namespace CampaignSvcs
     }
     else if(planned_free_amount < actual_delivered_free_amount)
     {
-      // decrease overdelivered 
+      // decrease overdelivered
       distribute_decimal_sum_(
         free_budget_distribution.begin() + now_hour,
         free_budget_distribution.end(),

@@ -42,19 +42,19 @@ public:
    *
    * @param [out] request
    * @return if we reach "last" request  - true.
-   */  
+   */
   bool get(std::string& request);
 
   /**
    * @brief Get container size
    *
    * @return container size
-   */  
+   */
   size_t size();
 
   /**
    * @brief Clear, remove all requests
-   */  
+   */
   void clear();
 
 
@@ -75,7 +75,7 @@ class ClientStorage : public virtual ReferenceCounting::Interface,
 
   typedef std::map<unsigned long, RequestStorage_var> RequestStoragesList;
   typedef RequestStoragesList::const_iterator ClientIterator;
-  
+
 public:
 
   /**
@@ -103,19 +103,19 @@ public:
    * @brief Get total request containers size
    *
    * @return size
-   */  
+   */
   size_t requests();
 
   /**
    * @brief Send generated request from client
    *
    * @param [out]r request
-   */  
+   */
   unsigned long get_request(std::string& request);
 
   /**
    * @brief Clear storage, remove all requests
-   */  
+   */
   void clear();
 
 
@@ -140,7 +140,7 @@ class BenchmarkStorage
   typedef Sync::PosixRWLock Mutex_;
   typedef Sync::PosixRGuard ReadGuard_;
   typedef Sync::PosixWGuard WriteGuard_;
-  
+
 public:
 
   /**
@@ -178,7 +178,7 @@ public:
    * @param frontend type
    * @param [out] request
    * @return client
-   */  
+   */
   AdServerClientBase* get_request_pair(FrontendType frontend_type,
                                        std::string& request);
 
@@ -186,7 +186,7 @@ public:
    * @brief Get next client from storage
    *
    * @return client
-   */  
+   */
   AdServerClientBase* get_client();
 
 
@@ -195,7 +195,7 @@ public:
    *
    * @param frontend type
    * @return count of requests
-   */  
+   */
   size_t request_size(FrontendType frontend_type);
 
 
@@ -203,19 +203,19 @@ public:
    * @brief Get total clients size
    *
    * @return size
-   */  
+   */
   size_t client_size();
 
   /**
    * @brief Clear storage, remove all clients & requests
-   */  
+   */
   void clear();
 
   /**
    * @brief Get statistics
    *
    * @return statistics
-   */  
+   */
   Statistics* stats();
 
 private:

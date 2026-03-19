@@ -5,7 +5,7 @@
 #include "TypeElement.hpp"
 
 namespace Code
-{  
+{
   void ElementVisitor::visit_i(const IncludeElement* elem) noexcept
   {
     visit_i(static_cast<const Element*>(elem));
@@ -19,7 +19,7 @@ namespace Code
   void ElementVisitor::visit_i(const TypeDefElement* elem) noexcept
   {
     visit_i(static_cast<const Element*>(elem));
-  }  
+  }
 
   void ElementVisitor::visit_i(const TypeElement* elem) noexcept
   {

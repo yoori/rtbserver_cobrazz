@@ -25,7 +25,7 @@ namespace
     {
       "Domain name with port.",
       "REF1", "Channel/2",
-      0, "Trigger/2/1", 
+      0, "Trigger/2/1",
     },
     {
       "All parts of URL.",
@@ -110,7 +110,7 @@ URLKeywordsDecoding::run_test()
       TEST[i].description +
         " Unexpected trigger_channels check");
   }
-  
+
   return true;
 }
 

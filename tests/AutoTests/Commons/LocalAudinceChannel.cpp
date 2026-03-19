@@ -146,7 +146,7 @@ namespace AutoTest
     if (is_changed && auto_commit)
     { commit(); }
   }
-  
+
   template<class Sequence>
   void LocalAudienceChannel::del_users(const Sequence& seq, bool auto_commit)
     /*throw(Exception)*/

@@ -41,7 +41,7 @@ target_link_libraries(ChannelUpdate_v28IDL
 )
 
 
-add_executable(ChannelProxy 
+add_executable(ChannelProxy
 ChannelProxyImpl.cpp ChannelProxyMain.cpp ChannelProxyImpl_v28.cpp
 )
 target_link_libraries(ChannelProxy

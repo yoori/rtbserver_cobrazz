@@ -137,7 +137,7 @@ PerformanceItem::PerformanceItem() :
 
 PerformanceItem::~PerformanceItem() noexcept
 { }
-  
+
 void PerformanceItem::push(const Generics::Time& time)
 {
   min_ = (time < min_ || min_ == Generics::Time::ZERO)? time : min_;
@@ -203,7 +203,7 @@ AdvPerformanceStats::AdvPerformanceStats()
   data_map["Trigger match"] = &AdvertiserResponse::trigger_match_time;
   data_map["Request fill"] = &AdvertiserResponse::request_fill_time;
   data_map["History match"] = &AdvertiserResponse::history_match_time;
-  data_map["Creative selection"] = &AdvertiserResponse::creative_selection_time;    
+  data_map["Creative selection"] = &AdvertiserResponse::creative_selection_time;
 }
 
 // RangeStats class

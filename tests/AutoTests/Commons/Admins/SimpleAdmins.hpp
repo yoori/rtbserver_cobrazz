@@ -14,9 +14,9 @@ namespace AutoTest
    *
    * Execute ChannelMatchAdmin command and log it's output without examination.
    */
-  class ChannelMatchLog:  
-    public ShellCmd  
-  {  
+  class ChannelMatchLog:
+    public ShellCmd
+  {
   public:
 
     /**
@@ -27,8 +27,8 @@ namespace AutoTest
      */
     void
     make_cmd(
-      const char* address,      
-      const char* trigger,      
+      const char* address,
+      const char* trigger,
       ChannelSrv service);
 
     /**
@@ -38,24 +38,24 @@ namespace AutoTest
      * @param trigger
      * @param service.
      */
-    ChannelMatchLog(      
-      const char* address,      
-      const char* trigger,      
+    ChannelMatchLog(
+      const char* address,
+      const char* trigger,
       ChannelSrv service = ChannelManagerController);
-    
-    ChannelMatchLog(      
-      const std::string& address,      
-      const char* trigger,      
+
+    ChannelMatchLog(
+      const std::string& address,
+      const char* trigger,
       ChannelSrv service = ChannelManagerController);
-    
-    ChannelMatchLog(      
-      const char* address,      
-      const std::string& trigger,      
+
+    ChannelMatchLog(
+      const char* address,
+      const std::string& trigger,
       ChannelSrv service = ChannelManagerController);
-    
-    ChannelMatchLog(      
-      const std::string& address,      
-      const std::string& trigger,      
+
+    ChannelMatchLog(
+      const std::string& address,
+      const std::string& trigger,
       ChannelSrv service = ChannelManagerController);
   };
 
@@ -82,7 +82,7 @@ namespace AutoTest
       const char* uuid,
       UserInfoSrv service,
       bool temp);
-                       
+
   public:
 
     /**
@@ -161,7 +161,7 @@ namespace AutoTest
      * @param RequestInfoManager address.
      */
     ClearExpiredProfiles(const char* address);
-    
+
   };
 
   /**
@@ -193,7 +193,7 @@ namespace AutoTest
      * @param CampaignServer address.
      */
     UpdateStats(const char* address);
-    
+
   };
 
   /**
@@ -252,7 +252,7 @@ namespace AutoTest
      * @brief Executes command
      */
     void exec();
-  };  
+  };
 
   class MoveCmd:
     protected ShellCmd

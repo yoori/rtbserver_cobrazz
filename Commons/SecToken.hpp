@@ -31,7 +31,7 @@ namespace AdServer
       static const size_t size = 16;
 
     public:
-      
+
       /**
        * @brief Constructor
        *
@@ -69,12 +69,12 @@ namespace AdServer
       */
       struct TokenStruct
       {
-        uint32_t ip_hash;    
-        uint32_t timestamp;  
-        uint32_t rnd8   : 8; 
+        uint32_t ip_hash;
+        uint32_t timestamp;
+        uint32_t rnd8   : 8;
         uint32_t data16 : 16;
-        uint32_t type8  : 8; 
-        uint32_t checksum;    
+        uint32_t type8  : 8;
+        uint32_t checksum;
       };
 
     private:
@@ -87,7 +87,7 @@ namespace AdServer
       crc32_calc_() const noexcept;
     };
 
-    
+
     /*
      * @class DependencyContainer
      */
@@ -141,9 +141,9 @@ namespace AdServer
       get_key(
         const Generics::Time& now,
         std::size_t& key_id) const;
-   
+
     private:
-      
+
       /**
        * @brief Make key from b64 string
        *
@@ -154,7 +154,7 @@ namespace AdServer
       make_key_(
         std::string base64_buf)
         /*throw(Exception, eh::Exception)*/;
-      
+
       typedef std::vector<Key> Keys;
       Keys keys_;
     };
@@ -262,18 +262,18 @@ namespace AdServer
         const String::SubString& ip_addr,
         const Generics::Time& timestamp,
         const Generics::Time& timeout);
-      
+
     protected:
       virtual
       ~SecTokenValidator() noexcept
      {}
-      
+
     private:
-     
+
       SecKeyStorage<AesDecryptKey> keys_;
-      
+
     };
-    
+
     typedef ReferenceCounting::SmartPtr<SecTokenValidator>
     SecTokenValidator_var;
   }

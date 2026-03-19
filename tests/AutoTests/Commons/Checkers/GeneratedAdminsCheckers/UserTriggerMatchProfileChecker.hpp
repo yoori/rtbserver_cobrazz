@@ -10,38 +10,38 @@
 namespace AutoTest
 {
   template<class ExpectedType, CheckType ch = CT_ONE>
-  class UserTriggerMatchProfileChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
-            
+  class UserTriggerMatchProfileChecker_:
+    public AutoTest::Checker
+  {
+    public:
+
       typedef ExpectedType Expected;
 
-      UserTriggerMatchProfileChecker_(      
-        BaseUnit* test,      
-        const std::string& uid,      
-        bool temp,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        uid_(uid),      
-        temp_(temp),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
-            
-      virtual ~UserTriggerMatchProfileChecker_() noexcept {}      
-            
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
-            
-    private:    
-            
-      BaseUnit* test_;      
-      std::string uid_;      
-      bool temp_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
-            
+      UserTriggerMatchProfileChecker_(
+        BaseUnit* test,
+        const std::string& uid,
+        bool temp,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        uid_(uid),
+        temp_(temp),
+        expected_(expected),
+        exists_(exists)
+        {}
+
+      virtual ~UserTriggerMatchProfileChecker_() noexcept {}
+
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
+
+    private:
+
+      BaseUnit* test_;
+      std::string uid_;
+      bool temp_;
+      Expected expected_;
+      AdminExistCheck exists_;
+
   };
 
   typedef UserTriggerMatchProfileChecker_<UserTriggerMatchProfileAdmin::Expected> UserTriggerMatchProfileChecker;

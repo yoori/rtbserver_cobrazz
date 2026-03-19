@@ -29,7 +29,7 @@ namespace
     {"/usr/include/", "/usr/", "../"},
     {"/usr/include/", "/usr", "../"},
       // combine "with '/'", "without '/'" FROM path.
-      // The final slash of FROM should not be significant!!! 
+      // The final slash of FROM should not be significant!!!
     {"file:///usr/include", "file:///usr/", "../"},
     {"file:///usr/include", "file:///usr", "../"},
     {"/usr/include", "/usr/", "../"},
@@ -105,7 +105,7 @@ namespace
     {"/usr/folder/", "/usr/folder", ""/*"../folder" ?*/},
 
     {"file:///usr/folder", "file:///usr/folder/", "./"},
-    {"file:///usr/folder", "file:///usr/folder", "./"/*"../folder" ?*/}, 
+    {"file:///usr/folder", "file:///usr/folder", "./"/*"../folder" ?*/},
     {"/usr/folder", "/usr/folder/", "./"},
     {"/usr/folder", "/usr/folder", "./"/*"../folder" ?*/},
 
@@ -119,7 +119,7 @@ namespace
 
   };
 
-// negative test cases should return errors 
+// negative test cases should return errors
   const TestCase NEGATIVE_TEST_CASES[] =
   {
 // suspect
@@ -163,7 +163,7 @@ namespace
     {"usr/include/../../../t", ""},
   };
 }
- 
+
 using namespace AdServer::PathManip;
 
 int do_relative_path_test() noexcept

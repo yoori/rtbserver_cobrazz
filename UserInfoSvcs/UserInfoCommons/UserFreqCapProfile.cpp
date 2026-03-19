@@ -385,7 +385,7 @@ namespace
       {
         add_fc_counter(res.last_impressions(), fc_counter.count, now_);
       }
-      
+
       if(!uc_inserted)
       {
         add_uc_fc_counter(res.last_impressions(), fc_counter.uc_count, now_);
@@ -504,7 +504,7 @@ namespace
         writer.set_id() == seq_order.set_id ?
         writer.imps() + seq_order.imps :
         seq_order.imps);
-      
+
       return res;
     }
 
@@ -519,7 +519,7 @@ namespace
         left.set_id() == right.set_id() ?
         left.imps() + right.imps() :
         right.imps());
-      
+
       return res;
     }
   };
@@ -1290,7 +1290,7 @@ namespace
     {
       return false;
     }
-    
+
     UserFreqCapProfileWriter writer;
 
     if(plain_profile_->membuf().size() != 0)
@@ -1306,7 +1306,7 @@ namespace
 
     PublisherAccountWriter pub_acc;
     pub_acc.timestamp() = timestamp.tv_sec;
-    
+
     if (writer.publisher_accounts().size() != 0)
     {
       UserFreqCapProfileWriter::publisher_accounts_Container::iterator
@@ -1354,14 +1354,14 @@ namespace
         writer.publisher_accounts().push_back(pub_acc);
       }
     }
-    
+
     Generics::MemBuf mb(writer.size());
     plain_profile_->membuf().assign(mb.data(), mb.size());
     writer.save(plain_profile_->membuf().data(), plain_profile_->membuf().size());
 
     return true;
   }
-  
+
   void
   UserFreqCapProfile::get_optin_publishers(
     std::list<unsigned long>& optin_publishers,
@@ -1407,7 +1407,7 @@ namespace
       unsigned long columns = sizeof(FC_TABLE_COLUMNS) / sizeof(FC_TABLE_COLUMNS[0]);
 
       Table table(columns);
-      
+
       for(unsigned long i = 0; i < columns; i++)
       {
         table.column(i, FC_TABLE_COLUMNS[i]);
@@ -1468,7 +1468,7 @@ namespace
       unsigned long columns = sizeof(UCFC_TABLE_COLUMNS) / sizeof(UCFC_TABLE_COLUMNS[0]);
 
       Table table(columns);
-      
+
       for(unsigned long i = 0; i < columns; i++)
       {
         table.column(i, UCFC_TABLE_COLUMNS[i]);
@@ -1505,7 +1505,7 @@ namespace
         sizeof(SEQ_ORDER_TABLE_COLUMNS[0]);
 
       Table table(columns);
-      
+
       for(unsigned long i = 0; i < columns; i++)
       {
         table.column(i, SEQ_ORDER_TABLE_COLUMNS[i]);

@@ -83,7 +83,7 @@ namespace CampaignSvcs
 
   protected:
     virtual ~CampaignConfigModifier() noexcept {}
-      
+
   private:
     typedef Sync::Policy::PosixThread SyncPolicy;
 

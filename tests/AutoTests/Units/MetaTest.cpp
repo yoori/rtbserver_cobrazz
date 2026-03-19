@@ -6,9 +6,9 @@ REFLECT_UNIT(MetaTest) (
   AUTO_TEST_FAST
 );
 
-bool 
+bool
 MetaTest::run_test()
 {
   return true;
 }
- 
+

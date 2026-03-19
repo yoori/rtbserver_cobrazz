@@ -25,17 +25,17 @@ namespace
 class CreativeExclusionTest: public BaseUnit
 {
 public:
- 
+
   CreativeExclusionTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~CreativeExclusionTest() noexcept
   {};
- 
+
 private:
   AutoTest::NSLookupRequest request;
 

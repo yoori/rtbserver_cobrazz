@@ -148,7 +148,7 @@ namespace UserInfoSvcs
     {
       return;
     }
-    
+
     try
     {
       UserProfileMap::Transaction_var base_profile_trans =
@@ -168,8 +168,8 @@ namespace UserInfoSvcs
       }
 
       SmartMemBuf_var add_mem_buf(new SmartMemBuf);
-      
-      ChannelsMatcher matching(base_mem_buf.in(), add_mem_buf.in()); 
+
+      ChannelsMatcher matching(base_mem_buf.in(), add_mem_buf.in());
 
       matching.remove_audience_channels(audience_channels);
 
@@ -190,7 +190,7 @@ namespace UserInfoSvcs
       throw Exception(ostr);
     }
   }
-  
+
   void
   UserInfoContainer::add_audience_channels(
     const UserId& user_id,
@@ -203,7 +203,7 @@ namespace UserInfoSvcs
     {
       return;
     }
-    
+
     ChannelDictionary_var channel_rules = channels_config();
 
     if (channel_rules.in() == 0)
@@ -256,7 +256,7 @@ namespace UserInfoSvcs
       throw Exception(ostr);
     }
   }
-  
+
   void
   UserInfoContainer::get_full_freq_caps(
     const UserId& user_id,
@@ -632,19 +632,19 @@ namespace UserInfoSvcs
               history_adapter(
                 Generics::transfer_membuf(history_profile)));
           }
-          
+
           const Generics::Time now(
             std::max(
               get_last_request_(base_profile.in()),
               get_last_request_(add_buf.in())));
-          
+
           update_history_(base_profile.in(),
                           history_profile.in(), now, *channel_rules, current_time_offset);
-          
+
           SmartMemBuf_var empty_buf(new SmartMemBuf);
-          
+
           ChannelsMatcher matching(add_buf.in(), empty_buf.in());
-          
+
           ProfileMatchParams profile_match_params;
           matching.merge(
             0, // skip local history profile, replace it with other history profile
@@ -652,9 +652,9 @@ namespace UserInfoSvcs
             history_profile->membuf(),
             *channel_rules,
             profile_match_params);
-          
+
           add_profile_trans->remove_profile();
-          
+
           if (add_buf->membuf().size() != 0)
           {
             base_profile_trans->save_profile(
@@ -662,7 +662,7 @@ namespace UserInfoSvcs
                 Algs::copy_membuf(add_buf)),
               now);
           }
-          
+
           if (history_profile->membuf().size() != 0)
           {
             history_profiles_->save_profile(
@@ -671,11 +671,11 @@ namespace UserInfoSvcs
                 Algs::copy_membuf(history_profile)),
               now);
           }
-          
+
           if (ho_info != 0 && add_buf->membuf().size() != 0)
           {
             ChannelsMatcher cm(add_buf.in(), empty_buf.in());
-            
+
             if (cm.need_channel_count_stats_logging(now, current_time_offset))
             {
               UniqueChannelsResult ucr;
@@ -684,7 +684,7 @@ namespace UserInfoSvcs
                 history_profile->membuf().size() != 0 ? &history_profile->membuf() : 0,
                 *channel_rules,
                 ucr);
-              
+
               ho_info->isp_date = now + current_time_offset;
               ho_info->adv_channel_count = ucr.simple_channels;
               ho_info->discover_channel_count = ucr.discover_channels;
@@ -1186,11 +1186,11 @@ namespace UserInfoSvcs
       if (publishers_optin_timeout != Generics::Time::ZERO)
       {
         ConstSmartMemBuf_var fc_mem_buf = freq_cap_profiles_->get_profile(user_id);
-        
+
         if(fc_mem_buf.in() && fc_mem_buf->membuf().size() > 0)
         {
           UserFreqCapProfile profile(fc_mem_buf);
-          
+
           profile.get_optin_publishers(optin_publishers, publishers_optin_timeout);
         }
       }
@@ -1210,7 +1210,7 @@ namespace UserInfoSvcs
       throw Exception(ostr);
     }
   }
-  
+
   void
   UserInfoContainer::match(
     const RequestMatchParams& request_params,
@@ -1649,7 +1649,7 @@ namespace UserInfoSvcs
         res.add_area_size + res.history_area_size + res.freq_cap_area_size;
 
       res.allocator_cache_size = MembufAllocator::ALLOCATOR->cached();
-      
+
       {
         SyncPolicy::ReadGuard guard(stat_lock_);
         res.ad_channels_count = ad_channels_count_;
@@ -1814,9 +1814,9 @@ namespace UserInfoSvcs
     {
       UserProfileMap::Transaction_var fc_profile_trans =
         freq_cap_profiles_->get_transaction(user_id, true, op_priority);
-      
+
       ConstSmartMemBuf_var fc_mem_buf = fc_profile_trans->get_profile();
-      
+
       UserFreqCapProfile profile(fc_mem_buf);
 
       profile.consider_publishers_optin(
@@ -1842,7 +1842,7 @@ namespace UserInfoSvcs
       throw Exception(ostr);
     }
   }
-  
+
   UserInfoContainer::AllUsersProcessingState_var
   UserInfoContainer::start_all_users_processing(
     const Generics::Time& processing_time,
@@ -2220,7 +2220,7 @@ namespace UserInfoSvcs
       matched_channels.url_keyword_channels,
       &ChannelMatch::channel_id,
       &ChannelMatch::channel_trigger_id);
-    
+
     ostr << std::endl << "  Base user profile: " << std::endl;
     ChannelsMatcher::print(
       base_profile.get<unsigned char>(),

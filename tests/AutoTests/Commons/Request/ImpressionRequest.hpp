@@ -11,7 +11,7 @@ namespace AutoTest
    * @brief Presentation of impression AdServer request.
    *
    * This request is sent when end user
-   * make impression on advertising 
+   * make impression on advertising
    */
   class ImpressionRequest : public BaseRequest
   {
@@ -51,21 +51,21 @@ namespace AutoTest
     /**
      * @brief Represents 'uid' param.
      *Country code of action request
-     * UID - user id. 
+     * UID - user id.
      */
     ImpressionParam uid;
 
     /**
      * @brief Represents 'requestid' param.
      *
-     * Impression request id. 
+     * Impression request id.
      */
     ImpressionParam requestid;
 
     /**
      * @brief Represents 'ccid' param.
      *
-     * Campaign creative id. 
+     * Campaign creative id.
      */
     ImpressionParam ccid;
 

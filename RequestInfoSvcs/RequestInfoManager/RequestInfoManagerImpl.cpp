@@ -1038,7 +1038,7 @@ namespace RequestInfoSvcs{
         {
           bid_chunks_config = &*request_info_manager_config_.BidChunksConfig();
         }
-        
+
         RequestInfoContainer_var request_info_container =
           new RequestInfoContainer(
             logger_,

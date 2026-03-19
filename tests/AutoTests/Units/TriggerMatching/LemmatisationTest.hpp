@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__LEMMATISATIONTEST_
 #define _AUTOTEST__LEMMATISATIONTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 class LemmatisationTest : public BaseUnit

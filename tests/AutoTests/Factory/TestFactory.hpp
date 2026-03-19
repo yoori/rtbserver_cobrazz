@@ -16,10 +16,10 @@ namespace TestFactory
 
   class TestFactory
   {
-    
+
   public:
     TestFactory() noexcept;
-    
+
     ~TestFactory() noexcept;
 
     void
@@ -46,6 +46,6 @@ namespace TestFactory
   };
 
 }; //namespace
-  
+
 
 #endif  // __TESTFACTORY_HPP

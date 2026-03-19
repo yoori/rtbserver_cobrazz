@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__SPENTBUDGETCHECKER_
 #define _AUTOTEST__SPENTBUDGETCHECKER_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace AutoTest
@@ -42,7 +42,7 @@ namespace AutoTest
 
   private:
     BaseUnit* test_;          // test
-    NSLookupRequest request_; // check 
+    NSLookupRequest request_; // check
     unsigned long ccgid_;     // CCG ID
     unsigned long  ccid_;        // expected CC ID
     Generics::Time deadline_;

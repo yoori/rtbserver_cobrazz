@@ -1,78 +1,79 @@
 add_library(CookieManager SHARED
-CookieManager.cpp
+  CookieManager.cpp
 )
+
 target_link_libraries(CookieManager
-
- HTTP
- Commons
- CORBACommons
- FeConfigXSD
-
+  HTTP
+  Commons
+  CORBACommons
+  FeConfigXSD
 )
 
 add_library(FCGI SHARED
-FCGI.cpp 
-  FrontendInterface.cpp 
+  HttpResponse.cpp
+  HttpRequest.cpp
+  FrontendInterface.cpp
   FrontendTaskPool.cpp
 )
 
 target_link_libraries(FCGI
- Commons
- Stream
- FeConfigXSD
-
+  Commons
+  Stream
+  FeConfigXSD
 )
 
 add_library(FrontendStatistic SHARED
-    FrontendStatistic.cpp
+  FrontendStatistic.cpp
 )
 
 target_link_libraries(FrontendStatistic
- CORBACommons
- Logger
- StatsDumper
+  CORBACommons
+  Logger
+  StatsDumper
 )
 
 
 add_library(ProcessingTemplates SHARED
-    ProcessingTemplates.cpp
+  ProcessingTemplates.cpp
 )
 
 target_link_libraries(ProcessingTemplates
- Generics
- FCGI
- Commons
+  Generics
+  FCGI
+  Commons
 )
 
-
 add_library(RequestMatchers SHARED
-
-RequestMatchers.cpp 
-  UserInfoClient.cpp 
-  UserBindClient.cpp 
-  UserAgentMatcher.cpp 
+  RequestMatchers.cpp
+  UserInfoClient.cpp
+  UserBindClient.cpp
+  UserAgentMatcher.cpp
   ChannelServerSessionPool.cpp
 )
 
 target_link_libraries(RequestMatchers
- HTTP
- BLogic
- Commons
- CORBACommons
- UserInfoClusterControlIDL UserInfoManagerControllerIDL UserInfoManagerControllerL
-UserBindControllerIDL  UserBindControllerStubs
- ChannelSessionFactory
- FeConfigXSD
- pcre
+  HTTP
+  BLogic
+  Commons
+  CORBACommons
 
+  UserInfoManagerControllerCall
+  UserInfoClusterControlIDL
+  UserInfoManagerControllerIDL
+  UserBindControllerIDL
+  UserBindControllerStubs
+  ChannelSessionFactory
+
+  FeConfigXSD
+
+  pcre
 )
 
 add_library(UserIdController SHARED
-UserIdController.cpp
+  UserIdController.cpp
 )
 
 target_link_libraries(UserIdController
- Generics
- Commons
+  Generics
+  Commons
 )
-#install(TARGETS UserIdController RequestMatchers ProcessingTemplates FrontendStatistic  FCGI CookieManager  DESTINATION ${INSTALL_DIR})

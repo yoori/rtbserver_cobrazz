@@ -18,7 +18,7 @@ namespace AdServer
 namespace ChannelSvcs
 {
 
-  class ChannelContainerBase; 
+  class ChannelContainerBase;
 
   class UpdateContainer:
     public TriggerParser::MergeContainer,

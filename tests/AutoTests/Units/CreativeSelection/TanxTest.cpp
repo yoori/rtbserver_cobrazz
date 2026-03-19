@@ -43,7 +43,7 @@ TanxTest::base_()
     size(fetch_string("BASE/SIZE")).
     ad_bid_count(1).
     min_cpm_price(1);
- 
+
   client.process_post(request);
 
   FAIL_CONTEXT(

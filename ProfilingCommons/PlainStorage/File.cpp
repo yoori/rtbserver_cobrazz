@@ -169,7 +169,7 @@ namespace Sys
         "File::munmap(): Can't msync memory block.");
     }
     */
-    
+
     if(::munmap(mem_ptr, size))
     {
       eh::throw_errno_exception<PosixException>(

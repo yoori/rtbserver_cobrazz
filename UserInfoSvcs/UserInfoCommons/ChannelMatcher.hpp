@@ -59,7 +59,7 @@ namespace AdServer
     {
       UniqueChannels simple;
       UniqueChannels discover;
-      
+
       ChannelIdSet found_session_channels;
       ChannelIdSet found_history_channels;
     };
@@ -82,7 +82,7 @@ namespace AdServer
       ChannelIdVector search_channels;
       ChannelIdVector url_channels;
       ChannelIdVector url_keyword_channels;
-      
+
       ChannelIdVector persistent_channels;
     };
 
@@ -93,7 +93,7 @@ namespace AdServer
         channel_id(test_id),
         channel_trigger_id(test_id)
       {}
-      
+
       ChannelMatch(unsigned long channel_id_val,
                    unsigned long channel_trigger_id_val)
         :
@@ -121,7 +121,7 @@ namespace AdServer
       ChannelMatchVector url_channels;
       ChannelMatchVector url_keyword_channels;
       ChannelMatchVector audience_channels;
-      
+
       ChannelIdVector persistent_channels;
     };
 
@@ -156,7 +156,7 @@ namespace AdServer
           session_discover_channels != right.session_discover_channels ||
           history_discover_channels != right.history_discover_channels;
       }
-      
+
       unsigned long simple_channels;
       unsigned long session_simple_channels;
       unsigned long history_simple_channels;
@@ -172,7 +172,7 @@ namespace AdServer
       AdServer::CampaignSvcs::AccuracyDecimal accuracy;
     };
     typedef std::list<GeoDataResult> GeoDataResultList;
-    
+
     struct ProfileProperties
     {
       bool fraud_request;
@@ -188,14 +188,14 @@ namespace AdServer
         :
         defined(false)
       {}
-      
+
       bool defined;
-      
+
       AdServer::CampaignSvcs::CoordDecimal latitude;
       AdServer::CampaignSvcs::CoordDecimal longitude;
       AdServer::CampaignSvcs::AccuracyDecimal accuracy;
     };
-    
+
     struct ProfileMatchParams
     {
       ProfileMatchParams(
@@ -236,7 +236,7 @@ namespace AdServer
           coord_data.defined = false;
         }
       }
-      
+
       bool no_match;
       bool no_result;
       bool provide_channel_count;
@@ -262,7 +262,7 @@ namespace AdServer
          (last_trigger_rdr.channel_id() == channel.channel_id &&
           last_trigger_rdr.channel_trigger_id() < channel.channel_trigger_id));
     }
-    
+
     inline
     bool operator==(
       const LastTriggerReader& last_trigger_rdr,
@@ -272,7 +272,7 @@ namespace AdServer
         (last_trigger_rdr.channel_id() == channel.channel_id &&
          last_trigger_rdr.channel_trigger_id() == channel.channel_trigger_id);
     }
-    
+
     class ChannelsMatcher
     {
     public:
@@ -280,7 +280,7 @@ namespace AdServer
       DECLARE_EXCEPTION(InvalidProfileException, Exception);
 
       ChannelsMatcher();
-      
+
       ChannelsMatcher(
         Generics::SmartMemBuf* base_profile,
         Generics::SmartMemBuf* add_profile) noexcept;
@@ -312,7 +312,7 @@ namespace AdServer
       void remove_audience_channels(
         const AudienceChannelSet& audience_channels)
         /*throw(InvalidProfileException)*/;
-      
+
       void match(
         ChannelMatchMap& result_channels,
         const Generics::Time& now,
@@ -333,7 +333,7 @@ namespace AdServer
             std::back_inserter(ciw),
             Algs::MemoryInitAdapter<HistoryChannelInfoWriter>()));
       }
-      
+
       template <typename ReaderType>
       static void copy_base_section(
         ChannelsInfoWriter& ciw,
@@ -345,21 +345,21 @@ namespace AdServer
           Algs::modify_inserter(
             std::back_inserter(ciw.ht_candidates()),
             Algs::MemoryInitAdapter<HTCandidatesWriter>()));
-        
+
         std::copy(
           cir.history_matches().begin(),
           cir.history_matches().end(),
           Algs::modify_inserter(
             std::back_inserter(ciw.history_matches()),
             Algs::MemoryInitAdapter<HistoryMatchesWriter>()));
-        
+
         std::copy(
           cir.history_visits().begin(),
           cir.history_visits().end(),
           Algs::modify_inserter(
             std::back_inserter(ciw.history_visits()),
             Algs::MemoryInitAdapter<HistoryVisitsWriter>()));
-        
+
         std::copy(
           cir.session_matches().begin(),
           cir.session_matches().end(),
@@ -375,7 +375,7 @@ namespace AdServer
       {
         copy_base_section(ciw, cir);
       }
-      
+
       void merge(
         Generics::SmartMemBuf* history_profile,
         const Generics::MemBuf& other_base_profile,
@@ -398,7 +398,7 @@ namespace AdServer
         const Generics::Time& now,
         const Generics::Time& gmt_offset) const
         /*throw(InvalidProfileException)*/;
-      
+
       bool need_history_optimization(
         const Generics::Time& now,
         const Generics::Time& period,
@@ -426,7 +426,7 @@ namespace AdServer
         std::ostream& ostr,
         bool print_align = false)
         noexcept;
-      
+
       static void print(
         const Generics::MemBuf& mb,
         std::ostream& ostr,
@@ -452,7 +452,7 @@ namespace AdServer
       AdServer::CampaignSvcs::CoordDecimal
       read_coord_(
         const void* buf);
-      
+
       template <typename _T1, typename _T2>
       void
       merge_geo_data_(
@@ -460,7 +460,7 @@ namespace AdServer
         const _T1& base_geo_data,
         const _T2& add_geo_data,
         const Generics::Time& now);
-      
+
       template <typename _T1, typename _T2>
       void
       add_geo_data_(
@@ -478,7 +478,7 @@ namespace AdServer
         const Generics::Time& now,
         const Generics::Time& repeat_trigger_timeout,
         bool filter_contextual_triggers);
-      
+
       bool
       update_triggers_(
         ChannelIdPack& result_filtered_channels,
@@ -490,7 +490,7 @@ namespace AdServer
         const Generics::Time& repeat_trigger_timeout,
         bool filter_contextual_triggers)
         /*throw(InvalidProfileException)*/;
-      
+
       static void collect_channel_ids_(
         const Generics::MemBuf& base_profile,
         const ChannelDictionary& dictionary,
@@ -502,7 +502,7 @@ namespace AdServer
         const ChannelDictionary& dictionary,
         AllUniqueChannels& auc)
         /*throw(Exception)*/;
-      
+
       static void fill_unique_channels_(
         const ChannelsInfoReader& section,
         const ChannelDictionary& dictionary,
@@ -516,7 +516,7 @@ namespace AdServer
         UniqueType channels_type,
         AllUniqueChannels& auc)
         /*throw(Exception)*/;
-      
+
       bool need_history_optimization_(
         const Generics::SmartMemBuf* profile,
         const Generics::Time& now,
@@ -530,7 +530,7 @@ namespace AdServer
         PersistentMatchesWriter& pmw,
         const BaseChannelsInfoType* base,
         const AddChannelsInfoType* add);
-      
+
       void match_persistent_section_(
         ChannelMatchMap& result_channels,
         PersistentMatchesWriter* out_pmw,
@@ -540,7 +540,7 @@ namespace AdServer
         const ChannelIdVector& channels,
         bool match_to_add,
         bool provide_persistent_channels) /*throw(Exception)*/;
-      
+
       void match_section_(
         ChannelMatchMap& result_channels,
         ChannelsInfoWriter* out_ciw,
@@ -585,7 +585,7 @@ namespace AdServer
         const ChannelsHashMap& channels,
         ChannelsInfoWriter& ciw,
         ChannelMatchMap& result_channels) noexcept;
-    
+
       void merge_history_info_(
         ChannelsInfoWriter::history_visits_Container& wr,
         const ChannelsInfoReader::history_visits_Container& rdr,
@@ -618,7 +618,7 @@ namespace AdServer
         const BaseChannelsInfoType* base,
         const AddChannelsInfoType* add,
         bool household = false);
- 
+
       template <typename BaseReaderType, typename AddReaderType>
       void merge_htc_(
         ChannelsInfoWriter::ht_candidates_Container& htcw,

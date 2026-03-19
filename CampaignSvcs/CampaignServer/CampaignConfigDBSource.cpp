@@ -1126,7 +1126,7 @@ namespace CampaignSvcs
             account->account_id = account_id;
             account->agency_account_id =
               rs->get_number<unsigned long>(POS_AGENCY_ACCOUNT_ID);
-            account->internal_account_id = 
+            account->internal_account_id =
               rs->get_number<unsigned long>(POS_INTERNAL_ACCOUNT_ID);
             account->role_id = rs->get_number<unsigned long>(POS_ROLE_ID);
             account->legal_name = rs->get_string(POS_LEGAL_NAME);
@@ -2587,13 +2587,13 @@ namespace CampaignSvcs
     {
       const CountryMap* old_countries =
         old_config ? &(old_config->countries) : 0;
-      
+
       enum
       {
         POS_COUNTRY_CODE = 1,
         POS_FOOTER_URL
       };
-      
+
       Commons::Postgres::Statement_var stmt =
         new Commons::Postgres::Statement(
           "SELECT "
@@ -2622,7 +2622,7 @@ namespace CampaignSvcs
           sysdate,
           old_countries);
       }
-      
+
       if(old_countries)
       {
         new_config->countries.deactivate_nonactive(
@@ -2635,7 +2635,7 @@ namespace CampaignSvcs
       ostr << FUN << ": Caught eh::Exception: " << ex.what();
       throw Exception(ostr);
     }
-    
+
   }
 
   void CampaignConfigDBSource::query_colocations_(
@@ -4081,7 +4081,7 @@ namespace CampaignSvcs
         fraud_condition->id =
           rs->get_number<unsigned long>(POS_FRAUD_CONDITION_ID);
         fraud_condition->type = rs->get_string(POS_TYPE)[0];
-        fraud_condition->period = 
+        fraud_condition->period =
           Generics::Time(rs->get_number<unsigned long>(POS_PERIOD));
         fraud_condition->limit =
           rs->get_number<unsigned long>(POS_LIMIT);

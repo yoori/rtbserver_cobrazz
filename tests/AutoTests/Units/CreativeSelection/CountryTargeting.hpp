@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__COUNTRYTARGETING_
 #define _AUTOTEST__COUNTRYTARGETING_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class CountryTargeting : public BaseUnit
 {

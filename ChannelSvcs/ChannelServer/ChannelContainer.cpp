@@ -229,7 +229,7 @@ namespace ChannelSvcs
             {
               it = ns_trigger_map_.insert(
                 it, std::make_pair(m_key, NSTriggerAtom()));
-              it->second.swap(temp); 
+              it->second.swap(temp);
             }
           }
         }
@@ -467,7 +467,7 @@ namespace ChannelSvcs
     ChannelIdToMatchInfo& info_new,
     ExcludeContainerType &new_ids,
     ExcludeContainerType &up_ids,
-    ExcludeContainerType &rm_ids) 
+    ExcludeContainerType &rm_ids)
     noexcept
   {
     ChannelMap::const_iterator it_i = info_old.begin();
@@ -530,7 +530,7 @@ namespace ChannelSvcs
 
   void ChannelContainer::trace_update_data_(
     const UpdateContainer& add,
-    std::ostream& debug) 
+    std::ostream& debug)
     noexcept
   {
     const UpdateContainer::Matters& matters_cont = add.get_matters();
@@ -688,7 +688,7 @@ namespace ChannelSvcs
       // it->first.trigger references to it->second.*->word.trigger
       // const std::string& trigger = remove_unmerged_value.begin()->word.trigger;
 
-      // push 
+      // push
       SoftMatcher_var new_matcher = new SoftMatcher(lang, remove_unmerged_value.begin()->word.trigger);
       const std::string& trigger = new_matcher->get_trigger();
 
@@ -864,7 +864,7 @@ namespace ChannelSvcs
             old_data = old_it->second;
           }
         }
-        
+
         ChannelUpdateData::TriggerItemVector::const_iterator old_item_it;
         for (IdVector::const_iterator it_rm = item.removed.begin();
              it_rm != item.removed.end(); ++it_rm)
@@ -914,7 +914,7 @@ namespace ChannelSvcs
               }
             }
           }
-          else 
+          else
           {//should be trigger_type == 'D'
             old_item_it = old_data->triggers.begin();
             assert(!old_item_it->channel_trigger_id);
@@ -990,7 +990,7 @@ namespace ChannelSvcs
             channel_ids_[channel_id].swap(old_data);
           }
         }
-        matters_cont.erase(matters_it++); 
+        matters_cont.erase(matters_it++);
         if (progress)
         {
           progress->set_progess(1);
@@ -1130,7 +1130,7 @@ namespace ChannelSvcs
 
 
   void ChannelContainer::match_uid_(
-    const Generics::Uuid& uid, 
+    const Generics::Uuid& uid,
     const ChannelChunkArray& array,
     TriggerMatchRes& res)
     /*throw(Exception)*/
@@ -1214,7 +1214,7 @@ namespace ChannelSvcs
                 url.prefix.append(i->prefix);
                 url.prefix.append(
                   i->postfix,
-                  0, 
+                  0,
                   url_prefix.length() - i->prefix.size());
                 url.postfix.append(
                   i->postfix,
@@ -1236,7 +1236,7 @@ namespace ChannelSvcs
       throw Exception(ostr);
     }
   }
-  
+
   /* match words for triggers*/
   void ChannelContainer::match_words_(
     const MatchWords& key_words,
@@ -1328,7 +1328,7 @@ namespace ChannelSvcs
     const MatchWords match_words[CT_MAX],
     const MatchWords& additional_url_keywords,
     const StringVector& exact_words,
-    const Generics::Uuid& uid, 
+    const Generics::Uuid& uid,
     unsigned int flags,
     TriggerMatchRes& res)
     /*throw(Exception)*/

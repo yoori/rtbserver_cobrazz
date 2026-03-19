@@ -14,14 +14,14 @@
  */
 class OptOutRequestConfig : public RequestConfig
 {
-  
+
 public:
   /**
    * @brief Constructor.
    *
    * @param _constraint constraint for request.
    * @param _url Base URL for request.
-   */  
+   */
   OptOutRequestConfig(ConstraintConfig* _constraint,
                       const char* _url);
 };
@@ -38,13 +38,13 @@ public:
    *
    * @param client_config XML-presentation of client configuration.
    * @param request_lists XML-presentation of parameters/headers/cookies values.
-   */  
+   */
   ClientConfig(const AdClientType& client_config,
                const RequestLists& request_lists)
     /*throw(SelectorPolicy::InvalidConfigRequestData)*/;
 
   const unsigned count;                         // requests per second
-  const unsigned long lifetime;                 // client lifetime 
+  const unsigned long lifetime;                 // client lifetime
   const unsigned long optout_rate;              // percentage of client without uid per second
   const double        action_rate;              // rate of action's requests
   const double        click_rate;               // rate of clicks's requests
@@ -59,7 +59,7 @@ public:
    * @return reference to request configuration object.
    */
   const RequestConfig_var& ns_request() const;
-  
+
   /**
    * @brief Access to action request parameters.
    *
@@ -91,7 +91,7 @@ public:
 
 
 private:
-  
+
   RequestConfig_var ns_request_;
   RequestConfig_var action_request_;
   RequestConfig_var click_request_;
@@ -108,40 +108,40 @@ typedef std::unique_ptr<ClientConfig> ClientConfig_var;
 */
 class Configuration
 {
-  
+
 public:
 
   DECLARE_EXCEPTION(InvalidConfiguration, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidConfigName, eh::DescriptiveException);
   DECLARE_EXCEPTION(InvalidXmlFieldFormat, eh::DescriptiveException);
 
-  // Field names 
+  // Field names
   static const char*          EXECUTION_TIME;   // Default test execution time.
   static const char*          THREADS_NUMBER;   // Default threads number for test.
 
   // List names
   static const char*          URL;              // URL's list name
-  static const char*          REFERER_KW;       // Referer's list name 
+  static const char*          REFERER_KW;       // Referer's list name
   static const char*          FT;               // Full text's list name
-  static const char*          VERSION;          // Version's list name  
-  static const char*          BROWSER;          // Browsers's list name  
-  static const char*          USER_AGENT;       // UserAgent's list name  
-  static const char*          OS;               // OS's list name  
-  static const char*          TID;              // Tid's list name  
-  static const char*          COUNTRY;          // Country's list name  
-  static const char*          FORMAT;           // Format's list name  
-  static const char*          CT_PSWND_COOKIE;  
+  static const char*          VERSION;          // Version's list name
+  static const char*          BROWSER;          // Browsers's list name
+  static const char*          USER_AGENT;       // UserAgent's list name
+  static const char*          OS;               // OS's list name
+  static const char*          TID;              // Tid's list name
+  static const char*          COUNTRY;          // Country's list name
+  static const char*          FORMAT;           // Format's list name
+  static const char*          CT_PSWND_COOKIE;
   static const char*          SIZENOTSUP;
-  static const char*          COLO_ID;          // ColoId's list name  
-  
-  
+  static const char*          COLO_ID;          // ColoId's list name
+
+
 public:
 
   /**
    * @brief Constructor.
    *
    * @param config_path Path of the configuration XML-file
-   */    
+   */
   Configuration(const char* config_path) :
     config_path_(config_path),
     description_(""),
@@ -219,7 +219,7 @@ public:
    * @return statistics interval dump in seconds.
    */
   unsigned long statistics_interval_dump() const;
-  
+
 private:
   std::string config_path_;
   std::string description_;

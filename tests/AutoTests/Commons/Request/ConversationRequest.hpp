@@ -11,7 +11,7 @@ namespace AutoTest
    * @brief Presentation of Conversation (action) AdServer request.
    *
    * This request is sent when end user
-   * complete an action (purchasing smth. for example). 
+   * complete an action (purchasing smth. for example).
    */
   class ConversationRequest : public BaseRequest
   {
@@ -49,7 +49,7 @@ namespace AutoTest
      * @brief Represents 'value' param.
      *
      * Conversion value in float format (dot separated,
-     *  for example, 5.99) in currency of advertiser account. 
+     *  for example, 5.99) in currency of advertiser account.
      */
     ConversationParam value;
 
@@ -81,7 +81,7 @@ namespace AutoTest
     /**
      * @brief Represents 'Referer' HTTP header.
      *
-     * URL of a page which have trigered ad request. 
+     * URL of a page which have trigered ad request.
      */
     HeaderParam<ConversationRequest> referer;
   };

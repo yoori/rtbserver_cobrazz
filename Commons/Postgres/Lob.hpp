@@ -24,9 +24,9 @@ namespace Postgres
 
     ~Lob() noexcept;
 
-    /* 
+    /*
      * Create a new large object
-     * @param conn if set than assign for use this connection 
+     * @param conn if set than assign for use this connection
      * else try to use connection set before
      * */
     void create(Connection* conn = 0) /*throw(Exception)*/;
@@ -39,14 +39,14 @@ namespace Postgres
     /*
      * import file to large object
      * designed oid may be associated with object before call
-     * @param file name 
+     * @param file name
      * */
     void import_file(const char* file_name) /*throw(Exception)*/;
 
     /*
      * export large object to file
      * oid should be associated with object before call
-     * @param file name 
+     * @param file name
      * */
     void export_file(const char* file_name) /*throw(Exception)*/;
 

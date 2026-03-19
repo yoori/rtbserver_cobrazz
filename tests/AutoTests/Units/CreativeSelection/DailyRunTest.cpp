@@ -48,11 +48,11 @@ DailyRunTest::process_testcase(
           expect[i].wday,
           expect[i].time,
           tz_name));
-      
+
       add_descr_phrase(expect[i].time);
     }
     client.process_request(request);
-    
+
     if (expect[i].have_cc)
     {
       FAIL_CONTEXT(
@@ -73,7 +73,7 @@ DailyRunTest::process_testcase(
 }
 
 
-bool 
+bool
 DailyRunTest::run_test()
 {
 

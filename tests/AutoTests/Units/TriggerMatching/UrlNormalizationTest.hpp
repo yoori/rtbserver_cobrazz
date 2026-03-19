@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__URLNORMALIZATIONTEST_
 #define _AUTOTEST__URLNORMALIZATIONTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
- 
+
 class UrlNormalizationTest: public BaseDBUnit
 {
 
@@ -19,16 +19,16 @@ class UrlNormalizationTest: public BaseDBUnit
 
 public:
   UrlNormalizationTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       conn_(open_pq())
   {};
- 
+
   virtual ~UrlNormalizationTest() noexcept
   {};
- 
+
 private:
 
   AutoTest::DBC::Conn conn_;

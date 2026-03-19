@@ -1,7 +1,7 @@
 
 #include "CampaignBudgetTest.hpp"
 #include "SpentBudgetChecker.hpp"
- 
+
 REFLECT_UNIT(CampaignBudgetTest) (
   "NoDBUpdate",
   AUTO_TEST_SLOW
@@ -164,7 +164,7 @@ CampaignBudgetTest::dynamic_daily_budget(bool initial)
   Generics::Time next_date =
     (base_time_ + Generics::Time::ONE_DAY).get_gm_time().get_date();
 
-  AutoTest::AndChecker initial_checker = 
+  AutoTest::AndChecker initial_checker =
     AutoTest::and_checker(
       CampaignChecker(this, ccg1,
         CampaignChecker::Expected().eval_status("A")),
@@ -247,7 +247,7 @@ CampaignBudgetTest::dynamic_daily_budget(bool initial)
       next_date));
 }
 
-bool 
+bool
 CampaignBudgetTest::run()
 {
   base_time_ = Generics::Time(fetch_string("TODAY"),

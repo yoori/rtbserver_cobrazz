@@ -8,45 +8,45 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = HistoryProfileAdmin::Expected, CheckType ch = CT_ONE>   
-  class HistoryProfileChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = HistoryProfileAdmin::Expected, CheckType ch = CT_ONE>
+  class HistoryProfileChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      HistoryProfileChecker_(      
-        BaseUnit* test,      
-        const std::string& uid,      
-        bool temp,      
-        UserInfoSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        uid_(uid),      
-        temp_(temp),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      HistoryProfileChecker_(
+        BaseUnit* test,
+        const std::string& uid,
+        bool temp,
+        UserInfoSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        uid_(uid),
+        temp_(temp),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~HistoryProfileChecker_() noexcept {}      
+      virtual ~HistoryProfileChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      std::string uid_;      
-      bool temp_;      
-      UserInfoSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      std::string uid_;
+      bool temp_;
+      UserInfoSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef HistoryProfileChecker_<HistoryProfileAdmin::Expected> HistoryProfileChecker;  
+  typedef HistoryProfileChecker_<HistoryProfileAdmin::Expected> HistoryProfileChecker;
   typedef HistoryProfileChecker_<std::string, CT_ONE_NOT_EXPECTED> HistoryProfileEmptyChecker;
 
 }

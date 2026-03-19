@@ -14,8 +14,8 @@ namespace
   const char SEARCH_REFERER[]            = "http://www.google.ru/search?hl=ru&q=";
 }
 
- 
-bool 
+
+bool
 ContextChannelsTest::run_test()
 {
   // simple test cases
@@ -25,7 +25,7 @@ ContextChannelsTest::run_test()
 
   //composite test case
   NOSTOP_FAIL_CONTEXT(composite_request_test_case());
-  
+
   return true;
 }
 
@@ -40,7 +40,7 @@ void ContextChannelsTest::url_request_test_case()
 
   exp_context_channels.push_back(get_object_by_name("Cntx01").Value());
   exp_noncontext_channels.push_back(get_object_by_name("NCntx01").Value());
-  
+
   // check results
 
   FAIL_CONTEXT(
@@ -93,9 +93,9 @@ void ContextChannelsTest::search_request_test_case()
   ChannelList exp_noncontext_channels;
   NSLookupRequest request;
   request.referer = SEARCH_REFERER + fetch_string("SearchKwd/01");
-  
+
   test_client_.process_request(request, "search channels request");
-  
+
   exp_context_channels.push_back(get_object_by_name("Cntx03").Value());
   exp_noncontext_channels.push_back(get_object_by_name("NCntx03").Value());
 
@@ -126,12 +126,12 @@ void ContextChannelsTest::composite_request_test_case()
   NSLookupRequest request;
   request.referer_kw = fetch_string("PageKwd/01");
   request.referer = SEARCH_REFERER + fetch_string("SearchKwd/01");
-  
+
   test_client_.process_request(request, "composite request");
 
   // expected result
   Locals all_locals = get_local_params();
-  
+
   const ulong test_param_size = all_locals.DataElem().size();
 
   for (ulong idx=0; idx < test_param_size; idx++)
@@ -142,7 +142,7 @@ void ContextChannelsTest::composite_request_test_case()
       if (param_name.find("NCntx") == 0)
         exp_noncontext_channels.push_back(all_locals.DataElem()[idx].Value());
     }
-  
+
   // check results
   FAIL_CONTEXT(
     AutoTest::sequence_checker(

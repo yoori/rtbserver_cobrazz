@@ -16,7 +16,7 @@ namespace AutoTest
    * @struct TypeTraits
    * @brief Defines 'equal' condition and provides to_string function.
    */
-  template <class T> 
+  template <class T>
   struct TypeTraits
   {
     /**
@@ -48,12 +48,12 @@ namespace AutoTest
 
   template<>
   struct TypeTraits<std::string>
-  {  
+  {
     static bool equal( const std::string& x, const std::string& y )
     {
       return x == y;
     }
-  
+
     static bool equal( const char* x, const std::string& y )
     {
       return y == x;
@@ -89,7 +89,7 @@ namespace AutoTest
    * @param y second object of comparison.
    * @return whether objects are equal.
    */
-  template <class T> 
+  template <class T>
   inline
   bool equal( const T& x, const T& y )
   {
@@ -104,7 +104,7 @@ namespace AutoTest
    * @param y second object of type R.
    * @return whether objects are equal.
    */
-  template <class L, class R> 
+  template <class L, class R>
   inline
   bool equal( const L& x, const R& y )
   {
@@ -117,9 +117,9 @@ namespace AutoTest
    * @param x object of type T.
    * @return string representation of x object.
    */
-  template <class T> 
+  template <class T>
   inline
-  std::string 
+  std::string
   to_string( const T& x )
   {
     return TypeTraits<T>::to_string(x);
@@ -132,20 +132,20 @@ namespace AutoTest
  * @return STL string
  */
 inline
-std::string 
+std::string
 strof ( const char* x )
 {
   return std::string (x);
 }
-  
+
 /**
  * @brief Convert object of type T into STL string representation.
  * @param x object of type T
  * @return STL string representation of object of type T
  */
-template <class T> 
+template <class T>
 inline
-std::string 
+std::string
 strof ( const T& x )
 {
   return AutoTest::to_string(x);
@@ -158,7 +158,7 @@ strof ( const T& x )
  * @param str STL string
  * @return object of class T
  */
-template <class T> 
+template <class T>
 inline
 T
 valueof (const std::string& str) /*throw(eh::Exception)*/

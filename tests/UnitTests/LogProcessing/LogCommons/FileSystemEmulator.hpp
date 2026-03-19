@@ -25,7 +25,7 @@ namespace fs
     ~Dir() noexcept
     {}
   };
-  
+
   typedef ReferenceCounting::SmartPtr<Dir> Dir_var;
 
   class Dir_var_less
@@ -120,7 +120,7 @@ namespace fs
     if (oi != file_system.end() && ni != file_system.end())
     {
       bool exist = false;
-      
+
       {
         SyncPolicy::WriteGuard lock((*oi)->mutex);
         exist = ((*oi)->find(old_file_name) != (*oi)->end());
@@ -179,7 +179,7 @@ namespace fs
     if (di != file_system.end())
     {
       Dir& dir = const_cast<Dir&>(**di);
-      
+
       SyncPolicy::WriteGuard lock(dir.mutex);
       Dir::iterator fi = dir.find(file_name);
 
@@ -218,7 +218,7 @@ namespace fs
     dir->name = path;
     file_system.insert(dir);
   }
-  
+
   void
   FileSystem::rmrf(const std::string& path)
     /*throw(std::exception)*/

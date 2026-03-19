@@ -37,7 +37,7 @@ namespace AdServer
     typedef std::unordered_set<ChannelId> ChannelIdHashSet;
     typedef std::set<ChannelId> ChannelIdSet;
     typedef std::map<ChannelId, unsigned long> ChannelWeightMap;
-    
+
     struct ChannelHolder;
 
     struct ChannelParams
@@ -61,7 +61,7 @@ namespace AdServer
       };
 
       typedef ReferenceCounting::SmartPtr<DiscoverParams, ReferenceCounting::PolicyAssert> DiscoverParams_var;
-      
+
       class CMPParams: public ReferenceCounting::AtomicImpl
       {
       public:
@@ -112,7 +112,7 @@ namespace AdServer
         DescriptiveParams() noexcept
           : parent_channel_id(0)
         {}
-        
+
         bool operator==(const DescriptiveParams& right) const noexcept
         {
           return name == right.name &&
@@ -164,7 +164,7 @@ namespace AdServer
       SimpleChannel_var;
     typedef ReferenceCounting::SmartPtr<ExpressionChannel, ReferenceCounting::PolicyAssert>
       ExpressionChannel_var;
-    
+
     struct ChannelUseCount
     {
       ChannelUseCount(): count(0) {}
@@ -190,7 +190,7 @@ namespace AdServer
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
       virtual bool has_params() const noexcept = 0;
-      
+
       virtual const ChannelParams& params() const noexcept = 0;
 
       virtual ChannelParams& params() noexcept = 0;
@@ -228,7 +228,7 @@ namespace AdServer
         ExpressionChannelList& cmp_channels,
         const ChannelIdHashSet& simple_channels)
         /*throw(Exception)*/ = 0;
-      
+
       virtual void get_all_cmp_channels(
         ExpressionChannelList& cmp_channels)
         /*throw(Exception)*/ = 0;
@@ -242,7 +242,7 @@ namespace AdServer
       {
         return ConstExpressionChannel_var();
       }
-      
+
       virtual ConstSimpleChannel_var
       simple_channel() const noexcept
       {
@@ -281,7 +281,7 @@ namespace AdServer
       {
         return channel.in() ? channel->has_params() : false;
       }
-      
+
       virtual const ChannelParams& params() const noexcept
       {
         assert(channel.in());
@@ -339,7 +339,7 @@ namespace AdServer
 
       virtual ConstExpressionChannel_var
       expression_channel() const noexcept;
-      
+
       virtual ConstSimpleChannel_var
       simple_channel() const noexcept;
 
@@ -369,7 +369,7 @@ namespace AdServer
     {
     public:
       ExpressionChannelBaseWithParams() {}
-      
+
       ExpressionChannelBaseWithParams(const ChannelParams& channel_params)
         : channel_params_(channel_params)
       {}
@@ -378,7 +378,7 @@ namespace AdServer
       {
         return true;
       }
-      
+
       virtual const ChannelParams& params() const noexcept;
 
       virtual ChannelParams& params() noexcept;
@@ -387,17 +387,17 @@ namespace AdServer
       {
         channel_params_ = channel_params;
       }
-      
+
     protected:
       virtual
       ~ExpressionChannelBaseWithParams() noexcept = default;
 
-      ChannelParams channel_params_;      
+      ChannelParams channel_params_;
     };
 
     typedef ReferenceCounting::SmartPtr<ExpressionChannelBaseWithParams, ReferenceCounting::PolicyAssert>
       ExpressionChannelBaseWithParams_var;
-    
+
     class SimpleChannel:
       public ExpressionChannelBaseWithParams,
       public ReferenceCounting::AtomicImpl
@@ -480,7 +480,7 @@ namespace AdServer
     public:
       friend void print(std::ostream& out, const ExpressionChannelBase* channel, bool expand)
         noexcept;
-      
+
       enum Operation
       {
         NOP = '-',
@@ -489,7 +489,7 @@ namespace AdServer
         AND_NOT = '^',
         TRUE = 'T'
       };
-      
+
       struct Expression
       {
         typedef std::vector<Expression> ExpressionList;
@@ -930,7 +930,7 @@ namespace AdServer
           *cmp_params == *right.cmp_params) ||
           (!cmp_params.in() && !right.cmp_params.in()));
     }
-    
+
     inline
     void print_expression(std::ostream& out,
       const ExpressionChannel::Expression& expr,
@@ -969,7 +969,7 @@ namespace AdServer
         out << ")";
       }
     }
-    
+
     inline
     void print(std::ostream& out, const ExpressionChannelBase* channel, bool expand)
       noexcept
@@ -1020,7 +1020,7 @@ namespace AdServer
 
       return false;
     }
-    
+
     inline
     ExpressionChannelHolder::ExpressionChannelHolder() noexcept
     {}
@@ -1030,7 +1030,7 @@ namespace AdServer
       ExpressionChannelBase* channel_val) noexcept
       : channel(ReferenceCounting::add_ref(channel_val))
     {}
-    
+
     inline
     ConstExpressionChannel_var
     ExpressionChannelHolder::expression_channel() const noexcept
@@ -1052,7 +1052,7 @@ namespace AdServer
     {
       return channel_params_;
     }
-    
+
     inline
     ChannelParams& ExpressionChannelBaseWithParams::params() noexcept
     {

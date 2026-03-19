@@ -166,7 +166,7 @@ namespace AdServer
         std::cout << std::endl;
       }
 #     endif
-      
+
       if(time_interval.in())
       {
         return time_interval->set(hash);

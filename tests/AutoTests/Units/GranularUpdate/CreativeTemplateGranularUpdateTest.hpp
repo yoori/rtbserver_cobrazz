@@ -9,22 +9,22 @@ namespace ORM = ::AutoTest::ORM;
 /**
 * @class CreativeTemplateGranularUpdateTest
 * @brief Test for template+files granular update
-*/ 
+*/
 class CreativeTemplateGranularUpdateTest:
   public BaseDBUnit
 {
 public:
- 
+
   CreativeTemplateGranularUpdateTest(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   {};
- 
+
   virtual ~CreativeTemplateGranularUpdateTest() noexcept
   {};
- 
+
 private:
 
   std::string file1_;

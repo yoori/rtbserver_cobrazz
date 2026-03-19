@@ -125,7 +125,7 @@ namespace RequestInfoSvcs
     print(std::ostream& ostr) noexcept;
 
   protected:
-    typedef Sync::Policy::PosixThread SyncPolicy;  
+    typedef Sync::Policy::PosixThread SyncPolicy;
     typedef Sync::Policy::PosixThread DumpSyncPolicy;
 
     // aggregate amount set
@@ -150,7 +150,7 @@ namespace RequestInfoSvcs
     };
 
     typedef Generics::GnuHashSet<AggregateRequestHashAdapter> AggregateAmountSet;
- 
+
     struct SaveAggregateRequestHashAdapter
     {
     public:
@@ -882,7 +882,7 @@ namespace RequestInfoSvcs
           (*req_it)->account_id,
           (*req_it)->advertiser_id,
           (*req_it)->campaign_id,
-          (*req_it)->ccg_id, 
+          (*req_it)->ccg_id,
           (*req_it)->ctr,
           (*req_it)->mode,
           // aggregate fields
@@ -900,7 +900,7 @@ namespace RequestInfoSvcs
         first_server_requests.push_back(*req_it);
       }
     }
-    
+
     // check key existance by aggregate map
     // if key exists:
     //   if existing first_request_time value great then current - reinsert key into send_amounts
@@ -1292,7 +1292,7 @@ namespace RequestInfoSvcs
         {
           return false;
         }
-        
+
         while(non_empty_servers_.empty())
         {
           non_empty_servers_cond_.wait(non_empty_servers_lock_);
@@ -1971,7 +1971,7 @@ namespace RequestInfoSvcs
         confirm_bid_info.clicks = CorbaAlgs::pack_decimal((*req_it)->clicks);
         confirm_bid_info.forced = false;
       }
-      
+
       AdServer::CampaignSvcs::BillingServer::ConfirmBidRefSeq_var remainder_request_seq;
 
       billing_servers_holder_->billing_servers[service_index]->add_amount(

@@ -1,6 +1,6 @@
 
 #include "ProfilesContentCleanupTest.hpp"
- 
+
 REFLECT_UNIT(ProfilesContentCleanupTest) (
   "UserProfiling",
   AUTO_TEST_SLOW
@@ -61,7 +61,7 @@ ProfilesContentCleanupTest::cleanup_by_visits_count()
         user.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "matching 'P' and 'S' channels");
-    
+
     if (i >= REQUESTS_OVER_CAPACITY)
     {
       expected_timestamps += (base_time_ + i * 60).
@@ -123,7 +123,7 @@ ProfilesContentCleanupTest::cleanup_by_visits_date()
         user.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       "matching 'P' and 'S' channels");
-    
+
     request.tid = fetch_string("TAG");
     request.referer_kw.clear();
     request.referer.clear();

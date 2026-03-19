@@ -9,32 +9,32 @@ namespace AutoTest
 
   const ExpressionChannelChecker::Expected ExpressionChannelChecker::ANY_EXPECTED_;
 
-  ExpressionChannelChecker::ExpressionChannelChecker(      
-    BaseUnit* test,      
-    unsigned long channel_id,      
-    const Expected& expected,      
+  ExpressionChannelChecker::ExpressionChannelChecker(
+    BaseUnit* test,
+    unsigned long channel_id,
+    const Expected& expected,
     AdminExistCheck exists)
-    : test_(test),      
-      channel_id_(channel_id),      
-      expected_(expected),      
-      exists_(exists)      
+    : test_(test),
+      channel_id_(channel_id),
+      expected_(expected),
+      exists_(exists)
   { }
 
   ExpressionChannelChecker::~ExpressionChannelChecker() noexcept
   { }
-  
-  bool  
-  ExpressionChannelChecker::check(bool throw_error)  
-    /*throw(CheckFailed, eh::Exception)*/  
+
+  bool
+  ExpressionChannelChecker::check(bool throw_error)
+    /*throw(CheckFailed, eh::Exception)*/
   {
-    
+
     if (expected_.has_status())
     {
       // To calc new account display status
       AutoTest::ORM::update_display_status(
         test_, "CHANNEL", static_cast<int>(channel_id_));
     }
-    
+
     AdminExistCheck remote_exists =
       !expected_.has_status() ||
          expected_.status() == "A" ||
@@ -46,7 +46,7 @@ namespace AutoTest
     central_admins.initialize(test_,
       CTE_CENTRAL, STE_CAMPAIGN_SERVER,
       channel_id_);
-    
+
     AdminsArray<ExpressionChannelAdmin, CT_ALL> remote_admins;
 
     remote_admins.initialize(test_,

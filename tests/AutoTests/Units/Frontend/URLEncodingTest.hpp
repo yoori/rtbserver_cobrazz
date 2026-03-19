@@ -1,9 +1,9 @@
 
 #ifndef _AUTOTEST__URLENCODINGTEST_
 #define _AUTOTEST__URLENCODINGTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 typedef AutoTest::NSLookupRequest NSLookupRequest;
 
 class URLEncodingTest : public BaseUnit
@@ -33,7 +33,7 @@ private:
   tag_passback_encoding(
     const char* tag,
     const char* expected_passback);
-  
+
   void
   clickurl_encoding();
   void

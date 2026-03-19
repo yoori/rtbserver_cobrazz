@@ -28,7 +28,7 @@ int check_blob(
   unsigned long size_iters)
 {
   std::string FUN;
-  
+
   {
     std::ostringstream fun_str;
     fun_str << "check_blob(start size = " << size_start <<
@@ -36,7 +36,7 @@ int check_blob(
       ", size iterations = " << size_iters << ")";
     FUN = fun_str.str();
   }
-  
+
   int rownum = 0;
   try
   {
@@ -73,7 +73,7 @@ int check_blob(
       std::cerr << FUN << ": on creating blob table caught eh::Exception: "
         << ex.what() << std::endl;
     }
-    
+
     {
       // insert set of blobs
       for(unsigned long i = 0; i < size_iters; ++i)
@@ -91,7 +91,7 @@ int check_blob(
 
       conn->commit();
     }
-    
+
     {
       Generics::Timer exec_timer;
       exec_timer.start();
@@ -103,7 +103,7 @@ int check_blob(
       ResultSet_var result_set = stmt->execute_query();
 
       exec_timer.stop();
-      
+
       Generics::Timer fetch_timer;
       fetch_timer.start();
 
@@ -121,7 +121,7 @@ int check_blob(
             std::endl;
           return 1;
         }
-        
+
 #       define CHECK_BLOB_CONTENT
 #       ifdef CHECK_BLOB_CONTENT
         for(unsigned long t = 0; t < expected_size; ++t)
@@ -167,7 +167,7 @@ int
 main(int argc, char* argv[])
 {
   int res = 0;
-  
+
   Generics::AppUtils::StringOption opt_ora_server(
     "//oraads/addbads.ocslab.com");
   Generics::AppUtils::StringOption opt_ora_user("ads_3");
@@ -205,9 +205,9 @@ main(int argc, char* argv[])
 
   args.parse(argc - 1, argv + 1);
 
-  std::cout <<  "Use to connect '" << opt_ora_server->c_str() 
+  std::cout <<  "Use to connect '" << opt_ora_server->c_str()
     << "' as user '" << opt_ora_user->c_str()
-    << "' with password '" <<  opt_ora_pwd->c_str() << "'." << std::endl; 
+    << "' with password '" <<  opt_ora_pwd->c_str() << "'." << std::endl;
 
   if(opt_start.installed())
   {
@@ -250,7 +250,7 @@ main(int argc, char* argv[])
       100000,
       10000,
       50);
-    
+
     res += check_blob(
       opt_ora_server->c_str(),
       opt_ora_user->c_str(),

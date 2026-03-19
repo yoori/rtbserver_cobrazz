@@ -40,7 +40,7 @@ namespace ChannelSvcs
       : PositiveContainerType(init),
         matcher(init.matcher)
     {}
-    
+
     MatchingEntity(MatchingEntity&& init) noexcept
     {
       this->swap(init);
@@ -349,7 +349,7 @@ namespace ChannelSvcs
     ChannelChunk(ChannelMatchInfo* info)
       /*throw(eh::Exception)*/;
 
-    typedef std::map<String::SubString, SoftVector> AddItemMap; 
+    typedef std::map<String::SubString, SoftVector> AddItemMap;
     typedef std::map<Generics::Uuid, IdSet> AddUidMap;
 
   public:
@@ -373,12 +373,12 @@ namespace ChannelSvcs
       /*throw(eh::Exception)*/;
 
     void match_uid(
-      const Generics::Uuid& uid, 
+      const Generics::Uuid& uid,
       TriggerMatchRes& res)
       const
       /*throw(eh::Exception)*/;
 
-    /* apply update saved in chunk 
+    /* apply update saved in chunk
      * @in - result chunk
      * updated_uid_channels - id of uid channels witch should be removed
      */
@@ -446,7 +446,7 @@ namespace ChannelSvcs
       char trigger_type)
       /*throw(Exception)*/;
 
-    /* add/remove channel to uid 
+    /* add/remove channel to uid
      * @uuid - uid
      * channel_id - new channel id, it id == 0, uid marks on removing
      */

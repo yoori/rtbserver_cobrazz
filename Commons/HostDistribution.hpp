@@ -28,11 +28,11 @@ namespace Commons
 
     /**
      * @param file configuration file
-     * */ 
+     * */
     HostDistributionFile(const char* file, const char* schema_file)
       /*throw(FileNotFound, InvalidFile)*/;
 
-    /** 
+    /**
      * Returns hostname by index value
      * @param index
      * @return host name for index
@@ -40,13 +40,13 @@ namespace Commons
     const std::string& get_host_by_index(unsigned long index) const
       /*throw(InvalidIndex)*/;
 
-    /** 
+    /**
      * Returns maximum index
      * @return maximum index + 1
      * */
     unsigned long get_index_limit() const noexcept;
 
-    /** 
+    /**
      * Returns Map of indexes to host
      * @return Map of indexes
      * */

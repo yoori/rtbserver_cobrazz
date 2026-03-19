@@ -63,7 +63,7 @@ namespace AdServer
           const ::CORBACommons::StringSeq& words)
         /*throw(ChannelSvcs::NotReady,
               ChannelSvcs::ImplementationException)*/;
-      
+
     protected:
       typedef Generics::TaskGoal TaskBase;
       typedef ReferenceCounting::SmartPtr<TaskBase> Task_var;

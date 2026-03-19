@@ -51,7 +51,7 @@ StatsHourlyActionsTest::run()
   AUTOTEST_CASE(
     case_actions_for_text_ad_group(),
     "Actions for text ad group");
-  
+
   return true;
 }
 
@@ -117,7 +117,7 @@ StatsHourlyActionsTest::case_action_from_different_campaign()
 {
   ORM::StatsList<HourlyStats> stats;
   std::list<HourlyStats::Diffs> diffs;
-  
+
   {
     HourlyStats stat(
       HourlyStats::Key().
@@ -171,7 +171,7 @@ StatsHourlyActionsTest::case_action_from_different_campaign()
 
   AutoTest::CreativeList exp_ccids;
   exp_ccids.push_back(fetch_string("CC Id/2/1"));
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       request, exp_ccids, actions));
@@ -219,7 +219,7 @@ StatsHourlyActionsTest::case_triple_action()
   actions.push_back(AutoTest::ACTION);
 
   AdClient client(AdClient::create_user(this));
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       request, exp_ccids, actions));
@@ -273,7 +273,7 @@ StatsHourlyActionsTest::case_action_before_click()
     AutoTest::CLICK, target_request_time_ + 1));
 
   AdClient client(AdClient::create_user(this));
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       request, exp_ccids, actions));
@@ -329,7 +329,7 @@ StatsHourlyActionsTest::case_action_before_impression_confirmation()
     AutoTest::CLICK, target_request_time_ + 2));
 
   AdClient client(AdClient::create_user(this));
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       request, exp_ccids, actions));
@@ -380,7 +380,7 @@ StatsHourlyActionsTest::case_one_action_for_multiple_creatives_in_campaign()
       AutoTest::ConsequenceActionList actions;
       actions.push_back(AutoTest::TRACK);
       actions.push_back(AutoTest::CLICK);
-      
+
       FAIL_CONTEXT(
         client.do_ad_requests(
           request, exp_ccids, actions));
@@ -389,11 +389,11 @@ StatsHourlyActionsTest::case_one_action_for_multiple_creatives_in_campaign()
       request.tid(fetch_string("Tag Id/5/2"));
       AutoTest::CreativeList exp_ccids;
       exp_ccids.push_back(fetch_string("CC Id/5/2"));
-      
+
       AutoTest::ConsequenceActionList actions;
       actions.push_back(AutoTest::TRACK);
       actions.push_back(AutoTest::CLICK);
-      
+
       FAIL_CONTEXT(
         client.do_ad_requests(
           request, exp_ccids, actions));
@@ -449,7 +449,7 @@ StatsHourlyActionsTest::case_action_for_display_creative_group_with_cpc_rate()
   actions.push_back(AutoTest::ACTION);
 
   AdClient client(AdClient::create_user(this));
-  
+
   FAIL_CONTEXT(
     client.do_ad_requests(
       request, exp_ccids, actions));
@@ -505,8 +505,8 @@ StatsHourlyActionsTest::case_actions_for_text_ad_group()
 
     stat.description(" #" + strof(i+1));
     stat.select(pq_conn_);
-    
-    exp_ccids.push_back(fetch_string(CREATIVES[i]));    
+
+    exp_ccids.push_back(fetch_string(CREATIVES[i]));
     stats.push_back(stat);
     diffs.push_back(
       HourlyStats::Diffs().

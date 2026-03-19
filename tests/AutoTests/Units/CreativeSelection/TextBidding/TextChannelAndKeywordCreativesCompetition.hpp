@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__TEXTCHANNELANDKEYWORDCREATIVESCOMPETITION_
 #define _AUTOTEST__TEXTCHANNELANDKEYWORDCREATIVESCOMPETITION_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class TextChannelAndKeywordCreativesCompetition : public BaseUnit
 {

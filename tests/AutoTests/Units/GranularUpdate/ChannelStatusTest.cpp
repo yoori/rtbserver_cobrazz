@@ -14,13 +14,13 @@ namespace
   typedef AutoTest::TriggerChecker TriggerChecker;
   typedef AutoTest::WaitChecker<TriggerChecker> WaitTriggerChecker;
 
-  void update_channel_status( 	 
-    DB::IConn& pq_conn) 	 
+  void update_channel_status( 	
+    DB::IConn& pq_conn) 	
   {
-    ORM::SerializeQueryManager::instance().execute( 	 
-      pq_conn, 	 
-      pq_conn.get_query( 	 
-        "select displaystatus.update_channel_status_by_stats();")); 
+    ORM::SerializeQueryManager::instance().execute( 	
+      pq_conn, 	
+      pq_conn.get_query( 	
+        "select displaystatus.update_channel_status_by_stats();"));
   }
 
 };
@@ -116,7 +116,7 @@ ChannelStatusTest::ChannelStatusChecker<ChannelChecker>::check(bool throw_error)
       test_, "CHANNEL", channel_id);
   }
 
- 
+
   ChannelChecker checker(
     test_,
     channel_id,
@@ -170,7 +170,7 @@ void
 ChannelStatusTest::set_up()
 {
   add_descr_phrase("Setup");
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       get_config().check_service(CTE_ALL, STE_CAMPAIGN_SERVER)),
@@ -386,7 +386,7 @@ ChannelStatusTest::channel_threshold_feature()
       AutoTest::SelectedCreativeChecker(AdClient::create_user(this),
         NSLookupRequest().
           referer_kw(fetch_string(channel_W_name + "/TRIGGERS")).
-          tid(tag), 
+          tid(tag),
         fetch_string(channel_W_name + "/CC_ID"))));
 
   // Status changed also for some expression channels

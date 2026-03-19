@@ -1,6 +1,6 @@
 #ifndef _AUTOTEST__CHANNELIMPINVENTORYTEST_
 #define _AUTOTEST__CHANNELIMPINVENTORYTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = ::AutoTest::ORM;
@@ -10,15 +10,15 @@ class ChannelImpInventoryTest: public BaseDBUnit
   typedef std::vector<std::string> StringSeq;
   typedef std::vector<int> IntSeq;
 
-  
+
 public:
   ChannelImpInventoryTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var) :
     BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~ChannelImpInventoryTest() noexcept
   { }
 
@@ -27,7 +27,7 @@ protected:
   virtual bool run();
 
   virtual void set_up();
-  
+
   virtual void tear_down();
 
 private:
@@ -47,7 +47,7 @@ private:
     SEND_OO_USER = 128,
     SEND_REFERER = 256
   };
-  
+
   void
   do_case_requests_(
     const std::string& prefix,
@@ -59,26 +59,26 @@ private:
 
   void
   fetch_list_(
-    StringSeq& seq, 
+    StringSeq& seq,
     const std::string& prefix);
 
   void
   fetch_list_(
-    IntSeq& seq, 
+    IntSeq& seq,
     const std::string& prefix);
-  
+
   void
   init_(
     ORM::StatsList<ORM::ChannelImpInventory>& stats,
     std::list<ORM::ChannelImpInventory::Diffs>& diffs,
     const std::string& prefix,
     size_t size);
-  
+
   void
   check_cretives_(
     const std::string& prefix,
     AutoTest::AdClient& client);
-  
+
   void
   check_channels_(
     const std::string& prefix,
@@ -89,10 +89,10 @@ private:
     const char* prefix,
     size_t size,
     int flags = SEND_DEFAULT);
-  
+
   void
   colo_case();
-  
+
   unsigned int default_colo_;
   size_t count_;
 };

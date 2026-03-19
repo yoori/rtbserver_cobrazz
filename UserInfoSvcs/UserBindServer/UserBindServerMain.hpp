@@ -37,13 +37,13 @@ protected:
   //
   virtual CORBACommons::IProcessControl::ALIVE_STATUS
   is_alive() /*throw(CORBA::SystemException)*/;
-  
+
 private:
   virtual ~UserBindServerApp_() noexcept{};
 
   const AdServer::UserInfoSvcs::UserBindServerImpl::UserBindServerConfig&
     config() const noexcept;
-  
+
   typedef std::unique_ptr<
     AdServer::UserInfoSvcs::UserBindServerImpl::UserBindServerConfig>
     ConfigPtr;
@@ -54,9 +54,9 @@ private:
 
   AdServer::UserInfoSvcs::UserBindServerImpl_var
     user_bind_server_impl_;
-  
+
   ConfigPtr configuration_;
-  
+
   typedef Sync::PosixMutex ShutdownMutex;
   typedef Sync::PosixGuard ShutdownGuard;
 

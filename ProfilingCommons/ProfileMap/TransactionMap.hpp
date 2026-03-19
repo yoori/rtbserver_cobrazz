@@ -116,7 +116,7 @@ namespace AdServer
 
       struct Portion: public ReferenceCounting::AtomicImpl
       {
-        SyncPolicy::Mutex open_transaction_map_lock;        
+        SyncPolicy::Mutex open_transaction_map_lock;
         OpenedTransactionMap open_transaction_map;
 
       protected:
@@ -229,7 +229,7 @@ namespace AdServer
         *it = new Portion();
       }
     }
-    
+
     /**
      * lock open_transaction_map_lock_,  find key:
      * If not exists simple create Transaction -> TransactionHolder and

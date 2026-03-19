@@ -47,7 +47,7 @@ namespace AutoTest
       close(output_[1]);
       return false;//throw
     }
-    else if (pid == 0) // child 
+    else if (pid == 0) // child
     {
       dup2(output_[1], STDOUT_FILENO);
       dup2(efile, STDERR_FILENO);
@@ -82,7 +82,7 @@ namespace AutoTest
         std::istream estream(&ebuffer);
         if(status)
         {
-          Stream::Error ostr;    
+          Stream::Error ostr;
           std::string line;
           ostr << "'";
           print_idname(ostr);
@@ -92,7 +92,7 @@ namespace AutoTest
                << std::endl;
           while(!estream.eof())
           {
-            getline(estream, line); 
+            getline(estream, line);
             ostr << "  " << line << std::endl;
           }
           throw CmdStatusFailed(ostr);
@@ -110,7 +110,7 @@ namespace AutoTest
     public:
       bool examine (std::istream&) { return true;}
     } examiner;
-    
+
     fetch(examiner);
   }
 
@@ -266,7 +266,7 @@ namespace AutoTest
       in.getline(line, sizeof(line));
       ostr << "  " << line << std::endl;
     }
-    logger.log(ostr.str(), log_level);         
+    logger.log(ostr.str(), log_level);
     return true;
   }
 
@@ -277,7 +277,7 @@ namespace AutoTest
   {
     DumpExaminer examiner (logger, log_level);
     std::ostringstream ostr;
-    print_idname(ostr);        
+    print_idname(ostr);
     logger.log(ostr.str(), log_level);
     try
     {
@@ -391,7 +391,7 @@ namespace AutoTest
       all_found = all_found && item_found;
     }
     return all_found;
-  }  
+  }
 
   bool AdminCmd::setup_examine(
     BasicExaminer& examiner,
@@ -593,6 +593,6 @@ namespace AutoTest
     result += adm.last().at(field);
     return result;
   }
-  
+
 }
 

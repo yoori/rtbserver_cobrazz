@@ -1,30 +1,30 @@
 
 #ifndef _AUTOTEST__MAXPUBLISHERSHARETEST_
 #define _AUTOTEST__MAXPUBLISHERSHARETEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = ::AutoTest::ORM;
- 
+
 class MaxPublisherShareTest: public BaseDBUnit
 {
 public:
- 
+
   MaxPublisherShareTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var),
       check_count_(0)
   { }
- 
+
   virtual ~MaxPublisherShareTest() noexcept
   { }
- 
+
 private:
 
   int check_count_;
- 
+
   void
   set_up();
 
@@ -68,7 +68,7 @@ private:
 
   void
   text_dynamic_();
-  
+
   void
   text_daily_part_1_(
     const AutoTest::Time& new_day);

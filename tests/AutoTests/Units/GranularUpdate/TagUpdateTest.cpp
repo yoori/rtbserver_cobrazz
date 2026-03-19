@@ -49,7 +49,7 @@ void TagUpdateTest::tag_create_case()
   tag->flags = 0;
   tag->size_type_id = other_size_type_;
   tag->site = site_id_;
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       tag->insert()),
@@ -155,21 +155,21 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
     "Initial for tag#3");
 
   request.tid = tag1;
-  
+
   FAIL_CONTEXT(
     SelectedCreativeChecker(
       client, request, cc_id).check(),
     "Initial request from tag#1");
 
   request.tid = tag2;
-  
+
   FAIL_CONTEXT(
     SelectedCreativeChecker(
       client, request, cc_id).check(),
     "Initial request from tag#2");
 
   request.tid = tag3;
-  
+
   FAIL_CONTEXT(
     SelectedCreativeChecker(
       client, request, 0).check(),
@@ -179,7 +179,7 @@ void TagUpdateTest::tag_update_creative_category_exclusion_case()
   ORM::ORMRestorer<ORM::PQ::Tagscreativecategoryexclusion>* exclusion1 =
     create<ORM::PQ::Tagscreativecategoryexclusion>();
   exclusion1->approval = "A";
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       exclusion1->insert(cat_id, tag1)),
@@ -273,7 +273,7 @@ void TagUpdateTest::tag_update_size_case()
   int size_type = fetch_int("Size2Type");
   int size = fetch_int("Size2");
   std::string size_name = fetch_string("Size2Name");
-  
+
   ORM::ORMRestorer<ORM::PQ::Tags>* tag =
     create<ORM::PQ::Tags>(fetch_int("UpdateSize/Tag1/ID"));
 
@@ -372,7 +372,7 @@ void TagUpdateTest::tear_down()
   add_descr_phrase("Tear down");
 }
 
-bool 
+bool
 TagUpdateTest::run()
 {
   AUTOTEST_CASE(
@@ -382,7 +382,7 @@ TagUpdateTest::run()
   AUTOTEST_CASE(
     tag_update_creative_category_exclusion_case(),
     "Update category case");
-  
+
   AUTOTEST_CASE(
     tag_update_size_case(),
     "Update size case");

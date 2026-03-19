@@ -133,14 +133,14 @@ namespace ProfilingCommons
     struct ValueType
     {
       ValueType() {}
-      
+
       ValueType(const BlockIndexType& index_val,
         const typename SyncIndexStrategy::KeyAddition& key_add_val)
         noexcept
         : index(index_val),
           key_add(key_add_val)
       {}
-      
+
       BlockIndexType index;
       typename SyncIndexStrategy::KeyAddition key_add;
     };
@@ -245,7 +245,7 @@ namespace ProfilingCommons
       const Generics::Time& now = Generics::Time::get_time_of_day(),
       OperationPriority op_priority = OP_RUNTIME)
       /*throw(Exception)*/;
-    
+
     virtual bool
     remove_profile(
       const KeyType& key,

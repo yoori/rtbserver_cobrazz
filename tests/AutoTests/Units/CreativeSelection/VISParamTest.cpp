@@ -91,11 +91,11 @@ VISParamTest::case02_ad_selection_based_on_visibility_filter()
   std::string tag2 = fetch_string("TAG02_2");
   std::string tag3 = fetch_string("TAG02_3");
   std::string tag4 = fetch_string("TAG02_4");
-  
+
   std::string keyword1 = fetch_string("KEYWORD02_1");
   std::string keyword2 = fetch_string("KEYWORD02_2");
   std::string keyword3 = fetch_string("KEYWORD02_3");
-  
+
   std::string country1 = fetch_string("COUNTRY02_1");
   std::string country2 = fetch_string("COUNTRY02_2");
   std::string country3 = fetch_string("COUNTRY02_3");
@@ -171,7 +171,7 @@ VISParamTest::case03_publisher_inventory_mode()
   add_descr_phrase("case03");
 
   std::string cc = fetch_string("CC03");
-  std::string keyword = fetch_string("KEYWORD03");  
+  std::string keyword = fetch_string("KEYWORD03");
   std::string country = fetch_string("COUNTRY03");
 
   std::string tag1 = fetch_string("TAG03_1");

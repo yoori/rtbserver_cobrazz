@@ -69,7 +69,7 @@ namespace Commons
 
     protected:
       virtual ~SqlStream() noexcept {};
-      
+
     private:
       void next_field_() noexcept;
 
@@ -77,7 +77,7 @@ namespace Commons
       std::ostringstream stream_;
       size_t pos_;
     };
-    
+
     typedef ReferenceCounting::SmartPtr<SqlStream> SqlStream_var;
   }
 }

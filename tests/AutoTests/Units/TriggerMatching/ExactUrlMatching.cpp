@@ -1,6 +1,6 @@
 
 #include "ExactUrlMatching.hpp"
- 
+
 REFLECT_UNIT(ExactUrlMatching) (
   "TriggerMatching",
   AUTO_TEST_FAST
@@ -32,8 +32,8 @@ namespace {
   };
 }
 
- 
-bool 
+
+bool
 ExactUrlMatching::run_test()
 {
   AdClient client(AdClient::create_user(this));
@@ -53,7 +53,7 @@ ExactUrlMatching::run_test()
         client.debug_info.trigger_channels,
         REQUESTS[i]).check(),
       "Check trigger_channels#" +  strof(i+1));
-    
+
   }
   return true;
 }

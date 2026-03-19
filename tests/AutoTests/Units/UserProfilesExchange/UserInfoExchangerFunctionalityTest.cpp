@@ -49,7 +49,7 @@ UserInfoExchangerFunctionalityTest::CheckRequest::CheckRequest(
   }
 }
 
-bool 
+bool
 UserInfoExchangerFunctionalityTest::run_test()
 {
   s_channel       = fetch_string("CH/S");
@@ -101,16 +101,16 @@ UserInfoExchangerFunctionalityTest::run_test()
       minor_frontend_prefix.c_str(),
       colo2_id.c_str(),
       "CH/Marker1");
-  
+
   verification();
 
   part5_return_to_colo1(client);
-  
+
   return true;
 }
 
 
-//  1. Create user on Colo#1 
+//  1. Create user on Colo#1
 //  2. 1st S|HT request -> colo#1
 //  3. 2nd S|HT request -> colo#2
 //  4. Wait exchanging
@@ -128,7 +128,7 @@ UserInfoExchangerFunctionalityTest::part1()
   };
 
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.referer_kw = s_keyword + "," + ht_keyword;
 
@@ -161,7 +161,7 @@ UserInfoExchangerFunctionalityTest::part1()
       client.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-  
+
   requests.push_back(CheckRequest(client,
                                   request.url().c_str(),
                                   colo2_id.c_str(),
@@ -171,7 +171,7 @@ UserInfoExchangerFunctionalityTest::part1()
 
 }
 
-//  1. Create user on Colo#1 
+//  1. Create user on Colo#1
 //  2. 1st S|HT request -> colo#1
 //  3. 2nd S|HT request -> colo#2
 //  3. 3d S|HT request -> colo#2
@@ -181,7 +181,7 @@ void
 UserInfoExchangerFunctionalityTest::part2()
 {
   add_descr_phrase("Part#2. Requests");
-  
+
   std::string expected[] = { s_bp, ht_bp };
   const char* h_expected[] =
   {
@@ -191,7 +191,7 @@ UserInfoExchangerFunctionalityTest::part2()
 
 
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.referer_kw = s_keyword + "," + ht_keyword;
 
@@ -209,7 +209,7 @@ UserInfoExchangerFunctionalityTest::part2()
       client.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-    
+
   client.change_base_url(minor_frontend_prefix.c_str());
   client.process_request(request, "Part#2. 2nd Colo#2 request");
 
@@ -225,9 +225,9 @@ UserInfoExchangerFunctionalityTest::part2()
       client.debug_info.trigger_channels,
       AutoTest::SCE_ENTRY).check(),
     "trigger_channels");
-                                
+
   client.process_request(request, "Part#2. 3d Colo#2 request");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       colo2_id,
@@ -247,10 +247,10 @@ UserInfoExchangerFunctionalityTest::part2()
                                   h_expected,
                                   countof(h_expected),
                                   "Part#2. Verification"));
-  
+
 }
 
-//  1. Create user on Colo#1 
+//  1. Create user on Colo#1
 //  2. 1st H request -> colo#1
 //  3. 2nd H request -> colo#2
 //  4. 3d  H request -> colo#2
@@ -263,7 +263,7 @@ UserInfoExchangerFunctionalityTest::part3()
 
   NSLookupRequest request;
   request.referer_kw  = h_keyword;
-  
+
   AdClient client(AdClient::create_user(this));
 
   client.process_request(request, "Part#3. 1st Colo#1 request");
@@ -272,13 +272,13 @@ UserInfoExchangerFunctionalityTest::part3()
       colo1_id,
       client.debug_info.colo_id).check(),
     "must receive Colo#1");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       h_bp,
       client.debug_info.trigger_channels).check(),
     "trigger_channels");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       h_channel,
@@ -287,34 +287,34 @@ UserInfoExchangerFunctionalityTest::part3()
     "Colo#1. history channel");
 
   client.change_base_url(minor_frontend_prefix.c_str());
-    
+
   client.process_request(request, "Part#3. 2nd Colo#2 request");
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       colo2_id,
       client.debug_info.colo_id).check(),
     "must receive Colo#2");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       h_bp,
       client.debug_info.trigger_channels).check(),
     "trigger_channels");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       h_channel,
       client.debug_info.history_channels,
-      AutoTest::SCE_NOT_ENTRY).check(), 
+      AutoTest::SCE_NOT_ENTRY).check(),
     "Colo#2. history channel");
-                              
+
   client.process_request(request, "Part3. 3d request Colo#2");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       h_channel,
       client.debug_info.history_channels,
-      AutoTest::SCE_NOT_ENTRY).check(), 
+      AutoTest::SCE_NOT_ENTRY).check(),
     "Colo#2. history channel");
 
 
@@ -327,7 +327,7 @@ UserInfoExchangerFunctionalityTest::part3()
                                   "Part#3. Verification"));
 }
 
-//  1. Create user on Colo#1 
+//  1. Create user on Colo#1
 //  2. 1st H request -> colo#1
 //  3. 1st S request -> colo#1
 //  4. 2nd H request -> colo#1
@@ -347,9 +347,9 @@ UserInfoExchangerFunctionalityTest::part4()
 
   NSLookupRequest h_validating_request;
   h_validating_request.referer_kw  = h_keyword;
-    
+
   AdClient client(AdClient::create_user(this));
- 
+
   std::string not_channels[] = {
     s_channel, h_channel, ht_channel
   };
@@ -368,10 +368,10 @@ UserInfoExchangerFunctionalityTest::part4()
       client.debug_info.history_channels,
       AutoTest::SCE_NOT_ENTRY).check(),
     "mustn't have history channels");
-  
+
   // 1st S request (Colo#1)
   client.process_request(s_validating_request,"Part#4. 1st Colo#1 S request");
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       colo1_id,
@@ -399,7 +399,7 @@ UserInfoExchangerFunctionalityTest::part4()
       client.debug_info.history_channels,
       AutoTest::SCE_NOT_ENTRY).check(),
     "mustn't have history channels");
-  
+
   // 2nd S & 3d H request (Colo#2) - request for matching
   NSLookupRequest request;
   request.referer_kw = s_keyword + "," + h_keyword;
@@ -417,7 +417,7 @@ UserInfoExchangerFunctionalityTest::part4()
       client.debug_info.history_channels,
       AutoTest::SCE_NOT_ENTRY).check(),
     "mustn't have history channels");
-  
+
   // Verification requests
   requests.push_back(CheckRequest(client,
                                   s_validating_request.url().c_str(),
@@ -452,7 +452,7 @@ UserInfoExchangerFunctionalityTest::part4()
 }
 
 //  Part5. First Colo#1 requests
-//  1. Create user on Colo#1 
+//  1. Create user on Colo#1
 //  2. 1st HT, H request -> colo#1
 void
 UserInfoExchangerFunctionalityTest::part5_colo1(AdClient& client)
@@ -483,7 +483,7 @@ UserInfoExchangerFunctionalityTest::part5_colo1(AdClient& client)
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         fetch_string("CH/Marker1"),
-        client.debug_info.history_channels).check(), 
+        client.debug_info.history_channels).check(),
       "Colo#1. marker channel");
 }
 
@@ -494,7 +494,7 @@ UserInfoExchangerFunctionalityTest::part5_colo2(AdClient& client)
 {
   add_descr_phrase("Part#5. Colo#2 requests");
   std::string expected[] = { ht_bp, h_bp, fetch_string("BP/Marker2") };
-  
+
   client.change_base_url(minor_frontend_prefix.c_str());
   NSLookupRequest request;
   request.referer_kw =
@@ -502,7 +502,7 @@ UserInfoExchangerFunctionalityTest::part5_colo2(AdClient& client)
 
   client.process_request(request,
      "Part#5. 2nd Colo#2 request to HT, H (also match Marker2)");
-    
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       colo2_id,
@@ -525,12 +525,12 @@ UserInfoExchangerFunctionalityTest::part5_return_to_colo1(AdClient& client)
   add_descr_phrase("Part#5. Return to Colo#1 & verification");
 
   std::string expected[] = { ht_channel, h_channel };
-  
+
   client.change_base_url(major_frontend_prefix.c_str());
   NSLookupRequest request;
   request.referer_kw =
       ht_keyword + "," + h_keyword;
-  request.debug_time =  AutoTest::Time() + 25*60*60;  
+  request.debug_time =  AutoTest::Time() + 25*60*60;
   client.process_request(request, "Part#5. 3d Colo#1 request to HT, H");
 
   request.referer_kw.clear();
@@ -543,7 +543,7 @@ UserInfoExchangerFunctionalityTest::part5_return_to_colo1(AdClient& client)
       colo_req_timeout,
       request).check(),
     "Check marker channel in adjacent colo history");
-  
+
   request.debug_time =  AutoTest::Time() + 49*60*60;
   client.process_request(request, "Part#5. Verification");
 
@@ -553,7 +553,7 @@ UserInfoExchangerFunctionalityTest::part5_return_to_colo1(AdClient& client)
       client.debug_info.history_channels,
       AutoTest::SCE_ENTRY).check(),
     "Colo#1. history channel");
-  
+
 }
 
 // Wait exchanger merging cicle
@@ -565,7 +565,7 @@ UserInfoExchangerFunctionalityTest::merging_profiles_wait(
   const char* marker_channel_name)
 {
   add_descr_phrase("Waiting marker channel");
-  
+
   client.change_base_url(frontend_dst);
   try
   {
@@ -581,15 +581,15 @@ UserInfoExchangerFunctionalityTest::merging_profiles_wait(
   catch (...)
   {
     AutoTest::AdminsArray<AutoTest::UserInfoAdminLog> admin;
-    
+
     admin.initialize(
       this, CTE_ALL,
       STE_USER_INFO_MANAGER_CONTROLLER,
       client.debug_info.uid.value().c_str(),
       AutoTest::UserInfoManagerController);
-    
+
     admin.log(AutoTest::Logger::thlog());
-    
+
     throw;
   }
 
@@ -612,11 +612,11 @@ UserInfoExchangerFunctionalityTest::verification()
           it->expected_colo,
           it->client.debug_info.colo_id).check(),
         "must have expected colo");
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           it->expected_history_channels,
-          it->client.debug_info.history_channels, 
+          it->client.debug_info.history_channels,
           it->exists? AutoTest::SCE_ENTRY: AutoTest::SCE_NOT_ENTRY).check(),
         "history channel");
     }
@@ -631,10 +631,10 @@ UserInfoExchangerFunctionalityTest::verification()
         AutoTest::UserInfoManagerController);
 
       admin.log(AutoTest::Logger::thlog());
-      
+
       throw;
     }
-        
+
   }
 }
 

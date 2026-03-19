@@ -14,7 +14,7 @@
 namespace Declaration
 {
   void type_traits(std::ostream& out, Declaration::BaseType* type)
-    noexcept;  
+    noexcept;
 }
 
 namespace Declaration
@@ -35,7 +35,7 @@ namespace Declaration
         type_descriptor->as_struct();
       Declaration::CompleteTemplateDescriptor_var complete_template_descriptor =
         type_descriptor->as_complete_template();
-      
+
       out << " descriptor";
       if(simple_descriptor.in() || struct_descriptor.in() ||
          complete_template_descriptor.in())
@@ -55,7 +55,7 @@ namespace Declaration
         type_reader->as_simple_reader();
       Declaration::StructReader_var struct_reader =
         type_reader->as_struct_reader();
-      
+
       out << " reader";
       if(simple_reader.in() || struct_reader.in())
       {
@@ -63,7 +63,7 @@ namespace Declaration
           (struct_reader.in() ? "struct " : "") << ")";
       }
     }
-    
+
     Declaration::BaseWriter_var type_writer =
       type->as_writer();
 
@@ -80,7 +80,7 @@ namespace Declaration
         out << "( " << (simple_writer.in() ? "simple " : "") <<
           (struct_writer.in() ? "struct " : "") << ")";
       }
-    }    
+    }
   }
 }
 

@@ -10,7 +10,7 @@ namespace ORM = ::AutoTest::ORM;
 /**
  * @class ChannelsGrannularUpdateTest
  * @brief tests dynamic channels loading
- */ 
+ */
 class ChannelsGrannularUpdateTest
   :public BaseDBUnit
 {
@@ -31,7 +31,7 @@ public:
   { }
 
 private:
-  
+
   /// Page channel
   ORM::PageChannel chp;
 
@@ -47,7 +47,7 @@ private:
 
   // ChannelTrigger
   std::list<ORM::PQ::Channeltrigger> channeltriggers;
-  
+
   void
   create_trigger(
     ORM::BehavioralChannel* channel,
@@ -58,12 +58,12 @@ private:
   void expression_channel();
   void delete_channel_expression();
   void channel_rate_change();
-  
+
   void set_up();
   bool run();
   void tear_down();
-  
-  
+
+
 };
- 
+
 #endif

@@ -1,29 +1,29 @@
 
 #ifndef _AUTOTEST__CHANNELINVENTORYESTIMMERGEUSERS_
 #define _AUTOTEST__CHANNELINVENTORYESTIMMERGEUSERS_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = AutoTest::ORM;
- 
+
 class ChannelInventoryEstimMergeUsers: public BaseUnit
 {
   typedef AutoTest::DBC::Conn DBConnection;
-  typedef AutoTest::TemporaryAdClient TemporaryAdClient;    
+  typedef AutoTest::TemporaryAdClient TemporaryAdClient;
 public:
   ChannelInventoryEstimMergeUsers(
-      UnitStat& stat_var, 
-      const char* task_name, 
+      UnitStat& stat_var,
+      const char* task_name,
       XsdParams params_var):
     BaseUnit(stat_var, task_name, params_var),
     conn(open_pq())
   {};
- 
+
   virtual ~ChannelInventoryEstimMergeUsers() noexcept
   {};
- 
+
 private:
- 
+
   virtual bool run_test();
 
   // Test cases
@@ -76,7 +76,7 @@ private:
   void exceed_match_level_on_merging();
 
   Generics::Time base_time;
-  
+
   DBConnection conn;
 };
 

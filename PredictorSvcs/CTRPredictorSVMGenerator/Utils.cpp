@@ -28,10 +28,10 @@ namespace AdServer
     {
 
       static const char* FUN = "remove_files";
-      
+
       try
       {
-        
+
         FileList file_list;
         Generics::DirSelect::directory_selector(
           path,
@@ -44,7 +44,7 @@ namespace AdServer
              it != file_list.end(); ++it)
         {
           struct stat fs;
-          
+
           if(::stat(it->c_str(), &fs) < 0)
           {
             Stream::Error ostr;
@@ -57,7 +57,7 @@ namespace AdServer
           {
             Generics::Time mod_time(fs.st_mtime);
             //Generics::Time now = Generics::Time::get_time_of_day();
-            
+
             if(logger->log_level() >= Logging::Logger::TRACE)
             {
               Stream::Error ostr;
@@ -88,7 +88,7 @@ namespace AdServer
       Logging::Logger* logger) noexcept
     {
       static const char* FUN = "remove_obsolete_files";
-      
+
       try
       {
         FileList file_list;
@@ -98,12 +98,12 @@ namespace AdServer
           mask,
           Generics::DirSelect::DSF_DONT_RESOLVE_LINKS |
           Generics::DirSelect::DSF_EXCEPTION_ON_OPEN);
-        
+
         for (FileList::const_iterator it = file_list.begin();
              it != file_list.end(); ++it)
         {
           struct stat fs;
-          
+
           if(::stat(it->c_str(), &fs) < 0)
           {
             Stream::Error ostr;
@@ -116,7 +116,7 @@ namespace AdServer
           {
             Generics::Time mod_time(fs.st_mtime);
             Generics::Time now = Generics::Time::get_time_of_day();
-            
+
             if (now - mod_time >= keep_interval)
             {
               Stream::Error ostr;
@@ -126,11 +126,11 @@ namespace AdServer
                 "' more than " <<
                 keep_interval.tv_sec / Generics::Time::ONE_DAY.tv_sec <<
                 " days";
-              
+
               logger->log(ostr.str(),
                 Logging::Logger::INFO,
                 ASPECT);
-              
+
               unlink(it->c_str());
             }
           }
@@ -149,4 +149,4 @@ namespace AdServer
 
   }
 }
-    
+

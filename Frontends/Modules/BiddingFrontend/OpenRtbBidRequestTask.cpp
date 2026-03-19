@@ -227,7 +227,7 @@ namespace Bidding
       return os;
     }
 
-    void 
+    void
     print_int_category_seq(
       AdServer::Commons::JsonObject& parent,
       const String::SubString& seq_name,
@@ -375,7 +375,7 @@ namespace Bidding
         ostr.str(),
         Logging::Logger::ERROR,
         Aspect::BIDDING_FRONTEND,
-        "ADS-IMPL-7601");        
+        "ADS-IMPL-7601");
     }
 
     return false;
@@ -601,7 +601,7 @@ namespace Bidding
     if(ad_slot_result.contracts.length() > 0)
     {
       const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& initial_contract = ad_slot_result.contracts[0];
-      
+
       // contractor
       {
         AdServer::Commons::JsonObject contractor_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CONTRACTOR));
@@ -615,7 +615,7 @@ namespace Bidding
           Response::OpenRtb::BuzSapeNroa::CONTRACTOR_LEGALFORM,
           String::SubString(initial_contract.contract_info.contractor_legal_form));
       }
-      
+
       // client
       {
         AdServer::Commons::JsonObject client_obj(nroa_obj.add_object(Response::OpenRtb::BuzSapeNroa::CLIENT));
@@ -853,7 +853,7 @@ namespace Bidding
                       request_info.native_ads_instantiate_type
                       );
                   }
-                  
+
                   escaped_creative_body = String::StringManip::json_escape(
                     String::SubString(native_response_ostr.str()));
 
@@ -1069,7 +1069,7 @@ namespace Bidding
                   else // SourceTraits::ERIDRT_SINGLE
                   {
                     nroa_obj.add_escaped_string_if_non_empty(
-                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));                      
+                      Response::OpenRtb::NROA_ERID, String::SubString(ad_slot_result.erid));
                   }
                 } // fill_nroa
               }
@@ -1340,7 +1340,7 @@ namespace Bidding
               bid_object.add_escaped_string(escaped_name,
                 String::SubString(ad_slot_result.tokens[token_i].value));
             }
-            //} // 
+            //} //
           } // if(ad_slot_result.selected_creatives.length() > 0)
         } // for(CORBA::ULong ad_slot_i = 0, ...
       } // close bidset oject and array

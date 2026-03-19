@@ -21,8 +21,8 @@ namespace
     RS_FT = 16,      // Use ft (full text mode)
     RS_CHECK_TRIGGERS = 32 // Check Debug-Info triggers fiels
   };
-  
-  
+
+
   struct TestCase
   {
     std::string description;
@@ -139,7 +139,7 @@ namespace
     {
       "Exact triggers#1.",
       "KWD/20",
-      "BPSearch/4,BPSearch/9", 0, RS_SEARCH 
+      "BPSearch/4,BPSearch/9", 0, RS_SEARCH
     },
     {
       "Exact triggers#2.",
@@ -180,7 +180,7 @@ LemmatisationTest::run_test()
     request.loc_name.clear();
 
     unsigned long special_effects = 0;
-    
+
     if (TEST_CASES[i].flags & RS_NO_ADV)
     {
       special_effects |= SpecialEffectsChecker::SE_NO_ADV;
@@ -222,7 +222,7 @@ LemmatisationTest::run_test()
       got_history_channels.assign(
           client.debug_info.history_channels.begin(),
           client.debug_info.history_channels.end());
-      
+
 
       FAIL_CONTEXT(
         ChannelsCheck(
@@ -231,7 +231,7 @@ LemmatisationTest::run_test()
           got_channels).check(),
         TEST_CASES[i].description +
           " Expected channels check");
-      
+
       FAIL_CONTEXT(
         ChannelsCheck(
           this,
@@ -242,7 +242,7 @@ LemmatisationTest::run_test()
         TEST_CASES[i].description +
           " Unexpected channels check");
     }
-  }  
+  }
   return true;
 }
 

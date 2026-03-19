@@ -1,6 +1,6 @@
 
 #include "ChannelInventoryEstimLevelDown.hpp"
- 
+
 REFLECT_UNIT(ChannelInventoryEstimLevelDown) (
   "Statistics",
   AUTO_TEST_SLOW
@@ -12,9 +12,9 @@ namespace {
   typedef AutoTest::DBC::Conn DBConnection;
   typedef ORM::ChannelInventoryEstimStats::Diffs Diffs;
 }
-  
- 
-bool 
+
+
+bool
 ChannelInventoryEstimLevelDown::run_test()
 {
   DBConnection conn(open_pq());
@@ -33,7 +33,7 @@ ChannelInventoryEstimLevelDown::run_test()
   request.debug_time = base_time;
 
   {
-   
+
     add_descr_phrase("After 1 hour and 1 munute");
     ORM::ChannelInventoryEstimStats stats;
 
@@ -99,11 +99,11 @@ ChannelInventoryEstimLevelDown::run_test()
       fetch_string("AdvBPPS1"),
       fetch_string("AdvBPPS2")
     };
-    
+
     request.referer_kw = fetch_string("KWS1") + "," +
         fetch_string("KWS2");
     request.debug_time = base_time + 62*60;
-    
+
     user.process_request(request);
 
     FAIL_CONTEXT(
@@ -118,7 +118,7 @@ ChannelInventoryEstimLevelDown::run_test()
       Diffs(0),
       Diffs(1)
     };
-    
+
     FAIL_CONTEXT(
       AutoTest::wait_checker(
         AutoTest::stats_diff_checker(
@@ -150,7 +150,7 @@ ChannelInventoryEstimLevelDown::run_test()
 
     request.referer_kw = fetch_string("KWS1");
     request.debug_time = base_time + 2*60*60 + 5*60;
-    
+
     user.process_request(request);
 
     FAIL_CONTEXT(

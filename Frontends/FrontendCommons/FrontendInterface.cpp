@@ -15,24 +15,24 @@ namespace FrontendCommons
   }
 
   // FrontendInterface::Configuration
-    
+
   FrontendInterface::Configuration::Configuration(
     const char* config_path) :
     config_path_(config_path)
   { }
-  
+
   void
   FrontendInterface::Configuration::read()
     /*throw(InvalidConfiguration)*/
   {
     Config::ErrorHandler error_handler;
-    
+
     try
     {
       config_ =
         xsd::AdServer::Configuration::FeConfiguration(
           config_path_.c_str(), error_handler);
-    
+
       if(error_handler.has_errors())
       {
         std::string error_string;

@@ -1,8 +1,8 @@
 #ifndef _AUTOTEST__GEODATAMERGINGTEST_
 #define _AUTOTEST__GEODATAMERGINGTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class GeoDataMergingTest : public BaseUnit
 {

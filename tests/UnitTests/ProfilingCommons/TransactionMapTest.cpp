@@ -226,7 +226,7 @@ main(int /*argc*/, char** /*argv*/) noexcept
   typedef AdServer::Commons::LockMap<Generics::StringHashAdapter> StringLockMap;
   StringLockMap lm;
   StringLockMap::WriteGuard lock = lm.write_lock("test");
-  
+
   try
   {
     std::cout << "TransactionMap multithreading test started.." << std::endl;

@@ -39,7 +39,7 @@ namespace ChannelSvcs
       }
       out << *it;
     }
-    out << '.' << std::endl; 
+    out << '.' << std::endl;
   }
 
   enum ParseMode

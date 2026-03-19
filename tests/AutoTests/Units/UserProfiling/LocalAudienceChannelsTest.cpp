@@ -18,7 +18,7 @@ namespace
 
 void LocalAudienceChannelsTest::persistent_uid_matching_setup_()
 {
-  
+
 }
 
 void LocalAudienceChannelsTest::persistent_uid_matching_()

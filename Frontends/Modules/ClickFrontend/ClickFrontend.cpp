@@ -691,9 +691,9 @@ namespace AdServer
         logger()->sstream(Logging::Logger::CRITICAL, Aspect::CLICK_FRONTEND) <<
           FUN << ": click_info: " <<
           "colo_id: " << click_info.colo_id <<
-          ", tag_id: " << click_info.tag_id << 
+          ", tag_id: " << click_info.tag_id <<
           ", tag_size_id: " << click_info.tag_size_id <<
-          ", ccid: " << click_info.ccid << 
+          ", ccid: " << click_info.ccid <<
           ", creative_id: " << click_info.creative_id <<
           ", ccg_keyword_id: " << click_info.ccg_keyword_id <<
           ", user_id_hash_mod.defined: " << click_info.user_id_hash_mod.defined <<

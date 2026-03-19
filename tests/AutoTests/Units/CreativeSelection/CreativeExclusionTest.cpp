@@ -30,14 +30,14 @@ namespace
     // Stage#3
     {"1-ne1",
      "Starting part 3: 'R' in SiteCampaignApproval "
-     "and ExclusionFlag is not set in AccountType",       
+     "and ExclusionFlag is not set in AccountType",
      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     },
 
     // Stage#4
     {"1-ne2",
      "Starting part 4: 'A' in SiteCampaignApproval "
-     "and ExclusionFlag is not set in AccountType",       
+     "and ExclusionFlag is not set in AccountType",
      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     },
 
@@ -51,7 +51,7 @@ namespace
     // Stage#6
     {"1-wse2",
      "Starting part 6: WalledGarden flag is set, 'A' "
-     "in SiteCampaignApproval and ExclusionFlag is set in AccountType",       
+     "in SiteCampaignApproval and ExclusionFlag is set in AccountType",
     {1, 1, 1, 0, 1, 1, 0, 1, 0, 0}
     },
 
@@ -171,7 +171,7 @@ namespace
 }
 
 
-void 
+void
 CreativeExclusionTest::exclusion(const TestCaseType* test_cases,
                                  const unsigned short& cases_count,
                                  const unsigned short tags_count)
@@ -181,11 +181,11 @@ CreativeExclusionTest::exclusion(const TestCaseType* test_cases,
     add_descr_phrase(test_cases[testcase_id].description);
 
     std::string prefix(test_cases[testcase_id].name_prefix);
-  
+
     request.referer_kw = fetch_string("kwd/" + prefix);
 
     for (size_t ind = 0; ind < tags_count; ++ind)
-    { 
+    {
 
       AutoTest::AdClient client(AutoTest::AdClient::create_user(this));
 
@@ -205,7 +205,7 @@ CreativeExclusionTest::exclusion(const TestCaseType* test_cases,
         test_cases[testcase_id].description +
           ". Unexpected ccid#" + strof(ind));
     }
-  }  
+  }
 }
 
 void
@@ -327,7 +327,7 @@ exclusion_text_by_domain_match_within_creative_token_()
 
     client.process_request(request);
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::equal_checker(
         fetch_string("TEST-5-8/EXP_CCID-" + strof(i)),
@@ -344,7 +344,7 @@ exclusion_by_ccg_keyword_click_url_()
   std::string description =
     "AdServer Ad Categories Test Plan "
     "(Test 5.9 Exclusion by CCG Keyword Click URL)";
-  
+
   add_descr_phrase(description);
 
   size_t cases_count = fetch_int("TEST-5-9/TCcount");

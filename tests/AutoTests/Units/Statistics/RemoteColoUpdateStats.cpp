@@ -13,7 +13,7 @@ namespace
     typedef AutoTest::ORM::PQ::Colostats ColoStats;
     typedef AutoTest::ORM::ORMDate Date;
     typedef AutoTest::ORM::ORMString String;
-    
+
   public:
     ColoStatsChecker(
       AutoTest::DBC::IConn& conn,
@@ -25,7 +25,7 @@ namespace
       date_(date),
       version_(version)
     { }
-    
+
     virtual ~ColoStatsChecker() noexcept
     { }
 
@@ -44,7 +44,7 @@ namespace
       {
         return true;
       }
-      
+
       if (throw_error)
       {
         Stream::Error error;
@@ -90,7 +90,7 @@ RemoteColoUpdateStats::run_test()
     "Remote configuration required");
 
   AutoTest::Time debug_time;
-  
+
   for (int i = 0; i < 2; ++i)
   {
     client.process_request(
@@ -104,7 +104,7 @@ RemoteColoUpdateStats::run_test()
         "CHANNEL",
         client.debug_info.history_channels).check(),
       "Expected history_channels");
-    
+
     FAIL_CONTEXT(
       CreativeChecker(
         client,
@@ -137,7 +137,7 @@ RemoteColoUpdateStats::run_test()
           fetch_string("VERSION"))).check(),
       " Colo#" + strof(i+1));
   }
-      
+
   return true;
 }
 

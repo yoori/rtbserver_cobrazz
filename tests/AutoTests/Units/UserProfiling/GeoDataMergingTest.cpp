@@ -30,7 +30,7 @@ GeoDataMergingTest::run_test()
   AUTOTEST_CASE(
     same_geodata_(),
     "Merging two non-emty profiles with the same geo_data");
-  
+
   return true;
 }
 
@@ -43,13 +43,13 @@ GeoDataMergingTest::empty_muid_()
     NSLookupRequest().loc_coord(fetch_string("Location/L1")));
   client2.process_request(
     NSLookupRequest().muid(client1.get_uid()));
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
       "Address/L1",
       client2.debug_info.geo_channels).check(),
-    "Geo channels check");  
+    "Geo channels check");
 }
 
 void GeoDataMergingTest::empty_profile_()
@@ -60,13 +60,13 @@ void GeoDataMergingTest::empty_profile_()
     NSLookupRequest().loc_coord(fetch_string("Location/L2")));
   client2.process_request(
     NSLookupRequest().muid(client1.get_uid()));
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
       "Address/L2",
       client2.debug_info.geo_channels).check(),
-    "Geo channels check");  
+    "Geo channels check");
 }
 
 void GeoDataMergingTest::merge_with_cleanup_()
@@ -88,7 +88,7 @@ void GeoDataMergingTest::merge_with_cleanup_()
   for (int i = 1; i <= 50; i++)
   {
     exp_channels_1+="Address/" + strof(i) + (i == 50? "": ",");
-    
+
     client1.process_request(
       NSLookupRequest().
         loc_coord(fetch_string("Location/" + strof(i))).
@@ -129,14 +129,14 @@ void GeoDataMergingTest::merge_with_cleanup_()
       "Address/L3,Address/L4",
       client2.debug_info.geo_channels,
       AutoTest::SCE_NOT_ENTRY).check(),
-    "Geo channels check#2");  
+    "Geo channels check#2");
 }
 
 void GeoDataMergingTest::same_geodata_()
 {
   AdClient client1(AdClient::create_user(this));
   AdClient client2(AdClient::create_user(this));
- 
+
   AutoTest::Time time(
       (AutoTest::Time().get_gm_time().format("%d-%m-%Y") +
         ":" + "00-00-01").c_str());
@@ -156,7 +156,7 @@ void GeoDataMergingTest::same_geodata_()
   for (int i = 1; i <= 98; i++)
   {
     exp_channels+=",Address/" + strof(i);
-    
+
     client1.process_request(
       NSLookupRequest().
         loc_coord(fetch_string("Location/" + strof(i))).

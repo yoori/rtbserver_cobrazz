@@ -47,7 +47,7 @@ namespace AutoTest
 
     /**
      * @brief Force 'statprocessing.proceed' job
-     * 
+     *
      * Util is usefull in tests, which wait
      * CTR or eCPM changing.
      */
@@ -78,7 +78,7 @@ namespace AutoTest
     update_channel_display_status(
       StatsDB::IConn& conn,
       int channel_id);
-    
+
     /**
      * @brief Update account status
      *
@@ -114,7 +114,7 @@ namespace AutoTest
      *
      * @param date to truncate
      * @return truncated date
-     */    
+     */
     Generics::ExtendedTime
     trunc_hourly(const Generics::ExtendedTime& date);
 
@@ -164,11 +164,11 @@ namespace AutoTest
       stats_diff_type (unsigned int v, double  precisely = min_stats_diff)
         :precisely_number(static_cast<double>(v), precisely)
       {}
-      
+
       stats_diff_type (const char* v, double  precisely = min_stats_diff)
         :precisely_number(v, precisely)
       {}
-      
+
       stats_diff_type (const std::string v, double precisely = min_stats_diff)
         :precisely_number(v, precisely)
       {}
@@ -250,7 +250,7 @@ namespace AutoTest
     }
 
     /**
-     * @brief check difference: initial + diff == real, 
+     * @brief check difference: initial + diff == real,
      */
     inline
     int check_difference(const stats_value_type& real,
@@ -265,8 +265,8 @@ namespace AutoTest
     }
 
     /**
-     * @brief check difference: initial[i] + diff == real[i], 
-     * 
+     * @brief check difference: initial[i] + diff == real[i],
+     *
      * within iterators access
      */
     template<typename Iterator1, typename Iterator2>
@@ -277,7 +277,7 @@ namespace AutoTest
       const stats_diff_type& diff)
     {
       int count = 0;
-      for(; (real_begin != real_end) 
+      for(; (real_begin != real_end)
             && (initial_begin != initial_end);
           ++real_begin, ++initial_begin, ++count)
         if (-1 != check_difference(*real_begin, *initial_begin, diff))
@@ -286,8 +286,8 @@ namespace AutoTest
     }
 
     /**
-     * @brief check difference: initial[i] + diff[i] == real[i], 
-     * 
+     * @brief check difference: initial[i] + diff[i] == real[i],
+     *
      * within iterators access
      */
     template<typename Iterator1, typename Iterator2, typename DiffIterator>
@@ -312,7 +312,7 @@ namespace AutoTest
 
     /**
      * @brief check difference
-     * 
+     *
      * within template objects
      */
     template<typename Object1, typename Object2>
@@ -327,9 +327,9 @@ namespace AutoTest
 
     /**
      * @brief check difference
-     * 
+     *
      * within template objects
-     */    
+     */
     template<typename Object1, typename Object2>
     int check_difference(const Object1& real,
       const Object2& initial,
@@ -339,10 +339,10 @@ namespace AutoTest
         beginof(initial), endof(initial),
         diff);
     }
-    
+
     /**
      * @brief check difference
-     * 
+     *
      * within template objects
      */
     template<typename Object1, typename Object2, typename Diffs>
@@ -356,8 +356,8 @@ namespace AutoTest
     }
 
     /**
-     * @brief check each difference: initial[i] + diff == real[i], 
-     * 
+     * @brief check each difference: initial[i] + diff == real[i],
+     *
      * within iterators access
      */
     template<typename Iterator1, typename Iterator2, typename Diffs>
@@ -380,10 +380,10 @@ namespace AutoTest
       }
       return -1;
     }
-    
+
     /**
      * @brief check each difference
-     * 
+     *
      * within template objects
      */
     template<typename Object1, typename Object2, typename Diffs>
@@ -505,7 +505,7 @@ namespace AutoTest
         memset(values, 0, sizeof(values));
       }
       BasicStats& operator= (const BasicStats& from)
-      { 
+      {
         memmove(values, from.values, sizeof(values));
         description_ = from.description_;
         return *this;
@@ -514,7 +514,7 @@ namespace AutoTest
         Selectable(),
         OneRowObject(),
         description_(from.description_)
-      { 
+      {
         memmove(values, from.values, sizeof(values));
       }
       void get (StatsDB::Result& result)
@@ -584,7 +584,7 @@ namespace AutoTest
       }
 
       template<typename Diff>
-      void print_diff  (std::ostream& out, 
+      void print_diff  (std::ostream& out,
                         const Diff& diff,
                         const BasicStats<T, Count>& real) const
       {
@@ -602,7 +602,7 @@ namespace AutoTest
         }
       }
       template<typename Diff>
-      void print_diff  (std::ostream& out, 
+      void print_diff  (std::ostream& out,
                         const Diff (&diff)[Count],
                         const BasicStats<T, Count>& real) const
       {

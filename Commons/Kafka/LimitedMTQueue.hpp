@@ -26,8 +26,8 @@ namespace AdServer
     class LimitedMTQueue
     {
     public:
-      DECLARE_EXCEPTION(AlreadyClosed, eh::DescriptiveException);      
-   
+      DECLARE_EXCEPTION(AlreadyClosed, eh::DescriptiveException);
+
     public:
       /**
        * @brief Constructor
@@ -36,7 +36,7 @@ namespace AdServer
        */
       explicit
       LimitedMTQueue(size_t max_size = 0);
-      
+
       /**
        * @brief Destructor
        */
@@ -52,7 +52,7 @@ namespace AdServer
       template <class... Args>
       bool
       try_emplace(Args&&... args);
-     
+
       /**
        * @brief Try push new element
        *
@@ -80,8 +80,8 @@ namespace AdServer
        * @param element
        */
       void
-      push(const T& val); 
-      
+      push(const T& val);
+
       /**
        * @brief Get an element from the top of the queue
        *
@@ -120,7 +120,7 @@ namespace AdServer
        */
       bool
       pop(T& val, const Generics::Time& timeout);
-      
+
       /**
        * @brief Get queue size
        *
@@ -145,7 +145,7 @@ namespace AdServer
 
     protected:
       typedef Sync::Policy::PosixThread SyncPolicy;
-      
+
     private:
       /**
        * @brief Check queue is inactive

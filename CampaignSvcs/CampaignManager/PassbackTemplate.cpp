@@ -96,7 +96,7 @@ namespace AdServer
         PassbackTemplate::InvalidTemplate)*/
     {
       TemplateHolder_var holder;
-      
+
       {
         SyncPolicy::WriteGuard lock(templates_lock_);
         KeyMap::iterator it = templates_.find(key);

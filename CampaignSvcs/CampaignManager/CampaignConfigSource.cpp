@@ -1060,7 +1060,7 @@ namespace CampaignSvcs
             {
               norm_name = ch_it->second->params().descriptive_params->name;
             }
-            
+
             new_config.platform_channel_priorities.insert(
               std::make_pair(
                 *cch_it,
@@ -2588,7 +2588,7 @@ namespace CampaignSvcs
         {
           default_tag_pricing_found = true;
         }
-        
+
         p_tag->tag_pricings.insert(
           std::make_pair(
             Tag::TagPricingKey(
@@ -2597,7 +2597,7 @@ namespace CampaignSvcs
               static_cast<CCGRateType>(tag_pricing_ref.ccg_rate_type)),
             tag_pricing));
       }
-      
+
       if(!p_tag->tag_pricings.empty() && !default_tag_pricing_found)
       {
         p_tag->tag_pricings.insert(
@@ -3199,7 +3199,7 @@ namespace CampaignSvcs
                     Aspect::CAMPAIGN_CONFIG_SOURCE, "ADS-?");
                 }
                 */
-                
+
                 try
                 {
                   TokenValueMap result_args;
@@ -3387,7 +3387,7 @@ namespace CampaignSvcs
   {
     // generic
     system_tokens[CreativeTokens::RANDOM] = "1";
-    
+
     // advertiser
     system_tokens[CreativeTokens::ADVERTISER_ID] = "0";
     system_tokens[CreativeTokens::CID] = "0";

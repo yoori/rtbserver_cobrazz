@@ -22,7 +22,7 @@ namespace RequestInfoSvcs {
     "request.",
     "tagRequest.",
   };
-  
+
   const LogStatValues::Key StatNames::WEB_INDEX_REQUESTS("webIndexRequestCounter");
 
 } // namespace RequestInfoSvcs

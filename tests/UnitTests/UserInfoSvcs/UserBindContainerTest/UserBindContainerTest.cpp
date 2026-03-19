@@ -718,7 +718,7 @@ int main() noexcept
 {
   const unsigned long ITERATIONS = 10000000;
   (void)ITERATIONS;
-  
+
   int ret = 0;
 
   try

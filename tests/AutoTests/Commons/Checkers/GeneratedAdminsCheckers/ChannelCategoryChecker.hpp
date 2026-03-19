@@ -13,10 +13,10 @@ namespace AutoTest
   {
     public:
       typedef ChannelCategoryAdmin::Expected Expected;
-    
+
       ChannelCategoryChecker(
         BaseUnit* test,
-        unsigned long category,    
+        unsigned long category,
         const Expected& expected,
         AdminExistCheck exists = AEC_EXISTS) :
         test_(test),
@@ -27,10 +27,10 @@ namespace AutoTest
 
       virtual ~ChannelCategoryChecker() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
     private:
-    
+
       BaseUnit* test_;
       unsigned long category_;
       Expected expected_;

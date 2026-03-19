@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__CCGKEYWORDUPDATE_
 #define _AUTOTEST__CCGKEYWORDUPDATE_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = ::AutoTest::ORM;
@@ -44,7 +44,7 @@ private:
 
   void
   change_ccgkeyword_();
-  
+
 };
 
 #endif // _AUTOTEST__CCGKEYWORDUPDATE_

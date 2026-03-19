@@ -46,9 +46,9 @@ SubAgentTest::run_test()
   request.referer_kw = fetch_string("KEYWORD");
   request.referer = fetch_string("URL");
   request.format.clear();
- 
+
   client.process_request(request);
- 
+
   std::string cc = fetch_string("CC");
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -58,7 +58,7 @@ SubAgentTest::run_test()
 
   request.referer.clear();
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       client.debug_info.selected_creatives.empty()),

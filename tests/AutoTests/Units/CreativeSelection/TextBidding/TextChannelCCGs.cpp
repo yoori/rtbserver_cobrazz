@@ -45,7 +45,7 @@ void TextChannelCCGs::scenario1()
   precisely_number exp_imp_revenues[] = {
       precisely_number(fetch_float("IMPREV1_1"), 0.001),
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -70,7 +70,7 @@ void TextChannelCCGs::scenario2()
   request.tid         = fetch_string("TAGNOMARGIN");
   request.colo        = fetch_string("COLONOMARGIN");
   request.referer_kw = fetch_string("CHANNELKEYWORD1");
-  
+
   client.process_request(request);
 
   std::string exp_ccids[] = {
@@ -80,7 +80,7 @@ void TextChannelCCGs::scenario2()
   precisely_number exp_imp_revenues[] = {
     precisely_number(fetch_float("IMPREV1_1"), 0.001),
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -121,7 +121,7 @@ void TextChannelCCGs::scenario3()
     precisely_number(fetch_float("IMPREV3_2"), 0.001),
     precisely_number(fetch_float("IMPREV3_3"), 0.001)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,
@@ -162,7 +162,7 @@ void TextChannelCCGs::scenario4()
     precisely_number(fetch_float("IMPREV3_2"), 0.001),
     precisely_number(fetch_float("IMPREV3_4"), 0.001)
   };
-  
+
   FAIL_CONTEXT(
     AutoTest::sequence_checker(
       exp_ccids,

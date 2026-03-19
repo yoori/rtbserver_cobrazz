@@ -32,7 +32,7 @@ struct ActiveObjectCallbackEmpty:
 struct TestObject: public Object
 {
   typedef Generics::Decimal<uint32_t, 22, 3> DecimalType;
-  
+
   TestObject(
     unsigned long op1_ulong,
     long op2_long,
@@ -51,7 +51,7 @@ struct TestObject: public Object
   {}
 
   virtual ~TestObject() noexcept {}
-  
+
   virtual const char* getSQLTypeName() const /*throw(eh::Exception)*/
   {
     return "ADSERVER_ORACLE_TEST_TYPE";
@@ -69,7 +69,7 @@ struct TestObject: public Object
     stream.set_null(AdServer::Commons::Oracle::Statement::DATE);
     stream.set_decimal(op8_decimal_);
   }
-  
+
   virtual void readSQL(SqlStream& /*stream*/)
     /*throw(eh::Exception, SqlException)*/
   {}
@@ -84,10 +84,10 @@ struct TestObject: public Object
       space << "op_date = " << op6_date_ << std::endl <<
       space << "op_timestamp = " << op7_timestamp_ << std::endl <<
       space << "op_decimal = " << op8_decimal_.str() << std::endl;
-    
+
     return out;
   }
-  
+
   bool operator==(const TestObject& right) const
   {
     return op1_ulong_ == right.op1_ulong_ &&
@@ -98,7 +98,7 @@ struct TestObject: public Object
       op7_timestamp_ == right.op7_timestamp_ &&
       op8_decimal_ == right.op8_decimal_;
   }
-  
+
   unsigned long op1_ulong_;
   long op2_long_;
   double op3_double_;
@@ -116,7 +116,7 @@ int check_auto_channel_ops(
   const char* pwd)
 {
 //static const char* FUN = "check_auto_channel_ops()";
-  
+
   try
   {
     Environment_var env = Environment::create_environment(
@@ -176,7 +176,7 @@ int check_object_ops(
   const char* pwd)
 {
   static const char* FUN = "check_object_ops()";
-  
+
   try
   {
     Environment_var env = Environment::create_environment(
@@ -196,7 +196,7 @@ int check_object_ops(
     }
     catch(...)
     {}
-    
+
     try
     {
       Statement_var stmt = conn->create_statement(
@@ -214,7 +214,7 @@ int check_object_ops(
     }
     catch(...)
     {}
-      
+
     try
     {
       Statement_var stmt = conn->create_statement(
@@ -320,7 +320,7 @@ int check_object_ops(
         "END;");
       stmt->execute();
     }
-          
+
     std::cout << FUN << ": created ADSERVER_ORACLE_TEST_PACKAGE package body." << std::endl;
 
     /* bind array of objects */
@@ -373,7 +373,7 @@ int check_object_ops(
 
     std::cout << FUN << ": executed array insert, cpu time = " <<
       cpu_timer.elapsed_time() << std::endl;
-    
+
     {
       std::vector<TestObject_var> check_vec;
       Statement_var stmt = conn->create_statement(
@@ -439,13 +439,13 @@ int check_object_ops_memory_holding(
   const char* pwd)
 {
   static const char* FUN = "check_object_ops_memory_holding()";
-  
+
   try
   {
     /* check OCI memory holding */
     unsigned long base_vsize, base_rss;
     Generics::Proc::memory_status(base_vsize, base_rss);
-    
+
     std::cout << FUN << ": to check memory holding: VSIZE = " << base_vsize
       << ", RSS = " << base_rss << std::endl;
 
@@ -479,7 +479,7 @@ int check_object_ops_memory_holding(
               date, timestamp,
               TestObject::DecimalType(String::SubString("111.111"))));
         }
-    
+
         {
           Statement_var stmt = conn->create_statement(
             "BEGIN "
@@ -524,7 +524,7 @@ int check_object_ops_memory_holding(
   {
     std::cerr << FUN << ": caught eh::Exception: " << ex.what() << std::endl;
     return 1;
-  } 
+  }
 }
 
 int check_result_set(
@@ -544,7 +544,7 @@ int check_result_set(
           Environment::EM_EVENTS*/));
 
       std::cout << FUN << ": connect to '" << db << "' as user '" << user
-      << "' with password '" << pwd << "'." << std::endl; 
+      << "' with password '" << pwd << "'." << std::endl;
       Connection_var conn = env->create_connection(
         ConnectionDescription(user, pwd, db));
 
@@ -565,7 +565,7 @@ int check_result_set(
       }
       catch(...)
       {}
-      
+
       {
         Statement_var stmt = conn->create_statement(
           "CREATE OR REPLACE TYPE ADSERVER_ORACLE_TEST_STR_COLL AS "
@@ -589,7 +589,7 @@ int check_result_set(
       }
 
       std::cout << FUN << ": check empty result set." << std::endl;
-      
+
       {
         // empty result set test
         Statement_var stmt = conn->create_statement(
@@ -614,7 +614,7 @@ int check_result_set(
       Generics::Time time2(String::SubString("1999-01-02 01:02:03"),
         "%Y-%m-%d %H:%M:%S");
       time2.tv_usec = 1111;
-      
+
       for(unsigned long i = 0; i < 30; ++i)
       {
         Statement_var stmt = conn->create_statement(
@@ -630,14 +630,14 @@ int check_result_set(
         {
           stmt->set_null(2, Statement::STRING);
         }
-        
+
         stmt->set_date(3, time1);
         stmt->set_timestamp(4, time2);
         stmt->set_blob(5, Lob("TEST", 4, false));
         stmt->set_null(6, Statement::DATE);
         stmt->execute();
       }
-      
+
       for(unsigned long i = 9999999; i < 10000002; ++i)
       {
         Statement_var stmt = conn->create_statement(
@@ -653,7 +653,7 @@ int check_result_set(
         {
           stmt->set_null(2, Statement::STRING);
         }
-        
+
         stmt->set_date(3, time1);
         stmt->set_timestamp(4, time2);
         stmt->set_blob(5, Lob("TEST", 4, false));
@@ -675,7 +675,7 @@ int check_result_set(
         {
           std::ostringstream count_str;
           count_str << TestObject::DecimalType(false, count, 0).str();
-          
+
           unsigned long p1_uint = result_set->get_uint(1);
           double p1_double = result_set->get_double(1);
           TestObject::DecimalType p1_num =
@@ -715,7 +715,7 @@ int check_result_set(
                 << result_set->get_string(2) << "' instead null" << std::endl;
             }
           }
-          
+
           Generics::Time p3 = result_set->get_date(3);
           if(p3 != time1)
           {
@@ -724,7 +724,7 @@ int check_result_set(
                       << "' instead '"
                       << time1.get_gm_time() << "'" << std::endl;
           }
-          
+
           Generics::Time p4 = result_set->get_timestamp(4);
           if(p4 != time2)
           {
@@ -740,7 +740,7 @@ int check_result_set(
           {
             std::cerr << "incorrect blob(p5) selected" << std::endl;
           }
-          
+
           ++count;
         }
 
@@ -857,7 +857,7 @@ int check_result_set(
         while(result_set->next())
         {
           std::string val = result_set->get_string(1);
-          
+
           if(val != "TT")
           {
             std::cerr << "selected string '" << val << "' records instead 'TT'."
@@ -880,7 +880,7 @@ int check_result_set(
     std::cerr << FUN << ": caught unexpected eh::Exception: " << ex.what() << std::endl;
     return 1;
   }
-  
+
   return 0;
 }
 
@@ -901,7 +901,7 @@ int check_result_set_memory_holding(
 
     Connection_var conn = env->create_connection(
       ConnectionDescription(user, pwd, db));
-    
+
     {
       // simple memory holding test
       unsigned long base_vsize_u, base_rss_u;
@@ -909,7 +909,7 @@ int check_result_set_memory_holding(
       long base_rss = static_cast<long>(base_rss_u);
       long base_vsize = static_cast<long>(base_vsize_u);
       long prev_rss = 0;
-    
+
       std::cout << FUN << ": to check memory holding: VSIZE = " << base_vsize
          << ", RSS = " << base_rss << std::endl;
 
@@ -920,7 +920,7 @@ int check_result_set_memory_holding(
         timer.start();
 
         const unsigned long COUNT = 100;
-      
+
         for(unsigned long i = 0; i < COUNT; ++i)
         {
           Statement_var stmt = conn->create_statement(
@@ -935,7 +935,7 @@ int check_result_set_memory_holding(
             result_set->get_uint(1);
             result_set->get_int(2);
             result_set->get_double(3);
-        
+
             result_set->get_string(4).c_str();
             result_set->get_date(5);
             result_set->get_timestamp(6);
@@ -963,17 +963,17 @@ int check_result_set_memory_holding(
             << " greatest then expected 220000" << std::endl;
           return 1;
         }
-      
+
         if(g > 4 && cur_rss - prev_rss != 0)
         {
           std::cerr << FUN << ": RSS continue grow" << std::endl;
           return 1;
         }
-      
+
         prev_rss = cur_rss;
       }
     }
-    
+
     {
       // memory holding by array binding test
       unsigned long base_vsize_u, base_rss_u;
@@ -981,7 +981,7 @@ int check_result_set_memory_holding(
       long base_vsize = static_cast<long>(base_vsize_u);
       long base_rss = static_cast<long>(base_rss_u);
       long prev_rss = 0;
-    
+
       std::cout << FUN << ": to check memory holding (with array binding): VSIZE = " << base_vsize
          << ", RSS = " << base_rss << std::endl;
 
@@ -1007,7 +1007,7 @@ int check_result_set_memory_holding(
           {
             vec.push_back(i);
           }
-          
+
           stmt->set_array(1, vec, "AD_IDLIST");
 
           ResultSet_var result_set = stmt->execute_query();
@@ -1017,7 +1017,7 @@ int check_result_set_memory_holding(
             result_set->get_uint(1);
             result_set->get_int(2);
             result_set->get_double(3);
-        
+
             result_set->get_string(4).c_str();
             result_set->get_date(5);
             result_set->get_timestamp(6);
@@ -1046,13 +1046,13 @@ int check_result_set_memory_holding(
           return 1;
         }
         */
-        
+
         if(g > 4 && cur_rss - prev_rss != 0)
         {
           std::cerr << FUN << ": RSS continue grow" << std::endl;
           return 1;
         }
-      
+
         prev_rss = cur_rss;
       }
     }
@@ -1129,7 +1129,7 @@ int check_time_ops(
           Generics::Time val = result_set->get_timestamp(1);
           if(val != Generics::Time(String::SubString("2008-08-04 17:01:28"),
             "%Y-%m-%d %H:%M:%S"))
-          {        
+          {
             std::cerr << "Incorrect time selected: "
               << val.get_gm_time()
               << " instead 2008-08-04 17:01:28" << std::endl;
@@ -1144,7 +1144,7 @@ int check_time_ops(
     std::cerr << FUN << ": caught unexpected eh::Exception: " << ex.what() << std::endl;
     return 1;
   }
-  
+
   return 0;
 }
 
@@ -1233,7 +1233,7 @@ int check_ORA_03106(
           "FROM WDTag wdt "
             "LEFT JOIN v_Site s ON s.site_id = wdt.site_id "
             "LEFT JOIN v_Account a ON a.account_id = s.account_id");
-        
+
         ResultSet_var rs = stmt->execute_query();
 
         while (rs->next())
@@ -1265,7 +1265,7 @@ int check_ORA_03106(
             "FROM WDTag wdt "
               "LEFT JOIN v_Site s ON s.site_id = wdt.site_id "
               "LEFT JOIN v_Account a ON a.account_id = s.account_id");
-        
+
             ResultSet_var srs = sstmt->execute_query();
 
             while (srs->next())
@@ -1299,7 +1299,7 @@ int
 main(int argc, char* argv[])
 {
   int res = 0;
-  
+
   Generics::AppUtils::StringOption opt_ora_server(
     "//oraads/addbads.ocslab.com");
   Generics::AppUtils::StringOption opt_ora_user("ads_3");
@@ -1398,14 +1398,14 @@ main(int argc, char* argv[])
       opt_ora_pwd->c_str(),
       opt_name->c_str());
   }
-  
+
   res += check_ORA_03106(
     opt_ora_server->c_str(),
     opt_ora_user->c_str(),
     opt_ora_pwd->c_str(),
     opt_name->c_str());
   */
-  
+
   return res;
 }
 

@@ -21,7 +21,7 @@ CCGKeywordUpdate::tear_down()
 {
   add_descr_phrase("Tear down.");
 }
-  
+
 
 bool
 CCGKeywordUpdate::run()
@@ -37,12 +37,12 @@ CCGKeywordUpdate::run()
   AUTOTEST_CASE(
     deactivate_ccgkeyword_(),
     "Deactivate CCGKeyword");
-  
-  AUTOTEST_CASE(  
+
+  AUTOTEST_CASE(
     deactivate_channel_(),
     "Deactivate keyword channel");
-  
-  AUTOTEST_CASE(  
+
+  AUTOTEST_CASE(
     change_ccgkeyword_(),
     "Change CCGKeyword");
 
@@ -69,7 +69,7 @@ CCGKeywordUpdate::add_ccgkeyword_()
   channel->params.trigger_type = "P";
   channel->params.minimum_visits = 2;
   channel->params.time_from = 0;
-  channel->params.time_to = 3600; 
+  channel->params.time_to = 3600;
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
@@ -217,7 +217,7 @@ CCGKeywordUpdate::change_ccgkeyword_()
 {
   unsigned long ccgkeyword_id =
     fetch_int("CHANGE/CCGKeyword");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       CCGKeywordChecker(

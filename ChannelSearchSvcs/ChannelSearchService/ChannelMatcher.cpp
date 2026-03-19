@@ -12,7 +12,7 @@ namespace ChannelSearchSvcs
 {
   ChannelMatcher::ChannelMatcher() noexcept
   {}
-  
+
   ChannelMatcher::Config_var
   ChannelMatcher::config() const /*throw(Exception)*/
   {

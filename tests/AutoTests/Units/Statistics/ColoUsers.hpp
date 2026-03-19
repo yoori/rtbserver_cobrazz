@@ -17,12 +17,12 @@ class ColoUsers: public BaseDBUnit
   typedef ORM::StatsList<ColoUserStat> ColoUserStats;
   typedef ColoUserStat::Diffs ColoUserDiff;
   typedef std::list<ColoUserDiff> ColoUserDiffs;
-  
+
   typedef ORM::GlobalColoUserStats GlobalColoUserStat;
   typedef ORM::StatsList<GlobalColoUserStat> GlobalColoUserStats;
   typedef GlobalColoUserStat::Diffs GlobalColoUserDiff;
   typedef std::list<GlobalColoUserDiff> GlobalColoUserDiffs;
-  
+
   typedef ORM::CreatedUserStats CreatedUserStat;
   typedef ORM::StatsList<CreatedUserStat> CreatedUserStats;
   typedef CreatedUserStat::Diffs CreatedUserDiff;
@@ -48,13 +48,13 @@ class ColoUsers: public BaseDBUnit
   };
 
 public:
- 
-  ColoUsers(UnitStat& stat_var, 
-            const char* task_name, 
-            XsdParams params_var): 
+
+  ColoUsers(UnitStat& stat_var,
+            const char* task_name,
+            XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var)
   { }
-  
+
   virtual ~ColoUsers() noexcept
   { }
 
@@ -63,9 +63,9 @@ protected:
   virtual bool run();
 
   virtual void set_up();
-  
+
   virtual void tear_down();
- 
+
 private:
 
   AutoTest::Time base_time_;
@@ -106,7 +106,7 @@ private:
   init_sum_diff_(
     Diffs& diff,
     const Expected& expected);
-  
+
   template<class Expected>
   void
   init_sum_diff_(
@@ -124,28 +124,28 @@ private:
 
   void
   unique_hids_();
-  
+
   void
   create_and_last_appearance_dates_();
 
   void
   non_gmt_timezone_();
-  
+
   void
   basic_async_part_1_(
     AdClient& client,
     TemporaryAdClient& temporary,
     const std::string& hid);
-  
+
   void
   basic_async_part_2_(
     AdClient& client,
     TemporaryAdClient& temporary,
     const std::string& hid);
-  
+
   void
   big_date_difference_();
-  
+
   void
   merge_on_adrequest_();
 
@@ -157,10 +157,10 @@ private:
 
   void
   optout_();
-  
+
   void
   non_serialized_();
-  
+
   void
   pub_inventory_();
 

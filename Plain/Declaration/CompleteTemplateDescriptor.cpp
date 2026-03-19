@@ -52,7 +52,7 @@ namespace Declaration
           (*dit)->name() << "', it is reader of '" <<
           (*rit)->descriptor()->name() << "'";
         throw InvalidParam(ostr.str());
-      }    
+      }
     }
 
     return create_template_reader_(args);
@@ -84,7 +84,7 @@ namespace Declaration
           (*dit)->name() << "', it is reader of '" <<
           (*rit)->descriptor()->name() << "'";
         throw InvalidParam(ostr.str());
-      }    
+      }
     }
 
     return create_template_writer_(args);

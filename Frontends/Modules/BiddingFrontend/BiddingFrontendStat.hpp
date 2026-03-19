@@ -27,7 +27,7 @@ namespace AdServer
         unsigned long request_other_,
         unsigned long request_other_bid_,
         const Generics::Time& processing_time);
-      
+
       unsigned long request_google;
       unsigned long request_google_bid;
       unsigned long request_openrtb;
@@ -38,7 +38,7 @@ namespace AdServer
       Generics::Time processing_time;
       typedef std::map<Generics::Time, std::size_t> TimeoutsMap;
       TimeoutsMap timeout_counters;
-    
+
       StatData&
       operator +=(const StatData& rhs) noexcept;
     };
@@ -49,7 +49,7 @@ namespace AdServer
       CampaignSvcs::CampaignManager::RequestCreativeResult*,
       const Generics::Time& processing_time)
       noexcept;
-    
+
     void
     add_skipped() noexcept;
 
@@ -70,7 +70,7 @@ namespace AdServer
 
   typedef ReferenceCounting::SmartPtr<StatHolder>
     StatHolder_var;
-  
+
   class BiddingFrontendStatsImpl:
     public CORBACommons::ReferenceCounting::ServantImpl<
       POA_CORBACommons::ProcessStatsControl>,
@@ -80,7 +80,7 @@ namespace AdServer
     BiddingFrontendStatsImpl(
       StatHolder* stat_holder)
       noexcept;
-      
+
     virtual CORBACommons::StatsValueSeq*
     get_stats()
       /*throw(CORBA::Exception,

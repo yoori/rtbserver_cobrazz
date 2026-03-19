@@ -27,7 +27,7 @@ namespace ProfilingCommons
   {
     mem_buf_ = file_controller_->create_buffer();
   }
- 
+
   FileWriter::FileWriter(
     const char* file_name,
     unsigned long buffer_size,

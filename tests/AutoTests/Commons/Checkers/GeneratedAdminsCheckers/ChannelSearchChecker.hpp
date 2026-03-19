@@ -8,43 +8,43 @@
 
 namespace AutoTest
 {
-  template<typename ExpectedType = ChannelSearchAdmin::Expected>  
-  class ChannelSearchChecker_:  
-    public AutoTest::Checker  
-  {  
-    public:    
+  template<typename ExpectedType = ChannelSearchAdmin::Expected>
+  class ChannelSearchChecker_:
+    public AutoTest::Checker
+  {
+    public:
 
-      typedef ExpectedType Expected;      
+      typedef ExpectedType Expected;
 
-      ChannelSearchChecker_(      
-        BaseUnit* test,      
-        const std::string& phrase,      
-        ChannelSrv service,      
-        const Expected& expected,      
-        AdminExistCheck exists = AEC_EXISTS) :      
-        test_(test),      
-        phrase_(phrase),      
-        service_(service),      
-        expected_(expected),      
-        exists_(exists)      
-        {}      
+      ChannelSearchChecker_(
+        BaseUnit* test,
+        const std::string& phrase,
+        ChannelSrv service,
+        const Expected& expected,
+        AdminExistCheck exists = AEC_EXISTS) :
+        test_(test),
+        phrase_(phrase),
+        service_(service),
+        expected_(expected),
+        exists_(exists)
+        {}
 
-      virtual ~ChannelSearchChecker_() noexcept {}      
+      virtual ~ChannelSearchChecker_() noexcept {}
 
-      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
+      bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
 
-    private:    
+    private:
 
-      BaseUnit* test_;      
-      std::string phrase_;      
-      ChannelSrv service_;      
-      Expected expected_;      
-      AdminExistCheck exists_;      
+      BaseUnit* test_;
+      std::string phrase_;
+      ChannelSrv service_;
+      Expected expected_;
+      AdminExistCheck exists_;
 
-  };  
+  };
 
-  typedef ChannelSearchChecker_<ChannelSearchAdmin::Expected> ChannelSearchChecker;  
-  typedef ChannelSearchChecker_<std::string> ChannelSearchCheckerSimple;  
+  typedef ChannelSearchChecker_<ChannelSearchAdmin::Expected> ChannelSearchChecker;
+  typedef ChannelSearchChecker_<std::string> ChannelSearchCheckerSimple;
 
 }
 

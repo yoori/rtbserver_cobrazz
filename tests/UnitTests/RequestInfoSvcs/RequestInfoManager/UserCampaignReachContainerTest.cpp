@@ -91,7 +91,7 @@ struct TestBase: public ReferenceCounting::AtomicImpl
         Stream::Error ostr;
         ostr << "result size non equal size = " << result.size() <<
           " of standard = " << etalon.size() << ". Result:" << std::endl;
-        
+
         {
           int i = 0;
           for (ReachInfoList::const_iterator e_it = result.begin();
@@ -102,9 +102,9 @@ struct TestBase: public ReferenceCounting::AtomicImpl
             e_it->print(ostr, "  ");
           }
         }
-        
+
         ostr << "Etalon:" << std::endl;
-        
+
         {
           int i = 0;
           for (ReachInfoList::const_iterator e_it = etalon.begin();
@@ -390,7 +390,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
           print_reach_map(std::cerr, etalon, "    ");
           std::cerr << "  for requests:" << std::endl;
           print_requests(std::cerr, requests_array, "    ");
-            
+
           return 1;
         }
         else if(!std::equal(result.begin(), result.end(), etalon.begin()))
@@ -405,7 +405,7 @@ struct TestSumBase: public ReferenceCounting::AtomicImpl
           return 1;
         }
       }
-      
+
       std::cout << "Test '" << name() << "': OK" << std::endl;
 
       return 0;
@@ -487,7 +487,7 @@ struct TestSimpleDailyAppear : public TestBase
 
       reach_info_list.push_back(reach_info);
     }
-    
+
     {
       CampaignReachProcessor::ReachInfo reach_info;
       reach_info.text_advertisers.push_back(IdAppearance(4, TIME, Generics::Time::ZERO, 1));

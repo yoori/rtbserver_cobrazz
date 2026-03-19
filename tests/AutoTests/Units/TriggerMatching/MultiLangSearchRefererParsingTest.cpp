@@ -6,7 +6,7 @@ REFLECT_UNIT(MultiLangSearchRefererParsingTest) (
   AUTO_TEST_FAST
 );
 
-namespace 
+namespace
 {
   typedef AutoTest::NSLookupRequest  NSLookupRequest;
   typedef AutoTest::AdClient AdClient;
@@ -29,7 +29,7 @@ namespace
     { "Channel/03", "gb2312" }
   };
 
-  bool 
+  bool
   valid_converting(
     const std::string& channel,
     const std::string& encoding)
@@ -46,27 +46,27 @@ namespace
   };
 }
 
-                             
-bool 
+
+bool
 MultiLangSearchRefererParsingTest::run_test()
 {
   add_descr_phrase("Starting <https://jira.ocslab.com/browse/ADSC-224>");
-  
+
   String::International::Convertion converter;
   std::string sbuf;
 
   bool pass = false;
-  
+
   DataElemObjectPtr search_engine;
   while (next_list_item(search_engine, "Search Engines"))
   {
     DataElemObjectPtr channel;
     while (next_list_item(channel, "Channels"))
-    {      
+    {
       sbuf.clear();
-      add_descr_phrase(((search_engine->Name() + ", ") + 
+      add_descr_phrase(((search_engine->Name() + ", ") +
                         channel->Name() + " are gathered").c_str());
-      
+
       //mime-encoding of trigger word + pre-encoding in original code if needed
       if (search_engine->Description() != "utf-8" &&
         valid_converting(channel->Name(), search_engine->Description()))
@@ -120,24 +120,24 @@ MultiLangSearchRefererParsingTest::run_test()
       {
         full_url += sbuf;
       }
-              
+
       AdClient client(AdClient::create_user(this));
 
       client.process_request(NSLookupRequest().tid(tid).referer(full_url), sbuf.c_str());
-      
+
       FAIL_CONTEXT(
         AutoTest::entry_checker(
-          channel->Value(), 
+          channel->Value(),
           client.debug_info.trigger_channels +
-            client.debug_info.trigger_channels).check(), 
-        "must have channel");                                
+            client.debug_info.trigger_channels).check(),
+        "must have channel");
     }
   }
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(pass),
-    "Not a single encoding convertion is success in the test.");  
-  
+    "Not a single encoding convertion is success in the test.");
+
   return true;
 }
 

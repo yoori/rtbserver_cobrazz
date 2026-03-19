@@ -15,7 +15,7 @@ namespace UnitTests
     /*throw(eh::Exception)*/
   {
     ChannelSvcs::UpdateContainer update_container(&container_, 0);
-    ChannelSvcs::ChannelIdToMatchInfo_var info = 
+    ChannelSvcs::ChannelIdToMatchInfo_var info =
       new ChannelSvcs::ChannelIdToMatchInfo;
     std::string base_word, ending;
     unsigned long channel_trigger_id = 10;

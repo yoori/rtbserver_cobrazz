@@ -1,6 +1,6 @@
 
 #include "ProfilesExpirationTest.hpp"
- 
+
 REFLECT_UNIT(ProfilesExpirationTest) (
   "UserProfiling",
   AUTO_TEST_FAST
@@ -29,7 +29,7 @@ void ProfilesExpirationTest::check_profiles_exist(
     std::string("UIM must ") + (exists ? "" : "not ") + "contain ";
   std::string dsc2 = std::string("profile for user '") + uid + "'";
 
-  AutoTest::AdminExistCheck check_empty = 
+  AutoTest::AdminExistCheck check_empty =
     exists? AutoTest::AEC_NOT_EXISTS: AutoTest::AEC_EXISTS;
 
   FAIL_CONTEXT(
@@ -68,7 +68,7 @@ ProfilesExpirationTest::expired_visits_removal_()
     (AutoTest::Time() - 2*24*60*60).
       get_gm_time().
       format(AutoTest::DEBUG_TIME_FORMAT);
-  
+
   AdClient user(AdClient::create_user(this));
 
   add_descr_phrase("Match HT + H channels");
@@ -126,7 +126,7 @@ ProfilesExpirationTest::expired_visits_removal_()
   add_descr_phrase("Deleting old profiles");
 
   DelAdmin::execute(this);
-  
+
   add_descr_phrase("Profiles check");
 
   FAIL_CONTEXT(
@@ -187,17 +187,17 @@ ProfilesExpirationTest::user_profiles_removal_(
   request.debug_time =
     (debug_time1 - 24*60*60).get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
   user1.process_request(request);
-  
+
   request.debug_time =
     debug_time1.get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
   user1.process_request(request);
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       channel_id,
       user1.debug_info.history_channels).check(),
     "must get expected channel in history_channels debug_info header");
-  
+
   if (!temp_user)
   {
     FAIL_CONTEXT(
@@ -206,7 +206,7 @@ ProfilesExpirationTest::user_profiles_removal_(
         user1.debug_info.ccid).check(),
       "must got expected ccid");
   }
-  
+
   if (remote_case_ && !temp_user)
   {
     user1.set_cookie_value("lc", absent_colo.c_str());
@@ -220,7 +220,7 @@ ProfilesExpirationTest::user_profiles_removal_(
   user2.process_request(request, "default colo");
   request.debug_time = debug_time2.get_gm_time().format(AutoTest::DEBUG_TIME_FORMAT);
   user2.process_request(request, "default colo");
-  
+
   FAIL_CONTEXT(
     AutoTest::entry_checker(
       channel_id,
@@ -249,7 +249,7 @@ ProfilesExpirationTest::user_profiles_removal_(
   FAIL_CONTEXT(
     check_profiles_exist(uid2, true, temp_user),
     "Check profile#1");
-  
+
   if (!temp_user)
   {
     FAIL_CONTEXT(
@@ -283,7 +283,7 @@ ProfilesExpirationTest::user_profiles_removal_(
   FAIL_CONTEXT(
     check_profiles_exist(uid2, true, temp_user),
     "Check profile#3");
-  
+
   if (!temp_user)
   {
 
@@ -294,11 +294,11 @@ ProfilesExpirationTest::user_profiles_removal_(
         FreqCapProfileChecker::Expected(),
         AutoTest::AEC_NOT_EXISTS).check(),
       "UIM must contain freq cap profile for user 1");
-    
-    
+
+
     FAIL_CONTEXT(
       FreqCapProfileChecker(
-        this, uid2, false, 
+        this, uid2, false,
         AutoTest::UserInfoManagerController,
         FreqCapProfileChecker::Expected().
           fc_id(fcap_id)).check(),
@@ -343,7 +343,7 @@ ProfilesExpirationTest::run_test()
       tuser2, 30*60,       // 30 mins
       true),
     "Temporary users profile removal");
-  
+
   return true;
 }
 

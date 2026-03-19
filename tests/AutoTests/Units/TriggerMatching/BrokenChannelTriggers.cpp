@@ -1,6 +1,6 @@
 
 #include "BrokenChannelTriggers.hpp"
- 
+
 REFLECT_UNIT(BrokenChannelTriggers) (
   "TriggerMatching",
   AUTO_TEST_FAST
@@ -143,8 +143,8 @@ namespace {
     {
       "Exact keyword > 20 words "
       "(9 words of them in quotes)",
-      0, "WORDS/SEARCH6", 0, 
-      "WORDS/ChannelP,WORDS/ChannelS,WORDS/ChannelR"      
+      0, "WORDS/SEARCH6", 0,
+      "WORDS/ChannelP,WORDS/ChannelS,WORDS/ChannelR"
     }
   };
 
@@ -169,23 +169,23 @@ namespace {
     }
   };
 }
- 
-bool 
+
+bool
 BrokenChannelTriggers::run_test()
 {
 
   AUTOTEST_CASE(
     test_group(INCORRECT_TRIGGER),
     "Incorrect trigger definition");
-  
+
   AUTOTEST_CASE(
     test_group(TRIGGER_LENGTH_LIMIT1),
     "Trigger length limit");
-  
+
   AUTOTEST_CASE(
     test_group(TRIGGER_LENGTH_LIMIT2),
     "Trigger length limit");
-  
+
   AUTOTEST_CASE(
     test_group(TRIGGER_WORDS_LIMIT),
     "Triggers word count limit");
@@ -232,7 +232,7 @@ BrokenChannelTriggers::test_case(
     request.referer_kw = fetch_string(test.referer_kw);
   }
   client.process_request(request);
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,
@@ -240,7 +240,7 @@ BrokenChannelTriggers::test_case(
       client.debug_info.trigger_channels).check(),
     test.description +
       " Expected trigger_channels");
-  
+
   FAIL_CONTEXT(
     ChannelsCheck(
       this,

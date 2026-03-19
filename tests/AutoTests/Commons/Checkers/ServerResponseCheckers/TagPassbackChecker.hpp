@@ -40,7 +40,7 @@ namespace AutoTest
        * @brief Get PASSBACK_PIXEL.
        */
       const std::string& pixel() const;
-      
+
       /**
        * @brief Set PASSBACK_TYPE.
        */
@@ -107,7 +107,7 @@ namespace AutoTest
      * @brief Get tokens.
      */
     const Tokens& tokens() const;
-    
+
     /**
      * @brief Check.
      * @param throw on error flag.

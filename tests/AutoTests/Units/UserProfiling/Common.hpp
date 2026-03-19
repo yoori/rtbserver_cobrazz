@@ -38,7 +38,7 @@ namespace AutoTest
           if (!referer_kw.empty()) referer_kw+=",";
           referer_kw += test->fetch_string(token.str());
         }
-        
+
         request.referer_kw = referer_kw;
       }
       if (base_time != Generics::Time::ZERO)
@@ -46,7 +46,7 @@ namespace AutoTest
         request.debug_time = base_time + params.time_ofset;
       }
     }
-    
+
   }
 }
 

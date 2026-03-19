@@ -79,29 +79,29 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::OPENX_REQUESTS[]
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body-openx", "728x90", "OpenX/HTTP_URL#3",
-    RequestParams({{&RTBRequest::ssl_enabled, "true"}}), 
+    RequestParams({{&RTBRequest::ssl_enabled, "true"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body", "728x90", "OpenX/HTTP_URL#3",
-    RequestParams({{&RTBRequest::ssl_enabled, "false"}}), 
+    RequestParams({{&RTBRequest::ssl_enabled, "false"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = http://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body", "728x90", "OpenX/HTTP_URL#3",
-    RequestParams({{&RTBRequest::ssl_enabled, "1"}}), 
+    RequestParams({{&RTBRequest::ssl_enabled, "1"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body", "728x90", "OpenX/HTTP_URL#3",
-    RequestParams({{&RTBRequest::ssl_enabled, "0"}}), 
+    RequestParams({{&RTBRequest::ssl_enabled, "0"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = http://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body", "728x90", "OpenX/HTTPS_URL#3",
-    RequestParams({{&RTBRequest::ssl_enabled, "false"}}), 
+    RequestParams({{&RTBRequest::ssl_enabled, "false"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) },
 
   { "OpenX/ACCOUNT", "body", "728x90", "OpenX/HTTP_URL#3",
     RequestParams({
       {&RTBRequest::ssl_enabled, "false"},
-      {&RTBRequest::secure, "1"}}), 
+      {&RTBRequest::secure, "1"}}),
     "OpenX/CREATIVE#3", ExpectedValues({{&Expected::adm, ".*\\bTRACKPIXEL = https://.*", 0}}) }
 };
 
@@ -344,7 +344,7 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::ALLYES_REQUESTS[
                        "<\\/iframe>", 0},
       {&Expected::nurl, ALLYES_NURL, 0}}) },
 
-  { "Allyes/ACCOUNT", "body-allyes", "468x60", 0, RequestParams(), 
+  { "Allyes/ACCOUNT", "body-allyes", "468x60", 0, RequestParams(),
     "Allyes/CREATIVEIDS/text1",
     ExpectedValues({
       {&Expected::crid, "Allyes/CREATIVES/text1", 1},
@@ -352,7 +352,7 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::ALLYES_REQUESTS[
                        ".*\\bCREATIVES_JSON = \\[{.*\"CCID\":\"\\d+\".*},{.*\"CCID\":\"\\d+\".*}\\].*", 0},
       {&Expected::nurl, ALLYES_NURL, 0}}) },
 
-  { "Allyes/ACCOUNT", "iframe-url-allyes", "468x60", 0, RequestParams(), 
+  { "Allyes/ACCOUNT", "iframe-url-allyes", "468x60", 0, RequestParams(),
     "Allyes/CREATIVEIDS/text1",
     ExpectedValues({
       {&Expected::crid, "Allyes/CREATIVES/text1", 1},
@@ -362,7 +362,7 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::ALLYES_REQUESTS[
                        ".*ad=\\d+,\\d+.*", 0},
       {&Expected::nurl, ALLYES_NURL, 0}}) },
 
-  { "Allyes/ACCOUNT", "body-allyes", "160x600", "Allyes/URL", RequestParams(), 
+  { "Allyes/ACCOUNT", "body-allyes", "160x600", "Allyes/URL", RequestParams(),
     "Allyes/CREATIVEIDS/no_imp_track",
     ExpectedValues({
       {&Expected::crid, "Allyes/CREATIVES/no_imp_track", 1},
@@ -377,7 +377,7 @@ const OpenRTBExtensionsTest::CaseRequest OpenRTBExtensionsTest::ALLYES_REQUESTS[
       {&Expected::nurl, ALLYES_NURL, 0}}) },
 
 
-  { "Allyes/ACCOUNT", "body-allyes", "240x400", "Allyes/URL", RequestParams(), 
+  { "Allyes/ACCOUNT", "body-allyes", "240x400", "Allyes/URL", RequestParams(),
     "Allyes/CREATIVEIDS/cat_fill",
     ExpectedValues({
       {&Expected::fmt, "CATEGORIES/visual/allyes_key", 1},

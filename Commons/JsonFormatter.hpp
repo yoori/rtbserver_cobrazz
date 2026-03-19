@@ -60,7 +60,7 @@ namespace Commons
     JsonObject&
     add_number(const String::SubString& name, const NumberType& value);
 
-    // Use for in RunTime PreFormattedType (YandexFormatter) 
+    // Use for in RunTime PreFormattedType (YandexFormatter)
     //   added in BiddingFrontend only in object, not array
     template<typename PreFormattedType>
     JsonObject&
@@ -108,7 +108,7 @@ namespace Commons
       OT_STRING_ARRAY,
       OT_ESCAPED_STRING_ARRAY
     };
-  
+
     JsonObject(std::ostream& out);
 
     // Check on add elements into object
@@ -132,7 +132,7 @@ namespace Commons
     size_t opened_child_object_;
     JsonObject* parent_;
   };
-  
+
   class JsonFormatter: public JsonObject
   {
   public:
@@ -232,7 +232,7 @@ namespace Commons
     if (type_ == OT_ARRAY)
     {
       type_ = required_type;
-    } 
+    }
     else if (type_ != required_type)
     {
       Stream::Error ostr;
@@ -244,7 +244,7 @@ namespace Commons
   inline
   void
   JsonObject::comma_()
-  {  
+  {
     if (!empty_)
     {
       out_stream_ << ", ";

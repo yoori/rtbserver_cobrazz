@@ -1,7 +1,7 @@
 
 #ifndef _AUTOTEST__CMPSTATTEST_
 #define _AUTOTEST__CMPSTATTEST_
- 
+
 #include <tests/AutoTests/Commons/Common.hpp>
 
 namespace ORM = AutoTest::ORM;
@@ -46,15 +46,15 @@ private:
 
   typedef ORM::StatsList<CMPStat> CMPStats;
   typedef std::list<ExpectedDiff> CMPDiffs;
-  
-public: 
+
+public:
   CMPStatTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var)
     : BaseDBUnit(stat_var, task_name, params_var)
   { }
- 
+
   virtual ~CMPStatTest() noexcept
   { }
 
@@ -63,7 +63,7 @@ protected:
   virtual void set_up();
   virtual bool run();
   virtual void tear_down();
- 
+
 private:
 
   template<size_t Count>
@@ -78,25 +78,25 @@ private:
   send_requests(
     const AutoTest::Time& debug_time,
     const Request(&requests) [Count]);
-  
+
   void
   pub_exp_ch_scenario();
-  
+
   void
   base_scenario();
-  
+
   void
   adv_exp_ch_scenario();
-  
+
   void
   cmp_exp_ch_scenario();
-  
+
   void
   currency_scenario();
-  
+
   void
   expression_scenario();
-  
+
   void
   ta_scenario();
 };

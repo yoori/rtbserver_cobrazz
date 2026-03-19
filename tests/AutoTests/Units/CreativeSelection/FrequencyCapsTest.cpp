@@ -344,7 +344,7 @@ FrequencyCapsTest::process_window_limit_simple_case_(
   test_client.process_request(request);
 
   print_fcap_ui_(test_client);
-  
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         nofc_ccids,
@@ -717,7 +717,7 @@ FrequencyCapsTest::process_life_count_text_ads_case_(
         true // confirm previous after new sending
         ));
     }
-    
+
     {
       add_descr_phrase(std::string(case_name) + " (don't confirm)");
 
@@ -734,7 +734,7 @@ FrequencyCapsTest::process_life_count_text_ads_case_(
       add_descr_phrase(std::string(case_name) + " (repeat after confirm timeout)");
 
       time_ += Data::FC_CONFIRM_TIMEOUT + 1;
-  
+
       // repeat scenario without track confirmation after confirm timeout
       // must work because, previous requests timeouted (by fc, as unconfirmed)
       FAIL_CONTEXT(process_life_count_case_(
@@ -997,7 +997,7 @@ FrequencyCapsTest::process_combined_limits_case_(
   }
 }
 
-void 
+void
 FrequencyCapsTest::print_fcap_ui_(AdClient &test_client)
 {
   if (!test_client.debug_info.uid.value().empty())
@@ -1015,5 +1015,5 @@ FrequencyCapsTest::print_fcap_ui_(AdClient &test_client)
   {
     AutoTest::Logger::thlog().stream(Logging::Logger::TRACE, ASPECT) <<
       "Empty freqcaps, because new client haven't profile.";
-  }      
+  }
 }

@@ -1,6 +1,6 @@
 
 #include "AccountBudgetTest.hpp"
- 
+
 REFLECT_UNIT(AccountBudgetTest) (
   "NoDBUpdate",
   AUTO_TEST_QUIET
@@ -13,7 +13,7 @@ namespace
   typedef AutoTest::CampaignChecker CampaignChecker;
 }
 
-bool 
+bool
 AccountBudgetTest::run_test()
 {
   NSLookupRequest request;
@@ -26,8 +26,8 @@ AccountBudgetTest::run_test()
   // after 2 requests, we have reaching zero balance
   unsigned long max_repeat_count =
     (fetch_int("ZEROBALANCE_ACCOUNT_CREDIT") * 1000 /
-     fetch_int("ZEROBALANCE_CPM")) + 1; 
-  
+     fetch_int("ZEROBALANCE_CPM")) + 1;
+
   // Check initial state
   FAIL_CONTEXT(CampaignChecker(
       this,

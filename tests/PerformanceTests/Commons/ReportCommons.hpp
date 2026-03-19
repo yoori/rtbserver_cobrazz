@@ -11,7 +11,7 @@
 void print_line(std::ostream& out, unsigned short line_lendth);
 void print_time(std::ostream& out, const Generics::Time& time);
 void print_header(std::ostream& out, const char* header, unsigned short width);
-    
+
 /**
  * @class DumpInterface
  * @brief Interface for dumping statistics object
@@ -22,7 +22,7 @@ public:
   static const unsigned short INDENTION = 15;
 
   static const unsigned short LINE_LENGTH = 120;
-  
+
 public:
   virtual ~DumpInterface() noexcept
   {}
@@ -30,26 +30,26 @@ public:
   /**
    * @brief dump
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump(std::ostream& out) const;
 
 protected:
   /**
    * @brief dump header
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_header(std::ostream& out) const;
 
   /**
    * @brief dump body
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_body(std::ostream& out) const;
 
   /**
    * @brief dump footer
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_footer(std::ostream& out) const;
 
 };
@@ -76,11 +76,11 @@ protected:
   /**
    * @brief dump body
    * @param output stream
-   */  
-  virtual std::ostream& dump_body(std::ostream& out) const;  
-  
+   */
+  virtual std::ostream& dump_body(std::ostream& out) const;
+
 private:
-  const Counter& counter_;   
+  const Counter& counter_;
 };
 
 /**
@@ -105,11 +105,11 @@ protected:
   /**
    * @brief dump body
    * @param output stream
-   */  
-  virtual std::ostream& dump_body(std::ostream& out) const;  
-  
+   */
+  virtual std::ostream& dump_body(std::ostream& out) const;
+
 private:
-  const Counter& counter_;   
+  const Counter& counter_;
 };
 
 /**
@@ -137,9 +137,9 @@ protected:
   /**
    * @brief dump body
    * @param output stream
-   */  
-  virtual std::ostream& dump_body(std::ostream& out) const;  
-  
+   */
+  virtual std::ostream& dump_body(std::ostream& out) const;
+
 private:
   const RangeStats& stats_;
   bool short_form_;
@@ -158,7 +158,7 @@ public:
 
   static const unsigned short LINE_LENGTH = 120;
 
-  
+
 public:
   /**
    * @brief Constructor.
@@ -177,22 +177,22 @@ protected:
   /**
    * @brief dump header
    * @param output stream
-   */  
+   */
   virtual std::ostream& dump_header(std::ostream& out) const;
 
   /**
    * @brief dump body
    * @param output stream
-   */  
-  virtual std::ostream& dump_body(std::ostream& out) const;  
-  
+   */
+  virtual std::ostream& dump_body(std::ostream& out) const;
+
 private:
   const PerformanceStatisticsBase& stats_;
   std::string header_;
 };
 
 inline
-std::ostream& 
+std::ostream&
 operator<< (std::ostream& out, const DumpInterface& obj)
 {
   return obj.dump(out);

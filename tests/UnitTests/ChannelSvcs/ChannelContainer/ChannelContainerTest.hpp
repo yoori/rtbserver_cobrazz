@@ -26,7 +26,7 @@ namespace AdServer
         TC_UIDS = 0x20,
         TC_ALL_CASES =
           TC_CONSTRUCTOR + TC_ADD_TRIGGER + TC_MERGE + TC_MATCH + TC_UPDATE
-      }; 
+      };
       struct IdToTrigger
       {
         unsigned int id;
@@ -63,7 +63,7 @@ namespace AdServer
         const char* prefix,
         ResultType& result,
         size_t number,
-        bool negative, 
+        bool negative,
         size_t count = 2)
         /*throw(eh::Exception)*/;
 
@@ -72,7 +72,7 @@ namespace AdServer
         ChannelSvcs::SoftTriggerList& result,
         size_t number,
         size_t count_words,
-        bool negative, 
+        bool negative,
         size_t count = 2)
         /*throw(eh::Exception)*/;
 

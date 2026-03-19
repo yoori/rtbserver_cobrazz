@@ -50,7 +50,7 @@ protected:
     bool print_plain,
     bool align)
     /*throw(eh::Exception)*/;
-  
+
   int
   print_user_action(
     AdServer::RequestInfoSvcs::RequestInfoManager* request_info_manager,

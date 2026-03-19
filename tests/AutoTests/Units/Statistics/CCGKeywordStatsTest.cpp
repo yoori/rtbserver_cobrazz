@@ -25,11 +25,11 @@ namespace
   };
 }
 
-void 
+void
 CCGKeywordStatsTest::set_up()
 { }
 
-bool 
+bool
 CCGKeywordStatsTest::run()
 {
   NOSTOP_FAIL_CONTEXT(system_currency_case_());
@@ -83,11 +83,11 @@ CCGKeywordStatsTest::run()
   return true;
 }
 
-void 
+void
 CCGKeywordStatsTest::tear_down()
 { }
 
-void 
+void
 CCGKeywordStatsTest::add_stats_(
   const std::string& description,
   const ORM::CCGKeywordStatsHourly::Key& key,
@@ -139,7 +139,7 @@ CCGKeywordStatsTest::add_stats_(
   }
 }
 
-void 
+void
 CCGKeywordStatsTest::system_currency_case_()
 {
   const char ENTITY_SUFFIX[] = "SystemCurrency";
@@ -168,7 +168,7 @@ CCGKeywordStatsTest::system_currency_case_()
       adv_amount((REPEAT_COUNT / 2) * revenue));
 
   AdClient client = AdClient::create_user(this);
-  AutoTest::NSLookupRequest request; 
+  AutoTest::NSLookupRequest request;
   request.referer_kw(fetch_string(std::string("Keyword1/") + ENTITY_SUFFIX));
   request.tid(fetch_int(std::string("Tid/") + ENTITY_SUFFIX));
   request.debug_time(now);
@@ -178,7 +178,7 @@ CCGKeywordStatsTest::system_currency_case_()
   for (unsigned long i = 0; i < REPEAT_COUNT; i++)
   {
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         ccid_exp,
@@ -194,7 +194,7 @@ CCGKeywordStatsTest::system_currency_case_()
   }
 }
 
-void 
+void
 CCGKeywordStatsTest::advertiser_currency_case_()
 {
   const char ENTITY_SUFFIX[] = "AdvCurrency";
@@ -204,12 +204,12 @@ CCGKeywordStatsTest::advertiser_currency_case_()
 
   Generics::Time now = Generics::Time::get_time_of_day();
   double revenue = fetch_float(std::string("ClickAmount1/") + ENTITY_SUFFIX);
-  
+
 
   //expected data
   std::list<std::string> ccid_exp;
   ccid_exp.push_back(fetch_string(std::string("CC1/") + ENTITY_SUFFIX));
-  
+
 
   // database
   add_stats_(
@@ -224,7 +224,7 @@ CCGKeywordStatsTest::advertiser_currency_case_()
       adv_amount((REPEAT_COUNT / 2) * revenue));
 
   AdClient client = AdClient::create_user(this);
-  AutoTest::NSLookupRequest request; 
+  AutoTest::NSLookupRequest request;
   request.referer_kw(fetch_string(std::string("Keyword1/") + ENTITY_SUFFIX));
   request.tid(fetch_string(std::string("Tid/") + ENTITY_SUFFIX));
   request.debug_time(now);
@@ -295,7 +295,7 @@ CCGKeywordStatsTest::mixed_currency_case_()
   const std::string keyword2 = std::string("Keyword2/") + ENTITY_SUFFIX;
 
   AdClient client = AdClient::create_user(this);
-  AutoTest::NSLookupRequest request; 
+  AutoTest::NSLookupRequest request;
   request.referer_kw(
     fetch_string(std::string("Keyword1/") + ENTITY_SUFFIX) + "," +
     fetch_string(std::string("Keyword2/") + ENTITY_SUFFIX));
@@ -306,7 +306,7 @@ CCGKeywordStatsTest::mixed_currency_case_()
   for (unsigned long i = 0; i < REPEAT_COUNT; i++)
   {
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::sequence_checker(
         ccid_exp,
@@ -342,7 +342,7 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
     AutoTest::ORM::get_tz_ofset(this, "Europe/Copenhagen");
   const Generics::Time ADV2_TZ_OFFSET =
     AutoTest::ORM::get_tz_ofset(this, "America/Sao_Paulo");
-  
+
   AutoTest::Time now;
   AutoTest::Time now_date(now.get_gm_time().get_date());
 
@@ -354,7 +354,7 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
 
   // check dates in advertiser timezones (adv_sdate):
   unsigned long adv1_ccg_keyword_id = fetch_int(
-    std::string("CCGKeywordId1/") + ENTITY_SUFFIX); 
+    std::string("CCGKeywordId1/") + ENTITY_SUFFIX);
   unsigned long adv2_ccg_keyword_id = fetch_int(
     std::string("CCGKeywordId2/") + ENTITY_SUFFIX);
 
@@ -403,7 +403,7 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
 
   {
     AdClient client = AdClient::create_user(this);
-    AutoTest::NSLookupRequest request; 
+    AutoTest::NSLookupRequest request;
     request.referer_kw(fetch_string(std::string("Keyword1/") + ENTITY_SUFFIX));
     client.process_request(request); // REVIEW !!! actual ?
 
@@ -425,7 +425,7 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
   }
   {
     AdClient client = AdClient::create_user(this);
-    AutoTest::NSLookupRequest request; 
+    AutoTest::NSLookupRequest request;
     request.referer_kw(fetch_string(std::string("Keyword2/") + ENTITY_SUFFIX));
     client.process_request(request);
 
@@ -446,4 +446,4 @@ CCGKeywordStatsTest::advertiser_timezone_case_()
       description + " Check CC#2");
   }
 
-} 
+}

@@ -45,7 +45,7 @@ namespace {
       "Unknown location.",
       "gb/utah/moscow", "GB/CntryCH", 0,
       &NSLookupRequest::loc_name
-    }, 
+    },
     {
       "Invalid location.",
       "1/2/3", 0, 0,
@@ -122,7 +122,7 @@ void GEOChannelsMatching::location_name_case(
   const LocTestRequest& testcase)
 {
     AdClient client(AdClient::create_user(this));
-    
+
     NSLookupRequest request;
 
     testcase.param(
@@ -175,7 +175,7 @@ void GEOChannelsMatching::ip_case(
   AdClient client(
     AdClient::create_user(
         this, AutoTest::UF_CENTRAL_FRONTEND));
-    
+
   client.process_request(
     NSLookupRequest().
       debug_ip(testcase.ip).

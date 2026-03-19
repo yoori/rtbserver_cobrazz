@@ -24,7 +24,7 @@ namespace UnitTests
     }
     else
     {
-      size_t type_num = Generics::safe_rand(5); 
+      size_t type_num = Generics::safe_rand(5);
       switch(type_num)
       {
         case 0:
@@ -44,14 +44,14 @@ namespace UnitTests
           break;
       }
     }
-    word.exact = Generics::safe_rand(2); 
+    word.exact = Generics::safe_rand(2);
     if(word.type == 'U')
     {
       if(trigger_.empty())
       {
-        size_t domain_length = 3 + Generics::safe_rand(10); 
-        size_t path_length = 1 + Generics::safe_rand(10); 
-        size_t path_segments = Generics::safe_rand(3); 
+        size_t domain_length = 3 + Generics::safe_rand(10);
+        size_t path_length = 1 + Generics::safe_rand(10);
+        size_t path_segments = Generics::safe_rand(3);
         ChannelServerTestCommons::generate_url(
           word.trigger, domain_length, path_length, path_segments);
         if(word.exact)
@@ -83,7 +83,7 @@ namespace UnitTests
       word.channel_trigger_id += iteration;
       if(trigger_.empty())
       {
-        size_t count_parts = Generics::safe_rand(max_parts) + 1; 
+        size_t count_parts = Generics::safe_rand(max_parts) + 1;
         size_t offset = 0;
         std::vector<size_t> sizes;
         size_t i;
@@ -117,7 +117,7 @@ namespace UnitTests
     }
     else
     {
-      size_t count_parts = Generics::safe_rand(max_parts + 1); 
+      size_t count_parts = Generics::safe_rand(max_parts + 1);
       if(count_parts)
       {
         if(trigger_.empty())
@@ -131,7 +131,7 @@ namespace UnitTests
           {
             std::string trigger_str;
             ChannelServerTestCommons::generate_word(trigger_str, max_word_len);
-            bool quoted = Generics::safe_rand(2); 
+            bool quoted = Generics::safe_rand(2);
             if(i != 0)
             {
               trigger.push_back(' ');
@@ -163,7 +163,7 @@ namespace UnitTests
         }
         catch(const eh::Exception& e)
         {
-          std::cerr << "eh::Exception: " << e.what() 
+          std::cerr << "eh::Exception: " << e.what()
             << " on parsing " << trigger << std::endl;
         }
         word.trigger.swap(trigger_view.trigger);
@@ -173,7 +173,7 @@ namespace UnitTests
     }
     std::cout << iteration << ':' << word.type << ":trigger = "
       << word.trigger << std::endl;
-    word.channel_trigger_id += Generics::safe_rand() % 5; 
+    word.channel_trigger_id += Generics::safe_rand() % 5;
   }
 
   int TriggerSerializationTest::print_compary_parts_(
@@ -291,7 +291,7 @@ namespace UnitTests
       ChannelSvcs::Serialization::serialize(
         word1.parts,
         word1.type,
-        word1.exact,(word1.channel_trigger_id ? false: true), result); 
+        word1.exact,(word1.channel_trigger_id ? false: true), result);
       ChannelSvcs::Serialization::get_parts(
         result.data(), result.size(), parts);
       res += print_compary_parts_(i + 1, word1.parts, parts, result.data(), result.size());
@@ -305,7 +305,7 @@ namespace UnitTests
     }
     return res;
   }
-  
+
   int TriggerSerializationTest::run(int argc, char* argv[]) noexcept
   {
     if(argc == 3)

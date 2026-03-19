@@ -625,7 +625,7 @@ namespace ImprTrack
 
     add_processor_(false, true, Param::DATA,
       new FrontendCommons::DataParamProcessor<RequestInfo>(param_processors_));
-    
+
     cookie_processors_.insert(std::make_pair(
       FrontendCommons::Cookies::CLIENT_ID,
       RequestInfoParamProcessor_var(
@@ -794,7 +794,7 @@ namespace ImprTrack
           ostr << "Request type/account_id mismatch, " <<
             "google keys not found for account '" <<
             request_info.publisher_account_id << "'";
-          
+
           logger()->log(ostr.str(),
             Logging::Logger::NOTICE,
             Aspect::IMPR_TRACK_FRONTEND);
@@ -805,7 +805,7 @@ namespace ImprTrack
     if (request_info.pub_imp_revenue < CampaignSvcs::RevenueDecimal::ZERO)
     {
       logger()->stream(Logging::Logger::NOTICE, Aspect::IMPR_TRACK_FRONTEND) <<
-        "RequestInfoFiller::fill(): get negative pub_imp_revenue: " << 
+        "RequestInfoFiller::fill(): get negative pub_imp_revenue: " <<
         request_info.pub_imp_revenue << ", set pub_imp_revenue to 0";
 
       request_info.pub_imp_revenue = CampaignSvcs::RevenueDecimal::ZERO;

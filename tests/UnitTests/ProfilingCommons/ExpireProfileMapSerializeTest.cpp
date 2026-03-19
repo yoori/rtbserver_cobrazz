@@ -205,7 +205,7 @@ public:
 
 protected:
   virtual ~IndTask() noexcept {}
-  
+
 private:
   Sync::Semaphore& sema_;
   volatile _Atomic_word& count_;
@@ -286,7 +286,7 @@ Generics::Time calc_independent_exec_time(const TestTraits& traits)
 
   Logging::Logger_var logger =
     new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
-  
+
   Generics::ActiveObjectCallback_var callback(
     new Logging::ActiveObjectCallbackImpl(logger));
 
@@ -313,7 +313,7 @@ Generics::Time calc_independent_exec_time(const TestTraits& traits)
   {
     sema.acquire();
   }
-  
+
   timer.stop();
   task_runner->deactivate_object();
   task_runner->wait_object();
@@ -363,7 +363,7 @@ int main(int argc, char* argv[]) noexcept
     traits.iters = 100000;
 //  traits.iters = 10000;
     traits.thread_count = *opt_thread_count;
-    
+
     {
       system((std::string("rm -r ") + traits.path +
         DEP_MAP_PATH + " 2>/dev/null; mkdir -p " + traits.path +
@@ -444,7 +444,7 @@ int main(int argc, char* argv[]) noexcept
         std::endl;
 
       std::cout << "=========================" << std::endl;
-    
+
       calc_coef<SaveFileLayerFunctor<PlainStorage::FileLayer> >(
         ind_time, dep_time, traits);
 

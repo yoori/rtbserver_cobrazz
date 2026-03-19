@@ -11,7 +11,7 @@ namespace AutoTest
     template<typename T>
     void
     Unused(const T& x);
-    
+
     int
     update_(
       std::ostream& strm,

@@ -155,7 +155,7 @@ namespace Bidding
           AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
         AdServer::Commons::JsonObject bid_object(bid_array.add_object());
-      
+
         CampaignSvcs::RevenueDecimal sum_pub_ecpm = CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
           ad_slot_result.selected_creatives[0].pub_ecpm);
 

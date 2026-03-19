@@ -1,16 +1,16 @@
 
 add_idl(LogGeneralizerIDL LogGeneralizer.idl ${IDL_DIRECTORY}/LogProcessing/LogGeneralizer)
 
-target_link_libraries(LogGeneralizerIDL 
+target_link_libraries(LogGeneralizerIDL
   CorbaTypesIDL
 )
 
 add_library(LogGeneralizerLib STATIC
-   LogGeneralizerImplInit.cpp  
-   LogGeneralizerImplInit2.cpp 
-   LogGeneralizerImpl.cpp  
-   LogDbSaverImpl.cpp      
-   DbConnectionFactory.cpp 
+   LogGeneralizerImplInit.cpp
+   LogGeneralizerImplInit2.cpp
+   LogGeneralizerImpl.cpp
+   LogDbSaverImpl.cpp
+   DbConnectionFactory.cpp
    ProcessingContexts.cpp
 )
 
@@ -19,7 +19,7 @@ target_link_libraries(LogGeneralizerLib
 )
 
 add_executable(LogGeneralizer
-  LogGeneralizerMain.cpp  
+  LogGeneralizerMain.cpp
 )
 
 target_link_libraries(LogGeneralizer

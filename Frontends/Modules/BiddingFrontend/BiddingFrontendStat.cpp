@@ -84,7 +84,7 @@ using namespace AdServer::CampaignSvcs;
 namespace AdServer
 {
   // StatHolder::StatData
-  
+
   StatHolder::StatData::StatData()
     : request_google(0),
       request_google_bid(0),
@@ -127,7 +127,7 @@ namespace AdServer
   }
 
   // StatHolder
-  
+
   void
   StatHolder::flush(
     const CampaignManager::RequestParams& request_params,
@@ -211,7 +211,7 @@ namespace AdServer
   }
 
   // BiddingFrontendStatsImpl
-  
+
   BiddingFrontendStatsImpl::BiddingFrontendStatsImpl(
     StatHolder* stat_holder)
     noexcept :
@@ -229,9 +229,9 @@ namespace AdServer
     CORBACommons::StatsValueSeq_var res;
     try
     {
-      Generics::Values_var stat = stat_holder_->dump_stats(); 
-      
-      res = 
+      Generics::Values_var stat = stat_holder_->dump_stats();
+
+      res =
         CORBACommons::ValuesConverter::get_stats(*stat);
     }
     catch(const eh::Exception& e)

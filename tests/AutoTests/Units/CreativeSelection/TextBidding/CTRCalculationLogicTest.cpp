@@ -89,7 +89,7 @@ namespace
           AutoTest::CCGKeywordChecker::Expected().
             ctr(expected_ctr_)).check(throw_on_error);
     }
-    
+
   private:
     BaseUnit* test_;
     AutoTest::DBC::IConn& pq_conn_;
@@ -135,7 +135,7 @@ CTRCalculationLogicTest::tear_down()
     static_cast<unsigned int>(fetch_int("CC1")),
     static_cast<unsigned int>(fetch_int("CC2"))
   };
-  
+
   ORM::clear_stats(pq_conn_, "cc_id", ccs);
 
   ORM::clear_stats(pq_conn_, "country_code", fetch_string("COUNTRYCODE"));
@@ -143,7 +143,7 @@ CTRCalculationLogicTest::tear_down()
   ORM::calc_ctr(pq_conn_);
 }
 
-bool 
+bool
 CTRCalculationLogicTest::run()
 {
 
@@ -183,7 +183,7 @@ CTRCalculationLogicTest::base_case()
   const unsigned int impressions3 = 400;
   unsigned int clicks2 = 0;
   unsigned int clicks3 = 0;
-  
+
   // All requests make with past time to
   // simulate state "one hour late", it need
   // for making tow = 1.0 for country, campaign, etc
@@ -199,12 +199,12 @@ CTRCalculationLogicTest::base_case()
     request.tid = fetch_string("Tag1");
     request.referer_kw = fetch_string("Keyword1");
     request.loc_name = fetch_string("Country");
-    request.debug_time = debug_time; 
+    request.debug_time = debug_time;
     AutoTest::AdClient
       client(AdClient::create_user(this));
     client.process_request(request);
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         fetch_string("CC1"),
@@ -224,13 +224,13 @@ CTRCalculationLogicTest::base_case()
       client(AdClient::create_user(this));
     client.process_request(request);
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         fetch_string("CC2"),
         SelectedCreativesCCID(client)).check(),
       "selected_creatives");
-    
+
     if (i % 4 == 0)
     {
       FAIL_CONTEXT(
@@ -256,13 +256,13 @@ CTRCalculationLogicTest::base_case()
       client(AdClient::create_user(this));
     client.process_request(request);
     client.process_request(request);
-    
+
     FAIL_CONTEXT(
       AutoTest::entry_checker(
         fetch_string("CC2"),
         SelectedCreativesCCID(client)).check(),
       "selected_creatives");
-    
+
     if (i % 2 == 0)
     {
       FAIL_CONTEXT(
@@ -293,7 +293,7 @@ CTRCalculationLogicTest::base_case()
   double ccg1_ctr = 0.0;
 
   // clicks / imps = (75 + 200) / (300 + 400) = 0.393
-  double ccg2_ctr = 
+  double ccg2_ctr =
     static_cast<double>(clicks2 + clicks3) /
       static_cast<double>(impressions2 + impressions3);
 
@@ -305,7 +305,7 @@ CTRCalculationLogicTest::base_case()
   double kw3_ctr = calc_ctr(2.0 * clicks3, 2.0 * impressions3, system_ctr);
 
   // (2 * clicks1 + 1000 * ccg1_ctr + 1000 * kw1_ctr) / (2000 + 2 * impressions1) =
-  // (2 * 0       + 1000 * 0.0      + 1000 * 0.125  ) / (2000 + 2 * 200) = 0.052 
+  // (2 * 0       + 1000 * 0.0      + 1000 * 0.125  ) / (2000 + 2 * 200) = 0.052
   double ctr1 = calc_kwd_ctr(0.0, 2.0 * impressions1, ccg1_ctr, kw1_ctr);
   // (2 * clicks2 + 1000 * ccg2_ctr + 1000 * kw2_ctr) / (2000 + 2 * impressions2) =
   // (2 * 75      + 1000 * 0.393    + 1000 * 0.173  ) / (2000 + 2 * 300) = 0.275
@@ -325,7 +325,7 @@ CTRCalculationLogicTest::base_case()
     precisely_number(ctr4, 0.00001)
   };
 
- 
+
   for (unsigned int i = 0; i < CCG_KEYWORD_SIZE; ++i)
   {
     std::string keyword_name = "CCGKeyword" + strof(i+1);
@@ -338,5 +338,5 @@ CTRCalculationLogicTest::base_case()
           expected_ctr[i])).check(),
       keyword_name + " check chanded CTR#" + strof(i+1));
   }
-  
+
 }

@@ -228,7 +228,7 @@ namespace AdServer
     FrontendsPool::init_frontend(
       const Config& cfg,
       T&&... params)
-    { 
+    {
       if (cfg.present())
       {
         frontends_.emplace_back(new Frontend(config_, std::forward<T>(params)...));

@@ -1,5 +1,5 @@
 add_library(AdInstFrontend SHARED
-RequestInfoFiller.cpp 
+RequestInfoFiller.cpp
   AdInstFrontend.cpp
 )
 target_link_libraries(AdInstFrontend
@@ -15,7 +15,7 @@ target_link_libraries(AdInstFrontend
 # ChannelControllerStubs
 ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 # CampaignManagerStubs
  CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
  CookieManager

@@ -33,12 +33,12 @@ namespace AdServer
       {
         return el->hash();
       }
-      
+
       unsigned long hash_union(unsigned long left, unsigned long right) const
       {
         return left ^ right;
       }
-      
+
       unsigned long hash(const ElementSeqType* el_seq) const
       {
         if(el_seq->empty())
@@ -47,7 +47,7 @@ namespace AdServer
         }
 
         unsigned long res = hash(*(*el_seq->begin()));
-        
+
         for(typename ElementSeqType::const_iterator el_it = ++el_seq->begin();
             el_it != el_seq->end(); ++el_it)
         {
@@ -59,7 +59,7 @@ namespace AdServer
     };
 
     struct ElementSeqBase;
-    
+
     struct SequencePackerElementEraser:
       public ReferenceCounting::DefaultImpl<>
     {
@@ -69,7 +69,7 @@ namespace AdServer
     typedef
       ReferenceCounting::SmartPtr<SequencePackerElementEraser>
       SequencePackerElementEraser_var;
-    
+
     class ElementSeqBase
     {
     public:
@@ -77,7 +77,7 @@ namespace AdServer
       {
         eraser_ = ReferenceCounting::add_ref(eraser);
       }
-      
+
       virtual ~ElementSeqBase() noexcept {}
 
       void unkeep_(ElementSeqBase* /*el*/)
@@ -87,7 +87,7 @@ namespace AdServer
           eraser_->erase(this);
         }
       }
-      
+
     protected:
       mutable SequencePackerElementEraser_var eraser_;
     };
@@ -101,15 +101,15 @@ namespace AdServer
     public:
       typedef ReferenceCounting::SmartPtr<const ElementType> Element_var;
       typedef ReferenceCounting::SmartPtr<const ElementSeqType> ConstElementSeq_var;
-      
+
     protected:
       typedef ReferenceCounting::SmartPtr<ElementSeqType> ElementSeq_var;
-      
+
       class ElementSeqHashAdapter
       {
       public:
         ElementSeqHashAdapter();
-        
+
         /* adapters for search */
         ElementSeqHashAdapter(
           const ElementSeqType* el_seq,
@@ -125,11 +125,11 @@ namespace AdServer
           const ElementSeqType* el_seq);
 
         ElementSeqHashAdapter& operator=(const ElementSeqHashAdapter& init);
-        
+
         unsigned long hash() const;
 
         bool operator==(const ElementSeqHashAdapter& right) const;
-        
+
         const ElementSeqType* list() const;
 
       private:
@@ -138,8 +138,8 @@ namespace AdServer
           const ElementSeqType* left,
           const ElementSeqType* right,
           const ElementType* left_cell = 0,
-          const ElementType* right_cell = 0);        
-        
+          const ElementType* right_cell = 0);
+
       private:
         unsigned long hash_;
         unsigned long size_;
@@ -160,7 +160,7 @@ namespace AdServer
         const ElementSeqType* el_seq, const ElementType* el) noexcept;
 
       unsigned long ptrs_size_() const noexcept;
-      
+
       unsigned long size_() const noexcept;
 
       unsigned long hashes_count_() const noexcept;
@@ -298,7 +298,7 @@ namespace AdServer
       bool right_cell_found = (right_cell == 0 || left_eq_right);
       typename ElementSeqType::const_iterator left_it = left->begin();
       typename ElementSeqType::const_iterator right_it = right->begin();
-      
+
       while(left_it != left->end() && right_it != right->end())
       {
         if(*(*left_it) == *(*right_it))
@@ -395,7 +395,7 @@ namespace AdServer
     {
       eraser_->set_packer(0);
     }
-      
+
     template<typename ElementType, typename ElementSeqType, typename ElementSeqHashType>
     inline
     typename SequencePacker<ElementType, ElementSeqType, ElementSeqHashType>::
@@ -479,7 +479,7 @@ namespace AdServer
       {
         hashes.insert(it->hash());
       }
-      
+
       return hashes.size();
     }
 
@@ -491,7 +491,7 @@ namespace AdServer
     {
       return adapter_table_.size();
     }
-      
+
     template<typename ElementType, typename ElementSeqType, typename ElementSeqHashType>
     inline
     unsigned long

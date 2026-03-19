@@ -320,7 +320,7 @@ namespace Bidding
 
     typedef Generics::GnuHashTable<Generics::SubStringHashAdapter, std::string>
       SourceNameMap;
-    
+
     typedef JsonParamProcessor<JsonProcessingContext>
       JsonRequestParamProcessor;
     typedef ReferenceCounting::SmartPtr<JsonRequestParamProcessor>

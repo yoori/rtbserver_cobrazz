@@ -162,7 +162,7 @@ OIXTestModeTest::pre_condition()
     num_shown(1).
     fraud_correction(false).
     stimestamp(target_sdate);
-  
+
   test_stats_.select(pq_conn_);
 
   // OVERLAP-CHANNEL1 & OVERLAP-CHANNEL2 matched on test request
@@ -176,7 +176,7 @@ OIXTestModeTest::pre_condition()
     key.sdate(now_);
 
     ORM::ChannelOverlapUserStats stat(key);
-    
+
     stat.select(pq_conn_);
 
     overlap_empty_stats_.push_back(stat);
@@ -200,7 +200,7 @@ OIXTestModeTest::process_test_case_(size_t index)
   keyword = fetch_string("CTX/KEYWORD") +
             "," +
             fetch_string("HALO-TRIGGER");
-            
+
   if (test_cases[index].referer_kw)
   {
     keyword += "," + fetch_string(test_cases[index].referer_kw) + "-d";
@@ -311,7 +311,7 @@ OIXTestModeTest::inventory_mode_tag_()
 
   precisely_number got_cpm_threshold(
     user.debug_info.cpm_threshold, 0.00000001);
-  
+
   FAIL_CONTEXT(
     AutoTest::equal_checker(
       expected_cpm_threshold,
@@ -332,7 +332,7 @@ void OIXTestModeTest::channel_overlaps_()
   {
     AdClient user(AdClient::create_user(this));
     user.process_request(request);
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
@@ -348,7 +348,7 @@ void OIXTestModeTest::channel_overlaps_()
   {
     AdClient user(AdClient::create_user(this));
     user.process_request(request);
-    
+
     FAIL_CONTEXT(
       ChannelsCheck(
         this,
@@ -356,16 +356,16 @@ void OIXTestModeTest::channel_overlaps_()
         user.debug_info.history_channels).check(),
       description +
         " Expected history");
-  }  
+  }
 }
- 
-bool 
+
+bool
 OIXTestModeTest::run()
 {
   add_descr_phrase("Run test");
 
   NOSTOP_FAIL_CONTEXT(channel_overlaps_());
-  
+
   for (size_t i = 0; i < countof(test_cases); ++i)
   {
     NOSTOP_FAIL_CONTEXT(process_test_case_(i));
@@ -387,9 +387,9 @@ OIXTestModeTest::post_condition()
     .channelimpinventory_imps (1)
     .channelimpinventory_clicks (0)
     .channelimpinventory_actions (0)
-    .channelimpinventory_revenue (0)        
+    .channelimpinventory_revenue (0)
     .channelimpinventory_impops_user_count (2)
-    .channelimpinventory_imps_user_count (1)       
+    .channelimpinventory_imps_user_count (1)
     .channelimpinventory_imps_other (2)
     .channelimpinventory_imps_other_user_count (1)
     .channelimpinventory_impops_no_imp (0)
@@ -413,9 +413,9 @@ OIXTestModeTest::post_condition()
     .channelimpinventory_imps (0)
     .channelimpinventory_clicks (0)
     .channelimpinventory_actions (0)
-    .channelimpinventory_revenue (0)        
+    .channelimpinventory_revenue (0)
     .channelimpinventory_impops_user_count (4)
-    .channelimpinventory_imps_user_count (0)       
+    .channelimpinventory_imps_user_count (0)
     .channelimpinventory_imps_value (0)
     .channelimpinventory_imps_other (3)
     .channelimpinventory_imps_other_user_count (2)
@@ -433,9 +433,9 @@ OIXTestModeTest::post_condition()
     .channelimpinventory_imps (0)
     .channelimpinventory_clicks (0)
     .channelimpinventory_actions (0)
-    .channelimpinventory_revenue (0)        
+    .channelimpinventory_revenue (0)
     .channelimpinventory_impops_user_count (2)
-    .channelimpinventory_imps_user_count (0)       
+    .channelimpinventory_imps_user_count (0)
     .channelimpinventory_imps_value (0)
     .channelimpinventory_imps_other (0)
     .channelimpinventory_imps_other_user_count (0)
@@ -456,9 +456,9 @@ OIXTestModeTest::post_condition()
     .channelimpinventory_imps (0)
     .channelimpinventory_clicks (0)
     .channelimpinventory_actions (0)
-    .channelimpinventory_revenue (0)        
+    .channelimpinventory_revenue (0)
     .channelimpinventory_impops_user_count (4)
-    .channelimpinventory_imps_user_count (0)       
+    .channelimpinventory_imps_user_count (0)
     .channelimpinventory_imps_value (0)
     .channelimpinventory_imps_other (0)
     .channelimpinventory_imps_other_user_count (0)
@@ -509,7 +509,7 @@ OIXTestModeTest::post_condition()
     ORM::SiteIdBasedStats::Diffs(0),
     ORM::SiteIdBasedStats::Diffs(0)
   };
-  
+
   ORM::TagIdBasedStats::Diffs tag_diff[4] = {
     ORM::TagIdBasedStats::Diffs()
     .tagauctionstats_requests(4)
@@ -548,7 +548,7 @@ OIXTestModeTest::post_condition()
     AutoTest::wait_checker(
       AutoTest::stats_diff_checker(
         pq_conn_,
-        test_ch_diff, 
+        test_ch_diff,
         test_ch_stats_)).check(),
     "channel id based stats check");
 
@@ -599,7 +599,7 @@ OIXTestModeTest::post_condition()
         ORM::ChannelOverlapUserStats::Diffs().users(1),
         overlap_stats_)).check(),
     "wait expected channels overlap stats");
-    
+
   FAIL_CONTEXT(
     AutoTest::stats_each_diff_checker(
       pq_conn_,
@@ -628,13 +628,13 @@ void OIXTestModeTest::make_derivative_requests_(
     TagPassbackChecker checker(
       client,
       fetch_string("ORIGINAL_URL"));
-    
+
     FAIL_CONTEXT(
       checker.check(),
       "Passback check");
 
     client.process_request(checker.tokens().pixel());
-     
+
   }
   else
   {

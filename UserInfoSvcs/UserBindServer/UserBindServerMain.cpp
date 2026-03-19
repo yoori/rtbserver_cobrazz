@@ -43,7 +43,7 @@ UserBindServerApp_::main(int& argc, char** argv)
   noexcept
 {
   static const char* FUN = "UserBindServerApp_::main()";
-  
+
   try
   {
     static const char* USAGE = "usage: UserBindServer <config_file>";
@@ -56,7 +56,7 @@ UserBindServerApp_::main(int& argc, char** argv)
     }
 
     Config::ErrorHandler error_handler;
-    
+
     try
     {
       /* using xsd namespace */
@@ -81,20 +81,20 @@ UserBindServerApp_::main(int& argc, char** argv)
       Stream::Error ostr;
 
       ostr << "Can't parse config file '" << argv[1] << "': ";
-      
+
       if(error_handler.has_errors())
       {
         std::string error_string;
         ostr << error_handler.text(error_string);
       }
-      
+
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
     {
       Stream::Error ostr;
       ostr << "Can't parse config file '" << argv[1] << "': " << e.what();
-      throw Exception(ostr);      
+      throw Exception(ostr);
     }
 
     // Initializing logger
@@ -125,7 +125,7 @@ UserBindServerApp_::main(int& argc, char** argv)
     }
 
     // Creating user info manager servant
-    user_bind_server_impl_ = 
+    user_bind_server_impl_ =
       new AdServer::UserInfoSvcs::UserBindServerImpl(
         callback(),
         logger(),
@@ -199,7 +199,7 @@ main(int argc, char** argv)
     std::cerr << "main(): Critical: got NULL application object.\n";
     return -1;
   }
-  
+
   app->main(argc, argv);
 }
 

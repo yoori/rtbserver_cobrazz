@@ -98,12 +98,12 @@ namespace Profiling
   {
 
     const unsigned long TIME_PRECISION = 30;
-    
+
     struct DMPProfileHash
     {
 
       static const int COORD_PRECISION = 10000;
-      
+
       DMPProfileHash(
         unsigned long time_precision,
         const DMPProfilingInfoReader& dmp_profiling_info)
@@ -120,7 +120,7 @@ namespace Profiling
       {
         return coord * COORD_PRECISION / COORD_PRECISION;
       }
-      
+
       void
       calc(const DMPProfilingInfoReader& dmp_profiling_info)
       {
@@ -153,7 +153,7 @@ namespace Profiling
       uint64_t hash_;
     };
   }
-  
+
   /*
    * ProfilingServer::ZmqRouter
    */
@@ -374,7 +374,7 @@ namespace Profiling
         const ::xsd::AdServer::Configuration::DMPProfileFilterType&
           filter_config =
             config_->DMPProfileFilter().get();
-        
+
         hash_filter_ =
           new HashFilter(
             filter_config.chunk_count(),
@@ -390,7 +390,7 @@ namespace Profiling
             (time_precision % TIME_PRECISION || time_precision == 0 ?
               1 : 0) ) * TIME_PRECISION;
       }
-      
+
       // init request info filler
       request_info_filler_.reset(
         new RequestInfoFiller(
@@ -535,7 +535,7 @@ namespace Profiling
   {
     typedef CORBACommons::ProcessStatsGen<ProfilingServerStats>
       ProcessStatsImpl;
-    
+
     try
     {
       corba_server_adapter_ =
@@ -641,21 +641,21 @@ namespace Profiling
     try
     {
       const std::size_t msg_size = msg.size();
-      
+
       stats_->add_received_messages(1, msg_size);
-      
+
       DMPProfilingInfoReader dmp_profiling_info(msg.data(), msg_size);
 
       const Generics::Time now = Generics::Time::get_time_of_day();
 
       bool profile_request = true;
-      
+
       if (hash_filter_)
       {
         DMPProfileHash dmp_hash(
           hash_time_precision_,
           dmp_profiling_info);
-        
+
         profile_request = !hash_filter_->set(
           dmp_hash.hash(),
           Generics::Time(dmp_profiling_info.time()),
@@ -672,7 +672,7 @@ namespace Profiling
           request_info,
           dmp_profiling_info,
           now);
-        
+
         AdServer::Commons::UserId user_id;
         std::string resolved_ext_user_id;
 
@@ -1066,7 +1066,7 @@ namespace Profiling
         query.statuses[0] = 'A';
         query.statuses[1] = '\0';
         query.first_url = request_params.common_info.referer;
-        
+
         try
         {
           std::string ref_words;
@@ -1485,7 +1485,7 @@ namespace Profiling
         match_params.change_last_request = false;
         match_params.filter_contextual_triggers = false;
         match_params.publishers_optin_timeout = CorbaAlgs::pack_time(Generics::Time::ZERO);
-        
+
         CORBACommons::TimestampInfo_var last_req;
         uim_session->merge(
           user_info,

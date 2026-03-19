@@ -30,7 +30,7 @@ namespace Cpp
     std::ostream& out_cpp_;
     std::string offset_;
   };
-    
+
   /* ImplGenerator */
   class ImplGenerator: public Code::ElementVisitor
   {
@@ -62,7 +62,7 @@ namespace Cpp
     {
       return Declaration::StructDescriptor_var(
         descriptor->as_struct()).in();
-      
+
     }
   }
 
@@ -183,7 +183,7 @@ namespace Cpp
         offset_ << "{" << std::endl;
       offset_ = offset_ + "  ";
     }
-    
+
     for(Code::ElementList::const_iterator el_it = elem->elements()->begin();
         el_it != elem->elements()->end(); ++el_it)
     {
@@ -265,7 +265,7 @@ namespace Cpp
     out << std::endl;
 
     ImplGenerator impl_generator(out_inl_impl, out_cpp);
-    
+
     for(Code::ElementList::const_iterator el_it = elements->begin();
         el_it != elements->end(); ++el_it)
     {

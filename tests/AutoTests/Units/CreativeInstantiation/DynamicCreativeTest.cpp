@@ -20,7 +20,7 @@ namespace
 
   const char* SERVICE = "/services/dcreative?";
 
-  const FrontendTestCase FRONTEND_TESTS[] = 
+  const FrontendTestCase FRONTEND_TESTS[] =
   {
     {
       "Unexisting creative HTML file.",
@@ -56,7 +56,7 @@ namespace
       "Security test.",
       "file=%2F%2E%2E%2F%2E%2E%2Flog%2Fapache%2Fsecure_error_log&c=http%3A%2F%2Fya.ru",
       403, false
-    } 
+    }
   };
 
   /**
@@ -128,7 +128,7 @@ namespace
     {
       return random_;
     }
-    
+
   private:
     std::string frontend_;
     std::string click_;
@@ -145,7 +145,7 @@ namespace
 
     static const size_t MAX_TOKEN_SIZE = 4096;
     static const size_t TOKEN_COUNT = 5;
-    
+
     typedef const std::string& (Creative::*CreativeMember)() const;
 
     struct Token
@@ -156,7 +156,7 @@ namespace
     };
 
     static const Token TOKENS[TOKEN_COUNT];
-    
+
   public:
     /**
      * @brief Constructor.
@@ -170,7 +170,7 @@ namespace
       body_(body),
       expected_(expected)
     { }
-     
+
 
     /**
      * @brief Destructor.
@@ -199,7 +199,7 @@ namespace
             " ('" << got_token << "')";;
           throw AutoTest::CheckFailed(ostr);
         }
-        
+
         std::string expected_token = TOKENS[index].token +
           " = " + (TOKENS[index].content?
             (expected_.*(TOKENS[index].content))(): "") +
@@ -301,7 +301,7 @@ DynamicCreativeTest::run_test()
 
   NOSTOP_FAIL_CONTEXT(dcreatives_frontend());
   NOSTOP_FAIL_CONTEXT(token_substitution());
-  
+
   return true;
 }
 
@@ -311,7 +311,7 @@ void DynamicCreativeTest::dcreatives_frontend()
   for (size_t i = 0; i < countof(FRONTEND_TESTS); ++i)
   {
     add_descr_phrase(FRONTEND_TESTS[i].description);
-    
+
     std::string url(SERVICE);
     url+=FRONTEND_TESTS[i].params;
 
@@ -319,9 +319,9 @@ void DynamicCreativeTest::dcreatives_frontend()
       AutoTest::equal_checker(
         FRONTEND_TESTS[i].expected_status,
         client.process(url, true)).check(),
-      FRONTEND_TESTS[i].description + 
+      FRONTEND_TESTS[i].description +
         " Unexpected response status.");
-  
+
     if (FRONTEND_TESTS[i].check_body)
     {
       Creative creative(frontend, "http://ya.ru");
@@ -352,7 +352,7 @@ void DynamicCreativeTest::token_substitution()
       AutoTest::equal_checker(
         fetch_string(TOKEN_TESTS[i].ccid),
         client.debug_info.ccid).check(),
-      TOKEN_TESTS[i].description + 
+      TOKEN_TESTS[i].description +
         " Unexpected ccid.");
 
     std::string html_url(
@@ -361,15 +361,15 @@ void DynamicCreativeTest::token_substitution()
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         !html_url.empty()),
-      TOKEN_TESTS[i].description + 
+      TOKEN_TESTS[i].description +
       " Unexpected htm_url.");
 
     std::string click(client.debug_info.click_url);
-    
+
     FAIL_CONTEXT(
       AutoTest::predicate_checker(
         !click.empty()),
-      TOKEN_TESTS[i].description + 
+      TOKEN_TESTS[i].description +
       " Unexpected click_url.");
 
     unsigned long got_status =
@@ -379,7 +379,7 @@ void DynamicCreativeTest::token_substitution()
       AutoTest::equal_checker(
         TOKEN_TESTS[i].status,
         got_status).check(),
-      TOKEN_TESTS[i].description + 
+      TOKEN_TESTS[i].description +
         " Unexpected response status.");
 
     // Check creative
@@ -391,7 +391,7 @@ void DynamicCreativeTest::token_substitution()
           AutoTest::equal_checker(
             TOKEN_TESTS[i].body,
             client.req_response_data()).check(),
-          TOKEN_TESTS[i].description + 
+          TOKEN_TESTS[i].description +
             " Unexpected dcreative response body.");
       }
       else
@@ -404,7 +404,7 @@ void DynamicCreativeTest::token_substitution()
             fetch_int(TOKEN_TESTS[i].agency): 0,
           TOKEN_TESTS[i].random
           );
-        
+
         FAIL_CONTEXT(
           CheckCreative(
             client.req_response_data(),
@@ -412,10 +412,10 @@ void DynamicCreativeTest::token_substitution()
           TOKEN_TESTS[i].description +
           " Unexpected creative content.");
       }
-      
+
     }
   }
-  
+
 }
 
 

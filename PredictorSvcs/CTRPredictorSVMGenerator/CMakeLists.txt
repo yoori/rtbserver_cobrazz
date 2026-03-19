@@ -1,10 +1,10 @@
 
 add_library(CTRPredictorSVMGeneration
-  FileGuard.cpp 
-  Utils.cpp 
-  FeatureContainer.cpp 
-  OutputLibSvmStream.cpp 
-  InputCsvStream.cpp 
+  FileGuard.cpp
+  Utils.cpp
+  FeatureContainer.cpp
+  OutputLibSvmStream.cpp
+  InputCsvStream.cpp
 )
 
 target_link_libraries(CTRPredictorSVMGeneration
@@ -15,8 +15,8 @@ target_link_libraries(CTRPredictorSVMGeneration
 )
 
 add_executable(CTRPredictorSVMGenerator
-  CampaignFolder.cpp 
-  CTRPredictorSVMGeneratorImpl.cpp 
+  CampaignFolder.cpp
+  CTRPredictorSVMGeneratorImpl.cpp
   CTRPredictorSVMGeneratorMain.cpp
 )
 
@@ -33,7 +33,7 @@ target_link_libraries(CTRPredictorSVMGenerator
 )
 
 add_executable(CTRPredictorSVMGenerateUtil
-  CTRPredictorSVMGenerateUtil.cpp 
+  CTRPredictorSVMGenerateUtil.cpp
 )
 
 target_link_libraries(CTRPredictorSVMGenerateUtil

@@ -141,7 +141,7 @@ namespace UserInfoSvcs
             full_path << "': " << ex.what();
           throw BindRequestContainer::Exception(ostr);
         }
-        
+
         return true;
       }
 

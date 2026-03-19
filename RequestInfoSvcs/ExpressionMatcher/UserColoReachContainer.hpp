@@ -86,7 +86,7 @@ namespace AdServer
       const bool HOUSEHOLD_;
 
       Generics::Time expire_time_;
-      UserInfoMap_var user_map_;      
+      UserInfoMap_var user_map_;
     };
 
     typedef ReferenceCounting::SmartPtr<UserColoReachContainer>

@@ -28,7 +28,7 @@ namespace AutoTest
       CheckerType check_type = CT_EQUAL);
 
     virtual ~EqualChecker() noexcept;
-    
+
     /**
      * Test that expected value @a exp_value equal or not
      * (depend on @ check_type) with the got value @ got_value
@@ -68,7 +68,7 @@ namespace AutoTest
 
   private:
     bool check_seq_(std::string& dsc) const;
-    
+
     FirstSequenceType expected_;
     SecondSequenceType got_;
     SequenceCheckerEnum check_type_;
@@ -163,7 +163,7 @@ namespace AutoTest
   template<typename DBFetcher>
   DBRecordChecker<DBFetcher>
   db_record_checker(DBFetcher& table, bool exists);
-  
+
 } //namespace AutoTest
 
 #include "CommonCheckers.tpp"

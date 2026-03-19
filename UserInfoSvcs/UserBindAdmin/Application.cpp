@@ -90,7 +90,7 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::Args args(-1);
 
   Generics::AppUtils::Option<unsigned long> opt_portion;
-  
+
   args.add(
     Generics::AppUtils::equal_name("help") ||
     Generics::AppUtils::short_name("h"),
@@ -100,9 +100,9 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::equal_name("reference") ||
     Generics::AppUtils::short_name("r"),
     opt_user_bind_mapper_ref);
-  
+
   args.parse(argc - 1, argv + 1);
- 
+
   Generics::AppUtils::Args::CommandList commands = args.commands();
 
   if(commands.empty() || opt_help.enabled() || *commands.begin() == "help")

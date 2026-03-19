@@ -71,10 +71,10 @@ namespace {
   typedef AutoTest::NSLookupRequest  NSLookupRequest;
   typedef AutoTest::DebugInfoList    DebugInfoList;
   typedef AutoTest::AdClient AdClient;
-  
+
 }
 
-bool 
+bool
 RefererMatchingTest::run_test()
 {
 
@@ -84,9 +84,9 @@ RefererMatchingTest::run_test()
   for (unsigned int idx = 0;
        idx < sizeof(appearances) / sizeof(*appearances);
        idx++)
-  
+
   {
-      
+
     DebugInfoList in_channels;
     DebugInfoList out_channels;
     Stream::Stack<128> log_msg;
@@ -97,7 +97,7 @@ RefererMatchingTest::run_test()
          channel_idx < sizeof(channels) / sizeof(*channels);
          channel_idx++)
     {
-          
+
       if (appearances[idx].*(channels[channel_idx].appearance))
       {
         // Channel must appear
@@ -109,7 +109,7 @@ RefererMatchingTest::run_test()
         out_channels.push_back(fetch_string(channels[channel_idx].name));
       }
     }
-        
+
     Stream::Stack<128> in_msg;
     in_msg << "must got trigger_channels for " << appearances[idx].referer;
 
@@ -119,7 +119,7 @@ RefererMatchingTest::run_test()
         client.debug_info.trigger_channels,
         AutoTest::SCE_ENTRY).check(),
       in_msg.str().str());
-      
+
     Stream::Stack<128> out_msg;
     in_msg << "must not got trigger_channels for " << appearances[idx].referer;
 
@@ -132,4 +132,4 @@ RefererMatchingTest::run_test()
   }
   return true;
 }
- 
+

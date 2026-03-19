@@ -62,14 +62,14 @@ ConfigFileList::ConfigFileList(const char* filepath,
       path = make_filepath(filepath, configpath);
     }
   file.open(path.c_str(), std::ios::in);
-  
+
   if(!file.is_open())
   {
     Stream::Error ostr;
     ostr << "Error: can't open file " << path;
     throw InvalidList(ostr);
   }
-  
+
   while(true)
   {
     std::string line;
@@ -95,7 +95,7 @@ ConfigDirFilesList::ConfigDirFilesList(const char* filespath,
 
   // Directory listing
   DIR *dp;
-  struct dirent *ep;     
+  struct dirent *ep;
   dp = opendir (path.c_str());
 
   if (dp != NULL)
@@ -117,20 +117,20 @@ ConfigDirFilesList::ConfigDirFilesList(const char* filespath,
 
         // Get text
         std::ostringstream text;
-        while (file.good())     
+        while (file.good())
         {
           char c = file.get();
           if (file.good()) text << c;
         }
 
         list_.push_back(text.str());
-        
+
         file.close();
-        
+
       }
 
     }
-    
+
     (void) closedir (dp);
   }
   else
@@ -184,7 +184,7 @@ RandomSelectorPolicy::RandomSelectorPolicy(
 RandomSelectorPolicy::~RandomSelectorPolicy() noexcept
 {
 }
-  
+
 void RandomSelectorPolicy::get_(std::string& value,
                                 unsigned short flags)
 {
@@ -210,13 +210,13 @@ RandomSetSelectorPolicy::RandomSetSelectorPolicy(
 RandomSetSelectorPolicy::~RandomSetSelectorPolicy() noexcept
 {
 }
-  
+
 void RandomSetSelectorPolicy::get_(std::string& value,
                                    unsigned short flags)
 {
 
   unsigned short size = max_set_size_;
-  
+
   if (random_size_) size = Generics::safe_rand(1, max_set_size_);
   value = "";
   unsigned long value_len = 0;
@@ -248,7 +248,7 @@ SelectorPolicy::SelectorPolicy(const String::SubString& entity_name,
   : entity_name(entity_name.str()), empty_prc_(empty_prc), request_count_(0)
 {
 }
-    
+
 SelectorPolicy::~SelectorPolicy() noexcept
 {
 }

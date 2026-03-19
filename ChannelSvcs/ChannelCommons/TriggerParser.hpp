@@ -72,7 +72,7 @@ namespace ChannelSvcs
         size_t seq_length,
         Logging::Logger* logger = 0)
         /*throw(Exception)*/;
-        
+
       static const unsigned long MAX_TRIGGER_LENGTH;
 
       static const unsigned long MAX_URL_LENGTH;

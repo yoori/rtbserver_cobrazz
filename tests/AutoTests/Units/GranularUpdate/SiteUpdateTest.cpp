@@ -36,7 +36,7 @@ void SiteUpdateTest::set_up()
 void SiteUpdateTest::create_site_()
 {
   unsigned long freq_cap_id = fetch_int("InsertSite/FC");
-  
+
   FAIL_CONTEXT(
     AutoTest::wait_checker(
       FreqCapChecker(
@@ -327,7 +327,7 @@ void SiteUpdateTest::delete_site_()
       site->update()),
     "updating site display status");
   // end of TODO
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       site->del()),
@@ -359,7 +359,7 @@ void SiteUpdateTest::update_site_freq_caps_()
 
   ORM::ORMRestorer<ORM::PQ::FreqCap>* freq_cap =
     create<ORM::PQ::FreqCap>(
-      fetch_int("UpdateFC/Publisher/FC"));  
+      fetch_int("UpdateFC/Publisher/FC"));
 
   FAIL_CONTEXT(
     AutoTest::wait_checker(
@@ -369,12 +369,12 @@ void SiteUpdateTest::update_site_freq_caps_()
         FreqCapChecker::Expected().
           window_time(strof(windows_length)) )).check(),
     "FreqCap initial check");
-  
+
   freq_cap->window_length = windows_length + 100;
-    
+
   FAIL_CONTEXT(
     freq_cap->update(),
-    "Can't update fcap");  
+    "Can't update fcap");
 
   ADD_WAIT_CHECKER(
     "FreqCap check",
@@ -383,7 +383,7 @@ void SiteUpdateTest::update_site_freq_caps_()
       freq_cap->id(),
       FreqCapChecker::Expected().
         window_time(strof(windows_length + 100)) ));
-  
+
 }
 
 void SiteUpdateTest::tear_down()
@@ -391,7 +391,7 @@ void SiteUpdateTest::tear_down()
   add_descr_phrase("Tear down");
 }
 
-bool 
+bool
 SiteUpdateTest::run()
 {
   AUTOTEST_CASE(
@@ -409,7 +409,7 @@ SiteUpdateTest::run()
   AUTOTEST_CASE(
     update_creative_exclusion_(),
     "Update creative exclusion");
-    
+
   AUTOTEST_CASE(
     delete_site_(),
     "Delete site");

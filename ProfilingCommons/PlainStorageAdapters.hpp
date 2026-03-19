@@ -125,7 +125,7 @@ namespace AdServer
         assert(buf_size == 8);
         *static_cast<uint64_t*>(buf) = key.value();
       }
- 
+
       template<typename NumberType>
       static unsigned long
       size(const Generics::NumericHashAdapter<NumberType>&)

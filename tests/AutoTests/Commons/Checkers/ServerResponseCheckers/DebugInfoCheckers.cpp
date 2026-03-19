@@ -7,7 +7,7 @@ namespace AutoTest
   // class ChannelsCheck
   ChannelsCheck::~ChannelsCheck() noexcept
   {}
-  
+
   bool
   ChannelsCheck::check(bool throw_error)
     /*throw(eh::Exception)*/
@@ -31,7 +31,7 @@ namespace AutoTest
         exp_channels.push_back(token.str());
       }
     }
-   
+
     return
       sequence_checker(
         exp_channels,
@@ -77,7 +77,7 @@ namespace AutoTest
     BaseUnit* test,
     const NSLookupRequest& request,
     const std::string& expected,
-    SequenceCheckerEnum check_type) 
+    SequenceCheckerEnum check_type)
     : ChannelSequenceChecker(
         test,
         AdClient::create_user(test),
@@ -93,7 +93,7 @@ namespace AutoTest
     const AdClient& client,
     const NSLookupRequest& request,
     const std::string& expected,
-    SequenceCheckerEnum check_type) 
+    SequenceCheckerEnum check_type)
     : ChannelSequenceChecker(
         test,
         client,
@@ -102,7 +102,7 @@ namespace AutoTest
         &DebugInfo::DebugInfo::history_channels,
         check_type)
   {}
- 
+
   // class SelectedCreativesCCID
   SelectedCreativesCCID::SelectedCreativesCCID(
     AdClient& client)
@@ -149,7 +149,7 @@ namespace AutoTest
   SelectedCreativesChecker::~SelectedCreativesChecker()
     noexcept
   {}
-    
+
   bool
   SelectedCreativesChecker::check(
     bool throw_error)
@@ -161,7 +161,7 @@ namespace AutoTest
       AutoTest::equal_seq(
         expected_ccids_,
         SelectedCreativesCCID(client_));
-    
+
     if (!check && throw_error)
     {
       Stream::Error err;
@@ -173,7 +173,7 @@ namespace AutoTest
     return check;
   }
 
-  
+
   // class SpecialEffectsChecker
   const char* SpecialEffectsChecker::S_E_STR[SpecialEffectsChecker::S_E_SIZE] =
   {
@@ -182,7 +182,7 @@ namespace AutoTest
     "ADV",
     "TRACK"
   };
-      
+
   SpecialEffectsChecker::~SpecialEffectsChecker() noexcept
   {}
 
@@ -194,7 +194,7 @@ namespace AutoTest
 
     unsigned long got = 0;
 
-    for (DebugInfo::StringListValue::const_iterator it = 
+    for (DebugInfo::StringListValue::const_iterator it =
            client_.debug_info.special_channels_effects.begin();
          it != client_.debug_info.special_channels_effects.end(); ++it)
     {
@@ -206,7 +206,7 @@ namespace AutoTest
         }
       }
     }
-   
+
     if ( (got & special_effects_) != special_effects_ )
     {
       if (throw_error)

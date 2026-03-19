@@ -27,7 +27,7 @@ namespace UserInfoSvcs
       {
         return owner_.get(pos_);
       }
-      
+
       reference&
       operator=(bool value)
       {
@@ -57,16 +57,16 @@ namespace UserInfoSvcs
         : owner_(nullptr),
           pos_(0)
       {}
-      
+
       const_iterator&
-      operator++() 
+      operator++()
       {
         ++pos_;
         return *this;
       }
 
       const_iterator
-      operator++(int) 
+      operator++(int)
       {
         const_iterator retval = *this;
         ++pos_;
@@ -74,14 +74,14 @@ namespace UserInfoSvcs
       }
 
       const_iterator&
-      operator--() 
+      operator--()
       {
         ++pos_;
         return *this;
       }
 
       const_iterator
-      operator--(int) 
+      operator--(int)
       {
         const_iterator retval = *this;
         ++pos_;
@@ -89,21 +89,21 @@ namespace UserInfoSvcs
       }
 
       const_iterator&
-      operator+=(int diff) 
+      operator+=(int diff)
       {
         pos_ += diff;
         return *this;
       }
 
       const_iterator&
-      operator-=(int diff) 
+      operator-=(int diff)
       {
         pos_ -= diff;
         return *this;
       }
 
       const_iterator
-      operator+(int diff) 
+      operator+(int diff)
       {
         const_iterator retval = *this;
         retval.pos_ += diff;
@@ -111,7 +111,7 @@ namespace UserInfoSvcs
       }
 
       const_iterator
-      operator-(int diff) 
+      operator-(int diff)
       {
         const_iterator retval = *this;
         retval.pos_ -= diff;
@@ -119,25 +119,25 @@ namespace UserInfoSvcs
       }
 
       bool
-      operator==(const_iterator other) const 
+      operator==(const_iterator other) const
       {
         return pos_ == other.pos_;
       }
 
       bool
-      operator!=(const_iterator other) const 
+      operator!=(const_iterator other) const
       {
         return pos_ != other.pos_;
       }
 
       const_reference
-      operator*() const 
+      operator*() const
       {
         return owner_->get(pos_);
       }
 
     protected:
-      const_iterator(const bit_deque* owner, int pos) 
+      const_iterator(const bit_deque* owner, int pos)
         : owner_(owner),
           pos_(pos)
       {}
@@ -161,16 +161,16 @@ namespace UserInfoSvcs
         : owner_(nullptr),
           pos_(0)
       {}
-      
+
       iterator&
-      operator++() 
+      operator++()
       {
         ++pos_;
         return *this;
       }
 
       iterator
-      operator++(int) 
+      operator++(int)
       {
         iterator retval = *this;
         ++pos_;
@@ -178,14 +178,14 @@ namespace UserInfoSvcs
       }
 
       iterator&
-      operator--() 
+      operator--()
       {
         ++pos_;
         return *this;
       }
 
       iterator
-      operator--(int) 
+      operator--(int)
       {
         iterator retval = *this;
         ++pos_;
@@ -193,21 +193,21 @@ namespace UserInfoSvcs
       }
 
       iterator&
-      operator+=(int diff) 
+      operator+=(int diff)
       {
         pos_ += diff;
         return *this;
       }
 
       iterator&
-      operator-=(int diff) 
+      operator-=(int diff)
       {
         pos_ -= diff;
         return *this;
       }
 
       iterator
-      operator+(int diff) 
+      operator+(int diff)
       {
         iterator retval = *this;
         retval.pos_ += diff;
@@ -215,7 +215,7 @@ namespace UserInfoSvcs
       }
 
       iterator
-      operator-(int diff) 
+      operator-(int diff)
       {
         iterator retval = *this;
         retval.pos_ -= diff;
@@ -223,19 +223,19 @@ namespace UserInfoSvcs
       }
 
       bool
-      operator==(iterator other) const 
+      operator==(iterator other) const
       {
         return pos_ == other.pos_;
       }
 
       bool
-      operator!=(iterator other) const 
+      operator!=(iterator other) const
       {
         return pos_ != other.pos_;
       }
 
       reference
-      operator*() const 
+      operator*() const
       {
         reference ret(*owner_, pos_);
         return ret;
@@ -247,7 +247,7 @@ namespace UserInfoSvcs
       }
 
     protected:
-      iterator(bit_deque* owner, int pos) 
+      iterator(bit_deque* owner, int pos)
         : owner_(owner),
           pos_(pos)
       {}
@@ -331,7 +331,7 @@ namespace UserInfoSvcs
           set(p, value);
         }
       }
-      
+
       if(size_ % 8 == 0)
       {
         array_.push_back(value ? 1 : 0);
@@ -349,13 +349,13 @@ namespace UserInfoSvcs
       std::swap(size_, other.size_);
       array_.swap(other.array_);
     }
-    
+
     bool
     get(int pos) const
     {
       return array_[pos / 8] & (1 << (pos % 8));
     }
-    
+
     void
     set(int pos, bool value)
     {

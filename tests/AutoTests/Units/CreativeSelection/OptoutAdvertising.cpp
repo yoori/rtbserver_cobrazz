@@ -28,7 +28,7 @@ namespace
      TCB_Redirected
     },
     {
-     "ALLCOLO", 
+     "ALLCOLO",
      "DisplayRONCPMCC",
      "DisplayRONCPMCC",
      "DisplayRONCPMCC",
@@ -68,14 +68,14 @@ namespace
       TCB_Redirected
     },
     {
-      "ALLCOLO", 
+      "ALLCOLO",
       "DisplayCPMCC",
       "DisplayCPMCC",
       "DisplayCPMCC",
       0
     },
     {
-      "NONOPTOUTCOLO", 
+      "NONOPTOUTCOLO",
       "DisplayCPMCC",
       "DisplayCPMCC",
       0,
@@ -94,7 +94,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   // Test 6.5. Campaigns with frequency caps
@@ -108,14 +108,14 @@ namespace
       TCB_Redirected
     },
     {
-      "ALLCOLO", 
+      "ALLCOLO",
       "DisplayFCCC",
       0,
       0,
       TCB_Redirected
     },
     {
-      "NONOPTOUTCOLO", 
+      "NONOPTOUTCOLO",
       "DisplayFCCC",
       0,
       0,
@@ -134,7 +134,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   // Test 6.6.1. Campaigns with action tracking (RON)
@@ -174,7 +174,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   // Test 6.6.2 Campaigns with action tracking
@@ -188,14 +188,14 @@ namespace
       TCB_Redirected
     },
     {
-      "ALLCOLO", 
+      "ALLCOLO",
       "DisplayCPACC",
       0,
       0,
       TCB_Redirected
     },
     {
-      "NONOPTOUTCOLO", 
+      "NONOPTOUTCOLO",
       "DisplayCPACC",
       0,
       0,
@@ -209,12 +209,12 @@ namespace
       TCB_Redirected
     },
     {
-      "DELETEDCOLO", 
+      "DELETEDCOLO",
       0,
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   // Test 6.7. Campaigns with impression/click tracking
@@ -254,7 +254,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   // Test 6.8. Text RON campaigns
@@ -294,7 +294,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   //Test 6.9. Text(C) targeted campaigns
@@ -334,7 +334,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   // Test 6.10. Text(K) targeted campaigns
@@ -374,7 +374,7 @@ namespace
       0,
       0,
       TCB_Redirected | TCB_RepeatReq
-    }      
+    }
   };
 
   // Test 6.11. Banned channels matching
@@ -414,7 +414,7 @@ namespace
       0,
       0,
       TCB_EmptyPassback
-    }      
+    }
   };
 
   // Test 7. Opt-in status targeting
@@ -456,7 +456,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   //   7.2. optin_status_targeting = NYN (only OptOut)
@@ -496,7 +496,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   //   7.3. optin_status_targeting = NNY (Unknown only)
@@ -536,7 +536,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   //   7.4. optin_status_targeting = NYY (OptOut + Unknown)
@@ -576,7 +576,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   //   7.5. optin_status_targeting = YNY (OptIn + Unknown)
@@ -616,9 +616,9 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
-  
+
   //   7.6. optin_status_targeting = YYN (OptIn + OptOut)
   const OptoutAdvertising::TestCase OST_YYN [] =
   {
@@ -656,7 +656,7 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
 
   //   7.7. optin_status_targeting = YYY (all)
@@ -696,9 +696,9 @@ namespace
       0,
       0,
       TCB_Redirected
-    }      
+    }
   };
-  
+
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::OptOutRequest OptOutRequest;
 
@@ -711,7 +711,7 @@ namespace
     CE_Undef  = 1,  // Undefined client
     CE_Optout = 2   // Optout client
   };
-  
+
   struct ClientDictionaryItem
   {
     const char* description;
@@ -733,7 +733,7 @@ namespace
       &OptoutAdvertising::TestCase::optout_ccid
     }
   };
-  
+
   const char PASSBACK[] = "http://www.passback.adserver.com/";
 
   /**
@@ -758,7 +758,7 @@ namespace
     {
       String::StringManip::mime_url_encode(
         String::SubString(passback_url),
-        passback_url_);      
+        passback_url_);
     }
 
     /**
@@ -802,7 +802,7 @@ OptoutAdvertising::run_test()
     RonAds,
     NSLookupRequest().
       tid(fetch_string("DisplayRONCPMTAG")));
-  
+
   add_descr_phrase("Test 6.2. Targeted ads matching on urls");
   run_test_case(
     TargetedAdsOnUrls,
@@ -829,7 +829,7 @@ OptoutAdvertising::run_test()
     NSLookupRequest().
       tid(fetch_string("DisplayCPATAG")).
       referer(fetch_string("URL")));
-  
+
   add_descr_phrase("Test 6.7. Campaigns with "
                    "impression/click tracking");
   run_test_case(
@@ -858,7 +858,7 @@ OptoutAdvertising::run_test()
     NSLookupRequest().
       tid(fetch_string("TATAG")).
       referer_kw(fetch_string("KEYWORD")));
-  
+
   add_descr_phrase("Test 6.11. Banned channels matching");
   run_test_case(
     NoAdv,
@@ -914,7 +914,7 @@ OptoutAdvertising::run_test()
     NSLookupRequest().
     tid(fetch_string("OSTTAG2")).
       referer_kw(fetch_string("OSTKWD/YYY")));
-  
+
   add_descr_phrase("Impression & clicks in optout mode");
   optout_click_and_impression();
   return true;
@@ -925,10 +925,10 @@ void OptoutAdvertising::run_test_case(
   const TestCase(&testcases)[Count],
   const NSLookupRequest& base_request)
 {
- 
+
   for (unsigned int i=0; i < Count; ++i)
   {
-   
+
     for (unsigned int j=0; j < countof(clients); ++j)
     {
 
@@ -940,9 +940,9 @@ void OptoutAdvertising::run_test_case(
       {
         client.process_request(OptOutRequest().op("out"));
       }
-     
+
       // Set request parameters & send request
-      
+
       NSLookupRequest request(base_request);
       request.colo = fetch_string(testcases[i].colo);
 
@@ -956,10 +956,10 @@ void OptoutAdvertising::run_test_case(
       if (testcases[i].flags & TCB_RepeatReq)
       {
         client.process_request(request);
-      }                
+      }
 
       // Check results
-      
+
       SpecialEffectsChecker checker(
         client,
         request,
@@ -989,7 +989,7 @@ void OptoutAdvertising::run_test_case(
       }
       else
       {
-        
+
         if (testcases[i].flags & TCB_Redirected)
         {
           FAIL_CONTEXT(
@@ -1024,9 +1024,9 @@ void OptoutAdvertising::optout_click_and_impression()
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.debug_info.track_pixel_url.empty()), 
+      !client.debug_info.track_pixel_url.empty()),
     "track_pixel_url empty check");
-  
+
   std::string track_pixel_url(client.debug_info.track_pixel_url);
 
   client.process_request(OptOutRequest().op("out"));
@@ -1035,7 +1035,7 @@ void OptoutAdvertising::optout_click_and_impression()
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.has_host_cookies()), 
+      !client.has_host_cookies()),
     "Host cookies shouldn't return in optout mode");
 
   FAIL_CONTEXT(
@@ -1047,7 +1047,7 @@ void OptoutAdvertising::optout_click_and_impression()
 
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
-      !client.has_host_cookies()), 
+      !client.has_host_cookies()),
     "Host cookies shouldn't return in optout mode");
 
   FAIL_CONTEXT(

@@ -1,5 +1,5 @@
 add_library(ImprTrackFrontend SHARED
- ImprTrackFrontend.cpp 
+ ImprTrackFrontend.cpp
   RequestInfoFiller.cpp
 
 )
@@ -18,7 +18,7 @@ target_link_libraries(ImprTrackFrontend
  #ChannelControllerStubs
  ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
 # CampaignManagerStubs
 CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger

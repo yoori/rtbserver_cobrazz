@@ -256,7 +256,7 @@ namespace RequestInfoSvcs
         impression_info.pub_revenue = pub_revenue;
       }
 
-      request_operation_processor_->process_impression(impression_info);    
+      request_operation_processor_->process_impression(impression_info);
     }
     catch(const eh::Exception& ex)
     {

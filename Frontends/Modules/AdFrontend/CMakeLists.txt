@@ -1,7 +1,7 @@
 add_library(AdFrontend SHARED
-    RequestInfoFiller.cpp 
-  AdFrontend.cpp 
-  AdFrontendStat.cpp 
+    RequestInfoFiller.cpp
+  AdFrontend.cpp
+  AdFrontendStat.cpp
   DebugSink.cpp
 )
 target_link_libraries(AdFrontend
@@ -17,7 +17,7 @@ target_link_libraries(AdFrontend
 # ChannelControllerStubs
 ChannelManagerControllerIDL
 # UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL  UserInfoManagerControllerL
+UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 # CampaignManagerStubs
  CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
  CookieManager

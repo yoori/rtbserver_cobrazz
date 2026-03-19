@@ -78,7 +78,7 @@ namespace RequestInfoSvcs
       sizeof(TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[0]);
 
     Table table(columns);
-      
+
     for(unsigned long i = 0; i < columns; i++)
     {
       table.column(i, TRIGGER_MATCH_PROFILE_TABLE_COLUMNS[i]);
@@ -95,7 +95,7 @@ namespace RequestInfoSvcs
     std::string prefix(max_len + 3, ' ');
 
     Table::Row row(table.columns());
-      
+
     row.add_field(user_id);
     row.add_field(print_match_list(
       profile_reader.page_matches().begin(),
@@ -117,7 +117,7 @@ namespace RequestInfoSvcs
       profile_reader.url_keyword_matches().end(),
       prefix.c_str(),
       align));
-    
+
     {
       std::ostringstream ostr;
       for(UserTriggerMatchReader::impressions_Container::const_iterator imp_it =

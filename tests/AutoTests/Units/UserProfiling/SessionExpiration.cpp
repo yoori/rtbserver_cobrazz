@@ -16,7 +16,7 @@ namespace
 
     typedef std::list<AutoTest::Time> TimeStamps;
     typedef AutoTest::BaseProfileChecker BaseProfileChecker;
-    
+
   public:
     /**
      * @brief Constructor.
@@ -39,13 +39,13 @@ namespace
       timestamps_(timestamps),
       description_(description)
     { }
-      
+
     /**
      * @brief Destructor.
      */
     virtual ~SessionMatchesCheck() noexcept
     { }
-    
+
     /**
      * @brief Check.
      * @param throw on error flag.
@@ -134,7 +134,7 @@ SessionExpiration::run_test()
   // 10 minutes later
   // 1st timestamp should be removed from url_session_matches
   time+=5*60 + 1;
-  timestamps.pop_front();  
+  timestamps.pop_front();
   timestamps.push_back(time);
   request.debug_time(time);
   client.process_request(request);
@@ -155,7 +155,7 @@ SessionExpiration::run_test()
     SessionMatchesCheck(
       this, client, "Channel",
       timestamps, "After 4th request.").check());
- 
+
   return true;
 }
 

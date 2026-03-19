@@ -1,6 +1,6 @@
 add_library(ActionFrontend SHARED
- RequestInfoFiller.cpp 
-  ActionFrontend.cpp 
+ RequestInfoFiller.cpp
+  ActionFrontend.cpp
   ActionFrontendStat.cpp
 )
 target_link_libraries(ActionFrontend

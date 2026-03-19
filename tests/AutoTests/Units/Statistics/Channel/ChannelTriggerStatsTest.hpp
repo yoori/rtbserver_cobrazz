@@ -11,7 +11,7 @@ namespace DB = ::AutoTest::DBC;
  * @class ChannelTriggerStatsTest
  * @brief test channel trigger stat logging behaviour
  * see https://confluence.ocslab.com/display/ADS/ChannelTriggerStatsTest
- */  
+ */
 class ChannelTriggerStatsTest: public BaseDBUnit
 {
   typedef ORM::ChannelTriggerStats Stat;
@@ -21,13 +21,13 @@ class ChannelTriggerStatsTest: public BaseDBUnit
 
 public:
   ChannelTriggerStatsTest(
-    UnitStat& stat_var, 
-    const char* task_name, 
+    UnitStat& stat_var,
+    const char* task_name,
     XsdParams params_var):
     BaseDBUnit(stat_var, task_name, params_var),
     default_colo_(fetch_int("DefaultColo"))
   { }
- 
+
   virtual ~ChannelTriggerStatsTest() noexcept
   { }
 
@@ -36,7 +36,7 @@ protected:
   virtual bool run();
 
   virtual void set_up();
-  
+
   virtual void tear_down();
 
 private:

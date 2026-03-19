@@ -60,9 +60,9 @@ AverageUsersCost::log_profile(
   {
     AutoTest::AdminsArray<AutoTest::InventoryProfileAdmin>
       admins;
-    
+
     admins.initialize(this, CTE_ALL, STE_EXPRESSION_MATCHER, uid);
-    
+
     admins.log(AutoTest::Logger::thlog());
   }
 }
@@ -90,7 +90,7 @@ AverageUsersCost::test_case(
     last_use(today_);
 
   stats.select(pq_conn_);
-  
+
   size_t d_imps = 0,
          t_imps = 0,
          d_clicks = 0,
@@ -268,7 +268,7 @@ AverageUsersCost::run_test()
   stats.select(pq_conn_);
 
   typedef ORM::ChannelInventoryStats::Diffs Diffs;
-  
+
   const Diffs diffs[5] =
   {
     Diffs().

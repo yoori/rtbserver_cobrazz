@@ -31,7 +31,7 @@ namespace AdServer
       typedef ReferenceCounting::SmartPtr<Statement> Statement_var;
 
       class Connection;
-      typedef ReferenceCounting::SmartPtr<Connection> Connection_var;      
+      typedef ReferenceCounting::SmartPtr<Connection> Connection_var;
 
       /**
        * class Statement
@@ -112,7 +112,7 @@ namespace AdServer
           unsigned int col_index,
           const char* val)
           /*throw(Exception, SqlException, NotSupported)*/;
-        
+
         void set_blob(unsigned int col_index, const Lob& val)
           /*throw(Exception, SqlException, NotSupported)*/;
 
@@ -151,14 +151,14 @@ namespace AdServer
           unsigned long size,
           void* indicator,
           void* data_len) /*throw(SqlException)*/;
-        
+
 #ifdef _USE_OCCI
         void describe_type_(
           const char* full_type_name,
           OCIObjectPtr<OCIType, true>& type_info)
           /*throw(TimedOut, SqlException)*/;
 #endif
-        
+
         const Generics::Time* use_timeout_(
           const Generics::Time* timeout) const
           noexcept;
@@ -258,7 +258,7 @@ namespace AdServer
         void set_object_attr_(
           const char* fun, void* val, unsigned long type_id)
           /*throw(SqlException)*/;
-        
+
       private:
         Statement_var statement_;
 
@@ -267,13 +267,13 @@ namespace AdServer
         OCIDuration oci_duration_;
         OCIAnyData* oci_any_data_;
         OCIInd obj_ind_[MAX_OBJECT_FIELDS];
-        
+
         std::list<OCIInd> indicators_;
 #endif
       };
 
       typedef ReferenceCounting::SmartPtr<SqlStream> SqlStream_var;
-      
+
       /**
        * class Object
        */
@@ -333,7 +333,7 @@ namespace AdServer
           delete[] const_cast<char*>(buffer);
         }
       }
-      
+
       /*
        * class Object
        */
@@ -361,7 +361,7 @@ namespace AdServer
         }
         set_number_array(param_index, vec, type);
       }
-      
+
     } //namespace Oracle
   } //namespace Commons
 } //namespace AdServer

@@ -14,13 +14,13 @@ namespace
   typedef AutoTest::SelectedCreativesActualCPC SelectedCreativesActualCPC;
   typedef AutoTest::ClickResponseChecker ClickResponseChecker;
 }
- 
-bool 
+
+bool
 KeywordClickUrlTest::run_test()
 {
   add_descr_phrase("Prepare data common");
   tid = fetch_string("Tag");
-  
+
   add_descr_phrase("Start testing");
   NOSTOP_FAIL_CONTEXT(part1());
   NOSTOP_FAIL_CONTEXT(part2());
@@ -30,7 +30,7 @@ KeywordClickUrlTest::run_test()
 
   return true;
 }
- 
+
 void
 KeywordClickUrlTest::part1()
 {
@@ -40,7 +40,7 @@ KeywordClickUrlTest::part1()
 
   add_descr_phrase("Prepare server context part1");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid = tid;
 
@@ -73,7 +73,7 @@ KeywordClickUrlTest::part2()
 
   add_descr_phrase("Prepare server context part2");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid = tid;
 
@@ -106,7 +106,7 @@ KeywordClickUrlTest::part3()
 
   add_descr_phrase("Prepare server context part3");
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid = tid;
 

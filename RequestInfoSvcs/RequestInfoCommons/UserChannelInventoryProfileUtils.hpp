@@ -102,9 +102,9 @@ namespace RequestInfoSvcs
     unsigned long columns =
       sizeof(CHANNEL_INVENTORY_DAY_PROFILE_TABLE_COLUMNS) /
       sizeof(CHANNEL_INVENTORY_DAY_PROFILE_TABLE_COLUMNS[0]);
-      
+
     Table table(columns);
-      
+
     for(unsigned long i = 0; i < columns; i++)
     {
       table.column(i, CHANNEL_INVENTORY_DAY_PROFILE_TABLE_COLUMNS[i]);
@@ -121,7 +121,7 @@ namespace RequestInfoSvcs
     std::string prefix(max_len + 3, ' ');
 
     Table::Row row(table.columns());
-      
+
     row.add_field(Generics::Time(inv_day_profile_reader.date()).gm_ft());
 
     row.add_field(print_channel_list(
@@ -140,7 +140,7 @@ namespace RequestInfoSvcs
     row.add_field(print_channel_list(
       inv_day_profile_reader.display_impop_no_imp_channel_list().begin(),
       inv_day_profile_reader.display_impop_no_imp_channel_list().end()));
-      
+
     row.add_field(print_channel_list(
       inv_day_profile_reader.text_imp_other_channel_list().begin(),
       inv_day_profile_reader.text_imp_other_channel_list().end()));
@@ -153,7 +153,7 @@ namespace RequestInfoSvcs
 
     {
       std::ostringstream ostr;
-      
+
       for(ChannelInventoryDayReader::channel_price_ranges_Container::const_iterator it =
             inv_day_profile_reader.channel_price_ranges().begin();
           it != inv_day_profile_reader.channel_price_ranges().end();
@@ -163,7 +163,7 @@ namespace RequestInfoSvcs
         {
           ostr << prefix;
         }
-          
+
         ostr << "[" << (*it).country() << ", " <<
           (*it).tag_size() << "]: "
           "ecpm = " << (*it).ecpm() << ", {";
@@ -176,7 +176,7 @@ namespace RequestInfoSvcs
 
       row.add_field(ostr.str());
     }
-      
+
     table.add_row(row);
     table.dump(out);
   }
@@ -191,9 +191,9 @@ namespace RequestInfoSvcs
     unsigned long columns =
       sizeof(COLO_REACH_PROFILE_TABLE_COLUMNS) /
       sizeof(COLO_REACH_PROFILE_TABLE_COLUMNS[0]);
-      
+
     Table table(columns);
-      
+
     for(unsigned long i = 0; i < columns; i++)
     {
       table.column(i, COLO_REACH_PROFILE_TABLE_COLUMNS[i]);
@@ -220,7 +220,7 @@ namespace RequestInfoSvcs
     table.dump(out);
     out << std::endl;
   }
-  
+
   inline
   void print_user_channel_inventory_profile(
     std::ostream& out,
@@ -231,9 +231,9 @@ namespace RequestInfoSvcs
     unsigned long columns =
       sizeof(CHANNEL_INVENTORY_PROFILE_TABLE_COLUMNS) /
       sizeof(CHANNEL_INVENTORY_PROFILE_TABLE_COLUMNS[0]);
-      
+
     Table table(columns);
-      
+
     for(unsigned long i = 0; i < columns; i++)
     {
       table.column(i, CHANNEL_INVENTORY_PROFILE_TABLE_COLUMNS[i]);

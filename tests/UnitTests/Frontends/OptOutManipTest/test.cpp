@@ -1,6 +1,6 @@
 #include<iostream>
 #include<Generics/Time.hpp>
-#include <Frontends/FrontendCommons/OptOutManip.hpp> 
+#include <Frontends/FrontendCommons/OptOutManip.hpp>
 
 
 int main(int argc, char* argv[])

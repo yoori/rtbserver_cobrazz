@@ -67,9 +67,9 @@ namespace RequestInfoSvcs
       prefix = std::string("\n") + std::string(table.value_align() + 3, ' ');
       records_separator = prefix;
     }
-    
+
     std::ostringstream action_markers_str;
-  
+
     for(UserActionProfileReader::action_markers_Container::const_iterator it =
           user_action_reader.action_markers().begin();
         it != user_action_reader.action_markers().end(); ++it)

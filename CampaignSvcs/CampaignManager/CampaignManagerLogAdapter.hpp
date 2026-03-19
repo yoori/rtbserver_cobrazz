@@ -465,7 +465,7 @@ namespace AdServer
           Generics::Time::ZERO :
           colo_it->second->account->time_offset;
     }
-    
+
     inline
     void
     CampaignManagerLogAdapter::fill_request_info(

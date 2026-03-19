@@ -26,7 +26,7 @@ namespace CampaignSvcs
 
     // how to reconstruct exp amount by scan budget
     // 1) proportionaly to sent amount
-    
+
     // keep imps, clicks for convert to amount with actual cost's
     // keep hour distribution for adapt between hours
 

@@ -92,7 +92,7 @@ namespace ChannelSvcs
       logger()->log(ostr.str(), Logging::Logger::DEBUG, ASPECT);
     }
   }
-  
+
   ::AdServer::ChannelSvcs::DictionaryProvider::LexemeSeq*
   DictionaryProviderImpl::get_lexemes(
     const char* language, const ::CORBACommons::StringSeq& words)
@@ -121,14 +121,14 @@ namespace ChannelSvcs
         {
           (*ret_value)[i].forms.length( item_vector[i].forms.size() );
           size_t j = 0;
-	  
+	
           for(Forms::const_iterator it =
               item_vector[i].forms.begin();
               it != item_vector[i].forms.end(); ++it, j++)
           {
             (*ret_value)[i].forms[j] << *it;
           }
-	  
+	
           if(logger()->log_level() >= Logging::Logger::TRACE)
           {
             const Forms& forms = item_vector[i].forms;

@@ -58,7 +58,7 @@ namespace AdServer
 
       protected:
         virtual
-        ~Chunk() noexcept 
+        ~Chunk() noexcept
         {}
 
       protected:
@@ -89,7 +89,7 @@ namespace AdServer
 
       protected:
         virtual
-        ~TimeInterval() noexcept 
+        ~TimeInterval() noexcept
         {}
 
       protected:

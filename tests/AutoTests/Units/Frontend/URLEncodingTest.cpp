@@ -25,7 +25,7 @@ bool
 URLEncodingTest::run_test()
 {
   add_descr_phrase("Passback frontend.");
-  
+
   NOSTOP_FAIL_CONTEXT(
     passback_encoding(
       "SIMPLE_TAG",
@@ -65,7 +65,7 @@ URLEncodingTest::run_test()
 
   NOSTOP_FAIL_CONTEXT(clickurl_encoding());
   NOSTOP_FAIL_CONTEXT(clickurl_relocate_encoding());
-  
+
   add_descr_phrase("Click frontend - preclick.");
 
   NOSTOP_FAIL_CONTEXT(
@@ -77,7 +77,7 @@ URLEncodingTest::run_test()
     clickurl_preclick_encoding(
       "PASSBACK_URL2",
       "PASSBACK_URL2_IDNA_EXP"));
-      
+
   NOSTOP_FAIL_CONTEXT(optout_redirect());
 
   return true;
@@ -158,7 +158,7 @@ URLEncodingTest::clickurl_encoding()
   std::string idna_click_url = fetch_string("PASSBACK_URL2_IDNA_EXP");
 
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("CLICK1_TAG");
 
@@ -188,7 +188,7 @@ URLEncodingTest::clickurl_relocate_encoding()
   std::string keyword   = fetch_string("KEYWORD2");
 
   AdClient client(AdClient::create_user(this));
-  
+
   NSLookupRequest request;
   request.tid         = fetch_string("CLICK2_TAG");
 
@@ -218,7 +218,7 @@ URLEncodingTest::clickurl_relocate_encoding()
     String::StringManip::mime_url_encode(
       fetch_string("PASSBACK_URL2"), url);
 
-    
+
     client.process_request(url_to_click +
     "*amp*relocate*eql*" + url);
 
@@ -236,7 +236,7 @@ URLEncodingTest::clickurl_relocate_encoding()
     std::string url;
     String::StringManip::mime_url_encode(
       fetch_string("PASSBACK_URL3"), url);
-    
+
     client.process_request(url_to_click +
     "*amp*relocate*eql*" + url);
 
@@ -265,7 +265,7 @@ URLEncodingTest::clickurl_relocate_encoding()
     "Check click response");
 
   }
-  
+
 }
 
 void
@@ -281,7 +281,7 @@ URLEncodingTest::clickurl_preclick_encoding(
   request.tid         = fetch_string("CLICK2_TAG");
   request.referer_kw = keyword;
   request.preclick = fetch_string(preclick);
-    
+
   client.process_request(request);
   FAIL_CONTEXT(
     AutoTest::equal_checker(
@@ -311,7 +311,7 @@ URLEncodingTest::optout_redirect()
     "http://cs.ocslab.com/cgi-bin/attest.cgi?actionid=123&cong=opt-out frontend");
   std::string path_url_mime(
     "http://cs.ocslab.com/cgi-bin/attest.cgi?actionid=123&cong=opt-out%20frontend");
-    
+
   const OORequest REQUESTS[] =
   {
     { "in", path_url, path_url_mime, 302},

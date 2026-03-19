@@ -28,7 +28,7 @@ namespace AutoTest
   protected:
     DBC::IConn& connection_;
     StatsDiffType diff_;
-    StatsType initial_; 
+    StatsType initial_;
     StatsType real_;
   };
 

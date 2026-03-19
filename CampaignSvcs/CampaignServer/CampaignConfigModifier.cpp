@@ -487,7 +487,7 @@ namespace CampaignSvcs
             new_campaign->creatives.swap(creatives);
           }
           new_campaign->timestamp = sysdate;
-          modified_ccgs.insert(std::make_pair(ccg_id, new_campaign));          
+          modified_ccgs.insert(std::make_pair(ccg_id, new_campaign));
         }
       }
 

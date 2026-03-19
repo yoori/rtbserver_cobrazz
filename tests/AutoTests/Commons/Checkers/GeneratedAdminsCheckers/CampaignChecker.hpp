@@ -12,9 +12,9 @@ namespace AutoTest
    * @class CampaignChecker
    * @brief CampaignAdmin call checking wrapper
    */
-  class CampaignChecker:  
-    public AutoTest::Checker  
-  {  
+  class CampaignChecker:
+    public AutoTest::Checker
+  {
   public:
 
     enum NotPresentTag
@@ -22,8 +22,8 @@ namespace AutoTest
       NOT_PRESENT
     };
 
-    typedef CampaignAdmin::Expected Expected;      
-    
+    typedef CampaignAdmin::Expected Expected;
+
     /**
      * @brief Constructor.
      *
@@ -41,20 +41,20 @@ namespace AutoTest
       BaseUnit* test,
       unsigned long ccg_id,
       NotPresentTag);
-            
-    virtual ~CampaignChecker() noexcept;
-            
-    bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;      
-            
-  private:    
 
-    BaseUnit* test_;      
-    unsigned long ccg_id_;      
-    Expected expected_;      
+    virtual ~CampaignChecker() noexcept;
+
+    bool check(bool throw_error = true) /*throw(CheckFailed, eh::Exception)*/;
+
+  private:
+
+    BaseUnit* test_;
+    unsigned long ccg_id_;
+    Expected expected_;
     CampaignAdmin::Modificator expand_channels_;
     AdminExistCheck exists_;
     static const Expected ANY_EXPECTED_;
-  };  
+  };
 }
 #endif  // __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNCHECKER_HPP
 

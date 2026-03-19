@@ -129,7 +129,7 @@ namespace AutoTest
     public:
 
       typedef void Type;
-      
+
       /**
        * @brief Constructor.
        * @param parent parameter
@@ -475,7 +475,7 @@ namespace AutoTest
     public:
 
       typedef typename OpenRtbTraits<Tag>::Type Type;
-      
+
       /**
        * @brief Constructor.
        * @param request request which this param belongs to

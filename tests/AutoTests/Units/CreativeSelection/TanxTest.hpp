@@ -1,13 +1,13 @@
 
 #ifndef _AUTOTEST__TANXTEST_
 #define _AUTOTEST__TANXTEST_
-  
+
 #include <tests/AutoTests/Commons/Common.hpp>
-  
+
 
 class TanxTest : public BaseUnit
 {
-  
+
 public:
   TanxTest(
     UnitStat& stat_var,

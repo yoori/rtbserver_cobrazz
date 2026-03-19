@@ -159,7 +159,7 @@ namespace ChannelSvcs
       {
         auto matching_segmentor_cfg =
           server_config->Segmentors().get().matching_segmentor();
-        
+
         for(xsd::AdServer::Configuration::SegmentorSettingsType::Segmentor_const_iterator
             it = server_config->Segmentors().get().Segmentor().begin();
             it != server_config->Segmentors().get().Segmentor().end(); ++it)
@@ -353,7 +353,7 @@ namespace ChannelSvcs
     }
     if (campaign_server_exception)
     {
-      update_data->info_ptr = 
+      update_data->info_ptr =
         update_data->container_ptr->get_old_info();
     }
     update_data->merge_size =
@@ -648,7 +648,7 @@ namespace ChannelSvcs
       CheckInformation::CheckMap ids;
       force_id.insert(
         query.new_ids.get_buffer(),
-        query.new_ids.get_buffer() + query.new_ids.length()); 
+        query.new_ids.get_buffer() + query.new_ids.length());
 
       CheckInformation info;
       container_->check_update(old_master, force_id, info, query.use_only_list);
@@ -1414,7 +1414,7 @@ namespace ChannelSvcs
   noexcept
   {
     ReadGuard_ lock(lock_set_sources_);
-    if(new_variant_server_) 
+    if(new_variant_server_)
     {
       return new_variant_server_->get_check_sum();
     }
@@ -1556,7 +1556,7 @@ namespace ChannelSvcs
     {
       out->id = channel_id;
       out->trigger_channel_id = in[i];
-    } 
+    }
     return in.size();
   }
 
@@ -1586,7 +1586,7 @@ namespace ChannelSvcs
         ostr << ',';
       }
       ostr << it->text();
-    } 
+    }
     ostr << "::ps:";
     for(MatchWords::const_iterator it = match_words[CT_SEARCH].begin();
        it != match_words[CT_SEARCH].end(); ++it)
@@ -1596,7 +1596,7 @@ namespace ChannelSvcs
         ostr << ',';
       }
       ostr << it->text();
-    } 
+    }
     ostr << "::pr:";
     for(MatchWords::const_iterator it = match_words[CT_URL_KEYWORDS].begin();
        it != match_words[CT_URL_KEYWORDS].end(); ++it)
@@ -1606,7 +1606,7 @@ namespace ChannelSvcs
         ostr << ',';
       }
       ostr << it->text();
-    } 
+    }
     trace_sequence("::pe:", exact_words, ostr);
   }
 
@@ -1650,7 +1650,7 @@ namespace ChannelSvcs
       {
         res.content_channels.length(
           result.count_channels[CT_PAGE] + result.count_channels[CT_SEARCH] +
-          result.count_channels[CT_URL] + result.count_channels[CT_URL_KEYWORDS]); 
+          result.count_channels[CT_URL] + result.count_channels[CT_URL_KEYWORDS]);
       }
       do
       {

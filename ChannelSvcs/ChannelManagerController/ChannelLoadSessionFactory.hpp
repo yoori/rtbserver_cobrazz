@@ -41,7 +41,7 @@ private:
   static const char* ASPECT;
 };
 
-typedef ReferenceCounting::SmartPtr<ChannelLoadSessionFactoryImpl> 
+typedef ReferenceCounting::SmartPtr<ChannelLoadSessionFactoryImpl>
   ChannelLoadSessionFactoryImpl_var;
 
 #endif /*CHANNEL_SVCS_CHANNEL_LOAD_SESSION_FACTORY_HPP_*/

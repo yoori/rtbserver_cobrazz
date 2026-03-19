@@ -385,19 +385,19 @@ namespace AutoTest
   };
 
   template<typename iterator, typename slice_type>
-  inline 
+  inline
   slice_iterator<iterator, slice_type>
   operator+ (int shift, const slice_iterator<iterator, slice_type>& iter)
-  { 
-    return iter + shift; 
+  {
+    return iter + shift;
   }
 
   template<typename iterator, typename slice_type>
   inline
   slice_iterator<iterator, slice_type>
   operator- (int shift, const slice_iterator<iterator, slice_type>& iter)
-  { 
-    return iter - shift; 
+  {
+    return iter - shift;
   }
 
   template<typename Seq, typename Value>
@@ -464,17 +464,17 @@ namespace AutoTest
     {
       return compare(other.c_str());
     }
-    
+
   };
 
   template<>
   struct TypeTraits<Comparable>
-  {  
+  {
     static bool equal( const Comparable& x, const Comparable& y )
     {
       return x.compare(y.str());
     }
-  
+
     static bool equal( const Comparable& x, const std::string& y )
     {
       return x.compare(y.c_str());
@@ -495,12 +495,12 @@ namespace AutoTest
    * @class ComparableString.
    * @brief Comparator for string values.
    */
-  class ComparableString : 
+  class ComparableString :
     public virtual Comparable
   {
   protected:
 
-    std::string value_; 
+    std::string value_;
 
   public:
 
@@ -530,7 +530,7 @@ namespace AutoTest
 
     /**
      * @brief Destructor.
-     */    
+     */
     virtual ~ComparableString() noexcept
     { }
 
@@ -542,7 +542,7 @@ namespace AutoTest
     bool
     compare(
       const char* other) const
-    { 
+    {
       return String::SubString(value_) == String::SubString(other);
     }
 
@@ -557,13 +557,13 @@ namespace AutoTest
     }
   };
 
-  
+
   template<>
   struct TypeTraits<ComparableString>: public TypeTraits<Comparable>
-  {  
+  {
   };
 
-  class ComparableRegExp : 
+  class ComparableRegExp :
     public virtual Comparable
   {
   protected:
@@ -579,7 +579,7 @@ namespace AutoTest
   };
   template<>
   struct TypeTraits<ComparableRegExp>: public TypeTraits<Comparable>
-  {  
+  {
   };
 
   typedef std::list<std::string> StringList;
@@ -662,7 +662,7 @@ namespace AutoTest
     bool
     compare(
       const char* other) const
-    { 
+    {
       if (check_is_entry_)
       {
         return equal_seq(value_, parse_list(other));
@@ -695,7 +695,7 @@ namespace AutoTest
 
     List value_;
     bool check_is_entry_;
-    
+
   };
 
   typedef ComparableSeq<ComparableString> ComparableStringList;
@@ -706,7 +706,7 @@ namespace AutoTest
    *
    * Using for comparing floating-point numbers.
    */
-  class precisely_number : 
+  class precisely_number :
     public virtual Comparable
   {
   protected:
@@ -743,7 +743,7 @@ namespace AutoTest
     double value() const
     {
       return value_;
-    }    
+    }
 
     /**
      * @brief Defaul constructor
@@ -863,7 +863,7 @@ namespace AutoTest
     {
       return (v.value_ - value_) > precisely_;
     }
-  
+
     /**
      * @brief Increment.
      *
@@ -929,14 +929,14 @@ namespace AutoTest
       val+=v;
       return val;
     }
-  
+
     /**
      * @brief Division.
      *
      * Divide precisely_numbers.
      * @param other precisely_number.
      * @return quotient.
-     */  
+     */
     precisely_number operator/(const precisely_number& v) const
     {
       precisely_number val(*this);
@@ -1027,7 +1027,7 @@ namespace AutoTest
     Money ()
       :precisely_number(0.0, money_delta)
     {}
-  
+
     /**
      * @brief Constructor.
      * @param double value.
@@ -1064,22 +1064,22 @@ namespace AutoTest
 
   template<>
   struct TypeTraits<Money>
-  {  
+  {
     static bool equal( const Money& x, const Money& y )
     {
       return x == y;
     }
-  
+
     static bool equal( const double& x, const Money& y )
     {
       return y == x;
     }
-  
+
     static bool equal( const Money& y, const double& x )
     {
       return y == x;
     }
-  
+
     static const std::string to_string( const Money& x )
     {
       std::ostringstream ost;
@@ -1115,7 +1115,7 @@ namespace AutoTest
     protected:
       virtual ~ValueVar() noexcept {}
     };
-  
+
     Var var_;
 
   public:

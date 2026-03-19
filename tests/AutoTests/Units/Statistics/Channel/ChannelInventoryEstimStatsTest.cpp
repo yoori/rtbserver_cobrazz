@@ -7,7 +7,7 @@ REFLECT_UNIT(ChannelInventoryEstimStatsTest) (
 );
 
 namespace {
-  
+
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef ORM::ChannelInventoryEstimStats::Diffs Diffs;
   typedef ORM::ChannelInventoryEstimStats Stat;
@@ -15,7 +15,7 @@ namespace {
 
   const ChannelInventoryEstimStatsTest::UserRequestType requests[] =
   {
-      // channel level regular from_now   
+      // channel level regular from_now
       //   #S1     0.2     0       +5
       {0, 0, 0, "KW0", "AdvBPP0"},
       {1, 0, 0, "KW0", "AdvBPP0"},
@@ -33,7 +33,7 @@ namespace {
 
       //   S#2     0.2     0       +1
       {9, 0, 0, "KW1", "AdvBPP1"},
-      
+
       //   S#1     0.5     0       +4
       {10, 0, "KW0", 0, "AdvBPS0"},
       {11, 0, "KW0", 0, "AdvBPS0"},
@@ -48,7 +48,7 @@ namespace {
       {18, 0, 0, "KW1", "AdvBPP1"},
 
       // Mixed
-      
+
       //  S#1     S#2     1      +1      +1
       //  S#2     S#2   0.2       0      +1
       {19, "URL0", 0, "KW1", "AdvBPU0,AdvBPP1"},
@@ -59,7 +59,7 @@ namespace {
       //  S#2     S#2    1       +1      +1
       {21, "URL1", 0, "KW1", "AdvBPU1,AdvBPP1"},
       // This request should increase row with maximum match level!
-      // S#1      S#2  0.5       0       +1 
+      // S#1      S#2  0.5       0       +1
       {22, 0, "KW0", "KW0", "AdvBPS0,AdvBPP0"},
 
       // History & history+today
@@ -114,14 +114,14 @@ namespace {
         String::StringManip::trim(token);
         exp_trigger_channels.push_back(test_->fetch_string(token.str()));
       }
-      
+
       FAIL_CONTEXT(
         AutoTest::sequence_checker(
           exp_trigger_channels,
           user_.debug_info.trigger_channels,
           AutoTest::SCE_ENTRY).check(),
         "trigger_channels");
-      
+
       return true;
     }
 
@@ -131,8 +131,8 @@ namespace {
     std::string exp_channels_;  // expected trigger channels names
   };
 }
- 
-bool 
+
+bool
 ChannelInventoryEstimStatsTest::run_test()
 {
   users.initialize(this, USERS_COUNT);
@@ -152,7 +152,7 @@ ChannelInventoryEstimStatsTest::run_test()
   test_4th_request_tomorrow();
   test_5th_request_after_tomorrow();
   test_different_colo_();
- 
+
   return true;
 }
 
@@ -182,7 +182,7 @@ ChannelInventoryEstimStatsTest::test_1st_request()
   stats[1].description(
     "ChannelInventoryEstimStats.Session channel#2 - "
     "level 0.2");
-  //     level = 0.5  
+  //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
@@ -273,7 +273,7 @@ ChannelInventoryEstimStatsTest::test_1st_request()
       Diffs().
         users_regular(0).
         users_from_now(3),
-      //     level = 1.0  
+      //     level = 1.0
       Diffs(1),
       Diffs(4),
       //  History & History+today
@@ -322,7 +322,7 @@ ChannelInventoryEstimStatsTest::test_2nd_request_70s_later()
   stats[1].description(
     "ChannelInventoryEstimStats.Session channel#2 - "
     "level 0.2");
-  //     level = 0.5  
+  //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
@@ -361,12 +361,12 @@ ChannelInventoryEstimStatsTest::test_2nd_request_70s_later()
 
   const UserRequestType requests_70[] =
   {
-    // channel level regular from_now   
+    // channel level regular from_now
     //  S#1      0.2    +1       -1
     //  S#1      0.5     0       +1
     {1, 0, 0, "KW0", "AdvBPP0"},  // move user#1 from 0.2 to 0.5
     //  S#1      0.2     0       +2
-    {23, 0, 0, "KW0", "AdvBPP0"}, // add user#23 to 0.2 
+    {23, 0, 0, "KW0", "AdvBPP0"}, // add user#23 to 0.2
     {24, 0, 0, "KW0", "AdvBPP0"}, // add user#24 to 0.2
 
     //  S#1      0.2     0       -1
@@ -385,9 +385,9 @@ ChannelInventoryEstimStatsTest::test_2nd_request_70s_later()
     //  S#1        1     0       +2
     {10, 0, "KW0", 0, "AdvBPS0"}, // move user#10 to 1
     {11, 0, "KW0", 0, "AdvBPS0"}  // move user#10 to 1
-    
+
   };
-  
+
   for (unsigned int i=0; i < countof(requests_70); ++i)
   {
     send_request(requests_70[i], 70);
@@ -398,7 +398,7 @@ ChannelInventoryEstimStatsTest::test_2nd_request_70s_later()
         requests_70[i].exp_trigger_channels).check(),
       "Check matching#" + strof(i));
   }
-    
+
   {
     const Diffs diff[6] =
     {
@@ -459,7 +459,7 @@ ChannelInventoryEstimStatsTest::test_3d_request_130s_later()
   stats[1].description(
     "ChannelInventoryEstimStats.Session channel#2 - "
     "level 0.2");
-  //     level = 0.5  
+  //     level = 0.5
   stats[2].key().
     channel_id(fetch_int("AdvChannel0")).
     colo_id(1).
@@ -494,10 +494,10 @@ ChannelInventoryEstimStatsTest::test_3d_request_130s_later()
     "ChannelInventoryEstimStats.Session channel#2 - "
     "level 1.0");
   stats.select(conn);
-  
+
   const UserRequestType requests_130[] =
    {
-    // channel level regular from_now   
+    // channel level regular from_now
     //    S#2    0.5    +1      -1
     //    S#2      1     0      +1
     {7, 0, "KW1", 0, "AdvBPS1"},
@@ -511,7 +511,7 @@ ChannelInventoryEstimStatsTest::test_3d_request_130s_later()
     {13, "URL0", 0, 0, "AdvBPU0"}
 
    };
-  
+
   for (unsigned int i=0; i < countof(requests_130); ++i)
   {
     send_request(requests_130[i], 130);
@@ -522,7 +522,7 @@ ChannelInventoryEstimStatsTest::test_3d_request_130s_later()
         requests_130[i].exp_trigger_channels).check(),
       "Check matching" + strof(i));
   }
-  
+
   {
     const Diffs diff[6] =
     {
@@ -759,7 +759,7 @@ ChannelInventoryEstimStatsTest::test_4th_request_tomorrow()
           conn, diff, stats)).check(),
       "tomorrow");
 
-  }  
+  }
 }
 
 void ChannelInventoryEstimStatsTest::test_5th_request_after_tomorrow()
@@ -802,10 +802,10 @@ void ChannelInventoryEstimStatsTest::test_5th_request_after_tomorrow()
     "ChannelInventoryEstimStats.History channel#2 - "
     "today not changed");
   stats.select(conn);
-  
+
   const UserRequestType requests_after_tomorrow[] =
    {
-    // channel level regular from_now   
+    // channel level regular from_now
     //    H#2      1    +1       0     after tomorrow
     //    H#2      2     0      +1     after tomorrow
     {24, 0, 0, "KWH2", "AdvBPPH2"},
@@ -858,7 +858,7 @@ void ChannelInventoryEstimStatsTest::test_different_colo_()
   unsigned long channel = fetch_int("AdvChannelCOLO");
 
   ORM::StatsArray<ORM::ChannelInventoryEstimStats, 3> stats;
-    
+
   stats[0].key().
     channel_id(channel).colo_id(colo1).match_level(0.2).sdate(base_time);
   stats[1].key().
@@ -868,7 +868,7 @@ void ChannelInventoryEstimStatsTest::test_different_colo_()
   for (size_t i = 0; i < 3; ++i)
   {
     stats[i].description(description);
-  } 
+  }
   stats.select(conn);
 
   AutoTest::AdClient user(AutoTest::AdClient::create_user(this));
@@ -920,7 +920,7 @@ ChannelInventoryEstimStatsTest::send_request(const UserRequestType& request,
   if (request.referer_kw) ns_request.referer_kw = fetch_string(request.referer_kw);
   if (request.search_kw) ns_request.search = fetch_string(request.search_kw);
   ns_request.debug_time = base_time + time_ofset;
- 
+
   users.process_request_i(request.user_index, ns_request);
 }
 

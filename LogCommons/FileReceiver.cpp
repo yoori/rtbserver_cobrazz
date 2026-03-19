@@ -24,7 +24,7 @@ namespace AdServer
       public:
         DirSelectAdapter(
           FileReceiver* file_receiver,
-          Handler handler, 
+          Handler handler,
           Generics::ActiveObject* interrupter,
           const char* prefix = "")
           noexcept;
@@ -44,7 +44,7 @@ namespace AdServer
 
       DirSelectAdapter::DirSelectAdapter(
         FileReceiver* file_receiver,
-        Handler handler, 
+        Handler handler,
         Generics::ActiveObject* interrupter,
         const char* prefix)
         noexcept

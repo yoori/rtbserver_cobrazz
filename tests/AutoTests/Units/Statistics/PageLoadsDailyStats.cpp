@@ -93,7 +93,7 @@ PageLoadsDailyStats::initialize_stats(
         tag_group(
           fetch_tag_group(expected[i].tag_group));
     }
-    
+
     ORM::PageLoadsDaily stat(key);
 
     stat.description(description + " #" + strof(i+1));
@@ -137,7 +137,7 @@ PageLoadsDailyStats::case01_multiple_tags_in_one_domain()
     ORM::PageLoadsDaily::Diffs().
       page_loads(1).
       utilized_page_loads(0));
-  
+
   NSLookupRequest request;
   request.debug_time = debug_time;
   request.referer = "www.pageloadsdailystats1.com";
@@ -252,7 +252,7 @@ PageLoadsDailyStats::case03_multiple_tags_iframe_noteq_page()
   };
 
   initialize_stats(description, EXPECTED);
- 
+
   NSLookupRequest request;
   request.debug_time = debug_time;
 
@@ -312,10 +312,10 @@ PageLoadsDailyStats::case04_multiple_tags_iframes()
   };
 
   initialize_stats(description, EXPECTED);
- 
+
   NSLookupRequest request;
   request.debug_time = debug_time;
-  
+
   request.referer = "www.pageloadsdailystats4_1.com";
   request.tid = tag1;
   request.referer_kw = keyword1;
@@ -471,7 +471,7 @@ PageLoadsDailyStats::case06_merging_on_the_same_tag()
   request1.debug_time = debug_time;
   request1.referer = "www.pageloadsdailystats6.com";
   request1.tid = tag1;
-  
+
   request2.debug_time = debug_time;
   request2.referer = "www.pageloadsdailystats6.com";
   request2.pl = pl;
@@ -719,7 +719,7 @@ PageLoadsDailyStats::case11_different_sites()
   request.debug_time = debug_time;
   request.referer = "www.pageloadsdailystats11.com";
   request.pl = pl;
-    
+
   request.referer_kw = keyword1;
   request.tid = tag1;
   client.process_request(request);
@@ -839,7 +839,7 @@ PageLoadsDailyStats::case13_inventory_mode_tags()
   add_descr_phrase(description);
 
   AdClient client(AdClient::create_user(this));
-  
+
   std::string pl = "9152113";
   std::string tag1 = fetch_string("TAG13_1");
   std::string tag2 = fetch_string("TAG13_2");
@@ -918,7 +918,7 @@ PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_1(
     { "SITE14b", "TAG14b_1", 1, 0 }
   };
 
-    
+
   initialize_stats(description, EXPECTED);
 
   {
@@ -1008,7 +1008,7 @@ PageLoadsDailyStats::case14_reverse_logs_delivery_order_part_2(
         client.debug_info.ccid).check(),
       "must select expected creative case14b 2");
   }
-  
+
 }
 
 void
@@ -1036,7 +1036,7 @@ PageLoadsDailyStats::case15_user_statuses()
     AdClient client(AdClient::create_nonoptin_user(this));
     request.referer = "www.pageloadsdailystats15_1.com";
     request.pl = pl;
-    
+
     request.tid = tag1;
     client.process_request(request);
     FAIL_CONTEXT(

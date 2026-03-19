@@ -37,7 +37,7 @@ namespace AutoTest
        */
       explicit TextField(
         const std::string& initial);
-      
+
       /**
        * @brief Set text.
        *
@@ -107,7 +107,7 @@ namespace AutoTest
       /**
        * @brief Constructor.
        *
-       * @param holded connection 
+       * @param holded connection
        */
       Conn(IConn* conn = 0);
 
@@ -224,7 +224,7 @@ namespace AutoTest
         const Arg1& arg1,
         const Arg2& arg2,
         T& value);
-      
+
     protected:
       IConn* conn_;
     };
@@ -343,7 +343,7 @@ namespace AutoTest
        * @brief Set string parameter to null.
        */
       virtual void null (const char* value);
-      
+
       /**
        * @brief Set string parameter to null.
        */
@@ -406,14 +406,14 @@ namespace AutoTest
        * @brief Execute query.
        *
        * @return execution status
-       */      
+       */
       virtual int update () = 0;
 
       /**
        * @brief throw exception on query.
        *
        * @param error message
-       */      
+       */
       virtual void throw_exception(
         const std::string& message) = 0;
 
@@ -421,10 +421,10 @@ namespace AutoTest
        * @brief Get query stream.
        *
        * @return stream
-       */      
+       */
       virtual IBasicQueryStream* query_stream () = 0;
     };
-      
+
     /**
     * @class QueryStream
     * @brief mixing to wrap Query with overloaded parameters setters
@@ -438,7 +438,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */     
+       */
       T&
       set(
         char value);
@@ -448,7 +448,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */     
+       */
       T& set(
         int value);
 
@@ -457,7 +457,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */     
+       */
       T& set(
         bool value);
 
@@ -466,7 +466,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */     
+       */
       T&
       set(
         unsigned int value);
@@ -476,7 +476,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */     
+       */
       T&
       set(
         float value);
@@ -486,7 +486,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */     
+       */
       T&
       set(
         double value);
@@ -496,7 +496,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */ 
+       */
       T&
       set(
         const char* value);
@@ -506,7 +506,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */ 
+       */
       T&
       set(
         const std::string& value);
@@ -516,7 +516,7 @@ namespace AutoTest
        *
        * @param parameter value
        * @return query
-       */ 
+       */
       T&
       set(
         const Generics::ExtendedTime& value);
@@ -549,7 +549,7 @@ namespace AutoTest
       T&
       null(
         int value);
-      
+
       /**
        * @brief Set bool parameter to null.
        *
@@ -687,7 +687,7 @@ namespace AutoTest
        * @brief throw exception on query.
        *
        * @param error message
-       */      
+       */
       void throw_exception(
         const std::string& message);
 
@@ -695,7 +695,7 @@ namespace AutoTest
        * @brief Get query stream interface.
        *
        * @param query stream interface
-       */            
+       */
       IBasicQueryStream* query_stream();
 
       /**
@@ -708,10 +708,10 @@ namespace AutoTest
        *        Also check that result contain only one row.
        *
        * @return true if success
-       */      
+       */
       template<class Getter>
       bool get_one (Getter getter);
-      
+
     protected:
       IQuery* query_;
     };
@@ -928,31 +928,31 @@ namespace AutoTest
        *
        * @param value.
        * @return result set
-       */      
+       */
       Result&
       get(
         Generics::ExtendedTime& value);
-      
+
       /**
        * @brief Get timestamp value.
        *
        * @param value.
        * @return result set
-       */      
+       */
       Result&
       get(
         Generics::Time& value);
-      
+
       /**
        * @brief Get long(text) value.
        *
        * @param value.
        * @return result set
-       */      
+       */
       Result&
       get(
         TextField& value);
-      
+
     protected:
       IResult* result_;
 
@@ -971,9 +971,9 @@ namespace AutoTest
       T*  object_;
       Method  method_;
     public:
-      
+
       GetResult (T* object, Method method);
-      
+
       void operator()(Result& result);
     };
 

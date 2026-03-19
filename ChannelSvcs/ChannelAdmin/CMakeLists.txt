@@ -11,7 +11,7 @@ target_link_libraries(ChannelAdmin
   ChannelContainer
   ChannelProxyIDL
   ChannelProxy_v28IDL
-  ChannelUpdate_v28IDL  
+  ChannelUpdate_v28IDL
   ChannelSessionFactory
   DictionaryProviderIDL
 )

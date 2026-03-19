@@ -20,21 +20,21 @@ ActionGranularUpdateTest::set_up()
   add_descr_phrase("Setup");
 }
 
-bool 
+bool
 ActionGranularUpdateTest::run()
 {
   AUTOTEST_CASE(
     add_action(),
     "Add action");
-  
+
   AUTOTEST_CASE(
     unlink_action(),
     "Unlink action");
-  
+
   AUTOTEST_CASE(
     action_for_inactive_ccg(),
     "Inactive CCG");
-  
+
   return true;
 }
 
@@ -51,7 +51,7 @@ ActionGranularUpdateTest::add_action()
   action->url = fetch_string("ADDACTION/URL");
   action->status = "A";
   action->display_status_id = 1;
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       action->insert()),
@@ -59,7 +59,7 @@ ActionGranularUpdateTest::add_action()
 
   ORM::ORMRestorer<ORM::PQ::Ccgaction>* ccg_action =
     create<ORM::PQ::Ccgaction>();
-  
+
   FAIL_CONTEXT(
     AutoTest::predicate_checker(
       ccg_action->insert(
@@ -131,11 +131,11 @@ ActionGranularUpdateTest::unlink_action()
 void
 ActionGranularUpdateTest::action_for_inactive_ccg()
 {
- 
+
   std::string action  = fetch_string("INACTIVECCG/ACTION");
   std::string ccg1  = fetch_string("INACTIVECCG/CCG1");
   std::string ccg2  = fetch_string("INACTIVECCG/CCG2");
-  
+
   AdClient client(AdClient::create_user(this));
 
   client.process_request(NSLookupRequest());
@@ -145,11 +145,11 @@ ActionGranularUpdateTest::action_for_inactive_ccg()
 
   client.process_request(ActionRequest().actionid(action));
 
-  
+
   {
     std::string expected = "\\[ action_id = " + action + ",.*, ccg_ids = " +
       ccg2 + " \\]";
-  
+
     ADD_WAIT_CHECKER(
       "Active CCG present",
       ActionProfileChecker(
@@ -162,7 +162,7 @@ ActionGranularUpdateTest::action_for_inactive_ccg()
 
   {
     std::string expected = "\\[ .*, ccg_ids = " + ccg1 + " \\]";
-    
+
     ADD_WAIT_CHECKER(
       "Inactive CCG absent",
       ActionProfileChecker(
