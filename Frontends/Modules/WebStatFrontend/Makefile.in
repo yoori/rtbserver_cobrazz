@@ -1,9 +1,0 @@
-@webstatfrontend_deps@
-
-includes := Frontends/Modules
-
-sources := \
-  RequestInfoFiller.cpp \
-  WebStatFrontend.cpp
-
-@webstatfrontend_post@

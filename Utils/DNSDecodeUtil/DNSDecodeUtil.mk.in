@@ -1,8 +1,0 @@
-@dnsdecodeutilexe_deps@
-
-sources := Application.cpp
-includes := .
-target := DNSDecodeUtil
-
-@dnsdecodeutilexe_post@
-

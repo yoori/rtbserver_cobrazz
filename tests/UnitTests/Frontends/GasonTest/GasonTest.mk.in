@@ -1,8 +1,0 @@
-@gasontestexe_deps@
-
-sources := GasonTest.cpp
-includes := .
-target := GasonTest
-
-@gasontestexe_post@
-

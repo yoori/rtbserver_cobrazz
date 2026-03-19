@@ -1,9 +1,0 @@
-@pubpixelfrontend_deps@
-
-includes := Frontends/Modules
-
-sources := \
-  RequestInfoFiller.cpp \
-  PubPixelFrontend.cpp
-
-@pubpixelfrontend_post@

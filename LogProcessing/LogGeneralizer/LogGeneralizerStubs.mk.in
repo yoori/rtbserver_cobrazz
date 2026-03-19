@@ -1,8 +1,0 @@
-@loggeneralizer_deps@
-sources := 
-includes := .
-
-corba_stub_idls := LogGeneralizer.idl
-corba_includes := .
-corba_idl_includes := .
-@loggeneralizer_post@

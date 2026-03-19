@@ -1,5 +1,0 @@
-OSBE_CONFIG_FILE([Makefile])
-
-OSBE_CONFIG_SUBDIR([StatsCollector])
-OSBE_CONFIG_SUBDIR([StatsDumper])
-OSBE_CONFIG_SUBDIR([ControlAdmin])

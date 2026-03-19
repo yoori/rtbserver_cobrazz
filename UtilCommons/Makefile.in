@@ -1,4 +1,0 @@
-@utilcommons_deps@
-sources := Table.cpp
-includes := .
-@utilcommons_post@

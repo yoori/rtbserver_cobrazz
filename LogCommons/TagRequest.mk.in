@@ -1,6 +1,0 @@
-@tagrequest_deps@
-sources := TagRequest.cpp
-
-includes := .
-@tagrequest_post@
-

@@ -1,6 +1,0 @@
-@actionrequest_deps@
-sources := ActionRequest.cpp
-
-includes := .
-@actionrequest_post@
-

@@ -1,6 +1,0 @@
-@sectoken_deps@
-
-sources := SecToken.cpp
-includes := .
-
-@sectoken_post@

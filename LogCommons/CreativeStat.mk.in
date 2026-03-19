@@ -1,6 +1,0 @@
-@creativestat_deps@
-sources := CreativeStat.cpp
-
-includes := .
-@creativestat_post@
-

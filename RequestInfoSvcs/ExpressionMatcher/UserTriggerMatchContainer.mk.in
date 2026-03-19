@@ -1,4 +1,0 @@
-@usertriggermatchcontainer_deps@
-sources := UserTriggerMatchContainer.cpp
-
-@usertriggermatchcontainer_post@

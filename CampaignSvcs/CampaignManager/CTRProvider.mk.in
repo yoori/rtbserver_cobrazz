@@ -1,6 +1,0 @@
-@ctrprovider_deps@
-
-sources := CTRProvider.cpp XGBoostPredictor.cpp CTRTrivialPredictor.cpp
-target := CTRProvider
-
-@ctrprovider_post@

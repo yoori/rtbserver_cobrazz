@@ -1,6 +1,0 @@
-@optionalvalueiotestexe_deps@
-
-sources := OptionalValueIOTest.cpp
-target := OptionalValueIOTest
-
-include $(top_srcdir)/tests/Test.post.rules

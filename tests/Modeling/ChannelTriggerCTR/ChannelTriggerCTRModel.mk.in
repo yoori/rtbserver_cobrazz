@@ -1,6 +1,0 @@
-@channeltriggerctrmodelexe_deps@
-
-sources := ChannelTriggerCTRModel.cpp
-target := ChannelTriggerCTRModel
-
-@channeltriggerctrmodelexe_post@

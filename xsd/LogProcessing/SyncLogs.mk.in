@@ -1,8 +1,0 @@
-@synclogsconfig_deps@
-sources := 
-includes := .
-xsd_files := SyncLogsConfig.xsd
-xsd_includes := xsd
-
-@synclogsconfig_post@
-

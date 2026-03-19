@@ -1,7 +1,0 @@
-@oracletimedouttestexe_deps@
-
-sources := TimedOutTest.cpp
-includes := .
-target := OracleTimedOutTest
-
-include $(top_srcdir)/tests/Test.post.rules

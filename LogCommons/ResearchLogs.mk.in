@@ -1,6 +1,0 @@
-@researchlogs_deps@
-sources := ResearchLogs.cpp
-
-includes := .
-@researchlogs_post@
-

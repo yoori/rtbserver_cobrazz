@@ -1,4 +1,0 @@
-@loggeneralizeradminexe_deps@
-sources := Application.cpp
-target := LogGeneralizerAdmin
-@loggeneralizeradminexe_post@

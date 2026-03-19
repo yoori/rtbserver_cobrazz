@@ -1,6 +1,0 @@
-@ipmatchertestexe_deps@
-
-target := IPMatcherTest
-sources := IPMatcherTest.cpp
-
-include $(top_srcdir)/tests/Test.post.rules

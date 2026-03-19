@@ -1,6 +1,0 @@
-@updateimitatorexe_deps@
-
-sources := UpdateImitator.cpp
-target := UpdateImitator
-
-include $(top_srcdir)/tests/Test.post.rules

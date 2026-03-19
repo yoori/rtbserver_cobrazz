@@ -1,9 +1,0 @@
-
-@adservertestconfig_deps@
-
-sources := 
-includes := .
-xsd_files := AdServerTestConfig.xsd
-xsd_includes := xsd
-
-@adservertestconfig_post@

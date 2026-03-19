@@ -1,5 +1,0 @@
-@requestinfoadminexe_deps@
-sources := Application.cpp 
-
-target := RequestInfoAdmin
-@requestinfoadminexe_post@

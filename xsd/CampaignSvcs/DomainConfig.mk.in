@@ -1,9 +1,0 @@
-@domainconfig_deps@
-
-sources := 
-includes := .
-xsd_files := DomainConfig.xsd
-
-xsd_includes := .
-
-@domainconfig_post@

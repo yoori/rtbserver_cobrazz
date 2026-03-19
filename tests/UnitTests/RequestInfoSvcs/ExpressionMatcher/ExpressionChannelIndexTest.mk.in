@@ -1,6 +1,0 @@
-@expressionchannelindextestexe_deps@
-
-sources := ExpressionChannelIndexTest.cpp
-target :=  ExpressionChannelIndexTest
-
-include $(top_srcdir)/tests/Test.post.rules

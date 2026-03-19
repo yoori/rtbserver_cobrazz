@@ -1,5 +1,0 @@
-@kafkaproducer_deps@
-
-sources := KafkaProducer.cpp
-
-@kafkaproducer_post@

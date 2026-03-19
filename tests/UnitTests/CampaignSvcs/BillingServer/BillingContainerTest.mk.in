@@ -1,6 +1,0 @@
-@billingcontainertestexe_deps@
-
-sources := BillingContainerTest.cpp
-target := BillingContainerTest
-
-include $(top_srcdir)/tests/Test.post.rules

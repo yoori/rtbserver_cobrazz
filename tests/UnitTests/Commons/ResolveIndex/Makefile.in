@@ -1,6 +1,0 @@
-@resolveindexexe_deps@
-
-sources := ResolveIndex.cpp
-target := ResolveIndex
-
-include $(top_srcdir)/tests/Test.post.rules

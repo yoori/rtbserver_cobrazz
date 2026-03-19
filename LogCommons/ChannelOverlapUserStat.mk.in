@@ -1,6 +1,0 @@
-@channeloverlapuserstat_deps@
-sources := ChannelOverlapUserStat.cpp
-
-includes := .
-@channeloverlapuserstat_post@
-

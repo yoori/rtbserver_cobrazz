@@ -1,7 +1,0 @@
-@dtreetrainerexe_deps@
-
-sources := Application.cpp
-
-target := DTreeTrainer
-
-@dtreetrainerexe_post@

@@ -1,7 +1,0 @@
-@localparamsconfig_deps@
-sources := 
-includes := .
-xsd_files := LocalParams.xsd
-xsd_includes := xsd
-
-@localparamsconfig_post@

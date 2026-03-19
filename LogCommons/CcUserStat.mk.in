@@ -1,6 +1,0 @@
-@ccuserstat_deps@
-sources := CcUserStat.cpp
-
-includes := .
-@ccuserstat_post@
-

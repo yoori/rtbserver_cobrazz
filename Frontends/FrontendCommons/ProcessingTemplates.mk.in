@@ -1,6 +1,0 @@
-@processingtemplates_deps@
-
-sources := ProcessingTemplates.cpp
-includes :=
-
-@processingtemplates_post@

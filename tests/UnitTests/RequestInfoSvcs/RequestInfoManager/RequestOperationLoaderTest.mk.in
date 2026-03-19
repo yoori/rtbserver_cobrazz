@@ -1,8 +1,0 @@
-@requestoperationloadertestexe_deps@
-
-sources := RequestOperationLoaderTest.cpp
-
-target := RequestOperationLoaderTest
-test_arguments := -p $$TEST_TMP_DIR/RequestOperationLoaderTestFolder
-
-include $(top_srcdir)/tests/Test.post.rules

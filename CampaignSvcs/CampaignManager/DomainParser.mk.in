@@ -1,6 +1,0 @@
-@domainparser_deps@
-
-sources := DomainParser.cpp
-includes := .
-
-@domainparser_post@

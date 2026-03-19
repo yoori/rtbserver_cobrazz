@@ -1,7 +1,0 @@
-@geoutilexe_deps@
-
-sources := Application.cpp
-
-target := GeoUtil
-
-@geoutilexe_post@

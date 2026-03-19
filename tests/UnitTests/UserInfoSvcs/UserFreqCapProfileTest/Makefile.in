@@ -1,7 +1,0 @@
-@userfreqcapprofiletestexe_deps@
-
-sources := UserFreqCapProfileTest.cpp
-target := UserFreqCapProfileTest
-vg_test_arguments :=
-
-include $(top_srcdir)/tests/Test.post.rules

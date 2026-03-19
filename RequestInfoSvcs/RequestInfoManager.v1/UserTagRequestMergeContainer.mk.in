@@ -1,5 +1,0 @@
-@usertagrequestmergecontainer_deps@
-
-sources := UserTagRequestMergeContainer.cpp
-
-@usertagrequestmergecontainer_post@

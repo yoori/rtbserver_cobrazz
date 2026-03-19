@@ -1,9 +1,0 @@
-@logiotestexe_deps@
-sources := LogIoTest.cpp
-
-includes := .
-
-target := LogIoTest
-
-include $(top_srcdir)/tests/Test.post.rules
-

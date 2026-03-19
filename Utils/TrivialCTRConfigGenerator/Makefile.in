@@ -1,6 +1,0 @@
-include Common.pre.rules
-
-target_makefile_list := \
-  TrivialCTRConfigGeneratorExe.mk
-
-include $(osbe_builddir)/config/Makentry.post.rules

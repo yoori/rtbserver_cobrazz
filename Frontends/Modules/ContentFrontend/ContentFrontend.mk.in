@@ -1,9 +1,0 @@
-@contentfrontend_deps@
-
-includes := Frontends/Modules
-
-target := ContentFrontend
-
-sources := ContentFrontend.cpp
-
-@contentfrontend_post@

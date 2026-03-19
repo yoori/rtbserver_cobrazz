@@ -1,4 +1,0 @@
-@userinventorycontainer_deps@
-sources := UserInventoryContainer.cpp
-
-@userinventorycontainer_post@

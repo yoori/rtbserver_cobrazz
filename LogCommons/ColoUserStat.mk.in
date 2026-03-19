@@ -1,6 +1,0 @@
-@colouserstat_deps@
-sources := ColoUserStat.cpp
-
-includes := .
-@colouserstat_post@
-

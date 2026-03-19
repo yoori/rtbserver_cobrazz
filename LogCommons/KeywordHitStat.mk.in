@@ -1,6 +1,0 @@
-@keywordhitstat_deps@
-sources := KeywordHitStat.cpp
-
-includes := .
-@keywordhitstat_post@
-

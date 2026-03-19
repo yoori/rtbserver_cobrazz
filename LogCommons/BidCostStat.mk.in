@@ -1,6 +1,0 @@
-@bidcoststat_deps@
-sources := BidCostStat.cpp
-
-includes := .
-@bidcoststat_post@
-

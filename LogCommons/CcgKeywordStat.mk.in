@@ -1,6 +1,0 @@
-@ccgkeywordstat_deps@
-sources := CcgKeywordStat.cpp
-
-includes := .
-@ccgkeywordstat_post@
-

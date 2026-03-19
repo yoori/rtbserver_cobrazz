@@ -1,4 +1,0 @@
-@messagesaver_deps@
-sources := MessageSaver.cpp
-
-@messagesaver_post@

@@ -1,6 +1,0 @@
-@webstat_deps@
-sources := WebStat.cpp
-
-includes := .
-@webstat_post@
-

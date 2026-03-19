@@ -1,9 +1,0 @@
-@campaigncommonsstubs_deps@
-
-sources := 
-includes := .
-
-corba_stub_idls := CampaignCommons.idl
-corba_includes := .
-corba_idl_includes := .
-@campaigncommonsstubs_post@

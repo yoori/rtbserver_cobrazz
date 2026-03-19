@@ -1,6 +1,0 @@
-@dummychannelserverexe_deps@
-
-sources := DummyChannelServer.cpp
-target := DummyChannelServer
-
-include $(top_srcdir)/tests/Test.post.rules

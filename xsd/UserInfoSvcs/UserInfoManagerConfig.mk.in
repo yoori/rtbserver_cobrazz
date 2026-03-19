@@ -1,7 +1,0 @@
-@userinfomanagerconfig_deps@
-sources := 
-includes := .
-xsd_files := UserInfoManagerConfig.xsd
-xsd_includes := xsd
-
-@userinfomanagerconfig_post@

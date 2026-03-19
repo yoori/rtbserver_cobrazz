@@ -1,6 +1,0 @@
-@userbindcontainertestexe_deps@
-
-sources := UserBindContainerTest.cpp
-target := UserBindContainerTest
-
-include $(top_srcdir)/tests/Test.post.rules

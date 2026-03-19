@@ -1,6 +1,0 @@
-@campaignconfigsource_deps@
-
-sources := CampaignConfigSource.cpp
-target := CampaignConfigSource
-
-@campaignconfigsource_post@

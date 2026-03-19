@@ -1,8 +1,0 @@
-@channelserverconfig_deps@
-sources :=
-includes := 
-xsd_files := ChannelServerConfig.xsd
-xsd_includes := . 
-
-@channelserverconfig_post@
-

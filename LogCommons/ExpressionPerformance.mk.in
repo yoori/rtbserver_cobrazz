@@ -1,6 +1,0 @@
-@expressionperformance_deps@
-sources := ExpressionPerformance.cpp
-
-includes := .
-@expressionperformance_post@
-
