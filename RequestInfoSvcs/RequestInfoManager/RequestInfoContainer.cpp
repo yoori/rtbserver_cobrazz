@@ -598,7 +598,7 @@ namespace RequestInfoSvcs {
     RequestInfoProfileWriter& request_writer,
     RequestInfo* request_info,
     const RevenueDecimal& pass_res_pub_imp_revenue,
-    const RequestInfo::Revenue& orig_pub_revenue)
+    const RequestInfo::Revenue& /*orig_pub_revenue*/)
   {
     // apply cost_coef to imp_pub_revenue
     //RevenueDecimal b_res_pub_revenue = pass_res_pub_imp_revenue;
@@ -889,7 +889,7 @@ namespace RequestInfoSvcs {
   RequestInfoContainer::convert_impression_info_to_request_writer(
     const ImpressionInfo& impression_info,
     RequestInfoProfileWriter& request_writer,
-    RequestInfo* request_info,
+    RequestInfo* /*request_info*/,
     bool notice)
   {
     //std::cerr << "RequestInfoContainer::convert_impression_info_to_request_writer()" << std::endl;
