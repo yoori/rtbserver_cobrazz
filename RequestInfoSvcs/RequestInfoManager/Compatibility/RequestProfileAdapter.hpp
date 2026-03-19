@@ -8,7 +8,7 @@ namespace AdServer
 {
 namespace RequestInfoSvcs
 {
-  const unsigned long CURRENT_REQUEST_PROFILE_VERSION = 362;
+  const unsigned long CURRENT_REQUEST_PROFILE_VERSION = 363;
 
   struct RequestProfileAdapter
   {

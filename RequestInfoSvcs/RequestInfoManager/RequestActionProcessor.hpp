@@ -404,6 +404,7 @@ namespace AdServer
       RevenueDecimal adv_commission;
       RevenueDecimal pub_cost_coef;
       unsigned long at_flags;
+      std::string additional_info;
 
       Revenue delta_adv_revenue;
 
@@ -989,6 +990,8 @@ namespace AdServer
         space << "conv_rate: " << conv_rate << std::endl <<
         space << "model_conv_rates: ";
       Algs::print(out, model_conv_rates.begin(), model_conv_rates.end());
+      out << std::endl <<
+        space << "additional_info: " << additional_info;
 
       return out;
     }

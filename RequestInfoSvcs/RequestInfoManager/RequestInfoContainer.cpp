@@ -310,6 +310,7 @@ namespace RequestInfoSvcs {
     request_info.pub_cost_coef = RevenueDecimal(
       request_reader.pub_cost_coef());
     request_info.at_flags = request_reader.at_flags();
+    request_info.additional_info = request_reader.additional_info();
   }
 
   void
@@ -589,6 +590,7 @@ namespace RequestInfoSvcs {
     request_writer.adv_commission() = request_info.adv_commission.str();
     request_writer.pub_cost_coef() = request_info.pub_cost_coef.str();
     request_writer.at_flags() = request_info.at_flags;
+    request_writer.additional_info() = request_info.additional_info;
   }
 
   void

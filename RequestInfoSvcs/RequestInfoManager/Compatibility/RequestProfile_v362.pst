@@ -1,6 +1,6 @@
 namespace AdServer
 {
-namespace RequestInfoSvcs
+namespace RequestInfoSvcs_v362
 {
   struct RequestInfoRevenueDescriptor
   {
@@ -45,7 +45,7 @@ namespace RequestInfoSvcs
   {
     uint version;
   };
-  
+
   autoreader RequestInfoProfileVersionReader<RequestInfoProfileVersionDescriptor>;
 
   struct RequestInfoProfileDescriptor
@@ -186,7 +186,6 @@ namespace RequestInfoSvcs
     string adv_commission;
     string pub_cost_coef;
     uint at_flags;
-    string additional_info;
   };
 
   reader RequestInfoProfileReader<RequestInfoProfileDescriptor>
@@ -226,7 +225,7 @@ namespace RequestInfoSvcs
 
     ccg_keyword_id;
     keyword_id;
-    
+
     num_shown;
     position;
 
@@ -298,7 +297,7 @@ namespace RequestInfoSvcs
     array<NonconsideredCustomActionReader> custom_actions_imp_non_considered_;
     array<NonconsideredCustomActionReader> custom_actions_click_non_considered_;
     array<ChannelRevenueReader> cmp_channels;
-    
+
     auction_type;
     viewability;
 
@@ -322,7 +321,6 @@ namespace RequestInfoSvcs
     adv_commission;
     pub_cost_coef;
     at_flags;
-    additional_info;
   };
 
   writer RequestInfoProfileWriter<RequestInfoProfileDescriptor>
@@ -434,7 +432,7 @@ namespace RequestInfoSvcs
     array<NonconsideredCustomActionWriter> custom_actions_imp_non_considered_;
     array<NonconsideredCustomActionWriter> custom_actions_click_non_considered_;
     array<ChannelRevenueWriter> cmp_channels;
-    
+
     auction_type;
     viewability;
 
@@ -458,7 +456,6 @@ namespace RequestInfoSvcs
     adv_commission;
     pub_cost_coef;
     at_flags;
-    additional_info;
   };
 }
 }
