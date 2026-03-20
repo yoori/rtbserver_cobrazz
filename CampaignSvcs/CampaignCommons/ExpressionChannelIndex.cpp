@@ -319,7 +319,7 @@ namespace CampaignSvcs
       }
     }
 
-    void print_channel_priority_map(
+    [[maybe_unused]] void print_channel_priority_map(
       std::ostream& out,
       ChannelPriorityMap& channel_priority_map)
     {

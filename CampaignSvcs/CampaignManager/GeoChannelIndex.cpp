@@ -220,7 +220,6 @@ namespace CampaignSvcs
     const AccuracyDecimal& accuracy)
     noexcept
   {
-    GeoBox cover_box;
     CoordDecimal angle_delta = AccuracyDecimal::div(
       AccuracyDecimal::mul(accuracy, ANGLE_MULTIPLYER, Generics::DMR_CEIL),
       EARTH_RADIUS_M,
