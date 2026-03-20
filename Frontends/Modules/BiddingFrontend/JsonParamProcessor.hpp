@@ -236,6 +236,7 @@ namespace Bidding
     std::string deal_id;
     DealList deals;
     MetricList metrics;
+    std::string tagid;
     std::string min_cpm_price_currency_code;
 
     bool secure;

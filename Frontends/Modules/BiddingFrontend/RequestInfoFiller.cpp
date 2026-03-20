@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdlib>
 #include <functional>
 #include <iomanip>
 #include <math.h>
@@ -85,6 +86,7 @@ namespace Request
     const String::SubString IMP_MIN_CPM_PRICE_CURRENCY_CODE("bidfloorcur");
     const String::SubString IMP_SECURE("secure");
     const String::SubString IMP_METRIC("metric");
+    const String::SubString IMP_TAGID("tagid");
     const String::SubString IMP_METRIC_TYPE("type");
     const String::SubString IMP_METRIC_VALUE("value");
 
@@ -783,6 +785,59 @@ namespace Bidding
       }
 
       kw_fmt.add_keyword(oss);
+    }
+
+    bool
+    try_parse_float_(
+      float& result,
+      const std::string& value) noexcept
+    {
+      if(value.empty())
+      {
+        return false;
+      }
+
+      char* end = nullptr;
+      const float parsed = std::strtof(value.c_str(), &end);
+      if(end == value.c_str() || (end != nullptr && *end != '\0'))
+      {
+        return false;
+      }
+
+      result = parsed;
+      return true;
+    }
+
+    std::string
+    make_additional_info_json_(
+      const RequestInfo::AdditionalInfo& additional_info)
+    {
+      std::ostringstream ostr;
+      ostr << "{";
+      ostr << "\"ssp_tag_id\":\""
+        << String::StringManip::json_escape(String::SubString(additional_info.tagid))
+        << "\"";
+
+      auto add_optional_metric =
+        [&ostr](const char* name, const std::optional<float>& value)
+      {
+        ostr << ",\"" << name << "\":";
+        if(value.has_value())
+        {
+          ostr << *value;
+        }
+        else
+        {
+          ostr << "null";
+        }
+      };
+
+      add_optional_metric("ctr", additional_info.ctr);
+      add_optional_metric("viewability", additional_info.viewability);
+      add_optional_metric("vtr", additional_info.vtr);
+      ostr << "}";
+
+      return ostr.str();
     }
   }
 
@@ -2169,6 +2224,12 @@ namespace Bidding
         Request::OpenRtb::IMP_METRIC,
         JsonAdSlotParamProcessor_var(
           new JsonImpMetricParamProcessor()));
+
+      processor->add_processor(
+        Request::OpenRtb::IMP_TAGID,
+        JsonAdSlotParamProcessor_var(
+          new JsonContextStringParamProcessor<JsonAdSlotProcessingContext>(
+            &JsonAdSlotProcessingContext::tagid)));
 
       // init imp::ext::type processor
       JsonAdSlotCompositeParamProcessor_var imp_ext_processor =
@@ -4203,6 +4264,7 @@ namespace Bidding
       AdServer::CampaignSvcs::US_UNDEFINED);
 
     init_request_param(request_params, request_info);
+    request_info.additional_info = RequestInfo::AdditionalInfo{};
 
     if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_URL)
     {
@@ -4311,6 +4373,11 @@ namespace Bidding
       ad_slot_it != context.ad_slots.end();
       ++ad_slot_it)
     {
+      if(request_info.additional_info.tagid.empty() && !ad_slot_it->tagid.empty())
+      {
+        request_info.additional_info.tagid = ad_slot_it->tagid;
+      }
+
       for (auto metric_it = ad_slot_it->metrics.begin();
         metric_it != ad_slot_it->metrics.end();
         ++metric_it)
@@ -4320,7 +4387,32 @@ namespace Bidding
           norm_keyword_(metric_it->type) +
           "x" +
           norm_keyword_(metric_it->value));
+
+        float metric_value = 0.0f;
+        if(try_parse_float_(metric_value, metric_it->value))
+        {
+          if(caseless_compare(metric_it->type, String::SubString("ctr")))
+          {
+            request_info.additional_info.ctr = metric_value;
+          }
+          else if(caseless_compare(metric_it->type, String::SubString("viewability")))
+          {
+            request_info.additional_info.viewability = metric_value;
+          }
+          else if(caseless_compare(metric_it->type, String::SubString("vtr")))
+          {
+            request_info.additional_info.vtr = metric_value;
+          }
+        }
       }
+    }
+
+    if(!request_info.additional_info.tagid.empty() ||
+      request_info.additional_info.ctr.has_value() ||
+      request_info.additional_info.viewability.has_value() ||
+      request_info.additional_info.vtr.has_value())
+    {
+      request_params.additional_info = make_additional_info_json_(request_info.additional_info);
     }
 
     if(context.site_content || context.app_content)

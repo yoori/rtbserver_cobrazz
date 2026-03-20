@@ -1,6 +1,7 @@
 #ifndef BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
 #define BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
 
+#include <optional>
 #include <string>
 
 #include <GeoIP/IPMap.hpp>
@@ -113,6 +114,13 @@ namespace Bidding
   struct RequestInfo
   {
     typedef std::vector<unsigned long> AccountIdArray;
+    struct AdditionalInfo
+    {
+      std::string tagid;
+      std::optional<float> ctr;
+      std::optional<float> viewability;
+      std::optional<float> vtr;
+    };
 
     RequestInfo()
       : debug_ccg(0),
@@ -175,6 +183,7 @@ namespace Bidding
     std::string bid_site_id;
     std::string bid_publisher_id;
     std::vector<std::string> ext_user_ids;
+    AdditionalInfo additional_info;
   };
 
   class RequestInfoFiller: public FrontendCommons::HTTPExceptions
