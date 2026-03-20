@@ -228,20 +228,10 @@ if [ '%{?buildType}' == 'nb' ]; then cpp_flags='-DDEBUG '; fi
 mkdir -p unixcommons/%{__osbe_build_dir}
 echo "DIRECTORY"
 pwd
-#cp unixcommons/default.config.t /tmp/unixcommons.default.config.t
-#cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
-#    unixcommons/default.config.t > unixcommons/%{__osbe_build_dir}/default.config
 
 if [ '%__type' == 'central' ]; then cpp_flags+='-DUSE_OCCI'; fi
 
 mkdir -p %{__product}/%{__osbe_build_dir}
-
-#cpp -DOS_%{_os_release} -DARCH_%{_target_cpu} -DARCH_FLAGS='%{__arch_flags}' ${cpp_flags} \
-#    -DUNIXCOMMONS_ROOT=%{_builddir}/foros-server-%{version}/unixcommons/%{__osbe_build_dir} \
-#    -DUNIXCOMMONS_INCLUDE=src \
-#    -DUNIXCOMMONS_CORBA_INCLUDE=src/CORBA \
-#    -DUNIXCOMMONS_DEF=%{_builddir}/foros-server-%{version}/unixcommons/libdefs \
-#    %{__product}/default.config.t > %{__product}/%{__osbe_build_dir}/default.config
 
 %build
 %ifnarch noarch
@@ -249,21 +239,12 @@ pushd unixcommons
 #osbe
 product_root=`pwd`
 cd %{__osbe_build_dir}
-#echo "CALL UNIXCOMMONS CMAKE in $(pwd)"
-#cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
-#%{__make} %{_smp_mflags}
-
-#${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
 popd
 
 pushd %{__product}
-#osbe
 product_root=`pwd`
 cd %{__osbe_build_dir}
-#export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.8/site-packages/
 cmake -DUNIXCOMMONS=$(pwd)/../unixcommons -DCMAKE_BUILD_TYPE=RelWithDebInfo .
-#${product_root}/configure --enable-no-questions --enable-guess-location=no --prefix=%{__inst_root}
-#scl enable devtoolset-8 -- %{__make} %{_smp_mflags}
 %{__make} %{_smp_mflags} VERBOSE=1
 popd
 %endif
@@ -280,14 +261,10 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}%{__inst_root}
 
 %ifnarch noarch
-#make -C unixcommons/%{__osbe_build_dir} install destdir=%{buildroot}
-#cmake --install unixcommons/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
 
 rm -rf %{buildroot}%{__inst_root}/include
 rm -rf `find %{buildroot}%{__inst_root}/lib -type f -name '*.a'`
 
-#scl enable devtoolset-8 --
-#make -C %{__product}/%{__osbe_build_dir} install destdir=%{buildroot}
 cmake --install %{__product}/%{__osbe_build_dir} --prefix "%{buildroot}%{__inst_root}/"
 
 # create so aliases for old UI
