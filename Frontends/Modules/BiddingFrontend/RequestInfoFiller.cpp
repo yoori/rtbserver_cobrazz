@@ -4412,7 +4412,7 @@ namespace Bidding
       request_info.additional_info.viewability.has_value() ||
       request_info.additional_info.vtr.has_value())
     {
-      request_params.additional_info = make_additional_info_json_(request_info.additional_info);
+      request_params.additional_info << make_additional_info_json_(request_info.additional_info);
     }
 
     if(context.site_content || context.app_content)
