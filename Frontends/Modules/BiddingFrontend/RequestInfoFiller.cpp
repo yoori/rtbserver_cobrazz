@@ -6427,6 +6427,7 @@ namespace Bidding
     request_params.only_display_ad = true;
     request_params.common_info.test_request = false;
     request_params.preview_ccid = 0;
+    request_params.additional_info = "{}";
     request_params.common_info.hpos = CampaignSvcs::UNDEFINED_PUB_POSITION_BOTTOM;
 
     fill_request_type_(request_info, request_params, request_info.source_id);

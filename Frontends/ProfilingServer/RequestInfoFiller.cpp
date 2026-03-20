@@ -552,6 +552,7 @@ namespace Profiling
     request_params.common_info.time = CorbaAlgs::pack_time(now);
     //request_params.context_info.time = CorbaAlgs::pack_time(Generics::Time(dmp_profiling_info.time()));
     request_params.common_info.set_cookie = false;
+    request_params.additional_info = "{}";
   }
 
   void

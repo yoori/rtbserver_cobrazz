@@ -2373,7 +2373,7 @@ namespace AdServer
               ad_info.adv_commission,
               ad_info.pub_cost_coef,
               ad_info.at_flags,
-              ""
+              request_info.additional_info
               );
 
             add_record(data);

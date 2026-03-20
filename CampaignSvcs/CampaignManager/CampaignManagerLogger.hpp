@@ -289,6 +289,7 @@ namespace AdServer
         // required for research profiling logging, process_ad_request
         Commons::StringHolder_var page_keywords;
         Commons::StringHolder_var url_keywords;
+        std::string additional_info;
         unsigned long random;
       };
 
@@ -825,4 +826,3 @@ namespace AdServer
 } // namespace AdServer
 
 #endif /*_AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNMANAGERLOGGER_HPP_*/
-

@@ -303,6 +303,7 @@ namespace AdServer
         new Commons::StringHolder(request_params.page_keywords);
       request_info.url_keywords =
         new Commons::StringHolder(request_params.url_keywords);
+      request_info.additional_info = request_params.additional_info.in();
 
       request_info.fraud = request_params.fraud;
       request_info.search_engine_id = request_params.search_engine_id;

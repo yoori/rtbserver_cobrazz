@@ -2092,6 +2092,7 @@ namespace AdServer
       request_params.session_start = history_match_result->session_start;
       request_params.only_display_ad = false;
       request_params.profiling_type = AdServer::CampaignSvcs::PT_ALL;
+      request_params.additional_info = "{}";
 
       if(request_info.tag_id)
       {
