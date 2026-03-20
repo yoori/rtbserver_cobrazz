@@ -541,7 +541,9 @@ namespace Cpp
     out_ << offset_ << "}" << std::endl << std::endl;
 
     // unsafe_init(const void* buf)
-    out_ << offset_ << "inline" << std::endl <<
+    out_ << "#pragma GCC diagnostic push" << std::endl <<
+      "#pragma GCC diagnostic ignored \"-Wmaybe-uninitialized\"" << std::endl <<
+      offset_ << "inline" << std::endl <<
       offset_ << "void" << std::endl <<
       offset_ << class_name << "::unsafe_init(const void* buf, unsigned long " <<
         (has_non_fixed_of_struct_field ? "size" : "/*size*/") <<
@@ -553,7 +555,8 @@ namespace Cpp
     Utils::fetch_fields_with_fixed_sum(
       *fields, FieldInitImplOps(out_, (offset_ + "  ").c_str()));
 
-    out_ << offset_ << "}" << std::endl << std::endl;
+    out_ << offset_ << "}" << std::endl << std::endl <<
+      "#pragma GCC diagnostic pop" << std::endl;
 
     // init(const void* buf, unsigned long size)
     out_ << offset_ << "inline" << std::endl <<
