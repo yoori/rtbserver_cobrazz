@@ -11,6 +11,17 @@ namespace PlainTypes
   public:
     static const unsigned long FIXED_SIZE = 8;
 
+    Buffer(const Buffer& init) = default;
+
+    Buffer(Buffer&& init) noexcept = default;
+
+    // MemBuf assignment operator is prohibited - declare it.
+    Buffer&
+    operator=(const Buffer& right) noexcept;
+
+    Buffer&
+    operator=(Buffer&& right) noexcept = default;
+
     void init_default() noexcept;
 
     void init(const void* buf, unsigned long size)
@@ -22,15 +33,20 @@ namespace PlainTypes
       noexcept;
 
     static ConstBuf read_cast(const void* fixed_buf);
-
-    Buffer&
-    operator=(const Buffer& right) noexcept;
   };
 }
 
 namespace PlainTypes
 {
   // Buffer
+  inline
+  Buffer&
+  Buffer::operator=(const Buffer& right) noexcept
+  {
+    assign(right.data(), right.size());
+    return *this;
+  }
+
   inline
   void
   Buffer::init_default() noexcept
@@ -84,14 +100,6 @@ namespace PlainTypes
       static_cast<const char*>(fixed_buf) +
         *static_cast<const uint32_t*>(fixed_buf),
       *(static_cast<const uint32_t*>(fixed_buf) + 1));
-  }
-
-  inline
-  Buffer&
-  Buffer::operator=(const Buffer& right) noexcept
-  {
-    assign(right.data(), right.size());
-    return *this;
   }
 }
 
