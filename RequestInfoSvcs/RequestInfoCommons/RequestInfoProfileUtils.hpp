@@ -134,7 +134,8 @@ namespace RequestInfoSvcs
       Table::Column("adv_commission", Table::Column::TEXT),
       Table::Column("pub_commission", Table::Column::TEXT),
       Table::Column("pub_cost_coef", Table::Column::TEXT),
-      Table::Column("at_flags", Table::Column::NUMBER)
+      Table::Column("at_flags", Table::Column::NUMBER),
+      Table::Column("additional_info", Table::Column::TEXT)
     };
 
     std::string
@@ -338,6 +339,7 @@ namespace RequestInfoSvcs
     row.add_field(reader.pub_commission());
     row.add_field(reader.pub_cost_coef());
     row.add_field(reader.at_flags());
+    row.add_field(reader.additional_info());
 
     table.add_row(row);
     table.dump(out);
