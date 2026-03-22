@@ -73,7 +73,6 @@ namespace AdServer
           // Parse model config
 
           FeatureContainer::instance().init(config_->Model().Feature());
-
         }
         catch (const xml_schema::parsing &ex)
         {
@@ -102,9 +101,7 @@ namespace AdServer
 
         try
         {
-          logger(Config::LoggerConfigReader::create(
-                   config_->Logger(), argv0));
-
+          logger(Config::LoggerConfigReader::create(config_->Logger(), argv0));
         }
         catch (const Config::LoggerConfigReader::Exception &ex)
         {
