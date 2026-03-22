@@ -1,4 +1,0 @@
-name="AdServerTestConfig"
-so_files=AdServerTestConfig
-osbe_cxx_feature_dep XSDTree
-osbe_cxx_dep AdServerTestCommonConfig

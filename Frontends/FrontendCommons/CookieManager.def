@@ -1,7 +1,0 @@
-name="CookieManager"
-so_files=CookieManager
-
-osbe_cxx_dep http
-osbe_cxx_dep Commons
-osbe_cxx_dep CORBACommons
-osbe_cxx_dep FeConfig

@@ -1,4 +1,0 @@
-name="ZmqBalancerConfig"
-so_files=ZmqBalancerConfig
-osbe_cxx_feature_dep XSDTree
-osbe_cxx_dep AdServerCommons

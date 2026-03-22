@@ -1,3 +1,0 @@
-name="XsltFileCache"
-so_files=XsltFileCache
-osbe_cxx_dep XslTransformer

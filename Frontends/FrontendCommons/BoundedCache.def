@@ -1,4 +1,0 @@
-name="BoundedCache"
-so_files=BoundedCache
-
-osbe_cxx_dep Generics

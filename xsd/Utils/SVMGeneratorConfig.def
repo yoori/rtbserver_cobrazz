@@ -1,5 +1,0 @@
-name="SVMGeneratorConfig"
-so_files=SVMGeneratorConfig
-
-osbe_cxx_feature_dep XSDTree
-osbe_cxx_dep AdServerCommons

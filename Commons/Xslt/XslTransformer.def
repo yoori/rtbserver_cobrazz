@@ -1,5 +1,0 @@
-name="XslTransformer"
-so_files=XslTransformer
-osbe_cxx_dep Xml
-osbe_cxx_dep Xslt
-osbe_cxx_dep http

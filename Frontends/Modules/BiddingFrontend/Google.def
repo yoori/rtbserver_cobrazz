@@ -1,4 +1,0 @@
-name="Google"
-so_files=Google
-
-osbe_cxx_feature_dep ProtoBuf

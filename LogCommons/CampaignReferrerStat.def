@@ -1,5 +1,0 @@
-name="CampaignReferrerStat"
-so_files=CampaignReferrerStat
-osbe_cxx_dep Generics
-osbe_cxx_dep Commons
-osbe_cxx_dep LogCommons

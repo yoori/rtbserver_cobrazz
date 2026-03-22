@@ -1,4 +1,0 @@
-name="Tanx"
-so_files=Tanx
-
-osbe_cxx_feature_dep ProtoBuf
