@@ -2825,6 +2825,7 @@ namespace RequestInfoSvcs
           data.conv_rate_algorithm_id = info.conv_rate_algorithm_id;
           data.predicted_conv_rate = info.conv_rate;
           data.tag_predicted_viewability = info.viewability;
+          data.additional_info = info.additional_info;
 
           if(info.pub_revenue.currency_rate != RevenueDecimal::ZERO)
           {

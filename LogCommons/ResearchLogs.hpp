@@ -160,6 +160,7 @@ namespace LogProcessing
     FixedNumberList model_ctrs;
 
     FixedNumber win_price;
+    std::string additional_info;
   };
 
   typedef SeqCollector<ResearchImpressionData> ResearchImpressionCollector;
@@ -175,7 +176,7 @@ namespace LogProcessing
         "URL,Publisher,Tag,ETag,Campaign,Group,CCID,GeoCh,"
         "UserCh,#ImpCh,#BidPrice,#BidFloor,"
         "#AlgorithmID,SizeID,Colo,#PredictedCTR,"
-        "Campaign_Freq,#CRAlgorithmID,#PredictedCR,#WinPrice,#Viewability";
+        "Campaign_Freq,#CRAlgorithmID,#PredictedCR,#WinPrice,#Viewability,#AdditionalInfo";
     }
 
     static std::ostream&
@@ -211,7 +212,8 @@ namespace LogProcessing
       os << data.predicted_conv_rate << ',';
       os << data.tag_visibility << ',';
       os << data.win_price << ',';
-      os << data.tag_predicted_viewability;
+      os << data.tag_predicted_viewability << ',';
+      write_string_as_csv(os, data.additional_info);
       return os;
     }
   };
@@ -282,4 +284,3 @@ namespace LogProcessing
 } // namespace AdServer
 
 #endif /* ADSERVER_LOGCOMMONS_RESEARCHLOGS_HPP_ */
-
