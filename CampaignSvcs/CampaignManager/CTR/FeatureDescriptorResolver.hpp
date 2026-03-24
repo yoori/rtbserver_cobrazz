@@ -55,6 +55,12 @@ namespace AdServer::CampaignSvcs::CTR
     BF_ARRAY_CANDIDATE_LEVEL_FIRST_ID = 152,
     BF_CONTENT_CATEGORIES = 152,
     BF_VISUAL_CATEGORIES = 153,
+
+    // request level SSP-specific features
+    BF_SSP_TAG_ID = 9999,
+    BF_SSP_CTR = 10000,
+    BF_SSP_VIEWABILITY = 10001,
+    BF_SSP_VTR = 10002,
   };
 
   // FeatureDescriptor

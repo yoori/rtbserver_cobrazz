@@ -338,7 +338,7 @@ namespace CampaignSvcs
     std::string directory_str;
     directory.assign_to(directory_str);
 
-    const std::string cost_file = directory_str + "/" + COST_FILE_NAME;
+    const std::string cost_file = directory_str + "/" + file.str();
 
     CostMapping_var cost_mapping(new CostMapping());
 

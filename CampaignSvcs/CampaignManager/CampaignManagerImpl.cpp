@@ -1,5 +1,7 @@
 
 #include <algorithm>
+#include <cstring>
+#include <vector>
 
 #include <eh/Exception.hpp>
 #include <Logger/Logger.hpp>
@@ -12,6 +14,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Algs.hpp>
+#include <Commons/Gason.hpp>
 
 #include <LogCommons/AdRequestLogger.hpp>
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
@@ -140,6 +143,63 @@ namespace AdServer
         }
         catch(const eh::Exception&)
         {}
+      }
+
+      void
+      fill_ssp_features_from_additional_info(
+        CampaignSelectParams& campaign_select_params,
+        const std::string& additional_info)
+      {
+        if(additional_info.empty())
+        {
+          return;
+        }
+
+        std::vector<char> json_holder(additional_info.begin(), additional_info.end());
+        json_holder.push_back('\0');
+
+        JsonValue root_value;
+        JsonAllocator json_allocator;
+        char* parse_end = nullptr;
+        const auto status = json_parse(
+          json_holder.data(),
+          &parse_end,
+          &root_value,
+          json_allocator);
+
+        if(status != JSON_PARSE_OK || root_value.getTag() != JSON_TAG_OBJECT)
+        {
+          return;
+        }
+
+        for(auto it = begin(root_value); it != end(root_value); ++it)
+        {
+          if(!it->key)
+          {
+            continue;
+          }
+
+          if(::strcmp(it->key, "ssp_tag_id") == 0 &&
+            it->value.getTag() == JSON_TAG_STRING)
+          {
+            campaign_select_params.ssp_tag_id = it->value.toString();
+          }
+          else if(::strcmp(it->key, "ctr") == 0 &&
+            it->value.getTag() == JSON_TAG_NUMBER)
+          {
+            campaign_select_params.ssp_ctr = static_cast<float>(it->value.toNumber());
+          }
+          else if(::strcmp(it->key, "viewability") == 0 &&
+            it->value.getTag() == JSON_TAG_NUMBER)
+          {
+            campaign_select_params.ssp_viewability = static_cast<float>(it->value.toNumber());
+          }
+          else if(::strcmp(it->key, "vtr") == 0 &&
+            it->value.getTag() == JSON_TAG_NUMBER)
+          {
+            campaign_select_params.ssp_vtr = static_cast<float>(it->value.toNumber());
+          }
+        }
       }
     }
 
@@ -3492,6 +3552,9 @@ namespace AdServer
 
         // fill campaign_select_params fields required for CTR calculate
         campaign_select_params.ext_tag_id = ad_slot.ext_tag_id.in();
+        fill_ssp_features_from_additional_info(
+          campaign_select_params,
+          request_params.additional_info.in());
         campaign_select_params.short_referer_hash = request_params.context_info.short_referer_hash;
         campaign_select_params.channels = triggered_channels;
         //CorbaAlgs::convert_sequence(request_params.channels, campaign_select_params.channels_array);

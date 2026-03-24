@@ -167,6 +167,26 @@ namespace AdServer::CampaignSvcs::CTR
       hash.add(static_cast<uint32_t>(request_params.tag_predicted_viewability));
     }
 
+    DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_tag_id_)
+    {
+      hash.add(request_params.ssp_tag_id);
+    }
+
+    DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_ctr_)
+    {
+      hash.add(request_params.ssp_ctr);
+    }
+
+    DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_viewability_)
+    {
+      hash.add(request_params.ssp_viewability);
+    }
+
+    DEFINE_REQUEST_FEATURE_HASH_FUN(add_hash_ssp_vtr_)
+    {
+      hash.add(request_params.ssp_vtr);
+    }
+
     struct AfterHourFeatureCalculatorCreator: public FeatureCalculatorCreator
     {
     public:
@@ -282,6 +302,10 @@ namespace AdServer::CampaignSvcs::CTR
       },
       { BF_VISIBILITY, "visibility", F2C(add_tag_visibility_) },
       { BF_PREDICTED_VIEWABILITY, "viewability", F2C(add_tag_predicted_viewability_) },
+      { BF_SSP_TAG_ID, "ssp_tag_id", F2C(add_hash_ssp_tag_id_) },
+      { BF_SSP_CTR, "ssp_ctr", F2C(add_hash_ssp_ctr_) },
+      { BF_SSP_VIEWABILITY, "ssp_viewability", F2C(add_hash_ssp_viewability_) },
+      { BF_SSP_VTR, "ssp_vtr", F2C(add_hash_ssp_vtr_) },
 
       { BF_SIZE_TYPE_ID, "sizetype", F2C(add_hash_size_type_id_) },
       { BF_SIZE_ID, "sizeid", F2C(add_hash_size_id_) },
