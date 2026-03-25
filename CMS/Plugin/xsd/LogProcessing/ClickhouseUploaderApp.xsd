@@ -1,0 +1,38 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  elementFormDefault="qualified"
+  xml:lang="en"
+  version="1.0">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      ClickhouseUploader Configuration File XML Schema
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
+
+  <xsd:element name="clickhouseUploader" type="ClickhouseUploaderConfigType">
+    <xsd:annotation>
+      <xsd:documentation>
+        ClickhouseUploader configuration.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+
+  <xsd:complexType name="ClickhouseUploaderConfigType">
+    <xsd:sequence>
+      <xsd:element name="logging" type="LoggingParamsType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            Logging parameters.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="clickhouse_conn" type="xsd:string" use="optional"/>
+    <xsd:attribute name="batch" type="xsd:positiveInteger" use="optional" default="1000"/>
+  </xsd:complexType>
+
+</xsd:schema>

@@ -220,11 +220,11 @@ namespace WebStat
 
       if(!request_info_list.empty() && !request_info_list.begin()->origin.empty())
       {
-        response.add_header(
+        response.add_header_nocopy_name(
           String::SubString("Access-Control-Allow-Origin"),
           request_info_list.begin()->origin);
 
-        response.add_header(
+        response.add_header_nocopy(
           String::SubString("Access-Control-Allow-Credentials"),
           String::SubString("true"));
       }
@@ -239,7 +239,7 @@ namespace WebStat
 
       if(request.method() == FCGI::HttpRequest::RM_GET)
       {
-        response.set_content_type(String::SubString("image/gif"));
+        response.set_content_type_nocopy(String::SubString("image/gif"));
 
         FileCache::BufferHolder_var buffer = pixel_->get();
         response.get_output_stream().write((*buffer)->data(), (*buffer)->size());

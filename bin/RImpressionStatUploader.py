@@ -9,6 +9,7 @@ import json
 import argparse
 import typing
 import shutil
+import atexit
 import jinja2
 
 
@@ -204,10 +205,22 @@ def main() :
     config.init_json(config_json)
 
   if config.pid_file :
+    pid_file_dir = os.path.dirname(config.pid_file)
+    if pid_file_dir:
+      os.makedirs(pid_file_dir, exist_ok = True)
+
     pid = os.getpid()
-    with open(config.pid_file, 'wb') as f:
-      f.write(str(pid).encode('utf-8'))
-      f.close()
+    with open(config.pid_file, 'w') as f:
+      f.write(str(pid))
+
+    def remove_pid_file() :
+      try :
+        if os.path.exists(config.pid_file) :
+          os.unlink(config.pid_file)
+      except Exception:
+        pass
+
+    atexit.register(remove_pid_file)
 
   logging.basicConfig(level = 'DEBUG', format = "%(asctime)s - %(levelname)s - %(message)s")
   logger = logging.getLogger(__name__)
@@ -221,14 +234,17 @@ def main() :
 
   with SignalInterruptHandler(
     [ signal.SIGINT, signal.SIGUSR1, signal.SIGHUP ],
-    handler = None) as interrupter :
-    while True :
-      try :
+    handler = None) as interrupter:
+    while not interrupter.interrupted():
+      try:
         logger.debug("To check stats: " + str(config.check_roots))
         check_stat_files(interrupter, config = config, logger = logger, processors = processors)
         logger.debug("From check stats")
-        time.sleep(60)
-      except Exception as e :
+        for i in range(60):
+          if interrupter.interrupted():
+            break
+          time.sleep(1)
+      except Exception as e:
         logger.error("Global exception: " + str(e))
     
 if __name__ == '__main__':

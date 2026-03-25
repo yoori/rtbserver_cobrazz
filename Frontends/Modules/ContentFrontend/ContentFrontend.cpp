@@ -514,7 +514,7 @@ namespace AdServer
       String::TextTemplate::ArgsEncoder encoder(&default_cont);
       std::string response_content = templ->instantiate(encoder);
 
-      response.set_content_type(Response::Type::TEXT_HTML);
+      response.set_content_type_nocopy(Response::Type::TEXT_HTML);
 
       response.get_output_stream().write(
         response_content.data(),

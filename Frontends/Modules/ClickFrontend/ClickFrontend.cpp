@@ -812,7 +812,7 @@ namespace AdServer
           std::string response_content = templ->instantiate(
             args_with_encoding);
 
-          response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
+          response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
           response.get_output_stream().write(
             response_content.data(), response_content.size());
           http_status = 200;
@@ -835,7 +835,7 @@ namespace AdServer
         {
           // do redirect to click_url
           http_status = 302;
-          response.add_header(
+          response.add_header_nocopy_name(
             Response::Header::LOCATION,
             request_info.click_prefix + click_result_info->url.in());
 

@@ -522,6 +522,13 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
+          select="$be-cluster-path/service[@descriptor = $clickhouse-uploader-descriptor]"/>
+        <xsl:with-param name="service-name" select="'lp-ClickhouseUploader'"/>
+        <xsl:with-param name="service-type" select="'AdServer::LogProcessing::ClickhouseUploader'"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
           select="$be-cluster-path/service[@descriptor = $dictionary-provider-descriptor]"/>
         <xsl:with-param name="service-name" select="'be-DictionaryProvider'"/>
         <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::DictionaryProvider'"/>

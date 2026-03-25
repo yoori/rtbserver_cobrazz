@@ -402,18 +402,18 @@ namespace AdServer
       {
         if(file_content->file_name() >= base_name)
         {
-          response.add_header(
+          response.add_header_nocopy(
             Header::CACHE_CONTROL,
             DirectoryConfig::DEFAULT_REQUESTED_FRESH_OR_OLDEST_VERSION_CACHE_HEADER);
         }
         else
         {
-          response.add_header(
+          response.add_header_nocopy(
             Header::CACHE_CONTROL,
             DirectoryConfig::DEFAULT_REQUEST_GREAT_VERSION_CACHE_HEADER);
         }
 
-        response.set_content_type(DirectoryConfig::DEFAULT_CONTENT_TYPE_HEADER);
+        response.set_content_type_nocopy(DirectoryConfig::DEFAULT_CONTENT_TYPE_HEADER);
 
         response.get_output_stream().write(
           static_cast<const char*>(file_content->data()),

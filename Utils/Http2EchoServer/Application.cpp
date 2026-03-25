@@ -40,7 +40,7 @@ namespace Utils
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
       response->set_status(200);
-      response->set_content_type(String::SubString("text/plain; charset=utf-8"));
+      response->set_content_type_nocopy(String::SubString("text/plain; charset=utf-8"));
 
       const auto& request = request_holder->request();
       Stream::Error out;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <String/SubString.hpp>
+
 namespace AdServer::Bidding
 {
 
@@ -14,28 +16,28 @@ enum class Stage
   CampaignSelectionConsidering
 };
 
-constexpr std::string_view convert_stage_to_string(
+constexpr String::SubString convert_stage_to_string(
   const Stage stage)
 {
   switch (stage)
   {
     case Stage::Initial:
-      return "initial";
+      return String::SubString("initial");
     case Stage::UserResolving:
-      return "user resolving";
+      return String::SubString("user resolving");
     case Stage::TriggerMatching:
-      return "trigger matching";
+      return String::SubString("trigger matching");
     case Stage::HistoryMatching:
-      return "history matching";
+      return String::SubString("history matching");
     case Stage::CampaignSelection:
-      return "campaign selection";
+      return String::SubString("campaign selection");
     case Stage::RequestParsing:
-      return "request parsing";
+      return String::SubString("request parsing");
     case Stage::CampaignSelectionConsidering:
-      return "campaign selection considering";
+      return String::SubString("campaign selection considering");
   }
 
-  return {};
+  return String::SubString();
 }
 
 } // namespace AdServer::Bidding

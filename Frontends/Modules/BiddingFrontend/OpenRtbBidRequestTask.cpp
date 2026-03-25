@@ -422,18 +422,18 @@ namespace Bidding
     if(!bid_response.empty())
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
-      response->set_content_type(Response::Type::JSON);
-      response->add_header(
+      response->set_content_type_nocopy(Response::Type::JSON);
+      response->add_header_nocopy(
         Response::Header::OPENRTB_VERSION,
         Response::Header::OPENRTB_VERSION_VALUE);
 
       if (interrupted())
       {
-        const std::string_view stage =  convert_stage_to_string(
+        const auto stage =  convert_stage_to_string(
           get_current_stage());
-        response->add_header(
+        response->add_header_nocopy(
           Response::Header::OPENRTB_INTERRUPTED_BID,
-          String::SubString(stage.data(), stage.length()));
+          stage);
       }
 
       auto& output = response->get_output_stream();
@@ -455,18 +455,18 @@ namespace Bidding
 
     if (interrupted())
     {
-      const std::string_view stage =  convert_stage_to_string(
+      const auto stage =  convert_stage_to_string(
         get_current_stage());
-      response->add_header(
+      response->add_header_nocopy(
         Response::Header::OPENRTB_INTERRUPTED_BID,
-        String::SubString(stage.data(), stage.length()));
+        stage);
     }
 
     if(code < 300)
     {
       // no-bid is No content by OpenRTB 2.0 spec
-      response->set_content_type(Response::Type::JSON);
-      response->add_header(
+      response->set_content_type_nocopy(Response::Type::JSON);
+      response->add_header_nocopy(
         Response::Header::OPENRTB_VERSION,
         Response::Header::OPENRTB_VERSION_VALUE);
       write_response_(204, response);

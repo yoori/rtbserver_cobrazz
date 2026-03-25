@@ -62,14 +62,14 @@ namespace AdServer
       {
         ostr << "</pre>\n</body>\n</html>\n";
 
-        response.set_content_type(Response::Type::TEXT_HTML);
+        response.set_content_type_nocopy(Response::Type::TEXT_HTML);
 
         str_response = ostr.str();
         http_status = 200;
       }
       else
       {
-        response.add_header(
+        response.add_header_nocopy_name(
           Response::Header::DEBUG_INFO,
           ostr.str());
       }
@@ -99,7 +99,7 @@ namespace AdServer
         Debug::ERROR_HEAD << "\n" << res_error <<
         "</pre>\n</body>\n</html>\n";
 
-      response.set_content_type(Response::Type::TEXT_HTML);
+      response.set_content_type_nocopy(Response::Type::TEXT_HTML);
 
       const std::string& debug_content_str = debug_content.str();
       response.get_output_stream().write(

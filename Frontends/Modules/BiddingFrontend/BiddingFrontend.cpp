@@ -3639,7 +3639,7 @@ namespace Bidding
 
     std::string ostr(fun);
     ostr += ": interrupted at ";
-    ostr += convert_stage_to_string(stage);
+    ostr += convert_stage_to_string(stage).str();
     ostr += ", after";
 
     group_logger()->add_error(

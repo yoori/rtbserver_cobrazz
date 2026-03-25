@@ -154,32 +154,6 @@ namespace FrontendCommons
     }
   };
 
-  /**
-   * some util functions for reduction code
-   * works with http & configuration instances
-   */
-
-  /*
-  inline
-  void
-  add_cookie(
-    const HTTP::CookieDef& cookie,
-    Apache::HttpResponse& response)
-  {
-    HTTP::CookieDefList cookies;
-    cookies.push_back(cookie);
-
-    HTTP::HeaderList headers;
-    cookies.set_cookie_header(headers);
-
-    for (HTTP::HeaderList::const_iterator it = headers.begin();
-         it != headers.end(); it++)
-    {
-      response.add_header(it->name.c_str(), it->value.c_str());
-    }
-  }
-  */
-
   template<typename HttpRequest>
   inline
   bool
@@ -422,7 +396,7 @@ namespace FrontendCommons
              out_cookie_headers.begin();
            it != out_cookie_headers.end(); ++it)
       {
-        response.add_header(it->name.c_str(), it->value.c_str());
+        response.add_header_nocopy(it->name.c_str(), it->value.c_str());
       }
     }
     catch(const eh::Exception& ex)
@@ -445,7 +419,7 @@ namespace FrontendCommons
   redirect(const String::SubString& url, HttpResponse& response)
     /*throw(eh::Exception)*/
   {
-    response.add_header(String::SubString("Location"), url);
+    response.add_header_nocopy_name(String::SubString("Location"), url.str());
     return 302; // HTTP_MOVED_TEMPORARILY; // HTTP_SEE_OTHER;
   }
 
@@ -454,9 +428,15 @@ namespace FrontendCommons
   void
   no_cache(HttpResponse& response) noexcept
   {
-    response.add_header("Cache-Control", "no-store, no-cache");
-    response.add_header("Expires", "Sat, 26 Jul 1997 05:00:00 GMT");
-    response.add_header("Vary", "Cookie");
+    response.add_header_nocopy(
+      String::SubString("Cache-Control"),
+      String::SubString("no-store, no-cache"));
+    response.add_header_nocopy(
+      String::SubString("Expires"),
+      String::SubString("Sat, 26 Jul 1997 05:00:00 GMT"));
+    response.add_header_nocopy(
+      String::SubString("Vary"),
+      String::SubString("Cookie"));
   }
 
   inline
@@ -672,21 +652,21 @@ namespace FrontendCommons
         //   The value of the 'Access-Control-Allow-Origin' header in
         //   the response must not be the wildcard '*' when the request's credentials
         //   mode is 'include'
-        response.add_header(
+        response.add_header_nocopy_name(
           String::SubString("Access-Control-Allow-Origin"),
-          origin);
+          origin.str());
       }
       else
       {
-        response.add_header(
+        response.add_header_nocopy(
           String::SubString("Access-Control-Allow-Origin"),
           String::SubString("*"));
       }
 
-      response.add_header(
+      response.add_header_nocopy(
         String::SubString("Access-Control-Allow-Credentials"),
         String::SubString("true"));
-      response.add_header(
+      response.add_header_nocopy(
         String::SubString("Vary"),
         String::SubString("Origin"));
     }

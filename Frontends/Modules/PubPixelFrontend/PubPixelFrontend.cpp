@@ -229,7 +229,7 @@ namespace PubPixel
 
         const AdServer::CampaignSvcs::StringSeq& pub_pixels = *pub_pixels_ptr;
 
-        response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
+        response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
         if(common_config_->ResponseHeaders().present())
         {
           FrontendCommons::add_headers(

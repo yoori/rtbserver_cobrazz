@@ -742,7 +742,7 @@ namespace AdServer
       pixel_.in())
     {
       http_status = 200;
-      response.set_content_type(pixel_content_type_);
+      response.set_content_type_nocopy(pixel_content_type_);
 
       FileCache::BufferHolder_var buffer = pixel_->get();
       response.get_output_stream().write((*buffer)->data(), (*buffer)->size());
@@ -853,7 +853,7 @@ namespace AdServer
           stream << "{}";
         }
 
-        response.set_content_type(Response::Type::JSON);
+        response.set_content_type_nocopy(Response::Type::JSON);
         response.write(stream.str());
 
         return 200;
@@ -1246,7 +1246,7 @@ namespace AdServer
     {
       http_status = 204;
 
-      response.add_header(String::SubString("X-Status"), String::SubString("Bad request"));
+      response.add_header_nocopy(String::SubString("X-Status"), String::SubString("Bad request"));
 
       //http_status = 400;
     }
@@ -2437,7 +2437,7 @@ namespace AdServer
 	}
       }
 
-      response.set_content_type(Response::Type::JSON);
+      response.set_content_type_nocopy(Response::Type::JSON);
       response.write(response_string.str());
 
       return 200;

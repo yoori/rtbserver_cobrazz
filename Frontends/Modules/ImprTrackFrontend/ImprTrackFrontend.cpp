@@ -1065,7 +1065,7 @@ namespace ImprTrack
 
             std::string response_content = templ->instantiate(args_with_encoding);
 
-            response.set_content_type(FrontendCommons::ContentType::TEXT_HTML);
+            response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
 
             response.get_output_stream().write(
               response_content.data(), response_content.size());
@@ -1095,7 +1095,7 @@ namespace ImprTrack
         }
         else
         {
-          response.set_content_type(track_pixel_content_type_);
+          response.set_content_type_nocopy(track_pixel_content_type_);
 
           if(common_config_->ResponseHeaders().present())
           {

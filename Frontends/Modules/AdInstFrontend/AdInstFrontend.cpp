@@ -390,7 +390,7 @@ namespace Instantiate
       // fill response
       if(!merge_success)
       {
-        response.add_header(
+        response.add_header_nocopy_name(
           Response::Header::MERGE_FAILED,
           merge_error_message);
       }
@@ -662,7 +662,7 @@ namespace Instantiate
         if(got_click_url)
         {
           // do redirect to click_url
-          response.add_header(
+          response.add_header_nocopy_name(
             Response::Header::LOCATION,
             request_info.click_prefix_url + click_result_info->url.in());
           return 302;
@@ -870,7 +870,7 @@ namespace Instantiate
       else if (inst_ad_result->creative_body[0])
       {
         std::string response_body(inst_ad_result->creative_body);
-        response.set_content_type(String::SubString(inst_ad_result->mime_format.in()));
+        response.set_content_type(inst_ad_result->mime_format.in());
 
         response.get_output_stream().write(
           response_body.c_str(), response_body.length());

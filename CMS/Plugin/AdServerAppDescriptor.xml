@@ -106,6 +106,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="ClickhouseUploader"
+        configSchema="xsd/LogProcessing/ClickhouseUploaderApp.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"/>
+
+      <service
         type="DictionaryProvider"
         configSchema="xsd/ChannelServing/DictionaryProviderApp.xsd"
         minOccurs="0"

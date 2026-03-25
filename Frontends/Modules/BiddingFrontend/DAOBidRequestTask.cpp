@@ -80,7 +80,7 @@ namespace Bidding
     if(!bid_response.empty())
     {
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
-      response->set_content_type(Response::Type::TEXT_XML);
+      response->set_content_type_nocopy(Response::Type::TEXT_XML);
 
       FCGI::OutputStream& output = response->get_output_stream();
       std::string bid_response = response_ostr.str();

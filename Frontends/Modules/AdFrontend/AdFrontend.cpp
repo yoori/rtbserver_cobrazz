@@ -1647,7 +1647,7 @@ namespace AdServer
 
       if(!merge_success)
       {
-        response.add_header(
+        response.add_header_nocopy_name(
           Response::Header::MERGE_FAILED,
           merge_error_message);
       }
@@ -1670,11 +1670,11 @@ namespace AdServer
 
           if(ad_slot_result.mime_format[0])
           {
-            response.set_content_type(String::SubString(ad_slot_result.mime_format.in()));
+            response.set_content_type(ad_slot_result.mime_format.in());
           }
           else
           {
-            response.set_content_type(Response::Type::TEXT_HTML);
+            response.set_content_type_nocopy(Response::Type::TEXT_HTML);
           }
 
           return 200;

@@ -25,6 +25,7 @@ EXPRESSION_MATCHER_DESCR=$BACKEND_CLUSTER/ExpressionMatcher
 LOG_GENERALIZER_DESCR=$BACKEND_CLUSTER/LogGeneralizer
 LOG_PROCESSING_DESCR=$BACKEND_CLUSTER/LogProcessing
 REQUEST_INFO_MANAGER_DESCR=$BACKEND_CLUSTER/RequestInfoManager
+CLICKHOUSE_UPLOADER_DESCR=$BACKEND_CLUSTER/ClickhouseUploader
 STAT_RECEIVER_DESCR=$BACKEND_CLUSTER/StatReceiver
 STATS_COLLECTOR_DESCR=$BACKEND_CLUSTER/StatsCollector
 USER_OPERATION_GENERATOR_DESCR=$BACKEND_CLUSTER/UserOperationGenerator
@@ -127,6 +128,19 @@ $EXEC/ServiceConf.sh \
   --xsl $XSLT_ROOT/LogProcessing/RequestInfoManager.xsl \
   --out-file RequestInfoManagerConfig.xml \
   --out-dir-suffix "$OUT_DIR_SUFFIX" \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
+
+let "EXIT_CODE|=$?"
+
+## configure ClickhouseUploader
+CLICKHOUSE_UPLOADER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CLICKHOUSE_UPLOADER_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$CLICKHOUSE_UPLOADER_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/LogProcessing/ClickhouseUploader.xsl \
+  --out-file ClickhouseUploaderConfig.json \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT
 

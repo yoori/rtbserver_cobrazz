@@ -414,7 +414,7 @@ namespace Action
   void
   Frontend::write_pixel(FCGI::HttpResponse& response) /*throw(eh::Exception)*/
   {
-    response.set_content_type(String::SubString("image/gif"));
+    response.set_content_type_nocopy(String::SubString("image/gif"));
 
     FileCache::BufferHolder_var buffer = track_pixel_->get();
     response.get_output_stream().write((*buffer)->data(), (*buffer)->size());
@@ -423,7 +423,7 @@ namespace Action
   void
   Frontend::write_html(FCGI::HttpResponse& response) /*throw(eh::Exception)*/
   {
-    response.set_content_type(String::SubString("text/html"));
+    response.set_content_type_nocopy(String::SubString("text/html"));
 
     FileCache::BufferHolder_var buffer = track_html_->get();
     response.get_output_stream().write((*buffer)->data(), (*buffer)->size());

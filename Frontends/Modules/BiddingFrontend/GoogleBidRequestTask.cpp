@@ -394,7 +394,7 @@ namespace Bidding
 
       // write response
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
-      response->set_content_type(Response::Type::OCTET_STREAM);
+      response->set_content_type_nocopy(Response::Type::OCTET_STREAM);
       Stream::BinaryStreamWriter response_writer(&response->get_output_stream());
       bid_response.set_processing_time_ms(
         (Generics::Time::get_time_of_day() - start_processing_time()).microseconds() / 1000);
@@ -417,7 +417,7 @@ namespace Bidding
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
     if(code < 300)
     {
-      response->set_content_type(Response::Type::OCTET_STREAM);
+      response->set_content_type_nocopy(Response::Type::OCTET_STREAM);
 
       Stream::BinaryStreamWriter response_writer(&response->get_output_stream());
       Google::BidResponse empty_bid_response;

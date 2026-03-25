@@ -209,7 +209,7 @@ namespace PassbackPixel
           response);
       }
 
-      response.set_content_type(String::SubString("image/gif"));
+      response.set_content_type_nocopy(String::SubString("image/gif"));
 
       FileCache::BufferHolder_var buffer = track_pixel_->get();
       response.get_output_stream().write((*buffer)->data(), (*buffer)->size());

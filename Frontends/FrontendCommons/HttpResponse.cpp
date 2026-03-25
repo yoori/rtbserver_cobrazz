@@ -1,5 +1,6 @@
 #include "HttpResponse.hpp"
 #include <sstream>
+#include <utility>
 
 namespace
 {
@@ -51,7 +52,7 @@ HttpResponse::status() const noexcept
 }
 
 void
-HttpResponse::add_header(
+HttpResponse::add_header_nocopy(
   const String::SubString& name,
   const String::SubString& value)
   /*throw(eh::Exception)*/
@@ -60,10 +61,43 @@ HttpResponse::add_header(
 }
 
 void
-HttpResponse::set_content_type(const String::SubString& value)
+HttpResponse::add_header_nocopy_name(
+  const String::SubString& name,
+  std::string value)
   /*throw(eh::Exception)*/
 {
-  add_header(CONTENT_TYPE_HEADER, value);
+  string_holders_.emplace_back(std::move(value));
+  const std::string& value_holder = string_holders_.back();
+  add_header_nocopy(name, String::SubString(value_holder));
+}
+
+void
+HttpResponse::add_header(
+  std::string name,
+  std::string value)
+  /*throw(eh::Exception)*/
+{
+  string_holders_.emplace_back(std::move(name));
+  const std::string& name_holder = string_holders_.back();
+  string_holders_.emplace_back(std::move(value));
+  const std::string& value_holder = string_holders_.back();
+  add_header_nocopy(
+    String::SubString(name_holder),
+    String::SubString(value_holder));
+}
+
+void
+HttpResponse::set_content_type_nocopy(const String::SubString& value)
+  /*throw(eh::Exception)*/
+{
+  add_header_nocopy(CONTENT_TYPE_HEADER, value);
+}
+
+void
+HttpResponse::set_content_type(std::string value)
+  /*throw(eh::Exception)*/
+{
+  add_header_nocopy_name(CONTENT_TYPE_HEADER, std::move(value));
 }
 
 void

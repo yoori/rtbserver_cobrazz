@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <iostream>
+#include <list>
 #include <vector>
 
 #include <Stream/BinaryStream.hpp>
@@ -46,13 +47,29 @@ namespace FCGI
     status() const noexcept;
 
     void
-    add_header(
+    add_header_nocopy(
       const String::SubString& name,
       const String::SubString& value)
       /*throw(eh::Exception)*/;
 
     void
-    set_content_type(const String::SubString& value)
+    add_header_nocopy_name(
+      const String::SubString& name,
+      std::string value)
+      /*throw(eh::Exception)*/;
+
+    void
+    add_header(
+      std::string name,
+      std::string value)
+      /*throw(eh::Exception)*/;
+
+    void
+    set_content_type_nocopy(const String::SubString& value)
+      /*throw(eh::Exception)*/;
+
+    void
+    set_content_type(std::string value)
       /*throw(eh::Exception)*/;
 
     void
@@ -83,6 +100,7 @@ namespace FCGI
   private:
     int status_;
     HTTP::SubHeaderList headers_;
+    std::list<std::string> string_holders_;
     std::vector<std::string> cookies_;
     std::string body_;
     OutputStream output_stream_;

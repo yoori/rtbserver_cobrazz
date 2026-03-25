@@ -179,7 +179,7 @@ namespace Bidding
       const std::string bid_response = response_ostr.str();
 
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
-      response->set_content_type(Response::Type::JSON);
+      response->set_content_type_nocopy(Response::Type::JSON);
       FCGI::OutputStream& output = response->get_output_stream();
       output.write(bid_response.data(), bid_response.size());
 
@@ -197,7 +197,7 @@ namespace Bidding
   {
     FCGI::HttpResponse_var response(new FCGI::HttpResponse());
 
-    response->set_content_type(Response::Type::JSON);
+    response->set_content_type_nocopy(Response::Type::JSON);
 
     if (code >= 300)
     {

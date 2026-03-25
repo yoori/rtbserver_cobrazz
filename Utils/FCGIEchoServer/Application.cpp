@@ -53,7 +53,7 @@ namespace
 
       FCGI::HttpResponse_var response(new FCGI::HttpResponse());
       const String::SubString content_type("text/plain");
-      response->set_content_type(content_type);
+      response->set_content_type_nocopy(content_type);
 
       auto& output = response->get_output_stream();
       const auto payload = response_body.str();

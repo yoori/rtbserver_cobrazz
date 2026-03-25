@@ -93,6 +93,7 @@
 <xsl:variable name="log-generalizer-descriptor" select="'AdCluster/BackendSubCluster/LogGeneralizer'"/>
 <xsl:variable name="expression-matcher-descriptor" select="'AdCluster/BackendSubCluster/ExpressionMatcher'"/>
 <xsl:variable name="request-info-manager-descriptor" select="'AdCluster/BackendSubCluster/RequestInfoManager'"/>
+<xsl:variable name="clickhouse-uploader-descriptor" select="'AdCluster/BackendSubCluster/ClickhouseUploader'"/>
 <xsl:variable name="stat-receiver-descriptor" select="'AdCluster/BackendSubCluster/StatReceiver'"/>
 <xsl:variable name="stats-collector-descriptor" select="'AdCluster/BackendSubCluster/StatsCollector'"/>
 
@@ -168,6 +169,7 @@
 <xsl:variable name="log-generalizer-log-path" select="'/log/LogGeneralizer/LogGeneralizer'"/>
 <xsl:variable name="request-info-manager-log-level" select="$default-log-level"/>
 <xsl:variable name="request-info-manager-log-path" select="'/log/RequestInfoManager/RequestInfoManager'"/>
+<xsl:variable name="clickhouse-uploader-log-path" select="'/log/ClickhouseUploader/ClickhouseUploader'"/>
 <xsl:variable name="user-info-manager-log-level" select="$default-log-level"/>
 <xsl:variable name="user-info-manager-log-path" select="'/log/UserInfoManager/UserInfoManager'"/>
 <xsl:variable name="user-info-manager-controller-log-level" select="$default-log-level"/>
