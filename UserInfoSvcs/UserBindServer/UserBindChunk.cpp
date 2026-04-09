@@ -13,6 +13,7 @@
 #include <Commons/UserInfoManip.hpp>
 
 #include "ChunkUtils.hpp"
+#include "ExternalIdHashAdapter.hpp"
 #include "UserBindChunk.hpp"
 
 namespace
@@ -1651,13 +1652,13 @@ namespace UserInfoSvcs
       }
     }
 
+    /*
     std::cerr << "enc stats:" << std::endl;
     for(auto it = enc_stats.begin(); it != enc_stats.end(); ++it)
     {
       std::cerr << static_cast<int>(it->first) << ": " << it->second << std::endl;
     }
 
-    /*
     std::cerr << "source enc stats:" << std::endl;
     for(auto it = source_enc_stats.begin(); it != source_enc_stats.end(); ++it)
     {

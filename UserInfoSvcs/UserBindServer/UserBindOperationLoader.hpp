@@ -1,5 +1,4 @@
-#ifndef USERBINDSERVER_USERBINDOPERATIONLOADER_HPP
-#define USERBINDSERVER_USERBINDOPERATIONLOADER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -11,9 +10,7 @@
 
 #include "UserBindOperationSaver.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // UserBindOperationLoader
   class UserBindOperationLoader:
@@ -44,6 +41,3 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<UserBindOperationLoader>
     UserBindOperationLoader_var;
 }
-}
-
-#endif /*USERBINDSERVER_USERBINDOPERATIONLOADER_HPP*/

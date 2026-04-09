@@ -2,7 +2,7 @@
 
 VERSION=$1
 #VERSION="3.21.8"
-VERSIONSSV=ssv1
+VERSIONSSV=ssv4
 
 pushd `dirname $0` >/dev/null
 SCRIPT_DIR=`pwd`
@@ -38,12 +38,20 @@ cat << 'EOF' > $SPEC_FILE
 Summary:        Protocol Buffers - Google's data interchange format
 Name:           protobuf
 Version:        %{_version}
-Release:        ssv1%{?dist}
+Release:        ssv4%{?dist}
 License:        BSD
 Group:          Development/Libraries
-Source:         https://github.com/google/protobuf/archive/v%{version}.tar.gz
 URL:            https://github.com/google/protobuf
 BuildRequires:  automake autoconf libtool pkgconfig zlib-devel
+Source:         https://github.com/google/protobuf/archive/v%{version}.tar.gz
+Patch0:         protobuf_build_fix.patch
+
+BuildRequires: abseil-cpp-devel = 20260107.1
+Requires: zlib
+Requires: glibc
+Requires: libgcc
+Requires: libstdc++
+Requires: abseil-cpp = 20260107.1
 
 %description
 Protocol Buffers are a way of encoding structured data in an efficient
@@ -65,7 +73,7 @@ Requires: %{name} = %{version}-%{release}
 
 %description compiler
 This package contains Protocol Buffers compiler for all programming
-languages
+%patchlanguages
 
 %package devel
 Summary: Protocol Buffers C++ headers and libraries
@@ -74,6 +82,7 @@ Requires: %{name} = %{version}-%{release}
 Requires: %{name}-compiler = %{version}-%{release}
 Requires: zlib-devel
 Requires: pkgconfig
+Requires: abseil-cpp-devel = 20260107.1
 
 %description devel
 This package contains Protocol Buffers compiler for all languages and
@@ -145,47 +154,18 @@ Conflicts: %{name}-compiler < %{version}
 This package contains Python libraries for Google Protocol Buffers
 
 %prep
-%setup -q
+%autosetup -p1
 chmod 644 examples/*
 
 %build
 iconv -f iso8859-1 -t utf-8 CONTRIBUTORS.txt > CONTRIBUTORS.txt.utf8
 mv CONTRIBUTORS.txt.utf8 CONTRIBUTORS.txt
 export PTHREAD_LIBS="-lpthread"
-./autogen.sh
-%configure
-
-make %{?_smp_mflags}
-
-#mkdir -p build/python36
-#mkdir -p build/python38
-
-pushd python
-echo "================="
-pwd
-echo %{__python36}
-echo "================="
-%{__python36} ./setup.py build
-%{__python38} ./setup.py build
-echo ">================"
-find build/ -type f
-echo ">================"
-sed -i -e 1d build/lib/google/protobuf/descriptor_pb2.py
-
-popd
-
-#%check
-#make %{?_smp_mflags} check
+%cmake3 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_ABSL_PROVIDER=package -DCMAKE_BUILD_TYPE=RelWithDebInfo
+%cmake3_build
 
 %install
-rm -rf %{buildroot}
-make %{?_smp_mflags} install DESTDIR=%{buildroot} STRIPBINARIES=no INSTALL="%{__install} -p" CPPROG="cp -p"
-find %{buildroot} -type f -name "*.la" -exec rm -f {} \;
-
-pushd python
-%{__python36} ./setup.py install --root=%{buildroot} --single-version-externally-managed --record=INSTALLED_FILES --optimize=1
-%{__python38} ./setup.py install --root=%{buildroot} --single-version-externally-managed --record=INSTALLED_FILES --optimize=1
-popd
+%cmake3_install
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
@@ -198,11 +178,12 @@ popd
 
 %files
 %{_libdir}/libprotobuf.so.*
-%doc CHANGES.txt CONTRIBUTORS.txt README.md
+%doc CONTRIBUTORS.txt README.md
 %license LICENSE
 
 %files compiler
 %{_bindir}/protoc
+%{_bindir}/protoc-25.9.0
 %{_libdir}/libprotoc.so.*
 %doc README.md
 %license LICENSE
@@ -210,13 +191,14 @@ popd
 %files devel
 %dir %{_includedir}/google
 %{_includedir}/google/protobuf/
+%{_includedir}/java/
+%{_includedir}/*.h
 %{_libdir}/libprotobuf.so
 %{_libdir}/libprotoc.so
-%{_libdir}/pkgconfig/protobuf.pc
-
-%files static
-%{_libdir}/libprotobuf.a
-%{_libdir}/libprotoc.a
+%{_libdir}/*.a
+%{_libdir}/pkgconfig/
+%{_libdir}/cmake/
+/usr/lib/debug/
 
 %files lite
 %{_libdir}/libprotobuf-lite.so.*
@@ -225,26 +207,23 @@ popd
 %{_libdir}/libprotobuf-lite.so
 %{_libdir}/pkgconfig/protobuf-lite.pc
 
-%files lite-static
-%{_libdir}/libprotobuf-lite.a
+#%define python36_sitelib /usr/lib/python3.6/site-packages
+#%files python36
+#%dir %{python36_sitelib}/google
+#%{python36_sitelib}/google/protobuf/
+#%{python36_sitelib}/protobuf-*-py?.?.egg-info/
+#%{python36_sitelib}/protobuf-*-py?.?-nspkg.pth
+#%doc python/README.md
+#%doc examples/add_person.py examples/list_people.py examples/addressbook.proto
 
-%define python36_sitelib /usr/lib/python3.6/site-packages
-%files python36
-%dir %{python36_sitelib}/google
-%{python36_sitelib}/google/protobuf/
-%{python36_sitelib}/protobuf-*-py?.?.egg-info/
-%{python36_sitelib}/protobuf-*-py?.?-nspkg.pth
-%doc python/README.md
-%doc examples/add_person.py examples/list_people.py examples/addressbook.proto
-
-%define python38_sitelib /usr/lib/python3.8/site-packages
-%files python38
-%dir %{python38_sitelib}/google
-%{python38_sitelib}/google/protobuf/
-%{python38_sitelib}/protobuf-*-py?.?.egg-info/
-%{python38_sitelib}/protobuf-*-py?.?-nspkg.pth
-%doc python/README.md
-%doc examples/add_person.py examples/list_people.py examples/addressbook.proto
+#%define python38_sitelib /usr/lib/python3.8/site-packages
+#%files python38
+#%dir %{python38_sitelib}/google
+#%{python38_sitelib}/google/protobuf/
+#%{python38_sitelib}/protobuf-*-py?.?.egg-info/
+#%{python38_sitelib}/protobuf-*-py?.?-nspkg.pth
+#%doc python/README.md
+#%doc examples/add_person.py examples/list_people.py examples/addressbook.proto
 
 EOF
 
@@ -252,7 +231,6 @@ PASS_ARGS=("--define" "_version $VERSION" "--define" "_release $VERSIONSSV" \
   "--define" "__python36 /usr/bin/python3.6" \
   "--define" "__python38 /usr/bin/python3.8" \
   )
-#echo "ARGS: " $PASS_ARGS
 
 $SUDO_PREFIX yum-builddep -y "${PASS_ARGS[@]}" "$SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
@@ -262,10 +240,10 @@ echo "to download source"
 spectool --force -g -R "${PASS_ARGS[@]}" "$SPEC_FILE" || \
   { echo "can't download source RPM" >&2 ; exit 1 ; }
 
-echo "to build rpm"
+mkdir -p "$RPM_SOURCES_DIR/protobuf"
+cp protobuf/protobuf_build_fix.patch "$RPM_SOURCES_DIR/"
 
 rpmbuild --force -ba "${PASS_ARGS[@]}" "$SPEC_FILE" || \
   { echo "can't build RPM" >&2 ; exit 1 ; }
-
 
 cp $BIN_RPM_FOLDER/protobuf*.rpm $RES_RPMS/

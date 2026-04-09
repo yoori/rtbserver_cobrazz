@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERBINDSERVER_FETCHABLEHASHTABLE_HPP
-#define USERINFOSVCS_USERBINDSERVER_FETCHABLEHASHTABLE_HPP
+#pragma once
 
 #include <deque>
 #include <bitset>
@@ -7,9 +6,7 @@
 #include <Sync/SyncPolicy.hpp>
 #include <Commons/tsl/sparse_set.h>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct bit_deque
   {
@@ -603,8 +600,5 @@ namespace UserInfoSvcs
     public FetchableHashTable<KeyType, ValueType, SparseSet>
   {};
 }
-}
 
 #include "FetchableHashTable.tpp"
-
-#endif /*USERINFOSVCS_USERBINDSERVER_FETCHABLEHASHTABLE_HPP*/

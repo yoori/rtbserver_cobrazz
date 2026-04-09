@@ -14,7 +14,7 @@
 #include <Generics/AtomicInt.hpp>
 #include "Generics/CompositeMetricsProvider.hpp"
 
-#include <UServerUtils/MetricsHTTPProvider.hpp>
+//#include <UServerUtils/MetricsHTTPProvider.hpp>
 //#include <UServerUtils/metrics_raii.hpp>
 
 #include <Sync/PosixLock.hpp>
@@ -41,7 +41,7 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
-#include "UServerUtils/MetricsHTTPProvider.hpp"
+//#include "UServerUtils/MetricsHTTPProvider.hpp"
 #include "RequestMetricsProvider.hpp"
 #include "Stage.hpp"
 
@@ -306,6 +306,15 @@ namespace Bidding
     static AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
     get_empty_history_matching_()
       /*throw(eh::Exception)*/;
+
+    /*
+    static void
+    protobuf_log_handler_(
+      google::protobuf::LogLevel level,
+      const char* filename,
+      int line,
+      const std::string& message);
+    */
 
     void
     update_config_() noexcept;

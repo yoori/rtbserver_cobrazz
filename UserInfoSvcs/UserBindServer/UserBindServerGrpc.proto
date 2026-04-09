@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package adserver.user_info_svcs.user_bind;
+
+import "Batch.proto";
+
+service UserBindServerGrpc {
+  rpc get_bind_request(GetBindRequestRequest) returns (GetBindRequestResponse);
+  rpc add_bind_request(AddBindRequestRequest) returns (AddBindRequestResponse);
+  rpc get_user_id(GetUserIdRequest) returns (GetUserIdResponse);
+  rpc add_user_id(AddUserIdRequest) returns (AddUserIdResponse);
+  rpc get_source(GetSourceRequest) returns (GetSourceResponse);
+}
+
+service UserBindServerBatchTransport {
+  rpc stream_batches(stream adserver.grpc.BatchRequest) returns (stream adserver.grpc.BatchResponse);
+}
+
+message GetBindRequestRequest {
+  string request_id = 1;
+  bytes timestamp = 2;
+}
+
+message GetBindRequestResponse {
+  repeated string bind_user_ids = 1;
+}
+
+message AddBindRequestRequest {
+  string request_id = 1;
+  repeated string bind_user_ids = 2;
+  bytes timestamp = 3;
+}
+
+message AddBindRequestResponse {}
+
+message GetUserIdRequest {
+  string id = 1;
+  bytes timestamp = 2;
+  bool silent = 3;
+  bool generate_user_id = 4;
+  bool for_set_cookie = 5;
+  bytes create_timestamp = 6;
+  bytes current_user_id = 7;
+}
+
+message GetUserIdResponse {
+  bytes user_id = 1;
+  bool min_age_reached = 2;
+  bool created = 3;
+  bool invalid_operation = 4;
+  bool user_found = 5;
+}
+
+message AddUserIdRequest {
+  string id = 1;
+  bytes timestamp = 2;
+  bytes user_id = 3;
+}
+
+message AddUserIdResponse {
+  bytes merge_user_id = 1;
+  bool invalid_operation = 2;
+}
+
+message GetSourceRequest {}
+
+message GetSourceResponse {
+  repeated uint32 chunks = 1;
+  uint32 chunks_number = 2;
+}

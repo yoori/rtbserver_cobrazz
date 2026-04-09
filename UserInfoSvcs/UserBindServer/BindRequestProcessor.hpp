@@ -1,12 +1,9 @@
-#ifndef USERINFOSVCS_BINDREQUESTPROCESSOR_HPP
-#define USERINFOSVCS_BINDREQUESTPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct BindRequestProcessor:
     public virtual ReferenceCounting::Interface
@@ -47,13 +44,3 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<BindRequestProcessor>
     BindRequestProcessor_var;
 }
-}
-
-namespace AdServer
-{
-namespace UserInfoSvcs
-{
-}
-}
-
-#endif /*USERINFOSVCS_BINDREQUESTPROCESSOR_HPP*/

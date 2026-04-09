@@ -1,5 +1,6 @@
-#ifndef USERINFOSVCS_USERBINDSERVERMAIN_HPP
-#define USERINFOSVCS_USERBINDSERVERMAIN_HPP
+#pragma once
+
+#include <mutex>
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -11,6 +12,8 @@
 #include <xsd/UserInfoSvcs/UserBindServerConfig.hpp>
 
 #include "UserBindServerImpl.hpp"
+
+#include "UserBindServerGrpc.hpp"
 
 class UserBindServerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
@@ -39,28 +42,22 @@ protected:
   is_alive() /*throw(CORBA::SystemException)*/;
 
 private:
-  virtual ~UserBindServerApp_() noexcept{};
+  virtual ~UserBindServerApp_() noexcept;
 
   const AdServer::UserInfoSvcs::UserBindServerImpl::UserBindServerConfig&
-    config() const noexcept;
+  config() const noexcept;
 
   typedef std::unique_ptr<
     AdServer::UserInfoSvcs::UserBindServerImpl::UserBindServerConfig>
     ConfigPtr;
 
 private:
-  CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
-  CORBACommons::CorbaConfig corba_config_;
-
-  AdServer::UserInfoSvcs::UserBindServerImpl_var
-    user_bind_server_impl_;
-
   ConfigPtr configuration_;
 
-  typedef Sync::PosixMutex ShutdownMutex;
-  typedef Sync::PosixGuard ShutdownGuard;
+  AdServer::UserInfoSvcs::UserBindServerImpl_var user_bind_server_impl_; // CORBA impl
+  AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter_; // GRPC impl
 
-  ShutdownMutex shutdown_lock_;
+  std::mutex shutdown_lock_;
 };
 
 typedef ReferenceCounting::SmartPtr<UserBindServerApp_>
@@ -76,5 +73,3 @@ UserBindServerApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /*USERINFOSVCS_USERBINDSERVERMAIN_HPP*/

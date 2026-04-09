@@ -8,9 +8,7 @@
 #include "SimpleFixedAllocator.hpp"
 #include "ExternalIdHashAdapter.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   namespace
   {
@@ -893,7 +891,7 @@ namespace UserInfoSvcs
       unsigned long len_;
     };
     */
-  };
+  }
 
   ExternalIdHashAdapter::EncodingSelector::
   EncodingSelector() noexcept
@@ -938,7 +936,7 @@ namespace UserInfoSvcs
     encoders_[b12_encoder_->id()] = b12_encoder_;
     encoders_[b20_encoder_->id()] = b20_encoder_;
     encoders_[h96_encoder_->id()] = h96_encoder_;
-  };
+  }
 
   const ExternalIdHashAdapter::EncodingSelector::Encoder*
   ExternalIdHashAdapter::EncodingSelector::
@@ -1057,7 +1055,7 @@ namespace UserInfoSvcs
     }
 
     return default_encoder_;
-  };
+  }
 
   const ExternalIdHashAdapter::EncodingSelector::Encoder*
   ExternalIdHashAdapter::EncodingSelector::
@@ -1067,6 +1065,5 @@ namespace UserInfoSvcs
       encoders_[index];
     assert(ret);
     return ret;
-  };
-};
-};
+  }
+}

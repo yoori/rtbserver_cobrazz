@@ -1709,8 +1709,8 @@ namespace AdServer
         format(format_val),
         version_id(version_id_val),
         status(status_val),
-        sys_options(sys_options_val),
-        initial_contract_id(0)
+        initial_contract_id(0),
+        sys_options(sys_options_val)
     {
       for(CORBA::ULong token_i = 0; token_i < tokens_val.length(); ++token_i)
       {

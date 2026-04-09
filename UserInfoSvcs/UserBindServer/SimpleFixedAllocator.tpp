@@ -1,6 +1,4 @@
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   SimpleFixedAllocator::SimpleFixedAllocator(unsigned long alloc_size)
     noexcept
@@ -96,5 +94,4 @@ namespace UserInfoSvcs
 
     allocators_[size - min_alloc_size_]->dealloc(buf);
   }
-}
 }

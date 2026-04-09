@@ -514,7 +514,7 @@ namespace Bidding
   void
   OpenRtbBidRequestTask::fill_ext0_nroa_(
     AdServer::Commons::JsonObject& nroa_obj,
-    const RequestInfo& request_info,
+    const RequestInfo& /*request_info*/,
     const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
@@ -589,7 +589,7 @@ namespace Bidding
   void
   OpenRtbBidRequestTask::fill_buzsape_nroa_(
     AdServer::Commons::JsonObject& nroa_obj,
-    const RequestInfo& request_info,
+    const RequestInfo& /*request_info*/,
     const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {

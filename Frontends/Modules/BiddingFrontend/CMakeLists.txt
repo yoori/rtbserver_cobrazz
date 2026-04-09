@@ -58,5 +58,5 @@ target_link_libraries(BiddingFrontend
   ${PROTOBUF_LDFLAGS}
   protoc
   FCGI
-  UServerUtils
+  # UServerUtils
 )

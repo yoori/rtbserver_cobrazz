@@ -188,6 +188,33 @@
   </xsd:complexType>
   <!-- SecureParams ends -->
 
+  <!-- GrpcConfigType -->
+  <xsd:complexType name="GrpcConfigType">
+    <xsd:sequence>
+      <xsd:element name="Endpoint" type="GrpcEndpointConfigType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Endpoint.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <!-- GrpcConfigType ends -->
+
+  <!-- GrpcEndpointConfigType -->
+  <xsd:complexType name="GrpcEndpointConfigType">
+    <xsd:attribute name="host" type="xsd:string" use="optional">
+      <xsd:annotation>
+        <xsd:documentation>Listen interface. By default use canonical host name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="required">
+      <xsd:annotation>
+        <xsd:documentation>port.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  <!-- GrpcEndpointConfigType -->
+
   <!-- Logger -->
   <xsd:complexType name="ErrorLoggerType">
     <xsd:sequence>

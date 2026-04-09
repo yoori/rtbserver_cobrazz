@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERBINDCHUNK_HPP
-#define USERINFOSVCS_USERBINDCHUNK_HPP
+#pragma once
 
 #include <string>
 #include <set>
@@ -19,16 +18,12 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/LockMap.hpp>
 #include <Commons/Containers.hpp>
-//#include <Commons/tsl/sparse_map.h>
-//#include <Commons/tsl/sparse_set.h>
 
 #include "FetchableHashTable.hpp"
 #include "ExternalIdHashAdapter.hpp"
 #include "UserBindProcessor.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class UserBindChunk:
     public UserBindProcessor,
@@ -688,12 +683,9 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<UserBindChunk>
     UserBindChunk_var;
 
-} /* UserInfoSvcs */
-} /* AdServer */
+} /* AdServer::UserInfoSvcs */
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // StringDefHashAdapter
   inline
@@ -846,6 +838,3 @@ namespace UserInfoSvcs
     return hash_;
   }
 }
-}
-
-#endif /*USERINFOSVCS_USERBINDCHUNK_HPP*/

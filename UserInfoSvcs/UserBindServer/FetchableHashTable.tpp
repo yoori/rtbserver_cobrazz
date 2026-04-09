@@ -1,6 +1,4 @@
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   template<
     typename KeyType,
@@ -189,5 +187,4 @@ namespace UserInfoSvcs
     return typename FetchableHashTable<
       KeyType, ValueType, HashSetType>::Fetcher(*this);
   }
-}
 }

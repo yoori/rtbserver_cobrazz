@@ -649,6 +649,8 @@ namespace Bidding
           request_timeout_ /= 1000;
         }
 
+        //google::protobuf::SetLogHandler(&Frontend::protobuf_log_handler_);
+
         control_task_runner_->enqueue_task(
           Generics::Task_var(new UpdateConfigTask(this, control_task_runner_)));
 
@@ -3518,6 +3520,27 @@ namespace Bidding
     res->colo_id = -1;
     return res._retn();
   }
+
+  /*
+  void
+  Frontend::protobuf_log_handler_(
+    google::protobuf::LogLevel level,
+    const char* filename,
+    int line,
+    const std::string& message)
+  {
+    static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
+
+    if (level == google::protobuf::LOGLEVEL_ERROR ||
+        level == google::protobuf::LOGLEVEL_FATAL)
+    {
+      Stream::Error ostr;
+      ostr << "[libprotobuf " << level_names[level] <<
+        ' ' << filename << ':' << line << "] " << message;
+      throw BidRequestTask::Invalid(ostr.str());
+    }
+  }
+  */
 
   void
   Frontend::fill_account_traits_() noexcept

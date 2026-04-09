@@ -1,9 +1,6 @@
-#ifndef EXTERNAL_ID_HASH_ADAPTER_HPP_
-#define EXTERNAL_ID_HASH_ADAPTER_HPP_
+#pragma once
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class ExternalIdHashAdapter
   {
@@ -47,12 +44,9 @@ namespace UserInfoSvcs
   protected:
     void* data_;
   };
-};
-};
+}
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // StringDefHashAdapter
   inline
@@ -78,7 +72,4 @@ namespace UserInfoSvcs
   {
     return data_ ? *static_cast<uint32_t*>(data_) : 0;
   }
-};
-};
-
-#endif /*EXTERNAL_ID_HASH_ADAPTER_HPP_*/
+}

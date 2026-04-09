@@ -1,14 +1,11 @@
-#ifndef USERBINDOPERATIONSAVER_HPP
-#define USERBINDOPERATIONSAVER_HPP
+#pragma once
 
 #include <string>
 #include <ProfilingCommons/MessageSaver.hpp>
 
 #include "UserBindProcessor.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class UserBindOperationSaver:
     public UserBindProcessor,
@@ -70,6 +67,3 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<UserBindOperationSaver>
     UserBindOperationSaver_var;
 }
-}
-
-#endif /*USERBINDOPERATIONSAVER_HPP*/

@@ -1,0 +1,709 @@
+#include <atomic>
+#include <algorithm>
+#include <chrono>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <ctime>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <random>
+#include <queue>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <vector>
+#include <optional>
+
+#include <sys/resource.h>
+
+#include <grpcpp/grpcpp.h>
+#include <grpc/impl/channel_arg_names.h>
+
+#include <Generics/AppUtils.hpp>
+#include <Generics/CompositeActiveObject.hpp>
+#include <Generics/Time.hpp>
+
+#include <Commons/GrpcAlgs.hpp>
+#include <Commons/UserInfoManip.hpp>
+
+#include <UserInfoSvcs/UserBindServer/UserBindServerGrpc.grpc.pb.h>
+
+#include "UserBindAsyncClient.hpp"
+#include "UserBindServerGrpc.grpc-client.hpp"
+#include "UserBindSyncClient.hpp"
+
+namespace
+{
+  using BatchClient = AdServer::UserInfoSvcs::UserBindServerGrpcAsyncBatchingClient;
+
+  enum class Mode
+  {
+    Sync,
+    Async,
+    AsyncBatch
+  };
+
+  std::optional<Mode>
+  parse_mode(const std::string& value)
+  {
+    if (value == "sync")
+    {
+      return Mode::Sync;
+    }
+
+    if (value == "async")
+    {
+      return Mode::Async;
+    }
+
+    if (value == "async-batch")
+    {
+      return Mode::AsyncBatch;
+    }
+
+    return std::nullopt;
+  }
+
+  std::string
+  random_external_id(std::mt19937& gen)
+  {
+    static constexpr std::size_t id_size = 10;
+    static constexpr char first = 'a';
+    static constexpr char last = 'z';
+    std::uniform_int_distribution<int> dist(first, last);
+
+    std::string id;
+    id.reserve(id_size);
+    for(std::size_t i = 0; i < id_size; ++i)
+    {
+      id.push_back(static_cast<char>(dist(gen)));
+    }
+    return id;
+  }
+
+  struct CpuTimes
+  {
+    double user = 0.0;
+    double sys = 0.0;
+  };
+
+  std::string
+  format_stat_float(double value)
+  {
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(6) << value;
+    auto result = out.str();
+    const auto dot_pos = result.find('.');
+    if (dot_pos != std::string::npos)
+    {
+      while (!result.empty() && result.back() == '0')
+      {
+        result.pop_back();
+      }
+      if (!result.empty() && result.back() == '.')
+      {
+        result.pop_back();
+      }
+    }
+    return result;
+  }
+
+  double
+  timeval_seconds(const timeval& value)
+  {
+    return static_cast<double>(value.tv_sec) +
+      static_cast<double>(value.tv_usec) / 1000000.0;
+  }
+
+  CpuTimes
+  process_cpu_times()
+  {
+    rusage usage{};
+    getrusage(RUSAGE_SELF, &usage);
+    return CpuTimes{
+      timeval_seconds(usage.ru_utime),
+      timeval_seconds(usage.ru_stime)
+    };
+  }
+
+  class LatencyTopPercentile final
+  {
+  public:
+    explicit LatencyTopPercentile(std::uint64_t max_samples)
+      : max_samples_(std::max<std::uint64_t>(1, max_samples))
+    {}
+
+    void add(std::uint64_t latency_us)
+    {
+      if (heap_size_.load(std::memory_order_relaxed) >= max_samples_ &&
+        latency_us <= threshold_.load(std::memory_order_relaxed))
+      {
+        return;
+      }
+
+      std::lock_guard<std::mutex> lock(lock_);
+      if (slowest_.size() < max_samples_)
+      {
+        slowest_.push(latency_us);
+      }
+      else if (latency_us > slowest_.top())
+      {
+        slowest_.pop();
+        slowest_.push(latency_us);
+      }
+
+      heap_size_.store(slowest_.size(), std::memory_order_relaxed);
+      if (!slowest_.empty())
+      {
+        threshold_.store(slowest_.top(), std::memory_order_relaxed);
+      }
+    }
+
+    std::uint64_t p99(std::uint64_t count) const
+    {
+      if (count == 0)
+      {
+        return 0;
+      }
+
+      std::vector<std::uint64_t> values;
+      {
+        std::lock_guard<std::mutex> lock(lock_);
+        values = slowest_.values();
+      }
+
+      if (values.empty())
+      {
+        return 0;
+      }
+
+      auto top_count = std::max<std::uint64_t>(1, (count + 99) / 100);
+      top_count = std::min<std::uint64_t>(top_count, values.size());
+      auto position = values.begin() + static_cast<std::ptrdiff_t>(top_count - 1);
+      std::nth_element(
+        values.begin(),
+        position,
+        values.end(),
+        std::greater<std::uint64_t>());
+      return *position;
+    }
+
+  private:
+    using SlowestHeap = std::priority_queue<
+      std::uint64_t,
+      std::vector<std::uint64_t>,
+      std::greater<std::uint64_t>>;
+
+    struct SlowestHeapAccessor : SlowestHeap
+    {
+      const std::vector<std::uint64_t>& values() const noexcept
+      {
+        return this->c;
+      }
+    };
+
+    const std::uint64_t max_samples_;
+    mutable std::mutex lock_;
+    SlowestHeapAccessor slowest_;
+    std::atomic<std::uint64_t> heap_size_{0};
+    std::atomic<std::uint64_t> threshold_{0};
+  };
+
+  void
+  print_usage()
+  {
+    std::cerr
+      << "Usage: UserBindGrpcPerf [OPTIONS]\n"
+      << "Options:\n"
+      << "  --target <host:port>  grpc endpoint (default: localhost:25728)\n"
+      << "  --count <N>           number of rpc calls (default: 10000000)\n"
+      << "  --threads <N>         test sender threads count (default: 16)\n"
+      << "  --client-threads <N>  client worker/CQ threads (default: 4)\n"
+      << "  --max-streams <N>     maximum async-batch grpc streams (default: --client-threads)\n"
+      << "  --mode <name>         sync | async | async-batch (default: async-batch)\n"
+      << "  --max-inflight <N>    soft max in-flight requests (default: 12000)\n"
+      << "  --max-outstanding-requests <N> maximum async-batch accepted but unfinished requests, 0 disables limit (default: 0)\n"
+      << "  --max-batch-size <N>  maximum batch size for async-batch mode (default: 1024)\n"
+      << "  --max-batch-delay-us <N> maximum time to wait for filling async-batch request, 0 disables delay flush (default: 3000)\n"
+      << "  --local-subchannel-pool <0|1> use local subchannel pool per channel (default: 1)\n"
+      << "  --grpc-compression <0|1> use grpc compression (default: 1)\n"
+      << "  --user-id <id>        fixed id for GetUserIdRequest::id\n";
+  }
+}
+
+int
+main(int argc, char** argv)
+{
+  try
+  {
+    using namespace Generics::AppUtils;
+
+    StringOption opt_user_bind_grpc_endpoint("localhost:25728");
+    Generics::AppUtils::Option<unsigned long> opt_count(10000000);
+    Generics::AppUtils::Option<unsigned int> opt_threads(16);
+    Generics::AppUtils::Option<unsigned int> opt_client_threads(4);
+    Generics::AppUtils::Option<unsigned int> opt_max_streams(0);
+    StringOption opt_mode("async-batch");
+    Generics::AppUtils::Option<unsigned long> opt_max_inflight(12000);
+    Generics::AppUtils::Option<unsigned long> opt_max_outstanding_requests(0);
+    Generics::AppUtils::Option<unsigned long> opt_max_batch_size(1024);
+    Generics::AppUtils::Option<unsigned long> opt_max_batch_delay_us(3000);
+    Generics::AppUtils::Option<unsigned long> opt_hot_buckets_count(1);
+    Generics::AppUtils::Option<unsigned int> opt_local_subchannel_pool(1);
+    Generics::AppUtils::Option<unsigned int> opt_grpc_compression(1);
+    StringOption opt_user_id;
+
+    Args args(-1);
+    args.add(equal_name("grpc-endpoint") || short_name("g"), opt_user_bind_grpc_endpoint);
+    args.add(equal_name("count") || short_name("c"), opt_count);
+    args.add(equal_name("threads") || short_name("t"), opt_threads);
+    args.add(equal_name("client-threads"), opt_client_threads);
+    args.add(equal_name("max-streams"), opt_max_streams);
+    args.add(equal_name("mode"), opt_mode);
+    args.add(equal_name("max-inflight"), opt_max_inflight);
+    args.add(equal_name("max-outstanding-requests"), opt_max_outstanding_requests);
+    args.add(equal_name("max-batch-size"), opt_max_batch_size);
+    args.add(equal_name("max-batch-delay-us"), opt_max_batch_delay_us);
+    args.add(equal_name("hot-buckets-count"), opt_hot_buckets_count);
+    args.add(equal_name("local-subchannel-pool"), opt_local_subchannel_pool);
+    args.add(equal_name("grpc-compression"), opt_grpc_compression);
+    args.add(equal_name("user-id"), opt_user_id);
+
+    args.parse(argc - 1, argv + 1);
+
+    if(*opt_threads == 0)
+    {
+      std::cerr << "--threads must be > 0" << std::endl;
+      return 1;
+    }
+
+    if(*opt_client_threads == 0)
+    {
+      std::cerr << "--client-threads must be > 0" << std::endl;
+      return 1;
+    }
+
+    const auto mode = parse_mode(*opt_mode);
+    if (!mode.has_value())
+    {
+      std::cerr << "--mode must be one of: sync, async, async-batch" << std::endl;
+      return 1;
+    }
+
+    if(*opt_max_batch_size == 0)
+    {
+      std::cerr << "--max-batch-size must be > 0" << std::endl;
+      return 1;
+    }
+
+    if(*opt_hot_buckets_count == 0)
+    {
+      std::cerr << "--hot-buckets-count must be > 0" << std::endl;
+      return 1;
+    }
+
+    const auto client_threads = *opt_client_threads;
+    const auto max_streams =
+      *opt_max_streams == 0 ? client_threads : *opt_max_streams;
+    const auto default_max_inflight =
+      *mode == Mode::AsyncBatch ?
+        std::max(
+          1UL,
+          static_cast<unsigned long>(max_streams) *
+            static_cast<unsigned long>(*opt_max_batch_size) *
+            32UL) :
+        std::max(1UL, static_cast<unsigned long>(client_threads) * 64UL);
+    const std::optional<std::size_t> max_inflight{
+      static_cast<std::size_t>(
+        *opt_max_inflight > 0 ?
+          *opt_max_inflight :
+          default_max_inflight)};
+
+    std::atomic<std::uint64_t> sent_count{0};
+    std::atomic<std::uint64_t> done_count{0};
+    std::atomic<std::uint64_t> error_count{0};
+    std::atomic<std::uint64_t> latency_count{0};
+    std::atomic<std::uint64_t> latency_sum_us{0};
+    std::atomic<std::uint64_t> latency_max_us{0};
+    LatencyTopPercentile latency_p99((*opt_count + 99) / 100);
+
+    Generics::ActiveObjectSet_var async_batch_active_objects = new Generics::ActiveObjectSet();
+    std::unique_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient> client_owner;
+    ReferenceCounting::SmartPtr<BatchClient> batch_client;
+    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient* client = nullptr;
+    if (*mode == Mode::Sync)
+    {
+      std::vector<std::shared_ptr<grpc::Channel>> channels;
+      channels.reserve(client_threads);
+      for (unsigned int i = 0; i < client_threads; ++i)
+      {
+        grpc::ChannelArguments channel_args;
+        channel_args.SetInt(
+          GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
+          *opt_local_subchannel_pool ? 1 : 0);
+        if(!*opt_grpc_compression)
+        {
+          channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
+        }
+        channels.emplace_back(
+          grpc::CreateCustomChannel(
+            *opt_user_bind_grpc_endpoint,
+            grpc::InsecureChannelCredentials(),
+            channel_args));
+      }
+      client_owner = std::make_unique<AdServer::UserInfoSvcs::UserBindSyncClient>(
+        channels,
+        *opt_grpc_compression != 0);
+      client = client_owner.get();
+    }
+    else if (*mode == Mode::Async)
+    {
+      std::vector<std::shared_ptr<grpc::Channel>> channels;
+      channels.reserve(client_threads);
+      for (unsigned int i = 0; i < client_threads; ++i)
+      {
+        grpc::ChannelArguments channel_args;
+        channel_args.SetInt(
+          GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
+          *opt_local_subchannel_pool ? 1 : 0);
+        if(!*opt_grpc_compression)
+        {
+          channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
+        }
+        channels.emplace_back(
+          grpc::CreateCustomChannel(
+            *opt_user_bind_grpc_endpoint,
+            grpc::InsecureChannelCredentials(),
+            channel_args));
+      }
+      client_owner = std::make_unique<AdServer::UserInfoSvcs::UserBindAsyncClient>(
+        channels,
+        client_threads,
+        max_inflight,
+        *opt_grpc_compression != 0);
+      client = client_owner.get();
+    }
+    else if (*mode == Mode::AsyncBatch)
+    {
+      AdServer::Grpc::BatchingOptions options;
+      options.max_batch_size = *opt_max_batch_size;
+      options.max_inflight = max_inflight;
+      if (*opt_max_outstanding_requests > 0)
+      {
+        options.max_outstanding_requests = *opt_max_outstanding_requests;
+      }
+      options.workers_number = client_threads;
+      options.hot_buckets_count = *opt_hot_buckets_count;
+      options.max_batch_delay = *opt_max_batch_delay_us > 0 ?
+        std::optional<std::chrono::microseconds>(
+          std::chrono::microseconds(*opt_max_batch_delay_us)) :
+        std::nullopt;
+      options.enable_grpc_compression = *opt_grpc_compression != 0;
+      options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
+      AdServer::Grpc::GrpcExecutor_var grpc_executor(
+        new AdServer::Grpc::GrpcExecutor(client_threads));
+      batch_client = ReferenceCounting::SmartPtr<BatchClient>(
+        new BatchClient(
+          *opt_user_bind_grpc_endpoint,
+          max_streams,
+          grpc_executor.in(),
+          options));
+      async_batch_active_objects->add_child_object(grpc_executor);
+      async_batch_active_objects->add_child_object(batch_client);
+      client = batch_client.in();
+    }
+
+    async_batch_active_objects->activate_object();
+
+    std::mutex callback_lock;
+
+    std::thread reporter_thread([&]() {
+      std::uint64_t prev = 0;
+      std::uint64_t prev_errors = 0;
+      std::uint64_t prev_write_batches = 0;
+      std::uint64_t prev_write_items = 0;
+      std::uint64_t prev_queue_wait_count = 0;
+      std::uint64_t prev_queue_wait_sum_us = 0;
+      std::uint64_t prev_response_wait_count = 0;
+      std::uint64_t prev_response_wait_sum_us = 0;
+      std::uint64_t prev_consumer_stream_write_count = 0;
+      std::uint64_t prev_consumer_stream_write_sum_us = 0;
+      std::uint64_t prev_latency_count = 0;
+      std::uint64_t prev_latency_sum_us = 0;
+      while(done_count.load(std::memory_order_relaxed) < *opt_count)
+      {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        const auto now = std::chrono::system_clock::now();
+        const std::time_t now_tt = std::chrono::system_clock::to_time_t(now);
+        std::tm tm{};
+        localtime_r(&now_tt, &tm);
+
+        const auto current = done_count.load(std::memory_order_relaxed);
+        const auto per_second = current - prev;
+        prev = current;
+        const auto current_errors = error_count.load(std::memory_order_relaxed);
+        const auto errors_delta = current_errors - prev_errors;
+        prev_errors = current_errors;
+        const auto current_latency_count =
+          latency_count.load(std::memory_order_relaxed);
+        const auto current_latency_sum_us =
+          latency_sum_us.load(std::memory_order_relaxed);
+        const auto latency_count_delta =
+          current_latency_count - prev_latency_count;
+        const auto latency_sum_delta_us =
+          current_latency_sum_us - prev_latency_sum_us;
+        prev_latency_count = current_latency_count;
+        prev_latency_sum_us = current_latency_sum_us;
+        const auto avg_latency_us = latency_count_delta == 0 ?
+          0.0 :
+          static_cast<double>(latency_sum_delta_us) /
+            static_cast<double>(latency_count_delta);
+
+        std::cout << std::put_time(&tm, "%T") << ": " << per_second <<
+          ", errors=" << errors_delta;
+        const auto stats = client->stats();
+        const auto write_batches = stats.write_batches - prev_write_batches;
+        const auto write_items = stats.write_items - prev_write_items;
+        const auto queue_wait_count =
+          stats.queue_wait_count - prev_queue_wait_count;
+        const auto queue_wait_sum_us =
+          stats.queue_wait_sum_us - prev_queue_wait_sum_us;
+        const auto response_wait_count =
+          stats.response_wait_count - prev_response_wait_count;
+        const auto response_wait_sum_us =
+          stats.response_wait_sum_us - prev_response_wait_sum_us;
+        prev_write_batches = stats.write_batches;
+        prev_write_items = stats.write_items;
+        prev_queue_wait_count = stats.queue_wait_count;
+        prev_queue_wait_sum_us = stats.queue_wait_sum_us;
+        prev_response_wait_count = stats.response_wait_count;
+        prev_response_wait_sum_us = stats.response_wait_sum_us;
+
+        const auto avg_batch = write_batches == 0 ?
+          0.0 :
+          static_cast<double>(write_items) / static_cast<double>(write_batches);
+        const auto total_avg_batch = stats.write_batches == 0 ?
+          0.0 :
+          static_cast<double>(stats.write_items) /
+            static_cast<double>(stats.write_batches);
+
+        std::cout << ", writes=" << write_batches <<
+          ", avg_batch=" << format_stat_float(avg_batch) <<
+          ", total_avg_batch=" << format_stat_float(total_avg_batch) <<
+          ", max_streams=" << stats.max_streams <<
+          ", avg_latency=" << format_stat_float(avg_latency_us) << "us" <<
+          ", p99_latency=" << latency_p99.p99(current_latency_count) << "us" <<
+          ", max_latency=" << latency_max_us.load(std::memory_order_relaxed) << "us";
+        if (queue_wait_count != 0)
+        {
+          std::cout << ", avg_queue_wait=" <<
+            format_stat_float(
+              static_cast<double>(queue_wait_sum_us) /
+                static_cast<double>(queue_wait_count)) <<
+            "us, max_queue_wait=" << stats.queue_wait_max_us << "us";
+        }
+        if (response_wait_count != 0)
+        {
+          std::cout << ", avg_response_wait=" <<
+            format_stat_float(
+              static_cast<double>(response_wait_sum_us) /
+                static_cast<double>(response_wait_count)) <<
+            "us, max_response_wait=" << stats.response_wait_max_us << "us";
+        }
+        if (stats.consumer_stream_write.has_value())
+        {
+          const auto consumer_stream_write_count =
+            stats.consumer_stream_write->count -
+              prev_consumer_stream_write_count;
+          const auto consumer_stream_write_sum_us =
+            stats.consumer_stream_write->sum_us -
+              prev_consumer_stream_write_sum_us;
+          prev_consumer_stream_write_count =
+            stats.consumer_stream_write->count;
+          prev_consumer_stream_write_sum_us =
+            stats.consumer_stream_write->sum_us;
+          if (consumer_stream_write_count != 0)
+          {
+            std::cout << ", avg_consumer_stream_write=" <<
+              format_stat_float(
+                static_cast<double>(consumer_stream_write_sum_us) /
+                  static_cast<double>(consumer_stream_write_count)) <<
+              "us, max_consumer_stream_write=" <<
+              stats.consumer_stream_write->max_us << "us";
+          }
+        }
+        std::cout << std::endl;
+      }
+    });
+
+    const auto run_start = std::chrono::steady_clock::now();
+    const auto cpu_start = process_cpu_times();
+
+    std::vector<std::thread> sender_threads;
+    sender_threads.reserve(*opt_threads);
+
+    for(unsigned long i = 0; i < *opt_threads; ++i)
+    {
+      sender_threads.emplace_back([&]() {
+        std::mt19937 gen(std::random_device{}());
+
+        while(true)
+        {
+          const auto req_index = sent_count.fetch_add(1, std::memory_order_relaxed);
+          if(req_index >= *opt_count)
+          {
+            return;
+          }
+
+          adserver::user_info_svcs::user_bind::GetUserIdRequest request;
+          if(opt_user_id.installed())
+          {
+            request.set_id(*opt_user_id);
+          }
+          else
+          {
+            request.set_id(random_external_id(gen));
+          }
+
+          auto now = Generics::Time::get_time_of_day();
+          request.set_timestamp(GrpcAlgs::pack_time(now));
+          request.set_silent(true);
+          request.set_generate_user_id(false);
+          request.set_for_set_cookie(false);
+          request.set_create_timestamp(GrpcAlgs::pack_time(now));
+          request.set_current_user_id(GrpcAlgs::pack_user_id(AdServer::Commons::UserId()));
+
+          const auto start = std::chrono::steady_clock::now();
+          client->get_user_id(
+            request,
+            [
+              &error_count,
+              &done_count,
+              &callback_lock,
+              &latency_count,
+              &latency_sum_us,
+              &latency_max_us,
+              &latency_p99,
+              start
+            ](
+              const grpc::Status& status,
+              const auto&) {
+              const auto finish = std::chrono::steady_clock::now();
+              const auto latency_us = static_cast<std::uint64_t>(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                  finish - start).count());
+              latency_count.fetch_add(1, std::memory_order_relaxed);
+              latency_sum_us.fetch_add(latency_us, std::memory_order_relaxed);
+              latency_p99.add(latency_us);
+              auto current_max = latency_max_us.load(std::memory_order_relaxed);
+              while (current_max < latency_us &&
+                !latency_max_us.compare_exchange_weak(
+                  current_max,
+                  latency_us,
+                  std::memory_order_relaxed))
+              {}
+              if(!status.ok())
+              {
+                error_count.fetch_add(1, std::memory_order_relaxed);
+                std::lock_guard<std::mutex> lock(callback_lock);
+                std::cerr << "grpc error: [" << status.error_code() << "] " <<
+                  status.error_message() << std::endl;
+              }
+              done_count.fetch_add(1, std::memory_order_relaxed);
+            });
+        }
+      });
+    }
+
+    for(auto& sender : sender_threads)
+    {
+      sender.join();
+    }
+
+    while(done_count.load(std::memory_order_relaxed) < *opt_count)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    const auto run_finish = std::chrono::steady_clock::now();
+    const auto cpu_finish = process_cpu_times();
+
+    async_batch_active_objects->deactivate_object();
+    async_batch_active_objects->wait_object();
+
+    reporter_thread.join();
+
+    const auto stats = client->stats();
+    const auto total_avg_batch = stats.write_batches == 0 ?
+      0.0 :
+      static_cast<double>(stats.write_items) /
+        static_cast<double>(stats.write_batches);
+    const auto total_latency_count = latency_count.load(std::memory_order_relaxed);
+    const auto total_avg_latency_us = total_latency_count == 0 ?
+      0.0 :
+      static_cast<double>(latency_sum_us.load(std::memory_order_relaxed)) /
+        static_cast<double>(total_latency_count);
+    const auto run_seconds = std::chrono::duration<double>(
+      run_finish - run_start).count();
+    const auto rps = run_seconds == 0.0 ?
+      0.0 :
+      static_cast<double>(done_count.load(std::memory_order_relaxed)) /
+        run_seconds;
+    const auto user_cpu_seconds = cpu_finish.user - cpu_start.user;
+    const auto sys_cpu_seconds = cpu_finish.sys - cpu_start.sys;
+    const auto cpu_seconds = user_cpu_seconds + sys_cpu_seconds;
+    std::cout << "completed: " << done_count.load(std::memory_order_relaxed) <<
+      ", errors: " << error_count.load(std::memory_order_relaxed) <<
+      ", rps: " << format_stat_float(rps) <<
+      ", cpu_time: " << format_stat_float(cpu_seconds) << "s" <<
+      ", user_cpu_time: " << format_stat_float(user_cpu_seconds) << "s" <<
+      ", sys_cpu_time: " << format_stat_float(sys_cpu_seconds) << "s" <<
+      ", writes: " << stats.write_batches <<
+      ", write_items: " << stats.write_items <<
+      ", avg_batch: " << format_stat_float(total_avg_batch) <<
+      ", max_streams: " << stats.max_streams <<
+      ", avg_latency: " << format_stat_float(total_avg_latency_us) << "us" <<
+      ", p99_latency: " << latency_p99.p99(total_latency_count) << "us" <<
+      ", max_latency: " << latency_max_us.load(std::memory_order_relaxed) << "us";
+    if (stats.queue_wait_count != 0)
+    {
+      std::cout << ", avg_queue_wait: " <<
+        format_stat_float(
+          static_cast<double>(stats.queue_wait_sum_us) /
+            static_cast<double>(stats.queue_wait_count)) <<
+        "us, max_queue_wait: " << stats.queue_wait_max_us << "us";
+    }
+    if (stats.response_wait_count != 0)
+    {
+      std::cout << ", avg_response_wait: " <<
+        format_stat_float(
+          static_cast<double>(stats.response_wait_sum_us) /
+            static_cast<double>(stats.response_wait_count)) <<
+        "us, max_response_wait: " << stats.response_wait_max_us << "us";
+    }
+    if (stats.consumer_stream_write.has_value() &&
+      stats.consumer_stream_write->count != 0)
+    {
+      std::cout << ", avg_consumer_stream_write: " <<
+        format_stat_float(
+          static_cast<double>(stats.consumer_stream_write->sum_us) /
+            static_cast<double>(stats.consumer_stream_write->count)) <<
+        "us, max_consumer_stream_write: " <<
+        stats.consumer_stream_write->max_us << "us";
+    }
+    std::cout << std::endl;
+
+    batch_client.reset();
+
+    return 0;
+  }
+  catch(const eh::Exception& ex)
+  {
+    std::cerr << "Caught eh::Exception: " << ex.what() << std::endl;
+  }
+
+  return 1;
+}

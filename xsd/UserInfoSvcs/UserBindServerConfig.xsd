@@ -37,6 +37,14 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="GrpcConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            GrpcConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="Logger" type="ErrorLoggerType">
         <xsd:annotation>
           <xsd:documentation>
