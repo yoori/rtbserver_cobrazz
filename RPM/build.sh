@@ -3,6 +3,17 @@
 VERSION=$1
 UNIXCOMMONSDIR=$2
 
+if [ -z "$VERSION" ] || [ -z "$UNIXCOMMONSDIR" ]; then
+  echo "Usage: $0 <version> <unixcommons-source-dir>" >&2
+  exit 1
+fi
+
+if [ ! -f "$UNIXCOMMONSDIR/CMakeLists.txt" ] ||
+   ! grep -Eq '^[[:space:]]*project[[:space:]]*\([[:space:]]*unixcommons' "$UNIXCOMMONSDIR/CMakeLists.txt"; then
+  echo "UNIXCOMMONSDIR must point to the unixcommons source tree: $UNIXCOMMONSDIR" >&2
+  exit 1
+fi
+
 # script require 'sudo rpm' for install RPM packages
 # create build/RPMS folder - all built packages will be duplicated here
 RES_TMP=build/TMP/
@@ -60,4 +71,3 @@ rpmbuild --force -ba --define "__product server" --define "__server_type central
   { echo "can't build RPM" >&2 ; exit 1 ; }
 
 cp $BIN_RPM_FOLDER/foros-server*.rpm $RES_RPMS/
-
