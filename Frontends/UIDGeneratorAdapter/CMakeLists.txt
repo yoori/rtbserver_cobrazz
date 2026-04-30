@@ -21,7 +21,7 @@ target_link_libraries(UIDGeneratorAdapter
  UIDGeneratorAdapterConfigXSD
 # DMPProfilingInfoPB
  UIDGeneratorProtocolPB
- protobuf
+ ${PROTOBUF_LDFLAGS}
  protoc
  DMPProfilingInfoPST
 

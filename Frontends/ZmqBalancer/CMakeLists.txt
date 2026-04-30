@@ -16,7 +16,7 @@ target_link_libraries(ZmqBalancer
 # UIDGeneratorAdapterConfigXSD
 # DMPProfilingInfoPB
  UIDGeneratorProtocolPB
- protobuf
+ ${PROTOBUF_LDFLAGS}
  protoc
  DMPProfilingInfoPST
  zmq

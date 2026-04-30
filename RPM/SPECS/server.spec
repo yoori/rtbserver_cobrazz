@@ -26,7 +26,7 @@
 %define __libevent_ver_req      2.1.8-5.el8
 %define __postgresql_ver_req    9.4.26
 #define __protobuf_ver_req      3.6.1-4
-%define __protobuf_ver_req      3.21.9
+%define __protobuf_ver_req      25.9-ssv4.el8
 %define __zeromq_ver_req        4.3.4
 %define __librdkafka_ver_req    1.9.2
 #define __open_ssl_ver_req      1.0.1e-42.el7
@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv443%{?dist}
+Release: ssv444%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -116,11 +116,11 @@ Requires: openssl >= %{__open_ssl_ver_req}
 BuildRequires: postgresql94-devel >= %{__postgresql_ver_req}
 BuildRequires: protobuf-devel = %{__protobuf_ver_req}
 BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
-BuildRequires: userver-devel = 1.0.29
 # userver-devel dependencies workaround:
-BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
+BuildRequires: libpq-devel
+#BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
-BuildRequires: grpc-plugins = 1.48.1-ssv2
+BuildRequires: grpc-plugins = 1.80.0-ssv4.el8
 BuildRequires: jemalloc-devel >= 5.2.1
 
 Requires: protobuf = %{__protobuf_ver_req}
@@ -143,7 +143,7 @@ Requires: librdkafka1 = %__librdkafka_ver_req
 Requires: vanga = %__vanga_ver_req
 Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 2.1.2
-Requires: userver = 1.0.29
+#Requires: userver = 1.0.29
 Requires: cryptopp libatomic libev
 
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller

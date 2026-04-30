@@ -307,13 +307,6 @@ namespace Bidding
     get_empty_history_matching_()
       /*throw(eh::Exception)*/;
 
-    static void
-    protobuf_log_handler_(
-      google::protobuf::LogLevel level,
-      const char* filename,
-      int line,
-      const std::string& message);
-
     void
     update_config_() noexcept;
 

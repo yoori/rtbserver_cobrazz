@@ -47,7 +47,7 @@ public:
 
   void wait_object() noexcept;
 
-  bool active() noexcept;
+  bool active() const noexcept;
 
 private:
   virtual

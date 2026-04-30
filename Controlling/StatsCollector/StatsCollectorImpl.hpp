@@ -40,7 +40,7 @@ namespace AdServer
       virtual void wait_object()
         /*throw(ActiveObject::Exception, eh::Exception)*/;
 
-      virtual bool active() /*throw(eh::Exception)*/;
+      virtual bool active() const /*throw(eh::Exception)*/;
 
       bool ready() noexcept;
 
@@ -106,7 +106,7 @@ namespace AdServer
     }
 
     inline
-    bool StatsCollectorImpl::active() /*throw(eh::Exception)*/
+    bool StatsCollectorImpl::active() const /*throw(eh::Exception)*/
     {
       return ready_;
     }

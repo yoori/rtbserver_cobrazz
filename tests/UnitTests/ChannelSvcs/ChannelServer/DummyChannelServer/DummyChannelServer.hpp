@@ -104,7 +104,7 @@ namespace AdServer
         const String::SubString& description,
         const char* error_code = 0) noexcept;
 
-      virtual bool active() /*throw(eh::Exception)*/;
+      virtual bool active() const /*throw(eh::Exception)*/;
 
       void finish() noexcept;
 
@@ -145,7 +145,7 @@ namespace AdServer
   namespace UnitTests
   {
     inline
-    bool DummyChannelServer::active() /*throw(eh::Exception)*/
+    bool DummyChannelServer::active() const /*throw(eh::Exception)*/
     {
       return active_;
     }

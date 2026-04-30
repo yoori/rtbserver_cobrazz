@@ -17,7 +17,7 @@ target_link_libraries(UIDGeneratorUtil
  UserHistoryProfileAdapter
  UserFreqCapProfileAdapter
 Allocator
-protobuf
+${PROTOBUF_LDFLAGS}
 protoc
 UIDGeneratorProtocolPB
 

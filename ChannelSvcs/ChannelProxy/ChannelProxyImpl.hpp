@@ -141,7 +141,7 @@ namespace AdServer
 
       virtual void wait_object() /*throw(ActiveObject::Exception, eh::Exception)*/;
 
-      virtual bool active() /*throw(eh::Exception)*/;
+      virtual bool active() const /*throw(eh::Exception)*/;
 
       Logging::Logger* logger() const noexcept;
 
@@ -225,7 +225,7 @@ namespace AdServer
     /* ChannelProxyImpl */
     inline
     bool
-    ChannelProxyImpl::active() /*throw(eh::Exception)*/
+    ChannelProxyImpl::active() const /*throw(eh::Exception)*/
     {
       ReadGuard_ guard(lock_);
       return active_;

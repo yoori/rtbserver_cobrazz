@@ -70,7 +70,7 @@ void PostgresConnectionFactoryImpl::wait_object()
   }
 }
 
-bool PostgresConnectionFactoryImpl::active()
+bool PostgresConnectionFactoryImpl::active() const
   noexcept
 {
   return conn_pool_.in() ? conn_pool_->active() : false;
@@ -78,4 +78,3 @@ bool PostgresConnectionFactoryImpl::active()
 
 } // namespace LogProcessing
 } // namespace AdServer
-

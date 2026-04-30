@@ -1,4 +1,7 @@
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PROTOBUF REQUIRED protobuf)
+
 set(IDL_FOUND TRUE)
 #/usr/bin/protoc --proto_path=../../../../Frontends/Modules/BiddingFrontend --cpp_out=.  ../../../../Frontends/Modules/BiddingFrontend/tanx-bidding.proto
 function(add_pb _target _pbfile target_dir)

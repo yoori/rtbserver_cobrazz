@@ -55,7 +55,7 @@ target_link_libraries(BiddingFrontend
   google-biddingPB
   tanx-biddingPB
   Gason
-  protobuf
+  ${PROTOBUF_LDFLAGS}
   protoc
   FCGI
   UServerUtils
