@@ -68,6 +68,7 @@ namespace AdServer::Grpc
     bool fail_pending_if_no_streams_() noexcept;
     void update_max_streams_(std::size_t streams_count) noexcept;
     void release_stream_() noexcept;
+    void clear_streams_() noexcept;
 
   private:
     const std::string endpoint_;

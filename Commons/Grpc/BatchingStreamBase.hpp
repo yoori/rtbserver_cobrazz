@@ -101,9 +101,6 @@ namespace AdServer::Grpc
       std::vector<std::shared_ptr<PendingRequest>>& requests,
       grpc::StatusCode status_code,
       const char* status_message);
-    void fail_queued_with_error_(
-      grpc::StatusCode status_code,
-      const char* status_message);
     void fail_inflight_with_error_(
       grpc::StatusCode status_code,
       const char* status_message);

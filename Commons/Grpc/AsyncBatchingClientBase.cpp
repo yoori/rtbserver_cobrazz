@@ -39,14 +39,7 @@ namespace AdServer::Grpc
     {
     }
 
-    {
-      std::lock_guard<std::mutex> lock(streams_registry_lock_);
-      streams_.clear();
-    }
-    {
-      std::lock_guard<std::mutex> lock(streams_lock_);
-      available_streams_.clear();
-    }
+    clear_streams_();
     batching_queue_.reset();
   }
 
@@ -88,6 +81,7 @@ namespace AdServer::Grpc
     coalesce_threads_.clear();
 
     Generics::CompositeActiveObject::wait_object_();
+    clear_streams_();
   }
 
   void
@@ -350,22 +344,27 @@ namespace AdServer::Grpc
   }
 
   void
+  AsyncBatchingClientBase::clear_streams_() noexcept
+  {
+    {
+      std::lock_guard<std::mutex> lock(streams_lock_);
+      available_streams_.clear();
+    }
+    {
+      std::lock_guard<std::mutex> lock(streams_registry_lock_);
+      streams_.clear();
+    }
+  }
+
+  void
   AsyncBatchingClientBase::coalesce_loop_()
   {
     while (active())
     {
       BatchingStreamBase::PendingBatch pending_batch;
-      if (!batching_queue_->pop_batch(
-            pending_batch,
-            [this]() {
-              return !active();
-            }))
+      if (!batching_queue_->pop_batch(pending_batch))
       {
-        if (!batching_queue_->running())
-        {
-          break;
-        }
-        continue;
+        break;
       }
 
       bool batch_sent = false;

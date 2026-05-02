@@ -51,11 +51,7 @@ namespace AdServer::Grpc
       std::string payload,
       std::function<void(const adserver::grpc::BatchResponseItem&)> callback);
 
-    bool pop_batch(
-      Batch& batch,
-      const std::function<bool()>& stop_waiting);
-
-    bool running() const noexcept;
+    bool pop_batch(Batch& batch);
 
     void return_batch_to_front(Batch&& batch);
 

@@ -108,17 +108,10 @@ namespace AdServer::Grpc
   }
 
   bool
-  BatchingQueue::pop_batch(
-    Batch& batch,
-    const std::function<bool()>& stop_waiting)
+  BatchingQueue::pop_batch(Batch& batch)
   {
     while (active())
     {
-      if (stop_waiting())
-      {
-        return false;
-      }
-
       {
         std::lock_guard<std::mutex> lock(ready_lock_);
         if (!ready_batches_.empty())
@@ -138,18 +131,16 @@ namespace AdServer::Grpc
       std::unique_lock<std::mutex> lock(hot_cv_lock_);
       if (deadline.has_value())
       {
-        hot_cv_.wait_until(lock, *deadline, [this, &stop_waiting]() {
+        hot_cv_.wait_until(lock, *deadline, [this]() {
           return !active() ||
-            stop_waiting() ||
             has_ready_batch_() ||
             has_due_hot_batch_();
         });
       }
       else
       {
-        hot_cv_.wait(lock, [this, &stop_waiting]() {
+        hot_cv_.wait(lock, [this]() {
           return !active() ||
-            stop_waiting() ||
             has_ready_batch_() ||
             hot_size_.load(std::memory_order_acquire) != 0;
         });
@@ -157,12 +148,6 @@ namespace AdServer::Grpc
     }
 
     return false;
-  }
-
-  bool
-  BatchingQueue::running() const noexcept
-  {
-    return active();
   }
 
   void

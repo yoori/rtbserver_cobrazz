@@ -576,9 +576,6 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
-      fail_queued_with_error_(
-        grpc::StatusCode::UNAVAILABLE,
-        "stream read failed");
       fail_inflight_with_error_(grpc::StatusCode::UNAVAILABLE, "stream read failed");
     }
   }
@@ -623,9 +620,6 @@ namespace AdServer::Grpc
 
     if (!ok)
     {
-      fail_queued_with_error_(
-        grpc::StatusCode::UNAVAILABLE,
-        "stream write failed");
       std::vector<std::shared_ptr<PendingRequest>> failed_write_requests;
       {
         std::lock_guard<std::mutex> inflight_lock(inflight_lock_);
@@ -679,13 +673,6 @@ namespace AdServer::Grpc
       }
     }
     requests.clear();
-  }
-
-  void
-  BatchingStreamBase::fail_queued_with_error_(
-    grpc::StatusCode /*status_code*/,
-    const char* /*status_message*/)
-  {
   }
 
   void
