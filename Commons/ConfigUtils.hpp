@@ -10,6 +10,7 @@
 #include <Logger/Syslog.hpp>
 #include <Logger/DistributorLogger.hpp>
 #include <Commons/Oracle/ConnectionDescription.hpp>
+#include <Commons/Grpc/GrpcClient.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 
@@ -31,6 +32,10 @@ namespace Config
     AdServer::Commons::Oracle::ConnectionDescription& conn,
     const xsd::AdServer::Configuration::DBConnectionType& db_conn_config)
     noexcept;
+
+  AdServer::Grpc::BatchingOptions
+  read_xsd_grpc_options(
+    const xsd::AdServer::Configuration::GrpcBatchingOptionsType& config);
 }
 
 namespace Config
@@ -148,6 +153,42 @@ namespace Config
     conn.statement_timeout = db_conn_config.statement_timeout().present() ?
       Generics::Time(*db_conn_config.statement_timeout()) :
       Generics::Time::ZERO;
+  }
+
+  inline
+  AdServer::Grpc::BatchingOptions
+  read_xsd_grpc_options(
+    const xsd::AdServer::Configuration::GrpcBatchingOptionsType& config)
+  {
+    AdServer::Grpc::BatchingOptions options;
+    options.channels_number = config.channels_number();
+    options.max_batch_size = config.max_batch_size();
+    if (config.max_inflight().present())
+    {
+      options.max_inflight = *config.max_inflight() > 0 ?
+        std::optional<std::size_t>(*config.max_inflight()) :
+        std::nullopt;
+    }
+    options.error_on_inflight_reaching = config.error_on_inflight_reaching();
+    if (config.max_outstanding_requests().present())
+    {
+      options.max_outstanding_requests = *config.max_outstanding_requests() > 0 ?
+        std::optional<std::size_t>(*config.max_outstanding_requests()) :
+        std::nullopt;
+    }
+    options.workers_number = config.workers_number();
+    options.hot_buckets_count = config.hot_buckets_count();
+    if (config.max_batch_delay_us().present())
+    {
+      options.max_batch_delay = *config.max_batch_delay_us() > 0 ?
+        std::optional<std::chrono::microseconds>(
+          std::chrono::microseconds(*config.max_batch_delay_us())) :
+        std::nullopt;
+    }
+    options.enable_grpc_compression = config.enable_grpc_compression();
+    options.use_local_subchannel_pool = config.use_local_subchannel_pool();
+    options.reconnect_period = Generics::Time(config.reconnect_period());
+    return options;
   }
 }
 

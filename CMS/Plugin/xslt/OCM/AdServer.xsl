@@ -660,6 +660,14 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
+          select="./service[@descriptor = $user-bind-controller2-descriptor]"/>
+        <xsl:with-param name="service-name" select="concat('fe', $pos,
+          '-UserBindController2')"/>
+        <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserBindController2'"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
           select="./service[@descriptor = $billing-server-descriptor]"/>
         <xsl:with-param name="service-name" select="concat('fe', $pos,
           '-BillingServer')"/>

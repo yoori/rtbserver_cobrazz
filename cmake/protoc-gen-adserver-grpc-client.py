@@ -63,6 +63,7 @@ def generate_hpp(file_desc, namespace):
     "",
     "#include <grpcpp/support/status.h>",
     "",
+    "#include <ReferenceCounting/SmartPtr.hpp>",
     "#include <Commons/Grpc/AsyncBatchingClientBase.hpp>",
     "#include <Commons/Grpc/GrpcClient.hpp>",
     "#include <Commons/Grpc/GrpcExecutor.hpp>",
@@ -80,7 +81,9 @@ def generate_hpp(file_desc, namespace):
       continue
 
     lines.extend([
-      "  class {} : public virtual AdServer::Grpc::Client".format(async_client),
+      "  class {} :".format(async_client),
+      "    public virtual ReferenceCounting::Interface,",
+      "    public virtual AdServer::Grpc::Client",
       "  {",
       "  public:",
       "    using Stats = AdServer::Grpc::Stats;",
@@ -109,6 +112,9 @@ def generate_hpp(file_desc, namespace):
     lines.extend([
       "  };",
       "",
+      "  using {}_var = ReferenceCounting::SmartPtr<{}>;".format(
+        async_client, async_client),
+      "",
       "  class {} final".format(batching_client),
       "    : public AdServer::Grpc::AsyncBatchingClientBase,",
       "      public {}".format(async_client),
@@ -124,7 +130,6 @@ def generate_hpp(file_desc, namespace):
       "",
       "    {}(".format(batching_client),
       "      const std::string& endpoint,",
-      "      std::size_t channels_number,",
       "      AdServer::Grpc::GrpcExecutor* grpc_executor,",
       "      AdServer::Grpc::BatchingOptions options = {});",
       "",
@@ -187,12 +192,10 @@ def generate_cpp(file_desc, namespace):
       "",
       "  {}::{}(".format(batching_client, batching_client),
       "    const std::string& endpoint,",
-      "    std::size_t channels_number,",
       "    AdServer::Grpc::GrpcExecutor* grpc_executor,",
       "    AdServer::Grpc::BatchingOptions options)",
       "    : AdServer::Grpc::AsyncBatchingClientBase(",
       "        endpoint,",
-      "        channels_number,",
       "        grpc_executor,",
       "        [] (AdServer::Grpc::BatchingOptions options) {",
     ])

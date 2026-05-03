@@ -46,7 +46,6 @@ target_link_libraries(ProcessingTemplates
 add_library(RequestMatchers SHARED
   RequestMatchers.cpp
   UserInfoClient.cpp
-  UserBindClient.cpp
   UserAgentMatcher.cpp
   ChannelServerSessionPool.cpp
 )
@@ -62,6 +61,12 @@ target_link_libraries(RequestMatchers
   UserInfoManagerControllerIDL
   UserBindControllerIDL
   UserBindControllerStubs
+  UserBindControllerGrpc
+  UserBindServerGrpc
+  UserBindServerGrpcClient
+  UserBindClient
+  GrpcBatch
+  gRPC::grpc++
   ChannelSessionFactory
 
   FeConfigXSD

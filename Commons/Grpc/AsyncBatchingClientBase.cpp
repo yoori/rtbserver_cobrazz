@@ -9,13 +9,12 @@ namespace AdServer::Grpc
 {
   AsyncBatchingClientBase::AsyncBatchingClientBase(
     const std::string& endpoint,
-    std::size_t channels_number,
     AdServer::Grpc::GrpcExecutor* grpc_executor,
     AdServer::Grpc::BatchingOptions options)
     : Generics::CompositeActiveObject(false, false),
       endpoint_(endpoint),
       options_(std::move(options)),
-      max_streams_(std::max<std::size_t>(1, channels_number)),
+      max_streams_(std::max<std::size_t>(1, options_.channels_number)),
       grpc_executor_(ReferenceCounting::add_ref(grpc_executor)),
       batching_queue_(new AdServer::Grpc::BatchingQueue(options_)),
       inflight_limiter_(options_.max_inflight)

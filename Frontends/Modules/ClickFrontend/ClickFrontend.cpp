@@ -293,7 +293,7 @@ namespace AdServer
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        user_bind_client_ = new FrontendCommons::UserBindClient(
+        user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
           common_config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
           logger());
@@ -947,9 +947,6 @@ namespace AdServer
 
     assert(user_bind_client_.in());
 
-    AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-      user_bind_client_->user_bind_mapper();
-
     // resolve cookie user id
     try
     {
@@ -969,7 +966,7 @@ namespace AdServer
         get_request_info.current_user_id = CorbaAlgs::pack_user_id(cookie_user_id);
 
         AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
-          user_bind_mapper->get_user_id(get_request_info);
+          user_bind_client_->get_user_id(get_request_info);
 
         resolved_cookie_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
       }

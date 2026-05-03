@@ -456,7 +456,7 @@ namespace Bidding
 
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          user_bind_client_ = new FrontendCommons::UserBindClient(
+          user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger());
@@ -1542,8 +1542,6 @@ namespace Bidding
 
         try
         {
-          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-            user_bind_client_->user_bind_mapper();
 
           auto base_ext_user_id_it = external_user_ids.begin();
 
@@ -1566,7 +1564,7 @@ namespace Bidding
             get_request_info.create_timestamp = CorbaAlgs::pack_time(request_info.user_create_time);
             // get_request_info.current_user_id is null
 
-            user_bind_info = user_bind_mapper->get_user_id(get_request_info);
+            user_bind_info = user_bind_client_->get_user_id(get_request_info);
 
             min_age_reached |= user_bind_info->min_age_reached;
             local_match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
@@ -1607,7 +1605,7 @@ namespace Bidding
                 add_user_request.user_id = CorbaAlgs::pack_user_id(match_user_id);
                 AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
                   prev_user_bind_info =
-                    user_bind_mapper->add_user_id(add_user_request);
+                    user_bind_client_->add_user_id(add_user_request);
 
                 (void)prev_user_bind_info;
               }

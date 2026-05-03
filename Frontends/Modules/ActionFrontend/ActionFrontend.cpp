@@ -272,7 +272,7 @@ namespace Action
 
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          user_bind_client_ = new FrontendCommons::UserBindClient(
+          user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger());
@@ -1037,8 +1037,6 @@ namespace Action
         {
           try
           {
-            AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-              user_bind_client_->user_bind_mapper();
 
             AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
               add_user_request_info;
@@ -1050,7 +1048,7 @@ namespace Action
 
             AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
               prev_user_bind_info =
-                user_bind_mapper->add_user_id(add_user_request_info);
+                user_bind_client_->add_user_id(add_user_request_info);
 
             (void)prev_user_bind_info;
           }
@@ -1104,8 +1102,6 @@ namespace Action
     {
       try
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
 
         AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
           add_user_request_info;
@@ -1116,7 +1112,7 @@ namespace Action
 
         AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
           prev_user_bind_info =
-            user_bind_mapper->add_user_id(add_user_request_info);
+            user_bind_client_->add_user_id(add_user_request_info);
 
         (void)prev_user_bind_info;
       }
@@ -1348,8 +1344,6 @@ namespace Action
     {
       try
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
 
         // get user id by external id
         AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
@@ -1363,7 +1357,7 @@ namespace Action
 
         AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var
           prev_user_bind_info =
-            user_bind_mapper->get_user_id(get_request_info);
+            user_bind_client_->get_user_id(get_request_info);
 
         const AdServer::Commons::UserId resolved_user_id =
           CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);

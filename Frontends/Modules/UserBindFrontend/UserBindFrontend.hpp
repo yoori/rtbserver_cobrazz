@@ -23,7 +23,8 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
-#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindDistributedGrpcClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 
@@ -240,6 +241,19 @@ namespace AdServer
       const UserBind::RequestInfo& request_info,
       FCGI::HttpResponse& response);
 
+    void
+    add_bind_request_(
+      const adserver::user_info_svcs::user_bind::AddBindRequestRequest&
+        request);
+
+    adserver::user_info_svcs::user_bind::GetUserIdResponse
+    get_user_id_(
+      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request);
+
+    adserver::user_info_svcs::user_bind::AddUserIdResponse
+    add_user_id_(
+      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request);
+
   private:
     // configuration
     CommonConfigPtr common_config_;
@@ -258,7 +272,9 @@ namespace AdServer
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::UserBindClient_var user_bind_client_;
+    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+      user_bind_client_;
+    AdServer::Grpc::GrpcExecutor_var user_bind_grpc_executor_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool>

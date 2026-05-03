@@ -34,7 +34,6 @@ namespace AdServer::Grpc
   protected:
     AsyncBatchingClientBase(
       const std::string& endpoint,
-      std::size_t channels_number,
       AdServer::Grpc::GrpcExecutor* grpc_executor,
       AdServer::Grpc::BatchingOptions options = {});
 
@@ -109,7 +108,26 @@ namespace AdServer::Grpc
       return;
     }
 
-    inflight_limiter_.acquire();
+    if (options_.error_on_inflight_reaching)
+    {
+      if (!inflight_limiter_.try_acquire())
+      {
+        if (callback)
+        {
+          callback(
+            grpc::Status(
+              grpc::StatusCode::RESOURCE_EXHAUSTED,
+              "inflight limit reached"),
+            {});
+        }
+        return;
+      }
+    }
+    else
+    {
+      inflight_limiter_.acquire();
+    }
+
     if (options_.max_outstanding_requests.has_value())
     {
       auto outstanding_requests =

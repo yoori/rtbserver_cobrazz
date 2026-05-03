@@ -78,6 +78,11 @@
         minOccurs="0"
         maxOccurs="2"/>
 
+      <xsd:element name="UserBindController2Group"
+        type="UserBindControllerGrpcGroupType"
+        minOccurs="0"
+        maxOccurs="2"/>
+
       <xsd:element name="Cookies" type="CookiesType"/>
 
       <xsd:element name="OptOutRemoveCookies" type="CookieNameListType"/>
@@ -174,6 +179,19 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindControllerGrpcGroupType">
+    <xsd:sequence>
+      <xsd:element name="BatchingOptions"
+        type="GrpcBatchingOptionsType"
+        minOccurs="0"
+        maxOccurs="1"/>
+      <xsd:element name="Endpoint"
+        type="xsd:string"
+        minOccurs="1"
+        maxOccurs="unbounded"/>
+    </xsd:sequence>
   </xsd:complexType>
 
   <xsd:complexType name="CookieNameListType">
@@ -977,6 +995,14 @@
     <xsd:attribute name="max_request_time" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="enable_profiling" type="xsd:boolean" use="required"/>
     <xsd:attribute name="nosecure_redirect" type="xsd:string" use="optional"/>
+    <xsd:attribute name="user_bind_call_mode" default="corba">
+      <xsd:simpleType>
+        <xsd:restriction base="xsd:string">
+          <xsd:enumeration value="corba"/>
+          <xsd:enumeration value="grpc"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+    </xsd:attribute>
   </xsd:complexType>
 
   <!-- -->

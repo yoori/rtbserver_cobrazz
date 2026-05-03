@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   targetNamespace="http://www.adintelligence.net/xsd/AdServer/Configuration"
   xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
   elementFormDefault="qualified"
@@ -8,7 +8,7 @@
 
   <xsd:annotation>
     <xsd:documentation>
-      UserBindController Configuration File XML Schema
+      UserBindController2 Configuration File XML Schema
     </xsd:documentation>
   </xsd:annotation>
 
@@ -18,27 +18,14 @@
 
   <xsd:complexType name="AdConfigurationType">
     <xsd:sequence>
-      <xsd:element name="UserBindControllerConfig" 
-        type="UserBindControllerConfigType"/>
+      <xsd:element name="UserBindController2Config"
+        type="UserBindController2ConfigType"/>
     </xsd:sequence>
   </xsd:complexType>
 
-  <xsd:complexType name="UserBindControllerConfigType">
-    <xsd:annotation>
-      <xsd:documentation>
-      </xsd:documentation>
-    </xsd:annotation>
-
+  <xsd:complexType name="UserBindController2ConfigType">
     <xsd:sequence>
-      <xsd:element name="CorbaConfig" type="CorbaConfigType">
-        <xsd:annotation>
-          <xsd:documentation>
-            CorbaConfig for service
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
-      <xsd:element name="GrpcConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1">
+      <xsd:element name="GrpcConfig" type="GrpcConfigType">
         <xsd:annotation>
           <xsd:documentation>
             GrpcConfig for service
@@ -49,7 +36,7 @@
       <xsd:element name="Logger" type="ErrorLoggerType">
         <xsd:annotation>
           <xsd:documentation>
-            Error logger for UserInfoManager
+            Error logger for UserBindController2
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -60,13 +47,13 @@
         maxOccurs="unbounded">
         <xsd:annotation>
           <xsd:documentation>
-          UIS references
+            UserBindServer gRPC endpoints
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
 
-    <xsd:attribute name="status_check_period" 
+    <xsd:attribute name="status_check_period"
       type="xsd:positiveInteger"
       use="required">
       <xsd:annotation>
@@ -77,33 +64,13 @@
 
   <xsd:complexType name="UserBindServerHostType">
     <xsd:sequence>
-      <xsd:element name="UserBindServerRef"
-        type="CorbaObjectRefType"
-        minOccurs="1"
-        maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            UserBindServer reference
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
       <xsd:element name="UserBindServerGrpcRef"
         type="GrpcEndpointConfigType"
-        minOccurs="0"
+        minOccurs="1"
         maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
             UserBindServer gRPC endpoint
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-      <xsd:element name="UserBindServerControlRef"
-        type="CorbaObjectRefType"
-        minOccurs="1"
-        maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            UserBindServerControl reference (ProcessControl)
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

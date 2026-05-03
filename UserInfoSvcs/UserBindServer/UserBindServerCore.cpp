@@ -126,8 +126,6 @@ namespace AdServer::UserInfoSvcs
   UserBindServerCore::GetUserResponseInfo
   UserBindServerCore::get_user_id(const GetUserRequestInfo& request_info)
   {
-    return UserBindServerCore::GetUserResponseInfo();
-
     UserBindProcessorHolder::Accessor user_bind_accessor =
       user_bind_container_->get_accessor();
 

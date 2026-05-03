@@ -29,6 +29,21 @@ add_grpc_sources(
 
 target_link_libraries(UserBindServerGrpc protobuf::libprotobuf GrpcBatch)
 
+add_library(UserBindServerGrpcClient STATIC)
+
+add_adserver_grpc_client_sources(
+  UserBindServerGrpcClient
+  ${CMAKE_SOURCE_DIR}/UserInfoSvcs/UserBindServer/UserBindServerGrpc.proto
+  ${CMAKE_CURRENT_BINARY_DIR}
+  AdServer::UserInfoSvcs
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(UserBindServerGrpcClient
+  PUBLIC
+    GrpcBatch
+    UserBindServerGrpc
+    gRPC::grpc++)
+
 # UserBindContainer
 target_link_libraries(UserBindContainer
   Generics

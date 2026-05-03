@@ -2,18 +2,12 @@ syntax = "proto3";
 
 package adserver.user_info_svcs.user_bind;
 
-import "Batch.proto";
-
 service UserBindServerGrpc {
   rpc get_bind_request(GetBindRequestRequest) returns (GetBindRequestResponse);
   rpc add_bind_request(AddBindRequestRequest) returns (AddBindRequestResponse);
   rpc get_user_id(GetUserIdRequest) returns (GetUserIdResponse);
   rpc add_user_id(AddUserIdRequest) returns (AddUserIdResponse);
   rpc get_source(GetSourceRequest) returns (GetSourceResponse);
-}
-
-service UserBindServerBatchTransport {
-  rpc stream_batches(stream adserver.grpc.BatchRequest) returns (stream adserver.grpc.BatchResponse);
 }
 
 message GetBindRequestRequest {

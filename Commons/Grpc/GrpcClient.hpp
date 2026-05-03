@@ -28,8 +28,10 @@ namespace AdServer::Grpc
   {
     BatchingOptions();
 
+    std::size_t channels_number = 1;
     std::size_t max_batch_size = 1024;
     std::optional<std::size_t> max_inflight{12000};
+    bool error_on_inflight_reaching = false;
     std::optional<std::size_t> max_outstanding_requests;
     std::size_t workers_number = 4;
     std::size_t hot_buckets_count = 1;
@@ -106,13 +108,13 @@ namespace AdServer::Grpc
   public:
     explicit InflightLimiter(std::optional<std::size_t> max_inflight = std::nullopt);
 
+    bool try_acquire() noexcept;
+
     void acquire();
 
     void release() noexcept;
 
   private:
-    bool try_acquire_() noexcept;
-
     std::mutex lock_;
     std::condition_variable cv_;
     std::atomic<std::size_t> inflight_count_{0};
@@ -213,8 +215,13 @@ namespace AdServer::Grpc
   {}
 
   inline bool
-  InflightLimiter::try_acquire_() noexcept
+  InflightLimiter::try_acquire() noexcept
   {
+    if (!max_inflight_)
+    {
+      return true;
+    }
+
     auto inflight_count = inflight_count_.load(std::memory_order_acquire);
     while (inflight_count < *max_inflight_)
     {
@@ -239,14 +246,14 @@ namespace AdServer::Grpc
       return;
     }
 
-    if (try_acquire_())
+    if (try_acquire())
     {
       return;
     }
 
     std::unique_lock lock(lock_);
     waiters_count_.fetch_add(1, std::memory_order_acq_rel);
-    cv_.wait(lock, [this] { return try_acquire_(); });
+    cv_.wait(lock, [this] { return try_acquire(); });
     waiters_count_.fetch_sub(1, std::memory_order_acq_rel);
   }
 

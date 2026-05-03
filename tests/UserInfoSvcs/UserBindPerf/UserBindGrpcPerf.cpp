@@ -31,10 +31,9 @@
 #include <Commons/UserInfoManip.hpp>
 
 #include <UserInfoSvcs/UserBindServer/UserBindServerGrpc.grpc.pb.h>
+#include <UserInfoSvcs/UserBindClient/UserBindDistributedGrpcClient.hpp>
 
-#include "UserBindAsyncClient.hpp"
 #include "UserBindServerGrpc.grpc-client.hpp"
-#include "UserBindSyncClient.hpp"
 
 namespace
 {
@@ -42,27 +41,21 @@ namespace
 
   enum class Mode
   {
-    Sync,
-    Async,
-    AsyncBatch
+    AsyncBatch,
+    DistributedGrpc
   };
 
   std::optional<Mode>
   parse_mode(const std::string& value)
   {
-    if (value == "sync")
-    {
-      return Mode::Sync;
-    }
-
-    if (value == "async")
-    {
-      return Mode::Async;
-    }
-
     if (value == "async-batch")
     {
       return Mode::AsyncBatch;
+    }
+
+    if (value == "distributed-grpc")
+    {
+      return Mode::DistributedGrpc;
     }
 
     return std::nullopt;
@@ -224,8 +217,10 @@ namespace
       << "  --threads <N>         test sender threads count (default: 16)\n"
       << "  --client-threads <N>  client worker/CQ threads (default: 4)\n"
       << "  --max-streams <N>     maximum async-batch grpc streams (default: --client-threads)\n"
-      << "  --mode <name>         sync | async | async-batch (default: async-batch)\n"
+      << "  --mode <name>         async-batch | distributed-grpc (default: async-batch)\n"
+      << "  --user-bind-controller-grpc-endpoint <host:port> UserBindController2 grpc endpoint for distributed-grpc mode\n"
       << "  --max-inflight <N>    soft max in-flight requests (default: 12000)\n"
+      << "  --error-on-inflight-reaching <0|1> fail request instead of waiting on max-inflight (default: 0)\n"
       << "  --max-outstanding-requests <N> maximum async-batch accepted but unfinished requests, 0 disables limit (default: 0)\n"
       << "  --max-batch-size <N>  maximum batch size for async-batch mode (default: 1024)\n"
       << "  --max-batch-delay-us <N> maximum time to wait for filling async-batch request, 0 disables delay flush (default: 3000)\n"
@@ -243,12 +238,14 @@ main(int argc, char** argv)
     using namespace Generics::AppUtils;
 
     StringOption opt_user_bind_grpc_endpoint("localhost:25728");
+    StringOption opt_user_bind_controller_grpc_endpoint;
     Generics::AppUtils::Option<unsigned long> opt_count(10000000);
     Generics::AppUtils::Option<unsigned int> opt_threads(16);
     Generics::AppUtils::Option<unsigned int> opt_client_threads(4);
     Generics::AppUtils::Option<unsigned int> opt_max_streams(0);
     StringOption opt_mode("async-batch");
     Generics::AppUtils::Option<unsigned long> opt_max_inflight(12000);
+    Generics::AppUtils::Option<unsigned int> opt_error_on_inflight_reaching(0);
     Generics::AppUtils::Option<unsigned long> opt_max_outstanding_requests(0);
     Generics::AppUtils::Option<unsigned long> opt_max_batch_size(1024);
     Generics::AppUtils::Option<unsigned long> opt_max_batch_delay_us(3000);
@@ -259,12 +256,16 @@ main(int argc, char** argv)
 
     Args args(-1);
     args.add(equal_name("grpc-endpoint") || short_name("g"), opt_user_bind_grpc_endpoint);
+    args.add(
+      equal_name("user-bind-controller-grpc-endpoint"),
+      opt_user_bind_controller_grpc_endpoint);
     args.add(equal_name("count") || short_name("c"), opt_count);
     args.add(equal_name("threads") || short_name("t"), opt_threads);
     args.add(equal_name("client-threads"), opt_client_threads);
     args.add(equal_name("max-streams"), opt_max_streams);
     args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("max-inflight"), opt_max_inflight);
+    args.add(equal_name("error-on-inflight-reaching"), opt_error_on_inflight_reaching);
     args.add(equal_name("max-outstanding-requests"), opt_max_outstanding_requests);
     args.add(equal_name("max-batch-size"), opt_max_batch_size);
     args.add(equal_name("max-batch-delay-us"), opt_max_batch_delay_us);
@@ -290,7 +291,16 @@ main(int argc, char** argv)
     const auto mode = parse_mode(*opt_mode);
     if (!mode.has_value())
     {
-      std::cerr << "--mode must be one of: sync, async, async-batch" << std::endl;
+      std::cerr << "--mode must be one of: async-batch, distributed-grpc" << std::endl;
+      return 1;
+    }
+
+    if (*mode == Mode::DistributedGrpc &&
+      opt_user_bind_controller_grpc_endpoint->empty())
+    {
+      std::cerr
+        << "--user-bind-controller-grpc-endpoint is required for distributed-grpc mode"
+        << std::endl;
       return 1;
     }
 
@@ -310,7 +320,7 @@ main(int argc, char** argv)
     const auto max_streams =
       *opt_max_streams == 0 ? client_threads : *opt_max_streams;
     const auto default_max_inflight =
-      *mode == Mode::AsyncBatch ?
+      (*mode == Mode::AsyncBatch || *mode == Mode::DistributedGrpc) ?
         std::max(
           1UL,
           static_cast<unsigned long>(max_streams) *
@@ -332,66 +342,16 @@ main(int argc, char** argv)
     LatencyTopPercentile latency_p99((*opt_count + 99) / 100);
 
     Generics::ActiveObjectSet_var async_batch_active_objects = new Generics::ActiveObjectSet();
-    std::unique_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient> client_owner;
     ReferenceCounting::SmartPtr<BatchClient> batch_client;
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient* client = nullptr;
-    if (*mode == Mode::Sync)
-    {
-      std::vector<std::shared_ptr<grpc::Channel>> channels;
-      channels.reserve(client_threads);
-      for (unsigned int i = 0; i < client_threads; ++i)
-      {
-        grpc::ChannelArguments channel_args;
-        channel_args.SetInt(
-          GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
-          *opt_local_subchannel_pool ? 1 : 0);
-        if(!*opt_grpc_compression)
-        {
-          channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
-        }
-        channels.emplace_back(
-          grpc::CreateCustomChannel(
-            *opt_user_bind_grpc_endpoint,
-            grpc::InsecureChannelCredentials(),
-            channel_args));
-      }
-      client_owner = std::make_unique<AdServer::UserInfoSvcs::UserBindSyncClient>(
-        channels,
-        *opt_grpc_compression != 0);
-      client = client_owner.get();
-    }
-    else if (*mode == Mode::Async)
-    {
-      std::vector<std::shared_ptr<grpc::Channel>> channels;
-      channels.reserve(client_threads);
-      for (unsigned int i = 0; i < client_threads; ++i)
-      {
-        grpc::ChannelArguments channel_args;
-        channel_args.SetInt(
-          GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
-          *opt_local_subchannel_pool ? 1 : 0);
-        if(!*opt_grpc_compression)
-        {
-          channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
-        }
-        channels.emplace_back(
-          grpc::CreateCustomChannel(
-            *opt_user_bind_grpc_endpoint,
-            grpc::InsecureChannelCredentials(),
-            channel_args));
-      }
-      client_owner = std::make_unique<AdServer::UserInfoSvcs::UserBindAsyncClient>(
-        channels,
-        client_threads,
-        max_inflight,
-        *opt_grpc_compression != 0);
-      client = client_owner.get();
-    }
-    else if (*mode == Mode::AsyncBatch)
+    if (*mode == Mode::AsyncBatch)
     {
       AdServer::Grpc::BatchingOptions options;
+      options.channels_number = max_streams;
       options.max_batch_size = *opt_max_batch_size;
       options.max_inflight = max_inflight;
+      options.error_on_inflight_reaching =
+        *opt_error_on_inflight_reaching != 0;
       if (*opt_max_outstanding_requests > 0)
       {
         options.max_outstanding_requests = *opt_max_outstanding_requests;
@@ -409,12 +369,45 @@ main(int argc, char** argv)
       batch_client = ReferenceCounting::SmartPtr<BatchClient>(
         new BatchClient(
           *opt_user_bind_grpc_endpoint,
-          max_streams,
           grpc_executor.in(),
           options));
       async_batch_active_objects->add_child_object(grpc_executor);
       async_batch_active_objects->add_child_object(batch_client);
       client = batch_client.in();
+    }
+    else if (*mode == Mode::DistributedGrpc)
+    {
+      AdServer::Grpc::BatchingOptions options;
+      options.channels_number = max_streams;
+      options.max_batch_size = *opt_max_batch_size;
+      options.max_inflight = max_inflight;
+      options.error_on_inflight_reaching =
+        *opt_error_on_inflight_reaching != 0;
+      if (*opt_max_outstanding_requests > 0)
+      {
+        options.max_outstanding_requests = *opt_max_outstanding_requests;
+      }
+      options.workers_number = client_threads;
+      options.hot_buckets_count = *opt_hot_buckets_count;
+      options.max_batch_delay = *opt_max_batch_delay_us > 0 ?
+        std::optional<std::chrono::microseconds>(
+          std::chrono::microseconds(*opt_max_batch_delay_us)) :
+        std::nullopt;
+      options.enable_grpc_compression = *opt_grpc_compression != 0;
+      options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
+
+      AdServer::Grpc::GrpcExecutor_var grpc_executor(
+        new AdServer::Grpc::GrpcExecutor(client_threads));
+      ReferenceCounting::SmartPtr<
+        AdServer::UserInfoSvcs::UserBindDistributedGrpcClient> distributed_client(
+          new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
+            std::vector<std::string>{*opt_user_bind_controller_grpc_endpoint},
+            options,
+            grpc_executor.in(),
+            nullptr));
+      async_batch_active_objects->add_child_object(grpc_executor);
+      async_batch_active_objects->add_child_object(distributed_client);
+      client = distributed_client.in();
     }
 
     async_batch_active_objects->activate_object();

@@ -622,6 +622,7 @@
 <xsl:template name="AddUserBindControllerGroups">
   <xsl:param name="full-cluster-path"/>
   <xsl:param name="error-prefix"/>
+  <xsl:param name="user-bind-call-mode" select="'corba'"/>
 
   <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor]">
     <xsl:if test="count(./service[@descriptor = $user-bind-controller-descriptor]) > 0">
@@ -657,6 +658,37 @@
           </xsl:for-each>
         </xsl:for-each>
       </cfg:UserBindControllerGroup>
+    </xsl:if>
+    <xsl:if test="$user-bind-call-mode = 'grpc' and count(./service[@descriptor = $user-bind-controller2-descriptor]) > 0">
+      <cfg:UserBindController2Group>
+        <xsl:for-each select="./service[@descriptor = $user-bind-controller2-descriptor]">
+          <xsl:variable name="hosts">
+            <xsl:call-template name="GetHosts">
+              <xsl:with-param name="hosts" select="@host"/>
+              <xsl:with-param name="error-prefix"
+                select="concat($error-prefix,
+                  ': AddUserBindControllerGroups: UserBindController2 grpc hosts resolving: ')"/>
+            </xsl:call-template>
+          </xsl:variable>
+
+          <xsl:variable
+            name="user-bind-controller-grpc-port"
+            select="./configuration/cfg:userBindController2/cfg:networkParams/@grpc_port"/>
+
+          <xsl:variable name="user-bind-controller-grpc-port-value">
+            <xsl:value-of select="$user-bind-controller-grpc-port"/>
+            <xsl:if test="count($user-bind-controller-grpc-port) = 0">
+              <xsl:value-of select="$def-user-bind-controller2-grpc-port"/>
+            </xsl:if>
+          </xsl:variable>
+
+          <xsl:for-each select="exsl:node-set($hosts)//host">
+            <cfg:Endpoint>
+              <xsl:value-of select="concat(., ':', $user-bind-controller-grpc-port-value)"/>
+            </cfg:Endpoint>
+          </xsl:for-each>
+        </xsl:for-each>
+      </cfg:UserBindController2Group>
     </xsl:if>
   </xsl:for-each>
 </xsl:template>

@@ -3,22 +3,23 @@
 #include <memory>
 #include <string>
 
+#include <Generics/ActiveObject.hpp>
+#include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
-#include <Logger/Logger.hpp>
-#include <Generics/ActiveObject.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
-#include "UserBindServerCore.hpp"
+
+#include "UserBindController2Impl.hpp"
 
 namespace AdServer::UserInfoSvcs
 {
-  class UserBindServerGrpc:
+  class UserBindController2Grpc:
     public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
-    UserBindServerGrpc(
-      UserBindServerCore* core,
+    UserBindController2Grpc(
+      UserBindController2Impl* controller,
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port);
@@ -27,13 +28,13 @@ namespace AdServer::UserInfoSvcs
     class ServiceImpl;
     using Impl = AdServer::Grpc::GrpcServer<ServiceImpl>;
 
-  protected:
-    ~UserBindServerGrpc() noexcept;
+    ~UserBindController2Grpc() noexcept override;
 
   private:
     const std::string bind_address_;
     const ReferenceCounting::SmartPtr<Impl> impl_;
   };
 
-  using UserBindServerGrpc_var = ReferenceCounting::SmartPtr<UserBindServerGrpc>;
+  using UserBindController2Grpc_var =
+    ReferenceCounting::SmartPtr<UserBindController2Grpc>;
 }
