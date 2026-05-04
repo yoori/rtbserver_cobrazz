@@ -617,6 +617,18 @@
     </xsl:if>
     <xsl:if test="$user-bind-call-mode = 'grpc' and count(./service[@descriptor = $user-bind-controller2-descriptor]) > 0">
       <cfg:UserBindController2Group>
+        <cfg:BatchingOptions
+          channels_number="32"
+          max_batch_size="2000"
+          max_inflight="1000000"
+          error_on_inflight_reaching="false"
+          max_outstanding_requests="0"
+          workers_number="4"
+          hot_buckets_count="4"
+          max_batch_delay_us="3000"
+          enable_grpc_compression="true"
+          use_local_subchannel_pool="true"
+          reconnect_period="1"/>
         <xsl:for-each select="./service[@descriptor = $user-bind-controller2-descriptor]">
           <xsl:variable name="hosts">
             <xsl:call-template name="GetHosts">
