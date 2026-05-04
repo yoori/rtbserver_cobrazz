@@ -47,6 +47,12 @@
         <xsl:value-of select="$def-user-bind-server-port"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="user-bind-server-grpc-port">
+      <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$user-bind-server-port + 500"/>
+      </xsl:if>
+    </xsl:variable>
 
     <exsl:document href="userBindServer.port"
       method="text" omit-xml-declaration="yes"
@@ -87,14 +93,11 @@
       </cfg:Endpoint>
     </cfg:CorbaConfig>
 
-    <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) > 0">
-      <cfg:GrpcConfig>
-        <cfg:Endpoint host="*">
-          <xsl:attribute name="port"><xsl:value-of
-            select="$user-bind-server-config/cfg:networkParams/@grpc_port"/></xsl:attribute>
-        </cfg:Endpoint>
-      </cfg:GrpcConfig>
-    </xsl:if>
+    <cfg:GrpcConfig>
+      <cfg:Endpoint host="*">
+        <xsl:attribute name="port"><xsl:value-of select="$user-bind-server-grpc-port"/></xsl:attribute>
+      </cfg:Endpoint>
+    </cfg:GrpcConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$user-bind-server-config/cfg:logging"/>

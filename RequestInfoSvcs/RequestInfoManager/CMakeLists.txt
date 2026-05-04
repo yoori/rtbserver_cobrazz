@@ -21,6 +21,7 @@ target_link_libraries(PassbackContainer
   PlainStorage2
   PrivacyFilter
   Commons
+  PassbackProfilePST
   RequestInfoManagerCompatibility
 )
 
@@ -101,6 +102,7 @@ target_link_libraries(RequestLogLoader
   String
   LogCommons
   PlainStorage3
+  RequestOperationProfilePST
   RequestInfoManagerCompatibility
   LogGeneralizerIDL
   LogGeneralizerLib
@@ -123,7 +125,7 @@ target_link_libraries(RequestOperationSaver
   RequestLogLoader
   MessageSaver
 
-  UserCampaignReachProfilePST
+  RequestOperationProfilePST
 )
 
 add_library(RequestOutLogger STATIC
@@ -147,6 +149,7 @@ add_library(UserActionInfoContainer STATIC
 )
 
 target_link_libraries(UserActionInfoContainer
+  UserActionProfilePST
   LogCommons
 )
 
@@ -165,6 +168,7 @@ add_library(UserFraudProtectionContainer STATIC
 )
 
 target_link_libraries(UserFraudProtectionContainer
+  UserFraudProtectionProfilePST
   LogCommons
 )
 
@@ -173,6 +177,7 @@ add_library(UserSiteReachContainer STATIC
 )
 
 target_link_libraries(UserSiteReachContainer
+  UserSiteReachProfilePST
   LogCommons
 )
 
@@ -181,5 +186,6 @@ add_library(UserTagRequestMergeContainer STATIC
 )
 
 target_link_libraries(UserTagRequestMergeContainer
+  UserTagRequestMergeProfilePST
   LogCommons
 )

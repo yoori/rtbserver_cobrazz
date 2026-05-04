@@ -59,10 +59,17 @@
     <xsl:for-each select="$fe-cluster-path/service[@descriptor = $user-bind-server-descriptor]">
       <xsl:variable name="user-bind-server-config" select="configuration/cfg:userBindServer"/>
 
+      <xsl:variable name="user-bind-server-port">
+        <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@port"/>
+        <xsl:if test="count($user-bind-server-config/cfg:networkParams/@port) = 0">
+          <xsl:value-of select="$def-user-bind-server-port"/>
+        </xsl:if>
+      </xsl:variable>
+
       <xsl:variable name="user-bind-server-grpc-port">
         <xsl:value-of select="$user-bind-server-config/cfg:networkParams/@grpc_port"/>
         <xsl:if test="count($user-bind-server-config/cfg:networkParams/@grpc_port) = 0">
-          <xsl:value-of select="'10528'"/>
+          <xsl:value-of select="$user-bind-server-port + 500"/>
         </xsl:if>
       </xsl:variable>
 

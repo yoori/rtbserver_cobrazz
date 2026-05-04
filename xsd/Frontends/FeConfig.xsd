@@ -78,10 +78,10 @@
         minOccurs="0"
         maxOccurs="2"/>
 
-      <xsd:element name="UserBindController2Group"
-        type="UserBindControllerGrpcGroupType"
+      <xsd:element name="UserBind"
+        type="UserBindType"
         minOccurs="0"
-        maxOccurs="2"/>
+        maxOccurs="1"/>
 
       <xsd:element name="Cookies" type="CookiesType"/>
 
@@ -181,12 +181,21 @@
     </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:complexType name="UserBindControllerGrpcGroupType">
+  <xsd:complexType name="UserBindType">
     <xsd:sequence>
       <xsd:element name="BatchingOptions"
         type="GrpcBatchingOptionsType"
         minOccurs="0"
         maxOccurs="1"/>
+      <xsd:element name="UserBindController2Group"
+        type="UserBindControllerGrpcGroupType"
+        minOccurs="0"
+        maxOccurs="2"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="UserBindControllerGrpcGroupType">
+    <xsd:sequence>
       <xsd:element name="Endpoint"
         type="xsd:string"
         minOccurs="1"

@@ -554,17 +554,21 @@ namespace AdServer
           AdServer::Grpc::BatchingOptions batching_options;
           std::vector<std::string> user_bind_controller_refs;
 
-          for(const auto& group : common_config_->UserBindController2Group())
+          if(common_config_->UserBind().present())
           {
-            if(group.BatchingOptions().present())
+            const auto& user_bind_config = *common_config_->UserBind();
+            if(user_bind_config.BatchingOptions().present())
             {
               batching_options =
-                Config::read_xsd_grpc_options(*group.BatchingOptions());
+                Config::read_xsd_grpc_options(*user_bind_config.BatchingOptions());
             }
 
-            for(const auto& endpoint : group.Endpoint())
+            for(const auto& group : user_bind_config.UserBindController2Group())
             {
-              user_bind_controller_refs.emplace_back(endpoint);
+              for(const auto& endpoint : group.Endpoint())
+              {
+                user_bind_controller_refs.emplace_back(endpoint);
+              }
             }
           }
 
