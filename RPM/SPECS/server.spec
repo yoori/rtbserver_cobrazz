@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv453%{?dist}
+Release: ssv454%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -149,7 +149,7 @@ Requires: gflags = 2.1.2
 #Requires: userver = 1.0.29
 Requires: cryptopp libatomic libev
 Requires: protobuf = 25.9
-Requires: grpc-devel = 1.80.0-ssv4.el8
+Requires: grpc = 1.80.0-ssv4.el8
 
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
 Requires: perl-Devel-GlobalDestruction perl-Devel-LexAlias perl-Devel-StackTrace perl-Dist-CheckConflicts perl-Email-Date-Format

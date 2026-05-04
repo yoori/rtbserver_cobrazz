@@ -69,23 +69,6 @@ do
   let "EXIT_CODE|=$?"
 done
 
-# AdProfilingCluster configuration
-ADPROFILING_CLUSTER_DESCR=AdProfilingCluster
-ADPROFILING_CLUSTER_XPATH="$CLUSTER_XPATH/serviceGroup[@descriptor = '$ADPROFILING_CLUSTER_DESCR']"
-ADPROFILING_CLUSTERS_COUNT="count($ADPROFILING_CLUSTER_XPATH)"
-ADPROFILING_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath "$ADPROFILING_CLUSTERS_COUNT" --plugin-root $PLUGIN_ROOT`
-
-if [ $ADPROFILING_COUNT -ne 0 ]
-then
-  $EXEC/ProfilingClusterConf.sh $APP_XML \
-   "$ADPROFILING_CLUSTER_XPATH" \
-   "$OUT_DIR" \
-   "$PLUGIN_ROOT" \
-   "$ADPROFILING_CLUSTER_DESCR" \
-   "$PRODUCT_IDENTIFIER"
-  let "EXIT_CODE|=$?"
-fi
-
 # OCM configuration
 $EXEC/OCMConf.sh $APP_XML \
   "$CLUSTER_XPATH" \
