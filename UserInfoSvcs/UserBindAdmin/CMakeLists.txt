@@ -1,15 +1,17 @@
 add_executable(UserBindAdmin
-    Application.cpp
+  Application.cpp
 )
+
 target_link_libraries(UserBindAdmin
- Generics
- CORBACommons
+  gRPC::grpc++
 
- Commons
+  Generics
+  CORBACommons
 
- UserBindControllerStubs
- UserBindServerIDL
- UserBindControllerIDL
+  Commons
+
+  UserBindControllerStubs
+  UserBindServerIDL
+  UserBindControllerIDL
+  UserBindServerGrpc
 )
-#install(TARGETS UserBindAdmin  DESTINATION ${INSTALL_DIR})
-

@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_BINDREQUESTCHUNK_HPP
-#define USERINFOSVCS_BINDREQUESTCHUNK_HPP
+#pragma once
 
 #include <string>
 
@@ -21,9 +20,7 @@
 
 #include "BindRequestProcessor.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class BindRequestChunk:
     public BindRequestProcessor,
@@ -303,12 +300,9 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<BindRequestChunk>
     BindRequestChunk_var;
 
-} /* UserInfoSvcs */
-} /* AdServer */
+} /* AdServer::UserInfoSvcs */
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // HashHashAdapter
   inline
@@ -338,6 +332,3 @@ namespace UserInfoSvcs
     return hash_;
   }
 }
-}
-
-#endif /*USERINFOSVCS_BINDREQUESTCHUNK_HPP*/

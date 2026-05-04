@@ -199,6 +199,14 @@
         maxHostOccurs="unbounded"/>
 
       <service
+        type="UserBindController2"
+        configSchema="xsd/UserInfoProfiling/UserBindController2App.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="0"
+        maxHostOccurs="unbounded"/>
+
+      <service
         type="BillingServer"
         configSchema="xsd/CampaignManagement/BillingServerApp.xsd"
         minOccurs="1"

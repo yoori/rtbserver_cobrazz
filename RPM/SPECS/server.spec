@@ -37,7 +37,7 @@
 
 Name:    foros-server%{?__type:-%__type}
 Version: %{version}
-Release: ssv444%{?dist}
+Release: ssv451%{?dist}
 Summary: Advertizing Server
 License: Commercial
 Group:   System Environment/Daemons
@@ -120,6 +120,9 @@ BuildRequires: protobuf-compiler = %{__protobuf_ver_req}
 BuildRequires: libpq-devel
 #BuildRequires: libev-devel yaml-cpp-devel cryptopp-devel libpq-devel http-parser-devel
 BuildRequires: c-ares-devel >= 1.18.1
+BuildRequires: protobuf-devel = 25.9
+BuildRequires: protobuf-compiler = 25.9
+BuildRequires: grpc-devel = 1.80.0-ssv4.el8
 BuildRequires: grpc-plugins = 1.80.0-ssv4.el8
 BuildRequires: jemalloc-devel >= 5.2.1
 
@@ -145,6 +148,8 @@ Requires: rocksdb = %__rocksdb_ver_req
 Requires: gflags = 2.1.2
 #Requires: userver = 1.0.29
 Requires: cryptopp libatomic libev
+Requires: protobuf = 25.9
+Requires: grpc-devel = 1.80.0-ssv4
 
 Requires: perl-B-Hooks-EndOfScope perl-Class-Data-Inheritable perl-Class-Method-Modifiers perl-Devel-Caller
 Requires: perl-Devel-GlobalDestruction perl-Devel-LexAlias perl-Devel-StackTrace perl-Dist-CheckConflicts perl-Email-Date-Format

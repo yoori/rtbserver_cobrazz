@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERBINDSERVER_CHUNKUTILS_HPP
-#define USERINFOSVCS_USERBINDSERVER_CHUNKUTILS_HPP
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -10,9 +9,7 @@
 #include <Generics/Rand.hpp>
 #include <String/RegEx.hpp>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   // path to file name map
   typedef std::map<std::string, std::string> FilePathMap;
@@ -71,6 +68,3 @@ namespace UserInfoSvcs
     ChunkFileDescriptionMap& chunk_files_;
   };
 }
-}
-
-#endif /*USERINFOSVCS_USERBINDSERVER_CHUNKUTILS_HPP*/

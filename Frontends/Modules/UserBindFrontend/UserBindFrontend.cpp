@@ -1,6 +1,7 @@
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
+#include <future>
 #include <Generics/Uuid.hpp>
 #include <Generics/TaskPool.hpp>
 
@@ -9,11 +10,13 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
 
+#include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/Base32.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/JsonFormatter.hpp>
 
 #include <Frontends/CommonModule/CommonModule.hpp>
@@ -73,6 +76,48 @@ namespace
   const String::SubString HTTP_PREFIX("http:");
   const String::SubString HTTPS_PREFIX("https:");
   const String::SubString IDFA_KNOWN_KEYWORD("rtbidfaknown");
+
+  void
+  throw_user_bind_exception_(const grpc::Status& status)
+  {
+    const std::string message = status.error_message();
+    switch (status.error_code())
+    {
+    case grpc::StatusCode::UNAVAILABLE:
+      throw AdServer::UserInfoSvcs::UserBindMapper::NotReady(
+        message.c_str());
+    case grpc::StatusCode::NOT_FOUND:
+      throw AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound(
+        message.c_str());
+    default:
+      throw AdServer::UserInfoSvcs::UserBindMapper::ImplementationException(
+        message.c_str());
+    }
+  }
+
+  template<typename Response, typename Start>
+  Response
+  wait_grpc_call_(Start&& start)
+  {
+    std::promise<std::pair<grpc::Status, Response>> promise;
+    auto future = promise.get_future();
+
+    start([&](
+      const grpc::Status& call_status,
+      const Response& call_response)
+    {
+      promise.set_value(std::make_pair(call_status, call_response));
+    });
+
+    auto result = future.get();
+
+    if (!result.first.ok())
+    {
+      throw_user_bind_exception_(result.first);
+    }
+
+    return std::move(result.second);
+  }
 
 
   const String::SubString GOOGLE_ERRORS[] = {
@@ -504,13 +549,51 @@ namespace AdServer
         */
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        if(!common_config_->UserBindControllerGroup().empty())
+        if(config_->user_bind_call_mode() == "grpc")
         {
-          user_bind_client_ = new FrontendCommons::UserBindClient(
-            common_config_->UserBindControllerGroup(),
-            corba_client_adapter_.in(),
-            logger());
-          add_child_object(user_bind_client_);
+          AdServer::Grpc::BatchingOptions batching_options;
+          std::vector<std::string> user_bind_controller_refs;
+
+          for(const auto& group : common_config_->UserBindController2Group())
+          {
+            if(group.BatchingOptions().present())
+            {
+              batching_options =
+                Config::read_xsd_grpc_options(*group.BatchingOptions());
+            }
+
+            for(const auto& endpoint : group.Endpoint())
+            {
+              user_bind_controller_refs.emplace_back(endpoint);
+            }
+          }
+
+          if(!user_bind_controller_refs.empty())
+          {
+            batching_options.workers_number = config_->threads();
+            user_bind_grpc_executor_ =
+              new AdServer::Grpc::GrpcExecutor(config_->threads());
+            AdServer::UserInfoSvcs::UserBindDistributedGrpcClient_var
+              user_bind_grpc_client =
+              new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
+                user_bind_controller_refs,
+                batching_options,
+                user_bind_grpc_executor_,
+                logger());
+            user_bind_client_ = user_bind_grpc_client;
+            add_child_object(user_bind_grpc_executor_);
+            add_child_object(user_bind_grpc_client);
+          }
+        }
+        else if(!common_config_->UserBindControllerGroup().empty())
+        {
+          FrontendCommons::UserBindCorbaClient_var user_bind_corba_client =
+            new FrontendCommons::UserBindCorbaClient(
+              common_config_->UserBindControllerGroup(),
+              corba_client_adapter_.in(),
+              logger());
+          user_bind_client_ = user_bind_corba_client;
+          add_child_object(user_bind_corba_client);
         }
 
         user_info_client_ = new FrontendCommons::UserInfoClient(
@@ -683,6 +766,48 @@ namespace AdServer
     {}
   }
 
+  void
+  UserBindFrontend::add_bind_request_(
+    const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request)
+  {
+    wait_grpc_call_<
+      adserver::user_info_svcs::user_bind::AddBindRequestResponse>(
+        [&](auto callback)
+        {
+          user_bind_client_->add_bind_request(
+            request,
+            std::move(callback));
+        });
+  }
+
+  adserver::user_info_svcs::user_bind::GetUserIdResponse
+  UserBindFrontend::get_user_id_(
+    const adserver::user_info_svcs::user_bind::GetUserIdRequest& request)
+  {
+    return wait_grpc_call_<
+      adserver::user_info_svcs::user_bind::GetUserIdResponse>(
+        [&](auto callback)
+        {
+          user_bind_client_->get_user_id(
+            request,
+            std::move(callback));
+        });
+  }
+
+  adserver::user_info_svcs::user_bind::AddUserIdResponse
+  UserBindFrontend::add_user_id_(
+    const adserver::user_info_svcs::user_bind::AddUserIdRequest& request)
+  {
+    return wait_grpc_call_<
+      adserver::user_info_svcs::user_bind::AddUserIdResponse>(
+        [&](auto callback)
+        {
+          user_bind_client_->add_user_id(
+            request,
+            std::move(callback));
+        });
+  }
+
   uint32_t
   UserBindFrontend::calc_yandex_sign_(
     const UserBind::RequestInfo& request_info,
@@ -763,21 +888,14 @@ namespace AdServer
     {
       try
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
 
-        // reconstruct cookie
-        AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-          add_user_request_info;
-        add_user_request_info.id << request_info.external_id;
-        add_user_request_info.user_id = CorbaAlgs::pack_user_id(
-          Commons::UserId());
-        add_user_request_info.timestamp = CorbaAlgs::pack_time(
-          request_info.time);
+        adserver::user_info_svcs::user_bind::AddUserIdRequest
+          add_user_request;
+        add_user_request.set_id(request_info.external_id);
+        add_user_request.set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
+        add_user_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
 
-        AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-          prev_user_bind_info =
-            user_bind_mapper->add_user_id(add_user_request_info);
+        auto prev_user_bind_info = add_user_id_(add_user_request);
 
         (void)prev_user_bind_info;
       }
@@ -1320,32 +1438,31 @@ namespace AdServer
           {
             try
             {
-              AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-                user_bind_client_->user_bind_mapper();
 
               const std::string cookie_external_id_str =
                 std::string("c/") + result_user_id.to_string();
 
-              AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-              get_request_info.id << cookie_external_id_str;
-              get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
-              get_request_info.silent = true;
-              get_request_info.generate_user_id = false;
-              get_request_info.for_set_cookie = true;
-              get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-              get_request_info.current_user_id = CorbaAlgs::pack_user_id(result_user_id);
-              AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var
-                prev_user_bind_info =
-                  user_bind_mapper->get_user_id(get_request_info);
+              adserver::user_info_svcs::user_bind::GetUserIdRequest
+                get_request;
+              get_request.set_id(cookie_external_id_str);
+              get_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
+              get_request.set_silent(true);
+              get_request.set_generate_user_id(false);
+              get_request.set_for_set_cookie(true);
+              get_request.set_create_timestamp(
+                GrpcAlgs::pack_time(Generics::Time::ZERO));
+              get_request.set_current_user_id(
+                GrpcAlgs::pack_user_id(result_user_id));
+              auto prev_user_bind_info = get_user_id_(get_request);
 
-              if(prev_user_bind_info->invalid_operation)
+              if(prev_user_bind_info.invalid_operation())
               {
                 cresolve_failed = true;
               }
               else
               {
                 Commons::UserId cresolved_user_id =
-                  CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+                  GrpcAlgs::unpack_user_id(prev_user_bind_info.user_id());
                 if(!cresolved_user_id.is_null())
                 {
                   result_user_id = cresolved_user_id;
@@ -1414,27 +1531,24 @@ namespace AdServer
                 {
                   try
                   {
-                    AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-                      user_bind_client_->user_bind_mapper();
 
                     const std::string& external_id_str = cur_external_id;
 
-                    // reconstruct cookie
-                    AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo
-                      get_request_info;
-                    get_request_info.id << external_id_str;
-                    get_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
-                    get_request_info.silent = true;
-                    get_request_info.generate_user_id = use_external_ids[ext_user_i].set_uid;
-                    get_request_info.for_set_cookie = !app_request;
-                    get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-                    // get_request_info.current_user_id is null
+                    adserver::user_info_svcs::user_bind::GetUserIdRequest
+                      get_request;
+                    get_request.set_id(external_id_str);
+                    get_request.set_timestamp(
+                      GrpcAlgs::pack_time(request_info.time));
+                    get_request.set_silent(true);
+                    get_request.set_generate_user_id(
+                      use_external_ids[ext_user_i].set_uid);
+                    get_request.set_for_set_cookie(!app_request);
+                    get_request.set_create_timestamp(
+                      GrpcAlgs::pack_time(Generics::Time::ZERO));
 
-                    AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var
-                      prev_user_bind_info = user_bind_mapper->get_user_id(
-                        get_request_info);
+                    auto prev_user_bind_info = get_user_id_(get_request);
 
-                    if(prev_user_bind_info->invalid_operation)
+                    if(prev_user_bind_info.invalid_operation())
                     {
                       resolve_failed_external_ids.insert(external_id_str);
 
@@ -1444,7 +1558,8 @@ namespace AdServer
                     else
                     {
                       AdServer::Commons::UserId resolved_user_id =
-                        CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+                        GrpcAlgs::unpack_user_id(
+                          prev_user_bind_info.user_id());
                       if(!resolved_user_id.is_null())
                       {
                         result_user_id = resolved_user_id;
@@ -1455,10 +1570,10 @@ namespace AdServer
 
                         if(config_->create_profile())
                         {
-                          create_user_profile = prev_user_bind_info->created;
+                          create_user_profile = prev_user_bind_info.created();
                         }
                       }
-                    } // prev_user_bind_info->invalid_operation
+                    } // prev_user_bind_info.invalid_operation()
 
                     if(!result_user_id.is_null())
                     {
@@ -1543,27 +1658,24 @@ namespace AdServer
                 {
                   try
                   {
-                    AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-                      user_bind_client_->user_bind_mapper();
 
-                    AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
-                      add_user_request_info;
-                    add_user_request_info.id << cur_external_id;
-                    add_user_request_info.user_id = CorbaAlgs::pack_user_id(
-                      !opted_out ? result_user_id : Commons::UserId());
-                    add_user_request_info.timestamp = CorbaAlgs::pack_time(
-                      request_info.time);
+                    adserver::user_info_svcs::user_bind::AddUserIdRequest
+                      add_user_request;
+                    add_user_request.set_id(cur_external_id);
+                    add_user_request.set_user_id(GrpcAlgs::pack_user_id(
+                      !opted_out ? result_user_id : Commons::UserId()));
+                    add_user_request.set_timestamp(
+                      GrpcAlgs::pack_time(request_info.time));
 
-                    AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-                      prev_user_bind_info =
-                        user_bind_mapper->add_user_id(add_user_request_info);
+                    auto prev_user_bind_info = add_user_id_(add_user_request);
 
                     /*
                     AdServer::Commons::UserId prev_user_id =
-                      CorbaAlgs::unpack_user_id(prev_user_bind_info->merge_user_id);
+                      GrpcAlgs::unpack_user_id(
+                        prev_user_bind_info.merge_user_id());
                     */
 
-                    if(prev_user_bind_info->invalid_operation)
+                    if(prev_user_bind_info.invalid_operation())
                     {
                       // report to web stats
                       report_bad_user_(request_info);
@@ -1796,22 +1908,17 @@ namespace AdServer
 
         try
         {
-          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-            user_bind_client_->user_bind_mapper();
 
-          AdServer::UserInfoSvcs::UserBindServer::BindRequestInfo bind_request;
-
-          bind_request.bind_user_ids.length(user_ids.size());
-          CORBA::ULong bind_user_id_i = 0;
-          for(auto it = user_ids.begin(); it != user_ids.end(); ++it, ++bind_user_id_i)
+          adserver::user_info_svcs::user_bind::AddBindRequestRequest
+            bind_request;
+          bind_request.set_request_id(dns_bind_request_id.str());
+          bind_request.set_timestamp(GrpcAlgs::pack_time(request_info.time));
+          for(auto it = user_ids.begin(); it != user_ids.end(); ++it)
           {
-            bind_request.bind_user_ids[bind_user_id_i] << *it;
+            bind_request.add_bind_user_ids(*it);
           }
 
-          user_bind_mapper->add_bind_request(
-            dns_bind_request_id.str().c_str(),
-            bind_request,
-            CorbaAlgs::pack_time(request_info.time));
+          add_bind_request_(bind_request);
         }
         catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
         {}

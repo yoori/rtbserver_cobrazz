@@ -27,7 +27,7 @@
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
-#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -193,7 +193,7 @@ namespace ImprTrack
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool>
       channel_servers_;
-    FrontendCommons::UserBindClient_var user_bind_client_;
+    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;
 
     Generics::TaskRunner_var task_runner_;

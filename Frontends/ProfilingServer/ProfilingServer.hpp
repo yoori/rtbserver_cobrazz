@@ -14,7 +14,7 @@
 //#include <Frontends/Modules/AdFrontend/RequestInfo.hpp>
 
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
-#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <xsd/Frontends/ProfilingServerConfig.hpp>
@@ -214,7 +214,7 @@ namespace Profiling
 
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
-    FrontendCommons::UserBindClient_var user_bind_client_;
+    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     DMPKafkaStreamer_var streamer_;

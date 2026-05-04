@@ -567,7 +567,7 @@ namespace Profiling
 
       if(!config_->UserBindControllerGroup().empty())
       {
-        user_bind_client_ = new FrontendCommons::UserBindClient(
+        user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
           config_->UserBindControllerGroup(),
           corba_client_adapter_.in(),
           logger());
@@ -780,14 +780,12 @@ namespace Profiling
     {
       try
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
 
         if(!request_info.bind_request_id.empty())
         {
           // append bind user ids got by bind_request_id
           AdServer::UserInfoSvcs::UserBindServer::BindRequestInfo_var bind_request_info =
-            user_bind_mapper->get_bind_request(
+            user_bind_client_->get_bind_request(
               request_info.bind_request_id.c_str(),
               request_params.common_info.time);
 
@@ -835,7 +833,7 @@ namespace Profiling
               get_request_info.current_user_id = CorbaAlgs::pack_user_id(match_user_id);
 
               AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var user_bind_info =
-                user_bind_mapper->get_user_id(get_request_info);
+                user_bind_client_->get_user_id(get_request_info);
 
               min_age_reached |= user_bind_info->min_age_reached;
               match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
@@ -957,8 +955,6 @@ namespace Profiling
     {
       try
       {
-        AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-          user_bind_client_->user_bind_mapper();
 
         for(auto ext_user_id_it = request_info.bind_user_ids.begin();
           ext_user_id_it != request_info.bind_user_ids.end();
@@ -993,7 +989,7 @@ namespace Profiling
 
               AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
                 prev_user_bind_info =
-                  user_bind_mapper->add_user_id(add_user_request_info);
+                  user_bind_client_->add_user_id(add_user_request_info);
 
               (void)prev_user_bind_info;
             }

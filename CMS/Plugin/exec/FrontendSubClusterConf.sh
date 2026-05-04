@@ -35,6 +35,7 @@ CHANNEL_SEARCH_SERVICE_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelSearchService
 
 USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
 USER_BIND_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController
+USER_BIND_CONTROLLER2_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindController2
 
 BILLING_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/BillingServer
 
@@ -182,6 +183,20 @@ $EXEC/ServiceConf.sh \
  --app-xml $APP_XML \
  --xsl $XSLT_ROOT/UserInfoProfiling/UserBindController.xsl \
  --out-file UserBindController.xml \
+ --out-dir-suffix "$OUT_DIR_SUFFIX" \
+ --out-dir $OUT_DIR \
+ --plugin-root $PLUGIN_ROOT
+
+let "EXIT_CODE|=$?"
+
+### UserBindController2
+USER_BIND_CONTROLLER2_SERVICE_XPATH="$CLUSTER_XPATH/service[@descriptor = '$USER_BIND_CONTROLLER2_DESCR']"
+
+$EXEC/ServiceConf.sh \
+ --services-xpath "$USER_BIND_CONTROLLER2_SERVICE_XPATH" \
+ --app-xml $APP_XML \
+ --xsl $XSLT_ROOT/UserInfoProfiling/UserBindController2.xsl \
+ --out-file UserBindController2.xml \
  --out-dir-suffix "$OUT_DIR_SUFFIX" \
  --out-dir $OUT_DIR \
  --plugin-root $PLUGIN_ROOT

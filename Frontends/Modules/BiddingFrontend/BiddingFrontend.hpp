@@ -14,7 +14,7 @@
 #include <Generics/AtomicInt.hpp>
 #include "Generics/CompositeMetricsProvider.hpp"
 
-#include <UServerUtils/MetricsHTTPProvider.hpp>
+//#include <UServerUtils/MetricsHTTPProvider.hpp>
 //#include <UServerUtils/metrics_raii.hpp>
 
 #include <Sync/PosixLock.hpp>
@@ -32,7 +32,7 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
-#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -41,7 +41,7 @@
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
 #include "PlannerPool.hpp"
-#include "UServerUtils/MetricsHTTPProvider.hpp"
+//#include "UServerUtils/MetricsHTTPProvider.hpp"
 #include "RequestMetricsProvider.hpp"
 #include "Stage.hpp"
 
@@ -307,6 +307,15 @@ namespace Bidding
     get_empty_history_matching_()
       /*throw(eh::Exception)*/;
 
+    /*
+    static void
+    protobuf_log_handler_(
+      google::protobuf::LogLevel level,
+      const char* filename,
+      int line,
+      const std::string& message);
+    */
+
     void
     update_config_() noexcept;
 
@@ -387,7 +396,7 @@ namespace Bidding
 
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::UserBindClient_var user_bind_client_;
+    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;

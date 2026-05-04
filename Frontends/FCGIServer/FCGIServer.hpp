@@ -10,7 +10,7 @@
 #include <xsd/Frontends/FCGIServerConfig.hpp>
 
 #include <FrontendCommons/FrontendInterface.hpp>
-#include <UServerUtils/MetricsHTTPProvider.hpp>
+//#include <UServerUtils/MetricsHTTPProvider.hpp>
 #include <Generics/CompositeMetricsProvider.hpp>
 
 namespace AdServer

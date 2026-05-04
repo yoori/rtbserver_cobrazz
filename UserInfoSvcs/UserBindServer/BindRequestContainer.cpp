@@ -172,7 +172,6 @@ namespace UserInfoSvcs
     for(ChunkPathMap::const_iterator chunk_it = chunk_folders.begin();
         chunk_it != chunk_folders.end(); ++chunk_it)
     {
-      std::cerr << "to load chunk #" << chunk_it->first << "/" << common_chunks_number_ << std::endl;
       chunks_[chunk_it->first] = new BindRequestChunk(
         logger,
         chunk_it->second.c_str(),

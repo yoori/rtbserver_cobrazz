@@ -1,5 +1,4 @@
-#ifndef USERBINDSERVER_SIMPLEFIXEDALLOCATOR_HPP_
-#define USERBINDSERVER_SIMPLEFIXEDALLOCATOR_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -8,9 +7,7 @@
 #include <Sync/SyncPolicy.hpp>
 #include <Generics/Singleton.hpp>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct SimpleFixedAllocator
   {
@@ -65,8 +62,5 @@ namespace UserInfoSvcs
     AllocArray allocators_;
   };
 }
-}
 
 #include "SimpleFixedAllocator.tpp"
-
-#endif /*USERBINDSERVER_SIMPLEFIXEDALLOCATOR_HPP_*/

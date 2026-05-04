@@ -1,14 +1,11 @@
-#ifndef USERINFOSVCS_USERBINDPROCESSOR_HPP
-#define USERINFOSVCS_USERBINDPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/UserIdBlackList.hpp>
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   struct UserBindProcessor:
     public virtual ReferenceCounting::Interface
@@ -72,11 +69,8 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<UserBindProcessor>
     UserBindProcessor_var;
 }
-}
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   inline
   UserBindProcessor::UserInfo::UserInfo()
@@ -100,6 +94,3 @@ namespace UserInfoSvcs
     return out;
   }
 }
-}
-
-#endif /*USERINFOSVCS_USERBINDPROCESSOR_HPP*/

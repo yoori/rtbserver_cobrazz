@@ -20,11 +20,14 @@ UserBindServerApp_::UserBindServerApp_() /*throw(eh::Exception)*/
       "UserBindServerApp_", ASPECT)
 {}
 
+UserBindServerApp_::~UserBindServerApp_() noexcept
+{}
+
 void
 UserBindServerApp_::shutdown(CORBA::Boolean wait_for_completion)
   /*throw(CORBA::SystemException)*/
 {
-  ShutdownGuard guard(shutdown_lock_);
+  std::unique_lock<std::mutex> guard(shutdown_lock_);
 
   deactivate_object();
   wait_object();
@@ -39,8 +42,7 @@ UserBindServerApp_::is_alive() /*throw(CORBA::SystemException)*/
 }
 
 void
-UserBindServerApp_::main(int& argc, char** argv)
-  noexcept
+UserBindServerApp_::main(int& argc, char** argv) noexcept
 {
   static const char* FUN = "UserBindServerApp_::main()";
 
@@ -100,8 +102,7 @@ UserBindServerApp_::main(int& argc, char** argv)
     // Initializing logger
     try
     {
-      logger(Config::LoggerConfigReader::create(
-        config().Logger(), argv[0]));
+      logger(Config::LoggerConfigReader::create(config().Logger(), argv[0]));
     }
     catch (const Config::LoggerConfigReader::Exception& e)
     {
@@ -110,12 +111,14 @@ UserBindServerApp_::main(int& argc, char** argv)
       throw Exception(ostr);
     }
 
-    // fill corba_config
+    // Fill corba_config
+    CORBACommons::CorbaConfig corba_config;
+
     try
     {
       Config::CorbaConfigReader::read_config(
         config().CorbaConfig(),
-        corba_config_);
+        corba_config);
     }
     catch(const eh::Exception& e)
     {
@@ -124,32 +127,48 @@ UserBindServerApp_::main(int& argc, char** argv)
       throw Exception(ostr);
     }
 
+    AdServer::UserInfoSvcs::UserBindServerCore_var user_bind_server_core =
+      new AdServer::UserInfoSvcs::UserBindServerCore(
+        config(),
+        logger());
+    add_child_object(user_bind_server_core);
+
     // Creating user info manager servant
-    user_bind_server_impl_ =
-      new AdServer::UserInfoSvcs::UserBindServerImpl(
-        callback(),
-        logger(),
-        config());
+    user_bind_server_impl_ = new AdServer::UserInfoSvcs::UserBindServerImpl(
+      callback(),
+      logger(),
+      user_bind_server_core);
 
-    add_child_object(user_bind_server_impl_);
+    CORBACommons::CorbaServerAdapter_var corba_server_adapter =
+      new CORBACommons::CorbaServerAdapter(corba_config);
 
-    corba_server_adapter_ =
-      new CORBACommons::CorbaServerAdapter(corba_config_);
-
-    corba_server_adapter_->add_binding(
+    corba_server_adapter->add_binding(
       USER_BIND_SERVER_OBJ_KEY, user_bind_server_impl_.in());
 
-    corba_server_adapter_->add_binding(
+    corba_server_adapter->add_binding(
       PROCESS_CONTROL_OBJ_KEY, this);
 
-    shutdowner_ = corba_server_adapter_->shutdowner();
+    if(config().GrpcConfig().present())
+    {
+      grpc_adapter_ = new AdServer::UserInfoSvcs::UserBindServerGrpc(
+        user_bind_server_core,
+        logger(),
+        config().GrpcConfig()->Endpoint().host().present() &&
+          *(config().GrpcConfig()->Endpoint().host()) != "*" ?
+          *config().GrpcConfig()->Endpoint().host() :
+          "0.0.0.0",
+        config().GrpcConfig()->Endpoint().port());
+      add_child_object(grpc_adapter_);
+    }
+
+    shutdowner_ = corba_server_adapter->shutdowner();
 
     activate_object();
 
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
 
     // Running orb loop
-    corba_server_adapter_->run();
+    corba_server_adapter->run();
 
     wait();
 
@@ -202,4 +221,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

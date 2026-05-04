@@ -57,16 +57,16 @@ Requires: %{name} = %{version}
 ToplingDB development headers and static libraries.
 
 %prep
-rm -rf %{_sourcedir}
-git clone --branch https://github.com/topling/toplingdb %{_sourcedir}
-cd %{_sourcedir}
+rm -rf %{_sourcedir}/toplingdb
+git clone --branch topling-8.10.2-frocks-1.0 https://github.com/topling/toplingdb %{_sourcedir}/toplingdb
+cd %{_sourcedir}/toplingdb
 
 %build
-%cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo
-%cmake_build
+make -j${nproc} db_bench DEBUG_LEVEL=0
 
 %install
-%cmake_install
+rm -rf %{buildroot}
+DESTDIR=%{buildroot} make install PREFIX=/usr
 
 %clean
 rm -rf %{buildroot}

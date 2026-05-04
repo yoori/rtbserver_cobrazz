@@ -24,7 +24,7 @@
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
-#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -183,7 +183,7 @@ namespace AdServer
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool>
       channel_servers_;
-    FrontendCommons::UserBindClient_var user_bind_client_;
+    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
     FrontendCommons::UserInfoClient_var user_info_client_;
 
     Generics::StringHashAdapter click_template_file_;

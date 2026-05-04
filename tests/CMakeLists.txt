@@ -1,4 +1,3 @@
-
 ADD_SUBDIRECTORY(LogProcessing)
 ADD_SUBDIRECTORY(Samples)
-
+ADD_SUBDIRECTORY(UserInfoSvcs)

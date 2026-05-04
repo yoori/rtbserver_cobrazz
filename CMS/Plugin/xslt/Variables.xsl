@@ -87,6 +87,9 @@
 <xsl:variable name="user-bind-controller-descriptor"
   select="'AdCluster/FrontendSubCluster/UserBindController'"/>
 
+<xsl:variable name="user-bind-controller2-descriptor"
+  select="'AdCluster/FrontendSubCluster/UserBindController2'"/>
+
 <xsl:variable name="billing-server-descriptor"
   select="'AdCluster/FrontendSubCluster/BillingServer'"/>
 
@@ -149,6 +152,7 @@
 <xsl:variable name="user-bind-server-log-path" select="'/log/UserBindServer/UserBindServer'"/>
 <xsl:variable name="user-bind-server-log-level" select="$default-log-level"/>
 <xsl:variable name="user-bind-controller-log-path" select="'/log/UserBindController/UserBindController'"/>
+<xsl:variable name="user-bind-controller2-log-path" select="'/log/UserBindController2/UserBindController2'"/>
 <xsl:variable name="user-bind-controller-log-level" select="$default-log-level"/>
 <xsl:variable name="user-operation-generator-log-path" select="'/log/UserOperationGenerator/UserOperationGenerator'"/>
 
@@ -266,6 +270,7 @@
 <xsl:variable name="def-dictionary-provider-threads" select="'10'"/>
 <xsl:variable name="def-user-bind-server-threads" select="'40'"/>
 <xsl:variable name="def-user-bind-controller-threads" select="'40'"/>
+<xsl:variable name="def-user-bind-controller2-threads" select="'40'"/>
 <xsl:variable name="def-channel-search-threads" select="'10'"/>
 <xsl:variable name="def-channel-server-threads" select="'40'"/>
 
@@ -382,6 +387,8 @@
 <xsl:variable name="def-dictionary-provider-port" select="$def-range-start + 10"/>
 <xsl:variable name="def-user-bind-server-port" select="$def-range-start + 28"/>
 <xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 29"/>
+<xsl:variable name="def-user-bind-controller2-port" select="$def-range-start + 35"/>
+<xsl:variable name="def-user-bind-controller2-grpc-port" select="'10529'"/>
 <xsl:variable name="def-user-operation-generator-port" select="$def-range-start + 30"/>
 <xsl:variable name="def-billing-server-port" select="$def-range-start + 31"/>
 <xsl:variable name="def-log-generalizer-port" select="$def-range-start + 11"/>
@@ -389,13 +396,14 @@
 <xsl:variable name="def-sync-logs-port" select="$def-range-start + 12"/>
 <xsl:variable name="def-expression-matcher-port" select="$def-range-start + 13"/>
 <xsl:variable name="def-sync-logs-server-port" select="$def-range-start + 14"/>
-<xsl:variable name="def-stat-receiver-port" select="$def-range-start +15"/>
+<xsl:variable name="def-stat-receiver-port" select="$def-range-start + 15"/>
 <xsl:variable name="def-request-info-manager-port" select="$def-range-start + 16"/>
 <!--xsl:variable name="def-local-channel-proxy-port" select="concat($def-range-start, '120')"/-->
 <xsl:variable name="def-stunnel-client-port" select="$def-range-start + 21"/>
 <xsl:variable name="def-uid-generator-adapter-port" select="$def-range-start + 32"/>
 <xsl:variable name="def-uid-generator-adapter-input-port" select="$def-range-start + 33"/>
 <xsl:variable name="def-predictor-sync-logs-server-port" select="$def-range-start + 68"/>
+
 <xsl:variable name="def-frontend-port" select="$def-range-start + 180"/>
 <xsl:variable name="def-secure-frontend-port" select="$def-range-start + 43"/>
 <xsl:variable name="def-stunnel-server-port" select="'10200'"/>

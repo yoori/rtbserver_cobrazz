@@ -1,30 +1,29 @@
-add_pb(UIDGeneratorProtocolPB UIDGeneratorProtocol.proto ${PB_DIRECTORY}/Frontends/UIDGeneratorAdapter)
+add_pb(
+  UIDGeneratorProtocolPB
+  UIDGeneratorProtocol.proto
+  ${PB_DIRECTORY}/Frontends/UIDGeneratorAdapter
+)
 
 add_executable(UIDGeneratorAdapter
-KeywordsProcessor.cpp
+  KeywordsProcessor.cpp
   DescriptorHandlerPoller.cpp
   AcceptorDescriptorHandler.cpp
   UIDGeneratorAdapterLogger.cpp
   UIDGeneratorAdapterImpl.cpp
   UIDGeneratorAdapterMain.cpp
 )
+
 target_link_libraries(UIDGeneratorAdapter
- Generics
- Commons
+  Generics
+  Commons
 
- AdServerCommonsXSD
+  AdServerCommonsXSD
 
- CORBACommons
- ProcessControlVars
- LogCommons
+  CORBACommons
+  ProcessControlVars
+  LogCommons
 
- UIDGeneratorAdapterConfigXSD
-# DMPProfilingInfoPB
- UIDGeneratorProtocolPB
- ${PROTOBUF_LDFLAGS}
- protoc
- DMPProfilingInfoPST
-
+  UIDGeneratorAdapterConfigXSD
+  UIDGeneratorProtocolPB
+  DMPProfilingInfoPST
 )
-
-#install(TARGETS UIDGeneratorAdapter  DESTINATION ${INSTALL_DIR})

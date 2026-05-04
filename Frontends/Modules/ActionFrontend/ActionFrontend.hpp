@@ -18,7 +18,7 @@
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <Frontends/FrontendCommons/UserBindClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
@@ -241,7 +241,7 @@ namespace Action
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    FrontendCommons::UserBindClient_var user_bind_client_;
+    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
   };
 }
 }

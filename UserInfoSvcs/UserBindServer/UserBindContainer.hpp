@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERBINDCONTAINER_HPP
-#define USERINFOSVCS_USERBINDCONTAINER_HPP
+#pragma once
 
 #include <string>
 
@@ -21,9 +20,7 @@
 
 #include "UserBindChunk.hpp"
 
-namespace AdServer
-{
-namespace UserInfoSvcs
+namespace AdServer::UserInfoSvcs
 {
   class UserBindContainer:
     public UserBindProcessor,
@@ -105,7 +102,4 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<UserBindContainer>
     UserBindContainer_var;
 
-} /* UserInfoSvcs */
-} /* AdServer */
-
-#endif /*USERINFOSVCS_USERBINDCONTAINER_HPP*/
+} /* AdServer::UserInfoSvcs */

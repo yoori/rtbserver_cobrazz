@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package adserver.grpc;
+
+service BatchTransport {
+  rpc stream_batches(stream BatchRequest) returns (stream BatchResponse);
+}
+
+message BatchRequestItem {
+  uint64 request_id = 1;
+  string full_method = 2;
+  bytes payload = 3;
+}
+
+message BatchRequest {
+  repeated BatchRequestItem items = 1;
+}
+
+message BatchResponseItem {
+  uint64 request_id = 1;
+  int32 status_code = 2;
+  string status_message = 3;
+  bytes payload = 4;
+}
+
+message BatchResponse {
+  repeated BatchResponseItem items = 1;
+}

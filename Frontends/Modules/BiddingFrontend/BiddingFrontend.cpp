@@ -456,7 +456,7 @@ namespace Bidding
 
         if(!common_config_->UserBindControllerGroup().empty())
         {
-          user_bind_client_ = new FrontendCommons::UserBindClient(
+          user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
             common_config_->UserBindControllerGroup(),
             corba_client_adapter_.in(),
             logger());
@@ -648,6 +648,8 @@ namespace Bidding
           request_timeout_ = Generics::Time(*(config_->request_timeout()));
           request_timeout_ /= 1000;
         }
+
+        //google::protobuf::SetLogHandler(&Frontend::protobuf_log_handler_);
 
         control_task_runner_->enqueue_task(
           Generics::Task_var(new UpdateConfigTask(this, control_task_runner_)));
@@ -1540,8 +1542,6 @@ namespace Bidding
 
         try
         {
-          AdServer::UserInfoSvcs::UserBindMapper_var user_bind_mapper =
-            user_bind_client_->user_bind_mapper();
 
           auto base_ext_user_id_it = external_user_ids.begin();
 
@@ -1564,7 +1564,7 @@ namespace Bidding
             get_request_info.create_timestamp = CorbaAlgs::pack_time(request_info.user_create_time);
             // get_request_info.current_user_id is null
 
-            user_bind_info = user_bind_mapper->get_user_id(get_request_info);
+            user_bind_info = user_bind_client_->get_user_id(get_request_info);
 
             min_age_reached |= user_bind_info->min_age_reached;
             local_match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
@@ -1605,7 +1605,7 @@ namespace Bidding
                 add_user_request.user_id = CorbaAlgs::pack_user_id(match_user_id);
                 AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
                   prev_user_bind_info =
-                    user_bind_mapper->add_user_id(add_user_request);
+                    user_bind_client_->add_user_id(add_user_request);
 
                 (void)prev_user_bind_info;
               }
@@ -3518,6 +3518,27 @@ namespace Bidding
     res->colo_id = -1;
     return res._retn();
   }
+
+  /*
+  void
+  Frontend::protobuf_log_handler_(
+    google::protobuf::LogLevel level,
+    const char* filename,
+    int line,
+    const std::string& message)
+  {
+    static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
+
+    if (level == google::protobuf::LOGLEVEL_ERROR ||
+        level == google::protobuf::LOGLEVEL_FATAL)
+    {
+      Stream::Error ostr;
+      ostr << "[libprotobuf " << level_names[level] <<
+        ' ' << filename << ':' << line << "] " << message;
+      throw BidRequestTask::Invalid(ostr.str());
+    }
+  }
+  */
 
   void
   Frontend::fill_account_traits_() noexcept
