@@ -663,9 +663,6 @@ hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
               </configuration:userBindModule>
             </configuration:frontend></configuration>
         </service>
-        <service descriptor="AdCluster/FrontendSubCluster/UIDGeneratorAdapter" name="UIDGeneratorAdapter" host="enode2 enode3">
-          <configuration><configuration:UIDGeneratorAdapter/></configuration>
-        </service>
         <service descriptor="AdCluster/FrontendSubCluster/UserInfoManager" name="UserInfoManager" host="enode2 enode3">
           <configuration><configuration:userInfoManager>
               <configuration:networkParams port="10101"/>
@@ -690,21 +687,6 @@ hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
               <configuration:networkParams port="10104"/>
               <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="86400"/>
             </configuration:channelController></configuration>
-        </service>
-        <service descriptor="AdCluster/FrontendSubCluster/ZmqProfilingBalancer" name="ZmqProfilingBalancer" host="enode2 enode3">
-          <configuration><configuration:zmqProfilingBalancer zmq_io_threads="1">
-              <configuration:profilingInfoConnectSocket hwm="100" linger="5000" non_block="false">
-                <configuration:address domain="enode2" port="10186"/>
-              </configuration:profilingInfoConnectSocket>
-              <configuration:anonymousStatsConnectSocket hwm="100" linger="5000" non_block="false">
-                <configuration:address domain="enode2" port="10187"/>
-              </configuration:anonymousStatsConnectSocket>
-            </configuration:zmqProfilingBalancer></configuration>
-        </service>
-        <service descriptor="AdCluster/FrontendSubCluster/ProfilingServer" name="ProfilingServer" host="enode2 enode3">
-          <configuration><configuration:profilingServer zmq_io_threads="1" work_threads="20">
-              <configuration:logging log_level="9" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
-            </configuration:profilingServer></configuration>
         </service>
         <service descriptor="AdCluster/FrontendSubCluster/UserBindServer" name="UserBindServer" host="enode2 enode3">
           <configuration><configuration:userBindServer user_seen_expire_time="604800"/></configuration>

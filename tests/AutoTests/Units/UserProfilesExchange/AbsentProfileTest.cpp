@@ -13,7 +13,7 @@ namespace
   typedef AutoTest::AdditionalProfileChecker AdditionalProfileChecker;
   typedef AutoTest::ChannelsCheck ChannelsCheck;
 
-  // 15 minutes need UserInfoExchanger to mark profile as absent
+  // Wait for profile absence propagation.
   static const unsigned long MAX_WAIT_TIME = 900;
 
   class WaitAdditionalProfileEmpty: public AutoTest::Checker
@@ -207,4 +207,3 @@ AbsentProfileTest::run_test()
 
   return true;
 }
-

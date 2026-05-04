@@ -19,8 +19,6 @@
   </xsl:choose>
 </xsl:variable>
 
-<xsl:variable name="xsd-zenoss-type"
-  select="document('../xsd/AppConfigType.xsd')/xsd:schema/xsd:complexType[@name = 'ZenOSSType']"/>
 <xsl:variable name="xsd-app-config-type"
   select="document('../xsd/AppConfigType.xsd')/xsd:schema/xsd:complexType[@name = 'AppConfigType']"/>
 <xsl:variable name="xsd-snmp-config-type"
@@ -107,12 +105,6 @@
 <xsl:variable name="channel-controller-descriptor" select="'AdCluster/FrontendSubCluster/ChannelController'"/>
 <xsl:variable name="channel-search-service-descriptor" select="'AdCluster/FrontendSubCluster/ChannelSearchService'"/>
 
-<xsl:variable name="profiling-server-descriptor" select="'AdCluster/FrontendSubCluster/ProfilingServer'"/>
-<xsl:variable name="uid-generator-adapter-descriptor" select="'AdCluster/FrontendSubCluster/UIDGeneratorAdapter'"/>
-<xsl:variable name="zmq-profiling-balancer-descriptor" select="'AdCluster/FrontendSubCluster/ZmqProfilingBalancer'"/>
-<xsl:variable name="default-uid-generator-topic" select="'uidgenerator'"/>
-<xsl:variable name="default-click-stream-topic" select="'clickstream'"/>
-<xsl:variable name="default-geo-topic" select="'geo'"/>
 <xsl:variable name="default-ads-spaces-topic" select="'adsspaces'"/>
 <xsl:variable name="default-match-topic" select="'match'"/>
 <xsl:variable name="default-kafka-threads" select="'20'"/>
@@ -127,7 +119,6 @@
 <xsl:variable name="pbe-campaign-server-descriptor" select="'AdProxyCluster/CampaignServer'"/>
 <xsl:variable name="pbe-channel-proxy-descriptor" select="'AdProxyCluster/ChannelProxy'"/>
 <xsl:variable name="pbe-stunnel-server-descriptor" select="'AdProxyCluster/STunnelServer'"/>
-<xsl:variable name="pbe-user-info-exchanger-descriptor" select="'AdProxyCluster/UserInfoExchanger'"/>
 
 <!-- logger specific params -->
 
@@ -178,13 +169,7 @@
 <xsl:variable name="user-info-manager-log-path" select="'/log/UserInfoManager/UserInfoManager'"/>
 <xsl:variable name="user-info-manager-controller-log-level" select="$default-log-level"/>
 <xsl:variable name="user-info-manager-controller-log-path" select="'/log/UserInfoManagerController/UserInfoManagerController'"/>
-<xsl:variable name="user-info-exchanger-log-level" select="$default-log-level"/>
-<xsl:variable name="user-info-exchanger-log-path" select="'/log/UserInfoExchanger/UserInfoExchanger'"/>
 <xsl:variable name="stats-collector-log-path" select="'/log/StatsCollector/StatsCollector'"/>
-<xsl:variable name="profiling-server-log-path" select="'/log/ProfilingServer/ProfilingServer'"/>
-<xsl:variable name="zmq-profiling-balancer-log-path" select="'/log/ZmqProfilingBalancer/ZmqProfilingBalancer'"/>
-<xsl:variable name="uid-generator-adapter-log-level" select="$default-log-level"/>
-<xsl:variable name="uid-generator-adapter-log-path" select="'/log/UIDGeneratorAdapter/UIDGeneratorAdapter'"/>
 <xsl:variable name="fcgi-adserver-log-path" select="'/log/FCGIAdServer/FCGIAdServer'"/>
 
 <xsl:variable name="fcgi-trackserver1-log-path" select="'/log/FCGITrackServer1/FCGITrackServer1'"/>
@@ -262,7 +247,6 @@
 <xsl:variable name="def-campaign-server-threads" select="'10'"/>
 <xsl:variable name="def-campaign-manager-threads" select="'40'"/>
 <xsl:variable name="def-conv-server-threads" select="'40'"/>
-<xsl:variable name="def-user-info-exchanger-threads" select="'10'"/>
 <xsl:variable name="def-user-info-manager-controller-threads" select="'10'"/>
 <xsl:variable name="def-user-info-manager-threads" select="'40'"/>
 <xsl:variable name="def-channel-controller-threads" select="'10'"/>
@@ -400,8 +384,6 @@
 <xsl:variable name="def-request-info-manager-port" select="$def-range-start + 16"/>
 <!--xsl:variable name="def-local-channel-proxy-port" select="concat($def-range-start, '120')"/-->
 <xsl:variable name="def-stunnel-client-port" select="$def-range-start + 21"/>
-<xsl:variable name="def-uid-generator-adapter-port" select="$def-range-start + 32"/>
-<xsl:variable name="def-uid-generator-adapter-input-port" select="$def-range-start + 33"/>
 <xsl:variable name="def-predictor-sync-logs-server-port" select="$def-range-start + 68"/>
 
 <xsl:variable name="def-frontend-port" select="$def-range-start + 180"/>
@@ -413,7 +395,6 @@
 
 <!-- default ports for proxy services -->
 <xsl:variable name="def-proxy-campaign-server-port" select="'10156'"/>
-<xsl:variable name="def-user-info-exchanger-port" select="'10160'"/>
 <xsl:variable name="def-channel-proxy-port" select="'10155'"/>
 <xsl:variable name="def-proxy-sync-logs-port" select="'10162'"/>
 <xsl:variable name="def-stunnel-server-internal-port" select="'10172'"/>
@@ -439,17 +420,6 @@
 <xsl:variable name="default-taskbot-db-name" select="'taskbot'"/>
 <xsl:variable name="default-taskbot-db-user" select="'taskbot'"/>
 <xsl:variable name="default-taskbot-db-password" select="'taskbot'"/>
-
-<!-- default profiling cluster params -->
-<xsl:variable name="def-zmq-profiling-balancer-port" select="$def-range-start + 74"/>
-<xsl:variable name="def-zmq-profiling-balancer-profiling-info-port" select="$def-range-start + 88"/>
-<xsl:variable name="def-zmq-profiling-balancer-anonymous-stats-port" select="$def-range-start + 89"/>
-<xsl:variable name="def-zmq-profiling-balancer-dmp-profiling-info-port" select="$def-range-start + 91"/>
-
-<xsl:variable name="def-profiling-server-port" select="$def-range-start + 75"/>
-<xsl:variable name="def-zmq-profiling-server-profiling-info-port" select="$def-range-start + 86"/>
-<xsl:variable name="def-zmq-profiling-server-anonymous-stats-port" select="$def-range-start + 87"/>
-<xsl:variable name="def-zmq-profiling-server-dmp-profiling-info-port" select="$def-range-start + 90"/>
 
 <!-- fcgi ports -->
 <xsl:variable name="def-fcgi-adserver-port" select="$def-range-start + 76"/>

@@ -89,23 +89,6 @@
       </service>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        name="UserInfoExchanger$NAME_POSTFIX"
-        host="$HOST">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="[% PORT_BASE + 10 %]"/>
-[% IF SECURE_CONNECTIONS %]
-            <externalNetworkParams port="[% PORT_BASE + 60 %]" host="$HOST"/>
-[% ELSE %]
-            <externalNetworkParams port="[% PORT_BASE + 60 %]" host="$HOST" secure="false"/>
-[% END %]
-            <logging sys_log="$SYS_LOG" log_level="$LOG_LEVEL"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/STunnelServer"
         name="STunnelServer$NAME_POSTFIX"
         host="$HOST">

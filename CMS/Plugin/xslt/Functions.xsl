@@ -19,9 +19,6 @@
   GetAutoRestart
   GetUserName
   PrivateKeyFile
-  GetZenOSSEnabled
-  ZenossInstallRoot
-  ZenossFolder
   ResolveHostName
   ConvertLogger
   ConvertSecureParams
@@ -193,47 +190,6 @@
       <xsl:value-of select="$ssh-key"/>
     </xsl:otherwise>
   </xsl:choose>
-</xsl:template>
-
-<xsl:template name="GetZenOSSEnabled">
-  <xsl:param name="app-xpath"/>
-  <xsl:call-template name="GetAttr">
-    <xsl:with-param name="node" select="$app-xpath/configuration/cfg:environment/cfg:ZenOSS"/>
-    <xsl:with-param name="name" select="'enabled'"/>
-    <xsl:with-param name="type" select="$xsd-zenoss-type"/>
-  </xsl:call-template>
-</xsl:template>
-
-<xsl:template name="ZenossInstallRoot">
-  <xsl:param name="app-xpath"/>
-  <xsl:variable name="zenoss-enabled">
-    <xsl:call-template name="GetZenOSSEnabled">
-      <xsl:with-param name="app-xpath" select="$app-xpath"/>
-    </xsl:call-template>
-  </xsl:variable>
-  <xsl:if test="$zenoss-enabled = 'true' or $zenoss-enabled = '1'">
-    <!-- Take default values from XSD, if <ZenOSS> omitted -->
-    <xsl:variable name="install-root" select="
-      $app-xpath/configuration/cfg:environment/cfg:ZenOSS/@install_root |
-        $xsd-zenoss-type/xsd:attribute[@name='install_root']/@default"/>
-    <xsl:value-of select="$install-root"/>
-  </xsl:if>
-</xsl:template>
-
-<xsl:template name="ZenossFolder">
-  <xsl:param name="app-xpath"/>
-  <xsl:variable name="zenoss-enabled">
-    <xsl:call-template name="GetZenOSSEnabled">
-      <xsl:with-param name="app-xpath" select="$app-xpath"/>
-    </xsl:call-template>
-  </xsl:variable>
-  <xsl:if test="$zenoss-enabled = 'true' or $zenoss-enabled = '1'">
-    <xsl:variable name="zenoss_install_root"><xsl:call-template name="ZenossInstallRoot">
-        <xsl:with-param name="app-xpath" select="$app-xpath"/>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:value-of select="concat($zenoss_install_root,'/lib/',$colocation-name)"/>
-  </xsl:if>
 </xsl:template>
 
 <xsl:template name="ResolveHostName">
@@ -1130,36 +1086,6 @@
     test="count($topic-config/@message_queue_size) = 0"><xsl:value-of 
     select="$default-kafka-message-queue-size"/></xsl:if>
   </xsl:attribute>
-</xsl:template>
-
-<xsl:template name="GetConnectSocketToProfilingServersConfig">
-  <xsl:param name="fe-cluster-path"/>
-  <xsl:param name="default-port"/>
-
-  <xsl:variable
-    name="profiling-server-config"
-    select="$fe-cluster-path/service[@descriptor = 'AdCluster/FrontendSubCluster/ProfilingServer']/configuration/cfg:profilingServer"/>
-
-  <xsl:variable name="dmp-profiling-info-port">
-    <xsl:value-of select="$profiling-server-config/cfg:networkParams/@dmp_profiling_info_port"/>
-    <xsl:if test="count($profiling-server-config/cfg:networkParams/@dmp_profiling_info_port) = 0">
-      <xsl:value-of select="$def-zmq-profiling-server-dmp-profiling-info-port"/>
-    </xsl:if>
-  </xsl:variable>
-
-  <socket hwm="1" non_block="false">
-  <xsl:for-each select="$fe-cluster-path/service[@descriptor = 'AdCluster/FrontendSubCluster/ProfilingServer']">
-    <xsl:variable name="hosts">
-      <xsl:call-template name="GetHosts">
-        <xsl:with-param name="hosts" select="@host"/>
-        <xsl:with-param name="error-prefix" select="'ZmqProfilingBalancer:ProfilingServer'"/>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:for-each select="exsl:node-set($hosts)/host">
-      <address domain="{.}" port="{$dmp-profiling-info-port}"/>
-    </xsl:for-each>
-  </xsl:for-each>
-  </socket>
 </xsl:template>
 
 </xsl:stylesheet>

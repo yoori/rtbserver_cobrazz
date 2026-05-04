@@ -37,7 +37,6 @@ then
   exit 1
 fi
 
-USER_INFO_EXCHANGER_DESCR=AdProxyCluster/UserInfoExchanger
 PROXY_CAMPAIGN_SERVER_DESCR=AdProxyCluster/CampaignServer
 PROXY_CHANNEL_PROXY_DESCR=AdProxyCluster/ChannelProxy
 STUNNEL_SERVER_DESCR=AdProxyCluster/STunnelServer
@@ -57,33 +56,6 @@ $EXEC/ServiceConf.sh \
   --service-hosts "$SERVICES_HOSTS" \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT
-
-## configure UserInfoExchanger
-USER_INFO_EXCHANGER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$USER_INFO_EXCHANGER_DESCR']"
-
-$EXEC/ServiceConf.sh \
-  --services-xpath "$USER_INFO_EXCHANGER_XPATH" \
-  --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/UserInfoProfiling/UserInfoExchanger.xsl \
-  --out-file UserInfoExchanger.xml \
-  --out-dir-suffix "$OUT_DIR_SUFFIX" \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT
-
-let "EXIT_CODE += $?"
-
-START_SCRIPT_NAME="$COLOCATION_NAME-$CLUSTER_NAME"
-
-$EXEC/CurrentEnvGen.sh \
-  --service-name "user_info_exchanger" \
-  --plugin-root "$PLUGIN_ROOT" \
-  --app-xml $APP_XML \
-  --search-xpath "configuration/cfg:userInfoExchanger" \
-  --services-xpath "$USER_INFO_EXCHANGER_XPATH" \
-  --out-dir $OUT_DIR \
-  --out-file CurrentEnv/$DACS_PBE_NAME
-
-let "EXIT_CODE += $?"
 
 ## configure CampaignServer in proxy mode
 CAMPAIGN_SERVER_XPATH="$CLUSTER_XPATH/service[@descriptor = '$PROXY_CAMPAIGN_SERVER_DESCR']"

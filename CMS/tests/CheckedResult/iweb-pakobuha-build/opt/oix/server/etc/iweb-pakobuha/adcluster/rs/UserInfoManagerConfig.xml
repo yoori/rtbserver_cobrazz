@@ -20,11 +20,6 @@
     <cfg:StatsDumper period="60">
       <cfg:StatsDumperRef name="StatsDumperRef" ref="corbaloc:iiop:rs:10118/StatsCollector"/>
     </cfg:StatsDumper>
-    <cfg:UserInfoExchangerParameters set_get_profiles_period="60" colo_request_timeout="600" customer_id="4">
-      <cfg:UserInfoExchangerRef name="UserInfoExchanger" ref="corbaloc:ssliop:vnode0:10210/UserInfoExchanger">
-        <cfg:Secure key="/opt/foros/server/etc/iweb-pakobuha/adcluster/rs/cert/skey.pem" certificate="/opt/oix/server/etc/iweb-pakobuha/adcluster/rs/cert/scert.pem" certificate_authority="/opt/oix/server/etc/iweb-pakobuha/adcluster/rs/cert/ca.pem" key-word="adserver"/>
-      </cfg:UserInfoExchangerRef>
-    </cfg:UserInfoExchangerParameters>
     <cfg:FreqCaps confirm_timeout="60"/>
   </cfg:UserInfoManagerConfig>
 </cfg:AdConfiguration>

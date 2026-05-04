@@ -78,10 +78,6 @@
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="nnode1"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="nnode2"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="nnode3"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="nnode0"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="nnode1"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="nnode2"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="nnode3"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="nnode0"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="nnode1"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="nnode2"/>
@@ -96,8 +92,6 @@
     <Service name="fe2-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="nnode4"/>
     <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="nnode4"/>
     <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="nnode5"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="nnode4"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="nnode5"/>
     <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="nnode4"/>
     <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="nnode5"/>
     <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="nnode0"/>
@@ -130,7 +124,6 @@
     <Service type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" name="fe2-UserInfoDistributor" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/moscow-test-central-2.0.0.0-cms20120629140323/lib ; /opt/oix/server/manager/moscow-test-central-2.0.0.0-cms20120629140323/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='nnode4,nnode5,' --chunks-root='/opt/oix/server/var/cache/Users2/' --transport='ssh:/home/aduser/.ssh/adkey.moscow-test-central-2.0.0.0-cms20120629140323' --check-hosts='nnode0,nnode1,nnode2,nnode3,nnode4,nnode5,' --force=%%force%% --check-hosts=%%check-hosts%%"/>
   </Services>
   <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server//bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
-    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="vnode0"/>
     <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="vnode0"/>
     <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="vnode0"/>
     <Service name="pbe1-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="vnode0"/>
@@ -143,7 +136,6 @@
   <Services start="%%START_NOLOOP_DONE%%" start_cmd="%%cmd%% start" cmd="/opt/foros/server//bin/adserver.pl %%HOST%% %%TYPE%%" env="adproxycluster-1"><Service name="keyscan-Scanner" host="localhost" start="%%START_NOLOOP_DONE%%" start_cmd="%%SMS_KEYSCAN%%" transport="/bin/sh -c &quot;$SMS_TEXT&quot;" keyscan_hosts=" vnode0"/>
     <Service name="pbe1-LogProxyConfigurator" type="AdServer::LogProcessing::LogProxyConfigurator" host="vnode0"/></Services>
   <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server//bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-2">
-    <Service name="pbe2-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="vnode3"/>
     <Service name="pbe2-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="vnode3"/>
     <Service name="pbe2-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="vnode3"/>
     <Service name="pbe2-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="vnode3"/>

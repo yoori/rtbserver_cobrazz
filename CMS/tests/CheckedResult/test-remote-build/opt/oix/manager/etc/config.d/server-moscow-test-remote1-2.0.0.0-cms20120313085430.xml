@@ -56,8 +56,6 @@
     <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="vnode1"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="vnode1"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="vnode2"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="vnode1"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="vnode2"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="vnode1"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="vnode2"/>
     <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="vnode1"/>

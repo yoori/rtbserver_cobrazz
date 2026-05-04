@@ -81,11 +81,9 @@ namespace Instantiate
       const String::SubString ENCRYPTED_USER_IP("euip");
       const String::SubString EXT_TAG_ID("etid");
 
-      const String::SubString TANX_SETTLE_PRICE("txp");
       const String::SubString OPEN_SETTLE_PRICE("p");
       const String::SubString OPENX_SETTLE_PRICE("oxp");
       const String::SubString LIVERAIL_SETTLE_PRICE("lrp");
-      const String::SubString BAIDU_SETTLE_PRICE("bdp");
       const String::SubString GOOGLE_SETTLE_PRICE("gp");
       const String::SubString FLAGS("f");
       const String::SubString BID_PRICE("bp");
@@ -429,9 +427,6 @@ namespace Instantiate
         RequestInfo,
         RequestInfo::RequestIdList,
         ListParameterSepCategory>(&RequestInfo::request_ids));
-    add_processor_(true, true, Request::Context::TANX_SETTLE_PRICE,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::tanx_price));
     add_processor_(true, true, Request::Context::OPEN_SETTLE_PRICE,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::open_price));
@@ -441,9 +436,6 @@ namespace Instantiate
     add_processor_(true, true, Request::Context::LIVERAIL_SETTLE_PRICE,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::liverail_price));
-    add_processor_(true, true, Request::Context::BAIDU_SETTLE_PRICE,
-      new FrontendCommons::StringParamProcessor<RequestInfo>(
-        &RequestInfo::baidu_price));
     add_processor_(true, true, Request::Context::GOOGLE_SETTLE_PRICE,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::google_price));

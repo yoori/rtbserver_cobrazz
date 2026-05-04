@@ -226,8 +226,7 @@ namespace Bidding
     JsonAdSlotProcessingContext()
       : min_cpm_price(AdServer::CampaignSvcs::RevenueDecimal::ZERO),
         secure(false),
-        video(false),
-        predicted_view_rate(-1)
+        video(false)
     {}
 
     std::string id;
@@ -240,9 +239,6 @@ namespace Bidding
     std::string min_cpm_price_currency_code;
 
     bool secure;
-    std::string appnexus_pos;
-
-    StringList appnexus_sizes;
     BannerArray banners;
     SizeBannerMap size_banner;
 
@@ -270,20 +266,6 @@ namespace Bidding
 
     // v 2.5 video .placement
     Commons::Optional<long> video_placement;
-
-    // AppNexus specific
-    Commons::Optional<long> slot_id;
-    Commons::Optional<long> site_id;
-    Commons::Optional<long> inventory_source_id;
-    ULongSet allowed_media_types;
-    ULongSet allowed_media_subtypes;
-    double predicted_view_rate;
-
-    // CompositeProcessor->add_processor require ContextType
-    //   in added object as in parent object.
-    //   So inventory_audits_content_categories required in both
-    //   JsonProcessingContext and JsonAdSlotProcessingContext
-    ULongSet inventory_audits_content_categories;
 
     Native_var native;
 
@@ -334,7 +316,6 @@ namespace Bidding
         site_publisher(false),
         app_content_producer(false),
         site_content_producer(false),
-        no_flash(false),
         regs_coppa(false)
     {}
 
@@ -429,11 +410,6 @@ namespace Bidding
     StringList content_producer_name;
 
     std::string allyessitetype; //ALLYES specific in site object
-
-    // Appnexus specific
-    Commons::Optional<long> selling_member_id;
-    bool no_flash;
-    ULongSet inventory_audits_content_categories;
 
     // ext
     std::string puid1;

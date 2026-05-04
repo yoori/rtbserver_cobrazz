@@ -138,7 +138,6 @@
       </xsl:if>
     </xsl:variable>
 
-    <xsl:variable name="user-info-exchanger-ref" select="$colo-config/cfg:userProfiling/cfg:userInfoExchangerRef"/>
     <xsl:variable name="global-secure-params" select="$colo-config/cfg:secureParams"/>
 
     <!-- start config generation -->
@@ -271,40 +270,6 @@
           </xsl:if>
         </xsl:attribute>
       </cfg:UserProfilesCleanup>
-    </xsl:if>
-
-    <xsl:if test="count($user-info-exchanger-ref) > 0">
-      <xsl:variable name="secure-params" select="$user-info-exchanger-ref/cfg:secureParams"/>
-      <cfg:UserInfoExchangerParameters
-        set_get_profiles_period="60"
-        colo_request_timeout="600">
-        <xsl:attribute name="customer_id"><xsl:value-of select="$colo-id"/></xsl:attribute>
-
-        <xsl:variable name="user-info-exchanger-host" select="$user-info-exchanger-ref/@host"/>
-
-        <cfg:UserInfoExchangerRef name="UserInfoExchanger">
-          <xsl:choose>
-            <xsl:when test="count($secure-params) > 0">
-              <xsl:attribute name="ref">
-                <xsl:value-of
-                  select="concat('corbaloc:ssliop:', $user-info-exchanger-host, ':', $user-info-exchanger-ref/@port, '/UserInfoExchanger')"/>
-              </xsl:attribute>
-              <xsl:call-template name="ConvertSecureParams">
-               <xsl:with-param name="secure-node" select="'true'"/>
-               <xsl:with-param name="global-secure-node" select="$global-secure-params"/>
-               <xsl:with-param name="config-root" select="$config-root"/>
-               <xsl:with-param name="secure-files-root" select="$secure-files-root"/>
-             </xsl:call-template>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:attribute name="ref">
-                <xsl:value-of
-                  select="concat('corbaloc:iiop:', $user-info-exchanger-host, ':', $user-info-exchanger-ref/@port, '/UserInfoExchanger')"/>
-              </xsl:attribute>
-            </xsl:otherwise>
-          </xsl:choose>
-        </cfg:UserInfoExchangerRef>
-      </cfg:UserInfoExchangerParameters>
     </xsl:if>
 
     <xsl:if test="($colo-config/cfg:coloParams/@backup_operations = 'true' or

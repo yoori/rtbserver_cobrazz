@@ -304,11 +304,6 @@ W/POuZ6lcg5Ktz885hZo+L7tdEy8W9ViH0Pd
             </configuration:fileTransferring>
           </configuration:syncLogs>
         </configuration:cluster></configuration>
-      <service id="14216" descriptor="AdProxyCluster/UserInfoExchanger" host="uk00labpbe00">
-        <configuration><configuration:userInfoExchanger>
-            <configuration:externalNetworkParams host="uk00labpbe00" secure="true" port="10210"/>
-          </configuration:userInfoExchanger></configuration>
-      </service>
       <service id="14217" descriptor="AdProxyCluster/ChannelProxy" host="uk00labpbe00">
         <configuration><configuration:channelProxy>
             <configuration:externalNetworkParams host="uk00labpbe00" secure="true" port="10205"/>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AdServer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:str="http://exslt.org/strings" sms-version="2" init="%%SUDO%%" brief="version 2.0.0.0 configuration for Devel colocation released at 2011-09-20 18:32:16" transport="ssh -o &quot;BatchMode yes&quot; -i /home/jurij_kuznecov/.ssh/adkey %%HOST%% &quot;. /home/jurij_kuznecov/projects/foros/run/trunk/pbe-etc/devel/%%env%%/environment.sh &amp;&amp; $SMS_TEXT&quot;" user="jurij_kuznecov">
   <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/home/jurij_kuznecov/projects/foros/server/trunk/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
-    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="xen.ocslab.com"/>
     <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="xen.ocslab.com"/>
     <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="xen.ocslab.com"/>
     <Service name="pbe1-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="xen.ocslab.com"/>

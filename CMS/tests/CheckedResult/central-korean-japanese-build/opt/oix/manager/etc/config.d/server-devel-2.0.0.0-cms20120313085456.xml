@@ -42,7 +42,6 @@
     <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="xen.ocslab.com"/>
     <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="xen.ocslab.com"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="xen.ocslab.com"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="xen.ocslab.com"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="xen.ocslab.com"/>
     <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="xen.ocslab.com"/>
   </Services>

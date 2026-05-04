@@ -127,7 +127,7 @@ sub create_rtb_campaigns
         creative_id => $creative });
       
       $ns->output('CC/' . $i . "/" . $j, $cc);
-      $ns->output('CREATIVE/' . $i . "/" . $j, get_tanx_creative($creative));
+      $ns->output('CREATIVE/' . $i . "/" . $j, get_external_creative_id($creative));
       $ns->output('CREATIVEID/' . $i . "/" . $j, $creative);
     }
   }
@@ -464,89 +464,6 @@ sub open_rtb
 }
 
 
-sub tanx
-{
-  my ($self, $namespace, $sizes) = @_;
-  my $ns = $namespace->sub_namespace('TANX');  
-
-  my $currency1 = $ns->create(
-    DB::Currency->blank(rate => 6));
-
-  my $currency2 = $ns->create(
-    DB::Currency->blank(rate => 3.35));
-
-  my $publisher1 = $ns->create(PubAccount => {
-    name => "Publisher1",
-    currency_id => $currency1,
-    country_code => COUNTRY_CODE,
-    internal_account_id => 
-         DB::Internal->blank(
-            name => 'Internal1',
-            country_code => COUNTRY_CODE,
-            currency_id => $currency1,
-            max_random_cpm => 106 )});
-
-  my $publisher2 = $ns->create(PubAccount => {
-    name => "Publisher2",
-    currency_id => $currency1,
-    country_code => COUNTRY_CODE,
-    internal_account_id => 
-         DB::Internal->blank(
-            name => 'Internal2',
-            country_code => COUNTRY_CODE,
-            currency_id => $currency2,
-            max_random_cpm => 59.18 )});
-
-  
-  my @sites = 
-    $self->create_sites(
-       $ns, 
-       [{ account => $publisher1, 
-          tags => [{size => $sizes->[0], cpm => 0, 
-                    max_ecpm => 1, probability => 0, 
-                    random => 99 }] },
-        { account => $publisher1, 
-          tags => [{size => $sizes->[1], cpm => 0, 
-                    max_ecpm => 0, probability => 0, 
-                    random => 100 },
-                   {size => $sizes->[3], cpm => 0.01, 
-                    max_ecpm => 1, probability => 0, 
-                    random => 99 },
-                   {size => $sizes->[5], cpm => 0, 
-                    max_ecpm => 1, probability => 0, 
-                    random => 99 },
-                   {size => $sizes->[4], cpm => 0, 
-                    max_ecpm => 0, probability => 0, 
-                    random => 100 }] },
-        { account => $publisher2, 
-          tags => [{size => $sizes->[0], cpm => 0, 
-                    max_ecpm => 1, probability => 0, 
-                    random => 99 },
-                   {size => $sizes->[1], cpm => 0,
-                    max_ecpm => 0, probability => 0, 
-                    random => 100 }] } ]);
-
-  
-  $self->create_rtb_campaigns(
-    $ns, \@sites, $currency1,
-    [ { entity => 'DisplayCampaign', cpm => 200, 
-        sizes => [$sizes->[1], $sizes->[0]], ron => 1 },
-      { entity => 'DisplayCampaign', cpc=> 110,
-        sizes => [$sizes->[1], $sizes->[0]] },
-      { entity => 'DisplayCampaign', 
-        cpm => 0, cpc => 10, rate_type => 'CPM',
-        sizes => [$sizes->[3], $sizes->[5]] },
-      { entity => 'DisplayCampaign', cpm => 0.01,
-        sizes => [$sizes->[3], $sizes->[5]] },
-      { entity => 'ChannelTargetedTACampaign', cpc => 100,
-        sizes => [$sizes->[4]], ron => 1 },
-      { entity => 'TextAdvertisingCampaign', cpc => 110, 
-        sizes => [ $sizes->[4] ] } ]);
-
-  $ns->output('ACCOUNT/1', $publisher1);
-  $ns->output('ACCOUNT/2', $publisher2);
-}
-
 sub init {
   my ($self, $ns) = @_;
 
@@ -571,7 +488,6 @@ sub init {
 
     $self->open_rtb($ns, \@sizes);
 
-    $self->tanx($ns, \@sizes);
   }
 
   $ns->output('COUNTRYCODE', COUNTRY_CODE);

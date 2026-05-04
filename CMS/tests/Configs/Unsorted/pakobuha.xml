@@ -31,9 +31,6 @@
           <inventoryStats simplifying="100"/>
           <snmpStats enable="true"/>
           <userProfiling>
-            <userInfoExchangerRef host="vnode0" port="10210">
-              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
-            </userInfoExchangerRef>
           </userProfiling>
           <remote connect_timeout="2700">
             <campaignServerRef host="vnode0" port="10206">

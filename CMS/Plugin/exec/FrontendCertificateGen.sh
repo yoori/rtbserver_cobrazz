@@ -106,11 +106,11 @@ then
     let "EXIT_CODE|=$?"
     echo "incorrect uid key" >&2
   fi
-  perl $EXEC/bin/ResignUids.pl $CERT_ROOT $PLUGIN_ROOT/data/SubAgentShell/SignedUids.pm
+  perl $EXEC/bin/ResignUids.pl $CERT_ROOT $PLUGIN_ROOT/data/FrontendCertificate/SignedUids.pm
   openssl rsa -inform DER -in $CERT_ROOT/private.der -outform DER -pubout -out $CERT_ROOT/public.der 1>/dev/null 2>&1
   let "EXIT_CODE|=$?"
 else
-  cp $PLUGIN_ROOT/data/SubAgentShell/SignedUids.pm $CERT_ROOT 
+  cp $PLUGIN_ROOT/data/FrontendCertificate/SignedUids.pm $CERT_ROOT
 fi
 TMP_UID_KEY_PRESENTED=$($EXEC/XPathGetValue.sh --plugin-root $PLUGIN_ROOT --xml $APP_XML \
   --xpath "count($COLO_PARAMS_XPATH/*[name() = 'configuration:temporary_uid_key' and . != ''])")

@@ -55,7 +55,6 @@
     <Service name="fe1-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="uk00labadsrv00"/>
     <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="uk00labadsrv00"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="uk00labadsrv00"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="uk00labadsrv00"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="uk00labadsrv00"/>
     <Service name="fe2-UserInfoManager" type="AdServer::UserInfoSvcs::UserInfoManager" host="uk00labadsrv01"/>
     <Service name="fe2-UserInfoManagerController" type="AdServer::UserInfoSvcs::UserInfoManagerController" host="uk00labadsrv01"/>
@@ -63,7 +62,6 @@
     <Service name="fe2-ChannelController" type="AdServer::ChannelSvcs::ChannelController" host="uk00labadsrv01"/>
     <Service name="fe2-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="uk00labadsrv01"/>
     <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="uk00labadsrv01"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="uk00labadsrv01"/>
     <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="uk00labadsrv01"/>
     <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="uk00labadsrv01"/>
     <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="uk00labadsrv00"/>
@@ -83,7 +81,6 @@
     <Service type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" name="fe2-UserInfoDistributor" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/channel-groups-2.0.0.0-cms20120703113216/lib ; /opt/oix/server/manager/channel-groups-2.0.0.0-cms20120703113216/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='uk00labadsrv01,' --chunks-root='/opt/oix/server/var/cache/Users2/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='uk00labadsrv00,uk00labadsrv01,' --force=%%force%% --check-hosts=%%check-hosts%%"/>
   </Services>
   <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
-    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="uk00labpbe00"/>
     <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="uk00labpbe00"/>
     <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="uk00labpbe00"/>
     <Service name="pbe1-CampaignServer" type="AdServer::CampaignSvcs::CampaignServer" host="uk00labpbe00"/>

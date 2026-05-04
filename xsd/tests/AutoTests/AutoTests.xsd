@@ -74,7 +74,6 @@
     <xsd:enumeration value="RequestInfoManager"/>
     <xsd:enumeration value="UserInfoManager"/>
     <xsd:enumeration value="UserInfoManagerController"/>
-    <xsd:enumeration value="UserInfoExchanger"/>
   </xsd:restriction>
 </xsd:simpleType>
 

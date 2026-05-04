@@ -17,7 +17,6 @@
   log_root=$workspace_root/log
   TNS_ADMIN=$config_root/OcciAdmin/
   
-  ZENOSS_DIR=/opt/zenoss/lib/foros/production-ro-rtc-hdc
   export ZENOSS_DIR
   
 

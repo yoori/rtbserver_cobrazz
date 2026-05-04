@@ -27,11 +27,6 @@
           <xsd:documentation>All that is necessary for the management of services owned by ISP</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="ZenOSS" type="ZenOSSType" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>Enable and configure ZenOSS monitoring</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
       <xsd:element name="develParams" type="DevelParamsType" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>
@@ -118,45 +113,6 @@
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
-
-  <xsd:complexType name="ZenOSSType">
-    <xsd:attribute name="enabled" type="xsd:boolean" default="true">
-      <xsd:annotation>
-        <xsd:documentation>Switches on/off</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="collector" type="xsd:string" default="localhost">
-      <xsd:annotation>
-        <xsd:documentation>Zenoss collector</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="group" type="xsd:string" default="OIX/Server">
-      <xsd:annotation>
-        <xsd:documentation>Zenoss groups</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="location" type="xsd:string" default="">
-      <xsd:annotation>
-        <xsd:documentation>Zenoss location</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="system" type="xsd:string">
-      <xsd:annotation>
-        <xsd:documentation>Zenoss system</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="community" type="xsd:string" default="public">
-      <xsd:annotation>
-        <xsd:documentation>SNMP community</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-    <xsd:attribute name="install_root" type="xsd:string" default="/opt/zenoss">
-      <xsd:annotation>
-        <xsd:documentation>Zenoss install root</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-  </xsd:complexType>
-
 
   <xsd:simpleType name="PublicKeyType">
     <xsd:restriction base="xsd:string">

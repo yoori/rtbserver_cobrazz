@@ -42,7 +42,6 @@ enum ServiceTypeEnum
   STE_REQUEST_INFO_MANAGER = ServiceEnum::RequestInfoManager,
   STE_USER_INFO_MANAGER = ServiceEnum::UserInfoManager,
   STE_USER_INFO_MANAGER_CONTROLLER = ServiceEnum::UserInfoManagerController,
-  STE_USER_INFO_EXCHANGER = ServiceEnum::UserInfoExchanger,
 };
 
 class GlobalConfig

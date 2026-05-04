@@ -17,8 +17,7 @@ use Exporter;
 @EXPORT = qw(get_config money_upscale money_downscale
              calc_min_cpm min max calc_ta_top_acpc make_autotest_name
              print_NoAdvNoTrack create_behavioral_parameters check_threshold_channel
-             calc_ctr_pq sync get_tz_ofset output_channel_triggers get_tanx_creative
-             get_baidu_creative);
+             calc_ctr_pq sync get_tz_ofset output_channel_triggers get_external_creative_id);
 
 sub create_behavioral_parameters {
     my ($ns, $acc, $format, $defaults, @triggers) = @_;
@@ -216,7 +215,7 @@ sub output_channel_triggers
   }
 }
 
-sub get_tanx_creative {
+sub get_external_creative_id {
   my $creative = shift;
 
   my ($year, $month, $day, $hour, $min, $sec, $nsec) = 
@@ -227,18 +226,6 @@ sub get_tanx_creative {
 
   $creative->{creative_id} . "-" . 
     strftime("%y%m%d%H%M%S", gmtime($time));
-}
-
-sub get_baidu_creative {
-  my $creative = shift;
-
-  my ($year, $month, $day, $hour, $min, $sec, $nsec) = 
-    ($creative->{version} =~ 
-       m!(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+)!);
-
-  my $time = timegm ($sec, $min, $hour, $day, $month - 1, $year);
-
-  ($creative->{creative_id} << 32) + $time;
 }
 
 1;

@@ -105,10 +105,6 @@ StatsCollectionEntry ::= SEQUENCE
   creativeSelectionLocal-Average                DisplayString,
   rtbRequestCount                               Counter64,
   rtbRequestBidCount                            Counter64,
-  rtbRequestTanxCount                           Counter64,
-  rtbRequestTanxBidCount                        Counter64,
-  rtbRequestBaiduCount                          Counter64,
-  rtbRequestBaiduBidCount                       Counter64,
   rtbRequestOpenRTBCount                        Counter64,
   rtbRequestOpenRTBBidCount                     Counter64,
   rtbRequestOtherCount                          Counter64,
@@ -584,34 +580,6 @@ processId OBJECT-TYPE
     STATUS current
     DESCRIPTION "Count of all bidding requests"
     ::= { statsCollectionEntry 68 }
-
-  rtbRequestTanxCount OBJECT-TYPE
-    SYNTAX Counter64
-    MAX-ACCESS read-only
-    STATUS current
-    DESCRIPTION "Count of TanX requests"
-    ::= { statsCollectionEntry 69 }
-
-  rtbRequestTanxBidCount OBJECT-TYPE
-    SYNTAX Counter64
-    MAX-ACCESS read-only
-    STATUS current
-    DESCRIPTION "Count of TanX bids made"
-    ::= { statsCollectionEntry 70 }
-
-  rtbRequestBaiduCount OBJECT-TYPE
-    SYNTAX Counter64
-    MAX-ACCESS read-only
-    STATUS current
-    DESCRIPTION "Count of Baidu requests"
-    ::= { statsCollectionEntry 71 }
-
-  rtbRequestBaiduBidCount OBJECT-TYPE
-    SYNTAX Counter64
-    MAX-ACCESS read-only
-    STATUS current
-    DESCRIPTION "Count of Baidu bids made"
-    ::= { statsCollectionEntry 72 }
 
   rtbRequestOpenRTBCount OBJECT-TYPE
     SYNTAX Counter64

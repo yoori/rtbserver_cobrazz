@@ -52,8 +52,6 @@
     <Service name="fe1-ChannelSearchService" type="AdServer::ChannelSearchSvcs::ChannelSearchService" host="HostName12"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="HostName13"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="HostName14"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="HostName13"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="HostName14"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="HostName13"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="HostName14"/>
     <Service name="lp-CleanupLogs" type="AdServer::LogProcessing::CleanupLogs" host="HostName5"/>
@@ -81,7 +79,6 @@
     <Service type="AdServer::UserInfoSvcs::UserInfoDistributor" host="localhost" name="fe1-UserInfoDistributor" start_cmd="export PERL5LIB=$PERL5LIB:/opt/foros/server/manager/default-values-colo-2.0.0.0-cms20120703113236/lib ; /opt/oix/server/manager/default-values-colo-2.0.0.0-cms20120703113236/bin/ConfigureUserChunks.pl reconf --chunks-count=10 --target-hosts='HostName1,' --chunks-root='/opt/oix/server/var/cache/Users1/' --transport='ssh:/home/aduser/.ssh/adkey' --check-hosts='HostName1,' --force=%%force%% --check-hosts=%%check-hosts%%"/>
   </Services>
   <Services start="%%START_LOOP_PRINT%%" stop="%%STOP_LOOP_PRINT%%" status="%%STATUS_PRINT%%" timeout="600" cmd="/opt/foros/server/bin/adserver.pl %%HOST%% %%TYPE%%" start_cmd="%%cmd%% start" stop_cmd="%%cmd%% stop" status_cmd="%%cmd%% is_alive" env="adproxycluster-1">
-    <Service name="pbe1-UserInfoExchanger" type="AdServer::UserInfoSvcs::UserInfoExchanger" host="HostName15"/>
     <Service name="pbe1-ChannelProxy" type="AdServer::ChannelSvcs::ChannelProxy" host="HostName16"/>
     <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="HostName16"/>
     <Service name="pbe1-SyncLogs" type="AdServer::LogProcessing::SyncLogs" host="HostName17"/>

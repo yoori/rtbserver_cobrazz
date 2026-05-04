@@ -61,86 +61,6 @@
 
 </xsl:template>
 
-<xsl:template name="AddSubAgentFrontendSubcluster">
-  <xsl:param name="cluster-path"/>
-  <xsl:param name="service-descriptor"/>
-  <xsl:param name="service-name-prefix"/>
-  <xsl:param name="checking-host"/>
-
-  <xsl:for-each select="$cluster-path/serviceGroup[@descriptor =
-    'AdProfilingCluster/FrontendSubCluster']/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/Frontend']">
-    <xsl:variable name="subcluster-hosts">
-      <xsl:call-template name="GetHosts">
-        <xsl:with-param name="hosts" select="@host"/>
-        <xsl:with-param name="error-prefix"
-          select="'SMS-frontend-subcluster-hosts'"/>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:if test="count(exsl:node-set($subcluster-hosts)[host =
-      $checking-host]) > 0">
-<xsl:text>
-    </xsl:text>
-      <Service name="{concat($service-name-prefix, '-SubAgent')}"
-        type="AdServer::Controlling::SubAgent" host="{$checking-host}"/>
-    </xsl:if>
-  </xsl:for-each>
-</xsl:template>
-
-<xsl:template name="AddSubAgentService">
-  <xsl:param name="cluster-path"/>
-  <xsl:param name="number"/>
-
-  <xsl:variable name="colo-config"
-    select="$cluster-path/configuration/cfg:cluster"/>
-
-  <xsl:if test="$colo-config/cfg:snmpStats/@enable = '1' or
-    $colo-config/cfg:snmpStats/@enable = 'true'">
-
-    <xsl:variable name="def-prefix" select="fe"/>
-    <xsl:variable name="subfe-hosts">
-      <xsl:for-each select="$cluster-path/serviceGroup[@descriptor =
-        'AdProfilingCluster/FrontendSubCluster']/service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/Frontend']">
-        <xsl:call-template name="GetHosts">
-          <xsl:with-param name="hosts" select="@host"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('SMS-', 'frontend', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:for-each>
-    </xsl:variable>
-
-    <xsl:for-each select="/colo:colocation/host">
-      <xsl:variable name="this-host">
-        <xsl:call-template name="ResolveHostName">
-          <xsl:with-param name="base-host" select="@name"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('SMS-', 'service-name', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:variable>
-      <xsl:choose>
-        <xsl:when test="count(exsl:node-set($subfe-hosts)[host =
-          $this-host]) > 0">
-          <xsl:variable name="prefix">
-            <xsl:choose>
-              <xsl:when test="count(exsl:node-set($tr-hosts)[host = $this-host]) > 0">
-                <xsl:value-of select="'tr'"/>
-              </xsl:when>
-              <xsl:otherwise><xsl:value-of select="$def-prefix"/></xsl:otherwise>
-            </xsl:choose>
-          </xsl:variable>
-          <xsl:call-template name="AddSubAgentFrontendSubcluster">
-            <xsl:with-param name="cluster-path" select="$cluster-path"/>
-            <xsl:with-param name="service-descriptor"
-              select="$http-frontend-descriptor"/>
-            <xsl:with-param name="service-name-prefix" select="$prefix"/>
-            <xsl:with-param name="checking-host" select="$this-host"/>
-          </xsl:call-template>
-        </xsl:when>
-      </xsl:choose>
-    </xsl:for-each>
-
-  </xsl:if>
-</xsl:template>
-
 <xsl:template name="AddOneOnHostService">
   <xsl:param name="serv-path"/>
   <xsl:param name="service-name"/>
@@ -240,11 +160,6 @@
         <xsl:with-param name="service-type" select="'AdServer::LogProcessing::STunnel'"/>
       </xsl:call-template>
     </xsl:if>
-
-    <xsl:call-template name="AddSubAgentService">
-      <xsl:with-param name="cluster-path" select="$cluster-path"/>
-      <xsl:with-param name="number" select="$number"/>
-    </xsl:call-template>
 
     <xsl:call-template name="AddOneOnHostService">
       <xsl:with-param name="serv-path" select="$cluster-path//service"/>

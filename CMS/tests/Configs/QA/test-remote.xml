@@ -354,9 +354,6 @@ z48NAhEA7fIxSeHNgu5EPqX8PSLLcQIQDZNw92/96BWJrPGIOv/cxQIQDplehs7w
           <inventoryStats simplifying="100" distrib_count="32"/>
           <snmpStats enable="true" monitoring_tag_id="2157"/>
           <userProfiling bind_chunks_count="16">
-            <userInfoExchangerRef host="vnode0" port="10210">
-              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
-            </userInfoExchangerRef>
           </userProfiling>
           <researchStat ip_logging_enabled="false" profiling_log_sampling="100">
             <receiverRef host="vauto" port="11876"/>
@@ -727,32 +724,6 @@ z48NAhEA7fIxSeHNgu5EPqX8PSLLcQIQDZNw92/96BWJrPGIOv/cxQIQDplehs7w
                   <source id="yandex" redirect="http://cs.ocslab.com/cgi-bin/rtb-bind.cgi?uid=##SSPUID##&amp;uid_unsigned=##UNSIGNEDSSPUID##&amp;ysign=##YANDEXSIGN##&amp;ssp=5"/>
                 </userBindModule>
               </frontend>
-            </configuration>
-          </service>
-
-          <service
-            descriptor="AdCluster/FrontendSubCluster/ZmqProfilingBalancer"
-            name="ZmqProfilingBalancer"
-            host="vnode1 vnode2">
-            <configuration>
-              <zmqProfilingBalancer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
-                <logging log_level="8" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
-                <profilingInfoConnectSocket hwm="100" non_block="false"/>
-                <anonymousStatsConnectSocket hwm="100" non_block="false"/>
-              </zmqProfilingBalancer>
-            </configuration>
-          </service>
-
-          <service
-            descriptor="AdCluster/FrontendSubCluster/ProfilingServer"
-            name="ProfilingServer"
-            host="vnode1 vnode2">
-            <configuration>
-              <profilingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration"
-                zmq_io_threads="1"
-                work_threads="20">
-                <logging log_level="8" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
-              </profilingServer>
             </configuration>
           </service>
 

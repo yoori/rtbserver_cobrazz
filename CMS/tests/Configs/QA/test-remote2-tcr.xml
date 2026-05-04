@@ -164,9 +164,6 @@ z48NAhEA7fIxSeHNgu5EPqX8PSLLcQIQDZNw92/96BWJrPGIOv/cxQIQDplehs7w
           <inventoryStats simplifying="100"/>
           <snmpStats enable="true" monitoring_tag_id="2157" monitoring_country="gb"/>
           <userProfiling>
-            <userInfoExchangerRef host="vtcr0" port="10210">
-              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
-            </userInfoExchangerRef>
           </userProfiling>
           <IPMapping>
             <colo ip_range="2.216.1.1/32" cohorts="" colo_id="58365"/>

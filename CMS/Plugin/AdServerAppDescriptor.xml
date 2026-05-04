@@ -238,22 +238,6 @@
        minHostOccurs="1"
        maxHostOccurs="unbounded"/>
 
-     <service
-       type="ZmqProfilingBalancer"
-       configSchema="xsd/Frontends/ZmqProfilingBalancerApp.xsd"
-       minOccurs="0"
-       maxOccurs="unbounded"
-       minHostOccurs="1"
-       maxHostOccurs="unbounded"/>
-
-     <service
-       type="ProfilingServer"
-       configSchema="xsd/Frontends/ProfilingServerApp.xsd"
-       minOccurs="0"
-       maxOccurs="unbounded"
-       minHostOccurs="1"
-       maxHostOccurs="unbounded"/>
-
      <!--
      <service
        type="FCGIServer"
@@ -263,14 +247,6 @@
        minHostOccurs="1"
        maxHostOccurs="unbounded"/>
      -->
-
-     <service
-       type="UIDGeneratorAdapter"
-       configSchema="xsd/Frontends/UIDGeneratorAdapterApp.xsd"
-       minOccurs="0"
-       maxOccurs="unbounded"
-       minHostOccurs="1"
-       maxHostOccurs="unbounded"/>
 
     </serviceGroup>
 
@@ -316,10 +292,6 @@
     <service
       type="CampaignServer"
       configSchema="xsd/CampaignManagement/CampaignServerApp.xsd"/>
-
-    <service
-      type="UserInfoExchanger"
-      configSchema="xsd/UserInfoProfiling/UserInfoExchangerApp.xsd"/>
 
     <service
       type="ChannelProxy"

@@ -20,64 +20,47 @@ sub init
   my %categories = (
     'vis-1-1' => { type => VISUAL,
                    iab => "RTB-ADSC-vis-1-open" },
-    'vis-1-2' => { type => VISUAL,
-                   tanx => 14012 },
+    'vis-1-2' => { type => VISUAL,},
     'vis-1-3' => { type => VISUAL,
                    openx => 111 },
     'vis-1' => { type => VISUAL,
                  iab => 1010,
-                 tanx => 14001,
                  openx => 110,
-                 allyes => 1,
-                 baidu => 2000 },
+                 allyes => 1,},
     'vis-2' => { type => VISUAL,
                  iab => 1020,
-                 tanx => 14002,
                  openx => 120,
-                 allyes => 2,
-                 baidu => 2001 },
+                 allyes => 2,},
     'vis-3' => { type => VISUAL,
                  iab => 1034,
-                 tanx => 14034,
                  openx => 134,
-                 allyes => 34,
-                 baidu => 1234 },
+                 allyes => 34,},
     'vis-4' => { type => VISUAL,
                  iab => 1034,
-                 tanx => 14034,
                  openx => 134,
-                 allyes => 34,
-                 baidu => 1234 },
+                 allyes => 34,},
     'vis-5' => { type => VISUAL },
     'cnt-1-1' => { type => CONTENT,
                    iab => "RTB-ADSC-cnt-1-open" },
-    'cnt-1-2' => { type => CONTENT,
-                   tanx => 14112 },
+    'cnt-1-2' => { type => CONTENT,},
     'cnt-1-3' => { type => CONTENT,
                    openx => 211 },
     'cnt-1' => { type => CONTENT,
                  iab => "RTB-ADSC cnt-1",
-                 tanx => 14101,
                  openx => 210,
-                 allyes => 'allyes-cnt-1',
-                 baidu => 2041 },
+                 allyes => 'allyes-cnt-1',},
     'cnt-2' => { type => CONTENT,
                  iab => "RTB-ADSC-cnt-2",
-                 tanx => 14102,
                  openx => 220,
                  allyes => 'allyes-cnt-2' },
     'cnt-3' => { type => CONTENT,
                  iab => "RTB-ADSC-cnt-3-4",
-                 tanx => 14134,
                  openx => 234,
-                 allyes => 'allyes-cnt-34',
-                 baidu => 2034 },
+                 allyes => 'allyes-cnt-34',},
     'cnt-4' => { type => CONTENT,
                  iab => "RTB-ADSC-cnt-3-4",
-                 tanx => 14134,
                  openx => 234,
-                 allyes => 'allyes-cnt-34',
-                 baidu => 2034 },
+                 allyes => 'allyes-cnt-34',},
     'cnt-5' => { type => CONTENT },
     'cnt-s-1' => { type => CONTENT,
                    iab => "RTB_ADSC_cnt_spec_1'" },
@@ -88,8 +71,7 @@ sub init
     'cnt-s-4' => { type => CONTENT,
                    iab => "RTB_ADSC_cnt_spec_4\nabc" },
     'text' => { type => VISUAL,
-                iab => 12,
-                tanx => 5 }
+                iab => 12,}
   );
 
   # Create categories
@@ -99,62 +81,38 @@ sub init
       { name => $name,
         cct_id => $fields->{type},
         iab_key => $fields->{iab},
-        tanx_key => $fields->{tanx},
         openx_key => $fields->{openx},
-        allyes_key => $fields->{allyes},
-        baidu_key => $fields->{baidu} });
+        allyes_key => $fields->{allyes}, });
 
     $ns->output("CATEGORIES/$name/iab", $fields->{iab})
       if defined $fields->{iab};
     $ns->output("CATEGORIES/$name/openx", $fields->{openx})
       if defined $fields->{openx};
-    $ns->output("CATEGORIES/$name/tanx", $fields->{tanx})
-      if defined $fields->{tanx};
     $ns->output("CATEGORIES/$name/allyes", $fields->{allyes})
       if defined $fields->{allyes};
-    $ns->output("CATEGORIES/$name/baidu", $fields->{baidu})
-      if defined $fields->{baidu};
   }
 
   $ns->output("CATEGORIES/vis-6/iab", 1000);
   $ns->output("CATEGORIES/vis-7/iab", 2000);
-  $ns->output("CATEGORIES/vis-7/tanx", 2222);
   $ns->output("CATEGORIES/cnt-6/iab", "RTB-unexisting-cat-1");
-  $ns->output("CATEGORIES/cnt-6/tanx", 1111);
   $ns->output("CATEGORIES/cnt-7/iab", "RTB-unexisting-cat-2");
-  $ns->output("CATEGORIES/cnt-7/tanx", 22);
   $ns->output("CATEGORIES/unexist", 2051);
 
   my $currency1 = $ns->create(Currency => { rate => 11 });
   my $iab = $ns->create(Publisher => {
     name => 'iab',
-    account_type_id => DB::Defaults::instance()->tanx_account->{account_type_id},
+    account_type_id => DB::Defaults::instance()->openrtb_account->{account_type_id},
     currency_id => $currency1,
     tag_id => undef });
 
   my $openx = $ns->create(Publisher => {
     name => 'openx', 
-    account_type_id => DB::Defaults::instance()->tanx_account->{account_type_id}, 
+    account_type_id => DB::Defaults::instance()->openrtb_account->{account_type_id},
     currency_id => $currency1,
-    tag_id => undef });
-
-  my $currency2 = $ns->create(Currency => { rate => 12 });
-  my $tanx = $ns->create(Publisher => {
-    name => 'tanx',
-    account_type_id => DB::Defaults::instance()->tanx_account->{account_type_id},
-    currency_id => $currency2,
-    tag_id => undef  });
-
-  my $baidu = $ns->create(Publisher => {
-    name => 'baidu',
-    account_type_id => DB::Defaults::instance()->tanx_account->{account_type_id},
-    currency_id => $currency2,
     tag_id => undef });
 
   $ns->output("iab/ACCOUNT_ID", $iab->{account_id});
   $ns->output("OpenX/ACCOUNT_ID", $openx->{account_id});
-  $ns->output("TanX/ACCOUNT_ID", $tanx->{account_id});
-  $ns->output("Baidu/ACCOUNT_ID", $baidu->{account_id});
 
   my @sizes = ( "120x240", "120x600", "160x600",
                 "240x400", "250x250", "300x250",
@@ -194,18 +152,6 @@ sub init
     $ns->create(PricedTag => {
       name => "openx-$_",
       site_id => $openx->{site_id},
-      size_id => $self->{sizes}->{$_} });
-
-    # Tag for tanx
-    $ns->create(PricedTag => {
-      name => "tanx-$_",
-      site_id => $tanx->{site_id},
-      size_id => $self->{sizes}->{$_} });
-
-    # Tag for baidu
-    $ns->create(PricedTag => {
-      name => "baidu-$_",
-      site_id => $baidu->{site_id},
       size_id => $self->{sizes}->{$_} });
 
     $ns->output("Sizes/$_", $self->{sizes}->{$_}->{protocol_name});
@@ -266,59 +212,7 @@ sub init
         { size => '240x400' },
         { size => '250x250' },
         { size => '728x90' },
-        { size => '468x61' }] },
-    'TANX' => {
-      campaign_args => {
-        advertiser_currency_id => $currency2,
-        campaigncreativegroup_cpm => 11,
-        channel_id => $channel,
-        campaigncreativegroup_flags => DB::Campaign::INCLUDE_SPECIFIC_SITES,
-        campaigncreativegroup_country_code => 'GB',
-        site_links => [ { site_id => $tanx->{site_id} } ] },
-      creatives => [
-        { size => '120x240',
-          categories => [ 'vis-1-2', 'cnt-1-1' ] },
-        { size => '120x600',
-          categories => [ 'vis-1-1', 'cnt-1-2' ] },
-        { size => '160x600',
-          categories => [ 'vis-1', 'vis-2', 'cnt-1' ] },
-        { size => '240x400',
-          categories => [ 'vis-1', 'cnt-1', 'cnt-2' ] },
-        { size => '250x250',
-          categories => [ 'vis-3', 'vis-4', 'cnt-3', 'cnt-4' ] },
-        { size => '300x250',
-          categories => [ 'vis-5', 'cnt-5' ] }, ] },
-    'TANX-RON' => {
-      campaign_args => {
-        advertiser_currency_id => $currency2,
-        campaigncreativegroup_cpm => 10,
-        channel_id => undef, # RON
-        campaigncreativegroup_country_code => 'GB',
-        campaigncreativegroup_flags =>
-          DB::Campaign::INCLUDE_SPECIFIC_SITES | DB::Campaign::RON,
-        site_links => [ { site_id => $tanx->{site_id} } ] },
-      creatives => [
-        { size => '120x240' },
-        { size => '120x600' } ]},
-    'BAIDU' => {
-      campaign_args => {
-        advertiser_currency_id => $currency2,
-        campaigncreativegroup_cpm => 500,
-        channel_id => $channel, # RON
-        campaigncreativegroup_country_code => 'GB',
-        campaigncreativegroup_flags =>
-          DB::Campaign::INCLUDE_SPECIFIC_SITES,
-        site_links => [ { site_id => $baidu->{site_id} } ] },
-      creatives => [
-        { size => '120x240' },
-        { size => '240x400',
-          categories => [ 'vis-1', 'cnt-3', 'cnt-4' ]  },
-        { size => '300x250',
-          categories => [ 'vis-5', 'cnt-5'] },
-        { size => '250x250',
-          categories => [ 'vis-2', 'vis-3', 'cnt-1'] },
-        { size => '336x280',
-          categories => [ 'vis-3', 'cnt-1', 'cnt-3'] } ]}
+        { size => '468x61' }] }
   );
 
 
@@ -347,14 +241,6 @@ sub init
       my $cc = $ns->create(CampaignCreative => {
         ccg_id => $campaign->{ccg_id},
         creative_id => $creative });
-
-      $ns->output(
-        "CREATIVE/$name/$creative_args->{size}/TANX", 
-                  get_tanx_creative($creative));
-
-      $ns->output(
-        "CREATIVE/$name/$creative_args->{size}/BAIDU", 
-                  get_baidu_creative($creative));
 
       $ns->output("CCIDS/$name/$creative_args->{size}", $cc);
       $ns->output("CREATIVEIDS/$name/$creative_args->{size}", $creative);

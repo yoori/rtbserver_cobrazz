@@ -96,7 +96,6 @@ private:
 
   // Cases
   void openx_();
-  void tanx_();
   void allyes_();
   void allyes_final_();
   void liverail_();

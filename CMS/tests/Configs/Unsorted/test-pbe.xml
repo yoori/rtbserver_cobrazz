@@ -34,18 +34,6 @@
       </configuration>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="vnode0">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="10110"/>
-            <externalNetworkParams port="10210" host="vnode0"/>
-            <logging log_level="4"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/ChannelProxy"
         host="vnode0">
         <configuration>

@@ -78,7 +78,6 @@ namespace Bidding
     bool ipw_extension;
     bool truncate_domain;
     std::string seat;
-    AdServer::Commons::Optional<unsigned long> appnexus_member_id;
     bool fill_adid;
     AdServer::Commons::Optional<Generics::Time> max_bid_time;
     NativeAdsInstantiateType native_ads_instantiate_type;
@@ -150,7 +149,6 @@ namespace Bidding
     bool skip_ccg_keywords;
     std::string search_words;
     std::string seat;
-    AdServer::Commons::Optional<unsigned long> appnexus_member_id;
     bool truncate_domain;
     bool ipw_extension;
     std::string format;
@@ -264,15 +262,6 @@ namespace Bidding
     // OpenRTB, Yandex
     void
     fill_by_openrtb_request(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-      RequestInfo& request_info,
-      std::string& keywords,
-      JsonProcessingContext& context,
-      const char* bid_request) const
-      /*throw(InvalidParamException, Exception)*/;
-
-    void
-    fill_by_appnexus_request(
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
@@ -445,9 +434,6 @@ namespace Bidding
     void
     init_param_processors_() noexcept;
 
-    void
-    init_appnexus_processors_() noexcept;
-
     static std::string
     make_ssp_uid_by_device_(const JsonProcessingContext& ctx)
       /*throw(eh::Exception)*/;
@@ -478,8 +464,6 @@ namespace Bidding
 
     ParamProcessorMap param_processors_;
     JsonRequestParamProcessor_var json_root_processor_;
-    JsonRequestParamProcessor_var appnexus_root_processor_;
-
     const SourceMap sources_;
     const bool enable_profile_referer_;
     const AccountTraitsById account_traits_;

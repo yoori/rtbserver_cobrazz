@@ -65,18 +65,6 @@
   workspace_root=<xsl:value-of select="$workspace-root"/>
   data_root=<xsl:value-of select="$data-root"/>
   log_root=$workspace_root/log
-  <xsl:variable name="zenoss-enabled">
-    <xsl:call-template name="GetZenOSSEnabled">
-      <xsl:with-param name="app-xpath" select="$app-path"/>
-    </xsl:call-template>
-  </xsl:variable>
-  <xsl:if test="$zenoss-enabled = 'true' or $zenoss-enabled = '1'">
-  ZENOSS_DIR=<xsl:call-template name="ZenossFolder">
-    <xsl:with-param name="app-xpath" select="$app-path"/>
-    </xsl:call-template>
-  export ZENOSS_DIR
-  </xsl:if>
-
   export server_root
   export server_bin_root
   export config_root

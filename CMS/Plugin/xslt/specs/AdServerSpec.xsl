@@ -26,12 +26,6 @@
   </xsl:call-template>
 </xsl:variable>
 
-<xsl:variable name="zenoss-enabled">
-  <xsl:call-template name="GetZenOSSEnabled">
-    <xsl:with-param name="app-xpath" select="$xpath"/>
-  </xsl:call-template>
-</xsl:variable>
-
 <xsl:variable name="ad-colo-config" select="$xpath/serviceGroup[@descriptor =
   $ad-cluster-descriptor]/configuration/cfg:cluster"/>
 <xsl:variable name="ad-snmp-stats-enabled">
@@ -555,8 +549,7 @@ install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/
       <xsl:with-param name="path" select=".//service[
         @descriptor = $pbe-stunnel-server-descriptor or
         @descriptor = $pbe-campaign-server-descriptor or
-        @descriptor = $pbe-channel-proxy-descriptor or
-        @descriptor = $pbe-user-info-exchanger-descriptor]"/>
+        @descriptor = $pbe-channel-proxy-descriptor]"/>
     </xsl:call-template>
   </xsl:variable>
 
@@ -571,7 +564,6 @@ install --mode 644 %{__plugin_root}/data/Config/91-aduser.conf %{buildroot}/etc/
       <xsl:with-param name="path" select=".//service[
         @descriptor = $pbe-campaign-server-descriptor or
         @descriptor = $pbe-channel-proxy-descriptor or
-        @descriptor = $pbe-user-info-exchanger-descriptor or
         @descriptor = $pbe-stunnel-server-descriptor]"/>
     </xsl:call-template>
     </xsl:if>
@@ -699,12 +691,6 @@ sysctl -p /etc/sysctl.d/adserver.conf
 
 %define __user <xsl:value-of select="$user-name"/>
 %define __group <xsl:value-of select="$user-group"/>
-  <xsl:if test="$zenoss-enabled = 'true' or $zenoss-enabled = '1'">
-%define __zenoss_dir        <xsl:call-template name="ZenossFolder">
-    <xsl:with-param name="app-xpath" select="$app-path"/>
-  </xsl:call-template>
-  </xsl:if>
-
   <xsl:call-template name="AdClusterSpecGenerator">
     <xsl:with-param name="app-path" select="$app-path"/>
     <xsl:with-param name="foros-zone-config" select="$foros-zone-config"/>
@@ -752,35 +738,7 @@ sysctl -p /etc/sysctl.d/adserver.conf
   </xsl:otherwise>
   </xsl:choose>
 
-  <xsl:if test="$zenoss-enabled = 'true' or $zenoss-enabled = '1'">
-    <xsl:if test="$ad-snmp-stats-enabled = 'true' or
-      $proxy-snmp-stats-enabled = 'true' or
-      $ad-profiling-snmp-stats-enabled = 'true'">
-%package zenoss
-Group: Monitoring
-Summary: foros server ZenOSS integration
-Requires: foros-zenoss
-
-%description zenoss
-Configuration files for foros server ZenOSS integration
-
-%files zenoss
-%defattr(-, root, root)
-%config %{__zenoss_dir}/*.xml
-%config %{__zenoss_dir}/mibs/*.mib
-  <xsl:if test="(count($ad-colo-config) > 0 and $ad-snmp-stats-enabled = 'true') or
-                (count($ad-profiling-colo-config) > 0 and $ad-profiling-snmp-stats-enabled = 'true')">
-%config %{__zenoss_dir}/mibs/LogProcessing/LogGeneralizer/*.mib
-%config %{__zenoss_dir}/mibs/CampaignSvcs/CampaignServer/*.mib
-%config %{__zenoss_dir}/mibs/Controlling/*.mib
-%config %{__zenoss_dir}/mibs/RequestInfoSvcs/ExpressionMatcher/*.mib
-%config %{__zenoss_dir}/mibs/RequestInfoSvcs/RequestInfoManager/*.mib
-  </xsl:if>
-  </xsl:if>
-  </xsl:if>
-
 </xsl:template>
 
 
 </xsl:stylesheet>
-

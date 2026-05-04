@@ -107,17 +107,6 @@
         </xsd:annotation>
       </xsd:element>
 
-      <xsd:element name="UserInfoExchangerParameters"
-        type="UserInfoExchangerParametersType"
-        minOccurs="0"
-        maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            UserInfoExchanger reference
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-
       <xsd:element name="UserOperationsBackup"
         type="UserOperationsBackupType"
         minOccurs="0"
@@ -225,28 +214,6 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:attribute name="confirm_timeout" type="xsd:positiveInteger" use="required"/>
-  </xsd:complexType>
-
-  <xsd:complexType name="UserInfoExchangerParametersType">
-    <xsd:annotation>
-      <xsd:documentation>
-        Description of UserInfoExchanger parameters
-      </xsd:documentation>
-    </xsd:annotation>
-
-    <xsd:sequence>
-      <xsd:element name="UserInfoExchangerRef" type="CorbaObjectRefType">
-        <xsd:annotation>
-          <xsd:documentation>
-            Description of UserInfoExchanger reference
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-    </xsd:sequence>
-
-    <xsd:attribute name="set_get_profiles_period" type="xsd:positiveInteger" use="required"/>
-    <xsd:attribute name="colo_request_timeout" type="xsd:positiveInteger" use="required"/>
-    <xsd:attribute name="customer_id" type="xsd:string" use="required"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserOperationsBackupType">

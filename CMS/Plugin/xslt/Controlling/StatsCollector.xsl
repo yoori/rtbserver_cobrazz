@@ -124,10 +124,6 @@
       <cfg:Rule name="rtbRequestTimeCounter" prefix="rtbRequestTimeCounter" type="Countable"/>
 
       <cfg:Rule name="rtbRequestBidCount" prefix="rtbRequestBidCount" type="Countable"/>
-      <cfg:Rule name="rtbRequestTanxCount" prefix="rtbRequestTanxCount" type="Countable"/>
-      <cfg:Rule name="rtbRequestTanxBidCount" prefix="rtbRequestTanxBidCount" type="Countable"/>
-      <cfg:Rule name="rtbRequestBaiduCount" prefix="rtbRequestBaiduCount" type="Countable"/>
-      <cfg:Rule name="rtbRequestBaiduBidCount" prefix="rtbRequestBaiduBidCount" type="Countable"/>
       <cfg:Rule name="rtbRequestOpenRTBCount" prefix="rtbRequestOpenRTBCount" type="Countable"/>
       <cfg:Rule name="rtbRequestOpenRTBBidCount" prefix="rtbRequestOpenRTBBidCount" type="Countable"/>
       <cfg:Rule name="rtbRequestOtherCount" prefix="rtbRequestOtherCount" type="Countable"/>

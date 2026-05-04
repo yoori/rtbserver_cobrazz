@@ -52,7 +52,6 @@ namespace Bidding
   class BidRequestTask;
   class OpenRtbBidRequestTask;
   class GoogleBidRequestTask;
-  class AppNexusBidRequestTask;
 
   class Frontend:
     private FrontendCommons::HTTPExceptions,
@@ -67,7 +66,6 @@ namespace Bidding
     friend class BidRequestTask;
     friend class OpenRtbBidRequestTask;
     friend class GoogleBidRequestTask;
-    friend class AppNexusBidRequestTask;
 
   public:
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -169,14 +167,6 @@ namespace Bidding
     process_openrtb_request_(
       bool& bad_request,
       OpenRtbBidRequestTask* request_task,
-      RequestInfo& request_info,
-      const char* bid_request)
-      noexcept;
-
-    void
-    process_appnexus_request_(
-      bool& bad_request,
-      AppNexusBidRequestTask* request_task,
       RequestInfo& request_info,
       const char* bid_request)
       noexcept;

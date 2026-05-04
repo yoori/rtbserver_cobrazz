@@ -21,11 +21,6 @@
     <cfg:CampaignServerRef name="CampaignServer">
       <cfg:Ref ref="corbaloc:iiop:rnode02:10106/CampaignServer_v24"/>
     </cfg:CampaignServerRef>
-    <cfg:UserInfoExchangerParameters set_get_profiles_period="60" colo_request_timeout="600" customer_id="84">
-      <cfg:UserInfoExchangerRef name="UserInfoExchanger" ref="corbaloc:ssliop:pbe.stage:10210/UserInfoExchanger">
-        <cfg:Secure key="/opt/foros/server/etc/london-test/adcluster/rnode02/cert/skey.pem" certificate="/opt/oix/server/etc/london-test/adcluster/rnode02/cert/scert.pem" certificate_authority="/opt/oix/server/etc/london-test/adcluster/rnode02/cert/ca.pem" key-word="adserver"/>
-      </cfg:UserInfoExchangerRef>
-    </cfg:UserInfoExchangerParameters>
     <cfg:FreqCaps confirm_timeout="60"/>
   </cfg:UserInfoManagerConfig>
 </cfg:AdConfiguration>

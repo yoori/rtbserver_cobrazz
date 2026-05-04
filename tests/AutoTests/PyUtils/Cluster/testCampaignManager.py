@@ -1136,11 +1136,9 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
       user_id_hash_mod = CampaignManagerUtils.UserIdHashModInfo(False, 0),
       merged_user_id = "",
       pubpixel_accounts = [],
-      tanx_price = "",
       open_price = "",
       openx_price = "",
-      liverail_price = "",
-      baidu_price = "")
+      liverail_price = "")
 
     try:
       instantiate_ad_result = self.CampaignObject.instantiate_ad(instantiate_ad_info)
@@ -1215,4 +1213,3 @@ class CampaignManagerTest(CORBAFunTest, CampaignServerTestMixin):
 
 if __name__ == '__main__':
  main()
-

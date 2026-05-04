@@ -30,8 +30,7 @@ namespace UserBind
         String::SubString("id"),
         String::SubString("tid"),
         String::SubString("ssp_user_id"),
-        String::SubString("google_gid"),
-        String::SubString("tanx_tid")
+        String::SubString("google_gid")
       };
 
       const String::SubString CLID_ID("clid");

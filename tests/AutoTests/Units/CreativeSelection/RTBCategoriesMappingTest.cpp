@@ -10,9 +10,7 @@ namespace
   typedef AutoTest::NSLookupRequest NSLookupRequest;
   typedef AutoTest::OpenRTBRequest OpenRTBRequest;
   typedef AutoTest::UserBindRequest UserBindRequest;
-  typedef AutoTest::TanxRequest TanxRequest;
   typedef AutoTest::OpenRTBResponseChecker OpenRTBResponseChecker;
-  typedef AutoTest::TanxResponseChecker TanxResponseChecker;
 
   const unsigned long FIELD_NOT_EXIST = std::numeric_limits<unsigned long>::max();
   const char EMPTY[] = "empty";
@@ -46,20 +44,6 @@ namespace
     typedef AutoTest::OpenRTBRequest Request;
     typedef AutoTest::OpenRTBResponseChecker Checker;
     typedef AutoTest::OpenRTBResponseChecker::ExpectedList Expected;
-  };
-
-  struct TanxTraits
-  {
-    typedef AutoTest::TanxRequest Request;
-    typedef AutoTest::TanxResponseChecker Checker;
-    typedef AutoTest::TanxResponseChecker::Expected Expected;
-  };
-
-  struct BaiduTraits
-  {
-    typedef AutoTest::BaiduRequest Request;
-    typedef AutoTest::BaiduResponseChecker Checker;
-    typedef AutoTest::BaiduResponseChecker::Expected Expected;
   };
 
   const char BODY[] = "body";
@@ -145,16 +129,6 @@ namespace
       {{ "RTB-RON/120x600", EMPTY, 0 }}
     },
     /*16*/
-    { "Tanx id in visual request field",
-      BODY, {{ "160x600", "vis-1/tanx" }}, 0,
-      {{ "RTB/160x600", "vis-1/iab,vis-2/iab", 0 }}
-    },
-    /*17*/
-    { "Tanx id in content request field",
-      BODY, {{ "160x600", 0 }}, "cnt-1/tanx",
-      {{ "RTB/160x600", "vis-1/iab,vis-2/iab", 0 }}
-    },
-    /*18*/
     { "OpenX id in visual request field (openx request type)",
       BODY_OPENX, {{ "160x600", "vis-1/openx" }}, 0,
       {{ "RTB-RON/160x600", EMPTY, EMPTY }}
@@ -294,146 +268,13 @@ namespace
   const RTBCategoriesMappingTest::RTBTestCase<3> TEST2_4[] =
   {
     /*4*/
-    { "TanxRequest.bcat should be applied to all banners",
+    { "bcat should be applied to all banners",
       BODY,
       {{ "240x400", 0 }, { "120x240", 0 }, { "120x600", 0 }}, "cnt-1-1/iab,cnt-2/iab", // request
       // response
       {{ "RTB-RON/240x400", EMPTY, EMPTY },
        { "RTB/120x240", EMPTY, EMPTY },
        { "RTB-RON/120x600", EMPTY, EMPTY }}
-    }
-  };
-
-// a:* - for excluded_ad_category request param filling
-// s:* - for excluded_sensitive_category request param filling
-  const RTBCategoriesMappingTest::TanxTestCase TEST3[] =
-  {
-    /*1*/
-    { "2 categories with the same TanX key",
-      { "250x250", 0 }, 0,
-      { "TANX/250x250", "vis-3/tanx", "cnt-3/tanx" }
-    },
-    /*2*/
-    { "categories w/o TanX key",
-      { "300x250", 0 }, 0, { "TANX/300x250", EMPTY, EMPTY }
-    },
-    /*3*/
-    { "2 visual categories with TanX key",
-      { "160x600", 0 }, 0,
-      { "TANX/160x600", "vis-1/tanx,vis-2/tanx", "cnt-1/tanx" }
-    },
-    /*4*/
-    { "2 content categories with Tanx key",
-      { "240x400", 0 }, 0,
-      { "TANX/240x400", "vis-1/tanx", "cnt-1/tanx,cnt-2/tanx" }
-    },
-    /*5*/
-    { "120x240 creative integrity check",
-      { "120x240", 0 }, 0,
-      { "TANX/120x240", "vis-1-2/tanx", EMPTY }
-    },
-    /*6*/
-    { "120x600 creative integrity check",
-      { "120x600", 0 }, 0,
-      { "TANX/120x600", EMPTY, "cnt-1-2/tanx" }
-    },
-    /*7*/
-    { "excluded by visual category",
-      { "120x240", "vis-1-2/tanx" }, 0,
-      { "TANX-RON/120x240", 0, 0 }
-    },
-    /*8*/
-    { "excluded by content category in excluded_sensitive_category field",
-      { "120x600", 0 },
-      "s:cnt-1-2/tanx", { "TANX-RON/120x600", 0, 0 }
-    },
-    /*9*/
-    { "excluded by content category in excluded_ad_category field",
-      { "120x600", 0 },
-      "a:cnt-1-2/tanx", { "TANX-RON/120x600", 0, 0 }
-    },
-    /*10*/
-    { "multiple visual categories in request, excluded by one",
-      { "160x600", "vis-7/tanx,vis-1/tanx" }, 0,
-      { 0, 0, 0 }
-    },
-    /*11*/
-    { "multiple content categories in request, excluded by one",
-      { "240x400", 0 },
-      "s:cnt-6/tanx,s:cnt-2/tanx,s:cnt-7/tanx", { 0, 0, 0 }
-    },
-    /*12*/
-    { "multiple content categories in 2 request fields, excluded by one",
-      { "240x400", 0 },
-      "a:cnt-6/tanx,s:cnt-1/tanx", { 0, 0, 0 }
-    },
-    /*13*/
-    { "multiple content categories in 2 request fields, excluded by one",
-      { "240x400", 0 },
-      "a:cnt-1/tanx,s:cnt-6/tanx", { 0, 0, 0 }
-    },
-    /*14*/
-    { "IAB visual category key",
-      { "160x600", "vis-1/iab" }, 0,
-      { "TANX/160x600", 0, 0 }
-    },
-    /*15*/
-    { "OpenX visual category key",
-      { "160x600", "vis-1/openx" },
-      0, { "TANX/160x600", 0, 0 }
-    },
-    /*16*/
-    { "OpenX content category key",
-      { "160x600", 0 },
-      "s:cnt-1/openx", { "TANX/160x600", 0, 0 }
-    }
-  };
-
-  const RTBCategoriesMappingTest::BaiduTestCase TEST4_1[] =
-  {
-    {
-      "2 categories with the same Baidu key",
-      { "240x400", 0 },
-      { "BAIDU/240x400", "vis-1/baidu", "cnt-3/baidu" }
-    },
-    {
-      "Categories w/o Baidu key",
-      { "300x250", 0 },
-      { "BAIDU/300x250", 0, 0 }
-    },
-    {
-      "2 visual categories with Baidu key",
-      { "250x250", 0 },
-      { "BAIDU/250x250", "vis-3/baidu", "cnt-1/baidu" }
-    },
-    {
-      "2 content categories with Baidu key",
-      { "336x280", 0 },
-      { "BAIDU/336x280", "vis-3/baidu", "cnt-3/baidu" }
-    }
-  };
-
-  const RTBCategoriesMappingTest::BaiduTestCase TEST4_2[] =
-  {
-    {
-      "Excluded by content category",
-      { "250x250", "cnt-1/baidu" },
-      { 0, 0, 0 }
-    },
-    {
-      "Excluded by visual category",
-      { "250x250", "vis-2/baidu" },
-      { 0, 0, 0 }
-    },
-    {
-      "Multiple content categories in request, excluded by one",
-      { "250x250", "unexist,cnt-1/baidu" },
-      { 0, 0, 0 }
-    },
-    {
-      "Multiple content categories in request, excluded by one",
-      { "250x250", "unexist" },
-      { "BAIDU/250x250", "vis-3/baidu", "cnt-1/baidu" }
     }
   };
 }
@@ -499,80 +340,6 @@ RTBCategoriesMappingTest::set_expected_categories(
     {
       set_categories(cat_list, obj, setter);
     }
-  }
-}
-
-void
-RTBCategoriesMappingTest::prepare_request(
-  TanxRequest& request,
-  const TanxTestCase& test_case)
-{
-  request.
-    url(fetch_string("SEARCH")).
-    debug_size(fetch_string(std::string("Sizes/") + test_case.banner.size)).
-    debug_ccg(fetch_string("TANX/CCG_ID")).
-    aid(fetch_string("TanX/ACCOUNT_ID")).
-    min_cpm_price(1);
-
-  if (test_case.banner.battr)
-  {
-    set_categories(
-      test_case.banner.battr,
-      request,
-      &TanxRequest::excluded_filter);
-  }
-  if (test_case.bcat)
-  {
-    String::SubString ccat;
-    String::StringManip::SplitComma tokenizer(String::SubString(test_case.bcat));
-    while (tokenizer.get_token(ccat))
-    {
-      String::SubString::SizeType sep = ccat.find(':');
-      if (sep == String::SubString::NPOS)
-      {
-        request.excluded_ad_category(fetch_int("CATEGORIES/" + ccat.str()));
-      }
-      else
-      {
-        std::string excl_field = ccat.substr(0, sep).str();
-        int cat_id = fetch_int("CATEGORIES/" + ccat.substr(sep + 1).str());
-        if (excl_field == "a")
-        {
-          request.excluded_ad_category(cat_id);
-        }
-        else if (excl_field == "s")
-        {
-          request.excluded_sensitive_category(cat_id);
-        }
-      }
-    }
-  }
-}
-
-void
-RTBCategoriesMappingTest::prepare_request(
-  BaiduRequest& request,
-  const BaiduTestCase& test_case)
-{
-  request.
-    debug_ccg(fetch_string("BAIDU/CCG_ID")).
-    aid(fetch_string("Baidu/ACCOUNT_ID")).
-    url(fetch_string("SEARCH")).
-    id("BAIDU").
-    minimum_cpm(1);
-
-  if (test_case.banner.size)
-  {
-    request.debug_size(
-      fetch_string(std::string("Sizes/") + test_case.banner.size));
-  }
-
-  if (test_case.banner.battr)
-  {
-    set_categories(
-      test_case.banner.battr,
-      request,
-      &BaiduRequest::excluded_product_category);
   }
 }
 
@@ -693,70 +460,6 @@ RTBCategoriesMappingTest::prepare_checker(
   }
 }
 
-void
-RTBCategoriesMappingTest::prepare_checker(
-  TanxResponseChecker::Expected& expected,
-  const TanxTestCase& test_case)
-{
-  // NOTE: empty Expected object means that we expects no bids;
-  if (test_case.bid.cc_id)
-  {
-    std::string creative_id = fetch_string(
-      std::string("CREATIVE/") + test_case.bid.cc_id  + "/TANX");
-    expected.creative_id(creative_id);
-  }
-
-  set_expected_categories(
-    test_case.bid.visual_categories,
-    expected,
-    &TanxResponseChecker::Expected::creative_type,
-    &TanxResponseChecker::Expected::creative_type_checked);
-
-  set_expected_categories(
-    test_case.bid.content_categories,
-    expected,
-    &TanxResponseChecker::Expected::category,
-    &TanxResponseChecker::Expected::category_checked);
-}
-
-void
-RTBCategoriesMappingTest::prepare_checker(
-  BaiduResponseChecker::Expected& expected,
-  const BaiduTestCase& test_case)
-{
-  // NOTE: empty Expected object means that we expects no bids;
-  if (test_case.bid.cc_id)
-  {
-    unsigned long creative_id = fetch_int(
-      std::string("CREATIVE/") + test_case.bid.cc_id + "/BAIDU");
-    expected.creative_id(creative_id);
-
-    if (!test_case.bid.visual_categories)
-    {
-      expected.type_exist(false);
-    }
-
-    if (!test_case.bid.content_categories)
-    {
-      expected.category_exist(false);
-    }
-  }
-  if (test_case.bid.visual_categories)
-  {
-    expected.type(
-      fetch_int(
-        std::string("CATEGORIES/") +
-        test_case.bid.visual_categories));
-  }
-  if (test_case.bid.content_categories)
-  {
-    expected.category(
-      fetch_int(
-        std::string("CATEGORIES/") +
-        test_case.bid.content_categories));
-  }
-}
-
 template<typename Traits, typename CaseType, size_t Cases>
 void RTBCategoriesMappingTest::perform_case_(
   const CaseType (&cases)[Cases])
@@ -806,18 +509,6 @@ RTBCategoriesMappingTest::run_test()
   AUTOTEST_CASE(
     perform_case_<RTBTraits>(TEST2_4),
     "OpenRTB multi-slot requests");
-
-  AUTOTEST_CASE(
-    perform_case_<TanxTraits>(TEST3),
-    "TanX categories exclusion");
-
-  AUTOTEST_CASE(
-    perform_case_<BaiduTraits>(TEST4_1),
-    "Baidu categories exclusion");
-
-  AUTOTEST_CASE(
-    perform_case_<BaiduTraits>(TEST4_2),
-    "Baidu categories exclusion");
 
   return true;
 }

@@ -214,7 +214,7 @@ my ($self, $namespace) = @_;
 
     $ns->output("CCIDS/$name", $campaign->{cc_id});
     $ns->output("CREATIVEIDS/$name", $campaign->{creative_id});
-    $ns->output("CREATIVES/$name", get_tanx_creative($campaign->{Creative}));
+    $ns->output("CREATIVES/$name", get_external_creative_id($campaign->{Creative}));
 
     foreach (@{$args->{creative_tag_sizes}})
     {
@@ -253,7 +253,7 @@ my ($self, $namespace) = @_;
 
     $ns->output("CCIDS/$name", $campaign->{cc_id});
     $ns->output("CREATIVEIDS/$name", $campaign->{creative_id});
-    $ns->output("CREATIVES/$name", get_tanx_creative($campaign->{Creative}));
+    $ns->output("CREATIVES/$name", get_external_creative_id($campaign->{Creative}));
   }
 
   $ns->create(PricedTag => {

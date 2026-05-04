@@ -114,11 +114,9 @@ namespace Instantiate
     AdServer::Commons::UserId temp_user_id;
     bool remove_merged_uid;
 
-    std::string tanx_price;
     std::string open_price; // price in open view
     std::string openx_price;
     std::string liverail_price;
-    std::string baidu_price;
     std::string google_price;
 
     std::string campaign_manager_index;

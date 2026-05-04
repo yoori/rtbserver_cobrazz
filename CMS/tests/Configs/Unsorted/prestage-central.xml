@@ -256,17 +256,6 @@
       </configuration>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="pbepre">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10210" host="pbepre"/>
-            <logging log_level="4"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/ChannelProxy"
         host="pbepre">
         <configuration>

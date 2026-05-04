@@ -39,19 +39,6 @@ public:
     unsigned short flags;
   };
 
-  struct TanxCase
-  {
-    const char* aid;
-    const char* ccg;
-    const char* size;
-    const char* url;
-    double min_cpm_price;
-    const char* expected;
-    size_t count;
-    unsigned short flags;
-  };
-
-public:
   RandomAuctionTest(
     UnitStat& stat_var,
     const char* task_name,
@@ -114,8 +101,6 @@ private:
     AdClient& client);
   void open_rtb_secondary(
     AdClient& client);
-  void tanx();
 };
 
 #endif // _AUTOTEST__RANDOMAUCTIONTEST_
-

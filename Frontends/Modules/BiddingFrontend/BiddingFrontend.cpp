@@ -31,7 +31,6 @@
 
 #include "OpenRtbBidRequestTask.hpp"
 #include "GoogleBidRequestTask.hpp"
-#include "AppNexusBidRequestTask.hpp"
 #include "AdXmlBidRequestTask.hpp"
 #include "ClickStarBidRequestTask.hpp"
 #include "AdJsonBidRequestTask.hpp"
@@ -317,8 +316,6 @@ namespace Bidding
           config_->GoogleUriList().Uri(), uri, found_uri) ||
         FrontendCommons::find_uri(
           config_->OpenRtbUriList().Uri(), uri, found_uri) ||
-        FrontendCommons::find_uri(
-          config_->AppNexusUriList().Uri(), uri, found_uri) ||
         (config_->AdXmlUriList().present() &&
          FrontendCommons::find_uri(
            config_->AdXmlUriList()->Uri(), uri, found_uri)) ||
@@ -527,11 +524,6 @@ namespace Bidding
           if(it->seat().present())
           {
             source_traits.seat = *(it->seat());
-          }
-
-          if(it->appnexus_member_id().present())
-          {
-            source_traits.appnexus_member_id = *(it->appnexus_member_id());
           }
 
           if(it->request_type().present())
@@ -748,15 +740,6 @@ namespace Bidding
       {
         // Google request
         request_task = new GoogleBidRequestTask(
-          this,
-          request_holder,
-          response_writer,
-          start_process_time);
-      }
-      else if(FrontendCommons::find_uri(
-        config_->AppNexusUriList().Uri(), request.uri(), found_uri))
-      {
-        request_task = new AppNexusBidRequestTask(
           this,
           request_holder,
           response_writer,
@@ -1266,211 +1249,6 @@ namespace Bidding
     }
   }
 
-  bool
-  Frontend::process_appnexus_request_(
-    bool& bad_request,
-    AppNexusBidRequestTask* request_task,
-    RequestInfo& request_info,
-    const char* bid_request)
-    noexcept
-  {
-    static const char* FUN = "Bidding::Frontend::process_appnexus_request_()";
-
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
-    {
-      logger()->log(
-        String::SubString("Bidding::Frontend::process_appnexus_request_(): entered"),
-        TraceLevel::MIDDLE,
-        Aspect::BIDDING_FRONTEND);
-    }
-
-    if(check_interrupt_(FUN, "processing start", request_task))
-    {
-      return false;
-    }
-
-    AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
-      campaign_match_result;
-    AdServer::Commons::UserId user_id;
-    JsonProcessingContext context;
-
-    {
-      // parse request
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
-        request_params(*request_task->request_params);
-      std::string keywords;
-
-      try
-      {
-        request_info_filler_->fill_by_appnexus_request(
-          request_params,
-          request_info,
-          keywords,
-          context,
-          bid_request);
-      }
-      catch(const InvalidParamException& ex)
-      {
-        bad_request = true;
-
-        Stream::Error ostr;
-        ostr << FUN << ": bad request, " << ex.what() <<
-          ", request: '" << bid_request << "'";
-
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::BIDDING_FRONTEND,
-          "ADS-IMPL-7601");
-
-        return false;
-      }
-
-      if(check_interrupt_(FUN, "request parsing", request_task))
-      {
-        return false;
-      }
-
-      if (!process_bid_request_(
-        FUN,
-        campaign_match_result.out(),
-        user_id,
-        request_task,
-        request_info,
-        keywords))
-      {
-        return false;
-      }
-    }
-
-    assert(request_task->request_params.in());
-
-    // ATTENTION!
-    // Use only const reference to the RequestParam here.
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams&
-      request_params(*request_task->request_params);
-
-    if(campaign_match_result)
-    {
-      if (!consider_campaign_selection_(
-        user_id,
-        request_info.current_time,
-        *campaign_match_result,
-        request_task->hostname))
-      {
-        return false;
-      }
-
-      if(check_interrupt_(FUN, "campaign selection considering", request_task))
-      {
-        return false;
-      }
-
-      // check that any campaign selected (in any slot)
-      bool ad_selected = false;
-
-      for(CORBA::ULong ad_slot_i = 0;
-          ad_slot_i < campaign_match_result->ad_slots.length();
-          ++ad_slot_i)
-      {
-        const AdServer::CampaignSvcs::CampaignManager::
-          AdSlotResult& ad_slot_result = campaign_match_result->ad_slots[ad_slot_i];
-
-        if(ad_slot_result.selected_creatives.length() > 0)
-        {
-          ad_selected = true;
-          break;
-        }
-      }
-
-      if(ad_selected)
-      {
-        std::ostringstream response_ostr;
-        try
-        {
-          AdServer::Commons::JsonFormatter root_response(response_ostr);
-          AdServer::Commons::JsonObject bid_response(
-            root_response.add_object(Response::AppNexus::BID_RESPONSE));
-          AdServer::Commons::JsonObject responses(
-            bid_response.add_array(Response::AppNexus::RESPONSES));
-          // std::string escaped_request_id =
-          //  String::StringManip::json_escape(context.request_id);
-
-          assert(campaign_match_result->ad_slots.length() ==
-            context.ad_slots.size());
-          JsonAdSlotProcessingContextList::const_iterator slot_it =
-            context.ad_slots.begin();
-
-          for(CORBA::ULong ad_slot_i = 0;
-              ad_slot_i < campaign_match_result->ad_slots.length();
-              ++ad_slot_i, ++slot_it)
-          {
-            const AdServer::CampaignSvcs::CampaignManager::
-              AdSlotResult& ad_slot_result = campaign_match_result->ad_slots[ad_slot_i];
-
-            if(ad_slot_result.selected_creatives.length() > 0)
-            {
-              AdServer::Commons::JsonObject bid_response(
-                responses.add_object());
-              // campaigns selected
-              CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
-              const AdServer::CampaignSvcs::CampaignManager::CreativeSelectResult& creative =
-                ad_slot_result.selected_creatives[0];
-
-              sum_pub_ecpm += CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-                creative.pub_ecpm);
-
-              limit_max_cpm_(sum_pub_ecpm, request_params.publisher_account_ids);
-              // result price in RUB/1000, ecpm is in 0.01/1000
-              CampaignSvcs::RevenueDecimal appnexus_price = CampaignSvcs::RevenueDecimal::div(
-                sum_pub_ecpm,
-                CampaignSvcs::RevenueDecimal(false, 100, 0));
-
-              std::string escaped_creative_body =
-                String::StringManip::json_escape(
-                  String::SubString(ad_slot_result.creative_body));
-
-              unsigned long member_id = 0;
-              if(request_info.appnexus_member_id.present())
-              {
-                member_id = *request_info.appnexus_member_id;
-              }
-              else
-              {
-                member_id = (
-                  !context.member_ids.empty() ? *context.member_ids.begin() : 0);
-              }
-
-              bid_response.add_number(Response::AppNexus::AUCTION_ID_64, slot_it->id);
-              bid_response.add_number(Response::AppNexus::MEMBER_ID, member_id);
-              bid_response.add_number(Response::AppNexus::PRICE, appnexus_price);
-              bid_response.add_as_string(Response::AppNexus::CREATIVE_CODE, creative.creative_id);
-
-              AdServer::Commons::JsonObject custom_macros(bid_response.add_array(
-                Response::AppNexus::CUSTOM_MACROS));
-              AdServer::Commons::JsonObject custom_macros_elem(custom_macros.add_object());
-              custom_macros_elem.add_string(
-                Response::AppNexus::CM_NAME, String::SubString("EXT_DATA"));
-              custom_macros_elem.add_escaped_string(
-                Response::AppNexus::CM_VALUE, String::SubString(ad_slot_result.creative_body));
-            } // if(ad_slot_result.selected_creatives.length() > 0)
-          } // for(CORBA::ULong ad_slot_i = 0, ...
-        } // try JsonObject root
-        catch(const AdServer::Commons::JsonObject::Exception& ex)
-        {
-          Stream::Error ostr;
-          ostr << FUN << " Error on formatting Json response: '" << ex.what() << "'";
-          logger()->log(ostr.str(), Logging::Logger::EMERGENCY, Aspect::BIDDING_FRONTEND);
-        }
-
-        request_task->bid_response = response_ostr.str();
-
-        return true;
-      } // if(ad_selected)
-    } // if(campaign_match_result)
-
-    return false;
-  }
   */
 
   void

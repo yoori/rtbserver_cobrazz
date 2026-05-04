@@ -1,6 +1,4 @@
-add_pb(baidu-biddingPB baidu-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
 add_pb(google-biddingPB google-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
-add_pb(tanx-biddingPB tanx-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/BiddingFrontend)
 
 add_library(BiddingFrontend SHARED
   RequestInfoFiller.cpp
@@ -11,7 +9,6 @@ add_library(BiddingFrontend SHARED
   BidRequestTask.cpp
   OpenRtbBidRequestTask.cpp
   GoogleBidRequestTask.cpp
-  AppNexusBidRequestTask.cpp
   AdXmlBidRequestTask.cpp
   AdJsonBidRequestTask.cpp
   ClickStarBidRequestTask.cpp
@@ -51,9 +48,7 @@ target_link_libraries(BiddingFrontend
   CommonModule
 
   FeConfigXSD
-  baidu-biddingPB
   google-biddingPB
-  tanx-biddingPB
   Gason
   ${PROTOBUF_LDFLAGS}
   protoc

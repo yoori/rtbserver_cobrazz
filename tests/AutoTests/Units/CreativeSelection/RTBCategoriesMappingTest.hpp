@@ -10,11 +10,7 @@ class RTBCategoriesMappingTest : public BaseUnit
 
   typedef AutoTest::AdClient AdClient;
   typedef AutoTest::OpenRTBRequest OpenRTBRequest;
-  typedef AutoTest::TanxRequest TanxRequest;
-  typedef AutoTest::BaiduRequest BaiduRequest;
   typedef AutoTest::OpenRTBResponseChecker OpenRTBResponseChecker;
-  typedef AutoTest::TanxResponseChecker TanxResponseChecker;
-  typedef AutoTest::BaiduResponseChecker BaiduResponseChecker;
 
 public:
   RTBCategoriesMappingTest(
@@ -59,16 +55,6 @@ public:
     ResponseBid bids[BannersCount];
   };
 
-  struct TanxTestCase
-  {
-    const char* description;
-    // Request params
-    RequestBanner banner;
-    const char* bcat;
-    // Response params
-    ResponseBid bid;
-  };
-
   template<size_t BannersCount = 1>
   struct AllyesTestCase
   {
@@ -79,15 +65,6 @@ public:
     const char* bcat;
     // Response params
     AllyesBid bids[BannersCount];
-  };
-
-  struct BaiduTestCase
-  {
-    const char* description;
-    // Request params
-    RequestBanner banner;
-    // Response params
-    ResponseBid bid;
   };
 
 private:
@@ -120,31 +97,11 @@ private:
     Setter setter,
     Touch touch);
 
-  void
-  prepare_request(
-    TanxRequest& request,
-    const TanxTestCase& test_case);
-
-  void
-  prepare_request(
-    BaiduRequest& request,
-    const BaiduTestCase& test_case);
-
   template<typename TestCase>
   void
   prepare_request(
     OpenRTBRequest& request,
     const TestCase& test_case);
-
-  void
-  prepare_checker(
-    TanxResponseChecker::Expected& expected,
-    const TanxTestCase& test_case);
-
-  void
-  prepare_checker(
-    BaiduResponseChecker::Expected& expected,
-    const BaiduTestCase& test_case);
 
   template<size_t Slots>
   void

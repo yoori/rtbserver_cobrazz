@@ -425,11 +425,6 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
           <inventoryStats simplifying="100"/>
           <snmpStats enable="false"/>
           <userProfiling repeat_trigger_timeout="0">
-            <userInfoExchangerRef host="$SOURCE_HOST" port="[% SOURCE_PORT_BASE + 60 %]">
-[% IF SECURE_CONNECTIONS %]
-              <secureParams key="ckey.pem" certificate="ccert.pem" password="adserver"/>
-[% END %]
-            </userInfoExchangerRef>
           </userProfiling>
           <remote>
             <campaignServerRef host="$SOURCE_HOST" port="[% SOURCE_PORT_BASE + 56 %]">
@@ -803,36 +798,6 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
             </campaignManager>
           </configuration>
         </service>
-
-        <service
-          descriptor="AdCluster/FrontendSubCluster/ZmqProfilingBalancer"
-          name="ZmqProfilingBalancer #1"
-          host="$HOST">
-          <configuration>
-            <zmqProfilingBalancer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
-              <networkParams port="[% PORT_BASE + 74 %]"/>
-              <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
-              <profilingInfoBindSocket hwm="1">
-                <address port="[% PORT_BASE + 88 %]"/>
-              </profilingInfoBindSocket>
-              <anonymousStatsBindSocket hwm="1">
-                <address port="[% PORT_BASE + 89 %]"/>
-              </anonymousStatsBindSocket>
-            </zmqProfilingBalancer>
-          </configuration>
-        </service>
-  
-        <service
-          descriptor="AdCluster/FrontendSubCluster/ProfilingServer"
-          name="ProfilingServer"
-          host="$HOST">
-        <configuration>
-          <profilingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" work_threads="5">
-            <networkParams port="[% PORT_BASE + 75 %]" profiling_info_port="[% PORT_BASE + 86 %]" anonymous_stats_port="[% PORT_BASE + 87 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
-          </profilingServer>
-        </configuration>
-      </service>
 
       <service
         descriptor="AdCluster/FrontendSubCluster/FCGIServer"

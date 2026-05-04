@@ -26,11 +26,6 @@
     <cfg:StatsDumper period="60" provide_channel_counters="true">
       <cfg:StatsDumperRef name="StatsDumperRef" ref="corbaloc:iiop:vnode1:10118/StatsCollector"/>
     </cfg:StatsDumper>
-    <cfg:UserInfoExchangerParameters set_get_profiles_period="60" colo_request_timeout="600" customer_id="6">
-      <cfg:UserInfoExchangerRef name="UserInfoExchanger" ref="corbaloc:ssliop:vnode0:10210/UserInfoExchanger">
-        <cfg:Secure key="/opt/foros/server/etc/moscow-test-remote1/adcluster/vnode1/cert/skey.pem" certificate="/opt/oix/server/etc/moscow-test-remote1/adcluster/vnode1/cert/scert.pem" certificate_authority="/opt/oix/server/etc/moscow-test-remote1/adcluster/vnode1/cert/ca.pem" key-word="adserver"/>
-      </cfg:UserInfoExchangerRef>
-    </cfg:UserInfoExchangerParameters>
     <cfg:UserOperationsLoad file_prefix="UserOp" check_period="60" dir="/opt/foros/server/var/log/UserInfoManager/In/UserOp_1" unprocessed_dir="/opt/oix/server/var/log/UserInfoManager/Out/UserOp_1"/>
     <cfg:FreqCaps confirm_timeout="60"/>
   </cfg:UserInfoManagerConfig>

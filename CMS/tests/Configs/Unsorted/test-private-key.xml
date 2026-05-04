@@ -412,13 +412,6 @@ W/POuZ6lcg5Ktz885hZo+L7tdEy8W9ViH0Pd
             </configuration:fileTransferring>
           </configuration:syncLogs>
         </configuration:cluster></configuration>
-      <service descriptor="AdProxyCluster/UserInfoExchanger" host="uk00propbe00">
-        <configuration><configuration:userInfoExchanger>
-            <configuration:networkParams port="10110"/>
-            <configuration:externalNetworkParams host="pbe" secure="true" port="10210"/>
-            <configuration:logging error_size_cleanup="104857600" error_time_cleanup="86400" log_level="4" rotate_size="100" rotate_time="1" sys_log="true" trace_size_cleanup="104857600" trace_time_cleanup="86400"/>
-          </configuration:userInfoExchanger></configuration>
-      </service>
       <service descriptor="AdProxyCluster/ChannelProxy" host="uk00propbe00">
         <configuration><configuration:channelProxy>
             <configuration:networkParams port="10105"/>

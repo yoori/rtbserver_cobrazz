@@ -11,9 +11,7 @@ namespace
   typedef AutoTest::SelectedCreativesCCID SelectedCreativesCCID;
   typedef AutoTest::UserBindRequest UserBindRequest;
   typedef AutoTest::OpenRTBRequest OpenRTBRequest;
-  typedef AutoTest::TanxRequest TanxRequest;
   typedef AutoTest::OpenRTBResponseChecker OpenRTBResponseChecker;
-  typedef AutoTest::TanxResponseChecker TanxResponseChecker;
   typedef AutoTest::Money Money;
   typedef AutoTest::CountChecker CountChecker;
 
@@ -26,12 +24,6 @@ namespace
   {
     typedef AutoTest::OpenRTBRequest Request;
     typedef AutoTest::OpenRTBResponseChecker Checker;
-  };
-
-  struct TanxTraits
-  {
-    typedef AutoTest::TanxRequest Request;
-    typedef AutoTest::TanxResponseChecker Checker;
   };
 
   // Saint Lucia IP
@@ -77,25 +69,6 @@ namespace
   }
 
   void
-  rtb_request(
-    BaseUnit* test,
-    TanxRequest& request,
-    const RandomAuctionTest::TanxCase& rtb_case)
-  {
-    request.
-      aid(test->fetch_int(rtb_case.aid)).
-      debug_ccg(test->fetch_int(rtb_case.ccg)).
-      debug_size(test->fetch_string(rtb_case.size)).
-      min_cpm_price(rtb_case.min_cpm_price);
-
-    request.url =
-      rtb_case.flags & RTCF_SEARCH?
-        search_url(
-          test->map_objects(rtb_case.url, " ")):
-            test->fetch_string(rtb_case.url);
-  }
-
-  void
   rtb_expected(
     BaseUnit* test,
     OpenRTBResponseChecker::Expected& expected,
@@ -104,17 +77,6 @@ namespace
     expected.
       price(e.price).
       adid(test->fetch_int(e.ccid.c_str()));
-  }
-
-  void
-  rtb_expected(
-    BaseUnit* test,
-    TanxResponseChecker::Expected& expected,
-    const RTBExpected& e)
-  {
-    expected.
-      max_cpm_price(e.price).
-      creative_id(test->fetch_string(e.ccid.c_str()));
   }
 
   class ProbabilityChecker :
@@ -601,91 +563,6 @@ RandomAuctionTest::open_rtb_secondary(
     CASES);
 }
 
-void
-RandomAuctionTest::tanx()
-{
-
-  AdClient client(AdClient::create_nonoptin_user(this));
-
-  // Precondition
-
-  client.process_request(
-    NSLookupRequest().
-      referer(fetch_string("TANX/URL/3")).
-      tid(fetch_int("TANX/Tag/2/3")).
-      colo(fetch_int("OpenRTBColo")).
-      loc_name("lc").
-      format("html"));
-
-  NOSTOP_FAIL_CONTEXT(
-    AutoTest::equal_checker(
-      fetch_string("TANX/CC/3/2"),
-      client.debug_info.ccid).check(),
-    "Precondition check");
-
-  const TanxCase CASES[] =
-  {
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/2", "SIZE/1",
-      "TANX/URL/2", 0, "TANX/CREATIVE/2/1:10600", 1, 0
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/2", "SIZE/1",
-      "TANX/URL/2", 10600,
-      "TANX/CREATIVE/2/1:10600", 1, 0
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/2", "SIZE/1",
-      "TANX/URL/2", 10601, 0, 1, 0
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/5", "SIZE/4",
-      "TANX/KWD/6", 10000,
-      "TANX/CREATIVE/5/1:10600,TANX/CREATIVE/6/1:10600", 100,
-      RTCF_SEARCH
-    },
-    {
-      "TANX/ACCOUNT/2", "TANX/CCG/2", "SIZE/1",
-      "TANX/KWD/2", 10598,
-      "TANX/CREATIVE/2/1:10599", 1,
-      RTCF_SEARCH
-    },
-    {
-      "TANX/ACCOUNT/2", "TANX/CCG/2", "SIZE/1",
-      "TANX/KWD/2", 10600,
-      0, 1, RTCF_SEARCH
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/2", "SIZE/0",
-      "TANX/KWD/2", 10599, "TANX/CREATIVE/2/2:10600", 1,
-      RTCF_SEARCH
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/1", "SIZE/0",
-      "TANX/KWD/2", 10601,
-      "TANX/CREATIVE/1/2:19999", 1,
-      RTCF_SEARCH
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/3", "SIZE/5",
-      "TANX/URL/3", 0,
-      0, 1, 0
-    },
-    {
-      "TANX/ACCOUNT/1", "TANX/CCG/4", "SIZE/5",
-      "TANX/URL/4", 0,
-      "TANX/CREATIVE/4/2:1", 1, 0
-    }
-  };
-
-  rtb_test_case<TanxTraits>(
-    client,
-    TanxTraits::Request().
-      ip(LC_IP),
-    CASES);
-}
-
-void
 RandomAuctionTest::set_up()
 {
   AutoTest::ORM::clear_stats(
@@ -730,10 +607,6 @@ RandomAuctionTest::run()
       open_rtb_secondary(client),
       "Open RTB. Secondary auctions");
   }
-
-  AUTOTEST_CASE(
-    tanx(),
-    "TanX cases");
 
   return true;
 }

@@ -600,8 +600,7 @@ namespace AdServer
         for(HTTP::ParamList::const_iterator it = params.begin();
             it != params.end(); ++it)
         {
-          // use last defined parameter (actual for baidu(static)
-          // when requestid defined for both frontends
+          // use last defined parameter when requestid defined for both frontends
           parsed_params[it->name] = it->value;
         }
       }

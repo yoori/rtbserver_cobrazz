@@ -3,8 +3,6 @@
 
 #include <tests/AutoTests/Commons/Request/BaseRequest.hpp>
 #include <tests/AutoTests/Commons/Request/ActionRequest.hpp>
-#include <tests/AutoTests/Commons/Request/TanxRequest.hpp>
-#include <tests/AutoTests/Commons/Request/BaiduRequest.hpp>
 #include <tests/AutoTests/Commons/Request/ClickRequest.hpp>
 #include <tests/AutoTests/Commons/Request/ConversationRequest.hpp>
 #include <tests/AutoTests/Commons/Request/ImpressionRequest.hpp>

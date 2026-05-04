@@ -16,7 +16,6 @@
 #include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerSessionFactory.hpp>
-#include <UserInfoSvcs/UserInfoExchanger/UserInfoExchanger.hpp>
 
 #include "Application.hpp"
 
@@ -41,18 +40,6 @@ namespace
     "user_id=<user id in base64 format> "
       "[--expand | -e] [--align | -a] [--plain | -p] "
       "-r[--reference=]<user_info_manager_corba_ref>|<user_info_manager_controller_corba_ref> \n\n"
-    "Debug commands:\n"
-    "Synopsis 4:\n"
-    "UserInfoAdmin request "
-      "--uid=<user id in base64 format> "
-      "--customer_id=<colo id> "
-      "--provider_id=<user info owner colo id> "
-      "--exchanger=<user info exchanger corba ref>\n\n"
-    "UserInfoAdmin response "
-      "--uid=<user id in base64 format> "
-      "--provider_id=<user info owner colo id> "
-      "--user_info=<test user info> "
-      "--user_history_info=<test history user info>\n\n"
     "UserInfoAdmin delete-old-profiles "
       "(-r[--reference=]<user_info_manager_corba_ref>|"
       "<user_info_manager_controller_corba_ref>) "
@@ -530,7 +517,6 @@ Application_::main(int& argc, char** argv)
 
   Generics::AppUtils::Option<std::string> opt_user_id;
   Generics::AppUtils::Option<std::string> opt_temp_user_id;
-  Generics::AppUtils::Option<std::string> opt_ui_exchanger_ref;
   Generics::AppUtils::Option<std::string> opt_user_info_manager_ref;
 
   // match options
@@ -539,10 +525,6 @@ Application_::main(int& argc, char** argv)
   Generics::AppUtils::Option<std::string> opt_matched_url_channels("");
   Generics::AppUtils::Option<std::string> opt_matched_persistent_channels("");
 
-  Generics::AppUtils::Option<unsigned long> opt_provider_id;
-  Generics::AppUtils::Option<std::string> opt_customer_id;
-  Generics::AppUtils::Option<std::string> opt_user_info;
-  Generics::AppUtils::Option<std::string> opt_user_history_info;
   Generics::AppUtils::Option<std::string> opt_keys_directory;
   Generics::AppUtils::CheckOption opt_persistent;
   Generics::AppUtils::CheckOption opt_sync;
@@ -584,18 +566,10 @@ Application_::main(int& argc, char** argv)
     Generics::AppUtils::short_name("t"),
     opt_temp_user_id);
 
-  args.add(Generics::AppUtils::equal_name("provider-id"), opt_provider_id);
-  args.add(Generics::AppUtils::equal_name("customer-id"), opt_customer_id);
-
   args.add(
     Generics::AppUtils::equal_name("reference") ||
     Generics::AppUtils::short_name("r"),
     opt_user_info_manager_ref);
-
-  args.add(
-    Generics::AppUtils::equal_name("exchanger") ||
-    Generics::AppUtils::short_name("re"),
-    opt_ui_exchanger_ref);
 
   args.add(Generics::AppUtils::equal_name("page-channels"),
     opt_matched_page_channels);
@@ -605,8 +579,6 @@ Application_::main(int& argc, char** argv)
     opt_matched_url_channels);
   args.add(Generics::AppUtils::equal_name("persistent-channels"),
     opt_matched_persistent_channels);
-  args.add(Generics::AppUtils::equal_name("user-info"), opt_user_info);
-  args.add(Generics::AppUtils::equal_name("user-history-info"), opt_user_history_info);
   args.add(Generics::AppUtils::equal_name("keys-dir"), opt_keys_directory);
   args.add(Generics::AppUtils::equal_name("persistent"), opt_persistent);
   args.add(Generics::AppUtils::equal_name("time"), opt_time);
@@ -834,242 +806,6 @@ Application_::main(int& argc, char** argv)
         opt_portion.installed() ? *opt_portion : -1);
     }
   }
-  else if(command == "request" || command == "response")
-  {
-    try
-    {
-      /* parse commons for request and response arguments */
-      AdServer::UserInfoSvcs::UserInfoExchanger_var  user_info_exchanger =
-        corba_client_adapter->resolve_object<
-          AdServer::UserInfoSvcs::UserInfoExchanger>(
-            opt_ui_exchanger_ref->c_str());
-
-      if(!opt_user_id.installed() || !opt_provider_id.installed())
-      {
-        throw Exception("user_id or provider_id isn't presented");
-      }
-
-      if(command == "request")
-      {
-        std::cout << "Request user info. " << std::endl;
-
-        if(!opt_customer_id.installed() || !opt_provider_id.installed())
-        {
-          throw Exception("customer_id or provider_id isn't defined");
-        }
-
-        try
-        {
-          AdServer::UserInfoSvcs::ColoUsersRequestSeq user_request;
-          user_request.length(1);
-          user_request[0].colo_id = *opt_provider_id;
-          user_request[0].users.length(1);
-          user_request[0].users[0] = opt_user_id->c_str();
-
-          user_info_exchanger->register_users_request(
-            opt_customer_id->c_str(), user_request);
-        }
-        catch(AdServer::UserInfoSvcs::
-              UserInfoExchanger::ImplementationException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught ImplementationException from register_users_request(..): " <<
-            ex.description;
-          throw Exception(ostr);
-        }
-        catch(CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught CORBA::SystemException from register_users_request(..): " << ex;
-          throw Exception(ostr);
-        }
-
-        std::cout << "Wait & receive user info..." << std::endl;
-
-        try
-        {
-          bool stop = false;
-
-          do
-          {
-            AdServer::UserInfoSvcs::UserProfileSeq_var user_profile;
-            AdServer::UserInfoSvcs::ReceiveCriteria rec_cr;
-            rec_cr.max_response_plain_size = 10*1024*1024;
-            rec_cr.common_chunks_number = 1;
-            rec_cr.chunk_ids.length(1);
-            rec_cr.chunk_ids[0] = 0;
-
-            user_info_exchanger->receive_users(
-              opt_customer_id->c_str(),
-              user_profile,
-              rec_cr);
-
-            if(user_profile->length() != 0)
-            {
-              for(CORBA::ULong i = 0; i < user_profile->length(); ++i)
-              {
-                const AdServer::UserInfoSvcs::UserProfile&
-                  up_to_print = (*user_profile)[i];
-
-                std::string plain_up_string(
-                  (const char*)up_to_print.plain_profile.get_buffer(),
-                  up_to_print.plain_profile.length());
-
-                std::string plain_uhp_string(
-                  (const char*)up_to_print.plain_history_profile.get_buffer(),
-                  up_to_print.plain_history_profile.length());
-
-                std::cout
-                  << "User Info received: " << std::endl
-                  << "  user_id='" << up_to_print.user_id << "'" << std::endl
-                  << "  colo_id='" << up_to_print.colo_id << "'" << std::endl
-                  << "  plain_profile='" << plain_up_string << "'" << std::endl
-                  << "  plain_history_profile='" << plain_uhp_string << "'" << std::endl;
-
-                if(*opt_user_id == (const char*)up_to_print.user_id)
-                {
-                  stop = true;
-                }
-              }
-            }
-            else
-            {
-              sleep(1);
-            }
-          }
-          while(!stop);
-        }
-        catch(const AdServer::UserInfoSvcs::
-              UserInfoExchanger::ImplementationException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught ImplementationException from receive_users(..): " <<
-            ex.description;
-          throw Exception(ostr);
-        }
-        catch(const CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught CORBA::SystemException from receive_users(..): " << ex;
-          throw Exception(ostr);
-        }
-      }
-      else if(command == "response")
-      {
-        std::cout << "Wait for user request..." << std::endl;
-
-        if(!opt_user_info.installed() || !opt_user_history_info.installed())
-        {
-          throw Exception("user-info or user-history-info undefined");
-        }
-
-        /* wait for user request */
-        try
-        {
-          bool stop = false;
-
-          do
-          {
-            AdServer::UserInfoSvcs::UserIdSeq_var requested_users;
-
-            user_info_exchanger->get_users_requests(
-              opt_customer_id->c_str(),
-              requested_users);
-
-            if(requested_users->length() != 0)
-            {
-              for(CORBA::ULong i = 0; i < requested_users->length(); ++i)
-              {
-                std::cout << "User requested: " << std::endl <<
-                  "  user_id='" << (*requested_users)[i] << "'" << std::endl;
-
-                if(*opt_user_id == (const char*)((*requested_users)[i]))
-                {
-                  stop = true;
-                }
-              }
-            }
-            else
-            {
-              sleep(1);
-            }
-          }
-          while(!stop);
-        }
-        catch(AdServer::UserInfoSvcs::
-              UserInfoExchanger::ImplementationException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught ImplementationException from get_users_requests(..): " <<
-            ex.description;
-          throw Exception(ostr);
-        }
-        catch(CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught CORBA::SystemException from get_users_requests(..): " << ex;
-          throw Exception(ostr);
-        }
-
-        std::cout << "To send requested user." << std::endl;
-
-        try
-        {
-          /* send requested user */
-          AdServer::UserInfoSvcs::UserProfileSeq user_profile;
-          user_profile.length(1);
-          user_profile[0].colo_id = *opt_provider_id;
-          user_profile[0].user_id = opt_user_id->c_str();
-
-          {
-            user_profile[0].plain_profile.length(opt_user_info->length());
-
-            memcpy(
-              user_profile[0].plain_profile.get_buffer(),
-              opt_user_info->c_str(),
-              opt_user_info->length());
-          }
-
-          {
-            user_profile[0].plain_history_profile.length(opt_user_history_info->length());
-
-            memcpy(
-              user_profile[0].plain_history_profile.get_buffer(),
-              opt_user_history_info->c_str(),
-              opt_user_history_info->length());
-          }
-
-          user_info_exchanger->send_users(
-            opt_customer_id->c_str(),
-            user_profile);
-
-          std::cout << "User info sended successfully." << std::endl;
-        }
-        catch(AdServer::UserInfoSvcs::
-              UserInfoExchanger::ImplementationException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught ImplementationException from send_users(..): " <<
-            ex.description;
-          throw Exception(ostr);
-        }
-        catch(CORBA::SystemException& ex)
-        {
-          Stream::Error ostr;
-          ostr << "Caught CORBA::SystemException from send_users(..): " << ex;
-          throw Exception(ostr);
-        }
-      }
-    }
-    catch(const eh::Exception& ex)
-    {
-      std::cout << "Caught eh::Exception: " << ex.what() << std::endl;
-    }
-    catch(const CORBA::SystemException& ex)
-    {
-      std::cout << "Caught CORBA::SystemException: " << ex << std::endl;
-    }
-  }
   else
   {
     std::cerr << "Unknown command '" << command << "'. "
@@ -1133,5 +869,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
-

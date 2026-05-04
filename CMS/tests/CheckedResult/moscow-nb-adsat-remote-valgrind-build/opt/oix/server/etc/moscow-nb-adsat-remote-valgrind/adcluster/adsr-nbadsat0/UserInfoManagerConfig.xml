@@ -22,11 +22,6 @@
     <cfg:CampaignServerRef name="CampaignServer">
       <cfg:Ref ref="corbaloc:iiop:adsr-nbadsat0:10106/CampaignServer_v24"/>
     </cfg:CampaignServerRef>
-    <cfg:UserInfoExchangerParameters set_get_profiles_period="60" colo_request_timeout="600" customer_id="2">
-      <cfg:UserInfoExchangerRef name="UserInfoExchanger" ref="corbaloc:ssliop:adsp-nbadsat0:10210/UserInfoExchanger">
-        <cfg:Secure key="/opt/foros/server/etc/moscow-nb-adsat-remote-valgrind/adcluster/adsr-nbadsat0/cert/skey.pem" certificate="/opt/oix/server/etc/moscow-nb-adsat-remote-valgrind/adcluster/adsr-nbadsat0/cert/scert.pem" certificate_authority="/opt/oix/server/etc/moscow-nb-adsat-remote-valgrind/adcluster/adsr-nbadsat0/cert/ca.pem" key-word="adserver"/>
-      </cfg:UserInfoExchangerRef>
-    </cfg:UserInfoExchangerParameters>
     <cfg:UserOperationsLoad file_prefix="UserOp" check_period="60" dir="/opt/foros/server/var/log/UserInfoManager/In/UserOp_1" unprocessed_dir="/opt/oix/server/var/log/UserInfoManager/Out/UserOp_1"/>
     <cfg:FreqCaps confirm_timeout="60"/>
   </cfg:UserInfoManagerConfig>

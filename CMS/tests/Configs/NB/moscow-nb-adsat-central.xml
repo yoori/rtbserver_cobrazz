@@ -470,17 +470,6 @@
       </configuration>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="adsp-nbadsat0">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10210" host="adsp-nbadsat0"/>
-            <logging log_level="4"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/ChannelProxy"
         host="adsp-nbadsat0">
         <configuration>
@@ -533,17 +522,6 @@
           </syncLogs>
         </cluster>
       </configuration>
-
-      <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="adsp-nbadsat1">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10210" host="adsp-nbadsat1"/>
-            <logging log_level="4"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
 
       <service
         descriptor="AdProxyCluster/ChannelProxy"

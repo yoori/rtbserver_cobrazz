@@ -60,7 +60,6 @@ target_link_libraries(UserInfoManager
  ProfileMap
 
  UserInfoManagerConfigXSD
- UserInfoExchangerIDL
  UserInfoManagerIDL
  UserInfoManagerControlIDL
  CampaignServerIDL

@@ -17,7 +17,6 @@
   log_root=$workspace_root/log
   TNS_ADMIN=$config_root/OcciAdmin/
   
-  ZENOSS_DIR=/opt/zenoss/lib/foros/moscow-test-remote2
   export ZENOSS_DIR
   
 

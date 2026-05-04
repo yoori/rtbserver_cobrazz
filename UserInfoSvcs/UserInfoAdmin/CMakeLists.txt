@@ -12,6 +12,5 @@ target_link_libraries(UserInfoAdmin
 
   UserInfoManagerIDL
   UserInfoManagerControlIDL
-  UserInfoExchangerIDL
   UserInfoManagerControllerCall
 )

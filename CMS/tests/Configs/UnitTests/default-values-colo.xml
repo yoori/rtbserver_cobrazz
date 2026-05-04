@@ -133,15 +133,6 @@
           </syncLogs>
         </cluster>
       </configuration>
-
-      <service descriptor="AdProxyCluster/UserInfoExchanger"
-        host="host15">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10205" host="extHost16"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
       <service descriptor="AdProxyCluster/ChannelProxy"
         host="host16">
         <configuration>

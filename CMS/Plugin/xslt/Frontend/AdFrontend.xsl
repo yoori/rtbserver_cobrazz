@@ -219,16 +219,6 @@
       <xsl:value-of select="@openx_integrity_key"/>
     </xsl:attribute>
   </xsl:if>
-  <xsl:if test="count(@baidu_encryption_key) > 0">
-    <xsl:attribute name="baidu_encryption_key">
-      <xsl:value-of select="@baidu_encryption_key"/>
-    </xsl:attribute>
-  </xsl:if>
-  <xsl:if test="count(@baidu_integrity_key) > 0">
-    <xsl:attribute name="baidu_integrity_key">
-      <xsl:value-of select="@baidu_integrity_key"/>
-    </xsl:attribute>
-  </xsl:if>
   <xsl:if test="count(@google_encryption_key) > 0">
     <xsl:attribute name="google_encryption_key">
       <xsl:value-of select="@google_encryption_key"/>
@@ -1201,10 +1191,6 @@
         <cfg:Uri path="/openrtb"/>
       </cfg:OpenRtbUriList>
 
-      <cfg:AppNexusUriList>
-        <cfg:Uri path="/appnexus"/>
-      </cfg:AppNexusUriList>
-
       <cfg:AdXmlUriList>
         <cfg:Uri path="/adxml"/>
       </cfg:AdXmlUriList>
@@ -1253,10 +1239,6 @@
           <xsl:attribute name="truncate_domain"><xsl:value-of
              select="@truncate_domain"/><xsl:if test="count(@truncate_domain)
              = 0">false</xsl:if></xsl:attribute>
-          <xsl:if test="count(@appnexus_member_id) > 0">
-            <xsl:attribute name="appnexus_member_id"><xsl:value-of
-              select="@appnexus_member_id"/></xsl:attribute>
-          </xsl:if>
           <xsl:choose>
             <xsl:when test="count(@vast_instantiate_type) > 0">
               <xsl:attribute name="vast_instantiate_type">

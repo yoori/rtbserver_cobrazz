@@ -245,18 +245,6 @@
       </configuration>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="xen.ocslab.com">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <networkParams port="12310"/>
-            <externalNetworkParams port="12360" host="xen.ocslab.com"/>
-            <logging log_level="4"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/ChannelProxy"
         host="xen.ocslab.com">
         <configuration>

@@ -41,9 +41,6 @@
           </coloParams>
           <inventoryStats simplifying="100"/>
           <userProfiling>
-            <userInfoExchangerRef host="adsp-nbadsat0" port="10210">
-              <secureParams key="skey.pem" certificate="scert.pem" password="adserver"/>
-            </userInfoExchangerRef>
           </userProfiling>
           <remote>
             <campaignServerRef host="adsp-nbadsat0" port="10206">

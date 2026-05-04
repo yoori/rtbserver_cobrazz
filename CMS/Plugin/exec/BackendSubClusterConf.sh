@@ -399,42 +399,6 @@ $EXEC/CurrentEnvGen.sh \
 
 let "EXIT_CODE|=$?"
 
-## Configure SubAgent
-SA_CONFIG_XPATH="$CLUSTER_XPATH/../configuration/cfg:cluster/cfg:snmpStats/@enable"
-SUBAGENT_ENABLE_XPATH="$SA_CONFIG_XPATH = 'true' or $SA_CONFIG_XPATH='1'"
-SUBAGENT_ENABLE=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath "$SUBAGENT_ENABLE_XPATH" --plugin-root $PLUGIN_ROOT`
-
-if [ $SUBAGENT_ENABLE == "true" ]
-then
-SUBAGENT_NEEDS_XPATH="
-  $EXPRESSION_MATCHER_XPATH |
-  $LOG_GENERALIZER_XPATH |
-  $REQUEST_INFO_MANAGER_XPATH"
-
-$EXEC/ServiceConf.sh \
-  --services-xpath "$SUBAGENT_NEEDS_XPATH" \
-  --app-xml $APP_XML \
-  --xsl $XSLT_ROOT/Zenoss/SubAgentShellFunctions.xsl \
-  --out-file subagent/subagent-shell-AdServer-functions-conf.xml \
-  --out-dir $OUT_DIR \
-  --plugin-root $PLUGIN_ROOT \
-  --var CONNECTIONS_ONLY 0 \
-  --var CLUSTER_XPATH "$CLUSTER_XPATH/.."
-
-let "EXIT_CODE|=$?"
-
-$EXEC/ProcessHostFiles.sh \
-  --services-xpath "$SUBAGENT_NEEDS_XPATH" \
-  --app-xml $APP_XML \
-  --plugin-root $PLUGIN_ROOT \
-  --out-dir $OUT_DIR \
-  --cmd 'cp $PLUGIN_ROOT/data/SubAgentShell/SubAgent-Shell-Apache.functions $HOST_DIR/subagent/' \
-  --cmd 'cp $PLUGIN_ROOT/data/SubAgentShell/SubAgent-Shell-AdCluster.functions $HOST_DIR/subagent/' \
-  --cmd 'cp $OUT_DIR/frontend_cert/SignedUids.pm $HOST_DIR/subagent'
-
-let "EXIT_CODE|=$?"
-fi
-
 if [ $EXIT_CODE -eq 0 ]
 then
   echo config for BackendSubCluster completed successfully

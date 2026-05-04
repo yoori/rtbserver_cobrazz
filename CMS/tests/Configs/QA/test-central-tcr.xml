@@ -592,16 +592,6 @@ hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
       </configuration>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="vtcr0">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10210" host="vtcr0"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/ChannelProxy"
         host="vtcr0">
         <configuration>
@@ -653,16 +643,6 @@ hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
           </syncLogs>
         </cluster>
       </configuration>
-
-      <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="vtcr3">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10210" host="vtcr3"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
 
       <service
         descriptor="AdProxyCluster/ChannelProxy"

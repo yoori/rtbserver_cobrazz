@@ -282,18 +282,6 @@
       </configuration>
 
       <service
-        descriptor="AdProxyCluster/UserInfoExchanger"
-        host="host15">
-        <configuration>
-          <userInfoExchanger xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration">
-            <externalNetworkParams port="10210" host="extHost15"/>
-            <logging log_level="4" error_time_cleanup="6" error_size_cleanup="7"
-              trace_time_cleanup="8" trace_size_cleanup="9"/>
-          </userInfoExchanger>
-        </configuration>
-      </service>
-
-      <service
         descriptor="AdProxyCluster/ChannelProxy"
         host="host16">
         <configuration>

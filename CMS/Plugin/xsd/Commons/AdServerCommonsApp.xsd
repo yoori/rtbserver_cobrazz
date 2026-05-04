@@ -473,7 +473,6 @@
       <xsd:enumeration value="openx"/>
       <xsd:enumeration value="liverail"/>
       <xsd:enumeration value="adriver"/>
-      <xsd:enumeration value="appnexus"/>
       <xsd:enumeration value="yandex"/>
       <xsd:enumeration value="google"/>
     </xsd:restriction>
@@ -514,7 +513,6 @@
 
     <xsd:attribute name="truncate_domain" type="xsd:boolean" default="false"/>
     <xsd:attribute name="seat" type="xsd:string" use="optional"/>
-    <xsd:attribute name="appnexus_member_id" type="xsd:nonNegativeInteger" use="optional"/>
     <xsd:attribute name="fill_adid" type="xsd:boolean" default="false"/>
     <xsd:attribute name="ipw_extension" type="xsd:boolean" use="optional"/>
 

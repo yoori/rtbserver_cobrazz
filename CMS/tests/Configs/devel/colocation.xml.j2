@@ -584,41 +584,6 @@ Dfvp7OOGAN6dEOM4+qR9sdjoSYKEBpsr6GtPAQw4dy753ec5
         </configuration>
       </service>
 
-      <!--
-      <service
-        descriptor="AdCluster/FrontendSubCluster/ZmqProfilingBalancer"
-        name="ZmqProfilingBalancer #1"
-        host="{{host}}">
-        <configuration>
-          <zmqProfilingBalancer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
-            <networkParams port="{{port_base + 74 }}"/>
-            <logging log_level="{{log_level}}" sys_log="{{sys_log}}"/>
-            <profilingInfoBindSocket hwm="1">
-              <address port="{{port_base + 88 }}"/>
-            </profilingInfoBindSocket>
-            <anonymousStatsBindSocket hwm="1">
-              <address port="{{port_base + 89 }}"/>
-            </anonymousStatsBindSocket>
-            <dmpProfilingInfoBindSocket hwm="1">
-              <address port="{{port_base + 91 }}"/>
-            </dmpProfilingInfoBindSocket>
-          </zmqProfilingBalancer>
-        </configuration>
-      </service>
-
-      <service
-        descriptor="AdCluster/FrontendSubCluster/ProfilingServer"
-        name="ProfilingServer"
-        host="{{host}}">
-      <configuration>
-        <profilingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" work_threads="5">
-          <networkParams port="{{port_base + 75 }}" profiling_info_port="{{port_base + 86 }}" anonymous_stats_port="{{port_base + 87 }}"/>
-          <logging log_level="{{log_level}}" sys_log="{{sys_log}}"/>
-        </profilingServer>
-      </configuration>
-    </service>
-    -->
-
     </serviceGroup>
 
     <serviceGroup

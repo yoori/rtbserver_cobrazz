@@ -93,192 +93,6 @@
 
 </xsl:template>
 
-<xsl:template name="AddSubAgentFrontendSubcluster">
-  <xsl:param name="cluster-path"/>
-  <xsl:param name="service-descriptor"/>
-  <xsl:param name="service-name-prefix"/>
-  <xsl:param name="checking-host"/>
-  <xsl:param name="use-position"/>
-
-  <xsl:for-each select="$cluster-path/serviceGroup[@descriptor =
-    $fe-cluster-descriptor]/service[@descriptor = $service-descriptor]">
-    <xsl:variable name="pos">
-      <xsl:if test="$use-position != 'false'">
-        <xsl:value-of select="position()"/>
-      </xsl:if>
-    </xsl:variable>
-    <xsl:variable name="subcluster-hosts">
-      <xsl:call-template name="GetHosts">
-        <xsl:with-param name="hosts" select="@host"/>
-        <xsl:with-param name="error-prefix"
-          select="'SMS-frontend-subcluster-hosts'"/>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:if test="count(exsl:node-set($subcluster-hosts)[host =
-      $checking-host]) > 0">
-<xsl:text>
-    </xsl:text>
-      <Service name="{concat($service-name-prefix, $pos, '-SubAgent')}"
-        type="AdServer::Controlling::SubAgent" host="{$checking-host}"/>
-    </xsl:if>
-  </xsl:for-each>
-</xsl:template>
-
-<xsl:template name="AddSubAgentService">
-  <xsl:param name="cluster-path"/>
-  <xsl:param name="number"/>
-
-  <xsl:variable name="colo-config"
-    select="$cluster-path/configuration/cfg:cluster"/>
-
-  <xsl:if test="$colo-config/cfg:snmpStats/@enable = '1' or
-    $colo-config/cfg:snmpStats/@enable = 'true'">
-
-    <xsl:variable
-      name="be-cluster-path"
-      select="$cluster-path/serviceGroup[@descriptor = $be-cluster-descriptor]"/>
-    <xsl:variable
-      name="subagent-be-services"
-      select="$be-cluster-path/service[
-              @descriptor = $campaign-server-descriptor or
-              @descriptor = $dictionary-provider-descriptor or
-              @descriptor = $expression-matcher-descriptor or
-              @descriptor = $log-generalizer-descriptor or
-              @descriptor = $request-info-manager-descriptor or
-              @descriptor = $stats-collector-descriptor or
-              @descriptor = $user-bind-server-descriptor
-              ]"/>
-
-    <xsl:variable name="be-hosts">
-      <xsl:for-each select="$subagent-be-services">
-        <xsl:call-template name="GetHosts">
-          <xsl:with-param name="hosts" select="@host"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('SMS-', 'service-name', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:for-each>
-    </xsl:variable>
-    <xsl:variable
-      name="subagent-pbe-services"
-      select="$cluster-path/service[
-              @descriptor = $pbe-campaign-server-descriptor or
-              @descriptor = $pbe-channel-proxy-descriptor or
-              @descriptor = $pbe-stunnel-server-descriptor or
-              @descriptor = $pbe-user-info-exchanger-descriptor]"/>
-    <xsl:variable name="pbe-hosts">
-      <xsl:for-each select="$subagent-pbe-services">
-        <xsl:call-template name="GetHosts">
-          <xsl:with-param name="hosts" select="@host"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('SMS-', 'service-name', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:for-each>
-    </xsl:variable>
-    <xsl:variable name="uim-hosts">
-      <xsl:for-each select="$cluster-path//service[@descriptor =
-        $user-info-manager-descriptor]">
-        <xsl:call-template name="GetHosts">
-          <xsl:with-param name="hosts" select="@host"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('OCM-', 'user-info-manager', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:for-each>
-    </xsl:variable>
-    <xsl:variable name="count-uim-clusters"
-      select="count($cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor])"/>
-    <xsl:variable name="ui-backup">
-      <xsl:if test="($colo-config/cfg:coloParams/@backup_operations != '1' and
-      $colo-config/cfg:coloParams/@backup_operations != 'true') or $count-uim-clusters = 1">
-        <xsl:value-of select="'false'"/>
-      </xsl:if>
-    </xsl:variable>
-    <xsl:variable name="def-prefix">
-      <xsl:choose>
-        <xsl:when test="$ui-backup = 'false'">
-          <xsl:value-of select="'ui'"/>
-        </xsl:when>
-        <xsl:otherwise>fe</xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-    <xsl:variable name="subfe-hosts">
-      <xsl:for-each select="$cluster-path/serviceGroup[@descriptor =
-        $fe-cluster-descriptor]/service[@descriptor = $http-frontend-descriptor]">
-        <xsl:call-template name="GetHosts">
-          <xsl:with-param name="hosts" select="@host"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('SMS-', 'frontend', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:for-each>
-    </xsl:variable>
-
-    <xsl:for-each select="/colo:colocation/host">
-      <xsl:variable name="this-host">
-        <xsl:call-template name="ResolveHostName">
-          <xsl:with-param name="base-host" select="@name"/>
-          <xsl:with-param name="error-prefix"
-            select="concat('SMS-', 'service-name', '-hosts')"/>
-        </xsl:call-template>
-      </xsl:variable>
-      <xsl:choose>
-        <xsl:when test="count(exsl:node-set($pbe-hosts)[host = $this-host]) > 0">
-          <xsl:if test="$isp-zone = '0'">
-<xsl:text>
-    </xsl:text>
-      <Service name="{concat('pbe', $number, '-SubAgent')}"
-        type="AdServer::Controlling::SubAgent" host="{$this-host}"/>
-          </xsl:if>
-        </xsl:when>
-        <xsl:when test="count(exsl:node-set($be-hosts)[host = $this-host]) > 0">
-          <xsl:if test="$isp-zone = '0'">
-<xsl:text>
-    </xsl:text>
-      <Service name="be-SubAgent"
-        type="AdServer::Controlling::SubAgent" host="{$this-host}"/>
-          </xsl:if>
-        </xsl:when>
-        <!--
-        <xsl:when test="count(exsl:node-set($uim-hosts)[host = $this-host]) > 0">
-          <xsl:if test="$isp-zone = '0'">
-            <xsl:call-template name="AddSubAgentFrontendSubcluster">
-              <xsl:with-param name="cluster-path" select="$cluster-path"/>
-              <xsl:with-param name="service-descriptor"
-                select="$user-info-manager-descriptor"/>
-              <xsl:with-param name="service-name-prefix" select="$def-prefix"/>
-              <xsl:with-param name="checking-host" select="$this-host"/>
-              <xsl:with-param name="use-position" select="$ui-backup"/>
-            </xsl:call-template>
-          </xsl:if>
-        </xsl:when>
-        -->
-        <!--
-        <xsl:when test="count(exsl:node-set($subfe-hosts)[host =
-          $this-host]) > 0">
-          <xsl:variable name="prefix">
-            <xsl:choose>
-              <xsl:when test="$isp-zone = '1' and count(exsl:node-set($tr-hosts)[host = $this-host]) > 0">
-                <xsl:value-of select="'tr'"/>
-              </xsl:when>
-              <xsl:otherwise><xsl:value-of select="$def-prefix"/></xsl:otherwise>
-            </xsl:choose>
-          </xsl:variable>
-          <xsl:if test="$nil-isp-zone = '1' or $isp-zone = '1' and count(exsl:node-set($tr-hosts)[host = $this-host]) > 0">
-          <xsl:call-template name="AddSubAgentFrontendSubcluster">
-            <xsl:with-param name="cluster-path" select="$cluster-path"/>
-            <xsl:with-param name="service-descriptor"
-              select="$http-frontend-descriptor"/>
-            <xsl:with-param name="service-name-prefix" select="$prefix"/>
-            <xsl:with-param name="checking-host" select="$this-host"/>
-            <xsl:with-param name="use-position" select="$ui-backup"/>
-          </xsl:call-template>
-          </xsl:if>
-        </xsl:when>
-        -->
-      </xsl:choose>
-    </xsl:for-each>
-
-  </xsl:if>
-</xsl:template>
-
 <xsl:template name="AddOneOnHostService">
   <xsl:param name="serv-path"/>
   <xsl:param name="service-name"/>
@@ -565,13 +379,6 @@
       </xsl:if>
     </xsl:if>
 
-    <!--
-    <xsl:call-template name="AddSubAgentService">
-      <xsl:with-param name="cluster-path" select="$cluster-path"/>
-      <xsl:with-param name="number" select="$number"/>
-    </xsl:call-template>
-    -->
-
     <xsl:variable name="group-prefix"><xsl:choose><xsl:when
       test="$cluster-path/@descriptor = $ad-proxycluster-descriptor">
       <xsl:value-of select="concat('pbe', $number)"/></xsl:when>
@@ -696,15 +503,6 @@
         <xsl:with-param name="service-type" select="'AdServer::Frontends::ConvServer'"/>
       </xsl:call-template>
 
-      <xsl:if test="count($fe-cluster-path/service[@descriptor = $profiling-server-descriptor]) > 0">
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $profiling-server-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-ProfilingServer')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Frontends::ProfilingServer'"/>
-        </xsl:call-template>
-      </xsl:if>
-
       <xsl:if test="count($fe-cluster-path/service[@descriptor = $http-frontend-descriptor]) > 0">
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"
@@ -760,24 +558,6 @@
         </xsl:call-template>
       </xsl:if>
 
-      <xsl:if test="count($fe-cluster-path/service[@descriptor = $uid-generator-adapter-descriptor]) > 0">
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $uid-generator-adapter-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-UIDGeneratorAdapter')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Frontends::UIDGeneratorAdapter'"/>
-        </xsl:call-template>
-      </xsl:if>
-
-      <xsl:if test="count($fe-cluster-path/service[@descriptor = $zmq-profiling-balancer-descriptor]) > 0">
-        <xsl:call-template name="AddService">
-          <xsl:with-param name="service-path"
-            select="./service[@descriptor = $zmq-profiling-balancer-descriptor]"/>
-          <xsl:with-param name="service-name" select="concat('tr', $pos, '-ZmqProfilingBalancer')"/>
-          <xsl:with-param name="service-type" select="'AdServer::Utils::ZmqProfilingBalancer'"/>
-        </xsl:call-template>
-      </xsl:if>
-
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
           select="./service[@descriptor = $http-frontend-descriptor]"/>
@@ -803,13 +583,6 @@
 
     <!--proxy cluster services-->
     <xsl:variable name="group"><xsl:value-of select="concat('pbe', $number, '-')"/></xsl:variable>
-
-    <xsl:call-template name="AddService">
-      <xsl:with-param name="service-path"
-        select="$cluster-path/service[@descriptor = $pbe-user-info-exchanger-descriptor]"/>
-      <xsl:with-param name="service-name" select="concat($group, 'UserInfoExchanger')"/>
-      <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserInfoExchanger'"/>
-    </xsl:call-template>
 
     <xsl:call-template name="AddService">
       <xsl:with-param name="service-path"
@@ -2172,15 +1945,9 @@
       </xsl:variable>
 
       <xsl:variable name="fe-services">
-        <xsl:if test="count($fe-cluster-path/service[@descriptor = $profiling-server-descriptor]) > 0">
-          <xsl:value-of select="'AdServer::Frontends::ProfilingServer '"/>
-        </xsl:if>
         <xsl:if test="count($fe-cluster-path/service[@descriptor = $http-frontend-descriptor]) > 0">
           <xsl:value-of select="$fcgi-dep"/><xsl:value-of
              select="'AdServer::HttpFrontend AdServer::HttpFrontend2 '"/>
-        </xsl:if>
-        <xsl:if test="count($fe-cluster-path/service[@descriptor = $uid-generator-adapter-descriptor]) > 0">
-          <xsl:value-of select="'AdServer::Frontends::UIDGeneratorAdapter '"/>
         </xsl:if>
       </xsl:variable>
       <xsl:variable name="campaign-manager-dep">
@@ -2371,13 +2138,6 @@
           <xsl:with-param name="be-cluster-path" select="$be-cluster-path"/>
         </xsl:call-template>
 
-        <xsl:if test="count($fe-cluster-path/service[@descriptor = $zmq-profiling-balancer-descriptor]) > 0">
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::Frontends::ProfilingServer'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::Utils::ZmqProfilingBalancer'"/>
-          </xsl:call-template>
-        </xsl:if>
-
         </xsl:when>
         <xsl:when test="$isp-zone = '0'">
       <xsl:if test="count($adcluster-path) > 0">
@@ -2486,13 +2246,6 @@
           <xsl:with-param name="slaves"
             select="'AdServer::HttpFrontend AdServer::HttpFrontend2 AdServer::HttpFrontend3'"/>
         </xsl:call-template>
-
-        <xsl:if test="count($fe-cluster-path/service[@descriptor = $zmq-profiling-balancer-descriptor]) > 0">
-          <xsl:call-template name="AddDependence">
-            <xsl:with-param name="masters" select="'AdServer::Frontends::ProfilingServer'"/>
-            <xsl:with-param name="slaves" select= "'AdServer::Utils::ZmqProfilingBalancer'"/>
-          </xsl:call-template>
-        </xsl:if>
 
       </xsl:if>
 

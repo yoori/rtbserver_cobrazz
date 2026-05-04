@@ -304,19 +304,6 @@ namespace UserInfoSvcs
       temp_profile_lifetime_ = Generics::Time(
         user_info_manager_config_.Storage().TempChunksConfig().expire_time());
 
-      opt_uie_receive_criteria_.common_chunks_number =
-        user_info_manager_config_.Storage().common_chunks_number();
-      opt_uie_receive_criteria_.max_response_plain_size = 10*1024*1024;
-
-      opt_uie_receive_criteria_.chunk_ids.length(chunk_folders_.size());
-      CORBA::ULong i = 0;
-      for(AdServer::ProfilingCommons::ProfileMapFactory::
-            ChunkPathMap::const_iterator chunk_it = chunk_folders_.begin();
-          chunk_it != chunk_folders_.end(); ++chunk_it, ++i)
-      {
-        opt_uie_receive_criteria_.chunk_ids[i] = chunk_it->first;
-      }
-
       Task_var load_chunks_msg = new LoadChunksDataTask(this, 0);
       task_runner_->enqueue_task(load_chunks_msg);
 
@@ -354,75 +341,7 @@ namespace UserInfoSvcs
       throw Exception(ostr);
     }
 
-    try
-    {
-      if(user_info_manager_config_.UserInfoExchangerParameters().present())
-      {
-        uie_presents_ = true;
-
-        CORBACommons::CorbaObjectRef corba_object_ref;
-
-        const xsd::AdServer::Configuration::UserInfoExchangerParametersType&
-          user_info_exchanger_params =
-            *user_info_manager_config_.UserInfoExchangerParameters();
-
-        Config::CorbaConfigReader::read_corba_ref(
-          user_info_exchanger_params.UserInfoExchangerRef(),
-          corba_object_ref);
-
-        exchange_customer_id_ = user_info_exchanger_params.customer_id();
-
-        {
-          std::ostringstream ostr;
-          ostr << user_info_manager_config_.colo_id();
-          exchange_provider_id_ = ostr.str();
-        }
-
-        CORBA::Object_var obj =
-          corba_client_adapter_->resolve_object(corba_object_ref);
-
-        user_info_exchanger_ = UserInfoExchanger::_narrow(obj.in());
-
-        if (CORBA::is_nil(user_info_exchanger_.in()))
-        {
-          throw Exception(
-            "Can't resolve UserInfoExchanger - _narrow return nil reference");
-        }
-
-        Task_var get_last_colo_profile_msg =
-          new GetLastColoProfilesTask(this, 0);
-        task_runner_->enqueue_task(get_last_colo_profile_msg);
-
-        if(logger_->log_level() >= Logging::Logger::TRACE)
-        {
-          logger_->sstream(Logging::Logger::TRACE,
-            Aspect::USER_INFO_MANAGER) <<
-            "GetLastColoProfilesTask was enqueued.";
-        }
-      }
-      else
-      {
-        uie_presents_ = false;
-      }
-
-      placement_colo_id_ = user_info_manager_config_.colo_id();
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": catch CORBA::SystemException when reading UserInfoExchanger reference: " <<
-        e;
-      throw Exception(ostr);
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": Caught eh::Exception when reading UserInfoExchanger reference: " <<
-        ex.what();
-      throw Exception(ostr);
-    }
+    placement_colo_id_ = user_info_manager_config_.colo_id();
   }
 
   void
@@ -1023,7 +942,7 @@ namespace UserInfoSvcs
           merge_history_profile.membuf(),
           merge_freq_cap_profile.membuf(),
           user_app,
-          uie_presents_ ? user_info.last_colo_id : placement_colo_id,
+          placement_colo_id,
           placement_colo_id,
           AdServer::ProfilingCommons::OP_RUNTIME,
           &ho_info);
@@ -1337,7 +1256,7 @@ namespace UserInfoSvcs
 
       user_operation_processor->match(
         request_params,
-        uie_presents_ ? user_info.last_colo_id : placement_colo_id,
+        placement_colo_id,
         placement_colo_id,
         colo_user_id,
         matched_channels,
@@ -1387,31 +1306,6 @@ namespace UserInfoSvcs
           match_result->geo_data_seq[i].accuracy =
             CorbaAlgs::pack_decimal<AdServer::CampaignSvcs::AccuracyDecimal>(
               it->accuracy);
-        }
-
-        if (uie_presents_)
-        {
-          if (user_info.last_colo_id != placement_colo_id)
-          {
-            match_result->colo_id = placement_colo_id;
-          }
-
-          if (colo_user_id.need_profile)
-          {
-            SyncPolicy::WriteGuard guard(colo_lock_);
-
-            long sz = colo_user_id.colo_id;
-
-            if (sz >= 0)
-            {
-              if (colo_profiles_vector_.size() <= (unsigned long)sz)
-              {
-                colo_profiles_vector_.resize(sz + 1);
-              }
-
-              colo_profiles_vector_[sz].user_id.push_back(colo_user_id.user_id);
-            }
-          }
         }
 
         Generics::Time publisher_optin_timeout(
@@ -2120,10 +2014,7 @@ namespace UserInfoSvcs
           fill_level_map_traits_(storage_config.BaseChunksConfig()),
           fill_level_map_traits_(storage_config.FreqCapChunksConfig()),
           user_info_manager_config_.colo_id(),
-          user_info_manager_config_.UserInfoExchangerParameters().present() ?
-            Generics::Time(user_info_manager_config_.
-              UserInfoExchangerParameters()->colo_request_timeout()) :
-            Generics::Time::ZERO,
+          Generics::Time::ZERO,
           Generics::Time(user_info_manager_config_.history_optimization_period()),
           provide_channel_counters_,
           Generics::Time(user_info_manager_config_.session_timeout()),
@@ -2226,221 +2117,6 @@ namespace UserInfoSvcs
       logger_->stream(Logging::Logger::TRACE,
         Aspect::USER_INFO_MANAGER) <<
         "LoadChunksDataTask has finished.";
-    }
-  }
-
-  void
-  UserInfoManagerImpl::get_last_colo_profiles_()
-    noexcept
-  {
-    static const char* FUN = "UserInfoManagerImpl::get_last_colo_profiles_()";
-
-    try
-    {
-      UserOperationProcessorAccessor user_operation_processor =
-        get_user_operation_processor_();
-      UserInfoContainerAccessor user_info_container =
-        get_user_info_container_(false);
-
-      if(!user_info_container.get().in() || !user_operation_processor.get().in())
-      {
-        return;
-      }
-
-      if(logger_->log_level() >= Logging::Logger::TRACE)
-      {
-        logger_->stream(Logging::Logger::TRACE,
-          Aspect::USER_INFO_MANAGER) <<
-          "GetLastColoProfilesTask started.";
-      }
-
-      ColoUsersRequestSeq users_request;
-
-      {
-        SyncPolicy::WriteGuard guard(colo_lock_);
-
-        users_request.length(colo_profiles_vector_.size());
-        CORBA::ULong user_i = 0;
-
-        for (unsigned int i = 0; i < colo_profiles_vector_.size(); ++i)
-        {
-          if (!colo_profiles_vector_[i].user_id.empty())
-          {
-            users_request[user_i].colo_id = i;
-            UserIdSeq& users_req = users_request[user_i].users;
-
-            CorbaAlgs::fill_sequence(
-              colo_profiles_vector_[i].user_id.begin(),
-              colo_profiles_vector_[i].user_id.end(),
-              users_req);
-
-            ++user_i;
-          }
-        }
-
-        users_request.length(user_i);
-        colo_profiles_vector_.clear();
-      }
-
-      if (users_request.length() != 0)
-      {
-        user_info_exchanger_->register_users_request(
-          exchange_customer_id_.c_str(),
-          users_request);
-      }
-
-      UserProfileSeq_var user_profiles_out;
-
-      user_info_exchanger_->receive_users(
-        exchange_customer_id_.c_str(),
-        user_profiles_out,
-        opt_uie_receive_criteria_);
-
-      const UserProfileSeq& profiles = user_profiles_out.in();
-
-      for (CORBA::ULong i = 0; i < profiles.length(); ++i)
-      {
-        MemBuf base_profile_mb(
-          profiles[i].plain_profile.get_buffer(),
-          profiles[i].plain_profile.length());
-        MemBuf history_profile_mb(
-          profiles[i].plain_history_profile.get_buffer(),
-          profiles[i].plain_history_profile.length());
-
-        UserInfoManagerLogger::HistoryOptimizationInfo ho_info;
-
-        user_operation_processor->exchange_merge(
-          UserId(profiles[i].user_id),
-          base_profile_mb.membuf(),
-          history_profile_mb.membuf(),
-          &ho_info);
-
-        if (ho_info.isp_date != Generics::Time::ZERO)
-        {
-          ho_info.colo_id = placement_colo_id_;
-          user_info_manager_logger_->process_history_optimization(ho_info);
-        }
-      }
-
-      UserIdSeq_var users_out;
-
-      user_info_exchanger_->get_users_requests(
-        exchange_provider_id_.c_str(),
-        users_out);
-
-      const UserIdSeq& ids = users_out.in();
-      UserProfileSeq user_profiles;
-
-      for(unsigned long i = 0; i < ids.length(); ++i)
-      {
-        const char* user_id = ids[i];
-
-        if(user_info_container->dispose_user(UserId(user_id)))
-        {
-          CORBA::ULong len = user_profiles.length();
-          user_profiles.length(len + 1);
-          AdServer::UserInfoSvcs::UserProfile& result_user = user_profiles[len];
-
-          SmartMemBuf_var mb_base_profile;
-          SmartMemBuf_var mb_history_profile;
-
-          user_info_container->get_user_profile(
-            UserId(user_id),
-            false,
-            &mb_base_profile,
-            0,
-            &mb_history_profile);
-
-          result_user.user_id = user_id;
-          result_user.colo_id = user_info_manager_config_.colo_id(); // provider id
-
-          if (mb_base_profile.in())
-          {
-            convert_mem_buf(
-              mb_base_profile->membuf(),
-              result_user.plain_profile);
-          }
-
-          if (mb_history_profile.in())
-          {
-            convert_mem_buf(
-              mb_history_profile->membuf(),
-              result_user.plain_history_profile);
-          }
-        }
-      }
-
-      if(user_profiles.length())
-      {
-        user_info_exchanger_->send_users(
-          exchange_provider_id_.c_str(),
-          user_profiles);
-      }
-    }
-    catch(const AdServer::UserInfoSvcs::UserInfoManager::NotReady&)
-    {}
-    catch(const UserInfoExchanger::ImplementationException& exc)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-54") <<
-        FUN << ": Caught AdServer::UserInfoSvcs::UserInfoExchanger::"
-        "ImplementationException: " << exc.description;
-    }
-    catch(const UserInfoContainer::NotReady& ex)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-54") <<
-        FUN << ": Caught AdServer::UserInfoSvcs::UserInfoExchanger::"
-        "ImplementationException: " << ex.what();
-    }
-    catch(const UserInfoContainer::ChunkNotFound& ex)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-54") <<
-        FUN << ": Caught AdServer::UserInfoSvcs::UserInfoExchanger::"
-        "ChunkNotFound: " << ex.what();
-    }
-    catch(const CORBA::SystemException& ex)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-54") <<
-        FUN << ": Caught CORBA::SystemException: " << ex;
-    }
-    catch(const eh::Exception& ex)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-54") <<
-        FUN << ": Caught eh::Exception: " << ex.what();
-    }
-
-    try
-    {
-      Generics::Time tm = Generics::Time::get_time_of_day() +
-        user_info_manager_config_.UserInfoExchangerParameters()->
-          set_get_profiles_period();
-
-      Task_var msg =
-        new GetLastColoProfilesTask(this, task_runner_);
-      scheduler_->schedule(msg, tm);
-    }
-    catch(const eh::Exception& ex)
-    {
-      logger_->sstream(Logging::Logger::EMERGENCY,
-        Aspect::USER_INFO_MANAGER,
-        "ADS-IMPL-52") <<
-        FUN << ": Can't schedule task. Caught eh::Exception: " << ex.what();
-    }
-
-    if(logger_->log_level() >= Logging::Logger::TRACE)
-    {
-      logger_->stream(Logging::Logger::TRACE,
-        Aspect::USER_INFO_MANAGER) <<
-        "GetLastColoProfilesTask has finished.";
     }
   }
 

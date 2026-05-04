@@ -564,41 +564,6 @@ BcRs03Vdem0+0+8HTtZlNzW5V/p30Id6H/WDUTSlu/I=
         </configuration>
       </service>
 
-      <!--
-      <service
-        descriptor="AdCluster/FrontendSubCluster/ZmqProfilingBalancer"
-        name="ZmqProfilingBalancer #1"
-        host="$HOST">
-        <configuration>
-          <zmqProfilingBalancer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" zmq_io_threads="1">
-            <networkParams port="[% PORT_BASE + 74 %]"/>
-            <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
-            <profilingInfoBindSocket hwm="1">
-              <address port="[% PORT_BASE + 88 %]"/>
-            </profilingInfoBindSocket>
-            <anonymousStatsBindSocket hwm="1">
-              <address port="[% PORT_BASE + 89 %]"/>
-            </anonymousStatsBindSocket>
-            <dmpProfilingInfoBindSocket hwm="1">
-              <address port="[% PORT_BASE + 91 %]"/>
-            </dmpProfilingInfoBindSocket>
-          </zmqProfilingBalancer>
-        </configuration>
-      </service>
-
-      <service
-        descriptor="AdCluster/FrontendSubCluster/ProfilingServer"
-        name="ProfilingServer"
-        host="$HOST">
-      <configuration>
-        <profilingServer xmlns="http://www.adintelligence.net/xsd/AdServer/Configuration" work_threads="5">
-          <networkParams port="[% PORT_BASE + 75 %]" profiling_info_port="[% PORT_BASE + 86 %]" anonymous_stats_port="[% PORT_BASE + 87 %]"/>
-          <logging log_level="$LOG_LEVEL" sys_log="$SYS_LOG"/>
-        </profilingServer>
-      </configuration>
-    </service>
-    -->
-
     </serviceGroup>
 
     <serviceGroup

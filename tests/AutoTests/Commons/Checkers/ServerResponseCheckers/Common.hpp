@@ -11,7 +11,5 @@
 #include <tests/AutoTests/Commons/Checkers/ServerResponseCheckers/OpenRTBResponseChecker.hpp>
 #include <tests/AutoTests/Commons/Checkers/ServerResponseCheckers/RedirectChecker.hpp>
 #include <tests/AutoTests/Commons/Checkers/ServerResponseCheckers/TagPassbackChecker.hpp>
-#include <tests/AutoTests/Commons/Checkers/ServerResponseCheckers/TanxResponseChecker.hpp>
-#include <tests/AutoTests/Commons/Checkers/ServerResponseCheckers/BaiduResponseChecker.hpp>
 
 #endif //__AUTOTESTS_COMMONS_SERVERRESPONSECHECKERS_COMMON_HPP

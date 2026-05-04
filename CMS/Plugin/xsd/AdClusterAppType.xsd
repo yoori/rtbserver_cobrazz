@@ -494,15 +494,6 @@
   </xsd:complexType>
 
   <xsd:complexType name="UserProfilingConfigType">
-    <xsd:sequence>
-      <xsd:element name="userInfoExchangerRef" type="SimpleCorbaRef" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>
-            CORBA reference to UserInfoExchanger service.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-    </xsd:sequence>
     <xsd:attribute name="chunks_count" type="xsd:positiveInteger" default="10">
       <xsd:annotation>
         <xsd:documentation>

@@ -103,11 +103,6 @@
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe02"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe03"/>
     <Service name="fe1-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe04"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe00"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe01"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe02"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe03"/>
-    <Service name="fe1-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe04"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe00"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe01"/>
     <Service name="fe1-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe02"/>
@@ -135,11 +130,6 @@
     <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe08"/>
     <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe09"/>
     <Service name="fe2-CampaignManager" type="AdServer::CampaignSvcs::CampaignManager" host="rtc00proadfe05"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe05"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe09"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe08"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe07"/>
-    <Service name="fe2-SubAgent" type="AdServer::Controlling::SubAgent" host="rtc00proadfe06"/>
     <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe05"/>
     <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe09"/>
     <Service name="fe2-AdFrontend" type="AdServer::AdFrontend" host="rtc00proadfe08"/>

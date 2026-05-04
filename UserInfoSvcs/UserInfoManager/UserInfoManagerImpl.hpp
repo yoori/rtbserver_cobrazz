@@ -25,7 +25,6 @@
 
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
-#include <UserInfoSvcs/UserInfoExchanger/UserInfoExchanger.hpp>
 
 #include <xsd/AdServerCommons/AdServerCommons.hpp>
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
@@ -57,8 +56,6 @@ namespace AdServer
         UserInfoManagerConfig;
 
       typedef std::list<unsigned long> ChunkIdList;
-
-      typedef std::vector<ColoUserIds> ColoUserIdVector; // TO RECHECK !!!
 
     public:
       UserInfoManagerImpl(
@@ -216,20 +213,6 @@ namespace AdServer
         UserInfoManagerImpl* manager_;
       };
 
-      class GetLastColoProfilesTask : public TaskBase
-      {
-      public:
-        GetLastColoProfilesTask(
-          UserInfoManagerImpl* user_info_manager_impl,
-          Generics::TaskRunner* task_runner)
-          noexcept;
-
-        virtual void execute() noexcept;
-
-      protected:
-        UserInfoManagerImpl* user_info_manager_impl_;
-      };
-
       class UpdateChannelsConfigTask : public TaskBase
       {
       public:
@@ -372,8 +355,6 @@ namespace AdServer
 
       void delete_old_temporary_profiles_(bool reschedule) noexcept;
 
-      void get_last_colo_profiles_() noexcept;
-
       void
       update_channels_config_(
         UserInfoContainer* user_info_container,
@@ -446,13 +427,6 @@ namespace AdServer
       CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
       CampaignServerPoolPtr campaign_servers_;
 
-      // user profiles exchange parameters
-      bool uie_presents_;
-      std::string exchange_customer_id_;
-      std::string exchange_provider_id_; // equal to placement colo id
-      UserInfoExchanger_var user_info_exchanger_;
-      AdServer::UserInfoSvcs::ReceiveCriteria opt_uie_receive_criteria_;
-
       bool clean_user_profiles_;
       Generics::Time profile_lifetime_;
       Generics::Time temp_profile_lifetime_;
@@ -460,9 +434,6 @@ namespace AdServer
       Generics::Time repeat_trigger_timeout_;
 
       bool provide_channel_counters_;
-
-      mutable SyncPolicy::Mutex colo_lock_;
-      ColoUserIdVector colo_profiles_vector_;
 
       mutable SyncPolicy::Mutex daily_stat_lock_;
       unsigned long current_day_;
@@ -502,23 +473,6 @@ namespace AdServer
       noexcept
     {
       manager_->flush_logs_();
-    }
-
-    inline
-    UserInfoManagerImpl::GetLastColoProfilesTask::GetLastColoProfilesTask(
-      UserInfoManagerImpl* user_info_manager_impl,
-      Generics::TaskRunner* task_runner)
-      noexcept
-      : TaskBase(task_runner),
-        user_info_manager_impl_(user_info_manager_impl)
-    {}
-
-    inline
-    void
-    UserInfoManagerImpl::GetLastColoProfilesTask::execute()
-      noexcept
-    {
-      user_info_manager_impl_->get_last_colo_profiles_();
     }
 
     inline

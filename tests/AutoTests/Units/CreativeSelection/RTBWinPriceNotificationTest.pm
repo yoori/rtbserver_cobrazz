@@ -38,24 +38,6 @@ sub openx_case_
   }
 }
 
-sub tanx_case_
-{
-  my ($self, $namespace) = @_;
-
-  my $ns = $namespace->sub_namespace('TanX');
-
-  my $tanx_rtb = $ns->create(Publisher => {
-      name => "TanXRTB",
-      account_id => DB::Defaults::instance()->tanx_account,
-      tag_id => undef });
-
-  $ns->output("Account", $tanx_rtb->{account_id});
-
-  $self->create_sizes($ns, $tanx_rtb,
-    [ { name => '120x240' },
-      { name => '728x90' } ] );
-}
-
 sub allyes_case_
 {
   my ($self, $namespace) = @_;
@@ -236,7 +218,7 @@ sub liverail_case_
     ccgkeyword_channel_id              => $behavioral_channel3->channel_id() } );
 
   $ns->output('KEYWORD#1',  $keyword1);
-  $ns->output('CREATIVE#8', get_tanx_creative($campaign3->{Creative}));
+  $ns->output('CREATIVE#8', get_external_creative_id($campaign3->{Creative}));
   $ns->output('CHANNEL#8',  $behavioral_channel3->channel_id());
   $ns->output('CCG#8',      $campaign3->{ccg_id});
   $ns->output('CC#8',       $campaign3->{cc_id});
@@ -262,7 +244,7 @@ sub liverail_case_
     ccgkeyword_channel_id              => $behavioral_channel4->channel_id() } );
 
   $ns->output('KEYWORD#2',  $keyword2);
-  $ns->output('CREATIVE#9', get_tanx_creative($campaign4->{Creative}));
+  $ns->output('CREATIVE#9', get_external_creative_id($campaign4->{Creative}));
   $ns->output('CHANNEL#9',  $behavioral_channel4->channel_id());
   $ns->output('CCG#9',      $campaign4->{ccg_id});
   $ns->output('CC#9',       $campaign4->{cc_id});
@@ -295,7 +277,7 @@ sub liverail_case_
       ccg_id      => ($index <=5 ? $campaign1->{ccg_id} : $campaign2->{ccg_id}),
       creative_id => $creative });
 
-    $ns->output("CREATIVE#$index", get_tanx_creative($creative));
+    $ns->output("CREATIVE#$index", get_external_creative_id($creative));
     $ns->output("CCG#$index",      $cc->{ccg_id});
     $ns->output("CC#$index",       $cc);
     $index = $index + 1
@@ -381,7 +363,7 @@ sub create_sizes
           ccg_id => $self->{display_campaign}->{ccg_id},
           creative_id => $creative });
 
-        $ns->output("Creatives/$name", get_tanx_creative($creative));
+        $ns->output("Creatives/$name", get_external_creative_id($creative));
         $ns->output("CCIDs/$name", $cc);
         $ns->output("CREATIVEIDs/$name", $creative);
       }
@@ -484,7 +466,7 @@ sub init {
     max_cpc_bid => 220 });
 
   $ns->output("Global/Creatives/Text",
-    get_tanx_creative($self->{text_campaign}->{Creative}));
+    get_external_creative_id($self->{text_campaign}->{Creative}));
   $ns->output("Global/CREATIVEIDs/Text", $self->{text_campaign}->{creative_id});
   $ns->output("Global/CCIDs/Text", $self->{text_campaign}->{cc_id});
 
@@ -509,7 +491,7 @@ sub init {
     push @{$self->{channel_text_campaigns}}, $campaign;
 
     $ns->output("Global/Creatives/ChannelText#$args->{name}",
-      get_tanx_creative($campaign->{Creative}));
+      get_external_creative_id($campaign->{Creative}));
     $ns->output("Global/CREATIVEIDs/ChannelText#$args->{name}", $campaign->{creative_id});
     $ns->output("Global/CCIDs/ChannelText#$args->{name}", $campaign->{cc_id});
     $ns->output("Global/CPMs/TextCPM#$args->{name}", $args->{cpm});
@@ -521,10 +503,7 @@ sub init {
   $ns->output("Colocation",
     DB::Defaults::instance()->openrtb_isp->{colo_id});
 
-  $ns->output("GUINEA/IP", DB::Defaults::instance()->ip_address);
-
-  $self->tanx_case_($ns);
-  $self->openx_case_($ns);
+  $ns->output("GUINEA/IP", DB::Defaults::instance()->ip_address);  $self->openx_case_($ns);
   $self->allyes_case_($ns);
   #$self->liverail_case_($ns);
 }

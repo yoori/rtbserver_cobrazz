@@ -100,13 +100,6 @@ $EXEC/OCMConf.sh $APP_XML \
 
 let "EXIT_CODE|=$?"
 
-$EXEC/SubAgentClustersConf.sh $APP_XML \
- "$CLUSTER_XPATH" \
- "$OUT_DIR" \
- "$PLUGIN_ROOT"
-
-let "EXIT_CODE|=$?"
-
 if [ $EXIT_CODE -eq 0 ]
 then
   echo config for AdServer config completed successfully

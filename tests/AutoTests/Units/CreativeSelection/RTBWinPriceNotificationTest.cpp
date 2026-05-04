@@ -9,11 +9,9 @@ namespace
 {
   typedef AutoTest::UserBindRequest UserBindRequest;
   typedef AutoTest::OpenRTBRequest OpenRTBRequest;
-  typedef AutoTest::TanxRequest TanxRequest;
   typedef AutoTest::AdClient AdClient;
 
   class OpenRTB;
-  class TanX;
   class OpenX;
   class Allyes;
   class LiveRail;
@@ -31,16 +29,6 @@ namespace
     typedef ResponseChecker::Expected Expected;
     typedef unsigned long SetterArgType;
     typedef Expected& (Expected::* ExpectedAdSetter)(SetterArgType);
-  };
-
-  template<>
-  struct RTBTraits<TanX>
-  {
-    typedef AutoTest::TanxRequest Request;
-    typedef AutoTest::TanxResponseChecker ResponseChecker;
-    typedef ResponseChecker::Expected Expected;
-    typedef std::string SetterArgType;
-    typedef Expected& (Expected::* ExpectedAdSetter)(const SetterArgType&);
   };
 
   // OpenX uses OpenRTB proto
@@ -108,31 +96,6 @@ namespace
   {
     return checker.bids().nurl;
   }
-
-  // Specializations
-  // TanX
-  template<> const RTBTraits<TanX>::Request::Member
-  RTBParamsMapping<TanX>::user_id = &RTBTraits<TanX>::Request::tid;
-
-  template<> std::string
-    RTBParamsMapping<TanX>::get_ad_instance(
-       const RTBTraits<TanX>::ResponseChecker& checker)
-  {
-    return checker.ad().html_snippet();
-  };
-
-  template<> std::string
-    RTBParamsMapping<TanX>::get_nurl(
-       const RTBTraits<TanX>::ResponseChecker& /*checker*/)
-  {
-    return std::string(); // There's no 'notification url' param for TanX
-  };
-
-  template<>
-  const char* RTBMacro<TanX>::win_price_macro = "%%SETTLE_PRICE%%";
-
-  template<>
-  const char* RTBMacro<TanX>::click_macro = "%%CLICK_URL_PRE_UNENC%%";
 
   // OpenRTB
   template<> const RTBTraits<OpenRTB>::Request::Member
@@ -551,48 +514,6 @@ void RTBWinPriceNotificationTest::select_current_stats_(
 }
 
 void
-RTBWinPriceNotificationTest::tanx_()
-{
-  add_descr_phrase("Start TanX pricing case");
-
-  const char e_prise_2100[] = "AQAAAAAAAFTZ6DsAAAAAAAAJzFcN%2ByK%2Blw%3D%3D";
-  const double d_prise_2100 = 0.021;
-  const char e_prise_0[]  = "AQAAAAAAAFRqNMUAAAAAAACFre3T76kAuQ%3D%3D";
-
-  const double adv_price = fetch_float("Global/CPMs/CPM") / 1000;
-  const double adv_rate = fetch_float("AdvertiserRate");
-  const double revenue_share = fetch_float("RevenueShare");
-
-  // win_price must be less than display_adv_price * pub_rate / adv_rate =
-  //   // 2100 * 10 / 65 ~ 323.08
-  const CaseRequest REQUESTS[] = {
-    { "TanX/Account", "script-tanx", "TanX/120x240", "URL", "TanX/Creatives/120x240", CF_INST_REQ | CF_IMPTRACK_REQ, e_prise_2100 },
-    { "TanX/Account", 0, "TanX/728x90", "URL", "TanX/Creatives/728x90", CF_IMPTRACK_REQ, e_prise_0 },
-    { "OpenRTB/Account", 0, "TanX/120x240", "URL", "TanX/Creatives/120x240", CF_IMPTRACK_REQ, e_prise_2100 },
-    { "DefaultRTB/Account", 0, "TanX/728x90", "URL", "TanX/Creatives/728x90", CF_IMPTRACK_REQ, e_prise_2100 }
-  };
-
-  const CaseStats EXPECTED_STATS[] = {
-    { "TanX/Account", 0, "TanX/CCIDs/120x240",
-      1, 1, 0, adv_price, d_prise_2100, isp_amount(adv_price, d_prise_2100, adv_rate, revenue_share ) },
-    { "TanX/Account", 0, "TanX/CCIDs/728x90",
-      1, 1, 0, adv_price, 0, isp_amount(adv_price, 0, adv_rate, revenue_share ) },
-    { "OpenRTB/Account", 0, "TanX/CCIDs/120x240",
-      1, 1, 0, adv_price, 0, isp_amount(adv_price, 0, adv_rate, revenue_share ) },
-    { "DefaultRTB/Account", 0, "TanX/CCIDs/728x90",
-      1, 1, 0, adv_price, 0, isp_amount(adv_price, 0, adv_rate, revenue_share ) },
-  };
-
-  Stats stats;
-  Diffs diffs;
-
-  select_current_stats_(EXPECTED_STATS, stats, diffs);
-  process_requests_<TanX>(REQUESTS);
-  ADD_WAIT_CHECKER("Waiting expected stats for RequestStatsHourly",
-    AutoTest::stats_diff_checker(pq_conn_, diffs, stats));
-}
-
-void
 RTBWinPriceNotificationTest::openx_()
 {
   add_descr_phrase("Start OpenX pricing case");
@@ -841,7 +762,6 @@ RTBWinPriceNotificationTest::pre_condition()
 bool
 RTBWinPriceNotificationTest::run()
 {
-  AUTOTEST_CASE(tanx_(), "TanX");
   AUTOTEST_CASE(openx_(), "OpenX");
   AUTOTEST_CASE(allyes_(), "Allyes");
 

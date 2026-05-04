@@ -634,12 +634,6 @@ hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
               </configuration:userBindModule>
             </configuration:frontend></configuration>
         </service>
-        <service descriptor="AdCluster/FrontendSubCluster/ProfilingServer" name="ProfilingServer" host="enode0">
-          <configuration><configuration:profilingServer zmq_io_threads="20" work_threads="20"/></configuration>
-        </service>
-        <service descriptor="AdCluster/FrontendSubCluster/UIDGeneratorAdapter" name="UIDGeneratorAdapter" host="enode0">
-          <configuration><configuration:UIDGeneratorAdapter/></configuration>
-        </service>
         <service descriptor="AdCluster/FrontendSubCluster/CampaignManager" name="CampaignManager" host="enode0">
           <configuration><configuration:campaignManager>
               <configuration:threadParams min="40"/>
@@ -734,12 +728,6 @@ hkiG9w0BAQUFAAOBgQAJWKjmA5AMnq5jJS8N4VCakt1yhOL9sHN/iEOja4gjL+AQ
             </configuration:fileTransferring>
           </configuration:syncLogs>
         </configuration:cluster></configuration>
-      <service descriptor="AdProxyCluster/UserInfoExchanger" host="enode1">
-        <configuration><configuration:userInfoExchanger>
-            <configuration:externalNetworkParams secure="true" host="enode1" port="10210"/>
-            <configuration:logging log_level="4" sys_log="true" rotate_size="100" rotate_time="1" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="86400"/>
-          </configuration:userInfoExchanger></configuration>
-      </service>
       <service descriptor="AdProxyCluster/ChannelProxy" host="enode1">
         <configuration><configuration:channelProxy>
             <configuration:externalNetworkParams secure="true" host="enode1" port="10205"/>
