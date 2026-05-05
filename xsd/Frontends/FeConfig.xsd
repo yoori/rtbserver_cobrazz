@@ -192,6 +192,7 @@
         minOccurs="0"
         maxOccurs="2"/>
     </xsd:sequence>
+    <xsd:attribute name="grpc_executor_threads" type="xsd:positiveInteger" default="16"/>
   </xsd:complexType>
 
   <xsd:complexType name="UserBindControllerGrpcGroupType">

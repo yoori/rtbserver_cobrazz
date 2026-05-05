@@ -91,7 +91,7 @@ BuildRequires: valgrind-devel
 BuildRequires: pcre-devel >= 8.42
 #BuildRequires: prelink
 BuildRequires: selinux-policy
-BuildRequires: xerces-c-devel
+BuildRequires: xerces-c-devel = 3.2.2-3
 BuildRequires: xsd >= 4.1.0
 BuildRequires: net-snmp-devel >= %{__net_snmp_ver_req} lm_sensors-libs
 Requires: net-snmp >= %{__net_snmp_ver_req} lm_sensors-libs
@@ -140,6 +140,8 @@ Requires: perl-Log-Dispatch-FileRotate
 Requires: perl-Specio
 Requires: perl-Hash-MultiKey perl-Digest-CRC perl-open
 
+Requires: xerces-c = 3.2.2-3
+Requires: libxslt = 1.1.32
 Requires: foros-dictionaries
 Requires: zeromq = %__zeromq_ver_req
 Requires: librdkafka1 = %__librdkafka_ver_req

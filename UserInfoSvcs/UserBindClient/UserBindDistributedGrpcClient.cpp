@@ -314,6 +314,23 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
+    RefHolder_var get_or_create_ref_holder_(
+      const std::string& endpoint)
+    {
+      std::lock_guard<std::mutex> lock(ref_holders_lock_);
+      auto& weak_ref_holder = ref_holders_[endpoint];
+      auto ref_holder = weak_ref_holder.lock();
+      if (!ref_holder)
+      {
+        ref_holder = std::make_shared<RefHolder>(
+          endpoint,
+          grpc_executor_,
+          batching_options_);
+        weak_ref_holder = ref_holder;
+      }
+      return ref_holder;
+    }
+
     unsigned long partition_index_(const std::string& user_id) const noexcept
     {
       return (
@@ -386,11 +403,8 @@ namespace AdServer::UserInfoSvcs
 
         for (const auto& server : response.user_bind_servers())
         {
-          auto ref_holder =
-            std::make_shared<RefHolder>(
-              server.user_bind_server_endpoint(),
-              grpc_executor_,
-              batching_options_);
+          auto ref_holder = get_or_create_ref_holder_(
+            server.user_bind_server_endpoint());
           for (const auto chunk_id : server.chunk_ids())
           {
             fill_partition->chunks_ref_map.emplace(chunk_id, ref_holder);
@@ -517,6 +531,8 @@ namespace AdServer::UserInfoSvcs
     AdServer::Grpc::GrpcExecutor_var grpc_executor_;
     Generics::FixedTaskRunner_var task_runner_;
     PartitionHolderArray partition_holders_;
+    std::mutex ref_holders_lock_;
+    std::map<std::string, std::weak_ptr<RefHolder>> ref_holders_;
   };
 
   UserBindDistributedGrpcClient::UserBindDistributedGrpcClient(

@@ -207,7 +207,7 @@
     <xsd:attribute name="max_inflight" type="xsd:nonNegativeInteger" use="optional"/>
     <xsd:attribute name="error_on_inflight_reaching" type="xsd:boolean" default="false"/>
     <xsd:attribute name="max_outstanding_requests" type="xsd:nonNegativeInteger" use="optional"/>
-    <xsd:attribute name="workers_number" type="xsd:positiveInteger" default="4"/>
+    <xsd:attribute name="workers_number" type="xsd:positiveInteger" default="16"/>
     <xsd:attribute name="hot_buckets_count" type="xsd:positiveInteger" default="1"/>
     <xsd:attribute name="max_batch_delay_us" type="xsd:nonNegativeInteger" use="optional"/>
     <xsd:attribute name="enable_grpc_compression" type="xsd:boolean" default="true"/>

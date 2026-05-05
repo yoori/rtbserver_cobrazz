@@ -552,11 +552,13 @@ namespace AdServer
         if(config_->user_bind_call_mode() == "grpc")
         {
           AdServer::Grpc::BatchingOptions batching_options;
+          std::size_t grpc_executor_threads = 16;
           std::vector<std::string> user_bind_controller_refs;
 
           if(common_config_->UserBind().present())
           {
             const auto& user_bind_config = *common_config_->UserBind();
+            grpc_executor_threads = user_bind_config.grpc_executor_threads();
             if(user_bind_config.BatchingOptions().present())
             {
               batching_options =
@@ -574,9 +576,8 @@ namespace AdServer
 
           if(!user_bind_controller_refs.empty())
           {
-            batching_options.workers_number = config_->threads();
             user_bind_grpc_executor_ =
-              new AdServer::Grpc::GrpcExecutor(config_->threads());
+              new AdServer::Grpc::GrpcExecutor(grpc_executor_threads);
             AdServer::UserInfoSvcs::UserBindDistributedGrpcClient_var
               user_bind_grpc_client =
               new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
