@@ -1,6 +1,7 @@
 #include "UserBindDistributedGrpcClient.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <map>
 #include <memory>
@@ -250,8 +251,11 @@ namespace AdServer::UserInfoSvcs
       {
         try
         {
-          client->deactivate_object();
-          client->wait_object();
+          if (client->active())
+          {
+            client->deactivate_object();
+            client->wait_object();
+          }
         }
         catch (...)
         {
@@ -296,17 +300,68 @@ namespace AdServer::UserInfoSvcs
     void deactivate_object_() override
     {
       Generics::CompositeActiveObject::deactivate_object_();
-      clear_partitions_();
+      deactivate_partitions_();
     }
 
-    void clear_partitions_() noexcept
+    void deactivate_partitions_() noexcept
     {
+      std::vector<Partition_var> partitions;
+      std::vector<RefHolder_var> ref_holders;
+      std::set<const RefHolder*> seen_refs;
+
+      deactivated_.store(true, std::memory_order_release);
+
       for (auto& holder : partition_holders_)
       {
         try
         {
           Sync::Policy::PosixThread::WriteGuard lock(holder->lock);
+          if (holder->partition)
+          {
+            partitions.emplace_back(holder->partition);
+          }
           holder->partition.reset();
+        }
+        catch (...)
+        {
+        }
+      }
+
+      for (const auto& partition : partitions)
+      {
+        if (!partition)
+        {
+          continue;
+        }
+
+        for (const auto& chunk_ref : partition->chunks_ref_map)
+        {
+          if (chunk_ref.second && seen_refs.insert(chunk_ref.second.get()).second)
+          {
+            ref_holders.emplace_back(chunk_ref.second);
+          }
+        }
+      }
+
+      for (const auto& ref_holder : ref_holders)
+      {
+        try
+        {
+          if (ref_holder->client->active())
+          {
+            ref_holder->client->deactivate_object();
+          }
+        }
+        catch (...)
+        {
+        }
+      }
+
+      for (const auto& ref_holder : ref_holders)
+      {
+        try
+        {
+          ref_holder->client->wait_object();
         }
         catch (...)
         {
@@ -318,6 +373,11 @@ namespace AdServer::UserInfoSvcs
       const std::string& endpoint)
     {
       std::lock_guard<std::mutex> lock(ref_holders_lock_);
+      if (deactivated_.load(std::memory_order_acquire))
+      {
+        return RefHolder_var();
+      }
+
       auto& weak_ref_holder = ref_holders_[endpoint];
       auto ref_holder = weak_ref_holder.lock();
       if (!ref_holder)
@@ -357,6 +417,11 @@ namespace AdServer::UserInfoSvcs
 
     void try_to_reresolve_partition_(unsigned int partition_num) noexcept
     {
+      if (deactivated_.load(std::memory_order_acquire))
+      {
+        return;
+      }
+
       const auto now = Generics::Time::get_time_of_day();
       {
         Sync::Policy::PosixThread::WriteGuard lock(
@@ -400,11 +465,18 @@ namespace AdServer::UserInfoSvcs
         }
 
         auto fill_partition = std::make_shared<Partition>();
+        bool resolve_interrupted = false;
 
         for (const auto& server : response.user_bind_servers())
         {
           auto ref_holder = get_or_create_ref_holder_(
             server.user_bind_server_endpoint());
+          if (!ref_holder)
+          {
+            resolve_interrupted = true;
+            break;
+          }
+
           for (const auto chunk_id : server.chunk_ids())
           {
             fill_partition->chunks_ref_map.emplace(chunk_id, ref_holder);
@@ -415,7 +487,7 @@ namespace AdServer::UserInfoSvcs
           }
         }
 
-        if (!fill_partition->chunks_ref_map.empty())
+        if (!resolve_interrupted && !fill_partition->chunks_ref_map.empty())
         {
           new_partition = fill_partition;
         }
@@ -425,17 +497,21 @@ namespace AdServer::UserInfoSvcs
       }
 
       const auto now = Generics::Time::get_time_of_day();
-      Sync::Policy::PosixThread::WriteGuard lock(
-        partition_holders_[partition_num]->lock);
-      if (new_partition)
       {
-        partition_holders_[partition_num]->partition = std::move(new_partition);
-        partition_holders_[partition_num]->resolve_in_progress = false;
-      }
-      else
-      {
-        partition_holders_[partition_num]->last_try_to_resolve = now;
-        partition_holders_[partition_num]->resolve_in_progress = false;
+        Partition_var old_partition;
+        Sync::Policy::PosixThread::WriteGuard lock(
+          partition_holders_[partition_num]->lock);
+        if (new_partition && !deactivated_.load(std::memory_order_acquire))
+        {
+          old_partition = std::move(partition_holders_[partition_num]->partition);
+          partition_holders_[partition_num]->partition = std::move(new_partition);
+          partition_holders_[partition_num]->resolve_in_progress = false;
+        }
+        else
+        {
+          partition_holders_[partition_num]->last_try_to_resolve = now;
+          partition_holders_[partition_num]->resolve_in_progress = false;
+        }
       }
     }
 
@@ -533,6 +609,7 @@ namespace AdServer::UserInfoSvcs
     PartitionHolderArray partition_holders_;
     std::mutex ref_holders_lock_;
     std::map<std::string, std::weak_ptr<RefHolder>> ref_holders_;
+    std::atomic_bool deactivated_{false};
   };
 
   UserBindDistributedGrpcClient::UserBindDistributedGrpcClient(
