@@ -7,6 +7,7 @@
 #include <Generics/Singleton.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/UserInfoSvcs/UserBindServerConfig.hpp>
@@ -56,6 +57,7 @@ private:
 
   AdServer::UserInfoSvcs::UserBindServerImpl_var user_bind_server_impl_; // CORBA impl
   AdServer::UserInfoSvcs::UserBindServerGrpc_var grpc_adapter_; // GRPC impl
+  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   std::mutex shutdown_lock_;
 };

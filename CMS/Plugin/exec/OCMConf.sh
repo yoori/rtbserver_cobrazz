@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ $# -lt 10 ]
+if [ $# -lt 9 ]
 then
-  echo "$0 : number of argument must be equal 10."
+  echo "$0 : number of argument must be equal 9."
   exit 1
 fi
 
@@ -15,8 +15,9 @@ COLOCATION_NAME=$5
 APP_VERSION=$6
 APP_RELEASE=$7
 ADCLUSTER_COUNT=$8
-ADPROFILINGCLUSTER_COUNT=$9
-ROOT_OUT_DIR=${10}
+ROOT_OUT_DIR=$9
+
+ADCLUSTER_COUNT=${ADCLUSTER_COUNT:-0}
 
 EXEC=$PLUGIN_ROOT/exec
 APP_ENV_XPATH=$CLUSTER_XPATH/configuration/cfg:environment
@@ -57,30 +58,18 @@ mkdir -p $MGR_PHORM_EXT_VAR_DIR
 
 TIMESTAMP=`date '+%F %T'`
 
-if [ $ADPROFILINGCLUSTER_COUNT -ne 0 ]
-then
-  $EXEC/XsltTransformer.sh \
-    --var XPATH "$CLUSTER_XPATH" \
-    --var CURRENT_TIME "$TIMESTAMP" \
-    --var PRODUCT_IDENTIFIER "$PRODUCT_PHORM_IDENTIFIER" \
-    --var ISP_ZONE "0" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/OCM/AdProfilingServer.xsl \
-    --out-file $OUT_DIR/server-$PRODUCT_PHORM_IDENTIFIER.xml
-else
-  $EXEC/XsltTransformer.sh \
-    --var XPATH "$CLUSTER_XPATH" \
-    --var CURRENT_TIME "$TIMESTAMP" \
-    --var PRODUCT_IDENTIFIER "$PRODUCT_PHORM_IDENTIFIER" \
-    --var ISP_ZONE "0" \
-    --app-xml $APP_XML \
-    --xsl $XSLT_ROOT/OCM/AdServer.xsl \
-    --out-file $OUT_DIR/server-$PRODUCT_PHORM_IDENTIFIER.xml
-fi
+$EXEC/XsltTransformer.sh \
+  --var XPATH "$CLUSTER_XPATH" \
+  --var CURRENT_TIME "$TIMESTAMP" \
+  --var PRODUCT_IDENTIFIER "$PRODUCT_PHORM_IDENTIFIER" \
+  --var ISP_ZONE "0" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/OCM/AdServer.xsl \
+  --out-file $OUT_DIR/server-$PRODUCT_PHORM_IDENTIFIER.xml
 
 let "EXIT_CODE|=$?"
 
-if [ $ADCLUSTER_COUNT -ne 0 ] || [ $ADPROFILINGCLUSTER_COUNT -ne 0 ]
+if [ "$ADCLUSTER_COUNT" -ne 0 ]
 then
 
 MGR_ISP_EXT_ROOT_DIR=$ROOT_OUT_DIR/opt/foros/server/manager/$PRODUCT_ISP_IDENTIFIER

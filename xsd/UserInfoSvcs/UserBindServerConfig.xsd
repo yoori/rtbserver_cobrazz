@@ -45,6 +45,14 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="HttpConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            HttpConfig for service monitoring
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="Logger" type="ErrorLoggerType">
         <xsd:annotation>
           <xsd:documentation>

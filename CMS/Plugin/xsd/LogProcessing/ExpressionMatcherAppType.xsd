@@ -14,12 +14,12 @@
   <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
 
   <xsd:complexType name="ExpressionMatcherNetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10113">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10313">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Monitoring port.</xsd:documentation>
       </xsd:annotation>

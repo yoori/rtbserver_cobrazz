@@ -81,6 +81,7 @@ target_link_libraries(UserBindServer
   UserBindServerConfigXSD
   UserBindServerIDL
   UserBindServerGrpc
+  HttpServer
 )
 
 target_sources(UserBindServer PRIVATE

@@ -84,7 +84,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="port" type="xsd:positiveInteger" default="10873">
+    <xsd:attribute name="port" type="xsd:positiveInteger">
       <xsd:annotation>
         <xsd:documentation>
           Target port.

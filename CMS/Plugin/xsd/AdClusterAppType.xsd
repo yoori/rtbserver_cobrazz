@@ -296,7 +296,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="port" type="xsd:positiveInteger" default="10000">
+    <xsd:attribute name="port" type="xsd:positiveInteger">
       <xsd:annotation>
         <xsd:documentation>
           Target port.
@@ -313,7 +313,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="port" type="xsd:positiveInteger" default="10000">
+    <xsd:attribute name="port" type="xsd:positiveInteger">
       <xsd:annotation>
         <xsd:documentation>
           Target port.
@@ -629,6 +629,13 @@
       <xsd:annotation>
         <xsd:documentation>
           Backup user profile operations
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="base_port" type="xsd:positiveInteger" default="10100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Base port for service port defaults. Service ports are calculated as base_port plus service-specific offsets.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

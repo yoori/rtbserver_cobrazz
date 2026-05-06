@@ -3,7 +3,8 @@
   xmlns:apd="http://foros.com/cms/applicationDescriptor"
   xmlns:dyn="http://exslt.org/dynamic"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-  exclude-result-prefixes="dyn xsd"
+  xmlns:cfg="http://www.adintelligence.net/xsd/AdServer/Configuration"
+  exclude-result-prefixes="dyn xsd cfg"
   xmlns:colo="http://www.foros.com/cms/colocation">
 
 <xsl:variable name="app-version">
@@ -359,7 +360,16 @@
 <xsl:variable name="def-host-check-period" select="'10'"/>
 
 <!-- default ports for services -->
-<xsl:variable name="def-range-start" select="10100"/>
+<xsl:variable name="configured-base-port"
+  select="(//cfg:coloParams[@base_port] | //colo:coloParams[@base_port])[1]/@base_port"/>
+<xsl:variable name="def-range-start">
+  <xsl:choose>
+    <xsl:when test="count($configured-base-port) > 0">
+      <xsl:value-of select="$configured-base-port"/>
+    </xsl:when>
+    <xsl:otherwise>10100</xsl:otherwise>
+  </xsl:choose>
+</xsl:variable>
 <xsl:variable name="def-user-info-manager-port" select="$def-range-start + 1"/>
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
@@ -372,7 +382,7 @@
 <xsl:variable name="def-user-bind-server-port" select="$def-range-start + 28"/>
 <xsl:variable name="def-user-bind-controller-port" select="$def-range-start + 29"/>
 <xsl:variable name="def-user-bind-controller2-port" select="$def-range-start + 35"/>
-<xsl:variable name="def-user-bind-controller2-grpc-port" select="'10529'"/>
+<xsl:variable name="def-user-bind-controller2-grpc-port" select="$def-range-start + 429"/>
 <xsl:variable name="def-user-operation-generator-port" select="$def-range-start + 30"/>
 <xsl:variable name="def-billing-server-port" select="$def-range-start + 31"/>
 <xsl:variable name="def-log-generalizer-port" select="$def-range-start + 11"/>
@@ -388,16 +398,16 @@
 
 <xsl:variable name="def-frontend-port" select="$def-range-start + 180"/>
 <xsl:variable name="def-secure-frontend-port" select="$def-range-start + 43"/>
-<xsl:variable name="def-stunnel-server-port" select="'10200'"/>
+<xsl:variable name="def-stunnel-server-port" select="$def-range-start + 100"/>
 
 <xsl:variable name="def-stats-collector-port" select="$def-range-start + 18"/>
 <xsl:variable name="def-stats-dumping-period" select="'60'"/>
 
 <!-- default ports for proxy services -->
-<xsl:variable name="def-proxy-campaign-server-port" select="'10156'"/>
-<xsl:variable name="def-channel-proxy-port" select="'10155'"/>
-<xsl:variable name="def-proxy-sync-logs-port" select="'10162'"/>
-<xsl:variable name="def-stunnel-server-internal-port" select="'10172'"/>
+<xsl:variable name="def-proxy-campaign-server-port" select="$def-range-start + 56"/>
+<xsl:variable name="def-channel-proxy-port" select="$def-range-start + 55"/>
+<xsl:variable name="def-proxy-sync-logs-port" select="$def-range-start + 62"/>
+<xsl:variable name="def-stunnel-server-internal-port" select="$def-range-start + 72"/>
 
 <!-- default secure params -->
 <xsl:variable name="default-secure-params-key" select="'skey.pem'"/>
@@ -408,9 +418,9 @@
 
 <xsl:variable name="default-distrib-count" select="'4'"/>
 
-<xsl:variable name="def-stat-files-receiver-port" select="'10873'"/>
+<xsl:variable name="def-stat-files-receiver-port" select="$def-range-start + 773"/>
 
-<xsl:variable name="def-rsync-server-port" select="'10114'"/>
+<xsl:variable name="def-rsync-server-port" select="$def-range-start + 14"/>
 
 <!-- default frontend variables -->
 <xsl:variable name="def-frontend-redirect-expire-time" select="'900'"/>

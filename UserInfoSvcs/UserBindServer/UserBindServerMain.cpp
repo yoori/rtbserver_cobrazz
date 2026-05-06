@@ -5,6 +5,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/ErrorHandler.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 
 #include "UserBindServerMain.hpp"
 
@@ -159,6 +160,34 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
           "0.0.0.0",
         config().GrpcConfig()->Endpoint().port());
       add_child_object(grpc_adapter_);
+    }
+
+    if(config().HttpConfig().present())
+    {
+      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+        config().HttpConfig()->Endpoint().host().present() &&
+          *(config().HttpConfig()->Endpoint().host()) != "*" ?
+          *config().HttpConfig()->Endpoint().host() :
+          "0.0.0.0",
+        config().HttpConfig()->Endpoint().port(),
+        4);
+      http_server_->add_handler(
+        "/stats",
+        [user_bind_server_core](
+          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        {
+          const auto stats = user_bind_server_core->stats();
+          return AdServer::Commons::HttpServer::HttpServer::Response{
+            200,
+            "application/json",
+            std::string("{\"get_user_id_total_requests\":") +
+              std::to_string(stats.get_user_id_total_requests) +
+              ",\"add_user_id_requests\":" +
+              std::to_string(stats.add_user_id_requests) +
+              "}\n"
+          };
+        });
+      add_child_object(http_server_);
     }
 
     shutdowner_ = corba_server_adapter->shutdowner();

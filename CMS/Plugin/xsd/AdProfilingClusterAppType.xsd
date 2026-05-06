@@ -133,6 +133,13 @@
       </xsd:element>
     </xsd:sequence>
 
+    <xsd:attribute name="base_port" type="xsd:positiveInteger" default="10100">
+      <xsd:annotation>
+        <xsd:documentation>
+          Base port for service port defaults. Service ports are calculated as base_port plus service-specific offsets.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="country" type="NoLeadingTrailingSpaces" use="optional">
       <xsd:annotation>
         <xsd:documentation>

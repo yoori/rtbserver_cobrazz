@@ -14,7 +14,7 @@
   <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
 
   <xsd:complexType name="CampaignManagerNetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10107">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>

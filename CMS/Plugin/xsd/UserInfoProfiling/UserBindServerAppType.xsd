@@ -14,17 +14,17 @@
   <xsd:include schemaLocation="../Commons/AdServerCommonsApp.xsd"/>
 
   <xsd:complexType name="UserBindServerNetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10128">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10328">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Monitoring port to accept connections.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional" default="10528">
+    <xsd:attribute name="grpc_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Port to accept connections from other cluster services.</xsd:documentation>
       </xsd:annotation>

@@ -42,7 +42,7 @@
   </xsd:complexType>
 
   <xsd:complexType name="StatReceiverNetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10115">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>Port to accept connections.</xsd:documentation>
       </xsd:annotation>

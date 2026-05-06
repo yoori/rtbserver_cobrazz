@@ -16,14 +16,14 @@
   <xsd:include schemaLocation="./Commons/AdServerCommonsApp.xsd"/>
 
   <xsd:complexType name="AdFCGINetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10176">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10276">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -48,14 +48,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI1NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10177">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10277">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -80,14 +80,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI2NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10196">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10296">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -112,14 +112,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI3NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10197">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10297">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -144,14 +144,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI4NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10198">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10298">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -176,14 +176,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI5NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10200">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10300">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -208,14 +208,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI6NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10201">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10301">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -240,14 +240,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI7NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10202">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10302">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -272,14 +272,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI8NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10203">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10303">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -304,14 +304,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI9NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10204">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10304">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -336,14 +336,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI10NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10205">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10305">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -368,14 +368,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI11NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10206">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10306">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -400,14 +400,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI12NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10207">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10307">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -432,14 +432,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI13NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10208">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10308">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -464,14 +464,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI14NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10209">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10309">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -496,14 +496,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI15NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10210">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10310">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -528,14 +528,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI16NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10211">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10311">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -560,14 +560,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI17NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10212">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10312">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -592,14 +592,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI18NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10213">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10313">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -624,14 +624,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI19NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10214">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10314">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -656,14 +656,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI20NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10215">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10315">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -688,14 +688,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI21NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10216">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10316">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -720,14 +720,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI22NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10217">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10317">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -752,14 +752,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI23NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10218">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10318">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -784,14 +784,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI24NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10219">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10319">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -816,14 +816,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI25NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10220">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10320">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -848,14 +848,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI26NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10221">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10321">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -880,14 +880,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI27NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10222">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10322">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -912,14 +912,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI28NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10223">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10323">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -944,14 +944,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI29NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10224">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10324">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -976,14 +976,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI30NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10225">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10325">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1008,14 +1008,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI31NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10226">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10326">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1040,14 +1040,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="RtbFCGI32NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10227">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10327">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1072,14 +1072,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="TrackFCGI1NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10195">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10295">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1104,14 +1104,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="TrackFCGI2NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10199">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10299">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1136,14 +1136,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="UserBindFCGI1NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10178">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10278">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1168,14 +1168,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="UserBindFCGI2NetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10194">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10294">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1200,14 +1200,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="UserBindIntFCGINetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10179">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10279">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.
@@ -1232,14 +1232,14 @@
   </xsd:complexType>
 
   <xsd:complexType name="UserBindAddFCGINetworkParamsType">
-    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional" default="10193">
+    <xsd:attribute name="port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for CORBA interface.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional" default="10293">
+    <xsd:attribute name="monitoring_port" type="xsd:positiveInteger" use="optional">
       <xsd:annotation>
         <xsd:documentation>
          Port for get monitoring metrics.

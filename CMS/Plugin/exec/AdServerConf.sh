@@ -38,7 +38,7 @@ ADCLUSTER_XPATH="$CLUSTER_XPATH/serviceGroup[@descriptor = '$ADCLUSTER_DESCR']"
 ADCLUSTER_COUNT_XPATH="count($ADCLUSTER_XPATH)"
 ADCLUSTER_COUNT=`$EXEC/XPathGetValue.sh --xml $APP_XML --xpath "$ADCLUSTER_COUNT_XPATH" --plugin-root $PLUGIN_ROOT`
 
-if [ $ADCLUSTER_COUNT -ne 0 ]
+if [ "$ADCLUSTER_COUNT" -ne 0 ]
 then
   $EXEC/AdClusterConf.sh $APP_XML \
    "$ADCLUSTER_XPATH" \
@@ -78,7 +78,6 @@ $EXEC/OCMConf.sh $APP_XML \
   "$APP_VERSION" \
   "$APP_RELEASE" \
   "$ADCLUSTER_COUNT" \
-  "$ADPROFILING_COUNT" \
   "$OUT_DIR"
 
 let "EXIT_CODE|=$?"

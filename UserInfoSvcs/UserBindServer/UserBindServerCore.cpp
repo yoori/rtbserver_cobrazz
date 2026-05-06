@@ -126,6 +126,8 @@ namespace AdServer::UserInfoSvcs
   UserBindServerCore::GetUserResponseInfo
   UserBindServerCore::get_user_id(const GetUserRequestInfo& request_info)
   {
+    get_user_id_total_requests_.fetch_add(1, std::memory_order_relaxed);
+
     UserBindProcessorHolder::Accessor user_bind_accessor =
       user_bind_container_->get_accessor();
 
@@ -213,6 +215,8 @@ namespace AdServer::UserInfoSvcs
   UserBindServerCore::AddUserResponseInfo
   UserBindServerCore::add_user_id(const AddUserRequestInfo& request_info)
   {
+    add_user_id_requests_.fetch_add(1, std::memory_order_relaxed);
+
     UserBindProcessorHolder::Accessor user_bind_accessor =
       user_bind_container_->get_accessor();
 
@@ -319,6 +323,15 @@ namespace AdServer::UserInfoSvcs
 
     res.chunks_number = chunks_number_;
     return res;
+  }
+
+  UserBindServerCore::Stats
+  UserBindServerCore::stats() const noexcept
+  {
+    return {
+      get_user_id_total_requests_.load(std::memory_order_relaxed),
+      add_user_id_requests_.load(std::memory_order_relaxed)
+    };
   }
 
   const UserBindContainer::ChunkPathMap&

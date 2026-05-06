@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <string>
 #include <vector>
 #include <utility>
@@ -80,6 +81,12 @@ namespace AdServer::UserInfoSvcs
       unsigned long chunks_number = 0;
     };
 
+    struct Stats
+    {
+      unsigned long get_user_id_total_requests = 0;
+      unsigned long add_user_id_requests = 0;
+    };
+
     typedef AdServer::Commons::AccessActiveObject<UserBindProcessor_var>
       UserBindProcessorHolder;
     typedef ReferenceCounting::SmartPtr<UserBindProcessorHolder>
@@ -111,6 +118,8 @@ namespace AdServer::UserInfoSvcs
     AddUserResponseInfo add_user_id(const AddUserRequestInfo& request_info);
 
     Source get_source() const;
+
+    Stats stats() const noexcept;
 
     const UserBindContainer::ChunkPathMap&
     chunks() const noexcept;
@@ -214,6 +223,8 @@ namespace AdServer::UserInfoSvcs
     UserBindContainer::ChunkPathMap chunks_;
     unsigned long chunks_number_;
     Commons::UserIdBlackList user_id_black_list_;
+    mutable std::atomic<unsigned long> get_user_id_total_requests_{0};
+    mutable std::atomic<unsigned long> add_user_id_requests_{0};
   };
 
   typedef ReferenceCounting::SmartPtr<UserBindServerCore>
