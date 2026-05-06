@@ -15,6 +15,7 @@
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>
 
 #include "ChannelServerImpl.hpp"
+#include "ChannelServerGrpc.hpp"
 
 class ChannelServerApp_ :
   public AdServer::Commons::ProcessControlVarsLoggerImpl
@@ -71,6 +72,7 @@ private:
 
   ConfigPtr configuration_;
   AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;
+  AdServer::ChannelSvcs::ChannelServerGrpc_var grpc_adapter_;
 
   typedef Sync::PosixMutex ShutdownMutex;
   typedef Sync::PosixGuard ShutdownGuard;
@@ -116,4 +118,3 @@ char* ChannelServerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
 
 
 #endif /*AD_CHANNEL_SVCS_SERVER_MAIN_HPP_*/
-

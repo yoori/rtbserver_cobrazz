@@ -447,6 +447,13 @@
         <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController'"/>
       </xsl:call-template>
 
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
+          select="./service[@descriptor = $channel-controller2-descriptor]"/>
+        <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController2')"/>
+        <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController2'"/>
+      </xsl:call-template>
+
       <xsl:if test="count(./service[@descriptor = $user-bind-server-descriptor]) > 0">
         <xsl:call-template name="AddService">
           <xsl:with-param name="service-path"

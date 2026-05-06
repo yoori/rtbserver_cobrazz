@@ -104,6 +104,7 @@
 
 <xsl:variable name="channel-server-descriptor" select="'AdCluster/FrontendSubCluster/ChannelServer'"/>
 <xsl:variable name="channel-controller-descriptor" select="'AdCluster/FrontendSubCluster/ChannelController'"/>
+<xsl:variable name="channel-controller2-descriptor" select="'AdCluster/FrontendSubCluster/ChannelController2'"/>
 <xsl:variable name="channel-search-service-descriptor" select="'AdCluster/FrontendSubCluster/ChannelSearchService'"/>
 
 <xsl:variable name="default-ads-spaces-topic" select="'adsspaces'"/>
@@ -154,6 +155,7 @@
 <xsl:variable name="channel-server-log-path" select="'/log/ChannelServer/ChannelServer'"/>
 <xsl:variable name="channel-controller-log-level" select="$default-log-level"/>
 <xsl:variable name="channel-controller-log-path" select="'/log/ChannelController/ChannelController'"/>
+<xsl:variable name="channel-controller2-log-path" select="'/log/ChannelController2/ChannelController2'"/>
 <xsl:variable name="channel-search-service-log-level" select="$default-log-level"/>
 <xsl:variable name="channel-search-service-log-path" select="'/log/ChannelSearchService/ChannelSearchService'"/>
 <xsl:variable name="sync-logs-log-level" select="$default-log-level"/>
@@ -374,6 +376,8 @@
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
 <xsl:variable name="def-channel-controller-port" select="$def-range-start + 4"/>
+<xsl:variable name="def-channel-controller2-port" select="$def-range-start + 430"/>
+<xsl:variable name="def-channel-controller2-grpc-port" select="$def-range-start + 430"/>
 <xsl:variable name="def-campaign-server-port" select="$def-range-start + 6"/>
 <xsl:variable name="def-campaign-manager-port" select="$def-range-start + 7"/>
 <xsl:variable name="def-conv-server-port" select="$def-range-start + 34"/>

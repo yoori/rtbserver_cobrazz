@@ -20,7 +20,7 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -225,7 +225,7 @@ namespace Action
 
     std::unique_ptr<AdServer::Action::RequestInfoFiller> request_info_filler_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelServerSessionPool>
+    std::unique_ptr<FrontendCommons::ChannelCorbaClient>
       channel_servers_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     CookieManagerPtr cookie_manager_;

@@ -17,6 +17,7 @@
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionImpl.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 
 /**
  * \class Application Application.hpp "ChannelAdmin/Application.hpp"
@@ -130,6 +131,11 @@ private:
     T2& res)
     /*throw(Exception)*/;
 
+  void make_match_query(
+    AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient* iface_ptr,
+    AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var& res)
+    /*throw(Exception)*/;
+
   int update_()
     /*throw(InvalidArgument, Exception, eh::Exception, CORBA::SystemException)*/;
 
@@ -204,6 +210,7 @@ private:
   Generics::Statistics::Collection_var collection_;
   CORBA::Object_var obj_ref_;
   AdServer::ChannelSvcs::ChannelServer_var channel_server_;
+  AdServer::ChannelSvcs::ChannelCorbaClient_var channel_client_;
   AdServer::ChannelSvcs::ChannelUpdateBase_v33_var channel_update_;
   AdServer::ChannelSvcs::ChannelServerSession_var channel_session_;
   AdServer::ChannelSvcs::ChannelLoadSession_var load_session_;

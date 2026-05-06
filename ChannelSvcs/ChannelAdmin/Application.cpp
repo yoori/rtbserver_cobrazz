@@ -616,28 +616,14 @@ void Application::init_server_interface_() /*throw(InvalidArgument)*/
       throw InvalidArgument(ostr);
     }
 
-    AdServer::ChannelSvcs::ChannelManagerController_var manager =
-      AdServer::ChannelSvcs::ChannelManagerController::_narrow(obj_ref_.in());
-
-    if(CORBA::is_nil(manager.in()))
-    {
-      throw InvalidArgument("_narrow return nil reference");
-    }
     Generics::ActiveObjectCallback_var callback(
       new Logging::ActiveObjectCallbackImpl(logger_.in()));
-    AdServer::ChannelSvcs::ChannelServerSessionFactory::init(
-        *adapter_,
-        &server_session_factory_,
-        0,
-        callback,
-        logger_.in());
-    channel_session_ = manager->get_channel_session();
-    if(CORBA::is_nil(channel_session_.in()))
-    {
-      Stream::Error ostr;
-      ostr << "channel session is nil";
-      throw InvalidArgument(ostr);
-    }
+    CORBACommons::CorbaObjectRefList refs;
+    refs.push_back(CORBACommons::CorbaObjectRef(reference_.c_str()));
+    channel_client_ = new AdServer::ChannelSvcs::ChannelCorbaClient(
+      refs,
+      adapter_.in(),
+      callback);
     initted = true;
     use_session_ = true;
   }
@@ -678,6 +664,14 @@ void Application::init_server_interface_() /*throw(InvalidArgument)*/
       {
         throw InvalidArgument("ChannelServer::_narrow failed ");
       }
+      Generics::ActiveObjectCallback_var callback(
+        new Logging::ActiveObjectCallbackImpl(logger_.in()));
+      CORBACommons::CorbaObjectRefList refs;
+      refs.push_back(CORBACommons::CorbaObjectRef(reference_.c_str()));
+      channel_client_ = new AdServer::ChannelSvcs::ChannelCorbaClient(
+        refs,
+        adapter_.in(),
+        callback);
     }
     catch(const CORBACommons::CorbaClientAdapter::Exception& e)
     {
@@ -1509,35 +1503,32 @@ int Application::ccg_traits_()
     *ulong_options[OPT_TIMES].value);
   try
   {
-    if (use_session_)
+    adserver::channel_svcs::channel_server::GetCcgTraitsRequest request;
+    adserver::channel_svcs::channel_server::GetCcgTraitsResponse response;
+    grpc::Status status;
+    AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(
+      in,
+      request);
+    channel_client_->get_ccg_traits(
+      request,
+      [&status, &response](
+        const grpc::Status& callback_status,
+        const adserver::channel_svcs::channel_server::GetCcgTraitsResponse&
+          callback_response)
+      {
+        status = callback_status;
+        response = callback_response;
+      });
+    if (!status.ok())
     {
-      typedef
-        decltype(&AdServer::ChannelSvcs::ChannelServerSession::get_ccg_traits)
-        FuncType;
-      FuncType func_ptr =
-        &AdServer::ChannelSvcs::ChannelServerSession::get_ccg_traits;
-      stat_marker.calc_stat_r(&*channel_session_, func_ptr, result_1, in);
+      Stream::Error ostr;
+      ostr << __func__ << ": grpc get_ccg_traits failed: code=" <<
+        static_cast<int>(status.error_code()) <<
+        ", message=" << status.error_message();
+      throw Exception(ostr);
     }
-    else
-    {
-      typedef
-        decltype(&AdServer::ChannelSvcs::ChannelServer::get_ccg_traits)
-        FuncType;
-      FuncType func_ptr =
-        &AdServer::ChannelSvcs::ChannelServer::get_ccg_traits;
-      stat_marker.calc_stat(&*channel_server_, func_ptr, in, result_2);
-      result_1 = new AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq(
-        result_2->ccg_keywords);
-      std::unique_ptr<Table> table(new Table(1));
-      Table::Row row(1);
-      table->column(0, Table::Column("negative_ccg"));
-      row.add_field(
-        concat_sequence(
-          result_2->neg_ccg.get_buffer(),
-          result_2->neg_ccg.get_buffer() + result_2->neg_ccg.length()));
-      table->add_row(row);
-      table->dump(std::cout);
-    }
+    result_1 =
+      AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(response);
   }
   catch(const AdServer::ChannelSvcs::ImplementationException& e)
   {
@@ -1785,6 +1776,103 @@ void print_match_appendix(
   table->dump(std::cout);
 }
 
+void Application::make_match_query(
+  AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient* iface_ptr,
+  AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var& res)
+  /*throw(Exception)*/
+{
+  AdServer::ChannelSvcs::ChannelServerBase::MatchQuery in;
+  try
+  {
+    in.request_id << String::SubString("ChannelAdmin");
+    in.first_url << *string_options[OPT_URL].value;
+    in.pwords << *string_options[OPT_PWORDS].value;
+    in.swords << *string_options[OPT_SWORDS].value;
+    if (!string_options[OPT_UID].value.installed())
+    {
+      in.uid = CorbaAlgs::pack_user_id(Generics::Uuid());
+    }
+    else
+    {
+      in.uid = CorbaAlgs::pack_user_id(
+        Generics::Uuid(*string_options[OPT_UID].value, true));
+    }
+    in.non_strict_word_match =
+      check_options[OPT_NS_WORD_H].value.enabled() ||
+      check_options[OPT_NS_WORD_S].value.enabled();
+    in.non_strict_url_match = check_options[OPT_NS_WORD_U].value.enabled();
+    in.return_negative = check_options[OPT_NEGATIVE].value.enabled();
+    in.simplify_page = !check_options[OPT_NO_SIMPLIFY_PAGE].value.enabled();
+    in.fill_content = !check_options[OPT_NO_PRINT_CONTENT].value.enabled();
+    if (string_options[OPT_STATUS].value->empty())
+    {
+      throw Exception("statuses didn't set");
+    }
+    in.statuses[0] = (*string_options[OPT_STATUS].value)[0];
+    if (string_options[OPT_STATUS].value->size() > 1)
+    {
+      in.statuses[1] = (*string_options[OPT_STATUS].value)[1];
+    }
+  }
+  catch(const eh::Exception& e)
+  {
+    Stream::Error ostr;
+    ostr << __func__ << ": Exception: " << e.what();
+    throw Exception(ostr);
+  }
+  struct GrpcStatMarker: public StatMarker
+  {
+    using StatMarker::StatMarker;
+    using StatMarker::calc_value_;
+  };
+  GrpcStatMarker stat_marker(
+    *string_options[OPT_STAT].value,
+    "Match",
+    *ulong_options[OPT_TIMES].value);
+  try
+  {
+    for (unsigned long i = 0; i < *ulong_options[OPT_TIMES].value; ++i)
+    {
+      const Generics::Time start_time = Generics::Time::get_time_of_day();
+      adserver::channel_svcs::channel_server::MatchRequest request;
+      adserver::channel_svcs::channel_server::MatchResponse response;
+      grpc::Status status;
+      AdServer::ChannelSvcs::GrpcAlgs::make_match_request(
+        in,
+        request);
+      iface_ptr->match(
+        request,
+        [&status, &response](
+          const grpc::Status& callback_status,
+          const adserver::channel_svcs::channel_server::MatchResponse&
+            callback_response)
+        {
+          status = callback_status;
+          response = callback_response;
+        });
+      if (!status.ok())
+      {
+        Stream::Error ostr;
+        ostr << __func__ << ": grpc match failed: code=" <<
+          static_cast<int>(status.error_code()) <<
+          ", message=" << status.error_message();
+        throw Exception(ostr);
+      }
+      res = AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
+        response);
+      stat_marker.calc_value_(
+        Generics::Time::get_time_of_day() - start_time,
+        i);
+    }
+  }
+  catch(const AdServer::ChannelSvcs::ChannelCorbaClient::Exception& e)
+  {
+    Stream::Error ostr;
+    ostr << __func__ << ": ChannelCorbaClient::Exception: " << e.what();
+    throw Exception(ostr);
+  }
+}
+
 template<class T1, class T2>
 void Application::make_match_query(
   T1* iface_ptr,
@@ -1898,44 +1986,27 @@ int Application::match_()
   std::string err_descr;
   try
   {
-    if (use_session_)
+    AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result;
+    make_match_query(
+      static_cast<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient*>(
+        channel_client_.in()),
+      result);
+    print_match_result(
+      result,
+      filters_, check_options[OPT_NO_PRINT_CONTENT].value.enabled());
+    for(size_t i = 0; i < result->match_time.length(); i++)
     {
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result_1;
-      AdServer::ChannelSvcs::ChannelIdSeq empty;
-      make_match_query<
-        AdServer::ChannelSvcs::ChannelServerSession,
-        AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var>(
-          channel_session_, result_1);
-        print_match_result(
-          result_1,
-          filters_, check_options[OPT_NO_PRINT_CONTENT].value.enabled());
-        for(size_t i = 0; i < result_1->match_time.length(); i++)
-        {
-          match_time << CorbaAlgs::unpack_time(result_1->match_time[i]);
-          if(i + 1 == result_1->match_time.length())
-          {
-            match_time << ".";
-          }
-          else
-          {
-            match_time << ", ";
-          }
-        }
-        print_match_appendix(match_time.str(), result_1);
+      match_time << CorbaAlgs::unpack_time(result->match_time[i]);
+      if(i + 1 == result->match_time.length())
+      {
+        match_time << ".";
+      }
+      else
+      {
+        match_time << ", ";
+      }
     }
-    else
-    {
-      AdServer::ChannelSvcs::ChannelServer::MatchResult_var result_2;
-      make_match_query<
-        AdServer::ChannelSvcs::ChannelServer,
-        AdServer::ChannelSvcs::ChannelServer::MatchResult_var>(
-          channel_server_, result_2);
-        print_match_result(
-          result_2,
-          filters_, check_options[OPT_NO_PRINT_CONTENT].value.enabled());
-        match_time << CorbaAlgs::unpack_time(result_2->match_time);
-        print_match_appendix(match_time.str(), result_2);
-    }
+    print_match_appendix(match_time.str(), result);
   }
   catch(const Exception& e)
   {
@@ -2039,5 +2110,3 @@ void Application::StatMarker::calc_value_(
     }
   }
 }
-
-

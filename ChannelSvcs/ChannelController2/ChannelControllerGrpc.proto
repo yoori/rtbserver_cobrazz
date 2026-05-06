@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package adserver.channel_svcs.channel_controller;
+
+service ChannelControllerGrpc {
+  rpc get_session_description(GetSessionDescriptionRequest)
+    returns (GetSessionDescriptionResponse);
+}
+
+message GetSessionDescriptionRequest {}
+
+message ChannelServerDescription {
+  string channel_server_endpoint = 1;
+  repeated uint32 chunk_ids = 2;
+}
+
+message ChannelServerGroup {
+  repeated ChannelServerDescription channel_servers = 1;
+}
+
+message GetSessionDescriptionResponse {
+  repeated ChannelServerGroup channel_server_groups = 1;
+  uint32 chunks_number = 2;
+}

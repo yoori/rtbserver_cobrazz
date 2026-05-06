@@ -25,7 +25,7 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
-#include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
@@ -191,7 +191,7 @@ namespace ImprTrack
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelServerSessionPool>
+    std::unique_ptr<FrontendCommons::ChannelCorbaClient>
       channel_servers_;
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
       user_bind_client_;

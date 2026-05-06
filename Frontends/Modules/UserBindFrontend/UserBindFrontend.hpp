@@ -25,7 +25,7 @@
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -276,7 +276,7 @@ namespace AdServer
     AdServer::Grpc::GrpcExecutor_var grpc_executor_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelServerSessionPool>
+    std::unique_ptr<FrontendCommons::ChannelCorbaClient>
       channel_servers_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::CookieManager<

@@ -491,7 +491,7 @@ namespace Bidding
           channel_manager_controller_refs);
 
         channel_servers_.reset(
-          new FrontendCommons::ChannelServerSessionPool(
+          new FrontendCommons::ChannelCorbaClient(
             channel_manager_controller_refs,
             corba_client_adapter_,
             callback()));
@@ -1334,7 +1334,29 @@ namespace Bidding
         query.swords << request_info.search_words;
         query.uid = CorbaAlgs::pack_user_id(user_id);
 
-        channel_servers_->match(query, trigger_matched_channels);
+        adserver::channel_svcs::channel_server::MatchRequest channel_request;
+      adserver::channel_svcs::channel_server::MatchResponse channel_response;
+      grpc::Status channel_status;
+      AdServer::ChannelSvcs::GrpcAlgs::make_match_request(query, channel_request);
+      channel_servers_->match(
+        channel_request,
+        [&channel_status, &channel_response](
+          const grpc::Status& status,
+          const adserver::channel_svcs::channel_server::MatchResponse& response)
+        {
+          channel_status = status;
+          channel_response = response;
+        });
+      if (!channel_status.ok())
+      {
+        Stream::Error ostr;
+        ostr << "ChannelServer grpc match failed: code=" <<
+          static_cast<int>(channel_status.error_code()) <<
+          ", message=" << channel_status.error_message();
+        throw FrontendCommons::ChannelCorbaClient::Exception(ostr);
+      }
+      trigger_matched_channels = AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
+        channel_response);
 
         request_params.trigger_match_result.pkw_channels.length(
           trigger_matched_channels->matched_channels.page_channels.length());
@@ -1381,11 +1403,11 @@ namespace Bidding
             AdServer::CampaignSvcs::US_BLACKLISTED);
         }
       }
-      catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
+      catch(const FrontendCommons::ChannelCorbaClient::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN <<
-          ": caught ChannelServerSessionPool::Exception: " <<
+          ": caught ChannelCorbaClient::Exception: " <<
           ex.what();
         logger()->log(ostr.str(),
           Logging::Logger::EMERGENCY,
@@ -1671,14 +1693,38 @@ namespace Bidding
           channel_ids[i] = history_match_result.channels[i].channel_id;
         }
 
-        ccg_keywords = channel_servers_->get_ccg_traits(channel_ids);
+        ccg_keywords = ([&]() {
+            adserver::channel_svcs::channel_server::GetCcgTraitsRequest channel_request;
+            adserver::channel_svcs::channel_server::GetCcgTraitsResponse channel_response;
+            grpc::Status channel_status;
+            AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(channel_ids, channel_request);
+            channel_servers_->get_ccg_traits(
+              channel_request,
+              [&channel_status, &channel_response](
+                const grpc::Status& status,
+                const adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response)
+              {
+                channel_status = status;
+                channel_response = response;
+              });
+            if (!channel_status.ok())
+            {
+              Stream::Error ostr;
+              ostr << "ChannelServer grpc get_ccg_traits failed: code=" <<
+                static_cast<int>(channel_status.error_code()) <<
+                ", message=" << channel_status.error_message();
+              throw FrontendCommons::ChannelCorbaClient::Exception(ostr);
+            }
+            return AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(
+              channel_response);
+          })();
       }
     }
-    catch(const FrontendCommons::ChannelServerSessionPool::Exception& ex)
+    catch(const FrontendCommons::ChannelCorbaClient::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN <<
-        ": caught ChannelServerSessionPool::Exception: " <<
+        ": caught ChannelCorbaClient::Exception: " <<
         ex.what();
       logger()->log(ostr.str(),
         Logging::Logger::EMERGENCY,

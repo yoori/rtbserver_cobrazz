@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package adserver.channel_svcs.channel_server;
+
+service ChannelServerGrpc {
+  rpc match(MatchRequest) returns (MatchResponse);
+  rpc get_ccg_traits(GetCcgTraitsRequest) returns (GetCcgTraitsResponse);
+}
+
+message ChannelAtom {
+  uint64 id = 1;
+  uint64 trigger_channel_id = 2;
+}
+
+message TriggerMatchResult {
+  repeated ChannelAtom page_channels = 1;
+  repeated ChannelAtom search_channels = 2;
+  repeated ChannelAtom url_channels = 3;
+  repeated ChannelAtom url_keyword_channels = 4;
+  repeated uint64 uid_channels = 5;
+}
+
+message ContentChannelAtom {
+  uint64 id = 1;
+  uint64 weight = 2;
+}
+
+message MatchRequest {
+  string request_id = 1;
+  string first_url = 2;
+  string first_url_words = 3;
+  string urls = 4;
+  string urls_words = 5;
+  string pwords = 6;
+  string swords = 7;
+  bytes uid = 8;
+  string statuses = 9;
+  bool non_strict_word_match = 10;
+  bool non_strict_url_match = 11;
+  bool return_negative = 12;
+  bool simplify_page = 13;
+  bool fill_content = 14;
+}
+
+message MatchResponse {
+  TriggerMatchResult matched_channels = 1;
+  repeated ContentChannelAtom content_channels = 2;
+  bool no_adv = 3;
+  bool no_track = 4;
+  bytes match_time = 5;
+}
+
+message GetCcgTraitsRequest {
+  repeated uint64 ids = 1;
+}
+
+message CcgKeyword {
+  uint64 ccg_keyword_id = 1;
+  uint64 ccg_id = 2;
+  uint64 channel_id = 3;
+  bytes max_cpc = 4;
+  bytes ctr = 5;
+  string click_url = 6;
+  string original_keyword = 7;
+}
+
+message GetCcgTraitsResponse {
+  repeated CcgKeyword ccg_keywords = 1;
+  repeated uint64 neg_ccg = 2;
+}

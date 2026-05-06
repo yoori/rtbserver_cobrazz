@@ -65,6 +65,13 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="channel-server-grpc-port">
+      <xsl:value-of select="$channel-server-config/cfg:networkParams/@grpc_port"/>
+      <xsl:if test="count($channel-server-config/cfg:networkParams/@grpc_port) = 0">
+        <xsl:value-of select="$channel-server-port + 500"/>
+      </xsl:if>
+    </xsl:variable>
+
     <exsl:document href="channelServer.port"
       method="text" omit-xml-declaration="yes"
       >  ['channelServer', <xsl:copy-of select="$channel-server-port"/>],</exsl:document>
@@ -115,6 +122,10 @@
         <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>
+
+    <cfg:GrpcConfig>
+      <cfg:Endpoint host="*" port="{$channel-server-grpc-port}"/>
+    </cfg:GrpcConfig>
 
     <xsl:choose>
       <xsl:when test="$channel-server-config/cfg:logging/@log_level > 7">

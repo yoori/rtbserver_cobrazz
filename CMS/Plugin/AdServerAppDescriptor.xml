@@ -175,6 +175,14 @@
         minHostOccurs="1"
         maxHostOccurs="unbounded"/>
 
+      <service
+        type="ChannelController2"
+        configSchema="xsd/ChannelServing/ChannelController2App.xsd"
+        minOccurs="0"
+        maxOccurs="unbounded"
+        minHostOccurs="0"
+        maxHostOccurs="unbounded"/>
+
       <service type="ChannelSearchService"
         configSchema="xsd/ChannelServing/ChannelSearchServiceApp.xsd"
         minOccurs="0"

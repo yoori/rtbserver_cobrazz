@@ -1,8 +1,9 @@
 ADD_SUBDIRECTORY(ChannelAdmin)
 ADD_SUBDIRECTORY(ChannelCommons)
+ADD_SUBDIRECTORY(ChannelController2)
 ADD_SUBDIRECTORY(ChannelManagerController)
 ADD_SUBDIRECTORY(ChannelProxy)
 ADD_SUBDIRECTORY(ChannelServer)
+ADD_SUBDIRECTORY(ChannelClient)
 ADD_SUBDIRECTORY(DictionaryProvider)
 ADD_SUBDIRECTORY(TriggerFilter)
-

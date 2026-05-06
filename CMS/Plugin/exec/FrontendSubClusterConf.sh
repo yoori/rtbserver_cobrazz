@@ -31,6 +31,7 @@ USER_INFO_MANAGER_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoManagerContro
 
 CHANNEL_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelServer
 CHANNEL_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController
+CHANNEL_CONTROLLER2_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController2
 CHANNEL_SEARCH_SERVICE_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelSearchService
 
 USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
@@ -142,6 +143,19 @@ $EXEC/ServiceConf.sh \
   --out-dir $OUT_DIR \
   --plugin-root $PLUGIN_ROOT \
   --cluster-id $CLUSTER_ID
+
+let "EXIT_CODE|=$?"
+
+## configure ChannelController2
+CHANNEL_CONTROLLER2_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CHANNEL_CONTROLLER2_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$CHANNEL_CONTROLLER2_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/ChannelServing/ChannelController2.xsl \
+  --out-file ChannelController2.xml \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
 
 let "EXIT_CODE|=$?"
 

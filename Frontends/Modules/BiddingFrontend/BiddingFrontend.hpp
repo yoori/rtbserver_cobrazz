@@ -30,7 +30,7 @@
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
@@ -401,7 +401,7 @@ namespace Bidding
     AdServer::Grpc::GrpcExecutor_var grpc_executor_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
+    std::unique_ptr<FrontendCommons::ChannelCorbaClient> channel_servers_;
 
     Generics::Planner_var planner_;
     Generics::TaskExecutor_var task_runner_;

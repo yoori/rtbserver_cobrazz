@@ -23,6 +23,7 @@ FRONTEND_CLUSTER_DESCR=AdCluster/FrontendSubCluster
 
 CHANNEL_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelServer
 CHANNEL_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController
+CHANNEL_CONTROLLER2_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController2
 CHANNEL_SEARCH_SERVICE_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelSearchService
 
 USER_BIND_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/UserBindServer
@@ -66,6 +67,20 @@ $EXEC/CurrentEnvGen.sh \
   --app-xml $APP_XML \
   --search-xpath "configuration/cfg:channelController" \
   --services-xpath "$CHANNEL_CONTROLLER_XPATH" \
+  --out-dir $OUT_DIR \
+  --out-file CurrentEnv/$FE_CURRENT_NAME
+
+let "EXIT_CODE|=$?"
+
+CHANNEL_CONTROLLER2_XPATH="$CLUSTER_XPATH/service[@descriptor = '$CHANNEL_CONTROLLER2_DESCR']"
+
+$EXEC/CurrentEnvGen.sh \
+  --service-name "channel_controller2" \
+  --plugin-root "$PLUGIN_ROOT" \
+  --app-xml $APP_XML \
+  --search-xpath "configuration/cfg:channelController2" \
+  --relative-port-xpath "cfg:networkParams/@grpc_port" \
+  --services-xpath "$CHANNEL_CONTROLLER2_XPATH" \
   --out-dir $OUT_DIR \
   --out-file CurrentEnv/$FE_CURRENT_NAME
 

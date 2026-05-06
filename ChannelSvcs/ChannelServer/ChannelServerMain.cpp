@@ -41,6 +41,12 @@ void ChannelServerApp_::shutdown(CORBA::Boolean wait_for_completion)
 
   if(server_impl_.in() != 0)
   {
+    if(grpc_adapter_.in() != 0)
+    {
+      grpc_adapter_->deactivate_object();
+      grpc_adapter_->wait_object();
+    }
+
     server_impl_->deactivate_object();
     server_impl_->wait_object();
   }
@@ -181,6 +187,19 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
     corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
 
     server_impl_->activate_object();
+
+    if(configuration_->GrpcConfig().present())
+    {
+      grpc_adapter_ = new AdServer::ChannelSvcs::ChannelServerGrpc(
+        server_impl_.in(),
+        logger(),
+        configuration_->GrpcConfig()->Endpoint().host().present() &&
+          *(configuration_->GrpcConfig()->Endpoint().host()) != "*" ?
+          *configuration_->GrpcConfig()->Endpoint().host() :
+          "0.0.0.0",
+        configuration_->GrpcConfig()->Endpoint().port());
+      grpc_adapter_->activate_object();
+    }
   }
   catch(const AdServer::ChannelSvcs::ChannelServerCustomImpl::Exception& e)
   {
@@ -361,4 +380,3 @@ int main(int argc, char** argv)
   app->main(argc, argv);
   return 0;
 }
-

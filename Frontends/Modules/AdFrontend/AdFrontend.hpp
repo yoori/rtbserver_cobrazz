@@ -25,7 +25,7 @@
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
-#include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
@@ -289,7 +289,7 @@ namespace AdServer
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;
+    std::unique_ptr<FrontendCommons::ChannelCorbaClient> channel_servers_;
 
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;

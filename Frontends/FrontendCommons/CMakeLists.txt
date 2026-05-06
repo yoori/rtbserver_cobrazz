@@ -47,7 +47,6 @@ add_library(RequestMatchers SHARED
   RequestMatchers.cpp
   UserInfoClient.cpp
   UserAgentMatcher.cpp
-  ChannelServerSessionPool.cpp
 )
 
 target_link_libraries(RequestMatchers
@@ -67,7 +66,7 @@ target_link_libraries(RequestMatchers
   UserBindClient
   GrpcBatch
   gRPC::grpc++
-  ChannelSessionFactory
+  ChannelClient
 
   FeConfigXSD
 
