@@ -36,6 +36,7 @@ UserBindServerIDL UserBindContainer
  CommonModule
 
  FeConfigXSD
+UserBindClient
 FCGI
 
 )

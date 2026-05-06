@@ -176,6 +176,7 @@ namespace Bidding
 
     bool skip_ext_category;
     std::string notice_url;
+    std::string require_debug_info;
 
     std::string bid_request_id;
     std::string bid_site_id;

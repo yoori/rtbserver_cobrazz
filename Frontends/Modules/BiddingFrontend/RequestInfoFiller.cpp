@@ -43,6 +43,7 @@ namespace Request
     const String::SubString FLAG("f");
     const String::SubString FORMAT("format");
     const String::SubString LOCATION_NAME("loc.name");
+    const String::SubString REQUIRE_DEBUG_INFO("require-debug-info");
   }
 
   namespace Debug
@@ -5185,6 +5186,10 @@ namespace Bidding
       Request::Context::FORMAT,
       new FrontendCommons::StringParamProcessor<RequestInfo>(
         &RequestInfo::format));
+    add_param_processor_(
+      Request::Context::REQUIRE_DEBUG_INFO,
+      new FrontendCommons::StringParamProcessor<RequestInfo>(
+        &RequestInfo::require_debug_info));
     add_param_processor_(
       Request::Debug::CURRENT_TIME,
       new FrontendCommons::TimeParamProcessor<RequestInfo>(

@@ -188,12 +188,6 @@ namespace AdServer
         "uid = " << (!request_info.client_id.is_null() ?
            request_info.client_id.to_string().c_str() : "") << sep_ <<
         "signed_uid = " << request_info.signed_client_id << sep_ <<
-        "temporary_uid = " << (!request_info.temp_client_id.is_null() ?
-           request_info.temp_client_id.to_string().c_str() : "") << sep_ <<
-        "merge_persistent_uid = " << (!request_info.merge_persistent_client_id.is_null() ?
-           request_info.merge_persistent_client_id.to_string().c_str() : "") << sep_ <<
-        "household_uid = " << (!request_info.household_client_id.is_null() ?
-           request_info.household_client_id.to_string().c_str() : "") << sep_ <<
         "ip = " << request_info.peer_ip << sep_ <<
         "search-phrase = " << request_info.search_words << sep_ <<
         "search_engine_id = " << request_info.search_engine_id << sep_ <<

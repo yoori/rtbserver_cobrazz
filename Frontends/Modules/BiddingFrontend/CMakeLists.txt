@@ -2,6 +2,7 @@ add_pb(google-biddingPB google-bidding.proto ${PB_DIRECTORY}/Frontends/Modules/B
 
 add_library(BiddingFrontend SHARED
   RequestInfoFiller.cpp
+  DebugSink.cpp
   AdXmlRequestInfoFiller.cpp
   BiddingFrontend.cpp
   BiddingFrontendStat.cpp
@@ -29,7 +30,7 @@ target_link_libraries(BiddingFrontend
   #ChannelControllerStubs
   ChannelManagerControllerIDL
   # UserInfoManagerControllerStubs
- UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
+  UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
 
   # CampaignManagerStubs
   CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex
@@ -40,7 +41,7 @@ target_link_libraries(BiddingFrontend
   StatInfoIDL BillStatInfoIDL CampaignServerIDL
 
   # UserBindServerStubs
-  UserBindServerIDL UserBindContainer
+  UserBindServerIDL UserBindClient
 
   RequestMatchers
   FrontendStatistic

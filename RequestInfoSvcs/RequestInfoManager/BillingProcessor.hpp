@@ -11,7 +11,6 @@
 
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
-#include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
 
 #include "RequestActionProcessor.hpp"
 

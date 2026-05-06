@@ -13,6 +13,7 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <Frontends/FrontendCommons/Cookies.hpp>
@@ -293,11 +294,17 @@ namespace AdServer
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
-          common_config_->UserBindControllerGroup(),
-          corba_client_adapter_.in(),
-          logger());
-        add_child_object(user_bind_client_);
+        auto user_bind_objects =
+          AdServer::UserInfoSvcs::create_distributed_user_bind_client(
+            *common_config_,
+            logger());
+        grpc_executor_ = user_bind_objects.grpc_executor;
+        user_bind_client_ = user_bind_objects.client;
+        if(user_bind_client_)
+        {
+          add_child_object(grpc_executor_);
+          add_child_object(user_bind_objects.client);
+        }
 
         user_info_client_ = new FrontendCommons::UserInfoClient(
           common_config_->UserInfoManagerControllerGroup(),
@@ -955,19 +962,25 @@ namespace AdServer
         const std::string cookie_external_id_str =
           std::string("c/") + cookie_user_id.to_string();
 
-        AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-        get_request_info.id << cookie_external_id_str;
-        get_request_info.timestamp = CorbaAlgs::pack_time(now);
-        get_request_info.silent = true;
-        get_request_info.generate_user_id = false;
-        get_request_info.for_set_cookie = false;
-        get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-        get_request_info.current_user_id = CorbaAlgs::pack_user_id(cookie_user_id);
+        adserver::user_info_svcs::user_bind::GetUserIdRequest
+          get_request_info;
+        get_request_info.set_id(cookie_external_id_str);
+        get_request_info.set_timestamp(GrpcAlgs::pack_time(now));
+        get_request_info.set_silent(true);
+        get_request_info.set_generate_user_id(false);
+        get_request_info.set_for_set_cookie(false);
+        get_request_info.set_create_timestamp(
+          GrpcAlgs::pack_time(Generics::Time::ZERO));
+        get_request_info.set_current_user_id(
+          GrpcAlgs::pack_user_id(cookie_user_id));
 
-        AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var prev_user_bind_info =
-          user_bind_client_->get_user_id(get_request_info);
+        auto prev_user_bind_info =
+          AdServer::UserInfoSvcs::sync_get_user_id(
+            user_bind_client_,
+            get_request_info);
 
-        resolved_cookie_user_id = CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+        resolved_cookie_user_id =
+          GrpcAlgs::unpack_user_id(prev_user_bind_info.user_id());
       }
     }
     catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)

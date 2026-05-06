@@ -39,6 +39,8 @@ namespace Bidding
     public Generics::Task,
     public ReferenceCounting::AtomicImpl
   {
+    friend class Frontend;
+
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
     DECLARE_EXCEPTION(Invalid, Exception);
@@ -70,10 +72,7 @@ namespace Bidding
     RequestParamsHolder_var&
     request_params() noexcept;
 
-    CORBA::String_var&
-    hostname() noexcept;
-
-    const CORBA::String_var&
+    const std::string&
     hostname() const noexcept;
 
     void set_current_stage(
@@ -142,14 +141,13 @@ namespace Bidding
     const Generics::Time start_processing_time_;
 
     RequestInfo request_info_;
+    DebugSink debug_sink_;
+    AdServer::Commons::UserId resolved_user_id_;
 
-    //mutable SyncPolicy::Mutex lock_;
     mutable Generics::AtomicInt to_interrupt_;
-    //bool finished;
-    //bool bad_request;
 
     /// The host performed last unbreakable operation.
-    CORBA::String_var hostname_;
+    std::string hostname_;
     RequestParamsHolder_var request_params_;
     std::string keywords_;
 
@@ -192,14 +190,7 @@ namespace Bidding
   }
 
   inline
-  CORBA::String_var&
-  BidRequestTask::hostname() noexcept
-  {
-    return hostname_;
-  }
-
-  inline
-  const CORBA::String_var&
+  const std::string&
   BidRequestTask::hostname() const noexcept
   {
     return hostname_;

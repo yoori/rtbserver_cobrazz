@@ -549,56 +549,16 @@ namespace AdServer
         */
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        if(config_->user_bind_call_mode() == "grpc")
+        auto user_bind_objects =
+          AdServer::UserInfoSvcs::create_distributed_user_bind_client(
+            *common_config_,
+            logger());
+        if(user_bind_objects.client)
         {
-          AdServer::Grpc::BatchingOptions batching_options;
-          std::size_t grpc_executor_threads = 16;
-          std::vector<std::string> user_bind_controller_refs;
-
-          if(common_config_->UserBind().present())
-          {
-            const auto& user_bind_config = *common_config_->UserBind();
-            grpc_executor_threads = user_bind_config.grpc_executor_threads();
-            if(user_bind_config.BatchingOptions().present())
-            {
-              batching_options =
-                Config::read_xsd_grpc_options(*user_bind_config.BatchingOptions());
-            }
-
-            for(const auto& group : user_bind_config.UserBindController2Group())
-            {
-              for(const auto& endpoint : group.Endpoint())
-              {
-                user_bind_controller_refs.emplace_back(endpoint);
-              }
-            }
-          }
-
-          if(!user_bind_controller_refs.empty())
-          {
-            user_bind_grpc_executor_ =
-              new AdServer::Grpc::GrpcExecutor(grpc_executor_threads);
-            AdServer::UserInfoSvcs::UserBindDistributedGrpcClient_var
-              user_bind_grpc_client =
-              new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
-                user_bind_controller_refs,
-                batching_options,
-                user_bind_grpc_executor_,
-                logger());
-            user_bind_client_ = user_bind_grpc_client;
-            add_child_object(user_bind_grpc_executor_);
-            add_child_object(user_bind_grpc_client);
-          }
-        }
-        else if(!common_config_->UserBindControllerGroup().empty())
-        {
-          FrontendCommons::UserBindCorbaClient_var user_bind_corba_client =
-            new FrontendCommons::UserBindCorbaClient(
-              common_config_->UserBindControllerGroup(),
-              corba_client_adapter_.in(),
-              logger());
-          user_bind_client_ = user_bind_corba_client;
-          add_child_object(user_bind_corba_client);
+          grpc_executor_ = user_bind_objects.grpc_executor;
+          user_bind_client_ = user_bind_objects.client;
+          add_child_object(grpc_executor_);
+          add_child_object(user_bind_objects.client);
         }
 
         user_info_client_ = new FrontendCommons::UserInfoClient(
@@ -606,7 +566,6 @@ namespace AdServer
           corba_client_adapter_.in(),
           logger());
         add_child_object(user_info_client_);
-
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
 

@@ -9,6 +9,7 @@
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 
@@ -270,13 +271,16 @@ namespace Action
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        if(!common_config_->UserBindControllerGroup().empty())
-        {
-          user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
-            common_config_->UserBindControllerGroup(),
-            corba_client_adapter_.in(),
+        auto user_bind_objects =
+          AdServer::UserInfoSvcs::create_distributed_user_bind_client(
+            *common_config_,
             logger());
-          add_child_object(user_bind_client_);
+        if(user_bind_objects.client)
+        {
+          grpc_executor_ = user_bind_objects.grpc_executor;
+          user_bind_client_ = user_bind_objects.client;
+          add_child_object(grpc_executor_);
+          add_child_object(user_bind_objects.client);
         }
 
         campaign_managers_.resolve(
@@ -1038,17 +1042,20 @@ namespace Action
           try
           {
 
-            AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+            adserver::user_info_svcs::user_bind::AddUserIdRequest
               add_user_request_info;
             const std::string external_id_str =
               std::string("c/") + relink_user_id.to_string();
-            add_user_request_info.id << external_id_str;
-            add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
-            add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+            add_user_request_info.set_id(external_id_str);
+            add_user_request_info.set_user_id(
+              GrpcAlgs::pack_user_id(link_user_id));
+            add_user_request_info.set_timestamp(
+              GrpcAlgs::pack_time(request_info.time));
 
-            AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-              prev_user_bind_info =
-                user_bind_client_->add_user_id(add_user_request_info);
+            auto prev_user_bind_info =
+              AdServer::UserInfoSvcs::sync_add_user_id(
+                user_bind_client_,
+                add_user_request_info);
 
             (void)prev_user_bind_info;
           }
@@ -1103,16 +1110,19 @@ namespace Action
       try
       {
 
-        AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo
+        adserver::user_info_svcs::user_bind::AddUserIdRequest
           add_user_request_info;
         const std::string external_id_str = std::string("ifa/") + request_info.ifa;
-        add_user_request_info.id << external_id_str;
-        add_user_request_info.user_id = CorbaAlgs::pack_user_id(link_user_id);
-        add_user_request_info.timestamp = CorbaAlgs::pack_time(request_info.time);
+        add_user_request_info.set_id(external_id_str);
+        add_user_request_info.set_user_id(
+          GrpcAlgs::pack_user_id(link_user_id));
+        add_user_request_info.set_timestamp(
+          GrpcAlgs::pack_time(request_info.time));
 
-        AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-          prev_user_bind_info =
-            user_bind_client_->add_user_id(add_user_request_info);
+        auto prev_user_bind_info =
+          AdServer::UserInfoSvcs::sync_add_user_id(
+            user_bind_client_,
+            add_user_request_info);
 
         (void)prev_user_bind_info;
       }
@@ -1346,21 +1356,25 @@ namespace Action
       {
 
         // get user id by external id
-        AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-        get_request_info.id << external_id_str;
-        get_request_info.timestamp = CorbaAlgs::pack_time(time);
-        get_request_info.silent = true;
-        get_request_info.generate_user_id = false;
-          get_request_info.for_set_cookie = false;
-        get_request_info.create_timestamp = CorbaAlgs::pack_time(Generics::Time::ZERO);
-        get_request_info.current_user_id = CorbaAlgs::pack_user_id(current_user_id);
+        adserver::user_info_svcs::user_bind::GetUserIdRequest
+          get_request_info;
+        get_request_info.set_id(external_id_str.str());
+        get_request_info.set_timestamp(GrpcAlgs::pack_time(time));
+        get_request_info.set_silent(true);
+        get_request_info.set_generate_user_id(false);
+        get_request_info.set_for_set_cookie(false);
+        get_request_info.set_create_timestamp(
+          GrpcAlgs::pack_time(Generics::Time::ZERO));
+        get_request_info.set_current_user_id(
+          GrpcAlgs::pack_user_id(current_user_id));
 
-        AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var
-          prev_user_bind_info =
-            user_bind_client_->get_user_id(get_request_info);
+        auto prev_user_bind_info =
+          AdServer::UserInfoSvcs::sync_get_user_id(
+            user_bind_client_,
+            get_request_info);
 
         const AdServer::Commons::UserId resolved_user_id =
-          CorbaAlgs::unpack_user_id(prev_user_bind_info->user_id);
+          GrpcAlgs::unpack_user_id(prev_user_bind_info.user_id());
 
         if(!resolved_user_id.is_null())
         {

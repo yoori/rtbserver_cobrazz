@@ -14,6 +14,7 @@ target_link_libraries(ActionFrontend
  CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
  FeConfigXSD
  FrontendStatistic
+ UserBindClient
  UserIdController
  CookieManager FCGI ProcessingTemplates RequestMatchers UserIdController
 

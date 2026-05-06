@@ -493,12 +493,7 @@
     <xsl:call-template name="AddUserBindControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
       <xsl:with-param name="error-prefix" select="AdFrontend"/>
-      <xsl:with-param name="user-bind-call-mode">
-        <xsl:value-of select="$userbind-module/@user_bind_call_mode"/>
-        <xsl:if test="count($userbind-module/@user_bind_call_mode) = 0">
-          <xsl:value-of select="'corba'"/>
-        </xsl:if>
-      </xsl:with-param>
+      <xsl:with-param name="user-bind-call-mode" select="'grpc'"/>
     </xsl:call-template>
 
     <cfg:Cookies>
@@ -1308,12 +1303,6 @@
   </xsl:if>
 
   <cfg:UserBindFeConfiguration enable_profiling="true">
-    <xsl:attribute name="user_bind_call_mode"><xsl:value-of select="$userbind-module/@user_bind_call_mode"/>
-      <xsl:if test="count($userbind-module/@user_bind_call_mode) = 0">
-        <xsl:value-of select="'corba'"/>
-      </xsl:if>
-    </xsl:attribute>
-
     <xsl:if test="count($userbind-module/@nosecure_redirect) > 0">
       <xsl:attribute name="nosecure_redirect"><xsl:value-of
         select="$userbind-module/@nosecure_redirect"/></xsl:attribute>

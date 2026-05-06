@@ -16,6 +16,7 @@ namespace FrontendCommons
     const std::string& signed_client_id)
     /*throw(eh::Exception)*/
   {
+    std::cout << "XXX add_UID_cookie: " << signed_client_id << std::endl;
     if(!signed_client_id.empty())
     {
       /* renew expiration time for uid cookie */
@@ -29,17 +30,6 @@ namespace FrontendCommons
           FrontendCommons::Cookies::CLIENT_ID,
           signed_client_id);
       }
-
-      // try set cookie in classic way
-      /*
-      cookie_manager.set(
-        response,
-        request,
-        FrontendCommons::Cookies::CLIENT_ID2,
-        signed_client_id,
-        Generics::Time::ZERO,
-        false);
-      */
     }
   }
 

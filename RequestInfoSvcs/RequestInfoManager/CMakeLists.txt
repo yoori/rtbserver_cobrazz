@@ -8,7 +8,6 @@ target_link_libraries(BillingProcessor
   Generics
   Commons
   BillingServerIDL
-  RequestProfilePST
 )
 
 add_library(PassbackContainer SHARED
@@ -36,6 +35,7 @@ target_link_libraries(RequestInfoContainer
   PrivacyFilter
   Commons
   ProfileMap
+  RequestProfilePST
   RequestInfoManagerCompatibility
 )
 
@@ -49,7 +49,6 @@ target_link_libraries(RequestInfoManagerIDL
 add_executable(RequestInfoManager
   RequestInfoManagerMain.cpp
   RequestInfoManagerImpl.cpp
-  RequestOutLogger.cpp
   RequestLogLoader.cpp
   RequestOperationDistributor.cpp
   ExpressionMatcherNotifier.cpp

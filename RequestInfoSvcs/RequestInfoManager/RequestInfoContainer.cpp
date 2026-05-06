@@ -2,6 +2,7 @@
 #include <PrivacyFilter/Filter.hpp>
 #include <LogCommons/LogCommons.hpp>
 #include <ProfilingCommons/ProfileMap/RocksDBProfileMap.hpp>
+#include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
 
 #include "Compatibility/RequestProfileAdapter.hpp"
 
@@ -3777,4 +3778,3 @@ namespace RequestInfoSvcs {
   }
 } /* namespace RequestInfoSvcs */
 } /* namespace AdServer */
-

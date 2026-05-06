@@ -2061,14 +2061,6 @@
     <xsd:attribute name="set_uid" type="xsd:boolean" default="true"/>
     <xsd:attribute name="create_profile" type="xsd:boolean" default="true"/>
     <xsd:attribute name="nosecure_redirect" type="xsd:string"/>
-    <xsd:attribute name="user_bind_call_mode" default="corba">
-      <xsd:simpleType>
-        <xsd:restriction base="xsd:string">
-          <xsd:enumeration value="corba"/>
-          <xsd:enumeration value="grpc"/>
-        </xsd:restriction>
-      </xsd:simpleType>
-    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="PageSenseFrontendConfigType">

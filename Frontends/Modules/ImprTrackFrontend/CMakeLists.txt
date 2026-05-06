@@ -28,7 +28,7 @@ CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSour
 StatInfoIDL BillStatInfoIDL CampaignServerIDL
 
 # UserBindServerStubs
-UserBindServerIDL UserBindContainer
+UserBindServerIDL UserBindContainer UserBindClient
 
  RequestMatchers
  FrontendStatistic

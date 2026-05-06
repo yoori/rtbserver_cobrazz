@@ -11,7 +11,6 @@
 
 #include <ProfilingCommons/ProfileMap/ProfileMapFactory.hpp>
 #include <ProfilingCommons/PlainStorageAdapters.hpp>
-#include <RequestInfoSvcs/RequestInfoCommons/RequestProfile.hpp>
 
 #include "RequestActionProcessor.hpp"
 #include "RequestOperationProcessor.hpp"
@@ -21,6 +20,8 @@ namespace AdServer
 {
   namespace RequestInfoSvcs
   {
+    class RequestInfoProfileWriter;
+
     typedef ProfilingCommons::TransactionProfileMap<
       ProfilingCommons::RequestIdPackHashAdapter>
       RequestInfoMap;

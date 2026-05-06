@@ -647,10 +647,17 @@
             select="./configuration/cfg:userBindController2/cfg:networkParams/@grpc_port"/>
 
           <xsl:variable name="user-bind-controller-grpc-port-value">
-            <xsl:value-of select="$user-bind-controller-grpc-port"/>
-            <xsl:if test="count($user-bind-controller-grpc-port) = 0">
-              <xsl:value-of select="$def-user-bind-controller2-grpc-port"/>
-            </xsl:if>
+            <xsl:choose>
+              <xsl:when test="count(./configuration/cfg:userBindController2/cfg:networkParams/@port) > 0">
+                <xsl:value-of select="./configuration/cfg:userBindController2/cfg:networkParams/@port"/>
+              </xsl:when>
+              <xsl:when test="count($user-bind-controller-grpc-port) > 0">
+                <xsl:value-of select="$user-bind-controller-grpc-port"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="$def-user-bind-controller2-grpc-port"/>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:variable>
 
           <xsl:for-each select="exsl:node-set($hosts)//host">

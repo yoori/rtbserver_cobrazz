@@ -32,11 +32,12 @@
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 #include <Frontends/FrontendCommons/UserInfoClient.hpp>
-#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
 #include "GroupLogger.hpp"
+#include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
 #include "JsonFormatter.hpp"
@@ -190,13 +191,21 @@ namespace Bidding
       RequestInfo& request_info)
       noexcept;
 
+    adserver::user_info_svcs::user_bind::GetUserIdResponse
+    get_user_id_(
+      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request);
+
+    adserver::user_info_svcs::user_bind::AddUserIdResponse
+    add_user_id_(
+      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request);
+
     void
     trigger_match_(
       AdServer::ChannelSvcs::ChannelServerBase::MatchResult_out trigger_matched_channels,
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const RequestInfo& request_info,
       const AdServer::Commons::UserId& user_id,
-      CORBA::String_var& hostname,
+      std::string& hostname,
       const char* keywords = 0)
       noexcept;
 
@@ -208,7 +217,7 @@ namespace Bidding
       const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
-      CORBA::String_var& hostname)
+      std::string& hostname)
       noexcept;
 
     void
@@ -245,7 +254,7 @@ namespace Bidding
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const AdServer::Commons::UserId& user_id,
       bool passback,
-      CORBA::String_var& hostname,
+      std::string& hostname,
       bool interrupted)
       noexcept;
 
@@ -255,7 +264,7 @@ namespace Bidding
       const Generics::Time& time,
       const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
         campaign_match_result,
-      CORBA::String_var& hostname)
+      std::string& hostname)
       noexcept;
 
     /*
@@ -380,13 +389,16 @@ namespace Bidding
     unsigned long colo_id_;
     SourceMap sources_;
     Generics::Time request_timeout_;
+    std::string server_id_;
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     BlacklistedTimeIntervals blacklisted_time_intervals_;
     RequestInfoFiller::AccountTraitsById account_traits_;
 
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
+    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+      user_bind_client_;
+    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
     FrontendCommons::UserInfoClient_var user_info_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::ChannelServerSessionPool> channel_servers_;

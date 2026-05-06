@@ -1,7 +1,9 @@
 #include <sstream>
 #include <algorithm>
+#include <future>
 #include <set>
 #include <zlib.h>
+#include <unistd.h>
 
 #include <HTTP/HTTPCookie.hpp>
 #include <String/StringManip.hpp>
@@ -17,11 +19,13 @@
 
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Algs.hpp>
+#include <Commons/ConfigUtils.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -68,6 +72,48 @@ namespace Bidding
   {
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
     static const UserInfoSvcs::CampaignIdSeq EMPTY_CAMPAIGN_ID_SEQ;
+
+    void
+    throw_user_bind_exception_(const grpc::Status& status)
+    {
+      const std::string message = status.error_message();
+      switch(status.error_code())
+      {
+      case grpc::StatusCode::UNAVAILABLE:
+        throw AdServer::UserInfoSvcs::UserBindMapper::NotReady(
+          message.c_str());
+      case grpc::StatusCode::NOT_FOUND:
+        throw AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound(
+          message.c_str());
+      default:
+        throw AdServer::UserInfoSvcs::UserBindMapper::ImplementationException(
+          message.c_str());
+      }
+    }
+
+    template<typename Response, typename Start>
+    Response
+    wait_grpc_call_(Start&& start)
+    {
+      std::promise<std::pair<grpc::Status, Response>> promise;
+      auto future = promise.get_future();
+
+      start([&](
+        const grpc::Status& call_status,
+        const Response& call_response)
+      {
+        promise.set_value(std::make_pair(call_status, call_response));
+      });
+
+      auto result = future.get();
+
+      if(!result.first.ok())
+      {
+        throw_user_bind_exception_(result.first);
+      }
+
+      return std::move(result.second);
+    }
 
     AdServer::CampaignSvcs::CampaignManager::ChannelTriggerMatchInfo
     convert_channel_atom(
@@ -226,7 +272,7 @@ namespace Bidding
       Frontend* frontend,
       FrontendCommons::CampaignManagersPool<Exception>& campaign_managers,
       const RequestParamsHolder* request_params,
-      const CORBA::String_var& hostname)
+      const std::string& hostname)
       /*throw(eh::Exception)*/
       : frontend_(frontend),
         campaign_managers_(campaign_managers),
@@ -244,9 +290,10 @@ namespace Bidding
         AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
           campaign_match_result;
 
+        CORBA::String_var hostname(CORBA::string_dup(hostname_.c_str()));
         campaign_managers_.get_campaign_creative(
           *request_params_var_,
-          hostname_,
+          hostname,
           campaign_match_result.out());
       }
       catch(const eh::Exception&)
@@ -262,7 +309,7 @@ namespace Bidding
     Frontend* frontend_;
     FrontendCommons::CampaignManagersPool<Exception>& campaign_managers_;
     const ConstRequestParamsHolder_var request_params_var_;
-    CORBA::String_var hostname_;
+    std::string hostname_;
   };
 
   //
@@ -300,6 +347,13 @@ namespace Bidding
       composite_metrics_provider_(ReferenceCounting::add_ref(composite_metrics_provider))
 //      request_metrics_provider_(new RequestMetricsProvider())
   {
+    char hostname[256];
+    if(gethostname(hostname, sizeof(hostname)) == 0)
+    {
+      hostname[sizeof(hostname) - 1] = 0;
+      server_id_ = hostname;
+    }
+
 //    composite_metrics_provider_->add_provider(request_metrics_provider_);
   }
 
@@ -451,13 +505,16 @@ namespace Bidding
           logger());
         add_child_object(user_info_client_);
 
-        if(!common_config_->UserBindControllerGroup().empty())
-        {
-          user_bind_client_ = new FrontendCommons::UserBindCorbaClient(
-            common_config_->UserBindControllerGroup(),
-            corba_client_adapter_.in(),
+        auto user_bind_objects =
+          AdServer::UserInfoSvcs::create_distributed_user_bind_client(
+            *common_config_,
             logger());
-          add_child_object(user_bind_client_);
+        if(user_bind_objects.client)
+        {
+          grpc_executor_ = user_bind_objects.grpc_executor;
+          user_bind_client_ = user_bind_objects.client;
+          add_child_object(grpc_executor_);
+          add_child_object(user_bind_objects.client);
         }
 
         for(BiddingFeConfiguration::Source_sequence::const_iterator
@@ -688,6 +745,34 @@ namespace Bidding
     {}
   }
 
+  adserver::user_info_svcs::user_bind::GetUserIdResponse
+  Frontend::get_user_id_(
+    const adserver::user_info_svcs::user_bind::GetUserIdRequest& request)
+  {
+    return wait_grpc_call_<
+      adserver::user_info_svcs::user_bind::GetUserIdResponse>(
+        [&](auto callback)
+        {
+          user_bind_client_->get_user_id(
+            request,
+            std::move(callback));
+        });
+  }
+
+  adserver::user_info_svcs::user_bind::AddUserIdResponse
+  Frontend::add_user_id_(
+    const adserver::user_info_svcs::user_bind::AddUserIdRequest& request)
+  {
+    return wait_grpc_call_<
+      adserver::user_info_svcs::user_bind::AddUserIdResponse>(
+        [&](auto callback)
+        {
+          user_bind_client_->add_user_id(
+            request,
+            std::move(callback));
+        });
+  }
+
   Generics::Time
   Frontend::get_request_timeout_(const FCGI::HttpRequest& request) noexcept
   {
@@ -858,399 +943,6 @@ namespace Bidding
     }
   }
 
-  /*
-  bool
-  Frontend::process_google_request_(
-    GoogleRequestTask* request_task,
-    RequestInfo& request_info,
-    const Google::BidRequest& bid_request)
-    noexcept
-  {
-    static const char* FUN = "Bidding::Frontend::process_google_request_()";
-
-    Google::BidResponse& bid_response = request_task->bid_response;
-
-    if(check_interrupt_(FUN, "processing start", request_task))
-    {
-      return false;
-    }
-
-    if(bid_request.has_is_ping() && bid_request.is_ping())
-    {
-      return false;
-    }
-
-    AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
-      campaign_match_result;
-    AdServer::Commons::UserId user_id;
-    GoogleAdSlotContextArray ad_slots_context;
-
-    {
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
-        request_params(*request_task->request_params());
-
-      std::string keywords;
-
-      request_info_filler_->fill_by_google_request(
-        request_params,
-        request_info,
-        keywords,
-        ad_slots_context,
-        bid_request);
-
-      if (!process_bid_request_(
-         FUN,
-         campaign_match_result.out(),
-         user_id,
-         request_task,
-         request_info,
-         keywords))
-      {
-        return false;
-      }
-    }
-
-    //assert(request_task->request_params.in());
-
-    // ATTENTION!
-    // Use only const reference to the RequestParam here.
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams&
-      request_params(*request_task->request_params);
-
-    // Fill response
-    if(campaign_match_result)
-    {
-      if (!consider_campaign_selection_(
-         user_id,
-         request_info.current_time,
-         *campaign_match_result,
-         request_task->hostname))
-      {
-        return false;
-      }
-
-      if(check_interrupt_(FUN, "campaign selection considering", request_task))
-      {
-        return false;
-      }
-
-      assert(
-        campaign_match_result->ad_slots.length() == ad_slots_context.size());
-
-      for(CORBA::ULong ad_slot_i = 0;
-          ad_slot_i < campaign_match_result->ad_slots.length();
-          ++ad_slot_i)
-      {
-        const AdServer::CampaignSvcs::CampaignManager::
-          AdSlotResult& ad_slot_result = campaign_match_result->ad_slots[ad_slot_i];
-
-        const Google::BidRequest_AdSlot& adslot = bid_request.adslot(ad_slot_i);
-
-        if(ad_slot_result.selected_creatives.length() > 0)
-        {
-          // campaigns selected
-          CampaignSvcs::RevenueDecimal sum_pub_ecpm = CampaignSvcs::RevenueDecimal::ZERO;
-
-          Google::BidResponse_Ad* ad = bid_response.add_ad();
-
-          for(CORBA::ULong creative_i = 0;
-              creative_i < ad_slot_result.selected_creatives.length();
-              ++creative_i)
-          {
-            sum_pub_ecpm += CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-              ad_slot_result.selected_creatives[creative_i].pub_ecpm);
-
-            ad->add_click_through_url(
-              ad_slot_result.selected_creatives[creative_i].destination_url.in());
-          }
-
-          categories_to_repeated(
-            ad_slot_result.external_content_categories,
-            std::bind1st(
-              std::mem_fun(&Google::BidResponse_Ad::add_category), ad));
-
-          limit_max_cpm_(sum_pub_ecpm, request_params.publisher_account_ids);
-
-          CampaignSvcs::ExtRevenueDecimal google_price = CampaignSvcs::ExtRevenueDecimal::mul(
-            CampaignSvcs::ExtRevenueDecimal(sum_pub_ecpm.str()),
-            CampaignSvcs::ExtRevenueDecimal(false, 10000, 0),
-            Generics::DMR_ROUND);
-
-          int64_t max_cpm_micros(google_price.integer<int64_t>());
-
-          Google::BidResponse_Ad_AdSlot* r_adslot = ad->add_adslot();
-          const GoogleAdSlotContext& ad_slot_context = ad_slots_context[ad_slot_i];
-
-          if (ad_slot_context.direct_deal_id &&
-            max_cpm_micros >= ad_slot_context.fixed_cpm_micros)
-          {
-            r_adslot->set_max_cpm_micros(ad_slot_context.fixed_cpm_micros);
-            r_adslot->set_deal_id(ad_slot_context.direct_deal_id);
-          }
-          else
-          {
-            r_adslot->set_max_cpm_micros(max_cpm_micros);
-          }
-
-          r_adslot->set_id(adslot.id());
-
-          if(ad_slot_context.width && ad_slot_context.height)
-          {
-            ad->set_width(ad_slot_context.width);
-            ad->set_height(ad_slot_context.height);
-          }
-
-          // choose billing_id
-          int64_t billing_id = 0;
-          for(auto publisher_account_it = request_info.publisher_account_ids.begin();
-            publisher_account_it != request_info.publisher_account_ids.end();
-            ++publisher_account_it)
-          {
-            auto account_it = account_traits_.find(*publisher_account_it);
-            if(account_it != account_traits_.end())
-            {
-              if(bid_request.has_video())
-              {
-                billing_id = account_it->second->video_billing_id;
-              }
-              else
-              {
-                billing_id = account_it->second->display_billing_id;
-              }
-
-              break;
-            }
-          }
-
-          if(billing_id != 0 &&
-            ad_slot_context.billing_ids.find(billing_id) != ad_slot_context.billing_ids.end())
-          {
-            r_adslot->set_billing_id(billing_id);
-          }
-          else if(!ad_slot_context.billing_ids.empty())
-          {
-            r_adslot->set_billing_id(*ad_slot_context.billing_ids.begin());
-          }
-
-          // Fill attributes
-          for_range(
-            Response::Google::CREATIVE_ATTR,
-            std::bind1st(
-              std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
-
-          // Fill external attributes
-          categories_to_repeated(
-            ad_slot_result.external_visual_categories,
-            std::bind1st(
-              std::mem_fun(&Google::BidResponse_Ad::add_attribute), ad));
-
-          {
-            // buyer_creative_id
-            const AdServer::CampaignSvcs::CampaignManager::
-              CreativeSelectResult& creative = ad_slot_result.selected_creatives[0];
-
-            std::ostringstream creative_version_ostr;
-
-            creative_version_ostr << creative.creative_version_id.in() << "-" <<
-              creative.creative_size << "S";
-
-            ad->set_buyer_creative_id(creative_version_ostr.str());
-
-            // Expanding attributes
-            fill_google_expanding_attributes(
-              ad,
-              creative.expanding);
-
-            // Secure attribute
-            if (creative.https_safe_flag)
-            {
-              ad->add_attribute(Response::Google::CREATIVE_SECURE);
-            }
-          }
-
-          // Video
-          if(request_params.ad_instantiate_type == AdServer::CampaignSvcs::AIT_VIDEO_URL &&
-            ad_slot_result.creative_url[0])
-          {
-            ad->set_video_url(ad_slot_result.creative_url);
-          }
-          // Banner
-          else
-          {
-            ad->set_html_snippet(ad_slot_result.creative_body.in());
-          }
-        }
-      }
-    }
-
-    // Fill SNMP stats
-    Generics::Time finish_processing_time = Generics::Time::get_time_of_day();
-    Generics::Time processing_time = finish_processing_time - request_task->start_processing_time();
-
-    if (stats_.in())
-    {
-      stats_->flush(request_params, campaign_match_result, processing_time);
-    }
-
-    return true;
-  }
-
-  void
-  Frontend::process_openrtb_request_(
-    bool& bad_request,
-    OpenRtbRequestTask* request_task,
-    RequestInfo& request_info,
-    const char* bid_request)
-    noexcept
-  {
-    if(logger()->log_level() >= TraceLevel::MIDDLE)
-    {
-      logger()->log(
-        String::SubString("Bidding::Frontend::process_openrtb_request_(): entered"),
-        TraceLevel::MIDDLE,
-        Aspect::BIDDING_FRONTEND);
-    }
-
-    static const char* FUN = "Bidding::Frontend::process_request_()";
-
-    if(check_interrupt_(FUN, "processing start", request_task))
-    {
-      return;
-    }
-
-    AdServer::Commons::UserId user_id;
-
-    AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
-      campaign_match_result;
-    JsonProcessingContext context;
-    {
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
-        request_params(*request_task->request_params);
-      std::string keywords;
-
-      try
-      {
-        request_info_filler_->fill_by_openrtb_request(
-          request_params,
-          request_info,
-          keywords,
-          context,
-          bid_request);
-      }
-      catch(const InvalidParamException& ex)
-      {
-        bad_request = true;
-
-        Stream::Error ostr;
-        ostr << FUN << ": bad request, " << ex.what() <<
-          ", request: '" << bid_request << "'" << ", uri: '" <<
-          request_task->uri << "'";
-
-        logger()->log(
-          ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::BIDDING_FRONTEND,
-          "ADS-IMPL-7601");
-
-        return;
-      }
-
-      if(check_interrupt_(FUN, "request parsing", request_task))
-      {
-        return;
-      }
-
-      if (!process_bid_request_(
-        FUN,
-        campaign_match_result.out(),
-        user_id,
-        request_task,
-        request_info,
-        keywords))
-      {
-        return;
-      }
-    }
-
-    assert(request_task->request_params.in());
-
-    // ATTENTION!
-    // Use only const reference to the RequestParam here.
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams&
-      request_params(*request_task->request_params);
-
-    if(campaign_match_result)
-    {
-      if (!consider_campaign_selection_(
-        user_id,
-        request_info.current_time,
-        *campaign_match_result,
-        request_task->hostname))
-      {
-        return;
-      }
-
-      if(check_interrupt_(FUN, "campaign selection considering", request_task))
-      {
-        return;
-      }
-
-      // check that any campaign selected (in any slot)
-      bool ad_selected = false;
-
-      for(CORBA::ULong ad_slot_i = 0;
-          ad_slot_i < campaign_match_result->ad_slots.length();
-          ++ad_slot_i)
-      {
-        const AdServer::CampaignSvcs::CampaignManager::
-          AdSlotResult& ad_slot_result = campaign_match_result->ad_slots[ad_slot_i];
-
-        if(ad_slot_result.selected_creatives.length() > 0)
-        {
-          ad_selected = true;
-          break;
-        }
-      }
-
-      if(ad_selected)
-      {
-        std::ostringstream response_ostr;
-        if(request_params.common_info.request_type !=
-           AdServer::CampaignSvcs::AR_YANDEX)
-        {
-          // standard OpenRTB, OpenX
-          fill_openrtb_response_(
-            response_ostr,
-            request_info,
-            request_params,
-            context,
-            *campaign_match_result);
-        }
-        else
-        {
-          fill_yandex_response_(
-            response_ostr,
-            request_info,
-            request_params,
-            context,
-            *campaign_match_result);
-        }
-
-        request_task->bid_response = response_ostr.str();
-      } // if(ad_selected)
-    } // if(campaign_match_result)
-
-
-    Generics::Time processing_time =
-      Generics::Time::get_time_of_day() - request_task->start_processing_time();
-    if (stats_.in())
-    {
-      stats_->flush(request_params, campaign_match_result, processing_time);
-    }
-  }
-
-  */
-
   void
   Frontend::resolve_user_id_(
     AdServer::Commons::UserId& match_user_id,
@@ -1324,7 +1016,7 @@ namespace Bidding
           auto base_ext_user_id_it = external_user_ids.begin();
 
           AdServer::Commons::UserId local_match_user_id;
-          AdServer::UserInfoSvcs::UserBindServer::GetUserResponseInfo_var user_bind_info;
+          adserver::user_info_svcs::user_bind::GetUserIdResponse user_bind_info;
 
           bool blacklisted = false;
           bool min_age_reached = false;
@@ -1333,19 +1025,23 @@ namespace Bidding
             ext_user_id_it != external_user_ids.end();
             ++ext_user_id_it)
           {
-            AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo get_request_info;
-            get_request_info.id << *ext_user_id_it;
-            get_request_info.timestamp = CorbaAlgs::pack_time(request_info.current_time);
-            get_request_info.silent = false;
-            get_request_info.generate_user_id = false;
-            get_request_info.for_set_cookie = false;
-            get_request_info.create_timestamp = CorbaAlgs::pack_time(request_info.user_create_time);
+            adserver::user_info_svcs::user_bind::GetUserIdRequest
+              get_request_info;
+            get_request_info.set_id(*ext_user_id_it);
+            get_request_info.set_timestamp(
+              GrpcAlgs::pack_time(request_info.current_time));
+            get_request_info.set_silent(false);
+            get_request_info.set_generate_user_id(false);
+            get_request_info.set_for_set_cookie(false);
+            get_request_info.set_create_timestamp(
+              GrpcAlgs::pack_time(request_info.user_create_time));
             // get_request_info.current_user_id is null
 
-            user_bind_info = user_bind_client_->get_user_id(get_request_info);
+            user_bind_info = get_user_id_(get_request_info);
 
-            min_age_reached |= user_bind_info->min_age_reached;
-            local_match_user_id = CorbaAlgs::unpack_user_id(user_bind_info->user_id);
+            min_age_reached |= user_bind_info.min_age_reached();
+            local_match_user_id =
+              GrpcAlgs::unpack_user_id(user_bind_info.user_id());
 
             blacklisted |= common_module_->user_id_controller()->null_blacklisted(match_user_id);
 
@@ -1377,13 +1073,13 @@ namespace Bidding
             {
               if(ext_user_id_it != base_ext_user_id_it)
               {
-                AdServer::UserInfoSvcs::UserBindServer::AddUserRequestInfo add_user_request;
-                add_user_request.id << *ext_user_id_it;
-                add_user_request.timestamp = CorbaAlgs::pack_time(request_info.current_time);
-                add_user_request.user_id = CorbaAlgs::pack_user_id(match_user_id);
-                AdServer::UserInfoSvcs::UserBindServer::AddUserResponseInfo_var
-                  prev_user_bind_info =
-                    user_bind_client_->add_user_id(add_user_request);
+                adserver::user_info_svcs::user_bind::AddUserIdRequest
+                  add_user_request;
+                add_user_request.set_id(*ext_user_id_it);
+                add_user_request.set_timestamp(
+                  GrpcAlgs::pack_time(request_info.current_time));
+                add_user_request.set_user_id(GrpcAlgs::pack_user_id(match_user_id));
+                auto prev_user_bind_info = add_user_id_(add_user_request);
 
                 (void)prev_user_bind_info;
               }
@@ -1400,7 +1096,7 @@ namespace Bidding
             common_info.user_status = static_cast<CORBA::ULong>(
               AdServer::CampaignSvcs::US_UNDEFINED);
           }
-          else if (user_bind_info->user_found)
+          else if (user_bind_info.user_found())
           { //external_user_id is found and user_id is null
             common_info.user_status = static_cast<CORBA::ULong>(
               AdServer::CampaignSvcs::US_OPTOUT);
@@ -1522,7 +1218,7 @@ namespace Bidding
     AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
     const RequestInfo& request_info,
     const AdServer::Commons::UserId& user_id,
-    CORBA::String_var& /*hostname*/,
+    std::string& /*hostname*/,
     const char* keywords)
     noexcept
   {
@@ -1707,7 +1403,7 @@ namespace Bidding
     const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& time,
-    CORBA::String_var& /*hostname*/)
+    std::string& /*hostname*/)
     noexcept
   {
     static const char* FUN = "Bidding::Frontend::history_match_()";
@@ -1997,7 +1693,7 @@ namespace Bidding
     const Generics::Time& now,
     const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
       campaign_match_result,
-    CORBA::String_var& /*hostname*/)
+    std::string& /*hostname*/)
     noexcept
   {
     static const char* FUN = "Bidding::Frontend::consider_campaign_selection_()";
@@ -2192,7 +1888,7 @@ namespace Bidding
         request_params,
         request_info,
         user_id,
-        request_task->hostname(),
+        request_task->hostname_,
         keywords.c_str());
 
       if(check_interrupt_(fn, Stage::TriggerMatching, request_task))
@@ -2214,7 +1910,7 @@ namespace Bidding
         trigger_match_result.ptr(),
         user_id,
         request_info.current_time,
-        request_task->hostname());
+        request_task->hostname_);
 
       if(check_interrupt_(fn, Stage::HistoryMatching, request_task))
       {
@@ -2244,7 +1940,7 @@ namespace Bidding
       (trigger_match_result &&
         (trigger_match_result->no_track || trigger_match_result->no_adv)) ||
       request_info.filter_request,
-      request_task->hostname(),
+      request_task->hostname_,
       interrupted);
 
     if (!interrupted)
@@ -2355,7 +2051,7 @@ namespace Bidding
     AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
     const AdServer::Commons::UserId& user_id,
     bool passback,
-    CORBA::String_var& hostname,
+    std::string& hostname,
     bool interrupted)
     noexcept
   {
@@ -2385,7 +2081,8 @@ namespace Bidding
       {
         if (!interrupted)
         {
-          request_params.need_debug_info = true;
+          request_params.need_debug_info = DebugSink::require_debug_info(
+            String::SubString(request_info.require_debug_info));
           request_params.ad_slots[0].debug_ccg = request_info.debug_ccg;
         }
         for(size_t i = 0; i < request_params.ad_slots.length(); ++i)
@@ -2583,10 +2280,13 @@ namespace Bidding
       }
       else
       {
+        CORBA::String_var selected_hostname(
+          CORBA::string_dup(hostname.c_str()));
         campaign_managers_.get_campaign_creative(
           request_params,
-          hostname,
+          selected_hostname,
           campaign_match_result);
+        hostname = selected_hostname.in() ? selected_hostname.in() : "";
       }
     }
     catch(const eh::Exception& ex)
@@ -3421,8 +3121,8 @@ namespace Bidding
     ostr += ", after";
 
     group_logger()->add_error(
-      request_task->hostname().in() ?
-        request_task->hostname() : "Undefined host",
+      !request_task->hostname().empty() ?
+        request_task->hostname().c_str() : "Undefined host",
       ostr,
       timeout,
       Logging::Logger::ERROR,

@@ -30,10 +30,17 @@
     </xsl:variable>
 
     <xsl:variable name="user-bind-controller-grpc-port">
-      <xsl:value-of select="$user-bind-controller-config/cfg:networkParams/@grpc_port"/>
-      <xsl:if test="count($user-bind-controller-config/cfg:networkParams/@grpc_port) = 0">
-        <xsl:value-of select="$def-user-bind-controller2-grpc-port"/>
-      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="count($user-bind-controller-config/cfg:networkParams/@port) > 0">
+          <xsl:value-of select="$user-bind-controller-config/cfg:networkParams/@port"/>
+        </xsl:when>
+        <xsl:when test="count($user-bind-controller-config/cfg:networkParams/@grpc_port) > 0">
+          <xsl:value-of select="$user-bind-controller-config/cfg:networkParams/@grpc_port"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$def-user-bind-controller2-grpc-port"/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:variable>
 
     <xsl:variable name="status-check-period"><xsl:value-of select="$user-bind-controller-config/cfg:controlParams/@status_check_period"/>

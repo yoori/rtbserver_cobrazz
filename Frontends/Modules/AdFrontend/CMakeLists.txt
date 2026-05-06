@@ -27,6 +27,7 @@ UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerController
  FeConfigXSD
  CommonModule
  ExpressionChannelIndex
+ UserBindClient
 
 CookieManager FCGI ProcessingTemplates  RequestMatchers UserIdController
 )

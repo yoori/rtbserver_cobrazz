@@ -13,8 +13,8 @@ namespace Bidding
     : bid_frontend_(bid_frontend),
       request_holder_(std::move(request_holder)),
       start_processing_time_(start_processing_time),
+      debug_sink_(bid_frontend->server_id_),
       to_interrupt_(0),
-      hostname_(CORBA::string_dup("")),
       request_params_(new RequestParamsHolder()),
       response_writer_(std::move(response_writer)),
       response_sent_(false)
@@ -41,6 +41,7 @@ namespace Bidding
       request_info_,
       request_holder_->request(),
       start_processing_time_);
+    debug_sink_.set(String::SubString(request_info_.require_debug_info));
 
     // fill request info & request type specific parameters
     if(!this->read_request())
@@ -55,14 +56,13 @@ namespace Bidding
       return false;
     }
 
-    AdServer::Commons::UserId user_id;
     AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
       campaign_match_result;
 
     bool not_interrupted = bid_frontend_->process_bid_request_(
       "", // FUN
       campaign_match_result.out(),
-      user_id,
+      resolved_user_id_,
       this,
       request_info_,
       keywords_);
@@ -72,6 +72,11 @@ namespace Bidding
       return false;
     }
 
+    debug_sink_.print_request_debug_info(
+      request_info_,
+      *request_params_,
+      resolved_user_id_);
+
     if(check_interrupt_(Stage::CampaignSelection))
     {
       return false;
@@ -80,13 +85,15 @@ namespace Bidding
     if(campaign_match_result)
     {
       if (!bid_frontend_->consider_campaign_selection_(
-        user_id,
+        resolved_user_id_,
         request_info_.current_time,
         *campaign_match_result,
         hostname_))
       {
         return false;
       }
+
+      debug_sink_.print_creative_selection_debug_info(*campaign_match_result);
 
       if(check_interrupt_(Stage::CampaignSelectionConsidering))
       {
@@ -142,6 +149,7 @@ namespace Bidding
 
     if(send_response)
     {
+      debug_sink_.write_response(response, code, resolved_user_id_);
       response_writer_->write(code, response);
       response_writer_ = FCGI::BaseHttpResponseWriter_var();
       response_sent_ = true;
@@ -153,7 +161,7 @@ namespace Bidding
   {
     request_holder_ = FCGI::HttpRequestHolder_var();
     request_info_ = RequestInfo();
-    hostname_ = CORBA::String_var();
+    hostname_.clear();
     request_params_ = RequestParamsHolder_var();
     keywords_.clear();
   }

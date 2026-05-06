@@ -1002,14 +1002,6 @@
     <xsd:attribute name="max_request_time" type="xsd:positiveInteger" use="required"/>
     <xsd:attribute name="enable_profiling" type="xsd:boolean" use="required"/>
     <xsd:attribute name="nosecure_redirect" type="xsd:string" use="optional"/>
-    <xsd:attribute name="user_bind_call_mode" default="corba">
-      <xsd:simpleType>
-        <xsd:restriction base="xsd:string">
-          <xsd:enumeration value="corba"/>
-          <xsd:enumeration value="grpc"/>
-        </xsd:restriction>
-      </xsd:simpleType>
-    </xsd:attribute>
   </xsd:complexType>
 
   <!-- -->

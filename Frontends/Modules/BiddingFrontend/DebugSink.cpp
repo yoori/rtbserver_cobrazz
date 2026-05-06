@@ -1,0 +1,438 @@
+#include "DebugSink.hpp"
+
+#include <utility>
+
+#include <String/AsciiStringManip.hpp>
+#include <Commons/Algs.hpp>
+#include <Commons/CorbaAlgs.hpp>
+
+#include "RequestInfoFiller.hpp"
+
+namespace AdServer
+{
+namespace Bidding
+{
+  namespace
+  {
+    namespace Response
+    {
+      namespace Header
+      {
+        const String::SubString DEBUG_INFO("Debug-Info");
+      }
+
+      namespace Type
+      {
+        const String::SubString TEXT_PLAIN("text/plain");
+      }
+    }
+
+    namespace Debug
+    {
+      const char REQUEST_INFO_HEAD[] = "=== Request params ===";
+      const char CREATIVE_SELECTION_INFO_HEAD[] = "=== Creative selection ===";
+      const char TRACE_CCG_INFO_HEAD[] = "=== Expected ===";
+    }
+
+    const char*
+    user_status_to_string(CORBA::ULong user_status) noexcept
+    {
+      switch(user_status)
+      {
+      case CampaignSvcs::US_UNDEFINED:
+        return "undefined";
+      case CampaignSvcs::US_OPTIN:
+        return "optin";
+      case CampaignSvcs::US_OPTOUT:
+        return "optout";
+      case CampaignSvcs::US_PROBE:
+        return "probe";
+      case CampaignSvcs::US_TEMPORARY:
+        return "temporary";
+      default:
+        return "unknown";
+      }
+    }
+
+    const char*
+    auction_type_to_string(CORBA::ULong auction_type) noexcept
+    {
+      if(auction_type == CampaignSvcs::AT_RANDOM)
+      {
+        return "random";
+      }
+      else if(auction_type == CampaignSvcs::AT_MAX_ECPM)
+      {
+        return "max ecpm";
+      }
+      else if(auction_type == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
+      {
+        return "proportional probability";
+      }
+
+      return "unknown";
+    }
+  }
+
+  DebugSink::DebugSink(std::string server_id)
+    : server_id_(std::move(server_id))
+  {}
+
+  void
+  DebugSink::set(const String::SubString& require_debug_info) noexcept
+  {
+    require_debug_info_ = parse_require_debug_info_(require_debug_info);
+    sep_ = require_debug_info_ == DI_BODY ? "\n" : "; ";
+  }
+
+  bool
+  DebugSink::require_debug_info() const noexcept
+  {
+    return require_debug_info_ != DI_NONE;
+  }
+
+  bool
+  DebugSink::require_debug_info(
+    const String::SubString& require_debug_info) noexcept
+  {
+    return parse_require_debug_info_(require_debug_info) != DI_NONE;
+  }
+
+  void
+  DebugSink::print_request_debug_info(
+    const RequestInfo& request_info,
+    const AdServer::CampaignSvcs::CampaignManager::RequestParams&
+      request_params,
+    const AdServer::Commons::UserId& user_id) noexcept
+  {
+    if(!require_debug_info())
+    {
+      return;
+    }
+
+    if(require_debug_info_ == DI_BODY)
+    {
+      debug_info_str_ << "\n" << Debug::REQUEST_INFO_HEAD << "\n";
+    }
+
+    debug_info_str_ << "server-id = " << server_id_ << sep_ << "time = ";
+    try
+    {
+      debug_info_str_ << request_info.current_time.gm_ft();
+    }
+    catch(...)
+    {
+      debug_info_str_ << "invalid";
+    }
+
+    debug_info_str_ << sep_ <<
+      "user_status = " <<
+        user_status_to_string(request_params.common_info.user_status) << sep_ <<
+      "source_id = " << request_info.source_id << sep_ <<
+      "request_id = " << CorbaAlgs::unpack_request_id(
+        request_params.common_info.request_id) << sep_ <<
+      "bid_request_id = " << request_info.bid_request_id << sep_ <<
+      "bid_site_id = " << request_info.bid_site_id << sep_ <<
+      "bid_publisher_id = " << request_info.bid_publisher_id << sep_ <<
+      "publisher_site_id = " << request_params.publisher_site_id << sep_ <<
+      "publisher_account_ids = ";
+    Algs::print(
+      debug_info_str_,
+      request_info.publisher_account_ids.begin(),
+      request_info.publisher_account_ids.end());
+
+    debug_info_str_ << sep_ <<
+      "test_request = " << request_params.common_info.test_request << sep_ <<
+      "log_as_test = " << request_params.common_info.log_as_test << sep_ <<
+      "location = ";
+
+    if(request_info.location.in())
+    {
+      debug_info_str_ << request_info.location->country << "/" <<
+        request_info.location->region << "/" <<
+        request_info.location->city;
+    }
+
+    debug_info_str_ << sep_ <<
+      "referer = " << request_params.common_info.referer << sep_ <<
+      "full_referer = " << request_params.common_info.full_referer << sep_ <<
+      "uid = " << (user_id.is_null() ? "" : user_id.to_string()) << sep_ <<
+      "signed_uid = " << request_params.common_info.signed_user_id << sep_ <<
+      "external_user_id = " << request_params.common_info.external_user_id << sep_ <<
+      "ip = " << request_params.common_info.peer_ip << sep_ <<
+      "user_agent = " << request_params.common_info.user_agent << sep_ <<
+      "search-phrase = " << request_params.search_words << sep_ <<
+      "search_engine_id = " << request_params.search_engine_id << sep_ <<
+      "filter_request = " << (request_info.filter_request ? "true" : "false") << sep_ <<
+      "passback_url = " << request_params.common_info.passback_url << sep_ <<
+      "format = " << request_info.format << sep_ <<
+      "seat = " << request_info.seat << sep_ <<
+      "app = " << (request_info.is_app ? "true" : "false") << sep_ <<
+      "application_id = " << request_info.application_id << sep_ <<
+      "advertising_id = " << request_info.advertising_id << sep_ <<
+      "idfa = " << request_info.idfa << sep_ <<
+      "ssp_devicetype = " << request_info.ssp_devicetype_str << sep_ <<
+      "ssp_video_placementtype = " <<
+        request_info.ssp_video_placementtype_str << sep_ <<
+      "browser = " << request_params.context_info.web_browser << sep_ <<
+      "platform = " << request_params.context_info.platform << sep_ <<
+      "full_platform = " << request_params.context_info.full_platform << sep_ <<
+      "platform_ids = ";
+    Algs::print(
+      debug_info_str_,
+      request_params.context_info.platform_ids.get_buffer(),
+      request_params.context_info.platform_ids.get_buffer() +
+        request_params.context_info.platform_ids.length());
+    debug_info_str_ << sep_ << "ad_slots = " <<
+      request_params.ad_slots.length() << sep_;
+  }
+
+  void
+  DebugSink::print_creative_selection_debug_info(
+    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      campaign_match_result) noexcept
+  {
+    if(!require_debug_info())
+    {
+      return;
+    }
+
+    bool ad_selected = false;
+    for(CORBA::ULong i = 0; i < campaign_match_result.ad_slots.length(); ++i)
+    {
+      if(campaign_match_result.ad_slots[i].selected_creatives.length() > 0)
+      {
+        ad_selected = true;
+        print_creative_selection_debug_info_(campaign_match_result.ad_slots[i]);
+      }
+    }
+
+    if(!ad_selected)
+    {
+      print_empty_creative_selection_debug_info_();
+    }
+  }
+
+  DebugInfo
+  DebugSink::parse_require_debug_info_(
+    const String::SubString& require_debug_info) noexcept
+  {
+    String::AsciiStringManip::Caseless value("");
+    value.str.assign(require_debug_info.data(), require_debug_info.size());
+
+    if(value == String::SubString("header"))
+    {
+      return DI_HEADER;
+    }
+    else if(value == String::SubString("body"))
+    {
+      return DI_BODY;
+    }
+    else
+    {
+      return DI_NONE;
+    }
+  }
+
+  void
+  DebugSink::write_response(
+    FCGI::HttpResponse_var& response,
+    int& http_status,
+    const AdServer::Commons::UserId& user_id) const noexcept
+  {
+    if(!require_debug_info())
+    {
+      return;
+    }
+
+    const std::string debug_info = make_debug_info_(user_id);
+
+    try
+    {
+      if(require_debug_info_ == DI_HEADER)
+      {
+        response->add_header_nocopy_name(
+          Response::Header::DEBUG_INFO,
+          debug_info);
+      }
+      else if(require_debug_info_ == DI_BODY)
+      {
+        FCGI::HttpResponse_var debug_response(new FCGI::HttpResponse());
+        debug_response->set_content_type_nocopy(Response::Type::TEXT_PLAIN);
+        debug_response->write(String::SubString(debug_info));
+        debug_response->write(String::SubString("\n"));
+
+        response = debug_response;
+        http_status = 200;
+      }
+    }
+    catch(...)
+    {}
+  }
+
+  std::string
+  DebugSink::make_debug_info_(
+    const AdServer::Commons::UserId& user_id) const
+  {
+    std::ostringstream out;
+    if(!debug_info_str_.str().empty())
+    {
+      out << debug_info_str_.str();
+    }
+    else
+    {
+      out << "server-id = " << server_id_ << sep_ <<
+        "uid = " << (user_id.is_null() ? "" : user_id.to_string());
+    }
+    return out.str();
+  }
+
+  void
+  DebugSink::print_empty_creative_selection_debug_info_() noexcept
+  {
+    if(require_debug_info_ == DI_BODY)
+    {
+      debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
+    }
+
+    debug_info_str_ <<
+      "ccid = 0" << sep_ <<
+      "cmpid = 0" << sep_ <<
+      "creative_size_id = 0" << sep_ <<
+      "mime_format = " << sep_ <<
+      "tag_id = 0" << sep_ <<
+      "site_id = 0" << sep_ <<
+      "site_rate_id = 0" << sep_;
+  }
+
+  void
+  DebugSink::print_creative_selection_debug_info_(
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult&
+      ad_slot_result) noexcept
+  {
+    const auto& selected_creatives = ad_slot_result.selected_creatives;
+    const auto& debug_info = ad_slot_result.debug_info;
+    const auto& debug_selected_creatives = debug_info.selected_creatives;
+
+    if(require_debug_info_ == DI_BODY)
+    {
+      debug_info_str_ << "\n" << Debug::CREATIVE_SELECTION_INFO_HEAD << "\n";
+    }
+
+    unsigned long first_ccid = 0;
+    unsigned long first_cmp_id = 0;
+    if(selected_creatives.length() != 0)
+    {
+      first_ccid = selected_creatives[0].ccid;
+      first_cmp_id = selected_creatives[0].cmp_id;
+    }
+
+    CampaignSvcs::RevenueDecimal imp_revenue(
+      CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal click_revenue(
+      CampaignSvcs::RevenueDecimal::ZERO);
+    CampaignSvcs::RevenueDecimal action_revenue(
+      CampaignSvcs::RevenueDecimal::ZERO);
+
+    for(CORBA::ULong i = 0; i < debug_selected_creatives.length(); ++i)
+    {
+      imp_revenue += CorbaAlgs::unpack_decimal<
+        CampaignSvcs::RevenueDecimal>(
+          debug_selected_creatives[i].imp_revenue);
+      click_revenue += CorbaAlgs::unpack_decimal<
+        CampaignSvcs::RevenueDecimal>(
+          debug_selected_creatives[i].click_revenue);
+      action_revenue += CorbaAlgs::unpack_decimal<
+        CampaignSvcs::RevenueDecimal>(
+          debug_selected_creatives[i].action_revenue);
+    }
+
+    debug_info_str_ <<
+      "ad_slot_id = " << ad_slot_result.ad_slot_id << sep_ <<
+      "ccid = " << first_ccid << sep_ <<
+      "cmpid = " << first_cmp_id << sep_ <<
+      "creative_size_id = " << debug_info.tag_size_id << sep_ <<
+      "mime_format = " << ad_slot_result.mime_format << sep_ <<
+      "tag_id = " << debug_info.tag_id << sep_ <<
+      "site_id = " << debug_info.site_id << sep_ <<
+      "site_rate_id = " << debug_info.site_rate_id << sep_ <<
+      "imp_revenue = " << imp_revenue << sep_ <<
+      "click_revenue = " << click_revenue << sep_ <<
+      "action_revenue = " << action_revenue << sep_ <<
+      "min_no_adv_ecpm = " << debug_info.min_no_adv_ecpm << sep_ <<
+      "min_text_ecpm = " << debug_info.min_text_ecpm << sep_ <<
+      "test_request = " << ad_slot_result.test_request << sep_ <<
+      "passback_url = " << ad_slot_result.passback_url << sep_ <<
+      "creative_url = " << ad_slot_result.creative_url << sep_ <<
+      "notice_url = " << ad_slot_result.notice_url << sep_ <<
+      "track_pixel_url = " << debug_info.track_pixel_url << sep_ <<
+      "cpm_threshold = " <<
+        CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+          debug_info.cpm_threshold) << sep_ <<
+      "walled_garden = " << debug_info.walled_garden << sep_ <<
+      "auction_type = " << auction_type_to_string(debug_info.auction_type) <<
+      sep_ << "selected_creatives = ";
+
+    const CORBA::ULong debug_count = debug_selected_creatives.length();
+    for(CORBA::ULong i = 0; i < selected_creatives.length(); ++i)
+    {
+      const auto& creative = selected_creatives[i];
+      const auto* debug_creative = i < debug_count ?
+        &debug_selected_creatives[i] : nullptr;
+      const String::SubString offset(require_debug_info_ == DI_BODY ? "  " : "");
+      const String::SubString creative_start_sep(
+        require_debug_info_ == DI_BODY ? "\n------\n" : "( ");
+      const char* creative_end_sep = require_debug_info_ == DI_BODY ? "" : ") ";
+
+      debug_info_str_ << creative_start_sep <<
+        offset << "request_id = " << CorbaAlgs::unpack_request_id(
+          creative.request_id) << sep_ <<
+        offset << "ccid = " << creative.ccid << sep_ <<
+        offset << "cmp_id = " << creative.cmp_id << sep_ <<
+        offset << "campaign_group_id = " << creative.campaign_group_id << sep_ <<
+        offset << "order_set_id = " << creative.order_set_id << sep_ <<
+        offset << "advertiser_id = " << creative.advertiser_id << sep_ <<
+        offset << "advertiser_name = " << creative.advertiser_name << sep_ <<
+        offset << "creative_id = " << creative.creative_id << sep_ <<
+        offset << "creative_version_id = " << creative.creative_version_id << sep_ <<
+        offset << "creative_size = " << creative.creative_size << sep_ <<
+        offset << "triggered_expression = " <<
+          (debug_creative ? debug_creative->triggered_expression.in() : "") << sep_ <<
+        offset << "ecpm = " << CorbaAlgs::unpack_decimal<
+          CampaignSvcs::RevenueDecimal>(creative.ecpm) << sep_ <<
+        offset << "pub_ecpm = " << CorbaAlgs::unpack_decimal<
+          CampaignSvcs::RevenueDecimal>(creative.pub_ecpm) << sep_ <<
+        offset << "ecpm_bid = " <<
+          (debug_creative ? CorbaAlgs::unpack_decimal<
+            CampaignSvcs::RevenueDecimal>(debug_creative->ecpm_bid).str() : "") << sep_ <<
+        offset << "click_url = " << creative.click_url << sep_ <<
+        offset << "destination_url = " << creative.destination_url << sep_ <<
+        offset << "html_url = " <<
+          (debug_creative ? debug_creative->html_url.in() : "") << sep_ <<
+        offset << "action_adv_url = " <<
+          (debug_creative ? debug_creative->action_adv_url.in() : "") << sep_ <<
+        offset << "revenue = " <<
+          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            creative.revenue) << sep_ <<
+        offset << "imp_revenue = " <<
+          (debug_creative ? CorbaAlgs::unpack_decimal<
+            CampaignSvcs::RevenueDecimal>(debug_creative->imp_revenue).str() : "") << sep_ <<
+        offset << "click_revenue = " <<
+          (debug_creative ? CorbaAlgs::unpack_decimal<
+            CampaignSvcs::RevenueDecimal>(debug_creative->click_revenue).str() : "") << sep_ <<
+        offset << "action_revenue = " <<
+          (debug_creative ? CorbaAlgs::unpack_decimal<
+            CampaignSvcs::RevenueDecimal>(debug_creative->action_revenue).str() : "");
+      debug_info_str_ << creative_end_sep;
+    }
+
+    debug_info_str_ << sep_;
+
+    if(require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
+    {
+      debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n" <<
+        debug_info.trace_ccg << "\n";
+    }
+  }
+}
+}

@@ -24,7 +24,7 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
-#include <UserInfoSvcs/UserBindClient/UserBindCorbaClient.hpp>
+#include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/ChannelServerSessionPool.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -293,7 +293,9 @@ namespace AdServer
 
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
-    FrontendCommons::UserBindCorbaClient_var user_bind_client_;
+    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+      user_bind_client_;
+    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
     FrontendCommons::UserInfoClient_var user_info_client_;
 
     AdFrontendStat_var stats_;
