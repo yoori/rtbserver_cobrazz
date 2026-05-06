@@ -208,11 +208,15 @@ namespace AdServer::Grpc
         return stream;
       }
 
-      if (fail_pending_if_no_streams_())
+      lock.unlock();
+
+      const bool pending_failed = fail_pending_if_no_streams_();
+      if (pending_failed)
       {
         break;
       }
 
+      lock.lock();
       streams_cv_.wait(lock, [this]() {
         return !active() ||
           !available_streams_.empty() ||

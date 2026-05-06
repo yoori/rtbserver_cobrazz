@@ -1,9 +1,25 @@
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
+#include <mutex>
 #include <stdexcept>
+#include <unordered_map>
 #include <utility>
+
+#include <grpc/impl/channel_arg_names.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
+#include <grpcpp/support/async_stream.h>
+#include <google/protobuf/arena.h>
+
+#include <ReferenceCounting/SmartPtr.hpp>
+
+#include <Commons/Grpc/BatchingQueue.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 
 namespace AdServer::Grpc
 {
@@ -22,111 +38,269 @@ namespace AdServer::Grpc
     }
   } // namespace
 
-  struct BatchingStreamBase::CompletionTag
+  struct BatchingStreamBase::Impl
+    : std::enable_shared_from_this<BatchingStreamBase::Impl>
+  {
+    using BatchResponseItem = BatchingStreamBase::BatchResponseItem;
+    using BatchRequest = BatchingStreamBase::BatchRequest;
+    using BatchResponse = BatchingStreamBase::BatchResponse;
+    using BatchTransport = BatchingStreamBase::BatchTransport;
+    using PendingRequest = BatchingStreamBase::PendingRequest;
+    using PendingBatch = BatchingStreamBase::PendingBatch;
+    using ReadyCallback = BatchingStreamBase::ReadyCallback;
+    using ClosedCallback = BatchingStreamBase::ClosedCallback;
+
+    Impl(
+      BatchingStreamBase& owner,
+      const std::string& endpoint,
+      AdServer::Grpc::GrpcExecutor* grpc_executor,
+      AdServer::Grpc::BatchingQueue* batching_queue,
+      unsigned int queue_index,
+      ReadyCallback ready_callback,
+      ClosedCallback closed_callback,
+      AdServer::Grpc::BatchingOptions options);
+
+    ~Impl();
+
+    bool available() noexcept;
+    bool try_start_write(
+      PendingBatch&& pending_batch,
+      bool measure_consumer_stream_write,
+      PendingBatch* failed_batch);
+    void activate_object_();
+    void deactivate_object_();
+    bool wait_more_();
+    void wait_object_();
+
+  private:
+    enum class StreamState
+    {
+      Starting,
+      Open,
+      Closing,
+      Broken,
+      Finished
+    };
+
+    struct CompletionTag;
+    struct StartTag;
+    struct ReadTag;
+    struct WriteTag;
+    struct WritesDoneTag;
+    struct FinishTag;
+
+    bool active() const noexcept;
+    bool start_write_(
+      std::vector<std::shared_ptr<PendingRequest>>&& pending_batch,
+      bool measure_consumer_stream_write,
+      std::vector<std::shared_ptr<PendingRequest>>* failed_batch);
+    bool start_stream_();
+    void maybe_start_read_i_();
+    void maybe_start_shutdown_i_();
+    void process_read_completion_(bool ok, std::unique_ptr<BatchResponse> response);
+    void process_write_completion_(
+      bool ok,
+      std::vector<std::shared_ptr<PendingRequest>>&& write_requests);
+    void process_start_completion_(bool ok);
+    void process_writes_done_completion_(bool ok);
+    void process_finish_completion_(bool ok);
+    void finish_with_error_(
+      grpc::StatusCode status_code,
+      const char* status_message);
+    void finish_requests_with_error_(
+      std::vector<std::shared_ptr<PendingRequest>>& requests,
+      grpc::StatusCode status_code,
+      const char* status_message);
+    void fail_inflight_with_error_(
+      grpc::StatusCode status_code,
+      const char* status_message);
+    void handle_executor_shutdown_i_() noexcept;
+    void complete_shutdown_i_() noexcept;
+    bool accepts_requests_i_() const noexcept;
+    void stop_processing_completion_tags_() noexcept;
+    void notify_completion_tags_drained_() noexcept;
+
+    void add_write_stats(std::uint64_t batches, std::uint64_t items) noexcept;
+    void add_queue_wait_stats(std::uint64_t wait_us) noexcept;
+    void add_response_wait_stats(std::uint64_t wait_us) noexcept;
+    void add_consumer_stream_write_stats(std::uint64_t wait_us) noexcept;
+
+  private:
+    BatchingStreamBase& owner_;
+    const AdServer::Grpc::BatchingOptions options_;
+    const std::string batch_stream_full_method_;
+    ReferenceCounting::SmartPtr<AdServer::Grpc::BatchingQueue> batching_queue_;
+    ReadyCallback ready_callback_;
+    ClosedCallback closed_callback_;
+
+    std::atomic<std::size_t> pending_completion_tags_{0};
+    std::atomic_bool process_completion_tags_{true};
+
+    std::mutex inflight_lock_;
+    std::unordered_map<std::uint64_t, std::shared_ptr<PendingRequest>> inflight_;
+
+    std::mutex state_lock_;
+    std::condition_variable shutdown_cv_;
+    std::condition_variable callback_cv_;
+
+    bool read_in_flight_ = false;
+    bool writes_done_started_ = false;
+    bool writes_done_in_flight_ = false;
+    bool finish_in_flight_ = false;
+    std::atomic_bool write_in_flight_{false};
+    std::atomic<StreamState> stream_state_{StreamState::Starting};
+    std::unique_ptr<grpc::ClientContext> stream_context_;
+    std::unique_ptr<BatchTransport> batch_stub_;
+    std::unique_ptr<grpc::ClientAsyncReaderWriter<BatchRequest, BatchResponse>> stream_;
+    grpc::Status finish_status_;
+    google::protobuf::Arena write_arena_;
+
+    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
+    const unsigned int queue_index_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor::CQ> grpc_queue_;
+  };
+
+  struct BatchingStreamBase::Impl::CompletionTag
     : AdServer::Grpc::GrpcCompletionEvent
   {
-    explicit CompletionTag(BatchingStreamBase* owner)
-      : owner_(owner)
+    explicit CompletionTag(std::shared_ptr<Impl> impl)
+      : impl_(impl)
     {
-      this->owner_->add_pending_completion_tag_();
+      impl->pending_completion_tags_.fetch_add(1, std::memory_order_acq_rel);
     }
 
     ~CompletionTag() override
     {
-      this->owner_->remove_pending_completion_tag_();
+      if (auto impl = impl_.lock())
+      {
+        if (impl->pending_completion_tags_.fetch_sub(
+              1,
+              std::memory_order_acq_rel) == 1)
+        {
+          impl->notify_completion_tags_drained_();
+        }
+      }
     }
 
   protected:
-    BatchingStreamBase* owner_;
+    template<typename Functor>
+    void with_impl_(Functor&& functor)
+    {
+      if (auto impl = impl_.lock())
+      {
+        if (!impl->process_completion_tags_.load(std::memory_order_acquire))
+        {
+          return;
+        }
+
+        if (impl->active())
+        {
+          functor(*impl);
+        }
+      }
+    }
+
+  private:
+    std::weak_ptr<Impl> impl_;
   };
 
-  struct BatchingStreamBase::StartTag final : CompletionTag
+  struct BatchingStreamBase::Impl::StartTag final : CompletionTag
   {
-    explicit StartTag(BatchingStreamBase* owner)
-      : CompletionTag(owner)
+    explicit StartTag(std::shared_ptr<Impl> impl)
+      : CompletionTag(std::move(impl))
     {}
 
     void
     proceed(bool ok) override
     {
-      this->owner_->process_start_completion_(ok);
+      with_impl_([ok](auto& impl) {
+        impl.process_start_completion_(ok);
+      });
     }
   };
 
-  struct BatchingStreamBase::ReadTag final : CompletionTag
+  struct BatchingStreamBase::Impl::ReadTag final : CompletionTag
   {
     ReadTag(
-      BatchingStreamBase* owner,
+      std::shared_ptr<Impl> impl,
       std::unique_ptr<BatchResponse> response)
-      : CompletionTag(owner),
+      : CompletionTag(std::move(impl)),
         response_(std::move(response))
     {}
 
     void
     proceed(bool ok) override
     {
-      this->owner_->process_read_completion_(ok, std::move(response_));
+      with_impl_([this, ok](auto& impl) {
+        impl.process_read_completion_(ok, std::move(response_));
+      });
     }
 
   private:
     std::unique_ptr<BatchResponse> response_;
   };
 
-  struct BatchingStreamBase::WriteTag final : CompletionTag
+  struct BatchingStreamBase::Impl::WriteTag final : CompletionTag
   {
     WriteTag(
-      BatchingStreamBase* owner,
+      std::shared_ptr<Impl> impl,
       std::vector<std::shared_ptr<PendingRequest>> write_requests)
-      : CompletionTag(owner),
+      : CompletionTag(std::move(impl)),
         write_requests_(std::move(write_requests))
     {}
 
     void
     proceed(bool ok) override
     {
-      this->owner_->process_write_completion_(ok, std::move(write_requests_));
+      with_impl_([this, ok](auto& impl) {
+        impl.process_write_completion_(ok, std::move(write_requests_));
+      });
     }
 
   private:
     std::vector<std::shared_ptr<PendingRequest>> write_requests_;
   };
 
-  struct BatchingStreamBase::WritesDoneTag final : CompletionTag
+  struct BatchingStreamBase::Impl::WritesDoneTag final : CompletionTag
   {
-    explicit WritesDoneTag(BatchingStreamBase* owner)
-      : CompletionTag(owner)
+    explicit WritesDoneTag(std::shared_ptr<Impl> impl)
+      : CompletionTag(std::move(impl))
     {}
 
     void
     proceed(bool ok) override
     {
-      this->owner_->process_writes_done_completion_(ok);
+      with_impl_([ok](auto& impl) {
+        impl.process_writes_done_completion_(ok);
+      });
     }
   };
 
-  struct BatchingStreamBase::FinishTag final : CompletionTag
+  struct BatchingStreamBase::Impl::FinishTag final : CompletionTag
   {
-    explicit FinishTag(BatchingStreamBase* owner)
-      : CompletionTag(owner)
+    explicit FinishTag(std::shared_ptr<Impl> impl)
+      : CompletionTag(std::move(impl))
     {}
 
     void
     proceed(bool ok) override
     {
-      this->owner_->process_finish_completion_(ok);
+      with_impl_([ok](auto& impl) {
+        impl.process_finish_completion_(ok);
+      });
     }
   };
 
-  BatchingStreamBase::BatchingStreamBase(
+  BatchingStreamBase::Impl::Impl(
+    BatchingStreamBase& owner,
     const std::string& endpoint,
     AdServer::Grpc::GrpcExecutor* grpc_executor,
     AdServer::Grpc::BatchingQueue* batching_queue,
     unsigned int queue_index,
-    AdServer::Grpc::Client* stats_owner,
     ReadyCallback ready_callback,
     ClosedCallback closed_callback,
     AdServer::Grpc::BatchingOptions options)
-    : AdServer::Grpc::Client(stats_owner),
+    : owner_(owner),
       options_(options),
       batch_stream_full_method_(
         options_.batch_stream_full_method.empty() ?
@@ -163,24 +337,129 @@ namespace AdServer::Grpc
         channel_args));
   }
 
+  BatchingStreamBase::Impl::~Impl()
+  {
+    stop_processing_completion_tags_();
+  }
+
+  BatchingStreamBase::BatchingStreamBase(
+    const std::string& endpoint,
+    AdServer::Grpc::GrpcExecutor* grpc_executor,
+    AdServer::Grpc::BatchingQueue* batching_queue,
+    unsigned int queue_index,
+    AdServer::Grpc::Client* stats_owner,
+    ReadyCallback ready_callback,
+    ClosedCallback closed_callback,
+    AdServer::Grpc::BatchingOptions options)
+    : AdServer::Grpc::Client(stats_owner)
+  {
+    impl_ = std::make_shared<Impl>(
+      *this,
+      endpoint,
+      grpc_executor,
+      batching_queue,
+      queue_index,
+      std::move(ready_callback),
+      std::move(closed_callback),
+      std::move(options));
+  }
+
   BatchingStreamBase::~BatchingStreamBase() = default;
 
   bool
   BatchingStreamBase::available() noexcept
+  {
+    return impl_->available();
+  }
+
+  bool
+  BatchingStreamBase::try_start_write(
+    PendingBatch&& pending_batch,
+    bool measure_consumer_stream_write,
+    PendingBatch* failed_batch)
+  {
+    return impl_->try_start_write(
+      std::move(pending_batch),
+      measure_consumer_stream_write,
+      failed_batch);
+  }
+
+  void
+  BatchingStreamBase::activate_object_()
+  {
+    impl_->activate_object_();
+  }
+
+  void
+  BatchingStreamBase::deactivate_object_()
+  {
+    impl_->deactivate_object_();
+  }
+
+  bool
+  BatchingStreamBase::wait_more_()
+  {
+    return impl_->wait_more_();
+  }
+
+  void
+  BatchingStreamBase::wait_object_()
+  {
+    impl_->wait_object_();
+  }
+
+  bool
+  BatchingStreamBase::Impl::active() const noexcept
+  {
+    return owner_.active();
+  }
+
+  void
+  BatchingStreamBase::Impl::add_write_stats(
+    std::uint64_t batches,
+    std::uint64_t items) noexcept
+  {
+    owner_.add_write_stats(batches, items);
+  }
+
+  void
+  BatchingStreamBase::Impl::add_queue_wait_stats(
+    std::uint64_t wait_us) noexcept
+  {
+    owner_.add_queue_wait_stats(wait_us);
+  }
+
+  void
+  BatchingStreamBase::Impl::add_response_wait_stats(
+    std::uint64_t wait_us) noexcept
+  {
+    owner_.add_response_wait_stats(wait_us);
+  }
+
+  void
+  BatchingStreamBase::Impl::add_consumer_stream_write_stats(
+    std::uint64_t wait_us) noexcept
+  {
+    owner_.add_consumer_stream_write_stats(wait_us);
+  }
+
+  bool
+  BatchingStreamBase::Impl::available() noexcept
   {
     std::lock_guard<std::mutex> lock(state_lock_);
     return active() && accepts_requests_i_();
   }
 
   void
-  BatchingStreamBase::activate_object_()
+  BatchingStreamBase::Impl::activate_object_()
   {
     start_stream_();
   }
 
   void
-  BatchingStreamBase::deactivate_object_()
+  BatchingStreamBase::Impl::deactivate_object_()
   {
+    stop_processing_completion_tags_();
     callback_cv_.notify_all();
     batching_queue_->notify_all();
 
@@ -205,26 +484,28 @@ namespace AdServer::Grpc
   }
 
   bool
-  BatchingStreamBase::wait_more_()
+  BatchingStreamBase::Impl::wait_more_()
   {
-    return pending_completion_tags_.load(std::memory_order_acquire) != 0;
+    return process_completion_tags_.load(std::memory_order_acquire) &&
+      pending_completion_tags_.load(std::memory_order_acquire) != 0;
   }
 
   void
-  BatchingStreamBase::wait_object_()
+  BatchingStreamBase::Impl::wait_object_()
   {
-    std::unique_lock<std::mutex> lock(state_lock_);
-    shutdown_cv_.wait(lock, [this]() {
-      return stream_state_.load() == StreamState::Finished &&
-        pending_completion_tags_.load(std::memory_order_acquire) == 0;
-    });
-    lock.unlock();
+    {
+      std::lock_guard<std::mutex> lock(state_lock_);
+      if (stream_state_.load() != StreamState::Finished)
+      {
+        complete_shutdown_i_();
+      }
+    }
 
     finish_with_error_(grpc::StatusCode::UNAVAILABLE, "inactive");
   }
 
   bool
-  BatchingStreamBase::start_stream_()
+  BatchingStreamBase::Impl::start_stream_()
   {
     {
       std::lock_guard<std::mutex> lock(state_lock_);
@@ -245,7 +526,7 @@ namespace AdServer::Grpc
     }
 
     if (!grpc_queue_->execute([this]() {
-      auto start_tag = std::make_unique<StartTag>(this);
+      auto start_tag = std::make_unique<StartTag>(shared_from_this());
       stream_ = batch_stub_->Call(
         stream_context_.get(),
         batch_stream_full_method_,
@@ -267,7 +548,7 @@ namespace AdServer::Grpc
   }
 
   bool
-  BatchingStreamBase::try_start_write(
+  BatchingStreamBase::Impl::try_start_write(
     PendingBatch&& pending_batch,
     bool measure_consumer_stream_write,
     PendingBatch* failed_batch)
@@ -294,7 +575,7 @@ namespace AdServer::Grpc
   }
 
   bool
-  BatchingStreamBase::start_write_(
+  BatchingStreamBase::Impl::start_write_(
     std::vector<std::shared_ptr<PendingRequest>>&& pending_batch,
     bool measure_consumer_stream_write,
     std::vector<std::shared_ptr<PendingRequest>>* failed_batch)
@@ -334,7 +615,7 @@ namespace AdServer::Grpc
         measure_consumer_stream_write
       ]() {
         auto write_tag = std::make_unique<WriteTag>(
-          this,
+          shared_from_this(),
           std::move(*write_requests));
         auto* write_tag_ptr = write_tag.get();
         const auto start = std::chrono::steady_clock::now();
@@ -380,7 +661,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::maybe_start_read_i_()
+  BatchingStreamBase::Impl::maybe_start_read_i_()
   {
     if (stream_state_.load() != StreamState::Open || read_in_flight_)
     {
@@ -391,7 +672,7 @@ namespace AdServer::Grpc
     auto response = std::make_unique<BatchResponse>();
     auto* response_ptr = response.get();
     auto read_tag = std::make_unique<ReadTag>(
-      this,
+      shared_from_this(),
       std::move(response));
     auto* read_tag_ptr = read_tag.get();
     if (!grpc_queue_->execute([this, response_ptr, read_tag_ptr]() {
@@ -408,7 +689,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::maybe_start_shutdown_i_()
+  BatchingStreamBase::Impl::maybe_start_shutdown_i_()
   {
     if (stream_state_.load() == StreamState::Finished)
     {
@@ -433,7 +714,7 @@ namespace AdServer::Grpc
     {
       writes_done_started_ = true;
       writes_done_in_flight_ = true;
-      auto writes_done_tag = std::make_unique<WritesDoneTag>(this);
+      auto writes_done_tag = std::make_unique<WritesDoneTag>(shared_from_this());
       auto* writes_done_tag_ptr = writes_done_tag.get();
       if (!grpc_queue_->execute([this, writes_done_tag_ptr]() {
         stream_->WritesDone(writes_done_tag_ptr);
@@ -456,7 +737,7 @@ namespace AdServer::Grpc
       !writes_done_in_flight_)
     {
       finish_in_flight_ = true;
-      auto finish_tag = std::make_unique<FinishTag>(this);
+      auto finish_tag = std::make_unique<FinishTag>(shared_from_this());
       auto* finish_tag_ptr = finish_tag.get();
       if (!grpc_queue_->execute([this, finish_tag_ptr]() {
         stream_->Finish(&finish_status_, finish_tag_ptr);
@@ -473,7 +754,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::process_start_completion_(bool ok)
+  BatchingStreamBase::Impl::process_start_completion_(bool ok)
   {
     bool ready = false;
     {
@@ -507,12 +788,12 @@ namespace AdServer::Grpc
     }
     else if (ready && ready_callback_)
     {
-      ready_callback_(this);
+      ready_callback_(&owner_);
     }
   }
 
   void
-  BatchingStreamBase::process_read_completion_(
+  BatchingStreamBase::Impl::process_read_completion_(
     bool ok,
     std::unique_ptr<BatchResponse> response)
   {
@@ -581,7 +862,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::process_write_completion_(
+  BatchingStreamBase::Impl::process_write_completion_(
     bool ok,
     std::vector<std::shared_ptr<PendingRequest>>&& write_requests)
   {
@@ -614,7 +895,7 @@ namespace AdServer::Grpc
       callback_cv_.notify_one();
       if (ready_callback_)
       {
-        ready_callback_(this);
+        ready_callback_(&owner_);
       }
     }
 
@@ -640,7 +921,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::process_writes_done_completion_(bool /*ok*/)
+  BatchingStreamBase::Impl::process_writes_done_completion_(bool /*ok*/)
   {
     std::lock_guard<std::mutex> lock(state_lock_);
     writes_done_in_flight_ = false;
@@ -648,7 +929,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::process_finish_completion_(bool /*ok*/)
+  BatchingStreamBase::Impl::process_finish_completion_(bool /*ok*/)
   {
     std::lock_guard<std::mutex> lock(state_lock_);
     finish_in_flight_ = false;
@@ -656,7 +937,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::finish_requests_with_error_(
+  BatchingStreamBase::Impl::finish_requests_with_error_(
     std::vector<std::shared_ptr<PendingRequest>>& requests,
     grpc::StatusCode status_code,
     const char* status_message)
@@ -676,7 +957,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::fail_inflight_with_error_(
+  BatchingStreamBase::Impl::fail_inflight_with_error_(
     grpc::StatusCode status_code,
     const char* status_message)
   {
@@ -696,7 +977,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::finish_with_error_(
+  BatchingStreamBase::Impl::finish_with_error_(
     grpc::StatusCode status_code,
     const char* status_message)
   {
@@ -716,7 +997,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::handle_executor_shutdown_i_() noexcept
+  BatchingStreamBase::Impl::handle_executor_shutdown_i_() noexcept
   {
     stream_state_.store(StreamState::Broken);
     callback_cv_.notify_one();
@@ -730,7 +1011,7 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::complete_shutdown_i_() noexcept
+  BatchingStreamBase::Impl::complete_shutdown_i_() noexcept
   {
     const bool already_finished =
       stream_state_.load() == StreamState::Finished;
@@ -743,12 +1024,12 @@ namespace AdServer::Grpc
     batching_queue_->notify_all();
     if (!already_finished && closed_callback_)
     {
-      closed_callback_(this);
+      closed_callback_(&owner_);
     }
   }
 
   bool
-  BatchingStreamBase::accepts_requests_i_() const noexcept
+  BatchingStreamBase::Impl::accepts_requests_i_() const noexcept
   {
     const auto stream_state = stream_state_.load();
     return stream_state == StreamState::Starting ||
@@ -756,20 +1037,18 @@ namespace AdServer::Grpc
   }
 
   void
-  BatchingStreamBase::add_pending_completion_tag_() noexcept
+  BatchingStreamBase::Impl::stop_processing_completion_tags_() noexcept
   {
-    pending_completion_tags_.fetch_add(1, std::memory_order_acq_rel);
+    process_completion_tags_.store(false, std::memory_order_release);
+    shutdown_cv_.notify_all();
   }
 
   void
-  BatchingStreamBase::remove_pending_completion_tag_() noexcept
+  BatchingStreamBase::Impl::notify_completion_tags_drained_() noexcept
   {
-    if (pending_completion_tags_.fetch_sub(1, std::memory_order_acq_rel) == 1)
-    {
-      shutdown_cv_.notify_all();
-      Sync::PosixGuard guard(cond_);
-      cond_.broadcast();
-    }
+    shutdown_cv_.notify_all();
+    Sync::PosixGuard guard(owner_.cond_);
+    owner_.cond_.broadcast();
   }
 
 } // namespace AdServer::Grpc
