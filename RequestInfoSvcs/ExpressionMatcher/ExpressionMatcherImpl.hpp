@@ -50,6 +50,7 @@ namespace AdServer
     class ExpressionMatcherImpl :
       public virtual CORBACommons::ReferenceCounting::
         ServantImpl<POA_AdServer::RequestInfoSvcs::ExpressionMatcher>,
+      public virtual Generics::RefCountableActiveObject,
       public virtual Generics::CompositeActiveObject,
       private RequestBasicChannelsProcessor,
       private ConsiderInterface

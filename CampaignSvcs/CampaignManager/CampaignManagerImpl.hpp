@@ -55,6 +55,7 @@ namespace AdServer
 
     class CampaignManagerImpl :
       public virtual Generics::CompositeActiveObject,
+      public virtual Generics::RefCountableActiveObject,
       public virtual CORBACommons::ReferenceCounting::ServantImpl<
         POA_AdServer::CampaignSvcs::CampaignManager>
     {

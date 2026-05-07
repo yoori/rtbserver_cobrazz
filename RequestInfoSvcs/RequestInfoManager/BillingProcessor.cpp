@@ -38,8 +38,7 @@ namespace RequestInfoSvcs
 
   // BillingProcessor::RequestPool
   struct BillingProcessor::RequestPool:
-    public Generics::SimpleActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, BillingProcessor::Exception);
@@ -2052,9 +2051,9 @@ namespace RequestInfoSvcs
       request_sender_(ReferenceCounting::add_ref(request_sender)),
       request_pool_(new RequestPool(request_sender->server_count()))
   {
-    add_child_object(scheduler_);
-    add_child_object(task_runner_);
-    add_child_object(request_pool_);
+    add_child_object(scheduler_.in());
+    add_child_object(task_runner_.in());
+    add_child_object(request_pool_.in());
 
     // init context
     Sender::Context_var context(new Sender::Context());
@@ -2070,7 +2069,7 @@ namespace RequestInfoSvcs
       request_pool_
       );
 
-    add_child_object(sender);
+    add_child_object(sender.in());
 
     // TODO: do in background
     if(FileManip::dir_exists(storage_root_))

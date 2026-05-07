@@ -11,8 +11,7 @@
 namespace FrontendCommons
 {
   class TaskScheduler:
-    public virtual ReferenceCounting::AtomicImpl,
-    public virtual Generics::CompositeActiveObject
+    public virtual Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -74,8 +73,8 @@ namespace FrontendCommons
 
     try
     {
-      add_child_object(task_runner_);
-      add_child_object(scheduler_);
+      add_child_object(task_runner_.in());
+      add_child_object(scheduler_.in());
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {

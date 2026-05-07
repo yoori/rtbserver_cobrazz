@@ -220,7 +220,7 @@ ChannelServerSessionFactoryImpl::ChannelServerSessionFactoryImpl(
 {
   try
   {
-    add_child_object(task_runner_);
+    add_child_object(task_runner_.in());
     activate_object();
   }
   catch(const eh::Exception& e)
@@ -1011,4 +1011,3 @@ void ChannelServerSessionFactoryImpl::report_error(
     callback_->report_error(severity, ostr.str(), error_code);
   }
 }
-

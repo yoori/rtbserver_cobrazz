@@ -14,7 +14,6 @@
 
 #include <Generics/CompositeActiveObject.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
-#include <ReferenceCounting/SmartPtr.hpp>
 
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
@@ -29,12 +28,13 @@ namespace AdServer::Grpc
   class AsyncBatchingClientBase
     : public Generics::CompositeActiveObject,
       public virtual AdServer::Grpc::Client,
+      public virtual Generics::RefCountableActiveObject,
       public virtual ReferenceCounting::AtomicImpl
   {
   protected:
     AsyncBatchingClientBase(
       const std::string& endpoint,
-      AdServer::Grpc::GrpcExecutor* grpc_executor,
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       AdServer::Grpc::BatchingOptions options = {});
 
     ~AsyncBatchingClientBase() override;
@@ -49,16 +49,16 @@ namespace AdServer::Grpc
       const char* parse_error_message);
 
   private:
-    using BatchingStream_var =
-      ReferenceCounting::SmartPtr<AdServer::Grpc::BatchingStreamBase>;
-    using BatchingQueue_var =
-      ReferenceCounting::SmartPtr<AdServer::Grpc::BatchingQueue>;
+    using BatchingStreamPtr =
+      std::shared_ptr<AdServer::Grpc::BatchingStreamBase>;
+    using BatchingQueuePtr =
+      std::shared_ptr<AdServer::Grpc::BatchingQueue>;
 
     void activate_object_() override;
     void deactivate_object_() override;
     void wait_object_() override;
 
-    BatchingStream_var make_stream_();
+    BatchingStreamPtr make_stream_();
     BatchingStreamBase* acquire_stream_();
     void release_stream_(BatchingStreamBase* stream) noexcept;
     void coalesce_loop_();
@@ -73,9 +73,9 @@ namespace AdServer::Grpc
     const std::string endpoint_;
     const AdServer::Grpc::BatchingOptions options_;
     const std::size_t max_streams_;
-    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
-    BatchingQueue_var batching_queue_;
-    std::vector<BatchingStream_var> streams_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    BatchingQueuePtr batching_queue_;
+    std::vector<BatchingStreamPtr> streams_;
     mutable std::mutex streams_registry_lock_;
     std::deque<BatchingStreamBase*> available_streams_;
     mutable std::mutex streams_lock_;

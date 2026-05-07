@@ -364,15 +364,15 @@ main(int argc, char** argv)
         std::nullopt;
       options.enable_grpc_compression = *opt_grpc_compression != 0;
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
-      AdServer::Grpc::GrpcExecutor_var grpc_executor(
-        new AdServer::Grpc::GrpcExecutor(client_threads));
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
+        std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
       batch_client = ReferenceCounting::SmartPtr<BatchClient>(
         new BatchClient(
           *opt_user_bind_grpc_endpoint,
-          grpc_executor.in(),
+          grpc_executor,
           options));
       async_batch_active_objects->add_child_object(grpc_executor);
-      async_batch_active_objects->add_child_object(batch_client);
+      async_batch_active_objects->add_child_object(batch_client.in());
       client = batch_client.in();
     }
     else if (*mode == Mode::DistributedGrpc)
@@ -396,17 +396,17 @@ main(int argc, char** argv)
       options.enable_grpc_compression = *opt_grpc_compression != 0;
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
 
-      AdServer::Grpc::GrpcExecutor_var grpc_executor(
-        new AdServer::Grpc::GrpcExecutor(client_threads));
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
+        std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
       ReferenceCounting::SmartPtr<
         AdServer::UserInfoSvcs::UserBindDistributedGrpcClient> distributed_client(
           new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
             std::vector<std::string>{*opt_user_bind_controller_grpc_endpoint},
             options,
-            grpc_executor.in(),
+            grpc_executor,
             nullptr));
       async_batch_active_objects->add_child_object(grpc_executor);
-      async_batch_active_objects->add_child_object(distributed_client);
+      async_batch_active_objects->add_child_object(distributed_client.in());
       client = distributed_client.in();
     }
 

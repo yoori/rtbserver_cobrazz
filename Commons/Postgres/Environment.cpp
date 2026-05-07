@@ -39,7 +39,8 @@ namespace Commons
     {
       ConnectionPool_var res =
         new Commons::Postgres::ConnectionPool(this, children_, max_conn);
-      children_->add_child_object(res);
+      children_->add_child_object(
+        static_cast<Generics::ActiveObject*>(res.in()));
       return res;
     }
 

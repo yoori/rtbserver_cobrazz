@@ -129,7 +129,7 @@ BillingServerApp_::main(int argc, char** argv)
       logger(),
       config());
 
-    add_child_object(billing_server_impl_);
+    add_child_object(billing_server_impl_.in());
 
     corba_server_adapter_ =
       new CORBACommons::CorbaServerAdapter(corba_config_);
@@ -200,4 +200,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

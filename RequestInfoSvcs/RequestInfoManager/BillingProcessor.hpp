@@ -20,7 +20,7 @@ namespace AdServer
   {
     class BillingProcessor:
       public virtual ReferenceCounting::AtomicImpl,
-      public virtual Generics::ActiveObject,
+      public virtual Generics::RefCountableActiveObject,
       public virtual RequestActionProcessor,
       protected virtual Generics::CompositeActiveObject
     {

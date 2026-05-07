@@ -879,7 +879,7 @@ namespace RequestInfoSvcs
         ((window_size.tv_sec % BANKS_COUNT) ? 1 : 0)),
       max_request_pool_size);
 
-    add_child_object(Generics::ActiveObject_var(
+    add_child_object(
       new Sender(
         callback,
         thread_count,
@@ -887,7 +887,7 @@ namespace RequestInfoSvcs
         window_size,
         max_request_pool_size,
         uid_private_key,
-        addresses)));
+        addresses));
   }
 
   TagRequestProfiler::~TagRequestProfiler()

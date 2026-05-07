@@ -19,8 +19,7 @@ namespace RequestInfoSvcs
   /** ExpressionMatcherNotifier */
   class ExpressionMatcherNotifier:
     public virtual RequestActionProcessor,
-    public Generics::CompositeActiveObject,
-    public virtual ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     typedef RequestActionProcessor::Exception Exception;

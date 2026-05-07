@@ -171,7 +171,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
         logger(),
         config());
 
-    add_child_object(user_info_manager_impl_);
+    add_child_object(user_info_manager_impl_.in());
 
     Generics::Time stat_dumper_period;
     CORBACommons::CorbaObjectRef dumper_ref;
@@ -202,7 +202,7 @@ UserInfoManagerApp_::main(int& argc, char** argv)
           dumper_ref,
           stat_dumper_period);
 
-    add_child_object(user_info_manager_stats_impl);
+    add_child_object(user_info_manager_stats_impl.in());
 
     user_info_manager_control_impl_ =
       new AdServer::UserInfoSvcs::UserInfoManagerControlImpl(
@@ -282,4 +282,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

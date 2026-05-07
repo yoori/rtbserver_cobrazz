@@ -1036,17 +1036,17 @@ namespace RequestInfoSvcs
       request_operation_processor,
       proc_stat_impl));
 
-    add_child_object(processing_state_->interrupter);
+    add_child_object(processing_state_->interrupter.in());
 
     // install log files check tasks
     scheduler_ = new Generics::Planner(log_errors_callback_);
 
-    add_child_object(scheduler_);
+    add_child_object(scheduler_.in());
 
     log_fetch_runner_ = new Generics::TaskRunner(
       log_errors_callback_, log_fetchers_.size());
 
-    add_child_object(log_fetch_runner_);
+    add_child_object(log_fetch_runner_.in());
     FileReceiverFacade::FileReceiversInitializer file_receivers;
     std::vector<std::size_t> priorities(LogTypesCount);
 
@@ -1066,14 +1066,14 @@ namespace RequestInfoSvcs
     // initialize processing threads
     file_receiver_facade_ = new FileReceiverFacade(
       file_receivers, OrderStrategy(priorities));
-    add_child_object(file_receiver_facade_);
+    add_child_object(file_receiver_facade_.in());
 
     Commons::DelegateActiveObject_var process_files_worker =
       Commons::make_delegate_active_object(
         std::bind(&RequestLogLoader::process_file_, this),
          callback,
          threads_count);
-    add_child_object(process_files_worker);
+    add_child_object(process_files_worker.in());
   }
 
   void

@@ -9,7 +9,7 @@ namespace AdServer::UserInfoSvcs
 {
   class UserBindOperationSaver:
     public UserBindProcessor,
-    public virtual Generics::ActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public virtual ReferenceCounting::AtomicImpl,
     public ProfilingCommons::MessageSaver
   {

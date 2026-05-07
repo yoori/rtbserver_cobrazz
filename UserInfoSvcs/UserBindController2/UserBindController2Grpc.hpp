@@ -32,7 +32,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const std::string bind_address_;
-    const ReferenceCounting::SmartPtr<Impl> impl_;
+    const std::shared_ptr<Impl> impl_;
   };
 
   using UserBindController2Grpc_var =

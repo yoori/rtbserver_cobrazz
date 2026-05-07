@@ -36,8 +36,7 @@ namespace AdServer
      */
     class UserInventoryInfoContainer:
       public MatchRequestProcessor,
-      public Generics::CompositeActiveObject,
-      public ReferenceCounting::AtomicImpl
+      public Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

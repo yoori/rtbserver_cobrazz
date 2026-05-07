@@ -16,8 +16,7 @@
 namespace AdServer::Frontends
 {
   class FCGIAcceptor:
-    public Generics::CompositeActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

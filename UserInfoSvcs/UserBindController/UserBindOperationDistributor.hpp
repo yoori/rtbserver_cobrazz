@@ -18,7 +18,8 @@ namespace UserInfoSvcs
   class UserBindOperationDistributor:
     public CORBACommons::ReferenceCounting::CorbaRefCountImpl<
       OBV_AdServer::UserInfoSvcs::UserBindMapperValueType>,
-    public Generics::CompositeActiveObject
+    public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject
   {
   public:
     typedef CORBACommons::CorbaObjectRefList ControllerRef;

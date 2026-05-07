@@ -56,8 +56,7 @@ namespace AdServer
 
     class UserInfoContainer:
       public UserOperationProcessor,
-      public Generics::CompositeActiveObject,
-      public virtual ReferenceCounting::AtomicImpl
+      public Generics::RefCountableCompositeActiveObject
     {
     public:
       typedef UserOperationProcessor::Exception Exception;

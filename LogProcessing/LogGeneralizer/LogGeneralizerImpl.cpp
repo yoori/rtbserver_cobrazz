@@ -77,7 +77,7 @@ LogGeneralizerImpl::LogGeneralizerImpl(
     const char* pg_conn =
       config.DBConnection().get().Postgres().connection_string().c_str();
     pg_conn_factory_impl_->initialize(pg_conn);
-    db_conn_factory_composite_->add_child_object(pg_conn_factory_impl_);
+    db_conn_factory_composite_->add_child_object(pg_conn_factory_impl_.in());
 
     add_child_object(db_conn_factory_composite_);
   }

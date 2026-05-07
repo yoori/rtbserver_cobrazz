@@ -158,9 +158,9 @@ namespace RequestInfoSvcs
 
     try
     {
-      add_child_object(task_runner_);
-      add_child_object(daily_processing_task_runner_);
-      add_child_object(scheduler_);
+      add_child_object(task_runner_.in());
+      add_child_object(daily_processing_task_runner_.in());
+      add_child_object(scheduler_.in());
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
@@ -494,7 +494,7 @@ namespace RequestInfoSvcs
           fill_level_map_traits_(expression_matcher_config_.ChunksConfig())
           );
 
-        add_child_object(user_inventory_container, true);
+        add_child_object(user_inventory_container.in(), true);
 
         user_inventory_container_ = user_inventory_container;
       }
@@ -552,7 +552,7 @@ namespace RequestInfoSvcs
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
             );
 
-          add_child_object(temp_user_trigger_match_container, true);
+          add_child_object(temp_user_trigger_match_container.in(), true);
 
           temp_user_trigger_match_container_ = temp_user_trigger_match_container;
 
@@ -615,7 +615,7 @@ namespace RequestInfoSvcs
             fill_level_map_traits_(expression_matcher_config_.TriggerImpsConfig()->RequestChunksConfig())
             );
 
-          add_child_object(user_trigger_match_container, true);
+          add_child_object(user_trigger_match_container.in(), true);
 
           user_trigger_match_container_ = user_trigger_match_container;
         }
@@ -656,7 +656,7 @@ namespace RequestInfoSvcs
           fill_level_map_traits_(expression_matcher_config_.HouseholdColoReachChunksConfig())
           );
 
-        add_child_object(household_colo_reach_container, true);
+        add_child_object(household_colo_reach_container.in(), true);
 
         household_colo_reach_container_ = household_colo_reach_container;
       }
@@ -764,7 +764,7 @@ namespace RequestInfoSvcs
       );
 
     user_info_manager_session_ = ReferenceCounting::add_ref(distributor);
-    add_child_object(distributor);
+    add_child_object(distributor.in());
 
     try_start_daily_processing_loop_();
 
@@ -1174,7 +1174,7 @@ namespace RequestInfoSvcs
             log_read_traits,
             expression_matcher_config_.LogProcessing().InLogs().check_logs_period());
 
-          add_child_object(log_loader_);
+          add_child_object(log_loader_.in());
 
           /* start processing loop */
           Commons::make_goal_task(

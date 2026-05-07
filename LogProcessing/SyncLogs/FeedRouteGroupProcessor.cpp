@@ -45,7 +45,7 @@ namespace LogProcessing
     bool interruptible,
     SchedType feed_type,
     bool commit_mode_flag,
-    Generics::ActiveObject* interrupter)
+    Generics::RefCountableActiveObject* interrupter)
     /*throw(Exception)*/
     : commit_mode(commit_mode_flag)
   {

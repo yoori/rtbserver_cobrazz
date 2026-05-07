@@ -22,8 +22,7 @@ namespace AdServer::CampaignSvcs
   using namespace AdServer::CampaignSvcs::AdInstances;
 
   class CampaignConfigSource:
-    public Generics::SimpleActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

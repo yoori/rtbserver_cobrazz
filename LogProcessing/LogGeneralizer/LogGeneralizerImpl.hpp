@@ -45,8 +45,7 @@ struct ProcTraits : protected LogProcessor::Traits
 };
 
 class CompositeActiveObjectImpl:
-  public Generics::CompositeActiveObject,
-  public ReferenceCounting::AtomicImpl
+  public Generics::RefCountableCompositeActiveObject
 {
 };
 

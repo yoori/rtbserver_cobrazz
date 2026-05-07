@@ -25,6 +25,7 @@ namespace ProfilingCommons
    * wrapper for divide saving of operations by chunks (distrib hash)
    */
   class MessageSaver:
+    public virtual Generics::RefCountableActiveObject,
     public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject
   {

@@ -30,7 +30,7 @@ typedef ReferenceCounting::SmartPtr<DbConnectionFactory>
   DbConnectionFactory_var;
 
 class PostgresConnectionFactoryImpl:
-  public Generics::ActiveObject,
+  public virtual Generics::RefCountableActiveObject,
   public DbConnectionFactory
 {
 public:
@@ -65,4 +65,3 @@ typedef ReferenceCounting::SmartPtr<PostgresConnectionFactoryImpl>
 } // namespace AdServer
 
 #endif /* AD_SERVER_LOG_PROCESSING_DB_CONNECTION_FACTORY_HPP */
-

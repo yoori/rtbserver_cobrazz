@@ -39,7 +39,8 @@ namespace CampaignSvcs
   class BillingServerImpl:
     public virtual CORBACommons::ReferenceCounting::ServantImpl<
       POA_AdServer::CampaignSvcs::BillingServer>,
-    public virtual Generics::CompositeActiveObject
+    public virtual Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

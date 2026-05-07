@@ -6,6 +6,7 @@ add_library(ChannelClient SHARED
 
 target_link_libraries(ChannelClient
   CORBACommons
+  ChannelControllerGrpc
   ChannelManagerControllerIDL
   ChannelServerGrpcClient
   ChannelSessionFactory

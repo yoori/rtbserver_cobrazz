@@ -21,8 +21,7 @@ namespace RequestInfoSvcs
    */
   class TagRequestProfiler:
     public TagRequestProcessor,
-    public Generics::CompositeActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     typedef std::list<std::string> AddressList;

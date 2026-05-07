@@ -91,8 +91,8 @@ namespace AdServer
         SERVICE_INDEX_(config.service_index()),
         channel_matcher_(new ChannelMatcher())
     {
-      add_child_object(task_runner_);
-      add_child_object(scheduler_);
+      add_child_object(task_runner_.in());
+      add_child_object(scheduler_.in());
 
       campaign_servers_ = resolve_campaign_servers_(
         corba_client_adapter_, config);
@@ -159,7 +159,7 @@ namespace AdServer
           callback,
           0);
 
-        add_child_object(server_session_factory_);
+        add_child_object(server_session_factory_.in());
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
         Config::CorbaConfigReader::read_multi_corba_ref(

@@ -20,6 +20,7 @@ namespace Commons
 
     class Environment:
       public Generics::CompositeActiveObject,
+      public virtual Generics::RefCountableActiveObject,
       public virtual ReferenceCounting::AtomicImpl,
       protected ConnectionOwner
     {

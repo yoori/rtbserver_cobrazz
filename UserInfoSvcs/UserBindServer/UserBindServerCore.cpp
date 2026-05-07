@@ -100,7 +100,7 @@ namespace AdServer::UserInfoSvcs
       bind_request_container_(new BindRequestProcessorHolder()),
       chunks_number_(user_bind_server_config.Storage().common_chunks_number())
   {
-    add_child_object(task_runner_.in());
+    add_child_object(task_runner_);
     add_child_object(scheduler_);
     add_child_object(user_bind_container_);
     add_child_object(bind_request_container_);

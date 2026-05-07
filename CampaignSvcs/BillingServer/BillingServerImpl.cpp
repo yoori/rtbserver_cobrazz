@@ -72,9 +72,9 @@ namespace CampaignSvcs
       config_.service_index(),
       campaign_server_refs);
 
-    add_child_object(task_runner_);
-    add_child_object(scheduler_);
-    add_child_object(billing_processor_);
+    add_child_object(task_runner_.in());
+    add_child_object(scheduler_.in());
+    add_child_object(billing_processor_.in());
 
     Commons::make_repeating_task(
       std::bind(&BillingServerImpl::load_, this),

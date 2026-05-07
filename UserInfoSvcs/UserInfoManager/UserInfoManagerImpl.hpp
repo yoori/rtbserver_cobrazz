@@ -47,6 +47,7 @@ namespace AdServer
     class UserInfoManagerImpl:
       public virtual CORBACommons::ReferenceCounting::ServantImpl<
         POA_AdServer::UserInfoSvcs::UserInfoManager>,
+      public virtual Generics::RefCountableActiveObject,
       public virtual Generics::CompositeActiveObject
     {
     public:

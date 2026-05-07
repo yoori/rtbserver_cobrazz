@@ -18,8 +18,7 @@ namespace Commons
    *   wait active_count dropping(<= 0) on wait_object
    */
   class CountActiveObject:
-    public Generics::SimpleActiveObject,
-    public virtual ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {
   public:
     CountActiveObject() noexcept;

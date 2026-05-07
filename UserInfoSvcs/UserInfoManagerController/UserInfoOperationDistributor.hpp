@@ -18,7 +18,8 @@ namespace UserInfoSvcs
   class UserInfoOperationDistributor:
     public CORBACommons::ReferenceCounting::CorbaRefCountImpl<
       OBV_AdServer::UserInfoSvcs::UserInfoManagerSession>,
-    public Generics::CompositeActiveObject
+    public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject
   {
   public:
     typedef CORBACommons::CorbaObjectRefList ControllerRef;

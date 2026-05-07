@@ -377,8 +377,8 @@ namespace ProfilingCommons
       undumped_size_(0),
       levels0_(0)
   {
-    add_child_object(task_runner_);
-    add_child_object(planner_);
+    add_child_object(task_runner_.in());
+    add_child_object(planner_.in());
 
     MapHolder_var map_holder = new MapHolder();
 

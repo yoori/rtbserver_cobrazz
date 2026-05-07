@@ -295,7 +295,7 @@ namespace AdServer
     FrontendCommons::TaskScheduler_var task_scheduler_;
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
       user_bind_client_;
-    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     FrontendCommons::UserInfoClient_var user_info_client_;
 
     AdFrontendStat_var stats_;

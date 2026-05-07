@@ -133,6 +133,7 @@ namespace ChannelSvcs
    * implementation of corba valuetype factory
    */
 class ChannelServerSessionFactoryImpl :
+  public virtual Generics::RefCountableActiveObject,
   public virtual Generics::CompositeActiveObject,
   public virtual CORBACommons::ReferenceCounting::CorbaRefCountImpl<
     CORBA::ValueFactoryBase>

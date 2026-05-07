@@ -34,7 +34,7 @@ namespace UserInfoSvcs
     const char* unprocessed_folder,
     const char* file_prefix,
     const ChunkIdSet& chunk_ids,
-    Generics::ActiveObject* interrupter)
+    Generics::RefCountableActiveObject* interrupter)
     noexcept
     : user_operation_processor_(ReferenceCounting::add_ref(user_operation_processor)),
       log_errors_(ReferenceCounting::add_ref(callback)),
@@ -203,7 +203,7 @@ namespace UserInfoSvcs
     const char* unprocessed_folder,
     const char* file_prefix,
     const ChunkIdSet& chunk_ids,
-    Generics::ActiveObject* interrupter)
+    Generics::RefCountableActiveObject* interrupter)
     noexcept
     : BaseOperationRecordFetcher(
         callback,
@@ -222,7 +222,7 @@ namespace UserInfoSvcs
     const char* unprocessed_folder,
     const char* file_prefix,
     const ChunkIdSet& chunk_ids,
-    Generics::ActiveObject* interrupter)
+    Generics::RefCountableActiveObject* interrupter)
     noexcept
     : BaseOperationRecordFetcher(
         callback,
@@ -250,7 +250,7 @@ namespace UserInfoSvcs
   {
     Generics::ActiveObject_var interrupter =
       new AdServer::LogProcessing::FileReceiverInterrupter();
-    add_child_object(interrupter);
+    add_child_object(interrupter.in());
 
     operation_fetcher_ =
       new ExternalOperationRecordFetcher(
@@ -272,7 +272,7 @@ namespace UserInfoSvcs
       file_prefix,
       check_period);
 
-    add_child_object(file_thread_processor_);
+    add_child_object(file_thread_processor_.in());
   }
 
   ExternalUserOperationLoader::~ExternalUserOperationLoader() noexcept
@@ -294,7 +294,7 @@ namespace UserInfoSvcs
   {
     Generics::ActiveObject_var interrupter =
       new AdServer::LogProcessing::FileReceiverInterrupter();
-    add_child_object(interrupter);
+    add_child_object(interrupter.in());
 
     operation_fetcher_ =
       new InternalOperationRecordFetcher(
@@ -316,7 +316,7 @@ namespace UserInfoSvcs
       file_prefix,
       check_period);
 
-    add_child_object(file_thread_processor_);
+    add_child_object(file_thread_processor_.in());
   }
 
   InternalUserOperationLoader::~InternalUserOperationLoader() noexcept

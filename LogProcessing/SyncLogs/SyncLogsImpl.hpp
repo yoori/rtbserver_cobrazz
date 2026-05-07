@@ -32,8 +32,7 @@ namespace AdServer
      * from this directory to destination by running 'rsync'.
      */
     class SyncLogsImpl:
-      public Generics::CompositeActiveObject,
-      public ReferenceCounting::AtomicImpl
+      public Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

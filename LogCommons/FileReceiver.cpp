@@ -158,12 +158,12 @@ namespace AdServer
     FileReceiver::FileReceiver(
       const char* intermediate_dir,
       size_t max_files_to_store,
-      Generics::ActiveObject* interrupter,
+      Generics::ActiveObject_var interrupter,
       Logging::Logger* logger)
       /*throw(eh::Exception)*/
       : intermediate_dir_(intermediate_dir),
         max_files_to_store_(max_files_to_store),
-        interrupter_(ReferenceCounting::add_ref(interrupter)),
+        interrupter_(std::move(interrupter)),
         logger_(ReferenceCounting::add_ref(logger)),
         // set undefined state:
         // we don't know which files are locating in intermediate dir and must

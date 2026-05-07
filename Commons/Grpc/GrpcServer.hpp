@@ -12,7 +12,6 @@
 
 #include <Generics/ActiveObject.hpp>
 #include <Logger/Logger.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Stream/MemoryStream.hpp>
 
@@ -28,8 +27,7 @@ namespace AdServer::Grpc
 
   template<typename ServiceImplType>
   class GrpcServer final:
-    public Generics::SimpleActiveObject,
-    public virtual ReferenceCounting::AtomicImpl
+    public Generics::SimpleActiveObject
   {
   public:
     GrpcServer(

@@ -188,7 +188,7 @@ namespace LogProcessing
         interruptible,
         commit_mode_flag);
 
-      add_child_object(mover_);
+      add_child_object(mover_.in());
     }
     catch(const FileRouter::Exception& e)
     {
@@ -317,7 +317,7 @@ namespace LogProcessing
       file_receiver_ = new FileReceiver(
         intermediate_path.c_str(),
         MAX_FILES_TO_STORE,
-        0,  //interrupter
+        Generics::ActiveObject_var(),  //interrupter
         0); // logger
     }
   }

@@ -30,7 +30,7 @@ namespace LogProcessing
   /** BasicFeedRouteProcessor */
   class BasicFeedRouteProcessor:
     public RouteProcessor,
-    public Generics::CompositeActiveObject
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     typedef FeedRouteMover::Exception Exception;
@@ -116,8 +116,7 @@ namespace LogProcessing
 
   /** FeedRouteProcessor */
   class FeedRouteProcessor:
-    public BasicFeedRouteProcessor,
-    public ReferenceCounting::AtomicImpl
+    public BasicFeedRouteProcessor
   {
   public:
     FeedRouteProcessor(
@@ -151,8 +150,7 @@ namespace LogProcessing
 
   /** ThreadPoolFeedRouteProcessor */
   class ThreadPoolFeedRouteProcessor:
-    public BasicFeedRouteProcessor,
-    public ReferenceCounting::AtomicImpl
+    public BasicFeedRouteProcessor
   {
   public:
     ThreadPoolFeedRouteProcessor(

@@ -92,8 +92,7 @@ namespace AdServer
     typedef ReferenceCounting::AssertPtr<LogFetcherBase>::Ptr LogFetcher_var;
 
     class RequestLogLoader:
-      public virtual ReferenceCounting::AtomicImpl,
-      public virtual Generics::CompositeActiveObject
+      public virtual Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

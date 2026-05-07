@@ -13,6 +13,7 @@ namespace Bidding
 {
   class PlannerPool:
     public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:

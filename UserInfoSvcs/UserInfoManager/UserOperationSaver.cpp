@@ -328,7 +328,7 @@ namespace UserInfoSvcs
       files_holder_,
       file_controller);
 
-    add_child_object(dump_thread);
+    add_child_object(dump_thread.in());
   }
 
   bool

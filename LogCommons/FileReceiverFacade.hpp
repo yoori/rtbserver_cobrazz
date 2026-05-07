@@ -71,8 +71,7 @@ namespace AdServer
      * FileReceivers MUST used for get_eldest inside FileReceiverFacade only.
      */
     template<typename OrderStrategy>
-    class FileReceiverFacade : public Generics::SimpleActiveObject,
-      public ReferenceCounting::AtomicImpl
+    class FileReceiverFacade : public Generics::RefCountableSimpleActiveObject
     {
     public:
       typedef typename OrderStrategy::LogType LogType;

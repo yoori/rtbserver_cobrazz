@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <utility>
 #include <vector>
@@ -13,6 +14,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Commons/UserInfoManip.hpp>
+#include <Commons/Grpc/RefPool.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Logger/ActiveObjectCallback.hpp>
 #include <String/StringManip.hpp>
@@ -35,6 +37,7 @@ namespace AdServer::UserInfoSvcs
   class UserBindDistributedGrpcClient::Distributor:
     public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public UserBindServerGrpcAsyncClient
   {
   public:
@@ -48,7 +51,7 @@ namespace AdServer::UserInfoSvcs
       Logging::Logger* logger,
       ControllerRefList controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
-      AdServer::Grpc::GrpcExecutor* grpc_executor,
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       const Generics::Time& pool_timeout = DEFAULT_POOL_TIMEOUT)
       : callback_(new Logging::ActiveObjectCallbackImpl(
           logger,
@@ -58,7 +61,7 @@ namespace AdServer::UserInfoSvcs
         pool_timeout_(pool_timeout),
         controller_refs_(std::move(controller_refs)),
         batching_options_(std::move(batching_options)),
-        grpc_executor_(ReferenceCounting::add_ref(grpc_executor)),
+        grpc_executor_(std::move(grpc_executor)),
         task_runner_(new Generics::TaskRunner(callback_, try_count_))
     {
       add_child_object(task_runner_);
@@ -74,75 +77,175 @@ namespace AdServer::UserInfoSvcs
       const adserver::user_info_svcs::user_bind::GetBindRequestRequest& request,
       GetBindRequestCallback callback) override
     {
-      auto client = get_client_(request.request_id());
-      if (!client)
+      auto ref = get_ref_(request.request_id());
+      if (!ref)
       {
         finish_with_unavailable_<
           adserver::user_info_svcs::user_bind::GetBindRequestResponse>(
             std::move(callback));
         return;
       }
-      client->get_bind_request(request, std::move(callback));
+
+      auto pool_ref = std::move(*ref);
+      pool_ref->client->get_bind_request(
+        request,
+        [
+          pool_ref = std::move(pool_ref),
+          callback = std::move(callback),
+          pool_timeout = pool_timeout_
+        ](
+          const grpc::Status& status,
+          const adserver::user_info_svcs::user_bind::GetBindRequestResponse&
+            response)
+        mutable
+        {
+          if (!status.ok())
+          {
+            pool_ref.mark_as_bad(
+              Generics::Time::get_time_of_day() + pool_timeout);
+          }
+          callback(status, response);
+        });
     }
 
     void add_bind_request(
       const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request,
       AddBindRequestCallback callback) override
     {
-      auto client = get_client_(request.request_id());
-      if (!client)
+      auto ref = get_ref_(request.request_id());
+      if (!ref)
       {
         finish_with_unavailable_<
           adserver::user_info_svcs::user_bind::AddBindRequestResponse>(
             std::move(callback));
         return;
       }
-      client->add_bind_request(request, std::move(callback));
+
+      auto pool_ref = std::move(*ref);
+      pool_ref->client->add_bind_request(
+        request,
+        [
+          pool_ref = std::move(pool_ref),
+          callback = std::move(callback),
+          pool_timeout = pool_timeout_
+        ](
+          const grpc::Status& status,
+          const adserver::user_info_svcs::user_bind::AddBindRequestResponse&
+            response)
+        mutable
+        {
+          if (!status.ok())
+          {
+            pool_ref.mark_as_bad(
+              Generics::Time::get_time_of_day() + pool_timeout);
+          }
+          callback(status, response);
+        });
     }
 
     void get_user_id(
       const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
       GetUserIdCallback callback) override
     {
-      auto client = get_client_(request.id());
-      if (!client)
+      auto ref = get_ref_(request.id());
+      if (!ref)
       {
         finish_with_unavailable_<
           adserver::user_info_svcs::user_bind::GetUserIdResponse>(
             std::move(callback));
         return;
       }
-      client->get_user_id(request, std::move(callback));
+
+      auto pool_ref = std::move(*ref);
+      pool_ref->client->get_user_id(
+        request,
+        [
+          pool_ref = std::move(pool_ref),
+          callback = std::move(callback),
+          pool_timeout = pool_timeout_
+        ](
+          const grpc::Status& status,
+          const adserver::user_info_svcs::user_bind::GetUserIdResponse&
+            response)
+        mutable
+        {
+          if (!status.ok())
+          {
+            pool_ref.mark_as_bad(
+              Generics::Time::get_time_of_day() + pool_timeout);
+          }
+          callback(status, response);
+        });
     }
 
     void add_user_id(
       const adserver::user_info_svcs::user_bind::AddUserIdRequest& request,
       AddUserIdCallback callback) override
     {
-      auto client = get_client_(request.id());
-      if (!client)
+      auto ref = get_ref_(request.id());
+      if (!ref)
       {
         finish_with_unavailable_<
           adserver::user_info_svcs::user_bind::AddUserIdResponse>(
             std::move(callback));
         return;
       }
-      client->add_user_id(request, std::move(callback));
+
+      auto pool_ref = std::move(*ref);
+      pool_ref->client->add_user_id(
+        request,
+        [
+          pool_ref = std::move(pool_ref),
+          callback = std::move(callback),
+          pool_timeout = pool_timeout_
+        ](
+          const grpc::Status& status,
+          const adserver::user_info_svcs::user_bind::AddUserIdResponse&
+            response)
+        mutable
+        {
+          if (!status.ok())
+          {
+            pool_ref.mark_as_bad(
+              Generics::Time::get_time_of_day() + pool_timeout);
+          }
+          callback(status, response);
+        });
     }
 
     void get_source(
       const adserver::user_info_svcs::user_bind::GetSourceRequest& request,
       GetSourceCallback callback) override
     {
-      auto client = get_client_(std::string());
-      if (!client)
+      auto ref = get_ref_(std::string());
+      if (!ref)
       {
         finish_with_unavailable_<
           adserver::user_info_svcs::user_bind::GetSourceResponse>(
             std::move(callback));
         return;
       }
-      client->get_source(request, std::move(callback));
+
+      auto pool_ref = std::move(*ref);
+      pool_ref->client->get_source(
+        request,
+        [
+          pool_ref = std::move(pool_ref),
+          callback = std::move(callback),
+          pool_timeout = pool_timeout_
+        ](
+          const grpc::Status& status,
+          const adserver::user_info_svcs::user_bind::GetSourceResponse&
+            response)
+        mutable
+        {
+          if (!status.ok())
+          {
+            pool_ref.mark_as_bad(
+              Generics::Time::get_time_of_day() + pool_timeout);
+          }
+          callback(status, response);
+        });
     }
 
     AdServer::Grpc::Stats stats() const noexcept override
@@ -162,10 +265,9 @@ namespace AdServer::UserInfoSvcs
           continue;
         }
 
-        for (const auto& chunk_ref : partition->chunks_ref_map)
+        for (const auto& ref_holder : partition->ref_holders)
         {
-          const auto* ref_holder = chunk_ref.second.get();
-          if (!seen_refs.insert(ref_holder).second)
+          if (!ref_holder || !seen_refs.insert(ref_holder.get()).second)
           {
             continue;
           }
@@ -207,45 +309,19 @@ namespace AdServer::UserInfoSvcs
     {
       RefHolder(
         std::string endpoint,
-        AdServer::Grpc::GrpcExecutor* grpc_executor,
+        std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
         AdServer::Grpc::BatchingOptions batching_options)
         : endpoint(std::move(endpoint)),
           client(new ServerClient(
             this->endpoint,
-            grpc_executor,
+            std::move(grpc_executor),
             std::move(batching_options)))
       {
         client->activate_object();
       }
 
-      bool is_bad(const Generics::Time& timeout) const noexcept
-      {
-        if (!marked_as_bad)
-        {
-          return false;
-        }
-
-        const auto now = Generics::Time::get_time_of_day();
-        Sync::Policy::PosixThread::WriteGuard lock(lock_);
-        if (marked_as_bad && now >= marked_as_bad_time + timeout)
-        {
-          marked_as_bad = false;
-        }
-        return marked_as_bad;
-      }
-
-      void release_bad() noexcept
-      {
-        Sync::Policy::PosixThread::WriteGuard lock(lock_);
-        marked_as_bad = true;
-        marked_as_bad_time = Generics::Time::get_time_of_day();
-      }
-
       const std::string endpoint;
       ReferenceCounting::SmartPtr<ServerClient> client;
-      mutable Sync::Policy::PosixThread::Mutex lock_;
-      Generics::Time marked_as_bad_time;
-      mutable bool marked_as_bad = false;
 
       ~RefHolder() noexcept
       {
@@ -264,6 +340,8 @@ namespace AdServer::UserInfoSvcs
     };
 
     using RefHolder_var = std::shared_ptr<RefHolder>;
+    using Pool = AdServer::Grpc::RefPool<RefHolder>;
+    using PoolPtr = std::shared_ptr<Pool>;
 
     class Partition
     {
@@ -279,7 +357,8 @@ namespace AdServer::UserInfoSvcs
           String::SubString(id)) % max_chunk_number;
       }
 
-      std::map<unsigned long, RefHolder_var> chunks_ref_map;
+      std::map<unsigned long, PoolPtr> chunks_ref_pool_map;
+      std::vector<RefHolder_var> ref_holders;
       unsigned int max_chunk_number = 0;
     };
 
@@ -307,7 +386,9 @@ namespace AdServer::UserInfoSvcs
     {
       std::vector<Partition_var> partitions;
       std::vector<RefHolder_var> ref_holders;
+      std::vector<PoolPtr> pools;
       std::set<const RefHolder*> seen_refs;
+      std::set<const Pool*> seen_pools;
 
       deactivated_.store(true, std::memory_order_release);
 
@@ -334,12 +415,42 @@ namespace AdServer::UserInfoSvcs
           continue;
         }
 
-        for (const auto& chunk_ref : partition->chunks_ref_map)
+        for (const auto& chunk_pool : partition->chunks_ref_pool_map)
         {
-          if (chunk_ref.second && seen_refs.insert(chunk_ref.second.get()).second)
+          if (chunk_pool.second && seen_pools.insert(chunk_pool.second.get()).second)
           {
-            ref_holders.emplace_back(chunk_ref.second);
+            pools.emplace_back(chunk_pool.second);
           }
+        }
+
+        for (const auto& ref_holder : partition->ref_holders)
+        {
+          if (ref_holder && seen_refs.insert(ref_holder.get()).second)
+          {
+            ref_holders.emplace_back(ref_holder);
+          }
+        }
+      }
+
+      for (const auto& pool : pools)
+      {
+        try
+        {
+          pool->deactivate_object();
+        }
+        catch (...)
+        {
+        }
+      }
+
+      for (const auto& pool : pools)
+      {
+        try
+        {
+          pool->wait_object();
+        }
+        catch (...)
+        {
         }
       }
 
@@ -362,6 +473,46 @@ namespace AdServer::UserInfoSvcs
         try
         {
           ref_holder->client->wait_object();
+        }
+        catch (...)
+        {
+        }
+      }
+    }
+
+    void deactivate_partition_pools_(const Partition_var& partition) noexcept
+    {
+      if (!partition)
+      {
+        return;
+      }
+
+      std::vector<PoolPtr> pools;
+      std::set<const Pool*> seen_pools;
+      for (const auto& chunk_pool : partition->chunks_ref_pool_map)
+      {
+        if (chunk_pool.second && seen_pools.insert(chunk_pool.second.get()).second)
+        {
+          pools.emplace_back(chunk_pool.second);
+        }
+      }
+
+      for (const auto& pool : pools)
+      {
+        try
+        {
+          pool->deactivate_object();
+        }
+        catch (...)
+        {
+        }
+      }
+
+      for (const auto& pool : pools)
+      {
+        try
+        {
+          pool->wait_object();
         }
         catch (...)
         {
@@ -464,7 +615,10 @@ namespace AdServer::UserInfoSvcs
           return;
         }
 
-        auto fill_partition = std::make_shared<Partition>();
+        std::map<unsigned long, std::vector<RefHolder_var>> chunk_refs;
+        std::vector<RefHolder_var> ref_holders;
+        std::set<const RefHolder*> seen_refs;
+        unsigned int max_chunk_number = 0;
         bool resolve_interrupted = false;
 
         for (const auto& server : response.user_bind_servers())
@@ -479,16 +633,34 @@ namespace AdServer::UserInfoSvcs
 
           for (const auto chunk_id : server.chunk_ids())
           {
-            fill_partition->chunks_ref_map.emplace(chunk_id, ref_holder);
-            if (chunk_id >= fill_partition->max_chunk_number)
+            chunk_refs[chunk_id].emplace_back(ref_holder);
+            if (seen_refs.insert(ref_holder.get()).second)
             {
-              fill_partition->max_chunk_number = chunk_id + 1;
+              ref_holders.emplace_back(ref_holder);
+            }
+            if (chunk_id >= max_chunk_number)
+            {
+              max_chunk_number = chunk_id + 1;
             }
           }
         }
 
-        if (!resolve_interrupted && !fill_partition->chunks_ref_map.empty())
+        if (!resolve_interrupted && !chunk_refs.empty())
         {
+          auto fill_partition = std::make_shared<Partition>();
+          fill_partition->ref_holders = std::move(ref_holders);
+          fill_partition->max_chunk_number = max_chunk_number;
+
+          for (auto& chunk_ref : chunk_refs)
+          {
+            auto pool = std::make_shared<Pool>();
+            pool->set_refs(chunk_ref.second);
+            pool->activate_object();
+            fill_partition->chunks_ref_pool_map.emplace(
+              chunk_ref.first,
+              std::move(pool));
+          }
+
           new_partition = fill_partition;
         }
       }
@@ -497,14 +669,16 @@ namespace AdServer::UserInfoSvcs
       }
 
       const auto now = Generics::Time::get_time_of_day();
+      bool partition_installed = false;
+      Partition_var old_partition;
       {
-        Partition_var old_partition;
         Sync::Policy::PosixThread::WriteGuard lock(
           partition_holders_[partition_num]->lock);
         if (new_partition && !deactivated_.load(std::memory_order_acquire))
         {
           old_partition = std::move(partition_holders_[partition_num]->partition);
           partition_holders_[partition_num]->partition = std::move(new_partition);
+          partition_installed = true;
           partition_holders_[partition_num]->resolve_in_progress = false;
         }
         else
@@ -513,9 +687,16 @@ namespace AdServer::UserInfoSvcs
           partition_holders_[partition_num]->resolve_in_progress = false;
         }
       }
+
+      deactivate_partition_pools_(old_partition);
+
+      if (new_partition && !partition_installed)
+      {
+        deactivate_partition_pools_(new_partition);
+      }
     }
 
-    ServerClient_var get_client_(const std::string& user_id)
+    std::optional<Pool::Ref> get_ref_(const std::string& user_id)
     {
       for (unsigned i = 0; i < try_count_; ++i)
       {
@@ -529,22 +710,23 @@ namespace AdServer::UserInfoSvcs
         }
 
         const auto chunk_index = partition->chunk_index(user_id);
-        auto iter = partition->chunks_ref_map.find(chunk_index);
-        if (iter == partition->chunks_ref_map.end())
+        auto iter = partition->chunks_ref_pool_map.find(chunk_index);
+        if (iter == partition->chunks_ref_pool_map.end())
         {
           try_to_reresolve_partition_(partition_num);
           continue;
         }
 
-        if (iter->second->is_bad(pool_timeout_))
+        auto ref = iter->second->get_object();
+        if (!ref)
         {
           continue;
         }
 
-        return iter->second->client;
+        return ref;
       }
 
-      return ServerClient_var();
+      return std::nullopt;
     }
 
     static std::size_t validate_controller_refs_(
@@ -604,7 +786,7 @@ namespace AdServer::UserInfoSvcs
     const Generics::Time pool_timeout_;
     const ControllerRefList controller_refs_;
     const AdServer::Grpc::BatchingOptions batching_options_;
-    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     Generics::FixedTaskRunner_var task_runner_;
     PartitionHolderArray partition_holders_;
     std::mutex ref_holders_lock_;
@@ -615,7 +797,7 @@ namespace AdServer::UserInfoSvcs
   UserBindDistributedGrpcClient::UserBindDistributedGrpcClient(
     const UserBindControllerRefs& user_bind_controller_refs,
     AdServer::Grpc::BatchingOptions batching_options,
-    AdServer::Grpc::GrpcExecutor* grpc_executor,
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     Logging::Logger* logger)
   {
     ReferenceCounting::SmartPtr<Distributor> distributor =
@@ -623,7 +805,7 @@ namespace AdServer::UserInfoSvcs
         logger,
         user_bind_controller_refs,
         std::move(batching_options),
-        grpc_executor);
+        std::move(grpc_executor));
     user_bind_mapper_ = distributor;
     add_child_object(distributor);
   }

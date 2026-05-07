@@ -340,12 +340,12 @@ namespace Action
             Generics::Time(common_config_->StatsDumper().get().period()),
             callback());
 
-          add_child_object(stats_);
+          add_child_object(stats_.in());
         }
 
         task_runner_ = new Generics::TaskRunner(
           callback(), config_->threads(), 0, config_->match_task_limit());
-        add_child_object(task_runner_);
+        add_child_object(task_runner_.in());
 
         derived_config_.use_referrer = Commons::LogReferrer::read_log_referrer_settings(
           config_->use_referrer_action_stats());

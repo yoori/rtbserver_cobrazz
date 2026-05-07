@@ -28,8 +28,7 @@ namespace Frontends
   class Http2Response;
 
   class Http2Acceptor final:
-    public Generics::SimpleActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

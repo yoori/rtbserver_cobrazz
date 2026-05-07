@@ -91,7 +91,7 @@ namespace AdServer
       FileReceiver(
         const char* intermediate_dir,
         size_t max_files_to_store,
-        Generics::ActiveObject* interrupter = 0,
+        Generics::ActiveObject_var interrupter = Generics::ActiveObject_var(),
         Logging::Logger* logger = 0)
         /*throw(eh::Exception)*/;
 
@@ -229,8 +229,7 @@ namespace AdServer
       FileReceiver_var;
 
     class FileReceiverInterrupter :
-      public ReferenceCounting::AtomicImpl,
-      public Generics::SimpleActiveObject
+      public Generics::RefCountableSimpleActiveObject
     {
     private:
       virtual
@@ -261,6 +260,7 @@ namespace AdServer
      */
     class FileThreadProcessor :
       public Generics::CompositeActiveObject,
+      public virtual Generics::RefCountableActiveObject,
       public ReferenceCounting::AtomicImpl
     {
     public:

@@ -1,4 +1,5 @@
 #include <fstream>
+#include <utility>
 
 #include <eh/Errno.hpp>
 #include <Commons/PathManip.hpp>
@@ -26,8 +27,7 @@ namespace AdServer
 namespace UserInfoSvcs
 {
   class InterrupterImpl:
-    public Generics::SimpleActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {};
 
   // UserBindOperationFetcher
@@ -47,7 +47,7 @@ namespace UserInfoSvcs
       const char* unprocessed_folder,
       const char* file_prefix,
       const ChunkIdSet& chunk_ids,
-      Generics::ActiveObject* interrupter)
+      Generics::ActiveObject_var interrupter)
       noexcept;
 
     virtual void
@@ -103,14 +103,14 @@ namespace UserInfoSvcs
     const char* unprocessed_folder,
     const char* file_prefix,
     const ChunkIdSet& chunk_ids,
-    Generics::ActiveObject* interrupter)
+    Generics::ActiveObject_var interrupter)
     noexcept
     : callback_(ReferenceCounting::add_ref(callback)),
       DIR_(folder),
       unprocessed_dir_(unprocessed_folder),
       file_prefix_(file_prefix),
       chunk_ids_(chunk_ids),
-      interrupter_(ReferenceCounting::add_ref(interrupter)),
+      interrupter_(std::move(interrupter)),
       user_bind_processor_(ReferenceCounting::add_ref(user_bind_operation_processor))
   {}
 

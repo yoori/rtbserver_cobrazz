@@ -32,8 +32,7 @@ namespace CampaignSvcs
   // TODO: background deactivated campaigns checking (CompositeActiveObject for this)
   //
   class BillingStateContainer:
-    public virtual Generics::CompositeActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

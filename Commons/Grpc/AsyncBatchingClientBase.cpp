@@ -9,14 +9,14 @@ namespace AdServer::Grpc
 {
   AsyncBatchingClientBase::AsyncBatchingClientBase(
     const std::string& endpoint,
-    AdServer::Grpc::GrpcExecutor* grpc_executor,
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     AdServer::Grpc::BatchingOptions options)
     : Generics::CompositeActiveObject(false, false),
       endpoint_(endpoint),
       options_(std::move(options)),
       max_streams_(std::max<std::size_t>(1, options_.channels_number)),
-      grpc_executor_(ReferenceCounting::add_ref(grpc_executor)),
-      batching_queue_(new AdServer::Grpc::BatchingQueue(options_)),
+      grpc_executor_(std::move(grpc_executor)),
+      batching_queue_(std::make_shared<AdServer::Grpc::BatchingQueue>(options_)),
       inflight_limiter_(options_.max_inflight)
   {
     if (!grpc_executor_)
@@ -101,14 +101,13 @@ namespace AdServer::Grpc
     return total;
   }
 
-  AsyncBatchingClientBase::BatchingStream_var
+  AsyncBatchingClientBase::BatchingStreamPtr
   AsyncBatchingClientBase::make_stream_()
   {
-    return BatchingStream_var(
-      new AdServer::Grpc::BatchingStreamBase(
+    return std::make_shared<AdServer::Grpc::BatchingStreamBase>(
         endpoint_,
-        grpc_executor_.in(),
-        batching_queue_.in(),
+        grpc_executor_,
+        batching_queue_,
         next_queue_index_.fetch_add(1, std::memory_order_relaxed),
         this,
         [this](auto* stream) {
@@ -117,7 +116,7 @@ namespace AdServer::Grpc
         [this](auto* stream) noexcept {
           handle_stream_closed_(stream);
         },
-        options_));
+        options_);
   }
 
   BatchingStreamBase*
@@ -154,7 +153,7 @@ namespace AdServer::Grpc
       if (stream_slot_reserved)
       {
         stream_start_attempts_.fetch_add(1, std::memory_order_acq_rel);
-        BatchingStream_var stream;
+        BatchingStreamPtr stream;
         bool stream_registered = false;
         try
         {
@@ -267,7 +266,7 @@ namespace AdServer::Grpc
         streams_.begin(),
         streams_.end(),
         [stream](const auto& registered_stream) {
-          return registered_stream.in() == stream;
+          return registered_stream.get() == stream;
         });
       if (it != streams_.end())
       {

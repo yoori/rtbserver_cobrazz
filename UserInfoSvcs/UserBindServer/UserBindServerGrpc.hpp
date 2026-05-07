@@ -14,6 +14,7 @@ namespace AdServer::UserInfoSvcs
 {
   class UserBindServerGrpc:
     public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
@@ -32,7 +33,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     const std::string bind_address_;
-    const ReferenceCounting::SmartPtr<Impl> impl_;
+    const std::shared_ptr<Impl> impl_;
   };
 
   using UserBindServerGrpc_var = ReferenceCounting::SmartPtr<UserBindServerGrpc>;

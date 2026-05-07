@@ -15,6 +15,7 @@ namespace AdServer::UserInfoSvcs
   // UserBindOperationLoader
   class UserBindOperationLoader:
     public virtual ReferenceCounting::AtomicImpl,
+    public virtual Generics::RefCountableActiveObject,
     public virtual Generics::CompositeActiveObject
   {
   public:

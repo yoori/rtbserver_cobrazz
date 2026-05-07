@@ -15,8 +15,7 @@
 namespace AdServer::Commons::HttpServer
 {
   class HttpServer final:
-    public Generics::SimpleActiveObject,
-    public virtual ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {
   public:
     struct Request

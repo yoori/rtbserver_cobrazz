@@ -43,7 +43,7 @@ namespace AdServer
       FileReceiverFacade::FileReceiversInitializer file_receivers;
       LogProcessing::FileReceiverInterrupter_var interruptor =
         new LogProcessing::FileReceiverInterrupter();
-      add_child_object(interruptor);
+      add_child_object(interruptor.in());
 
       for (auto it = log_read_traits.begin(); it != log_read_traits.end(); ++it)
       {
@@ -67,14 +67,14 @@ namespace AdServer
       }
 
       file_receiver_facade_ = new FileReceiverFacade(file_receivers);
-      add_child_object(file_receiver_facade_);
+      add_child_object(file_receiver_facade_.in());
 
       Commons::DelegateActiveObject_var process_files_worker =
         Commons::make_delegate_active_object(
           std::bind(&ExpressionMatcherLogLoader::process_file_, this),
            callback,
            threads_number);
-      add_child_object(process_files_worker);
+      add_child_object(process_files_worker.in());
     }
 
     void

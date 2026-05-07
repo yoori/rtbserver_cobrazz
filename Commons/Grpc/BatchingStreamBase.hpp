@@ -8,11 +8,11 @@
 #include <grpcpp/generic/generic_stub.h>
 
 #include <Generics/ActiveObject.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Commons/Grpc/Batch.grpc.pb.h>
 #include <Commons/Grpc/BatchingQueue.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
+#include <Commons/Grpc/GrpcExecutor.hpp>
 
 namespace AdServer::Grpc
 {
@@ -21,8 +21,7 @@ namespace AdServer::Grpc
 
   class BatchingStreamBase
     : public Generics::SimpleActiveObject,
-      public virtual AdServer::Grpc::Client,
-      public virtual ReferenceCounting::AtomicImpl
+      public virtual AdServer::Grpc::Client
   {
   public:
     using BatchResponseItem = adserver::grpc::BatchResponseItem;
@@ -36,8 +35,8 @@ namespace AdServer::Grpc
 
     explicit BatchingStreamBase(
       const std::string& endpoint,
-      AdServer::Grpc::GrpcExecutor* grpc_executor,
-      AdServer::Grpc::BatchingQueue* batching_queue,
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
       unsigned int queue_index,
       AdServer::Grpc::Client* stats_owner,
       ReadyCallback ready_callback,

@@ -22,8 +22,7 @@ namespace Commons
   //
   template<typename SmartPtrType, typename ControlSmartPtrType = SmartPtrType>
   class AccessActiveObject:
-    public Generics::SimpleActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableSimpleActiveObject
   {
   protected:
     struct ObjectHolder: public ReferenceCounting::AtomicImpl

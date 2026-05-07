@@ -13,7 +13,8 @@ namespace FrontendCommons
 {
   class UserInfoClient:
       public virtual ReferenceCounting::AtomicImpl,
-      public Generics::CompositeActiveObject
+      public Generics::CompositeActiveObject,
+      public virtual Generics::RefCountableActiveObject
   {
   public:
     typedef xsd::AdServer::Configuration::

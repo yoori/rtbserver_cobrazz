@@ -14,8 +14,7 @@ namespace AdServer
 namespace LogProcessing
 {
   class FeedRouteMover:
-    public ReferenceCounting::AtomicImpl,
-    public Generics::SimpleActiveObject,
+    public Generics::RefCountableSimpleActiveObject,
     protected InterruptCallback
   {
   public:

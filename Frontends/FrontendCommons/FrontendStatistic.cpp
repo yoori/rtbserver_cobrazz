@@ -110,11 +110,11 @@ namespace AdServer
       {
         planner = new Generics::Planner(callback);
       }
-      add_child_object(planner.in());
+      add_child_object(planner);
 
       Generics::TaskRunner_var task_runner(
         new Generics::TaskRunner(callback, 1));
-      add_child_object(task_runner.in());
+      add_child_object(task_runner);
 
       DumpStatsTask_var msg = new DumpStatsTask(stats_dumper_,
         logger, planner, task_runner, dump_period, *this);

@@ -79,6 +79,7 @@ namespace AdServer
     class RequestInfoManagerImpl:
       public virtual CORBACommons::ReferenceCounting::
         ServantImpl<POA_AdServer::RequestInfoSvcs::RequestInfoManager>,
+      public virtual Generics::RefCountableActiveObject,
       public virtual Generics::CompositeActiveObject
     {
     public:

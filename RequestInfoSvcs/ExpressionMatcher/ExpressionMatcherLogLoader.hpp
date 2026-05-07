@@ -29,8 +29,7 @@ namespace AdServer
     };
 
     class ExpressionMatcherLogLoader :
-      public Generics::CompositeActiveObject,
-      public virtual ReferenceCounting::AtomicImpl
+      public Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

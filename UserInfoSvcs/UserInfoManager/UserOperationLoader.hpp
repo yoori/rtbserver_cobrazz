@@ -38,7 +38,7 @@ namespace AdServer
         const char* unprocessed_folder,
         const char* file_prefix,
         const ChunkIdSet& chunk_ids,
-        Generics::ActiveObject* interrupter)
+        Generics::RefCountableActiveObject* interrupter)
         noexcept;
 
       virtual void
@@ -90,7 +90,7 @@ namespace AdServer
         const char* unprocessed_folder,
         const char* file_prefix,
         const ChunkIdSet& chunk_ids,
-        Generics::ActiveObject* interrupter)
+        Generics::RefCountableActiveObject* interrupter)
         noexcept;
 
     protected:
@@ -128,7 +128,7 @@ namespace AdServer
         const char* unprocessed_folder,
         const char* file_prefix,
         const ChunkIdSet& chunk_ids,
-        Generics::ActiveObject* interrupter)
+        Generics::RefCountableActiveObject* interrupter)
         noexcept;
 
     protected:
@@ -176,8 +176,7 @@ namespace AdServer
 
     /* InternalUserOperationLoader class */
     class InternalUserOperationLoader:
-      public virtual ReferenceCounting::AtomicImpl,
-      public virtual Generics::CompositeActiveObject
+      public virtual Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -209,8 +208,7 @@ namespace AdServer
 
     /* ExternalUserOperationLoader class */
     class ExternalUserOperationLoader:
-      public virtual ReferenceCounting::AtomicImpl,
-      public virtual Generics::CompositeActiveObject
+      public virtual Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

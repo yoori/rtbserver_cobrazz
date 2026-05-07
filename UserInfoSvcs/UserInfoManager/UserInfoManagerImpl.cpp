@@ -25,8 +25,7 @@ namespace
   const unsigned long CHUNKS_RELOAD_PERIOD = 30; // 30 sec
 
   class CompositeActiveObjectImpl:
-    public Generics::CompositeActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {};
 
   struct SimpleChannelProperties
@@ -212,10 +211,10 @@ namespace UserInfoSvcs
 
     try
     {
-      add_child_object(task_runner_);
-      add_child_object(scheduler_);
-      add_child_object(user_operation_processor_);
-      add_child_object(user_info_container_);
+      add_child_object(task_runner_.in());
+      add_child_object(scheduler_.in());
+      add_child_object(user_operation_processor_.in());
+      add_child_object(user_info_container_.in());
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
@@ -2039,7 +2038,7 @@ namespace UserInfoSvcs
           user_info_container);
 
         user_info_container_dependent_active_object_->add_child_object(
-          user_operation_saver_);
+          user_operation_saver_.in());
 
         user_operation_processor = user_operation_saver_;
 
@@ -2607,7 +2606,7 @@ namespace UserInfoSvcs
                   user_info_manager_config_.UserOperationsLoad()->check_period()),
                 user_info_manager_config_.UserOperationsLoad()->threads());
 
-              add_child_object(user_operation_loader_);
+              add_child_object(user_operation_loader_.in());
             }
 
             // init external user operations loading
@@ -2629,7 +2628,7 @@ namespace UserInfoSvcs
                   user_info_manager_config_.ExternalUserOperationsLoad()->check_period()),
                   user_info_manager_config_.ExternalUserOperationsLoad()->threads());
 
-              add_child_object(external_user_operation_loader_);
+              add_child_object(external_user_operation_loader_.in());
             }
           }
           break;

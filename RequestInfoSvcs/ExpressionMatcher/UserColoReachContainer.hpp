@@ -19,8 +19,7 @@ namespace AdServer
   namespace RequestInfoSvcs
   {
     class UserColoReachContainer:
-      public Generics::CompositeActiveObject,
-      public ReferenceCounting::AtomicImpl
+      public Generics::RefCountableCompositeActiveObject
     {
     public:
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

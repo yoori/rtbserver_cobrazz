@@ -21,8 +21,7 @@ namespace AdServer
 namespace UserInfoSvcs
 {
   class UserOperationGeneratorImpl :
-    public Generics::CompositeActiveObject,
-    public ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);

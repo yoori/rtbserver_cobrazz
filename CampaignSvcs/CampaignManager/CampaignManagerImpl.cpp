@@ -317,16 +317,16 @@ namespace AdServer
 
       try
       {
-        add_child_object(task_runner_);
-        add_child_object(update_task_runner_);
-        add_child_object(scheduler_);
+        add_child_object(task_runner_.in());
+        add_child_object(update_task_runner_.in());
+        add_child_object(scheduler_.in());
 
         if (campaign_manager_config_.KafkaAdsSpacesStorage().present())
         {
           kafka_producer_ = new Commons::Kafka::Producer(
             logger, callback,
             campaign_manager_config_.KafkaAdsSpacesStorage().get());
-          add_child_object(kafka_producer_);
+          add_child_object(kafka_producer_.in());
         }
 
         if (campaign_manager_config_.KafkaMatchStorage().present())
@@ -334,7 +334,7 @@ namespace AdServer
           kafka_match_producer_ = new Commons::Kafka::Producer(
             logger, callback,
             campaign_manager_config_.KafkaMatchStorage().get());
-          add_child_object(kafka_match_producer_);
+          add_child_object(kafka_match_producer_.in());
         }
       }
       catch(const Generics::CompositeActiveObject::Exception& ex)
@@ -415,7 +415,7 @@ namespace AdServer
             *campaign_manager_config_.Creative().drop_https_safe()
           );
 
-        add_child_object(campaign_config_source_);
+        add_child_object(campaign_config_source_.in());
       }
       catch(const eh::Exception& e)
       {
@@ -449,7 +449,7 @@ namespace AdServer
             confirm_billing_state_container_ = billing_state_container;
           }
 
-          add_child_object(billing_state_container);
+          add_child_object(billing_state_container.in());
         }
         catch(const eh::Exception& e)
         {

@@ -11,7 +11,7 @@ namespace RequestInfoSvcs
 {
   class RequestOperationSaver:
     public virtual RequestOperationProcessor,
-    public virtual Generics::ActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public virtual ReferenceCounting::AtomicImpl,
     protected ProfilingCommons::MessageSaver
   {

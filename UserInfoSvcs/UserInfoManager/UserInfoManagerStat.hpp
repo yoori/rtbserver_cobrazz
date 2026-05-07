@@ -15,6 +15,7 @@ namespace AdServer
     class UserInfoManagerStatsImpl:
       public virtual CORBACommons::ReferenceCounting::ServantImpl<
         POA_CORBACommons::ProcessStatsControl>,
+      public virtual Generics::RefCountableActiveObject,
       public virtual Generics::CompositeActiveObject
     {
     public:

@@ -34,6 +34,7 @@ namespace AdServer
     class ChannelSearchServiceImpl:
       virtual public CORBACommons::ReferenceCounting::ServantImpl<
         POA_AdServer::ChannelSearchSvcs::ChannelSearch>,
+      virtual public Generics::RefCountableActiveObject,
       virtual public Generics::CompositeActiveObject
     {
     public:
@@ -280,4 +281,3 @@ namespace ChannelSearchSvcs
 }
 
 #endif /* _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_IMPL_HPP_ */
-

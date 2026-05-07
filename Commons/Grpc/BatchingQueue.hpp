@@ -15,7 +15,6 @@
 #include <grpcpp/support/status.h>
 
 #include <Generics/ActiveObject.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Commons/Grpc/Batch.grpc.pb.h>
 #include <Commons/Grpc/GrpcClient.hpp>
@@ -33,8 +32,7 @@ namespace AdServer::Grpc
   };
 
   class BatchingQueue final
-    : public Generics::SimpleActiveObject,
-      public virtual ReferenceCounting::AtomicImpl
+    : public Generics::SimpleActiveObject
   {
   public:
     using PendingRequest = BatchingPendingRequest;

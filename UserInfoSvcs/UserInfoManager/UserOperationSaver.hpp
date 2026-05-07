@@ -14,8 +14,7 @@ namespace UserInfoSvcs
 {
   class UserOperationSaver:
     public UserOperationProcessor,
-    public Generics::CompositeActiveObject,
-    public virtual ReferenceCounting::AtomicImpl
+    public Generics::RefCountableCompositeActiveObject
   {
   public:
     enum

@@ -55,6 +55,7 @@ namespace ProfilingCommons
   template<typename KeyType, typename KeySerializerType>
   class LevelProfileMap:
     public virtual ProfileMap<KeyType>,
+    public virtual Generics::RefCountableActiveObject,
     public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject
   {

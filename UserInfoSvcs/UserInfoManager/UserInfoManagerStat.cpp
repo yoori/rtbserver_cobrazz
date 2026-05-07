@@ -97,10 +97,10 @@ namespace UserInfoSvcs
       try
       {
         task_runner_ = new Generics::TaskRunner(callback_, 1);
-        add_child_object(task_runner_);
+        add_child_object(task_runner_.in());
 
         scheduler_ = new Generics::Planner(callback_);
-        add_child_object(scheduler_);
+        add_child_object(scheduler_.in());
 
         stats_dumper_.reset(new AdServer::Controlling::StatsDumper(dumper_ref));
 

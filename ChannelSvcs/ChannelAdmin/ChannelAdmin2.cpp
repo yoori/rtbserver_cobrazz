@@ -1,5 +1,6 @@
 #include <condition_variable>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -120,7 +121,7 @@ main(int argc, char** argv)
     if (commands.empty() || !endpoints.installed())
     {
       std::cerr <<
-        "Usage: ChannelAdmin2 --endpoints host:port[,host:port] "
+        "Usage: ChannelAdmin2 --endpoints controller-host:port[,controller-host:port] "
         "match|ccg_traits [--url URL] [--pwords WORDS] [--swords WORDS] "
         "[--uid UID] [--status S] [--ids 1,2]\n";
       return 1;
@@ -128,8 +129,8 @@ main(int argc, char** argv)
 
     Logging::Logger_var logger =
       new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
-    AdServer::Grpc::GrpcExecutor_var grpc_executor =
-      new AdServer::Grpc::GrpcExecutor(1);
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
+      std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
     grpc_executor->activate_object();
 
     ChannelDistributedGrpcClient_var client =

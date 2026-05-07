@@ -80,8 +80,8 @@ namespace CampaignSvcs
 
     try
     {
-      add_child_object(task_runner_);
-      add_child_object(scheduler_);
+      add_child_object(task_runner_.in());
+      add_child_object(scheduler_.in());
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {

@@ -282,7 +282,7 @@ namespace LogProcessing
 
               route_processors_.push_back(route_processor);
 
-              add_child_object(route_processor);
+              add_child_object(route_processor.in());
 
               TaskMessage_var task(new ProcessRouteTask(route_processors_.back(),
                 check_period, 0, this));
@@ -293,7 +293,7 @@ namespace LogProcessing
 
         if(pool_task_runner)
         {
-          add_child_object(pool_task_runner);
+          add_child_object(pool_task_runner.in());
         }
       }
     }
@@ -356,7 +356,7 @@ namespace LogProcessing
 
               route_processors_.push_back(route_processor);
 
-              add_child_object(route_processor);
+              add_child_object(route_processor.in());
 
               TaskMessage_var task(new ProcessRouteTask(route_processors_.back(),
                 check_period, 0, this));
@@ -379,8 +379,8 @@ namespace LogProcessing
 
     try
     {
-      add_child_object(task_runner_);
-      add_child_object(scheduler_);
+      add_child_object(task_runner_.in());
+      add_child_object(scheduler_.in());
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {

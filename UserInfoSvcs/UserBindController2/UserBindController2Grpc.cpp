@@ -82,7 +82,7 @@ namespace AdServer::UserInfoSvcs
     std::string_view bind_address,
     unsigned int bind_port)
     : bind_address_(std::string(bind_address) + ":" + std::to_string(bind_port)),
-      impl_(new Impl(
+      impl_(std::make_shared<Impl>(
         logger,
         user_bind_controller2_grpc_aspect,
         bind_address_,

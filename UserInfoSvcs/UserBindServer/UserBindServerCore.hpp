@@ -26,6 +26,7 @@ namespace AdServer::UserInfoSvcs
 {
   class UserBindServerCore:
     public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:

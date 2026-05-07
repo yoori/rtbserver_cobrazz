@@ -16,8 +16,6 @@
 #include <grpcpp/support/async_stream.h>
 #include <google/protobuf/arena.h>
 
-#include <ReferenceCounting/SmartPtr.hpp>
-
 #include <Commons/Grpc/BatchingQueue.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 
@@ -53,8 +51,8 @@ namespace AdServer::Grpc
     Impl(
       BatchingStreamBase& owner,
       const std::string& endpoint,
-      AdServer::Grpc::GrpcExecutor* grpc_executor,
-      AdServer::Grpc::BatchingQueue* batching_queue,
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+      std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
       unsigned int queue_index,
       ReadyCallback ready_callback,
       ClosedCallback closed_callback,
@@ -129,7 +127,7 @@ namespace AdServer::Grpc
     BatchingStreamBase& owner_;
     const AdServer::Grpc::BatchingOptions options_;
     const std::string batch_stream_full_method_;
-    ReferenceCounting::SmartPtr<AdServer::Grpc::BatchingQueue> batching_queue_;
+    std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue_;
     ReadyCallback ready_callback_;
     ClosedCallback closed_callback_;
 
@@ -155,7 +153,7 @@ namespace AdServer::Grpc
     grpc::Status finish_status_;
     google::protobuf::Arena write_arena_;
 
-    AdServer::Grpc::GrpcExecutor_var grpc_executor_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     const unsigned int queue_index_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor::CQ> grpc_queue_;
   };
@@ -294,8 +292,8 @@ namespace AdServer::Grpc
   BatchingStreamBase::Impl::Impl(
     BatchingStreamBase& owner,
     const std::string& endpoint,
-    AdServer::Grpc::GrpcExecutor* grpc_executor,
-    AdServer::Grpc::BatchingQueue* batching_queue,
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
     unsigned int queue_index,
     ReadyCallback ready_callback,
     ClosedCallback closed_callback,
@@ -306,10 +304,10 @@ namespace AdServer::Grpc
         options_.batch_stream_full_method.empty() ?
           default_batch_stream_full_method :
           options_.batch_stream_full_method),
-      batching_queue_(ReferenceCounting::add_ref(batching_queue)),
+      batching_queue_(std::move(batching_queue)),
       ready_callback_(std::move(ready_callback)),
       closed_callback_(std::move(closed_callback)),
-      grpc_executor_(ReferenceCounting::add_ref(grpc_executor)),
+      grpc_executor_(std::move(grpc_executor)),
       queue_index_(queue_index)
   {
     if (!grpc_executor_)
@@ -344,8 +342,8 @@ namespace AdServer::Grpc
 
   BatchingStreamBase::BatchingStreamBase(
     const std::string& endpoint,
-    AdServer::Grpc::GrpcExecutor* grpc_executor,
-    AdServer::Grpc::BatchingQueue* batching_queue,
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
+    std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
     unsigned int queue_index,
     AdServer::Grpc::Client* stats_owner,
     ReadyCallback ready_callback,
@@ -356,8 +354,8 @@ namespace AdServer::Grpc
     impl_ = std::make_shared<Impl>(
       *this,
       endpoint,
-      grpc_executor,
-      batching_queue,
+      std::move(grpc_executor),
+      std::move(batching_queue),
       queue_index,
       std::move(ready_callback),
       std::move(closed_callback),

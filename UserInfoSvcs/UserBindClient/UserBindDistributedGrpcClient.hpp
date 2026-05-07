@@ -17,6 +17,7 @@ namespace AdServer::UserInfoSvcs
   class UserBindDistributedGrpcClient:
     public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
+    public virtual Generics::RefCountableActiveObject,
     public UserBindServerGrpcAsyncClient
   {
   public:
@@ -27,7 +28,7 @@ namespace AdServer::UserInfoSvcs
     UserBindDistributedGrpcClient(
       const UserBindControllerRefs& user_bind_controller_refs,
       AdServer::Grpc::BatchingOptions batching_options,
-      AdServer::Grpc::GrpcExecutor* grpc_executor,
+      std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       Logging::Logger* logger);
 
     ~UserBindDistributedGrpcClient() noexcept override = default;

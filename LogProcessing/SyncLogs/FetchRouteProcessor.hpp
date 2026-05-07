@@ -19,8 +19,7 @@ namespace AdServer
     /** */
     class FetchRouteProcessor:
       public RouteProcessor,
-      public Generics::SimpleActiveObject,
-      public ReferenceCounting::AtomicImpl,
+      public Generics::RefCountableSimpleActiveObject,
       protected InterruptCallback
     {
     public:

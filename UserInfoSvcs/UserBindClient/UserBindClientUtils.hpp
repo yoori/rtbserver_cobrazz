@@ -17,7 +17,7 @@ namespace AdServer::UserInfoSvcs
 {
   struct DistributedUserBindClientObjects
   {
-    AdServer::Grpc::GrpcExecutor_var grpc_executor;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
     UserBindDistributedGrpcClient_var client;
   };
 
@@ -119,7 +119,7 @@ namespace AdServer::UserInfoSvcs
     if(!user_bind_controller_refs.empty())
     {
       result.grpc_executor =
-        new AdServer::Grpc::GrpcExecutor(grpc_executor_threads);
+        std::make_shared<AdServer::Grpc::GrpcExecutor>(grpc_executor_threads);
       result.client = new UserBindDistributedGrpcClient(
         user_bind_controller_refs,
         batching_options,

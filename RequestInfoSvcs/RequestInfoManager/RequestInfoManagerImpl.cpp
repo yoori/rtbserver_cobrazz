@@ -112,8 +112,7 @@ namespace RequestInfoSvcs{
   /** UserFraudDeactivator */
   struct UserFraudDeactivator:
     public virtual UserFraudProtectionContainer::Callback,
-    public virtual ReferenceCounting::AtomicImpl,
-    public virtual Generics::CompositeActiveObject
+    public virtual Generics::RefCountableCompositeActiveObject
   {
   public:
     DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
@@ -189,8 +188,8 @@ namespace RequestInfoSvcs{
 
     try
     {
-      add_child_object(task_runner_);
-      add_child_object(scheduler_);
+      add_child_object(task_runner_.in());
+      add_child_object(scheduler_.in());
     }
     catch(const Generics::CompositeActiveObject::Exception& ex)
     {
@@ -223,7 +222,7 @@ namespace RequestInfoSvcs{
 
       user_fraud_deactivator_ = new UserFraudDeactivator(
         logger_, controller_groups);
-      add_child_object(user_fraud_deactivator_);
+      add_child_object(user_fraud_deactivator_.in());
     }
     catch(const eh::Exception& ex)
     {
@@ -267,7 +266,7 @@ namespace RequestInfoSvcs{
           req_op_config.chunks_count(),
           req_op_traits.period);
 
-        add_child_object(request_operation_saver_);
+        add_child_object(request_operation_saver_.in());
 
         request_operation_distributor_ = new RequestOperationDistributor(
           request_info_manager_config_.distrib_count(),
@@ -312,7 +311,7 @@ namespace RequestInfoSvcs{
         consider_click_traits,
         consider_impression_traits,
         consider_request_traits);
-      add_child_object(expression_matcher_notifier_);
+      add_child_object(expression_matcher_notifier_.in());
 
       processing_distributor_->add_child_processor(
         expression_matcher_notifier_);
@@ -769,7 +768,7 @@ namespace RequestInfoSvcs{
 
         tag_request_processor->add_child_processor(tag_request_profiler);
 
-        add_child_object(tag_request_profiler);
+        add_child_object(tag_request_profiler.in());
       }
 
       CompositeAdvActionProcessor_var adv_action_processor =
@@ -827,7 +826,7 @@ namespace RequestInfoSvcs{
     try
     {
       // activate object because main active object already active
-      add_child_object(request_log_loader_);
+      add_child_object(request_log_loader_.in());
     }
     catch(const eh::Exception& ex)
     {
@@ -1266,7 +1265,7 @@ namespace RequestInfoSvcs{
         Generics::Time(bs_config.send_delayed_period()) // send_delayed_period
         );
 
-      add_child_object(billing_processor);
+      add_child_object(billing_processor.in());
 
       processing_distributor_->add_child_processor(billing_processor);
 
@@ -1681,7 +1680,7 @@ namespace RequestInfoSvcs{
           controller_groups,
           corba_client_adapter_.in());
       user_info_matcher_ = ReferenceCounting::add_ref(distributor);
-      add_child_object(distributor);
+      add_child_object(distributor.in());
     }
     catch(const eh::Exception& ex)
     {

@@ -27,8 +27,7 @@ namespace UserInfoSvcs
     const char USER_OP_OUT_DIR[] = "UserOp";
 
     class Interrupter :
-      public ReferenceCounting::AtomicImpl,
-      public Generics::SimpleActiveObject
+      public Generics::RefCountableSimpleActiveObject
     {
     private:
       virtual
@@ -65,9 +64,9 @@ namespace UserInfoSvcs
       nullptr, // file controller
       null_user_operation_processor);
 
-    add_child_object(user_operation_saver_);
-    add_child_object(task_runner_);
-    add_child_object(scheduler_);
+    add_child_object(user_operation_saver_.in());
+    add_child_object(task_runner_.in());
+    add_child_object(scheduler_.in());
 
     flush_user_operation_saver_();
 
@@ -77,7 +76,7 @@ namespace UserInfoSvcs
         nullptr));
 
     interruper_ = new Interrupter();
-    add_child_object(interruper_);
+    add_child_object(interruper_.in());
   }
 
   void

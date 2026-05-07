@@ -302,7 +302,7 @@ namespace AdServer
         task_runner_ = new Generics::TaskRunner(callback(), 2);
         task_scheduler_ = new FrontendCommons::TaskScheduler(
           callback(), task_runner_);
-        add_child_object(task_scheduler_);
+        add_child_object(task_scheduler_.in());
 
         CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
         Config::CorbaConfigReader::read_multi_corba_ref(
@@ -351,7 +351,7 @@ namespace AdServer
             Generics::Time(common_config_->StatsDumper().get().period()),
             callback());
 
-          add_child_object(stats_);
+          add_child_object(stats_.in());
         }
 
         std::string user_agent_filter_path;

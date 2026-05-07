@@ -11,8 +11,6 @@
 #include <grpcpp/completion_queue.h>
 
 #include <Generics/ActiveObject.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
-#include <ReferenceCounting/SmartPtr.hpp>
 
 namespace AdServer::Grpc
 {
@@ -23,8 +21,7 @@ namespace AdServer::Grpc
   };
 
   class GrpcExecutor final
-    : public Generics::SimpleActiveObject,
-      public virtual ReferenceCounting::AtomicImpl
+    : public Generics::SimpleActiveObject
   {
   public:
     class CQ final
@@ -70,8 +67,6 @@ namespace AdServer::Grpc
 
     std::vector<CQHolder> holders_;
   };
-
-  using GrpcExecutor_var = ReferenceCounting::SmartPtr<GrpcExecutor>;
 }
 
 template<typename Functor>
