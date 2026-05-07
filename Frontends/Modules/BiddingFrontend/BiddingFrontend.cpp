@@ -1,7 +1,7 @@
 #include <sstream>
 #include <algorithm>
-#include <future>
 #include <set>
+#include <utility>
 #include <zlib.h>
 #include <unistd.h>
 
@@ -25,6 +25,7 @@
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/BidStatisticsPrometheus.hpp>
@@ -95,24 +96,12 @@ namespace Bidding
     Response
     wait_grpc_call_(Start&& start)
     {
-      std::promise<std::pair<grpc::Status, Response>> promise;
-      auto future = promise.get_future();
-
-      start([&](
-        const grpc::Status& call_status,
-        const Response& call_response)
-      {
-        promise.set_value(std::make_pair(call_status, call_response));
-      });
-
-      auto result = future.get();
-
-      if(!result.first.ok())
-      {
-        throw_user_bind_exception_(result.first);
-      }
-
-      return std::move(result.second);
+      return AdServer::Grpc::sync_call<Response>(
+        std::forward<Start>(start),
+        [](const grpc::Status& status)
+        {
+          throw_user_bind_exception_(status);
+        });
     }
 
     AdServer::CampaignSvcs::CampaignManager::ChannelTriggerMatchInfo
@@ -1920,6 +1909,11 @@ namespace Bidding
       request_params.common_info,
       request_info);
 
+    request_task->debug_sink_.print_request_debug_info(
+      request_info,
+      request_params,
+      user_id);
+
     if(check_interrupt_(fn, Stage::UserResolving, request_task))
     {
       interrupted = true;
@@ -1936,6 +1930,12 @@ namespace Bidding
         user_id,
         request_task->hostname_,
         keywords.c_str());
+
+      if(trigger_match_result)
+      {
+        request_task->debug_sink_.print_channel_matching_debug_info(
+          *trigger_match_result);
+      }
 
       if(check_interrupt_(fn, Stage::TriggerMatching, request_task))
       {
@@ -1957,6 +1957,12 @@ namespace Bidding
         user_id,
         request_info.current_time,
         request_task->hostname_);
+
+      if(history_match_result)
+      {
+        request_task->debug_sink_.print_history_matching_debug_info(
+          *history_match_result);
+      }
 
       if(check_interrupt_(fn, Stage::HistoryMatching, request_task))
       {

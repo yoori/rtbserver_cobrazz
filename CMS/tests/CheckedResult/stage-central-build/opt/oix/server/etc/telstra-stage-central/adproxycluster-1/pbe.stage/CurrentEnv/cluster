@@ -1,5 +1,3 @@
-user_info_exchanger_port=10110
-export user_info_exchanger_port
 
 campaign_server_port=10106
 export campaign_server_port

@@ -30,9 +30,6 @@ UserBindServerApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   std::unique_lock<std::mutex> guard(shutdown_lock_);
 
-  deactivate_object();
-  wait_object();
-
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
 }
 
@@ -198,6 +195,9 @@ UserBindServerApp_::main(int& argc, char** argv) noexcept
 
     // Running orb loop
     corba_server_adapter->run();
+
+    deactivate_object();
+    wait_object();
 
     wait();
 

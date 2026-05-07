@@ -9,6 +9,32 @@ target_link_libraries(UserInfoManagerIDL
   FreqCapInfoIDL
 )
 
+set(USER_INFO_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/UserInfoSvcs/UserInfoManager)
+set(USER_INFO_MANAGER_GRPC_PROTO UserInfoManagerGrpc.proto)
+
+add_grpc_sources(
+  UserInfoManagerGrpc
+  ${USER_INFO_MANAGER_GRPC_PROTO}
+  ${USER_INFO_MANAGER_GRPC_PROTO_DIR}
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(UserInfoManagerGrpc protobuf::libprotobuf GrpcBatch)
+
+add_library(UserInfoManagerGrpcClient STATIC)
+
+add_adserver_grpc_client_sources(
+  UserInfoManagerGrpcClient
+  ${CMAKE_SOURCE_DIR}/UserInfoSvcs/UserInfoManager/UserInfoManagerGrpc.proto
+  ${CMAKE_CURRENT_BINARY_DIR}
+  AdServer::UserInfoSvcs
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(UserInfoManagerGrpcClient
+  PUBLIC
+    GrpcBatch
+    UserInfoManagerGrpc
+    gRPC::grpc++)
+
 add_library(UserInfoContainer SHARED
   UserInfoContainer.cpp
   UserOperationLoader.cpp
@@ -43,6 +69,7 @@ add_executable(UserInfoManager
 UserInfoManagerMain.cpp
   FileRWStats.cpp
   UserInfoManagerImpl.cpp
+  UserInfoManagerGrpc.cpp
   UserInfoManagerControlImpl.cpp
   UserInfoContainer.cpp
   UserInfoManagerLogger.cpp
@@ -62,6 +89,7 @@ target_link_libraries(UserInfoManager
  UserInfoManagerConfigXSD
  UserInfoManagerIDL
  UserInfoManagerControlIDL
+ UserInfoManagerGrpc
  CampaignServerIDL
  LogCommons
 
@@ -70,5 +98,19 @@ target_link_libraries(UserInfoManager
  UserOperationProfilesPST
 
 )
+
+target_include_directories(UserInfoManager PRIVATE
+  ${Protobuf_INCLUDE_DIRS}
+)
+
+if(TARGET Protobuf::libprotobuf)
+  target_link_libraries(UserInfoManager Protobuf::libprotobuf)
+elseif(TARGET protobuf::libprotobuf)
+  target_link_libraries(UserInfoManager protobuf::libprotobuf)
+else()
+  target_link_libraries(UserInfoManager ${Protobuf_LIBRARIES})
+endif()
+
+target_link_libraries(UserInfoManager gRPC::grpc++)
 
 #install(TARGETS UserInfoManager UserInfoContainer UserInfoManagerIDL UserInfoManagerControlIDL  DESTINATION ${INSTALL_DIR})

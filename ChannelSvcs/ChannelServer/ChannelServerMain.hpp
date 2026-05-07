@@ -10,6 +10,7 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ProcessControl.hpp>
 #include <CORBACommons/Stats_s.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>
@@ -65,6 +66,7 @@ private:
 private:
   void load_config_(const char* name) /*throw(Exception)*/;
   void init_corba_() /*throw(Exception, CORBA::SystemException)*/;
+  void stop_() noexcept;
 
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
@@ -73,6 +75,7 @@ private:
   ConfigPtr configuration_;
   AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;
   AdServer::ChannelSvcs::ChannelServerGrpc_var grpc_adapter_;
+  AdServer::Commons::HttpServer::HttpServer_var http_server_;
 
   typedef Sync::PosixMutex ShutdownMutex;
   typedef Sync::PosixGuard ShutdownGuard;

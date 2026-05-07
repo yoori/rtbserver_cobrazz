@@ -217,9 +217,11 @@ namespace AdServer::ChannelSvcs
         ref = std::move(*ref),
         callback = std::move(callback),
         pool_timeout = pool_timeout_
-      ](
+      ]
+      (
         const grpc::Status& status,
-        const adserver::channel_svcs::channel_server::MatchResponse& response)
+        const adserver::channel_svcs::channel_server::MatchResponse& response
+      )
       mutable
       {
         if (!status.ok())

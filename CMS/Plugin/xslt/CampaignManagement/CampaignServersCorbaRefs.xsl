@@ -43,10 +43,14 @@
          </xsl:call-template>
       </xsl:variable>
 
-      <xsl:for-each select="exsl:node-set($hosts)/host">
-        <xsl:variable name="campaign-server-port" select="$campaign-server-config/cfg:networkParams/@port |
-          $xsd-campaign-server-network-params-type/xsd:attribute[@name='port']/@default"/>
+      <xsl:variable name="campaign-server-port">
+        <xsl:value-of select="$campaign-server-config/cfg:networkParams/@port"/>
+        <xsl:if test="count($campaign-server-config/cfg:networkParams/@port) = 0">
+          <xsl:value-of select="$def-campaign-server-port"/>
+        </xsl:if>
+      </xsl:variable>
 
+      <xsl:for-each select="exsl:node-set($hosts)/host">
         <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':',
           $campaign-server-port, $current-campaign-server-obj)}"/>
       </xsl:for-each>
@@ -82,10 +86,14 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:for-each select="exsl:node-set($hosts)/host">
-      <xsl:variable name="billing-server-port" select="$billing-server-config/cfg:networkParams/@port |
-        $xsd-billing-server-network-params-type/xsd:attribute[@name='port']/@default"/>
+    <xsl:variable name="billing-server-port">
+      <xsl:value-of select="$billing-server-config/cfg:networkParams/@port"/>
+      <xsl:if test="count($billing-server-config/cfg:networkParams/@port) = 0">
+        <xsl:value-of select="$def-billing-server-port"/>
+      </xsl:if>
+    </xsl:variable>
 
+    <xsl:for-each select="exsl:node-set($hosts)/host">
       <cfg:Ref ref="{concat('corbaloc:iiop:', ., ':',
         $billing-server-port, '/', $current-billing-server-obj)}"/>
     </xsl:for-each>

@@ -1,7 +1,7 @@
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
 
-#include <future>
+#include <utility>
 #include <Generics/Uuid.hpp>
 #include <Generics/TaskPool.hpp>
 
@@ -16,6 +16,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <Commons/Base32.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <Commons/JsonFormatter.hpp>
 
@@ -99,24 +100,12 @@ namespace
   Response
   wait_grpc_call_(Start&& start)
   {
-    std::promise<std::pair<grpc::Status, Response>> promise;
-    auto future = promise.get_future();
-
-    start([&](
-      const grpc::Status& call_status,
-      const Response& call_response)
-    {
-      promise.set_value(std::make_pair(call_status, call_response));
-    });
-
-    auto result = future.get();
-
-    if (!result.first.ok())
-    {
-      throw_user_bind_exception_(result.first);
-    }
-
-    return std::move(result.second);
+    return AdServer::Grpc::sync_call<Response>(
+      std::forward<Start>(start),
+      [](const grpc::Status& status)
+      {
+        throw_user_bind_exception_(status);
+      });
   }
 
 

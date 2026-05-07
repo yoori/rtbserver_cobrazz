@@ -1,6 +1,5 @@
 #pragma once
 
-#include <future>
 #include <string>
 #include <utility>
 #include <vector>
@@ -9,6 +8,7 @@
 
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindDistributedGrpcClient.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
@@ -40,24 +40,12 @@ namespace AdServer::UserInfoSvcs
   Response
   wait_user_bind_grpc_call(Start&& start)
   {
-    std::promise<std::pair<grpc::Status, Response>> promise;
-    auto future = promise.get_future();
-
-    start([&](
-      const grpc::Status& call_status,
-      const Response& call_response)
-    {
-      promise.set_value(std::make_pair(call_status, call_response));
-    });
-
-    auto result = future.get();
-
-    if(!result.first.ok())
-    {
-      throw_user_bind_exception(result.first);
-    }
-
-    return std::move(result.second);
+    return AdServer::Grpc::sync_call<Response>(
+      std::forward<Start>(start),
+      [](const grpc::Status& status)
+      {
+        throw_user_bind_exception(status);
+      });
   }
 
   inline adserver::user_info_svcs::user_bind::GetUserIdResponse

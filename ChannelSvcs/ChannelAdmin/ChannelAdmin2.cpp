@@ -1,33 +1,49 @@
-#include <condition_variable>
 #include <iostream>
 #include <memory>
-#include <mutex>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <grpcpp/grpcpp.h>
 
 #include <Generics/AppUtils.hpp>
 #include <Generics/Uuid.hpp>
-#include <Logger/StreamLogger.hpp>
 #include <String/StringManip.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelDistributedGrpcClient.hpp>
+#include <ChannelControllerGrpc.grpc.pb.h>
+#include <ChannelServerGrpc.grpc-client.hpp>
 
 namespace
 {
   using namespace AdServer::ChannelSvcs;
   namespace Proto = adserver::channel_svcs::channel_server;
+  namespace Controller = adserver::channel_svcs::channel_controller;
 
-  struct CallResult
+  const std::chrono::seconds RPC_TIMEOUT(10);
+
+  bool
+  is_channel_controller(const std::string& reference)
   {
-    grpc::Status status;
-    Proto::MatchResponse match_response;
-    Proto::GetCcgTraitsResponse traits_response;
-    bool done = false;
-  };
+    auto stub = Controller::ChannelControllerGrpc::NewStub(
+      grpc::CreateChannel(reference, grpc::InsecureChannelCredentials()));
+
+    grpc::ClientContext context;
+    context.set_deadline(std::chrono::system_clock::now() + RPC_TIMEOUT);
+    Controller::GetSessionDescriptionRequest request;
+    Controller::GetSessionDescriptionResponse response;
+    const auto status = stub->get_session_description(
+      &context,
+      request,
+      &response);
+
+    return status.ok() && !response.channel_server_groups().empty();
+  }
 
   std::vector<std::string>
   split_endpoints(const std::string& endpoints)
@@ -42,19 +58,68 @@ namespace
     return result;
   }
 
-  void
-  wait_for_call(CallResult& result, std::mutex& lock, std::condition_variable& cv)
+  struct ClientHolder
   {
-    std::unique_lock<std::mutex> guard(lock);
-    cv.wait(guard, [&result] { return result.done; });
-    if (!result.status.ok())
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
+    ChannelServerGrpcAsyncClient_var client;
+    Generics::ActiveObject* active_object = nullptr;
+  };
+
+  ClientHolder
+  create_client(const std::vector<std::string>& references)
+  {
+    if (references.empty())
     {
-      Stream::Error ostr;
-      ostr << "grpc call failed: code=" <<
-        static_cast<int>(result.status.error_code()) <<
-        ", message=" << result.status.error_message();
-      throw std::runtime_error(ostr.str().str());
+      throw std::runtime_error("empty ChannelAdmin2 endpoint list");
     }
+
+    ClientHolder result;
+    result.grpc_executor = std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
+    result.grpc_executor->activate_object();
+
+    if (references.size() > 1 || is_channel_controller(references.front()))
+    {
+      ChannelDistributedGrpcClient_var client =
+        new ChannelDistributedGrpcClient(
+          references,
+          AdServer::Grpc::BatchingOptions(),
+          result.grpc_executor);
+      result.client = client;
+      result.active_object = client;
+    }
+    else
+    {
+      ReferenceCounting::SmartPtr<ChannelServerGrpcAsyncBatchingClient> client =
+        new ChannelServerGrpcAsyncBatchingClient(
+          references.front(),
+          result.grpc_executor,
+          AdServer::Grpc::BatchingOptions());
+      result.client = client;
+      result.active_object = client;
+    }
+
+    result.active_object->activate_object();
+    return result;
+  }
+
+  void
+  shutdown_client(ClientHolder& holder) noexcept
+  {
+    try
+    {
+      if (holder.active_object)
+      {
+        holder.active_object->deactivate_object();
+        holder.active_object->wait_object();
+      }
+      if (holder.grpc_executor)
+      {
+        holder.grpc_executor->deactivate_object();
+        holder.grpc_executor->wait_object();
+      }
+    }
+    catch (...)
+    {}
   }
 
   void
@@ -121,28 +186,21 @@ main(int argc, char** argv)
     if (commands.empty() || !endpoints.installed())
     {
       std::cerr <<
-        "Usage: ChannelAdmin2 --endpoints controller-host:port[,controller-host:port] "
+        "Usage: ChannelAdmin2 --endpoints controller-host:port|server-host:port "
         "match|ccg_traits [--url URL] [--pwords WORDS] [--swords WORDS] "
         "[--uid UID] [--status S] [--ids 1,2]\n";
       return 1;
     }
 
-    Logging::Logger_var logger =
-      new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
-      std::make_shared<AdServer::Grpc::GrpcExecutor>(1);
-    grpc_executor->activate_object();
-
-    ChannelDistributedGrpcClient_var client =
-      new ChannelDistributedGrpcClient(
-        split_endpoints(*endpoints),
-        AdServer::Grpc::BatchingOptions(),
-        grpc_executor);
-    client->activate_object();
-
-    std::mutex lock;
-    std::condition_variable cv;
-    CallResult result;
+    const auto endpoint_list = split_endpoints(*endpoints);
+    ClientHolder holder = create_client(endpoint_list);
+    auto holder_guard = std::unique_ptr<ClientHolder, void(*)(ClientHolder*)>(
+      &holder,
+      [](ClientHolder* value)
+      {
+        shutdown_client(*value);
+      });
+    auto* client = holder.client.in();
 
     if (commands.front() == "match")
     {
@@ -164,21 +222,14 @@ main(int argc, char** argv)
 
       Proto::MatchRequest request;
       AdServer::ChannelSvcs::GrpcAlgs::make_match_request(query, request);
-      client->match(
-        request,
-        [&](
-          const grpc::Status& status,
-          const Proto::MatchResponse& response)
-        {
-          std::lock_guard<std::mutex> guard(lock);
-          result.status = status;
-          result.match_response = response;
-          result.done = true;
-          cv.notify_one();
-        });
-      wait_for_call(result, lock, cv);
+      const auto response =
+        AdServer::Grpc::sync_call<Proto::MatchResponse>(
+          [&](auto callback)
+          {
+            client->match(request, std::move(callback));
+          });
       ChannelServerBase::MatchResult_var corba_result =
-        AdServer::ChannelSvcs::GrpcAlgs::make_match_result(result.match_response);
+        AdServer::ChannelSvcs::GrpcAlgs::make_match_result(response);
       print_match_result(*corba_result);
     }
     else if (commands.front() == "ccg_traits")
@@ -198,22 +249,14 @@ main(int argc, char** argv)
 
       Proto::GetCcgTraitsRequest request;
       AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(query, request);
-      client->get_ccg_traits(
-        request,
-        [&](
-          const grpc::Status& status,
-          const Proto::GetCcgTraitsResponse& response)
-        {
-          std::lock_guard<std::mutex> guard(lock);
-          result.status = status;
-          result.traits_response = response;
-          result.done = true;
-          cv.notify_one();
-        });
-      wait_for_call(result, lock, cv);
+      const auto response =
+        AdServer::Grpc::sync_call<Proto::GetCcgTraitsResponse>(
+          [&](auto callback)
+          {
+            client->get_ccg_traits(request, std::move(callback));
+          });
       ChannelServerBase::CCGKeywordSeq_var corba_result =
-        AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(
-          result.traits_response);
+        AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(response);
       print_traits_result(*corba_result);
     }
     else
@@ -221,10 +264,6 @@ main(int argc, char** argv)
       throw std::runtime_error("unsupported ChannelAdmin2 command");
     }
 
-    client->deactivate_object();
-    client->wait_object();
-    grpc_executor->deactivate_object();
-    grpc_executor->wait_object();
     return 0;
   }
   catch (const std::exception& ex)

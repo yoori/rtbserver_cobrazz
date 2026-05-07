@@ -53,6 +53,7 @@ add_executable(ChannelServer
 
 target_link_libraries(ChannelServer
   HTTP
+  HttpServer
   XMLUtility
   CORBACommons
   ProcessControlVars

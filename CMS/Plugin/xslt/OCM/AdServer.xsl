@@ -442,6 +442,14 @@
 
       <xsl:call-template name="AddService">
         <xsl:with-param name="service-path"
+          select="./service[@descriptor = $user-info-controller2-descriptor]"/>
+        <xsl:with-param name="service-name" select="concat('fe', $pos,
+          '-UserInfoController2')"/>
+        <xsl:with-param name="service-type" select="'AdServer::UserInfoSvcs::UserInfoController2'"/>
+      </xsl:call-template>
+
+      <xsl:call-template name="AddService">
+        <xsl:with-param name="service-path"
           select="./service[@descriptor = $channel-controller-descriptor]"/>
         <xsl:with-param name="service-name" select="concat('tr', $pos, '-ChannelController')"/>
         <xsl:with-param name="service-type" select="'AdServer::ChannelSvcs::ChannelController'"/>

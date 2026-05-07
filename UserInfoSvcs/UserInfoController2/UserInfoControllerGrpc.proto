@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package adserver.user_info_svcs.user_info_controller;
+
+service UserInfoControllerGrpc {
+  rpc get_session_description(GetSessionDescriptionRequest)
+    returns (GetSessionDescriptionResponse);
+}
+
+message GetSessionDescriptionRequest {}
+
+message UserInfoDescription {
+  string user_info_manager_endpoint = 1;
+  repeated uint32 chunk_ids = 2;
+}
+
+message GetSessionDescriptionResponse {
+  repeated UserInfoDescription user_info_managers = 1;
+}

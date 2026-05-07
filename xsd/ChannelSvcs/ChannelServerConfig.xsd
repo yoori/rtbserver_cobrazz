@@ -44,6 +44,14 @@
         </xsd:annotation>
       </xsd:element>
 
+      <xsd:element name="HttpConfig" type="GrpcConfigType" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>
+            HttpConfig for service
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+
       <xsd:element name="MatchOptions" type="MatchOptionsType">
         <xsd:annotation>
           <xsd:documentation>

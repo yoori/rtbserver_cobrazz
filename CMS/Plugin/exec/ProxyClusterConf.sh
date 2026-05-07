@@ -184,7 +184,6 @@ cp $EXEC/copy_and_backup.sh $OUT_DIR/../copy_and_backup.sh
 let "EXIT_CODE|=$?"
 
 $EXEC/ProcessHostFiles.sh \
-  --services-xpath "$USER_INFO_EXCHANGER_XPATH" \
   --services-xpath "$CHANNEL_PROXY_XPATH" \
   --services-xpath "$CAMPAIGN_SERVER_XPATH" \
   --services-xpath "$STUNNEL_SERVER_XPATH" \

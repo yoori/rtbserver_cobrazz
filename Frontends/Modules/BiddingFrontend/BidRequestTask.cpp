@@ -72,11 +72,6 @@ namespace Bidding
       return false;
     }
 
-    debug_sink_.print_request_debug_info(
-      request_info_,
-      *request_params_,
-      resolved_user_id_);
-
     if(check_interrupt_(Stage::CampaignSelection))
     {
       return false;

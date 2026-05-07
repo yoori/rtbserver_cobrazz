@@ -89,6 +89,9 @@
 <xsl:variable name="user-bind-controller2-descriptor"
   select="'AdCluster/FrontendSubCluster/UserBindController2'"/>
 
+<xsl:variable name="user-info-controller2-descriptor"
+  select="'AdCluster/FrontendSubCluster/UserInfoController2'"/>
+
 <xsl:variable name="billing-server-descriptor"
   select="'AdCluster/FrontendSubCluster/BillingServer'"/>
 
@@ -172,6 +175,7 @@
 <xsl:variable name="user-info-manager-log-path" select="'/log/UserInfoManager/UserInfoManager'"/>
 <xsl:variable name="user-info-manager-controller-log-level" select="$default-log-level"/>
 <xsl:variable name="user-info-manager-controller-log-path" select="'/log/UserInfoManagerController/UserInfoManagerController'"/>
+<xsl:variable name="user-info-controller2-log-path" select="'/log/UserInfoController2/UserInfoController2'"/>
 <xsl:variable name="stats-collector-log-path" select="'/log/StatsCollector/StatsCollector'"/>
 <xsl:variable name="fcgi-adserver-log-path" select="'/log/FCGIAdServer/FCGIAdServer'"/>
 
@@ -374,6 +378,8 @@
 </xsl:variable>
 <xsl:variable name="def-user-info-manager-port" select="$def-range-start + 1"/>
 <xsl:variable name="def-user-info-manager-controller-port" select="$def-range-start + 2"/>
+<xsl:variable name="def-user-info-controller2-port" select="$def-range-start + 36"/>
+<xsl:variable name="def-user-info-controller2-grpc-port" select="$def-range-start + 431"/>
 <xsl:variable name="def-channel-server-port" select="$def-range-start + 3"/>
 <xsl:variable name="def-channel-controller-port" select="$def-range-start + 4"/>
 <xsl:variable name="def-channel-controller2-port" select="$def-range-start + 430"/>

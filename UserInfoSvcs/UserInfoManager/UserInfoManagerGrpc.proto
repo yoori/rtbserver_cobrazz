@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package adserver.user_info_svcs.user_info_manager;
+
+service UserInfoManagerGrpc {
+  rpc get_source(GetSourceRequest) returns (GetSourceResponse);
+  rpc get_master_stamp(GetMasterStampRequest) returns (GetMasterStampResponse);
+  rpc get_user_profile(GetUserProfileRequest) returns (GetUserProfileResponse);
+  rpc match(MatchRequest) returns (MatchResponse);
+  rpc update_user_freq_caps(UpdateUserFreqCapsRequest) returns (UpdateUserFreqCapsResponse);
+  rpc confirm_user_freq_caps(ConfirmUserFreqCapsRequest) returns (ConfirmUserFreqCapsResponse);
+  rpc fraud_user(FraudUserRequest) returns (FraudUserResponse);
+  rpc remove_user_profile(RemoveUserProfileRequest) returns (RemoveUserProfileResponse);
+  rpc merge(MergeRequest) returns (MergeResponse);
+  rpc consider_publishers_optin(ConsiderPublishersOptinRequest) returns (ConsiderPublishersOptinResponse);
+  rpc uim_ready(UimReadyRequest) returns (UimReadyResponse);
+  rpc get_progress(GetProgressRequest) returns (GetProgressResponse);
+  rpc clear_expired(ClearExpiredRequest) returns (ClearExpiredResponse);
+}
+
+message ProfilesRequestInfo {
+  bool base_profile = 1;
+  bool add_profile = 2;
+  bool history_profile = 3;
+  bool freq_cap_profile = 4;
+  bool pref_profile = 5;
+}
+
+message UserProfiles {
+  bytes base_user_profile = 1;
+  bytes add_user_profile = 2;
+  bytes history_user_profile = 3;
+  bytes freq_cap = 4;
+  bytes pref_profile = 5;
+}
+
+message UserInfo {
+  bytes user_id = 1;
+  bytes huser_id = 2;
+  uint32 time = 3;
+  int32 last_colo_id = 4;
+  int32 current_colo_id = 5;
+  int32 request_colo_id = 6;
+  bool temporary = 7;
+}
+
+message ChannelTriggerMatch {
+  uint32 channel_id = 1;
+  uint32 channel_trigger_id = 2;
+}
+
+message GeoData {
+  bytes latitude = 1;
+  bytes longitude = 2;
+  bytes accuracy = 3;
+}
+
+message MatchParams {
+  repeated uint32 persistent_channel_ids = 1;
+  repeated ChannelTriggerMatch search_channel_ids = 2;
+  repeated ChannelTriggerMatch page_channel_ids = 3;
+  repeated ChannelTriggerMatch url_channel_ids = 4;
+  repeated ChannelTriggerMatch url_keyword_channel_ids = 5;
+  bytes publishers_optin_timeout = 6;
+  bool use_empty_profile = 7;
+  bool silent_match = 8;
+  bool no_match = 9;
+  bool no_result = 10;
+  bool ret_freq_caps = 11;
+  bool provide_channel_count = 12;
+  bool provide_persistent_channels = 13;
+  bool change_last_request = 14;
+  string cohort = 15;
+  string cohort2 = 16;
+  bool filter_contextual_triggers = 17;
+  repeated GeoData geo_data_seq = 18;
+}
+
+message ChannelWeight {
+  uint32 channel_id = 1;
+  uint32 weight = 2;
+}
+
+message SeqOrderInfo {
+  uint32 ccg_id = 1;
+  uint32 set_id = 2;
+  uint32 imps = 3;
+}
+
+message CampaignFreq {
+  uint32 campaign_id = 1;
+  uint32 imps = 2;
+}
+
+message PartlyMatchResult {
+  uint32 channel_id = 1;
+  uint32 channel_trigger_id = 2;
+}
+
+message MatchResult {
+  bool times_inited = 1;
+  bytes last_request_time = 2;
+  bytes create_time = 3;
+  bytes session_start = 4;
+  int32 colo_id = 5;
+  repeated ChannelWeight channels = 6;
+  repeated ChannelWeight hid_channels = 7;
+  repeated uint32 full_freq_caps = 8;
+  repeated uint32 full_virtual_freq_caps = 9;
+  repeated SeqOrderInfo seq_orders = 10;
+  repeated CampaignFreq campaign_freqs = 11;
+  bool fraud_request = 12;
+  bytes process_time = 13;
+  int32 adv_channel_count = 14;
+  int32 discover_channel_count = 15;
+  string cohort = 16;
+  string cohort2 = 17;
+  repeated uint32 exclude_pubpixel_accounts = 18;
+  repeated GeoData geo_data_seq = 19;
+}
+
+message GetSourceRequest {}
+
+message GetSourceResponse {
+  repeated uint32 chunks = 1;
+  uint32 chunks_number = 2;
+}
+
+message GetMasterStampRequest {}
+
+message GetMasterStampResponse {
+  bytes master_stamp = 1;
+}
+
+message GetUserProfileRequest {
+  bytes user_id = 1;
+  bool temporary = 2;
+  ProfilesRequestInfo profile_request = 3;
+}
+
+message GetUserProfileResponse {
+  bool found = 1;
+  UserProfiles user_profile = 2;
+}
+
+message MatchRequest {
+  UserInfo user_info = 1;
+  MatchParams match_params = 2;
+}
+
+message MatchResponse {
+  bool matched = 1;
+  MatchResult match_result = 2;
+}
+
+message UpdateUserFreqCapsRequest {
+  bytes user_id = 1;
+  bytes time = 2;
+  bytes request_id = 3;
+  repeated uint32 freq_caps = 4;
+  repeated uint32 uc_freq_caps = 5;
+  repeated uint32 virtual_freq_caps = 6;
+  repeated SeqOrderInfo seq_orders = 7;
+  repeated uint32 campaign_ids = 8;
+  repeated uint32 uc_campaign_ids = 9;
+}
+
+message UpdateUserFreqCapsResponse {}
+
+message ConfirmUserFreqCapsRequest {
+  bytes user_id = 1;
+  bytes time = 2;
+  bytes request_id = 3;
+  repeated uint32 exclude_pubpixel_accounts = 4;
+}
+
+message ConfirmUserFreqCapsResponse {}
+
+message FraudUserRequest {
+  bytes user_id = 1;
+  bytes time = 2;
+}
+
+message FraudUserResponse {
+  bool fraud = 1;
+}
+
+message RemoveUserProfileRequest {
+  bytes user_id = 1;
+}
+
+message RemoveUserProfileResponse {
+  bool removed = 1;
+}
+
+message MergeRequest {
+  UserInfo user_info = 1;
+  MatchParams match_params = 2;
+  UserProfiles merge_user_profile = 3;
+}
+
+message MergeResponse {
+  bool result = 1;
+  bool merge_success = 2;
+  bytes last_request = 3;
+}
+
+message ConsiderPublishersOptinRequest {
+  bytes user_id = 1;
+  repeated uint32 exclude_pubpixel_accounts = 2;
+  bytes now = 3;
+}
+
+message ConsiderPublishersOptinResponse {}
+
+message UimReadyRequest {}
+
+message UimReadyResponse {
+  bool ready = 1;
+}
+
+message GetProgressRequest {}
+
+message GetProgressResponse {
+  string progress = 1;
+}
+
+message ClearExpiredRequest {
+  bool sync = 1;
+  bytes cleanup_time = 2;
+  int32 portion = 3;
+}
+
+message ClearExpiredResponse {}

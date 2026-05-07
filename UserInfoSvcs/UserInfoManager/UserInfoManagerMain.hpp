@@ -13,6 +13,7 @@
 #include "UserInfoManager.hpp"
 #include "UserInfoManagerImpl.hpp"
 #include "UserInfoManagerControlImpl.hpp"
+#include "UserInfoManagerGrpc.hpp"
 
 class UserInfoManagerApp_
   : public AdServer::Commons::ProcessControlVarsLoggerImpl,
@@ -62,6 +63,7 @@ private:
     user_info_manager_impl_;
   AdServer::UserInfoSvcs::UserInfoManagerControlImpl_var
     user_info_manager_control_impl_;
+  AdServer::UserInfoSvcs::UserInfoManagerGrpc_var grpc_adapter_;
 
   ConfigPtr configuration_;
 

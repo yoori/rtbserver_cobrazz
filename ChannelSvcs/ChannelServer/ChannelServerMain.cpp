@@ -10,6 +10,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/ConfigUtils.hpp>
+#include <Commons/HttpServer/HttpServer.hpp>
 
 #include "ChannelServerMain.hpp"
 #include "ChannelServerImpl.hpp"
@@ -26,6 +27,38 @@ namespace
   const char CHANNEL_UPDATE_OBJ_KEY[] = "ChannelUpdate";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
   const char PROCESS_STAT_CONTROL_OBJ_KEY[] = "ProcessStatsControl";
+
+  std::string
+  json_escape_(const std::string& value)
+  {
+    std::string result;
+    result.reserve(value.size());
+    for (const char ch : value)
+    {
+      switch (ch)
+      {
+      case '\\':
+        result += "\\\\";
+        break;
+      case '"':
+        result += "\\\"";
+        break;
+      case '\n':
+        result += "\\n";
+        break;
+      case '\r':
+        result += "\\r";
+        break;
+      case '\t':
+        result += "\\t";
+        break;
+      default:
+        result += ch;
+        break;
+      }
+    }
+    return result;
+  }
 }
 
 ChannelServerApp_::ChannelServerApp_() /*throw(eh::Exception)*/
@@ -38,18 +71,6 @@ void ChannelServerApp_::shutdown(CORBA::Boolean wait_for_completion)
   /*throw(CORBA::SystemException)*/
 {
   ShutdownGuard guard(shutdown_lock_);
-
-  if(server_impl_.in() != 0)
-  {
-    if(grpc_adapter_.in() != 0)
-    {
-      grpc_adapter_->deactivate_object();
-      grpc_adapter_->wait_object();
-    }
-
-    server_impl_->deactivate_object();
-    server_impl_->wait_object();
-  }
 
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
 }
@@ -200,6 +221,52 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
         configuration_->GrpcConfig()->Endpoint().port());
       grpc_adapter_->activate_object();
     }
+
+    if(configuration_->HttpConfig().present())
+    {
+      http_server_ = new AdServer::Commons::HttpServer::HttpServer(
+        configuration_->HttpConfig()->Endpoint().host().present() &&
+          *(configuration_->HttpConfig()->Endpoint().host()) != "*" ?
+          *configuration_->HttpConfig()->Endpoint().host() :
+          "0.0.0.0",
+        configuration_->HttpConfig()->Endpoint().port(),
+        4);
+      http_server_->add_handler(
+        "/stats",
+        [server_impl = server_impl_](
+          const AdServer::Commons::HttpServer::HttpServer::Request&)
+        {
+          AdServer::ChannelSvcs::ChannelServerStats stats;
+          server_impl->get_stats(stats);
+
+          std::string body = "{";
+          body += "\"total_requests\":";
+          body += std::to_string(
+            stats.params[
+              AdServer::ChannelSvcs::ChannelServerStats::MATCHINGS_COUNT]);
+          for (std::size_t i = 0;
+            i < AdServer::ChannelSvcs::ChannelServerStats::PARAMS_MAX;
+            ++i)
+          {
+            body += ",\"";
+            body += AdServer::ChannelSvcs::ChannelServerStats::param_name[i];
+            body += "\":";
+            body += std::to_string(stats.params[i]);
+          }
+          body += ",\"configuration\":\"";
+          body += json_escape_(stats.configuration);
+          body += "\",\"configuration_date\":";
+          body += std::to_string(stats.configuration_date.tv_sec);
+          body += "}\n";
+
+          return AdServer::Commons::HttpServer::HttpServer::Response{
+            200,
+            "application/json",
+            std::move(body)
+          };
+        });
+      http_server_->activate_object();
+    }
   }
   catch(const AdServer::ChannelSvcs::ChannelServerCustomImpl::Exception& e)
   {
@@ -216,6 +283,41 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
       "Catch eh::Exception on creating ChannelServer servants. "
       ": " << e.what();
     throw Exception(ostr);
+  }
+}
+
+void ChannelServerApp_::stop_() noexcept
+{
+  if(http_server_.in() != 0)
+  {
+    http_server_->deactivate_object();
+  }
+
+  if(grpc_adapter_.in() != 0)
+  {
+    grpc_adapter_->deactivate_object();
+  }
+
+  if(server_impl_.in() != 0)
+  {
+    server_impl_->deactivate_object();
+  }
+
+  if(http_server_.in() != 0)
+  {
+    http_server_->wait_object();
+    http_server_.reset();
+  }
+
+  if(grpc_adapter_.in() != 0)
+  {
+    grpc_adapter_->wait_object();
+    grpc_adapter_.reset();
+  }
+
+  if(server_impl_.in() != 0)
+  {
+    server_impl_->wait_object();
   }
 }
 
@@ -257,6 +359,8 @@ void ChannelServerApp_::main(int& argc, char** argv) noexcept
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service started.";
     // Running orb loop
     corba_server_adapter_->run();
+
+    stop_();
 
     wait();
     logger()->sstream(Logging::Logger::NOTICE, ASPECT) << "service stopped.";

@@ -222,6 +222,19 @@ UserInfoManagerApp_::main(int& argc, char** argv)
     corba_server_adapter_->add_binding(
       PROCESS_CONTROL_OBJ_KEY, this);
 
+    if(config().GrpcConfig().present())
+    {
+      grpc_adapter_ = new AdServer::UserInfoSvcs::UserInfoManagerGrpc(
+        user_info_manager_impl_,
+        logger(),
+        config().GrpcConfig()->Endpoint().host().present() &&
+          *(config().GrpcConfig()->Endpoint().host()) != "*" ?
+          *config().GrpcConfig()->Endpoint().host() :
+          "0.0.0.0",
+        config().GrpcConfig()->Endpoint().port());
+      add_child_object(grpc_adapter_);
+    }
+
     shutdowner_ = corba_server_adapter_->shutdowner();
 
     activate_object();

@@ -316,9 +316,6 @@ ProfilesExpirationTest::run_test()
         STE_USER_INFO_MANAGER_CONTROLLER)),
     "UserInfoManagerController need for this test");
 
-  remote_case_ =
-    get_config().check_service(CTE_CENTRAL, STE_USER_INFO_EXCHANGER);
-
   AdClient
     user1(AdClient::create_user(this)),
     user2(AdClient::create_user(this));
@@ -346,4 +343,3 @@ ProfilesExpirationTest::run_test()
 
   return true;
 }
-

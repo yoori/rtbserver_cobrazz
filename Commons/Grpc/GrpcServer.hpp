@@ -1,8 +1,8 @@
 #pragma once
 
-#include <algorithm>
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -41,8 +41,6 @@ namespace AdServer::Grpc
 
     void deactivate_object_() override;
 
-    bool wait_more_() override;
-
     void wait_object_() override;
 
     void process_queue_loop_(::grpc::ServerCompletionQueue* completion_queue);
@@ -55,7 +53,7 @@ namespace AdServer::Grpc
     std::unique_ptr<::grpc::Server> server_;
     std::vector<std::unique_ptr<::grpc::ServerCompletionQueue>> completion_queues_;
     std::vector<std::thread> workers_;
-    std::thread server_wait_thread_;
+    std::optional<std::thread> server_wait_thread_;
   };
 
   template<typename ServiceImplType>
@@ -111,7 +109,7 @@ namespace AdServer::Grpc
 
     if (completion_queues_.empty())
     {
-      server_wait_thread_ = std::thread([this]() {
+      server_wait_thread_.emplace([this]() {
         server_->Wait();
       });
     }
@@ -141,29 +139,18 @@ namespace AdServer::Grpc
   }
 
   template<typename ServiceImplType>
-  bool GrpcServer<ServiceImplType>::wait_more_()
-  {
-    return server_wait_thread_.joinable() ||
-      std::any_of(workers_.begin(), workers_.end(), [](const auto& worker) {
-        return worker.joinable();
-      });
-  }
-
-  template<typename ServiceImplType>
   void GrpcServer<ServiceImplType>::wait_object_()
   {
     for (auto& worker : workers_)
     {
-      if (worker.joinable())
-      {
-        worker.join();
-      }
+      worker.join();
     }
     workers_.clear();
 
-    if (server_wait_thread_.joinable())
+    if (server_wait_thread_)
     {
-      server_wait_thread_.join();
+      server_wait_thread_->join();
+      server_wait_thread_.reset();
     }
 
     if (server_)

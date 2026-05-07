@@ -159,6 +159,13 @@
         maxHostOccurs="unbounded"
         configSchema="xsd/UserInfoProfiling/UserInfoManagerControllerApp.xsd"/>
 
+      <service type="UserInfoController2"
+        minOccurs="1"
+        maxOccurs="unbounded"
+        minHostOccurs="1"
+        maxHostOccurs="unbounded"
+        configSchema="xsd/UserInfoProfiling/UserInfoController2App.xsd"/>
+
       <service
         type="ChannelServer"
         configSchema="xsd/ChannelServing/ChannelServerApp.xsd"
@@ -178,9 +185,9 @@
       <service
         type="ChannelController2"
         configSchema="xsd/ChannelServing/ChannelController2App.xsd"
-        minOccurs="0"
+        minOccurs="1"
         maxOccurs="unbounded"
-        minHostOccurs="0"
+        minHostOccurs="1"
         maxHostOccurs="unbounded"/>
 
       <service type="ChannelSearchService"
@@ -209,9 +216,9 @@
       <service
         type="UserBindController2"
         configSchema="xsd/UserInfoProfiling/UserBindController2App.xsd"
-        minOccurs="0"
+        minOccurs="1"
         maxOccurs="unbounded"
-        minHostOccurs="0"
+        minHostOccurs="1"
         maxHostOccurs="unbounded"/>
 
       <service

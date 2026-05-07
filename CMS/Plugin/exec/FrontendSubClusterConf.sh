@@ -28,6 +28,7 @@ FRONTEND_CLUSTER_DESCR=AdCluster/FrontendSubCluster
 
 USER_INFO_MANAGER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoManager
 USER_INFO_MANAGER_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoManagerController
+USER_INFO_CONTROLLER2_DESCR=$FRONTEND_CLUSTER_DESCR/UserInfoController2
 
 CHANNEL_SERVER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelServer
 CHANNEL_CONTROLLER_DESCR=$FRONTEND_CLUSTER_DESCR/ChannelController
@@ -114,6 +115,20 @@ $EXEC/CurrentEnvGen.sh \
   --services-xpath "$USER_INFO_MANAGER_CONTROLLER_XPATH" \
   --out-dir $OUT_DIR \
   --out-file CurrentEnv/fe.sh
+
+let "EXIT_CODE|=$?"
+
+## configure UserInfoController2
+USER_INFO_CONTROLLER2_XPATH="$CLUSTER_XPATH/service[
+  @descriptor = '$USER_INFO_CONTROLLER2_DESCR']"
+
+$EXEC/ServiceConf.sh \
+  --services-xpath "$USER_INFO_CONTROLLER2_XPATH" \
+  --app-xml $APP_XML \
+  --xsl $XSLT_ROOT/UserInfoProfiling/UserInfoController2.xsl \
+  --out-file UserInfoController2.xml \
+  --out-dir $OUT_DIR \
+  --plugin-root $PLUGIN_ROOT
 
 let "EXIT_CODE|=$?"
 

@@ -72,6 +72,10 @@
       </xsl:if>
     </xsl:variable>
 
+    <xsl:variable name="channel-server-http-port">
+      <xsl:value-of select="$channel-server-port + 600"/>
+    </xsl:variable>
+
     <exsl:document href="channelServer.port"
       method="text" omit-xml-declaration="yes"
       >  ['channelServer', <xsl:copy-of select="$channel-server-port"/>],</exsl:document>
@@ -126,6 +130,10 @@
     <cfg:GrpcConfig>
       <cfg:Endpoint host="*" port="{$channel-server-grpc-port}"/>
     </cfg:GrpcConfig>
+
+    <cfg:HttpConfig>
+      <cfg:Endpoint host="*" port="{$channel-server-http-port}"/>
+    </cfg:HttpConfig>
 
     <xsl:choose>
       <xsl:when test="$channel-server-config/cfg:logging/@log_level > 7">

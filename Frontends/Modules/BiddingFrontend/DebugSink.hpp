@@ -5,9 +5,11 @@
 #include <sstream>
 
 #include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
+#include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 #include <String/SubString.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
+#include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 namespace AdServer
 {
@@ -48,6 +50,16 @@ namespace Bidding
     print_creative_selection_debug_info(
       const AdServer::CampaignSvcs_v360::CampaignManager::RequestCreativeResult&
         campaign_match_result) noexcept;
+
+    void
+    print_channel_matching_debug_info(
+      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult&
+        match_result) noexcept;
+
+    void
+    print_history_matching_debug_info(
+      const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
+        match_result) noexcept;
 
     void
     write_response(

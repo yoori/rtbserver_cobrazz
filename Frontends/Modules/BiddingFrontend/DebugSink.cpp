@@ -1,5 +1,8 @@
 #include "DebugSink.hpp"
 
+#include <algorithm>
+#include <iterator>
+#include <set>
 #include <utility>
 
 #include <String/AsciiStringManip.hpp>
@@ -30,8 +33,71 @@ namespace Bidding
     namespace Debug
     {
       const char REQUEST_INFO_HEAD[] = "=== Request params ===";
+      const char CHANNEL_MATCHING_HEAD[] = "=== Channel matching result ===";
+      const char HISTORY_MATCHING_HEAD[] = "=== History matching result ===";
       const char CREATIVE_SELECTION_INFO_HEAD[] = "=== Creative selection ===";
       const char TRACE_CCG_INFO_HEAD[] = "=== Expected ===";
+    }
+
+    struct GetChannelId
+    {
+      unsigned long
+      operator()(
+        const ChannelSvcs::ChannelServerBase::ChannelAtom& atom) const noexcept
+      {
+        return atom.id;
+      }
+    };
+
+    using ChannelIdSet = std::set<unsigned long>;
+
+    void
+    add_channel_ids_(
+      ChannelIdSet& ids,
+      const ChannelSvcs::ChannelServerBase::ChannelAtomSeq& channels)
+    {
+      std::transform(
+        channels.get_buffer(),
+        channels.get_buffer() + channels.length(),
+        std::inserter(ids, ids.end()),
+        GetChannelId());
+    }
+
+    void
+    print_channel_ids_(
+      std::ostream& out,
+      const ChannelIdSet& ids,
+      char type,
+      bool& print_delimiter)
+    {
+      for(const auto id : ids)
+      {
+        if(print_delimiter)
+        {
+          out << ", ";
+        }
+        out << id << type;
+        print_delimiter = true;
+      }
+    }
+
+    void
+    print_channel_atom_seq_(
+      std::ostream& out,
+      const ChannelSvcs::ChannelServerBase::ChannelAtomSeq& channels,
+      char type,
+      bool& print_delimiter)
+    {
+      for(CORBA::ULong i = 0; i < channels.length(); ++i)
+      {
+        if(print_delimiter)
+        {
+          out << ", ";
+        }
+        out << channels[i].id << type << " :: " <<
+          channels[i].trigger_channel_id;
+        print_delimiter = true;
+      }
     }
 
     const char*
@@ -211,6 +277,165 @@ namespace Bidding
     {
       print_empty_creative_selection_debug_info_();
     }
+  }
+
+  void
+  DebugSink::print_channel_matching_debug_info(
+    const AdServer::ChannelSvcs::ChannelServerBase::MatchResult&
+      match_result) noexcept
+  {
+    if(!require_debug_info())
+    {
+      return;
+    }
+
+    if(require_debug_info_ == DI_BODY)
+    {
+      debug_info_str_ << "\n" << Debug::CHANNEL_MATCHING_HEAD << "\n";
+    }
+    else
+    {
+      debug_info_str_ << Debug::CHANNEL_MATCHING_HEAD << sep_;
+    }
+
+    ChannelIdSet ids;
+    add_channel_ids_(ids, match_result.matched_channels.page_channels);
+    const auto page_count = ids.size();
+    ids.clear();
+
+    add_channel_ids_(ids, match_result.matched_channels.search_channels);
+    const auto search_count = ids.size();
+    ids.clear();
+
+    add_channel_ids_(ids, match_result.matched_channels.url_channels);
+    add_channel_ids_(ids, match_result.matched_channels.url_keyword_channels);
+    std::copy(
+      match_result.matched_channels.uid_channels.get_buffer(),
+      match_result.matched_channels.uid_channels.get_buffer() +
+        match_result.matched_channels.uid_channels.length(),
+      std::inserter(ids, ids.end()));
+
+    debug_info_str_ <<
+      "trigger_channels_count = " <<
+        (page_count + search_count + ids.size()) << sep_ <<
+      "special_channels_effects = " <<
+        (match_result.no_track ? "NO TRACK" : "TRACK") << ", " <<
+        (match_result.no_adv ? "NO ADV" : "ADV") << sep_ <<
+      "triggers = ";
+
+    bool print_delimiter = false;
+    print_channel_atom_seq_(
+      debug_info_str_,
+      match_result.matched_channels.page_channels,
+      'P',
+      print_delimiter);
+    print_channel_atom_seq_(
+      debug_info_str_,
+      match_result.matched_channels.search_channels,
+      'S',
+      print_delimiter);
+    print_channel_atom_seq_(
+      debug_info_str_,
+      match_result.matched_channels.url_channels,
+      'U',
+      print_delimiter);
+    print_channel_atom_seq_(
+      debug_info_str_,
+      match_result.matched_channels.url_keyword_channels,
+      'R',
+      print_delimiter);
+
+    debug_info_str_ << sep_ << "trigger_channels = ";
+
+    print_delimiter = false;
+    ids.clear();
+    add_channel_ids_(ids, match_result.matched_channels.page_channels);
+    print_channel_ids_(debug_info_str_, ids, 'P', print_delimiter);
+    ids.clear();
+    add_channel_ids_(ids, match_result.matched_channels.search_channels);
+    print_channel_ids_(debug_info_str_, ids, 'S', print_delimiter);
+    ids.clear();
+    add_channel_ids_(ids, match_result.matched_channels.url_channels);
+    print_channel_ids_(debug_info_str_, ids, 'U', print_delimiter);
+    ids.clear();
+    add_channel_ids_(ids, match_result.matched_channels.url_keyword_channels);
+    print_channel_ids_(debug_info_str_, ids, 'R', print_delimiter);
+    ids.clear();
+    std::copy(
+      match_result.matched_channels.uid_channels.get_buffer(),
+      match_result.matched_channels.uid_channels.get_buffer() +
+        match_result.matched_channels.uid_channels.length(),
+      std::inserter(ids, ids.end()));
+    print_channel_ids_(debug_info_str_, ids, 'A', print_delimiter);
+
+    debug_info_str_ << sep_ << "content_channels = ";
+    for(CORBA::ULong i = 0; i < match_result.content_channels.length(); ++i)
+    {
+      if(i != 0)
+      {
+        debug_info_str_ << ", ";
+      }
+      debug_info_str_ << match_result.content_channels[i].id << "(" <<
+        match_result.content_channels[i].weight << ")";
+    }
+
+    debug_info_str_ << sep_;
+  }
+
+  void
+  DebugSink::print_history_matching_debug_info(
+    const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
+      match_result) noexcept
+  {
+    if(!require_debug_info())
+    {
+      return;
+    }
+
+    if(require_debug_info_ == DI_BODY)
+    {
+      debug_info_str_ << "\n" << Debug::HISTORY_MATCHING_HEAD << "\n";
+    }
+    else
+    {
+      debug_info_str_ << Debug::HISTORY_MATCHING_HEAD << sep_;
+    }
+
+    debug_info_str_ << "last_request_time = ";
+    try
+    {
+      debug_info_str_ << CorbaAlgs::unpack_time(
+        match_result.last_request_time).gm_ft() << sep_ <<
+        "create_time = " << CorbaAlgs::unpack_time(
+          match_result.create_time).gm_ft() << sep_ <<
+        "session_start = " << CorbaAlgs::unpack_time(
+          match_result.session_start).gm_ft();
+    }
+    catch(...)
+    {
+      debug_info_str_ << "invalid time";
+    }
+
+    debug_info_str_ << sep_ <<
+      "history_channels_count = " << match_result.channels.length() << sep_ <<
+      "history_channels = ";
+
+    CorbaAlgs::print_sequence_field(
+      debug_info_str_,
+      match_result.channels,
+      &UserInfoSvcs::UserInfoMatcher::ChannelWeight::channel_id);
+
+    debug_info_str_ << sep_ <<
+      "household_history_channels_count = " <<
+        match_result.hid_channels.length() << sep_ <<
+      "household_history_channels = ";
+
+    CorbaAlgs::print_sequence_field(
+      debug_info_str_,
+      match_result.hid_channels,
+      &UserInfoSvcs::UserInfoMatcher::ChannelWeight::channel_id);
+
+    debug_info_str_ << sep_;
   }
 
   DebugInfo
