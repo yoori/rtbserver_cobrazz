@@ -2,6 +2,8 @@
 #include <rocksdb/options.h>
 #include <rocksdb/utilities/db_ttl.h>
 
+#include <exception>
+
 #include <Stream/MemoryStream.hpp>
 
 #include "RocksDBProfileMap.hpp"
@@ -21,7 +23,8 @@ namespace ProfilingCommons
     options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
     options.create_if_missing = true;
-    // rocksdb : Each next level's file size will be target_file_size_multiplier bigger than previous one
+    // rocksdb : Each next level's file size will be
+    // target_file_size_multiplier bigger than previous one
     // we set it for decrease number of opened files
     options.target_file_size_multiplier = 2;
 
@@ -50,6 +53,9 @@ namespace ProfilingCommons
   {
     static const char* FUN = "RocksDBProfileMapImpl::check_profile()";
 
+    logical_read_operations_.fetch_add(1, std::memory_order_relaxed);
+    physical_read_operations_.fetch_add(1, std::memory_order_relaxed);
+
     std::string value;
     rocksdb::Status status = db_->Get(rocksdb::ReadOptions(), key.c_str(), &value);
 
@@ -68,12 +74,43 @@ namespace ProfilingCommons
     return true;
   }
 
+  void
+  RocksDBProfileMapImpl::check_profile_async(
+    const std::string& key,
+    CheckCallback callback) const
+  {
+    if(!callback)
+    {
+      return;
+    }
+
+    bool exists = false;
+    std::optional<std::string> error;
+    try
+    {
+      exists = check_profile(key);
+    }
+    catch(const std::exception& ex)
+    {
+      error = ex.what();
+    }
+    catch(...)
+    {
+      error = "unknown check error";
+    }
+
+    callback(exists, std::move(error));
+  }
+
   Generics::ConstSmartMemBuf_var
   RocksDBProfileMapImpl::get_profile(
     const std::string& key,
     Generics::Time* /*last_access_time*/)
   {
     static const char* FUN = "RocksDBProfileMapImpl::get_profile()";
+
+    logical_read_operations_.fetch_add(1, std::memory_order_relaxed);
+    physical_read_operations_.fetch_add(1, std::memory_order_relaxed);
 
     std::string value;
     rocksdb::Status status = db_->Get(rocksdb::ReadOptions(), key.c_str(), &value);
@@ -94,11 +131,48 @@ namespace ProfilingCommons
       new Generics::ConstSmartMemBuf(value.data(), value.size()));
   }
 
+  Generics::ConstSmartMemBuf_var
+  RocksDBProfileMapImpl::get_profile_async(
+    const std::string& key,
+    GetCallback callback,
+    std::optional<Generics::Time> last_access_time)
+  {
+    if(!callback)
+    {
+      return Generics::ConstSmartMemBuf_var();
+    }
+
+    Generics::ConstSmartMemBuf_var profile;
+    std::optional<std::string> error;
+    try
+    {
+      Generics::Time access_time;
+      profile = get_profile(
+        key,
+        last_access_time ? &access_time : nullptr);
+    }
+    catch(const std::exception& ex)
+    {
+      error = ex.what();
+    }
+    catch(...)
+    {
+      error = "unknown get error";
+    }
+
+    callback(profile, std::move(error));
+
+    return Generics::ConstSmartMemBuf_var();
+  }
+
   bool
   RocksDBProfileMapImpl::remove_profile(
     const std::string& key,
     OperationPriority)
   {
+    logical_write_operations_.fetch_add(1, std::memory_order_relaxed);
+    physical_write_operations_.fetch_add(1, std::memory_order_relaxed);
+
     rocksdb::Status status = db_->Delete(rocksdb::WriteOptions(), key.c_str());
 
     if(status.IsNotFound() || !status.ok())
@@ -127,6 +201,9 @@ namespace ProfilingCommons
   {
     static const char* FUN = "RocksDBProfileMapImpl::save_profile()";
 
+    logical_write_operations_.fetch_add(1, std::memory_order_relaxed);
+    physical_write_operations_.fetch_add(1, std::memory_order_relaxed);
+
     rocksdb::Status status = db_->Put(
       rocksdb::WriteOptions(),
       key.c_str(),
@@ -141,6 +218,33 @@ namespace ProfilingCommons
     }
   }
 
+  void
+  RocksDBProfileMapImpl::save_profile_async(
+    const std::string& key,
+    const Generics::ConstSmartMemBuf* profile,
+    const Generics::Time& now,
+    SaveCallback callback)
+  {
+    std::optional<std::string> error;
+    try
+    {
+      save_profile(key, profile, now, OP_RUNTIME);
+    }
+    catch(const std::exception& ex)
+    {
+      error = ex.what();
+    }
+    catch(...)
+    {
+      error = "unknown save error";
+    }
+
+    if(callback)
+    {
+      callback(std::move(error));
+    }
+  }
+
   unsigned long
   RocksDBProfileMapImpl::size() const noexcept
   {
@@ -151,6 +255,17 @@ namespace ProfilingCommons
   RocksDBProfileMapImpl::area_size() const noexcept
   {
     return 1;
+  }
+
+  ProfileMap<std::string>::Stats
+  RocksDBProfileMapImpl::stats() const noexcept
+  {
+    return {
+      logical_read_operations_.load(std::memory_order_relaxed),
+      logical_write_operations_.load(std::memory_order_relaxed),
+      physical_read_operations_.load(std::memory_order_relaxed),
+      physical_write_operations_.load(std::memory_order_relaxed)
+    };
   }
 }
 }

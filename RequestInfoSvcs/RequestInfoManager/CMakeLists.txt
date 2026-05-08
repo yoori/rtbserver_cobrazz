@@ -35,6 +35,7 @@ target_link_libraries(RequestInfoContainer
   PrivacyFilter
   Commons
   ProfileMap
+  ProfileMapRocksDB
   RequestProfilePST
   RequestInfoManagerCompatibility
 )
