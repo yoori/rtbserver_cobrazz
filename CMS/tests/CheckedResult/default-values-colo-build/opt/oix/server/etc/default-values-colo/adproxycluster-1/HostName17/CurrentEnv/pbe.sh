@@ -1,6 +1,0 @@
-campaign_server_port=10156
-export campaign_server_port
-
-sync_logs_port=10162
-export sync_logs_port
-

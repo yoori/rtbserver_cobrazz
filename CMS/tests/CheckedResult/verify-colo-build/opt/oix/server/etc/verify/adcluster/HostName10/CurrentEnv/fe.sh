@@ -1,3 +1,0 @@
-channel_server_port=10103
-export channel_server_port
-

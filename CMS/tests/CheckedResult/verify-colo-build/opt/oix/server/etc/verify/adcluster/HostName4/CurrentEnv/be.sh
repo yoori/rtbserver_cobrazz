@@ -1,9 +1,0 @@
-expression_matcher_port=10113
-export expression_matcher_port
-
-keyword_matcher_port=10108
-export keyword_matcher_port
-
-sync_logs_port=10112
-export sync_logs_port
-

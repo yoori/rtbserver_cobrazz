@@ -1,6 +1,0 @@
-content_frontend_port=10180
-export content_frontend_port
-
-content_sync_logs_port=10114
-export content_sync_logs_port
-

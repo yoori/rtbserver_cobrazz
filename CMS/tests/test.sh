@@ -131,7 +131,7 @@ function config_diff ()
 mkdir -p $RESULT_DIR
 mkdir -p $LOG_ROOT
 
-ALL_CONFIG_PATHS="NB Unsorted UnitTests QA"
+ALL_CONFIG_PATHS="cobrazz"
 
 COLO_NAME=""
 

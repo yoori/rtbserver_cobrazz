@@ -1,6 +1,0 @@
-campaign_manager_port=10107
-export campaign_manager_port
-
-ad_frontend_port=10180
-export ad_frontend_port
-

@@ -1,0 +1,1575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<colo:colocation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:colo="http://www.foros.com/cms/colocation" xmlns:configuration="http://www.adintelligence.net/xsd/AdServer/Configuration" xsi:schemaLocation="http://www.foros.com/cms/colocation /opt/cms/share/model/colocation.xsd" name="programmatic" description="">
+  <host name="adbe00" hostName="adbe00"/>
+  <host name="adbe01" hostName="adbe01"/>
+  <host name="adbe02" hostName="adbe02"/>
+  <host name="adbe03" hostName="adbe03"/>
+  <host name="adbe04" hostName="adbe04"/>
+  <host name="adbe05" hostName="adbe05"/>
+  <host name="adbe06" hostName="adbe06"/>
+
+  <host name="adfe100" hostName="adfe100"/>
+  <host name="adfe101" hostName="adfe101"/>
+  <host name="adfe103" hostName="adfe103"/>
+  <host name="adfe104" hostName="adfe104"/>
+  <host name="adfe105" hostName="adfe105"/>
+  <host name="adfe106" hostName="adfe106"/>
+  <host name="adfe107" hostName="adfe107"/>
+  <host name="adfe108" hostName="adfe108"/>
+  <host name="adfe109" hostName="adfe109"/>
+  <host name="adfe110" hostName="adfe110"/>
+
+  <host name="adfe200" hostName="adfe200"/>
+  <host name="adfe201" hostName="adfe201"/>
+  <host name="adfe202" hostName="adfe202"/>
+  <host name="adfe203" hostName="adfe203"/>
+  <host name="adfe205" hostName="adfe205"/>
+  <host name="adfe206" hostName="adfe206"/>
+  <host name="adfe207" hostName="adfe207"/>
+  <host name="adfe208" hostName="adfe208"/>
+  <host name="adfe209" hostName="adfe209"/>
+  <host name="adfe210" hostName="adfe210"/>
+  <host name="adfe211" hostName="adfe211"/>
+
+  <application descriptor="AdServer-4.0.0.19" name="AdServer" description="">
+    <configuration><configuration:environment autorestart="true">
+        <configuration:forosZoneManagement user_name="aduser" user_group="adgroup" ssh_key="/home/${user_name}/.ssh/adkey" public_key="ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAxl9awtGTI5cCNS4qIeu1bDi14MkZOKHmEYaS9Yccu8NQwXQa/wD5E45FfSQjXoNqj+ZhETj4NX/YoIhu+NkNFxYgqb1YckOUrdNr0m9QwzWgnvoXdHmtskxkr3WRxvsXuuZnr/Y0MooDBZKcoAJN2j81xKHigpCU7kQQORrLXX019n2PsyEZLrXxstRbDzU3/Hv3KWI8g/QSsNJyyFag4OhHLZrkvu2eikfz6BZC7KnT0ofzlDWpKf+KEo/qCAbpxUtwrCIZtvfGXCovyIsWyV3uexvcx33EqNimZiDBu2RJFY6I8f6fttXM/nQNEl8yIVVBTm8reUu7pI+2Zu+k2Q== aduser@ru13adbe00">
+          <configuration:private_key>-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAxl9awtGTI5cCNS4qIeu1bDi14MkZOKHmEYaS9Yccu8NQwXQa
+/wD5E45FfSQjXoNqj+ZhETj4NX/YoIhu+NkNFxYgqb1YckOUrdNr0m9QwzWgnvoX
+dHmtskxkr3WRxvsXuuZnr/Y0MooDBZKcoAJN2j81xKHigpCU7kQQORrLXX019n2P
+syEZLrXxstRbDzU3/Hv3KWI8g/QSsNJyyFag4OhHLZrkvu2eikfz6BZC7KnT0ofz
+lDWpKf+KEo/qCAbpxUtwrCIZtvfGXCovyIsWyV3uexvcx33EqNimZiDBu2RJFY6I
+8f6fttXM/nQNEl8yIVVBTm8reUu7pI+2Zu+k2QIBIwKCAQBarz9vALhKyLCNVu6w
+a8CmgFMk7jdqWKOwPYUChuiQWUl9AeB0krsBoB/ELccGonnbYgB85tfd8U0WL72z
+lmxiU0IhtaTGhUtIJiKpV3VgjYtBXGJ+Y4KappRtd5MZIlP9qygV7OSpY6mcJcPx
+YCOW+FMYD319g+xPqhYLefaRIny1IF7ZL6iFdv6+7SGiMz/maFwbalMOIQEXO2EF
+Wl6CC7aWoTZU3v0SLp33nMV3yaKEIQInC12rvwrXXg3rILmeKT3IhLK93tV4iacs
+460DZqGBGZrIKKbqLGWylSog6OC+GqLArqJuhFwNepcfHjicgregXEyqFuk+IpVD
+vS6LAoGBAPorMfuqHxmVPhbWa2FyO8q64goZcw1VmLxrvvng431sPdwSF0zYPj0c
+BWp1VY97xSD6cdk+GCR1XIUch/VoUn3ORqY+urB0EPkgCCsWNEmzU29OhX+N0ajs
+M/ZAZlHUr2y2nfltogX4YkSTWwtT6uVtXEZbWCDe0/OJNUqNhFVdAoGBAMr/FMSN
+6b71g42awkAKKVF5laOT9pl/cyPiQZSrvXS4MMuyAvENB5fWfI/lGcN6259XDeWg
+tKfM8R0+6jYtXNXtCpNGxSJDj1pEdOcAJMKemf3iLlqj0y6cY5GvFCO+t3C/Fkt+
+3pZssf8NnNcqYjDdmwlETSLmZanjbsVVPXmtAoGAeYKx4KMWa4MA5oVnWzd8IKPq
+IimeSE4lnVjnuzK3o1HU5zv8sEvGdXQCoWww30q+1YD1eCV5cMtKMgaLLg4ZcE4/
+kpN/P8NYs4SWQNBFSF5qWqJ7WzZBQ2tpsh9HpBbY3Qg+GhCtyGKzYyMAVfWPWX5C
+wxZsokBYUbesK4aQu78CgYEAuZjCh9I0y9kn0eyUV87GsOQxCpXoxtrs7ZuprH/D
+KOLqyN1EhJ4y0/dNUFxvU6OG+BUUBSU3dNih7tpvvIE+73mjRNL9YSfThbruig7C
+hg1Zl6o5AmnlpvViWU+dYoJ71Mv3IHP+tWqxXjhU4frdboF3zfVN1sQFLZy9DDCt
+PAsCgYEAlUAD5LPjCRwsg2CedtxCTjOv9CpXpiIRUBnGtf4klk7LvQYNDnDcR11v
+VECmzpxSKy07jjLOhwiIDRDYtcdGISRqtxT1InbPib6qjbC0xstCd67PudV4ony+
+I8rQTGQs+WU9+mZRNXF4q9jS7PIYlpPLYVawcXownOhzKKZiLy8=
+-----END RSA PRIVATE KEY-----</configuration:private_key>
+        </configuration:forosZoneManagement>
+        <configuration:ispZoneManagement user_name="aduser" user_group="adgroup" ssh_key="/home/${user_name}/.ssh/adkey" separate_isp_zone="false">
+          <configuration:private_key></configuration:private_key>
+        </configuration:ispZoneManagement>
+      </configuration:environment></configuration>
+    <serviceGroup descriptor="AdCluster" name="AdCluster">
+      <configuration><configuration:cluster enable_search_term_stats="true" referrer_logging_action_stats="domain and path" referrer_logging_site_referrer_stats="domain and path">
+          <configuration:environment workspace_root="/opt/foros/server/var" server_root="/opt/foros/server" cache_root="/opt/foros/server/var/cache" data_root="/opt/foros/server/var/www" config_root="/opt/foros/server/etc"/>
+          <configuration:secureParams ca="ca.pem"/>
+          <configuration:coloParams backup_operations="false"
+            enabled_countries="ru,in,kz,ge,by,uz,ua,tj,kg,am,az,md"
+            segmentor="None"
+            colo_id="693"
+            ad_request_profiling="ad-request profiling and stats collection enabled"
+            min_RTB_user_age="1"
+            RTB_offline_UID_generation="true"
+            max_bad_SSPID_events="1"
+            ip_key="MFBOeuplH3LlQqfGSvNiew.."
+            ssp_uid_key="EB9D65067D8CF903" intervalsBlacklist="" skip_external_ids="">
+
+            <configuration:virtualServer port="80"
+                                         internal_port="10180"
+                                         monitoring_port="10380" nginx_index="3"
+              keep_alive="true" keep_alive_timeout="1" max_keep_alive_requests="10" proxy_protocol="false">
+              <configuration:adservingDomain name="ad.new-programmatic.com"/>
+              <configuration:adservingDomain name="ad.new-programmatic.ru"/>
+              <configuration:adservingDomain name="ad.ad-blast.ru"/>
+              <configuration:adservingDomain name="ad-blast.ru"/>
+
+              <configuration:videoDomain name="video.new-programmatic.com"/>
+              <configuration:videoDomain name="vast.new-programmatic.com"/>
+              <configuration:videoDomain name="vast.new-programmatic.ru"/>
+              <configuration:videoDomain name="vast.ad-blast.ru"/>
+            </configuration:virtualServer>
+
+            <configuration:virtualServer port="80" internal_port="10182" keep_alive="true" keep_alive_timeout="1" max_keep_alive_requests="10" proxy_protocol="false">
+              <configuration:adservingDomain name="ad.new-programmatic.com"/>
+              <configuration:adservingDomain name="ad.new-programmatic.ru"/>
+              <configuration:adservingDomain name="ad.ad-blast.ru"/>
+              <configuration:adservingDomain name="ad-blast.ru"/>
+
+              <configuration:adservingDomain name="match.new-programmatic.com"/>
+              <configuration:adservingDomain name="match.new-programmatic.ru"/>
+              <configuration:adservingDomain name="match.ad-blast.ru"/>
+
+              <configuration:thirdPartyContentDomain name="media.new-programmatic.com"/>
+              <configuration:thirdPartyContentDomain name="media.new-programmatic.ru"/>
+              <configuration:thirdPartyContentDomain name="media.ad-blast.ru"/>
+
+              <configuration:videoDomain name="video.new-programmatic.com"/>
+            </configuration:virtualServer>
+
+            <configuration:virtualServer port="80" internal_port="10181" keep_alive="true" keep_alive_timeout="20" max_keep_alive_requests="10000" proxy_protocol="false">
+              <configuration:biddingDomain name="dsp.new-programmatic.com"/>
+              <configuration:biddingDomain name="dsp.new-programmatic.ru"/>
+              <configuration:biddingDomain name="dsp.ad-blast.ru"/>
+            </configuration:virtualServer>
+
+            <configuration:virtualServer port="80" internal_port="10183" monitoring_port="10381" nginx_index="2" keep_alive="true" keep_alive_timeout="1" max_keep_alive_requests="10" proxy_protocol="false">
+              <configuration:adservingDomain name="match.new-programmatic.com"/>
+              <configuration:adservingDomain name="match.new-programmatic.ru"/>
+              <configuration:adservingDomain name="ad-blast.ru"/>
+              <configuration:adservingDomain name="match.ad-blast.ru"/>
+            </configuration:virtualServer>
+
+            <configuration:secureVirtualServer port="443"
+                                               internal_port="10145"
+              monitoring_port="10345" nginx_index="3"
+              keep_alive="true" keep_alive_timeout="5" max_keep_alive_requests="0" enable="true" proxy_protocol="false">
+              <configuration:cert>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIGUjCCBTqgAwIBAgISBZUkNfJVQybafib4warJlgFmMA0GCSqGSIb3DQEBCwUA
+MDMxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQwwCgYDVQQD
+EwNSMTIwHhcNMjYwMjI1MDc0NjM4WhcNMjYwNTI2MDc0NjM3WjAjMSEwHwYDVQQD
+ExhhZG1hbmFnZXIuZ2VuaXVzZ3JvdXAuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+DwAwggEKAoIBAQCX77WX3yQBoAJJODRu6myf15YgliwesmlDaTITzznVaw4Pcz7O
+WQ0ccSv/CfBTa1gR4ZHOPG7PkxS8dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4
+pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vnYgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpC
+H2x1mUWk5DHGvTS8zi1mWtOSpE34NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuO
+IaqPL3jlJOEBFUmc4coYWhE+J9bCHUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M
++xHgJ/y6DrVh5lCi6K5Mwi2YtIPAIEoybrC/AgMBAAGjggNuMIIDajAOBgNVHQ8B
+Af8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAdBgNV
+HQ4EFgQUR+u+Il1aN2exnk2avc+iSIpuZskwHwYDVR0jBBgwFoAUALUp8i2ObzHo
+m0yteD763OkM0dIwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzAChhdodHRwOi8v
+cjEyLmkubGVuY3Iub3JnLzCCAWcGA1UdEQSCAV4wggFaghdhZC5uZXctcHJvZ3Jh
+bW1hdGljLmNvbYIYYWRtYW5hZ2VyLmdlbml1c2dyb3VwLmNjgiBkZXZlbG9wbWVu
+dC5uZXctcHJvZ3JhbW1hdGljLmNvbYIYZHNwLm5ldy1wcm9ncmFtbWF0aWMuY29t
+ghBraWNrLWNhcHRjaGEuY29tghptYXRjaC5uZXctcHJvZ3JhbW1hdGljLmNvbYIa
+bWVkaWEubmV3LXByb2dyYW1tYXRpYy5jb22CFG5ldy1wcm9ncmFtbWF0aWMuY29t
+ghNwbGF0Zm9ybS5jb2JyYXp6LmFpghZwbGF0Zm9ybS5nZW5pdXNkZXNrLmFpgg11
+aS5jb2JyYXp6LmFpghd1aS5uZXctcHJvZ3JhbW1hdGljLmNvbYIadmlkZW8ubmV3
+LXByb2dyYW1tYXRpYy5jb22CGHd3dy5uZXctcHJvZ3JhbW1hdGljLmNvbTATBgNV
+HSAEDDAKMAgGBmeBDAECATAvBgNVHR8EKDAmMCSgIqAghh5odHRwOi8vcjEyLmMu
+bGVuY3Iub3JnLzEwMy5jcmwwggENBgorBgEEAdZ5AgQCBIH+BIH7APkAdwBkEcRs
+pBLsp4kcogIuALyrTygH1B41J6vq/tUDyX3N8AAAAZyT+TSPAAAEAwBIMEYCIQCz
+PWgxSdXafa+GvUMqbKA/DipVsGgc77xjjuVIMBvCtwIhAOcZQHDtrv8Dyn/Pmjhq
+MNE+Lu4+GSBnCnrA3CJA4L4MAH4Apcl4kl1XRheChw3YiWYLXFVki30AQPLsB2hR
+0YhpGfcAAAGck/k3JQAIAAAFADNiIjEEAwBHMEUCIQDFcRht8+HwT7Pm8Jnz3W8q
+A5LnDqtJsSVPJ/5F4t75AgIgKRIV+yuHCpn0bvY9e5Ds9miy/7Nb5Ky2H73L6Jag
+X3IwDQYJKoZIhvcNAQELBQADggEBAD86K4YU5cWg21WQeDQ5Wv3gjA2LceE4KNel
+k4UqSJdQTkC/OY2dgIXewzfZGap8u0kGmUbQGrTRIrBGs6bL0t0nGEqNn5b1It+l
+MZPb0e1kB7iOxvD+tDGadYE1yREu1QB9DQso9NccEellaxhZ9RJDP+JMwxqBDe9w
+ZgFkOOtFSNMwUfa+RWwxJmRhgR2u5uKEldtJgVmDuSC1yD+uQJ5ZEUqMZ+2f9BH1
+NikJ042HERfgHNjDk/+WNz3Sn6YTumK7IaS0gfzCHBHUSSQDGhdxAnN2a2zCQdZm
+U/0pxdNpCqT80t3O31hHPebzrHjTyd+N/thBbFkMi565KjiuY3w=
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:cert>
+              <configuration:key>
+                <configuration:content>-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCX77WX3yQBoAJJ
+ODRu6myf15YgliwesmlDaTITzznVaw4Pcz7OWQ0ccSv/CfBTa1gR4ZHOPG7PkxS8
+dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vn
+YgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpCH2x1mUWk5DHGvTS8zi1mWtOSpE34
+NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuOIaqPL3jlJOEBFUmc4coYWhE+J9bC
+HUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M+xHgJ/y6DrVh5lCi6K5Mwi2YtIPA
+IEoybrC/AgMBAAECggEBAIaApZCh8H0jyoJJKFm8W5cRQgztBHfUV01e9f8FZ1xg
+Xl0dF8+SlAHGyj0H7mHa2GdT+kDJzQsjWKsSFv1srHPK87MZtNHzuMXMmjNaNfAM
+wV3/K+J2ZjCwUpgIPWlZv29jDJ4C7VpKu2R1rezBhl9tA6fG6FVh4cf4jnhsrIUI
+uni0ue+pGpeplx79jPaJUL9QAPMBypJdoA7y7Fyw+Eg73ddJk5XGB1pmXeUrdzQC
+OccM3CB0tr6RlVdPYPDf21Gw3gpqxgIQDhgBqKBWeXuo2PvEMrAv2Cxq/VQic47P
+hOZkR7UcY8xEjoKPcuPaZRv8PI+4cbqC2A4sDiJUWSECgYEAylGCBb/07IMpc/9I
+/1IzmBDsR4AJRw7ijEVJrCgOy0X4Azuk51ogLfFOln3hT+ODvLMRgrxb2mzYrECA
+XCTeqHPn0jHHvE+bVLBKm12+h+rEn/VhbNbDprXhw+zpB9tkeYKMJUHiYPdr9iNB
+KzcDZ0Y9cuUX9ZtlNQgaY9oTr/ECgYEAwD//nqMmNtHXQfktD7FzbLjwqmAA0dR3
+C/aRHE/abEcKHLilJ5rRKpev2pD4CRxqM/JQILQC12eZwmycC76rDpDJ2wvL2Mlw
+gFJuh9zW5GL5ZvzhrnBInTYtrlge2nkpMrS/KKPBEWqaAsEMYEqkUgd6yOjao7ZI
+nrwrmU0bG68CgYBt2Qluk8WosKJOL9pzfi8zLmULgTIIWcWZgXk5ttopdgjtwHGN
+h3qXV0BjJ1+xH4eEaflk8V4x3w1ZoP/Qh9g4wA2rK4oV7WcZ+UnYx3JOm6I8c199
+V7INDw3Qcg4oTO9lpgLvq7D9EvmUP5n/m7QGW7W7bzWuDbxKqeaiNmKgEQKBgDNo
+qb1NGWntYSeGL1OT+y6mocydkXqK2y66x4EPpXPw5zZY9ekKUEaYe3Dx9THShF/R
+uzWTjXL2hDpmeq/1U564fxHxLJiS/V+DK4VvO5OlF9Y/Z0YTRoertjl53P5FCgxC
+IyAF8hnrLLXx05JoQ1qgH2hcRCMlGnRAE1SSNt6HAoGAP4X8k3p4qywuT42tzAms
+In+av2z4LKB5LbyZBfg6ymmGy32BhjkUIXPVhFHdePQwF0h9qbXnug7pEXn7ophR
+kgA8d1wLEMG5XMqi33Qlda7rkcAFAbCS+zex6x9bRks1zUjtucfIAVKv0M2bjLjV
+gBs2/dqov7RNDL4GBqBOTQs=
+-----END PRIVATE KEY-----</configuration:content>
+              </configuration:key>
+              <configuration:ca>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIFBjCCAu6gAwIBAgIRAMISMktwqbSRcdxA9+KFJjwwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjQwMzEzMDAwMDAw
+WhcNMjcwMzEyMjM1OTU5WjAzMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3Mg
+RW5jcnlwdDEMMAoGA1UEAxMDUjEyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEA2pgodK2+lP474B7i5Ut1qywSf+2nAzJ+Npfs6DGPpRONC5kuHs0BUT1M
+5ShuCVUxqqUiXXL0LQfCTUA83wEjuXg39RplMjTmhnGdBO+ECFu9AhqZ66YBAJpz
+kG2Pogeg0JfT2kVhgTU9FPnEwF9q3AuWGrCf4yrqvSrWmMebcas7dA8827JgvlpL
+Thjp2ypzXIlhZZ7+7Tymy05v5J75AEaz/xlNKmOzjmbGGIVwx1Blbzt05UiDDwhY
+XS0jnV6j/ujbAKHS9OMZTfLuevYnnuXNnC2i8n+cF63vEzc50bTILEHWhsDp7CH4
+WRt/uTp8n1wBnWIEwii9Cq08yhDsGwIDAQABo4H4MIH1MA4GA1UdDwEB/wQEAwIB
+hjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwEgYDVR0TAQH/BAgwBgEB
+/wIBADAdBgNVHQ4EFgQUALUp8i2ObzHom0yteD763OkM0dIwHwYDVR0jBBgwFoAU
+ebRZ5nu25eQBc4AIiMgaWPbpm24wMgYIKwYBBQUHAQEEJjAkMCIGCCsGAQUFBzAC
+hhZodHRwOi8veDEuaS5sZW5jci5vcmcvMBMGA1UdIAQMMAowCAYGZ4EMAQIBMCcG
+A1UdHwQgMB4wHKAaoBiGFmh0dHA6Ly94MS5jLmxlbmNyLm9yZy8wDQYJKoZIhvcN
+AQELBQADggIBAI910AnPanZIZTKS3rVEyIV29BWEjAK/duuz8eL5boSoVpHhkkv3
+4eoAeEiPdZLj5EZ7G2ArIK+gzhTlRQ1q4FKGpPPaFBSpqV/xbUb5UlAXQOnkHn3m
+FVj+qYv87/WeY+Bm4sN3Ox8BhyaU7UAQ3LeZ7N1X01xxQe4wIAAE3JVLUCiHmZL+
+qoCUtgYIFPgcg350QMUIWgxPXNGEncT921ne7nluI02V8pLUmClqXOsCwULw+PVO
+ZCB7qOMxxMBoCUeL2Ll4oMpOSr5pJCpLN3tRA2s6P1KLs9TSrVhOk+7LX28NMUlI
+usQ/nxLJID0RhAeFtPjyOCOscQBA53+NRjSCak7P4A5jX7ppmkcJECL+S0i3kXVU
+y5Me5BbrU8973jZNv/ax6+ZK6TM8jWmimL6of6OrX7ZU6E2WqazzsFrLG3o2kySb
+zlhSgJ81Cl4tv3SbYiYXnJExKQvzf83DYotox3f0fwv7xln1A2ZLplCb0O+l/AK0
+YE0DS2FPxSAHi0iwMfW2nNHJrXcY3LLHD77gRgje4Eveubi2xxa+Nmk/hmhLdIET
+iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
+0zrLnOrAj/dfrlEWRhCvAgbuwLZX1A2sjNjXoPOHbsPiy+lO1KF8/XY7
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:ca>
+              <configuration:adservingDomain name="ad.new-programmatic.com"/>
+              <configuration:adservingDomain name="ad.new-programmatic.ru"/>
+              <configuration:adservingDomain name="ad.ad-blast.ru"/>
+              <configuration:adservingDomain name="ad-blast.ru"/>
+
+              <configuration:adservingDomain name="match.new-programmatic.com"/>
+              <configuration:adservingDomain name="match.new-programmatic.ru"/>
+              <configuration:adservingDomain name="match.ad-blast.ru"/>
+
+              <configuration:videoDomain name="video.new-programmatic.com"/>
+              <configuration:videoDomain name="vast.new-programmatic.com"/>
+              <configuration:videoDomain name="vast.new-programmatic.ru"/>
+              <configuration:videoDomain name="vast.ad-blast.ru"/>
+            </configuration:secureVirtualServer>
+
+            <configuration:secureVirtualServer port="443" internal_port="10147" keep_alive="true" keep_alive_timeout="5" max_keep_alive_requests="100" enable="true" proxy_protocol="false">
+              <configuration:cert>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIGUjCCBTqgAwIBAgISBZUkNfJVQybafib4warJlgFmMA0GCSqGSIb3DQEBCwUA
+MDMxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQwwCgYDVQQD
+EwNSMTIwHhcNMjYwMjI1MDc0NjM4WhcNMjYwNTI2MDc0NjM3WjAjMSEwHwYDVQQD
+ExhhZG1hbmFnZXIuZ2VuaXVzZ3JvdXAuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+DwAwggEKAoIBAQCX77WX3yQBoAJJODRu6myf15YgliwesmlDaTITzznVaw4Pcz7O
+WQ0ccSv/CfBTa1gR4ZHOPG7PkxS8dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4
+pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vnYgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpC
+H2x1mUWk5DHGvTS8zi1mWtOSpE34NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuO
+IaqPL3jlJOEBFUmc4coYWhE+J9bCHUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M
++xHgJ/y6DrVh5lCi6K5Mwi2YtIPAIEoybrC/AgMBAAGjggNuMIIDajAOBgNVHQ8B
+Af8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAdBgNV
+HQ4EFgQUR+u+Il1aN2exnk2avc+iSIpuZskwHwYDVR0jBBgwFoAUALUp8i2ObzHo
+m0yteD763OkM0dIwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzAChhdodHRwOi8v
+cjEyLmkubGVuY3Iub3JnLzCCAWcGA1UdEQSCAV4wggFaghdhZC5uZXctcHJvZ3Jh
+bW1hdGljLmNvbYIYYWRtYW5hZ2VyLmdlbml1c2dyb3VwLmNjgiBkZXZlbG9wbWVu
+dC5uZXctcHJvZ3JhbW1hdGljLmNvbYIYZHNwLm5ldy1wcm9ncmFtbWF0aWMuY29t
+ghBraWNrLWNhcHRjaGEuY29tghptYXRjaC5uZXctcHJvZ3JhbW1hdGljLmNvbYIa
+bWVkaWEubmV3LXByb2dyYW1tYXRpYy5jb22CFG5ldy1wcm9ncmFtbWF0aWMuY29t
+ghNwbGF0Zm9ybS5jb2JyYXp6LmFpghZwbGF0Zm9ybS5nZW5pdXNkZXNrLmFpgg11
+aS5jb2JyYXp6LmFpghd1aS5uZXctcHJvZ3JhbW1hdGljLmNvbYIadmlkZW8ubmV3
+LXByb2dyYW1tYXRpYy5jb22CGHd3dy5uZXctcHJvZ3JhbW1hdGljLmNvbTATBgNV
+HSAEDDAKMAgGBmeBDAECATAvBgNVHR8EKDAmMCSgIqAghh5odHRwOi8vcjEyLmMu
+bGVuY3Iub3JnLzEwMy5jcmwwggENBgorBgEEAdZ5AgQCBIH+BIH7APkAdwBkEcRs
+pBLsp4kcogIuALyrTygH1B41J6vq/tUDyX3N8AAAAZyT+TSPAAAEAwBIMEYCIQCz
+PWgxSdXafa+GvUMqbKA/DipVsGgc77xjjuVIMBvCtwIhAOcZQHDtrv8Dyn/Pmjhq
+MNE+Lu4+GSBnCnrA3CJA4L4MAH4Apcl4kl1XRheChw3YiWYLXFVki30AQPLsB2hR
+0YhpGfcAAAGck/k3JQAIAAAFADNiIjEEAwBHMEUCIQDFcRht8+HwT7Pm8Jnz3W8q
+A5LnDqtJsSVPJ/5F4t75AgIgKRIV+yuHCpn0bvY9e5Ds9miy/7Nb5Ky2H73L6Jag
+X3IwDQYJKoZIhvcNAQELBQADggEBAD86K4YU5cWg21WQeDQ5Wv3gjA2LceE4KNel
+k4UqSJdQTkC/OY2dgIXewzfZGap8u0kGmUbQGrTRIrBGs6bL0t0nGEqNn5b1It+l
+MZPb0e1kB7iOxvD+tDGadYE1yREu1QB9DQso9NccEellaxhZ9RJDP+JMwxqBDe9w
+ZgFkOOtFSNMwUfa+RWwxJmRhgR2u5uKEldtJgVmDuSC1yD+uQJ5ZEUqMZ+2f9BH1
+NikJ042HERfgHNjDk/+WNz3Sn6YTumK7IaS0gfzCHBHUSSQDGhdxAnN2a2zCQdZm
+U/0pxdNpCqT80t3O31hHPebzrHjTyd+N/thBbFkMi565KjiuY3w=
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:cert>
+              <configuration:key>
+                <configuration:content>-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCX77WX3yQBoAJJ
+ODRu6myf15YgliwesmlDaTITzznVaw4Pcz7OWQ0ccSv/CfBTa1gR4ZHOPG7PkxS8
+dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vn
+YgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpCH2x1mUWk5DHGvTS8zi1mWtOSpE34
+NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuOIaqPL3jlJOEBFUmc4coYWhE+J9bC
+HUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M+xHgJ/y6DrVh5lCi6K5Mwi2YtIPA
+IEoybrC/AgMBAAECggEBAIaApZCh8H0jyoJJKFm8W5cRQgztBHfUV01e9f8FZ1xg
+Xl0dF8+SlAHGyj0H7mHa2GdT+kDJzQsjWKsSFv1srHPK87MZtNHzuMXMmjNaNfAM
+wV3/K+J2ZjCwUpgIPWlZv29jDJ4C7VpKu2R1rezBhl9tA6fG6FVh4cf4jnhsrIUI
+uni0ue+pGpeplx79jPaJUL9QAPMBypJdoA7y7Fyw+Eg73ddJk5XGB1pmXeUrdzQC
+OccM3CB0tr6RlVdPYPDf21Gw3gpqxgIQDhgBqKBWeXuo2PvEMrAv2Cxq/VQic47P
+hOZkR7UcY8xEjoKPcuPaZRv8PI+4cbqC2A4sDiJUWSECgYEAylGCBb/07IMpc/9I
+/1IzmBDsR4AJRw7ijEVJrCgOy0X4Azuk51ogLfFOln3hT+ODvLMRgrxb2mzYrECA
+XCTeqHPn0jHHvE+bVLBKm12+h+rEn/VhbNbDprXhw+zpB9tkeYKMJUHiYPdr9iNB
+KzcDZ0Y9cuUX9ZtlNQgaY9oTr/ECgYEAwD//nqMmNtHXQfktD7FzbLjwqmAA0dR3
+C/aRHE/abEcKHLilJ5rRKpev2pD4CRxqM/JQILQC12eZwmycC76rDpDJ2wvL2Mlw
+gFJuh9zW5GL5ZvzhrnBInTYtrlge2nkpMrS/KKPBEWqaAsEMYEqkUgd6yOjao7ZI
+nrwrmU0bG68CgYBt2Qluk8WosKJOL9pzfi8zLmULgTIIWcWZgXk5ttopdgjtwHGN
+h3qXV0BjJ1+xH4eEaflk8V4x3w1ZoP/Qh9g4wA2rK4oV7WcZ+UnYx3JOm6I8c199
+V7INDw3Qcg4oTO9lpgLvq7D9EvmUP5n/m7QGW7W7bzWuDbxKqeaiNmKgEQKBgDNo
+qb1NGWntYSeGL1OT+y6mocydkXqK2y66x4EPpXPw5zZY9ekKUEaYe3Dx9THShF/R
+uzWTjXL2hDpmeq/1U564fxHxLJiS/V+DK4VvO5OlF9Y/Z0YTRoertjl53P5FCgxC
+IyAF8hnrLLXx05JoQ1qgH2hcRCMlGnRAE1SSNt6HAoGAP4X8k3p4qywuT42tzAms
+In+av2z4LKB5LbyZBfg6ymmGy32BhjkUIXPVhFHdePQwF0h9qbXnug7pEXn7ophR
+kgA8d1wLEMG5XMqi33Qlda7rkcAFAbCS+zex6x9bRks1zUjtucfIAVKv0M2bjLjV
+gBs2/dqov7RNDL4GBqBOTQs=
+-----END PRIVATE KEY-----</configuration:content>
+              </configuration:key>
+              <configuration:ca>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIFBjCCAu6gAwIBAgIRAMISMktwqbSRcdxA9+KFJjwwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjQwMzEzMDAwMDAw
+WhcNMjcwMzEyMjM1OTU5WjAzMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3Mg
+RW5jcnlwdDEMMAoGA1UEAxMDUjEyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEA2pgodK2+lP474B7i5Ut1qywSf+2nAzJ+Npfs6DGPpRONC5kuHs0BUT1M
+5ShuCVUxqqUiXXL0LQfCTUA83wEjuXg39RplMjTmhnGdBO+ECFu9AhqZ66YBAJpz
+kG2Pogeg0JfT2kVhgTU9FPnEwF9q3AuWGrCf4yrqvSrWmMebcas7dA8827JgvlpL
+Thjp2ypzXIlhZZ7+7Tymy05v5J75AEaz/xlNKmOzjmbGGIVwx1Blbzt05UiDDwhY
+XS0jnV6j/ujbAKHS9OMZTfLuevYnnuXNnC2i8n+cF63vEzc50bTILEHWhsDp7CH4
+WRt/uTp8n1wBnWIEwii9Cq08yhDsGwIDAQABo4H4MIH1MA4GA1UdDwEB/wQEAwIB
+hjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwEgYDVR0TAQH/BAgwBgEB
+/wIBADAdBgNVHQ4EFgQUALUp8i2ObzHom0yteD763OkM0dIwHwYDVR0jBBgwFoAU
+ebRZ5nu25eQBc4AIiMgaWPbpm24wMgYIKwYBBQUHAQEEJjAkMCIGCCsGAQUFBzAC
+hhZodHRwOi8veDEuaS5sZW5jci5vcmcvMBMGA1UdIAQMMAowCAYGZ4EMAQIBMCcG
+A1UdHwQgMB4wHKAaoBiGFmh0dHA6Ly94MS5jLmxlbmNyLm9yZy8wDQYJKoZIhvcN
+AQELBQADggIBAI910AnPanZIZTKS3rVEyIV29BWEjAK/duuz8eL5boSoVpHhkkv3
+4eoAeEiPdZLj5EZ7G2ArIK+gzhTlRQ1q4FKGpPPaFBSpqV/xbUb5UlAXQOnkHn3m
+FVj+qYv87/WeY+Bm4sN3Ox8BhyaU7UAQ3LeZ7N1X01xxQe4wIAAE3JVLUCiHmZL+
+qoCUtgYIFPgcg350QMUIWgxPXNGEncT921ne7nluI02V8pLUmClqXOsCwULw+PVO
+ZCB7qOMxxMBoCUeL2Ll4oMpOSr5pJCpLN3tRA2s6P1KLs9TSrVhOk+7LX28NMUlI
+usQ/nxLJID0RhAeFtPjyOCOscQBA53+NRjSCak7P4A5jX7ppmkcJECL+S0i3kXVU
+y5Me5BbrU8973jZNv/ax6+ZK6TM8jWmimL6of6OrX7ZU6E2WqazzsFrLG3o2kySb
+zlhSgJ81Cl4tv3SbYiYXnJExKQvzf83DYotox3f0fwv7xln1A2ZLplCb0O+l/AK0
+YE0DS2FPxSAHi0iwMfW2nNHJrXcY3LLHD77gRgje4Eveubi2xxa+Nmk/hmhLdIET
+iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
+0zrLnOrAj/dfrlEWRhCvAgbuwLZX1A2sjNjXoPOHbsPiy+lO1KF8/XY7
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:ca>
+
+              <configuration:adservingDomain name="ad.new-programmatic.com"/>
+              <configuration:adservingDomain name="ad.new-programmatic.ru"/>
+              <configuration:adservingDomain name="match.new-programmatic.ru"/>
+              <configuration:adservingDomain name="ad.ad-blast.ru"/>
+              <configuration:adservingDomain name="ad-blast.ru"/>
+              <configuration:adservingDomain name="match.ad-blast.ru"/>
+
+              <configuration:thirdPartyContentDomain name="media.new-programmatic.com"/>
+              <configuration:thirdPartyContentDomain name="media.new-programmatic.ru"/>
+              <configuration:thirdPartyContentDomain name="media.ad-blast.ru"/>
+
+              <configuration:videoDomain name="video.new-programmatic.com"/>
+            </configuration:secureVirtualServer>
+
+            <configuration:secureVirtualServer port="443" internal_port="10146" keep_alive="true" keep_alive_timeout="5" max_keep_alive_requests="10000" enable="true" proxy_protocol="false">
+              <configuration:cert>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIGUjCCBTqgAwIBAgISBZUkNfJVQybafib4warJlgFmMA0GCSqGSIb3DQEBCwUA
+MDMxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQwwCgYDVQQD
+EwNSMTIwHhcNMjYwMjI1MDc0NjM4WhcNMjYwNTI2MDc0NjM3WjAjMSEwHwYDVQQD
+ExhhZG1hbmFnZXIuZ2VuaXVzZ3JvdXAuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+DwAwggEKAoIBAQCX77WX3yQBoAJJODRu6myf15YgliwesmlDaTITzznVaw4Pcz7O
+WQ0ccSv/CfBTa1gR4ZHOPG7PkxS8dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4
+pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vnYgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpC
+H2x1mUWk5DHGvTS8zi1mWtOSpE34NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuO
+IaqPL3jlJOEBFUmc4coYWhE+J9bCHUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M
++xHgJ/y6DrVh5lCi6K5Mwi2YtIPAIEoybrC/AgMBAAGjggNuMIIDajAOBgNVHQ8B
+Af8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAdBgNV
+HQ4EFgQUR+u+Il1aN2exnk2avc+iSIpuZskwHwYDVR0jBBgwFoAUALUp8i2ObzHo
+m0yteD763OkM0dIwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzAChhdodHRwOi8v
+cjEyLmkubGVuY3Iub3JnLzCCAWcGA1UdEQSCAV4wggFaghdhZC5uZXctcHJvZ3Jh
+bW1hdGljLmNvbYIYYWRtYW5hZ2VyLmdlbml1c2dyb3VwLmNjgiBkZXZlbG9wbWVu
+dC5uZXctcHJvZ3JhbW1hdGljLmNvbYIYZHNwLm5ldy1wcm9ncmFtbWF0aWMuY29t
+ghBraWNrLWNhcHRjaGEuY29tghptYXRjaC5uZXctcHJvZ3JhbW1hdGljLmNvbYIa
+bWVkaWEubmV3LXByb2dyYW1tYXRpYy5jb22CFG5ldy1wcm9ncmFtbWF0aWMuY29t
+ghNwbGF0Zm9ybS5jb2JyYXp6LmFpghZwbGF0Zm9ybS5nZW5pdXNkZXNrLmFpgg11
+aS5jb2JyYXp6LmFpghd1aS5uZXctcHJvZ3JhbW1hdGljLmNvbYIadmlkZW8ubmV3
+LXByb2dyYW1tYXRpYy5jb22CGHd3dy5uZXctcHJvZ3JhbW1hdGljLmNvbTATBgNV
+HSAEDDAKMAgGBmeBDAECATAvBgNVHR8EKDAmMCSgIqAghh5odHRwOi8vcjEyLmMu
+bGVuY3Iub3JnLzEwMy5jcmwwggENBgorBgEEAdZ5AgQCBIH+BIH7APkAdwBkEcRs
+pBLsp4kcogIuALyrTygH1B41J6vq/tUDyX3N8AAAAZyT+TSPAAAEAwBIMEYCIQCz
+PWgxSdXafa+GvUMqbKA/DipVsGgc77xjjuVIMBvCtwIhAOcZQHDtrv8Dyn/Pmjhq
+MNE+Lu4+GSBnCnrA3CJA4L4MAH4Apcl4kl1XRheChw3YiWYLXFVki30AQPLsB2hR
+0YhpGfcAAAGck/k3JQAIAAAFADNiIjEEAwBHMEUCIQDFcRht8+HwT7Pm8Jnz3W8q
+A5LnDqtJsSVPJ/5F4t75AgIgKRIV+yuHCpn0bvY9e5Ds9miy/7Nb5Ky2H73L6Jag
+X3IwDQYJKoZIhvcNAQELBQADggEBAD86K4YU5cWg21WQeDQ5Wv3gjA2LceE4KNel
+k4UqSJdQTkC/OY2dgIXewzfZGap8u0kGmUbQGrTRIrBGs6bL0t0nGEqNn5b1It+l
+MZPb0e1kB7iOxvD+tDGadYE1yREu1QB9DQso9NccEellaxhZ9RJDP+JMwxqBDe9w
+ZgFkOOtFSNMwUfa+RWwxJmRhgR2u5uKEldtJgVmDuSC1yD+uQJ5ZEUqMZ+2f9BH1
+NikJ042HERfgHNjDk/+WNz3Sn6YTumK7IaS0gfzCHBHUSSQDGhdxAnN2a2zCQdZm
+U/0pxdNpCqT80t3O31hHPebzrHjTyd+N/thBbFkMi565KjiuY3w=
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:cert>
+              <configuration:key>
+                <configuration:content>-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCX77WX3yQBoAJJ
+ODRu6myf15YgliwesmlDaTITzznVaw4Pcz7OWQ0ccSv/CfBTa1gR4ZHOPG7PkxS8
+dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vn
+YgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpCH2x1mUWk5DHGvTS8zi1mWtOSpE34
+NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuOIaqPL3jlJOEBFUmc4coYWhE+J9bC
+HUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M+xHgJ/y6DrVh5lCi6K5Mwi2YtIPA
+IEoybrC/AgMBAAECggEBAIaApZCh8H0jyoJJKFm8W5cRQgztBHfUV01e9f8FZ1xg
+Xl0dF8+SlAHGyj0H7mHa2GdT+kDJzQsjWKsSFv1srHPK87MZtNHzuMXMmjNaNfAM
+wV3/K+J2ZjCwUpgIPWlZv29jDJ4C7VpKu2R1rezBhl9tA6fG6FVh4cf4jnhsrIUI
+uni0ue+pGpeplx79jPaJUL9QAPMBypJdoA7y7Fyw+Eg73ddJk5XGB1pmXeUrdzQC
+OccM3CB0tr6RlVdPYPDf21Gw3gpqxgIQDhgBqKBWeXuo2PvEMrAv2Cxq/VQic47P
+hOZkR7UcY8xEjoKPcuPaZRv8PI+4cbqC2A4sDiJUWSECgYEAylGCBb/07IMpc/9I
+/1IzmBDsR4AJRw7ijEVJrCgOy0X4Azuk51ogLfFOln3hT+ODvLMRgrxb2mzYrECA
+XCTeqHPn0jHHvE+bVLBKm12+h+rEn/VhbNbDprXhw+zpB9tkeYKMJUHiYPdr9iNB
+KzcDZ0Y9cuUX9ZtlNQgaY9oTr/ECgYEAwD//nqMmNtHXQfktD7FzbLjwqmAA0dR3
+C/aRHE/abEcKHLilJ5rRKpev2pD4CRxqM/JQILQC12eZwmycC76rDpDJ2wvL2Mlw
+gFJuh9zW5GL5ZvzhrnBInTYtrlge2nkpMrS/KKPBEWqaAsEMYEqkUgd6yOjao7ZI
+nrwrmU0bG68CgYBt2Qluk8WosKJOL9pzfi8zLmULgTIIWcWZgXk5ttopdgjtwHGN
+h3qXV0BjJ1+xH4eEaflk8V4x3w1ZoP/Qh9g4wA2rK4oV7WcZ+UnYx3JOm6I8c199
+V7INDw3Qcg4oTO9lpgLvq7D9EvmUP5n/m7QGW7W7bzWuDbxKqeaiNmKgEQKBgDNo
+qb1NGWntYSeGL1OT+y6mocydkXqK2y66x4EPpXPw5zZY9ekKUEaYe3Dx9THShF/R
+uzWTjXL2hDpmeq/1U564fxHxLJiS/V+DK4VvO5OlF9Y/Z0YTRoertjl53P5FCgxC
+IyAF8hnrLLXx05JoQ1qgH2hcRCMlGnRAE1SSNt6HAoGAP4X8k3p4qywuT42tzAms
+In+av2z4LKB5LbyZBfg6ymmGy32BhjkUIXPVhFHdePQwF0h9qbXnug7pEXn7ophR
+kgA8d1wLEMG5XMqi33Qlda7rkcAFAbCS+zex6x9bRks1zUjtucfIAVKv0M2bjLjV
+gBs2/dqov7RNDL4GBqBOTQs=
+-----END PRIVATE KEY-----</configuration:content>
+              </configuration:key>
+              <configuration:ca>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIFBjCCAu6gAwIBAgIRAMISMktwqbSRcdxA9+KFJjwwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjQwMzEzMDAwMDAw
+WhcNMjcwMzEyMjM1OTU5WjAzMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3Mg
+RW5jcnlwdDEMMAoGA1UEAxMDUjEyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEA2pgodK2+lP474B7i5Ut1qywSf+2nAzJ+Npfs6DGPpRONC5kuHs0BUT1M
+5ShuCVUxqqUiXXL0LQfCTUA83wEjuXg39RplMjTmhnGdBO+ECFu9AhqZ66YBAJpz
+kG2Pogeg0JfT2kVhgTU9FPnEwF9q3AuWGrCf4yrqvSrWmMebcas7dA8827JgvlpL
+Thjp2ypzXIlhZZ7+7Tymy05v5J75AEaz/xlNKmOzjmbGGIVwx1Blbzt05UiDDwhY
+XS0jnV6j/ujbAKHS9OMZTfLuevYnnuXNnC2i8n+cF63vEzc50bTILEHWhsDp7CH4
+WRt/uTp8n1wBnWIEwii9Cq08yhDsGwIDAQABo4H4MIH1MA4GA1UdDwEB/wQEAwIB
+hjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwEgYDVR0TAQH/BAgwBgEB
+/wIBADAdBgNVHQ4EFgQUALUp8i2ObzHom0yteD763OkM0dIwHwYDVR0jBBgwFoAU
+ebRZ5nu25eQBc4AIiMgaWPbpm24wMgYIKwYBBQUHAQEEJjAkMCIGCCsGAQUFBzAC
+hhZodHRwOi8veDEuaS5sZW5jci5vcmcvMBMGA1UdIAQMMAowCAYGZ4EMAQIBMCcG
+A1UdHwQgMB4wHKAaoBiGFmh0dHA6Ly94MS5jLmxlbmNyLm9yZy8wDQYJKoZIhvcN
+AQELBQADggIBAI910AnPanZIZTKS3rVEyIV29BWEjAK/duuz8eL5boSoVpHhkkv3
+4eoAeEiPdZLj5EZ7G2ArIK+gzhTlRQ1q4FKGpPPaFBSpqV/xbUb5UlAXQOnkHn3m
+FVj+qYv87/WeY+Bm4sN3Ox8BhyaU7UAQ3LeZ7N1X01xxQe4wIAAE3JVLUCiHmZL+
+qoCUtgYIFPgcg350QMUIWgxPXNGEncT921ne7nluI02V8pLUmClqXOsCwULw+PVO
+ZCB7qOMxxMBoCUeL2Ll4oMpOSr5pJCpLN3tRA2s6P1KLs9TSrVhOk+7LX28NMUlI
+usQ/nxLJID0RhAeFtPjyOCOscQBA53+NRjSCak7P4A5jX7ppmkcJECL+S0i3kXVU
+y5Me5BbrU8973jZNv/ax6+ZK6TM8jWmimL6of6OrX7ZU6E2WqazzsFrLG3o2kySb
+zlhSgJ81Cl4tv3SbYiYXnJExKQvzf83DYotox3f0fwv7xln1A2ZLplCb0O+l/AK0
+YE0DS2FPxSAHi0iwMfW2nNHJrXcY3LLHD77gRgje4Eveubi2xxa+Nmk/hmhLdIET
+iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
+0zrLnOrAj/dfrlEWRhCvAgbuwLZX1A2sjNjXoPOHbsPiy+lO1KF8/XY7
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:ca>
+
+              <configuration:biddingDomain name="dsp.new-programmatic.com"/>
+              <configuration:biddingDomain name="dsp.new-programmatic.ru"/>
+              <configuration:biddingDomain name="dsp.ad-blast.ru"/>
+            </configuration:secureVirtualServer>
+
+            <configuration:secureVirtualServer port="443" internal_port="10148" monitoring_port="10346" nginx_index="2" keep_alive="true" keep_alive_timeout="1" max_keep_alive_requests="10" enable="true" proxy_protocol="false">
+              <configuration:cert>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIGUjCCBTqgAwIBAgISBZUkNfJVQybafib4warJlgFmMA0GCSqGSIb3DQEBCwUA
+MDMxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQwwCgYDVQQD
+EwNSMTIwHhcNMjYwMjI1MDc0NjM4WhcNMjYwNTI2MDc0NjM3WjAjMSEwHwYDVQQD
+ExhhZG1hbmFnZXIuZ2VuaXVzZ3JvdXAuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+DwAwggEKAoIBAQCX77WX3yQBoAJJODRu6myf15YgliwesmlDaTITzznVaw4Pcz7O
+WQ0ccSv/CfBTa1gR4ZHOPG7PkxS8dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4
+pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vnYgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpC
+H2x1mUWk5DHGvTS8zi1mWtOSpE34NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuO
+IaqPL3jlJOEBFUmc4coYWhE+J9bCHUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M
++xHgJ/y6DrVh5lCi6K5Mwi2YtIPAIEoybrC/AgMBAAGjggNuMIIDajAOBgNVHQ8B
+Af8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAdBgNV
+HQ4EFgQUR+u+Il1aN2exnk2avc+iSIpuZskwHwYDVR0jBBgwFoAUALUp8i2ObzHo
+m0yteD763OkM0dIwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzAChhdodHRwOi8v
+cjEyLmkubGVuY3Iub3JnLzCCAWcGA1UdEQSCAV4wggFaghdhZC5uZXctcHJvZ3Jh
+bW1hdGljLmNvbYIYYWRtYW5hZ2VyLmdlbml1c2dyb3VwLmNjgiBkZXZlbG9wbWVu
+dC5uZXctcHJvZ3JhbW1hdGljLmNvbYIYZHNwLm5ldy1wcm9ncmFtbWF0aWMuY29t
+ghBraWNrLWNhcHRjaGEuY29tghptYXRjaC5uZXctcHJvZ3JhbW1hdGljLmNvbYIa
+bWVkaWEubmV3LXByb2dyYW1tYXRpYy5jb22CFG5ldy1wcm9ncmFtbWF0aWMuY29t
+ghNwbGF0Zm9ybS5jb2JyYXp6LmFpghZwbGF0Zm9ybS5nZW5pdXNkZXNrLmFpgg11
+aS5jb2JyYXp6LmFpghd1aS5uZXctcHJvZ3JhbW1hdGljLmNvbYIadmlkZW8ubmV3
+LXByb2dyYW1tYXRpYy5jb22CGHd3dy5uZXctcHJvZ3JhbW1hdGljLmNvbTATBgNV
+HSAEDDAKMAgGBmeBDAECATAvBgNVHR8EKDAmMCSgIqAghh5odHRwOi8vcjEyLmMu
+bGVuY3Iub3JnLzEwMy5jcmwwggENBgorBgEEAdZ5AgQCBIH+BIH7APkAdwBkEcRs
+pBLsp4kcogIuALyrTygH1B41J6vq/tUDyX3N8AAAAZyT+TSPAAAEAwBIMEYCIQCz
+PWgxSdXafa+GvUMqbKA/DipVsGgc77xjjuVIMBvCtwIhAOcZQHDtrv8Dyn/Pmjhq
+MNE+Lu4+GSBnCnrA3CJA4L4MAH4Apcl4kl1XRheChw3YiWYLXFVki30AQPLsB2hR
+0YhpGfcAAAGck/k3JQAIAAAFADNiIjEEAwBHMEUCIQDFcRht8+HwT7Pm8Jnz3W8q
+A5LnDqtJsSVPJ/5F4t75AgIgKRIV+yuHCpn0bvY9e5Ds9miy/7Nb5Ky2H73L6Jag
+X3IwDQYJKoZIhvcNAQELBQADggEBAD86K4YU5cWg21WQeDQ5Wv3gjA2LceE4KNel
+k4UqSJdQTkC/OY2dgIXewzfZGap8u0kGmUbQGrTRIrBGs6bL0t0nGEqNn5b1It+l
+MZPb0e1kB7iOxvD+tDGadYE1yREu1QB9DQso9NccEellaxhZ9RJDP+JMwxqBDe9w
+ZgFkOOtFSNMwUfa+RWwxJmRhgR2u5uKEldtJgVmDuSC1yD+uQJ5ZEUqMZ+2f9BH1
+NikJ042HERfgHNjDk/+WNz3Sn6YTumK7IaS0gfzCHBHUSSQDGhdxAnN2a2zCQdZm
+U/0pxdNpCqT80t3O31hHPebzrHjTyd+N/thBbFkMi565KjiuY3w=
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:cert>
+              <configuration:key>
+                <configuration:content>-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCX77WX3yQBoAJJ
+ODRu6myf15YgliwesmlDaTITzznVaw4Pcz7OWQ0ccSv/CfBTa1gR4ZHOPG7PkxS8
+dhHnXjFuTjIyY1w95qPgzQW7TJfsa55Iuqy4pY9Tw8Zo3MFBwXp0z1Eg5Kcmn3vn
+YgsD+SXgbiZLj+fEkIg7Gj46ugI4/prTcXpCH2x1mUWk5DHGvTS8zi1mWtOSpE34
+NN2aQmXdhPkyDquG7tp0SgrTwQXvvw1GiZuOIaqPL3jlJOEBFUmc4coYWhE+J9bC
+HUFv0ikLZt2OLbm/72MY+vVANz36o+bQR94M+xHgJ/y6DrVh5lCi6K5Mwi2YtIPA
+IEoybrC/AgMBAAECggEBAIaApZCh8H0jyoJJKFm8W5cRQgztBHfUV01e9f8FZ1xg
+Xl0dF8+SlAHGyj0H7mHa2GdT+kDJzQsjWKsSFv1srHPK87MZtNHzuMXMmjNaNfAM
+wV3/K+J2ZjCwUpgIPWlZv29jDJ4C7VpKu2R1rezBhl9tA6fG6FVh4cf4jnhsrIUI
+uni0ue+pGpeplx79jPaJUL9QAPMBypJdoA7y7Fyw+Eg73ddJk5XGB1pmXeUrdzQC
+OccM3CB0tr6RlVdPYPDf21Gw3gpqxgIQDhgBqKBWeXuo2PvEMrAv2Cxq/VQic47P
+hOZkR7UcY8xEjoKPcuPaZRv8PI+4cbqC2A4sDiJUWSECgYEAylGCBb/07IMpc/9I
+/1IzmBDsR4AJRw7ijEVJrCgOy0X4Azuk51ogLfFOln3hT+ODvLMRgrxb2mzYrECA
+XCTeqHPn0jHHvE+bVLBKm12+h+rEn/VhbNbDprXhw+zpB9tkeYKMJUHiYPdr9iNB
+KzcDZ0Y9cuUX9ZtlNQgaY9oTr/ECgYEAwD//nqMmNtHXQfktD7FzbLjwqmAA0dR3
+C/aRHE/abEcKHLilJ5rRKpev2pD4CRxqM/JQILQC12eZwmycC76rDpDJ2wvL2Mlw
+gFJuh9zW5GL5ZvzhrnBInTYtrlge2nkpMrS/KKPBEWqaAsEMYEqkUgd6yOjao7ZI
+nrwrmU0bG68CgYBt2Qluk8WosKJOL9pzfi8zLmULgTIIWcWZgXk5ttopdgjtwHGN
+h3qXV0BjJ1+xH4eEaflk8V4x3w1ZoP/Qh9g4wA2rK4oV7WcZ+UnYx3JOm6I8c199
+V7INDw3Qcg4oTO9lpgLvq7D9EvmUP5n/m7QGW7W7bzWuDbxKqeaiNmKgEQKBgDNo
+qb1NGWntYSeGL1OT+y6mocydkXqK2y66x4EPpXPw5zZY9ekKUEaYe3Dx9THShF/R
+uzWTjXL2hDpmeq/1U564fxHxLJiS/V+DK4VvO5OlF9Y/Z0YTRoertjl53P5FCgxC
+IyAF8hnrLLXx05JoQ1qgH2hcRCMlGnRAE1SSNt6HAoGAP4X8k3p4qywuT42tzAms
+In+av2z4LKB5LbyZBfg6ymmGy32BhjkUIXPVhFHdePQwF0h9qbXnug7pEXn7ophR
+kgA8d1wLEMG5XMqi33Qlda7rkcAFAbCS+zex6x9bRks1zUjtucfIAVKv0M2bjLjV
+gBs2/dqov7RNDL4GBqBOTQs=
+-----END PRIVATE KEY-----</configuration:content>
+              </configuration:key>
+              <configuration:ca>
+                <configuration:content>-----BEGIN CERTIFICATE-----
+MIIFBjCCAu6gAwIBAgIRAMISMktwqbSRcdxA9+KFJjwwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjQwMzEzMDAwMDAw
+WhcNMjcwMzEyMjM1OTU5WjAzMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3Mg
+RW5jcnlwdDEMMAoGA1UEAxMDUjEyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEA2pgodK2+lP474B7i5Ut1qywSf+2nAzJ+Npfs6DGPpRONC5kuHs0BUT1M
+5ShuCVUxqqUiXXL0LQfCTUA83wEjuXg39RplMjTmhnGdBO+ECFu9AhqZ66YBAJpz
+kG2Pogeg0JfT2kVhgTU9FPnEwF9q3AuWGrCf4yrqvSrWmMebcas7dA8827JgvlpL
+Thjp2ypzXIlhZZ7+7Tymy05v5J75AEaz/xlNKmOzjmbGGIVwx1Blbzt05UiDDwhY
+XS0jnV6j/ujbAKHS9OMZTfLuevYnnuXNnC2i8n+cF63vEzc50bTILEHWhsDp7CH4
+WRt/uTp8n1wBnWIEwii9Cq08yhDsGwIDAQABo4H4MIH1MA4GA1UdDwEB/wQEAwIB
+hjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwEgYDVR0TAQH/BAgwBgEB
+/wIBADAdBgNVHQ4EFgQUALUp8i2ObzHom0yteD763OkM0dIwHwYDVR0jBBgwFoAU
+ebRZ5nu25eQBc4AIiMgaWPbpm24wMgYIKwYBBQUHAQEEJjAkMCIGCCsGAQUFBzAC
+hhZodHRwOi8veDEuaS5sZW5jci5vcmcvMBMGA1UdIAQMMAowCAYGZ4EMAQIBMCcG
+A1UdHwQgMB4wHKAaoBiGFmh0dHA6Ly94MS5jLmxlbmNyLm9yZy8wDQYJKoZIhvcN
+AQELBQADggIBAI910AnPanZIZTKS3rVEyIV29BWEjAK/duuz8eL5boSoVpHhkkv3
+4eoAeEiPdZLj5EZ7G2ArIK+gzhTlRQ1q4FKGpPPaFBSpqV/xbUb5UlAXQOnkHn3m
+FVj+qYv87/WeY+Bm4sN3Ox8BhyaU7UAQ3LeZ7N1X01xxQe4wIAAE3JVLUCiHmZL+
+qoCUtgYIFPgcg350QMUIWgxPXNGEncT921ne7nluI02V8pLUmClqXOsCwULw+PVO
+ZCB7qOMxxMBoCUeL2Ll4oMpOSr5pJCpLN3tRA2s6P1KLs9TSrVhOk+7LX28NMUlI
+usQ/nxLJID0RhAeFtPjyOCOscQBA53+NRjSCak7P4A5jX7ppmkcJECL+S0i3kXVU
+y5Me5BbrU8973jZNv/ax6+ZK6TM8jWmimL6of6OrX7ZU6E2WqazzsFrLG3o2kySb
+zlhSgJ81Cl4tv3SbYiYXnJExKQvzf83DYotox3f0fwv7xln1A2ZLplCb0O+l/AK0
+YE0DS2FPxSAHi0iwMfW2nNHJrXcY3LLHD77gRgje4Eveubi2xxa+Nmk/hmhLdIET
+iVDFanoCrMVIpQ59XWHkzdFmoHXHBV7oibVjGSO7ULSQ7MJ1Nz51phuDJSgAIU7A
+0zrLnOrAj/dfrlEWRhCvAgbuwLZX1A2sjNjXoPOHbsPiy+lO1KF8/XY7
+-----END CERTIFICATE-----</configuration:content>
+              </configuration:ca>
+
+              <configuration:adservingDomain name="match.new-programmatic.com"/>
+              <configuration:adservingDomain name="match.new-programmatic.ru"/>
+              <configuration:adservingDomain name="ad-blast.ru"/>
+              <configuration:adservingDomain name="match.ad-blast.ru"/>
+            </configuration:secureVirtualServer>
+
+            <configuration:uid_key></configuration:uid_key>
+            <configuration:temporary_uid_key></configuration:temporary_uid_key>
+            <configuration:securityToken key0="MFBOeuplH3LlQqfGSvNiew==" key1="gYi+K845gfiUkvx7Se1zKA==" key2="mVa0GF8y1uvou3mktkNxqw==" key3="mCFIshSwVu4VxRTi73Rf+Q==" key4="fCW/qXof04/U/qRTggbJLw==" key5="K2UPkfYBFNA+MxHKkV5OUA==" key6="emcqWycuiztgJVng4az0Xw=="/>
+            <configuration:RTBAccount
+                google_encryption_key="4caac0d5e3bb9f0eadbbf4858ba8059545072fd72e3d0eaeb87e23fc87bcd27b"
+                google_integrity_key="800174173be3643c6f38a36634ecf36a547f4a6113f8807777a38d8b008d63e2"
+                account_id="10728" max_cpm_value="300"/>
+            <configuration:RTBAccount
+                google_encryption_key="e710dd79b5a116ba1f64929ee77e59596246aa69db517a1062f40634390e6566"
+                google_integrity_key="6df6b352194142709c07e65044b0ef02e306532b7aaf822ace6f8d8f1a546687"
+                account_id="9789" max_cpm_value="300"/>
+
+            <configuration:RTBAccount
+                google_encryption_key="582409cb10c1d6a887f1691dc722c848a95f595ef6010c0e5a5420faf62f35b4"
+                google_integrity_key="9e599f668c8f20b0167f45cb1941e416048b2adc3be2e5cd5a52a3938c0dcd38"
+                account_id="10638" max_cpm_value="300"/>
+            <configuration:RTBAccount
+                google_encryption_key="582409cb10c1d6a887f1691dc722c848a95f595ef6010c0e5a5420faf62f35b4"
+                google_integrity_key="9e599f668c8f20b0167f45cb1941e416048b2adc3be2e5cd5a52a3938c0dcd38"
+                account_id="9789" max_cpm_value="300"/>
+
+            <configuration:RTB yandex_key="4ae77e6422f4152fd1486beee6c28603">
+              <!-- process ad-blast.ru domain requests -->
+              <configuration:source id="adblast0">
+                <configuration:userBind redirect="https://match.targetrtb.com/userbind?clid=##SIGNEDCOOKIEUID=##&amp;src=carousel&amp;gi=1" passback="false"/>
+              </configuration:source>
+
+              <!--
+              <configuration:source id="adblast0">
+                <configuration:userBind redirect="https://match.new-programmatic.com/userbind?clid=##SIGNEDCOOKIEUID=##&amp;src=carousel&amp;gi=1&amp;passback=https%3A%2F%2Fcm.mgid.com%2Fm%3Fcdsp%3D476653%26c%3D##UNSIGNEDSSPUID=##" passback="false"/>
+              </configuration:source>
+              -->
+
+              <configuration:source id="req">
+                <configuration:userBind redirect="https://match.new-programmatic.com/req?clid=##SIGNEDUID=##" passback="false"/>
+              </configuration:source>
+
+              <configuration:source id="carousel">
+                <configuration:userBind redirect="##PASSBACK_URL=##" passback="false"/>
+              </configuration:source>
+
+              <configuration:source id="getshop">
+                <configuration:userBind redirect="//ad.qvol.ru/v1/match?ename=newprogrammatic_rtb&amp;eid=##SSPUID=##" passback="false"/>
+              </configuration:source>
+
+              <configuration:source id="qvol">
+                <configuration:userBind redirect="//a.qvol.tv/sync?dsp=NEWprogrammatic&amp;buyerid=##SSPUID=##" passback="false"/>
+              </configuration:source>
+
+              <configuration:source id="amn" instantiate_type="iframe with url" request_type="openrtb with click url" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false"
+                custom_click="true" preclick="${CLICK_URL}" mime_encoded_preclick="${CLICK_URL_ENC}" vast_preclick="${CLICK_URL}" mime_encoded_vast_preclick="${CLICK_URL_ENC}" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//stat.adlabs.ru/merge_gpsid/?sid=17&amp;id=##SSPUID=##">
+
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="andata">
+                <configuration:userBind redirect="https://gtsync.andata.ru/i?&amp;e=pv&amp;uid=##UNSIGNEDSSPUID=##&amp;aid=gg-dsp-andata_faxydi">
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="aidata">
+                <configuration:userBind
+                    redirect="https://x01.aidata.io/0.gif?pid=9601432&amp;id=##UNSIGNEDSSPUID=##">
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="popunder"
+                instantiate_type="url in body"
+                request_type="openrtb"
+                notice="nurl"
+                truncate_domain="false" seat="275"
+                vast_instantiate_type="video url"
+                vast_notice="nurl"
+                fill_adid="false" ipw_extension="true" custom_click="false" skip_ext_category="false"/>
+
+              <configuration:source id="ipw" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" seat="275" vast_instantiate_type="video url" vast_notice="nurl" fill_adid="false" ipw_extension="true" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//x.bidswitch.net/sync?dsp_id=275&amp;user_id=##UNSIGNEDSSPUID=##&amp;bsw_param=##PUSH_DATA=##">
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="btw"
+                instantiate_type="iframe with url"
+                request_type="openrtb with click url" notice="nurl"
+                truncate_domain="false" vast_instantiate_type="video url" vast_notice="nurl"
+                fill_adid="false" ipw_extension="false"
+                custom_click="true" preclick="${CLICK_URL}" mime_encoded_preclick="${CLICK_URL_ENC}"
+                vast_preclick=""
+                mime_encoded_vast_preclick=""
+                skip_ext_category="false"
+                native_instantiate_type="adm" native_impression_tracker_type="resources">
+                <configuration:userBind passback="true" redirect="//ads.betweendigital.com/match?bidder_id=130&amp;external_user_id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="vtochku"
+                instantiate_type="iframe with url"
+                request_type="openrtb with click url" notice="nurl"
+                truncate_domain="false" vast_instantiate_type="video url" vast_notice="nurl"
+                fill_adid="false" ipw_extension="false"
+                custom_click="true" preclick="${CLICK_URL}" mime_encoded_preclick="${CLICK_URL_ENC}"
+                vast_preclick=""
+                mime_encoded_vast_preclick=""
+                skip_ext_category="false"
+                native_instantiate_type="adm" native_impression_tracker_type="resources">
+              </configuration:source>
+
+              <!--
+              <configuration:source id="yandex" instantiate_type="data parameter value" request_type="yandex" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="https://an.yandex.ru/setud/target_rtb/##UNSIGNEDSSPUID=##?sign=##YANDEXSIGN##">
+                </configuration:userBind>
+              </configuration:source>
+              -->
+
+              <!-- yandex openrtb connection -->
+              <configuration:source id="yandex"
+                instantiate_type="body" request_type="openrtb"
+                notice="burl" truncate_domain="false" vast_notice="disabled"
+                fill_adid="false" ipw_extension="false"
+                custom_click="false"
+                skip_ext_category="false"
+                native_instantiate_type="native_as_element-1.2"
+                native_notice="nurl and burl" 
+                native_impression_tracker_type="resources"
+                >
+                <configuration:userBind passback="true" redirect="https://an.yandex.ru/mapuid/targetrtbis/##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="yandexrtb"
+                 instantiate_type="body"
+                 request_type="openrtb"
+                 notice="disabled"
+                 truncate_domain="false"
+                 vast_instantiate_type="body"
+                 vast_notice="disabled"
+                 fill_adid="false"
+                 ipw_extension="false"
+                 custom_click="false"
+                 skip_ext_category="false"
+                 native_instantiate_type="native_as_element-1.2"
+                 native_notice="nurl and burl"
+                 native_impression_tracker_type="resources"
+                 >
+                <configuration:userBind passback="true" redirect="https://an.yandex.ru/mapuid/targetrtbis/##UNSIGNEDSSPUID=##">
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="bidease" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+              </configuration:source>
+
+              <configuration:source id="qtm" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+              </configuration:source>
+              <configuration:source id="qtm_pull" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://matching.mobilebanner.ru/p.gif?pid=target-qm&amp;id=##UNSIGNEDSSPUID=##&amp;rt=https%3A%2F%2Fmatch.new-programmatic.com%2Fuserbind%3Fsrc%3Dqtm%26id%3D%25external_user_id%25"/>
+              </configuration:source>
+              <configuration:source id="qtm_pull2" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="http://matching.mobilebanner.ru/p.gif?pid=target-qm&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="qtm_pull3" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="http://matching.tlrtb.com/p.gif?pid=target-qm&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="qtm_pull4" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://matching.2ad.wtf/p.gif?pid=target-qm&amp;id=##UNSIGNEDSSPUID=##&amp;uid=##PUSH_DATA=##"/>
+              </configuration:source>
+              <configuration:source id="adr" instantiate_type="iframe with url" request_type="adriver" notice="disabled" truncate_domain="false"
+                vast_notice="disabled" vast_instantiate_type="nonsecure url"
+                fill_adid="true" ipw_extension="false"
+                custom_click="false" skip_ext_category="false"
+                erid_return_type="array">
+                <configuration:userBind passback="false" redirect="https://ssp.adriver.ru/cgi-bin/sync.cgi?dsp_id=149&amp;external_id=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="bidvol" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1&amp;passback=https%3A%2F%2Fssp.bidvol.com%2Fusersync%3Fid%3D##UNSIGNEDSSPUID=##%26dspcsid%3D26"
+                  redirect_empty_uid="false"/>
+                <configuration:userBind passback="false" redirect="https://sync.republer.com/match?src=newprog&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="get" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//exchange.rtbget.com/match?dsp=12&amp;external_uid=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="avm" instantiate_type="iframe with url" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//rtb.am15.net/aux/sync?advm_nid=60624&amp;uid=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="atv" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//sync.adaptv.advertising.com/sync?type=gif&amp;key=imarker&amp;uid=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="ezy" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//rtb.adeasy.ru/cookie-sync/store/21/?dspuid=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="adt" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//advombat.ru/0.gif?pid=IMARKER&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="adwise" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+              </configuration:source>
+
+              <configuration:source id="rtw" instantiate_type="iframe with url"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false"
+                vast_notice="disabled"
+                fill_adid="false"
+                ipw_extension="false"
+                custom_click="false"
+                native_instantiate_type="adm"
+                native_impression_tracker_type="resources"
+                skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="rtw_native" instantiate_type="iframe with url" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="lvr" instantiate_type="body" request_type="liverail" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//t4.liverail.com/?metric=csync&amp;p=3025&amp;s=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="amb" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://dmg.digitaltarget.ru/1/7500/i/i?a=1033&amp;e=##UNSIGNEDSSPUID=##&amp;i=##RANDOM=##"/>
+              </configuration:source>
+              <configuration:source id="rpb" instantiate_type="body" request_type="openrtb with click url" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="true" preclick="${CLICK_URL}" mime_encoded_preclick="${CLICK_URL:UE}" vast_preclick="${CLICK_URL}" mime_encoded_vast_preclick="${CLICK_URL:UE}" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="buz" instantiate_type="body"
+                request_type="openrtb"
+                notice="nurl"
+                truncate_domain="false"
+                vast_notice="disabled"
+                fill_adid="false"
+                ipw_extension="false"
+                custom_click="false"
+                skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="gpm" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind redirect="https://tms.dmp.wi-fi.ru/?dmpkit_cid=81460eb5-647b-4d9b-a3e3-7863f294c3da&amp;dmpkit_evid=71dee32b-4150-4012-9a7e-631445c66051&amp;g_adv=gen&amp;g_cp1=##UNSIGNEDSSPUID=##" passback="false"/>
+              </configuration:source>
+              <configuration:source id="bgn" instantiate_type="url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"> 
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="google" instantiate_type="iframe with url" request_type="google" notice="disabled" truncate_domain="false" vast_instantiate_type="video url" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" preclick="%%CLICK_URL_UNESC%%" mime_encoded_preclick="%%CLICK_URL_ESC%%" vast_preclick="%%CLICK_URL_UNESC%%" mime_encoded_vast_preclick="%%CLICK_URL_ESC%%" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="https://cm.g.doubleclick.net/pixel?google_nid=kvatimedia&amp;google_push=##mime-url:PUSH_DATA=##"/>
+              </configuration:source>
+              <configuration:source id="otm" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="https://sync.dmp.otm-r.com/match/programmatic.img?id=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="advark" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="url" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="otm_pull" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="https://sync.dmp.otm-r.com/match/programmatic.img?id=##SSPUID=##&amp;fp=##mime-url:PUSH_DATA=##"/>
+              </configuration:source>
+              <configuration:source id="relap" instantiate_type="url" request_type="openrtb" notice="burl" truncate_domain="false" vast_instantiate_type="body" vast_notice="burl" native_instantiate_type="adm" native_impression_tracker_type="resources" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="https://relap.io/partners/targetrtbcs.gif?uid=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="bind0" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://sync.dmp.otm-r.com/match/targetrtb?id=&amp;r=https%3A%2F%2Fmatch.new-programmatic.com%2Fuserbind%3Fsrc%3Dotm%26id%3D%7Bpid%7Dotm"/>
+              </configuration:source>
+              <configuration:source id="yandex_bfg" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//stub">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="apf" instantiate_type="iframe with url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//p.adframesrc.com/rtb/common/match.php?partner=imarker&amp;amp;external_uid=##SSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="mnt" instantiate_type="iframe with url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="adn" instantiate_type="iframe with url" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="pape" instantiate_type="body" request_type="openrtb with click url" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="true" preclick="${CLICK_URL}" mime_encoded_preclick="${CLICK_URL_ENC}" vast_preclick="${CLICK_URL}" mime_encoded_vast_preclick="${CLICK_URL_ENC}" skip_ext_category="false"/>
+              <configuration:source id="smartyads" instantiate_type="iframe with url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm_native" native_impression_tracker_type="imp" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="videonow" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="url" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="https://sync.videonow.ru/ssp?dsp=39&amp;version=2&amp;uuid=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="natroll" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="url" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="appodeal" instantiate_type="iframe with url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="ironsrc" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="ina" instantiate_type="iframe with url" request_type="openrtb" notice="nurl" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="adcolony" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" vast_instantiate_type="body" vast_notice="nurl" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="mtd" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="https://mediatoday.ru/core/match.gif?s=5&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="convertise" default_account_id="10933" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" max_bid_time="250" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true"/>
+              </configuration:source>
+              <configuration:source id="afx" instantiate_type="url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="opx" instantiate_type="iframe with url" request_type="openx" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="true" preclick="{clickurl}" mime_encoded_preclick="{clickurl_enc}" vast_preclick="{clickurl}" mime_encoded_vast_preclick="{clickurl_enc}" skip_ext_category="false"/>
+              <configuration:source id="ask" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="wmb" instantiate_type="iframe with url" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="sys" instantiate_type="body" request_type="openrtb with click url" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="spy" instantiate_type="url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false"/>
+              <configuration:source id="rambler" instantiate_type="url" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="adnetic" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="js" skip_ext_category="false"/>
+              <configuration:source id="mobfox" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm_native" native_impression_tracker_type="imp" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="admixer" instantiate_type="body" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false" vast_instantiate_type="body">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="rocket10" instantiate_type="body" notice="nurl" truncate_domain="false" vast_instantiate_type="body" vast_notice="nurl" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="decenterads" instantiate_type="body" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="imp" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="pubnative" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="nurl" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="hyper" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="nurl" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="anzu" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="nurl" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+
+              <configuration:source id="sape" instantiate_type="body"
+                notice="disabled"
+                truncate_domain="false"
+                vast_notice="disabled"
+                fill_adid="false"
+                ipw_extension="false"
+                custom_click="false"
+                native_instantiate_type="adm"
+                native_impression_tracker_type="resources"
+                skip_ext_category="false">
+		<configuration:userBind passback="true" redirect="https://mc.acint.net/match?dp=136&amp;euid=##mime-url:UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="ppush" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" max_bid_time="150" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="true">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="pprofit" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" max_bid_time="200" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="imp" skip_ext_category="false">
+                <configuration:userBind passback="true">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="moevideo"
+                instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false"
+                vast_instantiate_type="body"
+                vast_notice="disabled"
+                fill_adid="false" ipw_extension="false"
+                custom_click="false"
+                skip_ext_category="false"
+                notice_url="http://37.48.122.103/">
+                <configuration:userBind passback="false" redirect="https://rtb.moe.video/cs?d=19&amp;b=##UNSIGNEDSSPUID=##">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="admedia" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="pprofit_rb" instantiate_type="body" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="##PASSBACK_URL=##">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="adviora" instantiate_type="body" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="datspush" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm_native" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="true">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="ezmob" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm_native" native_impression_tracker_type="resources" skip_ext_category="false">
+
+              </configuration:source>
+              <configuration:source id="rtw_rb" instantiate_type="body" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="##PASSBACK_URL=##">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="adsterra" instantiate_type="body" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="true">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="popunder" instantiate_type="body" notice="nurl" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="false">
+
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="mgid0">
+                <configuration:userBind passback="false" redirect="https://cm.mgid.com/m?cdsp=476653&amp;c=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="mgid" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+                <configuration:userBind passback="false" redirect="https://sync.republer.com/match?src=newprog&amp;id=##UNSIGNEDSSPUID=##"/>
+                <!--<configuration:userBind passback="false"
+                  redirect="https://match.new-programmatic.com/userbind?src=bidvol&amp;pbf=1&amp;gi=1"/>-->
+                <!--<configuration:userBind passback="false" redirect="https://sync.dmp.otm-r.com/match/programmatic.img?id=##SSPUID=##&amp;fp=##mime-url:PUSH_DATA=##"/>-->
+              </configuration:source>
+              <configuration:source id="adskeeper" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+                <configuration:userBind passback="false">
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="adblast" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="https://ad-blast.ru/?id=##UID=##&amp;url=##mime-url:PASSBACK_URL=##"/>
+              </configuration:source>
+              <configuration:source id="waardex" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="https://sync.adkernel.com/user-sync?dsp=48&amp;t=image&amp;uid=##UNSIGNEDSSPUID=##">
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="clcadlla"
+                instantiate_type="url in body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false"
+                vast_instantiate_type="video url in body"
+                vast_notice="disabled" fill_adid="false"
+                ipw_extension="false" custom_click="false"
+                native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+              </configuration:source>
+
+              <configuration:source id="tube" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+                <configuration:userBind passback="false">
+                </configuration:userBind>
+              </configuration:source>
+              <configuration:source id="umedia" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+              <configuration:source id="adtelligent" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+                <configuration:userBind passback="false" redirect="https://sync.republer.com/match?src=newprog&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+              <configuration:source id="natimatica" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+                <configuration:userBind passback="false" redirect="//match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1"/>
+              </configuration:source>
+
+              <configuration:source id="clickstar" instantiate_type="body" request_type="openrtb" notice="disabled" truncate_domain="false" vast_instantiate_type="body" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="true">
+              </configuration:source>
+
+              <configuration:source id="popcash"
+                instantiate_type="url in body"
+                request_type="openrtb" notice="nurl"
+                truncate_domain="false"
+                vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+              </configuration:source>
+
+              <configuration:source id="skyadvert"
+                instantiate_type="body" notice="disabled" truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false"
+                custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://code.moviead55.ru/cookiesync_target.php?targetcookie=##mime-url:UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="ipw" instantiate_type="body" request_type="openrtb" notice="nurl" truncate_domain="false" seat="275" vast_instantiate_type="video url" vast_notice="nurl" fill_adid="false" ipw_extension="true" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true" redirect="//x.bidswitch.net/sync?dsp_id=275&amp;user_id=##UNSIGNEDSSPUID=##&amp;bsw_param=##PUSH_DATA=##"/>
+              </configuration:source>
+
+              <configuration:source id="alfasense"
+                instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false"
+                vast_instantiate_type="body"
+                vast_notice="disabled"
+                fill_adid="false" ipw_extension="false" custom_click="false" native_instantiate_type="adm" native_impression_tracker_type="resources" skip_ext_category="false">
+                <configuration:userBind passback="false" redirect="https://cs.alfasense.com/p?ssp=tg&amp;redir=0&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="gnezdo"
+                instantiate_type="body"
+                request_type="openrtb" notice="disabled" truncate_domain="false"
+                vast_instantiate_type="body" vast_notice="disabled"
+                fill_adid="false" ipw_extension="false" custom_click="false"
+                skip_ext_category="false"
+                native_instantiate_type="adm_native"
+                native_impression_tracker_type="resources">
+                <configuration:userBind passback="false"
+                  redirect="https://match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1&amp;passback=https://fcgi4.gnezdo.ru/cookie_matching_ssp/New-programmatic-banner/##UNSIGNEDSSPUID=##">
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="dao"
+                instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_instantiate_type="body"
+                vast_notice="disabled" fill_adid="false"
+                ipw_extension="false" custom_click="false"
+                native_instantiate_type="adm_native-1.2"
+                native_impression_tracker_type="resources" skip_ext_category="true">
+              </configuration:source>
+
+              <configuration:source id="adlook"
+                instantiate_type="body"
+                notice="disabled"
+                truncate_domain="false"
+                vast_notice="disabled"
+                fill_adid="false"
+                ipw_extension="false"
+                custom_click="false"
+                native_instantiate_type="adm_native"
+                native_impression_tracker_type="imp"
+                skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://a.adlook.tech/sync?dsp=13&amp;buyerid=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="adp" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://sync.adplay.ru/tools/sync?dsp=81&amp;uid=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="inv" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" fill_adid="false" ipw_extension="false" custom_click="false" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://traffaret.com/core/match.gif?s=45&amp;id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="bdstr" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" skip_ext_category="false">
+                <configuration:userBind passback="false"
+                  redirect="https://ssp.bidster.net/bind/113d269f-bb54-453f-8a82-f24f969536a8?id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="slt" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://kimberlite.io/rtb/sync/cobrazz?u=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="astra" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1&amp;passback=https%3A%2F%2Fssp.al-adtech.com%2Fapi%2Fopenrtb%2Fmatch%2Ftarget_rtb%3Fid%3D##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="clltch" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://mod.calltouch.ru/geniusdesk_uid.php?vid=##UNSIGNEDSSPUID=##&amp;siteId=##siteId=##&amp;sessionId=##sessionId=##">
+                  <configuration:redirectUrlParam name="siteId" token="siteId"/>
+                  <configuration:redirectUrlParam name="sessionId" token="sessionId"/>
+                  <configuration:redirectUrlParam name="vid" token="vid"/>
+                </configuration:userBind>
+              </configuration:source>
+
+              <configuration:source id="adspctr" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                custom_click="true" preclick="${CLICK_URL}"
+                mime_encoded_preclick="${CLICK_URL_ENC}"
+                vast_preclick=""
+                mime_encoded_vast_preclick=""
+                truncate_domain="false" vast_notice="disabled" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://match.new-programmatic.com/userbind?src=adblast0&amp;pbf=1&amp;gi=1&amp;passback=https%3A%2F%2Fa.adspector.io%2Fsync%3Fdsp%3D6%26buyerid%3D##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="techdig" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false" vast_notice="disabled" skip_ext_category="false">
+                <configuration:userBind passback="true"
+                  redirect="https://sync.opendsp.ru/match/target_rtb?id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="giraff" instantiate_type="body"
+                request_type="openrtb"
+                notice="disabled"
+                truncate_domain="false"
+                vast_notice="disabled"
+                skip_ext_category="false"
+                native_instantiate_type="adm-1.2"
+                native_notice="nurl"
+                native_impression_tracker_type="resources">
+              </configuration:source>
+
+              <configuration:source id="gpmd">
+                <configuration:userBind passback="true"
+                  redirect="https://tms.gpmdata.ru/?dmpkit_cid=81460eb5-647b-4d9b-a3e3-7863f294c3da&amp;dmpkit_evid=fd8068ef-c6c6-42f8-9cef-ad943175d496&amp;dsp_id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+              <configuration:source id="mgf">
+                <configuration:userBind passback="true"
+                  redirect="https://js.onef.pro/static/reg1f_v1.js?1f_pixel_id=d3f4af42-3fd0-45ae-9d49-631ac7bf0603&amp;internal_id=##UNSIGNEDSSPUID=##"/>
+              </configuration:source>
+
+	     <configuration:source id="techdig"
+		 instantiate_type="body"
+		 request_type="openrtb"
+		 notice="disabled"
+		 vast_instantiate_type="body"
+		 vast_notice="disabled">
+
+	       <configuration:userBind passback="true"
+                 redirect="https://sync.opendsp.ru/match/genius?id=##UNSIGNEDSSPUID=##"/>
+	     </configuration:source>
+
+              <configuration:allowedPassback domain="ssp-bid.pladform.ru"/>
+              <configuration:allowedPassback domain="media.new-programmatic.ru"/>
+              <configuration:allowedPassback domain="*"/>
+            </configuration:RTB>
+
+            <configuration:kafkaStorage>
+              <configuration:broker host="kafka01" port="9092"/>
+              <configuration:uidgenerator topic="uidgenerator" threads="20" message_queue_size="100000"/>
+              <configuration:clickstream topic="clickstream" threads="20" message_queue_size="100000"/>
+              <configuration:geo topic="geo" threads="20" message_queue_size="100000"/>
+              <configuration:adsSpaces topic="adsSpaces" threads="20" message_queue_size="100000"/>
+              <configuration:match topic="match" threads="20" message_queue_size="100000"/>
+            </configuration:kafkaStorage>
+          </configuration:coloParams>
+          <configuration:Cookies domain=".new-programmatic.com" path="/">
+            <configuration:Cookie name="OPTED_OUT" domain=".new-programmatic.com" path="/" expires="157680000"/>
+          </configuration:Cookies>
+          <configuration:inventoryStats simplifying="1" distrib_count="32"/>
+          <configuration:channelTriggerImpStats enable="false"/>
+          <configuration:tagGroupStats enable="false"/>
+          <configuration:snmpStats enable="true" monitoring_tag_id="12751" monitoring_country="ru" oid_suffix="0"/>
+          <configuration:userProfiling chunks_count="32"
+                                       bind_chunks_count="128"
+                                       repeat_trigger_timeout="60"
+                                       user_bind_keep_mode="keep only master"/>
+          <configuration:IPMapping></configuration:IPMapping>
+          <configuration:predictorConfig>
+            <configuration:researchStat ip_salt="" ip_logging_enabled="true" profiling_log_sampling="100" enable_bids="false" log_path="logs"/>
+            <configuration:CTRConfig expire_timeout="5000000" ctr_path="ctr" conv_path="conv"/>
+          </configuration:predictorConfig>
+          <configuration:audienceChannelConfig>
+            <configuration:sourceRef host="adbe00" port="11873"/>
+          </configuration:audienceChannelConfig>
+          <configuration:central campaign_statuses="active" channel_statuses="active">
+            <configuration:pgConnection connection_string="host=postdb00 port=5432 dbname=stat user=ro password=Q1oL6mm5hPTjnDQ"/>
+            <configuration:pgConnectionForLogProcessing connection_string="host=postdb00 port=5432 dbname=stat user=ads password=3Azb0uDoR33tPpI"/>
+            <configuration:statFilesReceiverRef host="postdb00" port="10873"/>
+            <configuration:dataSourceRef host="ui00" port="8873" path="filesender"/>
+          </configuration:central>
+        </configuration:cluster></configuration>
+      <serviceGroup descriptor="AdCluster/FrontendSubCluster" name="FrontendSubCluster-1">
+        <configuration><configuration:frontendCluster>
+            <configuration:channelServing>
+              <configuration:scaleParams chunks_count="128"/>
+            </configuration:channelServing>
+            <configuration:channelServer>
+              <configuration:networkParams port="10103"/>
+              <configuration:logging log_level="4" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:updateParams period="30" memory_size="100" chunks_count="32"/>
+            </configuration:channelServer>
+          </configuration:frontendCluster></configuration>
+        <service descriptor="AdCluster/FrontendSubCluster/CampaignManager" name="CampaignManager" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
+          <configuration><configuration:campaignManager>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:threadParams min="400"/>
+              <configuration:updateParams update_period="300" ecpm_update_period="30" campaign_types="all"/>
+              <configuration:statLogging flush_period="600" internal_logs_flush_period="600"/>
+            </configuration:campaignManager></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoManager" name="UserInfoManager" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
+          <configuration><configuration:userInfoManager>
+              <configuration:networkParams port="10101"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:threadParams min="100"/>
+              <configuration:updateParams update_period="300"/>
+              <configuration:profilesCleanupParams life_time="15" temp_life_time="30" clean_time="00:01" clean_user_profiles="false"/>
+              <configuration:matchParams session_timeout="30" repeat_trigger_timeout="60"/>
+              <configuration:storage min_free_space="0" max_add_undumped_size="300" max_temp_undumped_size="3072" max_history_undumped_size="2048" max_base_undumped_size="2048" max_freq_cap_undumped_size="3072"/>
+            </configuration:userInfoManager></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController" name="UserInfoManagerController" host="adfe101 adfe100">
+          <configuration><configuration:userInfoManagerController>
+              <configuration:networkParams port="10102"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:controlParams status_check_period="10"/>
+            </configuration:userInfoManagerController></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoController2" name="UserInfoController2" host="adfe101 adfe100">
+          <configuration><configuration:userInfoController2>
+              <configuration:networkParams grpc_port="10531"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:controlParams status_check_period="10"/>
+            </configuration:userInfoController2></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelServer" name="ChannelServer" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
+          <configuration><configuration:channelServer>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:threadParams min="200"/>
+              <configuration:updateParams period="900" memory_size="100" chunks_count="32"/>
+            </configuration:channelServer></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelController" name="ChannelController" host="adfe101 adfe100">
+          <configuration><configuration:channelController hosts_in_group="1" local_load="true">
+              <configuration:networkParams port="10104"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+            </configuration:channelController></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelController2" name="ChannelController2" host="adfe101 adfe100">
+          <configuration><configuration:channelController2>
+              <configuration:networkParams grpc_port="10530"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+            </configuration:channelController2></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindServer" name="UserBindServer" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
+          <configuration><configuration:userBindServer user_dump_period="28800" user_seen_expire_time="604800" bind_request_expire_time="2073600" user_expire_time="62208000">
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+              <configuration:threadParams min="100"/>
+            </configuration:userBindServer></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindController" name="UserBindController" host="adfe101">
+          <configuration><configuration:userBindController/></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindController2" name="UserBindController2" host="adfe101">
+          <configuration><configuration:userBindController2>
+              <configuration:networkParams grpc_port="10529"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+            </configuration:userBindController2></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/BillingServer" name="BillingServer" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
+          <configuration><configuration:billingServer>
+              <configuration:updateParams stat_update_period="3600" config_update_period="30" max_stat_delay="345600"/>
+            </configuration:billingServer></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/HttpFrontend" name="HttpFrontend" host="adfe100 adfe101 adfe103 adfe104 adfe105 adfe106 adfe107 adfe108 adfe109 adfe110">
+          <configuration><configuration:frontend>
+              <configuration:adFCGINetworkParams port="10176" backlog="3000" accept_threads="15" keep_connections="300"/>
+
+              <configuration:rtbFCGI1NetworkParams port="10177" monitoring_port="10377" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI2NetworkParams port="10196" monitoring_port="10396" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI3NetworkParams port="10197" monitoring_port="10397" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI4NetworkParams port="10198" monitoring_port="10398" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI5NetworkParams port="10200" monitoring_port="10400" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI6NetworkParams port="10201" monitoring_port="10401" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI7NetworkParams port="10202" monitoring_port="10402" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI8NetworkParams port="10203" monitoring_port="10403" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI9NetworkParams port="10204" monitoring_port="10404" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI10NetworkParams port="10205" monitoring_port="10405" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI11NetworkParams port="10206" monitoring_port="10406" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI12NetworkParams port="10207" monitoring_port="10407" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI13NetworkParams port="10208" monitoring_port="10408" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI14NetworkParams port="10209" monitoring_port="10409" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI15NetworkParams port="10210" monitoring_port="10410" backlog="3000" accept_threads="15" keep_connections="300"/>
+              <configuration:rtbFCGI16NetworkParams port="10211" monitoring_port="10411" backlog="3000" accept_threads="15" keep_connections="300"/>
+
+              <configuration:trackFCGI1NetworkParams port="10195" monitoring_port="10395" backlog="6000" accept_threads="15" keep_connections="300"/>
+              <configuration:trackFCGI2NetworkParams port="10199" monitoring_port="10399" backlog="6000" accept_threads="15" keep_connections="300"/>
+
+              <configuration:userBindFCGI1NetworkParams port="10178" backlog="6000" accept_threads="15" keep_connections="300"/>
+              <configuration:userBindFCGI2NetworkParams port="10194" backlog="6000" accept_threads="15" keep_connections="300"/>
+
+              <configuration:webServerParams timeout="3" server_limit="16" start_servers="1" max_clients="256000"/>
+              <configuration:debugInfo use_acl="false" acl="" colocations="" show_history_profile="true"/>
+              <configuration:requestModule set_uid="never" probe_uid="false" p3p_header="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;">
+                <configuration:session timeout="30"/>
+              </configuration:requestModule>
+              <configuration:impressionModule/>
+              <configuration:clickModule threads="100" set_uid="true" probe_uid="false"/>
+              <configuration:actionModule set_uid="true" task_limit="1000" threads="200"/>
+              <configuration:optoutModule enable="true"/>
+              <configuration:pageSenseModule caching="max-age=86400"/>
+              <configuration:biddingModule max_bid_time="60" flush_period="10" threads="700">
+                <configuration:logging log_level="6"/>
+              </configuration:biddingModule>
+              <configuration:userBindModule max_request_time="400"
+                                            threads="1000"
+                                            match_threads="100"
+                                            bind_pending_task_limit="300"
+                                            match_pending_task_limit="100"
+                                            set_uid="true"
+                create_profile="false"
+                nosecure_redirect="https://match.new-programmatic.com"/>
+            </configuration:frontend></configuration>
+        </service>
+      </serviceGroup>
+      <serviceGroup descriptor="AdCluster/FrontendSubCluster" name="FrontendSubCluster-2">
+        <configuration><configuration:frontendCluster>
+            <configuration:channelServing>
+              <configuration:scaleParams chunks_count="128"/>
+            </configuration:channelServing>
+            <configuration:channelServer>
+              <configuration:networkParams port="10103"/>
+              <configuration:logging log_level="4" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:updateParams period="30" memory_size="100" chunks_count="32"/>
+            </configuration:channelServer>
+          </configuration:frontendCluster></configuration>
+        <service descriptor="AdCluster/FrontendSubCluster/CampaignManager" name="CampaignManager" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
+          <configuration><configuration:campaignManager>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:threadParams min="400"/>
+              <configuration:updateParams update_period="300" ecpm_update_period="30" campaign_types="all"/>
+              <configuration:statLogging flush_period="600" internal_logs_flush_period="600"/>
+            </configuration:campaignManager></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoManager" name="UserInfoManager" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
+          <configuration><configuration:userInfoManager>
+              <configuration:networkParams port="10101"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:threadParams min="100"/>
+              <configuration:updateParams update_period="300"/>
+              <configuration:profilesCleanupParams life_time="15" temp_life_time="30" clean_time="00:01" clean_user_profiles="false"/>
+              <configuration:matchParams session_timeout="30" repeat_trigger_timeout="60"/>
+              <configuration:storage min_free_space="0" max_add_undumped_size="300" max_temp_undumped_size="3072" max_history_undumped_size="2048" max_base_undumped_size="2048" max_freq_cap_undumped_size="3072"/>
+            </configuration:userInfoManager></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoManagerController" name="UserInfoManagerController" host="adfe201 adfe200">
+          <configuration><configuration:userInfoManagerController>
+              <configuration:networkParams port="10102"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:controlParams status_check_period="10"/>
+            </configuration:userInfoManagerController></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserInfoController2" name="UserInfoController2" host="adfe201 adfe200">
+          <configuration><configuration:userInfoController2>
+              <configuration:networkParams grpc_port="10531"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:controlParams status_check_period="10"/>
+            </configuration:userInfoController2></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelServer" name="ChannelServer" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
+          <configuration><configuration:channelServer>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:threadParams min="200"/>
+              <configuration:updateParams period="900" memory_size="100" chunks_count="32"/>
+            </configuration:channelServer></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelController" name="ChannelController" host="adfe201 adfe200">
+          <configuration><configuration:channelController hosts_in_group="1" local_load="true">
+              <configuration:networkParams port="10104"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+            </configuration:channelController></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/ChannelController2" name="ChannelController2" host="adfe201 adfe200">
+          <configuration><configuration:channelController2>
+              <configuration:networkParams grpc_port="10530"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+            </configuration:channelController2></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindServer" name="UserBindServer" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
+          <configuration><configuration:userBindServer user_dump_period="28800" user_seen_expire_time="604800" bind_request_expire_time="2073600" user_expire_time="62208000">
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+              <configuration:threadParams min="100"/>
+            </configuration:userBindServer></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindController" name="UserBindController" host="adfe201">
+          <configuration><configuration:userBindController/></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/UserBindController2" name="UserBindController2" host="adfe201">
+          <configuration><configuration:userBindController2>
+              <configuration:networkParams grpc_port="10529"/>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+            </configuration:userBindController2></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/BillingServer" name="BillingServer" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
+          <configuration><configuration:billingServer>
+              <configuration:updateParams stat_update_period="3600" config_update_period="30" max_stat_delay="345600"/>
+            </configuration:billingServer></configuration>
+        </service>
+        <service descriptor="AdCluster/FrontendSubCluster/HttpFrontend" name="HttpFrontend" host="adfe200 adfe201 adfe202 adfe203 adfe205 adfe206 adfe207 adfe208 adfe209 adfe210 adfe211">
+          <configuration><configuration:frontend>
+              <configuration:adFCGINetworkParams port="10176" backlog="6000" accept_threads="10" keep_connections="300"/>
+              <configuration:rtbFCGI1NetworkParams port="10177" backlog="3000" accept_threads="10" keep_connections="300"/>
+              <configuration:rtbFCGI2NetworkParams port="10196" backlog="3000" accept_threads="10" keep_connections="300"/>
+              <configuration:userBindFCGI1NetworkParams port="10178" backlog="6000" accept_threads="10" keep_connections="300"/>
+              <configuration:userBindFCGI2NetworkParams port="10194" backlog="6000" accept_threads="10" keep_connections="300"/>
+              <configuration:webServerParams timeout="3" server_limit="16" start_servers="1" max_clients="256000"/>
+              <configuration:debugInfo use_acl="false" acl="" colocations="" show_history_profile="true"/>
+              <configuration:requestModule set_uid="never" probe_uid="false" p3p_header="CP=&quot;NON COR PSAo PSDo OUR BUS UNI STA PRE&quot;">
+                <configuration:session timeout="30"/>
+              </configuration:requestModule>
+              <configuration:impressionModule/>
+              <configuration:clickModule threads="100" set_uid="true" probe_uid="false"/>
+              <configuration:actionModule set_uid="true" task_limit="1000"/>
+              <configuration:optoutModule enable="true"/>
+              <configuration:pageSenseModule caching="max-age=86400"/>
+              <configuration:biddingModule max_bid_time="60" flush_period="10" threads="1000">
+                <configuration:logging log_level="6"/>
+              </configuration:biddingModule>
+              <configuration:userBindModule max_request_time="400"
+                                            threads="1000"
+                                            match_threads="100"
+                                            bind_pending_task_limit="300"
+                                            match_pending_task_limit="100"
+                                            set_uid="true"
+                create_profile="false"
+                nosecure_redirect="https://match.new-programmatic.com"/>
+            </configuration:frontend></configuration>
+        </service>
+      </serviceGroup>
+      <serviceGroup descriptor="AdCluster/BackendSubCluster" name="BackendSubCluster">
+        <configuration><configuration:backendCluster/></configuration>
+        <serviceGroup descriptor="AdCluster/BackendSubCluster/LogProcessing" name="LogProcessing">
+          <configuration><configuration:logProcessing>
+              <configuration:syncLogs>
+                <configuration:fileTransferring file_check_period="30" content_check_period="300" internal_content_check_period="300" host_check_period="120" logs_backup="disable"/>
+              </configuration:syncLogs>
+            </configuration:logProcessing></configuration>
+        </serviceGroup>
+        <service descriptor="AdCluster/BackendSubCluster/StatsCollector" name="StatsCollector" host="adbe00">
+          <configuration><configuration:statsCollector period="60">
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+            </configuration:statsCollector></configuration>
+        </service>
+
+        <service descriptor="AdCluster/BackendSubCluster/LogGeneralizer" name="LogGeneralizer" host="adbe00">
+          <configuration><configuration:logGeneralizer>
+	    <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+	    <configuration:statLogging max_upload_task_count="2" file_check_period="10" flush_period="900" flush_size="500000" search_term_count_threshold="10">
+	      <configuration:CreativeStat max_upload_task_count="4" file_check_period="10" flush_period="900" flush_size="40000000"/>
+	      <configuration:WebStat max_upload_task_count="4" file_check_period="10" flush_period="3600" flush_size="1000000"/>
+	      <configuration:ActionRequest max_upload_task_count="4" file_check_period="10" flush_period="2700"/>
+	      <configuration:ChannelHitStat max_upload_task_count="4" file_check_period="10" flush_period="7200" flush_size="5000000"/>
+	      <configuration:ChannelImpInventory max_upload_task_count="4" file_check_period="10" flush_period="7200" flush_size="3000000"/>
+	      <configuration:ChannelInventory max_upload_task_count="4" file_check_period="10" flush_period="7200" flush_size="5000000"/>
+	      <configuration:ChannelInventoryEstimationStat max_upload_task_count="4" file_check_period="10" flush_period="3600" flush_size="10000000"/>
+	      <configuration:ChannelPerformance max_upload_task_count="4" file_check_period="10" flush_period="7200" flush_size="30000000"/>
+	      <configuration:ChannelPriceRange max_upload_task_count="4" file_check_period="10" flush_period="21600" flush_size="15000000"/>
+	      <configuration:ExpressionPerformance max_upload_task_count="4" file_check_period="10" flush_period="3600" flush_size="2000000"/>
+	      <configuration:PassbackStat max_upload_task_count="4" file_check_period="10" flush_period="3600"/>
+	      <configuration:SiteReferrerStat max_upload_task_count="4" file_check_period="10" flush_period="7200" flush_size="60000000"/>
+	      <configuration:UserProperties max_upload_task_count="4" file_check_period="10" flush_period="3600" flush_size="1000000"/>
+	      <configuration:ChannelTriggerImpStat max_upload_task_count="4" file_check_period="10" flush_period="14400" flush_size="4000000"/>
+	      <configuration:ChannelTriggerStat max_upload_task_count="4" file_check_period="10" flush_period="14400" flush_size="5000000"/>
+	      <configuration:UserAgentStat max_upload_task_count="4" file_check_period="10" flush_period="7200" flush_size="5000000"/>
+	    </configuration:statLogging>
+          </configuration:logGeneralizer></configuration>
+        </service>
+
+        <service descriptor="AdCluster/BackendSubCluster/ClickhouseUploader" name="ClickhouseUploaderDevel" host="adbe00">
+	  <configuration>
+	    <configuration:clickhouseUploader clickhouse_conn="-h click00"/>
+	  </configuration>
+	</service>
+
+        <service descriptor="AdCluster/BackendSubCluster/ExpressionMatcher" name="ExpressionMatcher" host="adbe01 adbe02 adbe03 adbe04 adbe05 adbe06">
+          <configuration>
+	    <configuration:expressionMatcher enable_channel_overlap_stats="false" positive_triggers_group_size="1" negative_triggers_group_size="0"
+	      max_trigger_visits="0" channel_match_cache_size="2147483648">
+	      <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600"
+                error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+	      <configuration:threadParams min="50"/>
+	      <configuration:updateParams period="1200"/>
+	      <configuration:statLogging file_check_period="10" flush_period="300" activity_flush_period="3600" inventory_ecpm_flush_period="3600"/>
+	      <configuration:processing threads="12" cache_blocks="0"/>
+	      <configuration:storage min_free_space="0" max_inventory_undumped_size="15000" max_user_trigger_undumped_size="15000"/>
+	    </configuration:expressionMatcher>
+	  </configuration>
+        </service>
+        <service descriptor="AdCluster/BackendSubCluster/RequestInfoManager" name="RequestInfoManager" host="adbe01 adbe02 adbe03 adbe04 adbe05 adbe06">
+          <configuration><configuration:requestInfoManager>
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="10080" trace_size_cleanup="104857600" trace_time_cleanup="10080"/>
+              <configuration:processing threads="160" cache_blocks="1000"/>
+              <configuration:profiling sending_window="3600" max_pool_size="40000000"/>
+            </configuration:requestInfoManager></configuration>
+        </service>
+        <service descriptor="AdCluster/BackendSubCluster/DictionaryProvider" name="DictionaryProvider" host="adbe00">
+          <configuration><configuration:dictionaryProvider threads="1">
+              <configuration:logging log_level="7" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+            </configuration:dictionaryProvider></configuration>
+        </service>
+        <service descriptor="AdCluster/BackendSubCluster/UserOperationGenerator" name="UserOperationGenerator" host="adbe01">
+          <configuration><configuration:userOperationGenerator load_period="30" refresh_period="604800">
+              <configuration:logging log_level="17" sys_log="true" rotate_size="100" rotate_time="1440" error_size_cleanup="104857600" error_time_cleanup="86400" trace_size_cleanup="104857600" trace_time_cleanup="14400"/>
+            </configuration:userOperationGenerator></configuration>
+        </service>
+        <service descriptor="AdCluster/BackendSubCluster/CampaignServer" name="CampaignServer" host="adbe00">
+          <configuration><configuration:campaignServer>
+              <configuration:threadParams min="60"/>
+              <configuration:updateParams primary="true" update_period="600" bill_stat_update_period="3600" stat_sync_period="3600" ecpm_update_period="600"/>
+            </configuration:campaignServer></configuration>
+        </service>
+        <service descriptor="AdCluster/BackendSubCluster/Predictor" name="Predictor" host="adbe00">
+          <configuration><configuration:predictor log_days_to_keep="90">
+              <configuration:syncServer enable_backup="false">
+                <configuration:networkParams/>
+              </configuration:syncServer>
+              <configuration:merger max_timeout="0" sleep_timeout="300"/>
+            </configuration:predictor></configuration>
+        </service>
+      </serviceGroup>
+    </serviceGroup>
+  </application>
+</colo:colocation>
