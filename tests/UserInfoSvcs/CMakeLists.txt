@@ -1,1 +1,4 @@
 add_subdirectory(UserBindPerf)
+add_subdirectory(RocksDBProfileMapTest)
+add_subdirectory(ToplingDBProfileMapTest)
+add_subdirectory(RocksDBToplingCompatibilityTest)
