@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_MANAGER_WD_FREQCAP_PROFILE_HPP_
-#define _USER_INFO_MANAGER_WD_FREQCAP_PROFILE_HPP_
+#pragma once
 
 #include <string>
 #include <set>
@@ -75,7 +74,3 @@ namespace AdServer
     };
   }
 }
-
-#endif /*_USER_INFO_MANAGER_WD_FREQCAP_PROFILE_HPP_*/
-
-

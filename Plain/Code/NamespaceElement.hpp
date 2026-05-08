@@ -1,5 +1,4 @@
-#ifndef _CODE_NAMESPACEELEMENT_HPP_
-#define _CODE_NAMESPACEELEMENT_HPP_
+#pragma once
 
 #include <Declaration/Namespace.hpp>
 #include "Element.hpp"
@@ -83,5 +82,3 @@ namespace Code
     visitor->visit_i(this);
   }
 }
-
-#endif /*_CODE_NAMESPACEELEMENT_HPP_*/

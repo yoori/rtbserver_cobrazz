@@ -1,5 +1,4 @@
-#ifndef JSONPARAMPROCESSOR_HPP
-#define JSONPARAMPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -1171,5 +1170,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*JSONPARAMPROCESSOR_HPP*/

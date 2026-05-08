@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__OPTOUTTEST_
-#define _UNITTEST__OPTOUTTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -53,5 +52,3 @@ private:
   void cookie_expiration();
 
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_COMMONS_COMMONCHECKERS_IPP
-#define AUTOTESTS_COMMONS_COMMONCHECKERS_IPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Sequence.hpp>
 
@@ -229,5 +228,3 @@ namespace AutoTest
     return DBRecordChecker<DBFetcher>(table, exists);
   }
 }
-
-#endif /*AUTOTESTS_COMMONS_COMMONCHECKERS_IPP*/

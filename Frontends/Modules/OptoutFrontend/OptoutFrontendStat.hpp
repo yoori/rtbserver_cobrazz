@@ -1,6 +1,5 @@
 /// @file AdFrontend/OptOutFrontendStat.hpp
-#ifndef OPT_OUT_FRONTENDSTAT_HPP
-#define OPT_OUT_FRONTENDSTAT_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -56,5 +55,3 @@ namespace AdServer
 
 
 }
-
-#endif

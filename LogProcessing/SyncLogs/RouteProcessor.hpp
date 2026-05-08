@@ -1,7 +1,6 @@
 // @file SyncLogs/RouteProcessor.hpp
 
-#ifndef SYNCLOGS_ROUTEPROCESSOR_HPP
-#define SYNCLOGS_ROUTEPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -26,5 +25,3 @@ namespace LogProcessing
     RouteProcessor_var;
 }
 }
-
-#endif /*SYNCLOGS_ROUTEPROCESSOR_HPP*/

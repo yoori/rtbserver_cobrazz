@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__LOCALAUDIENCECHANNELSTEST_
-#define _AUTOTEST__LOCALAUDIENCECHANNELSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -31,5 +30,3 @@ private:
   void persistent_uid_matching_setup_();
   void persistent_uid_matching_();
 };
-
-#endif // _AUTOTEST__LOCALAUDIENCECHANNELSTEST_

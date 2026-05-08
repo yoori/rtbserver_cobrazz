@@ -1,5 +1,4 @@
-#ifndef USEROPERATIONPROCESSOR_HPP
-#define USEROPERATIONPROCESSOR_HPP
+#pragma once
 
 #include <list>
 #include <string>
@@ -204,5 +203,3 @@ namespace UserInfoSvcs
     UserOperationProcessor_var;
 }
 }
-
-#endif /*USEROPERATIONPROCESSOR_HPP*/

@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERINFOCONTAINER_HPP
-#define USERINFOSVCS_USERINFOCONTAINER_HPP
+#pragma once
 
 #include <list>
 #include <string>
@@ -424,5 +423,3 @@ namespace UserInfoSvcs
   }
 }
 }
-
-#endif /*USERINFOSVCS_USERINFOCONTAINER_HPP*/

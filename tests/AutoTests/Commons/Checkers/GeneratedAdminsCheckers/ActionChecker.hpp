@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_ACTIONCHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_ACTIONCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/ActionAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -38,5 +37,3 @@ namespace AutoTest
 
   };
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_ACTIONCHECKER_HPP
-

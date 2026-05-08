@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__TEXTADVERTISINGTEST_
-#define _UNITTEST__TEXTADVERTISINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -27,5 +26,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

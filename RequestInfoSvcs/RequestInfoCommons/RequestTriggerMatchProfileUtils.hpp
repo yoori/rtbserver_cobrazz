@@ -1,5 +1,4 @@
-#ifndef REQUESTTRIGGERMATCHPROFILEUTILS_HPP
-#define REQUESTTRIGGERMATCHPROFILEUTILS_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <UtilCommons/Table.hpp>
@@ -108,5 +107,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*REQUESTTRIGGERMATCHPROFILEUTILS_HPP*/

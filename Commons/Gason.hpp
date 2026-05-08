@@ -1,5 +1,4 @@
-#ifndef GASON_HPP
-#define GASON_HPP
+#pragma once
 
 #include <stdint.h>
 #include <assert.h>
@@ -262,5 +261,3 @@ bool is_delim(char c);
 bool is_sign(char c);
 bool is_dec(char c);
 bool is_hex(char c);
-
-#endif /*GASON_HPP*/

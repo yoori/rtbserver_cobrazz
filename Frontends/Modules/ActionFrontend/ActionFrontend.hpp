@@ -1,6 +1,5 @@
 
-#ifndef _AD_FRONTENDS_ACTION_FRONTEND_ACTION_FRONTEND_HPP_
-#define _AD_FRONTENDS_ACTION_FRONTEND_ACTION_FRONTEND_HPP_
+#pragma once
 
 #include <string>
 
@@ -258,5 +257,3 @@ namespace Action
   {}
 }
 } // namespace AdServer
-
-#endif // _AD_FRONTENDS_ACTION_FRONTEND_ACTION_FRONTEND_HPP_

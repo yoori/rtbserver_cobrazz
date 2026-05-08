@@ -1,6 +1,5 @@
 
-#ifndef __CONSTRAINT_HPP
-#define __CONSTRAINT_HPP
+#pragma once
 
 #include <vector>
 #include <list>
@@ -93,7 +92,3 @@ public:
 private:
   ConstraintsList constraints_;
 };
-
-
-
-#endif  // __CONSTRAINT_HPP

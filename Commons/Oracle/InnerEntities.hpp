@@ -1,5 +1,4 @@
-#ifndef ORACLE_INNERENTITIES_HPP
-#define ORACLE_INNERENTITIES_HPP
+#pragma once
 
 #include <assert.h>
 
@@ -333,5 +332,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*ORACLE_INNERENTITIES_HPP*/

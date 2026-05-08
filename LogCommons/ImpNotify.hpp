@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_COMMONS_IMP_NOTIFY_HPP
-#define AD_SERVER_LOG_COMMONS_IMP_NOTIFY_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -83,6 +82,3 @@ struct ImpNotifyTraits: LogDefaultTraits<ImpNotifyCollector, false, false>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_COMMONS_IMP_NOTIFY_HPP */
-

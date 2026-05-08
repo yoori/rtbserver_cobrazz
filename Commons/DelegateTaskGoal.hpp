@@ -1,5 +1,4 @@
-#ifndef COMMONS_DELEGATETASKGOAL_HPP_
-#define COMMONS_DELEGATETASKGOAL_HPP_
+#pragma once
 
 #include <type_traits>
 
@@ -280,5 +279,3 @@ namespace Commons
   }
 }
 }
-
-#endif /* COMMONS_DELEGATETASKGOAL_HPP_ */

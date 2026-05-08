@@ -1,5 +1,4 @@
-#ifndef AUTOTEST_UNITS_REMOTETRIGGERSCHECK_HPP
-#define AUTOTEST_UNITS_REMOTETRIGGERSCHECK_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,6 +22,3 @@ public:
 private:
   virtual bool run_test();
 };
-
-#endif /*AUTOTEST_UNITS_REMOTETRIGGERSCHECK_HPP*/
-

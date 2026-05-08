@@ -1,5 +1,4 @@
-#ifndef RWMEMPLEVEL_HPP
-#define RWMEMPLEVEL_HPP
+#pragma once
 
 #include <Sync/SyncPolicy.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -154,5 +153,3 @@ namespace ProfilingCommons
 }
 
 #include "RWMemLevel.tpp"
-
-#endif /*RWMEMLEVEL_HPP*/

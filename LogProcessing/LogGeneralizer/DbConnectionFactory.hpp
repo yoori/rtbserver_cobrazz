@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_DB_CONNECTION_FACTORY_HPP
-#define AD_SERVER_LOG_PROCESSING_DB_CONNECTION_FACTORY_HPP
+#pragma once
 
 
 #include <string>
@@ -63,5 +62,3 @@ typedef ReferenceCounting::SmartPtr<PostgresConnectionFactoryImpl>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_DB_CONNECTION_FACTORY_HPP */

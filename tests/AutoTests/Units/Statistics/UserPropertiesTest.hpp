@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__USERPROPERTIESTEST_
-#define _UNITTEST__USERPROPERTIESTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -121,5 +120,3 @@ private:
   void upvalue_case();
 
 };
-
-#endif  // __USERPROPERTIESTEST_HPP

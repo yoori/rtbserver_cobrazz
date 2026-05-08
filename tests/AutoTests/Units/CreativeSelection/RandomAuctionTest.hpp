@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__RANDOMAUCTIONTEST_
-#define _AUTOTEST__RANDOMAUCTIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -102,5 +101,3 @@ private:
   void open_rtb_secondary(
     AdClient& client);
 };
-
-#endif // _AUTOTEST__RANDOMAUCTIONTEST_

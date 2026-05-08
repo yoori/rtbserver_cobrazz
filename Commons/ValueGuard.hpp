@@ -1,5 +1,4 @@
-#ifndef ADSERVER_COMMONS_VALUEGUARD_HPP
-#define ADSERVER_COMMONS_VALUEGUARD_HPP
+#pragma once
 
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -78,5 +77,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*ADSERVER_COMMONS_VALUEGUARD_HPP*/

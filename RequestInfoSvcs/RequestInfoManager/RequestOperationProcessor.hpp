@@ -1,5 +1,4 @@
-#ifndef REQUESTOPERATIONPROCESSOR_HPP
-#define REQUESTOPERATIONPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/SmartPtr.hpp>
 #include <Generics/MemBuf.hpp>
@@ -52,5 +51,3 @@ namespace RequestInfoSvcs
     RequestOperationProcessor_var;
 }
 }
-
-#endif /*REQUESTOPERATIONPROCESSOR_HPP*/

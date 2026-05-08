@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CHANNELINVENTORYTEST_
-#define _UNITTEST__CHANNELINVENTORYTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -106,5 +105,3 @@ private:
   AutoTest::Time today;
   AutoTest::Time yesterday;
 };
-
-#endif

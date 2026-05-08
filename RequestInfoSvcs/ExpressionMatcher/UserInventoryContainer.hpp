@@ -1,5 +1,4 @@
-#ifndef _EXPRESSION_MATCHER_USER_INVENTORY_CONTAINER_HPP_
-#define _EXPRESSION_MATCHER_USER_INVENTORY_CONTAINER_HPP_
+#pragma once
 
 #include <string>
 #include <list>
@@ -176,5 +175,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*_EXPRESSION_MATCHER_USER_INVENTORY_CONTAINER_IMPL_HPP_*/

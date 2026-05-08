@@ -1,5 +1,4 @@
-#ifndef GEOINFOUTILS_HPP__
-#define GEOINFOUTILS_HPP__
+#pragma once
 
 #include <Commons/CorbaAlgs.hpp>
 #include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
@@ -64,6 +63,3 @@ namespace FrontendCommons
     return false;
   }
 }
-
-#endif /*GEOINFOUTILS_HPP__*/
-

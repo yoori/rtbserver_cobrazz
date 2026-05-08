@@ -4,8 +4,7 @@
  * @file PlainStorage/RecordLayerUtils.tpp
  */
 
-#ifndef _RECORD_LAYER_UTILS_TPP_
-#define _RECORD_LAYER_UTILS_TPP_
+#pragma once
 
 #include "BaseLayer.hpp"
 #include "Stream/MemoryStream.hpp"
@@ -331,5 +330,3 @@ namespace PlainStorage
     }
   }
 }
-
-#endif // _RECORD_LAYER_UTILS_TPP_

@@ -1,6 +1,5 @@
 
-#ifndef _COMMONS_ERROR_HANDLER_HPP_
-#define _COMMONS_ERROR_HANDLER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
@@ -123,5 +122,3 @@ namespace Config
     }
   }
 }
-
-#endif /* _COMMONS_ERROR_HANDLER_HPP_ */

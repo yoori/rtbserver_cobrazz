@@ -1,8 +1,7 @@
 /**
  * @file UserFraudProtectionContainer.hpp
  */
-#ifndef _REQUEST_INFO_SVCS_USER_FRAUD_PROTECTION_CONTAINER_IMPL_HPP_
-#define _REQUEST_INFO_SVCS_USER_FRAUD_PROTECTION_CONTAINER_IMPL_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -267,5 +266,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif // _REQUEST_INFO_SVCS_USER_FRAUD_PROTECTION_CONTAINER_IMPL_HPP_

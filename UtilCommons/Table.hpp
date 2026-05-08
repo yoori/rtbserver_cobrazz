@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_ADMIN_TABLE_HPP_
-#define _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_ADMIN_TABLE_HPP_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -422,5 +421,3 @@ Table::Sorter::Sorter(const char* nm, bool desc) /*throw(eh::Exception)*/
       descending(desc)
 {
 }
-
-#endif // _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_ADMIN_TABLE_HPP_

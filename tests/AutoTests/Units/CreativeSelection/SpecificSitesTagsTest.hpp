@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__SPECIFICSITESTAGSTEST_
-#define _UNITTEST__SPECIFICSITESTAGSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -29,5 +28,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

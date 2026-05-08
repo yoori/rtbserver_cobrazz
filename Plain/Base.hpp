@@ -1,5 +1,4 @@
-#ifndef PLAIN_BASE_HPP
-#define PLAIN_BASE_HPP
+#pragma once
 
 #include <stdint.h>
 #include <eh/Exception.hpp>
@@ -118,5 +117,3 @@ namespace PlainTypes
     return *static_cast<uint64_t*>(buf);
   }
 }
-
-#endif /*PLAIN_BASE_HPP*/

@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_ACTIONPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_ACTIONPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -166,5 +165,3 @@ namespace AutoTest
     return values_[i][Expected::CUSTOM_DONE_ACTIONS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_ACTIONPROFILEADMIN_HPP
-

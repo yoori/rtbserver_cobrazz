@@ -1,5 +1,4 @@
-#ifndef COMPOSITE_TAG_REQUEST_PROCESSOR_HPP
-#define COMPOSITE_TAG_REQUEST_PROCESSOR_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -70,5 +69,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*COMPOSITE_TAG_REQUEST_PROCESSOR_HPP*/

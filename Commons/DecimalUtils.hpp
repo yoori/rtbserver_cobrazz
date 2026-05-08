@@ -1,5 +1,4 @@
-#ifndef DECIMALUTILS_HPP
-#define DECIMALUTILS_HPP
+#pragma once
 
 #include <Generics/CommonDecimal.hpp>
 #include <String/SubString.hpp>
@@ -248,5 +247,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*DECIMALUTILS_HPP*/

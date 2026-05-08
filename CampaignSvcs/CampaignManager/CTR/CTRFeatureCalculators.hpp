@@ -1,5 +1,4 @@
-#ifndef CTRFEATURECALCULATORS_HPP_
-#define CTRFEATURECALCULATORS_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -527,5 +526,3 @@ namespace AdServer::CampaignSvcs
     };
   }
 }
-
-#endif /*CTRFEATURECALCULATORS_HPP_*/

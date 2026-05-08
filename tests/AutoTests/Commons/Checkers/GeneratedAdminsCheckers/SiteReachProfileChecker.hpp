@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_SITEREACHPROFILECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_SITEREACHPROFILECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/SiteReachProfileAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -49,6 +48,3 @@ namespace AutoTest
 }
 
 #include "SiteReachProfileChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_SITEREACHPROFILECHECKER_HPP
-

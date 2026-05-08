@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CHANNEL_INVENTORY_HPP
-#define AD_SERVER_LOG_PROCESSING_CHANNEL_INVENTORY_HPP
+#pragma once
 
 
 #include "LogCommons.hpp"
@@ -207,6 +206,3 @@ typedef LogDefaultTraits<ChannelInventoryCollector> ChannelInventoryTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CHANNEL_INVENTORY_HPP */
-

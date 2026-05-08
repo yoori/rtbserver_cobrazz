@@ -1,5 +1,4 @@
-#ifndef PLAIN_LIST_HPP
-#define PLAIN_LIST_HPP
+#pragma once
 
 #include <list>
 #include <Generics/TAlloc.hpp>
@@ -286,5 +285,3 @@ namespace PlainTypes
       dyn_ptr - static_cast<unsigned char*>(fixed_buf);
   }
 }
-
-#endif /*PLAIN_LIST_HPP*/

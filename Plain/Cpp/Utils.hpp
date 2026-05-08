@@ -1,5 +1,4 @@
-#ifndef PLAIN_CPP_UTILS_HPP
-#define PLAIN_CPP_UTILS_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -140,5 +139,3 @@ namespace Utils
   };
 }
 }
-
-#endif /*PLAIN_CPP_UTILS_HPP*/

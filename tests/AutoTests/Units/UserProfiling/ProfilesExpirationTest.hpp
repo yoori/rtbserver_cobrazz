@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__PROFILESEXPIRATIONTEST_
-#define _AUTOTEST__PROFILESEXPIRATIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -43,5 +42,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif //_AUTOTEST__PROFILESEXPIRATIONTEST_

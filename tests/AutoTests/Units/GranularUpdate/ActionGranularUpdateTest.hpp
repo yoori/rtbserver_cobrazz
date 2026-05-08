@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__ACTIONGRANULARUPDATETEST_
-#define _UNITTEST__ACTIONGRANULARUPDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -29,5 +28,3 @@ private:
   void unlink_action();
   void action_for_inactive_ccg();
 };
-
-#endif

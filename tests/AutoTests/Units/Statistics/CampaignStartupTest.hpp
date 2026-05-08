@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CAMPAIGNSTARTUPTEST_
-#define _UNITTEST__CAMPAIGNSTARTUPTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -26,5 +25,3 @@ private:
 private:
   AutoTest::NSLookupRequest request;
 };
-
-#endif

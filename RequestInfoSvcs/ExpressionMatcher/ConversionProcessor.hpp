@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_CONVERSIONPROCESSOR_HPP_
-#define EXPRESSIONMATCHER_CONVERSIONPROCESSOR_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -109,5 +108,3 @@ namespace AdServer
       ConversionProcessor_var;
   }
 }
-
-#endif /*EXPRESSIONMATCHER_CONVERSIONPROCESSOR_HPP_*/

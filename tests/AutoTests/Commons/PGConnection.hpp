@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_PGCONNECTION_HPP
-#define __AUTOTESTS_COMMONS_PGCONNECTION_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -577,5 +576,3 @@ namespace AutoTest
 }
 
 #include "PGConnection.ipp"
-
-#endif //__AUTOTESTS_COMMONS_PGCONNECTION_HPP

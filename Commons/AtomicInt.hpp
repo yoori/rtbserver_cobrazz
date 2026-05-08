@@ -1,5 +1,4 @@
-#ifndef ADSERVER_COMMONS_ATOMIC_HPP
-#define ADSERVER_COMMONS_ATOMIC_HPP
+#pragma once
 
 #if __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 2
 #include <ext/atomicity.h>
@@ -119,5 +118,3 @@ namespace Algs
     return static_cast<int64_t>(value_) - std::numeric_limits<_Atomic_word>::min();
   }
 }
-
-#endif /*ADSERVER_COMMONS_ATOMIC_HPP*/

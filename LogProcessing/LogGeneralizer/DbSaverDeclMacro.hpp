@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_DB_SAVER_DECL_MACRO_HPP
-#define AD_SERVER_LOG_PROCESSING_DB_SAVER_DECL_MACRO_HPP
+#pragma once
 
 
 #define DECLARE_NESTED_LOG_DB_SAVER_EXT_2(LOG_TYPE, CUSTOM_TYPE, OUT_TYPE) \
@@ -403,6 +402,3 @@ private: \
   PostgresConnectionFactoryImpl_var pg_conn_factory_; \
   OUT_TYPE output_; \
 }
-
-#endif /* AD_SERVER_LOG_PROCESSING_DB_SAVER_DECL_MACRO_HPP */
-

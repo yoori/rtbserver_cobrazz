@@ -1,5 +1,4 @@
-#ifndef _LOCAL_AUDIENCE_CHANNEL_HPP
-#define _LOCAL_AUDIENCE_CHANNEL_HPP
+#pragma once
 
 #include <set>
 #include <string>
@@ -62,5 +61,3 @@ namespace AutoTest
     Uids uids_;
   };
 };// AutoTest
-
-#endif // _LOCAL_AUDIENCE_CHANNEL_HPP

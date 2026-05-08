@@ -3,8 +3,7 @@
   OptOutLogging testing header
  */
 
-#ifndef _UNITTEST__OPTOUTLOGGINGSTEST_
-#define _UNITTEST__OPTOUTLOGGINGSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -75,5 +74,3 @@ private:
     const Expected (&expects) [Count],
     bool test = false);
 };
-
-#endif // _UNITTEST__OPTOUTLOGGINGSTEST_

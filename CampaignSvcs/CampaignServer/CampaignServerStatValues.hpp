@@ -1,5 +1,4 @@
-#ifndef CAMPAIGN_SERVER_STAT_VALUES_HPP
-#define CAMPAIGN_SERVER_STAT_VALUES_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <CORBACommons/StatsImpl.hpp>
@@ -97,5 +96,3 @@ namespace AdServer
     }
   }
 }
-
-#endif // CAMPAIGN_SERVER_STAT_VALUES_HPP

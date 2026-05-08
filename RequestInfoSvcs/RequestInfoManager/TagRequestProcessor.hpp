@@ -1,5 +1,4 @@
-#ifndef TAGREQUESTPROCESSOR_HPP
-#define TAGREQUESTPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -98,5 +97,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*TAGREQUESTPROCESSOR_HPP*/

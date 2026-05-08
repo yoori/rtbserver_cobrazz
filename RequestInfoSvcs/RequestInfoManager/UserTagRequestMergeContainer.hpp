@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOSVCS_REQUESTINFOMANAGER_TAGREQUESTMERGECONTAINER_HPP
-#define REQUESTINFOSVCS_REQUESTINFOMANAGER_TAGREQUESTMERGECONTAINER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -80,5 +79,3 @@ namespace RequestInfoSvcs
     UserTagRequestMergeContainer_var;
 }
 }
-
-#endif /*REQUESTINFOSVCS_REQUESTINFOMANAGER_TAGREQUESTMERGECONTAINER_HPP*/

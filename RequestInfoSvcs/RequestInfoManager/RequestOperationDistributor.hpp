@@ -1,5 +1,4 @@
-#ifndef REQUESTOPERATIONDISTRIBUTOR_HPP
-#define REQUESTOPERATIONDISTRIBUTOR_HPP
+#pragma once
 
 #include "RequestOperationProcessor.hpp"
 
@@ -70,5 +69,3 @@ namespace RequestInfoSvcs
     RequestOperationDistributor_var;
 }
 }
-
-#endif /*REQUESTOPERATIONDISTRIBUTOR_HPP*/

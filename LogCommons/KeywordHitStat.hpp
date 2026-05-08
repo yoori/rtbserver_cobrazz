@@ -1,5 +1,4 @@
-#ifndef ADSERVER_LOGPROCESSING_KEYWORDHITSTAT_HPP_
-#define ADSERVER_LOGPROCESSING_KEYWORDHITSTAT_HPP_
+#pragma once
 
 #include <iosfwd>
 #include <sstream>
@@ -185,6 +184,3 @@ namespace LogProcessing
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* ADSERVER_LOGPROCESSING_KEYWORDHITSTAT_HPP_ */
-

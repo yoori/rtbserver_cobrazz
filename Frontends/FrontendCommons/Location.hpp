@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_FRONTENDCOMMONS_LOCATION_HPP_
-#define FRONTENDS_FRONTENDCOMMONS_LOCATION_HPP_
+#pragma once
 
 #include <string>
 
@@ -210,5 +209,3 @@ namespace FrontendCommons
     return CoordLocation_var();
   }
 }
-
-#endif /* FRONTENDS_FRONTENDCOMMONS_LOCATION_HPP_ */

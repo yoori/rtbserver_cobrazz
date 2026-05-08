@@ -1,5 +1,4 @@
-#ifndef _COMMONS_CONFIGUTILS_HPP_
-#define _COMMONS_CONFIGUTILS_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/DirSelector.hpp>
@@ -191,5 +190,3 @@ namespace Config
     return options;
   }
 }
-
-#endif /*_COMMONS_CONFIGUTILS_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef _USERCAMPAIGNREACHPROFILEUTILS_HPP_
-#define _USERCAMPAIGNREACHPROFILEUTILS_HPP_
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <UtilCommons/Table.hpp>
@@ -68,5 +67,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*_USERCAMPAIGNREACHPROFILEUTILS_HPP_*/

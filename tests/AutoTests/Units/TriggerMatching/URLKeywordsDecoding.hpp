@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__URLKEYWORDSDECODING_
-#define _AUTOTEST__URLKEYWORDSDECODING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -21,5 +20,3 @@ private:
 
   virtual bool run_test();
 };
-
-#endif // _AUTOTEST__URLKEYWORDSDECODING_

@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_SECTOKEN_HPP_
-#define CAMPAIGNMANAGER_SECTOKEN_HPP_
+#pragma once
 
 #include <vector>
 
@@ -145,5 +144,3 @@ namespace AdServer
       SecTokenGenerator_var;
   }
 }
-
-#endif /* CAMPAIGNMANAGER_SECTOKEN_HPP_ */

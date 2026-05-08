@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_GLOBALSETTINGS_HPP
-#define _AUTOTESTS_COMMONS_GLOBALSETTINGS_HPP
+#pragma once
 
 #include <Generics/Singleton.hpp>
 #include "AutoTestsXsd.hpp"
@@ -142,5 +141,3 @@ namespace AutoTest
     return config_->get_params();
   }
 }
-
-#endif  // _AUTOTESTS_COMMONS_GLOBALSETTINGS_HPP

@@ -1,5 +1,4 @@
-#ifndef MATCHING_CHECK_TEST_HPP_
-#define MATCHING_CHECK_TEST_HPP_
+#pragma once
 
 #include<tests/UnitTests/ChannelSvcs/Commons/ChannelServerTestCommons.hpp>
 
@@ -26,6 +25,3 @@ namespace UnitTests
   };
 }
 }
-
-#endif
-

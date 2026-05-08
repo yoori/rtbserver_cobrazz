@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CHANNELINVENTORYESTIMMERGEUSERS_
-#define _AUTOTEST__CHANNELINVENTORYESTIMMERGEUSERS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -79,6 +78,3 @@ private:
 
   DBConnection conn;
 };
-
-#endif //_AUTOTEST__CHANNELINVENTORYESTIMMERGEUSERS_
-

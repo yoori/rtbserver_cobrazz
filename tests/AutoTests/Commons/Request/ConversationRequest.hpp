@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_REQUEST_CONVERSATIONREQUEST_HPP
-#define _AUTOTESTS_COMMONS_REQUEST_CONVERSATIONREQUEST_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 
@@ -86,6 +85,3 @@ namespace AutoTest
     HeaderParam<ConversationRequest> referer;
   };
 }//namespace AutoTest
-
-
-#endif  // _AUTOTESTS_COMMONS_REQUEST_CONVERSATIONREQUEST_HPP

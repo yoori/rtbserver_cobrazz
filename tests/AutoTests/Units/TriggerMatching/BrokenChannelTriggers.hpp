@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__BROKENCHANNELTRIGGERS_
-#define _AUTOTEST__BROKENCHANNELTRIGGERS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -44,5 +43,3 @@ private:
     const TestCase& test);
 
 };
-
-#endif //_AUTOTEST__BROKENCHANNELTRIGGERS_

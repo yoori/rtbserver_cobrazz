@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCS_BILLINGCONTAINER_HPP
-#define CAMPAIGNSVCS_BILLINGCONTAINER_HPP
+#pragma once
 
 #include <list>
 #include <vector>
@@ -563,5 +562,3 @@ namespace CampaignSvcs
   {}
 }
 }
-
-#endif /*CAMPAIGNSVCS_BILLINGCONTAINER_HPP*/

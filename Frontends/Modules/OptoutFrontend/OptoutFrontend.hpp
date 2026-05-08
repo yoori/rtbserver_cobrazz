@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_OPTOUT_FRONTEND_HPP_
-#define _AD_SERVER_OPTOUT_FRONTEND_HPP_
+#pragma once
 
 #include <string>
 
@@ -162,5 +161,3 @@ namespace AdServer
   {
   }
 } /* AdServer */
-
-#endif // _AD_SERVER_OPTOUT_FRONTEND_HPP_

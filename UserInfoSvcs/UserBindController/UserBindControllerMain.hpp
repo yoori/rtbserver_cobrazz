@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERBINDCONTROLLERMAIN_HPP_
-#define USERINFOSVCS_USERBINDCONTROLLERMAIN_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -86,5 +85,3 @@ UserBindControllerApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /*USERINFOSVCS_USERBINDCONTROLLERMAIN_HPP_*/

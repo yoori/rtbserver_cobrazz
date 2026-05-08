@@ -1,6 +1,5 @@
 
-#ifndef __REQUEST_HPP
-#define __REQUEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/DebugInfo.hpp>
 #include <tests/AutoTests/Commons/Request/OpenRTBRequest.hpp>
@@ -645,5 +644,3 @@ operator<< (std::ostream& out, const BaseRequest* request)
 {
   return request->dump(out);
 }
-
-#endif  // __REQUEST_HPP

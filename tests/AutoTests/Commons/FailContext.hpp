@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_FAILCONTEXT_HPP
-#define _AUTOTESTS_COMMONS_FAILCONTEXT_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Utils.hpp>
 
@@ -130,5 +129,3 @@ namespace AutoTest
         "Skip '" << __description__ << "' case"; \
     } \
   };
-
-#endif  // _AUTOTESTS_COMMONS_FAILCONTEXT_HPP

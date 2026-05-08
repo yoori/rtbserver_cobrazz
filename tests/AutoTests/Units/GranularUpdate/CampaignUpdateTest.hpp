@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNUPDATETEST
-#define AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNUPDATETEST
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -36,5 +35,3 @@ private:
   void change_date_interval_case_();
   void change_max_pub_share_case_();
 };
-
-#endif /*AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNUPDATETEST*/

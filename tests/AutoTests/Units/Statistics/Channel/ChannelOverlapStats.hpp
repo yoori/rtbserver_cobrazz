@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CHANNELOVERLAPSTATS_
-#define _AUTOTEST__CHANNELOVERLAPSTATS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -92,5 +91,3 @@ private:
   Diffs diffs_;
 
 };
-
-#endif // _AUTOTEST__CHANNELOVERLAPSTATS_

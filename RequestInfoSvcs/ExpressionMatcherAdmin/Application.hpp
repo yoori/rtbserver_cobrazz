@@ -1,5 +1,4 @@
-#ifndef _LOG_PROCESSING_EXPRESSION_MATCHER_ADMIN_APPLICATION_HPP_
-#define _LOG_PROCESSING_EXPRESSION_MATCHER_ADMIN_APPLICATION_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -59,5 +58,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*_LOG_PROCESSING_EXPRESSION_MATCHER_ADMIN_APPLICATION_HPP_*/

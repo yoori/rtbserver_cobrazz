@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CCGKEYWORDSTATSTEST_
-#define _UNITTEST__CCGKEYWORDSTATSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -70,5 +69,3 @@ private:
   ORM::CCGKeywordStatsTotal::Diffs current_total_;
 
 };
-
-#endif

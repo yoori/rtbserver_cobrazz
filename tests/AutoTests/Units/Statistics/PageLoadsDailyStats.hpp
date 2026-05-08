@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__PAGELOADSDAILYSTATS_
-#define _AUTOTEST__PAGELOADSDAILYSTATS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -70,5 +69,3 @@ private:
   std::list<ORM::PageLoadsDaily::Diffs> diffs;
   Generics::Time debug_time;
 };
-
-#endif // _AUTOTEST__PAGELOADSDAILYSTATS_

@@ -1,5 +1,4 @@
-#ifndef FILEWRITER_HPP
-#define FILEWRITER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -63,5 +62,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif /*FILEWRITER_HPP*/

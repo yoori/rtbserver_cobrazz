@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_UNITS_TAGUPDATETEST_HPP
-#define AUTOTESTS_UNITS_TAGUPDATETEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -37,5 +36,3 @@ private:
   void tag_update_size_case();
   void tag_remove_case();
 };
-
-#endif /*AUTOTESTS_UNITS_TAGUPDATETEST_HPP*/

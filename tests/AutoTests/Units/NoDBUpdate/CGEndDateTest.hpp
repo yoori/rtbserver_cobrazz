@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CGENDDATETEST_
-#define _AUTOTEST__CGENDDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -52,5 +51,3 @@ private:
   gmt_case_();
 
 };
-
-#endif //_AUTOTEST__CGENDDATETEST_

@@ -3,8 +3,7 @@
  * Layer for fixed size block sequencing to unlimited size record
  * do fragmentation control
  */
-#ifndef _PLAINSTORAGE_RECORDLAYER_HPP_
-#define _PLAINSTORAGE_RECORDLAYER_HPP_
+#pragma once
 
 #include <Generics/GnuHashTable.hpp>
 
@@ -190,5 +189,3 @@ namespace PlainStorage
 }
 
 #include "RecordLayer.tpp"
-
-#endif //_PLAINSTORAGE_RECORDLAYER_HPP_

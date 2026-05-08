@@ -1,5 +1,4 @@
-#ifndef _ORACLE_RESULTSET_HPP_
-#define _ORACLE_RESULTSET_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -289,6 +288,3 @@ namespace Oracle
 }
 }
 }
-
-#endif
-

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_GENERIC_LOG_PROC_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_GENERIC_LOG_PROC_IMPL_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -213,5 +212,3 @@ GenericLogProcessorImpl<L_TRAITS_, LVM_>::check_and_load()
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_GENERIC_LOG_PROC_IMPL_HPP */

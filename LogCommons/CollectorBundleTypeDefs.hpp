@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_COLLECTOR_BUNDLE_TYPE_DEFS_HPP
-#define AD_SERVER_LOG_PROCESSING_COLLECTOR_BUNDLE_TYPE_DEFS_HPP
+#pragma once
 
 #include <list>
 #include <LogCommons/FileReceiver.hpp>
@@ -17,6 +16,3 @@ namespace LogProcessing {
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_COLLECTOR_BUNDLE_TYPE_DEFS_HPP */
-

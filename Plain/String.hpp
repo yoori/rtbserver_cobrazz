@@ -1,5 +1,4 @@
-#ifndef PLAIN_STRING_HPP
-#define PLAIN_STRING_HPP
+#pragma once
 
 #include <string>
 #include <cstring>
@@ -123,5 +122,3 @@ namespace PlainTypes
       *static_cast<const uint32_t*>(fixed_buf);
   }
 }
-
-#endif /*PLAIN_STRING_HPP*/

@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__METATEST_
-#define _UNITTEST__METATEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,5 +22,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

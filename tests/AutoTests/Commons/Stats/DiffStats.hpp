@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_STATS_DIFFSTATS_HPP
-#define _AUTOTESTS_COMMONS_STATS_DIFFSTATS_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Stats/ORMStats.hpp>
 
@@ -64,5 +63,3 @@ namespace AutoTest
 }
 
 #include "DiffStats.tpp"
-
-#endif  //_AUTOTESTS_COMMONS_STATS_DIFFSTATS_HPP

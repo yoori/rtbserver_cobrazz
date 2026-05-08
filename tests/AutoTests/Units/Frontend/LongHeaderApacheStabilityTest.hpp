@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__LONGHEADERAPACHESTABILITYTEST_
-#define _UNITTEST__LONGHEADERAPACHESTABILITYTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -27,5 +26,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef ORACLE_CONNECTION_HPP
-#define ORACLE_CONNECTION_HPP
+#pragma once
 
 #include <Sync/PosixLock.hpp>
 
@@ -134,5 +133,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*ORACLE_CONNECTION_HPP*/

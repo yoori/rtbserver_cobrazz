@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_ITEMS_HPP
-#define AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_ITEMS_HPP
+#pragma once
 
 #include <sstream>
 #include <Generics/Time.hpp>
@@ -188,6 +187,3 @@ typedef LogDefaultTraits<WebwiseDiscoverItemsCollector, false>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_ITEMS_HPP */
-

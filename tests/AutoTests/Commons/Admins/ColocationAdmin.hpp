@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_COLOCATIONADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_COLOCATIONADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -190,5 +189,3 @@ namespace AutoTest
      return *this;
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_COLOCATIONADMIN_HPP
-

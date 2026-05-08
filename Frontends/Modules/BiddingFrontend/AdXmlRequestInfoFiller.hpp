@@ -1,5 +1,4 @@
-#ifndef BIDDINGFRONTEND_ADXMLREQUESTINFOFILLER_HPP_
-#define BIDDINGFRONTEND_ADXMLREQUESTINFOFILLER_HPP_
+#pragma once
 
 #include <string>
 
@@ -58,5 +57,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*BIDDINGFRONTEND_ADXMLREQUESTINFOFILLER_HPP_*/

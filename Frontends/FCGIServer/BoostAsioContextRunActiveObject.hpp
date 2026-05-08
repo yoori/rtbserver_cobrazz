@@ -1,5 +1,4 @@
-#ifndef BOOSTASIOCONTEXTRUNACTIVEOBJECT_HPP_
-#define BOOSTASIOCONTEXTRUNACTIVEOBJECT_HPP_
+#pragma once
 
 #include <memory>
 #include <Commons/DelegateActiveObject.hpp>
@@ -32,5 +31,3 @@ namespace AdServer::Frontends
     std::shared_ptr<boost::asio::io_service> io_service_;
   };
 }
-
-#endif

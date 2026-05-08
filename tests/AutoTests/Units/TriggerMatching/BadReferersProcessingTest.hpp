@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__BADREFERERSPROCESSINGTEST_
-#define _UNITTEST__BADREFERERSPROCESSINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -24,5 +23,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKER_HPP
-#define __AUTOTESTS_COMMONS_CHECKER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -23,5 +22,3 @@ namespace AutoTest
     {}
   };
 } //namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_CHECKER_HPP

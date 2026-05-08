@@ -1,5 +1,4 @@
-#ifndef _UTILS_PROFILEDUMP_HPP_
-#define _UTILS_PROFILEDUMP_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -75,5 +74,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*_UTILS_PROFILEDUMP_HPP_*/

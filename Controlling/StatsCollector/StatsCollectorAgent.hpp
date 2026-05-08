@@ -1,5 +1,4 @@
-#ifndef STATS_COLLECTOR_AGENT_HPP
-#define STATS_COLLECTOR_AGENT_HPP
+#pragma once
 
 #include<Generics/Values.hpp>
 #include<SNMPAgent/SNMPAgentX.hpp>
@@ -382,5 +381,3 @@ namespace AdServer
 
   }
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__SEARCHENGINEDYNAMICUPDATETEST_
-#define _AUTOTEST__SEARCHENGINEDYNAMICUPDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -47,6 +46,3 @@ private:
   void tear_down();
 
 };
-
-#endif //_AUTOTEST__SEARCHENGINEDYNAMICUPDATETEST_
-

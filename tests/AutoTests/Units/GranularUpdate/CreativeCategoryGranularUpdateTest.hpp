@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__CREATIVECATEGORYGRANULARUPDATETEST_
-#define _UNITTEST__CREATIVECATEGORYGRANULARUPDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -38,5 +37,3 @@ private:
   void add_tags_exclusion_();
   void del_tags_exclusion_();
 };
-
-#endif  // _UNITTEST__CREATIVECATEGORYGRANULARUPDATETEST_

@@ -22,8 +22,7 @@
     IN THE SOFTWARE.
 */
 
-#ifndef __ZMQ_HPP_INCLUDED__
-#define __ZMQ_HPP_INCLUDED__
+#pragma once
 
 #include <zmq.h>
 
@@ -591,5 +590,3 @@ namespace zmq
         void* socketPtr;
     };
 }
-
-#endif

@@ -1,7 +1,6 @@
 // @file Commons/Xslt/XslTransformer.hpp
 
-#ifndef XSL_TRANSFORMER_HPP_INCLUDED
-#define XSL_TRANSFORMER_HPP_INCLUDED
+#pragma once
 
 #include <map>
 #include <memory>
@@ -134,5 +133,3 @@ namespace AdServer
   {
   }
 }
-
-#endif // XSL_TRANSFORMER_HPP_INCLUDED

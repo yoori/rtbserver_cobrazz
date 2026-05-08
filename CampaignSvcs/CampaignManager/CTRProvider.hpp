@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTRPROVIDER_HPP
-#define CAMPAIGNMANAGER_CTRPROVIDER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -584,5 +583,3 @@ namespace AdServer::CampaignSvcs::CTR
     //hashes.swap(init.hashes);
   }
 }
-
-#endif /*CAMPAIGNMANAGER_CTRPROVIDER_HPP*/

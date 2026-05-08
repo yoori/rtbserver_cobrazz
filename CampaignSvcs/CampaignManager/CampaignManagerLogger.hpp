@@ -1,5 +1,4 @@
-#ifndef _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNMANAGERLOGGER_HPP_
-#define _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNMANAGERLOGGER_HPP_
+#pragma once
 
 #include <iomanip>
 #include <sstream>
@@ -824,5 +823,3 @@ namespace AdServer
 
   } // namespace CampaignSvcs
 } // namespace AdServer
-
-#endif /*_AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNMANAGERLOGGER_HPP_*/

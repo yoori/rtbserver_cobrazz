@@ -1,5 +1,4 @@
-#ifndef LOADINGPROGRESSCALLBACK_HPP
-#define LOADINGPROGRESSCALLBACK_HPP
+#pragma once
 
 #include "LoadingProgressCallbackBase.hpp"
 
@@ -27,5 +26,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif // LOADINGPROGRESSCALLBACK_HPP

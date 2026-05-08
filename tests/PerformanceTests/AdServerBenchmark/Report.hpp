@@ -1,6 +1,5 @@
 
-#ifndef _REPORT_HPP
-#define _REPORT_HPP
+#pragma once
 
 #include "Statistics.hpp"
 #include <tests/PerformanceTests/Commons/ReportCommons.hpp>
@@ -41,6 +40,3 @@ private:
   Statistics& stats_;           // statistics
   std::ostream& out_;           // output stream
 };
-
-
-#endif  // _REPORT_HPP

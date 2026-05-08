@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKER_DEBUGINFOCHECKERS_HPP
-#define __AUTOTESTS_COMMONS_CHECKERS_DEBUGINFOCHECKERS_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Checkers/Checker.hpp>
 #include <tests/AutoTests/Commons/Checkers/CommonCheckers.hpp>
@@ -353,5 +352,3 @@ namespace AutoTest
 } //namespace AutoTest
 
 #include "DebugInfoCheckers.ipp"
-
-#endif  // __AUTOTESTS_COMMONS_CHECKERS_DEBUGINFOCHECKERS_HPP

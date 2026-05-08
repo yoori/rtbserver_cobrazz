@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CHANNELINVENTORYESTIMSTATSTEST_
-#define _AUTOTEST__CHANNELINVENTORYESTIMSTATSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 #include "UserSet.hpp"
@@ -112,5 +111,3 @@ private:
   ORM::StatsArray<ORM::ChannelInventoryEstimStats, 10> dsc_stats_;
 
 };
-
-#endif //_AUTOTEST__CHANNELINVENTORYESTIMSTATSTEST_

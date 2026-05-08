@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__COUNTRYTEST_
-#define _UNITTEST__COUNTRYTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -28,5 +27,3 @@ private:
   void process_testcase(AdClient& test_client,
                         const char *cc_id);
 };
-
-#endif

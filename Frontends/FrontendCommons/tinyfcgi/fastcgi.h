@@ -12,8 +12,7 @@
  * $Id: fastcgi.h,v 1.1.1.1 1997/09/16 15:36:32 stanleyg Exp $
  */
 
-#ifndef _FASTCGI_H
-#define _FASTCGI_H
+#pragma once
 
 /*
  * Listening socket file number
@@ -131,6 +130,3 @@ typedef struct {
     FCGI_Header header;
     FCGI_UnknownTypeBody body;
 } FCGI_UnknownTypeRecord;
-
-#endif	/* _FASTCGI_H */
-

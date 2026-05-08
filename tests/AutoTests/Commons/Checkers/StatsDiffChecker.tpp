@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_COMMONS_CHECKER_STATSDIFFCHECKER_IPP
-#define AUTOTESTS_COMMONS_CHECKER_STATSDIFFCHECKER_IPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Stats/ORMStats.hpp>
 
@@ -155,5 +154,3 @@ namespace AutoTest
       connection, diff, initial);
   }
 }
-
-#endif /*AUTOTESTS_COMMONS_CHECKER_STATSDIFFCHECKER_IPP*/

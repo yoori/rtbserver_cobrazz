@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_GENERATEDADMINS_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_GENERATEDADMINS_HPP
+#pragma once
 
 
 #include <tests/AutoTests/Commons/Admins/CampaignAdmin.hpp>
@@ -41,6 +40,3 @@
 #include <tests/AutoTests/Commons/Admins/CCGKeywordAdmin.hpp>
 #include <tests/AutoTests/Commons/Admins/TriggerAdmin.hpp>
 #include <tests/AutoTests/Commons/Admins/ChannelSearchAdmin.hpp>
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_GENERATEDADMINS_HPP
-

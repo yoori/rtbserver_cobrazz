@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_HPP
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -1372,5 +1371,3 @@ namespace AutoTest
 }//namespace AutoTest
 
 #include "BaseRequest.ipp"
-
-#endif  // __AUTOTESTS_COMMONS_REQUEST_HPP

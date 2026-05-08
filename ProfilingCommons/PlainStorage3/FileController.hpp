@@ -1,5 +1,4 @@
-#ifndef FILECONTROLLER_HPP_
-#define FILECONTROLLER_HPP_
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -272,5 +271,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif /*FILECONTROLLER_HPP_*/

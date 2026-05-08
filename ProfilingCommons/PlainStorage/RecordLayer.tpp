@@ -1,7 +1,6 @@
 // @file ProfilingCommons/PlainStorage/RecordLayer.tpp
 
-#ifndef PLAINSTORAGE_RECORDLAYER_TPP
-#define PLAINSTORAGE_RECORDLAYER_TPP
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -1468,5 +1467,3 @@ namespace PlainStorage
   }
 
 } // namespace PlainStorage
-
-#endif // PLAINSTORAGE_RECORDLAYER_TPP

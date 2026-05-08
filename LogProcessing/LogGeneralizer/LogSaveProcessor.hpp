@@ -1,5 +1,4 @@
-#ifndef LOG_SAVE_PROCESSOR_HPP
-#define LOG_SAVE_PROCESSOR_HPP
+#pragma once
 
 #include <LogCommons/LogSaverBaseImpl.hpp>
 #include "ErrorCode.hpp"
@@ -225,5 +224,3 @@ LogSaveProcessor<LogExtTraits>::unlink_files_(
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // LOG_SAVE_PROCESSOR_HPP

@@ -1,6 +1,5 @@
 
-#ifndef __CONFIGCOMMONS_HPP
-#define __CONFIGCOMMONS_HPP
+#pragma once
 
 #include "ListSelectorPolicy.hpp"
 
@@ -120,6 +119,3 @@ public:
 };
 
 typedef std::unique_ptr<RequestConfig> RequestConfig_var;
-
-
-#endif  // __CONFIGCOMMONS_HPP

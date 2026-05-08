@@ -1,5 +1,4 @@
-#ifndef SEGMENTUTIL_HPP_
-#define SEGMENTUTIL_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -104,5 +103,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*SEGMENTUTIL_HPP_*/

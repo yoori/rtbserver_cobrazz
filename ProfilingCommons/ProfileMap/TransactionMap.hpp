@@ -4,8 +4,7 @@
  * can be created for each key. And lock application if it try get
  * already opened transaction, and wait it close.
  */
-#ifndef TRANSACTION_MAP_HPP
-#define TRANSACTION_MAP_HPP
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -342,5 +341,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*TRANSACTION_MAP_HPP*/

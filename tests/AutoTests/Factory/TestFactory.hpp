@@ -1,5 +1,4 @@
-#ifndef __TESTFACTORY_HPP
-#define __TESTFACTORY_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -46,6 +45,3 @@ namespace TestFactory
   };
 
 }; //namespace
-
-
-#endif  // __TESTFACTORY_HPP

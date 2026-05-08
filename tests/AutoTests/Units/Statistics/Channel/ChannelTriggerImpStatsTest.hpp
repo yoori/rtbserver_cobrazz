@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_UNITS_CHANNELTRIGGERIMPSTATSTEST_HPP
-#define AUTOTESTS_UNITS_CHANNELTRIGGERIMPSTATSTEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -55,5 +54,3 @@ private:
 
   void channel_types();
 };
-
-#endif /*AUTOTESTS_UNITS_CHANNELTRIGGERIMPSTATSTEST_HPP*/

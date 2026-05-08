@@ -1,7 +1,6 @@
 /// @file FrontendCommons/RequestMatchers.hpp
 
-#ifndef _FRONTENDCOMMONS_REQUESTMATCHERS_HPP_
-#define _FRONTENDCOMMONS_REQUESTMATCHERS_HPP_
+#pragma once
 
 #include <string>
 #include <list>
@@ -590,5 +589,3 @@ namespace FrontendCommons
       priority(init.priority)
   {}
 }
-
-#endif /*_FRONTENDCOMMONS_REQUESTMATCHERS_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__ACCOUNTCURRENCYTEST_
-#define _UNITTEST__ACCOUNTCURRENCYTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,5 +22,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef USERCOLOREACHPROFILEADAPTER_HPP
-#define USERCOLOREACHPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -23,5 +22,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*USERCOLOREACHPROFILEADAPTER_HPP*/

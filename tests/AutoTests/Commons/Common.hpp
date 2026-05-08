@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_COMMON_HPP
-#define __AUTOTESTS_COMMONS_COMMON_HPP
+#pragma once
 
 #include "AutoTestsXsd.hpp"
 #include "Utils.hpp"
@@ -28,5 +27,3 @@
 #include "ORM/ORMLogic.hpp"
 
 #include "LocalAudinceChannel.hpp"
-
-#endif  // __AUTOTESTS_COMMONS_COMMON_HPP

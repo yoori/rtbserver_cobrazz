@@ -1,5 +1,4 @@
-#ifndef CLICKSTARBIDREQUESTTASK_HPP_
-#define CLICKSTARBIDREQUESTTASK_HPP_
+#pragma once
 
 #include <iostream>
 #include "BidRequestTask.hpp"
@@ -83,5 +82,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*CLICKSTARBIDREQUESTTASK_HPP_*/

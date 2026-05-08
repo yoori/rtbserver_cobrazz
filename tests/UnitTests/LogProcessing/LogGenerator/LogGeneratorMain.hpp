@@ -1,6 +1,5 @@
 // @file LogGeneratorMain.hpp
-#ifndef LOG_GENERATOR_MAIN_HPP
-#define LOG_GENERATOR_MAIN_HPP
+#pragma once
 
 #include <vector>
 #include <set>
@@ -109,6 +108,3 @@ protected:
 };
 
 typedef ReferenceCounting::SmartPtr<Prober> Prober_var;
-
-#endif // LOG_GENERATOR_MAIN_HPP
-

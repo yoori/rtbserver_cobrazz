@@ -1,5 +1,4 @@
-#ifndef _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_IMPL_HPP_
-#define _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_IMPL_HPP_
+#pragma once
 
 
 #include <eh/Exception.hpp>
@@ -279,5 +278,3 @@ namespace ChannelSearchSvcs
   }
 }
 }
-
-#endif /* _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_IMPL_HPP_ */

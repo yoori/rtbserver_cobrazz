@@ -1,5 +1,4 @@
-#ifndef ORACLE_TIMEOUTCONTROL_HPP
-#define ORACLE_TIMEOUTCONTROL_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -33,5 +32,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*ORACLE_TIMEOUTCONTROL_HPP*/

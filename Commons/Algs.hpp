@@ -1,5 +1,4 @@
-#ifndef _COMMONS_ALGS_HPP_
-#define _COMMONS_ALGS_HPP_
+#pragma once
 
 #include <iterator>
 #include <ostream>
@@ -539,5 +538,3 @@ namespace Algs
     return Generics::transfer_membuf(mem_buf);
   }
 }
-
-#endif /*_COMMONS_ALGS_HPP_*/

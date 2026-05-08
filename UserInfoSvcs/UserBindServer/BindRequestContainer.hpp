@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_BINDREQUESTCONTAINER_HPP
-#define USERINFOSVCS_BINDREQUESTCONTAINER_HPP
+#pragma once
 
 #include <string>
 
@@ -85,5 +84,3 @@ namespace UserInfoSvcs
 
 } /* UserInfoSvcs */
 } /* AdServer */
-
-#endif /*USERINFOSVCS_BINDREQUESTCONTAINER_HPP*/

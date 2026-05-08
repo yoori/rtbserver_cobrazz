@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_CONNECTION_HPP
-#define __AUTOTESTS_COMMONS_CONNECTION_HPP
+#pragma once
 
 #include <string>
 #include <Generics/Uncopyable.hpp>
@@ -984,5 +983,3 @@ namespace AutoTest
 }
 
 #include "Connection.ipp"
-
-#endif //__AUTOTESTS_COMMONS_CONNECTION_HPP

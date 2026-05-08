@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_USER_AGENT_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_USER_AGENT_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -221,6 +220,3 @@ typedef LogDefaultTraits<UserAgentStatCollector> UserAgentStatTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_USER_AGENT_STAT_HPP */
-

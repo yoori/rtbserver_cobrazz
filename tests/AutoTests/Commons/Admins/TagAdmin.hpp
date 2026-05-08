@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_TAGADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_TAGADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -208,5 +207,3 @@ namespace AutoTest
     return values_[i][Expected::IMP_TRACK_PIXEL].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_TAGADMIN_HPP
-

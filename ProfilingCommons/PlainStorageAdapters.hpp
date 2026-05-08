@@ -1,5 +1,4 @@
-#ifndef _PROFILINGCOMMONS_PLAIN_STORAGE_ADAPTERS_HPP_
-#define _PROFILINGCOMMONS_PLAIN_STORAGE_ADAPTERS_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/HashTableAdapters.hpp>
@@ -257,5 +256,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_PROFILINGCOMMONS_PLAIN_STORAGE_ADAPTERS_HPP_*/

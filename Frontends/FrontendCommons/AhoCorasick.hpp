@@ -1,6 +1,5 @@
 
-#ifndef FRONTENDCOMMONS_AHO_CORASICK_HPP
-#define FRONTENDCOMMONS_AHO_CORASICK_HPP
+#pragma once
 
 #include <list>
 #include <queue>
@@ -281,5 +280,3 @@ namespace FrontendCommons
     }
   }
 }
-
-#endif /*FRONTENDCOMMONS_AHO_CORASICK_HPP*/

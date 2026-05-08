@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_DEBUGINFO_HPP
-#define __AUTOTESTS_COMMONS_DEBUGINFO_HPP
+#pragma once
 
 #include <map>
 #include <list>
@@ -966,5 +965,3 @@ namespace AutoTest
     }
   };
 }//namespace AutoTest
-
-#endif//__AUTOTESTS_COMMONS_DEBUGINFO_HPP

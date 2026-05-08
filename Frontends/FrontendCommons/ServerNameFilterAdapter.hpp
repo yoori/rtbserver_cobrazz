@@ -1,5 +1,4 @@
-#ifndef VIRTUALSERVERADAPTER_HPP
-#define VIRTUALSERVERADAPTER_HPP
+#pragma once
 
 #include <Apache/Adapters.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -110,5 +109,3 @@ namespace Apache
     }
   }
 }
-
-#endif /*VIRTUALSERVERADAPTER_HPP*/

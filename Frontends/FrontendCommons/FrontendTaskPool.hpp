@@ -1,5 +1,4 @@
-#ifndef FRONTENDCOMMONS_FRONTENDTASKPOOL_HPP_
-#define FRONTENDCOMMONS_FRONTENDTASKPOOL_HPP_
+#pragma once
 
 #include <String/SubString.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -75,5 +74,3 @@ namespace FrontendCommons
     Generics::AtomicInt task_count_;
   };
 }
-
-#endif /*FRONTENDCOMMONS_FRONTENDTASKPOOL_HPP_*/

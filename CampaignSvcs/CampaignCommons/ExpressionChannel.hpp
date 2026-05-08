@@ -1,5 +1,4 @@
-#ifndef _EXPRESSIONCHANNEL_HPP_
-#define _EXPRESSIONCHANNEL_HPP_
+#pragma once
 
 #include <string>
 #include <set>
@@ -1073,5 +1072,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_EXPRESSIONCHANNEL_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef SYNCLOGS_FILEROUTER_HPP
-#define SYNCLOGS_FILEROUTER_HPP
+#pragma once
 
 #include <string>
 #include <eh/Exception.hpp>
@@ -114,6 +113,3 @@ namespace LogProcessing
   };
 }
 }
-
-
-#endif /*SYNCLOGS_FILEROUTER_HPP*/

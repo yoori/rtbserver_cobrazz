@@ -1,5 +1,4 @@
-#ifndef COMMONS_INTERVAL_HPP_
-#define COMMONS_INTERVAL_HPP_
+#pragma once
 
 #include <set>
 
@@ -169,4 +168,3 @@ namespace Commons
   }
 }
 }
-#endif /* COMMONS_INTERVAL_HPP_ */

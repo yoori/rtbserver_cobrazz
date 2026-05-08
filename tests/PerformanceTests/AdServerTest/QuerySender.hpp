@@ -1,6 +1,5 @@
 
-#ifndef __QUERYSENDER_HPP
-#define __QUERYSENDER_HPP
+#pragma once
 
 #include <time.h>
 
@@ -267,5 +266,3 @@ private:
   Generics::Time start_time_;
 
 };
-
-#endif  // __QUERYSENDER_HPP

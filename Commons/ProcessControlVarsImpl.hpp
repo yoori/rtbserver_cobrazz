@@ -1,7 +1,6 @@
 // $Id: ProcessControlVarsImpl.hpp 185978 2020-07-04 00:12:49Z jurij_kuznecov $
 
-#ifndef _ADSERVER_COMMONS_PROCESS_CONTROL_VARS_IMPL_HPP_
-#define _ADSERVER_COMMONS_PROCESS_CONTROL_VARS_IMPL_HPP_
+#pragma once
 
 #include <map>
 #include <string>
@@ -379,5 +378,3 @@ namespace Commons {
 
 } // namespace Commons
 } // namespace AdServer
-
-#endif // _ADSERVER_COMMONS_PROCESS_CONTROL_VARS_IMPL_HPP_

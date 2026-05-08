@@ -1,5 +1,4 @@
-#ifndef _SIMPLEWRITER_HPP_
-#define _SIMPLEWRITER_HPP_
+#pragma once
 
 #include <Stream/MemoryStream.hpp>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -178,5 +177,3 @@ namespace Declaration
     return cpp_write_traits_generator_;
   }
 }
-
-#endif /*_SIMPLEWRITER_HPP_*/

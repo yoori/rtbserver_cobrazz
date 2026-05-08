@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_COMMONS_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_COMMONS_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -1431,5 +1430,3 @@ private:
 } // namespace AdServer
 
 #include <LogCommons/LogCommons.ipp>
-
-#endif // AD_SERVER_LOG_PROCESSING_LOG_COMMONS_HPP

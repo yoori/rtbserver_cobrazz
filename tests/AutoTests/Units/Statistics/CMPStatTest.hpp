@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CMPSTATTEST_
-#define _AUTOTEST__CMPSTATTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -100,5 +99,3 @@ private:
   void
   ta_scenario();
 };
-
-#endif //_AUTOTEST__CMPSTATTEST_

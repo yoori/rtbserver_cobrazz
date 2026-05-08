@@ -1,5 +1,4 @@
-#ifndef _FRONTENDCOMMONS_USERAGENTMATCHER_HPP_
-#define _FRONTENDCOMMONS_USERAGENTMATCHER_HPP_
+#pragma once
 
 #include <string>
 #include <eh/Exception.hpp>
@@ -28,6 +27,3 @@ namespace FrontendCommons
     HashSetT hash_set_;
   };
 } // namespace FrontendCommons
-
-#endif /* _FRONTENDCOMMONS_USERAGENTMATCHER_HPP_ */
-

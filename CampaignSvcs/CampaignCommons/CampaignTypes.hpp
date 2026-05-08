@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNCONFIGTYPES_HPP
-#define CAMPAIGNCONFIGTYPES_HPP
+#pragma once
 
 #include <limits>
 #include <set>
@@ -505,5 +504,3 @@ namespace AdServer
     }
   }
 }
-
-#endif

@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_STATS_COMMON_HPP
-#define __AUTOTESTS_COMMONS_STATS_COMMON_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Stats/ORMStats.hpp>
 #include <tests/AutoTests/Commons/Stats/StatsContainers.hpp>
@@ -46,6 +45,3 @@
 #include <tests/AutoTests/Commons/Stats/SiteChannelStats.hpp>
 #include <tests/AutoTests/Commons/Stats/ChannelTriggerStats.hpp>
 #include <tests/AutoTests/Commons/Stats/CcgAuctionStatsDaily.hpp>
-
-#endif  // __AUTOTESTS_COMMONS_STATS_COMMON_HPP
-

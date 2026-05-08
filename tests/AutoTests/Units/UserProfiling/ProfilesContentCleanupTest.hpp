@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__PROFILESCONTENTCLEANUPTEST_
-#define _AUTOTEST__PROFILESCONTENTCLEANUPTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -34,5 +33,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif //_AUTOTEST__PROFILESCONTENTCLEANUPTEST_

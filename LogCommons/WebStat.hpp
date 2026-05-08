@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_WEB_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_WEB_STAT_HPP
+#pragma once
 
 #include <cctype>
 
@@ -542,6 +541,3 @@ struct WebStatTraits: LogDefaultTraits<WebStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_WEB_STAT_HPP */
-

@@ -1,5 +1,4 @@
-#ifndef _STRUCTREADER_HPP_
-#define _STRUCTREADER_HPP_
+#pragma once
 
 #include <list>
 #include "StructDescriptor.hpp"
@@ -130,5 +129,3 @@ namespace Declaration
     return ReferenceCounting::add_ref(this);
   }
 }
-
-#endif /*_STRUCTREADER_HPP_*/

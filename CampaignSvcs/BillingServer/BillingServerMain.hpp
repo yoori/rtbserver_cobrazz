@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCS_BILLINGSERVERMAIN_HPP
-#define CAMPAIGNSVCS_BILLINGSERVERMAIN_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -72,5 +71,3 @@ BillingServerApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /*CAMPAIGNSVCS_BILLINGSERVERMAIN_HPP*/

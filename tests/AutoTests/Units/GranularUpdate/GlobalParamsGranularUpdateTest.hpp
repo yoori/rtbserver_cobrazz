@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__GLOBALPARAMSGRANULARUPDATETEST_
-#define _UNITTEST__GLOBALPARAMSGRANULARUPDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -90,5 +89,3 @@ private:
   unsigned int currency_exchange_id_;
   std::string frontend_;
 };
-
-#endif

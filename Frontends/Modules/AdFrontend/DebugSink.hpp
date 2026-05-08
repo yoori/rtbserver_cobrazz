@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_ADFRONTEND_DEBUGSINK_HPP_
-#define FRONTENDS_ADFRONTEND_DEBUGSINK_HPP_
+#pragma once
 
 #include <sstream>
 #include <string>
@@ -221,5 +220,3 @@ namespace AdServer
     return require_debug_info() && require_debug_info_ != DI_HEADER_SHORT;
   }
 }
-
-#endif /* FRONTENDS_ADFRONTEND_DEBUGSINK_HPP_ */

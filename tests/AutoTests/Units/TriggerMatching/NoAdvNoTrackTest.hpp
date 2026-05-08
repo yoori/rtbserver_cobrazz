@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__NOADVNOTRACKTEST_
-#define _UNITTEST__NOADVNOTRACKTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -47,6 +46,3 @@ private:
   void
   passback_case_();
 };
-
-#endif  // _UNITTEST__NOADVNOTRACKTEST_
-

@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGNCONFIGSOURCE_HPP_
-#define _CAMPAIGNCONFIGSOURCE_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Logger/Logger.hpp>
@@ -436,5 +435,3 @@ namespace AdServer::CampaignSvcs
   typedef ReferenceCounting::SmartPtr<CampaignConfigSource>
     CampaignConfigSource_var;
 }
-
-#endif

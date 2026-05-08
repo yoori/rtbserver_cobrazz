@@ -1,5 +1,4 @@
-#ifndef _EXPRESSION_MATCHER_CHANNEL_MATCHER_HPP_
-#define _EXPRESSION_MATCHER_CHANNEL_MATCHER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -146,5 +145,3 @@ namespace AdServer
 
   } // namespace RequestInfoSvcs
 } // namespace AdServer
-
-#endif /*_EXPRESSION_MATCHER_CHANNEL_MATCHER_HPP_*/

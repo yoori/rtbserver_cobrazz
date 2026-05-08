@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__TAGSANDCREATIVESSIZEMATCHING_
-#define _AUTOTEST__TAGSANDCREATIVESSIZEMATCHING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -32,5 +31,3 @@ private:
   void size_type_level();
   void rtb();
 };
-
-#endif // _AUTOTEST__TAGSANDCREATIVESSIZEMATCHING_

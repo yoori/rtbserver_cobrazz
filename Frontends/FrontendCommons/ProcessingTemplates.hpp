@@ -1,6 +1,5 @@
 
-#ifndef _FRONTENDCOMMONS_PROCCESSING_TEMPLATES_HPP_
-#define _FRONTENDCOMMONS_PROCCESSING_TEMPLATES_HPP_
+#pragma once
 
 #include <string>
 #include <map>
@@ -90,7 +89,3 @@ namespace FrontendCommons
     FrontendCommons::PassbackProcessingTemplate_var>
     PassbackProcessingTemplateMap;
 }
-
-
-#endif //_FRONTENDCOMMONS_PROCCESSING_TEMPLATES_HPP_
-

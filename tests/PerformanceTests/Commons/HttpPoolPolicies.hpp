@@ -1,6 +1,5 @@
 
-#ifndef __HTTPPOOLPOLICIES_HPP
-#define __HTTPPOOLPOLICIES_HPP
+#pragma once
 
 #include <HTTP/HttpAsyncPool.hpp>
 #include <HTTP/HttpAsyncPolicies.hpp>
@@ -98,6 +97,3 @@ private:
 };
 
 typedef ReferenceCounting::SmartPtr<HttpPoolPolicy> HttpPoolPolicy_var;
-
-
-#endif  // __HTTPPOOLPOLICIES_HPP

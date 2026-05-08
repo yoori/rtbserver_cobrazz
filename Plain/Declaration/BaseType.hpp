@@ -1,5 +1,4 @@
-#ifndef _BASETYPE_HPP_
-#define _BASETYPE_HPP_
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -59,5 +58,3 @@ namespace Declaration
 
   typedef ReferenceCounting::SmartPtr<BaseType> BaseType_var;
 }
-
-#endif

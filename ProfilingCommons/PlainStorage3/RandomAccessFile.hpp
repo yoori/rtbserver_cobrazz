@@ -1,5 +1,4 @@
-#ifndef RANDOMACCESSFILE_HPP
-#define RANDOMACCESSFILE_HPP
+#pragma once
 
 // We support large files, use mmap64 instead mmap, etc
 #ifndef PS_NOT_USE_LARGEFILES
@@ -73,5 +72,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif // RANDOMACCESSFILE_HPP

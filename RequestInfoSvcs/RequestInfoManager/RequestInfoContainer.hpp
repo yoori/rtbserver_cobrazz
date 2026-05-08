@@ -1,5 +1,4 @@
-#ifndef _REQUEST_INFO_SVCS_REQUEST_INFO_CONTAINER_IMPL_HPP_
-#define _REQUEST_INFO_SVCS_REQUEST_INFO_CONTAINER_IMPL_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -423,5 +422,3 @@ namespace AdServer
     }
   } /* RequestInfoSvcs */
 } /* AdServer */
-
-#endif /*_REQUEST_INFO_SVCS_REQUEST_INFO_CONTAINER_IMPL_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef PLAIN_CONSTVECTOR_HPP
-#define PLAIN_CONSTVECTOR_HPP
+#pragma once
 
 namespace PlainTypes
 {
@@ -594,5 +593,3 @@ operator+(
 {
   return it.advance(n);
 }
-
-#endif /* PLAIN_CONSTVECTOR_HPP */

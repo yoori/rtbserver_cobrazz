@@ -1,5 +1,4 @@
-#ifndef ADFOXBIDREQUESTTASK_HPP_
-#define ADFOXBIDREQUESTTASK_HPP_
+#pragma once
 
 #include <iostream>
 #include "BidRequestTask.hpp"
@@ -73,5 +72,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*ADFOXBIDREQUESTTASK_HPP_*/

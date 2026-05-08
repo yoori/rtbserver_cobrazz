@@ -1,5 +1,4 @@
-#ifndef PLAIN_VECTOR_HPP
-#define PLAIN_VECTOR_HPP
+#pragma once
 
 #include <vector>
 #include <Generics/TAlloc.hpp>
@@ -194,5 +193,3 @@ namespace PlainTypes
       dyn_ptr - static_cast<unsigned char*>(fixed_buf);
   }
 }
-
-#endif /*PLAIN_VECTOR_HPP*/

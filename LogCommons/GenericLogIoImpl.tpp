@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_GENERIC_LOG_IO_IMPL_TPP
-#define AD_SERVER_LOG_PROCESSING_GENERIC_LOG_IO_IMPL_TPP
+#pragma once
 
 #include <LogCommons/StatCollector.hpp>
 
@@ -382,5 +381,3 @@ namespace LogProcessing {
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_GENERIC_LOG_IO_IMPL_TPP */

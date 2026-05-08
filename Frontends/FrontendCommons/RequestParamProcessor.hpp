@@ -1,5 +1,4 @@
-#ifndef FRONTENDCOMMONS_REQUESTPARAMPROCESSOR_HPP
-#define FRONTENDCOMMONS_REQUESTPARAMPROCESSOR_HPP
+#pragma once
 
 #include <string>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -668,5 +667,3 @@ namespace FrontendCommons
 }
 
 #include "RequestParamProcessor.tpp"
-
-#endif /*FRONTENDCOMMONS_REQUESTPARAMPROCESSOR_HPP*/

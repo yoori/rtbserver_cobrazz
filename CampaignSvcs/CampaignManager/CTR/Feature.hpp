@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_FEATURE_HPP_
-#define CAMPAIGNMANAGER_CTR_FEATURE_HPP_
+#pragma once
 
 #include <set>
 #include <vector>
@@ -27,5 +26,3 @@ namespace AdServer::CampaignSvcs::CTR
 
   typedef std::vector<Feature> FeatureArray;
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_FEATURE_HPP_*/

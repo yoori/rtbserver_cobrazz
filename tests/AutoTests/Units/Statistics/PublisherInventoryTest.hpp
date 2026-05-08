@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__PUBLISHERINVENTORYTEST_
-#define _AUTOTEST__PUBLISHERINVENTORYTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -111,6 +110,3 @@ private:
     int active_users,
     int total_users);
 };
-
-#endif //_AUTOTEST__PUBLISHERINVENTORYTEST_
-

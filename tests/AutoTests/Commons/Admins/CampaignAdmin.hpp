@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -589,5 +588,3 @@ namespace AutoTest
     return force_remote_present_;
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNADMIN_HPP
-

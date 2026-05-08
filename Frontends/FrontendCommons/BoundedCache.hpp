@@ -1,5 +1,4 @@
-#ifndef BOUNDEDCACHE_HPP
-#define BOUNDEDCACHE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -147,5 +146,3 @@ namespace AdServer
     return map_.insert(typename ElementMap::value_type(key, h)).first;
   }
 }
-
-#endif /*BOUNDEDCACHE_HPP*/

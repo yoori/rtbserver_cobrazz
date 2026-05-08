@@ -1,5 +1,4 @@
-#ifndef USERBINDCORBACLIENT_HPP_
-#define USERBINDCORBACLIENT_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -79,5 +78,3 @@ namespace FrontendCommons
   typedef ReferenceCounting::SmartPtr<UserBindCorbaClient>
     UserBindCorbaClient_var;
 }
-
-#endif /*USERBINDCORBACLIENT_HPP_*/

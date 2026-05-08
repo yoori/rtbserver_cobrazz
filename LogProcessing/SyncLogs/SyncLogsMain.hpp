@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_LOG_PROCESSING_SYNCLOGS_MAIN_HPP_
-#define _AD_SERVER_LOG_PROCESSING_SYNCLOGS_MAIN_HPP_
+#pragma once
 
 #include <vector>
 
@@ -78,6 +77,3 @@ private:
 typedef ReferenceCounting::QualPtr<SyncLogsApp_> SyncLogsApp_var;
 
 typedef Generics::Singleton<SyncLogsApp_, SyncLogsApp_var> SyncLogsApp;
-
-#endif // _AD_SERVER_LOG_PROCESSING_SYNCLOGS_MAIN_HPP_
-

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__DIFFCOLOTZTEST_
-#define _AUTOTEST__DIFFCOLOTZTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -34,5 +33,3 @@ private:
   void gmt_day_switch();
 
 };
-
-#endif //_AUTOTEST__DIFFCOLOTZTEST_

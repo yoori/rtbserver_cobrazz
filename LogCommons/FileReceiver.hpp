@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_COMMONS_FILE_RECEIVER_HPP
-#define AD_SERVER_LOG_COMMONS_FILE_RECEIVER_HPP
+#pragma once
 
 #include <set>
 #include <string>
@@ -362,5 +361,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*AD_SERVER_LOG_COMMONS_FILE_RECEIVER_HPP*/

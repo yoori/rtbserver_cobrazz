@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CHANNELTARGETINGTEST_
-#define _UNITTEST__CHANNELTARGETINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -24,5 +23,3 @@ private:
   void part1();
   void part2();
 };
-
-#endif

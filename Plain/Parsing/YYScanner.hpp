@@ -1,5 +1,4 @@
-#ifndef PLAIN_PARSING_YYSCANNER_HPP
-#define PLAIN_PARSING_YYSCANNER_HPP
+#pragma once
 
 #ifndef YY_DECL
 # define YY_DECL \
@@ -44,5 +43,3 @@ namespace yy
   typedef ReferenceCounting::SmartPtr<PlainScanner>
     PlainScanner_var;
 }
-
-#endif /*PLAIN_PARSING_YYSCANNER_HPP*/

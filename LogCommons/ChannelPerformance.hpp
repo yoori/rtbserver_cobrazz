@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CHANNEL_PERFORMANCE_HPP
-#define AD_SERVER_LOG_PROCESSING_CHANNEL_PERFORMANCE_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -328,6 +327,3 @@ typedef LogDefaultTraits<ChannelPerformanceCollector> ChannelPerformanceTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CHANNEL_PERFORMANCE_HPP */
-

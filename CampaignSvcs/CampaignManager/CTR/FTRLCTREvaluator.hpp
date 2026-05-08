@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_FTRLCTREVALUATOR_HPP_
-#define CAMPAIGNMANAGER_CTR_FTRLCTREVALUATOR_HPP_
+#pragma once
 
 #include "CTREvaluator.hpp"
 
@@ -27,5 +26,3 @@ namespace AdServer::CampaignSvcs::CTR
     std::vector<float> feature_weights_;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_FTRLCTREVALUATOR_HPP_*/

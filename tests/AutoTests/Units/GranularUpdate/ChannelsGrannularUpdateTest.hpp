@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__ADDCHANNELSTEST_
-#define _UNITTEST__ADDCHANNELSTEST_
+#pragma once
 
 
 #include <tests/AutoTests/Commons/Common.hpp>
@@ -65,5 +64,3 @@ private:
 
 
 };
-
-#endif

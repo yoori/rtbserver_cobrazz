@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER__ALGS_HPP
-#define EXPRESSIONMATCHER__ALGS_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include "ColoReachProcessor.hpp"
@@ -115,5 +114,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-#endif
-

@@ -1,8 +1,7 @@
 /**
  * @file RequestLogLoader.hpp
  */
-#ifndef _REQUEST_LOG_LOADER_HPP_
-#define _REQUEST_LOG_LOADER_HPP_
+#pragma once
 
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Values.hpp>
@@ -210,5 +209,3 @@ namespace AdServer
     typedef ReferenceCounting::SmartPtr<RequestLogLoader> RequestLogLoader_var;
   }
 }
-
-#endif // _REQUEST_LOG_LOADER_HPP_

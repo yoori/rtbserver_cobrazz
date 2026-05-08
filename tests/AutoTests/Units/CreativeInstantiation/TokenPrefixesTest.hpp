@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__TOKENPREFIXESTEST_
-#define _UNITTEST__TOKENPREFIXESTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -28,5 +27,3 @@ private:
   void tokenPrefixesSimpleFileCase();
 
 };
-
-#endif

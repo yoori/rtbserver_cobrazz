@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_GLOBALSCHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_GLOBALSCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/GlobalsAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -43,6 +42,3 @@ namespace AutoTest
 }
 
 #include "GlobalsChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_GLOBALSCHECKER_HPP
-

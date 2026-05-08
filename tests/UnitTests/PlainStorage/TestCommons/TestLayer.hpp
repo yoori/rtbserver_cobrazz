@@ -1,7 +1,6 @@
 // @file PlainStorage/TestCommons/TestLayer.hpp
 
-#ifndef COMMONS_TESTLAYER_HPP
-#define COMMONS_TESTLAYER_HPP
+#pragma once
 
 #include <cassert>
 
@@ -429,5 +428,3 @@ namespace PlainStorage
   typedef ReferenceCounting::SmartPtr<TestBlockSizeAllocator>
     TestBlockSizeAllocator_var;
 }
-
-#endif // COMMONS_TESTLAYER_HPP

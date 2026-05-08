@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_COMMONCHECKERS_HPP
-#define __AUTOTESTS_COMMONS_COMMONCHECKERS_HPP
+#pragma once
 
 #include "Checker.hpp"
 #include <Generics/Time.hpp>
@@ -167,5 +166,3 @@ namespace AutoTest
 } //namespace AutoTest
 
 #include "CommonCheckers.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_COMMONCHECKERS_HPP

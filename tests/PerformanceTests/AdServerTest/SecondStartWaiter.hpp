@@ -1,6 +1,5 @@
 
-#ifndef __SECONDSTARTWAITER_HPP
-#define __SECONDSTARTWAITER_HPP
+#pragma once
 
 #include <Sync/Condition.hpp>
 #include <Generics/Time.hpp>
@@ -24,5 +23,3 @@ public:
 private:
   Generics::Time second_start_time_;
 };
-
-#endif  // __SECONDSTARTWAITER_HPP

@@ -1,5 +1,4 @@
-#ifndef POSTGRES_CONNECTION_HPP
-#define POSTGRES_CONNECTION_HPP
+#pragma once
 
 #include<set>
 #include<Generics/ActiveObject.hpp>
@@ -166,6 +165,3 @@ namespace Commons
   }
 }
 }
-
-#endif //POSTGRES_CONNECTION_HPP
-

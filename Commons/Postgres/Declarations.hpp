@@ -1,5 +1,4 @@
-#ifndef POSTGRES_DECLARATION_HPP
-#define POSTGRES_DECLARATION_HPP
+#pragma once
 
 #include <endian.h>
 
@@ -54,6 +53,3 @@ namespace Commons
   }
 }
 }
-
-#endif //POSTGRES_DECLARATION_HPP
-

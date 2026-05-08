@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST_COMMONS_ORM_PQORMOBJECTS_HPP
-#define _AUTOTEST_COMMONS_ORM_PQORMOBJECTS_HPP
+#pragma once
 
 #include "ORM.hpp"
 
@@ -4193,5 +4192,3 @@ namespace AutoTest
     }
   }
 }
-
-#endif // _AUTOTEST_COMMONS_ORM_PQORMOBJECTS_HPP

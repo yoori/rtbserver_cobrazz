@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_PASSPIXELFRONTEND_REQUESTINFOFILLER_HPP
-#define FRONTENDS_PASSPIXELFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 #include <map>
@@ -93,5 +92,3 @@ namespace PassbackPixel
   };
 } /*Passback*/
 } /*AdServer*/
-
-#endif /*FRONTENDS_PASSPIXELFRONTEND_REQUESTINFOFILLER_HPP*/

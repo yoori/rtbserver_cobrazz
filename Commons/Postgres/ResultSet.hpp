@@ -1,5 +1,4 @@
-#ifndef POSTGRES_RESULTSET_HPP
-#define POSTGRES_RESULTSET_HPP
+#pragma once
 
 #include <arpa/inet.h>
 #include <libpq-fe.h>
@@ -353,5 +352,3 @@ namespace Commons
   }
 }
 }
-
-#endif //POSTGRES_RESULTSET_HPP

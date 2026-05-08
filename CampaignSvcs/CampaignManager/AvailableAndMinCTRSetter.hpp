@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_AVAILABLEANDMINCTRSETTER_HPP
-#define CAMPAIGNMANAGER_AVAILABLEANDMINCTRSETTER_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -20,5 +19,3 @@ namespace AdServer::CampaignSvcs
   using CAvailableAndMinCTRSetter_var =
     ReferenceCounting::ConstPtr<AvailableAndMinCTRSetter>;
 }
-
-#endif /*CAMPAIGNMANAGER_AVAILABLEANDMINCTRSETTER_HPP*/

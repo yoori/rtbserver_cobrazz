@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_ADMIN_APPLICATION_HPP_
-#define _USER_INFO_SVCS_USER_INFO_ADMIN_APPLICATION_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -92,5 +91,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*_USER_INFO_SVCS_USER_INFO_ADMIN_APPLICATION_HPP_*/

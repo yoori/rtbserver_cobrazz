@@ -4,8 +4,7 @@
  *
  * Description: Wrapper for loading CorbaConfig from xsd structs
  */
-#ifndef _COMMONS_CORBACONFIG_HPP_
-#define _COMMONS_CORBACONFIG_HPP_
+#pragma once
 
 #include <list>
 #include <Generics/GnuHashTable.hpp>
@@ -106,6 +105,3 @@ namespace Config
   }
 
 }
-
-#endif /*_COMMONS_CORBACONFIG_HPP*/
-

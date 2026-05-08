@@ -1,7 +1,6 @@
 // @file PathManip.hpp
 
-#ifndef PATH_MANIP_INCLUDED
-#define PATH_MANIP_INCLUDED
+#pragma once
 
 #include <string>
 #include <eh/Exception.hpp>
@@ -75,5 +74,3 @@ namespace AdServer
       noexcept;
   }
 }
-
-#endif // PATH_MANIP_INCLUDED

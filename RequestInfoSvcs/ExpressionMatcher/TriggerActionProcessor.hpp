@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_TRIGGERACTIONPROCESSOR_HPP
-#define EXPRESSIONMATCHER_TRIGGERACTIONPROCESSOR_HPP
+#pragma once
 
 #include <ostream>
 #include <eh/Exception.hpp>
@@ -156,5 +155,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*EXPRESSIONMATCHER_TRIGGERACTIONPROCESSOR_HPP*/

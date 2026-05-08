@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNCREATIVEUPDATE
-#define AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNCREATIVEUPDATE
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -34,5 +33,3 @@ private:
   void update_option_value_();
 
 };
-
-#endif /*AUTOTESTS_UNITS_GRANULARUPDATE_CAMPAIGNCREATIVEUPDATE*/

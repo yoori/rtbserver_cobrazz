@@ -1,5 +1,4 @@
-#ifndef UTILS_CTRGENERATOR_APPLICATION_HPP_
-#define UTILS_CTRGENERATOR_APPLICATION_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -243,5 +242,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*UTILS_CTRGENERATOR_APPLICATION_HPP_*/

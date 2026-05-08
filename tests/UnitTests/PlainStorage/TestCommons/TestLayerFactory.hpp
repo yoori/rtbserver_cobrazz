@@ -1,7 +1,6 @@
 // @file PlainStorage/TestCommons/TestLayerFactory.hpp
 
-#ifndef COMMONS_TESTLAYERFACTORY_HPP
-#define COMMONS_TESTLAYERFACTORY_HPP
+#pragma once
 
 #include <ProfilingCommons/PlainStorage/FileLayer.hpp>
 #include <ProfilingCommons/PlainStorage/CacheLayer.hpp>
@@ -122,5 +121,3 @@ public:
   WriteFragmentLayer_var fragment_layer_;
   WriteRecordLayer_var record_layer_;
 };
-
-#endif // COMMONS_TESTLAYERFACTORY_HPP

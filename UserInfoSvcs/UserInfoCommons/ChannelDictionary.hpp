@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_CHANNEL_DICTIONARY_HPP_
-#define _USER_INFO_SVCS_CHANNEL_DICTIONARY_HPP_
+#pragma once
 
 #include <set>
 #include <map>
@@ -257,5 +256,3 @@ namespace AdServer
     typedef ReferenceCounting::SmartPtr<ChannelDictionary> ChannelDictionary_var;
   }
 }
-
-#endif /*_USER_INFO_SVCS_CHANNEL_DICTIONARY_HPP_*/

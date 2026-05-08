@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CTRCALCULATIONLOGICTEST_
-#define _UNITTEST__CTRCALCULATIONLOGICTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -40,5 +39,3 @@ private:
   void negative_ctr_();
   void time_of_week_();
 };
-
-#endif // _UNITTEST__CTRCALCULATIONLOGICTEST_

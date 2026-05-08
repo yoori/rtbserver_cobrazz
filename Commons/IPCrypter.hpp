@@ -1,5 +1,4 @@
-#ifndef COMMONS_IPCRYPTER_HPP
-#define COMMONS_IPCRYPTER_HPP
+#pragma once
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -92,5 +91,3 @@ namespace Commons
     IPCrypter_var;
 }
 }
-
-#endif /*COMMONS_IPCRYPTER_HPP*/

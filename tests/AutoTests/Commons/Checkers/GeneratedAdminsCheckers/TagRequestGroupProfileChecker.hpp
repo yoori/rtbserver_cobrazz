@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_TAGREQUESTGROUPPROFILECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_TAGREQUESTGROUPPROFILECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/TagRequestGroupProfileAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -50,6 +49,3 @@ namespace AutoTest
 }
 
 #include "TagRequestGroupProfileChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_TAGREQUESTGROUPPROFILECHECKER_HPP
-

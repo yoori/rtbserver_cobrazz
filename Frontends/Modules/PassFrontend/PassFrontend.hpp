@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_PASS_FRONTEND_HPP_
-#define _AD_SERVER_PASS_FRONTEND_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -127,5 +126,3 @@ namespace Passback
   {}
 }
 }
-
-#endif // _AD_SERVER_PASS_FRONTEND_HPP_

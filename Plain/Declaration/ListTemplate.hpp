@@ -1,5 +1,4 @@
-#ifndef PLAIN_DECLARATION_LISTTEMPLATE_HPP
-#define PLAIN_DECLARATION_LISTTEMPLATE_HPP
+#pragma once
 
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include "BaseTemplate.hpp"
@@ -59,5 +58,3 @@ namespace Declaration
     virtual ~CompatibilityListTemplate() noexcept {}
   };
 }
-
-#endif /*PLAIN_DECLARATION_LISTTEMPLATE_HPP*/

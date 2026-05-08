@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_COLO_USERS_HPP
-#define AD_SERVER_LOG_PROCESSING_COLO_USERS_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -207,6 +206,3 @@ typedef LogDefaultTraits<ColoUsersCollector, false> ColoUsersTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_COLO_USERS_HPP */
-

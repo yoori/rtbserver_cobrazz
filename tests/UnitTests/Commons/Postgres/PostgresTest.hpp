@@ -1,5 +1,4 @@
-#ifndef POSTGRES_TEST_HPP
-#define POSTGRES_TEST_HPP
+#pragma once
 
 #include<string>
 #include<eh/Exception.hpp>
@@ -190,5 +189,3 @@ namespace AdServer
 
   }
 }
-#endif //POSTGRES_TEST_HPP
-

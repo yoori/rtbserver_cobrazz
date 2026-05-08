@@ -1,5 +1,4 @@
-#ifndef _USERACTIONPROFILEUTILS_HPP_
-#define _USERACTIONPROFILEUTILS_HPP_
+#pragma once
 
 #include <sstream>
 #include <Generics/Time.hpp>
@@ -154,5 +153,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*_USERACTIONPROFILEUTILS_HPP_*/

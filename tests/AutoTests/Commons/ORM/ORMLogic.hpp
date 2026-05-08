@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_ORMLOGIC_HPP
-#define __AUTOTESTS_COMMONS_ORMLOGIC_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <iostream>
@@ -287,5 +286,3 @@ namespace AutoTest
     };
   }//namespace ORM
 }//namespace AutoTest
-
-#endif //__AUTOTESTS_COMMONS_ORMLOGIC_HPP

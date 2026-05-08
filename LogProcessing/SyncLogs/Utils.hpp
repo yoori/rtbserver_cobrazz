@@ -1,7 +1,6 @@
 // @file SyncLogs/Utils.hpp
 
-#ifndef SYNCLOGS_UTILS_HPP_INCLUDED
-#define SYNCLOGS_UTILS_HPP_INCLUDED
+#pragma once
 
 #include <string>
 #include <list>
@@ -352,5 +351,3 @@ namespace AdServer
     }
   }
 }
-
-#endif // SYNCLOGS_UTILS_HPP_INCLUDED

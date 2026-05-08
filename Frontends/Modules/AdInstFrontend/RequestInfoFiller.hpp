@@ -1,5 +1,4 @@
-#ifndef ADINSTFRONTEND_REQUESTINFOFILLER_HPP
-#define ADINSTFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 
@@ -221,5 +220,3 @@ namespace Instantiate
   }
 }
 }
-
-#endif /*ADINSTFRONTEND_REQUESTINFOFILLER_HPP*/

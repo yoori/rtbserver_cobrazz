@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_USER_PROPERTIES_HPP
-#define AD_SERVER_LOG_PROCESSING_USER_PROPERTIES_HPP
+#pragma once
 
 #include <iosfwd>
 #include <sstream>
@@ -269,6 +268,3 @@ typedef LogDefaultTraits<UserPropertiesCollector, false> UserPropertiesTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_USER_PROPERTIES_HPP */
-

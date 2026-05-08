@@ -1,5 +1,4 @@
-#ifndef UTILS_HPP_
-#define UTILS_HPP_
+#pragma once
 
 #include "Predictor.hpp"
 
@@ -446,5 +445,3 @@ namespace Utils
   }
 }
 }
-
-#endif /*UTILS_HPP_*/

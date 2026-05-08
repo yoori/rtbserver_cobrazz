@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__URLNORMALIZATIONTEST_
-#define _AUTOTEST__URLNORMALIZATIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -45,5 +44,3 @@ private:
   void post_condition();
   void tear_down();
 };
-
-#endif //_AUTOTEST__URLNORMALIZATIONTEST_

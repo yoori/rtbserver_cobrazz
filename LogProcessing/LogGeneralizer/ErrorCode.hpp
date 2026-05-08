@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_ERROR_CODE_HPP
-#define AD_SERVER_LOG_PROCESSING_ERROR_CODE_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -31,6 +30,3 @@ extern const char *LOG_GEN_IMPL_ERR_CODE_11;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_ERROR_CODE_HPP */
-

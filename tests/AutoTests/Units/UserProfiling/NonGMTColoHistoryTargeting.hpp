@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__NONGMTCOLOHISTORYTARGETING_
-#define _AUTOTEST__NONGMTCOLOHISTORYTARGETING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -55,5 +54,3 @@ private:
     const RequestInfo* requests,
     size_t requests_size);
 };
-
-#endif // _AUTOTEST__NONGMTCOLOHISTORYTARGETING_

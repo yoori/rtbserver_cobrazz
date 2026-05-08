@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_CHANNELOVERLAPREACHPROCESSOR_HPP
-#define EXPRESSIONMATCHER_CHANNELOVERLAPREACHPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -103,5 +102,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*EXPRESSIONMATCHER_CHANNELOVERLAPREACHPROCESSOR_HPP*/

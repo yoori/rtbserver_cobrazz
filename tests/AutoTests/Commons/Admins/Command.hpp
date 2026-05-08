@@ -1,5 +1,4 @@
-#ifndef _AUTOTESTS_COMMONS_ADMINS_COMMAND_HPP
-#define _AUTOTESTS_COMMONS_ADMINS_COMMAND_HPP
+#pragma once
 
 #include <vector>
 #include <string>
@@ -73,5 +72,3 @@ namespace AutoTest
     const AdminParams& params,
     size_t srv_id) /*throw(InvalidService, eh::Exception)*/;
 }
-
-#endif  //  _AUTOTESTS_COMMONS_ADMINS_COMMAND_HPP

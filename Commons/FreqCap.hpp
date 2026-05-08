@@ -1,5 +1,4 @@
-#ifndef _COMMONS_FREQCAP_HPP_
-#define _COMMONS_FREQCAP_HPP_
+#pragma once
 
 #include <Generics/Time.hpp>
 
@@ -77,5 +76,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_COMMONS_FREQCAP_HPP_*/

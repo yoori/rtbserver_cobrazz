@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_TYPE_CSV_TRAITS_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_TYPE_CSV_TRAITS_HPP
+#pragma once
 
 
 #include <sstream>
@@ -2086,5 +2085,3 @@ namespace LogProcessing
   };
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_TYPE_CSV_TRAITS_HPP */

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__ADVERTISERUSERSTATSTEST_
-#define _AUTOTEST__ADVERTISERUSERSTATSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -192,5 +191,3 @@ private:
   void
   optout_users_();
 };
-
-#endif // _AUTOTEST__ADVERTISERUSERSTATSTEST_

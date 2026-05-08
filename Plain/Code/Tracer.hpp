@@ -1,5 +1,4 @@
-#ifndef _TRACER_HPP_
-#define _TRACER_HPP_
+#pragma once
 
 #include "Element.hpp"
 #include <Code/IncludeElement.hpp>
@@ -239,5 +238,3 @@ namespace Code
     out_ = 0;
   }
 }
-
-#endif /*_TRACER_HPP_*/

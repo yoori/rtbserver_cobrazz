@@ -1,7 +1,6 @@
 // @file SyncLogs/FetchRouteProcessor.hpp
 
-#ifndef _FETCHROUTEPROCESSOR_HPP_
-#define _FETCHROUTEPROCESSOR_HPP_
+#pragma once
 
 #include <String/TextTemplate.hpp>
 #include <Logger/Logger.hpp>
@@ -110,6 +109,3 @@ namespace AdServer
       FetchRouteProcessor_var;
   }
 }
-
-
-#endif /*_FETCHROUTEPROCESSOR_HPP_*/

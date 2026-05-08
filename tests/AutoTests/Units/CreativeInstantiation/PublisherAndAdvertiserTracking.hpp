@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__PUBLISHERANDADVERTISERTRACKING_
-#define _AUTOTEST__PUBLISHERANDADVERTISERTRACKING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -50,5 +49,3 @@ private:
     const std::string& impression_url,
     const TestRequest& test);
 };
-
-#endif // _AUTOTEST__PUBLISHERANDADVERTISERTRACKING_

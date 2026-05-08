@@ -1,5 +1,4 @@
-#ifndef _REQUEST_INFO_SVCS_USER_SITE_REACH_CONTAINER_IMPL_HPP_
-#define _REQUEST_INFO_SVCS_USER_SITE_REACH_CONTAINER_IMPL_HPP_
+#pragma once
 
 #include <list>
 #include <string>
@@ -136,5 +135,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_REQUEST_INFO_SVCS_USER_SITE_REACH_CONTAINER_IMPL_HPP_*/

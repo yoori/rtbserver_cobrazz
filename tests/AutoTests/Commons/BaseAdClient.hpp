@@ -2,8 +2,7 @@
  * @file BaseAdClient.hpp
  * Ad server client
  */
-#ifndef __AUTOTESTS_COMMONS_BASEADCLIENT_HPP
-#define __AUTOTESTS_COMMONS_BASEADCLIENT_HPP
+#pragma once
 
 #if !defined(__AUTOTESTS_COMMONS_ADCLIENT_HPP)
 #error system header, must be included only from AdClient
@@ -394,5 +393,3 @@ namespace AutoTest
   }
 
 } //namespace AutoTest
-
-#endif // __AUTOTESTS_COMMONS_BASEADCLIENT_HPP

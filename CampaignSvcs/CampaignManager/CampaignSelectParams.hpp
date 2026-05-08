@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CAMPAIGNSELECTPARAMS_HPP_
-#define CAMPAIGNMANAGER_CAMPAIGNSELECTPARAMS_HPP_
+#pragma once
 
 #include <string>
 #include <Commons/Containers.hpp>
@@ -136,5 +135,3 @@ namespace CampaignSvcs
   typedef ReferenceCounting::ConstPtr<CampaignSelectParams> CCampaignSelectParams_var;
 }
 }
-
-#endif /*CAMPAIGNMANAGER_CAMPAIGNSELECTPARAMS_HPP_*/

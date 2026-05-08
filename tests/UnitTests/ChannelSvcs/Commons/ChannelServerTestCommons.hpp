@@ -1,5 +1,4 @@
-#ifndef CHANNELSERVERTESTCOMMONS_HPP
-#define CHANNELSERVERTESTCOMMONS_HPP
+#pragma once
 #include <string>
 #include <sstream>
 #include <eh/Exception.hpp>
@@ -163,5 +162,3 @@ namespace UnitTests
   };
 }
 }
-#endif
-

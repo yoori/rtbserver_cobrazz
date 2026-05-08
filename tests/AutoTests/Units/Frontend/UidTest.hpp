@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__UIDTEST_
-#define _UNITTEST__UIDTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,5 +22,3 @@ private:
   void probe_uid();
 
 };
-
-#endif

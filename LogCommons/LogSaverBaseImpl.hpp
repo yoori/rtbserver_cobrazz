@@ -1,5 +1,4 @@
-#ifndef LOGSAVERBASEIMPL_HPP_INCLUDED
-#define LOGSAVERBASEIMPL_HPP_INCLUDED
+#pragma once
 
 #include <LogCommons/LogCommons.hpp>
 
@@ -108,5 +107,3 @@ namespace LogProcessing {
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // LOGSAVERBASEIMPL_HPP_INCLUDED

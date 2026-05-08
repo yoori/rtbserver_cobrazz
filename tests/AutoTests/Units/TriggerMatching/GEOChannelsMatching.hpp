@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__GEOCHANNELSMATCHING_
-#define _AUTOTEST__GEOCHANNELSMATCHING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -52,5 +51,3 @@ private:
     const IPTestRequest& testcase);
 
 };
-
-#endif // _AUTOTEST__GEOCHANNELSMATCHING_

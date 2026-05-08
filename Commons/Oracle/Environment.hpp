@@ -1,5 +1,4 @@
-#ifndef ORACLE_ENVIRONMENT_HPP
-#define ORACLE_ENVIRONMENT_HPP
+#pragma once
 
 #include <set>
 #include <eh/Exception.hpp>
@@ -287,5 +286,3 @@ namespace Oracle
 }
 }
 }
-
-#endif /*ORACLE_ENVIRONMENT_HPP*/

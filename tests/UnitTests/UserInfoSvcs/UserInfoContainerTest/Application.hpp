@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_CONTAINER_TEST_APPLICATION_HPP_
-#define _USER_INFO_SVCS_USER_INFO_CONTAINER_TEST_APPLICATION_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -64,5 +63,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif

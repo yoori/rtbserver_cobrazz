@@ -1,5 +1,4 @@
-#ifndef _CORBAALGS_HPP_
-#define _CORBAALGS_HPP_
+#pragma once
 
 #include <cassert>
 #include <sstream>
@@ -456,5 +455,3 @@ namespace CorbaAlgs
     value.unpack(buf);
   }
 }
-
-#endif /*_CORBAALGS_HPP_*/

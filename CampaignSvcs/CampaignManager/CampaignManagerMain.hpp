@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_MAIN_HPP_
-#define _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_MAIN_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -152,5 +151,3 @@ inline
 CampaignManagerApp_::~CampaignManagerApp_() noexcept
 {
 }
-
-#endif // _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_MANAGER_CAMPAIGN_MANAGER_MAIN_HPP_

@@ -1,5 +1,4 @@
-#ifndef MMAPFILECACHE_HPP
-#define MMAPFILECACHE_HPP
+#pragma once
 
 namespace AdServer
 {
@@ -19,5 +18,3 @@ namespace AdServer
     Generics::GnuHashTable>
     TextTemplateCache;
 }
-
-#endif /*MMAPFILECACHE_HPP*/

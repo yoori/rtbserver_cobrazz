@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__STATSHOURLYACTIONSTEST_
-#define _AUTOTEST__STATSHOURLYACTIONSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -44,5 +43,3 @@ private:
   AutoTest::Time target_request_time_;
 
 };
-
-#endif // _AUTOTEST__STATSHOURLYACTIONSTEST_

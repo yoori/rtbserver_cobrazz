@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__SESSIONSYNCTEST_
-#define _UNITTEST__SESSIONSYNCTEST_
+#pragma once
 
 #include <Generics/TaskRunner.hpp>
 #include <tests/AutoTests/Commons/Common.hpp>
@@ -28,5 +27,3 @@ private:
   //
   Generics::ActiveObjectCallback_var callback_;
 };
-
-#endif

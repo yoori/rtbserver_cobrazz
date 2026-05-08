@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_DB_SAVER_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_DB_SAVER_IMPL_HPP
+#pragma once
 
 
 #include <Logger/Logger.hpp>
@@ -55,6 +54,3 @@ DECLARE_NESTED_LOG_PG_CSV_SAVER_USING_PREFIX(
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_DB_SAVER_IMPL_HPP */
-

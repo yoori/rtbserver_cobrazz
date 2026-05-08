@@ -1,5 +1,4 @@
-#ifndef LABEL_HPP_
-#define LABEL_HPP_
+#pragma once
 
 #include <String/SubString.hpp>
 #include "Predictor.hpp"
@@ -209,5 +208,3 @@ namespace Vanga
       ", pred = " << pred;
   }
 }
-
-#endif /*LABEL_HPP_*/

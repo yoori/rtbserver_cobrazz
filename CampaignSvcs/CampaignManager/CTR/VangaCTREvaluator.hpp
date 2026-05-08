@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_VANGACTREVALUATOR_HPP_
-#define CAMPAIGNMANAGER_CTR_VANGACTREVALUATOR_HPP_
+#pragma once
 
 #include <DTree/DTree.hpp>
 #include <DTree/LogRegPredictor.hpp>
@@ -26,5 +25,3 @@ namespace AdServer::CampaignSvcs::CTR
     Gears::IntrusivePtr<Vanga::LogRegPredictor<Vanga::DTree> > vanga_predictor_;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_VANGACTREVALUATOR_HPP_*/

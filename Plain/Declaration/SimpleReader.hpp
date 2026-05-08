@@ -1,5 +1,4 @@
-#ifndef _SIMPLEREADER_HPP_
-#define _SIMPLEREADER_HPP_
+#pragma once
 
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include "BaseReader.hpp"
@@ -80,5 +79,3 @@ namespace Declaration
     return cpp_read_traits_;
   }
 }
-
-#endif /*_SIMPLEREADER_HPP_*/

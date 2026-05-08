@@ -1,5 +1,4 @@
-#ifndef _GRPCALGS_HPP_
-#define _GRPCALGS_HPP_
+#pragma once
 
 #include <cassert>
 #include <string>
@@ -54,5 +53,3 @@ namespace GrpcAlgs
       reinterpret_cast<const unsigned char*>(user_id_str.data()) + user_id_str.size());
   }
 }
-
-#endif

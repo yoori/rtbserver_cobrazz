@@ -1,5 +1,4 @@
-#ifndef POSTGRES_SQL_STREAM_HPP
-#define POSTGRES_SQL_STREAM_HPP
+#pragma once
 
 #include<vector>
 #include<sstream>
@@ -118,5 +117,3 @@ namespace Commons
   }
 }
 }
-#endif //COMMONS_POSTGRES_SQL_STREAM_HPP
-

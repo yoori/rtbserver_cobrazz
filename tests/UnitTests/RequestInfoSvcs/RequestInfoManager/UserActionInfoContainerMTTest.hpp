@@ -1,8 +1,7 @@
 /**
  * @file UserActionInfoContainerMTTest.hpp
  */
-#ifndef USER_ACTION_INFO_CONTAINER_MT_TEST_HPP_INCLUDED
-#define USER_ACTION_INFO_CONTAINER_MT_TEST_HPP_INCLUDED
+#pragma once
 
 #include <map>
 
@@ -153,5 +152,3 @@ struct TestIt
  */
 bool
 multi_thread_test(const TestIt* test_it) noexcept;
-
-#endif // USER_ACTION_INFO_CONTAINER_MT_TEST_HPP_INCLUDED

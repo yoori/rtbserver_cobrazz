@@ -1,5 +1,4 @@
-#ifndef ORACLE_CONNECTIONDESCRIPTION_HPP
-#define ORACLE_CONNECTIONDESCRIPTION_HPP
+#pragma once
 
 #include <string>
 #include <Generics/Time.hpp>
@@ -59,5 +58,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*ORACLE_CONNECTIONDESCRIPTION_HPP*/

@@ -1,5 +1,4 @@
-#ifndef USERACTIONPROFILEADAPTER_HPP
-#define USERACTIONPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -19,5 +18,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*USERACTIONPROFILEADAPTER_HPP*/

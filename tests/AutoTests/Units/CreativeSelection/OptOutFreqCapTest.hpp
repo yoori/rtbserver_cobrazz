@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__OPTOUTFREQCAPTEST_
-#define _UNITTEST__OPTOUTFREQCAPTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -29,5 +28,3 @@ private:
   void  process_testcase(AdClient& test_client);
 
 };
-
-#endif

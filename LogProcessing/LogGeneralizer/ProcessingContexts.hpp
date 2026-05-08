@@ -1,5 +1,4 @@
-#ifndef LOG_PROCESSING_CONTEXT_HPP
-#define LOG_PROCESSING_CONTEXT_HPP
+#pragma once
 
 #include <ctime>
 #include <string>
@@ -182,5 +181,3 @@ namespace LogProcessing
   };
 }
 }
-
-#endif // LOG_PROCESSING_CONTEXT_HPP

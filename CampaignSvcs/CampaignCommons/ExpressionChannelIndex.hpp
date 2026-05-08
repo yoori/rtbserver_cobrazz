@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONCHANNELINDEX_HPP
-#define EXPRESSIONCHANNELINDEX_HPP
+#pragma once
 
 #include <list>
 #include <set>
@@ -170,5 +169,3 @@ namespace CampaignSvcs
     ExpressionChannelIndex_var;
 }
 }
-
-#endif /*EXPRESSIONCHANNELINDEX_HPP*/

@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_PASSBACKFRONTEND_REQUESTINFOFILLER_HPP
-#define FRONTENDS_PASSBACKFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 #include <map>
@@ -100,5 +99,3 @@ namespace Passback
   };
 } /*Passback*/
 } /*AdServer*/
-
-#endif /*FRONTENDS_PASSBACKFRONTEND_REQUESTINFOFILLER_HPP*/

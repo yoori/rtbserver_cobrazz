@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_ADDITIONALPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_ADDITIONALPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -421,5 +420,3 @@ namespace AutoTest
     return values_[i][Expected::URL_SESSION_MATCHES].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_ADDITIONALPROFILEADMIN_HPP
-

@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_STATACCOUNTCHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_STATACCOUNTCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/StatAccountAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -46,6 +45,3 @@ namespace AutoTest
 }
 
 #include "StatAccountChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_STATACCOUNTCHECKER_HPP
-

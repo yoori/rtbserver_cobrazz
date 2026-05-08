@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__REMOTECOLOUPDATESTATS_
-#define _AUTOTEST__REMOTECOLOUPDATESTATS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -22,6 +21,3 @@ private:
 
   virtual bool run_test();
 };
-
-#endif // _AUTOTEST__REMOTECOLOUPDATESTATS_
-

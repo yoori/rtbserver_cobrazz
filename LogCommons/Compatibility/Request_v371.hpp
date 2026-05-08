@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_REQUEST_V371_HPP
-#define AD_SERVER_LOG_PROCESSING_REQUEST_V371_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -1376,5 +1375,3 @@ typedef SeqCollector<RequestData_V_3_7_1, true> RequestCollector_V_3_7_1;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_REQUEST_V371_HPP */

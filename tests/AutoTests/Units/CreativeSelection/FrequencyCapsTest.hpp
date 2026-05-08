@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__FREQUENCYCAPSTEST_
-#define _UNITTEST__FREQUENCYCAPSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -146,6 +145,3 @@ private:
   AutoTest::Time time_;
   unsigned int min_request_period;
 };
-
-#endif // _UNITTEST__FREQUENCYCAPSTEST_
-

@@ -1,5 +1,4 @@
-#ifndef BIDDINGFRONTEND_KEYWORDFORMATTER_HPP_
-#define BIDDINGFRONTEND_KEYWORDFORMATTER_HPP_
+#pragma once
 
 #include <string>
 #include <list>
@@ -295,5 +294,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*BIDDINGFRONTEND_KEYWORDFORMATTER_HPP_*/

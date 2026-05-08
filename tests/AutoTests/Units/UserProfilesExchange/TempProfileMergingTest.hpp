@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__TEMPPROFILEMERGINGTEST_
-#define _AUTOTEST__TEMPPROFILEMERGINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -32,5 +31,3 @@ private:
   void merge_before_get_profile();
 
 };
-
-#endif //_AUTOTEST__TEMPPROFILEMERGINGTEST_

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_TAG_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_TAG_STAT_HPP
+#pragma once
 
 #include <iosfwd>
 #include <sstream>
@@ -306,6 +305,3 @@ struct WebwiseDiscoverTagStatTraits : LogDefaultTraits<WebwiseDiscoverTagStatCol
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_TAG_STAT_HPP */
-

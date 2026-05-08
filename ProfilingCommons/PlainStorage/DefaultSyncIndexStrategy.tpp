@@ -1,7 +1,6 @@
 // @file PlainStorage/DefaultSyncIndexStrategy.tpp
 
-#ifndef PLAINSTORAGE_DEFAULTSYNCINDEXSTRATEGY_TPP
-#define PLAINSTORAGE_DEFAULTSYNCINDEXSTRATEGY_TPP
+#pragma once
 
 #include <signal.h>
 #include <eh/Exception.hpp>
@@ -273,5 +272,3 @@ namespace PlainStorage
     key_block.attach_next_block(cur_block_index_);
   }
 }
-
-#endif // PLAINSTORAGE_DEFAULTSYNCINDEXSTRATEGY_TPP

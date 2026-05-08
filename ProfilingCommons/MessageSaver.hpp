@@ -1,5 +1,4 @@
-#ifndef PROFILINGCOMMONS_MESSAGESAVER_HPP_
-#define PROFILINGCOMMONS_MESSAGESAVER_HPP_
+#pragma once
 
 #include <list>
 #include <memory>
@@ -143,5 +142,3 @@ namespace ProfilingCommons
     MessageSaver_var;
 }
 }
-
-#endif /* PROFILINGCOMMONS_MESSAGESAVER_HPP_ */

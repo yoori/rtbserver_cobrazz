@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__OPENRTBTEST_
-#define _AUTOTEST__OPENRTBTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -36,5 +35,3 @@ private:
   void auctions_lost();
 
 };
-
-#endif // _AUTOTEST__OPENRTBTEST_

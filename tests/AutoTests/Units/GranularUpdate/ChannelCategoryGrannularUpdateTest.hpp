@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__HANNELCATEGORYGRANNULARUPDATETEST_
-#define _AUTOTEST__HANNELCATEGORYGRANNULARUPDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -28,5 +27,3 @@ private:
   void deactivate_category();
 
 };
-
-#endif //_AUTOTEST__HANNELCATEGORYGRANNULARUPDATETEST_

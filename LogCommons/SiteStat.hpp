@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_SITE_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_SITE_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -208,6 +207,3 @@ typedef LogDefaultTraits<SiteStatCollector> SiteStatTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_SITE_STAT_HPP
-

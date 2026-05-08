@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__COMBINEDHARDSOFTMATCHINGTEST_
-#define _UNITTEST__COMBINEDHARDSOFTMATCHINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -26,5 +25,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_SESSION_FACTORY_HPP_
-#define _USER_INFO_SVCS_USER_INFO_MANAGER_SESSION_FACTORY_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -24,5 +23,3 @@ namespace AdServer
     };
   } /* UserInfoSvcs */
 } /* AdServer */
-
-#endif /*_USER_INFO_SVCS_USER_INFO_MANAGER_SESSION_FACTORY_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_CHANNEL_MATCHER_IPP_
-#define _USER_INFO_SVCS_CHANNEL_MATCHER_IPP_
+#pragma once
 
 namespace AdServer
 {
@@ -53,5 +52,3 @@ namespace UserInfoSvcs
   }
 }
 }
-
-#endif /*_USER_INFO_SVCS_CHANNEL_MATCHER_IPP_*/

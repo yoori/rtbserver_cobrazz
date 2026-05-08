@@ -1,6 +1,5 @@
 
-#ifndef _APPLICATION_HPP
-#define _APPLICATION_HPP
+#pragma once
 
 #include <ReferenceCounting/Interface.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -81,5 +80,3 @@ private:
   HttpPoolPolicy_var http_pool_policy_;       // HTTP pool policies
   HTTP::HttpActiveInterface_var http_pool_;   // HTTP pool
 };
-
-#endif  // _APPLICATION_HPP

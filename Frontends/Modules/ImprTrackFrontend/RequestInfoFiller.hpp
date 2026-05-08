@@ -1,5 +1,4 @@
-#ifndef IMPRTRACKFRONTEND_REQUESTINFOFILLER_HPP_
-#define IMPRTRACKFRONTEND_REQUESTINFOFILLER_HPP_
+#pragma once
 
 #include <Generics/GnuHashTable.hpp>
 #include <GeoIP/IPMap.hpp>
@@ -214,5 +213,3 @@ namespace ImprTrack
   }
 }
 }
-
-#endif /* IMPRTRACKFRONTEND_REQUESTINFOFILLER_HPP_ */

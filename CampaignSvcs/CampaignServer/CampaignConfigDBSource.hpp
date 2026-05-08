@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGNCONFIGDBSOURCE_HPP_
-#define _CAMPAIGNCONFIGDBSOURCE_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -391,5 +390,3 @@ namespace AdServer
       CampaignConfigDBSource_var;
   }
 }
-
-#endif /*_CAMPAIGNCONFIGDBSOURCE_HPP_*/

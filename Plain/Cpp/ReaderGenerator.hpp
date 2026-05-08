@@ -1,5 +1,4 @@
-#ifndef PLAIN_CPP_READERGENERATOR_HPP
-#define PLAIN_CPP_READERGENERATOR_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -40,5 +39,3 @@ namespace Cpp
     std::string offset_;
   };
 }
-
-#endif /*PLAIN_CPP_READERGENERATOR_HPP*/

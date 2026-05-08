@@ -1,6 +1,5 @@
 /// @file AdFrontend/AdFrontendStat.hpp
-#ifndef ADFRONTENDSTAT_HPP
-#define ADFRONTENDSTAT_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -145,5 +144,3 @@ namespace AdServer
   {
   }
 }
-
-#endif

@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__NEGATIVEMATCHTEST_
-#define _UNITTEST__NEGATIVEMATCHTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -66,6 +65,3 @@ private:
     const TestCase& test);
 
 };
-
-#endif // _UNITTEST__NEGATIVEMATCHTEST_
-

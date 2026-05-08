@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__WEBSTATFRONTENDPROTOCOLTEST_
-#define _AUTOTEST__WEBSTATFRONTENDPROTOCOLTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -252,5 +251,3 @@ private:
     unsigned short client_flags,
     CCTagCaseEnum ccid_log_mask = CCTCE_LOG_CCID_CENTRAL);
 };
-
-#endif // _AUTOTEST__WEBSTATFRONTENDPROTOCOLTEST_

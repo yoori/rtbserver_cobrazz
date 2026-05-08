@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_REACHPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_REACHPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -183,5 +182,3 @@ namespace AutoTest
     return values_[i][Expected::TOTAL_APPEAR_DISPLAY_ADVS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_REACHPROFILEADMIN_HPP
-

@@ -1,5 +1,4 @@
-#ifndef _ADSERVER_CAMPAIGNSVCS_CAMPAIGNMANAGERLOGADAPTER_HPP_
-#define _ADSERVER_CAMPAIGNSVCS_CAMPAIGNMANAGERLOGADAPTER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <HTTP/UrlAddress.hpp>
@@ -1278,5 +1277,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_ADSERVER_CAMPAIGNSVCS_CAMPAIGNMANAGERLOGADAPTER_HPP_*/

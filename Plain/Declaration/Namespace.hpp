@@ -1,5 +1,4 @@
-#ifndef _NAMESPACE_HPP_
-#define _NAMESPACE_HPP_
+#pragma once
 
 #include <list>
 #include <map>
@@ -76,5 +75,3 @@ namespace Declaration
   typedef ReferenceCounting::SmartPtr<Namespace>
     Namespace_var;
 }
-
-#endif /*_NAMESPACE_HPP_*/

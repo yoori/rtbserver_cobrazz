@@ -1,5 +1,4 @@
-#ifndef COMMONS_USER_INFO_MANIP_HPP_
-#define COMMONS_USER_INFO_MANIP_HPP_
+#pragma once
 
 #include <Generics/Uuid.hpp>
 #include <Generics/CRC.hpp>
@@ -54,5 +53,3 @@ namespace AdServer
     };
   }
 }
-
-#endif /*COMMONS_USER_INFO_MANIP_HPP*/

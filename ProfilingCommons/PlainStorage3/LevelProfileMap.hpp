@@ -1,5 +1,4 @@
-#ifndef LEVELPROFILEMAP_HPP
-#define LEVELPROFILEMAP_HPP
+#pragma once
 
 #include <vector>
 #include <Sync/SyncPolicy.hpp>
@@ -325,5 +324,3 @@ namespace ProfilingCommons
 }
 
 #include "LevelProfileMap.tpp"
-
-#endif /*LEVELPROFILEMAP_HPP*/

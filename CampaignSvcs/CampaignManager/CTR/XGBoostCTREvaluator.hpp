@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_XGBOOSTCTREVALUATOR_HPP_
-#define CAMPAIGNMANAGER_CTR_XGBOOSTCTREVALUATOR_HPP_
+#pragma once
 
 #include "CTREvaluator.hpp"
 #include "XGBoostPredictor.hpp"
@@ -24,5 +23,3 @@ namespace AdServer::CampaignSvcs::CTR
     XGBoostPredictorPool_var xgboost_predictor_pool_;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_XGBOOSTCTREVALUATOR_HPP_*/

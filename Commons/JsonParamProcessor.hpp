@@ -1,5 +1,4 @@
-#ifndef COMMONS_JSONPARAMPROCESSOR_HPP_
-#define COMMONS_JSONPARAMPROCESSOR_HPP_
+#pragma once
 
 #include <math.h>
 #include <type_traits>
@@ -424,5 +423,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*COMMONS_JSONPARAMPROCESSOR_HPP_*/

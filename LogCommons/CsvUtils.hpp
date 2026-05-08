@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CSV_UTILS_HPP
-#define AD_SERVER_LOG_PROCESSING_CSV_UTILS_HPP
+#pragma once
 
 
 #include <stdint.h>
@@ -296,6 +295,3 @@ operator <<(std::ostream& ostr, const UuidIoCsvWrapper& uuid) noexcept
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CSV_UTILS_HPP */
-

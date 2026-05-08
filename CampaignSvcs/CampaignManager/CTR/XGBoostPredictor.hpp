@@ -1,5 +1,4 @@
-#ifndef XGBOOSTPREDICTOR_HPP_
-#define XGBOOSTPREDICTOR_HPP_
+#pragma once
 
 #include <memory>
 #include <list>
@@ -75,5 +74,3 @@ namespace AdServer::CampaignSvcs::CTR
   typedef std::shared_ptr<XGBoostPredictorPool>
     XGBoostPredictorPool_var;
 }
-
-#endif /*XGBOOSTPREDICTOR_HPP_*/

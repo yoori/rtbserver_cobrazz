@@ -1,5 +1,4 @@
-#ifndef _CREATIVETEXTGENERATOR_HPP_
-#define _CREATIVETEXTGENERATOR_HPP_
+#pragma once
 
 #include "CampaignConfig.hpp"
 
@@ -139,5 +138,3 @@ namespace AdServer
     };
   }
 }
-
-#endif

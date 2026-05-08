@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_IMPRESSIONREQUEST_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_IMPRESSIONREQUEST_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 #include <HTTP/UrlAddress.hpp>
@@ -79,5 +78,3 @@ namespace AutoTest
   };
 
 }//namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_REQUEST_IMPRESSIONREQUEST_HPP

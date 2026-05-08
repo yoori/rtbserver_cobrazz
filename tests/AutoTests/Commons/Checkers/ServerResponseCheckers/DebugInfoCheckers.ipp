@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_COMMONS_CHECKERS_DEBUGINFOCHECKERS_IPP
-#define AUTOTESTS_COMMONS_CHECKERS_DEBUGINFOCHECKERS_IPP
+#pragma once
 
 namespace AutoTest
 {
@@ -85,5 +84,3 @@ namespace AutoTest
           special_effects: static_cast<unsigned long>(SE_DEFAULT))
   {}
 }
-
-#endif /*AUTOTESTS_COMMONS_CHECKERS_DEBUGINFOCHECKERS_IPP*/

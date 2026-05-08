@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_REQUEST_BASE_HPP
-#define AD_SERVER_LOG_PROCESSING_REQUEST_BASE_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -179,5 +178,3 @@ namespace LogProcessing {
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_REQUEST_BASE_HPP */

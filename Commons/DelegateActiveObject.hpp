@@ -1,5 +1,4 @@
-#ifndef COMMONS_DELEGATEACTIVEOBJECT_HPP_
-#define COMMONS_DELEGATEACTIVEOBJECT_HPP_
+#pragma once
 
 #include <Generics/ActiveObject.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -136,5 +135,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /* COMMONS_DELEGATEACTIVEOBJECT_HPP_ */

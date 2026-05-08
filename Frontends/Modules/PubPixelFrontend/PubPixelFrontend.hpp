@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_PUBPIXELFRONTEND_PUBPIXELFRONTEND_HPP
-#define FRONTENDS_PUBPIXELFRONTEND_PUBPIXELFRONTEND_HPP
+#pragma once
 
 #include <string>
 
@@ -150,5 +149,3 @@ namespace PubPixel
   }
 } // namespace PubPixel
 } // namespace AdServer
-
-#endif /*FRONTENDS_PUBPIXELFRONTEND_PUBPIXELFRONTEND_HPP*/

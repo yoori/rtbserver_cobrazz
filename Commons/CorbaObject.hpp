@@ -1,5 +1,4 @@
-#ifndef COMMONS_CORBAOBJECT_HPP
-#define COMMONS_CORBAOBJECT_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -165,5 +164,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*COMMONS_CORBAOBJECT_HPP*/

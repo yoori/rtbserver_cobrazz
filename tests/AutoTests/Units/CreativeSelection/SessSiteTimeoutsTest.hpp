@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__SESSSITETIMEOUTSTEST_
-#define _UNITTEST__SESSSITETIMEOUTSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -35,5 +34,3 @@ private:
   std::string no_adv;
 
 };
-
-#endif // _UNITTEST__SESSSITETIMEOUTSTEST_

@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_CONTENTFRONTEND_HPP
-#define FRONTENDS_CONTENTFRONTEND_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -176,5 +175,3 @@ namespace AdServer
 
 
 }
-
-#endif /*FRONTENDS_CONTENTFRONTEND_HPP*/

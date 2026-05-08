@@ -7,8 +7,7 @@
 *   ThrowChecker, help fun : throw_checker
 */
 
-#ifndef AUTOTESTS_COMMONS_COMPOSITECHECKERS_HPP
-#define AUTOTESTS_COMMONS_COMPOSITECHECKERS_HPP
+#pragma once
 
 #include "Checker.hpp"
 #include <tests/AutoTests/Commons/Shutdown.hpp>
@@ -540,5 +539,3 @@ namespace AutoTest
 }
 
 #include "CompositeCheckers.tpp"
-
-#endif /*AUTOTESTS_COMMONS_COMPOSITECHECKERS_HPP*/

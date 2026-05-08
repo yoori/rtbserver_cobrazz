@@ -1,6 +1,5 @@
 /// @file FrontendCommons/FrontendStatistic.hpp
-#ifndef FRONTEND_COMMONS_FRONTENDSTAT_HPP
-#define FRONTEND_COMMONS_FRONTENDSTAT_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -37,5 +36,3 @@ namespace AdServer
   };
 
 }
-
-#endif

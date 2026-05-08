@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__LOGGINGTEST_
-#define _UNITTEST__LOGGINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -64,5 +63,3 @@ private:
 private:
   AutoTest::Time target_request_time_;
 };
-
-#endif

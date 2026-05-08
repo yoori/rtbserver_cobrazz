@@ -1,5 +1,4 @@
-#ifndef LOGPROCESSING_SYNCLOGS_FEEDROUTEGROUPPROCESSOR_HPP_
-#define LOGPROCESSING_SYNCLOGS_FEEDROUTEGROUPPROCESSOR_HPP_
+#pragma once
 
 #include <queue>
 
@@ -162,5 +161,3 @@ namespace LogProcessing
     FeedRouteGroupProcessor_var;
 }
 }
-
-#endif /* LOGPROCESSING_SYNCLOGS_FEEDROUTEGROUPPROCESSOR_HPP_ */

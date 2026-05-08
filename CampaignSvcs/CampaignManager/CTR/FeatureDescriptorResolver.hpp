@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_FEATUREDESCRIPTORRESOLVER_HPP_
-#define CAMPAIGNMANAGER_CTR_FEATUREDESCRIPTORRESOLVER_HPP_
+#pragma once
 
 #include <set>
 #include <vector>
@@ -110,5 +109,3 @@ namespace AdServer::CampaignSvcs::CTR
   typedef Generics::Singleton<FeatureDescriptorResolver_>
     FeatureDescriptorResolver;
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_FEATUREDESCRIPTORRESOLVER_HPP_*/

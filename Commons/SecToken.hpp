@@ -1,5 +1,4 @@
-#ifndef COMMONS_SECTOKEN_HPP
-#define COMMONS_SECTOKEN_HPP
+#pragma once
 
 #include <vector>
 #include <string>
@@ -280,5 +279,3 @@ namespace AdServer
 }
 
 #include "SecToken.tpp"
-
-#endif  // FRONTENDCOMMONS_SECTOKEN_HPP

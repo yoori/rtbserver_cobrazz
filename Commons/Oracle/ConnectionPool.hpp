@@ -1,5 +1,4 @@
-#ifndef ORACLE_CONNECTIONPOOL_HPP
-#define ORACLE_CONNECTIONPOOL_HPP
+#pragma once
 
 #include <vector>
 #include <Generics/CompositeActiveObject.hpp>
@@ -276,5 +275,3 @@ namespace Oracle
 }
 }
 }
-
-#endif /*ORACLE_CONNECTIONPOOL_HPP*/

@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__DAILYRUNTEST_
-#define _UNITTEST__DAILYRUNTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -57,5 +56,3 @@ private:
     const char* time_zone);
 
 };
-
-#endif

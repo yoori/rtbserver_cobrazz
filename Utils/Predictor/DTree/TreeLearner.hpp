@@ -1,5 +1,4 @@
-#ifndef TREELEARNER_HPP_
-#define TREELEARNER_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -399,5 +398,3 @@ namespace Vanga
 }
 
 #include "TreeLearner.tpp"
-
-#endif /*TREELEARNER_HPP_*/

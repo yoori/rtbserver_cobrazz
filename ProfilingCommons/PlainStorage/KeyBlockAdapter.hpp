@@ -1,7 +1,6 @@
 // @file ProfilingCommons/KeyBlockAdapter.hpp
 
-#ifndef KEYBLOCKADAPTER_HPP
-#define KEYBLOCKADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include "BaseLayer.hpp"
@@ -186,5 +185,3 @@ namespace PlainStorage
 }
 
 #include "KeyBlockAdapter.tpp"
-
-#endif // KEYBLOCKADAPTER_HPP

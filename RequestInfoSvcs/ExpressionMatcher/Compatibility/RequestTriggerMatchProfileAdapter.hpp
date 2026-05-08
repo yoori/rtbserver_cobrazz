@@ -1,5 +1,4 @@
-#ifndef REQUESTTRIGGERMATCHPROFILEADAPTER_HPP
-#define REQUESTTRIGGERMATCHPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -20,5 +19,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*REQUESTTRIGGERMATCHPROFILEADAPTER_HPP*/

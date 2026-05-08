@@ -1,5 +1,4 @@
-#ifndef BIDREQUESTTASK_HPP_
-#define BIDREQUESTTASK_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -226,5 +225,3 @@ namespace Bidding
   }
 }
 }
-
-#endif /*BIDREQUESTTASK_HPP_*/

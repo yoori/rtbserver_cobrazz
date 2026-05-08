@@ -1,5 +1,4 @@
-#ifndef UTILS_TRIVIALCTRCONFIGGENERATOR_HPP_
-#define UTILS_TRIVIALCTRCONFIGGENERATOR_HPP_
+#pragma once
 
 #include <iostream>
 #include <eh/Exception.hpp>
@@ -28,5 +27,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*UTILS_TRIVIALCTRCONFIGGENERATOR_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef LOGCOMMONS_LOGHOLDER_TPP
-#define LOGCOMMONS_LOGHOLDER_TPP
+#pragma once
 
 #include <iostream>
 
@@ -594,5 +593,3 @@ namespace LogProcessing
   }
 }
 }
-
-#endif /*LOGCOMMONS_LOGHOLDER_TPP*/

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__BROKENREQUESTTEST_
-#define _AUTOTEST__BROKENREQUESTTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -33,5 +32,3 @@ private:
     const char* unexpected = 0);
 
 };
-
-#endif //_AUTOTEST__BROKENREQUESTTEST_

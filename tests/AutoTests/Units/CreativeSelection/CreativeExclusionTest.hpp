@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__BASICCREATIVEEXCLUSIONTEST_
-#define _UNITTEST__BASICCREATIVEEXCLUSIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -53,5 +52,3 @@ private:
   void exclusion_text_by_domain_match_within_creative_token_();
   void exclusion_by_ccg_keyword_click_url_();
 };
-
-#endif

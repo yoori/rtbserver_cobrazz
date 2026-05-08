@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_VERSION_MANAGER_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_VERSION_MANAGER_HPP
+#pragma once
 
 
 #include <map>
@@ -895,6 +894,3 @@ public:
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_VERSION_MANAGER_HPP */
-

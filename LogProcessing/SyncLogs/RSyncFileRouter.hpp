@@ -1,5 +1,4 @@
-#ifndef _RSYNCFILEROUTER_HPP_
-#define _RSYNCFILEROUTER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -46,6 +45,3 @@ namespace AdServer
     };
   }
 }
-
-
-#endif

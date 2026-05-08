@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGN_SELECTOR_HPP_
-#define _CAMPAIGN_SELECTOR_HPP_
+#pragma once
 
 #include <map>
 #include <cassert>
@@ -551,5 +550,3 @@ namespace AdServer
     };
   }
 }
-
-#endif /*_CAMPAIGN_SELECTOR_HPP_*/

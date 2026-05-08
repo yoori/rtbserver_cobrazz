@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_INVENTORYACTIONPROCESSOR_HPP
-#define EXPRESSIONMATCHER_INVENTORYACTIONPROCESSOR_HPP
+#pragma once
 
 #include <list>
 #include <map>
@@ -599,5 +598,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*EXPRESSIONMATCHER_INVENTORYACTIONPROCESSOR_HPP*/

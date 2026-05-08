@@ -1,5 +1,4 @@
-#ifndef LOGCOMMONS_LOGHOLDER_HPP
-#define LOGCOMMONS_LOGHOLDER_HPP
+#pragma once
 
 #include <string>
 #include <list>
@@ -505,5 +504,3 @@ namespace AdServer
 }
 
 #include "LogHolder.tpp"
-
-#endif /*LOGCOMMONS_LOGHOLDER_HPP*/

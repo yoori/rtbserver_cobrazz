@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_OPTOUTFRONTEND_REQUESTINFOFILLER_HPP
-#define FRONTENDS_OPTOUTFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 
@@ -111,5 +110,3 @@ namespace OptOut
   };
 } // OptOut
 } /*AdServer*/
-
-#endif /*FRONTENDS_WEBSTATFRONTEND_REQUESTINFOFILLER_HPP*/

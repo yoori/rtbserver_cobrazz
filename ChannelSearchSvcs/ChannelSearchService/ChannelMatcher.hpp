@@ -1,5 +1,4 @@
-#ifndef CHANNELSEARCHSERVICE_CHANNELMATCHER_HPP
-#define CHANNELSEARCHSERVICE_CHANNELMATCHER_HPP
+#pragma once
 
 #include <set>
 
@@ -113,5 +112,3 @@ namespace ChannelSearchSvcs
     ChannelMatcher_var;
 }
 }
-
-#endif /*CHANNELSEARCHSERVICE_CHANNELMATCHER_HPP*/

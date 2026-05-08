@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSERVER_BILLSTATSOURCE_HPP
-#define CAMPAIGNSERVER_BILLSTATSOURCE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -139,5 +138,3 @@ namespace CampaignSvcs
     FBillStatSource_var;
 }
 }
-
-#endif /*CAMPAIGNSERVER_BILLSTATSOURCE_HPP*/

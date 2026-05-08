@@ -1,5 +1,4 @@
-#ifndef _NONLINKEDEXPRESSIONCHANNEL_HPP_
-#define _NONLINKEDEXPRESSIONCHANNEL_HPP_
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -225,5 +224,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_NONLINKEDEXPRESSIONCHANNEL_HPP_*/

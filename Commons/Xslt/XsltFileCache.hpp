@@ -1,5 +1,4 @@
-#ifndef XSLTFILECACHE_HPP
-#define XSLTFILECACHE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -106,5 +105,3 @@ namespace AdServer
   typedef ReferenceCounting::QualPtr<XsltFileCacheManager>
     XsltFileCacheManager_var;
 }
-
-#endif /*XSLTFILECACHE_HPP*/

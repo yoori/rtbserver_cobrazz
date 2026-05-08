@@ -1,5 +1,4 @@
-#ifndef CTRTRIVIALPREDICTOR_HPP_
-#define CTRTRIVIALPREDICTOR_HPP_
+#pragma once
 
 #include <memory>
 #include <list>
@@ -66,5 +65,3 @@ namespace CTR
 }
 }
 }
-
-#endif /*CTRTRIVIALPREDICTOR_HPP_*/

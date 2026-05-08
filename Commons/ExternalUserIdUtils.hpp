@@ -1,5 +1,4 @@
-#ifndef COMMONS_EXTERNALUSERIDUTILS_HPP_
-#define COMMONS_EXTERNALUSERIDUTILS_HPP_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -42,5 +41,3 @@ namespace Commons
     noexcept;
 }
 }
-
-#endif /*COMMONS_EXTERNALUSERIDUTILS_HPP_*/

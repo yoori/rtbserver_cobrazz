@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__SPECIFICPROFILESABSENT_
-#define _AUTOTEST__SPECIFICPROFILESABSENT_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,5 +22,3 @@ private:
   void case_for_non_opted_in_users();//1
 
 };
-
-#endif // _AUTOTEST__SPECIFICPROFILESABSENT_

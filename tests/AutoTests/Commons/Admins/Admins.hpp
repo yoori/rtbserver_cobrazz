@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTEST_COMMONS_ADMINS_HPP
-#define __AUTOTEST_COMMONS_ADMINS_HPP
+#pragma once
 
 #include <iostream>
 
@@ -878,5 +877,3 @@ namespace AutoTest
   get_field_list(const AdminCmd& adm, unsigned int field);
 
 }//namespace AutoTest
-
-#endif //__AUTOTEST_COMMONS_ADMINS_HPP

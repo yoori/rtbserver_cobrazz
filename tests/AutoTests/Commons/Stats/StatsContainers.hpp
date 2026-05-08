@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_COMMONS_STATS_STATSCONTAINERS_HPP
-#define AUTOTESTS_COMMONS_STATS_STATSCONTAINERS_HPP
+#pragma once
 
 #include <list>
 #include <tr1/array>
@@ -140,5 +139,3 @@ namespace ORM
 }
 
 #include "StatsContainers.tpp"
-
-#endif /*AUTOTESTS_COMMONS_STATS_STATSCONTAINERS_HPP*/

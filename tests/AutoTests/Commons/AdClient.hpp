@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_ADCLIENT_HPP
-#define __AUTOTESTS_COMMONS_ADCLIENT_HPP
+#pragma once
 
 #include <Generics/Uuid.hpp>
 
@@ -832,6 +831,3 @@ namespace AutoTest
   {}
 
 }
-
-
-#endif  // __AUTOTESTS_COMMONS_ADCLIENT_HPP

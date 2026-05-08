@@ -1,6 +1,5 @@
 
-#ifndef _REPORTCOMMONS_HPP
-#define _REPORTCOMMONS_HPP
+#pragma once
 
 #include "StatCommons.hpp"
 #include <eh/Exception.hpp>
@@ -197,5 +196,3 @@ operator<< (std::ostream& out, const DumpInterface& obj)
 {
   return obj.dump(out);
 }
-
-#endif  // _REPORTCOMMONS_HPP

@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERINFOMANAGER_FILERWSTATS_HPP_
-#define USERINFOSVCS_USERINFOMANAGER_FILERWSTATS_HPP_
+#pragma once
 
 #include <list>
 
@@ -79,5 +78,3 @@ namespace UserInfoSvcs
   };
 }
 }
-
-#endif /* USERINFOSVCS_USERINFOMANAGER_FILERWSTATS_HPP_ */

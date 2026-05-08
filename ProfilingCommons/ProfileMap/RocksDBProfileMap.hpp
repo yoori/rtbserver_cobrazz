@@ -1,5 +1,4 @@
-#ifndef ROCKSDBPROFILEMAP_HPP_
-#define ROCKSDBPROFILEMAP_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -185,5 +184,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*ROCKSDBPROFILEMAP_HPP_*/

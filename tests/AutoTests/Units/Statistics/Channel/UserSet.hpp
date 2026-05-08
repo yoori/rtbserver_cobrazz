@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__USERSET_HPP
-#define _UNITTEST__USERSET_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -96,6 +95,3 @@ namespace AutoTest
     }
   }
 }
-
-
-#endif  // _UNITTEST__USERSET_HPP

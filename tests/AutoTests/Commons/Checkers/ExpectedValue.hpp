@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKER_EXPECTEDVALUE_HPP
-#define __AUTOTESTS_COMMONS_CHECKER_EXPECTEDVALUE_HPP
+#pragma once
 
 #include <istream>
 
@@ -76,5 +75,3 @@ namespace AutoTest
 } //namespace AutoTest
 
 #include "ExpectedValue.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_CHECKER_EXPECTEDVALUE_HPP

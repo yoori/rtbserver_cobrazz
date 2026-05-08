@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__KEYWORDSNORMALIZATIONTEST_
-#define _AUTOTEST__KEYWORDSNORMALIZATIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -49,5 +48,3 @@ private:
   void tear_down();
 
 };
-
-#endif //_AUTOTEST__KEYWORDSNORMALIZATIONTEST_

@@ -3,8 +3,7 @@
 * Test that server dynamically update Site.
 * For more info see https://confluence.ocslab.com/display/ADS/SiteUpdateTest
 */
-#ifndef AUTOTESTS_UNITS_SITEUPDATETEST_HPP
-#define AUTOTESTS_UNITS_SITEUPDATETEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -40,5 +39,3 @@ private:
   void delete_site_();
   void update_site_freq_caps_();
 };
-
-#endif /*AUTOTESTS_UNITS_SITEUPDATETEST_HPP*/

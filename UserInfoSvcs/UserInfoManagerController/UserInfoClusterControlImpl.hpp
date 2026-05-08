@@ -1,5 +1,4 @@
-#ifndef USER_INFO_CLUSTER_CONTROLLER_HPP
-#define USER_INFO_CLUSTER_CONTROLLER_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -50,5 +49,3 @@ namespace AdServer
 
   }
 }
-
-#endif //USER_INFO_CLUSTER_CONTROLLER_HPP

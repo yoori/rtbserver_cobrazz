@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__OLDLOGSLOADINGTEST_
-#define _AUTOTEST__OLDLOGSLOADINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -28,6 +27,3 @@ private:
     int num);
 
 };
-
-#endif //_AUTOTEST__OLDLOGSLOADINGTEST_
-

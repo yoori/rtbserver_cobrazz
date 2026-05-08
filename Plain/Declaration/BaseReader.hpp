@@ -1,5 +1,4 @@
-#ifndef _BASEREADER_HPP_
-#define _BASEREADER_HPP_
+#pragma once
 
 #include <list>
 #include "BaseType.hpp"
@@ -34,5 +33,3 @@ namespace Declaration
 
   typedef std::list<BaseReader_var> BaseReaderList;
 }
-
-#endif /*_BSEREADER_HPP_*/

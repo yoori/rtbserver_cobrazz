@@ -1,5 +1,4 @@
-#ifndef USERSITEREACHPROFILEADAPTER_HPP
-#define USERSITEREACHPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -19,5 +18,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*USERSITEREACHPROFILEADAPTER_HPP*/

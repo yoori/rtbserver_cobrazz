@@ -1,5 +1,4 @@
-#ifndef ORACLE_EXCEPTION_HPP
-#define ORACLE_EXCEPTION_HPP
+#pragma once
 
 #ifdef _USE_OCCI
 #include <oci.h>
@@ -74,5 +73,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*ORACLE_EXCEPTION_HPP*/

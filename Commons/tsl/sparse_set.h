@@ -21,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TSL_SPARSE_SET_H
-#define TSL_SPARSE_SET_H
+#pragma once
 
 #include <cstddef>
 #include <functional>
@@ -651,5 +650,3 @@ using sparse_pg_set =
     sparse_set<Key, Hash, KeyEqual, Allocator, tsl::sh::prime_growth_policy>;
 
 }  // end namespace tsl
-
-#endif

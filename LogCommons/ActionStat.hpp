@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_ACTION_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_ACTION_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -718,6 +717,3 @@ struct ActionStatTraits: LogDefaultTraits<ActionStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_ACTION_STAT_HPP */
-

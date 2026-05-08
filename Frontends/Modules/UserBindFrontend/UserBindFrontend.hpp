@@ -1,5 +1,4 @@
-#ifndef ADSERVER_USERBINDFRONTEND_HPP
-#define ADSERVER_USERBINDFRONTEND_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -297,5 +296,3 @@ namespace AdServer
   UserBindFrontend::~UserBindFrontend() noexcept
   {}
 }
-
-#endif // ADSERVER_USERBINDFRONTEND_HPP

@@ -1,6 +1,5 @@
 
-#ifndef AD_SERVER_LOG_PROCESSING_CREATIVE_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_CREATIVE_STAT_HPP
+#pragma once
 
 #include <iosfwd>
 #include <istream>
@@ -1558,6 +1557,3 @@ struct CreativeStatTraits: LogDefaultTraits<CreativeStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_CREATIVE_STAT_HPP
-

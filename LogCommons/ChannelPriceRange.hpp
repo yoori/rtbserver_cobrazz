@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CHANNEL_PRICE_RANGE_HPP
-#define AD_SERVER_LOG_PROCESSING_CHANNEL_PRICE_RANGE_HPP
+#pragma once
 
 
 #include <cmath>
@@ -201,6 +200,3 @@ typedef LogDefaultTraits<ChannelPriceRangeCollector> ChannelPriceRangeTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CHANNEL_PRICE_RANGE_HPP */
-

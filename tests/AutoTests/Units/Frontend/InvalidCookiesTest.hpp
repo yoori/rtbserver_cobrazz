@@ -1,6 +1,5 @@
 
-#ifndef __INVALIDCOOKIESTEST_HPP
-#define __INVALIDCOOKIESTEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -54,5 +53,3 @@ private:
   void opt_out_after_crack_test_case();
 
 };
-
-#endif  // __INVALIDCOOKIESTEST_HPP

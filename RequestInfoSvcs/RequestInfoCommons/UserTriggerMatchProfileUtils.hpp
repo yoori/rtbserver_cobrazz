@@ -1,5 +1,4 @@
-#ifndef USERTRIGGERMATCHPROFILEUTILS_HPP
-#define USERTRIGGERMATCHPROFILEUTILS_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <UtilCommons/Table.hpp>
@@ -137,5 +136,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*USERCHANNELINVENTORYPROFILEUTILS_HPP*/

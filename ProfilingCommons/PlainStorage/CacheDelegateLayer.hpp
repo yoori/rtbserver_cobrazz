@@ -1,5 +1,4 @@
-#ifndef PLAINSTORAGE_CACHEDELEGATELAYER_HPP
-#define PLAINSTORAGE_CACHEDELEGATELAYER_HPP
+#pragma once
 
 #include <Commons/LockMap.hpp>
 #include "BlockCache.hpp"
@@ -81,5 +80,3 @@ namespace PlainStorage
 }
 
 #include "CacheDelegateLayer.tpp"
-
-#endif /*PLAINSTORAGE_CACHEDELEGATELAYER_HPP*/

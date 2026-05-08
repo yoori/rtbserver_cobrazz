@@ -1,6 +1,5 @@
 
-#ifndef _ADSERVERCLIENTS_HPP
-#define _ADSERVERCLIENTS_HPP
+#pragma once
 
 #include <HTTP/HttpClient.hpp>
 #include <tests/PerformanceTests/Commons/QuerySenderBase.hpp>
@@ -217,6 +216,3 @@ private:
 };
 
 typedef ReferenceCounting::SmartPtr<AdServerClientBase> AdServerClient_var;
-
-
-#endif  //_ADSERVERCLIENTS_HPP

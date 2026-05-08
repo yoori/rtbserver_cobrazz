@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__MAXPUBLISHERSHARETEST_
-#define _AUTOTEST__MAXPUBLISHERSHARETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -82,5 +81,3 @@ private:
     const AutoTest::Time& new_day);
 
 };
-
-#endif //_AUTOTEST__MAXPUBLISHERSHARETEST_

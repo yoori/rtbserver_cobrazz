@@ -1,8 +1,7 @@
 /**
  * @file UserActionInfoContainer.hpp
  */
-#ifndef _REQUEST_INFO_SVCS_USER_ACTION_INFO_CONTAINER_IMPL_HPP_
-#define _REQUEST_INFO_SVCS_USER_ACTION_INFO_CONTAINER_IMPL_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -157,5 +156,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif // _REQUEST_INFO_SVCS_USER_ACTION_INFO_CONTAINER_IMPL_HPP_

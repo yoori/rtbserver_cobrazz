@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__CHANNELIMPINVENTORYTEST_
-#define _AUTOTEST__CHANNELIMPINVENTORYTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -96,6 +95,3 @@ private:
   unsigned int default_colo_;
   size_t count_;
 };
-
-#endif //_AUTOTEST__CHANNELIMPINVENTORYTEST_
-

@@ -4,8 +4,7 @@
  * return pointer to one ReadBlock in ReadFileLayer
  * (or WriteBlock in WriteFileLayer)
  */
-#ifndef PLAINSTORAGE_FILELAYER_HPP
-#define PLAINSTORAGE_FILELAYER_HPP
+#pragma once
 
 #include "File.hpp"
 
@@ -327,5 +326,3 @@ namespace PlainStorage
 
   typedef ReferenceCounting::SmartPtr<WriteFileLayer> WriteFileLayer_var;
 }
-
-#endif // PLAINSTORAGE_FILELAYER_HPP

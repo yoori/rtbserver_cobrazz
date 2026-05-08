@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_CLICKREQUEST_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_CLICKREQUEST_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 #include <HTTP/UrlAddress.hpp>
@@ -85,5 +84,3 @@ namespace AutoTest
     RequestParam <ClickRequest, TimeParam> debug_time;
   };
 }//namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_REQUEST_CLICKREQUEST_HPP

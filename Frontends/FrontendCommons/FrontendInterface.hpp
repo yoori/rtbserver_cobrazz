@@ -1,5 +1,4 @@
-#ifndef FRONTENDCOMMONS_FRONTENDINTERFACE_HPP_
-#define FRONTENDCOMMONS_FRONTENDINTERFACE_HPP_
+#pragma once
 
 #include <String/SubString.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -127,5 +126,3 @@ namespace FrontendCommons
 }
 
 #include "FrontendInterface.ipp"
-
-#endif /*FRONTENDCOMMONS_FRONTENDINTERFACE_HPP_*/

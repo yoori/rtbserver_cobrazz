@@ -1,7 +1,6 @@
 /// @file ExpressionMatcherStats.hpp
 
-#ifndef EXPRESSION_MATCHER_STATS_INCLUDED
-#define EXPRESSION_MATCHER_STATS_INCLUDED
+#pragma once
 
 #include <Commons/AtomicInt.hpp>
 #include <Generics/Values.hpp>
@@ -105,5 +104,3 @@ namespace AdServer
     }
   }
 }
-
-#endif // EXPRESSION_MATCHER_STATS_INCLUDED

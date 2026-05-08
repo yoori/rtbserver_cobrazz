@@ -1,7 +1,6 @@
 /// LogCommons.ipp
 
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_COMMONS_IPP
-#define AD_SERVER_LOG_PROCESSING_LOG_COMMONS_IPP
+#pragma once
 
 #include <LogCommons/LogCommons.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
@@ -1303,6 +1302,3 @@ SafeSequenceGenerator::get()
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_COMMONS_IPP */
-

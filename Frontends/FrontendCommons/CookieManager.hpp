@@ -1,5 +1,4 @@
-#ifndef FRONTENDCOMMONS_COOKIEMANAGER_HPP
-#define FRONTENDCOMMONS_COOKIEMANAGER_HPP
+#pragma once
 
 #include <string>
 #include <list>
@@ -435,5 +434,3 @@ namespace FrontendCommons
     }
   }
 }
-
-#endif /*FRONTENDCOMMONS_COOKIEMANAGER_HPP*/

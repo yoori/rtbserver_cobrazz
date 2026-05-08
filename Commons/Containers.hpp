@@ -1,5 +1,4 @@
-#ifndef _COMMONS_CONTAINERS_HPP_
-#define _COMMONS_CONTAINERS_HPP_
+#pragma once
 
 namespace AdServer
 {
@@ -335,5 +334,3 @@ namespace AdServer
 
   }
 }
-
-#endif /*_COMMONS_CONTAINERS_HPP_*/

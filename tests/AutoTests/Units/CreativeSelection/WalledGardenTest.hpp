@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__WALLEDGARDENTEST_
-#define _UNITTEST__WALLEDGARDENTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -87,5 +86,3 @@ private:
   PubStats pubstats;
   AutoTest::Time today_;
 };
-
-#endif

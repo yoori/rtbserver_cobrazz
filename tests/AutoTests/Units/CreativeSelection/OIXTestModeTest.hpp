@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__OIXTESTMODETEST_
-#define _UNITTEST__OIXTESTMODETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -57,5 +56,3 @@ private:
   ORM::ChannelOverlapUserStats overlap_stats_;
   ORM::StatsList<ORM::ChannelOverlapUserStats> overlap_empty_stats_;
 };
-
-#endif

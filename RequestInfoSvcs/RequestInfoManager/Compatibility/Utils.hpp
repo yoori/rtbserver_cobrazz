@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOMANAGER_COMPATIBILITY_UTILS_HPP
-#define REQUESTINFOMANAGER_COMPATIBILITY_UTILS_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 
@@ -33,5 +32,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*REQUESTINFOMANAGER_COMPATIBILITY_UTILS_HPP*/

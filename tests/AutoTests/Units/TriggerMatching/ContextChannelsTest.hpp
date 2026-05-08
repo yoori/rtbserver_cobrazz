@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CONTEXTCHANNELSTEST_
-#define _UNITTEST__CONTEXTCHANNELSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -35,5 +34,3 @@ private:
   void search_request_test_case();
   void composite_request_test_case();
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKERS_CLICKRESPONSECHECKER_HPP
-#define __AUTOTESTS_COMMONS_CHECKERS_CLICKRESPONSECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Checkers/Checker.hpp>
 #include <tests/AutoTests/Commons/AdClient.hpp>
@@ -62,5 +61,3 @@ namespace AutoTest
     String::RegEx exp_crclick_regex_; // CRCLICK regex
   };
 } //namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_CHECKERS_CLICKRESPONSECHECKER_HPP

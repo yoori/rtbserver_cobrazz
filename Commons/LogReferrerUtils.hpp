@@ -1,5 +1,4 @@
-#ifndef _COMMONS_LOGREFERRERUTILS_HPP__
-#define _COMMONS_LOGREFERRERUTILS_HPP__
+#pragma once
 
 #include <string>
 
@@ -80,5 +79,3 @@ namespace LogReferrer
 }
 }
 }
-#endif //_COMMONS_LOGREFERRERUTILS_HPP__
-

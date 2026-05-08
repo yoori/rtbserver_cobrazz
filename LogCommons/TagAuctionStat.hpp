@@ -1,7 +1,6 @@
 /// @file TagAuctionStat.hpp
 
-#ifndef AD_SERVER_LOG_PROCESSING_TAG_AUCTION_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_TAG_AUCTION_STAT_HPP
+#pragma once
 
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
@@ -201,6 +200,3 @@ typedef LogDefaultTraits<TagAuctionStatCollector> TagAuctionStatTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_TAG_AUCTION_STAT_HPP
-

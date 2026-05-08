@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__DYNAMICCREATIVETEST_
-#define _AUTOTEST__DYNAMICCREATIVETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -27,5 +26,3 @@ private:
 
   std::string frontend;
 };
-
-#endif // _AUTOTEST__DYNAMICCREATIVETEST_

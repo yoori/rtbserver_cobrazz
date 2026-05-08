@@ -1,5 +1,4 @@
-#ifndef PLAIN_DECLARATION_SIMPLETYPE_HPP
-#define PLAIN_DECLARATION_SIMPLETYPE_HPP
+#pragma once
 
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include "SimpleDescriptor.hpp"
@@ -99,5 +98,3 @@ namespace Declaration
     return ReferenceCounting::add_ref(this);
   }
 }
-
-#endif /*PLAIN_DECLARATION_SIMPLETYPE_HPP*/

@@ -1,7 +1,6 @@
 // @file SyncLogs/FeedRouteProcessor.hpp
 
-#ifndef SYNCLOGS_FEEDROUTEPROCESSOR_HPP
-#define SYNCLOGS_FEEDROUTEPROCESSOR_HPP
+#pragma once
 
 #include <memory>
 
@@ -263,5 +262,3 @@ namespace LogProcessing
   }
 }
 }
-
-#endif /*SYNCLOGS_FEEDROUTEPROCESSOR_HPP*/

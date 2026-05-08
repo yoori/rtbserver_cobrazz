@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CHANNELPRICERANGELOGGING_
-#define _UNITTEST__CHANNELPRICERANGELOGGING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -129,5 +128,3 @@ private:
     Diffs& diffs_container);
 
 };
-
-#endif

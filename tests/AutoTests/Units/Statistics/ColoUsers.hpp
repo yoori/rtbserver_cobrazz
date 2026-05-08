@@ -1,7 +1,6 @@
 
 
-#ifndef _AUTOTEST__COLOUSERS_
-#define _AUTOTEST__COLOUSERS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -167,5 +166,3 @@ private:
   void
   oo_service_();
 };
-
-#endif  // _AUTOTEST__COLOUSERS_

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_STAT_DEF_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_STAT_DEF_HPP
+#pragma once
 
 
 #include <tr1/unordered_map>
@@ -356,6 +355,3 @@ typedef ReferenceCounting::SmartPtr<LogGeneralizerStatMapBundle>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_STAT_DEF_HPP */
-

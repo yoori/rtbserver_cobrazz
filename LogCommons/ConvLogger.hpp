@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_COMMONS_CONVLOGGER_HPP
-#define AD_SERVER_LOG_COMMONS_CONVLOGGER_HPP
+#pragma once
 
 #include <iosfwd>
 #include <string>
@@ -97,6 +96,3 @@ namespace LogProcessing
   };
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_COMMONS_CONVLOGGER_HPP */
-

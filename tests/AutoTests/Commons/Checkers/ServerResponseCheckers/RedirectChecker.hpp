@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKERS_REDIRECTCHECKER_HPP
-#define __AUTOTESTS_COMMONS_CHECKERS_REDIRECTCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Checkers/Checker.hpp>
 #include <tests/AutoTests/Commons/AdClient.hpp>
@@ -71,5 +70,3 @@ namespace AutoTest
     return location_;
   }
 }
-
-#endif /*AUTOTESTS_COMMONS_CHECKERS_REDIRECTCHECKER_HPP*/

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_SEARCH_ENGINE_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_SEARCH_ENGINE_STAT_HPP
+#pragma once
 
 #include <iosfwd>
 #include <Generics/Time.hpp>
@@ -232,6 +231,3 @@ typedef LogDefaultTraits<SearchEngineStatCollector> SearchEngineStatTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_SEARCH_ENGINE_STAT_HPP */
-

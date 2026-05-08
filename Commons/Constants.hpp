@@ -1,5 +1,4 @@
-#ifndef CONSTANTS_HPP_
-#define CONSTANTS_HPP_
+#pragma once
 
 namespace AdServer
 {
@@ -10,5 +9,3 @@ namespace AdServer
     const unsigned long MAX_WORD_LENGTH = 512;
   }
 }
-
-#endif /*_CONSTANTS_HPP_*/

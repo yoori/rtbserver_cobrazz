@@ -1,5 +1,4 @@
-#ifndef COMMONS_ZMQSOCKETHOLDER_HPP_
-#define COMMONS_ZMQSOCKETHOLDER_HPP_
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -65,5 +64,3 @@ namespace Commons
     ZmqSocketHolder_var;
 }
 }
-
-#endif /*COMMONS_ZMQSOCKETHOLDER_HPP_*/

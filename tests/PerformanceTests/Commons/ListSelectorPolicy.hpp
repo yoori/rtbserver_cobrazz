@@ -1,6 +1,5 @@
 
-#ifndef __LISTSELECTORPOLICY_HPP
-#define __LISTSELECTORPOLICY_HPP
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -352,6 +351,3 @@ void make_cookie_policy_list(SelectorPolicyList& cookies,
                              const String::SubString& value,
                              const RequestLists& lists)
   /*throw(SelectorPolicy::InvalidConfigRequestData)*/;
-
-
-#endif  // __LISTSELECTORPOLICY_HPP

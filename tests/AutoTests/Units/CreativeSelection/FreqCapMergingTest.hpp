@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__FREQCAPMERGINGTEST_
-#define _AUTOTEST__FREQCAPMERGINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -49,5 +48,3 @@ private:
     const std::string& description,
     const TestRequest (&requests)[COUNT]);
 };
-
-#endif //_AUTOTEST__FREQCAPMERGINGTEST_

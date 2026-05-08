@@ -1,6 +1,5 @@
 
-#ifndef _AD_FRONTENDS_CLICK_FRONTEND_CLICK_FRONTEND_HPP_
-#define _AD_FRONTENDS_CLICK_FRONTEND_CLICK_FRONTEND_HPP_
+#pragma once
 
 #include <string>
 
@@ -225,5 +224,3 @@ namespace AdServer
     return config_->Logger().log_level();
   }
 } // namespace AdServer
-
-#endif // _AD_FRONTENDS_CLICK_FRONTEND_CLICK_FRONTEND_HPP_

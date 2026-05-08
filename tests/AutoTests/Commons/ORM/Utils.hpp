@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST_COMMONS_ORM_UTILS_HPP
-#define _AUTOTEST_COMMONS_ORM_UTILS_HPP
+#pragma once
 
 #include "ORM.hpp"
 
@@ -57,5 +56,3 @@ namespace AutoTest
 }
 
 #include "Utils.ipp"
-
-#endif  // _AUTOTEST_COMMONS_ORM_UTILS_HPP

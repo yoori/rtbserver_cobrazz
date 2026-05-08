@@ -1,5 +1,4 @@
-#ifndef DTREE_HPP_
-#define DTREE_HPP_
+#pragma once
 
 #include <iostream>
 #include <map>
@@ -163,5 +162,3 @@ namespace Vanga
 }
 
 #include "DTree.tpp"
-
-#endif /*DTREE_HPP_*/

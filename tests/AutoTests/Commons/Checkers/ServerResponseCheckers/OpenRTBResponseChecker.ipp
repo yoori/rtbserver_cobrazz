@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_OPENRTBRESPONSECHECKER_IPP
-#define _AUTOTESTS_COMMONS_OPENRTBRESPONSECHECKER_IPP
+#pragma once
 
 namespace AutoTest
 {
@@ -228,4 +227,3 @@ namespace AutoTest
     return *this;
   }
 }
-#endif  // _AUTOTESTS_COMMONS_OPENRTBRESPONSECHECKER_IPP

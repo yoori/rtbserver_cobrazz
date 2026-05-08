@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKER_STATSDIFFCHECKER_HPP
-#define __AUTOTESTS_COMMONS_CHECKER_STATSDIFFCHECKER_HPP
+#pragma once
 
 #include "Checker.hpp"
 
@@ -83,5 +82,3 @@ namespace AutoTest
 } //namespace AutoTest
 
 #include "StatsDiffChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_CHECKER_STATSDIFFCHECKER_HPP

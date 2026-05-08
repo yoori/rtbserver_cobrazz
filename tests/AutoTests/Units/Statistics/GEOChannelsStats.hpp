@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__GEOCHANNELSSTATS_
-#define _AUTOTEST__GEOCHANNELSSTATS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -37,5 +36,3 @@ private:
   AutoTest::Time testtime;
   DB::Conn pq_conn_;
 };
-
-#endif // _AUTOTEST__GEOCHANNELSSTATS_

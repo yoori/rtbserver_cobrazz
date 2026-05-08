@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSERVER_STATSOURCE_HPP
-#define CAMPAIGNSERVER_STATSOURCE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -525,5 +524,3 @@ namespace CampaignSvcs
   }
 }
 }
-
-#endif /*CAMPAIGNSERVER_STATSOURCE_HPP*/

@@ -1,5 +1,4 @@
-#ifndef COMMONS_ZMQCONFIG_H_
-#define COMMONS_ZMQCONFIG_H_
+#pragma once
 
 #include <string>
 
@@ -34,5 +33,3 @@ namespace Config
       /*throw(eh::Exception)*/;
   };
 }
-
-#endif /* COMMONS_ZMQCONFIG_H_ */

@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_INVENTORYPROFILECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_INVENTORYPROFILECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/InventoryProfileAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -47,6 +46,3 @@ namespace AutoTest
 }
 
 #include "InventoryProfileChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_INVENTORYPROFILECHECKER_HPP
-

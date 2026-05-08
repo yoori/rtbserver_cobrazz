@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__MULTILANGCHANNELMATCHING_
-#define _AUTOTEST__MULTILANGCHANNELMATCHING_
+#pragma once
 #include <tests/AutoTests/Commons/Common.hpp>
 
 typedef std::list <std::string> ChannelList;
@@ -57,5 +56,3 @@ private:
 
   void url_channels();
 };
-
-#endif //_AUTOTEST__MULTILANGCHANNELMATCHING_

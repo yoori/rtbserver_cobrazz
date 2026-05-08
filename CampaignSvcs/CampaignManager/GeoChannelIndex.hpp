@@ -1,5 +1,4 @@
-#ifndef GEOCHANNELINDEX_HPP
-#define GEOCHANNELINDEX_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/GnuHashTable.hpp>
@@ -355,5 +354,3 @@ namespace CampaignSvcs
   }
 }
 }
-
-#endif /*GEOCHANNELINDEX_HPP*/

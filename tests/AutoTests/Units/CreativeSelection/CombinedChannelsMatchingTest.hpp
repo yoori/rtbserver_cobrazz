@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__COMBINEDCHANNELSMATCHINGTEST_
-#define _AUTOTEST__COMBINEDCHANNELSMATCHINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -24,5 +23,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif //_AUTOTEST__COMBINEDCHANNELSMATCHINGTEST_

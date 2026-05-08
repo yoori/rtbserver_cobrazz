@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERINFOCOMMONS_ALLOCATOR_HPP
-#define USERINFOSVCS_USERINFOCOMMONS_ALLOCATOR_HPP
+#pragma once
 
 #include <Generics/Allocator.hpp>
 #include <Generics/MemBuf.hpp>
@@ -30,5 +29,3 @@ namespace AdServer
     */
   }
 }
-
-#endif

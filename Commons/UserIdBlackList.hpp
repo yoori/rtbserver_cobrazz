@@ -1,5 +1,4 @@
-#ifndef USERIDBLACKLIST_HPP__
-#define USERIDBLACKLIST_HPP__
+#pragma once
 
 #include <string>
 //#include <istream>
@@ -106,4 +105,3 @@ namespace Commons
   };
 }
 }
-#endif //USERIDBLACKLIST_HPP__

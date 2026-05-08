@@ -3,8 +3,7 @@
  * @file ProfilingCommons/ExpireProfileMap.tpp
  */
 
-#ifndef PROFILING_COMMONS_EXPIRE_PROFILE_MAP_TPP
-#define PROFILING_COMMONS_EXPIRE_PROFILE_MAP_TPP
+#pragma once
 
 #include <cassert>
 #include <Generics/DirSelector.hpp>
@@ -584,5 +583,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif  // PROFILING_COMMONS_EXPIRE_PROFILE_MAP_TPP

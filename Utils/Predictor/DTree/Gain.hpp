@@ -1,5 +1,4 @@
-#ifndef GAIN_HPP_
-#define GAIN_HPP_
+#pragma once
 
 #include <Generics/Singleton.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -536,5 +535,3 @@ namespace Vanga
     preds.push_back(std::make_pair(val, count));
   }
 }
-
-#endif /*GAIN_HPP_*/

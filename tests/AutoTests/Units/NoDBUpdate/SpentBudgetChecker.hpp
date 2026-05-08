@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__SPENTBUDGETCHECKER_
-#define _AUTOTEST__SPENTBUDGETCHECKER_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -48,5 +47,3 @@ namespace AutoTest
     Generics::Time deadline_;
   };
 }; // namespace AutoTest
-
-#endif //_AUTOTEST__SPENTBUDGETCHECKER_

@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__GEODATAMERGINGTEST_
-#define _AUTOTEST__GEODATAMERGINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -26,5 +25,3 @@ private:
   void merge_with_cleanup_();
   void same_geodata_();
 };
-
-#endif // _AUTOTEST__GEODATAMERGINGTEST_

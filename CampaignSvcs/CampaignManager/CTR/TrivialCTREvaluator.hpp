@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_TRIVIALCTREVALUATOR_HPP_
-#define CAMPAIGNMANAGER_CTR_TRIVIALCTREVALUATOR_HPP_
+#pragma once
 
 //#include <PredictorSvcs/BidCostPredictor/CtrPredictor.hpp>
 #include <Logger/Logger.hpp>
@@ -55,5 +54,3 @@ namespace AdServer::CampaignSvcs::CTR
     static const KeyHashAdapter DEFAULT_KEY_;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_TRIVIALCTREVALUATOR_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef ADSERVER_BIDDINGFRONTEND_HPP
-#define ADSERVER_BIDDINGFRONTEND_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -454,5 +453,3 @@ namespace Bidding
   }
 }
 }
-
-#endif // ADSERVER_BIDDINGFRONTEND_HPP

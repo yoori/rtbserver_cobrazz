@@ -1,8 +1,7 @@
 /**
  * @file UserCampaignReachContainer.hpp
  */
-#ifndef REQUESTINFOMANAGER_USERCAMPAIGNREACHCONTAINER_HPP
-#define REQUESTINFOMANAGER_USERCAMPAIGNREACHCONTAINER_HPP
+#pragma once
 
 #include <list>
 #include <string>
@@ -215,5 +214,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*REQUESTINFOMANAGER_USERCAMPAIGNREACHCONTAINER_HPP*/

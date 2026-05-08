@@ -1,5 +1,4 @@
-#ifndef BASELEVEL_HPP
-#define BASELEVEL_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -123,5 +122,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif /*BASELEVEL_HPP*/

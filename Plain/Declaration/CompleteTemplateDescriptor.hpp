@@ -1,5 +1,4 @@
-#ifndef PLAIN_DECLARATION_COMPLETETEMPLATEDESCRIPTOR_HPP
-#define PLAIN_DECLARATION_COMPLETETEMPLATEDESCRIPTOR_HPP
+#pragma once
 
 #include "BaseDescriptor.hpp"
 #include "BaseReader.hpp"
@@ -53,5 +52,3 @@ namespace Declaration
   typedef ReferenceCounting::SmartPtr<CompleteTemplateDescriptor>
     CompleteTemplateDescriptor_var;
 }
-
-#endif /*PLAIN_DECLARATION_COMPLETETEMPLATEDESCRIPTOR_HPP*/

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_PASSBACK_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_PASSBACK_STAT_HPP
+#pragma once
 
 
 #include "LogCommons.hpp"
@@ -372,6 +371,3 @@ struct PassbackStatTraits: LogDefaultTraits<PassbackStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_PASSBACK_STAT_HPP */
-

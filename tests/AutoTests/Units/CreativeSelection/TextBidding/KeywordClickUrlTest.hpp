@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__KEYWORDCLICKURLTEST_
-#define _UNITTEST__KEYWORDCLICKURLTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -31,5 +30,3 @@ private:
   void part3 ();
   void part4 ();
 };
-
-#endif

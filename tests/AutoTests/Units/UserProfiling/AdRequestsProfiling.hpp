@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__ADREQUESTSPROFILING_
-#define _AUTOTEST__ADREQUESTSPROFILING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -30,5 +29,3 @@ private:
   void full_text_mode();
   void merging();
 };
-
-#endif // _AUTOTEST__ADREQUESTSPROFILING_

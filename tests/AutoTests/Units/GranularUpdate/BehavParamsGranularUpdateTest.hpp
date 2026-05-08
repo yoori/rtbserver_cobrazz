@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_BEHAVPARAMSGRANULARUPDATETEST_H
-#define AUTOTESTS_BEHAVPARAMSGRANULARUPDATETEST_H
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -29,5 +28,3 @@ private:
   void del_param();
 
 };
-
-#endif // AUTOTESTS_BEHAVPARAMSGRANULARUPDATETEST_H

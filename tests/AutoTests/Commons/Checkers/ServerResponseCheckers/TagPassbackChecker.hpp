@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKERS_TAGPASSBACKCHECKER_HPP
-#define __AUTOTESTS_COMMONS_CHECKERS_TAGPASSBACKCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Checkers/Checker.hpp>
 #include <tests/AutoTests/Commons/AdClient.hpp>
@@ -185,5 +184,3 @@ namespace AutoTest
     return got_;
   }
 }
-
-#endif /*AUTOTESTS_COMMONS_CHECKERS_TAGPASSBACKCHECKER_HPP*/

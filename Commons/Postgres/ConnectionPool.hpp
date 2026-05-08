@@ -1,5 +1,4 @@
-#ifndef POSTGRES_CONNECTION_POOL_HPP
-#define POSTGRES_CONNECTION_POOL_HPP
+#pragma once
 
 #include<deque>
 #include<Generics/ActiveObject.hpp>
@@ -69,5 +68,3 @@ namespace Commons
   }
 }
 }
-#endif //POSTGRES_CONNECTION_POOL_HPP
-

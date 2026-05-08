@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_CHANNELHITTEST_H
-#define AUTOTESTS_CHANNELHITTEST_H
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -36,5 +35,3 @@ private:
   void run_case(const AutoTest::Time& date,
     unsigned long colo = 0);
 };
-
-#endif // AUTOTESTS_CHANNELHITTEST_H

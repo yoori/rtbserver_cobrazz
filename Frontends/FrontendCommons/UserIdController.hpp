@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_USERIDCONTROLLER_HPP
-#define FRONTENDS_USERIDCONTROLLER_HPP
+#pragma once
 
 #include <memory>
 #include <eh/Exception.hpp>
@@ -220,5 +219,3 @@ namespace AdServer
     : client_id(id), user_status(status)
   {}
 }
-
-#endif /*FRONTENDS_USERIDCONTROLLER_HPP*/

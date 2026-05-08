@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CHANGINGCREATIVEWEIGHTSTEST_
-#define _AUTOTEST__CHANGINGCREATIVEWEIGHTSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,5 +22,3 @@ private:
   void tear_down();
 
 };
-
-#endif //_AUTOTEST__CHANGINGCREATIVEWEIGHTSTEST_

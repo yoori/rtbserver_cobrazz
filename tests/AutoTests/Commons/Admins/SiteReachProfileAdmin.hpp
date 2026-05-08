@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_SITEREACHPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_SITEREACHPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -132,5 +131,3 @@ namespace AutoTest
     return values_[i][Expected::MONTHLY_APPEAR_LISTS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_SITEREACHPROFILEADMIN_HPP
-

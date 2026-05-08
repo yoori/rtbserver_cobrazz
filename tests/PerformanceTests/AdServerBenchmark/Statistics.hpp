@@ -1,6 +1,5 @@
 
-#ifndef _STATISTICS_HPP
-#define _STATISTICS_HPP
+#pragma once
 
 #include <set>
 #include <Sync/SyncPolicy.hpp>
@@ -111,6 +110,3 @@ private:
   UidSet uids_;  // Client UUIDs set
   mutable Mutex_ lock_;
 };
-
-
-#endif  //_STATISTICS_HPP

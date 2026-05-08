@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_SITE_CHANNEL_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_SITE_CHANNEL_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -242,6 +241,3 @@ typedef LogDefaultTraits<SiteChannelStatCollector> SiteChannelStatTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_SITE_CHANNEL_STAT_HPP */
-

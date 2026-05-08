@@ -1,5 +1,4 @@
-#ifndef USERBASEPROFILEADAPTER_HPP
-#define USERBASEPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -19,5 +18,3 @@ namespace AdServer
 
   }
 }
-
-#endif /* USERBASEPROFILEADAPTER_HPP */

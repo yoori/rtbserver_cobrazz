@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_STATS_PUBLISHERINVENTORY_HPP
-#define __AUTOTESTS_COMMONS_STATS_PUBLISHERINVENTORY_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -470,5 +469,3 @@ namespace AutoTest
     }
   }
 }
-#endif  // __AUTOTESTS_COMMONS_STATS_PUBLISHERINVENTORY_HPP
-

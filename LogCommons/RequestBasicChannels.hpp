@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_REQUEST_BASIC_CHANNELS_HPP
-#define AD_SERVER_LOG_PROCESSING_REQUEST_BASIC_CHANNELS_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -2687,6 +2686,3 @@ struct RequestBasicChannelsTraits:
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_REQUEST_BASIC_CHANNELS_HPP */
-

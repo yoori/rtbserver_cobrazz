@@ -1,6 +1,5 @@
 // @file SyncLogs/Utils.hpp
-#ifndef BIDDING_FRONTEND_GROUP_LOGGER_HPP_INCLUDED
-#define BIDDING_FRONTEND_GROUP_LOGGER_HPP_INCLUDED
+#pragma once
 
 #include <string>
 #include <iomanip>
@@ -311,5 +310,3 @@ namespace AdServer
 
   }
 }
-
-#endif // BIDDING_FRONTEND_GROUP_LOGGER_HPP_INCLUDED

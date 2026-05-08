@@ -1,5 +1,4 @@
-#ifndef COMMONS_BASE32_HPP_
-#define COMMONS_BASE32_HPP_
+#pragma once
 
 #include <assert.h>
 #include <string.h>
@@ -222,5 +221,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*COMMONS_BASE32_HPP_*/

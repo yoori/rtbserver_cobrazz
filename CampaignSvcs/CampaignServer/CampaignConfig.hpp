@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGNCONFIG_HPP_
-#define _CAMPAIGNCONFIG_HPP_
+#pragma once
 
 #include <string>
 #include <list>
@@ -2279,5 +2278,3 @@ namespace AdServer
     {}
   }
 }
-
-#endif

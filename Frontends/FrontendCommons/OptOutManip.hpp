@@ -1,6 +1,5 @@
 
-#ifndef OPT_OUT_MANIP_HPP
-#define OPT_OUT_MANIP_HPP
+#pragma once
 
 #include <string>
 #include <eh/Exception.hpp>
@@ -58,5 +57,3 @@ namespace AdServer
     return buf.c_str();
   }
 }
-
-#endif//OPT_OUT_MANIP_HPP

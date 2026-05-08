@@ -1,5 +1,4 @@
-#ifndef SYNC_LOGS_ROUTE_HELPERS_HPP
-#define SYNC_LOGS_ROUTE_HELPERS_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -239,5 +238,3 @@ namespace LogProcessing
 
 }
 }
-#endif
-

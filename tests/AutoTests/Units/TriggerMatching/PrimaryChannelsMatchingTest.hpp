@@ -1,9 +1,5 @@
 
-#ifndef __PRIMARYCHANNELSMATCHINGTEST_HPP
-#define __PRIMARYCHANNELSMATCHINGTEST_HPP
-
-#ifndef _AUTOTEST__PRIMARYCHANNELSMATCHINGTEST_
-#define _AUTOTEST__PRIMARYCHANNELSMATCHINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -57,8 +53,3 @@ private:
     unsigned long flags);
 
 };
-
-#endif //_AUTOTEST__PRIMARYCHANNELSMATCHINGTEST_
-
-
-#endif  // __PRIMARYCHANNELSMATCHINGTEST_HPP

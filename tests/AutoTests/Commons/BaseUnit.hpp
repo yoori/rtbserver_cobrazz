@@ -2,8 +2,7 @@
  * @file tests/AutoTests/Commons/BaseUnit.hpp
  * base AutoTest execution unit
  */
-#ifndef __AUTOTESTS_COMMONS_BASEUNIT_HPP
-#define __AUTOTESTS_COMMONS_BASEUNIT_HPP
+#pragma once
 
 #include <sstream>
 #include <map>
@@ -453,5 +452,3 @@ private:
 
 #include "BaseUnit.ipp"
 #include "BaseUnit.tpp"
-
-#endif //__AUTOTESTS_COMMONS_BACEUNIT_HPP

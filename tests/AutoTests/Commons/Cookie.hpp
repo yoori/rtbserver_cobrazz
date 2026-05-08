@@ -2,8 +2,7 @@
  * @file Cookie.hpp
  * Http cookie wrapper.
  */
-#ifndef __AUTOTESTS_COMMONS_COOKIE_HPP
-#define __AUTOTESTS_COMMONS_COOKIE_HPP
+#pragma once
 
 #include <HTTP/HTTPCookie.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -124,5 +123,3 @@ namespace AutoTest
 
   } //namespace Cookie
 } //namespace AutoTest
-
-#endif //__AUTOTESTS_COMMONS_COOKIE_HPP

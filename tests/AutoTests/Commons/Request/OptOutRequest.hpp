@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_OPTOUTREQUEST_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_OPTOUTREQUEST_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 
@@ -135,5 +134,3 @@ namespace AutoTest
   };
 
 }//namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_REQUEST_OPTOUTREQUEST_HPP

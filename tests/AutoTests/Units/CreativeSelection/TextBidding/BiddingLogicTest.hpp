@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__BIDDINGLOGICTEST_
-#define _UNITTEST__BIDDINGLOGICTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -35,5 +34,3 @@ private:
   void scenario9 ();
 
 };
-
-#endif

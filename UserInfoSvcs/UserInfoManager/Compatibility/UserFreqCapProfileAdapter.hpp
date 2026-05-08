@@ -1,5 +1,4 @@
-#ifndef USERFREQCAPPROFILEADAPTER_HPP
-#define USERFREQCAPPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -19,5 +18,3 @@ namespace AdServer
 
   }
 }
-
-#endif /* USERFREQCAPPROFILEADAPTER_HPP */

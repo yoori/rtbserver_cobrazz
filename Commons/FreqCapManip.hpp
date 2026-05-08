@@ -1,5 +1,4 @@
-#ifndef _FREQCAPMANIP_HPP_
-#define _FREQCAPMANIP_HPP_
+#pragma once
 
 #include "FreqCap.hpp"
 #include <Commons/FreqCapInfo.hpp>
@@ -32,5 +31,3 @@ namespace AdServer
     }
   }
 }
-
-#endif

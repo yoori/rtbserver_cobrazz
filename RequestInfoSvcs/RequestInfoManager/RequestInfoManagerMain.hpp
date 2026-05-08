@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_MAIN_HPP_
-#define _USER_INFO_SVCS_USER_INFO_MANAGER_MAIN_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -75,5 +74,3 @@ RequestInfoManagerApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /*_REQUEST_INFO_SVCS_REQUEST_INFO_MANAGER_MAIN_HPP_*/

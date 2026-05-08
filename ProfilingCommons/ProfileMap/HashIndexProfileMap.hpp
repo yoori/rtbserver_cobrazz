@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_HASHINDEXPROFILEMAP_HPP
-#define PROFILEMAP_HASHINDEXPROFILEMAP_HPP
+#pragma once
 
 #include <Generics/HashTableAdapters.hpp>
 
@@ -163,5 +162,3 @@ namespace ProfilingCommons
 }
 
 #include "HashIndexProfileMap.tpp"
-
-#endif // PROFILEMAP_HASHINDEXPROFILEMAP_HPP

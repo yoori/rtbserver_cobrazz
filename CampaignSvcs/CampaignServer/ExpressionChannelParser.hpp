@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGNCOMMONS_EXPRESSIONCHANNELPARSER_HPP_
-#define _CAMPAIGNCOMMONS_EXPRESSIONCHANNELPARSER_HPP_
+#pragma once
 
 #include <String/StringManip.hpp>
 
@@ -274,5 +273,3 @@ namespace CampaignSvcs
   }
 }
 }
-
-#endif /*_CAMPAIGNCOMMONS_EXPRESSIONCHANNELPARSER_HPP_*/

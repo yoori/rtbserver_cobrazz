@@ -21,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TSL_SPARSE_GROWTH_POLICY_H
-#define TSL_SPARSE_GROWTH_POLICY_H
+#pragma once
 
 #include <algorithm>
 #include <array>
@@ -337,5 +336,3 @@ class prime_growth_policy {
 
 }  // namespace sh
 }  // namespace tsl
-
-#endif

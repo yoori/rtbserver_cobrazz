@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOSVCS_REQUESTINFOMANAGER_BILLINGPROCESSOR_HPP
-#define REQUESTINFOSVCS_REQUESTINFOMANAGER_BILLINGPROCESSOR_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -231,5 +230,3 @@ namespace AdServer
     typedef ReferenceCounting::SmartPtr<BillingProcessor> BillingProcessor_var;
   }
 }
-
-#endif /*REQUESTINFOSVCS_REQUESTINFOMANAGER_BILLINGPROCESSOR_HPP*/

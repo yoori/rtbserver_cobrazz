@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__SITEUSERSTATSTEST_
-#define _AUTOTEST__SITEUSERSTATSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -100,5 +99,3 @@ private:
   Diffs sum_diffs_;
   DBC::Conn conn_;
 };
-
-#endif // _AUTOTEST__SITEUSERSTATSTEST_

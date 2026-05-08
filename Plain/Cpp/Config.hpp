@@ -1,5 +1,4 @@
-#ifndef PLAIN_CPP_CONFIG_HPP
-#define PLAIN_CPP_CONFIG_HPP
+#pragma once
 
 namespace Cpp
 {
@@ -18,5 +17,3 @@ namespace Cpp
     "#include <Plain/Vector.hpp>\n"
     "#include <Plain/Buffer.hpp>\n";
 }
-
-#endif /*PLAIN_CPP_CONFIG_HPP*/

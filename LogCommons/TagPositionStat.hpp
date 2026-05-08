@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_TAG_POSITION_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_TAG_POSITION_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -394,6 +393,3 @@ struct TagPositionStatTraits: LogDefaultTraits<TagPositionStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_TAG_POSITION_STAT_HPP */
-

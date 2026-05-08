@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_HISTORYPROFILECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_HISTORYPROFILECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/HistoryProfileAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -52,6 +51,3 @@ namespace AutoTest
 }
 
 #include "HistoryProfileChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_HISTORYPROFILECHECKER_HPP
-

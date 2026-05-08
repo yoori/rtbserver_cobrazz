@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_PASSBACKPROFILECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_PASSBACKPROFILECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/PassbackProfileAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -50,6 +49,3 @@ namespace AutoTest
 }
 
 #include "PassbackProfileChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_PASSBACKPROFILECHECKER_HPP
-

@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_COMMONS_REFLECTION_HPP
-#define AUTOTESTS_COMMONS_REFLECTION_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/BaseUnit.hpp>
 
@@ -80,5 +79,3 @@ operator<< (std::ostream& strm, const UnitDescriptor& descriptor);
     "" # name,                                                          \
     CONSTRUCT_UNIT(name) };                                             \
   UnitDescriptorT< AT_INTERNAL_reflect_D_##name > AT_INTERNAL_reflect_##name
-
-#endif//AUTOTESTS_COMMONS_REFLECTION_HPP

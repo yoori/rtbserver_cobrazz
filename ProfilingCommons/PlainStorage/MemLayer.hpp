@@ -2,8 +2,7 @@
  * @file PlainStorage/MemLayer.hpp
  * MemLayer implementation of fixed size records layer (RAM based)
  */
-#ifndef PLAINSTORAGE_MEMLAYER_HPP
-#define PLAINSTORAGE_MEMLAYER_HPP
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -88,5 +87,3 @@ namespace PlainStorage
 
   typedef ReferenceCounting::SmartPtr<WriteMemLayer> WriteMemLayer_var;
 }
-
-#endif // PLAINSTORAGE_MEMLAYER_HPP

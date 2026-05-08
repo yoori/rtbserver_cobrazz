@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_MODEL_HPP_
-#define CAMPAIGNMANAGER_CTR_MODEL_HPP_
+#pragma once
 
 #include <optional>
 
@@ -72,5 +71,3 @@ namespace AdServer::CampaignSvcs::CTR
   using Model_var = ReferenceCounting::SmartPtr<Model>;
   using ModelList = std::list<Model_var>;
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_MODEL_HPP_*/

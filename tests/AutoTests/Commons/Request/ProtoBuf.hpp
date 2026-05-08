@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_REQUEST_PROTOBUF_HPP
-#define _AUTOTESTS_COMMONS_REQUEST_PROTOBUF_HPP
+#pragma once
 
 #include <type_traits>
 #include <google/protobuf/message.h>
@@ -409,5 +408,3 @@ namespace AutoTest
 }
 
 #include "ProtoBuf.ipp"
-
-#endif  //  _AUTOTESTS_COMMONS_REQUEST_PROTOBUF_HPP

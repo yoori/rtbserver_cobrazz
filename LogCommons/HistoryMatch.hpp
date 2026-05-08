@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_HISTORY_MATCH_CHANNELS_HPP
-#define AD_SERVER_LOG_PROCESSING_HISTORY_MATCH_CHANNELS_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -141,5 +140,3 @@ typedef LogDefaultTraits<HistoryMatchCollector, false, false> HistoryMatchTraits
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_HISTORY_MATCH_CHANNELS_HPP

@@ -1,5 +1,4 @@
-#ifndef USERINFOCOMMONS_FREQCAPPROFILE_HPP
-#define USERINFOCOMMONS_FREQCAPPROFILE_HPP
+#pragma once
 
 #include <Generics/MemBuf.hpp>
 #include <Commons/UserInfoManip.hpp>
@@ -116,5 +115,3 @@ namespace UserInfoSvcs
   };
 }
 }
-
-#endif /*USERINFOCOMMONS_FREQCAPPROFILE_HPP*/

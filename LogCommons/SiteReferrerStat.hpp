@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_SITE_REFERRER_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_SITE_REFERRER_STAT_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -796,6 +795,3 @@ struct SiteReferrerStatTraits: LogDefaultTraits<SiteReferrerStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_SITE_REFERRER_STAT_HPP */
-

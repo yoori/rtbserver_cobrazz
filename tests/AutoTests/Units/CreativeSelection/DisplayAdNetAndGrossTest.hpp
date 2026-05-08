@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__DISPLAYADNETANDGROSSTEST_
-#define _AUTOTEST__DISPLAYADNETANDGROSSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -40,5 +39,3 @@ private:
   Stats stats_;
   Generics::Time target_request_time_;
 };
-
-#endif //_AUTOTEST__DISPLAYADNETANDGROSSTEST_

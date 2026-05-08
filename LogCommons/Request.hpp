@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_REQUEST_HPP
-#define AD_SERVER_LOG_PROCESSING_REQUEST_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -1503,5 +1502,3 @@ struct RequestTraits: LogDefaultTraits<RequestCollector, false, false>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_REQUEST_HPP */

@@ -1,5 +1,4 @@
-#ifndef ADSERVER_ADINSTFRONTEND_HPP
-#define ADSERVER_ADINSTFRONTEND_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -186,5 +185,3 @@ namespace Instantiate
   {}
 }
 }
-
-#endif /*ADSERVER_ADINSTFRONTEND_HPP*/

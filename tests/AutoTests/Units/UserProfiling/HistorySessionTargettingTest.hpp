@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__HISTORYSESSIONTARGETTINGTEST_
-#define _UNITTEST__HISTORYSESSIONTARGETTINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -50,5 +49,3 @@ private:
     const AutoTest::Time& base_time);
 
 };
-
-#endif

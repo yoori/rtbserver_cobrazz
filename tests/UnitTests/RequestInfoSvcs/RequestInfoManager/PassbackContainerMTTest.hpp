@@ -2,8 +2,7 @@
  * @file PassbackContainerMTTest.hpp
  */
 
-#ifndef PASSBACK_CONTAINER_TEST_HPP_INCLUDED
-#define PASSBACK_CONTAINER_TEST_HPP_INCLUDED
+#pragma once
 
 #include <Sync/PosixLock.hpp>
 #include <RequestInfoSvcs/RequestInfoManager/PassbackContainer.hpp>
@@ -59,5 +58,3 @@ struct TestIt
  */
 bool
 multi_thread_test(const TestIt* test_it) noexcept;
-
-#endif // PASSBACK_CONTAINER_TEST_HPP_INCLUDED

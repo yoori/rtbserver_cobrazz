@@ -1,5 +1,4 @@
-#ifndef COMMONS_POSTGRESS_LOB_HPP
-#define COMMONS_POSTGRESS_LOB_HPP
+#pragma once
 
 #include<Commons/Postgres/Connection.hpp>
 
@@ -138,4 +137,3 @@ namespace Postgres
 }
 }
 }
-#endif //COMMONS_POSTGRESS_LOB_HPP

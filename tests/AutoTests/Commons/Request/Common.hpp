@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_COMMON_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_COMMON_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Request/BaseRequest.hpp>
 #include <tests/AutoTests/Commons/Request/ActionRequest.hpp>
@@ -10,5 +9,3 @@
 #include <tests/AutoTests/Commons/Request/OptOutRequest.hpp>
 #include <tests/AutoTests/Commons/Request/OpenRTBRequest.hpp>
 #include <tests/AutoTests/Commons/Request/UserBindRequest.hpp>
-
-#endif //__AUTOTESTS_COMMONS_REQUEST_COMMON_HPP

@@ -1,8 +1,7 @@
 /**
  * @file ThreadLogSaverImpl.hpp
  */
-#ifndef THREAD_LOG_SAVER_IMPL_HPP
-#define THREAD_LOG_SAVER_IMPL_HPP
+#pragma once
 
 //#define BUILD_WITH_DEBUG_MESSAGES
 #include <Generics/Trace.hpp>
@@ -374,5 +373,3 @@ ThreadLogSaverImpl<LogExtTraits, LogSaverType>::DbDumpTimeoutMsg::deliver()
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // THREAD_LOG_SAVER_IMPL_HPP

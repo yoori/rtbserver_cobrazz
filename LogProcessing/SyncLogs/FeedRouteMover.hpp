@@ -1,5 +1,4 @@
-#ifndef LOGPROCESSING_SYNCLOGS_FEEDROUTEMOVER_HPP_
-#define LOGPROCESSING_SYNCLOGS_FEEDROUTEMOVER_HPP_
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/ActiveObject.hpp>
@@ -86,5 +85,3 @@ namespace LogProcessing
     FixedFeedRouteMover_var;
 }
 }
-
-#endif /* LOGPROCESSING_SYNCLOGS_FEEDROUTEMOVER_HPP_ */

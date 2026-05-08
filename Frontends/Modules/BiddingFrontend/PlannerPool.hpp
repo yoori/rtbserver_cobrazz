@@ -1,5 +1,4 @@
-#ifndef SCHEDULER_POOL_HPP_
-#define SCHEDULER_POOL_HPP_
+#pragma once
 
 #include <vector>
 
@@ -40,5 +39,3 @@ namespace Bidding
   typedef ReferenceCounting::SmartPtr<PlannerPool> PlannerPool_var;
 }
 }
-
-#endif

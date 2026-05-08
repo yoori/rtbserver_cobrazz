@@ -1,7 +1,6 @@
 // @file PlainStorage/File.hpp
 
-#ifndef SYS_FILE_HPP
-#define SYS_FILE_HPP
+#pragma once
 
 // We support large files, use mmap64 instead mmap, etc
 #ifndef PS_NOT_USE_LARGEFILES
@@ -134,5 +133,3 @@ namespace Sys
     int file_handle_;
   };
 }
-
-#endif // SYS_FILE_HPP

@@ -1,5 +1,4 @@
-#ifndef PLAIN_BUFFER_HPP
-#define PLAIN_BUFFER_HPP
+#pragma once
 
 #include "Base.hpp"
 #include <Generics/MemBuf.hpp>
@@ -104,5 +103,3 @@ namespace PlainTypes
       *(static_cast<const uint32_t*>(fixed_buf) + 1));
   }
 }
-
-#endif /*PLAIN_BUFFER_HPP*/

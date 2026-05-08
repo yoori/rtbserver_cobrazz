@@ -1,5 +1,4 @@
-#ifndef ACCESSACTIVEOBJECT_HPP_
-#define ACCESSACTIVEOBJECT_HPP_
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
@@ -287,5 +286,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*ACCESSACTIVEOBJECT_HPP_*/

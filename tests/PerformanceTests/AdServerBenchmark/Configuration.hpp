@@ -1,6 +1,5 @@
 
-#ifndef _CONFIGURATION_HPP
-#define _CONFIGURATION_HPP
+#pragma once
 
 #include <XMLUtility/Utility.hpp>
 #include <Commons/ErrorHandler.hpp>
@@ -126,6 +125,3 @@ private:
   RequestLists request_params_;
   BenchmarkList benchmarks_;
 };
-
-
-#endif  // _CONFIGURATION_HPP

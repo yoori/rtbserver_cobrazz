@@ -1,5 +1,4 @@
-#ifndef CONTROL_ADMIN_APPLICATION_HPP_
-#define CONTROL_ADMIN_APPLICATION_HPP_
+#pragma once
 
 #include <getopt.h>
 #include<limits.h>
@@ -82,5 +81,3 @@ namespace AdServer
     };
   }
 }
-
-#endif

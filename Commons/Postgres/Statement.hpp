@@ -1,5 +1,4 @@
-#ifndef POSTGRES_STATEMENT_HPP
-#define POSTGRES_STATEMENT_HPP
+#pragma once
 
 #include<libpq-fe.h>
 #include<vector>
@@ -176,6 +175,3 @@ namespace Commons
   }
 }
 }
-
-#endif //POSTGRES_STATEMENT_HPP
-

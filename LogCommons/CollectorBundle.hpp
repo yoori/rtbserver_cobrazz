@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_COLLECTOR_BUNDLE_HPP
-#define AD_SERVER_LOG_PROCESSING_COLLECTOR_BUNDLE_HPP
+#pragma once
 
 
 #include <cstddef>
@@ -227,5 +226,3 @@ CollectorBundle<LogTraits>::get_min_file_timestamp() const
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_COLLECTOR_BUNDLE_HPP */

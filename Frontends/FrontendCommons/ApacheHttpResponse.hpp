@@ -1,5 +1,4 @@
-#ifndef FRONTENDCOMMONS_APACHEHTTPRESPONSE_HPP
-#define FRONTENDCOMMONS_APACHEHTTPRESPONSE_HPP
+#pragma once
 
 #include <Apache/Adapters.hpp>
 
@@ -47,5 +46,3 @@ namespace FrontendCommons
     Apache::HttpResponse::add_cookie(value);
   }
 }
-
-#endif /*FRONTENDCOMMONS_APACHEHTTPRESPONSE_HPP*/

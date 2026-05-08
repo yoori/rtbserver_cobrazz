@@ -1,5 +1,4 @@
-#ifndef PLAIN_DECLARATION_BASEDESCRIPTOR_HPP
-#define PLAIN_DECLARATION_BASEDESCRIPTOR_HPP
+#pragma once
 
 #include <list>
 #include "BaseType.hpp"
@@ -50,5 +49,3 @@ namespace Declaration
 
   typedef std::list<BaseDescriptor_var> BaseDescriptorList;
 }
-
-#endif /*PLAIN_DECLARATION_BASEDESCRIPTOR_HPP*/

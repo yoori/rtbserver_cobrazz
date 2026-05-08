@@ -1,7 +1,6 @@
 /// @file UrlMatcherTest.hpp
 
-#ifndef URL_MATCHER_TEST_HPP_INCLUDED
-#define URL_MATCHER_TEST_HPP_INCLUDED
+#pragma once
 
 #include <Commons/ErrorHandler.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
@@ -75,5 +74,3 @@ load_url_matcher(FrontendCommons::UrlMatcher& matcher,
 
 //    load_urls(permanent_fe_config->SearchersConfig());
 }
-
-#endif // URL_MATCHER_TEST_HPP_INCLUDED

@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_DELEGATEPROFILEMAP_HPP
-#define PROFILEMAP_DELEGATEPROFILEMAP_HPP
+#pragma once
 
 namespace AdServer
 {
@@ -168,5 +167,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*PROFILEMAP_DELEGATEPROFILEMAP_HPP*/

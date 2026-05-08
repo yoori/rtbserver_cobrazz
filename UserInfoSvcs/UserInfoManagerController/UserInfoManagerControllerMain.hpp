@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROLLER_MAIN_HPP_
-#define _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROLLER_MAIN_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -96,5 +95,3 @@ UserInfoManagerControllerApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /*_USER_INFO_SVCS_USER_INFO_MANAGER_CONTROLLER_MAIN_HPP_*/

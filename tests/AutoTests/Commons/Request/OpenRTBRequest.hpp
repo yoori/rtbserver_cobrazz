@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_REQUEST_OPENRTBREQUEST_HPP
-#define _AUTOTESTS_COMMONS_REQUEST_OPENRTBREQUEST_HPP
+#pragma once
 
 #include <Generics/Uncopyable.hpp>
 #include "BaseRequest.hpp"
@@ -993,6 +992,3 @@ namespace AutoTest
 
 
 #include "OpenRTBRequest.ipp"
-
-#endif  // _AUTOTESTS_COMMONS_REQUEST_OPENRTBREQUEST_HPP
-

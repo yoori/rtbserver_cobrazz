@@ -1,5 +1,4 @@
-#ifndef WORKERSTATSOBJECT_HPP_
-#define WORKERSTATSOBJECT_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -69,5 +68,3 @@ namespace Frontends
     WorkerStatsObject_var;
 }
 }
-
-#endif /*WORKERSTATSOBJECT_HPP_*/

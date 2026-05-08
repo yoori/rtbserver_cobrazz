@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__ZEROCOLLECTORTEST_
-#define _AUTOTEST__ZEROCOLLECTORTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -38,5 +37,3 @@ private:
   std::list<int> active_channels;
   std::list<int> wait_channels;
 };
-
-#endif // _AUTOTEST__ZEROCOLLECTORTEST_

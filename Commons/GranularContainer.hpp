@@ -1,5 +1,4 @@
-#ifndef _GRANULARCONTAINER_HPP_
-#define _GRANULARCONTAINER_HPP_
+#pragma once
 
 #include <map>
 #include <algorithm>
@@ -751,5 +750,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*_GRANULARCONTAINER_HPP_*/

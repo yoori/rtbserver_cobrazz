@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__USERPROFILEMERGINGTEST_
-#define _UNITTEST__USERPROFILEMERGINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -62,5 +61,3 @@ private:
 private:
   AutoTest::Time base_time;
 };
-
-#endif

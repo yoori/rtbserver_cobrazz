@@ -1,5 +1,4 @@
-#ifndef USERINFOMANAGER_USEROPERATIONSAVER_HPP
-#define USERINFOMANAGER_USEROPERATIONSAVER_HPP
+#pragma once
 
 #include <string>
 #include <Commons/LockMap.hpp>
@@ -239,5 +238,3 @@ namespace UserInfoSvcs
     UserOperationSaver_var;
 }
 }
-
-#endif /*USERINFOMANAGER_USEROPERATIONSAVER_HPP*/

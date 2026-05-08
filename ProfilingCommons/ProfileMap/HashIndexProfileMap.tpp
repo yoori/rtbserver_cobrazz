@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_HASHINDEXPROFILEMAP_TPP
-#define PROFILEMAP_HASHINDEXPROFILEMAP_TPP
+#pragma once
 
 namespace AdServer
 {
@@ -389,5 +388,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*PROFILEMAP_HASHINDEXPROFILEMAP_TPP*/

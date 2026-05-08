@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CTRCALCULATIONLOGICTEST_
-#define _UNITTEST__CTRCALCULATIONLOGICTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -25,6 +24,3 @@ private:
   void initial_case();
   void base_case();
 };
-
-#endif // _UNITTEST__CTRCALCULATIONLOGICTEST_
-

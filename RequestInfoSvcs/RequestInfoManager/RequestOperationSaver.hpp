@@ -1,5 +1,4 @@
-#ifndef REQUESTOPERATIONSAVER_HPP
-#define REQUESTOPERATIONSAVER_HPP
+#pragma once
 
 #include <Commons/UserInfoManip.hpp>
 #include <ProfilingCommons/MessageSaver.hpp>
@@ -78,5 +77,3 @@ namespace RequestInfoSvcs
     RequestOperationSaver_var;
 }
 }
-
-#endif /*REQUESTOPERATIONSAVER_HPP*/

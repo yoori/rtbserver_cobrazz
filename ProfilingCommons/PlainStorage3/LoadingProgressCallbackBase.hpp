@@ -1,5 +1,4 @@
-#ifndef LOADINGPROGRESSCALLBACKBASE_HPP
-#define LOADINGPROGRESSCALLBACKBASE_HPP
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -25,5 +24,3 @@ namespace ProfilingCommons
     LoadingProgressCallbackBase_var;
 }
 }
-
-#endif // LOADINGPROGRESSCALLBACKBASE_HPP

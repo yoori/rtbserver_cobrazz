@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_COLOREACHPROCESSOR_HPP
-#define EXPRESSIONMATCHER_COLOREACHPROCESSOR_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -100,5 +99,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*EXPRESSIONMATCHER_COLOREACHPROCESSOR_HPP*/

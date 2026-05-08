@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_STAT_COLLECTOR_HPP
-#define AD_SERVER_LOG_PROCESSING_STAT_COLLECTOR_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -1120,6 +1119,3 @@ operator<<(std::ostream& os, const SeqCollector<DATA_, USE_FIXED_BUF_STREAM_, ST
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_STAT_COLLECTOR_HPP */
-

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_PROCESSOR_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_PROCESSOR_IMPL_HPP
+#pragma once
 
 
 #include "LogTypeExtTraits.hpp"
@@ -236,5 +235,3 @@ typedef GenericLogProcessorImpl<CampaignReferrerStatExtTraits>
   CampaignReferrerStatProcessor;
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_PROCESSOR_IMPL_HPP */

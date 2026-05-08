@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_GENERIC_LOG_CSV_SAVER_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_GENERIC_LOG_CSV_SAVER_IMPL_HPP
+#pragma once
 
 
 #include <string>
@@ -299,6 +298,3 @@ GenericLogCsvSaverImpl<LogExtTraits>::save_i_(const CollectorT& collector)
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_GENERIC_LOG_CSV_SAVER_IMPL_HPP */
-

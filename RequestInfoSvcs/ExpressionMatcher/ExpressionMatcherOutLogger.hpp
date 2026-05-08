@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_EXPRESSIONMATCHEROUTLOGGER_HPP
-#define EXPRESSIONMATCHER_EXPRESSIONMATCHEROUTLOGGER_HPP
+#pragma once
 
 #include <set>
 #include <string>
@@ -257,5 +256,3 @@ namespace AdServer
       ExpressionMatcherOutLogger_var;
   }
 }
-
-#endif /*EXPRESSIONMATCHER_EXPRESSIONMATCHEROUTLOGGER_HPP*/

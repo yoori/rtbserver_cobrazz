@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCVERSIONADAPTER_HPP
-#define CAMPAIGNSVCVERSIONADAPTER_HPP
+#pragma once
 
 namespace AdServer
 {
@@ -26,5 +25,3 @@ namespace POA_AdServer
     using namespace POA_AdServer::CampaignSvcs_v360;
   }
 }
-
-#endif /*CAMPAIGNSVCVERSIONADAPTER_HPP*/

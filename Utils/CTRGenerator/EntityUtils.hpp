@@ -1,5 +1,4 @@
-#ifndef ENTITYUTILS_HPP
-#define ENTITYUTILS_HPP
+#pragma once
 
 using namespace AdServer::CampaignSvcs;
 
@@ -113,5 +112,3 @@ init_campaign_select_params(
   campaign_select_params.colocation = colocation;
   campaign_select_params.tag_sizes = tag->sizes;
 }
-
-#endif /*ENTITYUTILS_HPP*/

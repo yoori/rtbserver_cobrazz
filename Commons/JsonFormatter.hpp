@@ -1,5 +1,4 @@
-#ifndef COMMONS_JSON_FORMATTER_HPP__
-#define COMMONS_JSON_FORMATTER_HPP__
+#pragma once
 
 #include <ostream>
 #include <String/SubString.hpp>
@@ -424,6 +423,3 @@ namespace Commons
 
 }
 }
-
-#endif //COMMONS_JSON_FORMATTER_HPP__
-

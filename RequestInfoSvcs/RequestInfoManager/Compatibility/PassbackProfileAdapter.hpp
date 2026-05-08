@@ -1,5 +1,4 @@
-#ifndef PASSBACKPROFILEADAPTER_HPP
-#define PASSBACKPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -19,5 +18,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*PASSBACKPROFILEADAPTER_HPP*/

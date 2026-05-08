@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_ORM_HPP
-#define __AUTOTESTS_COMMONS_ORM_HPP
+#pragma once
 
 #include <sstream>
 #include <string>
@@ -851,5 +850,3 @@ namespace AutoTest
 }//namespace AutoTest
 
 #include "ORM.ipp"
-
-#endif //__AUTOTESTS_COMMONS_ORM_HPP

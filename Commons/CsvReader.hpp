@@ -1,5 +1,4 @@
-#ifndef CSVREADER_HPP
-#define CSVREADER_HPP
+#pragma once
 
 #include <iostream>
 #include <eh/Exception.hpp>
@@ -104,5 +103,3 @@ namespace Commons
     }
   }
 }
-
-#endif /*CSVREADER_HPP*/

@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_REQUESTPROFILECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_REQUESTPROFILECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/RequestProfileAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -50,6 +49,3 @@ namespace AutoTest
 }
 
 #include "RequestProfileChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_REQUESTPROFILECHECKER_HPP
-

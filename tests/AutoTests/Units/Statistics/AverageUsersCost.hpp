@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__AVERAGEUSERSCOST_
-#define _AUTOTEST__AVERAGEUSERSCOST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -56,5 +55,3 @@ private:
   run_test();
 
 };
-
-#endif // _AUTOTEST__AVERAGEUSERSCOST_

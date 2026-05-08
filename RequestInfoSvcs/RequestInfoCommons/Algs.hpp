@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOCOMMONS_ALGS_HPP
-#define REQUESTINFOCOMMONS_ALGS_HPP
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -689,5 +688,3 @@ operator<<(std::ostream& out, const AdServer::RequestInfoSvcs::IdAppearance& val
 
   return out;
 }
-
-#endif

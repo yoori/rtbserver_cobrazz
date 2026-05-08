@@ -1,8 +1,7 @@
 /**
  * @file UserCampaignReachContainerMTTest.hpp
  */
-#ifndef USER_CAMPAIGN_REACH_CONTAINER_MT_TEST_HPP_INCLUDED
-#define USER_CAMPAIGN_REACH_CONTAINER_MT_TEST_HPP_INCLUDED
+#pragma once
 
 #include <list>
 
@@ -62,6 +61,3 @@ struct TestIt
  */
 bool
 multi_thread_test(const TestIt* test_it) noexcept;
-
-
-#endif // USER_CAMPAIGN_REACH_CONTAINER_MT_TEST_HPP_INCLUDED

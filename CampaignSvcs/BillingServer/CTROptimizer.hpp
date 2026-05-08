@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCS_CTROPTIMIZER_HPP
-#define CAMPAIGNSVCS_CTROPTIMIZER_HPP
+#pragma once
 
 #include <vector>
 
@@ -239,5 +238,3 @@ namespace CampaignSvcs
   };
 }
 }
-
-#endif /*CAMPAIGNSVCS_CTROPTIMIZER_HPP*/

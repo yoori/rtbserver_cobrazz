@@ -1,5 +1,4 @@
-#ifndef SVM_HPP_
-#define SVM_HPP_
+#pragma once
 
 #include <vector>
 #include <deque>
@@ -138,5 +137,3 @@ namespace Vanga
 }
 
 #include "SVM.tpp"
-
-#endif /*SVM_HPP_*/

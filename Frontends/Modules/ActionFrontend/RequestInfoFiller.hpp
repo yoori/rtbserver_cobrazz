@@ -1,5 +1,4 @@
-#ifndef ACTIONFRONTEND_REQUESTINFOFILLER_HPP
-#define ACTIONFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 #include <set>
@@ -148,5 +147,3 @@ namespace Action
   }
 }
 }
-
-#endif /*ACTIONFRONTEND_REQUESTINFOFILLER_HPP*/

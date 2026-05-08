@@ -1,5 +1,4 @@
-#ifndef PLAINSTORAGE_DEFAULTSYNCINDEXSTRATEGY_HPP
-#define PLAINSTORAGE_DEFAULTSYNCINDEXSTRATEGY_HPP
+#pragma once
 
 #include <Sync/SyncPolicy.hpp>
 #include <ProfilingCommons/PlainStorage/BaseLayer.hpp>
@@ -217,5 +216,3 @@ namespace PlainStorage
 }
 
 #include "DefaultSyncIndexStrategy.tpp"
-
-#endif /*PLAINSTORAGE_DEFAULTSYNCINDEXSTRATEGY_HPP*/

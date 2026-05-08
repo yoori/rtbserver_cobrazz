@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__DISPUTINGINVOICE_
-#define _AUTOTEST__DISPUTINGINVOICE_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -52,6 +51,3 @@ private:
   clear_stats_();
 
 };
-
-#endif // _AUTOTEST__DISPUTINGINVOICE_
-

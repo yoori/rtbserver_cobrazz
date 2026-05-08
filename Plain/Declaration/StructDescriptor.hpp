@@ -1,5 +1,4 @@
-#ifndef _STRUCTDESCRIPTOR_HPP_
-#define _STRUCTDESCRIPTOR_HPP_
+#pragma once
 
 #include <list>
 #include <cstring>
@@ -227,5 +226,3 @@ namespace Declaration
     return ReferenceCounting::add_ref(this);
   }
 }
-
-#endif /*_STRUCTDESCRIPTOR_HPP_*/

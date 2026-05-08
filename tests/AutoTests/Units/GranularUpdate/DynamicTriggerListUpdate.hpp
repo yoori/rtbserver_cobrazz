@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__DYNAMICTRIGGERLISTUPDATE_
-#define _UNITTEST__DYNAMICTRIGGERLISTUPDATE_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -32,5 +31,3 @@ private:
   void no_adv();
   void no_track();
 };
-
-#endif

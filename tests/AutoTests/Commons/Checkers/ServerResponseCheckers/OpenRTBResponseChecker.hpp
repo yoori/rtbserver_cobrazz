@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_OPENRTBRESPONSECHECKER_HPP
-#define _AUTOTESTS_COMMONS_OPENRTBRESPONSECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Checkers/Checker.hpp>
 #include <tests/AutoTests/Commons/Checkers/CompositeCheckers.hpp>
@@ -437,5 +436,3 @@ namespace AutoTest
 }
 
 # include "OpenRTBResponseChecker.ipp"
-
-#endif  // _AUTOTESTS_COMMONS_OPENRTBRESPONSECHECKER_HPP

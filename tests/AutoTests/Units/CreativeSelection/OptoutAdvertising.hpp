@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__OPTOUTADVERTISING_
-#define _AUTOTEST__OPTOUTADVERTISING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -43,6 +42,3 @@ private:
   void optout_click_and_impression();
 
 };
-
-#endif // _AUTOTEST__OPTOUTADVERTISING_
-

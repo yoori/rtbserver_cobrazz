@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_ADMIN_APPLICATION_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_ADMIN_APPLICATION_HPP
+#pragma once
 
 
 #include <eh/Exception.hpp>
@@ -78,6 +77,3 @@ Application::instance() /*throw(eh::Exception)*/
 {
   return &AppSingleton::instance();
 }
-
-#endif // AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_ADMIN_APPLICATION_HPP
-

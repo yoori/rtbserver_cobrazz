@@ -1,5 +1,4 @@
-#ifndef POSTGRES_ENVIRONMENT_HPP
-#define POSTGRES_ENVIRONMENT_HPP
+#pragma once
 
 #include<string>
 #include<Generics/CompositeActiveObject.hpp>
@@ -58,4 +57,3 @@ namespace Commons
   }
 }
 }
-#endif //POSTGRES_ENVIRONMENT_HPP

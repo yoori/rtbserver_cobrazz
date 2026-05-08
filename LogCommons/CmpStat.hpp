@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CMP_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_CMP_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -680,6 +679,3 @@ struct CmpStatTraits: LogDefaultTraits<CmpStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_CMP_STAT_HPP
-

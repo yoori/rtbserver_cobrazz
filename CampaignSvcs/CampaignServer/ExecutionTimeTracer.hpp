@@ -1,5 +1,4 @@
-#ifndef _EXECUTION_TIME_TRACER_HPP_
-#define _EXECUTION_TIME_TRACER_HPP_
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
@@ -42,5 +41,3 @@ namespace CampaignSvcs
   };
 }
 }
-
-#endif

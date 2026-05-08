@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNCONFIGMODIFIER_HPP
-#define CAMPAIGNCONFIGMODIFIER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
@@ -272,5 +271,3 @@ namespace CampaignSvcs
     CampaignConfigModifier_var;
 }
 }
-
-#endif /*CAMPAIGNCONFIGMODIFIER_HPP*/

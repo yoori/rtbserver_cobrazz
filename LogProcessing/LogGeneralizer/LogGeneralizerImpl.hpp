@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_IMPL_HPP
+#pragma once
 
 
 #include <eh/Exception.hpp>
@@ -565,5 +564,3 @@ LogGeneralizerImpl::init_hf_log_proc_info_(
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_IMPL_HPP */

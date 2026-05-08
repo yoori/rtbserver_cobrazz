@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_MODELTRAITS_HPP_
-#define CAMPAIGNMANAGER_CTR_MODELTRAITS_HPP_
+#pragma once
 
 namespace AdServer::CampaignSvcs::CTR
 {
@@ -12,5 +11,3 @@ namespace AdServer::CampaignSvcs::CTR
     bool creative_dependent = true;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_MODELTRAITS_HPP_*/

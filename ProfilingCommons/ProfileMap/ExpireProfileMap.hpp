@@ -5,8 +5,7 @@
  * chunks or be removed from container as out-of-date.
  * @file ProfilingCommons/ExpireProfileMap.hpp
  */
-#ifndef PROFILING_COMMONS_EXPIRE_PROFILE_MAP_HPP
-#define PROFILING_COMMONS_EXPIRE_PROFILE_MAP_HPP
+#pragma once
 
 #include <list>
 #include <string>
@@ -519,5 +518,3 @@ namespace ProfilingCommons
 }
 
 #include "ExpireProfileMap.tpp"
-
-#endif

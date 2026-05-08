@@ -1,5 +1,4 @@
-#ifndef _SIMPLEDESCRIPTOR_HPP_
-#define _SIMPLEDESCRIPTOR_HPP_
+#pragma once
 
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include "BaseDescriptor.hpp"
@@ -68,5 +67,3 @@ namespace Declaration
     return ReferenceCounting::add_ref(this);
   }
 }
-
-#endif /*_SIMPLEDESCRIPTOR_HPP_*/

@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_CHANNEL_CONTAINER_TEST_HPP_
-#define _AD_SERVER_CHANNEL_CONTAINER_TEST_HPP_
+#pragma once
 
 namespace AdServer
 {
@@ -174,6 +173,3 @@ namespace AdServer
     };
   }
 }
-
-#endif//_AD_SERVER_CHANNEL_CONTAINER_TEST_HPP_
-

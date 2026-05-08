@@ -1,7 +1,6 @@
 // @file PlainStorage/DefaultAllocatorLayer.hpp
 
-#ifndef PLAINSTORAGE_DEFAULTALLOCATOR_HPP
-#define PLAINSTORAGE_DEFAULTALLOCATOR_HPP
+#pragma once
 
 #include <set>
 
@@ -141,5 +140,3 @@ namespace PlainStorage
     ReferenceCounting::SmartPtr<DefaultAllocatorLayer>
     DefaultAllocatorLayer_var;
 }
-
-#endif // PLAINSTORAGE_DEFAULTALLOCATOR_HPP

@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_TEST_CHANNEL_UPDATE_IMPL_HPP_
-#define _AD_SERVER_TEST_CHANNEL_UPDATE_IMPL_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <CORBACommons/ServantImpl.hpp>
@@ -130,5 +129,3 @@ namespace UnitTests
 
 }
 }
-#endif //_AD_SERVER_TEST_CHANNEL_UPDATE_IMPL_HPP_
-

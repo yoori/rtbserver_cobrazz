@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__ACTIONREQUESTSTESTS_
-#define _UNITTEST__ACTIONREQUESTSTESTS_
+#pragma once
 
 
 #include <tests/AutoTests/Commons/Common.hpp>
@@ -31,5 +30,3 @@ private:
   void test_part1 (AutoTest::DBC::IConn& conn);
 
 };
-
-#endif

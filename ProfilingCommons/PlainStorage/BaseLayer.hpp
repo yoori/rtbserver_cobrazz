@@ -19,8 +19,7 @@
  *
  */
 
-#ifndef PLAINSTORAGELAYER_HPP
-#define PLAINSTORAGELAYER_HPP
+#pragma once
 
 #include <list>
 #include <cstring>
@@ -620,5 +619,3 @@ namespace PlainStorage
     WriteBlock_var write_block_;
   };
 }
-
-#endif // PLAINSTORAGELAYER_HPP

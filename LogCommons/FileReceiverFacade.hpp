@@ -1,5 +1,4 @@
-#ifndef LOGCOMMONS_FILERECEIVERFACADE_HPP_
-#define LOGCOMMONS_FILERECEIVERFACADE_HPP_
+#pragma once
 
 #include <list>
 #include <string>
@@ -306,5 +305,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /* LOGCOMMONS_FILERECEIVERFACADE_HPP_ */

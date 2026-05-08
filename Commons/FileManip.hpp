@@ -1,5 +1,4 @@
-#ifndef COMMONS_FILEMANIP_HPP_
-#define COMMONS_FILEMANIP_HPP_
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -92,6 +91,3 @@ namespace FileManip
   }
 }
 }
-
-
-#endif /*COMMONS_FILEMANIP_HPP_*/

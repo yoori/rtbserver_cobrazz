@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__GEOCREATIVESELECTION_
-#define _AUTOTEST__GEOCREATIVESELECTION_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -44,5 +43,3 @@ private:
     const char* param_name,
     const char* separator = ",");
 };
-
-#endif // _AUTOTEST__GEOCREATIVESELECTION_

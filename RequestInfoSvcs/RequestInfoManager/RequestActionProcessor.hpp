@@ -1,5 +1,4 @@
-#ifndef _REQUEST_ACTION_PROCESSOR_HPP_
-#define _REQUEST_ACTION_PROCESSOR_HPP_
+#pragma once
 
 #include <list>
 #include <vector>
@@ -1093,5 +1092,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_REQUEST_ACTION_PROCESSOR_HPP_*/

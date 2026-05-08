@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_MAIN_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_MAIN_HPP
+#pragma once
 
 
 #include <eh/Exception.hpp>
@@ -83,6 +82,3 @@ LogGeneralizerApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_GENERALIZER_MAIN_HPP */
-

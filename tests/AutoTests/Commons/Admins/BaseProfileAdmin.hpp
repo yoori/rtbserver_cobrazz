@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_BASEPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_BASEPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -438,5 +437,3 @@ namespace AutoTest
     return values_[i][Expected::AUDIENCE_CHANNELS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_BASEPROFILEADMIN_HPP
-

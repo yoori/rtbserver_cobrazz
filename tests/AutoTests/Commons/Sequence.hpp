@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_SEQUENCE__HPP
-#define __AUTOTESTS_COMMONS_SEQUENCE__HPP
+#pragma once
 
 #include <Commons/Algs.hpp>
 #include <tests/AutoTests/Commons/Traits.hpp>
@@ -304,5 +303,3 @@ namespace AutoTest
     return ostr.str();
   }
 }
-
-#endif //__AUTOTESTS_COMMONS_SEQUENCE__HPP

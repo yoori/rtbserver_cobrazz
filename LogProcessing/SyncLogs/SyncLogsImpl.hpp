@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_LOG_PROCESSING_SYNCLOGS_IMPL_HPP_
-#define _AD_SERVER_LOG_PROCESSING_SYNCLOGS_IMPL_HPP_
+#pragma once
 
 #include <string>
 #include <list>
@@ -174,5 +173,3 @@ namespace AdServer
     }
   }
 }
-
-#endif // _AD_SERVER_LOG_PROCESSING_SYNCLOGS_IMPL_HPP_

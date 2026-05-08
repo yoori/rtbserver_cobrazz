@@ -1,7 +1,6 @@
 // @file Xslt/LibxsltTransformer.hpp
 
-#ifndef LIBXSLTTRANSFORMER_HPP_INCLUDED
-#define LIBXSLTTRANSFORMER_HPP_INCLUDED
+#pragma once
 
 #include <libxslt/xsltInternals.h>
 
@@ -202,5 +201,3 @@ namespace AdServer
   };
 
 }
-
-#endif // LIBXSLTTRANSFORMER_HPP_INCLUDED

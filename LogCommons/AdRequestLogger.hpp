@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_COMMONS_AD_REQUEST_LOGGER_HPP
-#define AD_SERVER_LOG_COMMONS_AD_REQUEST_LOGGER_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -1363,6 +1362,3 @@ struct PassbackImpressionTraits :
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_COMMONS_AD_REQUEST_LOGGER_HPP */
-

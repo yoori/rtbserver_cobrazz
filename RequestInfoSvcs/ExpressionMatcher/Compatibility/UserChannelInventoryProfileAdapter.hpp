@@ -1,5 +1,4 @@
-#ifndef USERCHANNELINVENTORYPROFILEADAPTER_HPP
-#define USERCHANNELINVENTORYPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -20,5 +19,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*USERCHANNELINVENTORYPROFILEADAPTER_HPP*/

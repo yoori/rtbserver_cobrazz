@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_USERTRIGGERMATCHCONTAINER_HPP
-#define EXPRESSIONMATCHER_USERTRIGGERMATCHCONTAINER_HPP
+#pragma once
 
 #include <list>
 #include <vector>
@@ -256,5 +255,3 @@ namespace RequestInfoSvcs
     UserTriggerMatchContainer_var;
 }
 }
-
-#endif /*EXPRESSIONMATCHER_USERTRIGGERMATCHCONTAINER_HPP*/

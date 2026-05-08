@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CUSTOM_LOG_PROC_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_CUSTOM_LOG_PROC_IMPL_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -209,5 +208,3 @@ CustomLogProcessorImpl<LogExtTraits, LogVersionManagerT>::check_and_load()
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CUSTOM_LOG_PROC_IMPL_HPP */

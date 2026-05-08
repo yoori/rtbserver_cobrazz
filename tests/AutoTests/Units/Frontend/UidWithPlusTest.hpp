@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__UIDWITHPLUSTEST_
-#define _UNITTEST__UIDWITHPLUSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -19,5 +18,3 @@ public:
 private:
   virtual bool run_test();
 };
-
-#endif

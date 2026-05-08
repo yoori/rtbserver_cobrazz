@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCS_BILLINGCONTAINERSTATE_HPP
-#define CAMPAIGNSVCS_BILLINGCONTAINERSTATE_HPP
+#pragma once
 
 #include <map>
 
@@ -344,5 +343,3 @@ namespace CampaignSvcs
   };
 }
 }
-
-#endif /*CAMPAIGNSVCS_BILLINGCONTAINERSTATE_HPP*/

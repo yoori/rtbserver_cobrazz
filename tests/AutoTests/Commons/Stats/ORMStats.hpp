@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_STATS_ORMSTATS_HPP
-#define __AUTOTESTS_COMMONS_STATS_ORMSTATS_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <iostream>
@@ -640,5 +639,3 @@ namespace AutoTest
 }//namespace AutoTest
 
 #include "ORMStats.ipp"
-
-#endif // __AUTOTESTS_COMMONS_STATS_ORMSTATS_HPP

@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_BIDCOSTPROVIDER_HPP
-#define CAMPAIGNMANAGER_BIDCOSTPROVIDER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -234,5 +233,3 @@ namespace CampaignSvcs
   {}
 }
 }
-
-#endif /*CAMPAIGNMANAGER_BIDCOSTPROVIDER_HPP*/

@@ -1,5 +1,4 @@
-#ifndef FRONTENDCOMMONS_COOKIES_HPP
-#define FRONTENDCOMMONS_COOKIES_HPP
+#pragma once
 
 #include <String/SubString.hpp>
 
@@ -15,5 +14,3 @@ namespace FrontendCommons
     const String::SubString SET_UID("setuid");
   }
 }
-
-#endif /*FRONTENDCOMMONS_COOKIES_HPP*/

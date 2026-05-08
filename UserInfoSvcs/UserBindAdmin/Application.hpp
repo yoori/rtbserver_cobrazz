@@ -1,5 +1,4 @@
-#ifndef USER_INFO_SVCS_USER_BIND_ADMIN_APPLICATION_HPP
-#define USER_INFO_SVCS_USER_BIND_ADMIN_APPLICATION_HPP
+#pragma once
 
 #include <map>
 #include <set>
@@ -72,5 +71,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*USER_INFO_SVCS_USER_BIND_ADMIN_APPLICATION_HPP*/

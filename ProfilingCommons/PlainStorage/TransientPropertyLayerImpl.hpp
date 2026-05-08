@@ -1,7 +1,6 @@
 // @file PlainStorage/TransientPropertyLayerImpl.hpp
 
-#ifndef _TRANSIENTPROPERTYLAYERIMPL_HPP_
-#define _TRANSIENTPROPERTYLAYERIMPL_HPP_
+#pragma once
 
 #include "BaseLayer.hpp"
 
@@ -119,5 +118,3 @@ namespace PlainStorage
   }
 
 }
-
-#endif // _TRANSIENTPROPERTYLAYERIMPL_HPP_

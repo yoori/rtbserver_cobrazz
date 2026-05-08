@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATCHER_USERCOLOREACHCONTAINER_HPP
-#define EXPRESSIONMATCHER_USERCOLOREACHCONTAINER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -92,5 +91,3 @@ namespace AdServer
       UserColoReachContainer_var;
   }
 }
-
-#endif /*EXPRESSIONMATCHER_USERCOLOREACHCONTAINER_HPP*/

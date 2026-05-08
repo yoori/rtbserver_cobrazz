@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_CATBOOSTCTREVALUATOR_HPP_
-#define CAMPAIGNMANAGER_CTR_CATBOOSTCTREVALUATOR_HPP_
+#pragma once
 
 #include <catboost/model_interface/wrapped_calcer.h>
 
@@ -37,5 +36,3 @@ namespace AdServer::CampaignSvcs::CTR
     std::unique_ptr<FeatureBufProvider> feature_buf_provider_;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_CATBOOSTCTREVALUATOR_HPP_*/

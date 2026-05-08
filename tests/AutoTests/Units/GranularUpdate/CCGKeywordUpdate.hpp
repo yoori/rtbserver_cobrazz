@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__CCGKEYWORDUPDATE_
-#define _AUTOTEST__CCGKEYWORDUPDATE_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -46,5 +45,3 @@ private:
   change_ccgkeyword_();
 
 };
-
-#endif // _AUTOTEST__CCGKEYWORDUPDATE_

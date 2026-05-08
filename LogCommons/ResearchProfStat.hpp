@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_RESEARCH_PROF_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_RESEARCH_PROF_STAT_HPP
+#pragma once
 
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
@@ -64,6 +63,3 @@ struct ResearchProfTraits:
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_RESEARCH_PROF_STAT_HPP */
-

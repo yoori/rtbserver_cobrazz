@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_EXPRESSIONCHANNELCHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_EXPRESSIONCHANNELCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/ExpressionChannelAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -33,5 +32,3 @@ namespace AutoTest
     static const Expected ANY_EXPECTED_;
   };
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_EXPRESSIONCHANNELCHECKER_HPP
-

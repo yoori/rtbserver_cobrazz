@@ -1,5 +1,4 @@
-#ifndef PLAIN_PARSER_HPP
-#define PLAIN_PARSER_HPP
+#pragma once
 
 #include <iostream>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -25,5 +24,3 @@ namespace Parsing
 
   typedef ReferenceCounting::SmartPtr<Parser> Parser_var;
 }
-
-#endif /*PLAIN_PARSER_HPP*/

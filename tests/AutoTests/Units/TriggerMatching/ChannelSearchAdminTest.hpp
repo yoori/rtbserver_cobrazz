@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CHANNELSEARCHADMINTEST_
-#define _UNITTEST__CHANNELSEARCHADMINTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -32,5 +31,3 @@ private:
   void test_case(unsigned int index,
                  const TestCase& test);
 };
-
-#endif

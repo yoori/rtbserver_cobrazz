@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CAMPAIGN_REFERRER_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_CAMPAIGN_REFERRER_STAT_HPP
+#pragma once
 
 #include <LogCommons/LogCommons.hpp>
 #include <LogCommons/StatCollector.hpp>
@@ -474,6 +473,3 @@ namespace LogProcessing
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CAMPAIGN_REFERRER_STAT_HPP */
-

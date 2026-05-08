@@ -1,5 +1,4 @@
-#ifndef COUNT_ACTIVE_OBJECT_HPP
-#define COUNT_ACTIVE_OBJECT_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -44,5 +43,3 @@ namespace Commons
     CountActiveObject_var;
 }
 }
-
-#endif /*COUNT_ACTIVE_OBJECT_HPP*/

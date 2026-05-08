@@ -1,5 +1,4 @@
-#ifndef COMPOSITE_REQUEST_OPERATION_PROCESSOR_HPP
-#define COMPOSITE_REQUEST_OPERATION_PROCESSOR_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -144,5 +143,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*COMPOSITE_REQUEST_OPERATION_PROCESSOR_HPP*/

@@ -1,5 +1,4 @@
-#ifndef COMMONS_STRINGHOLDER_HPP
-#define COMMONS_STRINGHOLDER_HPP
+#pragma once
 
 #include <string>
 
@@ -165,5 +164,3 @@ operator <<(std::ostream& os, const AdServer::Commons::ImmutableString& arg)
   os << arg.str();
   return os;
 }
-
-#endif /*COMMONS_STRINGHOLDER_HPP*/

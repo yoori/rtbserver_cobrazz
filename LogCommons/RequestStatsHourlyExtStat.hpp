@@ -1,6 +1,5 @@
 
-#ifndef AD_SERVER_LOG_PROCESSING_REQUEST_STATS_HOURLY_EXT_HPP
-#define AD_SERVER_LOG_PROCESSING_REQUEST_STATS_HOURLY_EXT_HPP
+#pragma once
 
 #include <iosfwd>
 #include <istream>
@@ -770,6 +769,3 @@ typedef LogDefaultTraits<RequestStatsHourlyExtStatCollector> RequestStatsHourlyE
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_REQUEST_STATS_HOURLY_EXT_HPP
-

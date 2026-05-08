@@ -1,9 +1,7 @@
 
+#pragma once
+
 #include <tests/AutoTests/Commons/Common.hpp>
-
-#ifndef _USERPROFILING_COMMONS_HPP
-#define _USERPROFILING_COMMONS_HPP
-
 
 namespace AutoTest
 {
@@ -49,6 +47,3 @@ namespace AutoTest
 
   }
 }
-
-
-#endif  // _USERPROFILING_COMMONS_HPP

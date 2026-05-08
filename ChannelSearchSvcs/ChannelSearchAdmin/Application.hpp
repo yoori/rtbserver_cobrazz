@@ -1,5 +1,4 @@
-#ifndef _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_ADMIN_APPLICATION_HPP_
-#define _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_ADMIN_APPLICATION_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -94,6 +93,3 @@ Application::instance() /*throw(eh::Exception)*/
 {
   return &AppSingleton::instance();
 }
-
-#endif // _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_ADMIN_APPLICATION_HPP_
-

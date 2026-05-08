@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_GENERIC_LOG_IO_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_GENERIC_LOG_IO_IMPL_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -1099,5 +1098,3 @@ private:
 } // namespace AdServer
 
 #include "GenericLogIoImpl.tpp"
-
-#endif /* AD_SERVER_LOG_PROCESSING_GENERIC_LOG_IO_IMPL_HPP */

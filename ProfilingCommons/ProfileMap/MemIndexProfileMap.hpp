@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_MEMINDEXPROFILEMAP_HPP
-#define PROFILEMAP_MEMINDEXPROFILEMAP_HPP
+#pragma once
 
 #include <set>
 #include <map>
@@ -271,5 +270,3 @@ namespace ProfilingCommons
 }
 
 #include "MemIndexProfileMap.tpp"
-
-#endif // PROFILEMAP_MEMINDEXPROFILEMAP_HPP

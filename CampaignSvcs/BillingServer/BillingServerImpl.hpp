@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCS_BILLINGSERVERIMPL_HPP
-#define CAMPAIGNSVCS_BILLINGSERVERIMPL_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
@@ -160,5 +159,3 @@ namespace CampaignSvcs
   }
 }
 }
-
-#endif /*CAMPAIGNSVCS_BILLINGSERVERIMPL_HPP*/

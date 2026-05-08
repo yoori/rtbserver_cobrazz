@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__BUDGETOVERRUNSTEST_
-#define _AUTOTEST__BUDGETOVERRUNSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -53,5 +52,3 @@ private:
   void set_unlim_budget_for_campaign(const std::string&);
   void set_unlim_budget_for_ccg(const std::string&);
 };
-
-#endif //_AUTOTEST__BUDGETOVERRUNSTEST_

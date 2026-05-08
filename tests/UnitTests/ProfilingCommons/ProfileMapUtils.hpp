@@ -1,5 +1,4 @@
-#ifndef PROFILEMAPUTILS_HPP
-#define PROFILEMAPUTILS_HPP
+#pragma once
 
 #include <ProfilingCommons/ProfileMap/ExpireProfileMap.hpp>
 
@@ -33,5 +32,3 @@ init_map(
 
   return map;
 }
-
-#endif /*PROFILEMAPUTILS_HPP*/

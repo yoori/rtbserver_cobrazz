@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSERVER_MODIFYCONFIGSOURCE_HPP
-#define CAMPAIGNSERVER_MODIFYCONFIGSOURCE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -84,5 +83,3 @@ namespace CampaignSvcs
   };
 }
 }
-
-#endif /*CAMPAIGNSERVER_MODIFYCONFIGSOURCE_HPP*/

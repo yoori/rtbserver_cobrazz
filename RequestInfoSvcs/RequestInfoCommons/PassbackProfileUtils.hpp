@@ -1,5 +1,4 @@
-#ifndef PASSBACKPROFILEUTILS_HPP
-#define PASSBACKPROFILEUTILS_HPP
+#pragma once
 
 #include <Generics/Time.hpp>
 #include <UtilCommons/Table.hpp>
@@ -77,5 +76,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*PASSBACKPROFILEUTILS_HPP*/

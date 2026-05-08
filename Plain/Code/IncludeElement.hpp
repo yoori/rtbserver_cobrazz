@@ -1,5 +1,4 @@
-#ifndef _CODE_INCLUDEELEMENT_HPP_
-#define _CODE_INCLUDEELEMENT_HPP_
+#pragma once
 
 #include "Element.hpp"
 
@@ -43,5 +42,3 @@ namespace Code
     visitor->visit_i(this);
   }
 }
-
-#endif /*_CODE_INCLUDEELEMENT_HPP_*/

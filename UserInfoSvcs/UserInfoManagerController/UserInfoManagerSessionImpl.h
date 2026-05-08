@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_SESSION_IMPL_HPP_
-#define _USER_INFO_SVCS_USER_INFO_MANAGER_SESSION_IMPL_HPP_
+#pragma once
 
 #include <map>
 
@@ -156,5 +155,3 @@ namespace AdServer
 
   } /* UserInfoSvcs */
 } /* AdServer */
-
-#endif /*_USER_INFO_SVCS_USER_INFO_MANAGER_SESSION_IMPL_HPP_*/

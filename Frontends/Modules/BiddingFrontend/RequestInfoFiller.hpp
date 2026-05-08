@@ -1,5 +1,4 @@
-#ifndef BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
-#define BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_
+#pragma once
 
 #include <optional>
 #include <string>
@@ -484,5 +483,3 @@ namespace Request
     extern const String::SubString SOURCE_ID;
   }
 }
-
-#endif /*BIDDINGFRONTEND_REQUESTINFOFILLER_HPP_*/

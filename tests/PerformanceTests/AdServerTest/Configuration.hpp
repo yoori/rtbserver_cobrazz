@@ -1,6 +1,5 @@
 
-#ifndef __CONFIGURATION_HPP
-#define __CONFIGURATION_HPP
+#pragma once
 
 #include <XMLUtility/Utility.hpp>
 #include <Commons/ErrorHandler.hpp>
@@ -231,6 +230,3 @@ private:
   ClientConfig_var client_config_;
   unsigned long statistics_interval_dump_;
 };
-
-
-#endif  // __CONFIGURATION_HPP

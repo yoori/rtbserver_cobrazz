@@ -1,5 +1,4 @@
-#ifndef PROFILING_COMMONS_CHUNKED_EXPIRE_PROFILE_MAP_HPP
-#define PROFILING_COMMONS_CHUNKED_EXPIRE_PROFILE_MAP_HPP
+#pragma once
 
 #include <vector>
 #include <set>
@@ -122,5 +121,3 @@ namespace ProfilingCommons
 }
 
 #include "ChunkedExpireProfileMap.tpp"
-
-#endif /*PROFILING_COMMONS_CHUNKED_EXPIRE_PROFILE_MAP_HPP*/

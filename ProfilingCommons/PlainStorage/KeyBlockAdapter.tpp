@@ -1,7 +1,6 @@
 // @file PlainStorage/KeyBlockAdapter.tpp
 
-#ifndef KEYBLOCKADAPTER_TPP
-#define KEYBLOCKADAPTER_TPP
+#pragma once
 
 #include <iostream>
 #include <Commons/AtomicInt.hpp>
@@ -620,5 +619,3 @@ namespace PlainStorage
     }
   }
 }
-
-#endif // KEYBLOCKADAPTER_TPP

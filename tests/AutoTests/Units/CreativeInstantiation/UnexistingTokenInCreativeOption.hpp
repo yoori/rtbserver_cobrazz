@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__UNEXISTINGTOKENINCREATIVEOPTION_
-#define _AUTOTEST__UNEXISTINGTOKENINCREATIVEOPTION_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -29,5 +28,3 @@ private:
   void set_creative_option();
 
 };
-
-#endif //_AUTOTEST__UNEXISTINGTOKENINCREATIVEOPTION_

@@ -1,6 +1,5 @@
 
-#ifndef HOST_DISTRIBUTION_FILE_HPP_
-#define HOST_DISTRIBUTION_FILE_HPP_
+#pragma once
 
 #include <string>
 #include <map>
@@ -99,5 +98,3 @@ namespace Commons
 
 }
 }
-
-#endif

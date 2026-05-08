@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_LOGGER_HPP
-#define __AUTOTESTS_COMMONS_LOGGER_HPP
+#pragma once
 
 #include <vector>
 #include <Sync/Key.hpp>
@@ -256,6 +255,3 @@ namespace AutoTest
 }
 
 #include "Logger.ipp"
-
-#endif //__AUTOTESTS_COMMONS_LOGGER_HPP
-

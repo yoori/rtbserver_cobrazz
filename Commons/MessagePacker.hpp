@@ -1,6 +1,5 @@
 // @file Commons/MessagePacker.hpp
-#ifndef MESSAGE_PACKER_HPP_INCLUDED
-#define MESSAGE_PACKER_HPP_INCLUDED
+#pragma once
 
 #include <string>
 
@@ -446,5 +445,3 @@ namespace AdServer
 
   }
 }
-
-#endif // MESSAGE_PACKER_HPP_INCLUDED

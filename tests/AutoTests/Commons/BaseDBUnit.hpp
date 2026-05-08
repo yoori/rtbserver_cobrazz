@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_BASEDBUNIT_HPP
-#define __AUTOTESTS_COMMONS_BASEDBUNIT_HPP
+#pragma once
 
 #include <tuple>
 #include <Commons/PathManip.hpp>
@@ -106,5 +105,3 @@ private:
 };
 
 #include "BaseDBUnit.ipp"
-
-#endif  // __AUTOTESTS_COMMONS_BASEDBUNIT_HPP

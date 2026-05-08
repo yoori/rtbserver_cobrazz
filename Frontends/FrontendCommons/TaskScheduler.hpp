@@ -1,5 +1,4 @@
-#ifndef _FRONTENDCOMMONS_TASKSCHDULER_HPP_
-#define _FRONTENDCOMMONS_TASKSCHDULER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -120,5 +119,3 @@ namespace FrontendCommons
     }
   }
 }
-
-#endif /*_FRONTENDCOMMONS_TASKSCHDULER_HPP_*/

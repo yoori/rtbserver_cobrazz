@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGN_INDEX_HPP_
-#define _CAMPAIGN_INDEX_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/CRC.hpp>
@@ -958,5 +957,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_CAMPAIGN_INDEX_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGNCONFIG_HPP_
-#define _CAMPAIGNCONFIG_HPP_
+#pragma once
 
 #include <list>
 #include <vector>
@@ -1511,5 +1510,3 @@ namespace CampaignSvcs
   }
 }
 }
-
-#endif /*_CAMPAIGNCONFIG_HPP_*/

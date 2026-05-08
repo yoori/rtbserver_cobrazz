@@ -1,5 +1,4 @@
-#ifndef BARRIER_HPP
-#define BARRIER_HPP
+#pragma once
 
 #include <Generics/Uncopyable.hpp>
 #include <pthread.h>
@@ -36,5 +35,3 @@ Barrier::wait() noexcept
   int res = pthread_barrier_wait(&barrier_);
   return (res == PTHREAD_BARRIER_SERIAL_THREAD);
 }
-
-#endif  /*BARRIER_HPP*/

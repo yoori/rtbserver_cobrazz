@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CCG_SELECTION_FAILURE_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_CCG_SELECTION_FAILURE_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -150,6 +149,3 @@ typedef LogDefaultTraits<CcgSelectionFailureStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CCG_SELECTION_FAILURE_STAT_HPP */
-

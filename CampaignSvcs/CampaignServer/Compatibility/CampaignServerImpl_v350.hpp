@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNSVCS_CAMPAIGNSERVER_CAMPAIGNSERVERIMPL_V350_HPP
-#define CAMPAIGNSVCS_CAMPAIGNSERVER_CAMPAIGNSERVERIMPL_V350_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -327,5 +326,3 @@ namespace AdServer
       CampaignServerImpl_v350_var;
   }
 }
-
-#endif // CAMPAIGNSVCS_CAMPAIGNSERVER_CAMPAIGNSERVERIMPL_V350_HPP

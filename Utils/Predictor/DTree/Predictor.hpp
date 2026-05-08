@@ -1,5 +1,4 @@
-#ifndef PREDICTOR_HPP_
-#define PREDICTOR_HPP_
+#pragma once
 
 #include <iostream>
 #include <map>
@@ -107,5 +106,3 @@ namespace Vanga
 }
 
 #include "Predictor.tpp"
-
-#endif /*PREDICTOR_HPP_*/

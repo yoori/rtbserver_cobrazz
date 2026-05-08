@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_GLOBALSADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_GLOBALSADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -228,5 +227,3 @@ namespace AutoTest
     return values_[i][Expected::MASTER_STAMP].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_GLOBALSADMIN_HPP
-

@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERINFOCOMMONS_USERPROFILEUTILS_HPP
-#define USERINFOSVCS_USERINFOCOMMONS_USERPROFILEUTILS_HPP
+#pragma once
 
 #include <sstream>
 
@@ -477,7 +476,3 @@ namespace AdServer
 
   }   // namespace UserInfoSvcs
 }   // namespace AdServer
-
-
-
-#endif

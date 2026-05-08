@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_BILLINGSTATECONTAINER_HPP_
-#define CAMPAIGNMANAGER_BILLINGSTATECONTAINER_HPP_
+#pragma once
 
 #include <deque>
 
@@ -259,5 +258,3 @@ namespace CampaignSvcs
   }
 }
 }
-
-#endif /*CAMPAIGNMANAGER_BILLINGSTATECONTAINER_HPP_*/

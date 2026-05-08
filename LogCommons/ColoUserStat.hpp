@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_COLO_USER_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_COLO_USER_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -751,6 +750,3 @@ ColoUsers_To_Colo_Or_GlobalColo_UserStatLoader::add_colo_user_stat_data_(
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_COLO_USER_STAT_HPP
-

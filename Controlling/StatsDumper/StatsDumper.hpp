@@ -1,6 +1,5 @@
 /// @file Controlling/StatsDumper/StatsDumper.hpp
-#ifndef CONTROLLING_STATS_DUMPER_HPP_
-#define CONTROLLING_STATS_DUMPER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -33,5 +32,3 @@ namespace AdServer
 
   }
 }
-
-#endif //CONTROLLING_STATS_DUMPER_HPP_

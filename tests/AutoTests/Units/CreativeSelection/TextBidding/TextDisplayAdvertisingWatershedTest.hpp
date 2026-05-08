@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__TEXTDISPLAYADVERTISINGWATERSHEDTEST_
-#define _UNITTEST__TEXTDISPLAYADVERTISINGWATERSHEDTEST_
+#pragma once
 
 
 #include <tests/AutoTests/Commons/Common.hpp>
@@ -36,5 +35,3 @@ private:
   text_wins_();
 
 };
-
-#endif

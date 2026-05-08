@@ -1,5 +1,4 @@
-#ifndef ADSERVER_REQUESTINFOSVCS_EXPRESSIONMATCHERIMPL_HPP
-#define ADSERVER_REQUESTINFOSVCS_EXPRESSIONMATCHERIMPL_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -571,5 +570,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*ADSERVER_REQUESTINFOSVCS_EXPRESSIONMATCHERIMPL_HPP*/

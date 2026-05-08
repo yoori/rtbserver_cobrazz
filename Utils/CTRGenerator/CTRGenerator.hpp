@@ -1,5 +1,4 @@
-#ifndef CTRGENERATOR_CTRGENERATOR_HPP
-#define CTRGENERATOR_CTRGENERATOR_HPP
+#pragma once
 
 #include <CampaignSvcs/CampaignManager/CTRProvider.hpp>
 
@@ -133,5 +132,3 @@ namespace CampaignSvcs
   };
 }
 }
-
-#endif /*CTRGENERATOR_CTRGENERATOR_HPP*/

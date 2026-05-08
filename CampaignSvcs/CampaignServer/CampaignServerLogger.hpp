@@ -1,5 +1,4 @@
-#ifndef _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNSERVERLOGGER_HPP_
-#define _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNSERVERLOGGER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -69,5 +68,3 @@ namespace AdServer
       CampaignServerLogger_var;
   }
 }
-
-#endif /*_AD_SERVER_CAMPAIGN_SVCS_CAMPAIGNSERVERLOGGER_HPP_*/

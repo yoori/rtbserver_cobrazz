@@ -1,5 +1,4 @@
-#ifndef ADSERVER_LOGCOMMONS_RESEARCHLOGS_HPP_
-#define ADSERVER_LOGCOMMONS_RESEARCHLOGS_HPP_
+#pragma once
 
 #include <iosfwd>
 #include <string>
@@ -282,5 +281,3 @@ namespace LogProcessing
   };
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* ADSERVER_LOGCOMMONS_RESEARCHLOGS_HPP_ */

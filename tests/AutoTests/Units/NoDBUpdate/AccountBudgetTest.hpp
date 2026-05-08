@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__REACHINGZEROBALANCETEST_
-#define _AUTOTEST__REACHINGZEROBALANCETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -22,6 +21,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif //_AUTOTEST__REACHINGZEROBALANCETEST_
-

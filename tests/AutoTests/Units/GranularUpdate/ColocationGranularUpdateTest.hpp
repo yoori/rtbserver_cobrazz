@@ -1,6 +1,5 @@
 
-#ifndef __COLOCATIONGRANULARUPDATETEST_HPP
-#define __COLOCATIONGRANULARUPDATETEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -41,5 +40,3 @@ private:
   void update_colo_account();
   void deactivate_colo();
 };
-
-#endif  // __COLOCATIONGRANULARUPDATETEST_HPP

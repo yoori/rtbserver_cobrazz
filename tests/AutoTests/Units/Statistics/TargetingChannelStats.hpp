@@ -1,5 +1,4 @@
-#ifndef __TARGETINGCHANNELSTATS_HPP
-#define __TARGETINGCHANNELSTATS_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -111,5 +110,3 @@ private:
   AutoTest::Time now_;
 
 };
-
-#endif  // __TARGETINGCHANNELSTATS_HPP

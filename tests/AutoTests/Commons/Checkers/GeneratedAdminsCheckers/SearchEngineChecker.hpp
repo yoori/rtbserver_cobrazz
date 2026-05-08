@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_SEARCHENGINECHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_SEARCHENGINECHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/SearchEngineAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -46,6 +45,3 @@ namespace AutoTest
 }
 
 #include "SearchEngineChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_SEARCHENGINECHECKER_HPP
-

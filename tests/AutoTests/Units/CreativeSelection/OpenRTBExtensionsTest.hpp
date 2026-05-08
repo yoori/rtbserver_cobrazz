@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__OPENRTBEXTENSIONSTEST_
-#define _AUTOTEST__OPENRTBEXTENSIONSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -176,5 +175,3 @@ private:
   template<size_t COUNT>
   void process_multislotcase_requests_(const MultislotCaseRequest (&cases)[COUNT]);
 };
-
-#endif // _AUTOTEST__OPENRTBEXTENSIONSTEST_

@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_PROC_STAT_IMPL_HPP
-#define AD_SERVER_LOG_PROCESSING_PROC_STAT_IMPL_HPP
+#pragma once
 
 
 #include <string>
@@ -256,5 +255,3 @@ template <class L_T_T_> const typename ProcStatsValues<L_T_T_>::Key
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_PROC_STAT_IMPL_HPP */

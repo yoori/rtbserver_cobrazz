@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_MEMINDEXPROFILEMAP_TPP
-#define PROFILEMAP_MEMINDEXPROFILEMAP_TPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ProfilingCommons/PlainStorage/DefaultSyncIndexStrategy.tpp>
@@ -578,5 +577,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif // PROFILEMAP_MEMINDEXPROFILEMAP_TPP

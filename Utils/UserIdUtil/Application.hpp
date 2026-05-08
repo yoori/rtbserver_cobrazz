@@ -1,5 +1,4 @@
-#ifndef UTILS_USERIDUTIL_HPP
-#define UTILS_USERIDUTIL_HPP
+#pragma once
 
 #include <iostream>
 #include <eh/Exception.hpp>
@@ -61,5 +60,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*UTILS_USERIDUTIL_HPP*/

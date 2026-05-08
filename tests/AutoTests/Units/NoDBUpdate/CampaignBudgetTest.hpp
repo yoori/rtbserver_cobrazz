@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__PAUSINGCAMPAIGNREACHINGTEST_
-#define _AUTOTEST__PAUSINGCAMPAIGNREACHINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -40,5 +39,3 @@ private:
     const std::string& description,
     AutoTest::Checker* checker) /*throw(eh::Exception)*/;
 };
-
-#endif //_AUTOTEST__PAUSINGCAMPAIGNREACHINGTEST_

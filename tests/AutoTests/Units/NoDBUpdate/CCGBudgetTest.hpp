@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__PAUSINGCGREACHINGTEST_
-#define _AUTOTEST__PAUSINGCGREACHINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -98,5 +97,3 @@ private:
 
   void prolong_lifetime(const std::string& prefix);
 };
-
-#endif //_AUTOTEST__PAUSINGCGREACHINGTEST_

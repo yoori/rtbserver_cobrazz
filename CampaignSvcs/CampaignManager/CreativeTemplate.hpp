@@ -1,5 +1,4 @@
-#ifndef _CREATIVE_TEMPLATE_HPP_
-#define _CREATIVE_TEMPLATE_HPP_
+#pragma once
 
 #include <list>
 #include <set>
@@ -510,5 +509,3 @@ namespace AdServer
 
   } /* CampaignSvcs */
 } /* AdServer */
-
-#endif /*_CREATIVE_TEMPLATE_HPP_*/

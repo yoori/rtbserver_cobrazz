@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_PROFILEMAPFACTORY_HPP
-#define PROFILEMAP_PROFILEMAPFACTORY_HPP
+#pragma once
 
 #include <ProfilingCommons/PlainStorage3/LevelProfileMap.hpp>
 #include <ProfilingCommons/ProfileMap/ExpireProfileMap.hpp>
@@ -389,5 +388,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif /*PROFILEMAP_PROFILEMAPFACTORY_HPP*/

@@ -3,8 +3,7 @@
  * CacheLayer's - simple keep last used blocks
  */
 
-#ifndef _PLAINSTORAGE_CACHELAYER_HPP_
-#define _PLAINSTORAGE_CACHELAYER_HPP_
+#pragma once
 
 #include <functional>
 
@@ -157,5 +156,3 @@ namespace PlainStorage
 }
 
 #include "CacheLayer.tpp"
-
-#endif // _PLAINSTORAGE_CACHELAYER_HPP_

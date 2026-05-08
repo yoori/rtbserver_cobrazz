@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_LOGGER_HPP_
-#define _USER_INFO_SVCS_USER_INFO_MANAGER_LOGGER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -62,5 +61,3 @@ namespace AdServer
       UserInfoManagerLogger_var;
   }
 }
-
-#endif /*_USER_INFO_SVCS_USER_INFO_MANAGER_LOGGER_HPP_*/

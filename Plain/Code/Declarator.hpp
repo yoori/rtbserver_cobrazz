@@ -1,5 +1,4 @@
-#ifndef _CODE_DECLARATOR_HPP_
-#define _CODE_DECLARATOR_HPP_
+#pragma once
 
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -74,5 +73,3 @@ namespace Code
   typedef ReferenceCounting::SmartPtr<Declarator>
     Declarator_var;
 }
-
-#endif

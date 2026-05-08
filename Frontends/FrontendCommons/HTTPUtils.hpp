@@ -1,7 +1,6 @@
 /// @file FrontendCommons/HTTPUtils.hpp
 
-#ifndef FRONTENDCOMMONS_HTTPUTILS_HPP
-#define FRONTENDCOMMONS_HTTPUTILS_HPP
+#pragma once
 
 #include <openssl/md5.h>
 #include <string>
@@ -704,5 +703,3 @@ namespace FrontendCommons
     }
   }
 }
-
-#endif /*FRONTENDCOMMONS_HTTPUTILS_HPP*/

@@ -1,5 +1,4 @@
-#ifndef ADSERVER_COMMONS_MALLOCSTATSPROVIDER_HPP
-#define ADSERVER_COMMONS_MALLOCSTATSPROVIDER_HPP
+#pragma once
 
 // STD
 #include <cstdint>
@@ -138,5 +137,3 @@ public:
 
 } // namespace Commons
 } // namespace AdServer
-
-#endif //ADSERVER_COMMONS_MALLOCSTATSPROVIDER_HPP

@@ -1,5 +1,4 @@
-#ifndef ADSERVER_FRONTENDS_DIRECTORYMODULE_HPP
-#define ADSERVER_FRONTENDS_DIRECTORYMODULE_HPP
+#pragma once
 
 #include <string>
 
@@ -192,5 +191,3 @@ namespace AdServer
     Configuration_var frontend_config_;
   };
 }
-
-#endif /*ADSERVER_FRONTENDS_DIRECTORYMODULE_HPP*/

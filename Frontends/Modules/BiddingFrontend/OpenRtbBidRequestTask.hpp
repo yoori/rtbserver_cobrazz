@@ -1,5 +1,4 @@
-#ifndef OPENRTBBIDREQUESTTASK_HPP_
-#define OPENRTBBIDREQUESTTASK_HPP_
+#pragma once
 
 #include <iostream>
 #include "BidRequestTask.hpp"
@@ -116,5 +115,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*OPENRTBBIDREQUESTTASK_HPP_*/

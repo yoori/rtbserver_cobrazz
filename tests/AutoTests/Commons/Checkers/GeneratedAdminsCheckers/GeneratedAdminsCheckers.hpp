@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_GENERATEDADMINSCHECKERS_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_GENERATEDADMINSCHECKERS_HPP
+#pragma once
 
 
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/CampaignChecker.hpp>
@@ -39,6 +38,3 @@
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/CCGKeywordChecker.hpp>
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/TriggerChecker.hpp>
 #include <tests/AutoTests/Commons/Admins/../Checkers/GeneratedAdminsCheckers/ChannelSearchChecker.hpp>
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_GENERATEDADMINS_HPP
-

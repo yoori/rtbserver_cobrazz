@@ -1,5 +1,4 @@
-#ifndef BIDDINGFRONTEND_UTILS_HPP_
-#define BIDDINGFRONTEND_UTILS_HPP_
+#pragma once
 
 #include <string>
 #include <CORBACommons/CorbaAdapters.hpp>
@@ -16,5 +15,3 @@ namespace Bidding
     const std::string& token_value);
 }
 }
-
-#endif /*BIDDINGFRONTEND_UTILS_HPP_*/

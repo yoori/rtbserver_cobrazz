@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__DYNAMICCREATIVECONTENTTEST_
-#define _AUTOTEST__DYNAMICCREATIVECONTENTTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -24,6 +23,3 @@ private:
   void add_file_copy_descr_phrase_(
     const char* message, const char* src, const char* dst);
 };
-
-#endif //_AUTOTEST__DYNAMICCREATIVECONTENTTEST_
-

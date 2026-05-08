@@ -1,5 +1,4 @@
-#ifndef USERBINDFRONTEND_REQUESTINFOFILLER_HPP_
-#define USERBINDFRONTEND_REQUESTINFOFILLER_HPP_
+#pragma once
 
 #include <Generics/GnuHashTable.hpp>
 #include <GeoIP/IPMap.hpp>
@@ -159,5 +158,3 @@ namespace UserBind
   };
 }
 }
-
-#endif /*USERBINDFRONTEND_REQUESTINFOFILLER_HPP_*/

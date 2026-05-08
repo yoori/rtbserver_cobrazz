@@ -1,5 +1,4 @@
-#ifndef TEXTTEMPLATECACHE_HPP
-#define TEXTTEMPLATECACHE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -291,5 +290,3 @@ namespace Commons
 
 }
 }
-
-#endif //TEXTTEMPLATECACHE_HPP

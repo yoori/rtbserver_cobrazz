@@ -264,18 +264,31 @@ namespace Bidding
     }
 
     bool ad_selected = false;
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotDebugInfo*
+      expected_debug_info = nullptr;
     for(CORBA::ULong i = 0; i < campaign_match_result.ad_slots.length(); ++i)
     {
-      if(campaign_match_result.ad_slots[i].selected_creatives.length() > 0)
+      const auto& ad_slot_result = campaign_match_result.ad_slots[i];
+      if(!expected_debug_info && ad_slot_result.debug_info.trace_ccg[0] != 0)
+      {
+        expected_debug_info = &ad_slot_result.debug_info;
+      }
+
+      if(ad_slot_result.selected_creatives.length() > 0)
       {
         ad_selected = true;
-        print_creative_selection_debug_info_(campaign_match_result.ad_slots[i]);
+        print_creative_selection_debug_info_(ad_slot_result);
       }
     }
 
     if(!ad_selected)
     {
       print_empty_creative_selection_debug_info_();
+    }
+
+    if(expected_debug_info)
+    {
+      print_expected_debug_info_(*expected_debug_info);
     }
   }
 
@@ -531,6 +544,18 @@ namespace Bidding
   }
 
   void
+  DebugSink::print_expected_debug_info_(
+    const AdServer::CampaignSvcs::CampaignManager::AdSlotDebugInfo&
+      debug_info) noexcept
+  {
+    if(require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
+    {
+      debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n" <<
+        debug_info.trace_ccg << "\n";
+    }
+  }
+
+  void
   DebugSink::print_creative_selection_debug_info_(
     const AdServer::CampaignSvcs::CampaignManager::AdSlotResult&
       ad_slot_result) noexcept
@@ -652,12 +677,6 @@ namespace Bidding
     }
 
     debug_info_str_ << sep_;
-
-    if(require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
-    {
-      debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n" <<
-        debug_info.trace_ccg << "\n";
-    }
   }
 }
 }

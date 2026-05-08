@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_ACTIONREQUEST_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_ACTIONREQUEST_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 
@@ -85,5 +84,3 @@ namespace AutoTest
     HeaderParam<ActionRequest> referer;
   };
 }//namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_REQUEST_ACTIONREQUEST_HPP

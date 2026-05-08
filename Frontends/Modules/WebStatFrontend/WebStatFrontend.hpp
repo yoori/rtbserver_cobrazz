@@ -1,5 +1,4 @@
-#ifndef ADSERVER_WEBSTATFRONTEND_HPP
-#define ADSERVER_WEBSTATFRONTEND_HPP
+#pragma once
 
 #include <string>
 
@@ -122,5 +121,3 @@ namespace WebStat
   }
 }
 } /* AdServer */
-
-#endif // ADSERVER_WEBSTATFRONTEND_HPP

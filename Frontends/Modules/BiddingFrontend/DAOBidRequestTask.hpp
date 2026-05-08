@@ -1,5 +1,4 @@
-#ifndef DAOBIDREQUESTTASK_HPP_
-#define DAOBIDREQUESTTASK_HPP_
+#pragma once
 
 #include <iostream>
 #include "BidRequestTask.hpp"
@@ -73,5 +72,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*DAOBIDREQUESTTASK_HPP_*/

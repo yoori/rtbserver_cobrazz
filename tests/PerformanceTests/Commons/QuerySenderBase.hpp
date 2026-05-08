@@ -1,5 +1,4 @@
-#ifndef __QUERYSENDERBASE_HPP
-#define __QUERYSENDERBASE_HPP
+#pragma once
 
 #include "StatCommons.hpp"
 #include <HTTP/HttpAsync.hpp>
@@ -32,5 +31,3 @@ public:
    */
   virtual ~QuerySenderBase() noexcept = default;
 };
-
-#endif  // __QUERYSENDERBASE_HPP

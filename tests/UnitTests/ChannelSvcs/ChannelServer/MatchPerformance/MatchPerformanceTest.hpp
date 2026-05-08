@@ -1,5 +1,4 @@
-#ifndef MATCH_PERFORMANCE_TEST_DEF
-#define MATCH_PERFORMANCE_TEST_DEF
+#pragma once
 
 #include <ChannelSvcs/ChannelServer/ChannelContainer.hpp>
 
@@ -36,6 +35,3 @@ namespace AdServer
 
   }
 }
-
-#endif
-

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__ZERODOWNTIMETEST_
-#define _AUTOTEST__ZERODOWNTIMETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -171,5 +170,3 @@ private:
   check_stats_();
 
 };
-
-#endif // _AUTOTEST__ZERODOWNTIMETEST_

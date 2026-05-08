@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_PAGE_LOADS_DAILY_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_PAGE_LOADS_DAILY_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -418,6 +417,3 @@ struct PageLoadsDailyStatTraits: LogDefaultTraits<PageLoadsDailyStatCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif // AD_SERVER_LOG_PROCESSING_PAGE_LOADS_DAILY_STAT_HPP
-

@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_PUBPIXELFRONTEND_REQUESTINFOFILLER_HPP
-#define FRONTENDS_PUBPIXELFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 #include <map>
@@ -84,5 +83,3 @@ namespace PubPixel
   };
 } /*PubPixel*/
 } /*AdServer*/
-
-#endif /*FRONTENDS_PUBPIXELFRONTEND_REQUESTINFOFILLER_HPP*/

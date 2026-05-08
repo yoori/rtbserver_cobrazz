@@ -1,5 +1,4 @@
-#ifndef _BENCHMARK_HPP
-#define _BENCHMARK_HPP
+#pragma once
 
 #include <tests/PerformanceTests/Commons/HttpPoolPolicies.hpp>
 #include "BenchmarkStorage.hpp"
@@ -169,5 +168,3 @@ protected:
 };
 
 typedef std::unique_ptr<BenchmarkBase> Benchmark_var;
-
-#endif  // _BENCHMARK_HPP

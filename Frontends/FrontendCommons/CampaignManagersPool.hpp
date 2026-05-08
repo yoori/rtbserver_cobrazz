@@ -1,8 +1,7 @@
 /**
  * @file CampaignManagersPool.hpp
  */
-#ifndef CAMPAIGN_MANAGER_HOOK_HPP
-#define CAMPAIGN_MANAGER_HOOK_HPP
+#pragma once
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/CorbaConfig.hpp>
@@ -1382,5 +1381,3 @@ namespace FrontendCommons
 
 
 }
-
-#endif // CAMPAIGN_MANAGER_HOOK_HPP

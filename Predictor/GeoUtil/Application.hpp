@@ -1,5 +1,4 @@
-#ifndef PREDICTOR_GEOUTIL_APPLICATION_HPP_
-#define PREDICTOR_GEOUTIL_APPLICATION_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -37,5 +36,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*PREDICTOR_GEOUTIL_APPLICATION_HPP_*/

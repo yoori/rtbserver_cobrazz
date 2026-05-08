@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__TEXTANDDISPLAYCREATIVESCOMPETITIONTEST_
-#define _UNITTEST__TEXTANDDISPLAYCREATIVESCOMPETITIONTEST_
+#pragma once
 
 
 #include <tests/AutoTests/Commons/Common.hpp>
@@ -30,5 +29,3 @@ private:
   void scenario4();
   void scenario5();
 };
-
-#endif

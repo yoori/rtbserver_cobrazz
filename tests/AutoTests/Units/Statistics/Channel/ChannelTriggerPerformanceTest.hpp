@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_UNITS_CHANNELTRIGGERPERFORMANCETEST_HPP
-#define AUTOTESTS_UNITS_CHANNELTRIGGERPERFORMANCETEST_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -67,5 +66,3 @@ private:
   bool run_test();
 
 };
-
-#endif /*AUTOTESTS_UNITS_CHANNELTRIGGERPERFORMANCETEST_HPP*/

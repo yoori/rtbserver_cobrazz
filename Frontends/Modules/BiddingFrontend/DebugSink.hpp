@@ -1,5 +1,4 @@
-#ifndef BIDDINGFRONTEND_DEBUGSINK_HPP_
-#define BIDDINGFRONTEND_DEBUGSINK_HPP_
+#pragma once
 
 #include <string>
 #include <sstream>
@@ -76,6 +75,11 @@ namespace Bidding
     print_empty_creative_selection_debug_info_() noexcept;
 
     void
+    print_expected_debug_info_(
+      const AdServer::CampaignSvcs_v360::CampaignManager::AdSlotDebugInfo&
+        debug_info) noexcept;
+
+    void
     print_creative_selection_debug_info_(
       const AdServer::CampaignSvcs_v360::CampaignManager::AdSlotResult&
         ad_slot_result) noexcept;
@@ -92,5 +96,3 @@ namespace Bidding
   };
 }
 }
-
-#endif

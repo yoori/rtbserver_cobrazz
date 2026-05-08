@@ -1,7 +1,6 @@
 
 
-#ifndef _AUTOTEST__PASSBACKSTATSTEST_
-#define _AUTOTEST__PASSBACKSTATSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -69,5 +68,3 @@ private:
   std::list<PassbackStats::Diffs> diffs_;
   std::list<std::string> requests_;
 };
-
-#endif //_AUTOTEST__PASSBACKSTATSTEST_

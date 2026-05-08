@@ -1,5 +1,4 @@
-#ifndef __APPLICATION_HPP
-#define __APPLICATION_HPP
+#pragma once
 
 #include <signal.h>
 #include <ace/Event_Handler.h>
@@ -58,6 +57,3 @@ private:
   HTTP::HttpActiveInterface_var http_pool_;
   QuerySender* sender_;
 };
-
-
-#endif  // __APPLICATION_HPP

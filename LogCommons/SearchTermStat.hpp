@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_SEARCH_TERM_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_SEARCH_TERM_STAT_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -226,6 +225,3 @@ struct SearchTermStatTraits:
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_SEARCH_TERM_STAT_HPP */
-

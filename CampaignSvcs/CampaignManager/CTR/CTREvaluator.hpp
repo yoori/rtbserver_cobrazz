@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_CTREVALUATOR_HPP_
-#define CAMPAIGNMANAGER_CTR_CTREVALUATOR_HPP_
+#pragma once
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include "CTRFeatureCalculators.hpp"
@@ -24,5 +23,3 @@ namespace AdServer::CampaignSvcs::CTR
       const HashArray* opt_hashes) const = 0;
   };
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_CTREVALUATOR_HPP_*/

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_ADMINS_SIMPLEADMINS_HPP
-#define _AUTOTESTS_COMMONS_ADMINS_SIMPLEADMINS_HPP
+#pragma once
 
 #include "Admins.hpp"
 #include <tests/AutoTests/Commons/BaseUnit.hpp>
@@ -275,6 +274,3 @@ namespace AutoTest
     void exec();
   };
 }
-
-
-#endif  // _AUTOTESTS_COMMONS_ADMINS_SIMPLEADMINS_HPP

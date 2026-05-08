@@ -1,5 +1,4 @@
-#ifndef _FILE_SYSTEM_H_
-#define _FILE_SYSTEM_H_
+#pragma once
 
 #include <cstdio>
 #include <fcntl.h>
@@ -95,5 +94,3 @@ namespace fs
     ::nftw(path.c_str(), unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
   }
 }
-
-#endif // _FILE_SYSTEM_H_

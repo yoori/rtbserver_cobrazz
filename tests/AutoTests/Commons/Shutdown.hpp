@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_SHUTDOWN_HPP
-#define _AUTOTESTS_COMMONS_SHUTDOWN_HPP
+#pragma once
 
 #include <Generics/Singleton.hpp>
 #include <Sync/Condition.hpp>
@@ -33,6 +32,3 @@ namespace AutoTest
 
   typedef Generics::Singleton<Shutdown_> Shutdown;
 }
-
-
-#endif  // _AUTOTESTS_COMMONS_SHUTDOWN_HPP

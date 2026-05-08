@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CHANNEL_COUNT_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_CHANNEL_COUNT_STAT_HPP
+#pragma once
 
 
 #include "LogCommons.hpp"
@@ -214,6 +213,3 @@ typedef LogDefaultTraits<ChannelCountStatCollector> ChannelCountStatTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CHANNEL_COUNT_STAT_HPP */
-

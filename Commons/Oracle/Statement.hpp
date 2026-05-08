@@ -1,5 +1,4 @@
-#ifndef _ORACLE_STATEMENT_HPP_
-#define _ORACLE_STATEMENT_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -388,5 +387,3 @@ namespace Oracle
 }
 }
 }
-
-#endif /*_ORACLE_STATEMENT_HPP_*/

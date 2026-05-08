@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_CHECKER_EXPECTEDVALUE_IPP
-#define __AUTOTESTS_COMMONS_CHECKER_EXPECTEDVALUE_IPP
+#pragma once
 
 namespace AutoTest
 {
@@ -74,4 +73,3 @@ namespace AutoTest
     return in;
   }
 }
-#endif  // __AUTOTESTS_COMMONS_CHECKER_EXPECTEDVALUE_IPP

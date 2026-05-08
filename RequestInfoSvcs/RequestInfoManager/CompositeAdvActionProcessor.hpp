@@ -1,5 +1,4 @@
-#ifndef COMPOSITE_ADV_ACTION_PROCESSOR_HPP
-#define COMPOSITE_ADV_ACTION_PROCESSOR_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -88,5 +87,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*COMPOSITE_ADV_ACTION_PROCESSOR_HPP*/

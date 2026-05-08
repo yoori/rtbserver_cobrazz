@@ -1,5 +1,4 @@
-#ifndef BOUNDEDCACHE_HPP
-#define BOUNDEDCACHE_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -160,5 +159,3 @@ namespace Commons
   }
 }
 }
-
-#endif //BOUNDEDCACHE_HPP

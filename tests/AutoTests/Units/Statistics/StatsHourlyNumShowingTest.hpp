@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__STATSHOURLYNUMSHOWINGTEST_
-#define _AUTOTEST__STATSHOURLYNUMSHOWINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -44,5 +43,3 @@ private:
   ORM::StatsList<ORM::HourlyStats> stats_;
   std::list<ORM::HourlyStats::Diffs> diffs_;
 };
-
-#endif  // _AUTOTEST__STATSHOURLYNUMSHOWINGTEST_

@@ -1,5 +1,4 @@
-#ifndef PROFILINGCOMMONS_ADAPTPROFILEMAP_HPP
-#define PROFILINGCOMMONS_ADAPTPROFILEMAP_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -85,5 +84,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*PROFILINGCOMMONS_ADAPTPROFILEMAP_HPP*/

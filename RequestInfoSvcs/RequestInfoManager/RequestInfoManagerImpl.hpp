@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOSVCS_REQUESTINFOMANAGERIMPL_HPP
-#define REQUESTINFOSVCS_REQUESTINFOMANAGERIMPL_HPP
+#pragma once
 
 #include <list>
 #include <string>
@@ -498,5 +497,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*REQUESTINFOSVCS_REQUESTINFOMANAGERIMPL_HPP*/

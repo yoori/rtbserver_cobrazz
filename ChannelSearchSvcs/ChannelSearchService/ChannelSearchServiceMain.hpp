@@ -1,5 +1,4 @@
-#ifndef _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_MAIN_HPP_
-#define _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_MAIN_HPP_
+#pragma once
 
 
 #include <eh/Exception.hpp>
@@ -66,6 +65,3 @@ ChannelSearchServiceApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /* _AD_SERVER_CHANNEL_SEARCH_SVCS_CHANNEL_SEARCH_SERVICE_MAIN_HPP_ */
-

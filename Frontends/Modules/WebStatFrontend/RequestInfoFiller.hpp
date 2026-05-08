@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_WEBSTATFRONTEND_REQUESTINFOFILLER_HPP
-#define FRONTENDS_WEBSTATFRONTEND_REQUESTINFOFILLER_HPP
+#pragma once
 
 #include <string>
 #include <map>
@@ -133,5 +132,3 @@ namespace WebStat
   };
 } /*WebStat*/
 } /*AdServer*/
-
-#endif /*FRONTENDS_WEBSTATFRONTEND_REQUESTINFOFILLER_HPP*/

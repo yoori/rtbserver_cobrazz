@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__ACTIONSTATSTEST_
-#define _UNITTEST__ACTIONSTATSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -156,5 +155,3 @@ private:
     AdClient& client);
 
 };
-
-#endif

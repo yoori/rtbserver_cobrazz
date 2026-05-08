@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_REQUEST_NSLOOKUPREQUEST_HPP
-#define __AUTOTESTS_COMMONS_REQUEST_NSLOOKUPREQUEST_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 
@@ -334,5 +333,3 @@ namespace AutoTest
     NSLookupParam rm_tuid;
   };
 }//namespace AutoTest
-
-#endif  // __AUTOTESTS_COMMONS_REQUEST_NSLOOKUPREQUEST_HPP

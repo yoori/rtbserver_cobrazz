@@ -1,5 +1,4 @@
-#ifndef USERBINDOPERATIONDISTRIBUTOR_HPP_
-#define USERBINDOPERATIONDISTRIBUTOR_HPP_
+#pragma once
 
 #include <list>
 
@@ -207,5 +206,3 @@ namespace UserInfoSvcs
     UserBindOperationDistributor_var;
 }
 }
-
-#endif /*USERBINDOPERATIONDISTRIBUTOR_HPP_*/

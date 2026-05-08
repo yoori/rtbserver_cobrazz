@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_ADMIN_APPLICATION_HPP_
-#define _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_ADMIN_APPLICATION_HPP_
+#pragma once
 
 #include <list>
 #include <string>
@@ -359,5 +358,3 @@ std::string sequence_to_string(const SeqType& seq)
   CorbaAlgs::print_sequence(ostr, seq);
   return ostr.str();
 }
-
-#endif // _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_ADMIN_APPLICATION_HPP_

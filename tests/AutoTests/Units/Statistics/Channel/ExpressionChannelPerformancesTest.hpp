@@ -1,5 +1,4 @@
-#ifndef AUTOTESTS_EXPRESSIONCHANNELPERFORMANCE_HPP
-#define AUTOTESTS_EXPRESSIONCHANNELPERFORMANCE_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -95,5 +94,3 @@ private:
   // Connection
   DB::Conn conn;
 };
-
-#endif

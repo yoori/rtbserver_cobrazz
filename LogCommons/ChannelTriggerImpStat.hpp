@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_CHANNEL_TRIGGER_IMP_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_CHANNEL_TRIGGER_IMP_STAT_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -383,6 +382,3 @@ struct ChannelTriggerImpStatTraits:
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_CHANNEL_TRIGGER_IMP_STAT_HPP */
-

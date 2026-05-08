@@ -1,7 +1,6 @@
 // @file Xslt/LibxsltExFunctions.hpp
 
-#ifndef LIBXSLTEXFUNCTIONS_HPP_INCLUDED
-#define LIBXSLTEXFUNCTIONS_HPP_INCLUDED
+#pragma once
 
 #include <string>
 
@@ -368,5 +367,3 @@ namespace AdServer
   }
 
 } // namespace AdServer
-
-#endif // XSLTEXFUNCTIONS_HPP_INCLUDED

@@ -1,6 +1,5 @@
 
-#ifndef _REPORT_HPP
-#define _REPORT_HPP
+#pragma once
 
 #include "Statistics.hpp"
 #include <eh/Exception.hpp>
@@ -371,7 +370,3 @@ private:
   void dump_body(std::ostream& out);
   void dump_server_list(std::ostream& out);
 };
-
-
-
-#endif  // _REPORT_HPP

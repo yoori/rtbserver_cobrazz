@@ -1,5 +1,4 @@
-#ifndef PLAINSTORAGE_BLOCKCACHE_HPP
-#define PLAINSTORAGE_BLOCKCACHE_HPP
+#pragma once
 
 #include <list>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -288,5 +287,3 @@ namespace PlainStorage
     //assert(block_order_size_ == block_order_.size());
   }
 }
-
-#endif /*PLAINSTORAGE_BLOCKCACHE_HPP*/

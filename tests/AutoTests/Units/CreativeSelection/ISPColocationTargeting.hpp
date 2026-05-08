@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__ISPCOLOCATIONTARGETING_
-#define _AUTOTEST__ISPCOLOCATIONTARGETING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -37,5 +36,3 @@ private:
     const TestCase(&testcases)[Count]);
 
 };
-
-#endif // _AUTOTEST__ISPCOLOCATIONTARGETING_

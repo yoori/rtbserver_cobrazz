@@ -1,5 +1,4 @@
-#ifndef ADXMLBIDREQUESTTASK_HPP_
-#define ADXMLBIDREQUESTTASK_HPP_
+#pragma once
 
 #include <iostream>
 #include "BidRequestTask.hpp"
@@ -91,5 +90,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*ADXMLBIDREQUESTTASK_HPP_*/

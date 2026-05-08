@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_TRIGGERCHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_TRIGGERCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/TriggerAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -49,6 +48,3 @@ namespace AutoTest
 }
 
 #include "TriggerChecker.tpp"
-
-#endif  // __AUTOTESTS_COMMONS_ADMINS_TRIGGERCHECKER_HPP
-

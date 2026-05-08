@@ -1,6 +1,5 @@
 /// @file DomainParser.hpp
-#ifndef _DOMAINPARSER_HPP_
-#define _DOMAINPARSER_HPP_
+#pragma once
 
 #include <set>
 #include <map>
@@ -61,5 +60,3 @@ namespace AdServer
     }
   }
 }
-
-#endif // _DOMAINPARSER_HPP_

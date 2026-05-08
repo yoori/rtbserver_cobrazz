@@ -2,8 +2,7 @@
  * @file TransactionProfileMap.hpp
  */
 
-#ifndef PROFILINGCOMMONS_TRANSACTIONPROFILEMAP_HPP
-#define PROFILINGCOMMONS_TRANSACTIONPROFILEMAP_HPP
+#pragma once
 
 #include "TransactionMap.hpp"
 #include "ProfileMap.hpp"
@@ -339,5 +338,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*PROFILINGCOMMONS_TRANSACTIONPROFILEMAP_HPP*/

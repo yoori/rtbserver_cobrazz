@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__USERPROFILESEXCHANGECOMMON_
-#define _AUTOTEST__USERPROFILESEXCHANGECOMMON_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -78,6 +77,3 @@ namespace AutoTest
     };
   }
 }
-
-
-#endif  // _AUTOTEST__USERPROFILESEXCHANGECOMMON_

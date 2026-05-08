@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__CHANNELTRIGGERSTATLOGGINGTEST_
-#define _UNITTEST__CHANNELTRIGGERSTATLOGGINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -81,5 +80,3 @@ private:
   void process_requests_(
     const ChannelTriggerRequest (&requests)[Count]);
 };
-
-#endif

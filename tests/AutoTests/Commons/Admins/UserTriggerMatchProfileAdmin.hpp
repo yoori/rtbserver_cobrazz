@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_USERTRIGGERMATCHPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_USERTRIGGERMATCHPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -170,5 +169,3 @@ namespace AutoTest
     return values_[i][Expected::REQUESTS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_USERTRIGGERMATCHPROFILEADMIN_HPP
-

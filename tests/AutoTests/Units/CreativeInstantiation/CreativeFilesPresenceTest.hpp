@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CREATIVEFILESPRESENCETEST_
-#define _UNITTEST__CREATIVEFILESPRESENCETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -31,5 +30,3 @@ private:
   void text_campaign_case();
   void ADSC_8367(); // 'Dynamic File' type option
 };
-
-#endif

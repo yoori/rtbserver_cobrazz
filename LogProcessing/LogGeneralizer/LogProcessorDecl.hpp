@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_LOG_PROCESSOR_DECL_HPP
-#define AD_SERVER_LOG_PROCESSING_LOG_PROCESSOR_DECL_HPP
+#pragma once
 
 
 #include <string>
@@ -51,5 +50,3 @@ protected:
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_LOG_PROCESSOR_DECL_HPP */

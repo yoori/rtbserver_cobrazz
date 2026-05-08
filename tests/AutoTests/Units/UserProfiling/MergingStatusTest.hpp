@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__MERGINGSTATUSTEST_
-#define _UNITTEST__MERGINGSTATUSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -35,5 +34,3 @@ private:
   std::string create_temporary_profile();
 
 };
-
-#endif

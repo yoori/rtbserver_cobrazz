@@ -21,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TSL_SPARSE_MAP_H
-#define TSL_SPARSE_MAP_H
+#pragma once
 
 #include <cstddef>
 #include <functional>
@@ -796,5 +795,3 @@ using sparse_pg_map =
     sparse_map<Key, T, Hash, KeyEqual, Allocator, tsl::sh::prime_growth_policy>;
 
 }  // end namespace tsl
-
-#endif

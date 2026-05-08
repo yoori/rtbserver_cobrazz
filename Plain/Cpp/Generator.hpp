@@ -1,5 +1,4 @@
-#ifndef PLAIN_CPP_GENERATOR_HPP
-#define PLAIN_CPP_GENERATOR_HPP
+#pragma once
 
 #include <Declaration/SimpleDescriptor.hpp>
 #include <Declaration/SimpleReader.hpp>
@@ -32,5 +31,3 @@ namespace Cpp
   typedef ReferenceCounting::SmartPtr<Generator>
     Generator_var;
 }
-
-#endif /*PLAIN_CPP_GENERATOR_HPP*/

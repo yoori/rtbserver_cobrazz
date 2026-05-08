@@ -1,5 +1,4 @@
-#ifndef _CORBA_CAMPAIGN_TYPES_HPP_
-#define _CORBA_CAMPAIGN_TYPES_HPP_
+#pragma once
 
 #include "CampaignTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
@@ -214,5 +213,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_CORBA_CAMPAIGN_TYPES_HPP_*/

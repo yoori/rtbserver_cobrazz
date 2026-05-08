@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__BANNEDCHADREQPROFDISABLING_
-#define _AUTOTEST__BANNEDCHADREQPROFDISABLING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -23,5 +22,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif //_AUTOTEST__BANNEDCHADREQPROFDISABLING_

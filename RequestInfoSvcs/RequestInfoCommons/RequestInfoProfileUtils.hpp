@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOPROFILEUTILS_HPP_
-#define REQUESTINFOPROFILEUTILS_HPP_
+#pragma once
 
 #include <Commons/Algs.hpp>
 
@@ -346,5 +345,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /* REQUESTINFOPROFILEUTILS_HPP_ */

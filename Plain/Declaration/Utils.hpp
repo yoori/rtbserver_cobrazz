@@ -1,5 +1,4 @@
-#ifndef PLAIN_DECLARATION_HPP
-#define PLAIN_DECLARATION_HPP
+#pragma once
 
 #include "BaseDescriptor.hpp"
 #include "SimpleDescriptor.hpp"
@@ -83,5 +82,3 @@ namespace Declaration
     }
   }
 }
-
-#endif /*PLAIN_DECLARATION_HPP*/

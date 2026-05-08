@@ -1,5 +1,4 @@
-#ifndef LOCKMAP_HPP
-#define LOCKMAP_HPP
+#pragma once
 
 #include <vector>
 #include <map>
@@ -273,5 +272,3 @@ namespace Commons
   }
 }
 }
-
-#endif /*LOCKMAP_HPP*/

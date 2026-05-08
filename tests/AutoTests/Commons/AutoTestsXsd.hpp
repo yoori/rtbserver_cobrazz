@@ -2,8 +2,7 @@
  * @file AutoTestsXsd.hpp
  * AutoTests configs wrapper
  */
-#ifndef __AUTOTESTS_COMMONS_AUTOTESTSXSD_HPP
-#define __AUTOTESTS_COMMONS_AUTOTESTSXSD_HPP
+#pragma once
 
 
 #include <xsd/tests/AutoTests/AutoTests.hpp>
@@ -180,5 +179,3 @@ private:
   const GlobalConfig& config_;
   Locals locals_;
 };
-
-#endif // __AUTOTESTS_COMMONS_AUTOTESTSXSD_HPP

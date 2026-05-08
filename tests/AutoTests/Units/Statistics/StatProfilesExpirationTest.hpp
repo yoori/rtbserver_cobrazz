@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__STATPROFILESEXPIRATIONTEST_
-#define _AUTOTEST__STATPROFILESEXPIRATIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -22,5 +21,3 @@ private:
   void tear_down();
   bool run();
 };
-
-#endif //_AUTOTEST__STATPROFILESEXPIRATIONTEST_

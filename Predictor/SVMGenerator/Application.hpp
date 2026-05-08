@@ -1,5 +1,4 @@
-#ifndef SVMGENERATOR_APPLICATION_HPP_
-#define SVMGENERATOR_APPLICATION_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -40,5 +39,3 @@ protected:
 };
 
 typedef Generics::Singleton<Application_> Application;
-
-#endif /*SVMGENERATOR_APPLICATION_HPP_*/

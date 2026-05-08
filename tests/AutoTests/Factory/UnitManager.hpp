@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__UNITMANAGER_
-#define _UNITTEST__UNITMANAGER_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/TaskRunner.hpp>
@@ -145,5 +144,3 @@ UnitManager::active() noexcept
 {
   return active_;
 }
-
-#endif

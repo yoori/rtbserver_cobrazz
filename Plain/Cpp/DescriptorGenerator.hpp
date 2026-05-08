@@ -1,5 +1,4 @@
-#ifndef PLAIN_CPP_DESCRIPTORGENERATOR_HPP
-#define PLAIN_CPP_DESCRIPTORGENERATOR_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -44,5 +43,3 @@ namespace Cpp
     std::string offset_;
   };
 }
-
-#endif /*PLAIN_CPP_DESCRIPTORGENERATOR_HPP*/

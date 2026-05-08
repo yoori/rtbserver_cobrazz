@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_FREQCAPPROFILEADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_FREQCAPPROFILEADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -166,5 +165,3 @@ namespace AutoTest
     return values_[i][Expected::LAST_IMPRESSIONS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_FREQCAPPROFILEADMIN_HPP
-

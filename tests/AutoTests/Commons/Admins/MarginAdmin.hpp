@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_MARGINADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_MARGINADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -259,5 +258,3 @@ namespace AutoTest
     return values_[i][Expected::ADVERTISER_ACCOUNTS].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_MARGINADMIN_HPP
-

@@ -1,5 +1,4 @@
-#ifndef _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_DECLARATIONS_HPP_
-#define _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_DECLARATIONS_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -138,5 +137,3 @@ namespace AdServer::CampaignSvcs
     LostAuction lost_auction;
   };
 } // namespace AdServer::CampaignSvcs
-
-#endif // _AD_SERVER_CAMPAIGN_SVCS_CAMPAIGN_MANAGER_DECLARATIONS_HPP_

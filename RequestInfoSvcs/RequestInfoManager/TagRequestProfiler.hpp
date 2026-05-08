@@ -1,5 +1,4 @@
-#ifndef TAGREQUESTPROFILER_HPP
-#define TAGREQUESTPROFILER_HPP
+#pragma once
 
 #include <list>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -61,5 +60,3 @@ namespace RequestInfoSvcs
     TagRequestProfiler_var;
 }
 }
-
-#endif /*TAGREQUESTPROFILER_HPP*/

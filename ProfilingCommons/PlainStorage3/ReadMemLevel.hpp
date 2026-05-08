@@ -1,5 +1,4 @@
-#ifndef READMEMPLEVEL_HPP
-#define READMEMPLEVEL_HPP
+#pragma once
 
 #include <Sync/SyncPolicy.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -181,5 +180,3 @@ namespace ProfilingCommons
 }
 
 #include "ReadMemLevel.tpp"
-
-#endif /*READMEMLEVEL_HPP*/

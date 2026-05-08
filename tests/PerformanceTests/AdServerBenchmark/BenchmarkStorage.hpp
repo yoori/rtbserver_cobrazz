@@ -1,5 +1,4 @@
-#ifndef _BENCHMARKSTORAGE_HPP
-#define _BENCHMARKSTORAGE_HPP
+#pragma once
 
 #include "AdServerClient.hpp"
 #include "Configuration.hpp"
@@ -225,6 +224,3 @@ private:
   Statistics* stats_;                 // statistics
   mutable Mutex_ lock_;
 };
-
-
-#endif  // _BENCHMARKSTORAGE_HPP

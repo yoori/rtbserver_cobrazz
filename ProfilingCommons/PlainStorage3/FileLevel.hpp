@@ -1,5 +1,4 @@
-#ifndef FILELEVEL_HPP
-#define FILELEVEL_HPP
+#pragma once
 
 #include <deque>
 
@@ -282,5 +281,3 @@ namespace ProfilingCommons
 }
 
 #include "FileLevel.tpp"
-
-#endif /*FILELEVEL_HPP*/

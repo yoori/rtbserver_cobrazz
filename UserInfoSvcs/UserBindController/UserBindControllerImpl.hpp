@@ -1,5 +1,4 @@
-#ifndef USERINFOSVCS_USERBINDCONTROLLERIMPL_HPP_
-#define USERINFOSVCS_USERBINDCONTROLLERIMPL_HPP_
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -282,5 +281,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*USERINFOSVCS_USERBINDCONTROLLERIMPL_HPP_*/

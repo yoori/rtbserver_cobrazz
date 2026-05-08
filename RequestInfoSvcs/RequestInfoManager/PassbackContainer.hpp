@@ -1,8 +1,7 @@
 /**
  * @file PassbackContainer.hpp
  */
-#ifndef REQUESTINFOSVCS_PASSBACKCONTAINER_HPP
-#define REQUESTINFOSVCS_PASSBACKCONTAINER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/Interface.hpp>
@@ -181,5 +180,3 @@ namespace RequestInfoSvcs
   }
 }
 }
-
-#endif /*REQUESTINFOSVCS_PASSBACKCONTAINER_HPP*/

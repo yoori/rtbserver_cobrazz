@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_CCGKEYWORDADMIN_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_CCGKEYWORDADMIN_HPP
+#pragma once
 
 #include "Admins.hpp"
 
@@ -232,5 +231,3 @@ namespace AutoTest
     return values_[i][Expected::ORIGINAL_KEYWORD].c_str();
   }
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_CCGKEYWORDADMIN_HPP
-

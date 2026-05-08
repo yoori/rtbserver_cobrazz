@@ -1,5 +1,4 @@
-#ifndef GOOGLEBIDREQUESTTASK_HPP_
-#define GOOGLEBIDREQUESTTASK_HPP_
+#pragma once
 
 #include "BidRequestTask.hpp"
 
@@ -60,5 +59,3 @@ namespace Bidding
   };
 }
 }
-
-#endif /*GOOGLEBIDREQUESTTASK_HPP_*/

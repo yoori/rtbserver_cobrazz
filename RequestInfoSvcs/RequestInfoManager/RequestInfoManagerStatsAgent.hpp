@@ -1,7 +1,6 @@
 /// @file RequestInfoManagerStatsAgent.hpp
 
-#ifndef REQUEST_INFO_MANAGER_STATS_AGENT_INCLUDED
-#define REQUEST_INFO_MANAGER_STATS_AGENT_INCLUDED
+#pragma once
 
 #include <SNMPAgent/SNMPAgentX.hpp>
 
@@ -84,5 +83,3 @@ namespace AdServer
     }
   } //  namespace RequestInfoSvcs
 } // namespace AdServer
-
-#endif // REQUEST_INFO_MANAGER_STATS_AGENT_INCLUDED

@@ -1,5 +1,4 @@
-#ifndef PROFILING_COMMONS_CHUNKED_EXPIRE_PROFILE_MAP_TPP
-#define PROFILING_COMMONS_CHUNKED_EXPIRE_PROFILE_MAP_TPP
+#pragma once
 
 namespace AdServer
 {
@@ -295,5 +294,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*PROFILING_COMMONS_CHUNKED_EXPIRE_PROFILE_MAP_TPP*/

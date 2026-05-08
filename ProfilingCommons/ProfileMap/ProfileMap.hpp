@@ -1,5 +1,4 @@
-#ifndef PROFILEMAP_PROFILEMAP_HPP
-#define PROFILEMAP_PROFILEMAP_HPP
+#pragma once
 
 #include <list>
 #include <eh/Exception.hpp>
@@ -71,5 +70,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif /*PROFILEMAP_PROFILEMAP_HPP*/

@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__TEXTCHANNELANDKEYWORDCREATIVESCOMPETITION_
-#define _AUTOTEST__TEXTCHANNELANDKEYWORDCREATIVESCOMPETITION_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -28,5 +27,3 @@ private:
   void scenario5();
   void scenario6();
 };
-
-#endif // _AUTOTEST__TEXTCHANNELANDKEYWORDCREATIVESCOMPETITION_

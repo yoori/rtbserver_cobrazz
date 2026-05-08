@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_EXPRESSION_PERFORMANCE_HPP
-#define AD_SERVER_LOG_PROCESSING_EXPRESSION_PERFORMANCE_HPP
+#pragma once
 
 
 #include <iosfwd>
@@ -246,6 +245,3 @@ typedef LogDefaultTraits<ExpressionPerformanceCollector>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_EXPRESSION_PERFORMANCE_HPP */
-

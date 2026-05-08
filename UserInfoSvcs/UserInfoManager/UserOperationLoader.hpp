@@ -1,5 +1,4 @@
-#ifndef USERINFOMANAGER_USEROPERATIONLOADER_HPP
-#define USERINFOMANAGER_USEROPERATIONLOADER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -239,5 +238,3 @@ namespace AdServer
       ExternalUserOperationLoader_var;
   }
 }
-
-#endif /*USERINFOMANAGER_USEROPERATIONLOADER_HPP*/

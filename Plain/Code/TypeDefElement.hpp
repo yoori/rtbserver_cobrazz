@@ -1,5 +1,4 @@
-#ifndef _CODE_TYPEDEFELEMENT_HPP_
-#define _CODE_TYPEDEFELEMENT_HPP_
+#pragma once
 
 #include <Declaration/BaseType.hpp>
 #include "Element.hpp"
@@ -61,5 +60,3 @@ namespace Code
     visitor->visit_i(this);
   }
 }
-
-#endif /*_CODE_TYPEDEFELEMENT_HPP_*/

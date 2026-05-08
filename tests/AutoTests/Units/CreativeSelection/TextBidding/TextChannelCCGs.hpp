@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__TEXTCHANNELCCGS_
-#define _AUTOTEST__TEXTCHANNELCCGS_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -28,5 +27,3 @@ private:
   void scenario4();
   void scenario5();
 };
-
-#endif // _AUTOTEST__TEXTCHANNELCCGS_

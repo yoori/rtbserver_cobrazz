@@ -2,8 +2,7 @@
  * @file ClientRequest.hpp
  * http request wrapper
  */
-#ifndef __AUTOTESTS_COMMONS_BASEREQUEST_HPP
-#define __AUTOTESTS_COMMONS_BASEREQUEST_HPP
+#pragma once
 
 #include <string>
 
@@ -367,6 +366,3 @@ namespace AutoTest
   }
 
 } // namespace AutoTest
-
-#endif // __AUTOTESTS_COMMONS_BASEREQUEST_HPP
-

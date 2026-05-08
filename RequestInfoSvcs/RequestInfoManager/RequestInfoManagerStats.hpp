@@ -1,7 +1,6 @@
 /// @file RequestInfoManagerStats.hpp
 
-#ifndef REQUEST_INFO_MANAGER_STATS_INCLUDED
-#define REQUEST_INFO_MANAGER_STATS_INCLUDED
+#pragma once
 
 #include <Generics/Values.hpp>
 #include <Generics/Time.hpp>
@@ -308,5 +307,3 @@ namespace AdServer
 
   }
 }
-
-#endif // REQUEST_INFO_MANAGER_STATS_INCLUDED

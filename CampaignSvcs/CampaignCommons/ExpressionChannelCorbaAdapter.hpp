@@ -1,5 +1,4 @@
-#ifndef _EXPRESSION_CHANNEL_CORBA_ADAPTER_HPP_
-#define _EXPRESSION_CHANNEL_CORBA_ADAPTER_HPP_
+#pragma once
 
 #include <Commons/CorbaAlgs.hpp>
 
@@ -285,5 +284,3 @@ namespace AdServer
     }
   }
 }
-
-#endif /*_EXPRESSION_CHANNEL_CORBA_ADAPTER_HPP_*/

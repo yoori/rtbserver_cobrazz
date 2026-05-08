@@ -1,7 +1,6 @@
 // @file PlainStorage/FragmentLayer.hpp
 
-#ifndef _PLAINSTORAGE_WRITEFRAGMENTLAYER_HPP_
-#define _PLAINSTORAGE_WRITEFRAGMENTLAYER_HPP_
+#pragma once
 
 #include <vector>
 #include <set>
@@ -543,5 +542,3 @@ namespace PlainStorage
 }
 
 #include "FragmentLayer.tpp"
-
-#endif //_PLAINSTORAGE_WRITEFRAGMENTLAYER_HPP_

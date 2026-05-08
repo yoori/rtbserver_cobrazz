@@ -1,9 +1,5 @@
 
-#ifndef __OPTOUTMATCHING_HPP
-#define __OPTOUTMATCHING_HPP
-
-#ifndef _AUTOTEST__OPTOUTMATCHING_
-#define _AUTOTEST__OPTOUTMATCHING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -54,7 +50,3 @@ private:
                      const char* namesuffix,
                      const char* names = 0);
 };
-
-#endif // _AUTOTEST__OPTOUTMATCHING_
-
-#endif  // __OPTOUTMATCHING_HPP

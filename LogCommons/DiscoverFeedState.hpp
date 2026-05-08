@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_DISCOVER_FEED_STATE_HPP
-#define AD_SERVER_LOG_PROCESSING_DISCOVER_FEED_STATE_HPP
+#pragma once
 
 #include <iosfwd>
 #include <sstream>
@@ -117,6 +116,3 @@ typedef LogDefaultTraits<DiscoverFeedStateCollector, false>
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_DISCOVER_FEED_STATE_HPP */
-

@@ -1,5 +1,4 @@
-#ifndef SERVER_NAME_FILTER_ADAPTER_EX_HPP_
-#define SERVER_NAME_FILTER_ADAPTER_EX_HPP_
+#pragma once
 
 #include <list>
 
@@ -231,5 +230,3 @@ namespace Apache
     return status;
   }
 }
-
-#endif /*SERVER_NAME_FILTER_ADAPTER_EX_HPP_*/

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__EXACTKEYWORDMATCHING_
-#define _AUTOTEST__EXACTKEYWORDMATCHING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -51,5 +50,3 @@ private:
     unsigned long flags);
 
 };
-
-#endif // _AUTOTEST__EXACTKEYWORDMATCHING_

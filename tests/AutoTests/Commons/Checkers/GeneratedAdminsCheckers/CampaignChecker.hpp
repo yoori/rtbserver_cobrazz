@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNCHECKER_HPP
-#define __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNCHECKER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Admins/CampaignAdmin.hpp>
 #include <tests/AutoTests/Commons/Checkers/AdminsChecker.hpp>
@@ -56,5 +55,3 @@ namespace AutoTest
     static const Expected ANY_EXPECTED_;
   };
 }
-#endif  // __AUTOTESTS_COMMONS_ADMINS_CAMPAIGNCHECKER_HPP
-

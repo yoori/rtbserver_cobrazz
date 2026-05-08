@@ -1,5 +1,4 @@
-#ifndef FRONTENDS_ADFRONTEND_REQUESTINFO_HPP_
-#define FRONTENDS_ADFRONTEND_REQUESTINFO_HPP_
+#pragma once
 
 #include <string>
 
@@ -133,5 +132,3 @@ namespace AdServer
     AdServer::CampaignSvcs::ChannelIdArray hit_channel_ids;
   };
 }
-
-#endif /* FRONTENDS_ADFRONTEND_REQUESTINFO_HPP_ */

@@ -1,7 +1,6 @@
 // @file PlainStorage/LayerFactory.hpp
 
-#ifndef _PLAINSTORAGE_LAYERFACTORY_HPP_
-#define _PLAINSTORAGE_LAYERFACTORY_HPP_
+#pragma once
 
 #include <unistd.h>
 
@@ -232,5 +231,3 @@ namespace PlainStorage
     }
   };
 }
-
-#endif //_PLAINSTORAGE_LAYERFACTORY_HPP_

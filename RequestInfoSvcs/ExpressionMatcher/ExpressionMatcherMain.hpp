@@ -1,5 +1,4 @@
-#ifndef _CAMPAIGN_SVCS_EXPRESSION_MATCHER_MAIN_HPP_
-#define _CAMPAIGN_SVCS_EXPRESSION_MATCHER_MAIN_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -77,5 +76,3 @@ ExpressionMatcherApp_::config() const noexcept
 {
   return *configuration_.get();
 }
-
-#endif /*_CAMPAIGN_SVCS_EXPRESSION_MATCHER_MAIN_HPP_*/

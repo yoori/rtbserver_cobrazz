@@ -1,5 +1,4 @@
-#ifndef CAMPAIGNMANAGER_CTR_ALGORITHM_HPP_
-#define CAMPAIGNMANAGER_CTR_ALGORITHM_HPP_
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -32,5 +31,3 @@ namespace AdServer::CampaignSvcs::CTR
   typedef ReferenceCounting::SmartPtr<Algorithm>
     Algorithm_var;
 }
-
-#endif /*CAMPAIGNMANAGER_CTR_ALGORITHM_HPP_*/

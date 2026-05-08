@@ -1,5 +1,4 @@
-#ifndef FILEREADER_HPP
-#define FILEREADER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -76,5 +75,3 @@ namespace ProfilingCommons
   };
 }
 }
-
-#endif /*FILEREADER_HPP*/

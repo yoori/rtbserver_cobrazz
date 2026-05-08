@@ -1,5 +1,4 @@
-#ifndef __AUTOTESTS_COMMONS_UTILS__HPP
-#define __AUTOTESTS_COMMONS_UTILS__HPP
+#pragma once
 
 #include <sstream>
 #include <math.h>
@@ -1148,5 +1147,3 @@ namespace AutoTest
   typedef ValueWrapperVar<Comparable> ComparableVar;
   typedef std::vector<ComparableVar> ComparableList;
 }
-
-#endif//__AUTOTESTS_COMMONS_UTILS__HPP

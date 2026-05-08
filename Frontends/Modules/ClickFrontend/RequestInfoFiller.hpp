@@ -1,5 +1,4 @@
-#ifndef CLICKFRONTEND_REQUESTINFIFILLER_HPP
-#define CLICKFRONTEND_REQUESTINFIFILLER_HPP
+#pragma once
 
 #include <string>
 
@@ -134,5 +133,3 @@ namespace ClickFE
   }
 }
 }
-#endif //CLICKFRONTEND_REQUESTINFIFILLER_HPP
-

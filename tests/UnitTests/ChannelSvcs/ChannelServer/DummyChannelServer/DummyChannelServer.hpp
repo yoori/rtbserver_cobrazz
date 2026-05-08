@@ -1,5 +1,4 @@
-#ifndef DUMMY_CHANNEL_SERVER_HPP_
-#define DUMMY_CHANNEL_SERVER_HPP_
+#pragma once
 
 #include <string>
 #include <set>
@@ -172,4 +171,3 @@ namespace AdServer
 
   }
 }
-#endif //DUMMY_CHANNEL_SERVER_HPP_

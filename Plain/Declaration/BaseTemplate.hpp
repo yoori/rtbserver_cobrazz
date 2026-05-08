@@ -1,5 +1,4 @@
-#ifndef PLAIN_DECLARATION_BASETEMPLATE_HPP
-#define PLAIN_DECLARATION_BASETEMPLATE_HPP
+#pragma once
 
 #include "BaseType.hpp"
 #include "BaseDescriptor.hpp"
@@ -40,5 +39,3 @@ namespace Declaration
   typedef ReferenceCounting::SmartPtr<BaseTemplate>
     BaseTemplate_var;
 }
-
-#endif /*PLAIN_DECLARATION_BASETEMPLATE_HPP*/

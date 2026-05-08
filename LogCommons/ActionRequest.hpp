@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_ACTION_REQUEST_HPP
-#define AD_SERVER_LOG_PROCESSING_ACTION_REQUEST_HPP
+#pragma once
 
 
 #include <LogCommons/LogCommons.hpp>
@@ -306,6 +305,3 @@ typedef LogDefaultTraits<ActionRequestCollector> ActionRequestTraits;
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_ACTION_REQUEST_HPP */
-

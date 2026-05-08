@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST_COMMONS_CHECKER_ADMINSCHECKER_HPP
-#define _AUTOTEST_COMMONS_CHECKER_ADMINSCHECKER_HPP
+#pragma once
 
 #include "Checker.hpp"
 #include <tests/AutoTests/Commons/Admins/Admins.hpp>
@@ -131,5 +130,3 @@ namespace AutoTest
       exists);
   }
 }
-
-#endif  // _AUTOTEST_COMMONS_CHECKER_ADMINSCHECKER_HPP

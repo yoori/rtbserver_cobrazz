@@ -1,5 +1,4 @@
-#ifndef USEROPERATIONPROFILESADAPTER_HPP
-#define USEROPERATIONPROFILESADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -59,5 +58,3 @@ namespace AdServer
 
   }
 }
-
-#endif /* USEROPERATIONPROFILESADAPTER_HPP */

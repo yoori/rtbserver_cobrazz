@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__MINUIDAGE_
-#define _AUTOTEST__MINUIDAGE_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -58,6 +57,3 @@ private:
 
 
 };
-
-#endif // _AUTOTEST__MINUIDAGE_
-

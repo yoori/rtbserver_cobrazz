@@ -1,5 +1,4 @@
-#ifndef _AUTOTEST__VISPARAMTEST_
-#define _AUTOTEST__VISPARAMTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -26,5 +25,3 @@ private:
   void case03_publisher_inventory_mode();
 
 };
-
-#endif // _AUTOTEST__VISPARAMTEST_

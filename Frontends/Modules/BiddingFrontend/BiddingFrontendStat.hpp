@@ -1,6 +1,5 @@
 /// @file BiddingFrontend/BiddingFrontendStat.hpp
-#ifndef BIDDINGFRONTENDSTAT_HPP
-#define BIDDINGFRONTENDSTAT_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/CompositeActiveObject.hpp>
@@ -93,5 +92,3 @@ namespace AdServer
   typedef ReferenceCounting::SmartPtr<BiddingFrontendStatsImpl>
   BiddingFrontendStatsImpl_var;
 }
-
-#endif // BIDDINGFRONTENDSTAT_HPP

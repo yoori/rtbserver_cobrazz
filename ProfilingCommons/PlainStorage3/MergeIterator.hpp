@@ -1,5 +1,4 @@
-#ifndef MERGEITERATOR_HPP
-#define MERGEITERATOR_HPP
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include "BaseLevel.hpp"
@@ -655,5 +654,3 @@ namespace ProfilingCommons
   }
 }
 }
-
-#endif /*MERGEITERATOR_HPP*/

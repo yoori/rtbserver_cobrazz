@@ -1,5 +1,4 @@
-#ifndef _CODE_ELEMENT_HPP_
-#define _CODE_ELEMENT_HPP_
+#pragma once
 
 #include <list>
 #include <iostream>
@@ -64,5 +63,3 @@ namespace Code
     elem->visited(this);
   }
 }
-
-#endif /*_CODE_ELEMENT_HPP_*/

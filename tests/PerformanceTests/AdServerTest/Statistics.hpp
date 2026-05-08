@@ -1,6 +1,5 @@
 
-#ifndef __STATISTICS_HPP
-#define __STATISTICS_HPP
+#pragma once
 
 #include <map>
 #include <tests/PerformanceTests/Commons/Constraint.hpp>
@@ -361,6 +360,3 @@ private:
   void _get_frontend_name(const char* url, std::string& frontend_name);
   bool _is_profiling_req(const char* url);
 };
-
-
-#endif  // __STATISTICS_HPP

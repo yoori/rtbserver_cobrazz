@@ -4,8 +4,7 @@
  * for operate posed block sequences
  */
 
-#ifndef _RECORD_LAYER_UTILS_HPP_
-#define _RECORD_LAYER_UTILS_HPP_
+#pragma once
 
 #include "BaseLayer.hpp"
 
@@ -83,5 +82,3 @@ namespace PlainStorage
 }
 
 #include "RecordLayerUtils.tpp"
-
-#endif /*_RECORD_LAYER_UTILS_HPP_*/

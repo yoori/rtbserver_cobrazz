@@ -1,5 +1,4 @@
-#ifndef _USER_INFO_SVCS_CHANNEL_MATCHER_HPP_
-#define _USER_INFO_SVCS_CHANNEL_MATCHER_HPP_
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -662,5 +661,3 @@ namespace AdServer
 }
 
 #include "ChannelMatcher.ipp"
-
-#endif

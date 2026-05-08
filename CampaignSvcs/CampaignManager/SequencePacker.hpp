@@ -1,5 +1,4 @@
-#ifndef _SEQUENCE_PACKER_HPP_
-#define _SEQUENCE_PACKER_HPP_
+#pragma once
 
 #include <cassert>
 #include <set>
@@ -502,5 +501,3 @@ namespace AdServer
     }
   }
 }
-
-#endif

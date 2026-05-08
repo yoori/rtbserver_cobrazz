@@ -1,5 +1,4 @@
-#ifndef _FILE_SYSTEM_EMULATOR_H_
-#define _FILE_SYSTEM_EMULATOR_H_
+#pragma once
 
 #include <set>
 #include <string>
@@ -228,5 +227,3 @@ namespace fs
   }
 
 }
-
-#endif //_FILE_SYSTEM_EMULATOR_H_

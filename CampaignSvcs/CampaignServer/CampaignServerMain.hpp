@@ -1,6 +1,5 @@
 
-#ifndef _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_SERVER_CAMPAIGN_SERVER_MAIN_HPP_
-#define _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_SERVER_CAMPAIGN_SERVER_MAIN_HPP_
+#pragma once
 
 #include <limits.h>
 
@@ -169,5 +168,3 @@ inline
 CampaignServerApp_::Configuration::Logger::Logger() noexcept
     : log_level(Logging::Logger::INFO)
 {}
-
-#endif // _AD_SERVER_CAMPAIGN_SERVICE_CAMPAIGN_SERVER_CAMPAIGN_SERVER_MAIN_HPP_

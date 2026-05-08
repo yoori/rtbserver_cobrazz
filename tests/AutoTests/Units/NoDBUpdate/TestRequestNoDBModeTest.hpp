@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__TESTREQUESTNODBMODETEST_
-#define _AUTOTEST__TESTREQUESTNODBMODETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -34,5 +33,3 @@ private:
   void tear_down();
 
 };
-
-#endif //_AUTOTEST__TESTREQUESTNODBMODETEST_

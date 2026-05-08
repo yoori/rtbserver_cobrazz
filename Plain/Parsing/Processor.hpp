@@ -1,5 +1,4 @@
-#ifndef PLAIN_PARSING_PROCESSOR_HPP
-#define PLAIN_PARSING_PROCESSOR_HPP
+#pragma once
 
 #include <sstream>
 #include <Declaration/SimpleDescriptor.hpp>
@@ -257,5 +256,3 @@ namespace Parsing
     return global_namespace_;
   }
 }
-
-#endif /*PLAIN_PARSING_PROCESSOR_HPP*/

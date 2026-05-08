@@ -1,5 +1,4 @@
-#ifndef HASHCALCULATOR_HPP_
-#define HASHCALCULATOR_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -458,5 +457,3 @@ protected:
   const HashCalculator_var next_calculator_;
   const unsigned long feature_index_;
 };
-
-#endif /*HASHCALCULATOR_HPP_*/

@@ -1,6 +1,5 @@
 
-#ifndef _UNITTEST__TAGSTEST_
-#define _UNITTEST__TAGSTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -57,5 +56,3 @@ private:
   std::string cc_id6;
 
 };
-
-#endif  // _UNITTEST__TAGSTEST_

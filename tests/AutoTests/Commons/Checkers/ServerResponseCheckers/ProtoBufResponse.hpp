@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_PROTOBUFRESPONSE_HPP
-#define _AUTOTESTS_COMMONS_PROTOBUFRESPONSE_HPP
+#pragma once
 
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>
@@ -287,5 +286,3 @@ namespace AutoTest
 }
 
 #include "ProtoBufResponse.tpp"
-
-#endif  // _AUTOTESTS_COMMONS_PROTOBUFRESPONSE_HPP

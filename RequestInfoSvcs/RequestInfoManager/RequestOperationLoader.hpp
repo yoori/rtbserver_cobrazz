@@ -1,5 +1,4 @@
-#ifndef REQUESTOPERATIONLOADER_HPP
-#define REQUESTOPERATIONLOADER_HPP
+#pragma once
 
 #include <Generics/ActiveObject.hpp>
 #include <ProfilingCommons/PlainStorage3/FileReader.hpp>
@@ -89,5 +88,3 @@ namespace RequestInfoSvcs
     RequestOperationLoader_var;
 }
 }
-
-#endif /*REQUESTOPERATIONLOADER_HPP*/

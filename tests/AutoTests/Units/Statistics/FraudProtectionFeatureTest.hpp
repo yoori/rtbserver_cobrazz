@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__FRAUDPROTECTIONFEATURETEST_
-#define _AUTOTEST__FRAUDPROTECTIONFEATURETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -81,6 +80,3 @@ private:
 
   AutoTest::Time today;    // 'today' timestamp
 };
-
-#endif //_AUTOTEST__FRAUDPROTECTIONFEATURETEST_
-

@@ -1,6 +1,5 @@
 
-#ifndef __AUTOTESTS_COMMONS_TRAITS__HPP
-#define __AUTOTESTS_COMMONS_TRAITS__HPP
+#pragma once
 
 #include <sstream>
 #include <string>
@@ -174,6 +173,3 @@ valueof (const std::string& str) /*throw(eh::Exception)*/
   }
   return value;
 }
-
-#endif //__AUTOTESTS_COMMONS_TRAITS__HPP
-

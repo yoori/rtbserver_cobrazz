@@ -1,5 +1,4 @@
-#ifndef _BASEWRITER_HPP_
-#define _BASEWRITER_HPP_
+#pragma once
 
 #include <list>
 #include <set>
@@ -49,5 +48,3 @@ namespace Declaration
 
   typedef std::list<BaseWriter_var> BaseWriterList;
 }
-
-#endif /*_BASEWRITER_HPP_*/

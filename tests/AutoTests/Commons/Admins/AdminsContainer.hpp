@@ -1,5 +1,4 @@
-#ifndef __AUTOTEST_COMMONS_ADMINS_ADMINSCONTAINER_HPP
-#define __AUTOTEST_COMMONS_ADMINS_ADMINSCONTAINER_HPP
+#pragma once
 
 #include <tests/AutoTests/Commons/Logger.hpp>
 #include <tests/AutoTests/Commons/BaseUnit.hpp>
@@ -192,5 +191,3 @@ namespace AutoTest
 }//namespace AutoTest
 
 #include "AdminsContainer.tpp"
-
-#endif //__AUTOTEST_COMMONS_ADMINS_ADMINSCONTAINER_HPP

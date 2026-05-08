@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__EXACTURLMATCHING_
-#define _AUTOTEST__EXACTURLMATCHING_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -24,6 +23,3 @@ private:
   virtual bool run_test();
 
 };
-
-#endif //_AUTOTEST__EXACTURLMATCHING_
-

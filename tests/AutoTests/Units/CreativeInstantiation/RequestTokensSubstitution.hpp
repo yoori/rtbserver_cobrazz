@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__REQUESTTOKENSSUBSTITUTION_
-#define _AUTOTEST__REQUESTTOKENSSUBSTITUTION_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -34,5 +33,3 @@ private:
     bool empty_tokens,
     const AutoTest::AdClient& client);
 };
-
-#endif // _AUTOTEST__REQUESTTOKENSSUBSTITUTION_

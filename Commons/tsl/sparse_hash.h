@@ -21,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TSL_SPARSE_HASH_H
-#define TSL_SPARSE_HASH_H
+#pragma once
 
 #include <algorithm>
 #include <cassert>
@@ -2232,5 +2231,3 @@ class sparse_hash : private Allocator,
 
 }  // namespace detail_sparse_hash
 }  // namespace tsl
-
-#endif

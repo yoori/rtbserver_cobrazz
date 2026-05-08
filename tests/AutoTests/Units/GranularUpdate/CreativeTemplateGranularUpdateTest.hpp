@@ -1,5 +1,4 @@
-#ifndef _UNITTEST__CREATIVETEMPLATEGRANULARUPDATETEST_
-#define _UNITTEST__CREATIVETEMPLATEGRANULARUPDATETEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -46,5 +45,3 @@ private:
   void testcase_delete_template();
   void testcase_del_status_template();
 };
-
-#endif

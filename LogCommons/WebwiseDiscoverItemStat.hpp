@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_ITEM_STAT_HPP
-#define AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_ITEM_STAT_HPP
+#pragma once
 
 #include <iosfwd>
 #include <sstream>
@@ -470,6 +469,3 @@ struct WebwiseDiscoverItemStatTraits : LogDefaultTraits<WebwiseDiscoverItemStatC
 
 } // namespace LogProcessing
 } // namespace AdServer
-
-#endif /* AD_SERVER_LOG_PROCESSING_WEBWISE_DISCOVER_ITEM_STAT_HPP */
-

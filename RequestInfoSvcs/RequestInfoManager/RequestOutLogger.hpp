@@ -1,5 +1,4 @@
-#ifndef REQUESTINFOSVCS_REQUESTOUTLOGGER_HPP
-#define REQUESTINFOSVCS_REQUESTOUTLOGGER_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -231,5 +230,3 @@ namespace AdServer
       RequestOutLogger_var;
   }
 }
-
-#endif /*REQUESTINFOSVCS_REQUESTOUTLOGGER_HPP*/

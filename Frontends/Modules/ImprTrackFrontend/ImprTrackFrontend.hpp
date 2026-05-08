@@ -1,6 +1,5 @@
 
-#ifndef _AD_FRONTENDS_IMPR_TRACK_FRONTEND_IMPR_TRACK_FRONTEND_HPP_
-#define _AD_FRONTENDS_IMPR_TRACK_FRONTEND_IMPR_TRACK_FRONTEND_HPP_
+#pragma once
 
 #include <string>
 #include <set>
@@ -216,5 +215,3 @@ namespace ImprTrack
   {}
 }
 } // namespace AdServer
-
-#endif // _AD_FRONTENDS_IMPR_TRACK_FRONTEND_IMPR_TRACK_FRONTEND_HPP_

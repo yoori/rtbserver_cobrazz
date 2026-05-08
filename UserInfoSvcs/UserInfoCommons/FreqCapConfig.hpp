@@ -1,5 +1,4 @@
-#ifndef FREQCAPCONFIG_HPP
-#define FREQCAPCONFIG_HPP
+#pragma once
 
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -34,5 +33,3 @@ namespace UserInfoSvcs
   typedef ReferenceCounting::SmartPtr<FreqCapConfig> FreqCapConfig_var;
 }
 }
-
-#endif /*FREQCAPCONFIG_HPP*/

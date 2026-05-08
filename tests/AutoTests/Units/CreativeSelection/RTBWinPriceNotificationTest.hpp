@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__RTBWINPRICENOTIFICATIONTEST_
-#define _AUTOTEST__RTBWINPRICENOTIFICATIONTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -107,5 +106,3 @@ private:
   void post_condition();
 
 };
-
-#endif // _AUTOTEST__RTBWINPRICENOTIFICATIONTEST_

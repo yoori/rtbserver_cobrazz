@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTEST__URLENCODINGTEST_
-#define _AUTOTEST__URLENCODINGTEST_
+#pragma once
 
 #include <tests/AutoTests/Commons/Common.hpp>
 
@@ -48,5 +47,3 @@ private:
 
   virtual bool run_test();
 };
-
-#endif // _AUTOTEST__URLENCODINGTEST_

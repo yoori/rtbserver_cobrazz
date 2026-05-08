@@ -1,5 +1,4 @@
-#ifndef USERTRIGGERMATCHPROFILEADAPTER_HPP
-#define USERTRIGGERMATCHPROFILEADAPTER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/MemBuf.hpp>
@@ -20,5 +19,3 @@ namespace RequestInfoSvcs
   };
 }
 }
-
-#endif /*USERTRIGGERMATCHPROFILEADAPTER_HPP*/

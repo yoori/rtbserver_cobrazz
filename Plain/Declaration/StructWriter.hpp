@@ -1,5 +1,4 @@
-#ifndef _STRUCTWRITER_HPP_
-#define _STRUCTWRITER_HPP_
+#pragma once
 
 #include <list>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -186,5 +185,3 @@ namespace Declaration
     }
   }
 }
-
-#endif /*_STRUCTWRITER_HPP_*/

@@ -1,6 +1,5 @@
 
-#ifndef _AUTOTESTS_COMMONS_REQUEST_DEBUGSIZEPARAM_HPP
-#define _AUTOTESTS_COMMONS_REQUEST_DEBUGSIZEPARAM_HPP
+#pragma once
 
 #include "BaseRequest.hpp"
 
@@ -43,6 +42,3 @@ namespace AutoTest
 };
 
 #include "DebugSizeParam.tpp"
-
-#endif  // _AUTOTESTS_COMMONS_REQUEST_DEBUGSIZEPARAM_HPP
-

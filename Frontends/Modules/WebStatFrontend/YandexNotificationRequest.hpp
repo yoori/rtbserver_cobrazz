@@ -1,5 +1,4 @@
-#ifndef ADSERVER_YANDEXNOTIFICATIONREQUEST_HPP_
-#define ADSERVER_YANDEXNOTIFICATIONREQUEST_HPP_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -31,5 +30,3 @@ namespace WebStat
     JsonYNParamProcessor_var;
 }
 }
-
-#endif

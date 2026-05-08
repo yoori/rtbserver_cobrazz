@@ -1,5 +1,4 @@
-#ifndef _REQUEST_INFO_FILLER_HPP_
-#define _REQUEST_INFO_FILLER_HPP_
+#pragma once
 
 #include <string>
 
@@ -163,5 +162,3 @@ namespace AdServer
     return colocations_;
   }
 }
-
-#endif /*_REQUEST_INFO_FILLER_HPP_*/

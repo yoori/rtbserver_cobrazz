@@ -1,6 +1,5 @@
 
-#ifndef __STATCOMMONS_HPP
-#define __STATCOMMONS_HPP
+#pragma once
 
 #include <map>
 #include "Constraint.hpp"
@@ -521,5 +520,3 @@ private:
   Average <long> average_;
   bool init_flag;
 };
-
-#endif  // __STATCOMMONS_HPP
