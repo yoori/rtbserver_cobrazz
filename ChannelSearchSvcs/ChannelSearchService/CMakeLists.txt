@@ -15,15 +15,12 @@ target_link_libraries(ChannelSearchService
  CORBACommons
  CampaignServerIDL
  ChannelManagerControllerIDL
- ChannelProxyIDL
- ChannelProxy_v28IDL
  ChannelSearchServiceConfigXSD
  ChannelSearchServiceIDL
- ChannelUpdate_v28IDL
  ChannelCommonsIDL
  ChannelManagerControllerIDL
  ChannelClusterControlIDL
- ChannelProxyIDL
+ ChannelSessionFactory
  DictionaryProviderIDL
  Commons
  ExpressionChannel

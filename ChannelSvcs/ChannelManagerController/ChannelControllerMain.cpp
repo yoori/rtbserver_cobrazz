@@ -17,7 +17,6 @@ namespace
   const char ASPECT[] = "ChannelManagerController";
   const char CHANNEL_CONTROLLER_OBJ_KEY[] = "ChannelManagerController";
   const char CHANNEL_CLUSTER_OBJ_KEY[] = "ChannelClusterControl";
-  const char PROCESS_STAT_OBJ_KEY[] = "ProcessStatsControl";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
@@ -152,9 +151,6 @@ void ChannelControllerApp_::init_corba_() /*throw(Exception)*/
       new AdServer::ChannelSvcs::ChannelClusterControlImpl(
         controller_impl_.in());
 
-    AdServer::ChannelSvcs::ChannelStatImpl_var stat_impl =
-      new AdServer::ChannelSvcs::ChannelStatImpl(controller_impl_.in());
-
     corba_server_adapter_->add_binding(
       CHANNEL_CONTROLLER_OBJ_KEY, controller_impl_.in());
 
@@ -162,8 +158,6 @@ void ChannelControllerApp_::init_corba_() /*throw(Exception)*/
       CHANNEL_CLUSTER_OBJ_KEY, control_impl.in());
 
     corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
-
-    corba_server_adapter_->add_binding(PROCESS_STAT_OBJ_KEY, stat_impl.in());
 
     controller_impl_->activate_object();
   }
@@ -355,4 +349,3 @@ int main(int argc, char** argv)
   }
   return 0;
 }
-

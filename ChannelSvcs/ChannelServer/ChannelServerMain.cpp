@@ -4,7 +4,6 @@
 #include <Generics/Scheduler.hpp>
 
 #include <Commons/ProcessControlVarsImpl.hpp>
-#include <CORBACommons/Stats.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
 #include <Commons/CorbaConfig.hpp>
@@ -13,10 +12,9 @@
 #include <Commons/HttpServer/HttpServer.hpp>
 
 #include "ChannelServerMain.hpp"
-#include "ChannelServerImpl.hpp"
+#include "ChannelServerCore.hpp"
 #include "ChannelServerControlImpl.hpp"
 #include "ChannelUpdateImpl.hpp"
-#include "ProcessStatsControl.hpp"
 //#include "ChannelServer.hpp"
 
 namespace
@@ -26,7 +24,6 @@ namespace
   const char CHANNEL_SERVER_CONTROL_OBJ_KEY[] = "ChannelServerControl";
   const char CHANNEL_UPDATE_OBJ_KEY[] = "ChannelUpdate";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
-  const char PROCESS_STAT_CONTROL_OBJ_KEY[] = "ProcessStatsControl";
 
   std::string
   json_escape_(const std::string& value)
@@ -174,24 +171,23 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
 
   try
   {
-    server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(
+    server_core_ = std::make_shared<AdServer::ChannelSvcs::ChannelServerCore>(
       logger(), configuration_.get());
+    server_impl_ = new AdServer::ChannelSvcs::ChannelServerCustomImpl(
+      server_core_);
     {
       using namespace AdServer::Commons;
       register_vars_controller();
       add_var_processor(DbStateProcessor::VAR_NAME,
         new DbStateProcessor(
-          new_simple_db_state_changer(server_impl_)));
+          new_simple_db_state_changer(server_core_)));
     }
 
     AdServer::ChannelSvcs::ChannelServerControlImpl_var server_control_impl(
-      new AdServer::ChannelSvcs::ChannelServerControlImpl(server_impl_.in()));
+      new AdServer::ChannelSvcs::ChannelServerControlImpl(server_core_));
 
     AdServer::ChannelSvcs::ChannelUpdateImpl_var update_impl(
-      new AdServer::ChannelSvcs::ChannelUpdateImpl(server_impl_.in()));
-
-    AdServer::ChannelSvcs::ChannelServerStatsImpl_var stat_impl(
-      new AdServer::ChannelSvcs::ChannelServerStatsImpl(server_impl_.in()));
+      new AdServer::ChannelSvcs::ChannelUpdateImpl(server_core_));
 
     corba_server_adapter_->add_binding(
       CHANNEL_SERVER_OBJ_KEY, server_impl_.in());
@@ -202,17 +198,14 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
     corba_server_adapter_->add_binding(
       CHANNEL_SERVER_CONTROL_OBJ_KEY, server_control_impl.in());
 
-    corba_server_adapter_->add_binding(
-      PROCESS_STAT_CONTROL_OBJ_KEY, stat_impl.in());
-
     corba_server_adapter_->add_binding(PROCESS_CONTROL_OBJ_KEY, this);
 
-    server_impl_->activate_object();
+    server_core_->activate_object();
 
     if(configuration_->GrpcConfig().present())
     {
       grpc_adapter_ = new AdServer::ChannelSvcs::ChannelServerGrpc(
-        server_impl_.in(),
+        server_core_,
         logger(),
         configuration_->GrpcConfig()->Endpoint().host().present() &&
           *(configuration_->GrpcConfig()->Endpoint().host()) != "*" ?
@@ -233,11 +226,11 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
         4);
       http_server_->add_handler(
         "/stats",
-        [server_impl = server_impl_](
+        [server_core = server_core_](
           const AdServer::Commons::HttpServer::HttpServer::Request&)
         {
           AdServer::ChannelSvcs::ChannelServerStats stats;
-          server_impl->get_stats(stats);
+          server_core->get_stats(stats);
 
           std::string body = "{";
           body += "\"total_requests\":";
@@ -268,12 +261,12 @@ void ChannelServerApp_::init_corba_() /*throw(Exception, CORBA::SystemException)
       http_server_->activate_object();
     }
   }
-  catch(const AdServer::ChannelSvcs::ChannelServerCustomImpl::Exception& e)
+  catch(const AdServer::ChannelSvcs::ChannelServerCore::Exception& e)
   {
     Stream::Error ostr;
     ostr << "ChannelServerApp::init_corba_: "
-      "Catch ChannelServerCustomImpl::Exception on creating "
-      " ChannelServer servants. : " << e.what();
+      "Catch ChannelServerCore::Exception on creating "
+      " ChannelServer core. : " << e.what();
     throw Exception(ostr);
   }
   catch(const eh::Exception& e)
@@ -298,9 +291,9 @@ void ChannelServerApp_::stop_() noexcept
     grpc_adapter_->deactivate_object();
   }
 
-  if(server_impl_.in() != 0)
+  if(server_core_)
   {
-    server_impl_->deactivate_object();
+    server_core_->deactivate_object();
   }
 
   if(http_server_.in() != 0)
@@ -315,9 +308,10 @@ void ChannelServerApp_::stop_() noexcept
     grpc_adapter_.reset();
   }
 
-  if(server_impl_.in() != 0)
+  if(server_core_)
   {
-    server_impl_->wait_object();
+    server_core_->wait_object();
+    server_core_.reset();
   }
 }
 

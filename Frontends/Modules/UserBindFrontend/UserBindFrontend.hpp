@@ -22,7 +22,7 @@
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <Frontends/FrontendCommons/UserInfoClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
@@ -274,7 +274,7 @@ namespace AdServer
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    FrontendCommons::UserInfoClient_var user_info_client_;
+    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelCorbaClient>
       channel_servers_;

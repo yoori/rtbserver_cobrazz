@@ -1,6 +1,4 @@
-
-#ifndef AD_SERVER_CHANNEL_SERVICE_CHANNEL_ADMIN_APPLICATION_HPP_
-#define AD_SERVER_CHANNEL_SERVICE_CHANNEL_ADMIN_APPLICATION_HPP_
+#pragma once
 
 #include <list>
 #include <string>
@@ -211,7 +209,7 @@ private:
   CORBA::Object_var obj_ref_;
   AdServer::ChannelSvcs::ChannelServer_var channel_server_;
   AdServer::ChannelSvcs::ChannelCorbaClient_var channel_client_;
-  AdServer::ChannelSvcs::ChannelUpdateBase_v33_var channel_update_;
+  AdServer::ChannelSvcs::ChannelUpdateBase_var channel_update_;
   AdServer::ChannelSvcs::ChannelServerSession_var channel_session_;
   AdServer::ChannelSvcs::ChannelLoadSession_var load_session_;
   ChannelServerSessionFactoryImpl_var server_session_factory_;
@@ -289,4 +287,3 @@ void Application::StatMarker::calc_stat_r(Object* call, Function func, ReturnTyp
   }
 }
 
-#endif // AD_SERVER_CHANNEL_SERVICE_CHANNEL_ADMIN_APPLICATION_HPP_

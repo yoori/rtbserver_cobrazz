@@ -27,7 +27,7 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
-#include <Frontends/FrontendCommons/UserInfoClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
@@ -171,7 +171,7 @@ namespace Instantiate
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    FrontendCommons::UserInfoClient_var user_info_client_;
+    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
   };
 }
 }

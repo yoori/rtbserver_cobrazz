@@ -1,5 +1,7 @@
 #include <eh/Exception.hpp>
 
+#include <memory>
+
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <Commons/CorbaConfig.hpp>
@@ -7,7 +9,6 @@
 #include <Commons/ErrorHandler.hpp>
 
 #include "UserInfoManagerMain.hpp"
-#include "UserInfoManagerStat.hpp"
 
 namespace
 {
@@ -15,7 +16,6 @@ namespace
   const char USER_INFO_MANAGER_OBJ_KEY[] = "UserInfoManager";
   const char USER_INFO_MANAGER_CONTROL_OBJ_KEY[] = "UserInfoManagerControl";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
-  const char USER_INFO_MANAGER_STATS_OBJ_KEY[] = "UserInfoManagerStats";
 }
 
 UserInfoManagerApp_::UserInfoManagerApp_() /*throw(eh::Exception)*/
@@ -44,8 +44,8 @@ UserInfoManagerApp_::is_alive() /*throw(CORBA::SystemException)*/
 bool
 UserInfoManagerApp_::is_ready_() noexcept
 {
-  return user_info_manager_impl_.in() != 0 &&
-    user_info_manager_impl_->uim_ready();
+  return user_info_manager_core_ &&
+    user_info_manager_core_->uim_ready();
 }
 
 char*
@@ -53,9 +53,11 @@ UserInfoManagerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
 {
   try
   {
-    if (user_info_manager_impl_.in() != 0)
+    if (user_info_manager_core_)
     {
-      return user_info_manager_impl_->get_progress();
+      CORBA::String_var result;
+      result << user_info_manager_core_->get_progress();
+      return result._retn();
     }
     CORBA::String_var r;
     r << std::string("0.0%");
@@ -165,48 +167,20 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       new CORBACommons::CorbaServerAdapter(corba_config_);
 
     // Creating user info manager servant
-    user_info_manager_impl_ =
-      new AdServer::UserInfoSvcs::UserInfoManagerImpl(
+    user_info_manager_core_ =
+      std::make_shared<AdServer::UserInfoSvcs::UserInfoManagerCore>(
         callback(),
         logger(),
         config());
+    user_info_manager_impl_ =
+      new AdServer::UserInfoSvcs::UserInfoManagerImpl(
+        user_info_manager_core_);
 
-    add_child_object(user_info_manager_impl_.in());
-
-    Generics::Time stat_dumper_period;
-    CORBACommons::CorbaObjectRef dumper_ref;
-    if(config().StatsDumper().present())
-    {
-      stat_dumper_period =
-        Generics::Time(config().StatsDumper().get().period());
-      try
-      {
-        Config::CorbaConfigReader::read_corba_ref(
-          config().StatsDumper().get().StatsDumperRef(),
-          dumper_ref);
-      }
-      catch(const eh::Exception& e)
-      {
-        logger()->sstream(Logging::Logger::EMERGENCY, ASPECT) <<
-          "UserInfoManagerApp_::main(): failed to init StatsDumper: " <<
-          e.what();
-      }
-    }
-
-    AdServer::UserInfoSvcs::UserInfoManagerStatsImpl_var
-      user_info_manager_stats_impl =
-        new AdServer::UserInfoSvcs::UserInfoManagerStatsImpl(
-          callback(),
-          logger(),
-          user_info_manager_impl_,
-          dumper_ref,
-          stat_dumper_period);
-
-    add_child_object(user_info_manager_stats_impl.in());
+    add_child_object(user_info_manager_core_);
 
     user_info_manager_control_impl_ =
       new AdServer::UserInfoSvcs::UserInfoManagerControlImpl(
-        user_info_manager_impl_);
+        user_info_manager_core_);
 
     register_vars_controller();
 
@@ -217,15 +191,12 @@ UserInfoManagerApp_::main(int& argc, char** argv)
       USER_INFO_MANAGER_CONTROL_OBJ_KEY, user_info_manager_control_impl_.in());
 
     corba_server_adapter_->add_binding(
-      USER_INFO_MANAGER_STATS_OBJ_KEY, user_info_manager_stats_impl.in());
-
-    corba_server_adapter_->add_binding(
       PROCESS_CONTROL_OBJ_KEY, this);
 
     if(config().GrpcConfig().present())
     {
       grpc_adapter_ = new AdServer::UserInfoSvcs::UserInfoManagerGrpc(
-        user_info_manager_impl_,
+        user_info_manager_core_,
         logger(),
         config().GrpcConfig()->Endpoint().host().present() &&
           *(config().GrpcConfig()->Endpoint().host()) != "*" ?

@@ -1,5 +1,4 @@
-#ifndef GENERICS_HOLDING_HASH_ADAPTER_HPP
-#define GENERICS_HOLDING_HASH_ADAPTER_HPP
+#pragma once
 
 /* TODO: this file should be merged with Generics/HashTableAdapters.hpp */
 
@@ -232,4 +231,3 @@ namespace Generics
   }
 }
 
-#endif

@@ -1,11 +1,14 @@
 add_library(UserInfoClient SHARED
+  UserInfoCorbaClient.cpp
   UserInfoDistributedGrpcClient.cpp
 )
 
 target_link_libraries(UserInfoClient
+  CORBACommons
   Generics
   Commons
   Logger
+  UserInfoManagerControllerCall
   UserInfoControllerGrpc
   UserInfoManagerGrpc
   UserInfoManagerGrpcClient

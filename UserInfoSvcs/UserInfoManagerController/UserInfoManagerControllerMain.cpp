@@ -13,7 +13,6 @@ namespace
   const char ASPECT[] = "UserInfoManagerController";
   const char USER_INFO_MANAGER_CONTROLLER_OBJ_KEY[] = "UserInfoManagerController";
   const char USER_INFO_CLUSTER_OBJ_KEY[] = "UserInfoClusterControl";
-  const char USER_INFO_CLUSTER_STATS_OBJ_KEY[] = "UserInfoClusterStats";
   const char PROCESS_CONTROL_OBJ_KEY[] = "ProcessControl";
 }
 
@@ -174,10 +173,6 @@ UserInfoManagerControllerApp_::main(int& argc, char** argv)
       new AdServer::UserInfoSvcs::UserInfoClusterImpl(
         user_info_manager_controller_impl_.in());
 
-    AdServer::UserInfoSvcs::UserInfoClusterStatsImpl_var cluster_stats =
-      new AdServer::UserInfoSvcs::UserInfoClusterStatsImpl(
-        user_info_manager_controller_impl_.in());
-
     corba_server_adapter_->add_binding(
       USER_INFO_MANAGER_CONTROLLER_OBJ_KEY,
       user_info_manager_controller_impl_.in());
@@ -185,10 +180,6 @@ UserInfoManagerControllerApp_::main(int& argc, char** argv)
     corba_server_adapter_->add_binding(
       USER_INFO_CLUSTER_OBJ_KEY,
       cluster_control.in());
-
-    corba_server_adapter_->add_binding(
-      USER_INFO_CLUSTER_STATS_OBJ_KEY,
-      cluster_stats.in());
 
     user_info_manager_controller_impl_->activate_object();
 
@@ -300,4 +291,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

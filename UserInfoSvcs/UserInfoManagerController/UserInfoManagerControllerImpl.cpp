@@ -186,27 +186,6 @@ namespace UserInfoSvcs{
           throw Exception(ostr);
         }
 
-        /* load UIM stats ref */
-        try
-        {
-          Config::CorbaConfigReader::read_corba_ref(
-            it->UserInfoManagerStatsRef(), corba_object_ref);
-
-          user_info_manager_host.uim_stats =
-            UserInfoManagerRef::ProcessControlCORBARef(
-              corba_client_adapter_, corba_object_ref);
-        }
-        catch(const eh::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr
-            << "Can't read UserInfoManagerStats corba object ref: '"
-            << corba_object_ref.object_ref << "'. "
-            << ": " << e.what();
-
-          throw Exception(ostr);
-        }
-
         user_info_manager_host.ready = false;
 
         user_info_managers_config->user_info_managers.push_back(
@@ -224,49 +203,6 @@ namespace UserInfoSvcs{
       ostr << "UserInfoManagerControllerImpl::fill_user_info_manager_refs_(): "
               "Can't resolve UserInfoManager references. : "
            << ex.what();
-      throw Exception(ostr);
-    }
-  }
-
-  void
-  UserInfoManagerControllerImpl::admit_user_info_managers_()
-    /*throw(Exception)*/
-  {
-    UserInfoManagersConfig_var user_info_managers_config;
-
-    {
-      ReadGuard_ lock(lock_);
-      user_info_managers_config =
-        new UserInfoManagersConfig(*user_info_managers_config_);
-    }
-
-    bool all_admitted = true;
-    std::ostringstream errors;
-
-    for(UserInfoManagerRefVector::iterator uim_it =
-          user_info_managers_config->user_info_managers.begin();
-        uim_it != user_info_managers_config->user_info_managers.end();
-        ++uim_it)
-    {
-      try
-      {
-        uim_it->user_info_manager_control->admit();
-      }
-      catch(const CORBA::SystemException& ex)
-      {
-        uim_it->ready = false;
-        all_admitted = false;
-
-        errors << "  Can't admit UIM: '"
-          << uim_it->user_info_manager.ref().object_ref <<
-          "': CORBA::SystemException: " << ex;
-      }
-    }
-
-    if(!all_admitted)
-    {
-      Stream::Error ostr;
-      ostr << "Can't admit all UIMs: " << errors.str();
       throw Exception(ostr);
     }
   }
@@ -291,25 +227,7 @@ namespace UserInfoSvcs{
     {
       try
       {
-        AdServer::UserInfoSvcs::UserInfoManagerStatus uim_status =
-          uim_it->user_info_manager_control->status();
-
-        if(uim_status < AdServer::UserInfoSvcs::S_READY)
-        {
-          /* uim isn't ready */
-          uim_it->ready = false;
-          uim_it->chunks.clear();
-
-          all_ready = false;
-
-          if(logger_->log_level() >= Logging::Logger::TRACE)
-          {
-            tracing << "Not ready UIM '"
-                    << uim_it->user_info_manager.ref().object_ref
-                    << "'. " << std::endl;
-          }
-        }
-        else if(!uim_it->ready)
+        if(!uim_it->ready)
         {
           /* uim is ready but not inited localy (sample: after restart uimc) */
           AdServer::UserInfoSvcs::ChunksConfig_var chunks_config;
@@ -318,6 +236,21 @@ namespace UserInfoSvcs{
           CorbaAlgs::convert_sequence(chunks_config->chunk_ids, uim_it->chunks);
           uim_it->common_chunks_number = chunks_config->common_chunks_number;
           uim_it->ready = uim_it->user_info_manager->uim_ready();
+
+          if(!uim_it->ready)
+          {
+            uim_it->chunks.clear();
+            all_ready = false;
+
+            if(logger_->log_level() >= Logging::Logger::TRACE)
+            {
+              tracing << "Not ready UIM '"
+                      << uim_it->user_info_manager.ref().object_ref
+                      << "'. " << std::endl;
+            }
+
+            continue;
+          }
 
           if(logger_->log_level() >= TraceLevel::HIGH)
           {
@@ -407,9 +340,6 @@ namespace UserInfoSvcs{
           /* all ready - check common constraints */
           check_source_consistency_(user_info_managers_config.in());
 
-          /* admit hosts to cluster */
-          admit_user_info_managers_();
-
           user_info_managers_config->all_ready = true;
           user_info_managers_config->first_all_ready = true;
         }
@@ -481,10 +411,7 @@ namespace UserInfoSvcs{
       {
         try
         {
-          AdServer::UserInfoSvcs::UserInfoManagerStatus uim_status =
-            uim_it->user_info_manager_control->status();
-
-          if(uim_status != AdServer::UserInfoSvcs::S_ADMITTED)
+          if(!uim_it->user_info_manager->uim_ready())
           {
             need_sources_reinit = true;
           }
@@ -655,53 +582,6 @@ namespace UserInfoSvcs{
     }
   }
 
-  CORBACommons::StatsValueSeq*
-  UserInfoManagerControllerImpl::get_stats() noexcept
-  {
-    CORBACommons::StatsValueSeq_var res = new CORBACommons::StatsValueSeq();
-
-    UserInfoManagersConfig_var user_info_managers_config;
-    {
-      ReadGuard_ lock(lock_);
-      user_info_managers_config = user_info_managers_config_;
-    }
-
-    if(user_info_managers_config->all_ready)
-    {
-      res->length(2);
-      CORBACommons::StatsValueSeq& res_ref = *res;
-
-      res_ref[0].key = "Sum size of user containers";
-      res_ref[1].key = "Sum size of context bounded maps";
-
-      unsigned long users_count = 0;
-      unsigned long context_users_count = 0;
-
-      UserInfoManagerRefVector& uims_vector =
-        user_info_managers_config->user_info_managers;
-      unsigned long len = uims_vector.size();
-
-      for (unsigned long i = 0; i < len; ++i)
-      {
-        CORBACommons::StatsValueSeq_var stats =
-          uims_vector[i].uim_stats->get_stats();
-
-        CORBA::ULong value;
-
-        stats[size_t(0)].value >>= value;
-        users_count += value;
-
-        stats[size_t(1)].value >>= value;
-        context_users_count += value;
-      }
-
-      res_ref[0].value <<= (CORBA::ULong)users_count;
-      res_ref[1].value <<= (CORBA::ULong)context_users_count;
-    }
-
-    return res._retn();
-  }
-
   CORBACommons::IProcessControl::ALIVE_STATUS
   UserInfoManagerControllerImpl::get_status() noexcept
   {
@@ -850,21 +730,5 @@ namespace UserInfoSvcs{
     return uimc_->get_comment();
   }
 
-  /*UserInfoClusterStatsImpl*/
-  UserInfoClusterStatsImpl::UserInfoClusterStatsImpl(
-    UserInfoManagerControllerImpl* controller) noexcept
-      :
-      uimc_(ReferenceCounting::add_ref(controller))
-  {}
-
-  UserInfoClusterStatsImpl::~UserInfoClusterStatsImpl() noexcept
-  {}
-
-  CORBACommons::StatsValueSeq*
-  UserInfoClusterStatsImpl::get_stats() noexcept
-  {
-    return uimc_->get_stats();
-  }
 } /*UserInfoSvcs*/
 } /*AdServer*/
-

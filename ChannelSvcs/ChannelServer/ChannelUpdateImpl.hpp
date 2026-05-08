@@ -1,5 +1,6 @@
-#ifndef AD_SERVER_CHANNEL_UPDATE_IMPL_HPP_
-#define AD_SERVER_CHANNEL_UPDATE_IMPL_HPP_
+#pragma once
+
+#include <memory>
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/DefaultImpl.hpp>
@@ -10,19 +11,21 @@
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase_s.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 
-#include "ChannelServerImpl.hpp"
+#include "ChannelServerCore.hpp"
 
 namespace AdServer
 {
 namespace ChannelSvcs
 {
+  typedef ChannelUpdateBase ChannelCurrent;
+
   class ChannelUpdateImpl:
     public virtual CORBACommons::ReferenceCounting::ServantImpl
-      <POA_AdServer::ChannelSvcs::ChannelUpdate_v33>
+      <POA_AdServer::ChannelSvcs::ChannelUpdate>
   {
   public:
 
-    ChannelUpdateImpl(ChannelServerCustomImpl* server)
+    ChannelUpdateImpl(ChannelServerCorePtr server)
       /*throw(eh::Exception)*/;
 
     virtual ~ChannelUpdateImpl() noexcept;
@@ -47,9 +50,6 @@ namespace ChannelSvcs
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
 
-    //
-    // IDL:AdServer/ChannelSvcs/ChannelProxy/get_count_chunks:1.0
-    //
     virtual ::CORBA::ULong get_count_chunks()
       /*throw(AdServer::ChannelSvcs::ImplementationException)*/;
 
@@ -63,11 +63,9 @@ namespace ChannelSvcs
         AdServer::ChannelSvcs::NotConfigured)*/;
 
   private:
-    ChannelServerCustomImpl_var server_;
+    ChannelServerCorePtr server_;
   };
 
   typedef ReferenceCounting::SmartPtr<ChannelUpdateImpl> ChannelUpdateImpl_var;
 }
 }
-#endif //AD_SERVER_CHANNEL_UPDATE_IMPL_HPP_
-

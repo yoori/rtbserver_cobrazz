@@ -1,4 +1,5 @@
 #include "ChannelServerGrpc.hpp"
+#include "ChannelServerCore.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -6,6 +7,7 @@
 #include <string>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerGrpc.grpc.pb.h>
@@ -25,32 +27,21 @@ namespace AdServer::ChannelSvcs
         reinterpret_cast<const char*>(seq.get_buffer()) + seq.length());
     }
 
-    void
-    unpack_user_id(
-      const std::string& value,
-      CORBACommons::UserIdInfo& result)
-    {
-      result.length(value.size());
-      std::copy(value.begin(), value.end(), result.get_buffer());
-    }
-
-    void
-    pack_channel_atoms(
-      const ChannelServerBase::ChannelAtomSeq& source,
+    void pack_channel_atoms(
+      const std::vector<ChannelServerCore::ChannelAtom>& source,
       google::protobuf::RepeatedPtrField<
         adserver::channel_svcs::channel_server::ChannelAtom>* target)
     {
-      for (CORBA::ULong i = 0; i < source.length(); ++i)
+      for (const auto& source_atom : source)
       {
         auto* atom = target->Add();
-        atom->set_id(source[i].id);
-        atom->set_trigger_channel_id(source[i].trigger_channel_id);
+        atom->set_id(source_atom.id);
+        atom->set_trigger_channel_id(source_atom.trigger_channel_id);
       }
     }
 
-    void
-    pack_match_result(
-      const ChannelServer::MatchResult& source,
+    void pack_match_result(
+      const ChannelServerCore::MatchResult& source,
       adserver::channel_svcs::channel_server::MatchResponse& target)
     {
       auto* matched_channels = target.mutable_matched_channels();
@@ -67,48 +58,46 @@ namespace AdServer::ChannelSvcs
         source.matched_channels.url_keyword_channels,
         matched_channels->mutable_url_keyword_channels());
 
-      for (
-        CORBA::ULong i = 0;
-        i < source.matched_channels.uid_channels.length();
-        ++i)
+      for (const auto channel_id : source.matched_channels.uid_channels)
       {
-        matched_channels->add_uid_channels(
-          source.matched_channels.uid_channels[i]);
+        matched_channels->add_uid_channels(channel_id);
       }
 
-      for (CORBA::ULong i = 0; i < source.content_channels.length(); ++i)
+      for (const auto& source_channel : source.content_channels)
       {
         auto* content_channel = target.add_content_channels();
-        content_channel->set_id(source.content_channels[i].id);
-        content_channel->set_weight(source.content_channels[i].weight);
+        content_channel->set_id(source_channel.id);
+        content_channel->set_weight(source_channel.weight);
       }
 
       target.set_no_adv(source.no_adv);
       target.set_no_track(source.no_track);
-      target.set_match_time(pack_oct_seq(source.match_time));
+      target.set_match_time(pack_oct_seq(CorbaAlgs::pack_time(source.match_time)));
     }
 
-    void
-    pack_traits_result(
-      const ChannelServer::TraitsResult& source,
+    void pack_traits_result(
+      const ChannelServerCore::TraitsResult& source,
       adserver::channel_svcs::channel_server::GetCcgTraitsResponse& target)
     {
-      for (CORBA::ULong i = 0; i < source.ccg_keywords.length(); ++i)
+      for (const auto& source_keyword : source.ccg_keywords)
       {
-        const auto& source_keyword = source.ccg_keywords[i];
         auto* keyword = target.add_ccg_keywords();
         keyword->set_ccg_keyword_id(source_keyword.ccg_keyword_id);
         keyword->set_ccg_id(source_keyword.ccg_id);
         keyword->set_channel_id(source_keyword.channel_id);
-        keyword->set_max_cpc(pack_oct_seq(source_keyword.max_cpc));
-        keyword->set_ctr(pack_oct_seq(source_keyword.ctr));
-        keyword->set_click_url(source_keyword.click_url.in());
-        keyword->set_original_keyword(source_keyword.original_keyword.in());
+        keyword->set_max_cpc(pack_oct_seq(
+          CorbaAlgs::pack_decimal<CampaignSvcs::RevenueDecimal>(
+            source_keyword.max_cpc)));
+        keyword->set_ctr(pack_oct_seq(
+          CorbaAlgs::pack_decimal<CampaignSvcs::CTRDecimal>(
+            source_keyword.ctr)));
+        keyword->set_click_url(source_keyword.click_url);
+        keyword->set_original_keyword(source_keyword.original_keyword);
       }
 
-      for (CORBA::ULong i = 0; i < source.neg_ccg.length(); ++i)
+      for (const auto ccg_id : source.neg_ccg)
       {
-        target.add_neg_ccg(source.neg_ccg[i]);
+        target.add_neg_ccg(ccg_id);
       }
     }
   }
@@ -123,7 +112,7 @@ namespace AdServer::ChannelSvcs
       adserver::channel_svcs::channel_server::ChannelServerGrpc::AsyncService;
 
   public:
-    explicit ServiceImpl(ChannelServerCustomImpl* server_impl);
+    explicit ServiceImpl(ChannelServerCorePtr core);
 
     static auto grpc_calls()
     {
@@ -149,12 +138,12 @@ namespace AdServer::ChannelSvcs
       ::grpc::Status& result_status) const;
 
   private:
-    ChannelServerCustomImpl_var server_impl_;
+    ChannelServerCorePtr core_;
   };
 
   ChannelServerGrpc::ServiceImpl::ServiceImpl(
-    ChannelServerCustomImpl* server_impl)
-    : server_impl_(ReferenceCounting::add_ref(server_impl))
+    ChannelServerCorePtr core)
+    : core_(std::move(core))
   {}
 
   void
@@ -165,15 +154,15 @@ namespace AdServer::ChannelSvcs
   {
     try
     {
-      ChannelServerBase::MatchQuery query;
-      query.request_id << request.request_id();
-      query.first_url << request.first_url();
-      query.first_url_words << request.first_url_words();
-      query.urls << request.urls();
-      query.urls_words << request.urls_words();
-      query.pwords << request.pwords();
-      query.swords << request.swords();
-      unpack_user_id(request.uid(), query.uid);
+      ChannelServerCore::MatchQuery query;
+      query.request_id = request.request_id();
+      query.first_url = request.first_url();
+      query.first_url_words = request.first_url_words();
+      query.urls = request.urls();
+      query.urls_words = request.urls_words();
+      query.pwords = request.pwords();
+      query.swords = request.swords();
+      query.uid = GrpcAlgs::unpack_user_id(request.uid());
       query.statuses[0] = request.statuses().empty() ?
         '\0' : request.statuses()[0];
       query.statuses[1] = request.statuses().size() > 1 ?
@@ -184,23 +173,23 @@ namespace AdServer::ChannelSvcs
       query.simplify_page = request.simplify_page();
       query.fill_content = request.fill_content();
 
-      ChannelServer::MatchResult_var result;
-      server_impl_->match(query, result.out());
-      pack_match_result(*result, response);
+      ChannelServerCore::MatchResult result;
+      core_->match(query, result);
+      pack_match_result(result, response);
 
       result_status = ::grpc::Status::OK;
     }
-    catch (const ChannelSvcs::NotConfigured& ex)
+    catch (const ChannelServerCore::NotConfigured& ex)
     {
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::UNAVAILABLE,
-        ex.description.in());
+        ex.what());
     }
-    catch (const ChannelSvcs::ImplementationException& ex)
+    catch (const ChannelServerCore::Exception& ex)
     {
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::INTERNAL,
-        ex.description.in());
+        ex.what());
     }
     catch (const eh::Exception& ex)
     {
@@ -218,30 +207,30 @@ namespace AdServer::ChannelSvcs
   {
     try
     {
-      ChannelIdSeq ids;
-      ids.length(request.ids_size());
+      std::vector<unsigned long> ids;
+      ids.reserve(request.ids_size());
       for (int i = 0; i < request.ids_size(); ++i)
       {
-        ids[i] = request.ids(i);
+        ids.push_back(request.ids(i));
       }
 
-      ChannelServer::TraitsResult_var result;
-      server_impl_->get_ccg_traits(ids, result.out());
-      pack_traits_result(*result, response);
+      ChannelServerCore::TraitsResult result;
+      core_->get_ccg_traits(ids, result);
+      pack_traits_result(result, response);
 
       result_status = ::grpc::Status::OK;
     }
-    catch (const ChannelSvcs::NotConfigured& ex)
+    catch (const ChannelServerCore::NotConfigured& ex)
     {
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::UNAVAILABLE,
-        ex.description.in());
+        ex.what());
     }
-    catch (const ChannelSvcs::ImplementationException& ex)
+    catch (const ChannelServerCore::Exception& ex)
     {
       result_status = AdServer::Grpc::error_status(
         ::grpc::StatusCode::INTERNAL,
-        ex.description.in());
+        ex.what());
     }
     catch (const eh::Exception& ex)
     {
@@ -252,7 +241,7 @@ namespace AdServer::ChannelSvcs
   }
 
   ChannelServerGrpc::ChannelServerGrpc(
-    ChannelServerCustomImpl* server_impl,
+    ChannelServerCorePtr core,
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port)
@@ -261,7 +250,7 @@ namespace AdServer::ChannelSvcs
         logger,
         channel_server_grpc_aspect,
         bind_address_,
-        std::make_unique<ServiceImpl>(server_impl)))
+        std::make_unique<ServiceImpl>(std::move(core))))
   {
     add_child_object(impl_);
   }

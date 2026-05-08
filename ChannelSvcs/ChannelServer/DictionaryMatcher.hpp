@@ -1,5 +1,4 @@
-#ifndef CHANNEL_SVCS_DICTIONARY_MATCHER_HPP_
-#define CHANNEL_SVCS_DICTIONARY_MATCHER_HPP_
+#pragma once
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
@@ -85,4 +84,3 @@ namespace ChannelSvcs
     }
 }
 }
-#endif//CHANNEL_SVCS_DICTIONARY_MATCHER_HPP_

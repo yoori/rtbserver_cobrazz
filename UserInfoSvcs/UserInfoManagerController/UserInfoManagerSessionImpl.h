@@ -4,7 +4,6 @@
 #include <map>
 
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/StatsImpl.hpp>
 
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>

@@ -3,6 +3,8 @@
 
 #include <list>
 #include <map>
+#include <mutex>
+#include <shared_mutex>
 #include <set>
 #include <string>
 
@@ -25,8 +27,6 @@
 #include <xsd/UserInfoSvcs/UserInfoManagerControllerConfig.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/StatsImpl.hpp>
-
 #include <Commons/CorbaObject.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController_s.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoClusterControl_s.hpp>
@@ -89,10 +89,6 @@ namespace AdServer
       get_status() noexcept;
 
       virtual
-      CORBACommons::StatsValueSeq*
-      get_stats() noexcept;
-
-      virtual
       char* get_comment() /*throw(CORBACommons::OutOfMemory)*/;
 
     protected:
@@ -146,13 +142,10 @@ namespace AdServer
           AdServer::UserInfoSvcs::UserInfoManager> UIMCORBARef;
         typedef AdServer::Commons::CorbaObject<
           AdServer::UserInfoSvcs::UserInfoManagerControl> UIMControlCORBARef;
-        typedef AdServer::Commons::CorbaObject<
-          CORBACommons::ProcessStatsControl> ProcessControlCORBARef;
 
         UIMCORBARef user_info_manager;
         UIMControlCORBARef user_info_manager_control;
         std::string user_info_manager_host_name;
-        ProcessControlCORBARef uim_stats;
         ChunkIdSet chunks;
         unsigned long common_chunks_number;
         bool ready;
@@ -192,8 +185,6 @@ namespace AdServer
         UserInfoManagersConfig* user_info_managers_config)
         /*throw(Exception)*/;
 
-      void admit_user_info_managers_() /*throw(Exception)*/;
-
       /* task functions implementation */
       void init_user_info_manager_sources_() noexcept;
 
@@ -215,9 +206,9 @@ namespace AdServer
       Generics::ActiveObjectCallback_var callback_;
       Logging::Logger_var logger_;
 
-      typedef Sync::PosixRWLock Mutex_;
-      typedef Sync::PosixRGuard ReadGuard_;
-      typedef Sync::PosixWGuard WriteGuard_;
+      typedef std::shared_mutex Mutex_;
+      typedef std::shared_lock<Mutex_> ReadGuard_;
+      typedef std::unique_lock<Mutex_> WriteGuard_;
 
       mutable Mutex_ lock_;
 
@@ -262,28 +253,6 @@ namespace AdServer
 
   typedef ReferenceCounting::SmartPtr<UserInfoClusterImpl>
       UserInfoClusterImpl_var;
-
-    /* UserInfoClusterStatsImpl */
-    class UserInfoClusterStatsImpl:
-      public virtual CORBACommons::ReferenceCounting::ServantImpl
-      <POA_AdServer::UserInfoSvcs::UserInfoClusterStats>
-    {
-    public:
-      UserInfoClusterStatsImpl(
-        UserInfoManagerControllerImpl* controller)
-        noexcept;
-
-      virtual CORBACommons::StatsValueSeq* get_stats() noexcept;
-
-    protected:
-      virtual
-      ~UserInfoClusterStatsImpl() noexcept;
-
-      UserInfoManagerControllerImpl_var uimc_;
-    };
-
-  typedef ReferenceCounting::SmartPtr<UserInfoClusterStatsImpl>
-      UserInfoClusterStatsImpl_var;
 
   } /* UserInfoSvcs */
 } /* AdServer */

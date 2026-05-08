@@ -7,7 +7,7 @@ module AdServer
 {
   module ChannelSvcs
   {
-    abstract interface ChannelUpdateBase_v33 //3.3.0
+    abstract interface ChannelUpdateBase //3.3.0
     {
       typedef AdServer::ChannelSvcs::TimeStamp TimeStamp;
 
@@ -122,7 +122,7 @@ module AdServer
 
     struct ChannelLoadDescription
     {
-      ChannelUpdateBase_v33 load_server;
+      ChannelUpdateBase load_server;
       ChunkKeySeq chunks;
       unsigned long count_chunks;
     };
@@ -130,12 +130,12 @@ module AdServer
 
     typedef sequence<ChannelLoadDescriptionSeq> GroupLoadDescriptionSeq;
 
-    interface ChannelUpdate_v33 : ChannelUpdateBase_v33
+    interface ChannelUpdate : ChannelUpdateBase
     {
     };
 
     /** ChannelLoadSession */
-    valuetype ChannelLoadSession supports ChannelUpdateBase_v33
+    valuetype ChannelLoadSession supports ChannelUpdateBase
     {
       private GroupLoadDescriptionSeq load_servers;
       private long source_id;

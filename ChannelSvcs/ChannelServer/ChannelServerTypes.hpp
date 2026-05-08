@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_CHANNELSERVER_TYPES
-#define AD_SERVER_CHANNELSERVER_TYPES
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -38,6 +37,4 @@ namespace ChannelSvcs
 
 }
 }
-
-#endif //AD_SERVER_CHANNELSERVER_TYPES
 

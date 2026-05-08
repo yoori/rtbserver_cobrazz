@@ -20,7 +20,6 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ServantImpl.hpp>
 #include <CORBACommons/ProcessControl.hpp>
-#include <CORBACommons/Stats.hpp>
 
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/ConfigUtils.hpp>
@@ -66,8 +65,7 @@ ChannelControllerImpl::CSInfo::CSInfo() noexcept
   : control_ref(0),
     proccontrol_ref(0),
     server_ref(0),
-    update_ref(0),
-    process_stat_ref(0)
+    update_ref(0)
 {
     check_sum[0] = check_sum[1] = 0;
 }
@@ -529,7 +527,7 @@ void ChannelControllerImpl::init_corba_refs_(
           }
 
           info->update_ref =
-            AdServer::ChannelSvcs::ChannelUpdate_v33::_narrow(obj.in());
+            AdServer::ChannelSvcs::ChannelUpdate::_narrow(obj.in());
 
           if(CORBA::is_nil(info->update_ref.in()))
           {
@@ -540,42 +538,6 @@ void ChannelControllerImpl::init_corba_refs_(
             throw Exception(ostr);
           }
 
-          if(i->ChannelStatRef().present())
-          {
-            //read process stat reference
-            Config::CorbaConfigReader::read_corba_ref(
-                i->ChannelStatRef().get(),
-                corba_object_ref);
-
-            //resolve process stat reference
-            obj = c_adapter_->resolve_object(corba_object_ref);
-
-            if(CORBA::is_nil(obj.in()))
-            {
-              logger()->sstream(Logging::Logger::ERROR,
-                                ASPECT,
-                                "ADS-IMPL-25")
-                << "ChannelServerControllerImpl::init_corba_refs_: "
-                "resolve_object return nil reference for process stat. "
-                "Reference is " << corba_object_ref.object_ref;
-            }
-            else
-            {
-              info->process_stat_ref =
-                CORBACommons::ProcessStatsControl::_narrow(obj.in());
-
-              if(CORBA::is_nil(info->process_stat_ref.in()))
-              {
-                logger()->sstream(Logging::Logger::ERROR,
-                                  ASPECT,
-                                  "ADS-IMPL-25")
-                  << "ChannelServerControllerImpl::init_corba_refs_: "
-                  "_narrow return nil reference for process stat. "
-                  "Reference is " << corba_object_ref.object_ref;
-                info->process_stat_ref = 0;
-              }
-            }
-          }
           vect.push_back(info);
         }
       }
@@ -882,9 +844,6 @@ ChannelControllerImpl::get_channel_session()
   return 0; // never reach
 }
 
-//
-// IDL:AdServer/ChannelSvcs/ChannelProxy/get_count_chunks:1.0
-//
 ::CORBA::ULong ChannelControllerImpl::get_count_chunks()
     /*throw(::CORBA::SystemException)*/
 {
@@ -994,109 +953,6 @@ ChannelControllerImpl::get_control_session()
   return 0; // never reach
 }
 
-CORBACommons::StatsValueSeq* ChannelControllerImpl::get_stats()
-  /*throw(CORBACommons::ProcessStatsControl::ImplementationException)*/
-{
-  const char* FUN="ChannelControllerImpl::get_stats()";
-  try
-  {
-    switch(connection_.servers.size())
-    {
-      case 0:
-        return new CORBACommons::StatsValueSeq;
-      case 1:
-        if(connection_.servers.front().size() == 1 &&
-           connection_.servers[0][0]->process_stat_ref)
-        {
-          return connection_.servers[0][0]->process_stat_ref->get_stats();
-        }
-        else
-        {
-          CORBACommons::ProcessStatsControl::ImplementationException e;
-          e.description = "ProcessStatsControl interface doesn't support";
-          throw e;
-        }
-      default:
-        {
-          typedef std::map<std::string, size_t> ValueMap;
-          ValueMap stat_data;
-          ValueMap::iterator fnd;
-          size_t value_num;
-          CORBACommons::StatsValueSeq_var res;
-          for(CSConnection::CSGroups::const_iterator it = connection_.servers.begin();
-              it != connection_.servers.end(); ++it)
-          {
-            for(CSConnection::CSInfoVector::const_iterator i = it->begin();
-                i != it->end(); ++i)
-            {
-              if((*i)->process_stat_ref)
-              {
-                res = (*i)->process_stat_ref->get_stats();
-              }
-              else
-              {
-                CORBACommons::ProcessStatsControl::ImplementationException e;
-                e.description = "ProcessStatsControl interface doesn't support";
-                throw e;
-              }
-              for(size_t j = 0; j < res->length(); j++)
-              {
-                CORBACommons::StatsValue& val = (*res)[j];
-                val.value >>= value_num;
-                fnd = stat_data.find(val.key.in());
-                if(fnd != stat_data.end())
-                {
-                  fnd->second += value_num;
-                }
-                else
-                {
-                  stat_data[val.key.in()] = value_num;
-                }
-              }
-            }
-          }
-          res = new CORBACommons::StatsValueSeq;
-          res->length(stat_data.size());
-          value_num = 0;
-          for(ValueMap::const_iterator i = stat_data.begin();
-              i!=stat_data.end(); ++i)
-          {
-            (*res)[value_num].key << i->first;
-            (*res)[value_num].value <<= i->second;
-            value_num++;
-          }
-          return res._retn();
-        }
-    }
-  }
-  catch(const eh::Exception& e)
-  {
-    Stream::Error ostr;
-    ostr << FUN << ": Caught eh::Exception. : "
-      << e.what();
-    CORBACommons::throw_desc<
-      CORBACommons::ProcessStatsControl::ImplementationException>(ostr.str());
-  }
-  catch(const CORBACommons::ProcessStatsControl::ImplementationException& e)
-  {
-    Stream::Error ostr;
-    ostr << FUN<< ": Caught CORBACommons::"
-      "ProcessStatsControl::ImplementationException. : "
-      << e.description;
-    CORBACommons::throw_desc<
-      CORBACommons::ProcessStatsControl::ImplementationException>(ostr.str());
-  }
-  catch(const CORBA::SystemException& e)
-  {
-    Stream::Error ostr;
-    ostr << FUN<< ": Caught CORBA::SystemException. : "
-      << e;
-    CORBACommons::throw_desc<
-      CORBACommons::ProcessStatsControl::ImplementationException>(ostr.str());
-  }
-  return 0; // never reach
-}
-
 ChannelClusterControlImpl::ChannelClusterControlImpl(
   ChannelControllerImpl* controller) noexcept:
   delegate_(ReferenceCounting::add_ref(controller))
@@ -1150,17 +1006,6 @@ ChannelClusterControlImpl::comment() /*throw(CORBACommons::OutOfMemory)*/
     str << ostr.str();
     return str._retn();
   }
-}
-
-ChannelStatImpl::ChannelStatImpl(ChannelControllerImpl* controller) noexcept:
-  delegate_(ReferenceCounting::add_ref(controller))
-{
-}
-
-CORBACommons::StatsValueSeq* ChannelStatImpl::get_stats()
-  /*throw(CORBACommons::ProcessStatsControl::ImplementationException)*/
-{
-  return delegate_->get_stats();
 }
 
 } /* ChannelSvcs */

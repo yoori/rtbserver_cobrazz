@@ -567,12 +567,12 @@ void Application::init_update_interface_() /*throw(InvalidArgument)*/
         }
       }
       channel_update_ =
-        AdServer::ChannelSvcs::ChannelUpdate_v33::_narrow(obj_ref_.in());
+        AdServer::ChannelSvcs::ChannelUpdate::_narrow(obj_ref_.in());
 
       if(CORBA::is_nil(channel_update_))
       {
         throw InvalidArgument("Application::init_update_interface_: "
-            "AdServer::ChannelSvcs::ChannelUpdate_v33::_narrow failed ");
+            "AdServer::ChannelSvcs::ChannelUpdate::_narrow failed ");
       }
     }
     catch(const CORBACommons::CorbaClientAdapter::Exception& e)
@@ -933,8 +933,8 @@ int Application::smartcheck_()
     }
     else
     {
-      typedef decltype(&AdServer::ChannelSvcs::ChannelUpdateBase_v33::check) FuncType;
-      FuncType func_ptr = &AdServer::ChannelSvcs::ChannelUpdateBase_v33::check;
+      typedef decltype(&AdServer::ChannelSvcs::ChannelUpdateBase::check) FuncType;
+      FuncType func_ptr = &AdServer::ChannelSvcs::ChannelUpdateBase::check;
       stat_marker.calc_stat(&*channel_update_, func_ptr, query, result);
     }
   }
@@ -1210,10 +1210,10 @@ int Application::update_()
     else
     {
       typedef
-        decltype(&AdServer::ChannelSvcs::ChannelUpdateBase_v33::update_triggers)
+        decltype(&AdServer::ChannelSvcs::ChannelUpdateBase::update_triggers)
         FuncType;
       FuncType func_ptr =
-        &AdServer::ChannelSvcs::ChannelUpdateBase_v33::update_triggers;
+        &AdServer::ChannelSvcs::ChannelUpdateBase::update_triggers;
       stat_marker.calc_stat(&*channel_update_, func_ptr, ids, result);
     }
   }
@@ -1444,10 +1444,10 @@ int Application::pos_ccg_()
     else
     {
       typedef
-        decltype(&AdServer::ChannelSvcs::ChannelUpdateBase_v33::update_all_ccg)
+        decltype(&AdServer::ChannelSvcs::ChannelUpdateBase::update_all_ccg)
         FuncType;
       FuncType func_ptr =
-        &AdServer::ChannelSvcs::ChannelUpdateBase_v33::update_all_ccg;
+        &AdServer::ChannelSvcs::ChannelUpdateBase::update_all_ccg;
       stat_marker.calc_stat(&*channel_update_, func_ptr, in, result);
     }
   }

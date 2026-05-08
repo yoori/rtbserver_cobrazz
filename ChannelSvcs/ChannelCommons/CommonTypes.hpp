@@ -1,6 +1,4 @@
-
-#ifndef AD_SERVER_COMMON_TYPES_HPP
-#define AD_SERVER_COMMON_TYPES_HPP
+#pragma once
 
 #include<vector>
 #include<string>
@@ -115,6 +113,4 @@ namespace AdServer
 
   }
 }
-
-#endif //AD_SERVER_COMMON_TYPES_HPP
 

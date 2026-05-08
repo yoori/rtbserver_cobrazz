@@ -7,7 +7,7 @@
 #include <xsd/RequestInfoSvcs/RequestInfoManagerConfig.hpp>
 
 #include <RequestInfoSvcs/ExpressionMatcher/ExpressionMatcher.hpp>
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 
 #include <Commons/LogReferrerUtils.hpp>
 
@@ -119,8 +119,8 @@ namespace RequestInfoSvcs{
 
     UserFraudDeactivator(
       Logging::Logger* logger,
-      const AdServer::UserInfoSvcs::UserInfoOperationDistributor::
-        ControllerRefList& controller_groups)
+      const AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList&
+        controller_groups)
       /*throw(Exception)*/;
 
     virtual void
@@ -201,8 +201,8 @@ namespace RequestInfoSvcs{
     try
     {
       // init fraud user processor: notify UIM's
-      AdServer::UserInfoSvcs::UserInfoOperationDistributor::
-        ControllerRefList controller_groups;
+      AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
+        controller_groups;
 
       for(UserInfoManagerControllerGroupSeq::const_iterator cg_it =
             request_info_manager_config_.UserInfoManagerControllerGroup().begin();
@@ -210,8 +210,8 @@ namespace RequestInfoSvcs{
             UserInfoManagerControllerGroup().end();
           ++cg_it)
       {
-        AdServer::UserInfoSvcs::UserInfoOperationDistributor::
-          ControllerRef controller_ref_group;
+        AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
+          controller_ref_group;
 
         Config::CorbaConfigReader::read_multi_corba_ref(
           *cg_it,
@@ -1663,8 +1663,8 @@ namespace RequestInfoSvcs{
   /* UserFraudDeactivator implementation */
   UserFraudDeactivator::UserFraudDeactivator(
     Logging::Logger* logger,
-    const AdServer::UserInfoSvcs::UserInfoOperationDistributor::
-      ControllerRefList& controller_groups)
+    const AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList&
+      controller_groups)
     /*throw(Exception)*/
     : logger_(ReferenceCounting::add_ref(logger))
   {
@@ -1674,13 +1674,13 @@ namespace RequestInfoSvcs{
     {
       corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-      AdServer::UserInfoSvcs::UserInfoOperationDistributor_var distributor =
-        new AdServer::UserInfoSvcs::UserInfoOperationDistributor(
+      AdServer::UserInfoSvcs::UserInfoCorbaClient_var client =
+        new AdServer::UserInfoSvcs::UserInfoCorbaClient(
           logger_,
           controller_groups,
           corba_client_adapter_.in());
-      user_info_matcher_ = ReferenceCounting::add_ref(distributor);
-      add_child_object(distributor.in());
+      user_info_matcher_ = client->user_info_session();
+      add_child_object(client.in());
     }
     catch(const eh::Exception& ex)
     {

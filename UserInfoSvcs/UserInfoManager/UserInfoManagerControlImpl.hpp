@@ -1,16 +1,12 @@
 #ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROL_IMPL_HPP_
 #define _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROL_IMPL_HPP_
 
-#include <string>
-
-#include <ReferenceCounting/ReferenceCounting.hpp>
+#include <memory>
 
 #include <eh/Exception.hpp>
 
-#include <Sync/SyncPolicy.hpp>
-
 #include <UserInfoSvcs/UserInfoManager/UserInfoManagerControl_s.hpp>
-#include <UserInfoSvcs/UserInfoManager/UserInfoManagerImpl.hpp>
+#include <UserInfoSvcs/UserInfoManager/UserInfoManagerCore.hpp>
 
 namespace AdServer
 {
@@ -27,13 +23,10 @@ namespace AdServer
       DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
 
       UserInfoManagerControlImpl(
-        UserInfoManagerImpl* user_info_manager_impl)
+        UserInfoManagerCorePtr user_info_manager_impl)
         /*throw(Exception)*/;
 
       virtual ~UserInfoManagerControlImpl() noexcept;
-
-      /** UserInfoManagerControl interface */
-      virtual AdServer::UserInfoSvcs::UserInfoManagerStatus status() noexcept;
 
       virtual void
       get_source_info(
@@ -43,15 +36,8 @@ namespace AdServer
       virtual void admit() noexcept;
 
     protected:
-      typedef Sync::PosixRWLock Mutex_;
-      typedef Sync::PosixRGuard ReadGuard_;
-      typedef Sync::PosixWGuard WriteGuard_;
-
-      mutable Mutex_ lock_;
-
       Logging::Logger_var logger_;
-      UserInfoManagerImpl_var user_info_manager_impl_;
-      bool admitted_;
+      UserInfoManagerCorePtr user_info_manager_impl_;
     };
 
     typedef

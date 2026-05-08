@@ -1,5 +1,4 @@
-#ifndef CHANNELSVCS_CHANNELCLIENT_CHANNELCORBACLIENT_HPP
-#define CHANNELSVCS_CHANNELCLIENT_CHANNELCORBACLIENT_HPP
+#pragma once
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
@@ -115,4 +114,3 @@ namespace FrontendCommons
   using ChannelCorbaClient_var = AdServer::ChannelSvcs::ChannelCorbaClient_var;
 }
 
-#endif /*CHANNELSVCS_CHANNELCLIENT_CHANNELCORBACLIENT_HPP*/

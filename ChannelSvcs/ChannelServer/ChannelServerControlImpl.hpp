@@ -1,6 +1,9 @@
-#ifndef AD_SERVER_CHANNEL_SERVER_CONTROL_IMPL_HPP_
-#define AD_SERVER_CHANNEL_SERVER_CONTROL_IMPL_HPP_
+#pragma once
 
+
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
 
 #include <ReferenceCounting/DefaultImpl.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -11,7 +14,7 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelServer_s.hpp>
-#include "ChannelServerImpl.hpp"
+#include "ChannelServerCore.hpp"
 
 namespace AdServer
 {
@@ -28,7 +31,7 @@ namespace ChannelSvcs
 
   public:
 
-    ChannelServerControlImpl(ChannelServerCustomImpl* custom) noexcept;
+    ChannelServerControlImpl(ChannelServerCorePtr custom) noexcept;
 
   protected:
     virtual ~ChannelServerControlImpl() noexcept;
@@ -57,14 +60,14 @@ namespace ChannelSvcs
 
   protected:
 
-    typedef Sync::PosixRWLock Mutex_;
-    typedef Sync::PosixRGuard ReadGuard_;
-    typedef Sync::PosixWGuard WriteGuard_;
+    typedef std::shared_mutex Mutex_;
+    typedef std::shared_lock<Mutex_> ReadGuard_;
+    typedef std::unique_lock<Mutex_> WriteGuard_;
 
     mutable Mutex_ lock_;
   private:
 
-    ChannelServerCustomImpl_var custom_impl_;
+    ChannelServerCorePtr custom_impl_;
   };
 
   typedef ReferenceCounting::SmartPtr<ChannelServerControlImpl>
@@ -72,6 +75,3 @@ namespace ChannelSvcs
 
 } /* ChannelSvcs */
 } /* AdServer */
-
-#endif /*AD_SERVER_CHANNEL_SERVER_CONTROL_IMPL_HPP_*/
-

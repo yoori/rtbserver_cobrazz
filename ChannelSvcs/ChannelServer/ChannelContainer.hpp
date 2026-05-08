@@ -1,12 +1,13 @@
+#pragma once
 
-#ifndef AD_SERVER_CHANNEL_CONTAINER
-#define AD_SERVER_CHANNEL_CONTAINER
-
+#include <atomic>
 #include <map>
 #include <set>
 #include <list>
+#include <mutex>
 #include <vector>
 #include <ostream>
+#include <shared_mutex>
 
 #include <eh/Exception.hpp>
 #include <Logger/Logger.hpp>
@@ -237,9 +238,9 @@ namespace ChannelSvcs
     void change_stage_(size_t stage) noexcept;
 
   private:
-    typedef Sync::PosixRWLock Mutex_;
-    typedef Sync::PosixRGuard ReadGuard_;
-    typedef Sync::PosixWGuard WriteGuard_;
+    typedef std::shared_mutex Mutex_;
+    typedef std::shared_lock<Mutex_> ReadGuard_;
+    typedef std::unique_lock<Mutex_> WriteGuard_;
 
     mutable Mutex_ lock_progress_;
     std::vector<size_t> progress_;
@@ -519,9 +520,9 @@ namespace ChannelSvcs
 
   protected:
 
-    typedef Sync::PosixRWLock Mutex_;
-    typedef Sync::PosixRGuard ReadGuard_;
-    typedef Sync::PosixWGuard WriteGuard_;
+    typedef std::shared_mutex Mutex_;
+    typedef std::shared_lock<Mutex_> ReadGuard_;
+    typedef std::unique_lock<Mutex_> WriteGuard_;
 
     typedef std::map<String::SubString, NSTriggerAtom> NSTriggerMapType;
     typedef std::map<String::SubString, NSTriggerAtom> NSUrlMapType;
@@ -544,8 +545,8 @@ namespace ChannelSvcs
     bool non_strict_;
 
     ChannelServerStats stats_;
-    volatile _Atomic_word queries_;
-    volatile _Atomic_word exceptions_;
+    std::atomic<unsigned long> queries_;
+    std::atomic<unsigned long> exceptions_;
     volatile sig_atomic_t terminated_;
   };
 
@@ -691,6 +692,3 @@ namespace AdServer
   }
   }//namespace ChannelSvcs
 }
-
-#endif //AD_SERVER_CHANNEL_CONTAINER
-

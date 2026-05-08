@@ -1,5 +1,4 @@
-#ifndef CHANNEL_SVCS_CHANNEL_LOAD_SESSION_FACTORY_HPP_
-#define CHANNEL_SVCS_CHANNEL_LOAD_SESSION_FACTORY_HPP_
+#pragma once
 
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -44,4 +43,3 @@ private:
 typedef ReferenceCounting::SmartPtr<ChannelLoadSessionFactoryImpl>
   ChannelLoadSessionFactoryImpl_var;
 
-#endif /*CHANNEL_SVCS_CHANNEL_LOAD_SESSION_FACTORY_HPP_*/

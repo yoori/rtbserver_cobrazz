@@ -1,10 +1,10 @@
-
-#ifndef AD_SERVER_CHANNEL_SERVER_VARIANT_HPP_
-#define AD_SERVER_CHANNEL_SERVER_VARIANT_HPP_
+#pragma once
 
 #include <vector>
+#include <mutex>
 #include <string>
 #include <deque>
+#include <shared_mutex>
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <Generics/SimpleDecimal.hpp>
@@ -20,7 +20,6 @@
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
 #include <ChannelSvcs/ChannelCommons/TriggerParser.hpp>
 #include <ChannelSvcs/ChannelServer/ChannelServerTypes.hpp>
-#include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionImpl.hpp>
 
 #include "ChannelContainer.hpp"
 
@@ -28,6 +27,8 @@ namespace AdServer
 {
 namespace ChannelSvcs
 {
+  typedef ChannelUpdateBase ChannelCurrent;
+
   typedef std::map<
     std::string, const Language::Segmentor::SegmentorInterface*> SegmMap;
 
@@ -163,9 +164,9 @@ namespace ChannelSvcs
 
     int get_source_id() noexcept;
 
-  protected:
     virtual ~ChannelServerVariantBase() noexcept{};
 
+  protected:
     void set_sources_id_(int source_id) noexcept;
 
     void set_first_load_stamp_(const Generics::Time& stamp) noexcept;
@@ -203,9 +204,9 @@ namespace ChannelSvcs
 
   protected:
 
-    typedef Sync::PosixRWLock Mutex_;
-    typedef Sync::PosixRGuard ReadGuard_;
-    typedef Sync::PosixWGuard WriteGuard_;
+    typedef std::shared_mutex Mutex_;
+    typedef std::shared_lock<Mutex_> ReadGuard_;
+    typedef std::unique_lock<Mutex_> WriteGuard_;
 
     bool is_my_id_(unsigned long id) noexcept;
 
@@ -286,7 +287,6 @@ namespace ChannelSvcs
 
     virtual bool get_db_state() noexcept;
 
-  protected:
     virtual ~ChannelServerDB() noexcept;
 
   private:
@@ -334,76 +334,6 @@ namespace ChannelSvcs
     std::list<unsigned long> update_history_;
   };
 
-  class ChannelServerProxy: public ChannelServerVariantBase
-  {
-  public:
-    typedef
-      CORBACommons::ObjectPool<
-        AdServer::ChannelSvcs::ChannelUpdate_v33,
-        ServerPoolConfig>
-      ChannelProxyPool;
-
-    typedef std::unique_ptr<ChannelProxyPool> ChannelProxyPoolPtr;
-
-    typedef std::unique_ptr<ChannelLoadSessionImpl> LoadSessionPtr;
-
-    enum
-    {
-      PRIORITY_SERVERS,
-      PRIORITY_PROXY
-    };
-
-    ChannelServerProxy(
-      const ChannelSvcs::GroupLoadDescriptionSeq& servers,
-      const ServerPoolConfig& proxy_pool_config,
-      const std::set<unsigned short>& ports,
-      const std::vector<unsigned int>& sources,
-      unsigned long count_chunks,
-      unsigned long colo,
-      const char* version,
-      const ServerPoolConfig& campaign_pool_config,
-      unsigned service_index,
-      Logging::Logger* logger,
-      unsigned long check_sum,
-      unsigned long priority = PRIORITY_SERVERS)
-      /*throw(ChannelServerException::Exception)*/;
-
-  protected:
-    bool check_source_(
-      UpdateData* data,
-      int new_source_id,
-      const Generics::Time& longest_update,
-      const Generics::Time& first_load_stamp,
-      const Generics::Time& new_master)
-      noexcept;
-
-    template<typename Function, typename...Args>
-    void do_query_(const char* fn_name, Function func, Args&... args)
-      /*throw(ChannelServerException::Exception)*/;
-
-    virtual ~ChannelServerProxy() noexcept;
-  public:
-
-    /* update ccg keywords*/
-    virtual void update_ccg(UpdateData* data, unsigned long limit)
-      /*throw(ChannelServerException::Exception)*/;
-
-    virtual void update(
-      unsigned long merge_limit,
-      UpdateData* data)
-      /*throw(ChannelServerException::Exception,
-        ChannelServerException::TemporyUnavailable)*/;
-
-    virtual void check_updating(UpdateData* data)//update data
-      /*throw(ChannelServerException::Exception,
-        ChannelServerException::TemporyUnavailable)*/;
-
-  private:
-    unsigned long priority_;
-    unsigned long tries_;
-    ChannelProxyPoolPtr proxy_pool_;
-    LoadSessionPtr load_session_;
-  };
 }
 }
 
@@ -480,122 +410,5 @@ namespace AdServer
       first_load_stamp_  = stamp;
     }
 
-
-    template<typename Function, typename...Args>
-    void ChannelServerProxy::do_query_(
-      const char* fn_name, Function func, Args&... args)
-      /*throw(ChannelServerException::Exception)*/
-    {
-      bool next_try, exception;
-      unsigned long iter = 0;
-      bool log = false;
-      std::ostringstream ostr;
-      bool use_servers = (priority_ == PRIORITY_SERVERS && tries_)
-        ? true : false;
-      Generics::Timer timer;
-      do
-      {
-        exception = false;
-        next_try = false;
-        try
-        {
-          timer.start();
-          if(use_servers)
-          {
-            iter++;
-            (&*load_session_->*func)(args...);
-          }
-          else
-          {
-            ChannelProxyPool::ObjectHandlerType proxy =
-              proxy_pool_->get_object();
-            try
-            {
-              (&*proxy->*func)(args...);
-            }
-            catch(const AdServer::ChannelSvcs::NotConfigured&)
-            {
-              throw;
-            }
-            catch(...)
-            {
-              proxy.release_bad(String::SubString(fn_name));
-              throw;
-            }
-          }
-          timer.stop();
-          logger_->sstream(Logging::Logger::DEBUG, ASPECT)
-            << fn_name << ": execute query time: " << timer.elapsed_time();
-        }
-        catch(const AdServer::ChannelSvcs::ImplementationException& e)
-        {
-          ostr << (log ? "; " : fn_name) << ": ImplementationException: "
-            << e.description;
-          log = true;
-          exception = true;
-        }
-        catch(const AdServer::ChannelSvcs::NotConfigured& e)
-        {
-          ostr << (log ? "; " : fn_name) << ": NotConfigured"
-            << e.description;
-          log = true;
-          exception = true;
-        }
-        catch(const CORBA::SystemException& e_123)
-        {
-          Stream::Error err;
-          err << fn_name << ": CORBA::SystemException: " << e_123;
-          logger_->log(
-              err.str(),
-              Logging::Logger::CRITICAL,
-              ASPECT,
-              "ADS-ICON-0");
-          exception = true;
-        }
-        catch(const eh::Exception& ex)
-        {
-          ostr << fn_name << ": eh::Exception: " << ex.what();
-          log = true;
-          exception = true;
-        }
-        if(exception)
-        {
-          if(use_servers)
-          {
-            if(iter < tries_)
-            {
-              next_try = true;
-            }
-            else if(proxy_pool_.get() && priority_ == PRIORITY_SERVERS)
-            {
-              use_servers = false;
-              next_try = true;
-            }
-          }
-          else
-          {
-            if(priority_ == PRIORITY_PROXY && tries_)
-            {
-              use_servers = true;
-              next_try = true;
-            }
-          }
-        }
-      } while(next_try);
-      if(exception)
-      {
-        throw ChannelServerException::Exception(
-          log ? ostr.str().c_str() : "");
-      }
-      else if(log)
-      {
-        logger_->log(
-          String::SubString(ostr.str()),
-          Logging::Logger::ERROR, ASPECT, "ADS-IMPL-15");
-      }
-    }
   }
 }
-
-#endif
-

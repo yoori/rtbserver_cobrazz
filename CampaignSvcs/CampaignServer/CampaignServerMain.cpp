@@ -18,9 +18,6 @@ namespace
 {
   const char* ASPECT  = "CampaignServer";
   const char* PROCESS_CONTROL_OBJ_KEY = "ProcessControl";
-  //const char* CAMPAIGN_SERVER_V320_OBJ_KEY = "CampaignServer_v320";
-  //const char* CAMPAIGN_SERVER_V330_OBJ_KEY = "CampaignServer_v330";
-  //const char* CAMPAIGN_SERVER_V340_OBJ_KEY = "CampaignServer_v340";
   const char* CAMPAIGN_SERVER_V350_OBJ_KEY = "CampaignServer_v350";
 
   const char* CAMPAIGN_SERVER_OBJ_KEY = "CampaignServer_v360";
@@ -186,35 +183,6 @@ CampaignServerApp_::main(int& argc, char** argv) noexcept
           new AdServer::CampaignSvcs::CampaignServerImpl_v350(
             logger(),
             campaign_server_impl_);
-
-      /*
-      AdServer::CampaignSvcs::CampaignServerImpl_v340_var
-        campaign_server_impl_v340 =
-          new AdServer::CampaignSvcs::CampaignServerImpl_v340(
-            logger(),
-            campaign_server_impl_v350);
-
-      AdServer::CampaignSvcs::CampaignServerImpl_v331_var
-        campaign_server_impl_v331 =
-          new AdServer::CampaignSvcs::CampaignServerImpl_v331(
-            logger(),
-            campaign_server_impl_v340);
-
-      AdServer::CampaignSvcs::CampaignServerImpl_v320_var
-        campaign_server_impl_v320 =
-          new AdServer::CampaignSvcs::CampaignServerImpl_v320(
-            logger(),
-            campaign_server_impl_v331);
-
-      corba_server_adapter_->add_binding(
-        CAMPAIGN_SERVER_V320_OBJ_KEY, campaign_server_impl_v320.in());
-
-      corba_server_adapter_->add_binding(
-        CAMPAIGN_SERVER_V330_OBJ_KEY, campaign_server_impl_v331.in());
-
-      corba_server_adapter_->add_binding(
-        CAMPAIGN_SERVER_V340_OBJ_KEY, campaign_server_impl_v340.in());
-      */
 
       corba_server_adapter_->add_binding(
         CAMPAIGN_SERVER_V350_OBJ_KEY, campaign_server_impl_v350.in());

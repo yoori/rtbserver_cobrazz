@@ -1,6 +1,6 @@
-#ifndef AD_SERVER_CHANNEL_DICTIONARY_PROVIDER_IMPL_HPP_
-#define AD_SERVER_CHANNEL_DICTIONARY_PROVIDER_IMPL_HPP_
+#pragma once
 
+#include <atomic>
 #include <set>
 #include <vector>
 
@@ -95,7 +95,7 @@ namespace AdServer
       Logging::ActiveObjectCallbackImpl_var callback_;
       Generics::TaskRunner_var task_runner_;
       DictionaryContainer cont_;
-      volatile _Atomic_word task_runned_;
+      std::atomic<long> task_runned_;
       static const char* ASPECT;
       static const size_t MAX_LOAD_SIZE;
     };
@@ -146,5 +146,3 @@ namespace AdServer
   } /* ChannelSvcs */
 } /* AdServer */
 
-
-#endif /*AD_SERVER_CHANNEL_DICTIONARY_PROVIDER_IMPL_HPP_*/

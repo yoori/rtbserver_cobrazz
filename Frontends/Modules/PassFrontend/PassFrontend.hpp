@@ -110,7 +110,7 @@ namespace Passback
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    FrontendCommons::UserInfoClient_var user_info_client_;
+    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
   };
 }
 }

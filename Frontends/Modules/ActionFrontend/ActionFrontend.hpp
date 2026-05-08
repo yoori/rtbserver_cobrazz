@@ -21,7 +21,7 @@
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
-#include <Frontends/FrontendCommons/UserInfoClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -227,7 +227,7 @@ namespace Action
     ChannelServerSessionFactoryImpl_var server_session_factory_;
     std::unique_ptr<FrontendCommons::ChannelCorbaClient>
       channel_servers_;
-    FrontendCommons::UserInfoClient_var user_info_client_;
+    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
     CookieManagerPtr cookie_manager_;
 
     IPMapPtr ip_map_;

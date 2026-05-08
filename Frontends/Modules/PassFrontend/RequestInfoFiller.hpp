@@ -20,7 +20,7 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/UserAgentMatcher.hpp>
-#include <Frontends/FrontendCommons/UserInfoClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <Frontends/FrontendCommons/RequestParamProcessor.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 

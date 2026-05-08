@@ -9,7 +9,7 @@
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
 
-#include <UserInfoSvcs/UserInfoManagerController/UserInfoOperationDistributor.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
 #include <CampaignSvcs/CampaignManager/CampaignConfigSource.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
@@ -737,16 +737,16 @@ namespace RequestInfoSvcs
       ExpressionMatcherConfigType::UserInfoManagerControllerGroup_sequence
       UserInfoManagerControllerGroupSeq;
 
-    AdServer::UserInfoSvcs::UserInfoOperationDistributor::
-      ControllerRefList controller_groups;
+    AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
+      controller_groups;
 
     for(UserInfoManagerControllerGroupSeq::const_iterator cg_it =
           expression_matcher_config_.UserInfoManagerControllerGroup().begin();
         cg_it != expression_matcher_config_.UserInfoManagerControllerGroup().end();
         ++cg_it)
     {
-      AdServer::UserInfoSvcs::UserInfoOperationDistributor::
-        ControllerRef controller_ref_group;
+      AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
+        controller_ref_group;
 
       Config::CorbaConfigReader::read_multi_corba_ref(
         *cg_it,
@@ -755,16 +755,16 @@ namespace RequestInfoSvcs
       controller_groups.push_back(controller_ref_group);
     }
 
-    AdServer::UserInfoSvcs::UserInfoOperationDistributor_var distributor =
-      new AdServer::UserInfoSvcs::UserInfoOperationDistributor(
+    AdServer::UserInfoSvcs::UserInfoCorbaClient_var client =
+      new AdServer::UserInfoSvcs::UserInfoCorbaClient(
         callback_->logger(),
         controller_groups,
         corba_client_adapter_.in(),
         Generics::Time::ZERO // pool timeout
       );
 
-    user_info_manager_session_ = ReferenceCounting::add_ref(distributor);
-    add_child_object(distributor.in());
+    user_info_manager_session_ = client->user_info_session();
+    add_child_object(client.in());
 
     try_start_daily_processing_loop_();
 

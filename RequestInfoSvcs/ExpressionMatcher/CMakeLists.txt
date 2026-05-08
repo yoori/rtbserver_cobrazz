@@ -63,6 +63,7 @@ target_link_libraries(ExpressionMatcher
   RequestTriggerMatchProfilePST
 
   ExpressionMatcherCompatibility
+  UserInfoClient
   UserInfoManagerControllerCall
 
   AdServerCommonsXSD

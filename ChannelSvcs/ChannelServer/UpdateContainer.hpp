@@ -1,6 +1,4 @@
-
-#ifndef AD_SERVER_UPDATE_CONTAINER
-#define AD_SERVER_UPDATE_CONTAINER
+#pragma once
 
 #include <map>
 #include <set>
@@ -166,6 +164,4 @@ namespace AdServer
 
   }//namespace ChannelSvcs
 }
-
-#endif //AD_SERVER_UPDATE_CONTAINER
 

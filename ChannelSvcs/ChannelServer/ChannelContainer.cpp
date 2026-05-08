@@ -1441,14 +1441,14 @@ namespace ChannelSvcs
           res);
       }
 
-      __gnu_cxx::__atomic_add(&queries_, 1);
+      queries_.fetch_add(1, std::memory_order_relaxed);
     }
     catch(const Exception& e)
     {
       Stream::Error ostr;
       ostr << "ChannelContainer::match: Caught Exception: " <<
         e.what();
-      __gnu_cxx::__atomic_add(&exceptions_, 1);
+      exceptions_.fetch_add(1, std::memory_order_relaxed);
       throw Exception(ostr);
     }
     catch(const eh::Exception& e)
@@ -1456,7 +1456,7 @@ namespace ChannelSvcs
       Stream::Error ostr;
       ostr << "ChannelContainer::match: Caught eh::Exception: " <<
         e.what();
-      __gnu_cxx::__atomic_add(&exceptions_, 1);
+      exceptions_.fetch_add(1, std::memory_order_relaxed);
       throw Exception(ostr);
     }
   }
@@ -1592,8 +1592,10 @@ namespace ChannelSvcs
         stats_.params[ChannelServerStats::NS_KW_COUNT] = ns_trigger_map_.size();
         stats_.params[ChannelServerStats::NS_URL_COUNT] = ns_url_map_.size();
       }
-      stats_.params[ChannelServerStats::MATCHINGS_COUNT] = queries_;
-      stats_.params[ChannelServerStats::EXCEPTIONS_COUNT] = exceptions_;
+      stats_.params[ChannelServerStats::MATCHINGS_COUNT] =
+        queries_.load(std::memory_order_relaxed);
+      stats_.params[ChannelServerStats::EXCEPTIONS_COUNT] =
+        exceptions_.load(std::memory_order_relaxed);
     }
     stats = stats_;
   }
@@ -1960,4 +1962,3 @@ namespace ChannelSvcs
 
 }// namespace ChannelSvcs
 }
-

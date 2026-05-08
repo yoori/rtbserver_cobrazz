@@ -1,8 +1,6 @@
 #ifndef _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROL_IDL_
 #define _USER_INFO_SVCS_USER_INFO_MANAGER_CONTROL_IDL_
 
-#include <CORBACommons/Stats.idl>
-
 module AdServer
 {
   module UserInfoSvcs
@@ -15,12 +13,6 @@ module AdServer
       unsigned long common_chunks_number;
     };
     
-    enum UserInfoManagerStatus
-    {
-      S_READY, // ready but not admited to cluster
-      S_ADMITTED
-    };
-        
     interface UserInfoManagerControl
     {
       exception ImplementationException
@@ -31,9 +23,6 @@ module AdServer
       void 
       get_source_info(out ChunksConfig user_info_source)
         raises(ImplementationException);
-
-      /** get status from controlled services */
-      UserInfoManagerStatus status() raises(ImplementationException);
 
       void admit() /* raises() */;
     };

@@ -3,12 +3,15 @@
 #include <grpcpp/grpcpp.h>
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/Grpc/GrpcServer.hpp>
 
+#include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <UserInfoSvcs/UserInfoManager/UserInfoManagerGrpc.grpc.pb.h>
 
 namespace AdServer::UserInfoSvcs
@@ -31,6 +34,17 @@ namespace AdServer::UserInfoSvcs
       return std::string(
         reinterpret_cast<const char*>(src.get_buffer()),
         reinterpret_cast<const char*>(src.get_buffer() + src.length()));
+    }
+
+    UserInfoManagerCore::ByteVector bytes_to_vector_(const std::string& src)
+    {
+      return UserInfoManagerCore::ByteVector(src.begin(), src.end());
+    }
+
+    std::string vector_to_bytes_(
+      const UserInfoManagerCore::ByteVector& src)
+    {
+      return std::string(src.begin(), src.end());
     }
 
     template<typename CorbaSeq, typename Repeated>
@@ -83,6 +97,18 @@ namespace AdServer::UserInfoSvcs
       dst.temporary = src.temporary();
     }
 
+    UserInfoManagerCore::UserInfo unpack_user_info_(const UserInfo& src)
+    {
+      UserInfoManagerCore::UserInfo dst;
+      dst.user_id = CorbaAlgs::unpack_user_id(src.user_id);
+      dst.huser_id = CorbaAlgs::unpack_user_id(src.huser_id);
+      dst.time = Generics::Time(src.time);
+      dst.request_colo_id = src.request_colo_id;
+      dst.current_colo_id = src.current_colo_id;
+      dst.temporary = src.temporary;
+      return dst;
+    }
+
     void convert_(
       const adserver::user_info_svcs::user_info_manager::ProfilesRequestInfo& src,
       ProfilesRequestInfo& dst)
@@ -92,6 +118,16 @@ namespace AdServer::UserInfoSvcs
       dst.history_profile = src.history_profile();
       dst.freq_cap_profile = src.freq_cap_profile();
       dst.pref_profile = src.pref_profile();
+    }
+
+    UserInfoManagerCore::ProfilesRequest
+    unpack_profiles_request_(const ProfilesRequestInfo& src)
+    {
+      return {
+        src.base_profile,
+        src.add_profile,
+        src.history_profile,
+        src.freq_cap_profile};
     }
 
     void convert_(
@@ -114,6 +150,28 @@ namespace AdServer::UserInfoSvcs
       dst.set_history_user_profile(oct_seq_to_bytes_(src.history_user_profile));
       dst.set_freq_cap(oct_seq_to_bytes_(src.freq_cap));
       dst.set_pref_profile(oct_seq_to_bytes_(src.pref_profile));
+    }
+
+    UserInfoManagerCore::UserProfiles
+    unpack_user_profiles_(const UserProfiles& src)
+    {
+      return {
+        bytes_to_vector_(oct_seq_to_bytes_(src.base_user_profile)),
+        bytes_to_vector_(oct_seq_to_bytes_(src.add_user_profile)),
+        bytes_to_vector_(oct_seq_to_bytes_(src.history_user_profile)),
+        bytes_to_vector_(oct_seq_to_bytes_(src.freq_cap)),
+        bytes_to_vector_(oct_seq_to_bytes_(src.pref_profile))};
+    }
+
+    void pack_user_profiles_(
+      const UserInfoManagerCore::UserProfiles& src,
+      adserver::user_info_svcs::user_info_manager::UserProfiles& dst)
+    {
+      dst.set_base_user_profile(vector_to_bytes_(src.base_user_profile));
+      dst.set_add_user_profile(vector_to_bytes_(src.add_user_profile));
+      dst.set_history_user_profile(vector_to_bytes_(src.history_user_profile));
+      dst.set_freq_cap(vector_to_bytes_(src.freq_cap));
+      dst.set_pref_profile(vector_to_bytes_(src.pref_profile));
     }
 
     void convert_(
@@ -140,6 +198,47 @@ namespace AdServer::UserInfoSvcs
       {
         convert_(src.Get(i), dst[i]);
       }
+    }
+
+    template<typename Seq>
+    std::vector<UserInfoManagerCore::ChannelTriggerMatch>
+    unpack_channel_matches_(const Seq& src)
+    {
+      std::vector<UserInfoManagerCore::ChannelTriggerMatch> result;
+      result.reserve(src.length());
+      for(CORBA::ULong i = 0; i < src.length(); ++i)
+      {
+        result.push_back({src[i].channel_id, src[i].channel_trigger_id});
+      }
+      return result;
+    }
+
+    template<typename Seq>
+    std::vector<unsigned long> unpack_ids_(const Seq& src)
+    {
+      return std::vector<unsigned long>(
+        src.get_buffer(),
+        src.get_buffer() + src.length());
+    }
+
+    template<typename Seq>
+    std::set<unsigned long> unpack_id_set_(const Seq& src)
+    {
+      return std::set<unsigned long>(
+        src.get_buffer(),
+        src.get_buffer() + src.length());
+    }
+
+    std::vector<UserInfoManagerCore::SeqOrder>
+    unpack_seq_orders_(const UserInfoManager::SeqOrderSeq& src)
+    {
+      std::vector<UserInfoManagerCore::SeqOrder> result;
+      result.reserve(src.length());
+      for(CORBA::ULong i = 0; i < src.length(); ++i)
+      {
+        result.push_back({src[i].ccg_id, src[i].set_id, src[i].imps});
+      }
+      return result;
     }
 
     void convert_(
@@ -170,6 +269,43 @@ namespace AdServer::UserInfoSvcs
       {
         convert_(src.geo_data_seq(i), dst.geo_data_seq[i]);
       }
+    }
+
+    UserInfoManagerCore::MatchParams
+    unpack_match_params_(const UserInfoMatcher::MatchParams& src)
+    {
+      UserInfoManagerCore::MatchParams dst;
+      dst.page_channel_ids = unpack_channel_matches_(src.page_channel_ids);
+      dst.search_channel_ids = unpack_channel_matches_(src.search_channel_ids);
+      dst.url_channel_ids = unpack_channel_matches_(src.url_channel_ids);
+      dst.url_keyword_channel_ids =
+        unpack_channel_matches_(src.url_keyword_channel_ids);
+      dst.persistent_channel_ids = unpack_ids_(src.persistent_channel_ids);
+      dst.cohort = src.cohort.in();
+      dst.cohort2 = src.cohort2.in();
+      dst.publishers_optin_timeout =
+        CorbaAlgs::unpack_time(src.publishers_optin_timeout);
+      dst.use_empty_profile = src.use_empty_profile;
+      dst.filter_contextual_triggers = src.filter_contextual_triggers;
+      dst.silent_match = src.silent_match;
+      dst.no_match = src.no_match;
+      dst.no_result = src.no_result;
+      dst.provide_channel_count = src.provide_channel_count;
+      dst.provide_persistent_channels = src.provide_persistent_channels;
+      dst.change_last_request = src.change_last_request;
+      dst.ret_freq_caps = src.ret_freq_caps;
+      dst.geo_data_seq.reserve(src.geo_data_seq.length());
+      for(CORBA::ULong i = 0; i < src.geo_data_seq.length(); ++i)
+      {
+        dst.geo_data_seq.push_back({
+          CorbaAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
+            src.geo_data_seq[i].latitude),
+          CorbaAlgs::unpack_decimal<CampaignSvcs::CoordDecimal>(
+            src.geo_data_seq[i].longitude),
+          CorbaAlgs::unpack_decimal<CampaignSvcs::AccuracyDecimal>(
+            src.geo_data_seq[i].accuracy)});
+      }
+      return dst;
     }
 
     void convert_(
@@ -250,6 +386,96 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
+    void convert_(
+      const UserInfoManagerCore::ChannelWeight& src,
+      adserver::user_info_svcs::user_info_manager::ChannelWeight& dst)
+    {
+      dst.set_channel_id(src.channel_id);
+      dst.set_weight(src.weight);
+    }
+
+    void convert_(
+      const UserInfoManagerCore::SeqOrder& src,
+      adserver::user_info_svcs::user_info_manager::SeqOrderInfo& dst)
+    {
+      dst.set_ccg_id(src.ccg_id);
+      dst.set_set_id(src.set_id);
+      dst.set_imps(src.imps);
+    }
+
+    void convert_(
+      const UserInfoManagerCore::CampaignFreq& src,
+      adserver::user_info_svcs::user_info_manager::CampaignFreq& dst)
+    {
+      dst.set_campaign_id(src.campaign_id);
+      dst.set_imps(src.imps);
+    }
+
+    void convert_(
+      const UserInfoManagerCore::GeoData& src,
+      adserver::user_info_svcs::user_info_manager::GeoData& dst)
+    {
+      dst.set_latitude(oct_seq_to_bytes_(
+        CorbaAlgs::pack_decimal<CampaignSvcs::CoordDecimal>(src.latitude)));
+      dst.set_longitude(oct_seq_to_bytes_(
+        CorbaAlgs::pack_decimal<CampaignSvcs::CoordDecimal>(src.longitude)));
+      dst.set_accuracy(oct_seq_to_bytes_(
+        CorbaAlgs::pack_decimal<CampaignSvcs::AccuracyDecimal>(src.accuracy)));
+    }
+
+    void convert_(
+      const UserInfoManagerCore::MatchResult& src,
+      adserver::user_info_svcs::user_info_manager::MatchResult& dst)
+    {
+      dst.set_times_inited(src.times_inited);
+      dst.set_last_request_time(oct_seq_to_bytes_(CorbaAlgs::pack_time(
+        src.last_request_time)));
+      dst.set_create_time(oct_seq_to_bytes_(CorbaAlgs::pack_time(
+        src.create_time)));
+      dst.set_session_start(oct_seq_to_bytes_(CorbaAlgs::pack_time(
+        src.session_start)));
+      dst.set_colo_id(src.colo_id);
+      for(const auto& channel : src.channels)
+      {
+        convert_(channel, *dst.add_channels());
+      }
+      for(const auto& channel : src.hid_channels)
+      {
+        convert_(channel, *dst.add_hid_channels());
+      }
+      for(const auto id : src.full_freq_caps)
+      {
+        dst.add_full_freq_caps(id);
+      }
+      for(const auto id : src.full_virtual_freq_caps)
+      {
+        dst.add_full_virtual_freq_caps(id);
+      }
+      for(const auto& seq_order : src.seq_orders)
+      {
+        convert_(seq_order, *dst.add_seq_orders());
+      }
+      for(const auto& campaign_freq : src.campaign_freqs)
+      {
+        convert_(campaign_freq, *dst.add_campaign_freqs());
+      }
+      dst.set_fraud_request(src.fraud_request);
+      dst.set_process_time(oct_seq_to_bytes_(CorbaAlgs::pack_time(
+        src.process_time)));
+      dst.set_adv_channel_count(src.adv_channel_count);
+      dst.set_discover_channel_count(src.discover_channel_count);
+      dst.set_cohort(src.cohort);
+      dst.set_cohort2(src.cohort2);
+      for(const auto id : src.exclude_pubpixel_accounts)
+      {
+        dst.add_exclude_pubpixel_accounts(id);
+      }
+      for(const auto& geo_data : src.geo_data_seq)
+      {
+        convert_(geo_data, *dst.add_geo_data_seq());
+      }
+    }
+
     template<typename PbRepeated, typename CorbaSeq>
     void convert_seq_order_seq_(const PbRepeated& src, CorbaSeq& dst)
     {
@@ -260,25 +486,25 @@ namespace AdServer::UserInfoSvcs
       }
     }
 
-    grpc::Status to_status_(const UserInfoManager::NotReady& ex)
+    grpc::Status to_status_(const UserInfoManagerCore::NotReady& ex)
     {
       return AdServer::Grpc::error_status(
         grpc::StatusCode::UNAVAILABLE,
-        ex.description.in());
+        ex.what());
     }
 
-    grpc::Status to_status_(const UserInfoManager::ChunkNotFound& ex)
+    grpc::Status to_status_(const UserInfoManagerCore::ChunkNotFound& ex)
     {
       return AdServer::Grpc::error_status(
         grpc::StatusCode::NOT_FOUND,
-        ex.description.in());
+        ex.what());
     }
 
-    grpc::Status to_status_(const UserInfoManager::ImplementationException& ex)
+    grpc::Status to_status_(const UserInfoManagerCore::Exception& ex)
     {
       return AdServer::Grpc::error_status(
         grpc::StatusCode::INTERNAL,
-        ex.description.in());
+        ex.what());
     }
   }
 
@@ -292,8 +518,8 @@ namespace AdServer::UserInfoSvcs
       adserver::user_info_svcs::user_info_manager::UserInfoManagerGrpc::AsyncService;
 
   public:
-    explicit ServiceImpl(UserInfoManagerImpl* user_info_manager)
-      : user_info_manager_(ReferenceCounting::add_ref(user_info_manager))
+    explicit ServiceImpl(UserInfoManagerCorePtr user_info_manager)
+      : user_info_manager_(std::move(user_info_manager))
     {}
 
     static auto grpc_calls()
@@ -381,7 +607,7 @@ namespace AdServer::UserInfoSvcs
       grpc::Status& result_status) const;
 
   private:
-    UserInfoManagerImpl_var user_info_manager_;
+    UserInfoManagerCorePtr user_info_manager_;
   };
 
   void UserInfoManagerGrpc::ServiceImpl::get_source(
@@ -391,7 +617,7 @@ namespace AdServer::UserInfoSvcs
   {
     try
     {
-      UserInfoManagerImpl::ChunkIdList chunks;
+      UserInfoManagerCore::ChunkIdList chunks;
       unsigned long chunks_number = 0;
       user_info_manager_->get_controllable_chunks(chunks, chunks_number);
       for(const auto chunk : chunks)
@@ -416,13 +642,12 @@ namespace AdServer::UserInfoSvcs
   {
     try
     {
-      CORBACommons::TimestampInfo_var master_stamp;
-      user_info_manager_->get_master_stamp(master_stamp.out());
-      response.set_master_stamp(oct_seq_to_bytes_(master_stamp.in()));
+      response.set_master_stamp(oct_seq_to_bytes_(CorbaAlgs::pack_time(
+        user_info_manager_->get_master_stamp())));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::get_user_profile(
@@ -437,19 +662,19 @@ namespace AdServer::UserInfoSvcs
       bytes_to_oct_seq_(request.user_id(), user_id);
       convert_(request.profile_request(), profile_request);
 
-      UserProfiles_var user_profile;
+      UserInfoManagerCore::UserProfiles user_profile;
       const bool found = user_info_manager_->get_user_profile(
-        user_id,
+        CorbaAlgs::unpack_user_id(user_id),
         request.temporary(),
-        profile_request,
-        user_profile.out());
+        unpack_profiles_request_(profile_request),
+        user_profile);
       response.set_found(found);
-      convert_(user_profile.in(), *response.mutable_user_profile());
+      pack_user_profiles_(user_profile, *response.mutable_user_profile());
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::match(
@@ -464,18 +689,18 @@ namespace AdServer::UserInfoSvcs
       convert_(request.user_info(), user_info);
       convert_(request.match_params(), match_params);
 
-      UserInfoMatcher::MatchResult_var match_result;
+      UserInfoManagerCore::MatchResult match_result;
       const bool matched = user_info_manager_->match(
-        user_info,
-        match_params,
-        match_result.out());
+        unpack_user_info_(user_info),
+        unpack_match_params_(match_params),
+        match_result);
       response.set_matched(matched);
-      convert_(match_result.in(), *response.mutable_match_result());
+      convert_(match_result, *response.mutable_match_result());
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::update_user_freq_caps(
@@ -504,20 +729,20 @@ namespace AdServer::UserInfoSvcs
       repeated_to_id_seq_(request.campaign_ids(), campaign_ids);
       repeated_to_id_seq_(request.uc_campaign_ids(), uc_campaign_ids);
       user_info_manager_->update_user_freq_caps(
-        user_id,
-        time,
-        request_id,
-        freq_caps,
-        uc_freq_caps,
-        virtual_freq_caps,
-        seq_orders,
-        campaign_ids,
-        uc_campaign_ids);
+        CorbaAlgs::unpack_user_id(user_id),
+        CorbaAlgs::unpack_time(time),
+        CorbaAlgs::unpack_request_id(request_id),
+        unpack_ids_(freq_caps),
+        unpack_ids_(uc_freq_caps),
+        unpack_ids_(virtual_freq_caps),
+        unpack_seq_orders_(seq_orders),
+        unpack_ids_(campaign_ids),
+        unpack_ids_(uc_campaign_ids));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::confirm_user_freq_caps(
@@ -538,15 +763,15 @@ namespace AdServer::UserInfoSvcs
         request.exclude_pubpixel_accounts(),
         exclude_pubpixel_accounts);
       user_info_manager_->confirm_user_freq_caps(
-        user_id,
-        time,
-        request_id,
-        exclude_pubpixel_accounts);
+        CorbaAlgs::unpack_user_id(user_id),
+        CorbaAlgs::unpack_time(time),
+        CorbaAlgs::unpack_request_id(request_id),
+        unpack_id_set_(exclude_pubpixel_accounts));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::fraud_user(
@@ -560,12 +785,14 @@ namespace AdServer::UserInfoSvcs
       CORBACommons::TimestampInfo time;
       bytes_to_oct_seq_(request.user_id(), user_id);
       bytes_to_oct_seq_(request.time(), time);
-      response.set_fraud(user_info_manager_->fraud_user(user_id, time));
+      response.set_fraud(user_info_manager_->fraud_user(
+        CorbaAlgs::unpack_user_id(user_id),
+        CorbaAlgs::unpack_time(time)));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::remove_user_profile(
@@ -577,12 +804,13 @@ namespace AdServer::UserInfoSvcs
     {
       CORBACommons::UserIdInfo user_id;
       bytes_to_oct_seq_(request.user_id(), user_id);
-      response.set_removed(user_info_manager_->remove_user_profile(user_id));
+      response.set_removed(user_info_manager_->remove_user_profile(
+        CorbaAlgs::unpack_user_id(user_id)));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::merge(
@@ -595,24 +823,25 @@ namespace AdServer::UserInfoSvcs
       UserInfo user_info;
       UserInfoMatcher::MatchParams match_params;
       UserProfiles merge_user_profile;
-      CORBA::Boolean merge_success = false;
-      CORBACommons::TimestampInfo_var last_request;
+      bool merge_success = false;
+      Generics::Time last_request;
       convert_(request.user_info(), user_info);
       convert_(request.match_params(), match_params);
       convert_(request.merge_user_profile(), merge_user_profile);
       response.set_result(user_info_manager_->merge(
-        user_info,
-        match_params,
-        merge_user_profile,
+        unpack_user_info_(user_info),
+        unpack_match_params_(match_params),
+        unpack_user_profiles_(merge_user_profile),
         merge_success,
-        last_request.out()));
+        last_request));
       response.set_merge_success(merge_success);
-      response.set_last_request(oct_seq_to_bytes_(last_request.in()));
+      response.set_last_request(oct_seq_to_bytes_(CorbaAlgs::pack_time(
+        last_request)));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::consider_publishers_optin(
@@ -631,14 +860,14 @@ namespace AdServer::UserInfoSvcs
         request.exclude_pubpixel_accounts(),
         exclude_pubpixel_accounts);
       user_info_manager_->consider_publishers_optin(
-        user_id,
-        exclude_pubpixel_accounts,
-        now);
+        CorbaAlgs::unpack_user_id(user_id),
+        unpack_id_set_(exclude_pubpixel_accounts),
+        CorbaAlgs::unpack_time(now));
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::NotReady& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ChunkNotFound& ex) { result_status = to_status_(ex); }
-    catch(const UserInfoManager::ImplementationException& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::NotReady& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::ChunkNotFound& ex) { result_status = to_status_(ex); }
+    catch(const UserInfoManagerCore::Exception& ex) { result_status = to_status_(ex); }
   }
 
   void UserInfoManagerGrpc::ServiceImpl::uim_ready(
@@ -655,8 +884,7 @@ namespace AdServer::UserInfoSvcs
     adserver::user_info_svcs::user_info_manager::GetProgressResponse& response,
     grpc::Status& result_status) const
   {
-    CORBA::String_var progress = user_info_manager_->get_progress();
-    response.set_progress(progress.in());
+    response.set_progress(user_info_manager_->get_progress());
     result_status = grpc::Status::OK;
   }
 
@@ -671,18 +899,18 @@ namespace AdServer::UserInfoSvcs
       bytes_to_oct_seq_(request.cleanup_time(), cleanup_time);
       user_info_manager_->clear_expired(
         request.sync(),
-        cleanup_time,
+        CorbaAlgs::unpack_time(cleanup_time),
         request.portion());
       result_status = grpc::Status::OK;
     }
-    catch(const UserInfoManager::ImplementationException& ex)
+    catch(const UserInfoManagerCore::Exception& ex)
     {
       result_status = to_status_(ex);
     }
   }
 
   UserInfoManagerGrpc::UserInfoManagerGrpc(
-    UserInfoManagerImpl* user_info_manager,
+    UserInfoManagerCorePtr user_info_manager,
     Logging::Logger* logger,
     std::string_view bind_address,
     unsigned int bind_port)
@@ -691,7 +919,7 @@ namespace AdServer::UserInfoSvcs
         logger,
         user_info_manager_grpc_aspect,
         bind_address_,
-        std::make_unique<ServiceImpl>(user_info_manager)))
+        std::make_unique<ServiceImpl>(std::move(user_info_manager))))
   {
     add_child_object(impl_);
   }

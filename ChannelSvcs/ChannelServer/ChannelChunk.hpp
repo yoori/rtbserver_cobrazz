@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_CHANNEL_CHUNK
-#define AD_SERVER_CHANNEL_CHUNK
+#pragma once
 
 #include <vector>
 #include <map>
@@ -784,4 +783,3 @@ namespace ChannelSvcs
 }
 }
 
-#endif //AD_SERVER_CHANNEL_CHUNK

@@ -40,7 +40,7 @@ namespace ChannelSvcs
         Task_var msg = new LoadTask(
           this, task_runner_, it->file().c_str(), it->lang().c_str());
         task_runner_->enqueue_task(msg);
-        __gnu_cxx::__atomic_add(&task_runned_, 1);
+        task_runned_.fetch_add(1, std::memory_order_relaxed);
       }
     }
     catch(const eh::Exception& e)
@@ -78,14 +78,15 @@ namespace ChannelSvcs
     }
     try
     {
-      __gnu_cxx::__atomic_add(&task_runned_, -1);
+      task_runned_.fetch_sub(1, std::memory_order_relaxed);
     }
     catch(const eh::Exception& e)
     {
       logger()->sstream(Logging::Logger::EMERGENCY, ASPECT, "ADS-IMPL-1302")
         << FN << ": Exception: " << e.what();
     }
-    if(logger()->log_level() >= Logging::Logger::DEBUG && task_runned_ == 0)
+    if(logger()->log_level() >= Logging::Logger::DEBUG &&
+      task_runned_.load(std::memory_order_relaxed) == 0)
     {
       std::ostringstream ostr;
       cont_.get_statistic(ostr);
@@ -98,10 +99,11 @@ namespace ChannelSvcs
     const char* language, const ::CORBACommons::StringSeq& words)
   /*throw(ChannelSvcs::NotReady, ChannelSvcs::ImplementationException)*/
   {
-    if(task_runned_)
+    const long task_runned = task_runned_.load(std::memory_order_relaxed);
+    if(task_runned)
     {
       Stream::Error err;
-      err << "Not ready :" << task_runned_ << " tasks remained";
+      err << "Not ready :" << task_runned << " tasks remained";
       CORBACommons::throw_desc<ChannelSvcs::NotReady>(err.str());
     }
     try

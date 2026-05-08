@@ -1,5 +1,4 @@
-#ifndef CHANNEL_UTILS_HPP
-#define CHANNEL_UTILS_HPP
+#pragma once
 
 #include<string>
 #include <Commons/CorbaAlgs.hpp>
@@ -129,6 +128,4 @@ namespace ChannelSvcs
     }
 }
 }
-
-#endif
 

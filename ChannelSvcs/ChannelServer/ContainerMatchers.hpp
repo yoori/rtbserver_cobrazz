@@ -1,6 +1,4 @@
-
-#ifndef AD_SERVER_CONTAINER_MATCHERS_HPP
-#define AD_SERVER_CONTAINER_MATCHERS_HPP
+#pragma once
 
 #include <vector>
 #include <ostream>
@@ -73,4 +71,3 @@ std::ostream& operator<<(std::ostream& os, const AdServer::ChannelSvcs::Positive
   return os;
 }
 
-#endif //AD_SERVER_CONTAINER_MATCHERS_HPP

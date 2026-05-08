@@ -359,10 +359,22 @@ namespace Passback
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
 
-        user_info_client_ = new FrontendCommons::UserInfoClient(
-          common_config_->UserInfoManagerControllerGroup(),
-          corba_client_adapter_.in(),
-          logger());
+        AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
+          user_info_controller_groups;
+        for(const auto& controller_group :
+            common_config_->UserInfoManagerControllerGroup())
+        {
+          AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
+            controller_group_refs;
+          Config::CorbaConfigReader::read_multi_corba_ref(
+            controller_group,
+            controller_group_refs);
+          user_info_controller_groups.push_back(controller_group_refs);
+        }
+        user_info_client_ = new AdServer::UserInfoSvcs::UserInfoCorbaClient(
+          logger(),
+          user_info_controller_groups,
+          corba_client_adapter_.in());
 
         add_child_object(user_info_client_);
 

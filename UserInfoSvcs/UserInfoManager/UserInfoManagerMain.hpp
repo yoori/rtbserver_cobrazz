@@ -2,6 +2,9 @@
 #define _USER_INFO_SVCS_USER_INFO_MANAGER_MAIN_HPP_
 
 #include <eh/Exception.hpp>
+
+#include <memory>
+
 #include <Generics/Time.hpp>
 #include <Generics/Singleton.hpp>
 
@@ -11,6 +14,7 @@
 #include <xsd/UserInfoSvcs/UserInfoManagerConfig.hpp>
 
 #include "UserInfoManager.hpp"
+#include "UserInfoManagerCore.hpp"
 #include "UserInfoManagerImpl.hpp"
 #include "UserInfoManagerControlImpl.hpp"
 #include "UserInfoManagerGrpc.hpp"
@@ -48,17 +52,18 @@ protected:
 private:
   virtual ~UserInfoManagerApp_() noexcept{};
 
-  const AdServer::UserInfoSvcs::UserInfoManagerImpl::UserInfoManagerConfig&
+  const AdServer::UserInfoSvcs::UserInfoManagerCore::UserInfoManagerConfig&
     config() const noexcept;
 
   typedef std::unique_ptr<
-    AdServer::UserInfoSvcs::UserInfoManagerImpl::UserInfoManagerConfig>
+    AdServer::UserInfoSvcs::UserInfoManagerCore::UserInfoManagerConfig>
     ConfigPtr;
 
 private:
   CORBACommons::CorbaServerAdapter_var corba_server_adapter_;
   CORBACommons::CorbaConfig corba_config_;
 
+  AdServer::UserInfoSvcs::UserInfoManagerCorePtr user_info_manager_core_;
   AdServer::UserInfoSvcs::UserInfoManagerImpl_var
     user_info_manager_impl_;
   AdServer::UserInfoSvcs::UserInfoManagerControlImpl_var
@@ -85,7 +90,7 @@ typedef Generics::Singleton<UserInfoManagerApp_, UserInfoManagerApp_var>
 //////////////////////////////////////////////////////////////////////////////
 
 inline
-const AdServer::UserInfoSvcs::UserInfoManagerImpl::UserInfoManagerConfig&
+const AdServer::UserInfoSvcs::UserInfoManagerCore::UserInfoManagerConfig&
 UserInfoManagerApp_::config() const noexcept
 {
   return *configuration_.get();

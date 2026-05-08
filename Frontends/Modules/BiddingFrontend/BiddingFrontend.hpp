@@ -31,7 +31,7 @@
 
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
-#include <Frontends/FrontendCommons/UserInfoClient.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -399,7 +399,7 @@ namespace Bidding
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    FrontendCommons::UserInfoClient_var user_info_client_;
+    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::ChannelCorbaClient> channel_servers_;
 

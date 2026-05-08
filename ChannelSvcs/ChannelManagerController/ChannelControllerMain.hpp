@@ -1,6 +1,4 @@
-
-#ifndef AD_CHANNEL_SVCS_CONTROLLER_MAIN_HPP_
-#define AD_CHANNEL_SVCS_CONTROLLER_MAIN_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <Generics/Time.hpp>
@@ -68,4 +66,3 @@ typedef ReferenceCounting::SmartPtr<ChannelControllerApp_>
 typedef Generics::Singleton<ChannelControllerApp_, ChannelControllerApp_var>
   ChannelControllerApp;
 
-#endif /*AD_CHANNEL_SVCS_CONTROLLER_MAIN_HPP_*/

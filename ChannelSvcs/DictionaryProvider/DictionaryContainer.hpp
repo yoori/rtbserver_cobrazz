@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_DICTIOMARY_CONTAINER
-#define AD_SERVER_DICTIOMARY_CONTAINER
+#pragma once
 
 #include <vector>
 #include <set>
@@ -125,4 +124,3 @@ namespace AdServer
 
 }
 
-#endif //AD_SERVER_DICTIOMARY_CONTAINER

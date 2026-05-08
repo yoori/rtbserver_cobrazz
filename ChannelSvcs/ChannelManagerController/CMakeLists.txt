@@ -34,7 +34,6 @@ ChannelSessionFactory
 ChannelClusterControl
 ChannelClusterControlIDL
 ChannelManagerControllerIDL
-StatsIDL
 ChannelManagerControllerConfigXSD
 )
 

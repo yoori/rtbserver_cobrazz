@@ -68,12 +68,12 @@ target_link_libraries(UserInfoContainer
 add_executable(UserInfoManager
 UserInfoManagerMain.cpp
   FileRWStats.cpp
+  UserInfoManagerCore.cpp
   UserInfoManagerImpl.cpp
   UserInfoManagerGrpc.cpp
   UserInfoManagerControlImpl.cpp
   UserInfoContainer.cpp
   UserInfoManagerLogger.cpp
-  UserInfoManagerStat.cpp
 
 )
 target_link_libraries(UserInfoManager
@@ -94,7 +94,6 @@ target_link_libraries(UserInfoManager
  LogCommons
 
  UserInfoContainer
- StatsDumper
  UserOperationProfilesPST
 
 )

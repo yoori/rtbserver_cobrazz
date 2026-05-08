@@ -1,6 +1,4 @@
-
-#ifndef AD_CHANNEL_SVCS_DICTIONARY_PROVIDER_HPP_
-#define AD_CHANNEL_SVCS_DICTIONARY_PROVIDER_HPP_
+#pragma once
 
 #include <eh/Exception.hpp>
 
@@ -64,4 +62,3 @@ typedef ReferenceCounting::SmartPtr<DictionaryProviderApp_> DictionaryProviderAp
 typedef Generics::Singleton<DictionaryProviderApp_, DictionaryProviderApp_var>
   DictionaryProviderApp;
 
-#endif /*AD_CHANNEL_SVCS_DICTIONARY_PROVIDER_HPP_*/

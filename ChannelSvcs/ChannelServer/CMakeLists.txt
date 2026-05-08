@@ -43,11 +43,11 @@ target_link_libraries(ChannelServerGrpcClient
 
 add_executable(ChannelServer
   ChannelServerVariant.cpp
-  ChannelServerImpl.cpp
+  ChannelServerCore.cpp
+  ChannelServerCustomImpl.cpp
   ChannelServerGrpc.cpp
   ChannelServerControlImpl.cpp
   ChannelUpdateImpl.cpp
-  ProcessStatsControl.cpp
   ChannelServerMain.cpp
 )
 
@@ -73,7 +73,6 @@ target_link_libraries(ChannelServer
   CampaignServerStubs_v350
   CampaignServer_v350IDL
   ProcessControlIDL
-  StatsIDL
   BLogic
   # ColoUpdateStat
   LogCommons

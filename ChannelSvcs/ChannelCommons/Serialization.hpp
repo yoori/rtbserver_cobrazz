@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_CHANNELSVCS_SERIALIZATION
-#define AD_SERVER_CHANNELSVCS_SERIALIZATION
+#pragma once
 
 #include<string>
 #include<Commons/CorbaTypes.hpp>
@@ -473,5 +472,3 @@ namespace AdServer
     }
   }
 }
-#endif//AD_SERVER_CHANNELSVCS_SERIALIZATION
-

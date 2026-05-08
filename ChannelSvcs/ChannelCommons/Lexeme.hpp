@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_CHANNELSVCS_LEXEME_HPP__
-#define AD_SERVER_CHANNELSVCS_LEXEME_HPP__
+#pragma once
 
 #include<vector>
 #include<String/SubString.hpp>
@@ -44,5 +43,3 @@ namespace ChannelSvcs
   }
 }
 }
-#endif //CHANNELSVCS_LEXEME_HPP__
-

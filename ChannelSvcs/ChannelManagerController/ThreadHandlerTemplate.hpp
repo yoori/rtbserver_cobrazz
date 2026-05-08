@@ -1,7 +1,6 @@
+#pragma once
 
-#ifndef THREAD_HANDLER_TEMPLATE_HPP
-#define THREAD_HANDLER_TEMPLATE_HPP
-
+#include <atomic>
 #include <sstream>
 #include <vector>
 #include <Generics/TaskRunner.hpp>
@@ -54,7 +53,7 @@ namespace Protected
     ResultsVector result_;
     std::ostringstream ex_descr_;
     size_t count_exception_;
-    volatile _Atomic_word res_count_;
+    std::atomic<std::size_t> res_count_;
     mutable Mutex_ lock_exception_;
     mutable Sync::Semaphore wait_end_;
   };
@@ -148,8 +147,9 @@ namespace Protected
     try
     {
       result_[num] = result._retn();
-      _Atomic_word old = __gnu_cxx::__exchange_and_add(&res_count_, 1);
-      if(old + 1 == static_cast<int>(result_.size()))
+      const std::size_t old =
+        res_count_.fetch_add(1, std::memory_order_relaxed);
+      if(old + 1 == result_.size())
       {
         wait_end_.release();
       }
@@ -178,8 +178,8 @@ namespace Protected
     try
     {
       result_[num] = 0;
-      __gnu_cxx::__atomic_add(&res_count_, 1);
-      if(res_count_ == (int)result_.size())
+      if(res_count_.fetch_add(1, std::memory_order_relaxed) + 1 ==
+        result_.size())
       {
         wait_end_.release();
       }
@@ -256,6 +256,3 @@ namespace Protected
 }// namespace Protected
 }//namespace ChannelSvcs
 }// namespace AdServer
-
-#endif //THREAD_HANDLER_TEMPLATE_HPP
-

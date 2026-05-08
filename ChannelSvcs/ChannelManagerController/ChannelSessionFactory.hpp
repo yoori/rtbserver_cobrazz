@@ -1,5 +1,4 @@
-#ifndef AD_CHANNEL_SVCS_CHANNEL_SESSION_FACTORY_HPP_
-#define AD_CHANNEL_SVCS_CHANNEL_SESSION_FACTORY_HPP_
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 
@@ -453,4 +452,3 @@ namespace ChannelSvcs
 } /* AdServer */
 
 
-#endif /*AD_CHANNEL_SVCS_CHANNEL_SESSION_FACTORY_HPP_*/

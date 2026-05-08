@@ -1,6 +1,6 @@
+#pragma once
 
-#ifndef AD_CHANNEL_SVCS_SERVER_MAIN_HPP_
-#define AD_CHANNEL_SVCS_SERVER_MAIN_HPP_
+#include <memory>
 
 #include <eh/Exception.hpp>
 #include <Generics/ActiveObject.hpp>
@@ -9,13 +9,13 @@
 
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ProcessControl.hpp>
-#include <CORBACommons/Stats_s.hpp>
 #include <Commons/HttpServer/HttpServer.hpp>
 #include <Commons/ProcessControlVarsImpl.hpp>
 
 #include <xsd/ChannelSvcs/ChannelServerConfig.hpp>
 
-#include "ChannelServerImpl.hpp"
+#include "ChannelServerCore.hpp"
+#include "ChannelServerCustomImpl.hpp"
 #include "ChannelServerGrpc.hpp"
 
 class ChannelServerApp_ :
@@ -73,6 +73,7 @@ private:
   CORBACommons::CorbaConfig corba_config_;
 
   ConfigPtr configuration_;
+  AdServer::ChannelSvcs::ChannelServerCorePtr server_core_;
   AdServer::ChannelSvcs::ChannelServerCustomImpl_var server_impl_;
   AdServer::ChannelSvcs::ChannelServerGrpc_var grpc_adapter_;
   AdServer::Commons::HttpServer::HttpServer_var http_server_;
@@ -96,9 +97,9 @@ typedef Generics::Singleton<ChannelServerApp_, ChannelServerApp_var>
 inline
 bool ChannelServerApp_::is_ready_() noexcept
 {
-  if(server_impl_.in())
+  if(server_core_)
   {
-    return server_impl_->ready();
+    return server_core_->ready();
   }
   else
   {
@@ -109,15 +110,29 @@ bool ChannelServerApp_::is_ready_() noexcept
 inline
 char* ChannelServerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
 {
-  if(server_impl_.in())
+  if(server_core_)
   {
-    return server_impl_->comment();
+    try
+    {
+      CORBA::String_var result;
+      result << server_core_->comment();
+      return result._retn();
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << "ChannelServerApp_::comment: caught eh::Exception: " <<
+        e.what();
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::ERROR,
+        "ChannelServer",
+        "ADS-IMPL-44");
+      throw CORBACommons::OutOfMemory();
+    }
   }
   else
   {
     return 0;
   }
 }
-
-
-#endif /*AD_CHANNEL_SVCS_SERVER_MAIN_HPP_*/

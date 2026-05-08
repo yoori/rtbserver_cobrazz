@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_CHANNEL_CONTROLLER_IMPL_HPP_
-#define AD_SERVER_CHANNEL_CONTROLLER_IMPL_HPP_
+#pragma once
 
 #include <set>
 #include <vector>
@@ -18,8 +17,6 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ServantImpl.hpp>
 #include <CORBACommons/ProcessControl.hpp>
-#include <CORBACommons/Stats.hpp>
-#include <CORBACommons/Stats_s.hpp>
 
 #include <CampaignSvcs/CampaignServer/CampaignServer.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
@@ -66,9 +63,6 @@ namespace ChannelSvcs
         /*throw(AdServer::ChannelSvcs::ImplementationException,
             ::CORBA::SystemException)*/;
 
-    //
-    // IDL:AdServer/ChannelSvcs/ChannelProxy/get_count_chunks:1.0
-    //
     virtual ::CORBA::ULong get_count_chunks() /*throw(::CORBA::SystemException)*/;
 
     //
@@ -83,9 +77,6 @@ namespace ChannelSvcs
     ::AdServer::ChannelSvcs::ChannelClusterSession*
       get_control_session()
         /*throw(AdServer::ChannelSvcs::ChannelClusterControl::ImplementationException)*/;
-
-    CORBACommons::StatsValueSeq* get_stats()
-      /*throw(CORBACommons::ProcessStatsControl::ImplementationException)*/;
 
     static void add_refs_to_sum(
       std::size_t& check_sum,
@@ -120,8 +111,7 @@ namespace ChannelSvcs
       AdServer::ChannelSvcs::ChannelServerControl_var control_ref;
       CORBACommons::IProcessControl_var proccontrol_ref;
       AdServer::ChannelSvcs::ChannelServer_var server_ref;
-      AdServer::ChannelSvcs::ChannelUpdateBase_v33_var update_ref;
-      CORBACommons::ProcessStatsControl_var process_stat_ref;
+      AdServer::ChannelSvcs::ChannelUpdateBase_var update_ref;
       std::vector<unsigned long> chunks;
       std::size_t check_sum[2];
     };
@@ -232,23 +222,6 @@ namespace ChannelSvcs
   typedef ReferenceCounting::SmartPtr<ChannelClusterControlImpl>
       ChannelClusterControlImpl_var;
 
-  class ChannelStatImpl:
-    public virtual CORBACommons::ReferenceCounting::ServantImpl
-    <POA_CORBACommons::ProcessStatsControl>
-  {
-  public:
-    ChannelStatImpl(ChannelControllerImpl* controller) noexcept;
-    ~ChannelStatImpl() noexcept {}
-
-    virtual CORBACommons::StatsValueSeq* get_stats()
-      /*throw(CORBACommons::ProcessStatsControl::ImplementationException)*/;
-
-  private:
-    ChannelControllerImpl_var delegate_;
-  };
-  typedef ReferenceCounting::SmartPtr<ChannelStatImpl>
-    ChannelStatImpl_var;
-
 } /* ChannelSvcs */
 } /* AdServer */
 
@@ -285,6 +258,3 @@ namespace AdServer
 
   } /* ChannelSvcs */
 } /* AdServer */
-
-
-#endif /*AD_SERVER_CHANNEL_CONTROLLER_IMPL_HPP_*/

@@ -1,5 +1,4 @@
-#ifndef TRIGGEER_FILTERING_APP_HPP
-#define TRIGGEER_FILTERING_APP_HPP
+#pragma once
 
 #include<string>
 #include<map>
@@ -46,4 +45,3 @@ namespace AdServer
   };
 }
 
-#endif

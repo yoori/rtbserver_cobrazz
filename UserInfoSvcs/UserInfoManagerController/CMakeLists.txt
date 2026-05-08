@@ -7,7 +7,6 @@ target_link_libraries(UserInfoClusterControlIDL
   Generics
   CORBACommons
   ProcessControlIDL
-  StatsIDL
 )
 
 add_idl(UserInfoManagerControllerIDL
@@ -41,7 +40,6 @@ target_link_libraries(UserInfoManagerController
 
 add_library(UserInfoManagerControllerCall SHARED
   UserInfoManagerSessionFactory.cpp
-  UserInfoOperationDistributor.cpp
   UserInfoManagerSessionImpl.cpp
 )
 

@@ -1,5 +1,4 @@
-#ifndef CHANNELSERVERSESSIONFACTORY_HPP
-#define CHANNELSERVERSESSIONFACTORY_HPP
+#pragma once
 
 #include <ChannelSvcs/ChannelManagerController/ChannelSessionFactory.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelLoadSessionFactory.hpp>
@@ -29,4 +28,3 @@ namespace ChannelSvcs
 } /* ChannelSvcs */
 } /* AdServer */
 
-#endif

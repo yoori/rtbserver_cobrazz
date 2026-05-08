@@ -1,7 +1,4 @@
-
-
-#ifndef CHANNEL_CLUSTER_CONTROLLER_HPP
-#define CHANNEL_CLUSTER_CONTROLLER_HPP
+#pragma once
 
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <eh/Exception.hpp>
@@ -78,6 +75,4 @@ namespace ChannelSvcs
   };
 }
 }
-
-#endif //CHANNEL_CLUSTER_CONTROLLER_HPP
 

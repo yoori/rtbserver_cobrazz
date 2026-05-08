@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_SOFT_MATCHERS_HPP_
-#define AD_SERVER_SOFT_MATCHERS_HPP_
+#pragma once
 
 #include <iostream>
 #include <ReferenceCounting/AtomicImpl.hpp>
@@ -171,6 +170,4 @@ namespace ChannelSvcs
 
 }// namespace ChannelSvcs
 }// namespace AdServer
-
-#endif //AD_SERVER_SOFT_MATCHERS_HPP_
 

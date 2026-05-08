@@ -69,6 +69,7 @@ target_link_libraries(RequestInfoManager
   PassbackContainer
   RequestInfoContainer
   ExpressionMatcherIDL
+  UserInfoClient
   UserInfoManagerControllerCall
   CampaignServerIDL
   LogCommons

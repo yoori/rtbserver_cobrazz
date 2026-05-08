@@ -60,7 +60,7 @@ namespace ChannelSvcs
         {
           auto& server = servers_copy[group_i][server_i];
           server.load_server =
-            AdServer::ChannelSvcs::ChannelUpdateBase_v33::_narrow(
+            AdServer::ChannelSvcs::ChannelUpdateBase::_narrow(
               static_cast<CORBA::Object*>(server.load_server.in()));
         }
       }
@@ -83,7 +83,7 @@ namespace ChannelSvcs
       /*throw(eh::Exception, Exception)*/
       : CORBA::ValueBase(),
         CORBA::AbstractBase(),
-        AdServer::ChannelSvcs::ChannelUpdateBase_v33(),
+        AdServer::ChannelSvcs::ChannelUpdateBase(),
         AdServer::ChannelSvcs::ChannelLoadSession(),
         CORBA::DefaultValueRefCountBase(),
         OBV_AdServer::ChannelSvcs::ChannelLoadSession(),
@@ -336,8 +336,6 @@ namespace ChannelSvcs
     }
   }
 
-  // IDL:AdServer/ChannelSvcs/ChannelProxy/get_count_chunks:1.0
-  //
   ::CORBA::ULong ChannelLoadSessionImpl::get_count_chunks()
     /*throw(AdServer::ChannelSvcs::ImplementationException)*/
   {

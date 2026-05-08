@@ -1,5 +1,4 @@
-#ifndef AD_CHANNEL_SVCS_CHANNEL_LOAD_SESSION_IMPL_HPP_
-#define AD_CHANNEL_SVCS_CHANNEL_LOAD_SESSION_IMPL_HPP_
+#pragma once
 
 #include <Generics/TaskRunner.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
@@ -9,7 +8,7 @@ namespace AdServer
 namespace ChannelSvcs
 {
 
-  typedef ::AdServer::ChannelSvcs::ChannelUpdateBase_v33 ChannelCurrent;
+  typedef ::AdServer::ChannelSvcs::ChannelUpdateBase ChannelCurrent;
 
   /**
    * ChannelLoadSessionImpl
@@ -65,9 +64,6 @@ namespace ChannelSvcs
       /*throw(AdServer::ChannelSvcs::ImplementationException,
         AdServer::ChannelSvcs::NotConfigured)*/;
 
-    //
-    // IDL:AdServer/ChannelSvcs/ChannelProxy/get_count_chunks:1.0
-    //
     ::CORBA::ULong get_count_chunks()
        /*throw(AdServer::ChannelSvcs::ImplementationException)*/;
 
@@ -106,4 +102,3 @@ namespace ChannelSvcs
 
 } /* ChannelSvcs */
 }
-#endif //AD_CHANNEL_SVCS_CHANNEL_LOAD_SESSION_IMPL_HPP_

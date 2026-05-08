@@ -45,7 +45,6 @@ target_link_libraries(ProcessingTemplates
 
 add_library(RequestMatchers SHARED
   RequestMatchers.cpp
-  UserInfoClient.cpp
   UserAgentMatcher.cpp
 )
 
@@ -55,6 +54,7 @@ target_link_libraries(RequestMatchers
   Commons
   CORBACommons
 
+  UserInfoClient
   UserInfoManagerControllerCall
   UserInfoClusterControlIDL
   UserInfoManagerControllerIDL

@@ -3,14 +3,18 @@
 #include <memory>
 #include <string>
 
-#include <Generics/ActiveObject.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
 
 #include <Commons/Grpc/GrpcServer.hpp>
 
-#include "ChannelServerImpl.hpp"
+namespace AdServer::ChannelSvcs
+{
+  class ChannelServerCore;
+  using ChannelServerCorePtr = std::shared_ptr<ChannelServerCore>;
+}
 
 namespace AdServer::ChannelSvcs
 {
@@ -20,7 +24,7 @@ namespace AdServer::ChannelSvcs
   {
   public:
     ChannelServerGrpc(
-      ChannelServerCustomImpl* server_impl,
+      ChannelServerCorePtr core,
       Logging::Logger* logger,
       std::string_view bind_address,
       unsigned int bind_port);

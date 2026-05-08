@@ -1,6 +1,4 @@
-
-#ifndef CHANNEL_SERVICE_CHANNEL_PARSER_HPP_
-#define CHANNEL_SERVICE_CHANNEL_PARSER_HPP_
+#pragma once
 
 #include <set>
 #include <Logger/Logger.hpp>
@@ -98,6 +96,4 @@ namespace ChannelSvcs
   }
 }// namespace ChannelSvcs
 }
-
-#endif //CHANNEL_SERVICE_CHANNEL_PARSER_HPP_
 

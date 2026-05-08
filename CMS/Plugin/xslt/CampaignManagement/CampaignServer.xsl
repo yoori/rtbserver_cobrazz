@@ -196,8 +196,6 @@
       <cfg:Endpoint host="*" port="{$campaign-server-port}">
         <cfg:Object servant="ProcessControl" name="ProcessControl"/>
         <cfg:Object servant="ProcessStatsControl" name="ProcessStatsControl"/>
-        <cfg:Object servant="CampaignServer_v330" name="CampaignServer_v330"/>
-        <cfg:Object servant="CampaignServer_v340" name="CampaignServer_v340"/>
         <cfg:Object servant="CampaignServer_v350" name="CampaignServer_v350"/>
         <cfg:Object servant="CampaignServer_v360" name="CampaignServer_v360"/>
         <cfg:Object servant="CampaignServer_v360" name="CampaignServer"/>
@@ -215,10 +213,6 @@
             <xsl:with-param name="secure-files-root" select="$secure-files-root"/>
           </xsl:call-template>
 
-          <cfg:Object servant="CampaignServer_v310" name="CampaignServer_v310"/>
-          <cfg:Object servant="CampaignServer_v320" name="CampaignServer_v320"/>
-          <cfg:Object servant="CampaignServer_v330" name="CampaignServer_v330"/>
-          <cfg:Object servant="CampaignServer_v340" name="CampaignServer_v340"/>
           <cfg:Object servant="CampaignServer_v350" name="CampaignServer_v350"/>
           <cfg:Object servant="CampaignServer_v360" name="CampaignServer_v360"/>
         </cfg:Endpoint>

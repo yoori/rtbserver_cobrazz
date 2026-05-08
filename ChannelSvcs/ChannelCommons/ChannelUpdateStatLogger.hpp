@@ -1,5 +1,4 @@
-#ifndef AD_SERVER_CHANNEL_UPDATE_STAT_LOGGER_HPP
-#define AD_SERVER_CHANNEL_UPDATE_STAT_LOGGER_HPP
+#pragma once
 
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/ReferenceCounting.hpp>
@@ -62,4 +61,3 @@ namespace AdServer
   }
 }
 
-#endif//AD_SERVER_CHANNEL_UPDATE_STAT_LOGGER_HPP
