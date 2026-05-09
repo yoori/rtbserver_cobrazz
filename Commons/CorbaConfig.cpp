@@ -150,6 +150,21 @@ namespace Config
     }
   }
 
+  void
+  CorbaConfigReader::read_multi_corba_ref(
+    const xsd::AdServer::Configuration::MultiCorbaObjectRefType&
+      xml_corba_object_refs,
+    std::vector<std::string>& corba_object_refs)
+    /*throw(CorbaConfigReader::Exception)*/
+  {
+    CORBACommons::CorbaObjectRefList refs;
+    read_multi_corba_ref(xml_corba_object_refs, refs);
+    for(const auto& ref : refs)
+    {
+      corba_object_refs.emplace_back(ref.object_ref);
+    }
+  }
+
   CORBACommons::CorbaObjectRefList
   CorbaConfigReader::read_multi_corba_ref(
     const xsd::AdServer::Configuration::MultiCorbaObjectRefType&

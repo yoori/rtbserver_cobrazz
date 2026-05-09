@@ -1,9 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <Generics/ActiveObject.hpp>
 #include <grpcpp/support/status.h>
 
 #include <Commons/ConfigUtils.hpp>
@@ -17,8 +19,8 @@ namespace AdServer::UserInfoSvcs
 {
   struct DistributedUserBindClientObjects
   {
-    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
-    UserBindDistributedGrpcClient_var client;
+    std::shared_ptr<UserBindServerGrpcAsyncClient> client;
+    std::shared_ptr<Generics::ActiveObject> active_object;
   };
 
   inline void
@@ -78,16 +80,15 @@ namespace AdServer::UserInfoSvcs
   create_distributed_user_bind_client(
     const xsd::AdServer::Configuration::CommonFeConfigurationType&
       common_config,
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     Logging::Logger* logger)
   {
     AdServer::Grpc::BatchingOptions batching_options;
-    std::size_t grpc_executor_threads = 16;
     std::vector<std::string> user_bind_controller_refs;
 
     if(common_config.UserBind().present())
     {
       const auto& user_bind_config = *common_config.UserBind();
-      grpc_executor_threads = user_bind_config.grpc_executor_threads();
       if(user_bind_config.BatchingOptions().present())
       {
         batching_options =
@@ -106,13 +107,13 @@ namespace AdServer::UserInfoSvcs
     DistributedUserBindClientObjects result;
     if(!user_bind_controller_refs.empty())
     {
-      result.grpc_executor =
-        std::make_shared<AdServer::Grpc::GrpcExecutor>(grpc_executor_threads);
-      result.client = new UserBindDistributedGrpcClient(
+      auto client = std::make_shared<UserBindDistributedGrpcClient>(
         user_bind_controller_refs,
         batching_options,
-        result.grpc_executor,
+        std::move(grpc_executor),
         logger);
+      result.client = client;
+      result.active_object = client;
     }
 
     return result;

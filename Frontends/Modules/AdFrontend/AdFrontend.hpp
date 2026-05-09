@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <memory>
 
 #include <eh/Exception.hpp>
 
@@ -22,14 +23,15 @@
 
 #include <CORBACommons/CorbaAdapters.hpp>
 
+#include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -108,13 +110,12 @@ namespace AdServer
     void
     update_colocation_flags() noexcept;
 
-    static AdServer::ChannelSvcs::ChannelServerBase::MatchResult*
+    static adserver::channel_svcs::channel_server::MatchResponse
     get_empty_trigger_matching()
       /*throw(eh::Exception)*/;
 
-    static AdServer::ChannelSvcs::ChannelServerBase::MatchQuery*
-    get_empty_matching_query()
-      /*throw(eh::Exception)*/;
+    static adserver::channel_svcs::channel_server::MatchRequest
+    get_empty_matching_request();
 
     static AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult*
     get_empty_history_matching()
@@ -183,13 +184,13 @@ namespace AdServer
       RequestTimeMetering& request_time_metering,
       const RequestInfo& request_info,
       const Generics::SubStringHashAdapter& instantiate_type,
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult*
+      const adserver::channel_svcs::channel_server::MatchResponse*
         trigger_matched_channels,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
       const Generics::Time& merged_last_request,
       bool profiling_available,
-      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
-      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* hid_ccg_keywords,
+      const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq*
+        ccg_keywords,
       DebugSink* debug_sink)
       /*throw(Exception)*/;
 
@@ -211,16 +212,17 @@ namespace AdServer
     void
     match_triggers_(
       RequestTimeMetering& request_time_metering,
-      AdServer::ChannelSvcs::ChannelServerBase::MatchQuery* query,
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_out
+      adserver::channel_svcs::channel_server::MatchRequest& request,
+      adserver::channel_svcs::channel_server::MatchResponse&
         trigger_matched_channels,
+      bool& trigger_matched_channels_present,
       const RequestInfo& request_info)
       /*throw(Exception)*/;
 
     void
     acquire_user_info_matcher(
       const RequestInfo& request_info,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult*
+      const adserver::channel_svcs::channel_server::MatchResponse*
         trigger_matching_result,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out match_result_out,
       bool& profiling_available,
@@ -245,7 +247,8 @@ namespace AdServer
 
     static void
     fill_debug_channels_(
-      const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtomSeq& in,
+      const google::protobuf::RepeatedPtrField<
+        adserver::channel_svcs::channel_server::ChannelAtom>& in,
       char type,
       DebugStream& out)
       /*throw(eh::Exception)*/;
@@ -259,14 +262,16 @@ namespace AdServer
       /*throw(eh::Exception)*/;
 
     static void prepare_ui_match_params_(
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams& match_params,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* match_result,
+      adserver::user_info_svcs::user_info_manager::MatchParams& match_params,
+      const adserver::channel_svcs::channel_server::MatchResponse* match_result,
       const RequestInfo& request_info)
       /*throw(eh::Exception)*/;
 
     static void
     add_hit_channels_(
-      AdServer::UserInfoSvcs::UserInfoMatcher::ChannelMatchSeq& result_channel_ids,
+      google::protobuf::RepeatedPtrField<
+        adserver::user_info_svcs::user_info_manager::ChannelTriggerMatch>&
+          result_channel_ids,
       const AdServer::CampaignSvcs::ChannelIdArray& hit_channels);
 
   private:
@@ -288,14 +293,16 @@ namespace AdServer
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    std::unique_ptr<FrontendCommons::ChannelCorbaClient> channel_servers_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
+      channel_client_;
 
     Generics::TaskRunner_var task_runner_;
     FrontendCommons::TaskScheduler_var task_scheduler_;
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      user_info_client_;
 
     AdFrontendStat_var stats_;
   };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 
 #include <Logger/Logger.hpp>
@@ -29,8 +31,9 @@
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
+#include <ChannelServerGrpc.grpc.pb.h>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -45,9 +48,7 @@
 #include "RequestMetricsProvider.hpp"
 #include "Stage.hpp"
 
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   class BidRequestTask;
   class OpenRtbBidRequestTask;
@@ -187,7 +188,8 @@ namespace Bidding
     resolve_user_id_(
       AdServer::Commons::UserId& match_user_id,
       AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
-      RequestInfo& request_info)
+      RequestInfo& request_info,
+      DebugSink::UserResolvingDebugInfo* user_resolving_debug_info)
       noexcept;
 
     adserver::user_info_svcs::user_bind::GetUserIdResponse
@@ -200,7 +202,8 @@ namespace Bidding
 
     void
     trigger_match_(
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_out trigger_matched_channels,
+      adserver::channel_svcs::channel_server::MatchResponse& trigger_matched_channels,
+      bool& trigger_matched_channels_present,
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const RequestInfo& request_info,
       const AdServer::Commons::UserId& user_id,
@@ -213,7 +216,7 @@ namespace Bidding
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out history_match_result,
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const RequestInfo& request_info,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+      const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
       std::string& hostname)
@@ -247,7 +250,7 @@ namespace Bidding
         campaign_match_result,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
         history_match_result,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+      const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
       const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
       const RequestInfo& request_info,
       AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
@@ -395,12 +398,14 @@ namespace Bidding
 
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      user_info_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    std::unique_ptr<FrontendCommons::ChannelCorbaClient> channel_servers_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
+      channel_client_;
 
     Generics::Planner_var planner_;
     Generics::TaskExecutor_var task_runner_;
@@ -422,12 +427,9 @@ namespace Bidding
 //    const RequestMetricsProvider_var request_metrics_provider_;
   };
 }
-}
 
 // Inlines
-namespace AdServer
-{
-namespace Bidding
+namespace AdServer::Bidding
 {
   inline
   Frontend::~Frontend() noexcept
@@ -451,5 +453,4 @@ namespace Bidding
     ExtConfigSyncPolicy::ReadGuard lock(ext_config_lock_);
     return ext_config_;
   }
-}
 }

@@ -4,7 +4,8 @@
 #include <sstream>
 
 #include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
-#include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
+#include <ChannelServerGrpc.grpc.pb.h>
+#include <Generics/Time.hpp>
 #include <String/SubString.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -23,9 +24,29 @@ namespace Bidding
     DI_BODY
   };
 
+  struct RequestTimeMetering
+  {
+    Generics::Time user_resolving_time;
+    Generics::Time trigger_match_time;
+    Generics::Time history_match_time;
+    Generics::Time history_match_local_time;
+    Generics::Time creative_selection_time;
+    Generics::Time creative_selection_local_time;
+  };
+
   class DebugSink
   {
   public:
+    struct UserResolvingDebugInfo
+    {
+      bool response_present = false;
+      std::string user_id;
+      bool min_age_reached = false;
+      bool created = false;
+      bool invalid_operation = false;
+      bool user_found = false;
+    };
+
     explicit DebugSink(std::string server_id);
 
     void
@@ -43,7 +64,12 @@ namespace Bidding
       const RequestInfo& request_info,
       const AdServer::CampaignSvcs_v360::CampaignManager::RequestParams&
         request_params,
-      const AdServer::Commons::UserId& user_id) noexcept;
+      const AdServer::Commons::UserId& user_id,
+      const std::string& channel_keywords) noexcept;
+
+    void
+    print_user_resolving_debug_info(
+      const UserResolvingDebugInfo& user_resolving_debug_info) noexcept;
 
     void
     print_creative_selection_debug_info(
@@ -52,13 +78,17 @@ namespace Bidding
 
     void
     print_channel_matching_debug_info(
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult&
-        match_result) noexcept;
+      const adserver::channel_svcs::channel_server::MatchResponse&
+        response) noexcept;
 
     void
     print_history_matching_debug_info(
       const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
         match_result) noexcept;
+
+    void
+    print_time_metering_debug_info(
+      const RequestTimeMetering& time_metering) noexcept;
 
     void
     write_response(

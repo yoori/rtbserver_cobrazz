@@ -13,7 +13,6 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
@@ -23,7 +22,6 @@
 namespace AdServer::ChannelSvcs
 {
   class ChannelDistributedGrpcClient:
-    public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
     public ChannelServerGrpcAsyncClient
   {
@@ -51,7 +49,7 @@ namespace AdServer::ChannelSvcs
 
   private:
     using Client = ChannelServerGrpcAsyncBatchingClient;
-    using Client_var = ReferenceCounting::SmartPtr<Client>;
+    using ClientPtr = std::shared_ptr<Client>;
 
     class ResolveRefsTask;
 
@@ -99,6 +97,4 @@ namespace AdServer::ChannelSvcs
     std::atomic_bool deactivated_{false};
   };
 
-  using ChannelDistributedGrpcClient_var =
-    ReferenceCounting::SmartPtr<ChannelDistributedGrpcClient>;
 }

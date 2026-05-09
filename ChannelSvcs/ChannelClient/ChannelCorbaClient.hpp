@@ -1,8 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <CORBACommons/ObjectPool.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
@@ -12,7 +13,6 @@
 namespace AdServer::ChannelSvcs
 {
   class ChannelCorbaClient:
-    public virtual ReferenceCounting::AtomicImpl,
     public ChannelServerGrpcAsyncClient
   {
   public:
@@ -35,13 +35,6 @@ namespace AdServer::ChannelSvcs
       GetCcgTraitsCallback callback) override;
 
   protected:
-    static void pack_match_request_(
-      const ChannelServerBase::MatchQuery& source,
-      adserver::channel_svcs::channel_server::MatchRequest& target);
-
-    static ChannelServerBase::MatchResult* unpack_match_response_(
-      const adserver::channel_svcs::channel_server::MatchResponse& source);
-
     static void pack_get_ccg_traits_request_(
       const ChannelIdSeq& source,
       adserver::channel_svcs::channel_server::GetCcgTraitsRequest& target);
@@ -105,12 +98,11 @@ namespace AdServer::ChannelSvcs
     PoolImplPtr pool_;
   };
 
-  using ChannelCorbaClient_var = ReferenceCounting::SmartPtr<ChannelCorbaClient>;
+  using ChannelCorbaClientPtr = std::shared_ptr<ChannelCorbaClient>;
 }
 
 namespace FrontendCommons
 {
   using ChannelCorbaClient = AdServer::ChannelSvcs::ChannelCorbaClient;
-  using ChannelCorbaClient_var = AdServer::ChannelSvcs::ChannelCorbaClient_var;
+  using ChannelCorbaClientPtr = AdServer::ChannelSvcs::ChannelCorbaClientPtr;
 }
-

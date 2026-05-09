@@ -2459,25 +2459,27 @@ namespace Bidding
       sources_(sources),
       enable_profile_referer_(enable_profile_referer),
       account_traits_(account_traits),
-      adxml_request_info_filler_(new AdXmlRequestInfoFiller(this))
+      adxml_request_info_filler_(new AdXmlRequestInfoFiller(this)),
+      openrtb_devicetype_mapping_({
+        {0, "Unknown"},
+        {1, "Mobile/Tablet - General"},
+        {2, "Personal Computer"},
+        {3, "Connected TV"},
+        {4, "Phone"},
+        {5, "Tablet"},
+        {6, "Connected Device"},
+        {7, "Set Top Box"},
+        {8, "OOH Device"}
+      }),
+      openrtb_video_placement_mapping_({
+        {1, "In-Stream"},
+        {2, "In-Banner"},
+        {3, "In-Article"},
+        {4, "In-Feed"},
+        {5, "Interstitial"}
+      })
   {
     static const char* FUN = "RequestInfoFiller::RequestInfoFiller()";
-
-    openrtb_devicetype_mapping_.emplace(0, "Unknown");
-    openrtb_devicetype_mapping_.emplace(1, "Mobile/Tablet - General");
-    openrtb_devicetype_mapping_.emplace(2, "Personal Computer");
-    openrtb_devicetype_mapping_.emplace(3, "Connected TV");
-    openrtb_devicetype_mapping_.emplace(4, "Phone");
-    openrtb_devicetype_mapping_.emplace(5, "Tablet");
-    openrtb_devicetype_mapping_.emplace(6, "Connected Device");
-    openrtb_devicetype_mapping_.emplace(7, "Set Top Box");
-    openrtb_devicetype_mapping_.emplace(8, "OOH Device");
-
-    openrtb_video_placement_mapping_.emplace(1, "In-Stream");
-    openrtb_video_placement_mapping_.emplace(2, "In-Banner");
-    openrtb_video_placement_mapping_.emplace(3, "In-Article");
-    openrtb_video_placement_mapping_.emplace(4, "In-Feed");
-    openrtb_video_placement_mapping_.emplace(5, "Interstitial");
 
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("MegafonID")), "megafon-stableid");
     source_mapping_.emplace(Generics::SubStringHashAdapter(String::SubString("quietmedia")), "megafon-stableid");

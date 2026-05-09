@@ -9,6 +9,8 @@
 #include <Commons/Containers.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+
 #include "PassFrontend.hpp"
 
 namespace
@@ -284,10 +286,7 @@ namespace Passback
        !passback_info.current_user_id.is_null())
     {
       // save freq caps
-      AdServer::UserInfoSvcs::UserInfoMatcher_var
-        uim_session = user_info_client_->user_info_session();
-
-      if(uim_session.in())
+      if(user_info_client_)
       {
         try
         {
@@ -297,7 +296,7 @@ namespace Passback
             passback_info.pubpixel_accounts.end(),
             pubpixel_accounts);
 
-          uim_session->confirm_user_freq_caps(
+          AdServer::UserInfoSvcs::GrpcAlgs::confirm_user_freq_caps(*user_info_client_,
             CorbaAlgs::pack_user_id(passback_info.current_user_id),
             CorbaAlgs::pack_time(passback_info.time),
             CorbaAlgs::pack_request_id(Commons::RequestId()),
@@ -371,12 +370,12 @@ namespace Passback
             controller_group_refs);
           user_info_controller_groups.push_back(controller_group_refs);
         }
-        user_info_client_ = new AdServer::UserInfoSvcs::UserInfoCorbaClient(
+        auto user_info_client = std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
           logger(),
           user_info_controller_groups,
           corba_client_adapter_.in());
-
-        add_child_object(user_info_client_);
+        user_info_client_ = user_info_client;
+        add_child_object(user_info_client);
 
         activate_object();
       }

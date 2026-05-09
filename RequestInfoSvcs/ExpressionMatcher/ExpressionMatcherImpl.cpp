@@ -8,6 +8,7 @@
 #include <Commons/Algs.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/DelegateTaskGoal.hpp>
+#include <Commons/GrpcAlgs.hpp>
 
 #include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
 #include <CampaignSvcs/CampaignCommons/ExpressionChannelCorbaAdapter.hpp>
@@ -755,16 +756,16 @@ namespace RequestInfoSvcs
       controller_groups.push_back(controller_ref_group);
     }
 
-    AdServer::UserInfoSvcs::UserInfoCorbaClient_var client =
-      new AdServer::UserInfoSvcs::UserInfoCorbaClient(
+    auto client =
+      std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
         callback_->logger(),
         controller_groups,
         corba_client_adapter_.in(),
         Generics::Time::ZERO // pool timeout
       );
 
-    user_info_manager_session_ = client->user_info_session();
-    add_child_object(client.in());
+    user_info_manager_session_ = client;
+    add_child_object(client);
 
     try_start_daily_processing_loop_();
 
@@ -779,13 +780,14 @@ namespace RequestInfoSvcs
     try
     {
       bool need_start = false;
-      AdServer::UserInfoSvcs::UserInfoManagerSession_var user_info_manager_session;
+      std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+        user_info_manager_session;
 
       {
         ChannelMatcher::Config_var configuration = channel_matcher_->config();
 
         SyncPolicy::WriteGuard lock(lock_);
-        need_start = user_info_manager_session_.in() &&
+        need_start = user_info_manager_session_ &&
           configuration.in() &&
           !daily_processing_loop_started_;
 
@@ -1290,7 +1292,8 @@ namespace RequestInfoSvcs
     try
     {
       {
-        AdServer::UserInfoSvcs::UserInfoManagerSession_var user_info_manager_session;
+        std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+          user_info_manager_session;
         ChannelMatcher::Config_var configuration;
 
         {
@@ -1299,7 +1302,7 @@ namespace RequestInfoSvcs
           configuration = channel_matcher_->config();
         }
 
-        if(!(user_info_manager_session.in() && configuration.in()))
+        if(!(user_info_manager_session && configuration.in()))
         {
           throw AdServer::RequestInfoSvcs::ExpressionMatcher::NotReady();
         }
@@ -2015,34 +2018,33 @@ namespace RequestInfoSvcs
   {
     static const char* FUN = "ExpressionMatcherImpl::daily_check_user_impl_()";
 
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
-    match_params.use_empty_profile = false;
-    match_params.silent_match = true;
-    match_params.no_match = false;
-    match_params.no_result = false;
-    match_params.ret_freq_caps = false;
-    match_params.provide_channel_count = false;
-    match_params.provide_persistent_channels = true;
-    match_params.filter_contextual_triggers = false;
-    match_params.publishers_optin_timeout =
-      CorbaAlgs::pack_time(Generics::Time::ZERO);
-
-    AdServer::UserInfoSvcs::UserInfo user_info;
-
-    user_info.user_id = CorbaAlgs::pack_user_id(user_id);
-    user_info.last_colo_id = -1;
-    user_info.current_colo_id = -1;
-    user_info.request_colo_id = -1;
-    user_info.temporary = false;
-    user_info.time = now.tv_sec;
-
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var match_result;
     CORBA::String_var hostname;
 
-    user_info_manager_session_->match(
-      user_info,
-      match_params,
-      match_result);
+    adserver::user_info_svcs::user_info_manager::MatchRequest
+      history_match_request;
+    auto* match_params = history_match_request.mutable_match_params();
+    match_params->set_use_empty_profile(false);
+    match_params->set_silent_match(true);
+    match_params->set_no_match(false);
+    match_params->set_no_result(false);
+    match_params->set_ret_freq_caps(false);
+    match_params->set_provide_channel_count(false);
+    match_params->set_provide_persistent_channels(true);
+    match_params->set_filter_contextual_triggers(false);
+    match_params->set_publishers_optin_timeout(
+      ::GrpcAlgs::pack_time(Generics::Time::ZERO));
+    auto* user_info = history_match_request.mutable_user_info();
+    user_info->set_user_id(::GrpcAlgs::pack_user_id(user_id));
+    user_info->set_last_colo_id(-1);
+    user_info->set_current_colo_id(-1);
+    user_info->set_request_colo_id(-1);
+    user_info->set_temporary(false);
+    user_info->set_time(now.tv_sec);
+    match_result =
+      AdServer::UserInfoSvcs::GrpcAlgs::history_match(
+        *user_info_manager_session_,
+        history_match_request);
 
     ChannelIdSet history_channels;
 

@@ -41,7 +41,10 @@ namespace AdServer::UserInfoSvcs
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       AdServer::Grpc::BatchingOptions batching_options)
       : endpoint(std::move(endpoint_val)),
-        client(new Client(endpoint, std::move(grpc_executor), std::move(batching_options)))
+        client(std::make_shared<Client>(
+          endpoint,
+          std::move(grpc_executor),
+          std::move(batching_options)))
     {
       client->activate_object();
     }
@@ -62,7 +65,7 @@ namespace AdServer::UserInfoSvcs
     }
 
     const std::string endpoint;
-    Client_var client;
+    ClientPtr client;
   };
 
   struct UserInfoDistributedGrpcClient::RefHolder
@@ -74,7 +77,7 @@ namespace AdServer::UserInfoSvcs
     AdServer::Grpc::Stats stats() const noexcept
     {
       return static_cast<UserInfoManagerGrpcAsyncClient*>(
-        client_holder->client.in())->stats();
+        client_holder->client.get())->stats();
     }
 
     ClientHolderPtr client_holder;
@@ -128,6 +131,9 @@ namespace AdServer::UserInfoSvcs
 
     add_child_object(task_runner_);
   }
+
+  UserInfoDistributedGrpcClient::~UserInfoDistributedGrpcClient() noexcept =
+    default;
 
   void
   UserInfoDistributedGrpcClient::activate_object_()
@@ -193,7 +199,7 @@ namespace AdServer::UserInfoSvcs
         merge_stats_(
           result,
           static_cast<UserInfoManagerGrpcAsyncClient*>(
-            client_holder->client.in())->stats());
+            client_holder->client.get())->stats());
       }
     }
     return result;

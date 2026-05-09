@@ -208,7 +208,7 @@ private:
   Generics::Statistics::Collection_var collection_;
   CORBA::Object_var obj_ref_;
   AdServer::ChannelSvcs::ChannelServer_var channel_server_;
-  AdServer::ChannelSvcs::ChannelCorbaClient_var channel_client_;
+  AdServer::ChannelSvcs::ChannelCorbaClientPtr channel_client_;
   AdServer::ChannelSvcs::ChannelUpdateBase_var channel_update_;
   AdServer::ChannelSvcs::ChannelServerSession_var channel_session_;
   AdServer::ChannelSvcs::ChannelLoadSession_var load_session_;
@@ -286,4 +286,3 @@ void Application::StatMarker::calc_stat_r(Object* call, Function func, ReturnTyp
     }
   }
 }
-

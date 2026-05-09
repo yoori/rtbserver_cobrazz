@@ -141,6 +141,7 @@ namespace Bidding
 
     RequestInfo request_info_;
     DebugSink debug_sink_;
+    RequestTimeMetering request_time_metering_;
     AdServer::Commons::UserId resolved_user_id_;
 
     mutable Generics::AtomicInt to_interrupt_;

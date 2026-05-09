@@ -26,6 +26,8 @@
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
 #include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
 
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+
 #include "UserBindFrontend.hpp"
 
 namespace Config
@@ -96,19 +98,6 @@ namespace
     }
   }
 
-  template<typename Response, typename Start>
-  Response
-  wait_grpc_call_(Start&& start)
-  {
-    return AdServer::Grpc::sync_call<Response>(
-      std::forward<Start>(start),
-      [](const grpc::Status& status)
-      {
-        throw_user_bind_exception_(status);
-      });
-  }
-
-
   const String::SubString GOOGLE_ERRORS[] = {
     String::SubString(
       "User has a Google cookie, but has opted "
@@ -158,10 +147,10 @@ namespace
   {
     ChannelMatch
     operator() (
-      const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom& atom)
+      const adserver::channel_svcs::channel_server::ChannelAtom& atom)
       noexcept
     {
-      return ChannelMatch(atom.id, atom.trigger_channel_id);
+      return ChannelMatch(atom.id(), atom.trigger_channel_id());
     }
   };
 
@@ -538,16 +527,19 @@ namespace AdServer
         */
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
+        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+          common_config_->grpc_executor_threads());
+        add_child_object(grpc_executor_);
+
         auto user_bind_objects =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
             *common_config_,
+            grpc_executor_,
             logger());
         if(user_bind_objects.client)
         {
-          grpc_executor_ = user_bind_objects.grpc_executor;
           user_bind_client_ = user_bind_objects.client;
-          add_child_object(grpc_executor_);
-          add_child_object(user_bind_objects.client);
+          add_child_object(user_bind_objects.active_object);
         }
 
         AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
@@ -562,23 +554,19 @@ namespace AdServer
             controller_group_refs);
           user_info_controller_groups.push_back(controller_group_refs);
         }
-        user_info_client_ = new AdServer::UserInfoSvcs::UserInfoCorbaClient(
+        auto user_info_client = std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
           logger(),
           user_info_controller_groups,
           corba_client_adapter_.in());
-        add_child_object(user_info_client_);
+        user_info_client_ = user_info_client;
+        add_child_object(user_info_client);
 
-        CORBACommons::CorbaObjectRefList channel_manager_controller_refs;
-
-        Config::CorbaConfigReader::read_multi_corba_ref(
-          common_config_->ChannelManagerControllerRefs().get(),
-          channel_manager_controller_refs);
-
-        channel_servers_.reset(
-          new FrontendCommons::ChannelCorbaClient(
-            channel_manager_controller_refs,
-            corba_client_adapter_,
-            callback()));
+        auto channel_client_objects =
+          AdServer::ChannelSvcs::create_distributed_channel_client(
+            *common_config_,
+            grpc_executor_);
+        channel_client_ = channel_client_objects.client;
+        add_child_object(channel_client_objects.active_object);
 
         campaign_managers_.resolve(
           *common_config_, corba_client_adapter_);
@@ -735,13 +723,17 @@ namespace AdServer
   UserBindFrontend::add_bind_request_(
     const adserver::user_info_svcs::user_bind::AddBindRequestRequest& request)
   {
-    wait_grpc_call_<
+    AdServer::Grpc::sync_call<
       adserver::user_info_svcs::user_bind::AddBindRequestResponse>(
         [&](auto callback)
         {
           user_bind_client_->add_bind_request(
             request,
             std::move(callback));
+        },
+        [](const grpc::Status& status)
+        {
+          throw_user_bind_exception_(status);
         });
   }
 
@@ -749,13 +741,17 @@ namespace AdServer
   UserBindFrontend::get_user_id_(
     const adserver::user_info_svcs::user_bind::GetUserIdRequest& request)
   {
-    return wait_grpc_call_<
+    return AdServer::Grpc::sync_call<
       adserver::user_info_svcs::user_bind::GetUserIdResponse>(
         [&](auto callback)
         {
           user_bind_client_->get_user_id(
             request,
             std::move(callback));
+        },
+        [](const grpc::Status& status)
+        {
+          throw_user_bind_exception_(status);
         });
   }
 
@@ -763,13 +759,17 @@ namespace AdServer
   UserBindFrontend::add_user_id_(
     const adserver::user_info_svcs::user_bind::AddUserIdRequest& request)
   {
-    return wait_grpc_call_<
+    return AdServer::Grpc::sync_call<
       adserver::user_info_svcs::user_bind::AddUserIdResponse>(
         [&](auto callback)
         {
           user_bind_client_->add_user_id(
             request,
             std::move(callback));
+        },
+        [](const grpc::Status& status)
+        {
+          throw_user_bind_exception_(status);
         });
   }
 
@@ -2005,7 +2005,8 @@ namespace AdServer
 
     const Generics::Time now = Generics::Time::get_time_of_day();
 
-    AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var trigger_match_result;
+    adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
+    bool trigger_match_result_present = false;
 
     if((!referer.empty() || !keywords.empty()) &&
       !result_user_id.is_null())
@@ -2013,46 +2014,26 @@ namespace AdServer
       // do trigger match
       try
       {
-        AdServer::ChannelSvcs::ChannelServerBase::MatchQuery query;
-        query.non_strict_word_match = false;
-        query.non_strict_url_match = false;
-        query.return_negative = false;
-        query.simplify_page = false;
-        query.statuses[0] = 'A';
-        query.statuses[1] = '\0';
-        query.fill_content = false;
-        query.pwords << keywords;
-        query.first_url << referer;
-
         adserver::channel_svcs::channel_server::MatchRequest channel_request;
-      adserver::channel_svcs::channel_server::MatchResponse channel_response;
-      grpc::Status channel_status;
-      AdServer::ChannelSvcs::GrpcAlgs::make_match_request(query, channel_request);
-      channel_servers_->match(
-        channel_request,
-        [&channel_status, &channel_response](
-          const grpc::Status& status,
-          const adserver::channel_svcs::channel_server::MatchResponse& response)
-        {
-          channel_status = status;
-          channel_response = response;
-        });
-      if (!channel_status.ok())
-      {
-        Stream::Error ostr;
-        ostr << "ChannelServer grpc match failed: code=" <<
-          static_cast<int>(channel_status.error_code()) <<
-          ", message=" << channel_status.error_message();
-        throw FrontendCommons::ChannelCorbaClient::Exception(ostr);
+        channel_request.set_non_strict_word_match(false);
+        channel_request.set_non_strict_url_match(false);
+        channel_request.set_return_negative(false);
+        channel_request.set_simplify_page(false);
+        channel_request.set_fill_content(false);
+        channel_request.set_statuses("A", 2);
+        channel_request.set_pwords(keywords.str());
+        channel_request.set_first_url(referer.str());
+
+        trigger_match_result = AdServer::ChannelSvcs::GrpcAlgs::channel_match(
+          *channel_client_,
+          channel_request);
+        trigger_match_result_present = true;
       }
-      trigger_match_result = AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
-        channel_response);
-      }
-      catch(const FrontendCommons::ChannelCorbaClient::Exception& ex)
+      catch(const eh::Exception& ex)
       {
         Stream::Error ostr;
         ostr << FUN <<
-          ": caught ChannelCorbaClient::Exception: " <<
+          ": caught ChannelServerGrpcAsyncClient error: " <<
           ex.what();
         logger()->log(ostr.str(),
           Logging::Logger::EMERGENCY,
@@ -2067,30 +2048,32 @@ namespace AdServer
       create_user_profile ||
       !cohort.empty() ||
       !keywords.empty() ||
-      (!result_user_id.is_null() && trigger_match_result.ptr() && (
-	trigger_match_result->matched_channels.page_channels.length() > 0 ||
-        trigger_match_result->matched_channels.url_channels.length() > 0 ||
-        trigger_match_result->matched_channels.url_keyword_channels.length() > 0)))
+      (!result_user_id.is_null() && trigger_match_result_present && (
+        trigger_match_result.matched_channels().page_channels_size() > 0 ||
+        trigger_match_result.matched_channels().url_channels_size() > 0 ||
+        trigger_match_result.matched_channels().url_keyword_channels_size() > 0)))
     {
       // merge merge_user_id into user_id
-      AdServer::UserInfoSvcs::UserInfoMatcher_var
-        uim_session = user_info_client_->user_info_session();
-
-      if(uim_session.in())
+      if(user_info_client_)
       {
         try
         {
+          adserver::user_info_svcs::user_info_manager::MatchRequest
+            history_match_request;
+          auto* grpc_match_params =
+            history_match_request.mutable_match_params();
           AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
 
-          if(trigger_match_result.ptr())
+          if(trigger_match_result_present)
           {
+            const auto& matched_channels =
+              trigger_match_result.matched_channels();
             typedef std::set<ChannelMatch> ChannelMatchSet;
             ChannelMatchSet page_channels;
 
             std::transform(
-              trigger_match_result->matched_channels.page_channels.get_buffer(),
-              trigger_match_result->matched_channels.page_channels.get_buffer() +
-                trigger_match_result->matched_channels.page_channels.length(),
+              matched_channels.page_channels().begin(),
+              matched_channels.page_channels().end(),
               std::inserter(page_channels, page_channels.end()),
               GetChannelTriggerId());
 
@@ -2102,14 +2085,16 @@ namespace AdServer
               match_params.page_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
               match_params.page_channel_ids[res_ch_i].channel_trigger_id =
                 ch_it->channel_trigger_id;
+              auto* channel_match = grpc_match_params->add_page_channel_ids();
+              channel_match->set_channel_id(ch_it->channel_id);
+              channel_match->set_channel_trigger_id(ch_it->channel_trigger_id);
             }
 
             ChannelMatchSet url_channels;
 
             std::transform(
-              trigger_match_result->matched_channels.url_channels.get_buffer(),
-              trigger_match_result->matched_channels.url_channels.get_buffer() +
-                trigger_match_result->matched_channels.url_channels.length(),
+              matched_channels.url_channels().begin(),
+              matched_channels.url_channels().end(),
               std::inserter(url_channels, url_channels.end()),
               GetChannelTriggerId());
 
@@ -2121,14 +2106,16 @@ namespace AdServer
               match_params.url_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
               match_params.url_channel_ids[res_ch_i].channel_trigger_id =
                 ch_it->channel_trigger_id;
+              auto* channel_match = grpc_match_params->add_url_channel_ids();
+              channel_match->set_channel_id(ch_it->channel_id);
+              channel_match->set_channel_trigger_id(ch_it->channel_trigger_id);
             }
 
             ChannelMatchSet url_keyword_channels;
 
             std::transform(
-              trigger_match_result->matched_channels.url_keyword_channels.get_buffer(),
-              trigger_match_result->matched_channels.url_keyword_channels.get_buffer() +
-                trigger_match_result->matched_channels.url_keyword_channels.length(),
+              matched_channels.url_keyword_channels().begin(),
+              matched_channels.url_keyword_channels().end(),
               std::inserter(url_keyword_channels, url_keyword_channels.end()),
               GetChannelTriggerId());
 
@@ -2140,6 +2127,10 @@ namespace AdServer
               match_params.url_keyword_channel_ids[res_ch_i].channel_id = ch_it->channel_id;
               match_params.url_keyword_channel_ids[res_ch_i].channel_trigger_id =
                 ch_it->channel_trigger_id;
+              auto* channel_match =
+                grpc_match_params->add_url_keyword_channel_ids();
+              channel_match->set_channel_id(ch_it->channel_id);
+              channel_match->set_channel_trigger_id(ch_it->channel_trigger_id);
             }
           }
 
@@ -2155,6 +2146,18 @@ namespace AdServer
           match_params.publishers_optin_timeout = CorbaAlgs::pack_time(
             Generics::Time::ZERO);
           match_params.cohort << cohort;
+          grpc_match_params->set_use_empty_profile(false);
+          grpc_match_params->set_silent_match(false);
+          grpc_match_params->set_no_match(false);
+          grpc_match_params->set_no_result(true);
+          grpc_match_params->set_ret_freq_caps(false);
+          grpc_match_params->set_provide_channel_count(false);
+          grpc_match_params->set_provide_persistent_channels(false);
+          grpc_match_params->set_change_last_request(false);
+          grpc_match_params->set_filter_contextual_triggers(false);
+          grpc_match_params->set_publishers_optin_timeout(
+            GrpcAlgs::pack_time(Generics::Time::ZERO));
+          grpc_match_params->set_cohort(cohort.str());
 
           AdServer::UserInfoSvcs::UserInfo user_info;
           user_info.user_id = CorbaAlgs::pack_user_id(result_user_id);
@@ -2163,6 +2166,13 @@ namespace AdServer
           user_info.current_colo_id = -1;
           user_info.temporary = false;
           user_info.time = now.tv_sec;
+          auto* grpc_user_info = history_match_request.mutable_user_info();
+          grpc_user_info->set_user_id(GrpcAlgs::pack_user_id(result_user_id));
+          grpc_user_info->set_last_colo_id(colo_id);
+          grpc_user_info->set_request_colo_id(colo_id);
+          grpc_user_info->set_current_colo_id(-1);
+          grpc_user_info->set_temporary(false);
+          grpc_user_info->set_time(now.tv_sec);
 
           bool do_match = true;
 
@@ -2176,7 +2186,8 @@ namespace AdServer
             profiles_request.history_profile = true;
             profiles_request.freq_cap_profile = true;
 
-            if(uim_session->get_user_profile(
+            if(AdServer::UserInfoSvcs::GrpcAlgs::get_user_profile(
+                 *user_info_client_,
                  CorbaAlgs::pack_user_id(merge_user_id),
                  false, // persistent profile
                  profiles_request,
@@ -2185,7 +2196,8 @@ namespace AdServer
               bool merge_success;
               CORBACommons::TimestampInfo_var last_request;
 
-              uim_session->merge(
+              AdServer::UserInfoSvcs::GrpcAlgs::merge(
+                *user_info_client_,
                 user_info,
                 match_params,
                 merge_user_profile.in(),
@@ -2194,14 +2206,18 @@ namespace AdServer
 
               do_match = false;
 
-              uim_session->remove_user_profile(
+              AdServer::UserInfoSvcs::GrpcAlgs::remove_user_profile(
+                *user_info_client_,
                 CorbaAlgs::pack_user_id(merge_user_id));
             }
           }
 
           if(do_match) // create_user_profile or not found merge profile
           {
-            uim_session->match(user_info, match_params, history_match_result.out());
+            history_match_result =
+              AdServer::UserInfoSvcs::GrpcAlgs::history_match(
+                *user_info_client_,
+                history_match_request);
           }
         }
         catch(const AdServer::UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
@@ -2233,7 +2249,7 @@ namespace AdServer
             Aspect::USER_BIND_FRONTEND,
             "ADS-ICON-7800");
         }
-      } // uim_session
+      }
     } // merge_user_id
 
     try
@@ -2243,7 +2259,7 @@ namespace AdServer
         request_info,
         result_user_id,
         now,
-        trigger_match_result,
+        trigger_match_result_present ? &trigger_match_result : nullptr,
         history_match_result,
         location,
         referer,
@@ -2269,7 +2285,8 @@ namespace AdServer
     AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
-    const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+    const adserver::channel_svcs::channel_server::MatchResponse*
+      trigger_match_result,
     const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
     const FrontendCommons::Location* location,
     const String::SubString& referer,
@@ -2278,8 +2295,6 @@ namespace AdServer
   {
     /*
       Don't fill:
-        mri.household_id
-        mri.match_info.hid_channels
         mri.match_info.coord_location
     */
 
@@ -2291,15 +2306,16 @@ namespace AdServer
 
     if(trigger_match_result)
     {
-      CORBA::ULong result_len =
-        trigger_match_result->matched_channels.page_channels.length();
+      const auto& page_channels =
+        trigger_match_result->matched_channels().page_channels();
+      CORBA::ULong result_len = page_channels.size();
       mri.match_info.pkw_channels.length(result_len);
       for(CORBA::ULong i = 0; i < result_len; ++i)
       {
         mri.match_info.pkw_channels[i].channel_id =
-          trigger_match_result->matched_channels.page_channels[i].id;
+          page_channels[i].id();
         mri.match_info.pkw_channels[i].channel_trigger_id =
-          trigger_match_result->matched_channels.page_channels[i].trigger_channel_id;
+          page_channels[i].trigger_channel_id();
       }
     }
 
@@ -2457,40 +2473,41 @@ namespace AdServer
     {
       return 400;
     }
-
-    AdServer::UserInfoSvcs::UserInfoMatcher_var
-      uim_session = user_info_client_->user_info_session();
-
-    if (!uim_session.in())
+    if (!user_info_client_)
     {
       return 500;
     }
 
     try
     {
-      AdServer::UserInfoSvcs::UserInfoMatcher::MatchParams match_params;
-      match_params.use_empty_profile = false;
-      match_params.silent_match = false;
-      match_params.no_match = false;
-      match_params.no_result = false;
-      match_params.ret_freq_caps = false;
-      match_params.provide_channel_count = false;
-      match_params.provide_persistent_channels = false;
-      match_params.change_last_request = false;
-      match_params.publishers_optin_timeout = CorbaAlgs::pack_time(Generics::Time::ZERO);
-
-      AdServer::UserInfoSvcs::UserInfo user_info;
-      user_info.user_id = CorbaAlgs::pack_user_id(request_info.user_id);
-      user_info.huser_id = CorbaAlgs::pack_user_id(AdServer::Commons::UserId{});
-      user_info.last_colo_id = request_info.colo_id;
-      user_info.request_colo_id = request_info.colo_id;
-      user_info.current_colo_id = -1;
-      user_info.temporary = false;
-      user_info.time = Generics::Time::get_time_of_day().tv_sec;
-
       // request match with empty triggered channels - get only actually matched channels
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
-      uim_session->match(user_info, match_params, history_match_result);
+      adserver::user_info_svcs::user_info_manager::MatchRequest
+        history_match_request;
+      auto* match_params = history_match_request.mutable_match_params();
+      match_params->set_use_empty_profile(false);
+      match_params->set_silent_match(false);
+      match_params->set_no_match(false);
+      match_params->set_no_result(false);
+      match_params->set_ret_freq_caps(false);
+      match_params->set_provide_channel_count(false);
+      match_params->set_provide_persistent_channels(false);
+      match_params->set_change_last_request(false);
+      match_params->set_publishers_optin_timeout(
+        GrpcAlgs::pack_time(Generics::Time::ZERO));
+      auto* user_info = history_match_request.mutable_user_info();
+      user_info->set_user_id(GrpcAlgs::pack_user_id(request_info.user_id));
+      user_info->set_huser_id(GrpcAlgs::pack_user_id(
+        AdServer::Commons::UserId{}));
+      user_info->set_last_colo_id(request_info.colo_id);
+      user_info->set_request_colo_id(request_info.colo_id);
+      user_info->set_current_colo_id(-1);
+      user_info->set_temporary(false);
+      user_info->set_time(Generics::Time::get_time_of_day().tv_sec);
+      history_match_result =
+        AdServer::UserInfoSvcs::GrpcAlgs::history_match(
+          *user_info_client_,
+          history_match_request);
 
       AdServer::UserInfoSvcs::UserInfoMatcher::ChannelWeightSeq& history_matched_channels =
 	history_match_result->channels;

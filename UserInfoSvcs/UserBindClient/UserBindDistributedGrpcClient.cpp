@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -35,15 +36,13 @@ namespace AdServer::UserInfoSvcs
   }
 
   class UserBindDistributedGrpcClient::Distributor:
-    public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
-    public virtual Generics::RefCountableActiveObject,
     public UserBindServerGrpcAsyncClient
   {
   public:
     using ControllerRefList = std::vector<std::string>;
     using ServerClient = UserBindServerGrpcAsyncBatchingClient;
-    using ServerClient_var = ReferenceCounting::SmartPtr<ServerClient>;
+    using ServerClientPtr = std::shared_ptr<ServerClient>;
     using ControllerGrpc =
       adserver::user_info_svcs::user_bind_controller::UserBindControllerGrpc;
 
@@ -275,7 +274,7 @@ namespace AdServer::UserInfoSvcs
           merge_stats_(
             result,
             static_cast<UserBindServerGrpcAsyncClient*>(
-              ref_holder->client.in())->stats());
+              ref_holder->client.get())->stats());
         }
       }
       return result;
@@ -312,7 +311,7 @@ namespace AdServer::UserInfoSvcs
         std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
         AdServer::Grpc::BatchingOptions batching_options)
         : endpoint(std::move(endpoint)),
-          client(new ServerClient(
+          client(std::make_shared<ServerClient>(
             this->endpoint,
             std::move(grpc_executor),
             std::move(batching_options)))
@@ -321,7 +320,7 @@ namespace AdServer::UserInfoSvcs
       }
 
       const std::string endpoint;
-      ReferenceCounting::SmartPtr<ServerClient> client;
+      ServerClientPtr client;
 
       ~RefHolder() noexcept
       {
@@ -800,15 +799,17 @@ namespace AdServer::UserInfoSvcs
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     Logging::Logger* logger)
   {
-    ReferenceCounting::SmartPtr<Distributor> distributor =
-      new Distributor(
-        logger,
-        user_bind_controller_refs,
-        std::move(batching_options),
-        std::move(grpc_executor));
+    auto distributor = std::make_shared<Distributor>(
+      logger,
+      user_bind_controller_refs,
+      std::move(batching_options),
+      std::move(grpc_executor));
     user_bind_mapper_ = distributor;
     add_child_object(distributor);
   }
+
+  UserBindDistributedGrpcClient::~UserBindDistributedGrpcClient() noexcept =
+    default;
 
   AdServer::Grpc::Stats
   UserBindDistributedGrpcClient::stats() const noexcept
@@ -837,7 +838,24 @@ namespace AdServer::UserInfoSvcs
     const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
     GetUserIdCallback callback)
   {
-    user_bind_mapper_->get_user_id(request, std::move(callback));
+    std::cout << "UserBindDistributedGrpcClient::get_user_id request: " <<
+      request.ShortDebugString() << std::endl;
+
+    user_bind_mapper_->get_user_id(
+      request,
+      [
+        callback = std::move(callback)
+      ](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
+      mutable
+      {
+        std::cout << "UserBindDistributedGrpcClient::get_user_id response: "
+          "status_code=" << static_cast<int>(status.error_code()) <<
+          ", status_message=" << status.error_message() <<
+          ", response=" << response.ShortDebugString() << std::endl;
+        callback(status, response);
+      });
   }
 
   void

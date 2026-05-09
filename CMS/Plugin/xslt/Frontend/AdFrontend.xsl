@@ -384,6 +384,7 @@
     request_domain="{$adserving-domain}"
     colo_id="{$colo-config/cfg:coloParams/@colo_id}"
     channel_factory_threads="{$channel-server-count * 10}"
+    grpc_executor_threads="16"
     domain_config_path="{concat($config-root, '/DomainConfig.xml')}"
     update_period="{$request-update-period}"
     profiling_log_sampling="{$request-profiling-log-sampling}"
@@ -489,6 +490,11 @@
         </xsl:for-each>
       </xsl:for-each>
     </cfg:ChannelManagerControllerRefs>
+
+    <xsl:call-template name="AddChannelController2Groups">
+      <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>
+      <xsl:with-param name="error-prefix" select="AdFrontend"/>
+    </xsl:call-template>
 
     <xsl:call-template name="AddUserBindControllerGroups">
       <xsl:with-param name="full-cluster-path" select="$full-cluster-path"/>

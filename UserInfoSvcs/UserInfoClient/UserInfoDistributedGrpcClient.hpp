@@ -15,7 +15,6 @@
 #include <Generics/TaskRunner.hpp>
 #include <Generics/Time.hpp>
 #include <Logger/Logger.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Commons/Grpc/GrpcClient.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
@@ -25,9 +24,7 @@
 namespace AdServer::UserInfoSvcs
 {
   class UserInfoDistributedGrpcClient:
-    public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
-    public virtual Generics::RefCountableActiveObject,
     public UserInfoManagerGrpcAsyncClient
   {
   public:
@@ -41,7 +38,7 @@ namespace AdServer::UserInfoSvcs
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       Logging::Logger* logger);
 
-    ~UserInfoDistributedGrpcClient() noexcept override = default;
+    ~UserInfoDistributedGrpcClient() noexcept override;
 
     AdServer::Grpc::Stats stats() const noexcept override;
 
@@ -99,7 +96,7 @@ namespace AdServer::UserInfoSvcs
 
   private:
     using Client = UserInfoManagerGrpcAsyncBatchingClient;
-    using Client_var = ReferenceCounting::SmartPtr<Client>;
+    using ClientPtr = std::shared_ptr<Client>;
 
     class ResolveRefsTask;
 
@@ -154,7 +151,4 @@ namespace AdServer::UserInfoSvcs
     std::condition_variable resolve_cond_;
     std::atomic_bool deactivated_{false};
   };
-
-  using UserInfoDistributedGrpcClient_var =
-    ReferenceCounting::SmartPtr<UserInfoDistributedGrpcClient>;
 }

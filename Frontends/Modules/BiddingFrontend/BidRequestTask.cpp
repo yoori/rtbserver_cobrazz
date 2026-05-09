@@ -89,6 +89,7 @@ namespace Bidding
       }
 
       debug_sink_.print_creative_selection_debug_info(*campaign_match_result);
+      debug_sink_.print_time_metering_debug_info(request_time_metering_);
 
       if(check_interrupt_(Stage::CampaignSelectionConsidering))
       {

@@ -10,6 +10,7 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <Generics/ActiveObject.hpp>
 #include <Generics/MemBuf.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/Time.hpp>
@@ -162,8 +163,9 @@ namespace
   struct UserInfoClientHolder
   {
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
-    Generics::ActiveObject_var active_object;
-    AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient_var client;
+    std::shared_ptr<Generics::ActiveObject> active_object;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      client;
   };
 
   UserInfoClientHolder create_user_info_client_(const std::string& reference)
@@ -176,8 +178,8 @@ namespace
     {
       Logging::Logger_var logger =
         new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
-      AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient_var client =
-        new AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient(
+      auto client =
+        std::make_shared<AdServer::UserInfoSvcs::UserInfoDistributedGrpcClient>(
           std::vector<std::string>{reference},
           AdServer::Grpc::BatchingOptions(),
           result.grpc_executor,
@@ -187,12 +189,11 @@ namespace
     }
     else
     {
-      ReferenceCounting::SmartPtr<
-        AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncBatchingClient> client =
-          new AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncBatchingClient(
-            reference,
-            result.grpc_executor,
-            AdServer::Grpc::BatchingOptions());
+      auto client = std::make_shared<
+        AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncBatchingClient>(
+          reference,
+          result.grpc_executor,
+          AdServer::Grpc::BatchingOptions());
       result.client = client;
       result.active_object = client;
     }
@@ -474,7 +475,7 @@ int main(int argc, char** argv)
         {
           shutdown_user_info_client_(*holder);
         });
-    auto* client = client_holder.client.in();
+    auto* client = client_holder.client.get();
 
     if (command == "get-config-timestamp")
     {

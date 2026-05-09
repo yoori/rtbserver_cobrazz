@@ -1,6 +1,7 @@
 #pragma once
 
 #include <eh/Exception.hpp>
+#include <memory>
 #include <ReferenceCounting/ReferenceCounting.hpp>
 #include <ReferenceCounting/PtrHolder.hpp>
 #include <Logger/Logger.hpp>
@@ -33,6 +34,11 @@
 #include "ExpressionMatcherOutLogger.hpp"
 #include "ExpressionMatcherStats.hpp"
 #include "ExpressionMatcherLogLoader.hpp"
+
+namespace AdServer::UserInfoSvcs
+{
+  class UserInfoManagerGrpcAsyncClient;
+}
 
 namespace AdServer
 {
@@ -396,7 +402,7 @@ namespace AdServer
 
       AdServer::UserInfoSvcs::UserInfoManagerController_var
         user_info_manager_controller_;
-      AdServer::UserInfoSvcs::UserInfoManagerSession_var
+      std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
         user_info_manager_session_;
 
       ExpressionMatcherConfig expression_matcher_config_;

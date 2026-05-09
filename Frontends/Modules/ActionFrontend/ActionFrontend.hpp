@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include <eh/Exception.hpp>
@@ -19,8 +20,9 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
+#include <ChannelServerGrpc.grpc.pb.h>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -29,9 +31,7 @@
 #include "ActionFrontendStat.hpp"
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace Action
+namespace AdServer::Action
 {
   namespace Configuration
   {
@@ -183,7 +183,8 @@ namespace Action
 
     void
     trigger_match_(
-      AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var& trigger_match_result,
+      adserver::channel_svcs::channel_server::MatchResponse& trigger_match_result,
+      bool& trigger_match_result_present,
       unsigned long conv_id,
       const Generics::Time& now,
       const AdServer::Commons::UserId& user_id,
@@ -203,7 +204,7 @@ namespace Action
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var& trigger_match_result) const
+      const adserver::channel_svcs::channel_server::MatchResponse& trigger_match_result) const
       noexcept;
 
     class MatchActionChannelsTask;
@@ -223,10 +224,10 @@ namespace Action
     CommonModule_var common_module_;
 
     std::unique_ptr<AdServer::Action::RequestInfoFiller> request_info_filler_;
-    ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelCorbaClient>
-      channel_servers_;
-    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
+      channel_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      user_info_client_;
     CookieManagerPtr cookie_manager_;
 
     IPMapPtr ip_map_;
@@ -240,20 +241,16 @@ namespace Action
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
   };
 }
-}
 
-namespace AdServer
-{
-namespace Action
+namespace AdServer::Action
 {
   /* Frontend class */
   inline
   Frontend::~Frontend() noexcept
   {}
 }
-} // namespace AdServer

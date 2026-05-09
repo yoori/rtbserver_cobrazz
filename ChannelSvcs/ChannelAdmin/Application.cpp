@@ -20,6 +20,7 @@
 #include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
 
+#include <ChannelServerGrpc.grpc.pb.h>
 #include <ChannelSvcs/DictionaryProvider/DictionaryProvider.hpp>
 #include <UtilCommons/Table.hpp>
 #include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
@@ -32,6 +33,76 @@ namespace
     const char* special_names[2]={
       "MR_NO_ADV",
       "MR_NO_TRACK"};
+  }
+
+  void
+  unpack_channel_atoms(
+    const google::protobuf::RepeatedPtrField<
+      adserver::channel_svcs::channel_server::ChannelAtom>& source,
+    AdServer::ChannelSvcs::ChannelServerBase::ChannelAtomSeq& target)
+  {
+    target.length(source.size());
+    for(int i = 0; i < source.size(); ++i)
+    {
+      target[i].id = source[i].id();
+      target[i].trigger_channel_id = source[i].trigger_channel_id();
+    }
+  }
+
+  template<typename CorbaOctSeq>
+  void
+  unpack_oct_seq(const std::string& value, CorbaOctSeq& target)
+  {
+    target.length(value.size());
+    std::copy(value.begin(), value.end(), target.get_buffer());
+  }
+
+  AdServer::ChannelSvcs::ChannelServerBase::MatchResult*
+  make_channel_match_result(
+    const adserver::channel_svcs::channel_server::MatchResponse& source)
+  {
+    using AdServer::ChannelSvcs::ChannelServerBase;
+
+    ChannelServerBase::MatchResult_var result =
+      new ChannelServerBase::MatchResult;
+    unpack_channel_atoms(
+      source.matched_channels().page_channels(),
+      result->matched_channels.page_channels);
+    unpack_channel_atoms(
+      source.matched_channels().search_channels(),
+      result->matched_channels.search_channels);
+    unpack_channel_atoms(
+      source.matched_channels().url_channels(),
+      result->matched_channels.url_channels);
+    unpack_channel_atoms(
+      source.matched_channels().url_keyword_channels(),
+      result->matched_channels.url_keyword_channels);
+
+    result->matched_channels.uid_channels.length(
+      source.matched_channels().uid_channels_size());
+    for(int i = 0; i < source.matched_channels().uid_channels_size(); ++i)
+    {
+      result->matched_channels.uid_channels[i] =
+        source.matched_channels().uid_channels(i);
+    }
+
+    result->content_channels.length(source.content_channels_size());
+    for(int i = 0; i < source.content_channels_size(); ++i)
+    {
+      result->content_channels[i].id = source.content_channels(i).id();
+      result->content_channels[i].weight =
+        source.content_channels(i).weight();
+    }
+
+    result->no_adv = source.no_adv();
+    result->no_track = source.no_track();
+    result->match_time.length(source.match_time().empty() ? 0 : 1);
+    if(!source.match_time().empty())
+    {
+      unpack_oct_seq(source.match_time(), result->match_time[0]);
+    }
+
+    return result._retn();
   }
 
   enum
@@ -620,7 +691,7 @@ void Application::init_server_interface_() /*throw(InvalidArgument)*/
       new Logging::ActiveObjectCallbackImpl(logger_.in()));
     CORBACommons::CorbaObjectRefList refs;
     refs.push_back(CORBACommons::CorbaObjectRef(reference_.c_str()));
-    channel_client_ = new AdServer::ChannelSvcs::ChannelCorbaClient(
+    channel_client_ = std::make_shared<AdServer::ChannelSvcs::ChannelCorbaClient>(
       refs,
       adapter_.in(),
       callback);
@@ -668,7 +739,7 @@ void Application::init_server_interface_() /*throw(InvalidArgument)*/
         new Logging::ActiveObjectCallbackImpl(logger_.in()));
       CORBACommons::CorbaObjectRefList refs;
       refs.push_back(CORBACommons::CorbaObjectRef(reference_.c_str()));
-      channel_client_ = new AdServer::ChannelSvcs::ChannelCorbaClient(
+      channel_client_ = std::make_shared<AdServer::ChannelSvcs::ChannelCorbaClient>(
         refs,
         adapter_.in(),
         callback);
@@ -1835,31 +1906,26 @@ void Application::make_match_query(
     {
       const Generics::Time start_time = Generics::Time::get_time_of_day();
       adserver::channel_svcs::channel_server::MatchRequest request;
-      adserver::channel_svcs::channel_server::MatchResponse response;
-      grpc::Status status;
-      AdServer::ChannelSvcs::GrpcAlgs::make_match_request(
-        in,
-        request);
-      iface_ptr->match(
-        request,
-        [&status, &response](
-          const grpc::Status& callback_status,
-          const adserver::channel_svcs::channel_server::MatchResponse&
-            callback_response)
-        {
-          status = callback_status;
-          response = callback_response;
-        });
-      if (!status.ok())
-      {
-        Stream::Error ostr;
-        ostr << __func__ << ": grpc match failed: code=" <<
-          static_cast<int>(status.error_code()) <<
-          ", message=" << status.error_message();
-        throw Exception(ostr);
-      }
-      res = AdServer::ChannelSvcs::GrpcAlgs::make_match_result(
-        response);
+      request.set_request_id(in.request_id.in());
+      request.set_first_url(in.first_url.in());
+      request.set_first_url_words(in.first_url_words.in());
+      request.set_urls(in.urls.in());
+      request.set_urls_words(in.urls_words.in());
+      request.set_pwords(in.pwords.in());
+      request.set_swords(in.swords.in());
+      request.set_uid(
+        reinterpret_cast<const char*>(in.uid.get_buffer()),
+        in.uid.length());
+      request.set_statuses(in.statuses, 2);
+      request.set_non_strict_word_match(in.non_strict_word_match);
+      request.set_non_strict_url_match(in.non_strict_url_match);
+      request.set_return_negative(in.return_negative);
+      request.set_simplify_page(in.simplify_page);
+      request.set_fill_content(in.fill_content);
+      res = make_channel_match_result(
+        AdServer::ChannelSvcs::GrpcAlgs::channel_match(
+          *iface_ptr,
+          request));
       stat_marker.calc_value_(
         Generics::Time::get_time_of_day() - start_time,
         i);
@@ -1989,7 +2055,7 @@ int Application::match_()
     AdServer::ChannelSvcs::ChannelServerBase::MatchResult_var result;
     make_match_query(
       static_cast<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient*>(
-        channel_client_.in()),
+        channel_client_.get()),
       result);
     print_match_result(
       result,

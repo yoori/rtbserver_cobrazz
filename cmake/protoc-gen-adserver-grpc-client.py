@@ -64,7 +64,6 @@ def generate_hpp(file_desc, namespace):
     "",
     "#include <grpcpp/support/status.h>",
     "",
-    "#include <ReferenceCounting/SmartPtr.hpp>",
     "#include <Commons/Grpc/AsyncBatchingClientBase.hpp>",
     "#include <Commons/Grpc/GrpcClient.hpp>",
     "#include <Commons/Grpc/GrpcExecutor.hpp>",
@@ -83,7 +82,6 @@ def generate_hpp(file_desc, namespace):
 
     lines.extend([
       "  class {} :".format(async_client),
-      "    public virtual ReferenceCounting::Interface,",
       "    public virtual AdServer::Grpc::Client",
       "  {",
       "  public:",
@@ -112,9 +110,6 @@ def generate_hpp(file_desc, namespace):
       lines.pop()
     lines.extend([
       "  };",
-      "",
-      "  using {}_var = ReferenceCounting::SmartPtr<{}>;".format(
-        async_client, async_client),
       "",
       "  class {} final".format(batching_client),
       "    : public AdServer::Grpc::AsyncBatchingClientBase,",

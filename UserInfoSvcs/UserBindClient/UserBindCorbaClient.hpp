@@ -1,8 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 #include <Sync/SyncPolicy.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
@@ -12,7 +13,6 @@
 namespace FrontendCommons
 {
   class UserBindCorbaClient:
-    public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
     public AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient
   {
@@ -75,6 +75,5 @@ namespace FrontendCommons
     AdServer::UserInfoSvcs::UserBindOperationDistributor_var user_bind_mapper_;
   };
 
-  typedef ReferenceCounting::SmartPtr<UserBindCorbaClient>
-    UserBindCorbaClient_var;
+  using UserBindCorbaClientPtr = std::shared_ptr<UserBindCorbaClient>;
 }

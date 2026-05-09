@@ -8,6 +8,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <Generics/AppUtils.hpp>
+#include <Generics/ActiveObject.hpp>
 #include <Generics/Time.hpp>
 #include <Generics/Uuid.hpp>
 #include <Logger/StreamLogger.hpp>
@@ -56,8 +57,9 @@ namespace
   struct ClientHolder
   {
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
-    Generics::ActiveObject_var active_object;
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var client;
+    std::shared_ptr<Generics::ActiveObject> active_object;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
+      client;
   };
 
   ClientHolder create_client_(const std::string& reference)
@@ -70,8 +72,8 @@ namespace
     {
       Logging::Logger_var logger =
         new Logging::OStream::Logger(Logging::OStream::Config(std::cerr));
-      AdServer::UserInfoSvcs::UserBindDistributedGrpcClient_var client =
-        new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
+      auto client =
+        std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
           std::vector<std::string>{reference},
           AdServer::Grpc::BatchingOptions(),
           result.grpc_executor,
@@ -81,12 +83,11 @@ namespace
     }
     else
     {
-      ReferenceCounting::SmartPtr<
-        AdServer::UserInfoSvcs::UserBindServerGrpcAsyncBatchingClient> client =
-          new AdServer::UserInfoSvcs::UserBindServerGrpcAsyncBatchingClient(
-            reference,
-            result.grpc_executor,
-            AdServer::Grpc::BatchingOptions());
+      auto client = std::make_shared<
+        AdServer::UserInfoSvcs::UserBindServerGrpcAsyncBatchingClient>(
+          reference,
+          result.grpc_executor,
+          AdServer::Grpc::BatchingOptions());
       result.client = client;
       result.active_object = client;
     }
@@ -240,7 +241,7 @@ int main(int argc, char** argv)
         throw std::runtime_error(
           "print-bind-request: expected argument: <bind request id>");
       }
-      print_bind_request_(holder.client.in(), commands.front());
+      print_bind_request_(holder.client.get(), commands.front());
     }
     else if (command == "add-user-id")
     {
@@ -252,7 +253,7 @@ int main(int argc, char** argv)
       const std::string external_id = commands.front();
       commands.pop_front();
       add_user_id_(
-        holder.client.in(),
+        holder.client.get(),
         external_id,
         AdServer::Commons::UserId(commands.front()));
     }
@@ -262,7 +263,7 @@ int main(int argc, char** argv)
       {
         throw std::runtime_error("get-user-id: expected argument: <external id>");
       }
-      get_user_id_(holder.client.in(), commands.front());
+      get_user_id_(holder.client.get(), commands.front());
     }
     else
     {

@@ -19,10 +19,10 @@ namespace AdServer
     {
       unsigned int
       operator() (
-        const AdServer::ChannelSvcs::ChannelServerBase::ChannelAtom& atom)
+        const adserver::channel_svcs::channel_server::ChannelAtom& atom)
         noexcept
       {
-        return atom.id;
+        return atom.id();
       }
     };
   }
@@ -204,14 +204,15 @@ namespace AdServer
 
   void
   DebugSink::print_channel_matching_seq_(
-    const ChannelSvcs::ChannelServerBase::ChannelAtomSeq& channels,
+    const google::protobuf::RepeatedPtrField<
+      adserver::channel_svcs::channel_server::ChannelAtom>& channels,
     char type)
     noexcept
   {
-    for(CORBA::ULong ch_i = 0; ch_i < channels.length(); ++ch_i)
+    for(int ch_i = 0; ch_i < channels.size(); ++ch_i)
     {
-      debug_info_str_ << field_begin_ << channels[ch_i].id << type <<
-        " :: " << channels[ch_i].trigger_channel_id << field_end_;
+      debug_info_str_ << field_begin_ << channels[ch_i].id() << type <<
+        " :: " << channels[ch_i].trigger_channel_id() << field_end_;
     }
   }
 
@@ -238,7 +239,7 @@ namespace AdServer
 
   void
   DebugSink::print_trigger_matching_debug_info(
-    const ChannelSvcs::ChannelServerBase::MatchResult& match_result,
+    const adserver::channel_svcs::channel_server::MatchResponse& match_result,
     const ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
     const char* prefix)
     noexcept
@@ -246,38 +247,7 @@ namespace AdServer
     IdSetType uniq_ids;
     if (require_short_header())
     {
-      size_t count = 0;
-      std::transform(
-        match_result.matched_channels.page_channels.get_buffer(),
-        match_result.matched_channels.page_channels.get_buffer() +
-        match_result.matched_channels.page_channels.length(),
-        std::inserter(uniq_ids, uniq_ids.end()),
-        GetChannelId());
-      count = uniq_ids.size();
-      uniq_ids.clear();
-      std::transform(
-        match_result.matched_channels.search_channels.get_buffer(),
-        match_result.matched_channels.search_channels.get_buffer() +
-        match_result.matched_channels.search_channels.length(),
-        std::inserter(uniq_ids, uniq_ids.end()),
-        GetChannelId());
-      count += uniq_ids.size();
-      uniq_ids.clear();
-      std::transform(
-        match_result.matched_channels.url_channels.get_buffer(),
-        match_result.matched_channels.url_channels.get_buffer() +
-        match_result.matched_channels.url_channels.length(),
-        std::inserter(uniq_ids, uniq_ids.end()),
-        GetChannelId());
-      std::copy(
-        match_result.matched_channels.uid_channels.get_buffer(),
-        match_result.matched_channels.uid_channels.get_buffer() +
-        match_result.matched_channels.uid_channels.length(),
-        std::inserter(uniq_ids, uniq_ids.end()));
-      count += uniq_ids.size();
-
-      debug_info_str_ << "trigger_channels_count = "
-        << count << sep_;
+      return;
     }
     else if (require_long_debug_info())
     {
@@ -288,31 +258,31 @@ namespace AdServer
 
       debug_info_str_ <<
         prefix << "special_channels_effects = " <<
-          (match_result.no_track ? "NO TRACK": "TRACK") << ", " <<
-          (match_result.no_adv ? "NO ADV": "ADV") << sep_ <<
+          (match_result.no_track() ? "NO TRACK": "TRACK") << ", " <<
+          (match_result.no_adv() ? "NO ADV": "ADV") << sep_ <<
         prefix <<
           "triggers = " << (require_debug_body() ? "\n" : "");
 
+      const auto& matched_channels = match_result.matched_channels();
       print_channel_matching_seq_(
-        match_result.matched_channels.page_channels, 'P');
+        matched_channels.page_channels(), 'P');
       print_channel_matching_seq_(
-        match_result.matched_channels.search_channels, 'S');
+        matched_channels.search_channels(), 'S');
       print_channel_matching_seq_(
-        match_result.matched_channels.url_channels, 'U');
+        matched_channels.url_channels(), 'U');
       print_channel_matching_seq_(
-        match_result.matched_channels.url_keyword_channels, 'R');
+        matched_channels.url_keyword_channels(), 'R');
 
       debug_info_str_ << sep_ <<
         prefix << "trigger_channels = ";
 
       IdSetType uniq_ids;
       bool first_delimiter = false;
-      if(match_result.matched_channels.page_channels.length())
+      if(matched_channels.page_channels_size())
       {
         std::transform(
-          match_result.matched_channels.page_channels.get_buffer(),
-          match_result.matched_channels.page_channels.get_buffer() +
-          match_result.matched_channels.page_channels.length(),
+          matched_channels.page_channels().begin(),
+          matched_channels.page_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
         print_with_type(
@@ -320,13 +290,12 @@ namespace AdServer
           uniq_ids.begin(), uniq_ids.end(), 'P', first_delimiter);
         first_delimiter = true;
       }
-      if(match_result.matched_channels.search_channels.length())
+      if(matched_channels.search_channels_size())
       {
         uniq_ids.clear();
         std::transform(
-          match_result.matched_channels.search_channels.get_buffer(),
-          match_result.matched_channels.search_channels.get_buffer() +
-          match_result.matched_channels.search_channels.length(),
+          matched_channels.search_channels().begin(),
+          matched_channels.search_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
         print_with_type(
@@ -334,13 +303,12 @@ namespace AdServer
           uniq_ids.begin(), uniq_ids.end(), 'S', first_delimiter);
         first_delimiter = true;
       }
-      if(match_result.matched_channels.url_channels.length())
+      if(matched_channels.url_channels_size())
       {
         uniq_ids.clear();
         std::transform(
-          match_result.matched_channels.url_channels.get_buffer(),
-          match_result.matched_channels.url_channels.get_buffer() +
-          match_result.matched_channels.url_channels.length(),
+          matched_channels.url_channels().begin(),
+          matched_channels.url_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
         print_with_type(
@@ -348,13 +316,12 @@ namespace AdServer
           uniq_ids.begin(), uniq_ids.end(), 'U', first_delimiter);
         first_delimiter = true;
       }
-      if(match_result.matched_channels.url_keyword_channels.length())
+      if(matched_channels.url_keyword_channels_size())
       {
         uniq_ids.clear();
         std::transform(
-          match_result.matched_channels.url_keyword_channels.get_buffer(),
-          match_result.matched_channels.url_keyword_channels.get_buffer() +
-          match_result.matched_channels.url_keyword_channels.length(),
+          matched_channels.url_keyword_channels().begin(),
+          matched_channels.url_keyword_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()),
           GetChannelId());
         print_with_type(
@@ -362,13 +329,12 @@ namespace AdServer
           uniq_ids.begin(), uniq_ids.end(), 'R', first_delimiter);
         first_delimiter = true;
       }
-      if(match_result.matched_channels.uid_channels.length())
+      if(matched_channels.uid_channels_size())
       {
         uniq_ids.clear();
         std::copy(
-          match_result.matched_channels.uid_channels.get_buffer(),
-          match_result.matched_channels.uid_channels.get_buffer() +
-          match_result.matched_channels.uid_channels.length(),
+          matched_channels.uid_channels().begin(),
+          matched_channels.uid_channels().end(),
           std::inserter(uniq_ids, uniq_ids.end()));
         print_with_type(
           debug_info_str_,
@@ -377,15 +343,14 @@ namespace AdServer
 
       debug_info_str_ << sep_ << prefix << "content_channels = ";
 
-      for(CORBA::ULong i = 0; i < match_result.content_channels.length(); ++i)
+      for(int i = 0; i < match_result.content_channels_size(); ++i)
       {
         if(i != 0)
         {
           debug_info_str_ << ", ";
         }
-        const ChannelSvcs::ChannelServerBase::ContentChannelAtom& atom =
-          match_result.content_channels[i];
-        debug_info_str_ << atom.id << "(" << atom.weight << ")";
+        const auto& atom = match_result.content_channels(i);
+        debug_info_str_ << atom.id() << "(" << atom.weight() << ")";
       }
 
       debug_info_str_ << sep_;
@@ -423,8 +388,6 @@ namespace AdServer
     }
     else if (require_short_header())
     {
-      debug_info_str_ << "history_channels_count = "
-        << history_match_result.channels.length() << sep_;
       return;
     }
 
@@ -452,13 +415,6 @@ namespace AdServer
       CorbaAlgs::print_sequence_field(
         debug_info_str_,
         history_match_result.channels,
-        &UserInfoSvcs::UserInfoMatcher::ChannelWeight::channel_id);
-
-      debug_info_str_ << sep_ << "household_history_channels = ";
-
-      CorbaAlgs::print_sequence_field(
-        debug_info_str_,
-        history_match_result.hid_channels,
         &UserInfoSvcs::UserInfoMatcher::ChannelWeight::channel_id);
     }
 
@@ -699,7 +655,7 @@ namespace AdServer
   void
   DebugSink::print_acquire_ad(
     const RequestInfo& request_info,
-    const ChannelSvcs::ChannelServerBase::MatchResult_var&
+    const adserver::channel_svcs::channel_server::MatchResponse*
       trigger_matched_channels,
     const ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var ccg_keywords,
     const UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
@@ -709,10 +665,10 @@ namespace AdServer
     {
       print_request_debug_info(request_info);
 
-      if (trigger_matched_channels.ptr())
+      if (trigger_matched_channels)
       {
         print_trigger_matching_debug_info(
-          trigger_matched_channels.in(),
+          *trigger_matched_channels,
           &ccg_keywords.in());
       }
 

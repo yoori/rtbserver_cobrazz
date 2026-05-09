@@ -13,7 +13,6 @@
 #include <grpcpp/support/status.h>
 
 #include <Generics/CompositeActiveObject.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <Commons/Grpc/BatchingStreamBase.hpp>
 #include <Commons/Grpc/GrpcClient.hpp>
@@ -27,9 +26,7 @@ namespace AdServer::Grpc
 
   class AsyncBatchingClientBase
     : public Generics::CompositeActiveObject,
-      public virtual AdServer::Grpc::Client,
-      public virtual Generics::RefCountableActiveObject,
-      public virtual ReferenceCounting::AtomicImpl
+      public virtual AdServer::Grpc::Client
   {
   protected:
     AsyncBatchingClientBase(

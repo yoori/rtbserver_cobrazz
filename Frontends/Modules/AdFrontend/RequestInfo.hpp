@@ -68,7 +68,6 @@ namespace AdServer
     mutable AdServer::Commons::UserId client_id;
     AdServer::CampaignSvcs::UserStatus user_status;
     AdServer::Commons::UserId temp_client_id;
-    AdServer::Commons::UserId household_client_id;
     AdServer::Commons::UserId merge_persistent_client_id;
 
     std::string referer;

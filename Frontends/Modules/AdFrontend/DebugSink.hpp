@@ -6,6 +6,7 @@
 #include <String/SubString.hpp>
 
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include <ChannelServerGrpc.grpc.pb.h>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -94,7 +95,8 @@ namespace AdServer
     void
     print_acquire_ad(
       const RequestInfo& request_info,
-      const ChannelSvcs::ChannelServerBase::MatchResult_var& trigger_matched_channels,
+      const adserver::channel_svcs::channel_server::MatchResponse*
+        trigger_matched_channels,
       const ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var ccg_keywords,
       const UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
       noexcept;
@@ -115,7 +117,7 @@ namespace AdServer
 
     void
     print_trigger_matching_debug_info(
-      const ChannelSvcs::ChannelServerBase::MatchResult& match_result,
+      const adserver::channel_svcs::channel_server::MatchResponse& match_result,
       const ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
       const char* prefix = "")
       noexcept;
@@ -136,7 +138,8 @@ namespace AdServer
 
     void
     print_channel_matching_seq_(
-      const ChannelSvcs::ChannelServerBase::ChannelAtomSeq& channels,
+      const google::protobuf::RepeatedPtrField<
+        adserver::channel_svcs::channel_server::ChannelAtom>& channels,
       char type)
       noexcept;
 

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <list>
+#include <vector>
 #include <Generics/GnuHashTable.hpp>
 #include <eh/Exception.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
@@ -53,6 +54,13 @@ namespace Config
       const xsd::AdServer::Configuration::MultiCorbaObjectRefType&
         xml_corba_object_ref,
       CORBACommons::CorbaObjectRefList& corba_object_refs)
+      /*throw(Exception)*/;
+
+    static void
+    read_multi_corba_ref(
+      const xsd::AdServer::Configuration::MultiCorbaObjectRefType&
+        xml_corba_object_ref,
+      std::vector<std::string>& corba_object_refs)
       /*throw(Exception)*/;
 
     static CORBACommons::CorbaObjectRefList

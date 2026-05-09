@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <set>
 
@@ -15,7 +16,6 @@
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/Containers.hpp>
 #include <Commons/TextTemplateCache.hpp>
-#include <ChannelSvcs/ChannelManagerController/ChannelServerSessionFactory.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 #include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 
@@ -24,8 +24,9 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
+#include <ChannelServerGrpc.grpc.pb.h>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
@@ -34,9 +35,7 @@
 
 #include "RequestInfoFiller.hpp"
 
-namespace AdServer
-{
-namespace ImprTrack
+namespace AdServer::ImprTrack
 {
   namespace Configuration
   {
@@ -161,7 +160,7 @@ namespace ImprTrack
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+      const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
       const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
       const String::SubString& peer_ip_val)
       const noexcept;
@@ -189,13 +188,13 @@ namespace ImprTrack
     // external services
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
-    ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelCorbaClient>
-      channel_servers_;
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
+      channel_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      user_info_client_;
 
     Generics::TaskRunner_var task_runner_;
 
@@ -203,15 +202,11 @@ namespace ImprTrack
     Commons::TextTemplateCache_var template_files_;
   };
 }
-}
 
 // Inlines
-namespace AdServer
-{
-namespace ImprTrack
+namespace AdServer::ImprTrack
 {
   inline
   Frontend::~Frontend() noexcept
   {}
 }
-} // namespace AdServer

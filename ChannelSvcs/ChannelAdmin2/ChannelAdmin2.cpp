@@ -7,11 +7,13 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <Generics/ActiveObject.hpp>
 #include <Generics/AppUtils.hpp>
 #include <Generics/Uuid.hpp>
 #include <String/StringManip.hpp>
 
 #include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
@@ -61,8 +63,8 @@ namespace
   struct ClientHolder
   {
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor;
-    ChannelServerGrpcAsyncClient_var client;
-    Generics::ActiveObject* active_object = nullptr;
+    std::shared_ptr<ChannelServerGrpcAsyncClient> client;
+    std::shared_ptr<Generics::ActiveObject> active_object;
   };
 
   ClientHolder
@@ -79,21 +81,19 @@ namespace
 
     if (references.size() > 1 || is_channel_controller(references.front()))
     {
-      ChannelDistributedGrpcClient_var client =
-        new ChannelDistributedGrpcClient(
-          references,
-          AdServer::Grpc::BatchingOptions(),
-          result.grpc_executor);
+      auto client = std::make_shared<ChannelDistributedGrpcClient>(
+        references,
+        AdServer::Grpc::BatchingOptions(),
+        result.grpc_executor);
       result.client = client;
       result.active_object = client;
     }
     else
     {
-      ReferenceCounting::SmartPtr<ChannelServerGrpcAsyncBatchingClient> client =
-        new ChannelServerGrpcAsyncBatchingClient(
-          references.front(),
-          result.grpc_executor,
-          AdServer::Grpc::BatchingOptions());
+      auto client = std::make_shared<ChannelServerGrpcAsyncBatchingClient>(
+        references.front(),
+        result.grpc_executor,
+        AdServer::Grpc::BatchingOptions());
       result.client = client;
       result.active_object = client;
     }
@@ -123,22 +123,23 @@ namespace
   }
 
   void
-  print_match_result(const ChannelServerBase::MatchResult& result)
+  print_match_result(const Proto::MatchResponse& result)
   {
+    const auto& matched_channels = result.matched_channels();
     std::cout << "page_channels=" <<
-      result.matched_channels.page_channels.length() << '\n';
+      matched_channels.page_channels_size() << '\n';
     std::cout << "search_channels=" <<
-      result.matched_channels.search_channels.length() << '\n';
+      matched_channels.search_channels_size() << '\n';
     std::cout << "url_channels=" <<
-      result.matched_channels.url_channels.length() << '\n';
+      matched_channels.url_channels_size() << '\n';
     std::cout << "url_keyword_channels=" <<
-      result.matched_channels.url_keyword_channels.length() << '\n';
+      matched_channels.url_keyword_channels_size() << '\n';
     std::cout << "uid_channels=" <<
-      result.matched_channels.uid_channels.length() << '\n';
+      matched_channels.uid_channels_size() << '\n';
     std::cout << "content_channels=" <<
-      result.content_channels.length() << '\n';
-    std::cout << "no_adv=" << result.no_adv << '\n';
-    std::cout << "no_track=" << result.no_track << '\n';
+      result.content_channels_size() << '\n';
+    std::cout << "no_adv=" << result.no_adv() << '\n';
+    std::cout << "no_track=" << result.no_track() << '\n';
   }
 
   void
@@ -200,37 +201,26 @@ main(int argc, char** argv)
       {
         shutdown_client(*value);
       });
-    auto* client = holder.client.in();
+    auto* client = holder.client.get();
 
     if (commands.front() == "match")
     {
-      ChannelServerBase::MatchQuery query;
-      query.request_id << String::SubString("ChannelAdmin2");
-      query.first_url << *url;
-      query.pwords << *pwords;
-      query.swords << *swords;
-      query.uid = uid->empty() ?
-        CorbaAlgs::pack_user_id(Generics::Uuid()) :
-        CorbaAlgs::pack_user_id(Generics::Uuid(*uid, true));
-      query.statuses[0] = status->empty() ? '\0' : (*status)[0];
-      query.statuses[1] = status->size() > 1 ? (*status)[1] : '\0';
-      query.non_strict_word_match = false;
-      query.non_strict_url_match = false;
-      query.return_negative = false;
-      query.simplify_page = true;
-      query.fill_content = true;
-
       Proto::MatchRequest request;
-      AdServer::ChannelSvcs::GrpcAlgs::make_match_request(query, request);
-      const auto response =
-        AdServer::Grpc::sync_call<Proto::MatchResponse>(
-          [&](auto callback)
-          {
-            client->match(request, std::move(callback));
-          });
-      ChannelServerBase::MatchResult_var corba_result =
-        AdServer::ChannelSvcs::GrpcAlgs::make_match_result(response);
-      print_match_result(*corba_result);
+      request.set_request_id("ChannelAdmin2");
+      request.set_first_url(*url);
+      request.set_pwords(*pwords);
+      request.set_swords(*swords);
+      request.set_uid(::GrpcAlgs::pack_user_id(
+        uid->empty() ? Generics::Uuid() : Generics::Uuid(*uid, true)));
+      request.set_statuses(status->data(), status->size());
+      request.set_non_strict_word_match(false);
+      request.set_non_strict_url_match(false);
+      request.set_return_negative(false);
+      request.set_simplify_page(true);
+      request.set_fill_content(true);
+      const auto result =
+        AdServer::ChannelSvcs::GrpcAlgs::channel_match(*client, request);
+      print_match_result(result);
     }
     else if (commands.front() == "ccg_traits")
     {

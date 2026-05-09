@@ -1,4 +1,5 @@
 add_library(ChannelClient SHARED
+  ChannelClientUtils.cpp
   ChannelCorbaClient.cpp
   ChannelDistributedGrpcClient.cpp
   ChannelGrpcAlgs.cpp
@@ -10,4 +11,5 @@ target_link_libraries(ChannelClient
   ChannelManagerControllerIDL
   ChannelServerGrpcClient
   ChannelSessionFactory
+  FeConfigXSD
 )

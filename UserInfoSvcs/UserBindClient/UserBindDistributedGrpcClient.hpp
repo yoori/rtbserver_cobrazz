@@ -1,10 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <eh/Exception.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
 
@@ -15,9 +15,7 @@
 namespace AdServer::UserInfoSvcs
 {
   class UserBindDistributedGrpcClient:
-    public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
-    public virtual Generics::RefCountableActiveObject,
     public UserBindServerGrpcAsyncClient
   {
   public:
@@ -31,7 +29,7 @@ namespace AdServer::UserInfoSvcs
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       Logging::Logger* logger);
 
-    ~UserBindDistributedGrpcClient() noexcept override = default;
+    ~UserBindDistributedGrpcClient() noexcept override;
 
     AdServer::Grpc::Stats stats() const noexcept override;
 
@@ -58,8 +56,6 @@ namespace AdServer::UserInfoSvcs
   private:
     class Distributor;
 
-    ReferenceCounting::SmartPtr<Distributor> user_bind_mapper_;
+    std::shared_ptr<Distributor> user_bind_mapper_;
   };
-
-  using UserBindDistributedGrpcClient_var = ReferenceCounting::SmartPtr<UserBindDistributedGrpcClient>;
 }

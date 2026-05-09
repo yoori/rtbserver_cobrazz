@@ -26,6 +26,8 @@
 #include <Frontends/FrontendCommons/OptOutManip.hpp>
 #include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
 
+#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+
 #include "AdInstFrontend.hpp"
 
 namespace
@@ -185,11 +187,12 @@ namespace Instantiate
             controller_group_refs);
           user_info_controller_groups.push_back(controller_group_refs);
         }
-        user_info_client_ = new AdServer::UserInfoSvcs::UserInfoCorbaClient(
+        auto user_info_client = std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
           logger(),
           user_info_controller_groups,
           corba_client_adapter_.in());
-        add_child_object(user_info_client_);
+        user_info_client_ = user_info_client;
+        add_child_object(user_info_client);
 
         request_info_filler_.reset(
           new RequestInfoFiller(
@@ -512,15 +515,11 @@ namespace Instantiate
     user_info.current_colo_id = -1;
     user_info.temporary = false;
     user_info.time = Generics::Time::get_time_of_day().tv_sec;
-
-    AdServer::UserInfoSvcs::UserInfoMatcher_var
-      uim_session = user_info_client_->user_info_session();
-
     try
     {
       merge_success = false;
 
-      if(uim_session.in())
+      if(user_info_client_)
       {
         if(request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
         {
@@ -535,7 +534,7 @@ namespace Instantiate
           profiles_request.freq_cap_profile = false; // don't merge freq cap profiles
           profiles_request.pref_profile = false;
 
-          merge_success = uim_session->get_user_profile(
+          merge_success = AdServer::UserInfoSvcs::GrpcAlgs::get_user_profile(*user_info_client_,
             CorbaAlgs::pack_user_id(request_info.temp_user_id),
             true,
             profiles_request,
@@ -560,12 +559,9 @@ namespace Instantiate
 
       if(merge_success && request_info.remove_merged_uid)
       {
-        AdServer::UserInfoSvcs::UserInfoMatcher_var
-          uim_session = user_info_client_->user_info_session();
-
-        if(uim_session.in())
+        if(user_info_client_)
         {
-          uim_session->remove_user_profile(
+          AdServer::UserInfoSvcs::GrpcAlgs::remove_user_profile(*user_info_client_,
             CorbaAlgs::pack_user_id(request_info.temp_user_id));
         }
       }

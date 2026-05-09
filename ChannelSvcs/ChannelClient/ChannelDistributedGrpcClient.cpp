@@ -31,7 +31,7 @@ namespace AdServer::ChannelSvcs
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       AdServer::Grpc::BatchingOptions batching_options)
       : endpoint(std::move(endpoint_val)),
-        client(new Client(
+        client(std::make_shared<Client>(
           endpoint,
           std::move(grpc_executor),
           std::move(batching_options)))
@@ -55,7 +55,7 @@ namespace AdServer::ChannelSvcs
     }
 
     const std::string endpoint;
-    Client_var client;
+    ClientPtr client;
   };
 
   struct ChannelDistributedGrpcClient::RefHolder
@@ -81,7 +81,7 @@ namespace AdServer::ChannelSvcs
     AdServer::Grpc::Stats stats() const noexcept
     {
       return static_cast<ChannelServerGrpcAsyncClient*>(
-        client_holder->client.in())->stats();
+        client_holder->client.get())->stats();
     }
 
     ClientHolderPtr client_holder;
@@ -190,7 +190,7 @@ namespace AdServer::ChannelSvcs
       merge_stats_(
         result,
         static_cast<ChannelServerGrpcAsyncClient*>(
-          client_holder->client.in())->stats());
+          client_holder->client.get())->stats());
     }
     return result;
   }

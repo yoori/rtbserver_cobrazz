@@ -342,7 +342,9 @@ main(int argc, char** argv)
     LatencyTopPercentile latency_p99((*opt_count + 99) / 100);
 
     Generics::ActiveObjectSet_var async_batch_active_objects = new Generics::ActiveObjectSet();
-    ReferenceCounting::SmartPtr<BatchClient> batch_client;
+    std::shared_ptr<BatchClient> batch_client;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>
+      distributed_client;
     AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient* client = nullptr;
     if (*mode == Mode::AsyncBatch)
     {
@@ -366,14 +368,13 @@ main(int argc, char** argv)
       options.use_local_subchannel_pool = *opt_local_subchannel_pool != 0;
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
         std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
-      batch_client = ReferenceCounting::SmartPtr<BatchClient>(
-        new BatchClient(
+      batch_client = std::make_shared<BatchClient>(
           *opt_user_bind_grpc_endpoint,
           grpc_executor,
-          options));
+          options);
       async_batch_active_objects->add_child_object(grpc_executor);
-      async_batch_active_objects->add_child_object(batch_client.in());
-      client = batch_client.in();
+      async_batch_active_objects->add_child_object(batch_client);
+      client = batch_client.get();
     }
     else if (*mode == Mode::DistributedGrpc)
     {
@@ -398,16 +399,15 @@ main(int argc, char** argv)
 
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor =
         std::make_shared<AdServer::Grpc::GrpcExecutor>(client_threads);
-      ReferenceCounting::SmartPtr<
-        AdServer::UserInfoSvcs::UserBindDistributedGrpcClient> distributed_client(
-          new AdServer::UserInfoSvcs::UserBindDistributedGrpcClient(
-            std::vector<std::string>{*opt_user_bind_controller_grpc_endpoint},
-            options,
-            grpc_executor,
-            nullptr));
+      distributed_client =
+        std::make_shared<AdServer::UserInfoSvcs::UserBindDistributedGrpcClient>(
+          std::vector<std::string>{*opt_user_bind_controller_grpc_endpoint},
+          options,
+          grpc_executor,
+          nullptr);
       async_batch_active_objects->add_child_object(grpc_executor);
-      async_batch_active_objects->add_child_object(distributed_client.in());
-      client = distributed_client.in();
+      async_batch_active_objects->add_child_object(distributed_client);
+      client = distributed_client.get();
     }
 
     async_batch_active_objects->activate_object();
@@ -689,6 +689,7 @@ main(int argc, char** argv)
     }
     std::cout << std::endl;
 
+    distributed_client.reset();
     batch_client.reset();
 
     return 0;

@@ -4,9 +4,11 @@
 #include <CORBACommons/ObjectPool.hpp>
 #include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
-#include <ReferenceCounting/AtomicImpl.hpp>
 
 #include <list>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <UserInfoSvcs/UserInfoManager/UserInfoManager.hpp>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
@@ -15,13 +17,11 @@
 namespace AdServer::UserInfoSvcs
 {
   class UserInfoCorbaClient:
-    public virtual ReferenceCounting::AtomicImpl,
     public Generics::CompositeActiveObject,
-    public virtual Generics::RefCountableActiveObject,
     public UserInfoManagerGrpcAsyncClient
   {
   public:
-    using ControllerRef = CORBACommons::CorbaObjectRefList;
+    using ControllerRef = std::vector<std::string>;
     using ControllerRefList = std::list<ControllerRef>;
 
     UserInfoCorbaClient(
@@ -31,8 +31,6 @@ namespace AdServer::UserInfoSvcs
       const Generics::Time& pool_timeout = Generics::Time::ONE_SECOND);
 
     ~UserInfoCorbaClient() noexcept override;
-
-    UserInfoManagerSession* user_info_session() noexcept;
 
     void get_source(
       const adserver::user_info_svcs::user_info_manager::GetSourceRequest& request,
@@ -93,5 +91,60 @@ namespace AdServer::UserInfoSvcs
     Distributor_var distributor_;
   };
 
-  using UserInfoCorbaClient_var = ReferenceCounting::SmartPtr<UserInfoCorbaClient>;
+  using UserInfoCorbaClientPtr = std::shared_ptr<UserInfoCorbaClient>;
+
+  namespace GrpcAlgs
+  {
+    bool get_user_profile(
+      UserInfoManagerGrpcAsyncClient& client,
+      const CORBACommons::UserIdInfo& user_id,
+      CORBA::Boolean temporary,
+      const ProfilesRequestInfo& profile_request,
+      UserProfiles_out user_profile);
+
+    bool history_match(
+      UserInfoManagerGrpcAsyncClient& client,
+      const adserver::user_info_svcs::user_info_manager::MatchRequest& request,
+      adserver::user_info_svcs::user_info_manager::MatchResponse& response);
+
+    UserInfoMatcher::MatchResult* history_match(
+      UserInfoManagerGrpcAsyncClient& client,
+      const adserver::user_info_svcs::user_info_manager::MatchRequest& request);
+
+    bool merge(
+      UserInfoManagerGrpcAsyncClient& client,
+      const UserInfo& user_info,
+      const UserInfoMatcher::MatchParams& match_params,
+      const UserProfiles& merge_user_profile,
+      CORBA::Boolean_out merge_success,
+      CORBACommons::TimestampInfo_out last_request);
+
+    bool remove_user_profile(
+      UserInfoManagerGrpcAsyncClient& client,
+      const CORBACommons::UserIdInfo& user_id_info);
+
+    void update_user_freq_caps(
+      UserInfoManagerGrpcAsyncClient& client,
+      const CORBACommons::UserIdInfo& user_id,
+      const CORBACommons::TimestampInfo& time,
+      const CORBACommons::RequestIdInfo& request_id,
+      const FreqCapIdSeq& freq_caps,
+      const FreqCapIdSeq& uc_freq_caps,
+      const FreqCapIdSeq& virtual_freq_caps,
+      const UserInfoManager::SeqOrderSeq& seq_orders,
+      const CampaignIdSeq& campaign_ids,
+      const CampaignIdSeq& uc_campaign_ids);
+
+    void confirm_user_freq_caps(
+      UserInfoManagerGrpcAsyncClient& client,
+      const CORBACommons::UserIdInfo& user_id,
+      const CORBACommons::TimestampInfo& time,
+      const CORBACommons::RequestIdInfo& request_id,
+      const CORBACommons::IdSeq& exclude_pubpixel_accounts);
+
+    bool fraud_user(
+      UserInfoManagerGrpcAsyncClient& client,
+      const CORBACommons::UserIdInfo& user_id,
+      const CORBACommons::TimestampInfo& time);
+  }
 }

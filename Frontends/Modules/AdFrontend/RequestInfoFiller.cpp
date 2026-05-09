@@ -1024,8 +1024,6 @@ namespace AdServer
 
       ColoFlagsMap_var colocations = get_colocations_();
 
-      bool hid_profile = false;
-
       if(filter_request_by_country)
       {
         request_info.passback_by_colocation = true;
@@ -1039,14 +1037,7 @@ namespace AdServer
         {
           request_info.passback_by_colocation = (
             colo_it->second.flags == CampaignSvcs::CS_NONE);
-          hid_profile = colo_it->second.hid_profile;
         }
-      }
-
-      if(!hid_profile ||
-         request_info.user_status != AdServer::CampaignSvcs::US_OPTIN)
-      {
-        request_info.household_client_id = AdServer::Commons::UserId();
       }
 
       if(request_info.original_user_agent.empty())
@@ -1242,24 +1233,15 @@ namespace AdServer
             request_info.merge_persistent_client_id = uid.uuid();
           }
         }
-        else if (household)
-        {
-          if(in != AdServer::Commons::PROBE_USER_ID.to_string())
-          {
-            Generics::SignedUuid uid = common_module_->user_id_controller()->verify(in);
-            if (!uid.uuid().is_null())
-            {
-              request_info.household_client_id = uid.uuid();
-            }
-          }
-        }
-        else if(in == AdServer::Commons::PROBE_USER_ID.to_string())
+        else if(!household &&
+          in == AdServer::Commons::PROBE_USER_ID.to_string())
         {
           request_info.client_id = AdServer::Commons::PROBE_USER_ID;
           request_info.signed_client_id = AdServer::Commons::PROBE_USER_ID.to_string();
           request_info.have_uid_cookie = rewrite_persistent;
         }
-        else if(request_info.signed_client_id.empty() || rewrite_persistent)
+        else if(!household && (
+          request_info.signed_client_id.empty() || rewrite_persistent))
         {
           Generics::SignedUuid uid = common_module_->user_id_controller()->verify(in);
           if (!uid.uuid().is_null())

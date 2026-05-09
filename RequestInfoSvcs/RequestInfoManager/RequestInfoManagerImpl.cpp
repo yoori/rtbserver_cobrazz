@@ -1,3 +1,4 @@
+#include <memory>
 #include <vector>
 
 #include <PrivacyFilter/Filter.hpp>
@@ -135,7 +136,8 @@ namespace RequestInfoSvcs{
   protected:
     Logging::Logger_var logger_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    AdServer::UserInfoSvcs::UserInfoMatcher_var user_info_matcher_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      user_info_matcher_;
   };
 
   /**
@@ -1674,13 +1676,13 @@ namespace RequestInfoSvcs{
     {
       corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-      AdServer::UserInfoSvcs::UserInfoCorbaClient_var client =
-        new AdServer::UserInfoSvcs::UserInfoCorbaClient(
+      auto client =
+        std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
           logger_,
           controller_groups,
           corba_client_adapter_.in());
-      user_info_matcher_ = client->user_info_session();
-      add_child_object(client.in());
+      user_info_matcher_ = client;
+      add_child_object(client);
     }
     catch(const eh::Exception& ex)
     {
@@ -1711,7 +1713,8 @@ namespace RequestInfoSvcs{
 
     try
     {
-      user_info_matcher_->fraud_user(
+      AdServer::UserInfoSvcs::GrpcAlgs::fraud_user(
+        *user_info_matcher_,
         CorbaAlgs::pack_user_id(user_id),
         CorbaAlgs::pack_time(deactivate_time));
     }

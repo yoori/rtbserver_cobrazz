@@ -470,8 +470,10 @@ namespace Bidding
 
     std::unique_ptr<AdXmlRequestInfoFiller> adxml_request_info_filler_;
 
-    std::unordered_map<unsigned int, std::string> openrtb_devicetype_mapping_;
-    std::unordered_map<unsigned int, std::string> openrtb_video_placement_mapping_;
+    const std::unordered_map<unsigned int, std::string>
+      openrtb_devicetype_mapping_;
+    const std::unordered_map<unsigned int, std::string>
+      openrtb_video_placement_mapping_;
   };
 }
 }

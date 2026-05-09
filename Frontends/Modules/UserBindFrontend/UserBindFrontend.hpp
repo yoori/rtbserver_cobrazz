@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 
 #include <GeoIP/IPMap.hpp>
@@ -21,10 +23,11 @@
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <ChannelServerGrpc.grpc.pb.h>
+#include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelCorbaClient.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
 
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -228,7 +231,8 @@ namespace AdServer
       AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
-      const AdServer::ChannelSvcs::ChannelServerBase::MatchResult* trigger_match_result,
+      const adserver::channel_svcs::channel_server::MatchResponse*
+        trigger_match_result,
       const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult* history_match_result,
       const FrontendCommons::Location* location,
       const String::SubString& referer,
@@ -270,13 +274,13 @@ namespace AdServer
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient_var
+    std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
-    AdServer::UserInfoSvcs::UserInfoCorbaClient_var user_info_client_;
-    ChannelServerSessionFactoryImpl_var server_session_factory_;
-    std::unique_ptr<FrontendCommons::ChannelCorbaClient>
-      channel_servers_;
+    std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
+      user_info_client_;
+    std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
+      channel_client_;
     FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
     std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
