@@ -27,10 +27,14 @@ namespace Bidding
   struct RequestTimeMetering
   {
     Generics::Time total_time;
+    Generics::Time user_resolving_started_at;
     Generics::Time user_resolving_time;
+    Generics::Time trigger_match_started_at;
     Generics::Time trigger_match_time;
+    Generics::Time history_match_started_at;
     Generics::Time history_match_time;
     Generics::Time history_match_local_time;
+    Generics::Time creative_selection_started_at;
     Generics::Time creative_selection_time;
     Generics::Time creative_selection_local_time;
   };

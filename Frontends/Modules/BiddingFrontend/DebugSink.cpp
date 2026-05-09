@@ -524,13 +524,21 @@ namespace Bidding
     debug_info_str_ <<
       "total_time = " <<
         time_metering.total_time.float_str() << sep_ <<
+      "user_resolving_started_at = " <<
+        time_metering.user_resolving_started_at.float_str() << sep_ <<
       "user_resolving_time = " <<
         time_metering.user_resolving_time.float_str() << sep_ <<
+      "trigger_match_started_at = " <<
+        time_metering.trigger_match_started_at.float_str() << sep_ <<
       "trigger_match_time = " <<
         time_metering.trigger_match_time.float_str() << sep_ <<
+      "history_match_started_at = " <<
+        time_metering.history_match_started_at.float_str() << sep_ <<
       "history_match_time = " <<
         time_metering.history_match_time.float_str() << " : " <<
         time_metering.history_match_local_time.float_str() << sep_ <<
+      "creative_selection_started_at = " <<
+        time_metering.creative_selection_started_at.float_str() << sep_ <<
       "creative_selection_time = " <<
         time_metering.creative_selection_time.float_str() << " : " <<
         time_metering.creative_selection_local_time.float_str() << sep_;

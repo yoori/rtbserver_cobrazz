@@ -1879,6 +1879,8 @@ namespace AdServer::Bidding
     // map external id to uid
     DebugSink::UserResolvingDebugInfo user_resolving_debug_info;
     {
+      request_time_metering.user_resolving_started_at =
+        Generics::Time::get_time_of_day() - request_task->start_processing_time();
       TimeGuard user_resolving_time_metering;
       resolve_user_id_(
         user_id,
@@ -1908,6 +1910,8 @@ namespace AdServer::Bidding
     if (!interrupted)
     {
       {
+        request_time_metering.trigger_match_started_at =
+          Generics::Time::get_time_of_day() - request_task->start_processing_time();
         TimeGuard trigger_match_time_metering;
         trigger_match_(
           trigger_match_result,
@@ -1940,6 +1944,8 @@ namespace AdServer::Bidding
     if (!interrupted)
     {
       {
+        request_time_metering.history_match_started_at =
+          Generics::Time::get_time_of_day() - request_task->start_processing_time();
         TimeGuard history_match_time_metering;
         history_match_(
           history_match_result.out(),
@@ -1979,6 +1985,8 @@ namespace AdServer::Bidding
     }
 
     {
+      request_time_metering.creative_selection_started_at =
+        Generics::Time::get_time_of_day() - request_task->start_processing_time();
       TimeGuard creative_selection_time_metering;
       select_campaign_(
         campaign_match_result,

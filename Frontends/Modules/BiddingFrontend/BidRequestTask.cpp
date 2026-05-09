@@ -50,6 +50,7 @@ namespace Bidding
       this->write_empty_response(400);
       return true;
     }
+    debug_sink_.set(String::SubString(request_info_.require_debug_info));
 
     // check interrupt
     if(check_interrupt_(Stage::RequestParsing))
@@ -154,6 +155,7 @@ namespace Bidding
 
     if(send_response)
     {
+      debug_sink_.set(String::SubString(request_info_.require_debug_info));
       debug_sink_.write_response(response, code, resolved_user_id_);
       response_writer_->write(code, response);
       response_writer_ = FCGI::BaseHttpResponseWriter_var();
