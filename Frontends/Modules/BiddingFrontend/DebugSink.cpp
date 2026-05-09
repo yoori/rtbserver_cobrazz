@@ -39,6 +39,7 @@ namespace Bidding
       const char CREATIVE_SELECTION_INFO_HEAD[] = "=== Creative selection ===";
       const char TRACE_CCG_INFO_HEAD[] = "=== Expected ===";
       const char TIME_METERING_HEAD[] = "=== Time Metering ===";
+      const char INTERRUPT_HEAD[] = "=== Interrupt ===";
     }
 
     struct GetChannelId
@@ -521,6 +522,8 @@ namespace Bidding
     }
 
     debug_info_str_ <<
+      "total_time = " <<
+        time_metering.total_time.float_str() << sep_ <<
       "user_resolving_time = " <<
         time_metering.user_resolving_time.float_str() << sep_ <<
       "trigger_match_time = " <<
@@ -531,6 +534,27 @@ namespace Bidding
       "creative_selection_time = " <<
         time_metering.creative_selection_time.float_str() << " : " <<
         time_metering.creative_selection_local_time.float_str() << sep_;
+  }
+
+  void
+  DebugSink::print_interrupt_debug_info(
+    const String::SubString& interrupted_step) noexcept
+  {
+    if(!require_debug_info())
+    {
+      return;
+    }
+
+    if(require_debug_info_ == DI_BODY)
+    {
+      debug_info_str_ << "\n" << Debug::INTERRUPT_HEAD << "\n";
+    }
+    else
+    {
+      debug_info_str_ << Debug::INTERRUPT_HEAD << sep_;
+    }
+
+    debug_info_str_ << "interrupted_step = " << interrupted_step << sep_;
   }
 
   DebugInfo

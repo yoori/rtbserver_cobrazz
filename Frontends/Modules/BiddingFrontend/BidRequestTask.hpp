@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include <eh/Exception.hpp>
 #include <ReferenceCounting/AtomicImpl.hpp>
 #include <ReferenceCounting/SmartPtr.hpp>
@@ -145,6 +147,7 @@ namespace Bidding
     AdServer::Commons::UserId resolved_user_id_;
 
     mutable Generics::AtomicInt to_interrupt_;
+    std::atomic<bool> timeout_interrupted_;
 
     /// The host performed last unbreakable operation.
     std::string hostname_;
@@ -222,7 +225,8 @@ namespace Bidding
   bool
   BidRequestTask::interrupted() const noexcept
   {
-    return to_interrupt_ != 0;
+    return to_interrupt_ != 0 ||
+      timeout_interrupted_.load(std::memory_order_relaxed);
   }
 }
 }

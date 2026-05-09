@@ -976,6 +976,7 @@ namespace AdServer
     res->last_request_time = CorbaAlgs::pack_time(Generics::Time::ZERO);
     res->create_time = CorbaAlgs::pack_time(Generics::Time::ZERO);
     res->session_start = CorbaAlgs::pack_time(Generics::Time::ZERO);
+    res->process_time = CorbaAlgs::pack_time(Generics::Time::ZERO);
 //    res->last_ad_request = CorbaAlgs::pack_time(Generics::Time::ZERO);
     res->colo_id = -1;
     return res._retn();

@@ -26,6 +26,7 @@ namespace Bidding
 
   struct RequestTimeMetering
   {
+    Generics::Time total_time;
     Generics::Time user_resolving_time;
     Generics::Time trigger_match_time;
     Generics::Time history_match_time;
@@ -89,6 +90,10 @@ namespace Bidding
     void
     print_time_metering_debug_info(
       const RequestTimeMetering& time_metering) noexcept;
+
+    void
+    print_interrupt_debug_info(
+      const String::SubString& interrupted_step) noexcept;
 
     void
     write_response(
