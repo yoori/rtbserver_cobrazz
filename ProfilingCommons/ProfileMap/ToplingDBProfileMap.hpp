@@ -25,6 +25,7 @@
 namespace toplingdb
 {
   class DB;
+  class SidePluginRepo;
 }
 
 namespace AdServer::ProfilingCommons
@@ -166,7 +167,8 @@ namespace AdServer::ProfilingCommons
     const unsigned long batch_size_;
     const Generics::Time max_delay_;
 
-    std::unique_ptr<toplingdb::DB> db_;
+    toplingdb::DB* db_ = nullptr;
+    std::unique_ptr<toplingdb::SidePluginRepo> plugin_repo_;
     mutable std::atomic<std::uint64_t> logical_read_operations_{0};
     mutable std::atomic<std::uint64_t> logical_write_operations_{0};
     mutable std::atomic<std::uint64_t> physical_read_operations_{0};
