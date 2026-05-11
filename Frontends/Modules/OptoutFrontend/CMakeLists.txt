@@ -6,22 +6,11 @@ add_library(OptoutFrontend SHARED
 
 target_link_libraries(OptoutFrontend
   Stream
-  Geoip
   CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
-  DomainParser
-  StatInfoIDL
-  BillStatInfoIDL
-  CampaignServerIDL
-  UserBindServerIDL
-  UserBindContainer
+  PrivacyFilter
   RequestMatchers
   FrontendStatistic
-  UserIdController
   CommonModule
   CampaignManagerClient
   FeConfigXSD

@@ -87,13 +87,13 @@ namespace
     switch (status.error_code())
     {
     case grpc::StatusCode::UNAVAILABLE:
-      throw AdServer::UserInfoSvcs::UserBindMapper::NotReady(
+      throw AdServer::UserInfoSvcs::UserBindClient::NotReady(
         message.c_str());
     case grpc::StatusCode::NOT_FOUND:
-      throw AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound(
+      throw AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound(
         message.c_str());
     default:
-      throw AdServer::UserInfoSvcs::UserBindMapper::ImplementationException(
+      throw AdServer::UserInfoSvcs::UserBindClient::ImplementationException(
         message.c_str());
     }
   }
@@ -864,15 +864,15 @@ namespace AdServer
 
         (void)prev_user_bind_info;
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
       {
         http_status = 500;
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+      catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
       {
         http_status = 500;
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+      catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
       {
         http_status = 500;
       }
@@ -1435,17 +1435,17 @@ namespace AdServer
                 }
               }
             }
-            catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+            catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
             {
               cresolve_failed = true;
               http_status = 500;
             }
-            catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+            catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
             {
               cresolve_failed = true;
               http_status = 500;
             }
-            catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+            catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
             {
               cresolve_failed = true;
               http_status = 500;
@@ -1546,7 +1546,7 @@ namespace AdServer
                       break;
                     }
                   }
-                  catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+                  catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
                   {
                     http_status = 500;
 
@@ -1559,27 +1559,27 @@ namespace AdServer
                       "ADS-IMPL-109");
                     */
                   }
-                  catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+                  catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
                   {
                     http_status = 500;
 
                     /*
                     Stream::Error ostr;
-                    ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+                    ostr << FUN << ": caught UserBindClient::ChunkNotFound";
                     logger()->log(ostr.str(),
                       Logging::Logger::ERROR,
                       Aspect::USER_BIND_FRONTEND,
                       "ADS-IMPL-109");
                     */
                   }
-                  catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& /*ex*/)
+                  catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
                   {
                     http_status = 500;
 
                     /*
                     Stream::Error ostr;
-                    ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-                      ex.description;
+                    ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+                      ex.what();
                     logger()->log(ostr.str(),
                       Logging::Logger::ERROR,
                       Aspect::USER_BIND_FRONTEND,
@@ -1646,7 +1646,7 @@ namespace AdServer
                       report_bad_user_(request_info);
                     }
                   }
-                  catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+                  catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
                   {
                     http_status = 500;
 
@@ -1659,27 +1659,27 @@ namespace AdServer
                       "ADS-IMPL-109");
                     */
                   }
-                  catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+                  catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
                   {
                     http_status = 500;
 
                     /*
                     Stream::Error ostr;
-                    ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+                    ostr << FUN << ": caught UserBindClient::ChunkNotFound";
                     logger()->log(ostr.str(),
                       Logging::Logger::ERROR,
                       Aspect::USER_BIND_FRONTEND,
                       "ADS-IMPL-109");
                     */
                   }
-                  catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& /*ex*/)
+                  catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
                   {
                     http_status = 500;
 
                     /*
                     Stream::Error ostr;
-                    ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-                      ex.description;
+                    ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+                      ex.what();
                     logger()->log(ostr.str(),
                       Logging::Logger::ERROR,
                       Aspect::USER_BIND_FRONTEND,
@@ -1885,9 +1885,9 @@ namespace AdServer
 
           add_bind_request_(bind_request);
         }
-        catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+        catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
         {}
-        catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+        catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
         {}
         catch(const CORBA::SystemException& e)
         {}

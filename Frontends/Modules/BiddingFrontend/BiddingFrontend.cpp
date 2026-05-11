@@ -98,13 +98,13 @@ namespace AdServer::Bidding
       switch(status.error_code())
       {
       case grpc::StatusCode::UNAVAILABLE:
-        throw AdServer::UserInfoSvcs::UserBindMapper::NotReady(
+        throw AdServer::UserInfoSvcs::UserBindClient::NotReady(
           message.c_str());
       case grpc::StatusCode::NOT_FOUND:
-        throw AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound(
+        throw AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound(
           message.c_str());
       default:
-        throw AdServer::UserInfoSvcs::UserBindMapper::ImplementationException(
+        throw AdServer::UserInfoSvcs::UserBindClient::ImplementationException(
           message.c_str());
       }
     }
@@ -1132,31 +1132,31 @@ namespace AdServer::Bidding
               AdServer::CampaignSvcs::US_EXTERNALPROBE);
           }
         }
-        catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady& )
+        catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady& )
         {
           Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::NotReady";
+            ostr << FUN << ": caught UserBindClient::NotReady";
 
           logger()->log(ostr.str(),
             Logging::Logger::WARNING,
             Aspect::BIDDING_FRONTEND,
             "ADS-IMPL-10681");
         }
-        catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+        catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
         {
           Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+            ostr << FUN << ": caught UserBindClient::ChunkNotFound";
 
           logger()->log(ostr.str(),
             Logging::Logger::ERROR,
             Aspect::BIDDING_FRONTEND,
             "ADS-IMPL-10681");
         }
-        catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+        catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
         {
           Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-            ex.description;
+            ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+            ex.what();
 
           logger()->log(ostr.str(),
             Logging::Logger::ERROR,

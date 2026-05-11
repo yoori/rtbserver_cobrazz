@@ -1069,7 +1069,7 @@ namespace AdServer::Action
 
             (void)prev_user_bind_info;
           }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+          catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
           {
             Stream::Error ostr;
             ostr << FUN << ": caught UserBindServer::NotReady";
@@ -1078,20 +1078,20 @@ namespace AdServer::Action
               Aspect::ACTION_FRONTEND,
               "ADS-IMPL-109");
           }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+          catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
           {
             Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+            ostr << FUN << ": caught UserBindClient::ChunkNotFound";
             logger()->log(ostr.str(),
               Logging::Logger::ERROR,
               Aspect::ACTION_FRONTEND,
               "ADS-IMPL-109");
           }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+          catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
           {
             Stream::Error ostr;
-            ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-              ex.description;
+            ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+              ex.what();
             logger()->log(ostr.str(),
               Logging::Logger::ERROR,
               Aspect::ACTION_FRONTEND,
@@ -1136,7 +1136,7 @@ namespace AdServer::Action
 
         (void)prev_user_bind_info;
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
       {
         Stream::Error ostr;
         ostr << FUN << ": caught UserBindServer::NotReady";
@@ -1145,20 +1145,20 @@ namespace AdServer::Action
           Aspect::ACTION_FRONTEND,
           "ADS-IMPL-109");
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+      catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+        ostr << FUN << ": caught UserBindClient::ChunkNotFound";
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::ACTION_FRONTEND,
           "ADS-IMPL-109");
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+      catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-          ex.description;
+        ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+          ex.what();
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::ACTION_FRONTEND,
@@ -1393,7 +1393,7 @@ namespace AdServer::Action
 
         return true;
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+      catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
       {
         Stream::Error ostr;
         ostr << FUN << ": caught UserBindServer::NotReady";
@@ -1402,20 +1402,20 @@ namespace AdServer::Action
           Aspect::ACTION_FRONTEND,
           "ADS-IMPL-109");
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+      catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+        ostr << FUN << ": caught UserBindClient::ChunkNotFound";
           logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::ACTION_FRONTEND,
           "ADS-IMPL-109");
       }
-      catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+      catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
       {
         Stream::Error ostr;
-        ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-          ex.description;
+        ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+          ex.what();
         logger()->log(ostr.str(),
           Logging::Logger::ERROR,
           Aspect::ACTION_FRONTEND,

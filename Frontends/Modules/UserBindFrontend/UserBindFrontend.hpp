@@ -18,7 +18,6 @@
 #include <String/TextTemplate.hpp>
 
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <CORBACommons/ObjectPool.hpp>
 #include <Commons/AtomicInt.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -123,14 +122,6 @@ namespace AdServer
 
     typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
     typedef std::unique_ptr<UserBindFeConfiguration> ConfigPtr;
-
-    typedef CORBACommons::ObjectPoolRefConfiguration
-      UserBindServerPoolConfig;
-    typedef CORBACommons::ObjectPool<
-      AdServer::UserInfoSvcs::UserBindServer, UserBindServerPoolConfig>
-      UserBindServerPool;
-    typedef std::unique_ptr<UserBindServerPool> UserBindServerPoolPtr;
-    typedef UserBindServerPool::ObjectHandlerType UserBindServerHandler;
 
     struct RedirectRule final: public ReferenceCounting::AtomicImpl
     {

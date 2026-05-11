@@ -7,20 +7,10 @@ target_link_libraries(ClickFrontend
   Stream
   Geoip
   CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
-  DomainParser
-  StatInfoIDL
-  BillStatInfoIDL
-  CampaignServerIDL
-  UserBindServerIDL
-  UserBindContainer
+  ChannelClient
+  UserInfoManagerGrpcClient
   UserBindClient
-  RequestMatchers
-  FrontendStatistic
   UserIdController
   CommonModule
   CampaignManagerClient

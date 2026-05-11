@@ -7,20 +7,13 @@ target_link_libraries(ImprTrackFrontend
   Stream
   Geoip
   CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
-  DomainParser
-  StatInfoIDL
-  BillStatInfoIDL
-  CampaignServerIDL
+  ChannelClient
+  UserInfoManagerControllerCall
+  UserInfoManagerGrpcClient
   UserBindServerIDL
-  UserBindContainer
   UserBindClient
   RequestMatchers
-  FrontendStatistic
   UserIdController
   CommonModule
   CampaignManagerClient

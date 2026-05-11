@@ -4,24 +4,8 @@ add_library(ContentFrontend SHARED
 
 target_link_libraries(ContentFrontend
   Stream
-  Geoip
-  CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
   CampaignManagerClient
-  DomainParser
-  StatInfoIDL
-  BillStatInfoIDL
-  CampaignServerIDL
-  UserBindServerIDL
-  UserBindContainer
-  RequestMatchers
-  FrontendStatistic
-  UserIdController
-  CommonModule
   FeConfigXSD
   FCGI
 )

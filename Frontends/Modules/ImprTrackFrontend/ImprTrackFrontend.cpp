@@ -643,15 +643,15 @@ namespace AdServer::ImprTrack
               }
             }
           }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+          catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
           {
             cresolve_failed = true;
           }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+          catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
           {
             cresolve_failed = true;
           }
-          catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+          catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
           {
             cresolve_failed = true;
           }
@@ -746,7 +746,7 @@ namespace AdServer::ImprTrack
                 }
               }
             }
-            catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+            catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
             {
               Stream::Error ostr;
               ostr << FUN << ": caught UserBindServer::NotReady";
@@ -755,20 +755,20 @@ namespace AdServer::ImprTrack
                 Aspect::IMPR_TRACK_FRONTEND,
                 "ADS-IMPL-109");
             }
-            catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+            catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
             {
               Stream::Error ostr;
-              ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+              ostr << FUN << ": caught UserBindClient::ChunkNotFound";
               logger()->log(ostr.str(),
                 Logging::Logger::ERROR,
                 Aspect::IMPR_TRACK_FRONTEND,
                 "ADS-IMPL-109");
             }
-            catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+            catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
             {
               Stream::Error ostr;
-              ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-                ex.description;
+              ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+                ex.what();
               logger()->log(ostr.str(),
                 Logging::Logger::ERROR,
                 Aspect::IMPR_TRACK_FRONTEND,
@@ -1318,7 +1318,7 @@ namespace AdServer::ImprTrack
           GrpcAlgs::unpack_user_id(prev_user_bind_info.user_id());
       }
     }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::NotReady&)
+    catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
     {
       Stream::Error ostr;
       ostr << FUN << ": caught UserBindServer::NotReady";
@@ -1327,20 +1327,20 @@ namespace AdServer::ImprTrack
         Aspect::IMPR_TRACK_FRONTEND,
         "ADS-IMPL-109");
     }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::ChunkNotFound& )
+    catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
     {
       Stream::Error ostr;
-      ostr << FUN << ": caught UserBindMapper::ChunkNotFound";
+      ostr << FUN << ": caught UserBindClient::ChunkNotFound";
       logger()->log(ostr.str(),
         Logging::Logger::ERROR,
         Aspect::IMPR_TRACK_FRONTEND,
         "ADS-IMPL-109");
     }
-    catch(const AdServer::UserInfoSvcs::UserBindMapper::ImplementationException& ex)
+    catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
     {
       Stream::Error ostr;
-      ostr << FUN << ": caught UserBindMapper::ImplementationException: " <<
-        ex.description;
+      ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
+        ex.what();
       logger()->log(ostr.str(),
         Logging::Logger::ERROR,
         Aspect::IMPR_TRACK_FRONTEND,

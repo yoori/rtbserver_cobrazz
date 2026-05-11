@@ -10,11 +10,10 @@ target_link_libraries(AdFrontend
   HTTP
   Geoip
   CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
+  ChannelClient
+  UserInfoManagerControllerCall
+  UserInfoManagerGrpcClient
   CookieManager
   RequestMatchers
   FrontendStatistic

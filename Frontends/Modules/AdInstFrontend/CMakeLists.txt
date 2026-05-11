@@ -8,14 +8,11 @@ target_link_libraries(AdInstFrontend
   HTTP
   Geoip
   CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
+  UserInfoManagerControllerCall
+  UserInfoManagerGrpcClient
   CookieManager
   RequestMatchers
-  FrontendStatistic
   FeConfigXSD
   CommonModule
   CampaignManagerClient

@@ -23,19 +23,12 @@ target_link_libraries(BiddingFrontend
   Stream
   Geoip
   CORBACommons
-  Polyglot
   Commons
-  ChannelManagerControllerIDL
-  UserInfoManagerControllerIDL
-  UserInfoClusterControlIDL
-  DomainParser
-  StatInfoIDL
-  BillStatInfoIDL
-  CampaignServerIDL
-  UserBindServerIDL
+  ChannelClient
+  UserInfoManagerControllerCall
+  UserInfoManagerGrpcClient
   UserBindClient
   RequestMatchers
-  FrontendStatistic
   UserIdController
   CommonModule
   CampaignManagerClient

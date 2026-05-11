@@ -28,7 +28,6 @@
 #include <Commons/Interval.hpp>
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
-#include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 
 #include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
