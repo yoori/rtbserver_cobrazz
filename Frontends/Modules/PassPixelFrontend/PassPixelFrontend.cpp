@@ -1,7 +1,8 @@
 #include <Generics/Time.hpp>
+#include <array>
+#include <utility>
 #include <Logger/StreamLogger.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "PassPixelFrontend.hpp"
 
@@ -32,6 +33,19 @@ namespace Aspect
   const char PASS_PIXEL_FRONTEND[] = "PassbackPixelFrontend";
 }
 
+namespace
+{
+  std::string
+  pack_time(const Generics::Time& time)
+  {
+    std::array<unsigned char, Generics::Time::TIME_PACK_LEN> packed_time;
+    time.pack(packed_time.data());
+    return std::string(
+      reinterpret_cast<const char*>(packed_time.data()),
+      packed_time.size());
+  }
+}
+
 namespace AdServer
 {
 namespace PassbackPixel
@@ -58,8 +72,7 @@ namespace PassbackPixel
         frontend_config->get().PassPixelFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::PASS_PIXEL_FRONTEND)
+      common_module_(ReferenceCounting::add_ref(common_module))
   {}
 
   void
@@ -223,13 +236,19 @@ namespace PassbackPixel
         Aspect::PASS_PIXEL_FRONTEND, "ADS-IMPL-194");
     }
 
-    AdServer::CampaignSvcs::CampaignManager::PassbackTrackInfo info;
-    info.time = CorbaAlgs::pack_time(passback_track_info.time);
-    info.country << passback_track_info.country;
-    info.colo_id = passback_track_info.colo_id;
-    info.tag_id = passback_track_info.tag_id;
-    info.user_status = passback_track_info.user_status;
-    campaign_managers_.consider_passback_track(info);
+    adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackRequest
+      info;
+    info.set_time(pack_time(passback_track_info.time));
+    info.set_country(passback_track_info.country);
+    info.set_colo_id(passback_track_info.colo_id);
+    info.set_tag_id(passback_track_info.tag_id);
+    info.set_user_status(passback_track_info.user_status);
+    AdServer::Grpc::sync_call<
+      adserver::campaign_svcs::campaign_manager::ConsiderPassbackTrackResponse>(
+        [this, &info](auto callback)
+        {
+          campaign_manager_->consider_passback_track(info, std::move(callback));
+        });
 
     return http_status;
   }
@@ -245,10 +264,9 @@ namespace PassbackPixel
       {
         parse_config_();
 
-        corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
+        campaign_manager_ =
+          std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
+            FrontendCommons::read_campaign_manager_refs(*common_config_));
 
         activate_object();
       }
@@ -268,6 +286,8 @@ namespace PassbackPixel
   void
   Frontend::shutdown() noexcept
   {
+    campaign_manager_.reset();
+
     logger()->log(String::SubString(
         "Frontend::shutdown(): frontend terminated"),
       Logging::Logger::INFO, Aspect::PASS_PIXEL_FRONTEND);

@@ -1,36 +1,29 @@
 add_library(AdFrontend SHARED
-    RequestInfoFiller.cpp
+  RequestInfoFiller.cpp
   AdFrontend.cpp
   AdFrontendStat.cpp
   DebugSink.cpp
 )
+
 target_link_libraries(AdFrontend
-
- Stream
- HTTP
- Geoip
+  Stream
+  HTTP
+  Geoip
   CORBACommons
-
- Polyglot
-
- Commons
-# ChannelControllerStubs
-ChannelManagerControllerIDL
-# UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
-# CampaignManagerStubs
- CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
- CookieManager
- RequestMatchers
- FrontendStatistic
-
- FeConfigXSD
- CommonModule
- ExpressionChannelIndex
- UserBindClient
-
-CookieManager FCGI ProcessingTemplates  RequestMatchers UserIdController
+  Polyglot
+  Commons
+  ChannelManagerControllerIDL
+  UserInfoManagerControllerIDL
+  UserInfoClusterControlIDL
+  CookieManager
+  RequestMatchers
+  FrontendStatistic
+  FeConfigXSD
+  CommonModule
+  CampaignManagerClient
+  ExpressionChannelIndex
+  UserBindClient
+  FCGI
+  ProcessingTemplates
+  UserIdController
 )
-
-
-#install(TARGETS  AdFrontend DESTINATION ${INSTALL_DIR})

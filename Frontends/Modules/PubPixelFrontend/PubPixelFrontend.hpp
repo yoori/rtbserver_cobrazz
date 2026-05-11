@@ -10,10 +10,11 @@
 #include <Logger/DistributorLogger.hpp>
 
 #include <HTTP/Http.hpp>
-#include <CORBACommons/CorbaAdapters.hpp>
 
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -119,8 +120,7 @@ namespace PubPixel
     ConfigPtr config_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
   };
 } // namespace PubPixel
 } // namespace AdServer

@@ -7,10 +7,6 @@
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 
-#include <CORBACommons/CorbaAdapters.hpp>
-
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/UserInfoManip.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
@@ -52,8 +48,7 @@ namespace PubPixel
         this->callback(),
         frontend_config->get().PubPixelFeConfiguration()->threads(),
         0), // max pending tasks
-      frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      campaign_managers_(this->logger(), Aspect::PUBPIXEL_FRONTEND)
+      frontend_config_(ReferenceCounting::add_ref(frontend_config))
   {}
 
   bool
@@ -129,10 +124,9 @@ namespace PubPixel
         common_config_->GeoIP().present() ?
         common_config_->GeoIP()->path().c_str() : 0));
 
-      corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
-      campaign_managers_.resolve(
-        *common_config_, corba_client_adapter_);
+      campaign_manager_ =
+        std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
+          FrontendCommons::read_campaign_manager_refs(*common_config_));
 
       activate_object();
     }
@@ -154,7 +148,7 @@ namespace PubPixel
   {
     try
     {
-      corba_client_adapter_.reset();
+      campaign_manager_.reset();
 
       log(String::SubString(
           "PubPixel::Frontend::shutdown: frontend terminated"),
@@ -213,21 +207,33 @@ namespace PubPixel
       }
       else
       {
-        AdServer::CampaignSvcs::StringSeq_var pub_pixels_ptr;
-        AdServer::CampaignSvcs::PublisherAccountIdSeq publisher_account_ids;
+        adserver::campaign_svcs::campaign_manager::GetPubPixelsRequest
+          pub_pixels_request;
+        pub_pixels_request.set_country(
+          request_info.country.present() ? *request_info.country : "");
+        pub_pixels_request.set_user_status(request_info.user_status);
+        for(const auto publisher_account_id :
+          request_info.publisher_account_ids)
+        {
+          pub_pixels_request.add_publisher_account_ids(publisher_account_id);
+        }
 
-        CorbaAlgs::fill_sequence(
-          request_info.publisher_account_ids.begin(),
-          request_info.publisher_account_ids.end(),
-          publisher_account_ids);
-
-        pub_pixels_ptr =
-          campaign_managers_.get_pub_pixels(
-            request_info.country.present() ? request_info.country->c_str() : "",
-            request_info.user_status,
-            publisher_account_ids);
-
-        const AdServer::CampaignSvcs::StringSeq& pub_pixels = *pub_pixels_ptr;
+        const auto pub_pixels = AdServer::Grpc::sync_call<
+          adserver::campaign_svcs::campaign_manager::GetPubPixelsResponse>(
+            [this, &pub_pixels_request](auto callback)
+            {
+              campaign_manager_->get_pub_pixels(
+                pub_pixels_request,
+                std::move(callback));
+            },
+            [](const grpc::Status& status)
+            {
+              Stream::Error ostr;
+              ostr << "CampaignManager get_pub_pixels failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
+              throw Exception(ostr);
+            });
 
         response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
         if(common_config_->ResponseHeaders().present())
@@ -237,16 +243,16 @@ namespace PubPixel
             response);
         }
 
-        if (pub_pixels.length())
+        if (pub_pixels.pixels_size())
         {
           static const char HEAD[] = "<!DOCTYPE html><html><head><title></title></head><body>";
           response.get_output_stream().write(HEAD, sizeof(HEAD) - 1);
 
-          for(CORBA::ULong pixel_i = 0; pixel_i < pub_pixels.length(); ++pixel_i)
+          for(const auto& pixel : pub_pixels.pixels())
           {
             response.get_output_stream().write(
-              pub_pixels[pixel_i].in(),
-              ::strlen(pub_pixels[pixel_i].in()));
+              pixel.data(),
+              pixel.size());
           }
 
           static const char TAIL[] = "</body></html>";

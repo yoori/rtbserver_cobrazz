@@ -23,6 +23,7 @@
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelUtils.hpp>
+#include <ChannelSvcs/ChannelCommons/ChannelUpdateBase.hpp>
 
 #include <ChannelSvcs/ChannelServer/ChannelServerTypes.hpp>
 
@@ -196,20 +197,27 @@ namespace AdServer::ChannelSvcs
       unsigned long check_sum = 0;
     };
 
-    struct LoadDescription
+    struct ProxySourceInfo
     {
-      std::string load_server;
-      std::vector<unsigned long> chunks;
-      unsigned long count_chunks = 0;
-    };
+      using ObjectRef = std::string;
 
-    typedef std::vector<LoadDescription> LoadDescriptionGroup;
-    typedef std::vector<LoadDescriptionGroup> LocalLoadDescriptor;
+      ChannelSvcs::GroupLoadDescriptionSeq local_descriptor;
+      std::vector<ObjectRef> proxy_refs;
+      std::vector<ObjectRef> campaign_refs;
+      unsigned long count_chunks = 0;
+      unsigned long colo = 0;
+      std::string version;
+      unsigned long check_sum = 0;
+    };
 
     void check(const CheckQuery& query, CheckData& data);
 
     void set_sources(
       const DBSourceInfo& db_info,
+      const std::vector<unsigned long>& sources);
+
+    void set_proxy_sources(
+      const ProxySourceInfo& proxy_info,
       const std::vector<unsigned long>& sources);
 
     unsigned long check_configuration() noexcept;

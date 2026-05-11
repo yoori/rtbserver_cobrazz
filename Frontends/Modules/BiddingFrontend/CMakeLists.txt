@@ -23,36 +23,26 @@ target_link_libraries(BiddingFrontend
   Stream
   Geoip
   CORBACommons
-
   Polyglot
-
   Commons
-  #ChannelControllerStubs
   ChannelManagerControllerIDL
-  # UserInfoManagerControllerStubs
-  UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
-
-  # CampaignManagerStubs
-  CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex
-  CreativeTemplateArgs SecToken CampaignManagerLogger
-
+  UserInfoManagerControllerIDL
+  UserInfoClusterControlIDL
   DomainParser
-  # CampaignServerStubs
-  StatInfoIDL BillStatInfoIDL CampaignServerIDL
-
-  # UserBindServerStubs
-  UserBindServerIDL UserBindClient
-
+  StatInfoIDL
+  BillStatInfoIDL
+  CampaignServerIDL
+  UserBindServerIDL
+  UserBindClient
   RequestMatchers
   FrontendStatistic
   UserIdController
   CommonModule
-
+  CampaignManagerClient
   FeConfigXSD
   google-biddingPB
   Gason
   ${PROTOBUF_LDFLAGS}
   protoc
   FCGI
-  # UServerUtils
 )

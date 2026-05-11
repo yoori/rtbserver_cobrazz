@@ -1,0 +1,247 @@
+syntax = "proto3";
+
+package adserver.campaign_svcs.campaign_manager;
+
+service CampaignManagerGrpc {
+  rpc ready(ReadyRequest) returns (ReadyResponse);
+  rpc progress_comment(ProgressCommentRequest) returns (ProgressCommentResponse);
+  rpc match_geo_channels(MatchGeoChannelsRequest) returns (MatchGeoChannelsResponse);
+  rpc get_file(GetFileRequest) returns (GetFileResponse);
+  rpc trace_campaign_selection_index(TraceCampaignSelectionIndexRequest)
+    returns (TraceCampaignSelectionIndexResponse);
+  rpc get_campaign_creative_by_ccid(GetCampaignCreativeByCcidRequest)
+    returns (GetCampaignCreativeByCcidResponse);
+  rpc get_channel_links(GetChannelLinksRequest) returns (GetChannelLinksResponse);
+  rpc get_discover_channels(GetDiscoverChannelsRequest)
+    returns (GetDiscoverChannelsResponse);
+  rpc get_category_channels(GetCategoryChannelsRequest)
+    returns (GetCategoryChannelsResponse);
+  rpc get_colocation_flags(GetColocationFlagsRequest)
+    returns (GetColocationFlagsResponse);
+  rpc get_pub_pixels(GetPubPixelsRequest) returns (GetPubPixelsResponse);
+  rpc consider_passback(ConsiderPassbackRequest)
+    returns (ConsiderPassbackResponse);
+  rpc consider_passback_track(ConsiderPassbackTrackRequest)
+    returns (ConsiderPassbackTrackResponse);
+  rpc verify_opt_operation(VerifyOptOperationRequest)
+    returns (VerifyOptOperationResponse);
+  rpc consider_web_operation(ConsiderWebOperationRequest)
+    returns (ConsiderWebOperationResponse);
+}
+
+message ReadyRequest {}
+
+message ReadyResponse {
+  bool ready = 1;
+}
+
+message ProgressCommentRequest {}
+
+message ProgressCommentResponse {
+  string comment = 1;
+}
+
+message GeoInfo {
+  string country = 1;
+  string region = 2;
+  string city = 3;
+}
+
+message GeoCoordInfo {
+  bytes longitude = 1;
+  bytes latitude = 2;
+  bytes accuracy = 3;
+}
+
+message MatchGeoChannelsRequest {
+  repeated GeoInfo location = 1;
+  repeated GeoCoordInfo coord_location = 2;
+}
+
+message MatchGeoChannelsResponse {
+  repeated uint64 geo_channels = 1;
+  repeated uint64 coord_channels = 2;
+}
+
+message GetFileRequest {
+  string file_name = 1;
+  string service_index = 2;
+}
+
+message GetFileResponse {
+  bytes file = 1;
+}
+
+message TraceCampaignSelectionIndexRequest {}
+
+message TraceCampaignSelectionIndexResponse {
+  string trace_xml = 1;
+}
+
+message GetCampaignCreativeByCcidRequest {
+  uint64 ccid = 1;
+  uint64 tag_id = 2;
+  string format = 3;
+  string original_url = 4;
+  string peer_ip = 5;
+}
+
+message GetCampaignCreativeByCcidResponse {
+  bool found = 1;
+  string creative_body = 2;
+}
+
+message GetChannelLinksRequest {
+  repeated uint64 channels = 1;
+  bool match = 2;
+}
+
+message ChannelSearchResult {
+  uint64 channel_id = 1;
+  uint64 use_count = 2;
+  repeated uint64 matched_simple_channels = 3;
+  repeated uint64 ccg_ids = 4;
+  string discover_query = 5;
+  string language = 6;
+}
+
+message GetChannelLinksResponse {
+  repeated ChannelSearchResult channels = 1;
+}
+
+message ChannelWeight {
+  uint64 channel_id = 1;
+  uint64 weight = 2;
+}
+
+message GetDiscoverChannelsRequest {
+  repeated ChannelWeight channels = 1;
+  string country = 2;
+  string language = 3;
+  bool all = 4;
+}
+
+message DiscoverChannelResult {
+  uint64 channel_id = 1;
+  string name = 2;
+  string query = 3;
+  string annotation = 4;
+  uint64 weight = 5;
+  repeated uint64 categories = 6;
+  string country_code = 7;
+  string language = 8;
+}
+
+message GetDiscoverChannelsResponse {
+  repeated DiscoverChannelResult channels = 1;
+}
+
+message GetCategoryChannelsRequest {
+  string language = 1;
+}
+
+message CategoryChannelNode {
+  uint64 channel_id = 1;
+  string name = 2;
+  uint64 flags = 3;
+  repeated CategoryChannelNode child_category_channels = 4;
+}
+
+message GetCategoryChannelsResponse {
+  repeated CategoryChannelNode channels = 1;
+}
+
+message GetColocationFlagsRequest {}
+
+message ColocationFlags {
+  uint64 colo_id = 1;
+  uint64 flags = 2;
+  uint64 hid_profile = 3;
+}
+
+message GetColocationFlagsResponse {
+  repeated ColocationFlags colocations = 1;
+}
+
+message GetPubPixelsRequest {
+  string country = 1;
+  uint64 user_status = 2;
+  repeated uint64 publisher_account_ids = 3;
+}
+
+message GetPubPixelsResponse {
+  repeated string pixels = 1;
+}
+
+message OptionalUInt64 {
+  bool defined = 1;
+  uint64 value = 2;
+}
+
+message ConsiderPassbackRequest {
+  bytes request_id = 1;
+  bytes time = 2;
+  OptionalUInt64 user_id_hash_mod = 3;
+}
+
+message ConsiderPassbackResponse {}
+
+message ConsiderPassbackTrackRequest {
+  bytes time = 1;
+  string country = 2;
+  uint64 colo_id = 3;
+  uint64 tag_id = 4;
+  uint64 user_status = 5;
+}
+
+message ConsiderPassbackTrackResponse {}
+
+enum OptOperation {
+  OPT_OPERATION_IN = 0;
+  OPT_OPERATION_OUT = 1;
+  OPT_OPERATION_STATUS = 2;
+  OPT_OPERATION_FORCED_IN = 3;
+}
+
+message VerifyOptOperationRequest {
+  uint64 time = 1;
+  int64 colo_id = 2;
+  string referer = 3;
+  OptOperation operation = 4;
+  uint64 status = 5;
+  uint64 user_status = 6;
+  bool log_as_test = 7;
+  string browser = 8;
+  string os = 9;
+  string ct = 10;
+  string curct = 11;
+  bytes user_id = 12;
+}
+
+message VerifyOptOperationResponse {}
+
+message ConsiderWebOperationRequest {
+  bytes time = 1;
+  uint64 colo_id = 2;
+  uint64 tag_id = 3;
+  uint64 cc_id = 4;
+  string ct = 5;
+  string curct = 6;
+  string browser = 7;
+  string os = 8;
+  string app = 9;
+  string source = 10;
+  string operation = 11;
+  string user_bind_src = 12;
+  uint32 result = 13;
+  uint64 user_status = 14;
+  bool test_request = 15;
+  repeated bytes request_ids = 16;
+  bytes global_request_id = 17;
+  string referer = 18;
+  string ip_address = 19;
+  string external_user_id = 20;
+  string user_agent = 21;
+}
+
+message ConsiderWebOperationResponse {}

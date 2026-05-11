@@ -13,8 +13,10 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
 #include "RequestInfoFiller.hpp"
@@ -108,7 +110,7 @@ namespace Passback
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
   };

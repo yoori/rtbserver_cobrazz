@@ -173,6 +173,9 @@
         <xsl:value-of select="$def-campaign-manager-port"/>
       </xsl:if>
     </xsl:variable>
+    <xsl:variable name="campaign-manager-grpc-port">
+      <xsl:value-of select="$campaign-manager-port + 500"/>
+    </xsl:variable>
 
     <exsl:document href="campaignManager.port"
       method="text" omit-xml-declaration="yes"
@@ -291,6 +294,10 @@
         <cfg:Object servant="CampaignManager" name="{$current-campaign-manager-obj}"/>
       </cfg:Endpoint>
     </cfg:CorbaConfig>
+
+    <cfg:GrpcConfig>
+      <cfg:Endpoint host="*" port="{$campaign-manager-grpc-port}"/>
+    </cfg:GrpcConfig>
 
     <xsl:call-template name="ConvertLogger">
       <xsl:with-param name="logger-node" select="$campaign-manager-config/cfg:logging"/>

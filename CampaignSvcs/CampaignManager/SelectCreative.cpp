@@ -6,7 +6,7 @@
 #include <Generics/RandomSelect.hpp>
 #include <Commons/CorbaAlgs.hpp>
 
-#include "CampaignManagerImpl.hpp"
+#include "CampaignManagerCore.hpp"
 #include "CampaignSelector.hpp"
 
 namespace
@@ -20,23 +20,19 @@ namespace AdServer
   namespace CampaignSvcs
   {
     void
-    CampaignManagerImpl::get_channel_targeting_info_(
+    CampaignManagerCore::get_channel_targeting_info_(
       CampaignSelectionData& select_params,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams&
-        request_params,
+      const ChannelIdHashSet& simple_channels,
       const Campaign* campaign_candidate,
       const CampaignKeyword* campaign_keyword,
       AdServer::CampaignSvcs::CampaignManager::CreativeSelectDebugInfo*
         creative_debug_info)
       /*throw(eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::select_creative()";
+      static const char* FUN = "CampaignManagerCore::select_creative()";
 
       if(campaign_candidate->targeted())
       {
-        ChannelIdHashSet simple_channels;
-        CorbaAlgs::convert_sequence(request_params.channels, simple_channels);
-
         try
         {
           select_params.responded_channels.clear();
@@ -103,24 +99,24 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::instantiate_creative_body_(
+    CampaignManagerCore::instantiate_creative_body_(
       const AdInstantiateType ad_instantiate_type,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
       const CampaignConfig* config,
       const Colocation* const colocation,
       const char* cr_size,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
+      const TraceAdSlotInfo& ad_slot,
       AdSelectionResult& ad_selection_result,
       RequestResultParams& request_result_params,
       CreativeParamsList& creative_params_list,
-      CORBA::String_out& creative_body,
-      CORBA::String_out& creative_url,
+      std::string& creative_body,
+      std::string& creative_url,
       const AdSlotContext& ad_slot_context,
       const String::SubString& ext_tag_id)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
     {
       InstantiateParams instantiate_params(
-        request_params.common_info.user_id,
+        CorbaAlgs::unpack_user_id(request_params.common_info.user_id),
         request_params.context_info.enabled_notice);
       instantiate_params.generate_pubpixel_accounts = true;
       instantiate_params.ext_tag_id = ext_tag_id;
@@ -161,7 +157,7 @@ namespace AdServer
           ad_selection_result.tag_size->size);
       }
 
-      bool is_native = ad_slot.format == NATIVE_FORMAT;
+      bool is_native = String::SubString(ad_slot.format) == NATIVE_FORMAT;
 
       if(ad_instantiate_type == AIT_BODY || is_native)
       {
@@ -170,7 +166,7 @@ namespace AdServer
           config,
           colocation,
           instantiate_params,
-          ad_slot.format,
+          ad_slot.format.c_str(),
           ad_selection_result,
           request_result_params,
           creative_params_list,
@@ -194,17 +190,17 @@ namespace AdServer
           request_params.common_info,
           ad_selection_result,
           ad_slot_context,
-          ad_slot.format,
+          ad_slot.format.c_str(),
           request_params.exclude_pubpixel_accounts,
           !request_params.context_info.enabled_notice);
 
-        creative_url << instantiate_url; // REVIEW
+        creative_url = instantiate_url; // REVIEW
 
         if(ad_instantiate_type == AIT_URL_PARAMS ||
            ad_instantiate_type == AIT_DATA_URL_PARAM ||
            ad_instantiate_type == AIT_DATA_PARAM_VALUE)
         {
-          creative_body << instantiate_url;
+          creative_body = instantiate_url;
         }
         else if(ad_instantiate_type == AIT_SCRIPT_WITH_URL ||
            ad_instantiate_type == AIT_IFRAME_WITH_URL)
@@ -230,7 +226,7 @@ namespace AdServer
           CreativeTemplateKey key(
             cr_format,
             cr_size,
-            ad_slot.format);
+            ad_slot.format.c_str());
 
           CreativeTemplate creative_template_descr;
           Template* creative_template = config->creative_templates.get(
@@ -274,7 +270,7 @@ namespace AdServer
               request_params.common_info,
               fill_track_pixel,
               InstantiateParams(
-                request_params.common_info.user_id,
+                CorbaAlgs::unpack_user_id(request_params.common_info.user_id),
                 fill_notice_url),
               instantiate_info,
               0 // consider_pub_pixel_accounts
@@ -331,22 +327,22 @@ namespace AdServer
     }
 
     bool
-    CampaignManagerImpl::instantiate_display_creative(
+    CampaignManagerCore::instantiate_display_creative(
       const CampaignConfig* config,
       const Colocation* colocation,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
+      const TraceAdSlotInfo& ad_slot,
       const CampaignSelector::WeightedCampaign& weighted_campaign,
       AdSelectionResult& ad_selection_result,
       RequestResultParams& request_result_params,
       CreativeParams& creative_params,
       AdServer::CampaignSvcs::CampaignManager::AdSlotDebugInfo* ad_slot_debug_info,
-      CORBA::String_out creative_body,
-      CORBA::String_out creative_url,
+      std::string& creative_body,
+      std::string& creative_url,
       AdSlotContext& ad_slot_context)
       /*throw(eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::instantiate_display_creative()";
+      static const char* FUN = "CampaignManagerCore::instantiate_display_creative()";
 
       assert(weighted_campaign.tag_size);
 
@@ -379,9 +375,11 @@ namespace AdServer
       select_params.request_id = Commons::RequestId::create_random_based();
 
       // Find responded expression and responded channels
+      ChannelIdHashSet simple_channels;
+      CorbaAlgs::convert_sequence(request_params.channels, simple_channels);
       get_channel_targeting_info_(
         select_params,
-        request_params,
+        simple_channels,
         campaign_candidate,
         0, // campaign keyword
         creative_debug_info);
@@ -466,23 +464,23 @@ namespace AdServer
     }
 
     bool
-    CampaignManagerImpl::instantiate_text_creatives(
+    CampaignManagerCore::instantiate_text_creatives(
       const CampaignConfig* config,
       const Colocation* const colocation,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams&
         request_params,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
+      const TraceAdSlotInfo& ad_slot,
       const CampaignSelector::WeightedCampaignKeywordList& campaign_keywords,
       AdSelectionResult& ad_selection_result,
       RequestResultParams& request_result_params,
       CreativeParamsList& creative_params_list,
       AdServer::CampaignSvcs::CampaignManager::AdSlotDebugInfo* ad_slot_debug_info,
-      CORBA::String_out creative_body,
-      CORBA::String_out creative_url,
+      std::string& creative_body,
+      std::string& creative_url,
       AdSlotContext& ad_slot_context)
       /*throw(eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::instantiate_text_creatives()";
+      static const char* FUN = "CampaignManagerCore::instantiate_text_creatives()";
 
       if(ad_slot_debug_info)
       {
@@ -520,9 +518,11 @@ namespace AdServer
         select_params.ctr = kw_it->ctr;
         select_params.conv_rate = kw_it->conv_rate;
 
+        ChannelIdHashSet simple_channels;
+        CorbaAlgs::convert_sequence(request_params.channels, simple_channels);
         get_channel_targeting_info_(
           select_params,
-          request_params,
+          simple_channels,
           campaign_candidate,
           kw_it->campaign_keyword,
           creative_debug_info);
@@ -609,4 +609,3 @@ namespace AdServer
     }
   } // namespace CampaignSvcs
 } // namespace AdServer
-

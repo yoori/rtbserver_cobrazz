@@ -1,44 +1,29 @@
 add_library(ClickFrontend SHARED
-RequestInfoFiller.cpp
+  RequestInfoFiller.cpp
   ClickFrontend.cpp
-
 )
-
 
 target_link_libraries(ClickFrontend
-
-
-
- Stream
- Geoip
- CORBACommons
-
- Polyglot
-
- Commons
- #ChannelControllerStubs
- ChannelManagerControllerIDL
-# UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
-
-# CampaignManagerStubs
-CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
-
- DomainParser
-# CampaignServerStubs
-StatInfoIDL BillStatInfoIDL CampaignServerIDL
-
-# UserBindServerStubs
-UserBindServerIDL UserBindContainer UserBindClient
-
- RequestMatchers
- FrontendStatistic
- UserIdController
- CommonModule
-
- FeConfigXSD
-FCGI
-
+  Stream
+  Geoip
+  CORBACommons
+  Polyglot
+  Commons
+  ChannelManagerControllerIDL
+  UserInfoManagerControllerIDL
+  UserInfoClusterControlIDL
+  DomainParser
+  StatInfoIDL
+  BillStatInfoIDL
+  CampaignServerIDL
+  UserBindServerIDL
+  UserBindContainer
+  UserBindClient
+  RequestMatchers
+  FrontendStatistic
+  UserIdController
+  CommonModule
+  CampaignManagerClient
+  FeConfigXSD
+  FCGI
 )
-
-#install(TARGETS ClickFrontend DESTINATION ${INSTALL_DIR})

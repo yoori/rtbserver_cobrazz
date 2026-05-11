@@ -119,8 +119,7 @@ namespace AdServer
         this->callback(),
         frontend_config->get().ContentFeConfiguration()->threads(),
         0), // max pending tasks
-      frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      campaign_managers_(this->logger(), Aspect::CONTENT_FRONTEND)
+      frontend_config_(ReferenceCounting::add_ref(frontend_config))
   {}
 
   void ContentFrontend::parse_configs_() /*throw(Exception)*/
@@ -189,16 +188,16 @@ namespace AdServer
           }
         }
       }
-      corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
-      campaign_managers_.resolve(
-        *common_config_, corba_client_adapter_);
+      campaign_manager_ =
+        std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
+          FrontendCommons::read_campaign_manager_refs(*common_config_));
 
       template_files_ = new Commons::TextTemplateCache(
         config_->TemplateCache().size(),
         Generics::Time(config_->TemplateCache().timeout()),
         Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
-          Generics::Time::ONE_SECOND, new CreativesUpdater(campaign_managers_)));
+          Generics::Time::ONE_SECOND,
+          new CreativesUpdater(*campaign_manager_)));
 
       activate_object();
     }
@@ -215,7 +214,7 @@ namespace AdServer
   {
     try
     {
-      corba_client_adapter_.reset();
+      campaign_manager_.reset();
 
       log(String::SubString(
           "ContentFrontend::shutdown: frontend terminated"),

@@ -61,9 +61,15 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::check_config() noexcept
+    fill_contract_info(
+      ::AdServer::CampaignSvcs::ContractInfo& contract_info,
+      const Contract& contract)
+      noexcept;
+
+    void
+    CampaignManagerCore::check_config() noexcept
     {
-      static const char* FUN = "CampaignManagerImpl::check_config()";
+      static const char* FUN = "CampaignManagerCore::check_config()";
 
       CampaignIndex_var configuration_index;
       CampaignConfig_var new_config;
@@ -192,14 +198,14 @@ namespace AdServer
 
     template<typename PredProviderType>
     ReferenceCounting::SmartPtr<const PredProviderType>
-    CampaignManagerImpl::update_rate_provider_(
+    CampaignManagerCore::update_rate_provider_(
       const PredProviderType* old_ctr_provider,
       const String::SubString& capture_root,
       const String::SubString& res_root,
       const Generics::Time& expire_timeout)
       /*throw(Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::update_rate_provider_()";
+      static const char* FUN = "CampaignManagerCore::update_rate_provider_()";
 
       const Generics::Time now = Generics::Time::get_time_of_day();
 
@@ -346,9 +352,9 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::update_ctr_provider() noexcept
+    CampaignManagerCore::update_ctr_provider() noexcept
     {
-      static const char* FUN = "CampaignManagerImpl::update_ctr_provider()";
+      static const char* FUN = "CampaignManagerCore::update_ctr_provider()";
 
       if(campaign_manager_config_.CTRConfig().present())
       {
@@ -388,9 +394,9 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::update_conv_rate_provider() noexcept
+    CampaignManagerCore::update_conv_rate_provider() noexcept
     {
-      static const char* FUN = "CampaignManagerImpl::update_conv_rate_provider()";
+      static const char* FUN = "CampaignManagerCore::update_conv_rate_provider()";
 
       if(campaign_manager_config_.ConvRateConfig().present())
       {
@@ -430,9 +436,9 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::update_bid_cost_provider() noexcept
+    CampaignManagerCore::update_bid_cost_provider() noexcept
     {
-      static const char* FUN = "CampaignManagerImpl::update_bid_cost_provider()";
+      static const char* FUN = "CampaignManagerCore::update_bid_cost_provider()";
 
       if(campaign_manager_config_.BidCostConfig().present())
       {
@@ -473,12 +479,13 @@ namespace AdServer
       }
     }
 
-    AdServer::CampaignSvcs::CampaignManager::CampaignConfig*
-    CampaignManagerImpl::get_config(
-      const AdServer::CampaignSvcs::
-        CampaignManager::GetConfigInfo& get_config_props)
-      /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/
+    CampaignConfig_var
+    CampaignManagerCore::get_config(
+      const ConfigRequestInfo& get_config_props)
+      /*throw(Exception)*/
     {
+      static_cast<void>(get_config_props);
+
       CampaignConfig_var config = configuration();
 
       if(config.in() == 0)
@@ -486,6 +493,21 @@ namespace AdServer
         config = new CampaignConfig();
         config->cost_limit = RevenueDecimal::ZERO;
       }
+
+      return config;
+    }
+
+    ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig*
+    CampaignManagerImpl::get_config(
+      const AdServer::CampaignSvcs::CampaignManager::GetConfigInfo& get_config_props)
+      /*throw(AdServer::CampaignSvcs::CampaignManager::ImplementationException)*/
+    {
+      try
+      {
+      CampaignManagerCore::ConfigRequestInfo core_info;
+      core_info.geo_channels = get_config_props.geo_channels;
+
+      CampaignConfig_var config = core_->get_config(core_info);
 
       ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig_var result =
           new ::AdServer::CampaignSvcs::CampaignManager::CampaignConfig();
@@ -1175,7 +1197,8 @@ namespace AdServer
       for(WebOperationHash::const_iterator it = config->web_operations.begin();
           it != config->web_operations.end(); ++it, i++)
       {
-        WebOperationInfo& info = result->web_operations[i];
+        AdServer::CampaignSvcs::WebOperationInfo& info =
+          result->web_operations[i];
         info.id = it->second->id;
         info.app << it->second->app;
         info.source << it->second->source;
@@ -1192,15 +1215,30 @@ namespace AdServer
         for(CampaignConfig::ContractMap::const_iterator it = config->contracts.begin();
             it != config->contracts.end(); ++it, i++)
         {
-          fill_contract_(result->contracts[i], *(it->second));
+          fill_contract_info(result->contracts[i], *(it->second));
         }
       }
 
       return result._retn();
+      }
+      catch(const CampaignManagerCore::Exception& ex)
+      {
+        CORBACommons::throw_desc<
+          AdServer::CampaignSvcs::CampaignManager::ImplementationException>(
+            String::SubString(ex.what()));
+      }
+      catch(const eh::Exception& ex)
+      {
+        CORBACommons::throw_desc<
+          AdServer::CampaignSvcs::CampaignManager::ImplementationException>(
+            String::SubString(ex.what()));
+      }
+
+      return 0;
     }
 
     void
-    CampaignManagerImpl::precalculate_pub_pixel_accounts_(
+    CampaignManagerCore::precalculate_pub_pixel_accounts_(
       CampaignConfig* campaign_config)
       /*throw(eh::Exception)*/
     {
@@ -1229,8 +1267,8 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_contract_(
-      ContractInfo& contract_info,
+    fill_contract_info(
+      ::AdServer::CampaignSvcs::ContractInfo& contract_info,
       const Contract& contract)
       noexcept
     {
@@ -1260,7 +1298,16 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_campaign_contracts_(
+    CampaignManagerCore::fill_contract_(
+      ::AdServer::CampaignSvcs::ContractInfo& contract_info,
+      const Contract& contract)
+      noexcept
+    {
+      fill_contract_info(contract_info, contract);
+    }
+
+    void
+    CampaignManagerCore::fill_campaign_contracts_(
       AdServer::CampaignSvcs::CampaignManager::ExtContractInfoSeq& contract_seq,
       const Contract* contract)
       noexcept

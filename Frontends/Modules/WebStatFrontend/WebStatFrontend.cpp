@@ -1,11 +1,12 @@
 #include <Generics/Time.hpp>
+#include <array>
+#include <utility>
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <String/StringManip.hpp>
 #include <PrivacyFilter/Filter.hpp>
 #include <Commons/ErrorHandler.hpp>
-#include <Commons/CorbaAlgs.hpp>
 
 #include "WebStatFrontend.hpp"
 
@@ -38,6 +39,24 @@ namespace WebStat
     {
       const char WEBSTAT_FRONTEND[] = "WebStatFrontend";
     }
+
+    std::string
+    pack_request_id(const AdServer::Commons::RequestId& request_id)
+    {
+      return std::string(
+        reinterpret_cast<const char*>(request_id.begin()),
+        reinterpret_cast<const char*>(request_id.end()));
+    }
+
+    std::string
+    pack_time(const Generics::Time& time)
+    {
+      std::array<unsigned char, Generics::Time::TIME_PACK_LEN> packed_time;
+      time.pack(packed_time.data());
+      return std::string(
+        reinterpret_cast<const char*>(packed_time.data()),
+        packed_time.size());
+    }
   }
 
   /**
@@ -62,8 +81,7 @@ namespace WebStat
         frontend_config->get().WebStatFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::WEBSTAT_FRONTEND)
+      common_module_(ReferenceCounting::add_ref(common_module))
   {}
 
   void
@@ -176,46 +194,60 @@ namespace WebStat
       {
         const RequestInfo& request_info = *req_it;
 
-        CampaignSvcs::CampaignManager::WebOperationInfo web_op_info;
+        adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+          web_op_info;
         //web_op_info.check_args = true;
-        web_op_info.time = CorbaAlgs::pack_time(request_info.time);
-        web_op_info.colo_id = request_info.colo_id;
-        web_op_info.tag_id = request_info.tag_id;
-        web_op_info.cc_id = request_info.cc_id;
-        web_op_info.ct << request_info.ct;
-        web_op_info.curct << request_info.curct;
-        web_op_info.browser << request_info.browser;
-        web_op_info.os << request_info.os;
-        web_op_info.app << request_info.application;
-        web_op_info.source << request_info.source;
-        web_op_info.operation << request_info.operation;
-        web_op_info.result = request_info.result;
-        web_op_info.user_status = static_cast<unsigned long>(request_info.user_status);
-        web_op_info.test_request = request_info.test_request;
-        web_op_info.referer << request_info.referer;
-        web_op_info.ip_address << request_info.peer_ip;
-        web_op_info.external_user_id << request_info.external_user_id;
-        web_op_info.user_agent << request_info.user_agent;
+        web_op_info.set_time(pack_time(request_info.time));
+        web_op_info.set_colo_id(request_info.colo_id);
+        web_op_info.set_tag_id(request_info.tag_id);
+        web_op_info.set_cc_id(request_info.cc_id);
+        web_op_info.set_ct(request_info.ct);
+        web_op_info.set_curct(request_info.curct);
+        web_op_info.set_browser(request_info.browser);
+        web_op_info.set_os(request_info.os);
+        web_op_info.set_app(request_info.application);
+        web_op_info.set_source(request_info.source);
+        web_op_info.set_operation(request_info.operation);
+        web_op_info.set_result(request_info.result);
+        web_op_info.set_user_status(request_info.user_status);
+        web_op_info.set_test_request(request_info.test_request);
+        web_op_info.set_referer(request_info.referer);
+        web_op_info.set_ip_address(request_info.peer_ip);
+        web_op_info.set_external_user_id(request_info.external_user_id);
+        web_op_info.set_user_agent(request_info.user_agent);
         if (!request_info.request_ids.empty())
         {
-          web_op_info.request_ids.length(request_info.request_ids.size());
-          CORBA::ULong ri = 0;
           for(RequestIdSet::const_iterator rit = request_info.request_ids.begin();
-              rit != request_info.request_ids.end(); ++rit, ++ri)
+              rit != request_info.request_ids.end(); ++rit)
           {
-            if (!rit->is_null())
-            {
-              web_op_info.request_ids[ri] = CorbaAlgs::pack_request_id(*rit);
-            }
+            web_op_info.add_request_ids(
+              rit->is_null() ? std::string() : pack_request_id(*rit));
           }
         }
         if (!request_info.global_request_id.is_null())
         {
-          web_op_info.global_request_id =
-            CorbaAlgs::pack_request_id(request_info.global_request_id);
+          web_op_info.set_global_request_id(
+            pack_request_id(request_info.global_request_id));
         }
 
-        campaign_managers_.consider_web_operation(web_op_info);
+        AdServer::Grpc::sync_call<
+          adserver::campaign_svcs::campaign_manager::ConsiderWebOperationResponse>(
+            [this, &web_op_info](auto callback)
+            {
+              campaign_manager_->consider_web_operation(
+                web_op_info,
+                std::move(callback));
+            },
+            [](const grpc::Status& status)
+            {
+              if(status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
+              {
+                throw FrontendCommons::HTTPExceptions::InvalidParamException(
+                  "incorrect argument");
+              }
+
+              AdServer::Grpc::throw_grpc_error(status);
+            });
       }
 
       if(!request_info_list.empty() && !request_info_list.begin()->origin.empty())
@@ -255,10 +287,6 @@ namespace WebStat
     {
       http_result = 400;
     }
-    catch(const AdServer::CampaignSvcs::CampaignManager::IncorrectArgument&)
-    {
-      http_result = 400;
-    }
     catch(const eh::Exception& e)
     {
       http_result = 500;
@@ -282,13 +310,12 @@ namespace WebStat
       {
         parse_config_();
 
-        corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
         pixel_ = FileCachePtr(
           new FileCache(config_->pixel_path().c_str()));
 
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
+        campaign_manager_ =
+          std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
+            FrontendCommons::read_campaign_manager_refs(*common_config_));
 
         request_info_filler_.reset(new RequestInfoFiller(
           config_->rid_public_key().c_str(),
@@ -313,6 +340,8 @@ namespace WebStat
   void
   Frontend::shutdown() noexcept
   {
+    campaign_manager_.reset();
+
     logger()->log(String::SubString(
       "WebStat::Frontend::shutdown(): frontend terminated"),
       Logging::Logger::INFO,

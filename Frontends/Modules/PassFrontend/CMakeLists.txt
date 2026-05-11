@@ -3,43 +3,26 @@ add_library(PassFrontend SHARED
   PassFrontend.cpp
 )
 
-
 target_link_libraries(PassFrontend
-
-
-
- Stream
- Geoip
- CORBACommons
-
- Polyglot
-
- Commons
- #ChannelControllerStubs
- ChannelManagerControllerIDL
-# UserInfoManagerControllerStubs
-UserInfoManagerControllerIDL UserInfoClusterControlIDL UserInfoManagerControllerIDL
-
-# CampaignManagerStubs
-CampaignManagerIDL BidRateProvider CTRProvider CampaignConfig CampaignConfigSource CampaignIndex CreativeTemplateArgs SecToken  CampaignManagerLogger
-
- DomainParser
-# CampaignServerStubs
-StatInfoIDL BillStatInfoIDL CampaignServerIDL
-
-# UserBindServerStubs
-UserBindServerIDL UserBindContainer
-
- RequestMatchers
- FrontendStatistic
- UserIdController
- CommonModule
-
- FeConfigXSD
-FCGI
-
-
-
+  Stream
+  Geoip
+  CORBACommons
+  Polyglot
+  Commons
+  ChannelManagerControllerIDL
+  UserInfoManagerControllerIDL
+  UserInfoClusterControlIDL
+  DomainParser
+  StatInfoIDL
+  BillStatInfoIDL
+  CampaignServerIDL
+  UserBindServerIDL
+  UserBindContainer
+  RequestMatchers
+  FrontendStatistic
+  UserIdController
+  CommonModule
+  CampaignManagerClient
+  FeConfigXSD
+  FCGI
 )
-
-#install(TARGETS PassFrontend  DESTINATION ${INSTALL_DIR})

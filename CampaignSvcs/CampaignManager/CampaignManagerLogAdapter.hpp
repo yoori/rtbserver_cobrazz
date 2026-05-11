@@ -39,7 +39,7 @@ namespace AdServer
         const AdServer::CampaignSvcs::CampaignManager::ContextAdRequestInfo& context_info,
         const AdServer::CampaignSvcs::CampaignManager::RequestParams* request_params,
         AdServer::CampaignSvcs::CampaignManager::AdRequestDebugInfo* debug_info,
-        const CampaignManagerImpl::AdSlotContext& ad_slot_context)
+        const CampaignManagerCore::AdSlotContext& ad_slot_context)
         /*throw(Exception)*/;
 
       static void
@@ -53,8 +53,8 @@ namespace AdServer
         const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
         const Tag* tag,
         const AdSelectionResult& ad_selection_request,
-        const CampaignManagerImpl::AdSlotContext& ad_slot_context,
-        const CampaignManagerImpl::AdSlotMinCpm& ad_slot_min_ecpm,
+        const CampaignManagerCore::AdSlotContext& ad_slot_context,
+        const CampaignManagerCore::AdSlotMinCpm& ad_slot_min_ecpm,
         const Tag::SizeMap& tag_sizes,
         bool disable_impression_tracking)
         /*throw(Exception)*/;
@@ -113,7 +113,7 @@ namespace AdServer
         const AdSelectionResult& ad_selection_result,
         unsigned long num_shown,
         unsigned long position,
-        const CampaignManagerImpl::AdSlotContext& ad_slot_context)
+        const CampaignManagerCore::AdSlotContext& ad_slot_context)
         /*throw(Exception)*/;
 
       static void
@@ -476,7 +476,7 @@ namespace AdServer
       const AdServer::CampaignSvcs::CampaignManager::ContextAdRequestInfo& context_info,
       const AdServer::CampaignSvcs::CampaignManager::RequestParams* request_params,
       AdServer::CampaignSvcs::CampaignManager::AdRequestDebugInfo* ad_request_debug_info,
-      const CampaignManagerImpl::AdSlotContext& ad_slot_context)
+      const CampaignManagerCore::AdSlotContext& ad_slot_context)
       /*throw(Exception)*/
     {
       //static const char* FUN = "CampaignManagerLogAdapter::fill_request_info()";
@@ -616,8 +616,8 @@ namespace AdServer
       const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
       const Tag* tag,
       const AdSelectionResult& ad_selection_result,
-      const CampaignManagerImpl::AdSlotContext& ad_slot_context,
-      const CampaignManagerImpl::AdSlotMinCpm& ad_slot_min_cpm,
+      const CampaignManagerCore::AdSlotContext& ad_slot_context,
+      const CampaignManagerCore::AdSlotMinCpm& ad_slot_min_cpm,
       const Tag::SizeMap& tag_sizes,
       bool disable_impression_tracking)
       /*throw(Exception)*/
@@ -872,7 +872,7 @@ namespace AdServer
       const AdSelectionResult& ad_selection_result,
       unsigned long num_shown,
       unsigned long position,
-      const CampaignManagerImpl::AdSlotContext& ad_slot_context)
+      const CampaignManagerCore::AdSlotContext& ad_slot_context)
       /*throw(Exception)*/
     {
       static const char* FUN = "CampaignManagerLogAdapter::fill_ad_selection_info_()";

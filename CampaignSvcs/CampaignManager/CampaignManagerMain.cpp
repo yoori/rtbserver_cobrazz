@@ -74,10 +74,17 @@ CampaignManagerApp_::shutdown(CORBA::Boolean wait_for_completion)
 {
   ShutdownWriteGuard guard(shutdown_lock_);
 
-  if(campaign_manager_impl_.in() != 0)
+  if(grpc_adapter_.in() != 0)
   {
-    campaign_manager_impl_->deactivate_object();
-    campaign_manager_impl_->wait_object();
+    grpc_adapter_->deactivate_object();
+    grpc_adapter_->wait_object();
+    grpc_adapter_.reset();
+  }
+
+  if(campaign_manager_core_.in() != 0)
+  {
+    campaign_manager_core_->deactivate_object();
+    campaign_manager_core_->wait_object();
   }
 
   CORBACommons::ProcessControlImpl::shutdown(wait_for_completion);
@@ -96,8 +103,8 @@ CampaignManagerApp_::is_ready_() noexcept
 
   try
   {
-    if (campaign_manager_impl_.in() &&
-        campaign_manager_impl_->ready())
+    if (campaign_manager_core_.in() &&
+        campaign_manager_core_->ready())
     {
       status = true;
     }
@@ -107,7 +114,7 @@ CampaignManagerApp_::is_ready_() noexcept
     logger()->sstream(Logging::Logger::EMERGENCY,
                       ASPECT,
                       "ADS-IMPL-167")
-      << "CampaignManagerImpl::ready(): "
+      << "CampaignManagerCore::ready(): "
       << "Got eh:Exception. : "
       << e.what();
   }
@@ -120,9 +127,9 @@ char* CampaignManagerApp_::comment() /*throw(CORBACommons::OutOfMemory)*/
   try
   {
     std::string res;
-    if (campaign_manager_impl_.in())
+    if (campaign_manager_core_.in())
     {
-      campaign_manager_impl_->progress_comment(res);
+      campaign_manager_core_->progress_comment(res);
     }
     CORBA::String_var r;
     r << res;
@@ -190,8 +197,8 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         new AdServer::CampaignSvcs::CampaignManagerLogger(
           configuration_.log_params, logger());
 
-    campaign_manager_impl_ =
-      new AdServer::CampaignSvcs::CampaignManagerImpl(
+    campaign_manager_core_ =
+      new AdServer::CampaignSvcs::CampaignManagerCore(
         *campaign_manager_config_,
         *domain_config_,
         callback(),
@@ -199,6 +206,10 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
         campaign_manager_logger,
         configuration_.creative_instantiate,
         configuration_.campaigns_types.c_str());
+
+    campaign_manager_impl_ =
+      new AdServer::CampaignSvcs::CampaignManagerImpl(
+        campaign_manager_core_.in());
 
     register_vars_controller();
 
@@ -209,8 +220,22 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     corba_server_adapter_->add_binding(
       PROCESS_CONTROL_OBJ_KEY, this);
 
-    stage = "activating CampaignManagerImpl active object";
-    campaign_manager_impl_->activate_object();
+    stage = "activating CampaignManagerCore active object";
+    campaign_manager_core_->activate_object();
+
+    if(campaign_manager_config_->GrpcConfig().present())
+    {
+      stage = "activating CampaignManagerGrpc";
+      grpc_adapter_ = new AdServer::CampaignSvcs::CampaignManagerGrpc(
+        campaign_manager_core_.in(),
+        logger(),
+        campaign_manager_config_->GrpcConfig()->Endpoint().host().present() &&
+          *(campaign_manager_config_->GrpcConfig()->Endpoint().host()) != "*" ?
+          *campaign_manager_config_->GrpcConfig()->Endpoint().host() :
+          "0.0.0.0",
+        campaign_manager_config_->GrpcConfig()->Endpoint().port());
+      grpc_adapter_->activate_object();
+    }
 
     stage = "running orb loop";
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
@@ -225,7 +250,15 @@ CampaignManagerApp_::main(int& argc, char** argv) noexcept
     logger()->sstream(Logging::Logger::NOTICE, ASPECT)
       << "service stopped.";
 
+    if(grpc_adapter_.in() != 0)
+    {
+      grpc_adapter_->deactivate_object();
+      grpc_adapter_->wait_object();
+      grpc_adapter_.reset();
+    }
+
     campaign_manager_impl_.reset();
+    campaign_manager_core_.reset();
   }
   catch (const Exception& e)
   {
@@ -275,7 +308,7 @@ CampaignManagerApp_::read_logger_config(
 
 void
 CampaignManagerApp_::read_creative_config(
-  AdServer::CampaignSvcs::CampaignManagerImpl::CreativeInstantiate&
+  AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate&
     creative_instantiate,
   const xsd::AdServer::Configuration::CampaignManagerCreative&
     xsd_creative_description)
@@ -299,7 +332,7 @@ CampaignManagerApp_::read_creative_config(
      it != xsd_creative_description.SourceRule().end();
      ++it)
   {
-    AdServer::CampaignSvcs::CampaignManagerImpl::
+    AdServer::CampaignSvcs::CampaignManagerCore::
       CreativeInstantiate::SourceRule source_rule;
 
     if(it->click_prefix().present())
@@ -626,7 +659,7 @@ CampaignManagerApp_::read_config(const char* filename, const char* argv0)
       campaign_manager_config_ =
         ConfigPtr(
           new AdServer::CampaignSvcs::
-          CampaignManagerImpl::CampaignManagerConfig(
+          CampaignManagerCore::CampaignManagerConfig(
             ad_configuration->CampaignManager()));
     }
     catch(const xml_schema::parsing& e)
@@ -796,4 +829,3 @@ main(int argc, char** argv)
 
   app->main(argc, argv);
 }
-

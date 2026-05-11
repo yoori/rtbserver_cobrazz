@@ -474,6 +474,8 @@ namespace CampaignSvcs
       update_info.fraud_user_deactivate_period);
     new_config.cost_limit = CorbaAlgs::unpack_decimal<RevenueDecimal>(
       update_info.cost_limit);
+    new_config.google_publisher_account_id =
+      update_info.google_publisher_account_id;
 
     apply_sizes_update_(update_info, new_config);
     apply_app_formats_update_(update_info, new_config);

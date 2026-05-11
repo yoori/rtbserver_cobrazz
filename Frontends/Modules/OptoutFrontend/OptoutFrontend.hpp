@@ -19,8 +19,10 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/RequestMatchers.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
@@ -142,7 +144,7 @@ namespace AdServer
     OptOutFrontendStat_var stats_;
 
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
 
     std::unique_ptr<OptOut::RequestInfoFiller> request_info_filler_;
   };

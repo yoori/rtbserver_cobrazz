@@ -14,14 +14,11 @@
 #include <HTTP/HTTPCookie.hpp>
 //#include <Apache/Adapters.hpp>
 
-#include <CORBA/CORBACommons/CorbaAdapters.hpp>
-
-#include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaObject.hpp>
-
 #include <xsd/Frontends/FeConfig.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
@@ -77,10 +74,6 @@ namespace WebStat
     typedef Generics::FileCache<> FileCache;
     typedef FileCache::Cache_var FileCachePtr;
 
-    typedef std::unique_ptr<
-      Commons::CorbaObject<AdServer::CampaignSvcs::CampaignManager> >
-      CampaignManagerRef;
-
   private:
     virtual ~Frontend() noexcept;
 
@@ -100,8 +93,7 @@ namespace WebStat
     CommonModule_var common_module_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
 
     FileCachePtr pixel_;
   };

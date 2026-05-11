@@ -91,13 +91,21 @@ namespace ChannelSvcs
       const ::AdServer::ChannelSvcs::ChunkKeySeq& sources)
       /*throw(AdServer::ChannelSvcs::ImplementationException)*/
   {
-    static_cast<void>(proxy_info);
-    static_cast<void>(sources);
-
+    WriteGuard_ guard(lock_);
     try
     {
-      throw ChannelServerCore::Exception(
-        "Proxy source loading is not supported");
+      ChannelServerCore::ProxySourceInfo core_proxy_info;
+      core_proxy_info.local_descriptor = proxy_info.local_descriptor;
+      core_proxy_info.count_chunks = proxy_info.count_chunks;
+      core_proxy_info.colo = proxy_info.colo;
+      core_proxy_info.version = proxy_info.version.in();
+      core_proxy_info.check_sum = proxy_info.check_sum;
+      core_proxy_info.proxy_refs = unpack_refs(proxy_info.proxy_refs);
+      core_proxy_info.campaign_refs = unpack_refs(proxy_info.campaign_refs);
+
+      custom_impl_->set_proxy_sources(
+        core_proxy_info,
+        unpack_sources(sources));
     }
     catch(const eh::Exception& ex)
     {

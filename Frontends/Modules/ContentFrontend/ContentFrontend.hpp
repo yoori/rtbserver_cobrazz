@@ -9,7 +9,9 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 // #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Commons/TextTemplateCache.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -113,22 +115,47 @@ namespace AdServer
 
       virtual ~CreativesUpdater() noexcept {}
 
-      FrontendCommons::CampaignManagersPool<Exception>& campaign_managers_;
+      AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient&
+        campaign_manager_;
     public:
 
-      CreativesUpdater(FrontendCommons::CampaignManagersPool<Exception>& campaign_managers)
+      CreativesUpdater(
+        AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient&
+          campaign_manager)
         noexcept
-        : campaign_managers_(campaign_managers)
+        : campaign_manager_(campaign_manager)
       {}
 
       virtual Holder
       far_update(const char* file, const char* service_index) /*throw(Exception)*/
       {
-        CORBACommons::OctSeq_var content;
-        campaign_managers_.get_file(file, content, service_index);
         try
         {
-          String::SubString file_body(reinterpret_cast<char*>(content->get_buffer()), content->length());
+          adserver::campaign_svcs::campaign_manager::GetFileRequest request;
+          request.set_file_name(file);
+          if(service_index)
+          {
+            request.set_service_index(service_index);
+          }
+
+          const auto response = AdServer::Grpc::sync_call<
+            adserver::campaign_svcs::campaign_manager::GetFileResponse>(
+              [this, &request](auto callback)
+              {
+                campaign_manager_.get_file(request, std::move(callback));
+              },
+              [](const grpc::Status& status)
+              {
+                Stream::Error ostr;
+                ostr << "CampaignManager get_file failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                throw Exception(ostr);
+              });
+
+          String::SubString file_body(
+            response.file().data(),
+            response.file().size());
           Generics::Time now = Generics::Time::get_time_of_day();
           return new ConfigType::TextTemplateHolder(
             Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
@@ -168,8 +195,7 @@ namespace AdServer
     StringList strings_; // string's holder for SubString using
     TemplateRuleMap template_rules_;
 
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
     Commons::TextTemplateCache_var template_files_;
   };
 

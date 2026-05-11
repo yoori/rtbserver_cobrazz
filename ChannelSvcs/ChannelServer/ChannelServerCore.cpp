@@ -1238,6 +1238,123 @@ namespace AdServer::ChannelSvcs
     }
   }
 
+  void ChannelServerCore::set_proxy_sources(
+    const ChannelServerCore::ProxySourceInfo& proxy_info,
+    const std::vector<unsigned long>& sources)
+  {
+    if(sources.empty())
+    {
+      Stream::Error ostr;
+      ostr << __func__ << ": setting empty source";
+      throw ChannelServerCore::Exception(ostr.str());
+    }
+    try
+    {
+      WriteGuard_ lock(lock_set_sources_);
+      std::vector<unsigned int> vec_sources;
+      vec_sources.reserve(sources.size());
+
+      Stream::Error ostr;
+      ostr << __func__ << ": sources:";
+      for(const auto source : sources)
+      {
+        vec_sources.push_back(source);
+        ostr << source << ",";
+      }
+
+      ChannelServerVariantBase::ServerPoolConfig
+        pool_config(state_holder_->c_adapter.in());
+      pool_config.timeout = Generics::Time(
+        std::min(update_period_, 10UL)); // 10 sec
+      if(!proxy_info.campaign_refs.empty())
+      {
+        Stream::Error mes;
+        mes << "References to campaign server: ";
+        for(size_t i = 0; i < proxy_info.campaign_refs.size(); ++i)
+        {
+          if(i != 0)
+          {
+            mes << "; ";
+          }
+          mes << proxy_info.campaign_refs[i];
+          pool_config.iors_list.emplace_back(proxy_info.campaign_refs[i].c_str());
+        }
+        logger()->log(mes.str(), Logging::Logger::TRACE, ASPECT);
+      }
+
+      ChannelServerVariantBase::ServerPoolConfig
+        proxy_pool_config(state_holder_->c_adapter.in());
+      proxy_pool_config.timeout = Generics::Time(
+        std::min(update_period_, 10UL)); // 10 sec
+      if(!proxy_info.proxy_refs.empty())
+      {
+        Stream::Error mes;
+        mes << "References to channel proxy: ";
+        for(size_t i = 0; i < proxy_info.proxy_refs.size(); ++i)
+        {
+          if(i != 0)
+          {
+            mes << "; ";
+          }
+          mes << proxy_info.proxy_refs[i];
+          proxy_pool_config.iors_list.emplace_back(proxy_info.proxy_refs[i].c_str());
+        }
+        logger()->log(mes.str(), Logging::Logger::TRACE, ASPECT);
+      }
+
+      colo_ = proxy_info.colo;
+      version_ = proxy_info.version;
+      if(logger()->log_level() >= Logging::Logger::TRACE &&
+         proxy_info.local_descriptor.length())
+      {
+        Stream::Error mes;
+        mes << "Local references: ";
+        describe_description(mes, proxy_info.local_descriptor);
+        logger()->log(mes.str(), Logging::Logger::TRACE, ASPECT);
+      }
+
+      new_variant_server_ = std::make_shared<ChannelServerProxy>(
+        proxy_info.local_descriptor,
+        proxy_pool_config,
+        ports_,
+        vec_sources,
+        proxy_info.count_chunks,
+        proxy_info.colo,
+        proxy_info.version.c_str(),
+        pool_config,
+        SERVICE_INDEX_,
+        logger(),
+        proxy_info.check_sum);
+
+      configuration_date_ = Generics::Time::get_time_of_day();
+      if(state_ == UpdateData::US_ZERO)
+      {
+        state_ = UpdateData::US_START;
+      }
+
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::TRACE,
+        ASPECT);
+    }
+    catch(const ChannelServerException::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << __func__ << ": ChannelServerException::Exception: " << e.what();
+      logger()->log(
+        ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-40");
+      throw ChannelServerCore::Exception(ostr.str());
+    }
+    catch(const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << __func__ << ": eh::Exception: " << e.what();
+      logger()->log(
+        ostr.str(), Logging::Logger::CRITICAL, ASPECT, "ADS-IMPL-40");
+      throw ChannelServerCore::Exception(ostr.str());
+    }
+  }
+
   unsigned long ChannelServerCore::check_configuration()
   noexcept
   {

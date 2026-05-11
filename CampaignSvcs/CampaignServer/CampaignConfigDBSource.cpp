@@ -773,6 +773,7 @@ namespace CampaignSvcs
       GlobalParamMap global_params;
       global_params.insert(std::make_pair(FRAUD_USER_DEACTIVATE_PERIOD, ""));
       global_params.insert(std::make_pair(COST_LIMIT, ""));
+      global_params.insert(std::make_pair(GOOGLE_PUBLISHER_ACCOUNT_ID, ""));
 
       std::ostringstream sql_request;
       sql_request <<

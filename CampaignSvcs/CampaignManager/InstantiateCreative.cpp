@@ -13,10 +13,11 @@
 #include <HTTP/UrlAddress.hpp>
 
 #include <Commons/Algs.hpp>
+#include <Commons/CorbaAlgs.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 #include <LogCommons/AdRequestLogger.hpp>
 
-#include "CampaignManagerImpl.hpp"
+#include "CampaignManagerCore.hpp"
 #include "CampaignManagerLogger.hpp"
 #include "CreativeTextGenerator.hpp"
 
@@ -177,7 +178,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::instantiate_click_url(
+    CampaignManagerCore::instantiate_click_url(
       const CampaignConfig* const campaign_config,
       const OptionValue& click_url,
       std::string& result_click_url,
@@ -299,17 +300,17 @@ namespace AdServer
     }
 
     bool
-    CampaignManagerImpl::instantiate_creative_preview(
-      const AdServer::CampaignSvcs::CampaignManager::CreativeParams& params,
+    CampaignManagerCore::instantiate_creative_preview(
+      const PreviewCreativeParams& params,
       const CampaignConfig* const campaign_config,
       const Campaign* campaign,
       const Creative* creative,
       const Tag* tag,
       const Tag::Size& tag_size,
-      CORBA::String_out creative_body)
-      /*throw(CORBA::SystemException, eh::Exception)*/
+      std::string& creative_body)
+      /*throw(eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::instantiate_creative_preview()";
+      static const char* FUN = "CampaignManagerCore::instantiate_creative_preview()";
 
       unsigned long random = Generics::safe_rand();
 
@@ -375,7 +376,7 @@ namespace AdServer
         CreativeTemplateKey key(
           creative->creative_format.c_str(),
           tag_size.size->protocol_name.c_str(),
-          params.format.in());
+          params.format.c_str());
 
         Template* creative_template =
           campaign_config->creative_templates.get(key);
@@ -386,13 +387,13 @@ namespace AdServer
           ostr << "Can't find creative template for (type='" <<
             creative->creative_format <<
             "', size='" << tag_size.size->protocol_name <<
-            "', app_format='" << params.format.in() << "').";
+            "', app_format='" << params.format << "').";
 
           throw Exception(ostr);
         }
 
-        std::string peer_ip = params.peer_ip.in() && *params.peer_ip ?
-          params.peer_ip.in() :
+        std::string peer_ip = !params.peer_ip.empty() ?
+          params.peer_ip :
           "127.0.0.1";
 
         TemplateParams_var request_args_ptr = new TemplateParams();
@@ -445,7 +446,7 @@ namespace AdServer
 
           request_args[CreativeTokens::USER_STATUS] = "0";
 
-          request_args[CreativeTokens::ORIGLINK] = params.original_url.in();
+          request_args[CreativeTokens::ORIGLINK] = params.original_url;
           request_args[CreativeTokens::REQUEST_TOKEN] = "";
           request_args[CreativeTokens::COLOCATION] = "0";
 
@@ -464,7 +465,7 @@ namespace AdServer
           request_args[CreativeTokens::COHORT] = "";
           request_args[CreativeTokens::TEST_REQUEST] = "0";
 
-          request_args[CreativeTokens::APP_FORMAT] = params.format.in();
+          request_args[CreativeTokens::APP_FORMAT] = params.format;
           request_args[CreativeTokens::TEMPLATE_FORMAT] = creative->creative_format;
 
           request_args[CreativeTokens::PUBPIXELS] = (
@@ -552,7 +553,7 @@ namespace AdServer
           std::ostringstream creative_body_str;
           creative_template->instantiate(
             request_args_ptr, creative_args_list, creative_body_str);
-          creative_body << creative_body_str.str();
+          creative_body = creative_body_str.str();
         }
 
         return true;
@@ -564,7 +565,7 @@ namespace AdServer
           ": eh::Exception while instantiating creative ccid=" <<
           creative->ccid <<
           ", cmpid=" << campaign->campaign_id <<
-          ", app_format='" << params.format.in() <<
+          ", app_format='" << params.format <<
           "': " << ex.what();
 
         logger_->log(ostr.str(),
@@ -585,7 +586,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_instantiate_request_params_(
+    CampaignManagerCore::fill_instantiate_request_params_(
       TokenValueMap& request_args,
       AccountIdList* consider_pub_pixel_accounts,
       const CampaignConfig* const campaign_config,
@@ -603,7 +604,7 @@ namespace AdServer
       const String::SubString& ext_tag_id)
       /*throw(eh::Exception)*/
     {
-      //static const char* FUN = "CampaignManagerImpl::fill_instantiate_request_params_()";
+      //static const char* FUN = "CampaignManagerCore::fill_instantiate_request_params_()";
 
       for(CORBA::ULong tok_i = 0; tok_i < request_params.tokens.length(); ++tok_i)
       {
@@ -839,7 +840,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_instantiate_passback_params_(
+    CampaignManagerCore::fill_instantiate_passback_params_(
       TokenValueMap& request_args,
       const CampaignConfig* const campaign_config,
       const Tag* tag,
@@ -920,7 +921,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_track_urls_(
+    CampaignManagerCore::fill_track_urls_(
       const AdSelectionResult& ad_selection_result,
       RequestResultParams& request_result_params,
       const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& request_params,
@@ -1135,7 +1136,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_iurl_(
+    CampaignManagerCore::fill_iurl_(
       std::string& iurl,
       const CampaignConfig* const campaign_config,
       const CreativeInstantiateRule& instantiate_info,
@@ -1200,9 +1201,9 @@ namespace AdServer
       }
     }
 
-    /* CampaignManagerImpl::fill_instantiate_params(..) */
+    /* CampaignManagerCore::fill_instantiate_params(..) */
     void
-    CampaignManagerImpl::fill_instantiate_params_(
+    CampaignManagerCore::fill_instantiate_params_(
       const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& request_params,
       const CampaignConfig* const campaign_config,
       const Colocation* const colocation,
@@ -1221,7 +1222,7 @@ namespace AdServer
         PublisherAccountIdSeq* exclude_pubpixel_accounts)
       /*throw(eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::fill_instantiate_params_()";
+      static const char* FUN = "CampaignManagerCore::fill_instantiate_params_()";
 
       const Tag* tag = ad_selection_result.tag;
 
@@ -1813,7 +1814,7 @@ namespace AdServer
     }
 
     std::string
-    CampaignManagerImpl::init_click_params0_(
+    CampaignManagerCore::init_click_params0_(
       const AdServer::Commons::RequestId& request_id,
       const Colocation* colocation,
       const Creative* creative,
@@ -1938,7 +1939,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::init_click_url_(
+    CampaignManagerCore::init_click_url_(
       ClickParams& click_params,
       const Colocation* colocation,
       const Tag* tag,
@@ -2054,7 +2055,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_instantiate_url_(
+    CampaignManagerCore::fill_instantiate_url_(
       std::string& instantiate_url,
       AdInstantiateType ad_instantiate_type,
       CreativeParamsList& creative_params_list,
@@ -2482,7 +2483,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::init_instantiate_url_(
+    CampaignManagerCore::init_instantiate_url_(
       std::string& instantiate_url,
       AdInstantiateType ad_instantiate_type,
       CreativeParamsList& creative_params_list,
@@ -2500,7 +2501,7 @@ namespace AdServer
       bool fill_auction_price)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::init_instantiate_url_()";
+      static const char* FUN = "CampaignManagerCore::init_instantiate_url_()";
 
       request_result_params.request_id = CorbaAlgs::unpack_request_id(
         request_params.request_id);
@@ -2592,15 +2593,15 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::instantiate_url_creative_(
-      CORBA::String_out creative_body,
+    CampaignManagerCore::instantiate_url_creative_(
+      std::string& creative_body,
       RequestResultParams& request_result_params,
       const AdSelectionResult& ad_selection_result,
       const String::SubString& instantiate_url,
       AdInstantiateType ad_instantiate_type)
       /*throw(CreativeTemplateProblem)*/
     {
-      static const char* FUN = "CampaignManagerImpl::instantiate_url_creative_()";
+      static const char* FUN = "CampaignManagerCore::instantiate_url_creative_()";
 
       request_result_params.mime_format = (
         ad_instantiate_type == AIT_SCRIPT_WITH_URL ?
@@ -2621,7 +2622,7 @@ namespace AdServer
 
         std::ostringstream ostr;
         templ->instantiate(ostr, args);
-        creative_body << ostr.str();
+        creative_body = ostr.str();
       }
       catch(const eh::Exception& ex)
       {
@@ -2632,7 +2633,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::instantiate_creative_(
+    CampaignManagerCore::instantiate_creative_(
       const AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& request_params,
       const CampaignConfig* const campaign_config,
       const Colocation* const colocation,
@@ -2641,13 +2642,13 @@ namespace AdServer
       AdSelectionResult& ad_selection_result,
       RequestResultParams& request_result_params,
       CreativeParamsList& creative_params_list,
-      CORBA::String_out creative_body,
+      std::string& creative_body,
       const AdSlotContext& ad_slot_context,
       const AdServer::CampaignSvcs::
         PublisherAccountIdSeq* exclude_pubpixel_accounts)
       /*throw(CreativeTemplateProblem, CreativeOptionsProblem, eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::instantiate_creative_()";
+      static const char* FUN = "CampaignManagerCore::instantiate_creative_()";
 
       assert(!ad_selection_result.selected_campaigns.empty());
       assert(ad_selection_result.tag);
@@ -2734,7 +2735,7 @@ namespace AdServer
           creative_body_str);
 
         request_result_params.mime_format = creative_template_descr.mime_format;
-        creative_body << creative_body_str.str();
+        creative_body = creative_body_str.str();
       }
       catch(const Template::InvalidTemplate& ex)
       {
@@ -2789,9 +2790,9 @@ namespace AdServer
     }
 
     bool
-    CampaignManagerImpl::instantiate_passback(
-      CORBA::String_out mime_format,
-      CORBA::String_out passback_body,
+    CampaignManagerCore::instantiate_passback(
+      std::string& mime_format,
+      std::string& passback_body,
       const CampaignConfig* const campaign_config,
       const Colocation* colocation,
       const Tag* tag,
@@ -2801,7 +2802,7 @@ namespace AdServer
       const String::SubString& ext_tag_id)
       /*throw(eh::Exception)*/
     {
-      static const char* FUN = "CampaignManagerImpl::instantiate_passback()";
+      static const char* FUN = "CampaignManagerCore::instantiate_passback()";
 
       try
       {
@@ -2853,7 +2854,7 @@ namespace AdServer
               campaign_config,
               tag,
               InstantiateParams(
-                request_params.common_info.user_id,
+                CorbaAlgs::unpack_user_id(request_params.common_info.user_id),
                 false // enabled_notice : don't used here
                 ),
               request_params.common_info,
@@ -2891,8 +2892,8 @@ namespace AdServer
 
             std::ostringstream passback_body_ostr;
             passback_template->instantiate(passback_body_ostr, request_args);
-            passback_body << passback_body_ostr.str();
-            mime_format << app_format_it->second.mime_format;
+            passback_body = passback_body_ostr.str();
+            mime_format = app_format_it->second.mime_format;
           }
           else
           {
@@ -2922,7 +2923,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_creative_instantiate_args_(
+    CampaignManagerCore::fill_creative_instantiate_args_(
       CreativeInstantiateArgs& creative_instantiate_args,
       const CreativeInstantiateRule& creative_instantiate_rule,
       const Creative* creative,
@@ -2961,7 +2962,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::fill_yandex_track_params_(
+    CampaignManagerCore::fill_yandex_track_params_(
       std::string& yandex_track_params,
       const AdServer::CampaignSvcs::CampaignManager::
         CommonAdRequestInfo& request_params,
@@ -3019,7 +3020,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::init_yandex_tokens_(
+    CampaignManagerCore::init_yandex_tokens_(
       const CampaignConfig* campaign_config,
       const CreativeInstantiateRule& instantiate_info,
       RequestResultParams& request_result_params,
@@ -3048,7 +3049,7 @@ namespace AdServer
         if(token_it == creative->tokens.end() || token_it->second.value.empty())
         {
           Stream::Error ostr;
-          ostr << "CampaignManagerImpl::init_yandex_tokens_(): yandex token " <<
+          ostr << "CampaignManagerCore::init_yandex_tokens_(): yandex token " <<
             YANDEX_TOKENS[i].result_name << " has empty value";
           throw CreativeInstantiateProblem(ostr);
         }
@@ -3074,7 +3075,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::init_track_pixels_(
+    CampaignManagerCore::init_track_pixels_(
       const CampaignConfig* campaign_config,
       RequestResultParams& request_result_params,
       const AdServer::CampaignSvcs::CampaignManager::
@@ -3158,35 +3159,36 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::init_native_tokens_(
+    CampaignManagerCore::init_native_tokens_(
       const CampaignConfig* campaign_config,
       const CreativeInstantiateRule& instantiate_info,
       RequestResultParams& request_result_params,
       const AdServer::CampaignSvcs::CampaignManager::
         CommonAdRequestInfo& request_params,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot,
+      const TraceAdSlotInfo& ad_slot,
       const AdSlotContext& ad_slot_context,
       const Creative* creative)
       /*throw(CreativeInstantiateProblem)*/
     {
 
-      static const char* FUN = "CampaignManagerImpl::init_native_tokens_()";
+      static const char* FUN = "CampaignManagerCore::init_native_tokens_()";
 
       // Data tokens
 
-      for(unsigned long i = 0; i < ad_slot.native_data_tokens.length(); ++i)
+      for(std::vector<NativeDataTokenInfo>::const_iterator token_it =
+            ad_slot.native_data_tokens.begin();
+          token_it != ad_slot.native_data_tokens.end(); ++token_it)
       {
-        const AdServer::CampaignSvcs::CampaignManager::NativeDataToken& token =
-          ad_slot.native_data_tokens[i];
-        OptionTokenValueMap::const_iterator token_it = creative->tokens.find(
-          token.name.in());
-        if (token_it == creative->tokens.end() || token_it->second.value.empty())
+        OptionTokenValueMap::const_iterator creative_token_it =
+          creative->tokens.find(token_it->name);
+        if (creative_token_it == creative->tokens.end() ||
+            creative_token_it->second.value.empty())
         {
-          if (token.required)
+          if (token_it->required)
           {
             Stream::Error ostr;
             ostr << FUN << ": data token '" <<
-              token.name << "' is absent or has empty value";
+              token_it->name << "' is absent or has empty value";
             throw CreativeInstantiateProblem(ostr);
           }
         }
@@ -3194,8 +3196,8 @@ namespace AdServer
         {
           request_result_params.native_data_tokens.insert(
             std::make_pair(
-              token.name.in(),
-              token_it->second.value));
+              token_it->name,
+              creative_token_it->second.value));
         }
       }
 
@@ -3214,50 +3216,50 @@ namespace AdServer
           0, request_params.tokens[tok_i].value.in());
       }
 
-      for(unsigned long i = 0; i < ad_slot.native_image_tokens.length(); ++i)
+      for(std::vector<NativeImageTokenInfo>::const_iterator token_it =
+            ad_slot.native_image_tokens.begin();
+          token_it != ad_slot.native_image_tokens.end(); ++token_it)
       {
-        const AdServer::CampaignSvcs::CampaignManager::NativeImageToken& token =
-          ad_slot.native_image_tokens[i];
+        unsigned long width = token_it->width;
+        unsigned long height = token_it->height;
 
-        unsigned long width = token.width;
-        unsigned long height = token.height;
-
-        auto token_it = creative->tokens.find(token.name.in());
-        if (token_it == creative->tokens.end() || token_it->second.value.empty())
+        auto creative_token_it = creative->tokens.find(token_it->name);
+        if (creative_token_it == creative->tokens.end() ||
+            creative_token_it->second.value.empty())
         {
-          if (token.required)
+          if (token_it->required)
           {
             Stream::Error ostr;
             ostr << FUN << ": image token '" <<
-              token.name << "' is absent or has empty value";
+              token_it->name << "' is absent or has empty value";
             throw CreativeInstantiateProblem(ostr);
           }
         }
         else
         {
-          if (token.name != MAIN_IMAGE)
+          if (token_it->name != MAIN_IMAGE)
           {
             std::ostringstream width_name_ostr, height_name_ostr;
-            width_name_ostr << token.name << "_WIDTH";
-            height_name_ostr << token.name << "_HEIGHT";
+            width_name_ostr << token_it->name << "_WIDTH";
+            height_name_ostr << token_it->name << "_HEIGHT";
             find_token(
               creative->tokens, width_name_ostr.str(), width);
             find_token(
               creative->tokens, height_name_ostr.str(), height);
             if (!(width && height))
             {
-              if (token.required)
+              if (token_it->required)
               {
                 Stream::Error ostr;
                 ostr << FUN << ": can't detect width or height for image token '" <<
-                  token.name << "'";
+                  token_it->name << "'";
                 throw CreativeInstantiateProblem(ostr);
               }
               continue;
             }
           }
 
-          args[token.name.in()] = token_it->second;
+          args[token_it->name] = creative_token_it->second;
 
           try
           {
@@ -3265,7 +3267,7 @@ namespace AdServer
 
             const TokenProcessorMap::const_iterator it =
               campaign_config->token_processors.find(
-                token_it->second.option_id);
+                creative_token_it->second.option_id);
 
             if(it != campaign_config->token_processors.end())
             {
@@ -3304,15 +3306,15 @@ namespace AdServer
             }
 
             request_result_params.native_image_tokens.insert(
-              std::make_pair(token.name.in(), image));
+              std::make_pair(token_it->name, image));
           }
           catch(const eh::Exception& ex)
           {
-            if (token.required)
+            if (token_it->required)
             {
               Stream::Error ostr;
               ostr << FUN << ": can't instantiate image token '" <<
-                token.name << "': " << ex.what();
+                token_it->name << "': " << ex.what();
               throw CreativeInstantiateProblem(ostr);
             }
             continue;
@@ -3344,7 +3346,7 @@ namespace AdServer
     }
 
     void
-    CampaignManagerImpl::init_vast_tokens_(
+    CampaignManagerCore::init_vast_tokens_(
       RequestResultParams& request_result_params,
       const Creative* creative)
       /*throw(CreativeInstantiateProblem)*/
@@ -3382,4 +3384,3 @@ namespace AdServer
     }
   } // namespace CampaignSvcs
 } // namespace AdServer
-

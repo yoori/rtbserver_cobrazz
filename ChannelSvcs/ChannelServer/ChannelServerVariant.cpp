@@ -1134,6 +1134,542 @@ namespace AdServer::ChannelSvcs
     return pg_env_->active();
   }
 
+  ChannelServerProxy::ChannelServerProxy(
+    const ChannelSvcs::GroupLoadDescriptionSeq& servers,
+    const ServerPoolConfig& proxy_pool_config,
+    const std::set<unsigned short>& ports,
+    const std::vector<unsigned int>& sources,
+    unsigned long count_chunks,
+    unsigned long colo,
+    const char* version,
+    const ServerPoolConfig& campaign_pool_config,
+    unsigned service_index,
+    Logging::Logger* logger,
+    unsigned long check_sum,
+    unsigned long priority)
+    /*throw(ChannelServerException::Exception)*/
+    : ChannelServerVariantBase(
+        sources,
+        ports,
+        count_chunks,
+        colo,
+        version,
+        campaign_pool_config,
+        service_index,
+        logger,
+        check_sum),
+      priority_(priority),
+      tries_(servers.length()),
+      proxy_pool_(),
+      load_session_()
+  {
+    if(proxy_pool_config.iors_list.empty() && !servers.length())
+    {
+      Stream::Error ostr;
+      ostr << __func__ << ": empty list of ChannelProxy references";
+      throw ChannelServerException::Exception(ostr);
+    }
+
+    if(servers.length())
+    {
+      load_session_.reset(
+        new ChannelLoadSessionImpl(servers, get_source_id()));
+    }
+
+    if(!proxy_pool_config.iors_list.empty())
+    {
+      try
+      {
+        proxy_pool_.reset(
+          new ChannelProxyPool(
+            proxy_pool_config,
+            CORBACommons::ChoosePolicyType::PT_BAD_SWITCH));
+      }
+      catch(const eh::Exception& e)
+      {
+        Stream::Error ostr;
+        ostr << __func__ << ": eh:Exception: " << e.what();
+        throw ChannelServerException::Exception(ostr);
+      }
+    }
+
+    first_load_stamp_ = Generics::Time::ZERO;
+  }
+
+  ChannelServerProxy::~ChannelServerProxy() noexcept
+  {
+  }
+
+  void ChannelServerProxy::update(
+    unsigned long merge_limit,
+    UpdateData* data)
+    /*throw(ChannelServerException::Exception,
+      ChannelServerException::TemporyUnavailable)*/
+  {
+    if(!data->container_ptr->ready())
+    {
+      Stream::Error err;
+      err << __func__ << ": container not ready to parse";
+      throw ChannelServerException::TemporyUnavailable(err);
+    }
+
+    Generics::Timer timer, all_timer;
+    ChannelCurrent::UpdateData_var result;
+    const UpdateData::CheckContainerType& new_ids =
+      data->container_ptr->get_new();
+    UpdateData::CheckContainerType& check_ids = data->check_data;
+    ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
+    all_timer.start();
+    CORBA::ULong i = 0;
+    size_t count = 0;
+    size_t calc_channel_size = 0;
+    ChannelIdSeq in;
+
+    if(data->unmerged_data.empty())
+    {
+      size_t channels_size =
+        merge_limit / TriggerParser::TriggerParser::WORSE_MULT;
+      UpdateData::CheckContainerType::iterator it = check_ids.begin();
+      for(; it != check_ids.end(); ++it, ++count)
+      {
+        const MatchInfo& s_info = (*a_info_ptr)[*it];
+        if(calc_channel_size + s_info.channel_size < channels_size || count == 0)
+        {
+          calc_channel_size += s_info.channel_size;
+        }
+        else
+        {
+          break;
+        }
+      }
+
+      logger_->sstream(Logging::Logger::DEBUG, ASPECT)
+        << "Use ids: " << count << " channels size: " << calc_channel_size;
+
+      in.length(count);
+      std::copy(check_ids.begin(), it, in.get_buffer());
+
+      typedef decltype(&ChannelUpdateBase::update_triggers) FuncType;
+      FuncType func_ptr = &ChannelUpdateBase::update_triggers;
+      do_query_(__func__, func_ptr, in, result);
+
+      if(result->source_id != get_source_id())
+      {
+        data->new_master = data->old_master;
+      }
+    }
+    else
+    {
+      result = data->unmerged_data.get_unmered_data(i);
+    }
+
+    ChannelCurrent::ChannelByIdSeq& channels = result->channels;
+    unsigned long progress = data->progress->get_progress();
+    Generics::Time parse_time;
+    if(channels.length())
+    {
+      TriggerList triggers;
+      for(; i < channels.length(); ++i)
+      {
+        size_t channel_size = 0;
+        ChannelCurrent::ChannelById& value = channels[i];
+        if(check_ids.find(value.channel_id) == check_ids.end())
+        {
+          Stream::Error oerr;
+          oerr << __func__ << ": implementation error trigger with id = "
+            << value.channel_id << " was gotten from proxy, but shouldn't.";
+          throw ChannelServerException::Exception(oerr);
+        }
+
+        for(size_t j = 0; j < value.words.length(); ++j)
+        {
+          triggers.push_back(Trigger());
+          Trigger& trigger = triggers.back();
+          trigger.channel_trigger_id = value.words[j].channel_trigger_id;
+          Serialization::get_trigger(
+            value.words[j].trigger.get_buffer(),
+            value.words[j].trigger.length(),
+            trigger.trigger);
+          trigger.type =
+            Serialization::trigger_type(value.words[j].trigger.get_buffer());
+          trigger.negative =
+            Serialization::negative(value.words[j].trigger.get_buffer());
+          channel_size += trigger.trigger.size();
+        }
+
+        MatchInfo& s_info = (*a_info_ptr)[value.channel_id];
+        s_info.db_stamp = CorbaAlgs::unpack_time(value.stamp);
+        s_info.stamp = s_info.db_stamp;
+
+        if(data->merge_size != 0 &&
+           channel_size * TriggerParser::TriggerParser::WORSE_MULT > merge_limit)
+        {
+          data->need_merge = true;
+          break;
+        }
+
+        data->progress->set_progess(1);
+        check_ids.erase(value.channel_id);
+        const bool uid_channel = !s_info.channel.match_mask(
+          Channel::CH_URL |
+          Channel::CH_PAGE |
+          Channel::CH_SEARCH |
+          Channel::CH_URL_KEYWORDS);
+        data->merge_size += data->container_ptr->select_parsed_triggers(
+          value.channel_id,
+          triggers,
+          !uid_channel);
+        timer.start();
+        s_info.channel_size = channel_size;
+        TriggerParser::TriggerParser::parse_triggers(
+          value.channel_id,
+          s_info.lang,
+          triggers,
+          0,
+          ports_,
+          data->container_ptr,
+          Commons::DEFAULT_MAX_HARD_WORD_SEQ,
+          logger_);
+        timer.stop_add(parse_time);
+        data->merge_size +=
+          channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+        if(merge_limit < channel_size)
+        {
+          merge_limit = 0;
+          data->need_merge = true;
+          ++i;
+          break;
+        }
+
+        merge_limit -=
+          channel_size * TriggerParser::TriggerParser::WORSE_MULT;
+        triggers.clear();
+      }
+    }
+
+    if(i < channels.length())
+    {
+      logger_->sstream(Logging::Logger::NOTICE, ASPECT, "ADS-IMPL-47")
+        << "Save unparsed data " << i << "/" << channels.length()
+        << ", merge size = " << data->merge_size
+        << ", first id = " << channels[i].channel_id;
+      data->unmerged_data.set_unmered_data(result, i);
+    }
+    else if(i != in.length())
+    {
+      for(count = 0; count < in.length(); ++count)
+      {
+        if(check_ids.find(in[count]) != check_ids.end())
+        {
+          if(new_ids.find(in[count]) != new_ids.end())
+          {
+            a_info_ptr->erase(in[count]);
+          }
+          check_ids.erase(in[count]);
+        }
+      }
+    }
+
+    all_timer.stop();
+    auto load_progress = data->progress->get_progress() - progress;
+    logger_->sstream(Logging::Logger::DEBUG, ASPECT)
+      << "Parsed: " << load_progress
+      << " Parse time: " << parse_time
+      << " Load time: " << all_timer.elapsed_time();
+    logger_->sstream(Logging::Logger::DEBUG, ASPECT)
+      << "Finish query: " << (check_ids.empty() ? "all loaded" : "partly loaded");
+  }
+
+  void ChannelServerProxy::update_ccg(UpdateData* data, unsigned long limit)
+    /*throw(ChannelServerException::Exception)*/
+  {
+    ChannelIdToMatchInfo& info = *data->info_ptr;
+    if(data->start_ccg_id == 0)
+    {
+      data->new_ccg_map = new CCGMap;
+    }
+
+    ChannelCurrent::PosCCGResult_var result;
+    ChannelCurrent::CCGQuery query;
+    query.master_stamp = CorbaAlgs::pack_time(data->old_master);
+    query.start = data->start_ccg_id;
+    query.limit = limit;
+    query.channel_ids.length(info.size());
+    query.use_only_list = data->old_ccg_map ? false : true;
+
+    std::set<unsigned long> old_active;
+    if(data->old_ccg_map)
+    {
+      for(CCGMap::ActiveMap::const_iterator it =
+          data->old_ccg_map->active().begin();
+          it != data->old_ccg_map->active().end();
+          ++it)
+      {
+        old_active.insert(old_active.end(), it->second->channel_id);
+      }
+    }
+
+    size_t j = 0;
+    const unsigned int mask_type = Channel::CH_PAGE | Channel::CH_SEARCH;
+    for(ChannelIdToMatchInfo::const_iterator it =
+          info.lower_bound(data->start_ccg_id);
+        it != info.end() && j < query.channel_ids.length();
+        ++it)
+    {
+      const Channel& ch = it->second.channel;
+      if(ch.match_mask(mask_type) &&
+         old_active.find(ch.get_id()) == old_active.end())
+      {
+        query.channel_ids[j++] = ch.get_id();
+      }
+    }
+    query.channel_ids.length(j);
+
+    typedef decltype(&ChannelUpdateBase::update_all_ccg) FuncType;
+    FuncType func_ptr = &ChannelUpdateBase::update_all_ccg;
+    do_query_(__func__, func_ptr, query, result);
+
+    if(result->source_id != get_source_id())
+    {
+      data->new_master = data->old_master;
+    }
+
+    data->ccg_loaded = false;
+    if(result->keywords.length())
+    {
+      CCGKeyword_var ccg_ptr;
+      for(size_t i = 0; i < result->keywords.length(); ++i)
+      {
+        ChannelCurrent::CCGKeyword& keyword = result->keywords[i];
+        if(is_my_id_(keyword.channel_id) &&
+           info.find(keyword.channel_id) != info.end())
+        {
+          ccg_ptr = new CCGKeyword;
+          ccg_ptr->ccg_keyword_id = keyword.ccg_keyword_id;
+          ccg_ptr->ccg_id = keyword.ccg_id;
+          ccg_ptr->channel_id = keyword.channel_id;
+          ccg_ptr->max_cpc =
+            CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+              keyword.max_cpc);
+          ccg_ptr->ctr =
+            CorbaAlgs::unpack_decimal<CampaignSvcs::CTRDecimal>(keyword.ctr);
+          ccg_ptr->click_url = keyword.click_url;
+          ccg_ptr->original_keyword = keyword.original_keyword;
+          data->new_ccg_map->activate(
+            keyword.ccg_keyword_id,
+            ccg_ptr,
+            data->new_master,
+            data->old_ccg_map);
+          info[ccg_ptr->channel_id].channel.ccg_keywords.push_back(
+            data->new_ccg_map->active()[keyword.ccg_keyword_id]);
+        }
+      }
+    }
+    else
+    {
+      for(size_t i = 0; i < result->deleted.length(); ++i)
+      {
+        data->new_ccg_map->deactivate(
+          result->deleted[i].id,
+          CorbaAlgs::unpack_time(result->deleted[i].stamp),
+          data->old_ccg_map);
+      }
+
+      data->ccg_loaded = true;
+      if(data->old_ccg_map)
+      {
+        for(CCGMap::ActiveMap::const_iterator old_iter =
+              data->old_ccg_map->active().begin();
+            old_iter != data->old_ccg_map->active().end();
+            ++old_iter)
+        {
+          if(info.find(old_iter->second->channel_id) != info.end())
+          {
+            if(data->new_ccg_map->active().find(old_iter->first) ==
+                 data->new_ccg_map->active().end() &&
+               data->new_ccg_map->inactive().find(old_iter->first) ==
+                 data->new_ccg_map->inactive().end())
+            {
+              info[old_iter->second->channel_id].channel.ccg_keywords.push_back(
+                old_iter->second);
+              data->new_ccg_map->activate(
+                old_iter->first,
+                old_iter->second,
+                old_iter->second->timestamp,
+                data->old_ccg_map);
+            }
+          }
+          else
+          {
+            data->new_ccg_map->deactivate(
+              old_iter->first,
+              old_iter->second->timestamp,
+              data->old_ccg_map);
+          }
+        }
+      }
+    }
+
+    data->start_ccg_id = result->start_id;
+  }
+
+  bool ChannelServerProxy::check_source_(
+    UpdateData* data,
+    int new_source_id,
+    const Generics::Time& longest_update,
+    const Generics::Time& first_load_stamp,
+    const Generics::Time& new_master)
+    noexcept
+  {
+    int old_source_id = get_source_id();
+    if(old_source_id == -1)
+    {
+      set_sources_id_(new_source_id);
+      if(first_load_stamp != Generics::Time::ZERO)
+      {
+        set_first_load_stamp_(first_load_stamp);
+      }
+    }
+    else if(new_source_id != old_source_id)
+    {
+      data->old_master -= longest_update;
+      set_sources_id_(new_source_id);
+      if(first_load_stamp != Generics::Time::ZERO)
+      {
+        set_first_load_stamp_(first_load_stamp);
+      }
+      return false;
+    }
+    else if(get_first_load_stamp() != first_load_stamp)
+    {
+      if(first_load_stamp == Generics::Time::ZERO)
+      {
+        data->new_master = data->old_master;
+        return true;
+      }
+      set_first_load_stamp_(first_load_stamp);
+      data->old_master = first_load_stamp - longest_update;
+      return false;
+    }
+
+    data->new_master = new_master;
+    return true;
+  }
+
+  void ChannelServerProxy::check_updating(UpdateData* data)
+    /*throw(ChannelServerException::Exception,
+      ChannelServerException::TemporyUnavailable)*/
+  {
+    if(!data->container_ptr->ready())
+    {
+      Stream::Error err;
+      err << __func__ << ": container not ready to parse";
+      throw ChannelServerException::TemporyUnavailable(err);
+    }
+
+    Generics::Timer all_timer;
+    ChannelCurrent::CheckData_var res;
+    const UpdateData::CheckContainerType& new_ids =
+      data->container_ptr->get_new();
+    const UpdateData::CheckContainerType& up_ids =
+      data->container_ptr->get_updated();
+    ChannelCurrent::CheckQuery query;
+    all_timer.start();
+    query.colo_id = colo_;
+    query.version << version_;
+    query.new_ids.length(new_ids.size() + up_ids.size());
+    std::copy(new_ids.begin(), new_ids.end(), query.new_ids.get_buffer());
+    std::copy(
+      up_ids.begin(),
+      up_ids.end(),
+      query.new_ids.get_buffer() + new_ids.size());
+    query.use_only_list = data->old_master == Generics::Time::ZERO;
+
+    do
+    {
+      query.master_stamp = CorbaAlgs::pack_time(data->old_master);
+      typedef decltype(&ChannelUpdateBase::check) FuncType;
+      FuncType func_ptr = &ChannelUpdateBase::check;
+      do_query_(__func__, func_ptr, query, res);
+    }
+    while(!check_source_(
+      data,
+      res->source_id,
+      CorbaAlgs::unpack_time(res->max_time),
+      CorbaAlgs::unpack_time(res->first_stamp),
+      CorbaAlgs::unpack_time(res->master_stamp)));
+
+    std::ostringstream ostr;
+    UpdateData::CheckContainerType& check_ids = data->check_data;
+    ChannelIdToMatchInfo::iterator fnd;
+    unsigned long id;
+    Generics::Time time_value;
+    ChannelIdToMatchInfo* a_info_ptr = data->info_ptr;
+
+    check_ids = new_ids;
+    if(!res->special_adv)
+    {
+      a_info_ptr->erase(c_special_adv);
+      check_ids.erase(c_special_adv);
+    }
+    if(!res->special_track)
+    {
+      a_info_ptr->erase(c_special_track);
+      check_ids.erase(c_special_track);
+    }
+
+    for(size_t i = 0; i < res->versions.length(); ++i)
+    {
+      id = res->versions[i].id;
+      time_value = CorbaAlgs::unpack_time(res->versions[i].stamp);
+      fnd = a_info_ptr->find(id);
+      if(fnd == a_info_ptr->end())
+      {
+        ostr << "id = " << id << " was gotten, but it is not actual"
+          << std::endl;
+        continue;
+      }
+
+      MatchInfo& m_info = fnd->second;
+      if(time_value != m_info.db_stamp || up_ids.find(id) != up_ids.end())
+      {
+        m_info.channel_size = res->versions[i].size;
+        check_ids.insert(check_ids.end(), id);
+      }
+    }
+
+    all_timer.stop();
+    if(logger_->log_level() >= Logging::Logger::TRACE)
+    {
+      if(ostr.str().size())
+      {
+        logger_->log(
+          ostr.str(),
+          Logging::Logger::TRACE,
+          ASPECT);
+      }
+
+      std::ostringstream need_load;
+      need_load << "Need to load: ";
+      for(UpdateData::CheckContainerType::const_iterator it =
+            check_ids.begin();
+          it != check_ids.end();
+          ++it)
+      {
+        if(it != check_ids.begin())
+        {
+          need_load << ", ";
+        }
+        need_load << *it;
+      }
+      need_load << ". Load time: " << all_timer.elapsed_time();
+      logger_->log(
+        need_load.str(),
+        Logging::Logger::TRACE,
+        ASPECT);
+    }
+  }
+
   UpdateData::UpdateData(UpdateContainer* container)
     noexcept
     : state(US_ZERO),

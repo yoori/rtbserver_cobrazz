@@ -11,6 +11,33 @@ target_link_libraries(CampaignManagerIDL
   CampaignCommonsIDL
 )
 
+# CampaignManagerGrpc
+set(CAMPAIGN_MANAGER_GRPC_PROTO_DIR ${PB_DIRECTORY}/CampaignSvcs/CampaignManager)
+set(CAMPAIGN_MANAGER_GRPC_PROTO CampaignManagerGrpc.proto)
+
+add_grpc_sources(
+  CampaignManagerGrpc
+  ${CAMPAIGN_MANAGER_GRPC_PROTO}
+  ${CAMPAIGN_MANAGER_GRPC_PROTO_DIR}
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(CampaignManagerGrpc protobuf::libprotobuf GrpcBatch)
+
+add_library(CampaignManagerGrpcClient STATIC)
+
+add_adserver_grpc_client_sources(
+  CampaignManagerGrpcClient
+  ${CMAKE_SOURCE_DIR}/CampaignSvcs/CampaignManager/CampaignManagerGrpc.proto
+  ${CMAKE_CURRENT_BINARY_DIR}
+  AdServer::CampaignSvcs
+  --proto_path=${CMAKE_SOURCE_DIR}/Commons/Grpc)
+
+target_link_libraries(CampaignManagerGrpcClient
+  PUBLIC
+    GrpcBatch
+    CampaignManagerGrpc
+    gRPC::grpc++)
+
 add_library(BidRateProvider SHARED
   BidCostProvider.cpp
 )
@@ -125,7 +152,9 @@ target_link_libraries(CampaignManagerLogger
 )
 
 add_executable(CampaignManager
+  CampaignManagerCore.cpp
   CampaignManagerImpl.cpp
+  CampaignManagerGrpc.cpp
   CampaignManagerMain.cpp
   InstantiateCreative.cpp
   CreativeTextGenerator.cpp
@@ -172,4 +201,9 @@ target_link_libraries(CampaignManager
   BidRateProvider
   DomainConfigXSD
   StatInfoIDL
+  CampaignManagerGrpc
+)
+
+target_include_directories(CampaignManager PRIVATE
+  ${Protobuf_INCLUDE_DIRS}
 )

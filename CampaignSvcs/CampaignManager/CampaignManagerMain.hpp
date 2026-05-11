@@ -14,6 +14,7 @@
 #include <CampaignSvcs/CampaignManagerConfig.hpp>
 #include <CampaignSvcs/DomainConfig.hpp>
 
+#include "CampaignManagerGrpc.hpp"
 #include "CampaignManagerImpl.hpp"
 
 /**
@@ -62,7 +63,7 @@ private:
     std::string log_root;
     std::string out_logs_dir;
 
-    AdServer::CampaignSvcs::CampaignManagerImpl::CreativeInstantiate
+    AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate
       creative_instantiate;
 
     std::string campaigns_types;
@@ -81,7 +82,7 @@ private:
   virtual ~CampaignManagerApp_() noexcept;
 
   void read_creative_config(
-    AdServer::CampaignSvcs::CampaignManagerImpl::CreativeInstantiate&
+    AdServer::CampaignSvcs::CampaignManagerCore::CreativeInstantiate&
       creative_instantiate,
     const xsd::AdServer::Configuration::CampaignManagerCreative&
       xsd_creative_description)
@@ -113,7 +114,7 @@ private:
 
 private:
   typedef std::unique_ptr<
-    AdServer::CampaignSvcs::CampaignManagerImpl::CampaignManagerConfig>
+    AdServer::CampaignSvcs::CampaignManagerCore::CampaignManagerConfig>
     ConfigPtr;
 
   typedef xsd::AdServer::Configuration::DomainConfigurationType
@@ -127,7 +128,9 @@ private:
   Configuration configuration_;
   CORBACommons::CorbaConfig corba_config_;
 
+  AdServer::CampaignSvcs::CampaignManagerCore_var campaign_manager_core_;
   AdServer::CampaignSvcs::CampaignManagerImpl_var campaign_manager_impl_;
+  AdServer::CampaignSvcs::CampaignManagerGrpc_var grpc_adapter_;
 
   typedef Sync::Policy::PosixThread SyncPolicy;
   typedef SyncPolicy::Mutex ShutdownMutex;

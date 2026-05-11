@@ -1,5 +1,6 @@
 
 #include <sstream>
+#include <utility>
 
 #include <Generics/Time.hpp>
 #include <Logger/StreamLogger.hpp>
@@ -65,6 +66,19 @@ namespace Request
 
 namespace AdServer
 {
+namespace
+{
+  namespace pb = adserver::campaign_svcs::campaign_manager;
+
+  std::string
+  pack_user_id(const AdServer::Commons::UserId& user_id)
+  {
+    return std::string(
+      reinterpret_cast<const char*>(user_id.begin()),
+      reinterpret_cast<const char*>(user_id.end()));
+  }
+}
+
   /**
    * OptoutFrontend implementation
    */
@@ -86,8 +100,7 @@ namespace AdServer
         frontend_config->get().OptOutFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::OPTOUT_FRONTEND)
+      common_module_(ReferenceCounting::add_ref(common_module))
   {}
 
   void
@@ -186,8 +199,7 @@ namespace AdServer
     OptOut::RequestInfo request_info;
     std::string verify_referer;// FIXME: not used
 
-    AdServer::CampaignSvcs::CampaignManager::OptOperation ver_operation =
-      AdServer::CampaignSvcs::CampaignManager::OO_OUT;
+    pb::OptOperation ver_operation = pb::OPT_OPERATION_OUT;
     const char* local_aspect = Aspect::OPTIN;
 
     try
@@ -227,7 +239,7 @@ namespace AdServer
           // Place log record to apache log
           if (request_info.oo_operation == OO_OUT) /* Opt-Out */
           {
-            ver_operation = AdServer::CampaignSvcs::CampaignManager::OO_OUT;
+            ver_operation = pb::OPT_OPERATION_OUT;
 
             std::list<std::string> remove_cookie_list_holder;
             FrontendCommons::CookieNameSet remove_cookie_list;
@@ -248,7 +260,7 @@ namespace AdServer
           }
           else if (request_info.oo_operation == OO_IN)
           {
-            ver_operation = AdServer::CampaignSvcs::CampaignManager::OO_IN;
+            ver_operation = pb::OPT_OPERATION_IN;
 
             if(oo_to_set)
             {
@@ -317,25 +329,32 @@ namespace AdServer
             request_info.oo_status_in_redirect_url,
             request_info.oo_status_out_redirect_url,
             request_info.oo_status_undef_redirect_url, response);
-          ver_operation = AdServer::CampaignSvcs::CampaignManager::OO_STATUS;
+          ver_operation = pb::OPT_OPERATION_STATUS;
           status = (request_info.old_oo_type == OO_IN ? 3 :
             (request_info.old_oo_type == OO_OUT ? 4 : 5));
         }
 
-        campaign_managers_.verify_opt_operation(
-          request_info.debug_time.tv_sec,
-          request_info.colo_id,
-          verify_referer.c_str(),
-          ver_operation,
-          static_cast<CORBA::ULong>(status),
-          static_cast<CORBA::ULong>(request_info.user_status),
-          request_info.log_as_test,
-          request_info.browser.c_str(),
-          request_info.os.c_str(),
-          request_info.ct.c_str(),
-          request_info.curct.c_str(),
-          request_info.local_aspect,
-          new_user_id);
+        pb::VerifyOptOperationRequest verify_opt_operation_request;
+        verify_opt_operation_request.set_time(request_info.debug_time.tv_sec);
+        verify_opt_operation_request.set_colo_id(request_info.colo_id);
+        verify_opt_operation_request.set_referer(verify_referer);
+        verify_opt_operation_request.set_operation(ver_operation);
+        verify_opt_operation_request.set_status(status);
+        verify_opt_operation_request.set_user_status(request_info.user_status);
+        verify_opt_operation_request.set_log_as_test(request_info.log_as_test);
+        verify_opt_operation_request.set_browser(request_info.browser);
+        verify_opt_operation_request.set_os(request_info.os);
+        verify_opt_operation_request.set_ct(request_info.ct);
+        verify_opt_operation_request.set_curct(request_info.curct);
+        verify_opt_operation_request.set_user_id(pack_user_id(new_user_id));
+
+        AdServer::Grpc::sync_call<pb::VerifyOptOperationResponse>(
+          [this, &verify_opt_operation_request](auto callback)
+          {
+            campaign_manager_->verify_opt_operation(
+              verify_opt_operation_request,
+              std::move(callback));
+          });
 
         if(stats_)
         {
@@ -429,18 +448,27 @@ namespace AdServer
             verify_referer << LOG_DELIMITER <<
             "0"/*failure*/;
 
-          campaign_managers_.verify_opt_operation(
-            request_info.debug_time.tv_sec,
-            request_info.colo_id,
-            verify_referer.c_str(),
-            ver_operation,
-            0,
-            request_info.log_as_test,
-            request_info.browser.c_str(),
-            request_info.os.c_str(),
-            request_info.ct.c_str(),
-            request_info.curct.c_str(),
-            request_info.local_aspect);
+          pb::VerifyOptOperationRequest verify_opt_operation_request;
+          verify_opt_operation_request.set_time(request_info.debug_time.tv_sec);
+          verify_opt_operation_request.set_colo_id(request_info.colo_id);
+          verify_opt_operation_request.set_referer(verify_referer);
+          verify_opt_operation_request.set_operation(ver_operation);
+          verify_opt_operation_request.set_status(0);
+          verify_opt_operation_request.set_user_status(request_info.user_status);
+          verify_opt_operation_request.set_log_as_test(
+            request_info.log_as_test);
+          verify_opt_operation_request.set_browser(request_info.browser);
+          verify_opt_operation_request.set_os(request_info.os);
+          verify_opt_operation_request.set_ct(request_info.ct);
+          verify_opt_operation_request.set_curct(request_info.curct);
+
+          AdServer::Grpc::sync_call<pb::VerifyOptOperationResponse>(
+            [this, &verify_opt_operation_request](auto callback)
+            {
+              campaign_manager_->verify_opt_operation(
+                verify_opt_operation_request,
+                std::move(callback));
+            });
 
           logger()->log(
             ostr.str(),
@@ -492,9 +520,9 @@ namespace AdServer
         parse_config_();
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
+        campaign_manager_ =
+          std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
+            FrontendCommons::read_campaign_manager_refs(*common_config_));
 
         if(common_config_->StatsDumper().present())
         {
@@ -540,6 +568,7 @@ namespace AdServer
     {
       deactivate_object();
       wait_object();
+      campaign_manager_.reset();
 
       logger()->log(String::SubString(
             "OptoutFrontend::shutdown: frontend terminated"),

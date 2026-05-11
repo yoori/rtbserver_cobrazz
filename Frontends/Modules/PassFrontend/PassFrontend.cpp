@@ -1,5 +1,7 @@
 
 #include <Generics/Time.hpp>
+#include <array>
+#include <utility>
 #include <HTTP/HTTPCookie.hpp>
 #include <HTTP/UrlAddress.hpp>
 #include <Commons/ErrorHandler.hpp>
@@ -49,6 +51,27 @@ namespace Request
   }
 }
 
+namespace
+{
+  std::string
+  pack_request_id(const AdServer::Commons::RequestId& request_id)
+  {
+    return std::string(
+      reinterpret_cast<const char*>(request_id.begin()),
+      reinterpret_cast<const char*>(request_id.end()));
+  }
+
+  std::string
+  pack_time(const Generics::Time& time)
+  {
+    std::array<unsigned char, Generics::Time::TIME_PACK_LEN> packed_time;
+    time.pack(packed_time.data());
+    return std::string(
+      reinterpret_cast<const char*>(packed_time.data()),
+      packed_time.size());
+  }
+}
+
 namespace AdServer
 {
 namespace Passback
@@ -75,8 +98,7 @@ namespace Passback
         frontend_config->get().PassFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::PASS_FRONTEND)
+      common_module_(ReferenceCounting::add_ref(common_module))
   {}
 
   void
@@ -265,21 +287,22 @@ namespace Passback
 
     if(!passback_info.test_request)
     {
-      AdServer::CampaignSvcs::CampaignManager::PassbackInfo info;
-      info.request_id = CorbaAlgs::pack_request_id(passback_info.request_id);
+      adserver::campaign_svcs::campaign_manager::ConsiderPassbackRequest info;
+      info.set_request_id(pack_request_id(passback_info.request_id));
+      info.set_time(pack_time(passback_info.time));
       if(passback_info.user_id_hash_mod.present())
       {
-        info.user_id_hash_mod.defined = true;
-        info.user_id_hash_mod.value = *passback_info.user_id_hash_mod;
-      }
-      else
-      {
-        info.user_id_hash_mod.defined = false;
+        auto* user_id_hash_mod = info.mutable_user_id_hash_mod();
+        user_id_hash_mod->set_defined(true);
+        user_id_hash_mod->set_value(*passback_info.user_id_hash_mod);
       }
 
-      info.time = CorbaAlgs::pack_time(passback_info.time);
-
-      campaign_managers_.consider_passback(info);
+      AdServer::Grpc::sync_call<
+        adserver::campaign_svcs::campaign_manager::ConsiderPassbackResponse>(
+          [this, &info](auto callback)
+          {
+            campaign_manager_->consider_passback(info, std::move(callback));
+          });
     }
 
     if(!passback_info.pubpixel_accounts.empty() &&
@@ -354,9 +377,9 @@ namespace Passback
         parse_config_();
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
+        campaign_manager_ =
+          std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
+            FrontendCommons::read_campaign_manager_refs(*common_config_));
 
         AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
           user_info_controller_groups;
@@ -395,6 +418,8 @@ namespace Passback
   void
   Frontend::shutdown() noexcept
   {
+    campaign_manager_.reset();
+
     logger()->log(String::SubString(
         "Frontend::shutdown(): frontend terminated"),
       Logging::Logger::INFO, Aspect::PASS_FRONTEND);

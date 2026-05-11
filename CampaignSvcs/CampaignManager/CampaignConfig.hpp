@@ -1505,7 +1505,14 @@ namespace CampaignSvcs
     /** CampaignConfig class */
     inline
     CampaignConfig::CampaignConfig() noexcept
-      : master_stamp(0)
+      : master_stamp(0),
+        first_load_stamp(0),
+        finish_load_stamp(0),
+        global_params_timestamp(0),
+        currency_exchange_id(0),
+        fraud_user_deactivate_period(Generics::Time::ZERO),
+        cost_limit(RevenueDecimal::ZERO),
+        google_publisher_account_id(0)
     {}
   }
 }
