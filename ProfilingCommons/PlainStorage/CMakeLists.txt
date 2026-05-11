@@ -1,6 +1,6 @@
 add_library(PlainStorage2 SHARED
 
- File.cpp
+  File.cpp
   FileLayer.cpp
   MemLayer.cpp
   FragmentLayer.cpp
@@ -9,8 +9,8 @@ add_library(PlainStorage2 SHARED
 
 target_link_libraries(PlainStorage2
 
- Generics
- Commons
+  Generics
+  Commons
 )
 
 #install(TARGETS PlainStorage2  DESTINATION ${INSTALL_DIR})

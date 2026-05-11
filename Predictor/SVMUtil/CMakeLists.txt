@@ -1,15 +1,15 @@
 
 add_executable(SVMUtil
-Application.cpp
+  Application.cpp
 )
 target_link_libraries(SVMUtil
- Generics
+  Generics
 
- Commons
-# IPMap
-#Geoip
-/opt/foros/vanga/lib/libGearsBasic.so
-/opt/foros/vanga/lib/libGearsThreading.so
+  Commons
+  # IPMap
+  #Geoip
+  /opt/foros/vanga/lib/libGearsBasic.so
+  /opt/foros/vanga/lib/libGearsThreading.so
 )
 #install(TARGETS SVMUtil  DESTINATION ${INSTALL_DIR})
 

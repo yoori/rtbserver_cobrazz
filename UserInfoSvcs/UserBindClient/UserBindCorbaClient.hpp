@@ -50,27 +50,6 @@ namespace FrontendCommons
       const adserver::user_info_svcs::user_bind::GetSourceRequest& request,
       GetSourceCallback callback) override;
 
-    AdServer::UserInfoSvcs::UserBindMapper::BindRequestInfo*
-    get_bind_request(
-      const char* id,
-      const CORBACommons::TimestampInfo& timestamp);
-
-    void
-    add_bind_request(
-      const char* id,
-      const AdServer::UserInfoSvcs::UserBindServer::BindRequestInfo& bind_request,
-      const CORBACommons::TimestampInfo& timestamp);
-
-    AdServer::UserInfoSvcs::UserBindMapper::GetUserResponseInfo*
-    get_user_id(
-      const AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo&
-        request_info);
-
-    AdServer::UserInfoSvcs::UserBindMapper::AddUserResponseInfo*
-    add_user_id(
-      const AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo&
-        request_info);
-
   private:
     AdServer::UserInfoSvcs::UserBindOperationDistributor_var user_bind_mapper_;
   };

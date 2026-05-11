@@ -1,14 +1,14 @@
 
 
 add_executable(UserIdUtil
- Application.cpp
+  Application.cpp
 )
 target_link_libraries(UserIdUtil
- Generics
- PlainStorage2
- PlainStorage3
+  Generics
+  PlainStorage2
+  PlainStorage3
 
- UtilCommons
+  UtilCommons
 
 
 )

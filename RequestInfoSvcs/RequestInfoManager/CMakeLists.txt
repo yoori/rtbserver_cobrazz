@@ -74,9 +74,6 @@ target_link_libraries(RequestInfoManager
   CampaignServerIDL
   LogCommons
 
-  RequestInfoContainer
-
-  BillingProcessor
   MessageSaver
   RequestLogLoader
   RequestOperationSaver

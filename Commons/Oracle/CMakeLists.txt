@@ -1,6 +1,6 @@
 add_library(Oracle SHARED
 
- OraException.cpp
+  OraException.cpp
   Environment.cpp
   Connection.cpp
   Statement.cpp
@@ -9,8 +9,8 @@ add_library(Oracle SHARED
   ConnectionPool.cpp
 )
 target_link_libraries(Oracle
-    Generics
-    Commons
+  Generics
+  Commons
 )
 
 

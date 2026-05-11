@@ -1,40 +1,40 @@
 add_idl(ChannelClusterControlIDL ChannelClusterControl.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController)
 target_link_libraries(ChannelClusterControlIDL
- XMLUtility
- CORBACommons
- ProcessControlVars
- AdServerCommonsXSD
- Commons
- ChannelCommonsIDL
- ChannelUpdateBaseIDL
- ChannelServerIDL
- ChannelCommons
- )
+  XMLUtility
+  CORBACommons
+  ProcessControlVars
+  AdServerCommonsXSD
+  Commons
+  ChannelCommonsIDL
+  ChannelUpdateBaseIDL
+  ChannelServerIDL
+  ChannelCommons
+)
 
 add_idl(ChannelManagerControllerIDL ChannelManagerController.idl ${IDL_DIRECTORY}/ChannelSvcs/ChannelManagerController)
 target_link_libraries(ChannelManagerControllerIDL
 
- XMLUtility
- CORBACommons
- ProcessControlVars
- AdServerCommonsXSD
- Commons
- ChannelCommonsIDL
- ChannelUpdateBaseIDL
- ChannelServerIDL
- ChannelCommons
+  XMLUtility
+  CORBACommons
+  ProcessControlVars
+  AdServerCommonsXSD
+  Commons
+  ChannelCommonsIDL
+  ChannelUpdateBaseIDL
+  ChannelServerIDL
+  ChannelCommons
 )
 
 add_executable( ChannelController
-    ChannelControllerMain.cpp
-    ChannelControllerImpl.cpp
+  ChannelControllerMain.cpp
+  ChannelControllerImpl.cpp
 )
 target_link_libraries(ChannelController
-ChannelSessionFactory
-ChannelClusterControl
-ChannelClusterControlIDL
-ChannelManagerControllerIDL
-ChannelManagerControllerConfigXSD
+  ChannelSessionFactory
+  ChannelClusterControl
+  ChannelClusterControlIDL
+  ChannelManagerControllerIDL
+  ChannelManagerControllerConfigXSD
 )
 
 add_library(ChannelSessionFactory SHARED
@@ -44,22 +44,22 @@ add_library(ChannelSessionFactory SHARED
   ChannelLoadSessionImpl.cpp
 )
 target_link_libraries(ChannelSessionFactory
- Generics
- Logger
- CORBACommons
- ChannelCommons
- ChannelClusterControlIDL
- ChannelManagerControllerIDL
+  Generics
+  Logger
+  CORBACommons
+  ChannelCommons
+  ChannelClusterControlIDL
+  ChannelManagerControllerIDL
 
 )
 
 add_library(ChannelClusterControl SHARED
-ChannelClusterControlImpl.cpp
+  ChannelClusterControlImpl.cpp
 )
 target_link_libraries(ChannelClusterControl
- Generics
- CORBACommons
-ChannelClusterControlIDL
+  Generics
+  CORBACommons
+  ChannelClusterControlIDL
 )
 
 #install(TARGETS ChannelClusterControl ChannelSessionFactory ChannelController ChannelClusterControlIDL ChannelManagerControllerIDL   DESTINATION ${INSTALL_DIR})

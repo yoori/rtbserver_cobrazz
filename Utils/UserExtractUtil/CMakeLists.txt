@@ -3,17 +3,17 @@
 
 
 add_executable(UserExtractUtil
-    UserExtractUtil.cpp
- )
+  UserExtractUtil.cpp
+)
 target_link_libraries(UserExtractUtil
 
- Generics
+  Generics
 
- Commons
- ProfileMap
- PlainStorage3
-# ChannelInventory
- ExpressionMatcherCompatibility
+  Commons
+  ProfileMap
+  PlainStorage3
+  # ChannelInventory
+  ExpressionMatcherCompatibility
 
 )
 

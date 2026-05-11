@@ -6,8 +6,8 @@ add_library(PlainCpp SHARED
 )
 
 target_link_libraries(PlainCpp
- Generics
- PlainDeclaration
- PlainCode
+  Generics
+  PlainDeclaration
+  PlainCode
 )
 #install(TARGETS PlainCpp DESTINATION ${INSTALL_DIR})

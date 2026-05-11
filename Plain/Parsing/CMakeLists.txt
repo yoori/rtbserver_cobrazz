@@ -11,9 +11,9 @@ add_library(PlainParser SHARED
 
 )
 target_link_libraries(PlainParser
-YYParser_yy YYScanner_ll
-PlainDeclaration
-PlainCode
+  YYParser_yy YYScanner_ll
+  PlainDeclaration
+  PlainCode
 )
 
 #install(TARGETS PlainParser  DESTINATION ${INSTALL_DIR})

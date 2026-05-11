@@ -27,18 +27,18 @@ add_library(Commons  SHARED
 )
 
 target_link_libraries(Commons
-    ProcessControlIDL
-    HostDistributionFileXSD xerces-c Generics AdServerCommonsXSD HTTP CORBACommons crypto
-    TAO TAO_AnyTypeCode  TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny TAO_EndpointPolicy TAO_FaultTolerance
-    TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable
-    TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
-    zmq  pthread ACE Logger Sync
-    CorbaObjectRefIDL
-    )
+  ProcessControlIDL
+  HostDistributionFileXSD xerces-c Generics AdServerCommonsXSD HTTP CORBACommons crypto
+  TAO TAO_AnyTypeCode  TAO_CodecFactory TAO_CosEvent TAO_CosNaming TAO_CosNotification TAO_DynamicAny TAO_EndpointPolicy TAO_FaultTolerance
+  TAO_FT_ClientORB TAO_FT_ServerORB TAO_FTORB_Utils TAO_IORManip TAO_IORTable
+  TAO_Messaging TAO_PI TAO_PI_Server TAO_PortableGroup TAO_PortableServer TAO_Security TAO_SSLIOP TAO_TC TAO_TC_IIOP TAO_Valuetype ACE_SSL
+  zmq  pthread ACE Logger Sync
+  CorbaObjectRefIDL
+)
 
 
 add_library(Gason SHARED
-    Gason.cpp
+  Gason.cpp
 )
 
 target_link_libraries(Gason Generics)
@@ -46,17 +46,17 @@ target_link_libraries(Gason Generics)
 
 
 add_library(ProcessControlVars SHARED
-ProcessControlVarsImpl.cpp
+  ProcessControlVarsImpl.cpp
 )
 
 target_link_libraries(ProcessControlVars
-Stream
-CORBACommons
-AdServerCommonsXSD
-Generics
-CorbaTypesIDL
-Commons
-    zmq  pthread ACE Logger Sync
+  Stream
+  CORBACommons
+  AdServerCommonsXSD
+  Generics
+  CorbaTypesIDL
+  Commons
+  zmq  pthread ACE Logger Sync
 )
 
 

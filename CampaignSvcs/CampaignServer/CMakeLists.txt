@@ -57,7 +57,6 @@ add_executable(CampaignServer
 
 target_link_libraries(CampaignServer
   LogCommons
-  CampaignServerIDL
   Commons
   Postgres
   LogGeneralizerLib
@@ -67,7 +66,6 @@ target_link_libraries(CampaignServer
 
   ExpressionChannel
   CampaignConfigModifier
-  BillStatServerSource
   CORBACommons
   CampaignServer_v350IDL
   CampaignServerStubs_v350
@@ -80,23 +78,14 @@ target_link_libraries(CampaignServer
   AdServerCommonsXSD
   SNMPAgent
   Logger
-  CampaignConfigModifier
   CorbaTypesIDL
   BillingServerIDL
-  Generics ACE Logger Sync
-  pcre ssl crypto z event
+  Generics ACE Sync
   String
   xerces-c
   CTROptimizer
 
-  BillingServerIDL
-  BillStatInfoIDL
-  CorbaTypesIDL
-  CampaignServerIDL
   CampaignCommonsIDL
-  StatInfoIDL
-
-  AdServerCommonsXSD
   CampaignServerConfigXSD
   DomainConfigXSD
   HostDistributionFileXSD

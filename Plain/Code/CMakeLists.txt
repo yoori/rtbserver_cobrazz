@@ -4,7 +4,7 @@ add_library(PlainCode SHARED
 
 )
 target_link_libraries( PlainCode
-PlainDeclaration
+  PlainDeclaration
 )
 
 #install(TARGETS PlainCode  DESTINATION ${INSTALL_DIR})

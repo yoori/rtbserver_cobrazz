@@ -2,7 +2,7 @@
 add_library(DTree SHARED
 
 
- Utils.cpp
+  Utils.cpp
   Predictor.cpp
   SVM.cpp
   DTree.cpp
@@ -10,8 +10,8 @@ add_library(DTree SHARED
 )
 target_link_libraries(DTree
 
- Generics
- Commons
+  Generics
+  Commons
 
 )
 

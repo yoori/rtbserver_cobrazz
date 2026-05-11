@@ -1,23 +1,23 @@
 add_executable(PlainStorageUtil
- Application.cpp
+  Application.cpp
 )
 
 target_link_libraries(PlainStorageUtil
- Generics
- PlainStorage2
- PlainStorage3
-pcre
+  Generics
+  PlainStorage2
+  PlainStorage3
+  pcre
 )
 
 
 add_executable(LevelCheckUtil
- LevelCheckUtil.cpp
+  LevelCheckUtil.cpp
 
 )
 target_link_libraries(LevelCheckUtil
 
- Generics
- Commons
- PlainStorage3
+  Generics
+  Commons
+  PlainStorage3
 )
 #install(TARGETS PlainStorageUtil LevelCheckUtil  DESTINATION ${INSTALL_DIR})

@@ -1,12 +1,12 @@
 
 add_executable(GeoUtil
-Application.cpp
+  Application.cpp
 )
 target_link_libraries(GeoUtil
- Generics
+  Generics
 
- Commons
-Geoip
+  Commons
+  Geoip
 
 )
 

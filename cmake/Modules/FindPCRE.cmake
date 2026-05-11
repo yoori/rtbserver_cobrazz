@@ -1,6 +1,6 @@
 # - Find PCRE library
 # -*- cmake -*-
-# 
+#
 # Find the Perl-Compatible Regular Expressions (PCRE) includes and
 # library
 #

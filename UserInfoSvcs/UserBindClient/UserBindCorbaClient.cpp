@@ -285,37 +285,4 @@ namespace FrontendCommons
         "get_source is not available through UserBindCorbaClient"),
       response);
   }
-
-  AdServer::UserInfoSvcs::UserBindMapper::BindRequestInfo*
-  UserBindCorbaClient::get_bind_request(
-    const char* id,
-    const CORBACommons::TimestampInfo& timestamp)
-  {
-    return user_bind_mapper_->get_bind_request(id, timestamp);
-  }
-
-  void
-  UserBindCorbaClient::add_bind_request(
-    const char* id,
-    const AdServer::UserInfoSvcs::UserBindServer::BindRequestInfo& bind_request,
-    const CORBACommons::TimestampInfo& timestamp)
-  {
-    user_bind_mapper_->add_bind_request(id, bind_request, timestamp);
-  }
-
-  AdServer::UserInfoSvcs::UserBindMapper::GetUserResponseInfo*
-  UserBindCorbaClient::get_user_id(
-    const AdServer::UserInfoSvcs::UserBindMapper::GetUserRequestInfo&
-      request_info)
-  {
-    return user_bind_mapper_->get_user_id(request_info);
-  }
-
-  AdServer::UserInfoSvcs::UserBindMapper::AddUserResponseInfo*
-  UserBindCorbaClient::add_user_id(
-    const AdServer::UserInfoSvcs::UserBindMapper::AddUserRequestInfo&
-      request_info)
-  {
-    return user_bind_mapper_->add_user_id(request_info);
-  }
 }

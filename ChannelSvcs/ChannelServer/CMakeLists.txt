@@ -37,9 +37,9 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(ChannelServerGrpcClient
   PUBLIC
-    GrpcBatch
-    ChannelServerGrpc
-    gRPC::grpc++)
+  GrpcBatch
+  ChannelServerGrpc
+  gRPC::grpc++)
 
 add_executable(ChannelServer
   ChannelServerVariant.cpp
@@ -64,17 +64,13 @@ target_link_libraries(ChannelServer
   ChannelServerIDL
   ChannelUpdateBaseIDL
   ChannelCommonsIDL
-  ChannelUpdateBaseIDL
-  ChannelServerIDL
   ChannelContainer
   ChannelServerGrpc
   ChannelSessionFactory
-#  CampaignServerStubs
   CampaignServerStubs_v350
   CampaignServer_v350IDL
   ProcessControlIDL
   BLogic
-  # ColoUpdateStat
   LogCommons
   Polyglot
   GenericSegmentor

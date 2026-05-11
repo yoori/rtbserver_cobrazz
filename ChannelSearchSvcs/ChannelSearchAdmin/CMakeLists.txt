@@ -1,15 +1,13 @@
 
 add_executable(ChannelSearchAdmin
-    Application.cpp
+  Application.cpp
 )
 target_link_libraries(ChannelSearchAdmin
- Generics
- Logger
- Commons
- UtilCommons
- ChannelSearchServiceIDL
- ChannelManagerControllerIDL  ChannelClusterControlIDL
- ChannelSearchServiceIDL
- ChannelSessionFactory
+  Generics
+  Logger
+  Commons
+  UtilCommons
+  ChannelSearchServiceIDL
+  ChannelManagerControllerIDL  ChannelClusterControlIDL
+  ChannelSessionFactory
 )
-#install(TARGETS ChannelSearchAdmin  DESTINATION ${INSTALL_DIR})

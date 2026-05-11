@@ -2,24 +2,19 @@ add_pst(SegmentProfilePST  SegmentProfile.pst ${PST_DIRECTORY}/Predictor/Segment
 
 
 add_executable(SegmentUtil
-Application.cpp
+  Application.cpp
 )
 target_link_libraries(SegmentUtil
- Generics
+  Generics
 
- Commons
-# IPMap
-#Geoip
-SegmentProfilePST
- PlainStorage3
+  Commons
+  SegmentProfilePST
+  PlainStorage3
 
 
-# ProfilingCommons
-MessageSaver
-PlainStorage2
-PlainStorage3
-#PlainStorageUtil
-ProfileMap
+  MessageSaver
+  PlainStorage2
+  ProfileMap
 
 )
 

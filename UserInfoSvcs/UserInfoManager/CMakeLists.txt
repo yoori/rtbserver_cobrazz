@@ -31,9 +31,9 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(UserInfoManagerGrpcClient
   PUBLIC
-    GrpcBatch
-    UserInfoManagerGrpc
-    gRPC::grpc++)
+  GrpcBatch
+  UserInfoManagerGrpc
+  gRPC::grpc++)
 
 add_library(UserInfoContainer SHARED
   UserInfoContainer.cpp
@@ -43,30 +43,27 @@ add_library(UserInfoContainer SHARED
 )
 add_dependencies(UserInfoContainer UserChannelBaseProfilePST )
 target_link_libraries(UserInfoContainer
- Generics
- PrivacyFilter
-    LogCommons
- Commons
- Allocator
- PlainStorage2
- PlainStorage3
+  Generics
+  PrivacyFilter
+  Commons
+  Allocator
+  PlainStorage2
+  PlainStorage3
 
- ChannelMatcher
- LogCommons
- UserFreqCapProfile
- UserOperationProfilesPST
-# FileReceiver
-# UserFreqCapProfile
- UserBaseProfileAdapter
- UserHistoryProfileAdapter
- UserOperationProfilesAdapter
- UserFreqCapProfileAdapter
+  ChannelMatcher
+  LogCommons
+  UserFreqCapProfile
+  UserOperationProfilesPST
+  UserBaseProfileAdapter
+  UserHistoryProfileAdapter
+  UserOperationProfilesAdapter
+  UserFreqCapProfileAdapter
 
 )
 
 
 add_executable(UserInfoManager
-UserInfoManagerMain.cpp
+  UserInfoManagerMain.cpp
   FileRWStats.cpp
   UserInfoManagerCore.cpp
   UserInfoManagerImpl.cpp
@@ -77,24 +74,23 @@ UserInfoManagerMain.cpp
 
 )
 target_link_libraries(UserInfoManager
- CORBACommons
- LogCommons
- ProcessControlVars
- Commons
- AdServerCommonsXSD
- PlainStorage2
- PrivacyFilter
- ProfileMap
+  CORBACommons
+  LogCommons
+  ProcessControlVars
+  Commons
+  AdServerCommonsXSD
+  PlainStorage2
+  PrivacyFilter
+  ProfileMap
 
- UserInfoManagerConfigXSD
- UserInfoManagerIDL
- UserInfoManagerControlIDL
- UserInfoManagerGrpc
- CampaignServerIDL
- LogCommons
+  UserInfoManagerConfigXSD
+  UserInfoManagerIDL
+  UserInfoManagerControlIDL
+  UserInfoManagerGrpc
+  CampaignServerIDL
 
- UserInfoContainer
- UserOperationProfilesPST
+  UserInfoContainer
+  UserOperationProfilesPST
 
 )
 

@@ -1,14 +1,14 @@
 
 add_executable(SVMGenerator
-Application.cpp
+  Application.cpp
 )
 target_link_libraries(SVMGenerator
- Generics
+  Generics
 
- Commons
-# IPMap
-#Geoip
-SVMGeneratorConfigXSD
+  Commons
+  # IPMap
+  #Geoip
+  SVMGeneratorConfigXSD
 
 )
 #install(TARGETS SVMGenerator  DESTINATION ${INSTALL_DIR})

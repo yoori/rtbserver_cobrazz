@@ -1,11 +1,11 @@
 
 add_executable(DTreeUtilsTest
-DTreeUtilsTest.cpp
+  DTreeUtilsTest.cpp
 )
 target_link_libraries(DTreeUtilsTest
 
- Generics
-    DTree
+  Generics
+  DTree
 )
 
 #install(TARGETS DTreeUtilsTest DESTINATION ${INSTALL_DIR})

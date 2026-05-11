@@ -1,14 +1,14 @@
 add_executable(sampleBidStats
- sampleBidStats.cpp
+  sampleBidStats.cpp
 )
 
 include_directories()
 
 if(APPLE)
-set(MACLINK "userver-stacktrace")
+  set(MACLINK "userver-stacktrace")
 endif()
 if(LINUX)
-set(LINUXLINK "Generics")
+  set(LINUXLINK "Generics")
 endif()
 
 target_link_libraries(sampleBidStats UServerUtils)

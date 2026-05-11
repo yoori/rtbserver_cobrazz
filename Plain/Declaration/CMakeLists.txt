@@ -12,7 +12,7 @@ add_library(PlainDeclaration SHARED
 
 
 target_link_libraries(PlainDeclaration
- Generics
+  Generics
 )
 
 #install(TARGETS PlainDeclaration DESTINATION ${INSTALL_DIR})

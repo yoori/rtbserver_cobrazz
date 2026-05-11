@@ -1,13 +1,13 @@
 
 
 add_executable(DNSDecodeUtil
- Application.cpp
+  Application.cpp
 )
 target_link_libraries(DNSDecodeUtil
- Generics
- String
- Stream
- Commons
+  Generics
+  String
+  Stream
+  Commons
 
 )
 

@@ -1,20 +1,20 @@
 
 
 add_executable(ProfileDump
- Application.cpp
+  Application.cpp
 )
 target_link_libraries(ProfileDump
 
- Generics
- PlainStorage2
+  Generics
+  PlainStorage2
 
- UtilCommons
- ChannelMatcher
- RequestInfoManagerCompatibility
- UserBaseProfileAdapter
- UserHistoryProfileAdapter
- UserFreqCapProfileAdapter
-Allocator
+  UtilCommons
+  ChannelMatcher
+  RequestInfoManagerCompatibility
+  UserBaseProfileAdapter
+  UserHistoryProfileAdapter
+  UserFreqCapProfileAdapter
+  Allocator
 
 )
 

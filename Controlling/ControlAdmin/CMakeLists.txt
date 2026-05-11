@@ -1,9 +1,9 @@
 add_executable(ControlAdmin
-    Application.cpp
+  Application.cpp
 )
 target_link_libraries(ControlAdmin
-    ProcessControlIDL  CORBACommons StatsIDL StatsCollectorIDL Generics pthread UtilCommons
-    CorbaTypesIDL
+  ProcessControlIDL  CORBACommons StatsIDL StatsCollectorIDL Generics pthread UtilCommons
+  CorbaTypesIDL
 )
 
 

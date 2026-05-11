@@ -4,12 +4,12 @@ add_executable(PrFeatureFilter
 )
 target_link_libraries(PrFeatureFilter
 
- Generics
+  Generics
 
- DTree
- CTRGeneratorConfigXSD
- CTRGeneratorDataConfigXSD
- CTRProvider
+  DTree
+  CTRGeneratorConfigXSD
+  CTRGeneratorDataConfigXSD
+  CTRProvider
 
 )
 #install(TARGETS PrFeatureFilter  DESTINATION ${INSTALL_DIR})

@@ -1,5 +1,5 @@
 add_executable(ChannelAdmin
-    Application.cpp
+  Application.cpp
 )
 target_link_libraries(ChannelAdmin
   Logger

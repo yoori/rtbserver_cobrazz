@@ -8,9 +8,9 @@ add_library(Postgres SHARED
   Lob.cpp
 )
 target_link_libraries(Postgres
-    Generics
-    Commons
-    pq
+  Generics
+  Commons
+  pq
 )
 
 #install(TARGETS Postgres DESTINATION ${INSTALL_DIR})

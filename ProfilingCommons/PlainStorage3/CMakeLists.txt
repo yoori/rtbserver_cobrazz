@@ -9,7 +9,7 @@ add_library(PlainStorage3 SHARED
 
 target_link_libraries(PlainStorage3
 
- Generics
- Commons
+  Generics
+  Commons
 )
 #install(TARGETS PlainStorage3  DESTINATION ${INSTALL_DIR})

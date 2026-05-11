@@ -1,18 +1,18 @@
 
 add_executable(ExpressionMatcherAdmin
-Application.cpp
+  Application.cpp
 )
 target_link_libraries(ExpressionMatcherAdmin
- String
- Generics
- CORBACommons
- UtilCommons
+  String
+  Generics
+  CORBACommons
+  UtilCommons
 
- ExpressionMatcherIDL
- pthread
- ProcessControlIDL
- UserActionProfilePST
-UserActionProfile_v321PST
+  ExpressionMatcherIDL
+  pthread
+  ProcessControlIDL
+  UserActionProfilePST
+  UserActionProfile_v321PST
 
 )
 

@@ -3,18 +3,18 @@ add_executable(UserBindGrpcPerf
 
 target_link_libraries(UserBindGrpcPerf
   PRIVATE
-    Generics
-    Commons
-    GrpcBatch
-    UserBindServerGrpc
-    UserBindServerGrpcClient
-    UserBindClient
-    gRPC::grpc++
+  Generics
+  Commons
+  GrpcBatch
+  UserBindServerGrpc
+  UserBindServerGrpcClient
+  UserBindClient
+  gRPC::grpc++
 )
 
 target_include_directories(UserBindGrpcPerf
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../..
 )
 
 add_executable(UserBindCorbaPerf
@@ -22,13 +22,13 @@ add_executable(UserBindCorbaPerf
 
 target_link_libraries(UserBindCorbaPerf
   PRIVATE
-    Generics
-    CORBACommons
-    Commons
-    UserBindServerIDL
+  Generics
+  CORBACommons
+  Commons
+  UserBindServerIDL
 )
 
 target_include_directories(UserBindCorbaPerf
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../..
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../..
 )

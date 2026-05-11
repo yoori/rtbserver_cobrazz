@@ -1,9 +1,9 @@
 add_executable(DTreeTrainer
-    Application.cpp
+  Application.cpp
 )
 target_link_libraries(DTreeTrainer
-    Generics
-    DTree
+  Generics
+  DTree
 )
 
 

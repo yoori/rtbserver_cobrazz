@@ -2,15 +2,15 @@ add_idl(DictionaryProviderIDL DictionaryProvider.idl ${IDL_DIRECTORY}/ChannelSvc
 
 
 target_link_libraries(DictionaryProviderIDL
- Generics
- HTTP
+  Generics
+  HTTP
   Commons
- BLogic
- LogCommons
-CORBACommons
-CorbaTypesIDL
-ChannelUpdateBaseIDL
-ChannelServerIDL
+  BLogic
+  LogCommons
+  CORBACommons
+  CorbaTypesIDL
+  ChannelUpdateBaseIDL
+  ChannelServerIDL
 )
 
 
@@ -18,7 +18,7 @@ ChannelServerIDL
 
 add_executable(DictionaryProvider
 
-DictionaryProviderMain.cpp DictionaryProviderImpl.cpp DictionaryContainer.cpp
+  DictionaryProviderMain.cpp DictionaryProviderImpl.cpp DictionaryContainer.cpp
 )
 target_link_libraries(DictionaryProvider
   Generics

@@ -10,10 +10,7 @@ target_link_libraries(UserInfoClient
   Logger
   UserInfoManagerControllerCall
   UserInfoControllerGrpc
-  UserInfoManagerGrpc
   UserInfoManagerGrpcClient
-  GrpcBatch
-  gRPC::grpc++
 )
 
 target_include_directories(UserInfoClient PUBLIC

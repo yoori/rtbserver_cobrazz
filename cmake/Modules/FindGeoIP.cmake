@@ -26,8 +26,8 @@ pkg_search_module(GEOIP geoip)
 # Find the header
 find_path(GEOIP_INCLUDE_DIR GeoIP.h
   HINTS
-    "${GEOIP_INCLUDEDIR}"
-    "${GEOIP_ROOT}"
+  "${GEOIP_INCLUDEDIR}"
+  "${GEOIP_ROOT}"
   PATH_SUFFIXES include Include
 )
 
@@ -35,8 +35,8 @@ find_path(GEOIP_INCLUDE_DIR GeoIP.h
 find_library(GEOIP_LIBRARY
   NAMES GeoIP libGeoIP-1
   HINTS
-    "${GEOIP_LIBDIR}"
-    "${GEOIP_ROOT}"
+  "${GEOIP_LIBDIR}"
+  "${GEOIP_ROOT}"
   PATH_SUFFIXES lib
 )
 

@@ -2,27 +2,27 @@ include_directories(${LIBXML2_INCLUDE_DIRS})
 
 
 add_executable(XslTransformAdmin
-    XslTransformAdmin.cpp
+  XslTransformAdmin.cpp
 )
 target_link_libraries(XslTransformAdmin
-XslTransformer Generics pthread
+  XslTransformer Generics pthread
 )
 
 add_library(XslTransformer STATIC
-    LibxsltTransformer.cpp
-    XslTransformer.cpp
+  LibxsltTransformer.cpp
+  XslTransformer.cpp
 
 )
 
 target_link_libraries(XslTransformer
- xml2
- xslt
- HTTP
+  xml2
+  xslt
+  HTTP
 
 )
 
 add_library(XsltFileCache STATIC
-XsltFileCache.cpp
+  XsltFileCache.cpp
 )
 
 target_link_libraries(XsltFileCache String Generics AdServerCommonsXSD Sync XslTransformer

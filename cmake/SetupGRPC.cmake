@@ -13,12 +13,12 @@ function(add_grpc_sources target proto_file output_dir)
   add_custom_command(
     OUTPUT ${pb_cc} ${pb_h} ${grpc_cc} ${grpc_h}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      --proto_path=${proto_dir}
-      ${ARGN}
-      --cpp_out=${output_dir}
-      --grpc_out=${output_dir}
-      --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
-      ${proto_abs}
+    --proto_path=${proto_dir}
+    ${ARGN}
+    --cpp_out=${output_dir}
+    --grpc_out=${output_dir}
+    --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
+    ${proto_abs}
     DEPENDS ${proto_abs}
   )
 
@@ -57,14 +57,14 @@ function(add_adserver_grpc_client_sources target proto_file output_dir namespace
   add_custom_command(
     OUTPUT ${client_cc} ${client_h}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      --proto_path=${proto_dir}
-      ${ARGN}
-      --plugin=protoc-gen-adserver-grpc-client=${CMAKE_SOURCE_DIR}/cmake/protoc-gen-adserver-grpc-client.py
-      --adserver-grpc-client_out=namespace=${namespace_param}:${output_dir}
-      ${proto_abs}
+    --proto_path=${proto_dir}
+    ${ARGN}
+    --plugin=protoc-gen-adserver-grpc-client=${CMAKE_SOURCE_DIR}/cmake/protoc-gen-adserver-grpc-client.py
+    --adserver-grpc-client_out=namespace=${namespace_param}:${output_dir}
+    ${proto_abs}
     DEPENDS
-      ${proto_abs}
-      ${CMAKE_SOURCE_DIR}/cmake/protoc-gen-adserver-grpc-client.py
+    ${proto_abs}
+    ${CMAKE_SOURCE_DIR}/cmake/protoc-gen-adserver-grpc-client.py
   )
 
   target_sources(${target} PRIVATE ${client_cc})

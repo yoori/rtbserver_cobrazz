@@ -34,9 +34,9 @@ add_adserver_grpc_client_sources(
 
 target_link_libraries(CampaignManagerGrpcClient
   PUBLIC
-    GrpcBatch
-    CampaignManagerGrpc
-    gRPC::grpc++)
+  GrpcBatch
+  CampaignManagerGrpc
+  gRPC::grpc++)
 
 add_library(BidRateProvider SHARED
   BidCostProvider.cpp
@@ -188,7 +188,6 @@ target_link_libraries(CampaignManager
   ExpressionChannel
   CreativeTemplateArgs
   CampaignConfig
-  CampaignConfigSource
   CampaignIndex
   DomainParser
   CampaignManagerLogger

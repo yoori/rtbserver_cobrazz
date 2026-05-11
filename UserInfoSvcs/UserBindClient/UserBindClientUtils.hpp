@@ -5,18 +5,26 @@
 #include <utility>
 #include <vector>
 
+#include <eh/Exception.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <grpcpp/support/status.h>
 
 #include <Commons/ConfigUtils.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
-#include <UserInfoSvcs/UserBindServer/UserBindServer.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindDistributedGrpcClient.hpp>
 #include <xsd/Frontends/FeConfig.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
+  namespace UserBindClient
+  {
+    DECLARE_EXCEPTION(Exception, eh::DescriptiveException);
+    DECLARE_EXCEPTION(NotReady, Exception);
+    DECLARE_EXCEPTION(ChunkNotFound, Exception);
+    DECLARE_EXCEPTION(ImplementationException, Exception);
+  }
+
   struct DistributedUserBindClientObjects
   {
     std::shared_ptr<UserBindServerGrpcAsyncClient> client;
@@ -30,11 +38,11 @@ namespace AdServer::UserInfoSvcs
     switch(status.error_code())
     {
     case grpc::StatusCode::UNAVAILABLE:
-      throw UserBindMapper::NotReady(message.c_str());
+      throw UserBindClient::NotReady(message.c_str());
     case grpc::StatusCode::NOT_FOUND:
-      throw UserBindMapper::ChunkNotFound(message.c_str());
+      throw UserBindClient::ChunkNotFound(message.c_str());
     default:
-      throw UserBindMapper::ImplementationException(message.c_str());
+      throw UserBindClient::ImplementationException(message.c_str());
     }
   }
 

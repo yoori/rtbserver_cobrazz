@@ -1,11 +1,11 @@
 
 
 add_executable(TrivialCTRConfigGenerator
- Application.cpp
+  Application.cpp
 )
 target_link_libraries(TrivialCTRConfigGenerator
- Generics
- Commons
+  Generics
+  Commons
 
 )
 

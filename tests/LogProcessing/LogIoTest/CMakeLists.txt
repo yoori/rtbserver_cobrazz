@@ -1,11 +1,11 @@
 add_executable(logProcessingLogIoTest
- LogIoTest.cpp
+  LogIoTest.cpp
 )
 
 include_directories()
 
 if(LINUX)
-set(LINUXLINK "Generics")
+  set(LINUXLINK "Generics")
 endif()
 
 target_link_libraries(logProcessingLogIoTest LogCommons)

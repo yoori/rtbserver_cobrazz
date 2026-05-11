@@ -6,9 +6,9 @@ add_library(ProfileMap SHARED
 
 target_link_libraries(ProfileMap
 
- Generics
- Commons
- rocksdb
+  Generics
+  Commons
+  rocksdb
 )
 
 #install(TARGETS ProfileMap  DESTINATION ${INSTALL_DIR})

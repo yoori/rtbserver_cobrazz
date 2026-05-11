@@ -17,10 +17,10 @@ target_link_libraries(ExpressionMatcherCompatibility
   UserTriggerMatchProfilePST
   RequestTriggerMatchProfilePST
 
-Sync
-Generics
-String
-pthread
+  Sync
+  Generics
+  String
+  pthread
 )
 
 #install(TARGETS ExpressionMatcherCompatibility  DESTINATION ${INSTALL_DIR})

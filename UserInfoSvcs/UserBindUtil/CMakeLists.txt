@@ -1,16 +1,16 @@
 add_executable(UserBindUtil
-    Application.cpp
+  Application.cpp
 )
 
 target_link_libraries(UserBindUtil
 
 
- Generics
- CORBACommons
+  Generics
+  CORBACommons
 
- LogCommons
- Commons
- PlainStorage3
+  LogCommons
+  Commons
+  PlainStorage3
 
 
 )

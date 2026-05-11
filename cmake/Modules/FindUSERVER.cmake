@@ -9,7 +9,7 @@
 #  NETSNMP_FOUND       - True if Net-SNMP found.
 
 #IF (NETSNMP_INCLUDE_DIR)
-  # Already in cache, be silent
+# Already in cache, be silent
 #  SET(NETSNMP_FIND_QUIETLY TRUE)
 #ENDIF (NETSNMP_INCLUDE_DIR)
 
@@ -25,5 +25,5 @@ FIND_LIBRARY(USERVER_CORE
 
 
 MARK_AS_ADVANCED(
-    USERVER_CORE
-  )
+  USERVER_CORE
+)

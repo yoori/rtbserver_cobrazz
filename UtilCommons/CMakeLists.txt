@@ -1,9 +1,9 @@
 add_library(UtilCommons SHARED
-Table.cpp
+  Table.cpp
 )
 target_link_libraries(UtilCommons
-#String
-Generics
+  #String
+  Generics
 
 
 )

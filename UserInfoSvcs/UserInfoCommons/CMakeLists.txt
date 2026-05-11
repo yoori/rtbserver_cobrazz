@@ -1,40 +1,40 @@
 add_library(Allocator SHARED
-Allocator.cpp
+  Allocator.cpp
 )
 
 
 target_link_libraries(Allocator
- Generics
- Commons
+  Generics
+  Commons
 )
 
 add_pst(UserChannelBaseProfilePST  UserChannelBaseProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
 add_pst(UserChannelHistoryProfilePST  UserChannelHistoryProfile.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
 
 add_library(ChannelMatcher SHARED
-    ChannelMatcher.cpp
+  ChannelMatcher.cpp
 )
 target_link_libraries(ChannelMatcher
- Generics
- PlainStorage2
- PlainStorage3
+  Generics
+  PlainStorage2
+  PlainStorage3
 
- UtilCommons
-    UserChannelBaseProfilePST
-    UserChannelHistoryProfilePST
+  UtilCommons
+  UserChannelBaseProfilePST
+  UserChannelHistoryProfilePST
 )
 
 add_pst(UserFreqCapProfileDescriptionPST  UserFreqCapProfileDescription.pst ${PST_DIRECTORY}/UserInfoSvcs/UserInfoCommons)
 
 add_library(UserFreqCapProfile SHARED
-    UserFreqCapProfile.cpp
+  UserFreqCapProfile.cpp
 )
 target_link_libraries(UserFreqCapProfile
-    UserFreqCapProfileDescriptionPST
-    Generics
-    Commons
-    Allocator
-    UtilCommons
+  UserFreqCapProfileDescriptionPST
+  Generics
+  Commons
+  Allocator
+  UtilCommons
 
 )
 
