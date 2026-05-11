@@ -70,8 +70,486 @@ namespace AdServer::Bidding
 {
   namespace
   {
+    namespace PB = adserver::campaign_svcs::campaign_manager;
+
     const CampaignSvcs::RevenueDecimal MAX_CPM_CONF_MULTIPLIER(false, 100, 0);
     static const UserInfoSvcs::CampaignIdSeq EMPTY_CAMPAIGN_ID_SEQ;
+
+    template<typename CorbaOctSeq>
+    std::string pack_oct_seq(const CorbaOctSeq& seq)
+    {
+      return std::string(
+        reinterpret_cast<const char*>(seq.get_buffer()),
+        reinterpret_cast<const char*>(seq.get_buffer()) + seq.length());
+    }
+
+    template<typename CorbaOctSeq>
+    void unpack_oct_seq(const std::string& value, CorbaOctSeq& target)
+    {
+      target.length(value.size());
+      std::copy(value.begin(), value.end(), target.get_buffer());
+    }
+
+    template<typename SourceSeq>
+    void pack_ids(
+      const SourceSeq& source,
+      google::protobuf::RepeatedField<google::protobuf::uint64>* target)
+    {
+      for(CORBA::ULong i = 0; i < source.length(); ++i)
+      {
+        target->Add(source[i]);
+      }
+    }
+
+    template<typename SourceSeq>
+    void pack_strings(
+      const SourceSeq& source,
+      google::protobuf::RepeatedPtrField<std::string>* target)
+    {
+      for(CORBA::ULong i = 0; i < source.length(); ++i)
+      {
+        *target->Add() = source[i].str;
+      }
+    }
+
+    template<typename TargetSeq>
+    void unpack_ids(
+      const google::protobuf::RepeatedField<google::protobuf::uint64>& source,
+      TargetSeq& target)
+    {
+      target.length(source.size());
+      for(int i = 0; i < source.size(); ++i)
+      {
+        target[i] = source[i];
+      }
+    }
+
+    template<typename TargetSeq>
+    void unpack_strings(
+      const google::protobuf::RepeatedPtrField<std::string>& source,
+      TargetSeq& target)
+    {
+      target.length(source.size());
+      for(int i = 0; i < source.size(); ++i)
+      {
+        target[i] = source[i];
+      }
+    }
+
+    void pack_decimal(
+      const CampaignManager::DecimalInfo& source,
+      PB::DecimalInfo& target)
+    {
+      target.set_value(pack_oct_seq(source));
+    }
+
+    void unpack_decimal(
+      const PB::DecimalInfo& source,
+      CampaignManager::DecimalInfo& target)
+    {
+      unpack_oct_seq(source.value(), target);
+    }
+
+    void pack_tokens(
+      const CampaignManager::TokenSeq& source,
+      google::protobuf::RepeatedPtrField<PB::TokenInfo>* target)
+    {
+      for(CORBA::ULong i = 0; i < source.length(); ++i)
+      {
+        auto* token = target->Add();
+        token->set_name(source[i].name.str);
+        token->set_value(source[i].value.str);
+      }
+    }
+
+    void unpack_tokens(
+      const google::protobuf::RepeatedPtrField<PB::TokenInfo>& source,
+      CampaignManager::TokenSeq& target)
+    {
+      target.length(source.size());
+      for(int i = 0; i < source.size(); ++i)
+      {
+        target[i].name = source[i].name();
+        target[i].value = source[i].value();
+      }
+    }
+
+    void pack_common_ad_request_info(
+      const CampaignManager::CommonAdRequestInfo& source,
+      PB::CommonAdRequestInfo& target)
+    {
+      target.set_time(pack_oct_seq(source.time));
+      target.set_request_id(pack_oct_seq(source.request_id));
+      target.set_creative_instantiate_type(source.creative_instantiate_type.str);
+      target.set_request_type(source.request_type);
+      target.set_random(source.random);
+      target.set_test_request(source.test_request);
+      target.set_log_as_test(source.log_as_test);
+      target.set_colo_id(source.colo_id);
+      target.set_external_user_id(source.external_user_id.str);
+      target.set_source_id(source.source_id.str);
+      for(CORBA::ULong i = 0; i < source.location.length(); ++i)
+      {
+        auto* location = target.add_location();
+        location->set_country(source.location[i].country.str);
+        location->set_region(source.location[i].region.str);
+        location->set_city(source.location[i].city.str);
+      }
+      for(CORBA::ULong i = 0; i < source.coord_location.length(); ++i)
+      {
+        auto* coord = target.add_coord_location();
+        coord->set_longitude(pack_oct_seq(source.coord_location[i].longitude));
+        coord->set_latitude(pack_oct_seq(source.coord_location[i].latitude));
+        coord->set_accuracy(pack_oct_seq(source.coord_location[i].accuracy));
+      }
+      target.set_full_referer(source.full_referer.str);
+      target.set_referer(source.referer.str);
+      pack_strings(source.urls, target.mutable_urls());
+      target.set_security_token(source.security_token.str);
+      target.set_pub_impr_track_url(source.pub_impr_track_url.str);
+      target.set_pub_param(source.pub_param.str);
+      target.set_preclick_url(source.preclick_url.str);
+      target.set_click_prefix_url(source.click_prefix_url.str);
+      target.set_original_url(source.original_url.str);
+      target.set_track_user_id(pack_oct_seq(source.track_user_id));
+      target.set_user_id(pack_oct_seq(source.user_id));
+      target.set_user_status(source.user_status);
+      target.set_signed_user_id(source.signed_user_id.str);
+      target.set_peer_ip(source.peer_ip.str);
+      target.set_user_agent(source.user_agent.str);
+      target.set_cohort(source.cohort.str);
+      target.set_hpos(source.hpos);
+      target.set_ext_track_params(source.ext_track_params.str);
+      pack_tokens(source.tokens, target.mutable_tokens());
+      target.set_set_cookie(source.set_cookie);
+      target.set_passback_type(source.passback_type.str);
+      target.set_passback_url(source.passback_url.str);
+    }
+
+    void pack_context_ad_request_info(
+      const CampaignManager::ContextAdRequestInfo& source,
+      PB::ContextAdRequestInfo& target)
+    {
+      target.set_enabled_notice(source.enabled_notice);
+      target.set_client(source.client.str);
+      target.set_client_version(source.client_version.str);
+      pack_ids(source.platform_ids, target.mutable_platform_ids());
+      pack_ids(source.geo_channels, target.mutable_geo_channels());
+      target.set_platform(source.platform.str);
+      target.set_full_platform(source.full_platform.str);
+      target.set_web_browser(source.web_browser.str);
+      target.set_ip_hash(source.ip_hash.str);
+      target.set_profile_referer(source.profile_referer);
+      target.set_page_load_id(source.page_load_id);
+      target.set_full_referer_hash(source.full_referer_hash);
+      target.set_short_referer_hash(source.short_referer_hash);
+    }
+
+    void pack_request_params(
+      const CampaignManager::RequestParams& source,
+      PB::RequestParams& target)
+    {
+      pack_common_ad_request_info(source.common_info, *target.mutable_common_info());
+      pack_context_ad_request_info(source.context_info, *target.mutable_context_info());
+      target.set_publisher_site_id(source.publisher_site_id);
+      pack_ids(source.publisher_account_ids, target.mutable_publisher_account_ids());
+      target.set_fill_track_pixel(source.fill_track_pixel);
+      target.set_fill_iurl(source.fill_iurl);
+      target.set_ad_instantiate_type(source.ad_instantiate_type);
+      target.set_only_display_ad(source.only_display_ad);
+      pack_ids(source.full_freq_caps, target.mutable_full_freq_caps());
+      for(CORBA::ULong i = 0; i < source.seq_orders.length(); ++i)
+      {
+        auto* seq_order = target.add_seq_orders();
+        seq_order->set_ccg_id(source.seq_orders[i].ccg_id);
+        seq_order->set_set_id(source.seq_orders[i].set_id);
+        seq_order->set_imps(source.seq_orders[i].imps);
+      }
+      for(CORBA::ULong i = 0; i < source.campaign_freqs.length(); ++i)
+      {
+        auto* campaign_freq = target.add_campaign_freqs();
+        campaign_freq->set_campaign_id(source.campaign_freqs[i].campaign_id);
+        campaign_freq->set_imps(source.campaign_freqs[i].imps);
+      }
+      target.set_household_id(pack_oct_seq(source.household_id));
+      target.set_merged_user_id(pack_oct_seq(source.merged_user_id));
+      target.set_search_engine_id(source.search_engine_id);
+      target.set_search_words(source.search_words.str);
+      target.set_page_keywords_present(source.page_keywords_present);
+      target.set_profiling_available(source.profiling_available);
+      target.set_fraud(source.fraud);
+      pack_ids(source.channels, target.mutable_channels());
+      pack_ids(source.hid_channels, target.mutable_hid_channels());
+      for(CORBA::ULong i = 0; i < source.ccg_keywords.length(); ++i)
+      {
+        auto* kw = target.add_ccg_keywords();
+        kw->set_ccg_keyword_id(source.ccg_keywords[i].ccg_keyword_id);
+        kw->set_ccg_id(source.ccg_keywords[i].ccg_id);
+        kw->set_channel_id(source.ccg_keywords[i].channel_id);
+        pack_decimal(source.ccg_keywords[i].max_cpc, *kw->mutable_max_cpc());
+        pack_decimal(source.ccg_keywords[i].ctr, *kw->mutable_ctr());
+        kw->set_click_url(source.ccg_keywords[i].click_url.str);
+        kw->set_original_keyword(source.ccg_keywords[i].original_keyword.str);
+      }
+      auto* trigger = target.mutable_trigger_match_result();
+      auto pack_trigger = [](const auto& source_channels, auto* target_channels)
+      {
+        for(CORBA::ULong i = 0; i < source_channels.length(); ++i)
+        {
+          auto* channel = target_channels->Add();
+          channel->set_channel_id(source_channels[i].channel_id);
+          channel->set_channel_trigger_id(source_channels[i].channel_trigger_id);
+        }
+      };
+      pack_trigger(source.trigger_match_result.url_channels, trigger->mutable_url_channels());
+      pack_trigger(source.trigger_match_result.pkw_channels, trigger->mutable_pkw_channels());
+      pack_trigger(source.trigger_match_result.skw_channels, trigger->mutable_skw_channels());
+      pack_trigger(source.trigger_match_result.ukw_channels, trigger->mutable_ukw_channels());
+      pack_ids(source.trigger_match_result.uid_channels, trigger->mutable_uid_channels());
+      target.set_client_create_time(pack_oct_seq(source.client_create_time));
+      target.set_session_start(pack_oct_seq(source.session_start));
+      pack_ids(source.exclude_pubpixel_accounts, target.mutable_exclude_pubpixel_accounts());
+      target.set_tag_delivery_factor(source.tag_delivery_factor);
+      target.set_ccg_delivery_factor(source.ccg_delivery_factor);
+      target.set_preview_ccid(source.preview_ccid);
+      for(CORBA::ULong i = 0; i < source.ad_slots.length(); ++i)
+      {
+        const auto& src = source.ad_slots[i];
+        auto* dst = target.add_ad_slots();
+        dst->set_ad_slot_id(src.ad_slot_id);
+        dst->set_format(src.format.str);
+        dst->set_tag_id(src.tag_id);
+        pack_strings(src.sizes, dst->mutable_sizes());
+        dst->set_ext_tag_id(src.ext_tag_id.str);
+        pack_decimal(src.min_ecpm, *dst->mutable_min_ecpm());
+        dst->set_min_ecpm_currency_code(src.min_ecpm_currency_code.str);
+        pack_strings(src.currency_codes, dst->mutable_currency_codes());
+        dst->set_passback(src.passback);
+        dst->set_up_expand_space(src.up_expand_space);
+        dst->set_right_expand_space(src.right_expand_space);
+        dst->set_left_expand_space(src.left_expand_space);
+        dst->set_tag_visibility(src.tag_visibility);
+        dst->set_tag_predicted_viewability(src.tag_predicted_viewability);
+        dst->set_down_expand_space(src.down_expand_space);
+        dst->set_video_min_duration(src.video_min_duration);
+        dst->set_video_max_duration(src.video_max_duration);
+        dst->set_video_skippable_max_duration(src.video_skippable_max_duration);
+        dst->set_video_allow_skippable(src.video_allow_skippable);
+        dst->set_video_allow_unskippable(src.video_allow_unskippable);
+        dst->set_video_width(src.video_width);
+        dst->set_video_height(src.video_height);
+        pack_strings(src.exclude_categories, dst->mutable_exclude_categories());
+        pack_strings(src.required_categories, dst->mutable_required_categories());
+        dst->set_debug_ccg(src.debug_ccg);
+        pack_ids(src.allowed_durations, dst->mutable_allowed_durations());
+        for(CORBA::ULong j = 0; j < src.native_data_tokens.length(); ++j)
+        {
+          auto* token = dst->add_native_data_tokens();
+          token->set_name(src.native_data_tokens[j].name.str);
+          token->set_required(src.native_data_tokens[j].required);
+        }
+        for(CORBA::ULong j = 0; j < src.native_image_tokens.length(); ++j)
+        {
+          auto* token = dst->add_native_image_tokens();
+          token->set_name(src.native_image_tokens[j].name.str);
+          token->set_required(src.native_image_tokens[j].required);
+          token->set_width(src.native_image_tokens[j].width);
+          token->set_height(src.native_image_tokens[j].height);
+        }
+        dst->set_native_ads_impression_tracker_type(
+          src.native_ads_impression_tracker_type);
+        dst->set_fill_track_html(src.fill_track_html);
+        pack_tokens(src.tokens, dst->mutable_tokens());
+      }
+      target.set_required_passback(source.required_passback);
+      target.set_profiling_type(source.profiling_type);
+      target.set_disable_fraud_detection(source.disable_fraud_detection);
+      target.set_need_debug_info(source.need_debug_info);
+      target.set_page_keywords(source.page_keywords.str);
+      target.set_url_keywords(source.url_keywords.str);
+      target.set_ssp_location(source.ssp_location.str);
+      target.set_additional_info(source.additional_info.str);
+    }
+
+    void unpack_request_creative_result(
+      const PB::RequestCreativeResult& source,
+      CampaignManager::RequestCreativeResult& target)
+    {
+      target.ad_slots.length(source.ad_slots_size());
+      for(int i = 0; i < source.ad_slots_size(); ++i)
+      {
+        const auto& src = source.ad_slots(i);
+        auto& dst = target.ad_slots[i];
+        dst.ad_slot_id = src.ad_slot_id();
+        unpack_oct_seq(src.request_id(), dst.request_id);
+        dst.passback = src.passback();
+        dst.passback_url = src.passback_url();
+        dst.creative_body = src.creative_body();
+        dst.notice_url = src.notice_url();
+        unpack_strings(src.track_pixel_urls(), dst.track_pixel_urls);
+        dst.yandex_track_params = src.yandex_track_params();
+        dst.creative_url = src.creative_url();
+        dst.track_pixel_params = src.track_pixel_params();
+        dst.click_params = src.click_params();
+        dst.mime_format = src.mime_format();
+        dst.iurl = src.iurl();
+        dst.test_request = src.test_request();
+
+        dst.selected_creatives.length(src.selected_creatives_size());
+        for(int j = 0; j < src.selected_creatives_size(); ++j)
+        {
+          const auto& src_creative = src.selected_creatives(j);
+          auto& dst_creative = dst.selected_creatives[j];
+          unpack_oct_seq(src_creative.request_id(), dst_creative.request_id);
+          dst_creative.ccid = src_creative.ccid();
+          dst_creative.cmp_id = src_creative.cmp_id();
+          dst_creative.campaign_group_id = src_creative.campaign_group_id();
+          dst_creative.order_set_id = src_creative.order_set_id();
+          dst_creative.advertiser_id = src_creative.advertiser_id();
+          dst_creative.advertiser_name = src_creative.advertiser_name();
+          dst_creative.creative_size = src_creative.creative_size();
+          unpack_decimal(src_creative.revenue(), dst_creative.revenue);
+          unpack_decimal(src_creative.ecpm(), dst_creative.ecpm);
+          unpack_decimal(src_creative.pub_ecpm(), dst_creative.pub_ecpm);
+          dst_creative.click_url = src_creative.click_url();
+          dst_creative.destination_url = src_creative.destination_url();
+          dst_creative.creative_version_id = src_creative.creative_version_id();
+          dst_creative.creative_id = src_creative.creative_id();
+          dst_creative.https_safe_flag = src_creative.https_safe_flag();
+          dst_creative.expanding = src_creative.expanding();
+        }
+
+        unpack_strings(
+          src.external_visual_categories(),
+          dst.external_visual_categories);
+        unpack_strings(
+          src.external_content_categories(),
+          dst.external_content_categories);
+        dst.pub_currency_code = src.pub_currency_code();
+        dst.overlay_width = src.overlay_width();
+        dst.overlay_height = src.overlay_height();
+        unpack_tokens(src.tokens(), dst.tokens);
+        unpack_tokens(src.ext_tokens(), dst.ext_tokens);
+        dst.track_impr = src.track_impr();
+        dst.tag_size = src.tag_size();
+        unpack_ids(src.freq_caps(), dst.freq_caps);
+        unpack_ids(src.uc_freq_caps(), dst.uc_freq_caps);
+
+        const auto& src_debug = src.debug_info();
+        auto& dst_debug = dst.debug_info;
+        dst_debug.tag_id = src_debug.tag_id();
+        dst_debug.tag_size_id = src_debug.tag_size_id();
+        dst_debug.site_id = src_debug.site_id();
+        dst_debug.site_rate_id = src_debug.site_rate_id();
+        dst_debug.min_no_adv_ecpm = src_debug.min_no_adv_ecpm();
+        dst_debug.min_text_ecpm = src_debug.min_text_ecpm();
+        dst_debug.auction_type = src_debug.auction_type();
+        dst_debug.track_pixel_url = src_debug.track_pixel_url();
+        unpack_decimal(src_debug.cpm_threshold(), dst_debug.cpm_threshold);
+        dst_debug.walled_garden = src_debug.walled_garden();
+        dst_debug.selected_creatives.length(src_debug.selected_creatives_size());
+        for(int j = 0; j < src_debug.selected_creatives_size(); ++j)
+        {
+          const auto& src_debug_creative = src_debug.selected_creatives(j);
+          auto& dst_debug_creative = dst_debug.selected_creatives[j];
+          unpack_decimal(src_debug_creative.imp_revenue(), dst_debug_creative.imp_revenue);
+          unpack_decimal(src_debug_creative.click_revenue(), dst_debug_creative.click_revenue);
+          unpack_decimal(src_debug_creative.action_revenue(), dst_debug_creative.action_revenue);
+          unpack_decimal(src_debug_creative.ecpm_bid(), dst_debug_creative.ecpm_bid);
+          dst_debug_creative.action_adv_url = src_debug_creative.action_adv_url();
+          dst_debug_creative.html_url = src_debug_creative.html_url();
+          dst_debug_creative.triggered_expression =
+            src_debug_creative.triggered_expression();
+          dst_debug_creative.full_expression = src_debug_creative.full_expression();
+        }
+        dst_debug.trace_ccg = src_debug.trace_ccg();
+
+        unpack_tokens(src.native_data_tokens(), dst.native_data_tokens);
+        dst.native_image_tokens.length(src.native_image_tokens_size());
+        for(int j = 0; j < src.native_image_tokens_size(); ++j)
+        {
+          const auto& src_token = src.native_image_tokens(j);
+          auto& dst_token = dst.native_image_tokens[j];
+          dst_token.name = src_token.name();
+          dst_token.value = src_token.value();
+          dst_token.width = src_token.width();
+          dst_token.height = src_token.height();
+        }
+        dst.track_html_body = src.track_html_body();
+        dst.erid = src.erid();
+        dst.contracts.length(src.contracts_size());
+        for(int j = 0; j < src.contracts_size(); ++j)
+        {
+          const auto& src_contract = src.contracts(j);
+          auto& dst_contract = dst.contracts[j];
+          auto& dst_contract_info = dst_contract.contract_info;
+          dst_contract_info.contract_id = src_contract.contract_id();
+          dst_contract_info.number = src_contract.number();
+          dst_contract_info.date = src_contract.date();
+          dst_contract_info.type = src_contract.type();
+          dst_contract_info.vat_included = src_contract.vat_included();
+          dst_contract_info.ord_contract_id = src_contract.ord_contract_id();
+          dst_contract_info.ord_ado_id = src_contract.ord_ado_id();
+          dst_contract_info.subject_type = src_contract.subject_type();
+          dst_contract_info.action_type = src_contract.action_type();
+          dst_contract_info.agent_acting_for_publisher =
+            src_contract.agent_acting_for_publisher();
+          dst_contract_info.parent_contract_id =
+            src_contract.contract_parent_contract_id();
+          dst_contract_info.client_id = src_contract.client_id();
+          dst_contract_info.client_name = src_contract.client_name();
+          dst_contract_info.client_legal_form =
+            src_contract.client_legal_form();
+          dst_contract_info.contractor_id = src_contract.contractor_id();
+          dst_contract_info.contractor_name = src_contract.contractor_name();
+          dst_contract_info.contractor_legal_form =
+            src_contract.contractor_legal_form();
+          unpack_oct_seq(src_contract.timestamp(), dst_contract_info.timestamp);
+          dst.contracts[j].parent_contract_id =
+            src_contract.parent_contract_id();
+        }
+      }
+
+      unpack_oct_seq(source.process_time(), target.process_time);
+      target.debug_info.colo_id = source.debug_info().colo_id();
+      unpack_ids(source.debug_info().geo_channels(), target.debug_info.geo_channels);
+      unpack_ids(
+        source.debug_info().platform_channels(),
+        target.debug_info.platform_channels);
+      target.debug_info.last_platform_channel_id =
+        source.debug_info().last_platform_channel_id();
+      target.debug_info.user_group_id = source.debug_info().user_group_id();
+    }
+
+    CampaignManager::RequestCreativeResult
+    get_campaign_creative(
+      AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient& campaign_manager,
+      const CampaignManager::RequestParams& request_params,
+      std::string& hostname)
+    {
+      PB::GetCampaignCreativeRequest request;
+      pack_request_params(request_params, *request.mutable_request_params());
+
+      auto response = AdServer::Grpc::sync_call<PB::GetCampaignCreativeResponse>(
+        [&](auto callback)
+        {
+          campaign_manager.get_campaign_creative(request, std::move(callback));
+        },
+        [](const grpc::Status& status)
+        {
+          Stream::Error ostr;
+          ostr << "CampaignManager::get_campaign_creative(): "
+            "gRPC call failed: code=" <<
+            static_cast<int>(status.error_code()) <<
+            ", message=" << status.error_message();
+          return Frontend::Exception(ostr);
+        });
+
+      hostname = response.hostname();
+      CampaignManager::RequestCreativeResult result;
+      unpack_request_creative_result(response.request_result(), result);
+      return result;
+    }
 
     class TimeGuard
     {
@@ -109,12 +587,12 @@ namespace AdServer::Bidding
       }
     }
 
-    AdServer::CampaignSvcs::CampaignManager::ChannelTriggerMatchInfo
+    AdServer::Bidding::CampaignManager::ChannelTriggerMatchInfo
     convert_channel_atom(
       const adserver::channel_svcs::channel_server::ChannelAtom& atom)
       noexcept
     {
-      AdServer::CampaignSvcs::CampaignManager::ChannelTriggerMatchInfo out;
+      AdServer::Bidding::CampaignManager::ChannelTriggerMatchInfo out;
       out.channel_id = atom.id();
       out.channel_trigger_id = atom.trigger_channel_id();
       return out;
@@ -265,12 +743,13 @@ namespace AdServer::Bidding
   public:
     InterruptPassbackTask(
       Frontend* frontend,
-      FrontendCommons::CampaignManagersPool<Exception>& campaign_managers,
+      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+        campaign_manager,
       const RequestParamsHolder* request_params,
       const std::string& hostname)
       /*throw(eh::Exception)*/
       : frontend_(frontend),
-        campaign_managers_(campaign_managers),
+        campaign_manager_(std::move(campaign_manager)),
         request_params_var_(ReferenceCounting::add_ref(request_params)),
         hostname_(hostname)
     {}
@@ -282,14 +761,11 @@ namespace AdServer::Bidding
       {
         frontend_->passback_task_count_ += -1;
 
-        AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
-          campaign_match_result;
-
-        CORBA::String_var hostname(CORBA::string_dup(hostname_.c_str()));
-        campaign_managers_.get_campaign_creative(
+        std::string hostname = hostname_;
+        (void)get_campaign_creative(
+          *campaign_manager_,
           *request_params_var_,
-          hostname,
-          campaign_match_result.out());
+          hostname);
       }
       catch(const eh::Exception&)
       {
@@ -302,7 +778,8 @@ namespace AdServer::Bidding
 
   private:
     Frontend* frontend_;
-    FrontendCommons::CampaignManagersPool<Exception>& campaign_managers_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
     const ConstRequestParamsHolder_var request_params_var_;
     std::string hostname_;
   };
@@ -334,7 +811,7 @@ namespace AdServer::Bidding
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),
-      campaign_managers_(this->logger(), Aspect::BIDDING_FRONTEND),
+      campaign_manager_(),
       stats_(ReferenceCounting::add_ref(stats)),
       bid_task_count_(0),
       passback_task_count_(0),
@@ -477,9 +954,6 @@ namespace AdServer::Bidding
           task_scheduler,
           flush_period)->schedule(flush_period);
 
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
-
         AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
           user_info_controller_groups;
         for(const auto& controller_group :
@@ -502,6 +976,15 @@ namespace AdServer::Bidding
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
+
+        auto campaign_manager_client =
+          std::make_shared<
+            AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+              FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+              AdServer::Grpc::BatchingOptions(),
+              grpc_executor_);
+        campaign_manager_ = campaign_manager_client;
+        add_child_object(campaign_manager_client);
 
         auto user_bind_objects =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
@@ -702,13 +1185,13 @@ namespace AdServer::Bidding
           request_timeout_ /= 1000;
         }
 
+        activate_object();
+
         control_task_runner_->enqueue_task(
           Generics::Task_var(new UpdateConfigTask(this, control_task_runner_)));
 
         control_task_runner_->enqueue_task(
           Generics::Task_var(new FlushStateTask(this, control_task_runner_)));
-
-        activate_object();
       }
       catch (const eh::Exception& ex)
       {
@@ -950,7 +1433,7 @@ namespace AdServer::Bidding
   void
   Frontend::resolve_user_id_(
     AdServer::Commons::UserId& match_user_id,
-    AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
+    AdServer::Bidding::CampaignManager::CommonAdRequestInfo& common_info,
     RequestInfo& request_info,
     DebugSink::UserResolvingDebugInfo* user_resolving_debug_info)
     noexcept
@@ -1235,7 +1718,7 @@ namespace AdServer::Bidding
     adserver::channel_svcs::channel_server::MatchResponse&
       trigger_matched_channels,
     bool& trigger_matched_channels_present,
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const RequestInfo& request_info,
     const AdServer::Commons::UserId& user_id,
     std::string& /*hostname*/,
@@ -1392,7 +1875,7 @@ namespace AdServer::Bidding
   void
   Frontend::history_match_(
     AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out history_match_result,
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const RequestInfo& request_info,
     const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
     const AdServer::Commons::UserId& user_id,
@@ -1651,35 +2134,29 @@ namespace AdServer::Bidding
           channel_ids[i] = history_match_result.channels[i].channel_id;
         }
 
-        ccg_keywords = ([&]() {
-          adserver::channel_svcs::channel_server::GetCcgTraitsRequest
-            channel_request;
-          adserver::channel_svcs::channel_server::GetCcgTraitsResponse
-            channel_response;
-          grpc::Status channel_status;
-          AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(
-            channel_ids,
-            channel_request);
-          channel_client_->get_ccg_traits(
-            channel_request,
-            [&channel_status, &channel_response](
-              const grpc::Status& status,
-              const adserver::channel_svcs::channel_server::GetCcgTraitsResponse& response)
+        adserver::channel_svcs::channel_server::GetCcgTraitsRequest
+          channel_request;
+        AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(
+          channel_ids,
+          channel_request);
+        auto channel_response = AdServer::Grpc::sync_call<
+          adserver::channel_svcs::channel_server::GetCcgTraitsResponse>(
+            [&](auto callback)
             {
-              channel_status = status;
-              channel_response = response;
+              channel_client_->get_ccg_traits(
+                channel_request,
+                std::move(callback));
+            },
+            [](const grpc::Status& status)
+            {
+              Stream::Error ostr;
+              ostr << "ChannelServer grpc get_ccg_traits failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
+              return Exception(ostr);
             });
-          if (!channel_status.ok())
-          {
-            Stream::Error ostr;
-            ostr << "ChannelServer grpc get_ccg_traits failed: code=" <<
-              static_cast<int>(channel_status.error_code()) <<
-              ", message=" << channel_status.error_message();
-            throw Exception(ostr);
-          }
-          return AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(
-            channel_response);
-        })();
+        ccg_keywords = AdServer::ChannelSvcs::GrpcAlgs::make_ccg_traits_result(
+          channel_response);
       }
     }
     catch(const eh::Exception& ex)
@@ -1699,7 +2176,7 @@ namespace AdServer::Bidding
   Frontend::consider_campaign_selection_(
     const AdServer::Commons::UserId& user_id, // not null
     const Generics::Time& now,
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result,
     std::string& /*hostname*/)
     noexcept
@@ -1725,7 +2202,7 @@ namespace AdServer::Bidding
       for(CORBA::ULong ad_slot_i = 0;
           ad_slot_i < campaign_match_result.ad_slots.length(); ++ad_slot_i)
       {
-        const AdServer::CampaignSvcs::CampaignManager::
+        const AdServer::Bidding::CampaignManager::
           AdSlotResult& ad_slot = campaign_match_result.ad_slots[ad_slot_i];
 
         for(CORBA::ULong i = 0;
@@ -1760,7 +2237,7 @@ namespace AdServer::Bidding
             ad_slot_i < campaign_match_result.ad_slots.length();
             ++ad_slot_i)
         {
-          const AdServer::CampaignSvcs::CampaignManager::
+          const AdServer::Bidding::CampaignManager::
             AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
           if(ad_slot_result.selected_creatives.length() > 0)
@@ -1772,7 +2249,7 @@ namespace AdServer::Bidding
               creative_i < ad_slot_result.selected_creatives.length();
               ++creative_i)
             {
-              const AdServer::CampaignSvcs::CampaignManager::
+              const AdServer::Bidding::CampaignManager::
                 CreativeSelectResult& creative =
                   ad_slot_result.selected_creatives[creative_i];
 
@@ -1861,7 +2338,7 @@ namespace AdServer::Bidding
   bool
   Frontend::process_bid_request_(
     const char* fn,
-    AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out
+    AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result,
     AdServer::Commons::UserId& user_id,
     BidRequestTask* request_task,
@@ -1871,7 +2348,7 @@ namespace AdServer::Bidding
   {
     bool interrupted = false;
 
-    AdServer::CampaignSvcs::CampaignManager::RequestParams&
+    AdServer::Bidding::CampaignManager::RequestParams&
       request_params(*request_task->request_params());
     RequestTimeMetering& request_time_metering =
       request_task->request_time_metering_;
@@ -1879,6 +2356,7 @@ namespace AdServer::Bidding
     // map external id to uid
     DebugSink::UserResolvingDebugInfo user_resolving_debug_info;
     {
+      request_task->set_current_stage(Stage::UserResolving);
       request_time_metering.user_resolving_started_at =
         Generics::Time::get_time_of_day() - request_task->start_processing_time();
       TimeGuard user_resolving_time_metering;
@@ -1910,6 +2388,7 @@ namespace AdServer::Bidding
     if (!interrupted)
     {
       {
+        request_task->set_current_stage(Stage::TriggerMatching);
         request_time_metering.trigger_match_started_at =
           Generics::Time::get_time_of_day() - request_task->start_processing_time();
         TimeGuard trigger_match_time_metering;
@@ -1944,6 +2423,7 @@ namespace AdServer::Bidding
     if (!interrupted)
     {
       {
+        request_task->set_current_stage(Stage::HistoryMatching);
         request_time_metering.history_match_started_at =
           Generics::Time::get_time_of_day() - request_task->start_processing_time();
         TimeGuard history_match_time_metering;
@@ -1984,6 +2464,13 @@ namespace AdServer::Bidding
       return false;
     }
 
+    request_task->set_current_stage(Stage::CampaignSelection);
+
+    get_ccg_keywords_(
+      ccg_keywords,
+      request_info,
+      *history_match_result);
+
     {
       request_time_metering.creative_selection_started_at =
         Generics::Time::get_time_of_day() - request_task->start_processing_time();
@@ -2005,10 +2492,10 @@ namespace AdServer::Bidding
         creative_selection_time_metering.consider();
     }
 
-    if(campaign_match_result)
+    if(campaign_match_result.ad_slots.length())
     {
       request_time_metering.creative_selection_local_time =
-        CorbaAlgs::unpack_time(campaign_match_result->process_time);
+        CorbaAlgs::unpack_time(campaign_match_result.process_time);
     }
 
     if (!interrupted)
@@ -2018,9 +2505,8 @@ namespace AdServer::Bidding
         return false;
       }
 
-      if(campaign_match_result &&
-        campaign_match_result->ad_slots.length() > 0 &&
-        campaign_match_result->ad_slots[0].debug_info.trace_ccg[0] &&
+      if(campaign_match_result.ad_slots.length() > 0 &&
+        campaign_match_result.ad_slots[0].debug_info.trace_ccg[0] &&
         request_params.ad_slots.length() > 0 &&
         logger()->log_level() >= Logging::Logger::TRACE)
       {
@@ -2031,7 +2517,7 @@ namespace AdServer::Bidding
 
         request_task->print_request(ostr);
 
-        ostr << std::endl << campaign_match_result->ad_slots[0].debug_info.trace_ccg;
+        ostr << std::endl << campaign_match_result.ad_slots[0].debug_info.trace_ccg;
         std::cout << ostr.str() << std::endl;
 
         logger()->log(
@@ -2080,7 +2566,7 @@ namespace AdServer::Bidding
             Generics::Task_var(
               new InterruptPassbackTask(
                 this,
-                campaign_managers_,
+                campaign_manager_,
                 request_params,
                 request_task->hostname())));
         }
@@ -2109,14 +2595,14 @@ namespace AdServer::Bidding
 
   void
   Frontend::select_campaign_(
-      AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out
+      AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
         history_match_result,
     const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
     const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
     const RequestInfo& request_info,
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const AdServer::Commons::UserId& user_id,
     bool passback,
     std::string& hostname,
@@ -2189,7 +2675,7 @@ namespace AdServer::Bidding
       for(CORBA::ULong i = 0;
           i < history_match_result.geo_data_seq.length(); ++i)
       {
-        AdServer::CampaignSvcs::CampaignManager::GeoCoordInfo& res_loc =
+        AdServer::Bidding::CampaignManager::GeoCoordInfo& res_loc =
           request_params.common_info.coord_location[i];
         res_loc.longitude = history_match_result.geo_data_seq[i].longitude;
         res_loc.latitude = history_match_result.geo_data_seq[i].latitude;
@@ -2234,7 +2720,7 @@ namespace AdServer::Bidding
         {
           const AdServer::ChannelSvcs::ChannelServerBase::CCGKeyword&
             src_ccg_kw = (*ccg_keywords)[i];
-          AdServer::CampaignSvcs::CampaignManager::CCGKeywordInfo&
+          AdServer::Bidding::CampaignManager::CCGKeywordInfo&
             res_ccg_kw = request_params.ccg_keywords[i];
           res_ccg_kw.ccg_keyword_id = src_ccg_kw.ccg_keyword_id;
           res_ccg_kw.ccg_id = src_ccg_kw.ccg_id;
@@ -2348,13 +2834,10 @@ namespace AdServer::Bidding
       }
       else
       {
-        CORBA::String_var selected_hostname(
-          CORBA::string_dup(hostname.c_str()));
-        campaign_managers_.get_campaign_creative(
+        campaign_match_result = get_campaign_creative(
+          *campaign_manager_,
           request_params,
-          selected_hostname,
-          campaign_match_result);
-        hostname = selected_hostname.in() ? selected_hostname.in() : "";
+          hostname);
       }
     }
     catch(const eh::Exception& ex)
@@ -2388,18 +2871,33 @@ namespace AdServer::Bidding
 
     try
     {
-      AdServer::CampaignSvcs::ColocationFlagsSeq_var colocations =
-        campaign_managers_.get_colocation_flags();
+      auto colocation_response =
+        AdServer::Grpc::sync_call<PB::GetColocationFlagsResponse>(
+          [&](auto callback)
+          {
+            campaign_manager_->get_colocation_flags(
+              PB::GetColocationFlagsRequest(),
+              std::move(callback));
+          },
+          [](const grpc::Status& status)
+          {
+            Stream::Error ostr;
+            ostr << "CampaignManager::get_colocation_flags(): "
+              "gRPC call failed: code=" <<
+              static_cast<int>(status.error_code()) <<
+              ", message=" << status.error_message();
+            return Exception(ostr);
+          });
 
       ExtConfig_var new_config(new ExtConfig());
 
-      for (CORBA::ULong i = 0; i < colocations->length(); ++i)
+      for (const auto& colocation_info : colocation_response.colocations())
       {
         ExtConfig::Colocation colocation;
-        colocation.flags = colocations[i].flags;
+        colocation.flags = colocation_info.flags();
         new_config->colocations.insert(
           ExtConfig::ColocationMap::value_type(
-            colocations[i].colo_id,
+            colocation_info.colo_id(),
             colocation));
       }
 
@@ -2542,7 +3040,7 @@ namespace AdServer::Bidding
   void
   Frontend::limit_max_cpm_(
     AdServer::CampaignSvcs::RevenueDecimal& val,
-    const AdServer::CampaignSvcs::ULongSeq& account_ids)
+    const AdServer::Bidding::CampaignManager::IdSeq& account_ids)
     const noexcept
   {
     for(CORBA::ULong i = 0; i < account_ids.length(); ++i)
@@ -2605,7 +3103,6 @@ namespace AdServer::Bidding
     BidRequestTask* request_task)
     noexcept
   {
-    request_task->set_current_stage(stage);
     if(request_task->interrupted())
     {
       interrupt_(fun, stage, request_task);

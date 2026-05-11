@@ -29,15 +29,17 @@
 
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
+#include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
-#include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
+#include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
 #include "GroupLogger.hpp"
+#include "CampaignManagerTypes.hpp"
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
@@ -186,7 +188,7 @@ namespace AdServer::Bidding
     void
     resolve_user_id_(
       AdServer::Commons::UserId& match_user_id,
-      AdServer::CampaignSvcs::CampaignManager::CommonAdRequestInfo& common_info,
+      AdServer::Bidding::CampaignManager::CommonAdRequestInfo& common_info,
       RequestInfo& request_info,
       DebugSink::UserResolvingDebugInfo* user_resolving_debug_info)
       noexcept;
@@ -203,7 +205,7 @@ namespace AdServer::Bidding
     trigger_match_(
       adserver::channel_svcs::channel_server::MatchResponse& trigger_matched_channels,
       bool& trigger_matched_channels_present,
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const RequestInfo& request_info,
       const AdServer::Commons::UserId& user_id,
       std::string& hostname,
@@ -213,7 +215,7 @@ namespace AdServer::Bidding
     void
     history_match_(
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_out history_match_result,
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const RequestInfo& request_info,
       const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
       const AdServer::Commons::UserId& user_id,
@@ -231,7 +233,7 @@ namespace AdServer::Bidding
     bool
     process_bid_request_(
       const char* fn,
-      AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out
+      AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result,
       AdServer::Commons::UserId& user_id,
       BidRequestTask* request_task,
@@ -245,14 +247,14 @@ namespace AdServer::Bidding
 
     void
     select_campaign_(
-      AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_out
+      AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result,
       AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult&
         history_match_result,
       const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
       const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* ccg_keywords,
       const RequestInfo& request_info,
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const AdServer::Commons::UserId& user_id,
       bool passback,
       std::string& hostname,
@@ -263,7 +265,7 @@ namespace AdServer::Bidding
     consider_campaign_selection_(
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& time,
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result,
       std::string& hostname)
       noexcept;
@@ -273,10 +275,10 @@ namespace AdServer::Bidding
     fill_openrtb_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       const JsonProcessingContext& context,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
       noexcept;
 
@@ -284,10 +286,10 @@ namespace AdServer::Bidding
     fill_yandex_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       const JsonProcessingContext& context,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
       noexcept;
     */
@@ -299,7 +301,7 @@ namespace AdServer::Bidding
     void
     limit_max_cpm_(
       AdServer::CampaignSvcs::RevenueDecimal& val,
-      const AdServer::CampaignSvcs::ULongSeq& account_ids)
+      const AdServer::Bidding::CampaignManager::IdSeq& account_ids)
       const noexcept;
 
   private:
@@ -372,7 +374,7 @@ namespace AdServer::Bidding
     fill_native_response_(
       AdServer::Commons::JsonObject* json,
       const JsonAdSlotProcessingContext::Native& native_context,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         AdSlotResult& ad_slot_result,
       bool need_escape,
       bool add_root_native);
@@ -402,7 +404,8 @@ namespace AdServer::Bidding
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
 

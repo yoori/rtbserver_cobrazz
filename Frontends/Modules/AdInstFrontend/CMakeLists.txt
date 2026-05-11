@@ -15,7 +15,7 @@ target_link_libraries(AdInstFrontend
   RequestMatchers
   FeConfigXSD
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FCGI
   ProcessingTemplates
   UserIdController

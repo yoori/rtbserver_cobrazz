@@ -10,8 +10,8 @@
 // #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
-#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
-#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
+#include <CampaignManagerGrpc.grpc-client.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -195,7 +195,8 @@ namespace AdServer
     StringList strings_; // string's holder for SubString using
     TemplateRuleMap template_rules_;
 
-    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
     Commons::TextTemplateCache_var template_files_;
   };
 

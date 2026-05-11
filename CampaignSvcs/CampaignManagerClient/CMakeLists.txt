@@ -4,6 +4,16 @@ add_library(CampaignManagerClient SHARED
 
 target_link_libraries(CampaignManagerClient
   CORBACommons
-  CampaignManagerIDL
   CampaignManagerGrpcClient
+  CampaignManagerIDL
+)
+
+add_library(CampaignManagerGrpcDistributedClient SHARED
+  CampaignManagerDistributedGrpcClient.cpp
+)
+
+target_link_libraries(CampaignManagerGrpcDistributedClient
+  GrpcBatch
+  CampaignManagerGrpcClient
+  gRPC::grpc++
 )

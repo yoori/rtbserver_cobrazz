@@ -1,5 +1,7 @@
 #include "GoogleBidRequestTask.hpp"
 
+#include <Commons/CorbaAlgs.hpp>
+
 namespace AdServer
 {
 namespace Bidding
@@ -104,7 +106,7 @@ namespace Bidding
 
     template <typename AddRepeatedFn>
     void categories_to_repeated(
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         ExternalCreativeCategoryIdSeq& categories,
       AddRepeatedFn fn)
     {
@@ -233,13 +235,13 @@ namespace Bidding
 
   bool
   GoogleBidRequestTask::write_response(
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
     try
     {
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
+      AdServer::Bidding::CampaignManager::RequestParams& request_params =
         *request_params_;
 
       Google::BidResponse bid_response;
@@ -251,7 +253,7 @@ namespace Bidding
           ad_slot_i < campaign_match_result.ad_slots.length();
           ++ad_slot_i)
       {
-        const AdServer::CampaignSvcs::CampaignManager::
+        const AdServer::Bidding::CampaignManager::
           AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
         const Google::BidRequest_AdSlot& adslot = bid_request_.adslot(ad_slot_i);
@@ -356,7 +358,7 @@ namespace Bidding
 
           {
             // buyer_creative_id
-            const AdServer::CampaignSvcs::CampaignManager::
+            const AdServer::Bidding::CampaignManager::
               CreativeSelectResult& creative = ad_slot_result.selected_creatives[0];
 
             std::ostringstream creative_version_ostr;

@@ -40,6 +40,13 @@ namespace GrpcAlgs
   }
 
   inline
+  std::string
+  pack_request_id(const AdServer::Commons::RequestId& request_id)
+  {
+    return std::string(request_id.begin(), request_id.end());
+  }
+
+  inline
   AdServer::Commons::UserId
   unpack_user_id(const std::string& user_id_str)
   {
@@ -51,5 +58,28 @@ namespace GrpcAlgs
     return AdServer::Commons::UserId(
       reinterpret_cast<const unsigned char*>(user_id_str.data()),
       reinterpret_cast<const unsigned char*>(user_id_str.data()) + user_id_str.size());
+  }
+
+  template<typename DecimalType>
+  std::string
+  pack_decimal(const DecimalType& dec)
+  {
+    std::string result;
+    result.resize(DecimalType::PACK_SIZE);
+    dec.pack(reinterpret_cast<unsigned char*>(&result[0]));
+    return result;
+  }
+
+  template<typename DecimalType>
+  DecimalType
+  unpack_decimal(const std::string& str)
+  {
+    DecimalType result;
+    assert(str.size() == DecimalType::PACK_SIZE);
+    if(str.size() == DecimalType::PACK_SIZE)
+    {
+      result.unpack(reinterpret_cast<const unsigned char*>(str.data()));
+    }
+    return result;
   }
 }

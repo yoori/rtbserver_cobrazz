@@ -16,8 +16,8 @@
 
 #include <xsd/Frontends/FeConfig.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
-#include <CampaignSvcs/CampaignManagerClient/CampaignManagerCorbaClient.hpp>
-#include <Frontends/FrontendCommons/CampaignManagerCorbaClientConfig.hpp>
+#include <CampaignManagerGrpc.grpc-client.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 #include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
@@ -93,7 +93,8 @@ namespace WebStat
     CommonModule_var common_module_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    AdServer::CampaignSvcs::CampaignManagerCorbaClientPtr campaign_manager_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
 
     FileCachePtr pixel_;
   };

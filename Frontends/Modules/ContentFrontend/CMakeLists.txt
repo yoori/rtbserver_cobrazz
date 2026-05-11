@@ -5,7 +5,7 @@ add_library(ContentFrontend SHARED
 target_link_libraries(ContentFrontend
   Stream
   Commons
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FCGI
 )

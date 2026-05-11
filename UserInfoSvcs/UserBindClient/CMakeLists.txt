@@ -7,7 +7,6 @@ target_link_libraries(UserBindClient
   Commons
   CORBACommons
   Logger
-  FeConfigXSD
   UserBindControllerIDL
   UserBindControllerStubs
   UserBindControllerGrpc

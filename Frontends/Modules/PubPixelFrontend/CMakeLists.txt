@@ -6,7 +6,7 @@ add_library(PubPixelFrontend SHARED
 target_link_libraries(PubPixelFrontend
   Stream
   Commons
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   RequestMatchers
   FeConfigXSD
   FCGI

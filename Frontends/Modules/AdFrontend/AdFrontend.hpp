@@ -25,11 +25,12 @@
 
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
-#include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
+#include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
+#include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include <CampaignManagerGrpc.grpc.pb.h>
+#include <CampaignSvcs/CampaignManagerClient/CampaignManagerDistributedGrpcClient.hpp>
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
@@ -179,7 +180,7 @@ namespace AdServer
     request_campaign_manager_(
       PassbackInfo& passback_info,
       bool& log_as_test,
-      AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var&
+      adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
         campaign_matching_result,
       RequestTimeMetering& request_time_metering,
       const RequestInfo& request_info,
@@ -196,7 +197,9 @@ namespace AdServer
 
     void
     convert_ccg_keywords_(
-      AdServer::CampaignSvcs::CampaignManager::CCGKeywordSeq& ccg_keywords,
+      google::protobuf::RepeatedPtrField<
+        adserver::campaign_svcs::campaign_manager::CcgKeywordInfo>&
+          ccg_keywords,
       const AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq* src_ccg_keywords)
       noexcept;
 
@@ -233,7 +236,7 @@ namespace AdServer
     user_info_post_match_(
       RequestTimeMetering& request_time_metering,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
         campaign_select_result)
       noexcept;
 
@@ -292,7 +295,8 @@ namespace AdServer
 
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
 

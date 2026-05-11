@@ -130,8 +130,9 @@ namespace AdServer
 
   void
   StatHolder::flush(
-    const CampaignManager::RequestParams& request_params,
-    CampaignManager::RequestCreativeResult* campaign_match_result,
+    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestCreativeResult*
+      campaign_match_result,
     const Generics::Time& processing_time)
     noexcept
   {

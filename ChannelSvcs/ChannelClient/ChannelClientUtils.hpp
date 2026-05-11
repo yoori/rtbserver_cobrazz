@@ -8,8 +8,8 @@
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <ChannelSvcs/ChannelCommons/ChannelServer.hpp>
 #include <ChannelSvcs/ChannelClient/ChannelGrpcAlgs.hpp>
+#include <ChannelSvcs/ChannelClient/ChannelDistributedGrpcClient.hpp>
 #include <ChannelServerGrpc.grpc-client.hpp>
-#include <xsd/Frontends/FeConfig.hpp>
 
 namespace AdServer::ChannelSvcs
 {
@@ -21,7 +21,7 @@ namespace AdServer::ChannelSvcs
 
   DistributedChannelClientObjects
   create_distributed_channel_client(
-    const xsd::AdServer::Configuration::CommonFeConfigurationType&
-      common_config,
+    const ChannelDistributedGrpcClient::ChannelControllerRefs&
+      channel_controller_refs,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor);
 }

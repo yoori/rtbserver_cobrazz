@@ -8,7 +8,7 @@ target_link_libraries(WebStatFrontend
   Commons
   RequestMatchers
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FCGI
 )

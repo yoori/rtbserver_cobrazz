@@ -181,7 +181,7 @@ namespace Bidding
   void
   DebugSink::print_request_debug_info(
     const RequestInfo& request_info,
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams&
+    const AdServer::Bidding::CampaignManager::RequestParams&
       request_params,
     const AdServer::Commons::UserId& user_id,
     const std::string& channel_keywords) noexcept
@@ -329,7 +329,7 @@ namespace Bidding
 
   void
   DebugSink::print_creative_selection_debug_info(
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result) noexcept
   {
     if(!require_debug_info())
@@ -338,7 +338,7 @@ namespace Bidding
     }
 
     bool ad_selected = false;
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotDebugInfo*
+    const AdServer::Bidding::CampaignManager::AdSlotDebugInfo*
       expected_debug_info = nullptr;
     for(CORBA::ULong i = 0; i < campaign_match_result.ad_slots.length(); ++i)
     {
@@ -659,7 +659,7 @@ namespace Bidding
 
   void
   DebugSink::print_expected_debug_info_(
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotDebugInfo&
+    const AdServer::Bidding::CampaignManager::AdSlotDebugInfo&
       debug_info) noexcept
   {
     if(require_debug_info_ == DI_BODY && debug_info.trace_ccg[0] != 0)
@@ -671,7 +671,7 @@ namespace Bidding
 
   void
   DebugSink::print_creative_selection_debug_info_(
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult&
+    const AdServer::Bidding::CampaignManager::AdSlotResult&
       ad_slot_result) noexcept
   {
     const auto& selected_creatives = ad_slot_result.selected_creatives;

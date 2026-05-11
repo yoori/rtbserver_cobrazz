@@ -28,7 +28,7 @@ namespace Bidding
 
     virtual bool
     write_response(
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result)
       noexcept;
 
@@ -52,7 +52,7 @@ namespace Bidding
 
     void
     fill_by_adjson_request_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
       const FCGI::HttpRequest& request)
@@ -62,8 +62,8 @@ namespace Bidding
     fill_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+      const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
       noexcept;
 

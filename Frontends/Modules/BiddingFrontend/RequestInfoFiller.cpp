@@ -645,12 +645,12 @@ namespace Bidding
     }
 
     void fill_token(
-      AdServer::CampaignSvcs::CampaignManager::NativeDataToken&,
+      AdServer::Bidding::CampaignManager::NativeDataToken&,
       const NativeData&)
     {}
 
     void fill_token(
-      AdServer::CampaignSvcs::CampaignManager::NativeImageToken& res_token,
+      AdServer::Bidding::CampaignManager::NativeImageToken& res_token,
       const NativeImage& image_asset)
     {
       res_token.width = image_asset.width;
@@ -709,7 +709,7 @@ namespace Bidding
     void
     fill_video_size(
       KeywordFormatter& kw_fmt,
-      AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot_request,
+      AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request,
       unsigned long width,
       unsigned long height)
     {
@@ -1034,7 +1034,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -1249,7 +1249,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       JsonAdSlotProcessingContext& ad_slot_context,
       const JsonValue& value) const
@@ -1347,7 +1347,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
+      AdServer::Bidding::CampaignManager::RequestParams&
         request_params,
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
@@ -1367,7 +1367,7 @@ namespace Bidding
 
   private:
     void process_deal_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
+      AdServer::Bidding::CampaignManager::RequestParams&
         request_params,
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
@@ -1443,7 +1443,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
     {
@@ -1463,7 +1463,7 @@ namespace Bidding
   private:
     void
     process_metric_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
     {
@@ -1522,7 +1522,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonProcessingContext& context,
       const JsonValue& value) const
     {
@@ -1541,7 +1541,7 @@ namespace Bidding
 
   private:
     void process_segment_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonProcessingContext& context,
       const JsonValue& value) const
     {
@@ -1605,7 +1605,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
+      AdServer::Bidding::CampaignManager::RequestParams&
         request_params,
       Native& context,
       const JsonValue& value) const
@@ -1839,7 +1839,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams&
+      AdServer::Bidding::CampaignManager::RequestParams&
         request_params,
       JsonAdSlotProcessingContext::Native& context,
       const JsonValue& value) const
@@ -1879,7 +1879,7 @@ namespace Bidding
     {
       virtual void
       process(
-        AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+        AdServer::Bidding::CampaignManager::RequestParams& request_params,
         Native& context,
         const JsonValue& value) const
       {
@@ -1956,7 +1956,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       JsonAdSlotProcessingContext& context,
       const JsonValue& value) const
@@ -2039,7 +2039,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonProcessingContext::UserEid& user_eid,
       const JsonValue& value) const
     {
@@ -2058,7 +2058,7 @@ namespace Bidding
 
   private:
     void process_uid_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonProcessingContext::UserEid& user_eid,
       const JsonValue& value) const
     {
@@ -2105,7 +2105,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonProcessingContext& context,
       const JsonValue& value) const
     {
@@ -2124,7 +2124,7 @@ namespace Bidding
 
   private:
     void process_user_eid_(
-      AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      AdServer::Bidding::CampaignManager::RequestParams& request_params,
       JsonProcessingContext& context,
       const JsonValue& value) const
     {
@@ -2402,7 +2402,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       JsonProcessingContext& context,
       const JsonValue& value) const
@@ -3213,7 +3213,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_by_google_request(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
     std::string& keywords,
     GoogleAdSlotContextArray& as_slots_context,
@@ -3426,7 +3426,7 @@ namespace Bidding
     request_params.ad_slots.length(bid_request.adslot_size());
     for(int slot_i = 0; slot_i < bid_request.adslot_size(); ++slot_i)
     {
-      AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot_request =
+      AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
         request_params.ad_slots[slot_i];
 
       init_adslot(ad_slot_request);
@@ -3887,7 +3887,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_vast_instantiate_type_(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const std::string& source_id) const
     noexcept
   {
@@ -3903,7 +3903,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_native_instantiate_type_(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const std::string& source_id) const
     noexcept
   {
@@ -3918,7 +3918,7 @@ namespace Bidding
   void
   RequestInfoFiller::fill_request_type_(
     RequestInfo& request_info,
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const std::string& source_id) const
     noexcept
   {
@@ -3995,7 +3995,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_by_openrtb_request(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
     std::string& keywords,
     JsonProcessingContext& context,
@@ -4588,7 +4588,7 @@ namespace Bidding
             request_info.source_id);
         }
 
-        AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot_request =
+        AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
           request_params.ad_slots[slot_i];
 
         init_adslot(ad_slot_request);
@@ -5223,7 +5223,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_by_user_agent(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
     String::SubString user_agent,
     bool filter_request,
@@ -5310,7 +5310,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_by_referer(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     std::string& search_words,
     const HTTP::HTTPAddress& referer,
     bool fill_search_words,
@@ -5348,7 +5348,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_additional_url_(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     std::string& search_words,
     const HTTP::HTTPAddress& add_url)
     const
@@ -5373,7 +5373,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::fill_search_words_(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     std::string& search_words,
     const HTTP::HTTPAddress& url)
     const
@@ -5420,7 +5420,7 @@ namespace Bidding
   void
   RequestInfoFiller::fill_by_ip(
     RequestInfo& request_info,
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     String::SubString ip)
     const
     noexcept
@@ -5494,7 +5494,7 @@ namespace Bidding
   RequestInfoFiller::verify_user_id_(
     const std::string& signed_user_id,
     const std::string& source_id,
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params)
+    AdServer::Bidding::CampaignManager::RequestParams& request_params)
     const noexcept
   {
     static const size_t UNSIGNED_SSP_USER_ID_LEN = 22;
@@ -5561,7 +5561,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::select_referer_(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const JsonProcessingContext& context,
     HTTP::HTTPAddress& referer) const
     /*throw(eh::Exception)*/
@@ -5733,7 +5733,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::init_adslot(
-    AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& adslot_info)
+    AdServer::Bidding::CampaignManager::AdSlotInfo& adslot_info)
     noexcept
   {
     adslot_info.video_allow_skippable = true;
@@ -5743,7 +5743,7 @@ namespace Bidding
 
   void
   RequestInfoFiller::init_request_param(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info) const noexcept
   {
     CorbaAlgs::fill_sequence(

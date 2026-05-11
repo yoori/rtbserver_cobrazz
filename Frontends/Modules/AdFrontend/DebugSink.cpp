@@ -1,9 +1,14 @@
 #include "DebugSink.hpp"
 
+#include <Commons/CorbaAlgs.hpp>
+#include <Commons/GrpcAlgs.hpp>
+
 namespace AdServer
 {
   namespace
   {
+    namespace CM = adserver::campaign_svcs::campaign_manager;
+
     namespace Debug
     {
       const char ERROR_HEAD[] = "=== ERROR ===";
@@ -25,6 +30,21 @@ namespace AdServer
         return atom.id();
       }
     };
+
+    void
+    print_ids(
+      DebugStream& out,
+      const google::protobuf::RepeatedField<google::protobuf::uint64>& ids)
+    {
+      for(int i = 0; i < ids.size(); ++i)
+      {
+        if(i)
+        {
+          out << ",";
+        }
+        out << ids.Get(i);
+      }
+    }
   }
 
   DebugSink::DebugSink(bool allow_show_history_profile) noexcept
@@ -504,19 +524,18 @@ namespace AdServer
   void
   DebugSink::print_creative_selection_debug_info_(
     const PassbackInfo& passback_info,
-    const CampaignSvcs::CampaignManager::AdSlotResult&
-      request_creative_result)
+    const CM::AdSlotResult& request_creative_result)
     noexcept
   {
-    const CampaignSvcs::CampaignManager::CreativeSelectResultSeq&
-      selected_creatives = request_creative_result.selected_creatives;
-    const CampaignSvcs::CampaignManager::AdSlotDebugInfo& debug_info =
-      request_creative_result.debug_info;
-    const CampaignSvcs::CampaignManager::CreativeSelectDebugInfoSeq&
-      debug_selected_creatives = request_creative_result.debug_info.selected_creatives;
-    CORBA::ULong creative_count = selected_creatives.length();
+    const auto& selected_creatives =
+      request_creative_result.selected_creatives();
+    const CM::AdSlotDebugInfo& debug_info =
+      request_creative_result.debug_info();
+    const auto& debug_selected_creatives =
+      request_creative_result.debug_info().selected_creatives();
+    const int creative_count = selected_creatives.size();
 
-    assert(selected_creatives.length() == debug_selected_creatives.length());
+    assert(selected_creatives.size() == debug_selected_creatives.size());
 
     if (require_debug_body())
     {
@@ -525,11 +544,11 @@ namespace AdServer
     }
     else if (require_short_header())
     {
-      CORBA::ULong dc_count = debug_selected_creatives.length();
+      const int dc_count = debug_selected_creatives.size();
       debug_info_str_ << "fc_click_url = " <<
-        (dc_count ? selected_creatives[0].click_url : "") << sep_ <<
+        (dc_count ? selected_creatives.Get(0).click_url() : "") << sep_ <<
         "fc_action_url = " <<
-          (dc_count ? debug_selected_creatives[0].action_adv_url : "") << sep_ <<
+          (dc_count ? debug_selected_creatives.Get(0).action_adv_url() : "") << sep_ <<
         "passback_url = " << passback_info.url << sep_ <<
         "ccids = " << creative_count << sep_;
       return;
@@ -540,8 +559,8 @@ namespace AdServer
 
     if(creative_count != 0)
     {
-      first_ccid = selected_creatives[0].ccid;
-      first_cmp_id = selected_creatives[0].cmp_id;
+      first_ccid = selected_creatives.Get(0).ccid();
+      first_cmp_id = selected_creatives.Get(0).cmp_id();
     }
 
     CampaignSvcs::RevenueDecimal imp_revenue(
@@ -551,50 +570,50 @@ namespace AdServer
     CampaignSvcs::RevenueDecimal action_revenue(
       CampaignSvcs::RevenueDecimal::ZERO);
 
-    for(CORBA::ULong i = 0; i < debug_selected_creatives.length(); ++i)
+    for(int i = 0; i < debug_selected_creatives.size(); ++i)
     {
-      imp_revenue += CorbaAlgs::unpack_decimal<
+      imp_revenue += GrpcAlgs::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives[i].imp_revenue);
-      click_revenue += CorbaAlgs::unpack_decimal<
+          debug_selected_creatives.Get(i).imp_revenue().value());
+      click_revenue += GrpcAlgs::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives[i].click_revenue);
-      action_revenue += CorbaAlgs::unpack_decimal<
+          debug_selected_creatives.Get(i).click_revenue().value());
+      action_revenue += GrpcAlgs::unpack_decimal<
         CampaignSvcs::RevenueDecimal>(
-          debug_selected_creatives[i].action_revenue);
+          debug_selected_creatives.Get(i).action_revenue().value());
     }
 
     debug_info_str_ <<
       "ccid = " << first_ccid << sep_ <<
       "cmpid = " << first_cmp_id << sep_ <<
-      "creative_size_id = " << debug_info.tag_size_id << sep_ <<
-      "mime_format = " << request_creative_result.mime_format << sep_ <<
-      "tag_id = " << debug_info.tag_id << sep_ <<
-      "site_id = " << debug_info.site_id << sep_ <<
-      "site_rate_id = " << debug_info.site_rate_id << sep_ <<
+      "creative_size_id = " << debug_info.tag_size_id() << sep_ <<
+      "mime_format = " << request_creative_result.mime_format() << sep_ <<
+      "tag_id = " << debug_info.tag_id() << sep_ <<
+      "site_id = " << debug_info.site_id() << sep_ <<
+      "site_rate_id = " << debug_info.site_rate_id() << sep_ <<
       "imp_revenue = " << imp_revenue << sep_ <<
       "click_revenue = " << click_revenue << sep_ <<
       "action_revenue = " << action_revenue << sep_ <<
-      "min_no_adv_ecpm = " << debug_info.min_no_adv_ecpm << sep_ <<
-      "min_text_ecpm = " << debug_info.min_text_ecpm << sep_ <<
-      "test_request = " << request_creative_result.test_request << sep_ <<
+      "min_no_adv_ecpm = " << debug_info.min_no_adv_ecpm() << sep_ <<
+      "min_text_ecpm = " << debug_info.min_text_ecpm() << sep_ <<
+      "test_request = " << request_creative_result.test_request() << sep_ <<
       "passback_url = " << passback_info.url << sep_ <<
-      "track_pixel_url = " << debug_info.track_pixel_url << sep_ <<
+      "track_pixel_url = " << debug_info.track_pixel_url() << sep_ <<
       "cpm_threshold = " <<
-        CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-          debug_info.cpm_threshold) << sep_ <<
-      "walled_garden = " << debug_info.walled_garden << sep_ <<
+        GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+          debug_info.cpm_threshold().value()) << sep_ <<
+      "walled_garden = " << debug_info.walled_garden() << sep_ <<
       "auction_type = ";
 
-    if(debug_info.auction_type == CampaignSvcs::AT_RANDOM)
+    if(debug_info.auction_type() == CampaignSvcs::AT_RANDOM)
     {
       debug_info_str_ << "random";
     }
-    else if(debug_info.auction_type == CampaignSvcs::AT_MAX_ECPM)
+    else if(debug_info.auction_type() == CampaignSvcs::AT_MAX_ECPM)
     {
       debug_info_str_ << "max ecpm";
     }
-    else if(debug_info.auction_type == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
+    else if(debug_info.auction_type() == CampaignSvcs::AT_PROPORTIONAL_PROBABILITY)
     {
       debug_info_str_ << "proportional probability";
     }
@@ -606,49 +625,51 @@ namespace AdServer
     debug_info_str_ << sep_ <<
       "selected_creatives = ";
 
-    CORBA::ULong i = 0;
-    for(i = 0; i < creative_count; ++i)
+    for(int i = 0; i < creative_count; ++i)
     {
       const String::SubString OFFSET(require_debug_body() ? "  " : "");
+      const CM::CreativeSelectResult& creative = selected_creatives.Get(i);
+      const CM::CreativeSelectDebugInfo& debug_creative =
+        debug_selected_creatives.Get(i);
 
       debug_info_str_ << creative_start_sep_ <<
-        OFFSET << "request_id = " << CorbaAlgs::unpack_request_id(
-          selected_creatives[i].request_id) << sep_ <<
-        OFFSET << "ccid = " << selected_creatives[i].ccid << sep_ <<
-        OFFSET << "cmp_id = " << selected_creatives[i].cmp_id << sep_ <<
-        OFFSET << "order_set_id = " << selected_creatives[i].order_set_id << sep_ <<
+        OFFSET << "request_id = " <<
+          AdServer::Commons::RequestId(creative.request_id()) << sep_ <<
+        OFFSET << "ccid = " << creative.ccid() << sep_ <<
+        OFFSET << "cmp_id = " << creative.cmp_id() << sep_ <<
+        OFFSET << "order_set_id = " << creative.order_set_id() << sep_ <<
         OFFSET << "triggered_expression = " <<
-          debug_selected_creatives[i].triggered_expression << sep_ <<
-        OFFSET << "ecpm = " << CorbaAlgs::unpack_decimal<
-          AdServer::CampaignSvcs::RevenueDecimal>(selected_creatives[i].ecpm) << sep_ <<
-        OFFSET << "ecpm_bid = " << CorbaAlgs::unpack_decimal<
-          AdServer::CampaignSvcs::RevenueDecimal>(debug_selected_creatives[i].ecpm_bid) << sep_ <<
-        OFFSET << "click_url = " << selected_creatives[i].click_url << sep_ <<
-        OFFSET << "html_url = " << debug_selected_creatives[i].html_url << sep_ <<
+          debug_creative.triggered_expression() << sep_ <<
+        OFFSET << "ecpm = " << GrpcAlgs::unpack_decimal<
+          AdServer::CampaignSvcs::RevenueDecimal>(creative.ecpm().value()) << sep_ <<
+        OFFSET << "ecpm_bid = " << GrpcAlgs::unpack_decimal<
+          AdServer::CampaignSvcs::RevenueDecimal>(debug_creative.ecpm_bid().value()) << sep_ <<
+        OFFSET << "click_url = " << creative.click_url() << sep_ <<
+        OFFSET << "html_url = " << debug_creative.html_url() << sep_ <<
         OFFSET << "action_adv_url = " <<
-          debug_selected_creatives[i].action_adv_url << sep_ <<
+          debug_creative.action_adv_url() << sep_ <<
         OFFSET << "revenue = " <<
-          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-            selected_creatives[i].revenue) << sep_ <<
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            creative.revenue().value()) << sep_ <<
         OFFSET << "imp_revenue = " <<
-          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-            debug_selected_creatives[i].imp_revenue) << sep_ <<
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            debug_creative.imp_revenue().value()) << sep_ <<
         OFFSET << "click_revenue = " <<
-          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-            debug_selected_creatives[i].click_revenue) << sep_ <<
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            debug_creative.click_revenue().value()) << sep_ <<
         OFFSET << "action_revenue = " <<
-          CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
-            debug_selected_creatives[i].action_revenue);
+          GrpcAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
+            debug_creative.action_revenue().value());
       debug_info_str_ << creative_end_sep_;
     }
 
     debug_info_str_ << sep_;
 
     if (require_debug_body() &&
-        debug_info.trace_ccg[0] != 0)
+        !debug_info.trace_ccg().empty())
     {
       debug_info_str_ << "\n" << Debug::TRACE_CCG_INFO_HEAD << "\n";
-      debug_info_str_ << debug_info.trace_ccg;
+      debug_info_str_ << debug_info.trace_ccg();
     }
   }
 
@@ -681,39 +702,52 @@ namespace AdServer
   DebugSink::print_creative_selection_debug_info(
     const RequestInfo& request_info,
     const PassbackInfo& passback_info,
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const CM::RequestCreativeResult&
       campaign_matching_result,
     const RequestTimeMetering& request_time_metering)
     noexcept
   {
     if(require_debug_info())
     {
-      const AdServer::CampaignSvcs::CampaignManager::AdRequestDebugInfo&
-        debug_info = campaign_matching_result.debug_info;
+      const CM::AdRequestDebugInfo& debug_info =
+        campaign_matching_result.debug_info();
 
-      debug_info_str_ << "colo_id = " << debug_info.colo_id << sep_ << "freq-caps = ";
-      CorbaAlgs::print_sequence_sequence(debug_info_str_,
-        campaign_matching_result.ad_slots,
-        &AdServer::CampaignSvcs::CampaignManager::AdSlotResult::freq_caps);
+      debug_info_str_ << "colo_id = " << debug_info.colo_id() << sep_ <<
+        "freq-caps = ";
+      for(int i = 0; i < campaign_matching_result.ad_slots_size(); ++i)
+      {
+        if(i)
+        {
+          debug_info_str_ << ",";
+        }
+        print_ids(debug_info_str_,
+          campaign_matching_result.ad_slots(i).freq_caps());
+      }
       debug_info_str_ << sep_ << "uc-freq-caps = ";
-      CorbaAlgs::print_sequence_sequence(debug_info_str_,
-        campaign_matching_result.ad_slots,
-        &AdServer::CampaignSvcs::CampaignManager::AdSlotResult::uc_freq_caps);
+      for(int i = 0; i < campaign_matching_result.ad_slots_size(); ++i)
+      {
+        if(i)
+        {
+          debug_info_str_ << ",";
+        }
+        print_ids(debug_info_str_,
+          campaign_matching_result.ad_slots(i).uc_freq_caps());
+      }
       debug_info_str_ << sep_ <<
-        "user_group_id = " << debug_info.user_group_id << sep_ <<
+        "user_group_id = " << debug_info.user_group_id() << sep_ <<
         "geo_channels = ";
-      CorbaAlgs::print_sequence(debug_info_str_, debug_info.geo_channels);
+      print_ids(debug_info_str_, debug_info.geo_channels());
       debug_info_str_ << sep_ << "device_channels = ";
-      CorbaAlgs::print_sequence(debug_info_str_, debug_info.platform_channels);
+      print_ids(debug_info_str_, debug_info.platform_channels());
       debug_info_str_ << sep_ <<
-        "last_device_channel_id = " << debug_info.last_platform_channel_id << sep_ <<
+        "last_device_channel_id = " << debug_info.last_platform_channel_id() << sep_ <<
         "random = " << request_info.random << sep_;
 
-      if(campaign_matching_result.ad_slots.length())
+      if(campaign_matching_result.ad_slots_size())
       {
         print_creative_selection_debug_info_(
           passback_info,
-          campaign_matching_result.ad_slots[0]);
+          campaign_matching_result.ad_slots(0));
       }
       else
       {

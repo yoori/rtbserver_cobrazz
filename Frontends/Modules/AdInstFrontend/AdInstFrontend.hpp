@@ -24,7 +24,8 @@
 #include <UserInfoSvcs/UserInfoManagerController/UserInfoManagerController.hpp>
 
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include <CampaignManagerGrpc.grpc-client.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/TaskScheduler.hpp>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
@@ -138,7 +139,7 @@ namespace Instantiate
     instantiate_click_(
       HttpResponse& response,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::InstantiateAdResult*
+      const adserver::campaign_svcs::campaign_manager::InstantiateAdResult&
         inst_ad_result)
       /*throw(Exception)*/;
 
@@ -169,7 +170,9 @@ namespace Instantiate
 
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
   };

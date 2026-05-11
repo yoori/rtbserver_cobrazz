@@ -10,7 +10,7 @@ target_link_libraries(UserBindFrontend
   Commons
   UserIdController
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   UserBindClient
   FCGI

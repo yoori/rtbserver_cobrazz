@@ -1,4 +1,5 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "DAOBidRequestTask.hpp"
@@ -57,13 +58,13 @@ namespace Bidding
 
   bool
   DAOBidRequestTask::write_response(
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
     //static const char* FUN = "DAOBidRequestTask::write_response()";
 
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
+    AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
 
     std::ostringstream response_ostr;
@@ -128,8 +129,8 @@ namespace Bidding
   DAOBidRequestTask::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
-    const AdServer::CampaignSvcs::CampaignManager::
+    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
+    const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
@@ -143,7 +144,7 @@ namespace Bidding
 
       assert(campaign_match_result.ad_slots.length() > 0);
 
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[0];
 
       CampaignSvcs::RevenueDecimal sum_pub_ecpm = CorbaAlgs::unpack_decimal<CampaignSvcs::RevenueDecimal>(
@@ -161,7 +162,7 @@ namespace Bidding
       if(ad_slot_result.native_data_tokens.length() >= 1)
       {
         // NDTE_TITLE
-        const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+        const AdServer::Bidding::CampaignManager::TokenInfo& token =
           ad_slot_result.native_data_tokens[0];
         // title
         root_json.add_escaped_string(
@@ -181,7 +182,7 @@ namespace Bidding
       // icon
       if(ad_slot_result.native_image_tokens.length() > 1)
       {
-        const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
           ad_slot_result.native_image_tokens[1];
         root_json.add_escaped_string(
           Response::AdJson::ICON,
@@ -191,7 +192,7 @@ namespace Bidding
       // image
       if(ad_slot_result.native_image_tokens.length() > 0)
       {
-        const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+        const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
           ad_slot_result.native_image_tokens[0];
         root_json.add_escaped_string(
           Response::AdJson::IMAGE, String::SubString(token.value));

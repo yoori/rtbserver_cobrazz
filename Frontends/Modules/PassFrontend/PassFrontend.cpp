@@ -377,9 +377,11 @@ namespace Passback
         parse_config_();
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-        campaign_manager_ =
-          std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
-            FrontendCommons::read_campaign_manager_refs(*common_config_));
+        auto campaign_manager = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+        campaign_manager_ = campaign_manager;
+        add_child_object(campaign_manager);
 
         AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
           user_info_controller_groups;

@@ -1,5 +1,7 @@
 #include <zlib.h>
 
+#include <Commons/CorbaAlgs.hpp>
+
 #include "OpenRtbBidRequestTask.hpp"
 
 namespace AdServer
@@ -231,7 +233,7 @@ namespace Bidding
     print_int_category_seq(
       AdServer::Commons::JsonObject& parent,
       const String::SubString& seq_name,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         ExternalCreativeCategoryIdSeq& categories)
     {
       AdServer::Commons::JsonObject array(parent.add_array(seq_name));
@@ -383,13 +385,13 @@ namespace Bidding
 
   bool
   OpenRtbBidRequestTask::write_response(
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
     //static const char* FUN = "OpenRtbBidRequestTask::write_response()";
 
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
+    AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
 
     std::ostringstream response_ostr;
@@ -515,7 +517,7 @@ namespace Bidding
   OpenRtbBidRequestTask::fill_ext0_nroa_(
     AdServer::Commons::JsonObject& nroa_obj,
     const RequestInfo& /*request_info*/,
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
     nroa_obj.add_escaped_string_if_non_empty(
@@ -527,7 +529,7 @@ namespace Bidding
 
       for(CORBA::ULong contract_i = 0; contract_i < ad_slot_result.contracts.length(); ++contract_i)
       {
-        const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& contract = ad_slot_result.contracts[contract_i];
+        const AdServer::Bidding::CampaignManager::ExtContractInfo& contract = ad_slot_result.contracts[contract_i];
         AdServer::Commons::JsonObject contract_obj(contracts_array.add_object());
         contract_obj.add_escaped_string_if_non_empty(
           Response::OpenRtb::CONTRACT_ORD_ID, String::SubString(contract.contract_info.ord_contract_id));
@@ -554,7 +556,7 @@ namespace Bidding
   void
   OpenRtbBidRequestTask::fill_buzsape_nroa_contract_(
     AdServer::Commons::JsonObject& contract_obj,
-    const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& ext_contract_info)
+    const AdServer::Bidding::CampaignManager::ExtContractInfo& ext_contract_info)
     noexcept
   {
     contract_obj.add_escaped_string_if_non_empty(
@@ -590,7 +592,7 @@ namespace Bidding
   OpenRtbBidRequestTask::fill_buzsape_nroa_(
     AdServer::Commons::JsonObject& nroa_obj,
     const RequestInfo& /*request_info*/,
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
     nroa_obj.add_escaped_string_if_non_empty(
@@ -600,7 +602,7 @@ namespace Bidding
 
     if(ad_slot_result.contracts.length() > 0)
     {
-      const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& initial_contract = ad_slot_result.contracts[0];
+      const AdServer::Bidding::CampaignManager::ExtContractInfo& initial_contract = ad_slot_result.contracts[0];
 
       // contractor
       {
@@ -653,9 +655,9 @@ namespace Bidding
   OpenRtbBidRequestTask::fill_openrtb_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    const AdServer::Bidding::CampaignManager::RequestParams& request_params,
     const JsonProcessingContext& context,
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult& campaign_match_result,
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult& campaign_match_result,
     bool fill_yandex_attributes)
     noexcept
   {
@@ -710,7 +712,7 @@ namespace Bidding
             ad_slot_i < campaign_match_result.ad_slots.length();
             ++ad_slot_i, ++slot_it)
         {
-          const AdServer::CampaignSvcs::CampaignManager::
+          const AdServer::Bidding::CampaignManager::
             AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
           if(pub_currency_code.empty())
@@ -1114,10 +1116,10 @@ namespace Bidding
   OpenRtbBidRequestTask::fill_yandex_response_(
     std::ostream& response_ostr,
     const RequestInfo& request_info,
-    const AdServer::CampaignSvcs::CampaignManager::
+    const AdServer::Bidding::CampaignManager::
       RequestParams& request_params,
     const JsonProcessingContext& context,
-    const AdServer::CampaignSvcs::CampaignManager::
+    const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
@@ -1200,7 +1202,7 @@ namespace Bidding
             ad_slot_i < campaign_match_result.ad_slots.length();
             ++ad_slot_i, ++slot_it)
         {
-          const AdServer::CampaignSvcs::CampaignManager::
+          const AdServer::Bidding::CampaignManager::
             AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
           if(pub_currency_code.empty())
@@ -1359,7 +1361,7 @@ namespace Bidding
   OpenRtbBidRequestTask::fill_native_response_(
     AdServer::Commons::JsonObject* root_json,
     const JsonAdSlotProcessingContext::Native& native_context,
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result,
+    const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result,
     bool need_escape,
     bool add_root_native,
     SourceTraits::NativeAdsInstantiateType instantiate_type)
@@ -1475,7 +1477,7 @@ namespace Bidding
       for (auto data_it = native_context.data_assets.begin();
         data_it != native_context.data_assets.end(); ++data_it, ++data_i)
       {
-        const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+        const AdServer::Bidding::CampaignManager::TokenInfo& token =
           ad_slot_result.native_data_tokens[data_i];
         if(token.value[0])
         {
@@ -1514,7 +1516,7 @@ namespace Bidding
         for (auto image_it = native_context.image_assets.begin();
            image_it != native_context.image_assets.end(); ++image_it, ++image_i)
         {
-          const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+          const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
             ad_slot_result.native_image_tokens[image_i];
           if(token.value[0])
           {

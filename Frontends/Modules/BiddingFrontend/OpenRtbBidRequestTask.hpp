@@ -34,7 +34,7 @@ namespace Bidding
 
     virtual bool
     write_response(
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result)
       noexcept;
 
@@ -57,9 +57,9 @@ namespace Bidding
     fill_openrtb_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      const AdServer::Bidding::CampaignManager::RequestParams& request_params,
       const JsonProcessingContext& context,
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult& campaign_match_result,
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult& campaign_match_result,
       bool fill_yandex_attributes)
       noexcept;
 
@@ -67,10 +67,10 @@ namespace Bidding
     fill_yandex_response_(
       std::ostream& response_ostr,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       const JsonProcessingContext& context,
-      const AdServer::CampaignSvcs::CampaignManager::
+      const AdServer::Bidding::CampaignManager::
         RequestCreativeResult& campaign_match_result)
       noexcept;
 
@@ -78,7 +78,7 @@ namespace Bidding
     fill_native_response_(
       AdServer::Commons::JsonObject* root_json,
       const JsonAdSlotProcessingContext::Native& native_context,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result,
+      const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result,
       bool need_escape,
       bool add_root_native,
       SourceTraits::NativeAdsInstantiateType instantiate_type);
@@ -92,21 +92,21 @@ namespace Bidding
     static void
     fill_buzsape_nroa_contract_(
       AdServer::Commons::JsonObject& contract_obj,
-      const AdServer::CampaignSvcs::CampaignManager::ExtContractInfo& ext_contract_info)
+      const AdServer::Bidding::CampaignManager::ExtContractInfo& ext_contract_info)
       noexcept;
 
     static void
     fill_buzsape_nroa_(
       AdServer::Commons::JsonObject& nroa_obj,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+      const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
       noexcept;
 
     static void
     fill_ext0_nroa_(
       AdServer::Commons::JsonObject& nroa_obj,
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+      const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
       noexcept;
 
   private:

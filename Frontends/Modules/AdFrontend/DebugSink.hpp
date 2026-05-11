@@ -5,7 +5,7 @@
 
 #include <String/SubString.hpp>
 
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include <CampaignManagerGrpc.grpc.pb.h>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <ChannelSvcs/ChannelManagerController/ChannelManagerController.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
@@ -105,7 +105,7 @@ namespace AdServer
     print_creative_selection_debug_info(
       const RequestInfo& request_info,
       const PassbackInfo& passback_info,
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const adserver::campaign_svcs::campaign_manager::RequestCreativeResult&
         campaign_matching_result,
       const RequestTimeMetering& request_time_metering)
       noexcept;
@@ -152,7 +152,7 @@ namespace AdServer
     void
     print_creative_selection_debug_info_(
       const PassbackInfo& passback_info,
-      const CampaignSvcs::CampaignManager::AdSlotResult&
+      const adserver::campaign_svcs::campaign_manager::AdSlotResult&
         request_creative_result)
       noexcept;
 

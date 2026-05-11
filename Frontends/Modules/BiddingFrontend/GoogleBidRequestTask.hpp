@@ -37,7 +37,7 @@ namespace Bidding
     // write response (convert holder to response)
     virtual bool
     write_response(
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result)
       noexcept;
 

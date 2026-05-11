@@ -2,7 +2,7 @@
 
 #include <string>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
+#include "CampaignManagerTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 
 namespace AdServer
@@ -10,7 +10,7 @@ namespace AdServer
 namespace Bidding
 {
   void add_token(
-    AdServer::CampaignSvcs::CampaignManager::TokenSeq& tokens,
+    AdServer::Bidding::CampaignManager::TokenSeq& tokens,
     const char* token_name,
     const std::string& token_value);
 }

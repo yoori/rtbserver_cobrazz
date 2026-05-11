@@ -11,5 +11,4 @@ target_link_libraries(ChannelClient
   ChannelManagerControllerIDL
   ChannelServerGrpcClient
   ChannelSessionFactory
-  FeConfigXSD
 )

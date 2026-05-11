@@ -9,7 +9,7 @@ target_link_libraries(PassFrontend
   Commons
   RequestMatchers
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FCGI
 )

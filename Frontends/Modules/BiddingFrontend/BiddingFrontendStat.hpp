@@ -5,7 +5,7 @@
 #include <Generics/CompositeActiveObject.hpp>
 #include <Controlling/StatsDumper/StatsDumper.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
+#include "CampaignManagerTypes.hpp"
 
 
 namespace AdServer
@@ -44,8 +44,8 @@ namespace AdServer
 
     void
     flush(
-      const CampaignSvcs::CampaignManager::RequestParams&,
-      CampaignSvcs::CampaignManager::RequestCreativeResult*,
+      const AdServer::Bidding::CampaignManager::RequestParams&,
+      AdServer::Bidding::CampaignManager::RequestCreativeResult*,
       const Generics::Time& processing_time)
       noexcept;
 

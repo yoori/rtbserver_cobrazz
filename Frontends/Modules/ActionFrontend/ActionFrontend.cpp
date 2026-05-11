@@ -10,6 +10,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 
@@ -182,8 +183,7 @@ namespace AdServer::Action
         frontend_config->get().ActionFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::ACTION_FRONTEND)
+      common_module_(ReferenceCounting::add_ref(common_module))
   {}
 
   void
@@ -289,8 +289,13 @@ namespace AdServer::Action
           add_child_object(user_bind_objects.active_object);
         }
 
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
+        auto campaign_manager = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
+        campaign_manager_ = campaign_manager;
+        add_child_object(campaign_manager);
 
         AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
           user_info_controller_groups;
@@ -711,7 +716,7 @@ namespace AdServer::Action
 
   void
   Frontend::fill_match_request_info_(
-    AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
+    adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
     const adserver::channel_svcs::channel_server::MatchResponse&
@@ -723,19 +728,18 @@ namespace AdServer::Action
         mri.match_info.coord_location
     */
 
-    mri.match_info.colo_id = common_config_->colo_id();
-    mri.user_id = CorbaAlgs::pack_user_id(user_id);
-    mri.request_time = CorbaAlgs::pack_time(now);
+    auto* match_info = mri.mutable_match_info();
+    match_info->set_colo_id(common_config_->colo_id());
+    mri.set_user_id(GrpcAlgs::pack_user_id(user_id));
+    mri.set_request_time(GrpcAlgs::pack_time(now));
     const auto& page_channels =
       trigger_match_result.matched_channels().page_channels();
-    CORBA::ULong result_len = page_channels.size();
-    mri.match_info.pkw_channels.length(result_len);
-    for(CORBA::ULong i = 0; i < result_len; ++i)
+    const int result_len = page_channels.size();
+    for(int i = 0; i < result_len; ++i)
     {
-      mri.match_info.pkw_channels[i].channel_id =
-        page_channels[i].id();
-      mri.match_info.pkw_channels[i].channel_trigger_id =
-        page_channels[i].trigger_channel_id();
+      auto* pkw_channel = match_info->add_pkw_channels();
+      pkw_channel->set_channel_id(page_channels[i].id());
+      pkw_channel->set_channel_trigger_id(page_channels[i].trigger_channel_id());
     }
   }
 
@@ -896,14 +900,31 @@ namespace AdServer::Action
 
         try
         {
-          AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
+          adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
+            process_match_request;
           fill_match_request_info_(
-            request_info,
+            *process_match_request.mutable_match_request_info(),
             user_id,
             now,
             trigger_match_result);
 
-          campaign_managers_.process_match_request(request_info);
+          AdServer::Grpc::sync_call<
+            adserver::campaign_svcs::campaign_manager::ProcessMatchRequestResponse>(
+              [&](auto callback)
+              {
+                campaign_manager_->process_match_request(
+                  process_match_request,
+                  std::move(callback));
+              },
+              [](const grpc::Status& status)
+              {
+                Stream::Error ostr;
+                ostr << "CampaignManager::process_match_request(): "
+                  "gRPC call failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                throw Exception(ostr);
+              });
         }
         catch(const eh::Exception& ex)
         {
@@ -1232,62 +1253,66 @@ namespace AdServer::Action
 
     try
     {
-      AdServer::CampaignSvcs::CampaignManager::ActionInfo verify_action_info;
+      adserver::campaign_svcs::campaign_manager::ActionInfo
+        verify_action_info;
 
       // verify_action_info.user_id, verify_action_info.user_status must be initialized in loop
 
-      verify_action_info.time = CorbaAlgs::pack_time(request_info.time);
-      verify_action_info.test_request = request_info.test_request;
-      verify_action_info.log_as_test = request_info.log_as_test;
+      verify_action_info.set_time(GrpcAlgs::pack_time(request_info.time));
+      verify_action_info.set_test_request(request_info.test_request);
+      verify_action_info.set_log_as_test(request_info.log_as_test);
 
       {
-        verify_action_info.location.length(1);
-        verify_action_info.location[0].country << request_info.location.country_code;
-        verify_action_info.location[0].region << request_info.location.region;
-        verify_action_info.location[0].city << request_info.location.city;
+        auto* location = verify_action_info.add_location();
+        location->set_country(request_info.location.country_code.str());
+        location->set_region(request_info.location.region.str());
+        location->set_city(request_info.location.city.str());
       }
 
-      verify_action_info.referer << request_info.referer;
-      verify_action_info.action_value_defined = request_info.value.present();
+      verify_action_info.set_referer(request_info.referer);
+      verify_action_info.set_action_value_defined(request_info.value.present());
       if(request_info.value.present())
       {
-        verify_action_info.action_value = CorbaAlgs::pack_decimal(*request_info.value);
+        verify_action_info.mutable_action_value()->set_value(
+          GrpcAlgs::pack_decimal(*request_info.value));
       }
 
-      verify_action_info.order_id << request_info.order_id;
+      verify_action_info.set_order_id(request_info.order_id);
 
       if(request_info.campaign_id.present())
       {
-        verify_action_info.campaign_id_defined = true;
-        verify_action_info.campaign_id = *request_info.campaign_id;
+        auto* campaign_id = verify_action_info.mutable_campaign_id();
+        campaign_id->set_defined(true);
+        campaign_id->set_value(*request_info.campaign_id);
       }
       else
       {
-        verify_action_info.campaign_id_defined = false;
+        verify_action_info.mutable_campaign_id()->set_defined(false);
       }
 
       if(request_info.action_id.present())
       {
-        verify_action_info.action_id_defined = true;
-        verify_action_info.action_id = *request_info.action_id;
+        auto* action_id = verify_action_info.mutable_action_id();
+        action_id->set_defined(true);
+        action_id->set_value(*request_info.action_id);
       }
       else
       {
-        verify_action_info.action_id_defined = false;
+        verify_action_info.mutable_action_id()->set_defined(false);
       }
 
       if(common_config_->ip_logging_enabled())
       {
         std::string ip_hash;
         FrontendCommons::ip_hash(ip_hash, request_info.peer_ip, common_config_->ip_salt());
-        verify_action_info.ip_hash << ip_hash;
-        verify_action_info.peer_ip << request_info.peer_ip;
+        verify_action_info.set_ip_hash(ip_hash);
+        verify_action_info.set_peer_ip(request_info.peer_ip);
       }
 
-      CorbaAlgs::fill_sequence(
-        request_info.platform_ids.begin(),
-        request_info.platform_ids.end(),
-        verify_action_info.platform_ids);
+      for(const auto platform_id : request_info.platform_ids)
+      {
+        verify_action_info.add_platform_ids(platform_id);
+      }
 
       const Commons::UserId* verify_user_ids[] = {
         &request_info.user_id,
@@ -1307,14 +1332,35 @@ namespace AdServer::Action
            verify_user_id != AdServer::Commons::PROBE_USER_ID &&
            processed_user_ids.find(verify_user_id) == processed_user_ids.end())
         {
-          verify_action_info.user_id = CorbaAlgs::pack_user_id(verify_user_id);
-          verify_action_info.user_status = AdServer::CampaignSvcs::US_OPTIN;
+          verify_action_info.set_user_id(GrpcAlgs::pack_user_id(verify_user_id));
+          verify_action_info.set_user_status(AdServer::CampaignSvcs::US_OPTIN);
 
-          campaign_managers_.action_taken(verify_action_info);
+          adserver::campaign_svcs::campaign_manager::ActionTakenRequest
+            action_taken_request;
+          *action_taken_request.mutable_action_info() = verify_action_info;
+          AdServer::Grpc::sync_call<
+            adserver::campaign_svcs::campaign_manager::ActionTakenResponse>(
+              [&](auto callback)
+              {
+                campaign_manager_->action_taken(
+                  action_taken_request,
+                  std::move(callback));
+              },
+              [](const grpc::Status& status)
+              {
+                Stream::Error ostr;
+                ostr << "CampaignManager::action_taken(): "
+                  "gRPC call failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                throw Exception(ostr);
+              });
 
           if(stats_)
           {
-            stats_->consider_request(verify_action_info);
+            stats_->consider_request(
+              verify_action_info.test_request(),
+              verify_action_info.user_status());
           }
 
           processed_user_ids.insert(verify_user_id);
@@ -1324,17 +1370,38 @@ namespace AdServer::Action
       if(processed_user_ids.empty())
       {
         // verify action without user id
-        verify_action_info.user_id = CorbaAlgs::pack_user_id(Commons::UserId());
-        verify_action_info.user_status =
+        verify_action_info.set_user_id(GrpcAlgs::pack_user_id(Commons::UserId()));
+        verify_action_info.set_user_status(
           request_info.user_status != AdServer::CampaignSvcs::US_OPTOUT ?
           AdServer::CampaignSvcs::US_UNDEFINED :
-          AdServer::CampaignSvcs::US_OPTOUT;
+          AdServer::CampaignSvcs::US_OPTOUT);
 
-        campaign_managers_.action_taken(verify_action_info);
+        adserver::campaign_svcs::campaign_manager::ActionTakenRequest
+          action_taken_request;
+        *action_taken_request.mutable_action_info() = verify_action_info;
+        AdServer::Grpc::sync_call<
+          adserver::campaign_svcs::campaign_manager::ActionTakenResponse>(
+            [&](auto callback)
+            {
+              campaign_manager_->action_taken(
+                action_taken_request,
+                std::move(callback));
+            },
+            [](const grpc::Status& status)
+            {
+              Stream::Error ostr;
+              ostr << "CampaignManager::action_taken(): "
+                "gRPC call failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
+              throw Exception(ostr);
+            });
 
         if(stats_) // ?
         {
-          stats_->consider_request(verify_action_info);
+          stats_->consider_request(
+            verify_action_info.test_request(),
+            verify_action_info.user_status());
         }
       }
     }

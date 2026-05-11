@@ -455,6 +455,52 @@
 
         </xsl:for-each>
       </cfg:CampaignManagerRef>
+      <cfg:CampaignManagerGrpcGroup>
+        <xsl:for-each select="$full-cluster-path/serviceGroup[@descriptor = $fe-cluster-descriptor] |
+                              $full-cluster-path/serviceGroup[@descriptor = 'AdProfilingCluster/FrontendSubCluster']">
+
+          <xsl:variable name="cluster-id" select="position()"/>
+
+          <xsl:variable name="campaign-manager-host-port-set">
+            <xsl:for-each select="./service[@descriptor = $campaign-manager-descriptor] |
+                                  ./service[@descriptor = 'AdProfilingCluster/FrontendSubCluster/CampaignManager']">
+              <xsl:variable name="campaign-manager-host-subset">
+                <xsl:call-template name="GetHosts">
+                  <xsl:with-param name="hosts" select="@host"/>
+                  <xsl:with-param name="error-prefix" select="'CampaignManagerGrpc'"/>
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:variable
+                name="campaign-manager-config"
+                select="./configuration/cfg:campaignManager"/>
+              <xsl:if test="count($campaign-manager-config) = 0">
+                <xsl:message terminate="yes"> AdFrontend: Can't find campaign manager config </xsl:message>
+              </xsl:if>
+
+              <xsl:variable name="campaign-manager-port">
+                <xsl:value-of select="$campaign-manager-config/cfg:networkParams/@port"/>
+                <xsl:if test="count($campaign-manager-config/cfg:networkParams/@port) = 0">
+                  <xsl:value-of select="$def-campaign-manager-port"/>
+                </xsl:if>
+              </xsl:variable>
+              <xsl:variable name="campaign-manager-grpc-port">
+                <xsl:value-of select="$campaign-manager-port + 500"/>
+              </xsl:variable>
+              <xsl:for-each select="exsl:node-set($campaign-manager-host-subset)/host">
+                <host port="{$campaign-manager-grpc-port}"><xsl:value-of select="."/></host>
+              </xsl:for-each>
+            </xsl:for-each>
+          </xsl:variable>
+
+          <xsl:for-each select="exsl:node-set($campaign-manager-host-port-set)/host">
+            <xsl:sort select="."/>
+            <cfg:Endpoint service_index="{concat($cluster-id, '_', position())}">
+              <xsl:value-of select="concat(., ':', @port)"/>
+            </cfg:Endpoint>
+          </xsl:for-each>
+
+        </xsl:for-each>
+      </cfg:CampaignManagerGrpcGroup>
     </xsl:if>
 
     <xsl:call-template name="AddUserInfoManagerControllerGroups">

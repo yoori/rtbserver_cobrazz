@@ -19,7 +19,7 @@ target_link_libraries(AdFrontend
   FrontendStatistic
   FeConfigXSD
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   ExpressionChannelIndex
   UserBindClient
   FCGI

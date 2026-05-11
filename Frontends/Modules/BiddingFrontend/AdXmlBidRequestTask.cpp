@@ -1,4 +1,5 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "AdXmlBidRequestTask.hpp"
@@ -86,13 +87,13 @@ namespace Bidding
 
   bool
   AdXmlBidRequestTask::write_response(
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
     //static const char* FUN = "AdXmlBidRequestTask::write_response()";
 
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
+    AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
 
     std::ostringstream response_ostr;
@@ -157,8 +158,8 @@ namespace Bidding
   AdXmlBidRequestTask::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams& /*request_params*/,
-    const AdServer::CampaignSvcs::CampaignManager::
+    const AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
+    const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
@@ -195,7 +196,7 @@ namespace Bidding
   void
   AdXmlBidRequestTask::fill_response_adslot_(
     std::ostream& response_ostr,
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
     // find title & image
@@ -204,7 +205,7 @@ namespace Bidding
     if(ad_slot_result.native_data_tokens.length() >= 1)
     {
       // NDTE_TITLE
-      const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[0];
       add_xml_escaped_string_(response_ostr, token.value);
     }
@@ -213,7 +214,7 @@ namespace Bidding
     if(ad_slot_result.native_data_tokens.length() >= 2)
     {
       // NDTE_DESC
-      const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[1];
       add_xml_escaped_string_(response_ostr, token.value);
     }
@@ -234,7 +235,7 @@ namespace Bidding
     if(ad_slot_result.native_image_tokens.length() > 0)
     {
       // NITE_MAIN
-      const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
       add_xml_escaped_string_(response_ostr, token.value);
     }

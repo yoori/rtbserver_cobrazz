@@ -434,7 +434,6 @@ namespace AdServer
         frontend_config->get().UserBindFeConfiguration()->bind_pending_task_limit()),
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::USER_BIND_FRONTEND),
       bind_task_count_(0),
       match_task_count_(0)
   {}
@@ -568,8 +567,13 @@ namespace AdServer
         channel_client_ = channel_client_objects.client;
         add_child_object(channel_client_objects.active_object);
 
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
+        auto campaign_manager = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
+        campaign_manager_ = campaign_manager;
+        add_child_object(campaign_manager);
 
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
@@ -1797,26 +1801,6 @@ namespace AdServer
           match_task_count_ += -1;
         }
 
-        /*
-        if(create_user_profile)
-        {
-          // send request to CampaignManager
-          campaign_managers_.verify_opt_operation(
-            request_info.time.tv_sec,
-            request_info.colo_id,
-            "",
-            AdServer::CampaignSvcs::CampaignManager::OO_FORCED_IN,
-            0, // status
-            CampaignSvcs::US_UNDEFINED,//unused for OO_FORCED_IN
-            false, // log_as_test
-            "", // browser
-            "", // os
-            "", // ct
-            "", // curct
-            "", // aspect
-            result_user_id);
-        }
-        */
       } // !country_filtered
 
       if(!dns_bind_request_id.empty())
@@ -1916,26 +1900,7 @@ namespace AdServer
   {
     try
     {
-      /*
-      AdServer::CampaignSvcs::CampaignManager::WebOperationInfo web_op;
-      web_op.time = CorbaAlgs::pack_time(request_info.time);
-      web_op.colo_id = request_info.colo_id;
-      web_op.tag_id = 0;
-      web_op.cc_id = 0;
-      web_op.curct << request_info.external_id;
-      web_op.app << WebStats::APPLICATION;
-      web_op.source << WebStats::SOURCE;
-      web_op.operation << WebStats::INVALID_MAPPING_OPERATION;
-      web_op.user_bind_src << request_info.source_id;
-      web_op.result = 'F';
-      web_op.user_status = static_cast<unsigned long>(request_info.user_status);
-      web_op.test_request = false;
-
-      campaign_managers_.consider_web_operation(web_op);
-      */
     }
-    catch (AdServer::CampaignSvcs::CampaignManager::IncorrectArgument&)
-    {}
     catch (const Exception&)
     {}
     catch(const eh::Exception&)
@@ -1953,28 +1918,40 @@ namespace AdServer
     {
       try
       {
-        CampaignSvcs::CampaignManager::WebOperationInfo web_op_info;
-        web_op_info.time = CorbaAlgs::pack_time(request_info.time);
-        web_op_info.colo_id = request_info.colo_id;
-        web_op_info.tag_id = 0;
-        web_op_info.cc_id = 0;
-        web_op_info.app << WebStats::APPLICATION;
-        web_op_info.source << WebStats::SOURCE;
-        web_op_info.operation << WebStats::OPERATION;
-        web_op_info.result = 'U';
-        web_op_info.user_status = static_cast<unsigned long>(request_info.user_status);
-        web_op_info.test_request = false;
-        web_op_info.user_bind_src << request_info.source_id;
-        campaign_managers_.consider_web_operation(web_op_info);
-      }
-      catch (AdServer::CampaignSvcs::CampaignManager::IncorrectArgument&)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": CampaignManager::IncorrectArgument caught";
-        logger()->log(ostr.str(),
-          Logging::Logger::ERROR,
-          Aspect::USER_BIND_FRONTEND,
-          "ADS-IMPL-7805");
+        adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+          web_op_info;
+        web_op_info.set_time(GrpcAlgs::pack_time(request_info.time));
+        web_op_info.set_colo_id(request_info.colo_id);
+        web_op_info.set_tag_id(0);
+        web_op_info.set_cc_id(0);
+        web_op_info.set_app(WebStats::APPLICATION.str());
+        web_op_info.set_source(WebStats::SOURCE.str());
+        web_op_info.set_operation(WebStats::OPERATION.str());
+        web_op_info.set_result('U');
+        web_op_info.set_user_status(
+          static_cast<unsigned long>(request_info.user_status));
+        web_op_info.set_test_request(false);
+        web_op_info.set_user_bind_src(request_info.source_id);
+        AdServer::Grpc::sync_call<
+          adserver::campaign_svcs::campaign_manager::ConsiderWebOperationResponse>(
+            [&](auto callback)
+            {
+              campaign_manager_->consider_web_operation(
+                web_op_info,
+                std::move(callback));
+            },
+            [](const grpc::Status& status)
+            {
+              if(status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
+              {
+                Stream::Error ostr;
+                ostr << "CampaignManager::consider_web_operation(): "
+                  "gRPC call failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                throw Exception(ostr);
+              }
+            });
       }
       catch (eh::Exception& ex)
       {
@@ -2254,9 +2231,10 @@ namespace AdServer
 
     try
     {
-      AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
+      adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
+        process_match_request;
       fill_match_request_info_(
-        request_info,
+        *process_match_request.mutable_match_request_info(),
         result_user_id,
         now,
         trigger_match_result_present ? &trigger_match_result : nullptr,
@@ -2265,7 +2243,23 @@ namespace AdServer
         referer,
         source);
 
-      campaign_managers_.process_match_request(request_info);
+      AdServer::Grpc::sync_call<
+        adserver::campaign_svcs::campaign_manager::ProcessMatchRequestResponse>(
+          [&](auto callback)
+          {
+            campaign_manager_->process_match_request(
+              process_match_request,
+              std::move(callback));
+          },
+          [](const grpc::Status& status)
+          {
+            Stream::Error ostr;
+            ostr << "CampaignManager::process_match_request(): "
+              "gRPC call failed: code=" <<
+              static_cast<int>(status.error_code()) <<
+              ", message=" << status.error_message();
+            throw Exception(ostr);
+          });
     }
     catch(const eh::Exception& ex)
     {
@@ -2282,7 +2276,7 @@ namespace AdServer
 
   void
   UserBindFrontend::fill_match_request_info_(
-    AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
+    adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
     const adserver::channel_svcs::channel_server::MatchResponse*
@@ -2298,24 +2292,23 @@ namespace AdServer
         mri.match_info.coord_location
     */
 
-    mri.match_info.colo_id = common_config_->colo_id();
-    mri.user_id = CorbaAlgs::pack_user_id(user_id);
-    mri.request_time = CorbaAlgs::pack_time(now);
-    mri.match_info.full_referer << referer;
-    mri.source << source;
+    auto* match_info = mri.mutable_match_info();
+    match_info->set_colo_id(common_config_->colo_id());
+    mri.set_user_id(GrpcAlgs::pack_user_id(user_id));
+    mri.set_request_time(GrpcAlgs::pack_time(now));
+    match_info->set_full_referer(referer.str());
+    mri.set_source(source.str());
 
     if(trigger_match_result)
     {
       const auto& page_channels =
         trigger_match_result->matched_channels().page_channels();
-      CORBA::ULong result_len = page_channels.size();
-      mri.match_info.pkw_channels.length(result_len);
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      const int result_len = page_channels.size();
+      for(int i = 0; i < result_len; ++i)
       {
-        mri.match_info.pkw_channels[i].channel_id =
-          page_channels[i].id();
-        mri.match_info.pkw_channels[i].channel_trigger_id =
-          page_channels[i].trigger_channel_id();
+        auto* pkw_channel = match_info->add_pkw_channels();
+        pkw_channel->set_channel_id(page_channels[i].id());
+        pkw_channel->set_channel_trigger_id(page_channels[i].trigger_channel_id());
       }
     }
 
@@ -2323,19 +2316,18 @@ namespace AdServer
     {
       CORBA::ULong result_len =
         history_match_result->channels.length();
-      mri.match_info.channels.length(result_len);
       for(CORBA::ULong i = 0; i < result_len; ++i)
       {
-        mri.match_info.channels[i] =
-          history_match_result->channels[i].channel_id;
+        match_info->add_channels(history_match_result->channels[i].channel_id);
       }
     }
 
     if (location)
     {
-      FrontendCommons::fill_geo_location_info(
-        mri.match_info.location,
-        location);
+      auto* geo_info = match_info->add_location();
+      geo_info->set_country(location->country);
+      geo_info->set_region(location->region);
+      geo_info->set_city(location->city);
     }
   }
 

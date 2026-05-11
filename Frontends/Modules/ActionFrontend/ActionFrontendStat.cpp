@@ -41,17 +41,18 @@ namespace AdServer
 
   void
   AcFrontendStat::consider_request(
-    const AdServer::CampaignSvcs::CampaignManager::ActionInfo& request_info)
+    bool test_request,
+    unsigned long user_status)
     noexcept
   {
-    if (request_info.test_request)
+    if (test_request)
     {
       return;
     }
 
     StatData d{
-      request_info.user_status == AdServer::CampaignSvcs::US_OPTIN ? 1UL : 0UL,
-      request_info.user_status == AdServer::CampaignSvcs::US_OPTOUT ? 1UL : 0UL};
+      user_status == AdServer::CampaignSvcs::US_OPTIN ? 1UL : 0UL,
+      user_status == AdServer::CampaignSvcs::US_OPTOUT ? 1UL : 0UL};
 
     if (!d.opt_in_user && !d.non_opt_on_user)
     {

@@ -9,11 +9,9 @@
 #include <Generics/ActiveObject.hpp>
 #include <grpcpp/support/status.h>
 
-#include <Commons/ConfigUtils.hpp>
 #include <Commons/Grpc/GrpcExecutor.hpp>
 #include <Commons/Grpc/GrpcSync.hpp>
 #include <UserInfoSvcs/UserBindClient/UserBindDistributedGrpcClient.hpp>
-#include <xsd/Frontends/FeConfig.hpp>
 
 namespace AdServer::UserInfoSvcs
 {
@@ -86,32 +84,12 @@ namespace AdServer::UserInfoSvcs
 
   inline DistributedUserBindClientObjects
   create_distributed_user_bind_client(
-    const xsd::AdServer::Configuration::CommonFeConfigurationType&
-      common_config,
+    const UserBindDistributedGrpcClient::UserBindControllerRefs&
+      user_bind_controller_refs,
+    AdServer::Grpc::BatchingOptions batching_options,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     Logging::Logger* logger)
   {
-    AdServer::Grpc::BatchingOptions batching_options;
-    std::vector<std::string> user_bind_controller_refs;
-
-    if(common_config.UserBind().present())
-    {
-      const auto& user_bind_config = *common_config.UserBind();
-      if(user_bind_config.BatchingOptions().present())
-      {
-        batching_options =
-          Config::read_xsd_grpc_options(*user_bind_config.BatchingOptions());
-      }
-
-      for(const auto& group : user_bind_config.UserBindController2Group())
-      {
-        for(const auto& endpoint : group.Endpoint())
-        {
-          user_bind_controller_refs.emplace_back(endpoint);
-        }
-      }
-    }
-
     DistributedUserBindClientObjects result;
     if(!user_bind_controller_refs.empty())
     {

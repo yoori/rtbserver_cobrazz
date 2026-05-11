@@ -37,6 +37,8 @@ namespace Bidding
   bool
   BidRequestTask::execute_() noexcept
   {
+    set_current_stage(Stage::RequestParsing);
+
     // fill request info by url parameters
     bid_frontend_->request_info_filler_->fill(
       request_info_,
@@ -58,12 +60,12 @@ namespace Bidding
       return false;
     }
 
-    AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult_var
+    AdServer::Bidding::CampaignManager::RequestCreativeResult
       campaign_match_result;
 
     bool not_interrupted = bid_frontend_->process_bid_request_(
       "", // FUN
-      campaign_match_result.out(),
+      campaign_match_result,
       resolved_user_id_,
       this,
       request_info_,
@@ -79,36 +81,41 @@ namespace Bidding
       return false;
     }
 
-    if(campaign_match_result)
+    if(campaign_match_result.ad_slots.length())
     {
+      set_current_stage(Stage::CampaignSelectionConsidering);
+
       if (!bid_frontend_->consider_campaign_selection_(
         resolved_user_id_,
         request_info_.current_time,
-        *campaign_match_result,
+        campaign_match_result,
         hostname_))
       {
         return false;
       }
+    }
 
-      debug_sink_.print_creative_selection_debug_info(*campaign_match_result);
-      request_time_metering_.total_time =
-        Generics::Time::get_time_of_day() - start_processing_time_;
-      debug_sink_.print_time_metering_debug_info(request_time_metering_);
+    debug_sink_.print_creative_selection_debug_info(campaign_match_result);
+    request_time_metering_.total_time =
+      Generics::Time::get_time_of_day() - start_processing_time_;
+    debug_sink_.print_time_metering_debug_info(request_time_metering_);
 
-      if(check_interrupt_(Stage::CampaignSelectionConsidering))
-      {
-        return false;
-      }
+    if(check_interrupt_(Stage::CampaignSelectionConsidering))
+    {
+      return false;
+    }
 
+    if(campaign_match_result.ad_slots.length())
+    {
       // check that any campaign selected (in any slot)
       bool ad_selected = false;
 
       for(CORBA::ULong ad_slot_i = 0;
-          ad_slot_i < campaign_match_result->ad_slots.length();
+          ad_slot_i < campaign_match_result.ad_slots.length();
           ++ad_slot_i)
       {
-        const AdServer::CampaignSvcs::CampaignManager::
-          AdSlotResult& ad_slot_result = campaign_match_result->ad_slots[ad_slot_i];
+        const AdServer::Bidding::CampaignManager::
+          AdSlotResult& ad_slot_result = campaign_match_result.ad_slots[ad_slot_i];
 
         if(ad_slot_result.selected_creatives.length() > 0)
         {

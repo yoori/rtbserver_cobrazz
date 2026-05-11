@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
+#include "CampaignManagerTypes.hpp"
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <Generics/Time.hpp>
 #include <String/SubString.hpp>
@@ -67,7 +67,7 @@ namespace Bidding
     void
     print_request_debug_info(
       const RequestInfo& request_info,
-      const AdServer::CampaignSvcs_v360::CampaignManager::RequestParams&
+      const AdServer::Bidding::CampaignManager::RequestParams&
         request_params,
       const AdServer::Commons::UserId& user_id,
       const std::string& channel_keywords) noexcept;
@@ -78,7 +78,7 @@ namespace Bidding
 
     void
     print_creative_selection_debug_info(
-      const AdServer::CampaignSvcs_v360::CampaignManager::RequestCreativeResult&
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result) noexcept;
 
     void
@@ -115,12 +115,12 @@ namespace Bidding
 
     void
     print_expected_debug_info_(
-      const AdServer::CampaignSvcs_v360::CampaignManager::AdSlotDebugInfo&
+      const AdServer::Bidding::CampaignManager::AdSlotDebugInfo&
         debug_info) noexcept;
 
     void
     print_creative_selection_debug_info_(
-      const AdServer::CampaignSvcs_v360::CampaignManager::AdSlotResult&
+      const AdServer::Bidding::CampaignManager::AdSlotResult&
         ad_slot_result) noexcept;
 
     static DebugInfo

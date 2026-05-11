@@ -8,8 +8,6 @@
 #include <Generics/Time.hpp>
 #include <Generics/TaskRunner.hpp>
 
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
-
 #include "BiddingFrontend.hpp"
 #include "Stage.hpp"
 
@@ -19,7 +17,7 @@ namespace Bidding
 {
   // RequestParamsHolder
   class RequestParamsHolder:
-     public AdServer::CampaignSvcs::CampaignManager::RequestParams,
+     public AdServer::Bidding::CampaignManager::RequestParams,
      public ReferenceCounting::AtomicImpl
   {
   protected:
@@ -100,7 +98,7 @@ namespace Bidding
     // return true if response sent, false otherwise
     virtual bool
     write_response(
-      const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+      const AdServer::Bidding::CampaignManager::RequestCreativeResult&
         campaign_match_result)
       noexcept = 0;
 

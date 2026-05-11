@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
+#include "CampaignManagerTypes.hpp"
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
@@ -25,7 +25,7 @@ namespace Bidding
 
     void
     fill_by_request(
-      ::AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+      ::AdServer::Bidding::CampaignManager::RequestParams& request_params,
       RequestInfo& request_info,
       std::string& keywords,
       const FCGI::HttpRequest& request,

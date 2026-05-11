@@ -1,5 +1,6 @@
 ADD_SUBDIRECTORY(BillingServer)
 ADD_SUBDIRECTORY(CampaignAdmin)
+ADD_SUBDIRECTORY(CampaignAdmin2)
 ADD_SUBDIRECTORY(CampaignCommons)
 ADD_SUBDIRECTORY(BillingAdmin)
 ADD_SUBDIRECTORY(CampaignManager)

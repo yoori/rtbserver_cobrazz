@@ -1,4 +1,5 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
+#include <Commons/CorbaAlgs.hpp>
 
 #include "KeywordFormatter.hpp"
 #include "ClickStarBidRequestTask.hpp"
@@ -99,13 +100,13 @@ namespace Bidding
 
   bool
   ClickStarBidRequestTask::write_response(
-    const AdServer::CampaignSvcs::CampaignManager::RequestCreativeResult&
+    const AdServer::Bidding::CampaignManager::RequestCreativeResult&
       campaign_match_result)
     noexcept
   {
     //static const char* FUN = "ClickStarBidRequestTask::write_response()";
 
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params =
+    AdServer::Bidding::CampaignManager::RequestParams& request_params =
       *request_params_;
 
     std::ostringstream response_ostr;
@@ -170,8 +171,8 @@ namespace Bidding
   ClickStarBidRequestTask::fill_response_(
     std::ostream& response_ostr,
     const RequestInfo& /*request_info*/,
-    const AdServer::CampaignSvcs::CampaignManager::RequestParams& /*request_params*/,
-    const AdServer::CampaignSvcs::CampaignManager::
+    const AdServer::Bidding::CampaignManager::RequestParams& /*request_params*/,
+    const AdServer::Bidding::CampaignManager::
       RequestCreativeResult& campaign_match_result)
     noexcept
   {
@@ -208,7 +209,7 @@ namespace Bidding
   void
   ClickStarBidRequestTask::fill_response_adslot_(
     std::ostream& response_ostr,
-    const AdServer::CampaignSvcs::CampaignManager::AdSlotResult& ad_slot_result)
+    const AdServer::Bidding::CampaignManager::AdSlotResult& ad_slot_result)
     noexcept
   {
     AdServer::Commons::JsonFormatter root_json(response_ostr);
@@ -226,7 +227,7 @@ namespace Bidding
 
     if(ad_slot_result.native_data_tokens.length() >= 1)
     {
-      const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[0];
       root_json.add_string(
         Response::Json::TITLE,
@@ -235,7 +236,7 @@ namespace Bidding
 
     if(ad_slot_result.native_data_tokens.length() >= 2)
     {
-      const AdServer::CampaignSvcs::CampaignManager::TokenInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenInfo& token =
         ad_slot_result.native_data_tokens[1];
       root_json.add_string(
         Response::Json::DESCRIPTION,
@@ -245,7 +246,7 @@ namespace Bidding
     if(ad_slot_result.native_image_tokens.length() >= 1)
     {
       // NITE_MAIN
-      const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
         ad_slot_result.native_image_tokens[0];
       root_json.add_string(
         Response::Json::IMAGE,
@@ -255,7 +256,7 @@ namespace Bidding
     if(ad_slot_result.native_image_tokens.length() >= 2)
     {
       // NITE_ICON
-      const AdServer::CampaignSvcs::CampaignManager::TokenImageInfo& token =
+      const AdServer::Bidding::CampaignManager::TokenImageInfo& token =
         ad_slot_result.native_image_tokens[1];
       root_json.add_string(
         Response::Json::ICON,

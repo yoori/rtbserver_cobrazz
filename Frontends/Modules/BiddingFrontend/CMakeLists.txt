@@ -31,7 +31,7 @@ target_link_libraries(BiddingFrontend
   RequestMatchers
   UserIdController
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   google-biddingPB
   Gason

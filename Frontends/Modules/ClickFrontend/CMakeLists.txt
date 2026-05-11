@@ -13,7 +13,7 @@ target_link_libraries(ClickFrontend
   UserBindClient
   UserIdController
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FCGI
 )

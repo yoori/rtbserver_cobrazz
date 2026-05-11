@@ -15,12 +15,13 @@
 #include <String/TextTemplate.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
+#include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Commons/TextTemplateCache.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/CookieManager.hpp>
-#include <UserInfoSvcs/UserBindClient/UserBindClientUtils.hpp>
-#include <Frontends/FrontendCommons/CampaignManagersPool.hpp>
-#include <ChannelSvcs/ChannelClient/ChannelClientUtils.hpp>
+#include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
+#include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
+#include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
@@ -201,7 +202,7 @@ namespace AdServer::Action
 
     void
     fill_match_request_info_(
-      AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
+      adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
       const AdServer::Commons::UserId& user_id,
       const Generics::Time& now,
       const adserver::channel_svcs::channel_server::MatchResponse& trigger_match_result) const
@@ -240,7 +241,8 @@ namespace AdServer::Action
 
     /* external services */
     CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
-    FrontendCommons::CampaignManagersPool<Exception> campaign_managers_;
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;

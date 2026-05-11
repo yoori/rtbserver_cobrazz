@@ -66,29 +66,11 @@ namespace FrontendCommons
   }
 
   UserBindCorbaClient::UserBindCorbaClient(
-    const UserBindControllerGroupSeq& user_bind_controller_group,
+    const ControllerRefList& controller_groups,
     const CORBACommons::CorbaClientAdapter* corba_client_adapter,
     Logging::Logger* logger)
     noexcept
   {
-    AdServer::UserInfoSvcs::UserBindOperationDistributor::
-      ControllerRefList controller_groups;
-
-    for(UserBindControllerGroupSeq::const_iterator cg_it =
-        user_bind_controller_group.begin();
-        cg_it != user_bind_controller_group.end();
-        ++cg_it)
-    {
-      AdServer::UserInfoSvcs::UserBindOperationDistributor::
-        ControllerRef controller_ref_group;
-
-      Config::CorbaConfigReader::read_multi_corba_ref(
-        *cg_it,
-        controller_ref_group);
-
-      controller_groups.push_back(controller_ref_group);
-    }
-
     AdServer::UserInfoSvcs::UserBindOperationDistributor_var distributor =
       new AdServer::UserInfoSvcs::UserBindOperationDistributor(
         logger,

@@ -6,9 +6,7 @@
 #include <CORBACommons/CorbaAdapters.hpp>
 #include <Frontends/FrontendCommons/FrontendStatistic.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignCommons.hpp>
-#include <CampaignSvcs/CampaignCommons/CampaignSvcsVersionAdapter.hpp>
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
-#include <CampaignSvcs/CampaignManager/CampaignManager.hpp>
 
 namespace AdServer
 {
@@ -36,7 +34,8 @@ namespace AdServer
       /*throw(Exception)*/;
 
     void consider_request(
-      const AdServer::CampaignSvcs::CampaignManager::ActionInfo& verify_action_info)
+      bool test_request,
+      unsigned long user_status)
       noexcept;
 
     virtual Generics::Values_var

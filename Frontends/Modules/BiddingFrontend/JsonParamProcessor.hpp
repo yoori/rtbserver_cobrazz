@@ -523,7 +523,7 @@ namespace Bidding
   public:
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       ContextType& context,
       const JsonValue& value) const = 0;
@@ -551,7 +551,7 @@ namespace Bidding
     {}
 
     void process_value_(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       ContextType& context,
       const JsonValue& value) const
@@ -570,7 +570,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       ContextType& context,
       const JsonValue& value) const
@@ -655,7 +655,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& request_params,
       ContextType& context,
       const JsonValue& value) const
@@ -695,7 +695,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -727,7 +727,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -759,7 +759,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -813,7 +813,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -856,7 +856,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -910,7 +910,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -1013,7 +1013,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -1061,7 +1061,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const
@@ -1137,7 +1137,7 @@ namespace Bidding
 
     virtual void
     process(
-      AdServer::CampaignSvcs::CampaignManager::
+      AdServer::Bidding::CampaignManager::
         RequestParams& /*request_params*/,
       ContextType& context,
       const JsonValue& value) const

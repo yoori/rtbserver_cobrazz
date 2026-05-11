@@ -12,7 +12,7 @@ target_link_libraries(OptoutFrontend
   RequestMatchers
   FrontendStatistic
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FCGI
 )

@@ -16,7 +16,7 @@ target_link_libraries(ImprTrackFrontend
   RequestMatchers
   UserIdController
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FCGI
 )

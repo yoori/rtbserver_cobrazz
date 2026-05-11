@@ -85,7 +85,7 @@ namespace Bidding
 
   void
   AdXmlRequestInfoFiller::fill_by_request(
-    AdServer::CampaignSvcs::CampaignManager::RequestParams& request_params,
+    AdServer::Bidding::CampaignManager::RequestParams& request_params,
     RequestInfo& request_info,
     std::string& keywords,
     const FCGI::HttpRequest& request,
@@ -182,7 +182,7 @@ namespace Bidding
 
     request_params.ad_slots.length(1);
 
-    AdServer::CampaignSvcs::CampaignManager::AdSlotInfo& ad_slot_request =
+    AdServer::Bidding::CampaignManager::AdSlotInfo& ad_slot_request =
       request_params.ad_slots[0];
 
     RequestInfoFiller::init_adslot(ad_slot_request);

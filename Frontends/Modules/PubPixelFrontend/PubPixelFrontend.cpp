@@ -124,9 +124,11 @@ namespace PubPixel
         common_config_->GeoIP().present() ?
         common_config_->GeoIP()->path().c_str() : 0));
 
-      campaign_manager_ =
-        std::make_shared<AdServer::CampaignSvcs::CampaignManagerCorbaClient>(
-          FrontendCommons::read_campaign_manager_refs(*common_config_));
+      auto campaign_manager = std::make_shared<
+        AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+          FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+      campaign_manager_ = campaign_manager;
+      add_child_object(campaign_manager);
 
       activate_object();
     }

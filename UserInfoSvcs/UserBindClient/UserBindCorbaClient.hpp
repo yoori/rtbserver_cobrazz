@@ -6,7 +6,6 @@
 #include <Sync/SyncPolicy.hpp>
 #include <CORBACommons/CorbaAdapters.hpp>
 
-#include <xsd/Frontends/FeConfig.hpp>
 #include <UserInfoSvcs/UserBindController/UserBindOperationDistributor.hpp>
 #include <UserBindServerGrpc.grpc-client.hpp>
 
@@ -17,13 +16,12 @@ namespace FrontendCommons
     public AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient
   {
   public:
-    typedef xsd::AdServer::Configuration::
-      CommonFeConfigurationType::UserBindControllerGroup_sequence
-      UserBindControllerGroupSeq;
+    using ControllerRefList =
+      AdServer::UserInfoSvcs::UserBindOperationDistributor::ControllerRefList;
 
   public:
     UserBindCorbaClient(
-      const UserBindControllerGroupSeq& user_bind_controller_group,
+      const ControllerRefList& controller_groups,
       const CORBACommons::CorbaClientAdapter* corba_client_adapter,
       Logging::Logger* logger)
       noexcept;

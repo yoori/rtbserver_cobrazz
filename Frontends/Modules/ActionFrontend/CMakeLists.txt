@@ -10,7 +10,7 @@ target_link_libraries(ActionFrontend
   Commons
   CORBACommons
   CommonModule
-  CampaignManagerClient
+  CampaignManagerGrpcDistributedClient
   FeConfigXSD
   FrontendStatistic
   UserBindClient

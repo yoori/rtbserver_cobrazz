@@ -10,6 +10,7 @@
 #include <Commons/CorbaConfig.hpp>
 #include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
+#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/UserInfoManip.hpp>
 #include <Commons/ExternalUserIdUtils.hpp>
 
@@ -133,7 +134,7 @@ namespace AdServer::ImprTrack
       const AdServer::Commons::UserId& user_id,
       const AdServer::Commons::UserId& cookie_user_id,
       const Generics::Time& now,
-      const AdServer::CampaignSvcs::CampaignManager::ImpressionResultInfo& impression_result_info,
+      const adserver::campaign_svcs::campaign_manager::ImpressionResultInfo& impression_result_info,
       const String::SubString& peer_ip,
       const std::list<std::string>& markers)
       noexcept
@@ -144,10 +145,10 @@ namespace AdServer::ImprTrack
         peer_ip_(peer_ip.str()),
         markers_(markers)
     {
-      for(CORBA::ULong i = 0; i < impression_result_info.creatives.length(); ++i)
+      for(const auto& creative : impression_result_info.creatives())
       {
-        campaign_ids_.emplace_back(impression_result_info.creatives[i].campaign_id);
-        advertiser_ids_.emplace_back(impression_result_info.creatives[i].advertiser_id);
+        campaign_ids_.emplace_back(creative.campaign_id());
+        advertiser_ids_.emplace_back(creative.advertiser_id());
       }
     }
 
@@ -200,8 +201,7 @@ namespace AdServer::ImprTrack
         frontend_config->get().ImprTrackFeConfiguration()->threads(),
         0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
-      common_module_(ReferenceCounting::add_ref(common_module)),
-      campaign_managers_(this->logger(), Aspect::IMPR_TRACK_FRONTEND)
+      common_module_(ReferenceCounting::add_ref(common_module))
   {}
 
   void
@@ -289,9 +289,6 @@ namespace AdServer::ImprTrack
 
         corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
 
-        campaign_managers_.resolve(
-          *common_config_, corba_client_adapter_);
-
         cookie_manager_.reset(
           new FrontendCommons::CookieManager<
             FCGI::HttpRequest, FCGI::HttpResponse>(common_config_->Cookies()));
@@ -303,6 +300,14 @@ namespace AdServer::ImprTrack
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
+
+        auto campaign_manager = std::make_shared<
+          AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
+        campaign_manager_ = campaign_manager;
+        add_child_object(campaign_manager);
 
         auto user_bind_objects =
           AdServer::UserInfoSvcs::create_distributed_user_bind_client(
@@ -513,7 +518,7 @@ namespace AdServer::ImprTrack
       AdServer::Commons::UserId result_user_id = request_info.actual_user_id;
       ResultUserIdType result_user_id_type = RUIT_COOKIE;
       (void)result_user_id_type;
-      AdServer::CampaignSvcs::CampaignManager::ImpressionResultInfo_var
+      adserver::campaign_svcs::campaign_manager::ImpressionResultInfo
         impression_result_info;
 
       if (!request_info.skip)
@@ -527,60 +532,83 @@ namespace AdServer::ImprTrack
         // confirm impression for stats (CampaignManager)
         if(!request_info.request_ids.empty())
         {
-          AdServer::CampaignSvcs::CampaignManager::ImpressionInfo
+          adserver::campaign_svcs::campaign_manager::ImpressionInfo
             verify_impression_info;
-          verify_impression_info.verify_type = request_info.verify_type;
-          verify_impression_info.time = CorbaAlgs::pack_time(request_info.time);
-          verify_impression_info.bid_time = CorbaAlgs::pack_time(request_info.bid_time);
-          verify_impression_info.pub_imp_revenue_type =
-            request_info.pub_imp_revenue_type;
-          verify_impression_info.pub_imp_revenue = CorbaAlgs::pack_decimal(
-            request_info.pub_imp_revenue);
-          verify_impression_info.request_type = request_info.request_type;
-          verify_impression_info.user_id = CorbaAlgs::pack_user_id(
-            request_info.actual_user_id);
-          verify_impression_info.referer << request_info.referer;
-          verify_impression_info.viewability = request_info.viewability;
-          verify_impression_info.action_name << request_info.action_name;
+          verify_impression_info.set_verify_type(request_info.verify_type);
+          verify_impression_info.set_time(GrpcAlgs::pack_time(request_info.time));
+          verify_impression_info.set_bid_time(GrpcAlgs::pack_time(request_info.bid_time));
+          verify_impression_info.set_pub_imp_revenue_type(
+            request_info.pub_imp_revenue_type);
+          verify_impression_info.mutable_pub_imp_revenue()->set_value(
+            GrpcAlgs::pack_decimal(request_info.pub_imp_revenue));
+          verify_impression_info.set_request_type(request_info.request_type);
+          verify_impression_info.set_user_id(GrpcAlgs::pack_user_id(
+            request_info.actual_user_id));
+          verify_impression_info.set_referer(request_info.referer);
+          verify_impression_info.set_viewability(request_info.viewability);
+          verify_impression_info.set_action_name(request_info.action_name);
 
           if(request_info.user_id_hash_mod.present())
           {
-            verify_impression_info.user_id_hash_mod.defined = true;
-            verify_impression_info.user_id_hash_mod.value =
-              *request_info.user_id_hash_mod;
+            auto* user_id_hash_mod =
+              verify_impression_info.mutable_user_id_hash_mod();
+            user_id_hash_mod->set_defined(true);
+            user_id_hash_mod->set_value(*request_info.user_id_hash_mod);
           }
           else
           {
-            verify_impression_info.user_id_hash_mod.defined = false;
+            verify_impression_info.mutable_user_id_hash_mod()->set_defined(false);
           }
 
-          verify_impression_info.creatives.length(request_info.request_ids.size());
-          CORBA::ULong ri = 0;
           RequestInfo::CreativeList::const_iterator cr_it =
             request_info.creatives.begin();
           for(RequestIdList::const_iterator rit = request_info.request_ids.begin();
             rit != request_info.request_ids.end();
-            ++rit, ++ri)
+            ++rit)
           {
-            auto& cr_info = verify_impression_info.creatives[ri];
-            cr_info.request_id = CorbaAlgs::pack_request_id(*rit);
+            auto* cr_info = verify_impression_info.add_creatives();
+            cr_info->set_request_id(GrpcAlgs::pack_request_id(*rit));
             // ccg_keyword_id non used now,
             // it can't define specific impression cost (only click)
-            cr_info.ccg_keyword_id = 0;
+            cr_info->set_ccg_keyword_id(0);
             if(cr_it != request_info.creatives.end())
             {
-              cr_info.ccid = cr_it->ccid;
-              cr_info.ctr = CorbaAlgs::pack_decimal(cr_it->ctr);
+              cr_info->set_ccid(cr_it->ccid);
+              cr_info->mutable_ctr()->set_value(
+                GrpcAlgs::pack_decimal(cr_it->ctr));
               ++cr_it;
             }
             else
             {
-              cr_info.ccid = 0;
-              cr_info.ctr = CorbaAlgs::pack_decimal(CampaignSvcs::RevenueDecimal::ZERO);
+              cr_info->set_ccid(0);
+              cr_info->mutable_ctr()->set_value(
+                GrpcAlgs::pack_decimal(CampaignSvcs::RevenueDecimal::ZERO));
             }
           }
 
-          campaign_managers_.verify_impression(verify_impression_info, impression_result_info);
+          adserver::campaign_svcs::campaign_manager::VerifyImpressionRequest
+            verify_impression_request;
+          *verify_impression_request.mutable_impression_info() =
+            verify_impression_info;
+          auto verify_impression_response = AdServer::Grpc::sync_call<
+            adserver::campaign_svcs::campaign_manager::VerifyImpressionResponse>(
+              [&](auto callback)
+              {
+                campaign_manager_->verify_impression(
+                  verify_impression_request,
+                  std::move(callback));
+              },
+              [](const grpc::Status& status)
+              {
+                Stream::Error ostr;
+                ostr << "CampaignManager::verify_impression(): "
+                  "gRPC call failed: code=" <<
+                  static_cast<int>(status.error_code()) <<
+                  ", message=" << status.error_message();
+                throw Exception(ostr);
+              });
+          impression_result_info =
+            verify_impression_response.impression_result_info();
         }
 
         bool invalid_bind_operation = false;
@@ -1200,24 +1228,42 @@ namespace AdServer::ImprTrack
   {
     try
     {
-      AdServer::CampaignSvcs::CampaignManager::WebOperationInfo web_op;
-      web_op.time = CorbaAlgs::pack_time(request_info.time);
-      web_op.colo_id = request_info.colo_id;
-      web_op.tag_id = 0;
-      web_op.cc_id = 0;
-      web_op.curct << request_info.external_user_id;
-      web_op.app << WebStats::APPLICATION;
-      web_op.source << WebStats::SOURCE;
-      web_op.operation << WebStats::INVALID_MAPPING_OPERATION;
-      web_op.user_bind_src << request_info.source_id;
-      web_op.result = 'F';
-      web_op.user_status = static_cast<unsigned long>(request_info.user_status);
-      web_op.test_request = false;
+      adserver::campaign_svcs::campaign_manager::ConsiderWebOperationRequest
+        web_op;
+      web_op.set_time(GrpcAlgs::pack_time(request_info.time));
+      web_op.set_colo_id(request_info.colo_id);
+      web_op.set_tag_id(0);
+      web_op.set_cc_id(0);
+      web_op.set_curct(request_info.external_user_id);
+      web_op.set_app(WebStats::APPLICATION.str());
+      web_op.set_source(WebStats::SOURCE.str());
+      web_op.set_operation(WebStats::INVALID_MAPPING_OPERATION.str());
+      web_op.set_user_bind_src(request_info.source_id);
+      web_op.set_result('F');
+      web_op.set_user_status(static_cast<unsigned long>(request_info.user_status));
+      web_op.set_test_request(false);
 
-      campaign_managers_.consider_web_operation(web_op);
+      AdServer::Grpc::sync_call<
+        adserver::campaign_svcs::campaign_manager::ConsiderWebOperationResponse>(
+          [&](auto callback)
+          {
+            campaign_manager_->consider_web_operation(
+              web_op,
+              std::move(callback));
+          },
+          [](const grpc::Status& status)
+          {
+            if(status.error_code() != grpc::StatusCode::INVALID_ARGUMENT)
+            {
+              Stream::Error ostr;
+              ostr << "CampaignManager::consider_web_operation(): "
+                "gRPC call failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
+              throw Exception(ostr);
+            }
+          });
     }
-    catch(const AdServer::CampaignSvcs::CampaignManager::IncorrectArgument&)
-    {}
     catch(const eh::Exception&)
     {}
   }
@@ -1474,16 +1520,33 @@ namespace AdServer::ImprTrack
 
       try
       {
-        AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo request_info;
+        adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
+          process_match_request;
         fill_match_request_info_(
-          request_info,
+          *process_match_request.mutable_match_request_info(),
           user_id,
           now,
           &trigger_match_result,
           history_match_result,
           peer_ip);
 
-        campaign_managers_.process_match_request(request_info);
+        AdServer::Grpc::sync_call<
+          adserver::campaign_svcs::campaign_manager::ProcessMatchRequestResponse>(
+            [&](auto callback)
+            {
+              campaign_manager_->process_match_request(
+                process_match_request,
+                std::move(callback));
+            },
+            [](const grpc::Status& status)
+            {
+              Stream::Error ostr;
+              ostr << "CampaignManager::process_match_request(): "
+                "gRPC call failed: code=" <<
+                static_cast<int>(status.error_code()) <<
+                ", message=" << status.error_message();
+              throw Exception(ostr);
+            });
       }
       catch(const eh::Exception& ex)
       {
@@ -1501,7 +1564,7 @@ namespace AdServer::ImprTrack
 
   void
   Frontend::fill_match_request_info_(
-    AdServer::CampaignSvcs::CampaignManager::MatchRequestInfo& mri,
+    adserver::campaign_svcs::campaign_manager::MatchRequestInfo& mri,
     const AdServer::Commons::UserId& user_id,
     const Generics::Time& now,
     const adserver::channel_svcs::channel_server::MatchResponse* trigger_match_result,
@@ -1514,21 +1577,22 @@ namespace AdServer::ImprTrack
         mri.match_info.coord_location
     */
 
-    mri.match_info.colo_id = common_config_->colo_id();
-    mri.user_id = CorbaAlgs::pack_user_id(user_id);
-    mri.request_time = CorbaAlgs::pack_time(now);
+    auto* match_info = mri.mutable_match_info();
+    match_info->set_colo_id(common_config_->colo_id());
+    mri.set_user_id(GrpcAlgs::pack_user_id(user_id));
+    mri.set_request_time(GrpcAlgs::pack_time(now));
 
     {
-      CORBA::ULong result_len =
+      const int result_len =
         trigger_match_result->matched_channels().page_channels_size();
-      mri.match_info.pkw_channels.length(result_len);
-      for(CORBA::ULong i = 0; i < result_len; ++i)
+      for(int i = 0; i < result_len; ++i)
       {
-        mri.match_info.pkw_channels[i].channel_id =
-          trigger_match_result->matched_channels().page_channels(i).id();
-        mri.match_info.pkw_channels[i].channel_trigger_id =
+        auto* pkw_channel = match_info->add_pkw_channels();
+        pkw_channel->set_channel_id(
+          trigger_match_result->matched_channels().page_channels(i).id());
+        pkw_channel->set_channel_trigger_id(
           trigger_match_result->matched_channels().
-            page_channels(i).trigger_channel_id();
+            page_channels(i).trigger_channel_id());
       }
     }
 
@@ -1536,11 +1600,9 @@ namespace AdServer::ImprTrack
     {
       CORBA::ULong result_len =
         history_match_result->channels.length();
-      mri.match_info.channels.length(result_len);
       for(CORBA::ULong i = 0; i < result_len; ++i)
       {
-        mri.match_info.channels[i] =
-          history_match_result->channels[i].channel_id;
+        match_info->add_channels(history_match_result->channels[i].channel_id);
       }
     }
 
@@ -1561,9 +1623,10 @@ namespace AdServer::ImprTrack
           location->city = geo_location.city.str();
           location->normalize();
 
-          FrontendCommons::fill_geo_location_info(
-            mri.match_info.location,
-            location);
+          auto* geo_info = match_info->add_location();
+          geo_info->set_country(location->country);
+          geo_info->set_region(location->region);
+          geo_info->set_city(location->city);
         }
       }
       catch(const eh::Exception&)
