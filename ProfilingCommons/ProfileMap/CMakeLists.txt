@@ -1,5 +1,6 @@
 add_library(ProfileMap SHARED
 
+  ProfileMapIOUring.cpp
   ProfileMapFactory.cpp
 )
 

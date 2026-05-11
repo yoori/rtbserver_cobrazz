@@ -1,10 +1,13 @@
 #include <toplingdb/rocksdb/db.h>
 #include <toplingdb/rocksdb/options.h>
 #include <toplingdb/rocksdb/write_batch.h>
+#include <toplingdb/topling/side_plugin_repo.h>
 
 #include <algorithm>
 #include <ctime>
 #include <future>
+#include <iomanip>
+#include <sstream>
 #include <unordered_set>
 
 #include <Stream/MemoryStream.hpp>
@@ -16,6 +19,152 @@ namespace AdServer::ProfilingCommons
   namespace
   {
     constexpr std::size_t TTL_TIMESTAMP_SIZE = sizeof(std::int32_t);
+
+    void
+    append_json_string(std::ostream& os, const std::string& value)
+    {
+      os << '"';
+      for(const unsigned char ch : value)
+      {
+        switch(ch)
+        {
+        case '\\':
+          os << "\\\\";
+          break;
+        case '"':
+          os << "\\\"";
+          break;
+        case '\b':
+          os << "\\b";
+          break;
+        case '\f':
+          os << "\\f";
+          break;
+        case '\n':
+          os << "\\n";
+          break;
+        case '\r':
+          os << "\\r";
+          break;
+        case '\t':
+          os << "\\t";
+          break;
+        default:
+          if(ch < 0x20)
+          {
+            os << "\\u"
+              << std::hex
+              << std::setw(4)
+              << std::setfill('0')
+              << static_cast<int>(ch)
+              << std::dec
+              << std::setfill(' ');
+          }
+          else
+          {
+            os << ch;
+          }
+          break;
+        }
+      }
+      os << '"';
+    }
+
+    std::string
+    build_topling_side_plugin_config(const std::string& path)
+    {
+      std::ostringstream os;
+      os <<
+        R"json({
+  "Cache": {
+    "block_cache": {
+      "class": "LRUCache",
+      "params": {
+        "capacity": "512M"
+      }
+    }
+  },
+  "TableFactory": {
+    "fast": {
+      "class": "SingleFastTable",
+      "params": {
+        "indexType": "MainPatricia",
+        "keyPrefixLen": 0
+      }
+    },
+    "bb": {
+      "class": "BlockBasedTable",
+      "params": {
+        "block_size": "4K",
+        "block_restart_interval": 16,
+        "index_block_restart_interval": 1,
+        "metadata_block_size": "4K",
+        "block_cache": "${block_cache}",
+        "block_cache_compressed": null,
+        "persistent_cache": null,
+        "filter_policy": null
+      }
+    },
+    "dispatch": {
+      "class": "DispatcherTable",
+      "params": {
+        "default": "fast",
+        "readers": {
+          "SingleFastTable": "fast",
+          "BlockBasedTable": "bb"
+        },
+        "level_writers": [
+          "fast",
+          "fast",
+          "fast",
+          "fast",
+          "fast",
+          "fast",
+          "fast"
+        ]
+      }
+    }
+  },
+  "CFOptions": {
+    "default": {
+      "max_write_buffer_number": 4,
+      "write_buffer_size": "64M",
+      "target_file_size_base": "16M",
+      "target_file_size_multiplier": 2,
+      "level0_slowdown_writes_trigger": 20,
+      "level0_stop_writes_trigger": 36,
+      "level0_file_num_compaction_trigger": 4,
+      "table_factory": "dispatch",
+      "ttl": 0
+    }
+  },
+  "DBOptions": {
+    "dbo": {
+      "create_if_missing": true,
+      "create_missing_column_families": true,
+      "fail_if_options_file_error": false,
+      "max_background_compactions": 4,
+      "max_subcompactions": 1,
+      "allow_mmap_reads": true
+    }
+  },
+  "databases": {
+    "profile_map": {
+      "method": "DB::Open",
+      "params": {
+        "db_options": "$dbo",
+        "cf_options": "$default",
+        "path": )json";
+      append_json_string(os, path);
+      os <<
+        R"json(
+      }
+    }
+  },
+  "open": "profile_map"
+})json";
+      return os.str();
+    }
 
     std::string
     pack_value_with_ttl_timestamp(const Generics::ConstSmartMemBuf* profile)
@@ -61,27 +210,37 @@ namespace AdServer::ProfilingCommons
   {
     static const char* FUN = "ToplingDBProfileMapImpl::ToplingDBProfileMapImpl()";
 
-    toplingdb::Options options;
-    options.create_if_missing = true;
-    options.fail_if_options_file_error = false;
+    plugin_repo_.reset(new toplingdb::SidePluginRepo());
 
-    toplingdb::DB* db = nullptr;
-    const auto status = toplingdb::DB::Open(options, path_.c_str(), &db);
-    if(!status.ok())
+    const auto import_status = plugin_repo_->Import(
+      build_topling_side_plugin_config(path_));
+    if(!import_status.ok())
     {
       Stream::Error ostr;
-      ostr << FUN << ": can't open DB: " << path_;
+      ostr << FUN << ": can't import ToplingDB config: "
+        << import_status.ToString();
       throw ProfileMap<std::string>::Exception(ostr.str());
     }
 
-    db_.reset(db);
+    toplingdb::DB* db = nullptr;
+    const auto status = plugin_repo_->OpenDB(&db);
+    if(!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": can't open DB: " << path_ << ": "
+        << status.ToString();
+      throw ProfileMap<std::string>::Exception(ostr.str());
+    }
+
+    db_ = db;
   }
 
   ToplingDBProfileMapImpl::~ToplingDBProfileMapImpl() noexcept
   {
-    if(db_)
+    if(plugin_repo_)
     {
-      db_->Close();
+      plugin_repo_->CloseAllDB(true);
+      db_ = nullptr;
     }
   }
 

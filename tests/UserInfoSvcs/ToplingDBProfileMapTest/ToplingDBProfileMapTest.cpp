@@ -266,9 +266,12 @@ namespace
       << "  --count <N>         number of read/write operations (default: 1000000)\n"
       << "  --threads <N>       test callback worker threads count (default: 16)\n"
       << "  --keys <N>          number of pre-generated random keys (default: 10000)\n"
+      << "  --mode <sync|async> test mode (default: async)\n"
       << "  --workers <N>       ToplingDBProfileMapImpl workers count (default: 4)\n"
       << "  --batch-size <N>    ToplingDBProfileMapImpl batch size (default: 128)\n"
       << "  --max-inflight <N>  maximum async scenarios in flight (default: 12000)\n"
+      << "  --test-inflight <N> test-level async scenario window, 0 uses max-inflight\n"
+      << "                      (default: 0)\n"
       << "  --max-delay-us <N>  maximum batch accumulation delay, 0 disables (default: 0)\n"
       << "  --keep-db <0|1>     keep DB directory after test (default: 0)\n";
   }
@@ -287,9 +290,11 @@ main(int argc, char** argv)
     Option<unsigned long> opt_count(1000000);
     Option<unsigned int> opt_threads(16);
     Option<unsigned long> opt_keys(10000);
+    StringOption opt_mode("async");
     Option<unsigned long> opt_workers(4);
     Option<unsigned long> opt_batch_size(128);
     Option<unsigned long> opt_max_inflight(12000);
+    Option<unsigned long> opt_test_inflight(0);
     Option<unsigned long> opt_max_delay_us(0);
     Option<unsigned int> opt_keep_db(0);
     CheckOption opt_help;
@@ -299,9 +304,11 @@ main(int argc, char** argv)
     args.add(equal_name("count") || short_name("c"), opt_count);
     args.add(equal_name("threads") || short_name("t"), opt_threads);
     args.add(equal_name("keys") || short_name("k"), opt_keys);
+    args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("workers"), opt_workers);
     args.add(equal_name("batch-size"), opt_batch_size);
     args.add(equal_name("max-inflight"), opt_max_inflight);
+    args.add(equal_name("test-inflight"), opt_test_inflight);
     args.add(equal_name("max-delay-us"), opt_max_delay_us);
     args.add(equal_name("keep-db"), opt_keep_db);
     args.add(equal_name("help") || short_name("h"), opt_help);
@@ -317,6 +324,12 @@ main(int argc, char** argv)
     if(*opt_threads == 0)
     {
       std::cerr << "--threads must be > 0" << std::endl;
+      return 1;
+    }
+
+    if(*opt_mode != "sync" && *opt_mode != "async")
+    {
+      std::cerr << "--mode must be sync or async" << std::endl;
       return 1;
     }
 
@@ -341,6 +354,15 @@ main(int argc, char** argv)
     if(*opt_max_inflight == 0)
     {
       std::cerr << "--max-inflight must be > 0" << std::endl;
+      return 1;
+    }
+
+    const std::uint64_t test_inflight =
+      *opt_test_inflight == 0 ? *opt_max_inflight : *opt_test_inflight;
+
+    if(test_inflight == 0)
+    {
+      std::cerr << "--test-inflight must be > 0 when set" << std::endl;
       return 1;
     }
 
@@ -369,6 +391,7 @@ main(int argc, char** argv)
 
     std::atomic<std::uint64_t> sent_count{0};
     std::atomic<std::uint64_t> done_count{0};
+    std::atomic<std::uint64_t> inflight_count{0};
     std::atomic<std::uint64_t> error_count{0};
     std::atomic<std::uint64_t> read_hit_count{0};
     std::atomic<std::uint64_t> latency_count{0};
@@ -424,6 +447,7 @@ main(int argc, char** argv)
 
         std::cout << std::put_time(&tm, "%T") <<
           ": " << done_delta <<
+          ", inflight=" << inflight_count.load(std::memory_order_relaxed) <<
           ", errors=" << errors_delta <<
           ", hits=" << hits_delta <<
           ", avg_latency=" << format_stat_float(avg_latency_us) << "us" <<
@@ -437,171 +461,247 @@ main(int argc, char** argv)
     const auto run_start = std::chrono::steady_clock::now();
     const auto cpu_start = process_cpu_times();
 
-    struct Scenario final
+    if(*opt_mode == "sync")
     {
-      std::string key;
-      std::string body;
-      std::chrono::steady_clock::time_point start;
-    };
+      std::vector<std::thread> threads;
+      threads.reserve(*opt_threads);
 
-    TaskExecutor callback_executor(*opt_threads);
-    std::mutex done_lock;
-    std::condition_variable done_cond;
-    std::function<void()> start_scenario;
-
-    auto log_error =
-      [&](const std::string& message)
-    {
-      error_count.fetch_add(1, std::memory_order_relaxed);
-      std::lock_guard<std::mutex> lock(error_lock);
-      std::cerr << message << std::endl;
-    };
-
-    auto complete_scenario =
-      [&](
-        const std::chrono::steady_clock::time_point& start,
-        bool start_next)
-    {
-      const auto finish = std::chrono::steady_clock::now();
-      const auto latency_us = static_cast<std::uint64_t>(
-        std::chrono::duration_cast<std::chrono::microseconds>(
-          finish - start).count());
-      latency_count.fetch_add(1, std::memory_order_relaxed);
-      latency_sum_us.fetch_add(latency_us, std::memory_order_relaxed);
-      update_max(latency_max_us, latency_us);
-
-      const auto done =
-        done_count.fetch_add(1, std::memory_order_relaxed) + 1;
-      if(done >= *opt_count)
+      for(unsigned int i = 0; i < *opt_threads; ++i)
       {
-        done_cond.notify_all();
-      }
+        threads.emplace_back([&]() {
+          std::mt19937 gen(std::random_device{}());
+          std::uniform_int_distribution<std::size_t> key_dist(0, keys.size() - 1);
 
-      if(start_next)
-      {
-        start_scenario();
-      }
-    };
-
-    start_scenario =
-      [&]()
-    {
-      const auto index = sent_count.fetch_add(1, std::memory_order_relaxed);
-      if(index >= *opt_count)
-      {
-        return;
-      }
-
-      thread_local std::mt19937 gen(std::random_device{}());
-      std::uniform_int_distribution<std::size_t> key_dist(0, keys.size() - 1);
-
-      auto scenario = std::make_shared<Scenario>();
-      scenario->key = keys[key_dist(gen)];
-      scenario->body = random_ascii(gen, BODY_SIZE);
-      scenario->start = std::chrono::steady_clock::now();
-
-      try
-      {
-        map->get_profile_async(
-          scenario->key,
-          [
-            &,
-            scenario
-          ](
-            const Generics::ConstSmartMemBuf_var& read_buf,
-            std::optional<std::string> error)
+          while(true)
           {
-            callback_executor.post(
-              [
-                &,
-                scenario,
-                read_buf,
-                error = std::move(error)
-              ]() mutable
+            const auto index = sent_count.fetch_add(1, std::memory_order_relaxed);
+            if(index >= *opt_count)
             {
-              if(error)
-              {
-                log_error("operation error: " + *error);
-                complete_scenario(scenario->start, true);
-                return;
-              }
+              return;
+            }
 
+            const auto& key = keys[key_dist(gen)];
+            const std::string body = random_ascii(gen, BODY_SIZE);
+            const auto start = std::chrono::steady_clock::now();
+
+            try
+            {
+              Generics::ConstSmartMemBuf_var read_buf = map->get_profile(key);
               if(read_buf.in())
               {
                 read_hit_count.fetch_add(1, std::memory_order_relaxed);
                 if(read_buf->membuf().size() != BODY_SIZE)
                 {
-                  std::ostringstream ostr;
-                  ostr << "unexpected profile size for key '" <<
-                    scenario->key << "': " << read_buf->membuf().size();
-                  log_error(ostr.str());
+                  std::lock_guard<std::mutex> lock(error_lock);
+                  std::cerr << "unexpected profile size for key '" << key <<
+                    "': " << read_buf->membuf().size() << std::endl;
+                  error_count.fetch_add(1, std::memory_order_relaxed);
                 }
               }
 
-              Generics::ConstSmartMemBuf_var write_buf =
-                make_profile(scenario->body);
-              try
+              Generics::ConstSmartMemBuf_var write_buf = make_profile(body);
+              map->save_profile(
+                key,
+                write_buf.in(),
+                Generics::Time::get_time_of_day());
+            }
+            catch(const eh::Exception& ex)
+            {
+              error_count.fetch_add(1, std::memory_order_relaxed);
+              std::lock_guard<std::mutex> lock(error_lock);
+              std::cerr << "operation error: " << ex.what() << std::endl;
+            }
+
+            const auto finish = std::chrono::steady_clock::now();
+            const auto latency_us = static_cast<std::uint64_t>(
+              std::chrono::duration_cast<std::chrono::microseconds>(
+                finish - start).count());
+            latency_count.fetch_add(1, std::memory_order_relaxed);
+            latency_sum_us.fetch_add(latency_us, std::memory_order_relaxed);
+            update_max(latency_max_us, latency_us);
+
+            done_count.fetch_add(1, std::memory_order_relaxed);
+          }
+        });
+      }
+
+      for(auto& thread : threads)
+      {
+        thread.join();
+      }
+    }
+    else
+    {
+      struct Scenario final
+      {
+        std::string key;
+        std::string body;
+        std::chrono::steady_clock::time_point start;
+      };
+
+      TaskExecutor callback_executor(*opt_threads);
+      std::mutex done_lock;
+      std::condition_variable done_cond;
+      std::function<void()> start_scenario;
+
+      auto log_error =
+        [&](const std::string& message)
+      {
+        error_count.fetch_add(1, std::memory_order_relaxed);
+        std::lock_guard<std::mutex> lock(error_lock);
+        std::cerr << message << std::endl;
+      };
+
+      auto complete_scenario =
+        [&](
+          const std::chrono::steady_clock::time_point& start,
+          bool start_next)
+      {
+        const auto finish = std::chrono::steady_clock::now();
+        const auto latency_us = static_cast<std::uint64_t>(
+          std::chrono::duration_cast<std::chrono::microseconds>(
+            finish - start).count());
+        latency_count.fetch_add(1, std::memory_order_relaxed);
+        latency_sum_us.fetch_add(latency_us, std::memory_order_relaxed);
+        update_max(latency_max_us, latency_us);
+
+        const auto done =
+          done_count.fetch_add(1, std::memory_order_relaxed) + 1;
+        if(done >= *opt_count)
+        {
+          done_cond.notify_all();
+        }
+
+        inflight_count.fetch_sub(1, std::memory_order_relaxed);
+
+        if(start_next)
+        {
+          start_scenario();
+        }
+      };
+
+      start_scenario =
+        [&]()
+      {
+        const auto index = sent_count.fetch_add(1, std::memory_order_relaxed);
+        if(index >= *opt_count)
+        {
+          return;
+        }
+
+        inflight_count.fetch_add(1, std::memory_order_relaxed);
+
+        thread_local std::mt19937 gen(std::random_device{}());
+        std::uniform_int_distribution<std::size_t> key_dist(0, keys.size() - 1);
+
+        auto scenario = std::make_shared<Scenario>();
+        scenario->key = keys[key_dist(gen)];
+        scenario->body = random_ascii(gen, BODY_SIZE);
+        scenario->start = std::chrono::steady_clock::now();
+
+        try
+        {
+          map->get_profile_async(
+            scenario->key,
+            [
+              &,
+              scenario
+            ](
+              const Generics::ConstSmartMemBuf_var& read_buf,
+              std::optional<std::string> error)
+            {
+              callback_executor.post(
+                [
+                  &,
+                  scenario,
+                  read_buf,
+                  error = std::move(error)
+                ]() mutable
               {
-                map->save_profile_async(
-                  scenario->key,
-                  write_buf.in(),
-                  Generics::Time::get_time_of_day(),
-                  [
-                    &,
-                    scenario,
-                    write_buf
-                  ](std::optional<std::string> error)
+                if(error)
                 {
-                  callback_executor.post(
+                  log_error("operation error: " + *error);
+                  complete_scenario(scenario->start, true);
+                  return;
+                }
+
+                if(read_buf.in())
+                {
+                  read_hit_count.fetch_add(1, std::memory_order_relaxed);
+                  if(read_buf->membuf().size() != BODY_SIZE)
+                  {
+                    std::ostringstream ostr;
+                    ostr << "unexpected profile size for key '" <<
+                      scenario->key << "': " << read_buf->membuf().size();
+                    log_error(ostr.str());
+                  }
+                }
+
+                Generics::ConstSmartMemBuf_var write_buf =
+                  make_profile(scenario->body);
+                try
+                {
+                  map->save_profile_async(
+                    scenario->key,
+                    write_buf.in(),
+                    Generics::Time::get_time_of_day(),
                     [
                       &,
                       scenario,
-                      write_buf,
-                      error = std::move(error)
-                    ]() mutable
+                      write_buf
+                    ](std::optional<std::string> error)
                   {
-                    if(error)
+                    callback_executor.post(
+                      [
+                        &,
+                        scenario,
+                        write_buf,
+                        error = std::move(error)
+                      ]() mutable
                     {
+                      if(error)
+                      {
                       log_error("operation error: " + *error);
                     }
 
-                    complete_scenario(scenario->start, true);
+                      complete_scenario(scenario->start, true);
+                    });
                   });
-                });
-              }
-              catch(const eh::Exception& ex)
-              {
-                log_error(std::string("operation error: ") + ex.what());
-                complete_scenario(scenario->start, true);
-              }
+                }
+                catch(const eh::Exception& ex)
+                {
+                  log_error(std::string("operation error: ") + ex.what());
+                  complete_scenario(scenario->start, true);
+                }
+              });
             });
+        }
+        catch(const eh::Exception& ex)
+        {
+          log_error(std::string("operation error: ") + ex.what());
+          complete_scenario(scenario->start, true);
+        }
+      };
+
+      const std::uint64_t initial_inflight =
+        std::min<std::uint64_t>(test_inflight, *opt_count);
+      for(std::uint64_t i = 0; i < initial_inflight; ++i)
+      {
+        start_scenario();
+      }
+
+      {
+        std::unique_lock<std::mutex> lock(done_lock);
+        done_cond.wait(
+          lock,
+          [&]()
+          {
+            return done_count.load(std::memory_order_relaxed) >= *opt_count;
           });
       }
-      catch(const eh::Exception& ex)
-      {
-        log_error(std::string("operation error: ") + ex.what());
-        complete_scenario(scenario->start, true);
-      }
-    };
 
-    const std::uint64_t initial_inflight =
-      std::min<std::uint64_t>(*opt_max_inflight, *opt_count);
-    for(std::uint64_t i = 0; i < initial_inflight; ++i)
-    {
-      start_scenario();
+      callback_executor.stop();
     }
-
-    {
-      std::unique_lock<std::mutex> lock(done_lock);
-      done_cond.wait(
-        lock,
-        [&]()
-        {
-          return done_count.load(std::memory_order_relaxed) >= *opt_count;
-        });
-    }
-
-    callback_executor.stop();
 
     const auto run_finish = std::chrono::steady_clock::now();
     const auto cpu_finish = process_cpu_times();
@@ -638,6 +738,7 @@ main(int argc, char** argv)
       ", avg_latency: " << format_stat_float(total_avg_latency_us) << "us" <<
       ", avg_batch_size: " << format_stat_float(avg_batch_size(profile_map_stats)) <<
       ", max_latency: " << latency_max_us.load(std::memory_order_relaxed) << "us" <<
+      ", test_inflight: " << test_inflight <<
       ", path: " << *opt_path <<
       std::endl;
 
