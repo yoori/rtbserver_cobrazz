@@ -196,6 +196,9 @@ namespace AdServer::Grpc
   void
   BatchingQueue::deactivate_object_()
   {
+    // Hold the wait mutex while notifying to avoid losing the wakeup between
+    // a pop_batch() predicate check and the thread actually entering wait().
+    std::lock_guard<std::mutex> lock(hot_cv_lock_);
     hot_cv_.notify_all();
   }
 

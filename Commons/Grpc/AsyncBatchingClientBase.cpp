@@ -63,7 +63,6 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::deactivate_object_()
   {
     streams_cv_.notify_all();
-    batching_queue_->notify_all();
     Generics::CompositeActiveObject::deactivate_object_();
   }
 

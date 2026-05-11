@@ -72,6 +72,8 @@ namespace AdServer::Grpc
   void GrpcServer<ServiceImplType>::activate_object_()
   {
     ::grpc::ServerBuilder builder;
+    builder.SetMaxReceiveMessageSize(-1);
+    builder.SetMaxSendMessageSize(-1);
     builder.AddListeningPort(bind_address_, ::grpc::InsecureServerCredentials());
     service_->register_services(builder);
 

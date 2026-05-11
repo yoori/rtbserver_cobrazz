@@ -320,6 +320,9 @@ namespace AdServer::Grpc
     }
 
     grpc::ChannelArguments channel_args;
+    channel_args.SetMaxReceiveMessageSize(-1);
+    channel_args.SetMaxSendMessageSize(-1);
+    channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
     channel_args.SetInt(
       GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
       options_.use_local_subchannel_pool ? 1 : 0);
