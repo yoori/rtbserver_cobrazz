@@ -143,10 +143,7 @@ namespace AdServer::CampaignSvcs
 
     for (const auto& client_holder : client_holders_)
     {
-      if (client_holder && client_holder->client)
-      {
-        client_holder->client->deactivate_object();
-      }
+      client_holder->client->deactivate_object();
     }
 
     for (auto& service_index_pool : service_index_pools_)
@@ -157,10 +154,7 @@ namespace AdServer::CampaignSvcs
 
     for (const auto& client_holder : client_holders_)
     {
-      if (client_holder && client_holder->client)
-      {
-        client_holder->client->wait_object();
-      }
+      client_holder->client->wait_object();
     }
   }
 

@@ -1798,6 +1798,8 @@ namespace AdServer::Bidding
     auto complete_mapping = std::make_shared<std::function<void()>>();
     auto add_next = std::make_shared<std::function<void()>>();
     auto get_next = std::make_shared<std::function<void()>>();
+    std::weak_ptr<std::function<void()>> add_next_ref = add_next;
+    std::weak_ptr<std::function<void()>> get_next_ref = get_next;
 
     *complete_mapping = [this, state, finish, add_next, log_exception]()
     {
@@ -1843,11 +1845,17 @@ namespace AdServer::Bidding
       }
     };
 
-    *add_next = [this, state, finish, add_next, log_exception]()
+    *add_next = [this, state, finish, add_next_ref, log_exception]()
     {
       auto& request_task = state->request_task;
       auto& request_info = request_task->request_info_;
       auto& match_user_id = request_task->resolved_user_id_;
+      auto add_next = add_next_ref.lock();
+      if(!add_next)
+      {
+        (*finish)(std::move(state->debug_info));
+        return;
+      }
 
       while(state->add_index < state->external_user_ids.size() &&
         state->add_index == state->base_index)
@@ -1898,11 +1906,17 @@ namespace AdServer::Bidding
         });
     };
 
-    *get_next = [this, state, finish, get_next, complete_mapping, log_exception]()
+    *get_next = [this, state, finish, get_next_ref, complete_mapping, log_exception]()
     {
       auto& request_task = state->request_task;
       auto& request_info = request_task->request_info_;
       auto& common_info = request_task->request_params()->common_info;
+      auto get_next = get_next_ref.lock();
+      if(!get_next)
+      {
+        (*finish)(std::move(state->debug_info));
+        return;
+      }
 
       if(state->get_index >= state->external_user_ids.size())
       {

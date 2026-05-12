@@ -153,6 +153,7 @@ namespace AdServer::UserInfoSvcs
     Generics::CompositeActiveObject::deactivate_object_();
 
     std::vector<PoolPtr> old_pools;
+    std::vector<ClientHolderPtr> client_holders;
     {
       std::unique_lock<std::shared_mutex> lock(pool_lock_);
       for (auto& chunk_pool : chunk_pools_)
@@ -166,8 +167,17 @@ namespace AdServer::UserInfoSvcs
       chunk_pools_.clear();
       chunks_number_ = 0;
       refs_state_.clear();
-      current_client_holders_.clear();
+      client_holders = std::move(current_client_holders_);
       client_holders_.clear();
+    }
+
+    std::set<ClientHolder*> seen_clients;
+    for (const auto& client_holder : client_holders)
+    {
+      if (seen_clients.insert(client_holder.get()).second)
+      {
+        client_holder->client->deactivate_object();
+      }
     }
 
     std::set<Pool*> seen_pools;
@@ -177,6 +187,15 @@ namespace AdServer::UserInfoSvcs
       {
         pool->deactivate_object();
         pool->wait_object();
+      }
+    }
+
+    seen_clients.clear();
+    for (const auto& client_holder : client_holders)
+    {
+      if (seen_clients.insert(client_holder.get()).second)
+      {
+        client_holder->client->wait_object();
       }
     }
   }
@@ -211,6 +230,13 @@ namespace AdServer::UserInfoSvcs
     const request_type& request, \
     callback_type callback) \
   { \
+    if (!active()) \
+    { \
+      finish_with_unavailable_<response_type>( \
+        std::move(callback), \
+        "inactive"); \
+      return; \
+    } \
     auto ref = get_ref_(user_expr); \
     if (!ref) \
     { \
@@ -243,6 +269,13 @@ namespace AdServer::UserInfoSvcs
     const request_type& request, \
     callback_type callback) \
   { \
+    if (!active()) \
+    { \
+      finish_with_unavailable_<response_type>( \
+        std::move(callback), \
+        "inactive"); \
+      return; \
+    } \
     auto ref = get_any_ref_(); \
     if (!ref) \
     { \

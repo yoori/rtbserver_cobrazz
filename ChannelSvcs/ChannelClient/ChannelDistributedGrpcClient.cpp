@@ -154,18 +154,29 @@ namespace AdServer::ChannelSvcs
     Generics::CompositeActiveObject::deactivate_object_();
 
     PoolPtr old_pool;
+    std::vector<ClientHolderPtr> client_holders;
     {
       std::unique_lock<std::shared_mutex> lock(pool_lock_);
       old_pool = std::move(pool_);
+      client_holders = std::move(current_client_holders_);
       refs_state_.clear();
-      current_client_holders_.clear();
       client_holders_.clear();
+    }
+
+    for (const auto& client_holder : client_holders)
+    {
+      client_holder->client->deactivate_object();
     }
 
     if (old_pool)
     {
       old_pool->deactivate_object();
       old_pool->wait_object();
+    }
+
+    for (const auto& client_holder : client_holders)
+    {
+      client_holder->client->wait_object();
     }
   }
 
@@ -200,6 +211,14 @@ namespace AdServer::ChannelSvcs
     const adserver::channel_svcs::channel_server::MatchRequest& request,
     MatchCallback callback)
   {
+    if (!active())
+    {
+      callback(
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
+        adserver::channel_svcs::channel_server::MatchResponse());
+      return;
+    }
+
     auto ref = get_ref_();
     if (!ref)
     {
@@ -238,6 +257,14 @@ namespace AdServer::ChannelSvcs
     const adserver::channel_svcs::channel_server::GetCcgTraitsRequest& request,
     GetCcgTraitsCallback callback)
   {
+    if (!active())
+    {
+      callback(
+        grpc::Status(grpc::StatusCode::UNAVAILABLE, "inactive"),
+        adserver::channel_svcs::channel_server::GetCcgTraitsResponse());
+      return;
+    }
+
     auto ref = get_ref_();
     if (!ref)
     {
