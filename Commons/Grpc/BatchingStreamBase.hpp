@@ -57,6 +57,7 @@ namespace AdServer::Grpc
     void deactivate_object_() override;
     bool wait_more_() override;
     void wait_object_() override;
+    void mark_finished_() noexcept;
 
   private:
     struct Impl;

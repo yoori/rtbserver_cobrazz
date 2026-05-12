@@ -53,6 +53,8 @@ namespace AdServer::Grpc
   {
     try
     {
+      deactivate_streams_();
+      wait_streams_();
       clear_children();
     }
     catch (...)
@@ -84,6 +86,7 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::deactivate_object_()
   {
     streams_cv_.notify_all();
+    deactivate_streams_();
     Generics::CompositeActiveObject::deactivate_object_();
   }
 
@@ -99,6 +102,7 @@ namespace AdServer::Grpc
     }
     coalesce_threads_.clear();
 
+    wait_streams_();
     Generics::CompositeActiveObject::wait_object_();
     clear_streams_();
   }
@@ -186,11 +190,11 @@ namespace AdServer::Grpc
           }
           {
             std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
-            streams_.emplace_back(stream);
+            streams_.emplace(stream.get(), stream);
           }
           stream_registered = true;
           update_max_streams_(streams_count);
-          add_child_object(stream);
+          stream->activate_object();
         }
         catch (...)
         {
@@ -198,7 +202,7 @@ namespace AdServer::Grpc
           if (stream_registered)
           {
             std::lock_guard<std::mutex> streams_lock(streams_registry_lock_);
-            auto it = std::find(streams_.begin(), streams_.end(), stream);
+            auto it = streams_.find(stream.get());
             if (it != streams_.end())
             {
               streams_.erase(it);
@@ -280,16 +284,13 @@ namespace AdServer::Grpc
     assert(stream);
 
     bool stream_removed = false;
+    BatchingStreamPtr stream_holder;
     {
       std::lock_guard<std::mutex> registry_lock(streams_registry_lock_);
-      auto it = std::find_if(
-        streams_.begin(),
-        streams_.end(),
-        [stream](const auto& registered_stream) {
-          return registered_stream.get() == stream;
-        });
+      auto it = streams_.find(stream);
       if (it != streams_.end())
       {
+        stream_holder = std::move(it->second);
         streams_.erase(it);
         stream_removed = true;
       }
@@ -366,15 +367,66 @@ namespace AdServer::Grpc
   }
 
   void
+  AsyncBatchingClientBase::deactivate_streams_() noexcept
+  {
+    std::vector<BatchingStreamPtr> streams;
+    {
+      std::lock_guard<std::mutex> lock(streams_registry_lock_);
+      streams.reserve(streams_.size());
+      for (const auto& [_, stream] : streams_)
+      {
+        streams.emplace_back(stream);
+      }
+    }
+
+    for (auto& stream : streams)
+    {
+      try
+      {
+        stream->deactivate_object();
+      }
+      catch (...)
+      {
+      }
+    }
+  }
+
+  void
+  AsyncBatchingClientBase::wait_streams_() noexcept
+  {
+    std::unordered_map<BatchingStreamBase*, BatchingStreamPtr> streams;
+    {
+      std::lock_guard<std::mutex> lock(streams_registry_lock_);
+      streams.swap(streams_);
+    }
+    {
+      std::lock_guard<std::mutex> lock(streams_lock_);
+      available_streams_.clear();
+    }
+
+    for (auto& [_, stream] : streams)
+    {
+      try
+      {
+        stream->wait_object();
+      }
+      catch (...)
+      {
+      }
+    }
+  }
+
+  void
   AsyncBatchingClientBase::clear_streams_() noexcept
   {
     {
       std::lock_guard<std::mutex> lock(streams_lock_);
       available_streams_.clear();
     }
+    std::unordered_map<BatchingStreamBase*, BatchingStreamPtr> streams;
     {
       std::lock_guard<std::mutex> lock(streams_registry_lock_);
-      streams_.clear();
+      streams.swap(streams_);
     }
   }
 

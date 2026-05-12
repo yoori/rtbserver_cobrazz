@@ -114,6 +114,7 @@ namespace AdServer::Grpc
       const char* status_message);
     void handle_executor_shutdown_i_() noexcept;
     void complete_shutdown_i_() noexcept;
+    void release_grpc_resources_i_() noexcept;
     bool accepts_requests_i_() const noexcept;
     void stop_processing_completion_tags_() noexcept;
     void notify_completion_tags_drained_() noexcept;
@@ -149,7 +150,7 @@ namespace AdServer::Grpc
     std::atomic<StreamState> stream_state_{StreamState::Starting};
     std::unique_ptr<grpc::ClientContext> stream_context_;
     std::unique_ptr<BatchTransport> batch_stub_;
-    std::unique_ptr<grpc::ClientAsyncReaderWriter<BatchRequest, BatchResponse>> stream_;
+    grpc::ClientAsyncReaderWriter<BatchRequest, BatchResponse>* stream_ = nullptr;
     grpc::Status finish_status_;
     google::protobuf::Arena write_arena_;
 
@@ -397,6 +398,14 @@ namespace AdServer::Grpc
     impl_->wait_object_();
   }
 
+  void
+  BatchingStreamBase::mark_finished_() noexcept
+  {
+    Sync::PosixGuard guard(cond_);
+    state_ = AS_NOT_ACTIVE;
+    cond_.broadcast();
+  }
+
   bool
   BatchingStreamBase::Impl::active() const noexcept
   {
@@ -448,7 +457,6 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::deactivate_object_()
   {
-    stop_processing_completion_tags_();
     callback_cv_.notify_all();
     batching_queue_->notify_all();
 
@@ -475,21 +483,26 @@ namespace AdServer::Grpc
   bool
   BatchingStreamBase::Impl::wait_more_()
   {
-    return process_completion_tags_.load(std::memory_order_acquire) &&
-      pending_completion_tags_.load(std::memory_order_acquire) != 0;
+    return pending_completion_tags_.load(std::memory_order_acquire) != 0;
   }
 
   void
   BatchingStreamBase::Impl::wait_object_()
   {
     {
-      std::lock_guard<std::mutex> lock(state_lock_);
+      std::unique_lock<std::mutex> lock(state_lock_);
+      shutdown_cv_.wait(lock, [this]() {
+        return pending_completion_tags_.load(std::memory_order_acquire) == 0;
+      });
+
       if (stream_state_.load() != StreamState::Finished)
       {
         complete_shutdown_i_();
       }
+      release_grpc_resources_i_();
     }
 
+    stop_processing_completion_tags_();
     finish_with_error_(grpc::StatusCode::UNAVAILABLE, "inactive");
   }
 
@@ -520,7 +533,7 @@ namespace AdServer::Grpc
         stream_context_.get(),
         batch_stream_full_method_,
         &grpc_queue_->completion_queue(),
-        start_tag.get());
+        start_tag.get()).release();
       start_tag.release();
     }))
     {
@@ -1004,17 +1017,27 @@ namespace AdServer::Grpc
   {
     const bool already_finished =
       stream_state_.load() == StreamState::Finished;
-    stream_.reset();
-    stream_context_.reset();
-    grpc_queue_.reset();
     stream_state_.store(StreamState::Finished);
     shutdown_cv_.notify_all();
     callback_cv_.notify_all();
     batching_queue_->notify_all();
+    owner_.mark_finished_();
     if (!already_finished && closed_callback_)
     {
       closed_callback_(&owner_);
     }
+    if (pending_completion_tags_.load(std::memory_order_acquire) == 0)
+    {
+      release_grpc_resources_i_();
+    }
+  }
+
+  void
+  BatchingStreamBase::Impl::release_grpc_resources_i_() noexcept
+  {
+    stream_ = nullptr;
+    stream_context_.reset();
+    grpc_queue_.reset();
   }
 
   bool
@@ -1035,6 +1058,13 @@ namespace AdServer::Grpc
   void
   BatchingStreamBase::Impl::notify_completion_tags_drained_() noexcept
   {
+    {
+      std::lock_guard<std::mutex> lock(state_lock_);
+      if (stream_state_.load() == StreamState::Finished)
+      {
+        release_grpc_resources_i_();
+      }
+    }
     shutdown_cv_.notify_all();
     Sync::PosixGuard guard(owner_.cond_);
     owner_.cond_.broadcast();

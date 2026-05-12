@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -65,6 +66,8 @@ namespace AdServer::Grpc
     bool fail_pending_if_no_streams_() noexcept;
     void update_max_streams_(std::size_t streams_count) noexcept;
     void release_stream_() noexcept;
+    void deactivate_streams_() noexcept;
+    void wait_streams_() noexcept;
     void clear_streams_() noexcept;
 
   private:
@@ -74,7 +77,7 @@ namespace AdServer::Grpc
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<grpc::Channel> channel_;
     BatchingQueuePtr batching_queue_;
-    std::vector<BatchingStreamPtr> streams_;
+    std::unordered_map<BatchingStreamBase*, BatchingStreamPtr> streams_;
     mutable std::mutex streams_registry_lock_;
     std::deque<BatchingStreamBase*> available_streams_;
     mutable std::mutex streams_lock_;
