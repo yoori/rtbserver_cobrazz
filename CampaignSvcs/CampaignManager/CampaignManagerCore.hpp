@@ -3,6 +3,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <optional>
 #include <vector>
 
 #include <eh/Exception.hpp>
@@ -237,13 +238,10 @@ namespace AdServer
         Generics::Time time;
         bool test_request = false;
         bool log_as_test = false;
-        bool campaign_id_defined = false;
-        unsigned long campaign_id = 0;
-        bool action_id_defined = false;
-        unsigned long action_id = 0;
+        std::optional<unsigned long> campaign_id;
+        std::optional<unsigned long> action_id;
         std::string order_id;
-        bool action_value_defined = false;
-        RevenueDecimal action_value = RevenueDecimal::ZERO;
+        std::optional<RevenueDecimal> action_value;
         std::string referer;
         unsigned long user_status = 0;
         AdServer::Commons::UserId user_id;
@@ -455,8 +453,7 @@ namespace AdServer
         bool consider_request = false;
         bool enabled_notice = false;
         bool emulate_click = false;
-        RevenueDecimal pub_imp_revenue = RevenueDecimal::ZERO;
-        bool pub_imp_revenue_defined = false;
+        std::optional<RevenueDecimal> pub_imp_revenue;
       };
 
       struct InstantiateAdResult

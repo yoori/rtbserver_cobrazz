@@ -141,11 +141,27 @@ namespace AdServer::CampaignSvcs
 
     Generics::CompositeActiveObject::deactivate_object_();
 
+    for (const auto& client_holder : client_holders_)
+    {
+      if (client_holder && client_holder->client)
+      {
+        client_holder->client->deactivate_object();
+      }
+    }
+
     for (auto& service_index_pool : service_index_pools_)
     {
       service_index_pool.second->wait_object();
     }
     default_pool_->wait_object();
+
+    for (const auto& client_holder : client_holders_)
+    {
+      if (client_holder && client_holder->client)
+      {
+        client_holder->client->wait_object();
+      }
+    }
   }
 
   AdServer::Grpc::Stats
@@ -193,6 +209,12 @@ namespace AdServer::CampaignSvcs
     const char* unavailable_description,
     const std::string& service_index)
   {
+    if (!active())
+    {
+      callback(unavailable_status("inactive"), Response());
+      return;
+    }
+
     auto ref = get_ref_(service_index);
     if (!ref)
     {

@@ -431,7 +431,6 @@ message InstantiateAdInfo {
   bool enabled_notice = 21;
   bool emulate_click = 22;
   DecimalInfo pub_imp_revenue = 23;
-  bool pub_imp_revenue_defined = 24;
 }
 
 message InstantiateAdResult {
@@ -633,7 +632,6 @@ message ActionInfo {
   OptionalUInt64 campaign_id = 4;
   OptionalUInt64 action_id = 5;
   string order_id = 6;
-  bool action_value_defined = 7;
   DecimalInfo action_value = 8;
   string referer = 9;
   uint64 user_status = 10;
@@ -894,10 +892,8 @@ message ConfigDeliveryLimits {
   bytes date_end = 2;
   DecimalInfo budget = 3;
   DecimalInfo daily_budget = 4;
-  bool imps_defined = 5;
-  uint64 imps = 6;
-  bool clicks_defined = 7;
-  uint64 clicks = 8;
+  optional uint64 imps = 6;
+  optional uint64 clicks = 8;
   uint32 delivery_pacing = 9;
 }
 

@@ -241,6 +241,8 @@ def main():
   namespace = cpp_namespace_from_param(request.parameter)
   files_to_generate = set(request.file_to_generate)
   response = plugin_pb2.CodeGeneratorResponse()
+  response.supported_features = (
+    plugin_pb2.CodeGeneratorResponse.FEATURE_PROTO3_OPTIONAL)
 
   for file_desc in request.proto_file:
     if file_desc.name not in files_to_generate:

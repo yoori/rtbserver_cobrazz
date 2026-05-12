@@ -185,6 +185,7 @@ namespace AdServer::Grpc
   void
   BatchingQueue::notify_all()
   {
+    std::lock_guard<std::mutex> lock(hot_cv_lock_);
     hot_cv_.notify_all();
   }
 

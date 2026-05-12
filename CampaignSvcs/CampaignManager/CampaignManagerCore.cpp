@@ -1850,10 +1850,13 @@ namespace AdServer
         instantiate_ad_info.consider_request = core_info.consider_request;
         instantiate_ad_info.enabled_notice = core_info.enabled_notice;
         instantiate_ad_info.emulate_click = core_info.emulate_click;
-        instantiate_ad_info.pub_imp_revenue =
-          CorbaAlgs::pack_decimal<RevenueDecimal>(core_info.pub_imp_revenue);
         instantiate_ad_info.pub_imp_revenue_defined =
-          core_info.pub_imp_revenue_defined;
+          core_info.pub_imp_revenue.has_value();
+        if(core_info.pub_imp_revenue)
+        {
+          instantiate_ad_info.pub_imp_revenue =
+            CorbaAlgs::pack_decimal<RevenueDecimal>(*core_info.pub_imp_revenue);
+        }
 
         ConstCampaignConfig_var campaign_config = configuration();
         const Colocation* colocation = 0;
@@ -2603,8 +2606,17 @@ namespace AdServer
               ad_slot_debug_info,
               matched_channels);
           }
-          catch(const eh::Exception&)
+          catch(const eh::Exception& ex)
           {
+            logger_->sstream(Logging::Logger::EMERGENCY,
+              Aspect::CAMPAIGN_MANAGER,
+              "ADS-IMPL-118") <<
+              "CampaignManagerCore::get_campaign_creative(): "
+              "ad slot campaign selection failed for ad_slot_id=" <<
+              core_ad_slot.ad_slot_id <<
+              ", tag_id=" << (tag ? tag->tag_id : 0) <<
+              ": " << ex.what();
+
             ad_slot_result.selected_creatives.length(0);
 
             if(ad_slot_debug_info)
@@ -5326,26 +5338,26 @@ namespace AdServer
         adv_action_info.colo_id = campaign_manager_config_.colocation_id();
         adv_action_info.order_id = action_info.order_id;
         adv_action_info.ip_hash = action_info.ip_hash;
-        if(action_info.action_value_defined)
+        if(action_info.action_value)
         {
-          adv_action_info.action_value = action_info.action_value;
+          adv_action_info.action_value = *action_info.action_value;
         }
         else
         {
           adv_action_info.action_value = RevenueDecimal::ZERO;
         }
 
-        if(action_info.action_id_defined)
+        if(action_info.action_id)
         {
           AdvActionMap::const_iterator adv_act_it =
-            config->adv_actions.find(action_info.action_id);
+            config->adv_actions.find(*action_info.action_id);
           if(adv_act_it != config->adv_actions.end())
           {
-            adv_action_info.action_id = action_info.action_id;
+            adv_action_info.action_id = *action_info.action_id;
             adv_action_info.ccg_ids.assign(
               adv_act_it->second.ccg_ids.begin(),
               adv_act_it->second.ccg_ids.end());
-            if(!action_info.action_value_defined)
+            if(!action_info.action_value)
             {
               adv_action_info.action_value = adv_act_it->second.cur_value;
             }
@@ -5384,9 +5396,9 @@ namespace AdServer
           }
         }
 
-        if(action_info.campaign_id_defined)
+        if(action_info.campaign_id)
         {
-          adv_action_info.ccg_ids.push_back(action_info.campaign_id);
+          adv_action_info.ccg_ids.push_back(*action_info.campaign_id);
         }
 
         produce_action_message_(action_info);
@@ -6459,7 +6471,7 @@ namespace AdServer
 
         char action_id_str[40];
         size_t action_id_size = String::StringManip::int_to_str(
-          action_info.action_id, action_id_str, sizeof(action_id_str));
+          action_info.action_id.value_or(0), action_id_str, sizeof(action_id_str));
 
         std::string act_ref("act-");
         act_ref.append(action_id_str, action_id_size);

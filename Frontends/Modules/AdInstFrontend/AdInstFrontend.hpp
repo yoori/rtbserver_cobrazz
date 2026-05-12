@@ -169,7 +169,6 @@ namespace Instantiate
     CookieManagerPtr cookie_manager_;
 
     /* external services */
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;

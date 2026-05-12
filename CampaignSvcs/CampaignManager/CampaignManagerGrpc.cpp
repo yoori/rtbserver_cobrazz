@@ -775,10 +775,14 @@ namespace AdServer::CampaignSvcs
       target.set_date_end(pack_oct_seq(source.date_end));
       pack_decimal_info(source.budget, *target.mutable_budget());
       pack_decimal_info(source.daily_budget, *target.mutable_daily_budget());
-      target.set_imps_defined(source.imps_defined);
-      target.set_imps(source.imps);
-      target.set_clicks_defined(source.clicks_defined);
-      target.set_clicks(source.clicks);
+      if(source.imps_defined)
+      {
+        target.set_imps(source.imps);
+      }
+      if(source.clicks_defined)
+      {
+        target.set_clicks(source.clicks);
+      }
       target.set_delivery_pacing(
         static_cast<unsigned char>(source.delivery_pacing));
     }
@@ -1823,8 +1827,10 @@ namespace AdServer::CampaignSvcs
       info.consider_request = source.consider_request();
       info.enabled_notice = source.enabled_notice();
       info.emulate_click = source.emulate_click();
-      info.pub_imp_revenue = unpack_revenue_decimal(source.pub_imp_revenue());
-      info.pub_imp_revenue_defined = source.pub_imp_revenue_defined();
+      if(source.has_pub_imp_revenue())
+      {
+        info.pub_imp_revenue = unpack_revenue_decimal(source.pub_imp_revenue());
+      }
 
       const auto result = core_->instantiate_ad(info);
       auto* target = response.mutable_instantiate_ad_result();
@@ -2306,23 +2312,18 @@ namespace AdServer::CampaignSvcs
       info.time = unpack_time(source.time());
       info.test_request = source.test_request();
       info.log_as_test = source.log_as_test();
-      info.campaign_id_defined =
-        source.has_campaign_id() && source.campaign_id().defined();
-      if(info.campaign_id_defined)
+      if(source.has_campaign_id() && source.campaign_id().defined())
       {
-        info.campaign_id = source.campaign_id().value();
+        info.campaign_id.emplace(source.campaign_id().value());
       }
-      info.action_id_defined =
-        source.has_action_id() && source.action_id().defined();
-      if(info.action_id_defined)
+      if(source.has_action_id() && source.action_id().defined())
       {
-        info.action_id = source.action_id().value();
+        info.action_id.emplace(source.action_id().value());
       }
       info.order_id = source.order_id();
-      info.action_value_defined = source.action_value_defined();
-      if(info.action_value_defined)
+      if(source.has_action_value())
       {
-        info.action_value = unpack_revenue_decimal(source.action_value());
+        info.action_value.emplace(unpack_revenue_decimal(source.action_value()));
       }
       info.referer = source.referer();
       info.user_status = source.user_status();

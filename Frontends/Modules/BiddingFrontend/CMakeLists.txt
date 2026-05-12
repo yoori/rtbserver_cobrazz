@@ -5,8 +5,8 @@ add_library(BiddingFrontend SHARED
   DebugSink.cpp
   AdXmlRequestInfoFiller.cpp
   BiddingFrontend.cpp
+  BiddingFrontendWorkers.cpp
   BiddingFrontendStat.cpp
-  PlannerPool.cpp
   BidRequestTask.cpp
   OpenRtbBidRequestTask.cpp
   GoogleBidRequestTask.cpp

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include <eh/Exception.hpp>
@@ -43,8 +44,8 @@
 #include "DebugSink.hpp"
 #include "RequestInfoFiller.hpp"
 #include "BiddingFrontendStat.hpp"
+#include "BiddingFrontendWorkers.hpp"
 #include "JsonFormatter.hpp"
-#include "PlannerPool.hpp"
 //#include "UServerUtils/MetricsHTTPProvider.hpp"
 #include "RequestMetricsProvider.hpp"
 #include "Stage.hpp"
@@ -52,6 +53,8 @@
 namespace AdServer::Bidding
 {
   class BidRequestTask;
+  typedef ReferenceCounting::SmartPtr<BidRequestTask>
+    BidRequestTask_var;
   class OpenRtbBidRequestTask;
   class GoogleBidRequestTask;
 
@@ -193,6 +196,12 @@ namespace AdServer::Bidding
       DebugSink::UserResolvingDebugInfo* user_resolving_debug_info)
       noexcept;
 
+    void
+    resolve_user_id_async_(
+      BidRequestTask_var request_task,
+      std::function<void(DebugSink::UserResolvingDebugInfo)> callback)
+      noexcept;
+
     adserver::user_info_svcs::user_bind::GetUserIdResponse
     get_user_id_(
       const adserver::user_info_svcs::user_bind::GetUserIdRequest& request);
@@ -230,6 +239,62 @@ namespace AdServer::Bidding
       const AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult& history_match_result)
       noexcept;
 
+    void
+    process_bid_request_after_user_resolved_async_(
+      const char* fn,
+      std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
+        campaign_match_result,
+      BidRequestTask_var request_task,
+      const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
+      bool interrupted,
+      std::function<void(bool)> callback)
+      noexcept;
+
+    void
+    trigger_match_async_(
+      BidRequestTask_var request_task,
+      const AdServer::Commons::UserId& user_id,
+      std::function<void(
+        std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>,
+        bool)> callback)
+      noexcept;
+
+    void
+    history_match_async_(
+      BidRequestTask_var request_task,
+      std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
+        trigger_match_result,
+      bool trigger_match_result_present,
+      const AdServer::Commons::UserId& user_id,
+      std::function<void(
+        AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var)> callback)
+      noexcept;
+
+    void
+    get_ccg_keywords_async_(
+      BidRequestTask_var request_task,
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
+        history_match_result,
+      std::function<void(
+        AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var)> callback)
+      noexcept;
+
+    void
+    select_campaign_async_(
+      std::shared_ptr<AdServer::Bidding::CampaignManager::RequestCreativeResult>
+        campaign_match_result,
+      BidRequestTask_var request_task,
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
+        history_match_result,
+      std::shared_ptr<adserver::channel_svcs::channel_server::MatchResponse>
+        trigger_match_result,
+      bool trigger_match_result_present,
+      AdServer::ChannelSvcs::ChannelServerBase::CCGKeywordSeq_var ccg_keywords,
+      const AdServer::Commons::UserId& user_id,
+      bool interrupted,
+      std::function<void()> callback)
+      noexcept;
+
     bool
     process_bid_request_(
       const char* fn,
@@ -239,6 +304,24 @@ namespace AdServer::Bidding
       BidRequestTask* request_task,
       RequestInfo& request_info,
       const std::string& keywords)
+      noexcept;
+
+    bool
+    process_bid_request_after_user_resolved_(
+      const char* fn,
+      AdServer::Bidding::CampaignManager::RequestCreativeResult&
+        campaign_match_result,
+      AdServer::Commons::UserId& user_id,
+      BidRequestTask* request_task,
+      RequestInfo& request_info,
+      const std::string& keywords,
+      const DebugSink::UserResolvingDebugInfo& user_resolving_debug_info,
+      bool interrupted)
+      noexcept;
+
+    void
+    process_bid_request_async_(
+      BidRequestTask_var request_task)
       noexcept;
 
     void
@@ -258,7 +341,8 @@ namespace AdServer::Bidding
       const AdServer::Commons::UserId& user_id,
       bool passback,
       std::string& hostname,
-      bool interrupted)
+      bool interrupted,
+      bool call_campaign_manager = true)
       noexcept;
 
     bool
@@ -398,7 +482,6 @@ namespace AdServer::Bidding
     RequestInfoFiller::AccountTraitsById account_traits_;
 
     // external services
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
@@ -410,9 +493,8 @@ namespace AdServer::Bidding
       channel_client_;
 
     Generics::Planner_var planner_;
-    Generics::TaskExecutor_var task_runner_;
+    BiddingFrontendWorkers_var bid_workers_;
     Generics::TaskRunner_var control_task_runner_;
-    PlannerPool_var planner_pool_;
     StatHolder_var stats_;
 
     mutable ExtConfigSyncPolicy::Mutex ext_config_lock_;

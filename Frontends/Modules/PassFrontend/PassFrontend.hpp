@@ -8,7 +8,6 @@
 #include <Logger/DistributorLogger.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
-#include <CORBA/CORBACommons/CorbaAdapters.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
@@ -109,7 +108,7 @@ namespace Passback
     CommonModule_var common_module_;
 
     std::unique_ptr<RequestInfoFiller> request_info_filler_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
+    std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>

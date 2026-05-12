@@ -34,9 +34,11 @@ namespace Bidding
     Generics::Time history_match_started_at;
     Generics::Time history_match_time;
     Generics::Time history_match_local_time;
+    bool history_match_error = false;
     Generics::Time creative_selection_started_at;
     Generics::Time creative_selection_time;
     Generics::Time creative_selection_local_time;
+    bool creative_selection_error = false;
   };
 
   class DebugSink

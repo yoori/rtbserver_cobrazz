@@ -265,7 +265,6 @@ namespace AdServer
 
     // external services
     //std::unique_ptr<Logging::LoggerCallbackHolder> callback_holder_;
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;

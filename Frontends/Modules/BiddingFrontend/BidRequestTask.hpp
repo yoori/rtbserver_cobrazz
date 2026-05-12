@@ -125,6 +125,18 @@ namespace Bidding
     execute_() noexcept;
 
     bool
+    parse_request_() noexcept;
+
+    void
+    complete_request_(
+      bool not_interrupted,
+      AdServer::Bidding::CampaignManager::RequestCreativeResult&
+        campaign_match_result) noexcept;
+
+    void
+    finish_(bool write_empty_response) noexcept;
+
+    bool
     check_interrupt_(const Stage stage)
       noexcept;
 

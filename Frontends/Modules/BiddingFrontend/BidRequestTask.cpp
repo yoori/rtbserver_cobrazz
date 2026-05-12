@@ -24,18 +24,25 @@ namespace Bidding
   void
   BidRequestTask::execute() noexcept
   {
-    if(!execute_())
+    if(!parse_request_())
     {
-      this->write_empty_response(0);
+      finish_(false);
+      return;
     }
 
-    clear();
-
-    bid_frontend_->bid_task_count_ += -1;
+    bid_frontend_->process_bid_request_async_(
+      BidRequestTask_var(ReferenceCounting::add_ref(this)));
   }
 
   bool
   BidRequestTask::execute_() noexcept
+  {
+    execute();
+    return true;
+  }
+
+  bool
+  BidRequestTask::parse_request_() noexcept
   {
     set_current_stage(Stage::RequestParsing);
 
@@ -50,35 +57,37 @@ namespace Bidding
     if(!this->read_request())
     {
       this->write_empty_response(400);
-      return true;
+      return false;
     }
     debug_sink_.set(String::SubString(request_info_.require_debug_info));
 
     // check interrupt
     if(check_interrupt_(Stage::RequestParsing))
     {
+      this->write_empty_response(0);
       return false;
     }
 
-    AdServer::Bidding::CampaignManager::RequestCreativeResult
-      campaign_match_result;
+    return true;
+  }
 
-    bool not_interrupted = bid_frontend_->process_bid_request_(
-      "", // FUN
-      campaign_match_result,
-      resolved_user_id_,
-      this,
-      request_info_,
-      keywords_);
-
+  void
+  BidRequestTask::complete_request_(
+    bool not_interrupted,
+    AdServer::Bidding::CampaignManager::RequestCreativeResult&
+      campaign_match_result)
+    noexcept
+  {
     if(!not_interrupted)
     {
-      return false;
+      finish_(true);
+      return;
     }
 
     if(check_interrupt_(Stage::CampaignSelection))
     {
-      return false;
+      finish_(true);
+      return;
     }
 
     if(campaign_match_result.ad_slots.length())
@@ -91,7 +100,8 @@ namespace Bidding
         campaign_match_result,
         hostname_))
       {
-        return false;
+        finish_(true);
+        return;
       }
     }
 
@@ -102,7 +112,8 @@ namespace Bidding
 
     if(check_interrupt_(Stage::CampaignSelectionConsidering))
     {
-      return false;
+      finish_(true);
+      return;
     }
 
     if(campaign_match_result.ad_slots.length())
@@ -126,11 +137,26 @@ namespace Bidding
 
       if(ad_selected)
       {
-        return this->write_response(campaign_match_result);
+        this->write_response(campaign_match_result);
+        finish_(false);
+        return;
       }
     }
 
-    return false;
+    finish_(true);
+  }
+
+  void
+  BidRequestTask::finish_(bool write_empty_response) noexcept
+  {
+    if(write_empty_response)
+    {
+      this->write_empty_response(0);
+    }
+
+    clear();
+
+    bid_frontend_->bid_task_count_ += -1;
   }
 
   void

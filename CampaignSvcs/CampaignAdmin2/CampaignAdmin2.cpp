@@ -1171,10 +1171,10 @@ namespace
       row.add_field(optional_decimal_value(ccg_limits.budget()));
       row.add_field(optional_decimal_value(ccg_limits.daily_budget()));
       row.add_field(std::string(1, static_cast<char>(ccg_limits.delivery_pacing())));
-      row.add_field(ccg_limits.imps_defined() ?
+      row.add_field(ccg_limits.has_imps() ?
         std::to_string(ccg_limits.imps()) : std::string());
       row.add_field(std::string());
-      row.add_field(ccg_limits.clicks_defined() ?
+      row.add_field(ccg_limits.has_clicks() ?
         std::to_string(ccg_limits.clicks()) : std::string());
       row.add_field(std::string());
       row.add_field(time_value(cmp_limits.date_start()));
@@ -1182,10 +1182,10 @@ namespace
       row.add_field(optional_decimal_value(cmp_limits.budget()));
       row.add_field(optional_decimal_value(cmp_limits.daily_budget()));
       row.add_field(std::string(1, static_cast<char>(cmp_limits.delivery_pacing())));
-      row.add_field(cmp_limits.imps_defined() ?
+      row.add_field(cmp_limits.has_imps() ?
         std::to_string(cmp_limits.imps()) : std::string());
       row.add_field(std::string());
-      row.add_field(cmp_limits.clicks_defined() ?
+      row.add_field(cmp_limits.has_clicks() ?
         std::to_string(cmp_limits.clicks()) : std::string());
       row.add_field(std::string());
       row.add_field(decimal_value(campaign.max_pub_share()));

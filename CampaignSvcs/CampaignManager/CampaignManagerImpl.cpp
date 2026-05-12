@@ -953,11 +953,12 @@ namespace AdServer
         core_info.consider_request = instantiate_ad_info.consider_request;
         core_info.enabled_notice = instantiate_ad_info.enabled_notice;
         core_info.emulate_click = instantiate_ad_info.emulate_click;
-        core_info.pub_imp_revenue =
-          CorbaAlgs::unpack_decimal<RevenueDecimal>(
-            instantiate_ad_info.pub_imp_revenue);
-        core_info.pub_imp_revenue_defined =
-          instantiate_ad_info.pub_imp_revenue_defined;
+        if(instantiate_ad_info.pub_imp_revenue_defined)
+        {
+          core_info.pub_imp_revenue =
+            CorbaAlgs::unpack_decimal<RevenueDecimal>(
+              instantiate_ad_info.pub_imp_revenue);
+        }
 
         const CampaignManagerCore::InstantiateAdResult core_result =
           core_->instantiate_ad(core_info);
@@ -1351,16 +1352,19 @@ namespace AdServer
         core_action_info.time = CorbaAlgs::unpack_time(action_info.time);
         core_action_info.test_request = action_info.test_request;
         core_action_info.log_as_test = action_info.log_as_test;
-        core_action_info.campaign_id_defined = action_info.campaign_id_defined;
-        core_action_info.campaign_id = action_info.campaign_id;
-        core_action_info.action_id_defined = action_info.action_id_defined;
-        core_action_info.action_id = action_info.action_id;
+        if(action_info.campaign_id_defined)
+        {
+          core_action_info.campaign_id.emplace(action_info.campaign_id);
+        }
+        if(action_info.action_id_defined)
+        {
+          core_action_info.action_id.emplace(action_info.action_id);
+        }
         core_action_info.order_id = action_info.order_id.in();
-        core_action_info.action_value_defined = action_info.action_value_defined;
         if(action_info.action_value_defined)
         {
-          core_action_info.action_value =
-            CorbaAlgs::unpack_decimal<RevenueDecimal>(action_info.action_value);
+          core_action_info.action_value.emplace(
+            CorbaAlgs::unpack_decimal<RevenueDecimal>(action_info.action_value));
         }
         core_action_info.referer = action_info.referer.in();
         core_action_info.user_status = action_info.user_status;

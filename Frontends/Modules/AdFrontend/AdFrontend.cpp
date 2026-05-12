@@ -30,7 +30,7 @@
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
 #include "AdFrontend.hpp"
 
@@ -358,35 +358,21 @@ namespace AdServer
           }
         }
 
-        corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
-
         task_runner_ = new Generics::TaskRunner(callback(), 2);
         task_scheduler_ = new FrontendCommons::TaskScheduler(
           callback(), task_runner_);
         add_child_object(task_scheduler_.in());
 
-        AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
-          user_info_controller_groups;
-        for(const auto& controller_group :
-            common_config_->UserInfoManagerControllerGroup())
-        {
-          AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
-            controller_group_refs;
-          Config::CorbaConfigReader::read_multi_corba_ref(
-            controller_group,
-            controller_group_refs);
-          user_info_controller_groups.push_back(controller_group_refs);
-        }
-        auto user_info_client = std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
-          logger(),
-          user_info_controller_groups,
-          corba_client_adapter_.in());
-        user_info_client_ = user_info_client;
-        add_child_object(user_info_client);
-
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
+
+        user_info_client_ =
+          AdServer::UserInfoSvcs::create_distributed_user_info_client(
+            *common_config_,
+            grpc_executor_,
+            logger(),
+            this);
 
         auto campaign_manager_client =
           std::make_shared<

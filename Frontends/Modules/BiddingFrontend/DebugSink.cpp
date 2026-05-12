@@ -535,12 +535,22 @@ namespace Bidding
         time_metering.history_match_started_at.float_str() << sep_ <<
       "history_match_time = " <<
         time_metering.history_match_time.float_str() << " : " <<
-        time_metering.history_match_local_time.float_str() << sep_ <<
+        time_metering.history_match_local_time.float_str();
+    if(time_metering.history_match_error)
+    {
+      debug_info_str_ << " => error";
+    }
+    debug_info_str_ << sep_ <<
       "creative_selection_started_at = " <<
         time_metering.creative_selection_started_at.float_str() << sep_ <<
       "creative_selection_time = " <<
         time_metering.creative_selection_time.float_str() << " : " <<
-        time_metering.creative_selection_local_time.float_str() << sep_;
+        time_metering.creative_selection_local_time.float_str();
+    if(time_metering.creative_selection_error)
+    {
+      debug_info_str_ << " => error";
+    }
+    debug_info_str_ << sep_;
   }
 
   void

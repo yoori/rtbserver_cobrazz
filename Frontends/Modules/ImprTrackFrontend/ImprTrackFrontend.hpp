@@ -187,7 +187,6 @@ namespace AdServer::ImprTrack
     IPMapPtr ip_map_;
 
     // external services
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>

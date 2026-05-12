@@ -11,7 +11,7 @@
 #include <Commons/Containers.hpp>
 #include <Frontends/CommonModule/CommonModule.hpp>
 
-#include <UserInfoSvcs/UserInfoClient/UserInfoCorbaClient.hpp>
+#include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
 #include "PassFrontend.hpp"
 
@@ -376,31 +376,24 @@ namespace Passback
       {
         parse_config_();
 
-        corba_client_adapter_ = new CORBACommons::CorbaClientAdapter();
+        grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
+          common_config_->grpc_executor_threads());
+        add_child_object(grpc_executor_);
+
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
-            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_));
+            FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
+            AdServer::Grpc::BatchingOptions(),
+            grpc_executor_);
         campaign_manager_ = campaign_manager;
         add_child_object(campaign_manager);
 
-        AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRefList
-          user_info_controller_groups;
-        for(const auto& controller_group :
-            common_config_->UserInfoManagerControllerGroup())
-        {
-          AdServer::UserInfoSvcs::UserInfoCorbaClient::ControllerRef
-            controller_group_refs;
-          Config::CorbaConfigReader::read_multi_corba_ref(
-            controller_group,
-            controller_group_refs);
-          user_info_controller_groups.push_back(controller_group_refs);
-        }
-        auto user_info_client = std::make_shared<AdServer::UserInfoSvcs::UserInfoCorbaClient>(
-          logger(),
-          user_info_controller_groups,
-          corba_client_adapter_.in());
-        user_info_client_ = user_info_client;
-        add_child_object(user_info_client);
+        user_info_client_ =
+          AdServer::UserInfoSvcs::create_distributed_user_info_client(
+            *common_config_,
+            grpc_executor_,
+            logger(),
+            this);
 
         activate_object();
       }

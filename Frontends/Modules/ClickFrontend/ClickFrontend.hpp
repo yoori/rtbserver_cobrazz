@@ -177,8 +177,6 @@ namespace AdServer
     CommonModule_var common_module_;
 
     std::unique_ptr<ClickFE::RequestInfoFiller> request_info_filler_;
-
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>

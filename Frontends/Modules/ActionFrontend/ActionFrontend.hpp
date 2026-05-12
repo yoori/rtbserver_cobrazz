@@ -240,7 +240,6 @@ namespace AdServer::Action
     Generics::TaskRunner_var task_runner_;
 
     /* external services */
-    CORBACommons::CorbaClientAdapter_var corba_client_adapter_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>

@@ -1305,6 +1305,40 @@ namespace AdServer::UserInfoSvcs
       return convert_history_match_result_(response.match_result());
     }
 
+    UserInfoMatcher::MatchResult* make_history_match_result(
+      const pb::MatchResponse& response)
+    {
+      return convert_history_match_result_(response.match_result());
+    }
+
+    void make_update_user_freq_caps_request(
+      pb::UpdateUserFreqCapsRequest& request,
+      const CORBACommons::UserIdInfo& user_id,
+      const CORBACommons::TimestampInfo& time,
+      const CORBACommons::RequestIdInfo& request_id,
+      const FreqCapIdSeq& freq_caps,
+      const FreqCapIdSeq& uc_freq_caps,
+      const FreqCapIdSeq& virtual_freq_caps,
+      const UserInfoManager::SeqOrderSeq& seq_orders,
+      const CampaignIdSeq& campaign_ids,
+      const CampaignIdSeq& uc_campaign_ids)
+    {
+      request.set_user_id(oct_seq_to_bytes_(user_id));
+      request.set_time(oct_seq_to_bytes_(time));
+      request.set_request_id(oct_seq_to_bytes_(request_id));
+      id_seq_to_repeated_(freq_caps, request.mutable_freq_caps());
+      id_seq_to_repeated_(uc_freq_caps, request.mutable_uc_freq_caps());
+      id_seq_to_repeated_(
+        virtual_freq_caps,
+        request.mutable_virtual_freq_caps());
+      for(CORBA::ULong i = 0; i < seq_orders.length(); ++i)
+      {
+        convert_(seq_orders[i], *request.add_seq_orders());
+      }
+      id_seq_to_repeated_(campaign_ids, request.mutable_campaign_ids());
+      id_seq_to_repeated_(uc_campaign_ids, request.mutable_uc_campaign_ids());
+    }
+
     bool merge(
       UserInfoManagerGrpcAsyncClient& client,
       const UserInfo& user_info,
@@ -1360,20 +1394,17 @@ namespace AdServer::UserInfoSvcs
       const CampaignIdSeq& uc_campaign_ids)
     {
       pb::UpdateUserFreqCapsRequest request;
-      request.set_user_id(oct_seq_to_bytes_(user_id));
-      request.set_time(oct_seq_to_bytes_(time));
-      request.set_request_id(oct_seq_to_bytes_(request_id));
-      id_seq_to_repeated_(freq_caps, request.mutable_freq_caps());
-      id_seq_to_repeated_(uc_freq_caps, request.mutable_uc_freq_caps());
-      id_seq_to_repeated_(
+      make_update_user_freq_caps_request(
+        request,
+        user_id,
+        time,
+        request_id,
+        freq_caps,
+        uc_freq_caps,
         virtual_freq_caps,
-        request.mutable_virtual_freq_caps());
-      for(CORBA::ULong i = 0; i < seq_orders.length(); ++i)
-      {
-        convert_(seq_orders[i], *request.add_seq_orders());
-      }
-      id_seq_to_repeated_(campaign_ids, request.mutable_campaign_ids());
-      id_seq_to_repeated_(uc_campaign_ids, request.mutable_uc_campaign_ids());
+        seq_orders,
+        campaign_ids,
+        uc_campaign_ids);
       AdServer::Grpc::sync_call<pb::UpdateUserFreqCapsResponse>(
         [&](auto callback)
         {

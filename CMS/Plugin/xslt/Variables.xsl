@@ -338,7 +338,7 @@
 <xsl:variable name="def-request-session-timeout" select="'30'"/>
 <xsl:variable name="def-request-update-period" select="'60'"/>
 
-<xsl:variable name="def-bidding-module-threads" select="'1000'"/>
+<xsl:variable name="def-bidding-module-threads" select="'128'"/>
 
 <xsl:variable name="def-userbind-module-threads" select="'1000'"/>
 <xsl:variable name="def-userbind-module-match-threads" select="'100'"/>
