@@ -50,7 +50,7 @@ namespace AdServer::Grpc
 
     Impl(
       BatchingStreamBase& owner,
-      const std::string& endpoint,
+      std::shared_ptr<grpc::Channel> channel,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
       unsigned int queue_index,
@@ -291,7 +291,7 @@ namespace AdServer::Grpc
 
   BatchingStreamBase::Impl::Impl(
     BatchingStreamBase& owner,
-    const std::string& endpoint,
+    std::shared_ptr<grpc::Channel> channel,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
     unsigned int queue_index,
@@ -318,24 +318,12 @@ namespace AdServer::Grpc
     {
       throw std::runtime_error("BatchingStreamBase requires BatchingQueue");
     }
-
-    grpc::ChannelArguments channel_args;
-    channel_args.SetMaxReceiveMessageSize(-1);
-    channel_args.SetMaxSendMessageSize(-1);
-    channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
-    channel_args.SetInt(
-      GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
-      options_.use_local_subchannel_pool ? 1 : 0);
-    if (!options_.enable_grpc_compression)
+    if (!channel)
     {
-      channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
+      throw std::runtime_error("BatchingStreamBase requires grpc Channel");
     }
 
-    batch_stub_ = std::make_unique<BatchTransport>(
-      grpc::CreateCustomChannel(
-        endpoint,
-        grpc::InsecureChannelCredentials(),
-        channel_args));
+    batch_stub_ = std::make_unique<BatchTransport>(std::move(channel));
   }
 
   BatchingStreamBase::Impl::~Impl()
@@ -344,7 +332,7 @@ namespace AdServer::Grpc
   }
 
   BatchingStreamBase::BatchingStreamBase(
-    const std::string& endpoint,
+    std::shared_ptr<grpc::Channel> channel,
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
     std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
     unsigned int queue_index,
@@ -356,7 +344,7 @@ namespace AdServer::Grpc
   {
     impl_ = std::make_shared<Impl>(
       *this,
-      endpoint,
+      std::move(channel),
       std::move(grpc_executor),
       std::move(batching_queue),
       queue_index,

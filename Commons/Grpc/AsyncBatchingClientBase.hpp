@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include <grpcpp/channel.h>
 #include <grpcpp/support/status.h>
 
 #include <Generics/CompositeActiveObject.hpp>
@@ -71,6 +72,7 @@ namespace AdServer::Grpc
     const AdServer::Grpc::BatchingOptions options_;
     const std::size_t max_streams_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    std::shared_ptr<grpc::Channel> channel_;
     BatchingQueuePtr batching_queue_;
     std::vector<BatchingStreamPtr> streams_;
     mutable std::mutex streams_registry_lock_;

@@ -5,6 +5,8 @@
 #include <zlib.h>
 #include <unistd.h>
 
+#include <google/protobuf/arena.h>
+
 #include <HTTP/HTTPCookie.hpp>
 #include <String/StringManip.hpp>
 #include <String/AsciiStringManip.hpp>
@@ -526,11 +528,13 @@ namespace AdServer::Bidding
       const CampaignManager::RequestParams& request_params,
       std::string& hostname)
     {
-      PB::GetCampaignCreativeRequest request;
+      google::protobuf::Arena arena;
+      auto& request = *google::protobuf::Arena::CreateMessage<
+        PB::GetCampaignCreativeRequest>(&arena);
       pack_request_params(request_params, *request.mutable_request_params());
 
       auto response = AdServer::Grpc::sync_call<PB::GetCampaignCreativeResponse>(
-        [&](auto callback)
+        [&request, &campaign_manager](auto callback)
         {
           campaign_manager.get_campaign_creative(request, std::move(callback));
         },
@@ -1720,7 +1724,9 @@ namespace AdServer::Bidding
     {
       try
       {
-        adserver::channel_svcs::channel_server::MatchRequest channel_request;
+        google::protobuf::Arena arena;
+        auto& channel_request = *google::protobuf::Arena::CreateMessage<
+          adserver::channel_svcs::channel_server::MatchRequest>(&arena);
         channel_request.set_non_strict_word_match(false);
         channel_request.set_non_strict_url_match(false);
         channel_request.set_return_negative(false);
@@ -1891,8 +1897,10 @@ namespace AdServer::Bidding
       {
         try
         {
-          adserver::user_info_svcs::user_info_manager::MatchRequest
-            history_match_request;
+          google::protobuf::Arena arena;
+          auto& history_match_request = *google::protobuf::Arena::CreateMessage<
+            adserver::user_info_svcs::user_info_manager::MatchRequest>(
+              &arena);
 
           auto* user_info = history_match_request.mutable_user_info();
           user_info->set_user_id(GrpcAlgs::pack_user_id(user_id));
@@ -2123,8 +2131,10 @@ namespace AdServer::Bidding
           channel_ids[i] = history_match_result.channels[i].channel_id;
         }
 
-        adserver::channel_svcs::channel_server::GetCcgTraitsRequest
-          channel_request;
+        google::protobuf::Arena arena;
+        auto& channel_request = *google::protobuf::Arena::CreateMessage<
+          adserver::channel_svcs::channel_server::GetCcgTraitsRequest>(
+            &arena);
         AdServer::ChannelSvcs::GrpcAlgs::make_get_ccg_traits_request(
           channel_ids,
           channel_request);

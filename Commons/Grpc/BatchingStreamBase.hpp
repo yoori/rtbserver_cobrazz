@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include <grpcpp/channel.h>
 #include <grpcpp/generic/generic_stub.h>
 
 #include <Generics/ActiveObject.hpp>
@@ -34,7 +35,7 @@ namespace AdServer::Grpc
     using ClosedCallback = std::function<void(BatchingStreamBase*)>;
 
     explicit BatchingStreamBase(
-      const std::string& endpoint,
+      std::shared_ptr<grpc::Channel> channel,
       std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor,
       std::shared_ptr<AdServer::Grpc::BatchingQueue> batching_queue,
       unsigned int queue_index,

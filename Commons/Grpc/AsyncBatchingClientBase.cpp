@@ -5,6 +5,10 @@
 #include <stdexcept>
 #include <utility>
 
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
+#include <grpcpp/support/channel_arguments.h>
+
 namespace AdServer::Grpc
 {
   AsyncBatchingClientBase::AsyncBatchingClientBase(
@@ -23,6 +27,23 @@ namespace AdServer::Grpc
     {
       throw std::runtime_error("AsyncBatchingClientBase requires GrpcExecutor");
     }
+
+    grpc::ChannelArguments channel_args;
+    channel_args.SetMaxReceiveMessageSize(-1);
+    channel_args.SetMaxSendMessageSize(-1);
+    channel_args.SetInt(GRPC_ARG_ENABLE_HTTP_PROXY, 0);
+    channel_args.SetInt(
+      GRPC_ARG_USE_LOCAL_SUBCHANNEL_POOL,
+      options_.use_local_subchannel_pool ? 1 : 0);
+    if (!options_.enable_grpc_compression)
+    {
+      channel_args.SetCompressionAlgorithm(GRPC_COMPRESS_NONE);
+    }
+
+    channel_ = grpc::CreateCustomChannel(
+      endpoint_,
+      grpc::InsecureChannelCredentials(),
+      channel_args);
 
     add_child_object(batching_queue_);
     streams_.reserve(max_streams_);
@@ -104,7 +125,7 @@ namespace AdServer::Grpc
   AsyncBatchingClientBase::make_stream_()
   {
     return std::make_shared<AdServer::Grpc::BatchingStreamBase>(
-        endpoint_,
+        channel_,
         grpc_executor_,
         batching_queue_,
         next_queue_index_.fetch_add(1, std::memory_order_relaxed),
