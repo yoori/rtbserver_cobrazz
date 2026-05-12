@@ -5548,10 +5548,8 @@ namespace Bidding
           return;
         }
 
-        const Generics::SignedUuid signed_uid =
-          common_module_->user_id_controller()->sign(uid);
-
-        request_params.common_info.signed_user_id << signed_uid.str();
+        request_params.common_info.user_status = static_cast<CORBA::ULong>(
+          AdServer::CampaignSvcs::US_OPTIN);
       }
       catch(...)
       {

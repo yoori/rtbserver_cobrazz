@@ -731,7 +731,6 @@ namespace AdServer
         request_args[CreativeTokens::EXTERNAL_USER_ID] = request_params.external_user_id;
       }
 
-      request_args[CreativeTokens::UID] = request_params.signed_user_id;
       const Commons::UserId user_id = CorbaAlgs::unpack_user_id(request_params.track_user_id);
       if(!user_id.is_null())
       {

@@ -3359,7 +3359,6 @@ namespace CampaignSvcs
     system_tokens[CreativeTokens::REFERER_DOMAIN] = "";
     system_tokens[CreativeTokens::REFERER_DOMAIN_HASH] = "";
     system_tokens[CreativeTokens::ETID] = "";
-    system_tokens[CreativeTokens::UID] = "";
     system_tokens[CreativeTokens::ORIGLINK] = "";
     system_tokens[CreativeTokens::PUBPIXELS] = "";
     system_tokens[CreativeTokens::PUB_PIXELS_OPTIN] = "";

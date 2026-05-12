@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -838,24 +837,7 @@ namespace AdServer::UserInfoSvcs
     const adserver::user_info_svcs::user_bind::GetUserIdRequest& request,
     GetUserIdCallback callback)
   {
-    std::cout << "UserBindDistributedGrpcClient::get_user_id request: " <<
-      request.ShortDebugString() << std::endl;
-
-    user_bind_mapper_->get_user_id(
-      request,
-      [
-        callback = std::move(callback)
-      ](
-        const grpc::Status& status,
-        const adserver::user_info_svcs::user_bind::GetUserIdResponse& response)
-      mutable
-      {
-        std::cout << "UserBindDistributedGrpcClient::get_user_id response: "
-          "status_code=" << static_cast<int>(status.error_code()) <<
-          ", status_message=" << status.error_message() <<
-          ", response=" << response.ShortDebugString() << std::endl;
-        callback(status, response);
-      });
+    user_bind_mapper_->get_user_id(request, std::move(callback));
   }
 
   void

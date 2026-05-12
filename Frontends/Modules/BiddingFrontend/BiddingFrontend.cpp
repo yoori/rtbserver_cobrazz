@@ -214,7 +214,6 @@ namespace AdServer::Bidding
       target.set_track_user_id(pack_oct_seq(source.track_user_id));
       target.set_user_id(pack_oct_seq(source.user_id));
       target.set_user_status(source.user_status);
-      target.set_signed_user_id(source.signed_user_id.str);
       target.set_peer_ip(source.peer_ip.str);
       target.set_user_agent(source.user_agent.str);
       target.set_cohort(source.cohort.str);
@@ -1452,13 +1451,6 @@ namespace AdServer::Bidding
       common_info.user_status = static_cast<CORBA::ULong>(
         AdServer::CampaignSvcs::US_FOREIGN);
     }
-    else if(common_info.signed_user_id[0] &&
-      common_info.user_status != AdServer::CampaignSvcs::US_PROBE)
-    {
-      common_info.user_status = static_cast<CORBA::ULong>(
-        AdServer::CampaignSvcs::US_OPTIN);
-      match_user_id = CorbaAlgs::unpack_user_id(common_info.user_id);
-    }
     else if(!request_info.advertising_id.empty() ||
       !request_info.idfa.empty() ||
       common_info.external_user_id[0])
@@ -1588,9 +1580,6 @@ namespace AdServer::Bidding
 
             common_info.user_status = static_cast<CORBA::ULong>(
               AdServer::CampaignSvcs::US_OPTIN);
-
-            common_info.signed_user_id <<
-              common_module_->user_id_controller()->sign(match_user_id).str();
           }
           else if (blacklisted)
           {

@@ -241,7 +241,6 @@ namespace Bidding
       "referer = " << request_params.common_info.referer << sep_ <<
       "full_referer = " << request_params.common_info.full_referer << sep_ <<
       "uid = " << (user_id.is_null() ? "" : user_id.to_string()) << sep_ <<
-      "signed_uid = " << request_params.common_info.signed_user_id << sep_ <<
       "external_user_id = " << request_params.common_info.external_user_id << sep_ <<
       "ip = " << request_params.common_info.peer_ip << sep_ <<
       "user_agent = " << request_params.common_info.user_agent << sep_ <<
