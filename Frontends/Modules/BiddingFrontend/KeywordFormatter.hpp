@@ -224,6 +224,30 @@ namespace Bidding
       add_(String::SubString(), String::SubString(), kw, false);
     }
 
+    void
+    add_full_rtb_keyword(const String::SubString& keyword)
+    {
+      if (keyword.empty())
+      {
+        return;
+      }
+
+      std::string keyword_holder = keyword.str();
+      add_keyword(keyword_holder);
+
+      if (!short_rtb_name_.empty())
+      {
+        static const std::string RTB_PREFIX_VALUE("rtb");
+        std::string source_keyword(RTB_PREFIX_VALUE);
+        source_keyword += short_rtb_name_;
+        source_keyword +=
+          keyword_holder.compare(0, RTB_PREFIX_VALUE.size(), RTB_PREFIX_VALUE) == 0 ?
+            keyword_holder.substr(RTB_PREFIX_VALUE.size()) :
+            keyword_holder;
+        add_keyword(source_keyword);
+      }
+    }
+
     template <typename ValueStringListType>
     void
     add_keyword_list(const ValueStringListType& kwl)

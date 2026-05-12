@@ -4516,7 +4516,7 @@ namespace Bidding
                 Request::OpenRtb::VIDEO_PLAYBACKMETHOD_SOUND_ON)
               != slot_it->video_playbackmethods->end())
           {
-            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_ON);
+            kw_fmt.add_full_rtb_keyword(Request::OpenRtb::VIDEO_SOUND_ON);
           }
           if (std::find(
                 slot_it->video_playbackmethods->begin(),
@@ -4524,15 +4524,14 @@ namespace Bidding
                 Request::OpenRtb::VIDEO_PLAYBACKMETHOD_SOUND_OFF)
               != slot_it->video_playbackmethods->end())
           {
-            kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_SOUND_OFF);
+            kw_fmt.add_full_rtb_keyword(Request::OpenRtb::VIDEO_SOUND_OFF);
           }
         }
 
         // TEAM-313
         if (!slot_it->video_skip.empty())
         {
-          kw_fmt.add_dict_keyword(
-            String::SubString(),
+          kw_fmt.add_full_rtb_keyword(
             get_value_from_seq(
               Request::OpenRtb::VIDEO_SKIPS,
               *slot_it->video_skip));
@@ -4540,8 +4539,7 @@ namespace Bidding
 
         if (!slot_it->video_reward.empty())
         {
-          kw_fmt.add_dict_keyword(
-            String::SubString(),
+          kw_fmt.add_full_rtb_keyword(
             get_value_from_seq(
               Request::OpenRtb::VIDEO_REWARDS,
               *slot_it->video_reward));
@@ -4549,8 +4547,7 @@ namespace Bidding
 
         if (slot_it->video_placement.has_value())
         {
-          kw_fmt.add_dict_keyword(
-            String::SubString(),
+          kw_fmt.add_full_rtb_keyword(
             get_value_from_seq(
               Request::OpenRtb::VIDEO_PLACEMENTS_STREAM_NAMES,
               *slot_it->video_placement));
@@ -4561,7 +4558,7 @@ namespace Bidding
                 *slot_it->video_placement)
               != Request::OpenRtb::VIDEO_PLACEMENTS_OUT_STREAM_INDEXES.end())
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_OUT_STREAM_NAME);
+            kw_fmt.add_full_rtb_keyword(Request::OpenRtb::VIDEO_TYPE_OUT_STREAM_NAME);
           }
         }
 
@@ -4569,15 +4566,15 @@ namespace Bidding
         {
           if (*slot_it->video_start_delay == Request::OpenRtb::VIDEO_START_DELAY_TYPE_PRE)
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_PRE);
+            kw_fmt.add_full_rtb_keyword(Request::OpenRtb::VIDEO_TYPE_PRE);
           }
           else if (*slot_it->video_start_delay > Request::OpenRtb::VIDEO_START_DELAY_TYPE_PRE)
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_MID);
+            kw_fmt.add_full_rtb_keyword(Request::OpenRtb::VIDEO_TYPE_MID);
           }
           else if (*slot_it->video_start_delay == Request::OpenRtb::VIDEO_START_DELAY_TYPE_POST)
           {
-              kw_fmt.add_dict_keyword(String::SubString(), Request::OpenRtb::VIDEO_TYPE_POST);
+            kw_fmt.add_full_rtb_keyword(Request::OpenRtb::VIDEO_TYPE_POST);
           }
         }
 
