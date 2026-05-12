@@ -126,6 +126,8 @@ namespace AdServer::Grpc
   template<typename ServiceImplType>
   void GrpcServer<ServiceImplType>::deactivate_object_()
   {
+    service_->stop_accepting_requests();
+
     if (server_)
     {
       server_->Shutdown(std::chrono::system_clock::now());

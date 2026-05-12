@@ -1,9 +1,12 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
+#include <condition_variable>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -83,6 +86,12 @@ namespace AdServer::Grpc
   {
     template<typename ServiceImplType, typename AsyncServiceType>
     friend class GrpcBatchStreamCall;
+    template<
+      typename ServiceImplType,
+      typename AsyncServiceType,
+      typename Request,
+      typename Response>
+    friend class GrpcUnaryCall;
 
   public:
     using CompletionQueues = std::vector<::grpc::ServerCompletionQueue*>;
@@ -104,6 +113,8 @@ namespace AdServer::Grpc
 
     void start(const CompletionQueues& completion_queues)
     {
+      accepting_requests_.store(true, std::memory_order_release);
+
       const auto registrations = registrations_per_queue();
       for (auto* completion_queue : completion_queues)
       {
@@ -112,6 +123,16 @@ namespace AdServer::Grpc
           register_in_queue(completion_queue);
         }
       }
+    }
+
+    void stop_accepting_requests() noexcept
+    {
+      accepting_requests_.store(false, std::memory_order_release);
+
+      std::unique_lock<std::mutex> lock(registration_lock_);
+      registration_cv_.wait(lock, [this]() noexcept {
+        return active_registrations_.load(std::memory_order_acquire) == 0;
+      });
     }
 
   protected:
@@ -221,6 +242,59 @@ namespace AdServer::Grpc
       }
     }
 
+    class RequestRegistrationGuard
+    {
+    public:
+      explicit RequestRegistrationGuard(GrpcServiceBase* service) noexcept
+        : service_(service),
+          active_(service_ && service_->begin_request_registration())
+      {}
+
+      ~RequestRegistrationGuard() noexcept
+      {
+        if (active_)
+        {
+          service_->end_request_registration();
+        }
+      }
+
+      bool active() const noexcept
+      {
+        return active_;
+      }
+
+    private:
+      GrpcServiceBase* service_;
+      bool active_;
+    };
+
+    bool begin_request_registration() noexcept
+    {
+      if (!accepting_requests_.load(std::memory_order_acquire))
+      {
+        return false;
+      }
+
+      active_registrations_.fetch_add(1, std::memory_order_acq_rel);
+      if (accepting_requests_.load(std::memory_order_acquire))
+      {
+        return true;
+      }
+
+      end_request_registration();
+      return false;
+    }
+
+    void end_request_registration() noexcept
+    {
+      if (active_registrations_.fetch_sub(1, std::memory_order_acq_rel) == 1 &&
+        !accepting_requests_.load(std::memory_order_acquire))
+      {
+        std::lock_guard<std::mutex> lock(registration_lock_);
+        registration_cv_.notify_all();
+      }
+    }
+
   private:
     using BatchDispatchFn = std::function<void(
       const adserver::grpc::BatchRequestItem&,
@@ -228,6 +302,10 @@ namespace AdServer::Grpc
 
     std::unordered_map<std::string, BatchDispatchFn> batch_methods_;
     std::vector<::grpc::Service*> grpc_services_;
+    std::atomic_bool accepting_requests_{false};
+    std::atomic_size_t active_registrations_{0};
+    std::mutex registration_lock_;
+    std::condition_variable registration_cv_;
   };
 
   template<
@@ -360,7 +438,10 @@ namespace AdServer::Grpc
         }
 
         state_ = State::Process;
-        request_method_();
+        if (!request_method_())
+        {
+          delete this;
+        }
         return;
       }
 
@@ -382,7 +463,7 @@ namespace AdServer::Grpc
     }
 
   protected:
-    virtual void request_method_() = 0;
+    virtual bool request_method_() = 0;
 
     virtual void spawn_next_() = 0;
 
@@ -442,8 +523,14 @@ namespace AdServer::Grpc
     {}
 
   private:
-    void request_method_() override
+    bool request_method_() override
     {
+      GrpcServiceBase::RequestRegistrationGuard registration_guard(service_impl_);
+      if (!registration_guard.active())
+      {
+        return false;
+      }
+
       (async_service_->*request_rpc_)(
         &this->context_,
         &this->request_,
@@ -451,6 +538,7 @@ namespace AdServer::Grpc
         this->completion_queue_,
         this->completion_queue_,
         this);
+      return true;
     }
 
     void spawn_next_() override
@@ -520,6 +608,13 @@ namespace AdServer::Grpc
           }
 
           state_ = State::Start;
+          GrpcServiceBase::RequestRegistrationGuard registration_guard(service_impl_);
+          if (!registration_guard.active())
+          {
+            delete this;
+            return;
+          }
+
           (async_service_->*request_stream_)(
             &context_,
             &responder_,
