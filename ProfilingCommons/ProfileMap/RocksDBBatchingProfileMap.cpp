@@ -18,12 +18,14 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& expire_time,
     unsigned long workers_count,
     unsigned long batch_size,
-    const Generics::Time& max_delay)
+    const Generics::Time& max_delay,
+    bool disable_wal)
     : path_(path.str()),
       expire_time_(expire_time),
       workers_count_(std::max(1UL, workers_count)),
       batch_size_(std::max(1UL, batch_size)),
-      max_delay_(max_delay)
+      max_delay_(max_delay),
+      disable_wal_(disable_wal)
   {
     static const char* FUN = "RocksDBBatchingProfileMapImpl::RocksDBBatchingProfileMapImpl()";
 
@@ -538,8 +540,12 @@ namespace AdServer::ProfilingCommons
       keys.emplace_back(operation.key);
     }
 
+    rocksdb::ReadOptions read_options;
+    read_options.async_io = true;
+    read_options.optimize_multiget_for_io = true;
+
     std::vector<std::string> values(keys.size());
-    const auto statuses = db_->MultiGet(rocksdb::ReadOptions(), keys, &values);
+    const auto statuses = db_->MultiGet(read_options, keys, &values);
 
     auto status_it = statuses.begin();
     auto value_it = values.begin();
@@ -616,7 +622,10 @@ namespace AdServer::ProfilingCommons
       }
     }
 
-    const auto status = db_->Write(rocksdb::WriteOptions(), &write_batch);
+    rocksdb::WriteOptions write_options;
+    write_options.disableWAL = disable_wal_;
+
+    const auto status = db_->Write(write_options, &write_batch);
     if(!status.ok())
     {
       throw ProfileMap<std::string>::Exception(

@@ -58,7 +58,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& expire_time,
       unsigned long workers_count = 4,
       unsigned long batch_size = 128,
-      const Generics::Time& max_delay = Generics::Time::ZERO);
+      const Generics::Time& max_delay = Generics::Time::ZERO,
+      bool disable_wal = false);
 
     ~ToplingDBProfileMapImpl() noexcept override;
 
@@ -109,6 +110,9 @@ namespace AdServer::ProfilingCommons
 
     Stats
     stats() const noexcept override;
+
+    void
+    flush();
 
   protected:
     void activate_object_() override;
@@ -166,6 +170,7 @@ namespace AdServer::ProfilingCommons
     const unsigned long workers_count_;
     const unsigned long batch_size_;
     const Generics::Time max_delay_;
+    const bool disable_wal_;
 
     toplingdb::DB* db_ = nullptr;
     std::unique_ptr<toplingdb::SidePluginRepo> plugin_repo_;
@@ -200,7 +205,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& expire_time,
       unsigned long workers_count = 4,
       unsigned long batch_size = 128,
-      const Generics::Time& max_delay = Generics::Time::ZERO);
+      const Generics::Time& max_delay = Generics::Time::ZERO,
+      bool disable_wal = false);
 
     bool
     check_profile(const KeyType& key) const override;
@@ -252,6 +258,8 @@ namespace AdServer::ProfilingCommons
     typename ProfileMap<KeyType>::Stats
     stats() const noexcept override;
 
+    void flush();
+
     void activate_object();
     void deactivate_object();
     void wait_object();
@@ -270,13 +278,15 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& expire_time,
     unsigned long workers_count,
     unsigned long batch_size,
-    const Generics::Time& max_delay)
+    const Generics::Time& max_delay,
+    bool disable_wal)
     : impl_(new ToplingDBProfileMapImpl(
         path,
         expire_time,
         workers_count,
         batch_size,
-        max_delay))
+        max_delay,
+        disable_wal))
   {}
 
   template<typename KeyType, typename KeyAdapterType>
@@ -375,6 +385,13 @@ namespace AdServer::ProfilingCommons
       stats.physical_read_operations,
       stats.physical_write_operations
     };
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  void
+  ToplingDBProfileMap<KeyType, KeyAdapterType>::flush()
+  {
+    impl_->flush();
   }
 
   template<typename KeyType, typename KeyAdapterType>

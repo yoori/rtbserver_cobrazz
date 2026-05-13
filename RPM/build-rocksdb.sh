@@ -12,16 +12,20 @@ mkdir -p $RES_TMP
 mkdir -p $RES_RPMS
 
 # download and install packages required for build
-sudo yum -y install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build autoconf automake libtool \
-  glib2-devel cmake gcc-c++ epel-rpm-macros \
+sudo yum -y install \
+  spectool yum-utils rpmdevtools redhat-rpm-config rpm-build \
+  autoconf automake libtool \
+  glib2-devel cmake gcc-c++ epel-rpm-macros gcc-toolset-10-gcc-c++ \
   || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
 
-sudo yum -y install libzstd-devel zlib-devel || \
+sudo yum -y install libzstd-devel zlib-devel folly-devel liburing-devel || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
 
 # create folders for RPM build environment
-mkdir -vp  `rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'`
+RPM_DIRS=`rpm -E \
+  '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'`
+mkdir -vp $RPM_DIRS
 
 #cp /home/ykuznetsov/rocksdb-6.5.2.tar.gz "`rpm -E %_sourcedir`"/
 
@@ -33,7 +37,8 @@ ROCKSDB_SPEC_FILE=`rpm -E %_specdir`/rocksdb.spec
 cat << 'EOF' > $ROCKSDB_SPEC_FILE
 Name:    rocksdb
 Version: %{_version}
-Release: ssv2%{?dist}
+Release: ssv3%{?dist}
+%global debug_package %{nil}
 Summary: A Persistent Key-Value Store for Flash and RAM Storage
 Group:   Development/Libraries/C and C++
 License: BSD-2-Clause
@@ -42,8 +47,11 @@ URL:     https://github.com/facebook/rocksdb
 Source0: https://github.com/facebook/rocksdb/archive/v%{_version}.tar.gz
 BuildRequires: autoconf automake libtool curl make
 BuildRequires: gcc-c++
-BuildRequires: libzstd-devel bzip2-devel snappy
+BuildRequires: gcc-toolset-10-gcc-c++
+BuildRequires: libzstd-devel bzip2-devel snappy liburing-devel
+BuildRequires: folly-devel
 Requires: zlib libstdc++ libzstd
+Requires: folly liburing
 
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-%{release}-XXXXXX)
 %define __product protobuf
@@ -62,16 +70,77 @@ using RocksDB.
 
 %prep
 %setup -q -n rocksdb-%{_version}
+find . -type f \
+  \( -name '*.cc' -o -name '*.h' \) \
+  -exec perl -pi -e 's#folly/coro/#folly/experimental/coro/#g' {} +
+perl -0pi -e '
+  s#co_withExecutor\(
+    \s*&range->context\(\)->executor\(\),
+    \s*
+  #folly::coro::co_viaIfAsync(
+    folly::getKeepAliveToken(&range->context()->executor()), #gx
+' \
+  db/version_set.cc
+sed -i '/int ret = io_uring_queue_init(kIoUringDepth, new_io_uring, flags);/a\
+  if (ret == -EINVAL) {\
+    ret = io_uring_queue_init(kIoUringDepth, new_io_uring, 0);\
+  }' env/io_posix.h
+sed -i '2260,2262c\
+  options.include_memtables =\
+      ((include_flags & SizeApproximationFlags::INCLUDE_MEMTABLES) !=\
+       SizeApproximationFlags::NONE);\
+  options.include_files =\
+      ((include_flags & SizeApproximationFlags::INCLUDE_FILES) !=\
+       SizeApproximationFlags::NONE);' include/rocksdb/db.h
 
 %build
-PORTABLE=1 make -j6 static_lib shared_lib DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0
+env \
+  CXX=/opt/rh/gcc-toolset-10/root/usr/bin/g++ \
+  CC=/opt/rh/gcc-toolset-10/root/usr/bin/gcc \
+  ROCKSDB_CXX_STANDARD=gnu++20 \
+  make -j6 static_lib \
+    USE_COROUTINES=1 \
+    WITH_LIBURING=1 \
+    DISABLE_JEMALLOC=1 \
+    DISABLE_WARNING_AS_ERROR=1 \
+    DEBUG_LEVEL=0 \
+    PORTABLE=1 \
+    EXTRA_CXXFLAGS='-std=gnu++20 -fPIC' \
+    EXTRA_LDFLAGS='-lfolly'
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/usr
-echo "Install to %{buildroot}/usr"
-DESTDIR=%{buildroot}/usr make install INSTALL_PATH=%{buildroot}/usr
-mv %{buildroot}/usr/lib %{buildroot}/usr/lib64
+mkdir -p \
+  %{buildroot}%{_includedir} \
+  %{buildroot}%{_libdir}/pkgconfig \
+  %{buildroot}%{_libdir}/cmake/rocksdb
+cp -a include/rocksdb %{buildroot}%{_includedir}/
+install -m 0644 librocksdb.a %{buildroot}%{_libdir}/librocksdb.a
+cat > %{buildroot}%{_libdir}/pkgconfig/rocksdb.pc <<PC_EOF
+prefix=/usr
+exec_prefix=\${prefix}
+includedir=\${prefix}/include
+libdir=/usr/lib64
+
+Name: rocksdb
+Description: An embeddable persistent key-value store for fast storage
+Version: %{version}
+Libs: -L\${libdir} -lrocksdb
+Libs.private: -lfolly -luring -lzstd -lz -lbz2 -lsnappy -llz4 -pthread -lrt -ldl
+Cflags: -I\${includedir} -std=c++20
+PC_EOF
+mkdir -p %{buildroot}%{_libdir}/cmake/rocksdb
+cat > %{buildroot}%{_libdir}/cmake/rocksdb/RocksDBConfig.cmake <<'CMAKE_EOF'
+include(CMakeFindDependencyMacro)
+
+add_library(RocksDB::rocksdb STATIC IMPORTED)
+set_target_properties(RocksDB::rocksdb PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../librocksdb.a"
+  INTERFACE_INCLUDE_DIRECTORIES "/usr/include"
+  INTERFACE_COMPILE_FEATURES cxx_std_20
+  INTERFACE_LINK_LIBRARIES
+    "folly;uring;zstd;z;bz2;snappy;lz4;pthread;rt;dl")
+CMAKE_EOF
 
 %clean
 rm -rf %{buildroot}
@@ -79,19 +148,19 @@ rm -rf %{buildroot}
 %postun -n %{name} -p /sbin/ldconfig
 
 %files -n %{name}
-%defattr(444,root,root)
-%{_libdir}/librocksdb.so*
+%license COPYING LICENSE.Apache LICENSE.leveldb
 
 %files -n %{name}-devel
 %defattr(-,root,root)
 %{_includedir}/rocksdb
 %defattr(444,root,root)
 %{_libdir}/*.a
+%{_libdir}/cmake/rocksdb
+%{_libdir}/pkgconfig/rocksdb.pc
 
 EOF
 
-#VERSION=6.5.2
-VERSION=7.6.0
+VERSION=11.1.1
 
 $SUDO_PREFIX yum-builddep -y "$ROCKSDB_SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
@@ -104,4 +173,3 @@ rpmbuild --force -ba --define "_version $VERSION" "$ROCKSDB_SPEC_FILE" || \
 
 # install librdkafka
 cp $BIN_RPM_FOLDER/rocksdb*.rpm $RES_RPMS/
-

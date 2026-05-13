@@ -32,7 +32,8 @@ namespace ProfilingCommons
   public:
     RocksDBProfileMapImpl(
       const String::SubString& path,
-      const Generics::Time& expire_time);
+      const Generics::Time& expire_time,
+      bool disable_wal = false);
 
     virtual
     ~RocksDBProfileMapImpl() noexcept;
@@ -84,9 +85,13 @@ namespace ProfilingCommons
     Stats
     stats() const noexcept override;
 
+    void
+    flush();
+
   private:
     const std::string path_;
     rocksdb::DBWithTTL* db_;
+    const bool disable_wal_;
     mutable std::atomic<std::uint64_t> logical_read_operations_{0};
     mutable std::atomic<std::uint64_t> logical_write_operations_{0};
     mutable std::atomic<std::uint64_t> physical_read_operations_{0};
@@ -112,7 +117,8 @@ namespace ProfilingCommons
   public:
     RocksDBProfileMap(
       const String::SubString& path,
-      const Generics::Time& expire_time);
+      const Generics::Time& expire_time,
+      bool disable_wal = false);
 
     virtual bool
     check_profile(const KeyType& key) const;
@@ -162,6 +168,9 @@ namespace ProfilingCommons
     typename ProfileMap<KeyType>::Stats
     stats() const noexcept override;
 
+    void
+    flush();
+
   private:
     KeyAdapterType key_adapter_;
     std::shared_ptr<RocksDBProfileMapImpl> impl_;
@@ -176,8 +185,9 @@ namespace ProfilingCommons
   template<typename KeyType, typename KeyAdapterType>
   RocksDBProfileMap<KeyType, KeyAdapterType>::RocksDBProfileMap(
     const String::SubString& path,
-    const Generics::Time& expire_time)
-    : impl_(new RocksDBProfileMapImpl(path, expire_time))
+    const Generics::Time& expire_time,
+    bool disable_wal)
+    : impl_(new RocksDBProfileMapImpl(path, expire_time, disable_wal))
   {}
 
   template<typename KeyType, typename KeyAdapterType>
@@ -283,6 +293,13 @@ namespace ProfilingCommons
       stats.physical_read_operations,
       stats.physical_write_operations
     };
+  }
+
+  template<typename KeyType, typename KeyAdapterType>
+  void
+  RocksDBProfileMap<KeyType, KeyAdapterType>::flush()
+  {
+    impl_->flush();
   }
 }
 }
