@@ -23,15 +23,18 @@ if [ -n "${DISABLE_REPOS:-}" ]; then
 fi
 
 # download and install packages required for build
-sudo yum -y "${YUM_REPO_ARGS[@]}" install spectool yum-utils rpmdevtools redhat-rpm-config rpm-build autoconf automake \
-  libtool glib2-devel cmake gcc-c++ epel-rpm-macros \
+sudo yum -y "${YUM_REPO_ARGS[@]}" install \
+  spectool yum-utils rpmdevtools redhat-rpm-config rpm-build \
+  autoconf automake libtool glib2-devel cmake gcc-c++ epel-rpm-macros \
   zlib-devel bzip2-devel snappy-devel lz4-devel libzstd-devel \
   liburing-devel boost176-devel \
   || \
   { echo "can't install base packages" >&2 ; exit 1 ; }
 
 # create folders for RPM build environment
-mkdir -vp $(rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch')
+mkdir -vp $(
+  rpm -E '%_tmppath %_rpmdir %_builddir %_sourcedir %_specdir %_srcrpmdir %_rpmdir/%_arch'
+)
 
 BIN_RPM_FOLDER=$(rpm -E '%_rpmdir/%_arch')
 TOPLINGDB_SPEC_FILE=$(rpm -E %_specdir)/toplingdb.spec
@@ -45,12 +48,12 @@ Group:   Development/Libraries/C and C++
 License: Apache-2.0
 URL:     https://github.com/topling/toplingdb
 BuildRequires: autoconf automake libtool curl make
-BuildRequires: gcc-c++ cmake
+BuildRequires: gcc-c++ gcc-toolset-10-gcc-c++ cmake
 BuildRequires: libaio-devel gcc-c++ gflags-devel zlib-devel bzip2-devel libcurl-devel liburing-devel
-BuildRequires: snappy-devel jemalloc-devel boost176-devel
+BuildRequires: snappy-devel jemalloc-devel boost176-devel folly-devel
 BuildRequires: gflags-devel
 Requires: zlib libstdc++
-Requires: jemalloc
+Requires: folly jemalloc
 
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{_version}-%{release}-XXXXXX)
 
@@ -61,7 +64,7 @@ ToplingDB - high performance kv storage based on RocksDB.
 Summary: ToplingDB development files
 Group:   Development/Libraries/C and C++
 Requires: %{name} = %{version}
-Requires: boost176-devel
+Requires: boost176-devel folly-devel
 
 %description -n %{name}-devel
 ToplingDB development headers and CMake/pkg-config integration files.
@@ -71,28 +74,26 @@ ToplingDB development headers and CMake/pkg-config integration files.
 
 %prep
 %setup -q -c -T -n %{name}-%{_version}
-export GIT_TERMINAL_PROMPT=0
-git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 clone --depth 1 --branch topling-8.10.2-frocks-1.0 https://github.com/topling/toplingdb .
+cp -a /home/jurij_kuznecov/projects/toplingdb/. .
+perl -0pi -e '
+  $from = "autovector<FilePickerMultiGet, 4>& batches";
+  $to = "autovector<FilePickerMultiGet, 4, std::vector<FilePickerMultiGet>>& batches";
+  s/\Q$from\E/$to/g;
+  $from = "autovector<FilePickerMultiGet, 4> batches;";
+  $to = "autovector<FilePickerMultiGet, 4, std::vector<FilePickerMultiGet>> batches;";
+  s/\Q$from\E/$to/g;
+' db/version_set.h
+perl -0pi -e '
+  $from = "autovector<FilePickerMultiGet, 4>& batches";
+  $to = "autovector<FilePickerMultiGet, 4, std::vector<FilePickerMultiGet>>& batches";
+  s/\Q$from\E/$to/g;
+  $from = "autovector<FilePickerMultiGet, 4> batches;";
+  $to = "autovector<FilePickerMultiGet, 4, std::vector<FilePickerMultiGet>> batches;";
+  s/\Q$from\E/$to/g;
+' db/version_set.cc
 sed -i '/boost-include\/boost/d' Makefile
 sed -i 's/\bgit pull\b/git status --short/g' Makefile
 sed -i 's/^shared_lib: $(SHARED) dcompact_worker/shared_lib: $(SHARED)/' Makefile
-git submodule update --init --recursive
-mkdir -p sideplugin
-for plugin in \
-  cspp-memtable \
-  cspp-wbwi \
-  topling-sst \
-  topling-zip \
-  topling-zip_table_reader \
-  toplingdb-fs \
-  topling-dcompact; do
-  if [ ! -d "sideplugin/${plugin}/.git" ]; then
-    git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 clone --depth 1 "https://github.com/topling/${plugin}" "sideplugin/${plugin}"
-  else
-    git -C "sideplugin/${plugin}" pull --ff-only
-  fi
-  git -C "sideplugin/${plugin}" submodule update --init --recursive || :
-done
 find . \
   \( -path './.git' -o -path './third-party' \) -prune -o \
   -type f \( -name '*.cc' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -o -name '*.hh' \) \
@@ -103,26 +104,32 @@ find . \
 
 %build
 echo "To make from $(pwd)"
+export PATH="/opt/rh/gcc-toolset-10/root/usr/bin:${PATH}"
 export LIBRARY_PATH="%{_libdir}:/usr/lib64:/lib64${LIBRARY_PATH:+:$LIBRARY_PATH}"
 export LD_LIBRARY_PATH="%{_libdir}:/usr/lib64:/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export LDFLAGS="${LDFLAGS:-} -L%{_libdir} -L/usr/lib64 -L/lib64"
-export EXTRA_LDFLAGS="${EXTRA_LDFLAGS:-} -L%{_libdir} -L/usr/lib64 -L/lib64"
+export EXTRA_LDFLAGS="${EXTRA_LDFLAGS:-} -L%{_libdir} -L/usr/lib64 -L/lib64 -lfolly"
 #PORTABLE=1 make %{?_smp_mflags} shared_lib db_bench \
 #  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0
-PORTABLE=1 make shared_lib db_bench \
-  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0 LINK_SHARED_LIBURING=1 WITH_TOPLING_ROCKS=0 MAKE_UNIT_TEST=0 V=1 \
-  LIBNAME=%{toplingdb_rocksdb_libname} EXTRA_CXXFLAGS="-DROCKSDB_NAMESPACE=%{toplingdb_rocksdb_namespace}"
+PORTABLE=1 make %{?_smp_mflags} shared_lib db_bench \
+  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0 LINK_SHARED_LIBURING=1 \
+  WITH_TOPLING_ROCKS=0 MAKE_UNIT_TEST=0 USE_COROUTINES=1 V=1 \
+  LIBNAME=%{toplingdb_rocksdb_libname} \
+  EXTRA_CXXFLAGS="-DROCKSDB_NAMESPACE=%{toplingdb_rocksdb_namespace} -DROCKSDB_IOURING_PRESENT"
 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr
+export PATH="/opt/rh/gcc-toolset-10/root/usr/bin:${PATH}"
 export LIBRARY_PATH="%{_libdir}:/usr/lib64:/lib64${LIBRARY_PATH:+:$LIBRARY_PATH}"
 export LD_LIBRARY_PATH="%{_libdir}:/usr/lib64:/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export LDFLAGS="${LDFLAGS:-} -L%{_libdir} -L/usr/lib64 -L/lib64"
-export EXTRA_LDFLAGS="${EXTRA_LDFLAGS:-} -L%{_libdir} -L/usr/lib64 -L/lib64"
-DESTDIR=%{buildroot} PORTABLE=1 make install-dev-shared PREFIX=/usr \
-  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0 LINK_SHARED_LIBURING=1 WITH_TOPLING_ROCKS=0 MAKE_UNIT_TEST=0 V=1 \
-  LIBNAME=%{toplingdb_rocksdb_libname} EXTRA_CXXFLAGS="-DROCKSDB_NAMESPACE=%{toplingdb_rocksdb_namespace}"
+export EXTRA_LDFLAGS="${EXTRA_LDFLAGS:-} -L%{_libdir} -L/usr/lib64 -L/lib64 -lfolly"
+DESTDIR=%{buildroot} PORTABLE=1 make %{?_smp_mflags} install-dev-shared PREFIX=/usr \
+  DISABLE_WARNING_AS_ERROR=1 DEBUG_LEVEL=0 LINK_SHARED_LIBURING=1 \
+  WITH_TOPLING_ROCKS=0 MAKE_UNIT_TEST=0 USE_COROUTINES=1 V=1 \
+  LIBNAME=%{toplingdb_rocksdb_libname} \
+  EXTRA_CXXFLAGS="-DROCKSDB_NAMESPACE=%{toplingdb_rocksdb_namespace} -DROCKSDB_IOURING_PRESENT"
 rm -rf %{buildroot}%{_includedir}/boost
 if [ -d %{buildroot}/usr/lib ] && [ "%{_libdir}" != "/usr/lib" ]; then
   mkdir -p %{buildroot}%{_libdir}
@@ -206,10 +213,16 @@ rm -rf %{buildroot}
 %{_libdir}/cmake/toplingdb
 EOF_SPEC
 
-$SUDO_PREFIX yum-builddep -y "${YUM_REPO_ARGS[@]}" --define "_version $VERSION" --define "_release $RELEASE" "$TOPLINGDB_SPEC_FILE" || \
+$SUDO_PREFIX yum-builddep -y "${YUM_REPO_ARGS[@]}" \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  "$TOPLINGDB_SPEC_FILE" || \
   { echo "can't install build requirements" >&2 ; exit 1 ; }
 
-rpmbuild --force -ba --define "_version $VERSION" --define "_release $RELEASE" "$TOPLINGDB_SPEC_FILE" || \
+rpmbuild --force -ba \
+  --define "_version $VERSION" \
+  --define "_release $RELEASE" \
+  "$TOPLINGDB_SPEC_FILE" || \
   { echo "can't build toplingdb RPM" >&2 ; exit 1 ; }
 
 cp "$BIN_RPM_FOLDER"/toplingdb*.rpm "$RES_RPMS"/

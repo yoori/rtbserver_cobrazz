@@ -14,6 +14,12 @@
 
 #include "ToplingDBProfileMap.hpp"
 
+extern "C" bool
+RocksDbIOUringEnable()
+{
+  return true;
+}
+
 namespace AdServer::ProfilingCommons
 {
   namespace
@@ -85,13 +91,6 @@ namespace AdServer::ProfilingCommons
     }
   },
   "TableFactory": {
-    "fast": {
-      "class": "SingleFastTable",
-      "params": {
-        "indexType": "MainPatricia",
-        "keyPrefixLen": 0
-      }
-    },
     "bb": {
       "class": "BlockBasedTable",
       "params": {
@@ -104,25 +103,6 @@ namespace AdServer::ProfilingCommons
         "persistent_cache": null,
         "filter_policy": null
       }
-    },
-    "dispatch": {
-      "class": "DispatcherTable",
-      "params": {
-        "default": "fast",
-        "readers": {
-          "SingleFastTable": "fast",
-          "BlockBasedTable": "bb"
-        },
-        "level_writers": [
-          "fast",
-          "fast",
-          "fast",
-          "fast",
-          "fast",
-          "fast",
-          "fast"
-        ]
-      }
     }
   },
   "CFOptions": {
@@ -134,7 +114,7 @@ namespace AdServer::ProfilingCommons
       "level0_slowdown_writes_trigger": 20,
       "level0_stop_writes_trigger": 36,
       "level0_file_num_compaction_trigger": 4,
-      "table_factory": "dispatch",
+      "table_factory": "bb",
       "ttl": 0
     }
   },
@@ -145,7 +125,7 @@ namespace AdServer::ProfilingCommons
       "fail_if_options_file_error": false,
       "max_background_compactions": 4,
       "max_subcompactions": 1,
-      "allow_mmap_reads": true
+      "allow_mmap_reads": false
     }
   },
   "databases": {
@@ -201,12 +181,14 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& expire_time,
     unsigned long workers_count,
     unsigned long batch_size,
-    const Generics::Time& max_delay)
+    const Generics::Time& max_delay,
+    bool disable_wal)
     : path_(path.str()),
       expire_time_(expire_time),
       workers_count_(std::max(1UL, workers_count)),
       batch_size_(std::max(1UL, batch_size)),
-      max_delay_(max_delay)
+      max_delay_(max_delay),
+      disable_wal_(disable_wal)
   {
     static const char* FUN = "ToplingDBProfileMapImpl::ToplingDBProfileMapImpl()";
 
@@ -722,8 +704,13 @@ namespace AdServer::ProfilingCommons
       keys.emplace_back(operation.key);
     }
 
+    toplingdb::ReadOptions read_options;
+    read_options.async_io = true;
+    read_options.async_queue_depth = static_cast<std::uint16_t>(
+      std::min<unsigned long>(batch_size_, 65535));
+
     std::vector<std::string> values(keys.size());
-    const auto statuses = db_->MultiGet(toplingdb::ReadOptions(), keys, &values);
+    const auto statuses = db_->MultiGet(read_options, keys, &values);
 
     auto status_it = statuses.begin();
     auto value_it = values.begin();
@@ -799,7 +786,10 @@ namespace AdServer::ProfilingCommons
       }
     }
 
-    const auto status = db_->Write(toplingdb::WriteOptions(), &write_batch);
+    toplingdb::WriteOptions write_options;
+    write_options.disableWAL = disable_wal_;
+
+    const auto status = db_->Write(write_options, &write_batch);
     if(!status.ok())
     {
       throw ProfileMap<std::string>::Exception(
@@ -854,7 +844,11 @@ namespace AdServer::ProfilingCommons
   ToplingDBProfileMapImpl::direct_check_profile_(const std::string& key) const
   {
     std::string value;
-    const auto status = db_->Get(toplingdb::ReadOptions(), key, &value);
+    toplingdb::ReadOptions read_options;
+    read_options.async_io = true;
+    read_options.async_queue_depth = 1;
+
+    const auto status = db_->Get(read_options, key, &value);
 
     if(status.IsNotFound())
     {
@@ -909,5 +903,22 @@ namespace AdServer::ProfilingCommons
       physical_read_operations_.load(std::memory_order_relaxed),
       physical_write_operations_.load(std::memory_order_relaxed)
     };
+  }
+
+  void
+  ToplingDBProfileMapImpl::flush()
+  {
+    check_background_error_();
+
+    toplingdb::FlushOptions options;
+    options.wait = true;
+    options.allow_write_stall = true;
+
+    const auto status = db_->Flush(options);
+    if(!status.ok())
+    {
+      throw ProfileMap<std::string>::Exception(
+        "ToplingDBProfileMapImpl::flush(): " + status.ToString());
+    }
   }
 }

@@ -273,6 +273,8 @@ namespace
       << "  --max-inflight <N>  maximum async scenarios in flight for batch mode (default: 12000)\n"
       << "  --max-delay-us <N>  maximum batch accumulation delay for batch mode,\n"
       << "                      0 disables (default: 0)\n"
+      << "  --disable-wal <0|1> disable RocksDB WAL writes (default: 0)\n"
+      << "  --prepare-db <0|1>  fill, flush and reopen DB before test (default: 0)\n"
       << "  --keep-db <0|1>     keep DB directory after test (default: 0)\n";
   }
 }
@@ -297,6 +299,8 @@ main(int argc, char** argv)
     Option<unsigned long> opt_batch_size(128);
     Option<unsigned long> opt_max_inflight(12000);
     Option<unsigned long> opt_max_delay_us(0);
+    Option<unsigned int> opt_disable_wal(0);
+    Option<unsigned int> opt_prepare_db(0);
     Option<unsigned int> opt_keep_db(0);
     CheckOption opt_help;
 
@@ -310,6 +314,8 @@ main(int argc, char** argv)
     args.add(equal_name("batch-size"), opt_batch_size);
     args.add(equal_name("max-inflight"), opt_max_inflight);
     args.add(equal_name("max-delay-us"), opt_max_delay_us);
+    args.add(equal_name("disable-wal"), opt_disable_wal);
+    args.add(equal_name("prepare-db"), opt_prepare_db);
     args.add(equal_name("keep-db"), opt_keep_db);
     args.add(equal_name("help") || short_name("h"), opt_help);
 
@@ -369,6 +375,27 @@ main(int argc, char** argv)
       }
     }
 
+    if(*opt_prepare_db != 0)
+    {
+      DirectProfileMap prepare_map(
+        String::SubString(*opt_path),
+        Generics::Time::ZERO,
+        *opt_disable_wal != 0);
+
+      std::mt19937 gen(std::random_device{}());
+      for(const auto& key : keys)
+      {
+        const std::string body = random_ascii(gen, BODY_SIZE);
+        Generics::ConstSmartMemBuf_var write_buf = make_profile(body);
+        prepare_map.save_profile(
+          key,
+          write_buf.in(),
+          Generics::Time::get_time_of_day());
+      }
+
+      prepare_map.flush();
+    }
+
     std::unique_ptr<DirectProfileMap> direct_map;
     std::unique_ptr<BatchProfileMap> batch_map;
     ProfileMapBase* map = nullptr;
@@ -383,7 +410,8 @@ main(int argc, char** argv)
           *opt_batch_size,
           Generics::Time(
             *opt_max_delay_us / 1000000,
-            *opt_max_delay_us % 1000000)));
+            *opt_max_delay_us % 1000000),
+          *opt_disable_wal != 0));
       batch_map->activate_object();
       map = batch_map.get();
     }
@@ -392,7 +420,8 @@ main(int argc, char** argv)
       direct_map.reset(
         new DirectProfileMap(
           String::SubString(*opt_path),
-          Generics::Time::ZERO));
+          Generics::Time::ZERO,
+          *opt_disable_wal != 0));
       map = direct_map.get();
     }
 
@@ -744,6 +773,7 @@ main(int argc, char** argv)
       ", avg_batch_size: " << format_stat_float(avg_batch_size(profile_map_stats)) <<
       ", max_latency: " << latency_max_us.load(std::memory_order_relaxed) << "us" <<
       ", mode: " << *opt_mode <<
+      ", disable_wal: " << (*opt_disable_wal != 0 ? 1 : 0) <<
       ", path: " << *opt_path <<
       std::endl;
 

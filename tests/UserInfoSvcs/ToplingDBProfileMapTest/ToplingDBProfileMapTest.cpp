@@ -36,7 +36,7 @@
 namespace
 {
   constexpr std::size_t KEY_SIZE = 16;
-  constexpr std::size_t BODY_SIZE = 16;
+  constexpr std::size_t BODY_SIZE = 1600;
 
   struct CpuTimes
   {
@@ -266,13 +266,17 @@ namespace
       << "  --count <N>         number of read/write operations (default: 1000000)\n"
       << "  --threads <N>       test callback worker threads count (default: 16)\n"
       << "  --keys <N>          number of pre-generated random keys (default: 10000)\n"
-      << "  --mode <sync|async> test mode (default: async)\n"
+      << "  --key-seed <N>      random seed for generated keys, 0 uses random seed\n"
+      << "                      (default: 1)\n"
+      << "  --mode <sync|async|prepare> test mode (default: async)\n"
       << "  --workers <N>       ToplingDBProfileMapImpl workers count (default: 4)\n"
       << "  --batch-size <N>    ToplingDBProfileMapImpl batch size (default: 128)\n"
       << "  --max-inflight <N>  maximum async scenarios in flight (default: 12000)\n"
       << "  --test-inflight <N> test-level async scenario window, 0 uses max-inflight\n"
       << "                      (default: 0)\n"
       << "  --max-delay-us <N>  maximum batch accumulation delay, 0 disables (default: 0)\n"
+      << "  --disable-wal <0|1> disable ToplingDB WAL writes (default: 0)\n"
+      << "  --reset-db <0|1>    remove DB directory before opening (default: 1)\n"
       << "  --keep-db <0|1>     keep DB directory after test (default: 0)\n";
   }
 }
@@ -290,12 +294,15 @@ main(int argc, char** argv)
     Option<unsigned long> opt_count(1000000);
     Option<unsigned int> opt_threads(16);
     Option<unsigned long> opt_keys(10000);
+    Option<unsigned long> opt_key_seed(1);
     StringOption opt_mode("async");
     Option<unsigned long> opt_workers(4);
     Option<unsigned long> opt_batch_size(128);
     Option<unsigned long> opt_max_inflight(12000);
     Option<unsigned long> opt_test_inflight(0);
     Option<unsigned long> opt_max_delay_us(0);
+    Option<unsigned int> opt_disable_wal(0);
+    Option<unsigned int> opt_reset_db(1);
     Option<unsigned int> opt_keep_db(0);
     CheckOption opt_help;
 
@@ -304,12 +311,15 @@ main(int argc, char** argv)
     args.add(equal_name("count") || short_name("c"), opt_count);
     args.add(equal_name("threads") || short_name("t"), opt_threads);
     args.add(equal_name("keys") || short_name("k"), opt_keys);
+    args.add(equal_name("key-seed"), opt_key_seed);
     args.add(equal_name("mode"), opt_mode);
     args.add(equal_name("workers"), opt_workers);
     args.add(equal_name("batch-size"), opt_batch_size);
     args.add(equal_name("max-inflight"), opt_max_inflight);
     args.add(equal_name("test-inflight"), opt_test_inflight);
     args.add(equal_name("max-delay-us"), opt_max_delay_us);
+    args.add(equal_name("disable-wal"), opt_disable_wal);
+    args.add(equal_name("reset-db"), opt_reset_db);
     args.add(equal_name("keep-db"), opt_keep_db);
     args.add(equal_name("help") || short_name("h"), opt_help);
 
@@ -327,9 +337,9 @@ main(int argc, char** argv)
       return 1;
     }
 
-    if(*opt_mode != "sync" && *opt_mode != "async")
+    if(*opt_mode != "sync" && *opt_mode != "async" && *opt_mode != "prepare")
     {
-      std::cerr << "--mode must be sync or async" << std::endl;
+      std::cerr << "--mode must be sync, async or prepare" << std::endl;
       return 1;
     }
 
@@ -366,12 +376,18 @@ main(int argc, char** argv)
       return 1;
     }
 
-    remove_all(*opt_path);
+    if(*opt_reset_db != 0)
+    {
+      remove_all(*opt_path);
+    }
 
     std::vector<std::string> keys;
     keys.reserve(*opt_keys);
     {
-      std::mt19937 gen(std::random_device{}());
+      const auto seed = *opt_key_seed == 0 ?
+        std::random_device{}() :
+        static_cast<std::uint32_t>(*opt_key_seed);
+      std::mt19937 gen(seed);
       for(unsigned long i = 0; i < *opt_keys; ++i)
       {
         keys.emplace_back(random_ascii(gen, KEY_SIZE));
@@ -386,7 +402,8 @@ main(int argc, char** argv)
         *opt_batch_size,
         Generics::Time(
           *opt_max_delay_us / 1000000,
-          *opt_max_delay_us % 1000000)));
+          *opt_max_delay_us % 1000000),
+        *opt_disable_wal != 0));
     map->activate_object();
 
     std::atomic<std::uint64_t> sent_count{0};
@@ -461,7 +478,64 @@ main(int argc, char** argv)
     const auto run_start = std::chrono::steady_clock::now();
     const auto cpu_start = process_cpu_times();
 
-    if(*opt_mode == "sync")
+    if(*opt_mode == "prepare")
+    {
+      std::vector<std::thread> threads;
+      threads.reserve(*opt_threads);
+
+      for(unsigned int i = 0; i < *opt_threads; ++i)
+      {
+        threads.emplace_back([&]() {
+          std::mt19937 gen(std::random_device{}());
+
+          while(true)
+          {
+            const auto index = sent_count.fetch_add(1, std::memory_order_relaxed);
+            if(index >= *opt_count)
+            {
+              return;
+            }
+
+            const auto& key = keys[index % keys.size()];
+            const std::string body = random_ascii(gen, BODY_SIZE);
+            const auto start = std::chrono::steady_clock::now();
+
+            try
+            {
+              Generics::ConstSmartMemBuf_var write_buf = make_profile(body);
+              map->save_profile(
+                key,
+                write_buf.in(),
+                Generics::Time::get_time_of_day());
+            }
+            catch(const eh::Exception& ex)
+            {
+              error_count.fetch_add(1, std::memory_order_relaxed);
+              std::lock_guard<std::mutex> lock(error_lock);
+              std::cerr << "operation error: " << ex.what() << std::endl;
+            }
+
+            const auto finish = std::chrono::steady_clock::now();
+            const auto latency_us = static_cast<std::uint64_t>(
+              std::chrono::duration_cast<std::chrono::microseconds>(
+                finish - start).count());
+            latency_count.fetch_add(1, std::memory_order_relaxed);
+            latency_sum_us.fetch_add(latency_us, std::memory_order_relaxed);
+            update_max(latency_max_us, latency_us);
+
+            done_count.fetch_add(1, std::memory_order_relaxed);
+          }
+        });
+      }
+
+      for(auto& thread : threads)
+      {
+        thread.join();
+      }
+
+      map->flush();
+    }
+    else if(*opt_mode == "sync")
     {
       std::vector<std::thread> threads;
       threads.reserve(*opt_threads);
@@ -739,10 +813,13 @@ main(int argc, char** argv)
       ", avg_batch_size: " << format_stat_float(avg_batch_size(profile_map_stats)) <<
       ", max_latency: " << latency_max_us.load(std::memory_order_relaxed) << "us" <<
       ", test_inflight: " << test_inflight <<
+      ", disable_wal: " << (*opt_disable_wal != 0 ? 1 : 0) <<
+      ", reset_db: " << (*opt_reset_db != 0 ? 1 : 0) <<
+      ", key_seed: " << *opt_key_seed <<
       ", path: " << *opt_path <<
       std::endl;
 
-    if(*opt_keep_db == 0)
+    if(*opt_keep_db == 0 && *opt_mode != "prepare")
     {
       remove_all(*opt_path);
     }

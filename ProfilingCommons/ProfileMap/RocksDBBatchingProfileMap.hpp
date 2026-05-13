@@ -57,7 +57,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& expire_time,
       unsigned long workers_count = 4,
       unsigned long batch_size = 128,
-      const Generics::Time& max_delay = Generics::Time::ZERO);
+      const Generics::Time& max_delay = Generics::Time::ZERO,
+      bool disable_wal = false);
 
     ~RocksDBBatchingProfileMapImpl() noexcept override;
 
@@ -165,6 +166,7 @@ namespace AdServer::ProfilingCommons
     const unsigned long workers_count_;
     const unsigned long batch_size_;
     const Generics::Time max_delay_;
+    const bool disable_wal_;
 
     std::unique_ptr<rocksdb::DBWithTTL> db_;
     mutable std::atomic<std::uint64_t> logical_read_operations_{0};
@@ -198,7 +200,8 @@ namespace AdServer::ProfilingCommons
       const Generics::Time& expire_time,
       unsigned long workers_count = 4,
       unsigned long batch_size = 128,
-      const Generics::Time& max_delay = Generics::Time::ZERO);
+      const Generics::Time& max_delay = Generics::Time::ZERO,
+      bool disable_wal = false);
 
     bool
     check_profile(const KeyType& key) const override;
@@ -268,13 +271,15 @@ namespace AdServer::ProfilingCommons
     const Generics::Time& expire_time,
     unsigned long workers_count,
     unsigned long batch_size,
-    const Generics::Time& max_delay)
+    const Generics::Time& max_delay,
+    bool disable_wal)
     : impl_(new RocksDBBatchingProfileMapImpl(
         path,
         expire_time,
         workers_count,
         batch_size,
-        max_delay))
+        max_delay,
+        disable_wal))
   {}
 
   template<typename KeyType, typename KeyAdapterType>

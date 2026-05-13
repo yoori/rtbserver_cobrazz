@@ -1,4 +1,6 @@
 add_subdirectory(UserBindPerf)
 add_subdirectory(RocksDBProfileMapTest)
-add_subdirectory(ToplingDBProfileMapTest)
-add_subdirectory(RocksDBToplingCompatibilityTest)
+if(TARGET ProfileMapToplingDB)
+  add_subdirectory(ToplingDBProfileMapTest)
+  add_subdirectory(RocksDBToplingCompatibilityTest)
+endif()

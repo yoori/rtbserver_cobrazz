@@ -11,7 +11,7 @@ target_link_libraries(ProfileMap
 )
 
 find_package(RocksDB CONFIG REQUIRED)
-find_package(ToplingDB CONFIG REQUIRED)
+find_package(ToplingDB CONFIG QUIET)
 find_library(JEMALLOC_LIBRARY NAMES jemalloc REQUIRED)
 
 if(TARGET RocksDB::rocksdb-shared)
@@ -32,16 +32,18 @@ target_link_libraries(ProfileMapRocksDB
   ${ROCKSDB_TARGET}
 )
 
-add_library(ProfileMapToplingDB SHARED
-  ToplingDBProfileMap.cpp
-)
+if(ToplingDB_FOUND)
+  add_library(ProfileMapToplingDB SHARED
+    ToplingDBProfileMap.cpp
+  )
 
-target_link_libraries(ProfileMapToplingDB
-  ProfileMap
-  Generics
-  Commons
-  ToplingDB::rocksdb
-  ${JEMALLOC_LIBRARY}
-)
+  target_link_libraries(ProfileMapToplingDB
+    ProfileMap
+    Generics
+    Commons
+    ToplingDB::rocksdb
+    ${JEMALLOC_LIBRARY}
+  )
+endif()
 
 #install(TARGETS ProfileMap  DESTINATION ${INSTALL_DIR})

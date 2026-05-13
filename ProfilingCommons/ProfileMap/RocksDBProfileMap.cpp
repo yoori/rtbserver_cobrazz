@@ -14,8 +14,11 @@ namespace ProfilingCommons
 {
   RocksDBProfileMapImpl::RocksDBProfileMapImpl(
     const String::SubString& path,
-    const Generics::Time& expire_time)
-    : path_(path.str())
+    const Generics::Time& expire_time,
+    bool disable_wal)
+    : path_(path.str()),
+      db_(nullptr),
+      disable_wal_(disable_wal)
   {
     static const char* FUN = "RocksDBProfileMapImpl::RocksDBProfileMapImpl()";
 
@@ -173,7 +176,10 @@ namespace ProfilingCommons
     logical_write_operations_.fetch_add(1, std::memory_order_relaxed);
     physical_write_operations_.fetch_add(1, std::memory_order_relaxed);
 
-    rocksdb::Status status = db_->Delete(rocksdb::WriteOptions(), key.c_str());
+    rocksdb::WriteOptions write_options;
+    write_options.disableWAL = disable_wal_;
+
+    rocksdb::Status status = db_->Delete(write_options, key.c_str());
 
     if(status.IsNotFound() || !status.ok())
     {
@@ -204,8 +210,11 @@ namespace ProfilingCommons
     logical_write_operations_.fetch_add(1, std::memory_order_relaxed);
     physical_write_operations_.fetch_add(1, std::memory_order_relaxed);
 
+    rocksdb::WriteOptions write_options;
+    write_options.disableWAL = disable_wal_;
+
     rocksdb::Status status = db_->Put(
-      rocksdb::WriteOptions(),
+      write_options,
       key.c_str(),
       rocksdb::Slice(
         static_cast<const char*>(profile->membuf().data()),
@@ -266,6 +275,24 @@ namespace ProfilingCommons
       physical_read_operations_.load(std::memory_order_relaxed),
       physical_write_operations_.load(std::memory_order_relaxed)
     };
+  }
+
+  void
+  RocksDBProfileMapImpl::flush()
+  {
+    static const char* FUN = "RocksDBProfileMapImpl::flush()";
+
+    rocksdb::FlushOptions options;
+    options.wait = true;
+
+    const auto status = db_->Flush(options);
+    if(!status.ok())
+    {
+      Stream::Error ostr;
+      ostr << FUN << ": can't flush DB '" << path_ << "': " <<
+        status.ToString();
+      throw Exception(ostr.str());
+    }
   }
 }
 }
