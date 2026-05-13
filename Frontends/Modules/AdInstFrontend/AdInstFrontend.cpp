@@ -18,15 +18,13 @@
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaAlgs.hpp>
-#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/GrpcAlgs.hpp>
 #include <LogCommons/LogCommons.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include <CampaignSvcs/CampaignCommons/CampaignTypes.hpp>
 
 #include <Frontends/FrontendCommons/OptOutManip.hpp>
-#include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
 
 #include <Frontends/FrontendCommons/UserInfoClientConfig.hpp>
 
@@ -34,12 +32,48 @@
 
 namespace
 {
+  DECLARE_EXCEPTION(GrpcCallException, eh::DescriptiveException);
+
   const String::AsciiStringManip::Caseless
     MIME_ENCODED_HTTP_PREFIX("http%3a%2f%2f");
   const String::AsciiStringManip::Caseless
     MIME_ENCODED_HTTPS_PREFIX("https%3a%2f%2f");
   const String::AsciiStringManip::Caseless
     MIME_ENCODED_SHEME_RELATIVE_PREFIX("%2f%2f");
+
+  void
+  throw_grpc_exception_(
+    const char* name,
+    const grpc::Status& status)
+  {
+    Stream::Error ostr;
+    ostr << name << ": gRPC call failed: code=" <<
+      static_cast<int>(status.error_code()) <<
+      ", message=" << status.error_message();
+    throw GrpcCallException(ostr);
+  }
+
+  void
+  throw_user_info_exception_(
+    const char* name,
+    const grpc::Status& status)
+  {
+    Stream::Error ostr;
+    ostr << name << ": gRPC call failed: code=" <<
+      static_cast<int>(status.error_code()) <<
+      ", message=" << status.error_message();
+    const std::string message = ostr.str().str();
+
+    if(status.error_code() == grpc::StatusCode::UNAVAILABLE)
+    {
+      throw AdServer::UserInfoSvcs::UserInfoMatcher::NotReady(
+        message.c_str());
+    }
+
+    throw AdServer::UserInfoSvcs::UserInfoMatcher::ImplementationException(
+      message.c_str());
+  }
+
 }
 
 namespace Aspect
@@ -91,10 +125,6 @@ namespace Instantiate
         "Frontend",
         Aspect::AD_INST_FRONTEND,
         0),
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().AdInstFeConfiguration()->threads(),
-        0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module))
   {}
@@ -170,6 +200,11 @@ namespace Instantiate
       try
       {
         parse_configs_();
+        workers_ = new FrontendCommons::FrontendWorkers(
+          callback(),
+          config_->threads());
+        add_child_object(workers_);
+
         grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
@@ -213,6 +248,40 @@ namespace Instantiate
         Logging::Logger::INFO,
         Aspect::AD_INST_FRONTEND);
     }
+  }
+
+  void
+  Frontend::handle_request(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
+  }
+
+  void
+  Frontend::handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_noparams_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   /** Frontend::shutdown */
@@ -353,7 +422,6 @@ namespace Instantiate
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
 
     if(logger()->log_level() >= TraceLevel::MIDDLE)
     {
@@ -374,60 +442,118 @@ namespace Instantiate
       Generics::SubStringHashAdapter instantiate_type =
         FrontendCommons::deduce_instantiate_type(&request_info.secure, request);
 
-      bool merge_success = true;
-      std::string merge_error_message;
+      auto finish_response =
+        [this,
+          request_holder,
+          response_writer,
+          response_ptr,
+          request_info](
+            int status,
+            bool merge_success,
+            const std::string& merge_error_message) mutable
+        {
+          FCGI::HttpResponse& response = *response_ptr;
+          const FCGI::HttpRequest& request = request_holder->request();
 
-      // do users merge
-      if(!request_info.temp_user_id.is_null() &&
-         !request_info.user_id.is_null())
-      {
-        merge_success = false;
+          try
+          {
+            HTTP::CookieList cookies;
+            cookies.load_from_headers(request.headers());
 
-        merge_users_(
-          merge_success,
-          merge_error_message,
-          request_info);
-      }
+            if(!merge_success)
+            {
+              response.add_header_nocopy_name(
+                Response::Header::MERGE_FAILED,
+                merge_error_message);
+            }
 
-      http_status = instantiate_ad_(
-        response,
+            if(common_config_->ResponseHeaders().present())
+            {
+              FrontendCommons::add_headers(
+                *(common_config_->ResponseHeaders()),
+                response);
+            }
+
+            if(request_info.set_uid && request_info.user_id.is_null())
+            {
+              const Generics::SignedUuid signed_uid =
+                common_module_->user_id_controller()->generate();
+              cookie_manager_->set(
+                response,
+                request,
+                FrontendCommons::Cookies::CLIENT_ID,
+                signed_uid.str());
+            }
+
+            if(request_info.format == "vast")
+            {
+              FrontendCommons::CORS::set_headers(request, response);
+            }
+          }
+          catch(const HTTP::CookieList::Exception& e)
+          {
+            status = 400;
+
+            Stream::Error ostr;
+            ostr << FUN << ": HTTP::CookieList::Exception caught: " <<
+              e.what();
+
+            logger()->log(ostr.str(),
+              Logging::Logger::NOTICE,
+              Aspect::AD_INST_FRONTEND);
+          }
+          catch(const eh::Exception& e)
+          {
+            status = 500;
+
+            Stream::Error ostr;
+            ostr << FUN << ": eh::Exception caught: " << e.what();
+
+            logger()->log(ostr.str(),
+              Logging::Logger::EMERGENCY,
+              Aspect::AD_INST_FRONTEND,
+              "ADS-IMPL-109");
+          }
+
+          response_writer->write(status, response_ptr);
+        };
+
+      merge_users_async_(
         request_info,
-        instantiate_type);
-
-      HTTP::CookieList cookies;
-      cookies.load_from_headers(request.headers());
-
-      // fill response
-      if(!merge_success)
-      {
-        response.add_header_nocopy_name(
-          Response::Header::MERGE_FAILED,
-          merge_error_message);
-      }
-
-      if(common_config_->ResponseHeaders().present())
-      {
-        FrontendCommons::add_headers(
-          *(common_config_->ResponseHeaders()),
-          response);
-      }
-
-      if(request_info.set_uid && request_info.user_id.is_null())
-      {
-        // set new user id
-        const Generics::SignedUuid signed_uid =
-          common_module_->user_id_controller()->generate();
-        cookie_manager_->set(
-          response,
-          request,
-          FrontendCommons::Cookies::CLIENT_ID,
-          signed_uid.str());
-      }
-
-      if(request_info.format == "vast")
-      {
-        FrontendCommons::CORS::set_headers(request, response);
-      }
+        [this,
+          response_ptr,
+          request_info,
+          instantiate_type,
+          finish_response = std::move(finish_response)](
+            bool merge_success,
+            std::string merge_error_message) mutable
+        {
+          workers_->post(
+            [this,
+              response_ptr,
+              request_info,
+              instantiate_type,
+              merge_success,
+              merge_error_message = std::move(merge_error_message),
+              finish_response = std::move(finish_response)]() mutable
+            {
+              instantiate_ad_async_(
+                response_ptr,
+                request_info,
+                instantiate_type,
+                [merge_success,
+                  merge_error_message = std::move(merge_error_message),
+                  finish_response = std::move(finish_response)](
+                    int instantiate_status) mutable
+                {
+                  finish_response(
+                    instantiate_status,
+                    merge_success,
+                    merge_error_message);
+                });
+            });
+        });
+      return;
     }
     catch (const ForbiddenException &ex)
     {
@@ -490,228 +616,318 @@ namespace Instantiate
   }
 
   void
-  Frontend::merge_users_(
-    bool& merge_success,
-    std::string& merge_error_message,
-    const RequestInfo& request_info)
+  Frontend::merge_users_async_(
+    const RequestInfo& request_info,
+    MergeUsersCallback callback)
     noexcept
   {
-    static const char* FUN = "Frontend::merge_users_()";
+    static const char* FUN = "Frontend::merge_users_async_()";
 
-    merge_success = true;
+    if(request_info.temp_user_id.is_null() || request_info.user_id.is_null())
+    {
+      callback(true, std::string());
+      return;
+    }
 
-    AdServer::UserInfoSvcs::UserProfiles_var merge_user_profile;
-    AdServer::UserInfoSvcs::UserInfo user_info;
+    if(!user_info_client_)
+    {
+      callback(false, MergeMessage::SOURCE_NOT_READY);
+      return;
+    }
 
-    user_info.user_id = CorbaAlgs::pack_user_id(request_info.user_id);
+    if(request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
+    {
+      callback(false, MergeMessage::SOURCE_IS_PROBE);
+      return;
+    }
 
-    user_info.last_colo_id = request_info.colo_id;
-    user_info.request_colo_id = request_info.colo_id;
-    user_info.current_colo_id = -1;
-    user_info.temporary = false;
-    user_info.time = Generics::Time::get_time_of_day().tv_sec;
+    adserver::user_info_svcs::user_info_manager::GetUserProfileRequest
+      get_profile_request;
+    get_profile_request.set_user_id(
+      GrpcAlgs::pack_user_id(request_info.temp_user_id));
+    get_profile_request.set_temporary(true);
+    auto* profiles_request =
+      get_profile_request.mutable_profile_request();
+    profiles_request->set_base_profile(true);
+    profiles_request->set_add_profile(true);
+    profiles_request->set_history_profile(true);
+    profiles_request->set_freq_cap_profile(false);
+    profiles_request->set_pref_profile(false);
+
+    user_info_client_->get_user_profile(
+      get_profile_request,
+      [this, request_info, callback = std::move(callback), FUN](
+        const grpc::Status& status,
+        const adserver::user_info_svcs::user_info_manager::
+          GetUserProfileResponse& get_profile_response) mutable
+      {
+        workers_->post(
+          [this,
+            request_info,
+            status,
+            get_profile_response,
+            callback = std::move(callback),
+            FUN]() mutable
+        {
+          try
+          {
+            if(!status.ok())
+            {
+              throw_user_info_exception_(
+                "UserInfoManager::get_user_profile()",
+                status);
+            }
+
+            bool merge_success = get_profile_response.found();
+
+            if(get_profile_response.user_profile().
+                 base_user_profile().empty() &&
+               get_profile_response.user_profile().
+                 add_user_profile().empty())
+            {
+              merge_success = false;
+            }
+
+            if(!merge_success)
+            {
+              callback(false, MergeMessage::SOURCE_IS_UNKNOWN);
+              return;
+            }
+
+            if(!request_info.remove_merged_uid)
+            {
+              callback(true, std::string());
+              return;
+            }
+
+            adserver::user_info_svcs::user_info_manager::
+              RemoveUserProfileRequest remove_request;
+            remove_request.set_user_id(
+              GrpcAlgs::pack_user_id(request_info.temp_user_id));
+            user_info_client_->remove_user_profile(
+              remove_request,
+              [this, callback = std::move(callback), FUN](
+                const grpc::Status& remove_status,
+                const adserver::user_info_svcs::user_info_manager::
+                  RemoveUserProfileResponse&) mutable
+              {
+                workers_->post(
+                  [this, remove_status, callback = std::move(callback), FUN]()
+                    mutable
+                  {
+                    try
+                    {
+                      if(!remove_status.ok())
+                      {
+                        throw_user_info_exception_(
+                          "UserInfoManager::remove_user_profile()",
+                          remove_status);
+                      }
+
+                      callback(true, std::string());
+                    }
+                    catch(const UserInfoSvcs::UserInfoMatcher::NotReady&)
+                    {
+                      logger()->log(
+                        String::SubString(
+                          "UserInfoManager not ready for merging."),
+                        TraceLevel::MIDDLE,
+                        Aspect::AD_INST_FRONTEND);
+
+                      callback(false, MergeMessage::SOURCE_NOT_READY);
+                    }
+                    catch(const UserInfoSvcs::UserInfoMatcher::
+                      ImplementationException& ex)
+                    {
+                      Stream::Error ostr;
+                      ostr << FUN << ": Can't remove user profile for "
+                        "merging. Caught UserInfoMatcher::"
+                        "ImplementationException: " << ex.description;
+
+                      logger()->log(ostr.str(),
+                        Logging::Logger::NOTICE,
+                        Aspect::AD_INST_FRONTEND,
+                        "ADS-IMPL-111");
+
+                      callback(false, MergeMessage::SOURCE_EXCEPTION);
+                    }
+                  });
+              });
+          }
+          catch(const UserInfoSvcs::UserInfoMatcher::NotReady&)
+          {
+            logger()->log(
+              String::SubString("UserInfoManager not ready for merging."),
+              TraceLevel::MIDDLE,
+              Aspect::AD_INST_FRONTEND);
+
+            callback(false, MergeMessage::SOURCE_NOT_READY);
+          }
+          catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& ex)
+          {
+            Stream::Error ostr;
+            ostr << FUN << ": Can't get user profile for merging. "
+              "Caught UserInfoMatcher::ImplementationException: " <<
+              ex.description;
+
+            logger()->log(ostr.str(),
+              Logging::Logger::NOTICE,
+              Aspect::AD_INST_FRONTEND,
+              "ADS-IMPL-111");
+
+            callback(false, MergeMessage::SOURCE_EXCEPTION);
+          }
+        });
+      });
+  }
+
+  void
+  Frontend::instantiate_click_async_(
+    FCGI::HttpResponse_var response,
+    const RequestInfo& request_info,
+    const adserver::campaign_svcs::campaign_manager::InstantiateAdResult&
+      inst_ad_result,
+    InstantiateCallback callback)
+    noexcept
+  {
+    static const char* FUN = "Frontend::instantiate_click_async_()";
+
     try
     {
-      merge_success = false;
-
-      if(user_info_client_)
+      if(request_info.creatives.empty())
       {
-        if(request_info.temp_user_id == AdServer::Commons::PROBE_USER_ID)
-        {
-          merge_error_message = MergeMessage::SOURCE_IS_PROBE;
-        }
-        else
-        {
-          AdServer::UserInfoSvcs::ProfilesRequestInfo profiles_request;
-          profiles_request.base_profile = true;
-          profiles_request.add_profile = true;
-          profiles_request.history_profile = true;
-          profiles_request.freq_cap_profile = false; // don't merge freq cap profiles
-          profiles_request.pref_profile = false;
+        callback(204);
+        return;
+      }
 
-          merge_success = AdServer::UserInfoSvcs::GrpcAlgs::get_user_profile(*user_info_client_,
-            CorbaAlgs::pack_user_id(request_info.temp_user_id),
-            true,
-            profiles_request,
-            merge_user_profile.out());
+      adserver::campaign_svcs::campaign_manager::ClickInfo click_info;
 
-          if (merge_user_profile->base_user_profile.length() == 0 &&
-              merge_user_profile->add_user_profile.length() == 0)
-          {
-            merge_success = false;
-          }
+      const RequestInfo::CreativeInfo& first_creative =
+        request_info.creatives.front();
+      click_info.set_colo_id(request_info.colo_id);
+      click_info.set_tag_id(request_info.tag_id);
+      click_info.set_tag_size_id(request_info.tag_size_id);
+      click_info.set_creative_id(request_info.creative_id);
+      click_info.set_log_click(request_info.consider_request);
+      click_info.set_ccid(first_creative.ccid);
+      click_info.set_ccg_keyword_id(first_creative.ccg_keyword_id);
+      click_info.mutable_ctr()->set_value(
+        GrpcAlgs::pack_decimal(first_creative.ctr));
 
-          if(!merge_success)
-          {
-            merge_error_message = MergeMessage::SOURCE_IS_UNKNOWN;
-          }
-        }
+      if(request_info.user_id_hash_mod.present())
+      {
+        auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
+        user_id_hash_mod->set_defined(true);
+        user_id_hash_mod->set_value(*request_info.user_id_hash_mod);
+      }
+      else if(request_info.consider_request &&
+        !request_info.enabled_notice &&
+        !request_info.user_id.is_null())
+      {
+        auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
+        user_id_hash_mod->set_defined(true);
+        user_id_hash_mod->set_value(
+          AdServer::LogProcessing::user_id_distribution_hash(
+            request_info.user_id));
       }
       else
       {
-        merge_error_message = MergeMessage::SOURCE_NOT_READY;
+        auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
+        user_id_hash_mod->set_value(0);
+        user_id_hash_mod->set_defined(false);
       }
 
-      if(merge_success && request_info.remove_merged_uid)
+      click_info.set_time(GrpcAlgs::pack_time(request_info.time));
+      click_info.set_bid_time(GrpcAlgs::pack_time(request_info.bid_time));
+
+      if(inst_ad_result.request_ids_size())
       {
-        if(user_info_client_)
-        {
-          AdServer::UserInfoSvcs::GrpcAlgs::remove_user_profile(*user_info_client_,
-            CorbaAlgs::pack_user_id(request_info.temp_user_id));
-        }
+        click_info.set_request_id(inst_ad_result.request_ids(0));
       }
-    }
-    catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-    {
-      logger()->log(
-        String::SubString("UserInfoManager not ready for merging."),
-        TraceLevel::MIDDLE,
-        Aspect::AD_INST_FRONTEND);
+      click_info.set_referer(request_info.referer);
 
-      merge_error_message = MergeMessage::SOURCE_NOT_READY;
-    }
-    catch(const UserInfoSvcs::UserInfoManager::ImplementationException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't get user profile for merging. "
-        "Caught UserInfoManager::ImplementationException: " <<
-        ex.description;
+      adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
+        click_url_request;
+      *click_url_request.mutable_click_info() = click_info;
+      click_url_request.set_service_index(request_info.campaign_manager_index);
 
-      logger()->log(ostr.str(),
-        Logging::Logger::NOTICE,
-        Aspect::AD_INST_FRONTEND,
-        "ADS-IMPL-111");
-
-      merge_error_message = MergeMessage::SOURCE_EXCEPTION;
-    }
-    catch(const CORBA::SystemException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": Can't get user profile for merging. "
-        "Caught CORBA::SystemException: " <<
-        ex;
-
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::AD_INST_FRONTEND,
-        "ADS-ICON-2");
-
-      merge_error_message = MergeMessage::SOURCE_IS_UNAVAILABLE;
-    }
-  }
-
-  int
-  Frontend::instantiate_click_(
-    HttpResponse& response,
-    const RequestInfo& request_info,
-    const adserver::campaign_svcs::campaign_manager::InstantiateAdResult&
-      inst_ad_result)
-    /*throw(Exception)*/
-  {
-    static const char* FUN = "Frontend::instantiate_click_()";
-
-    try
-    {
-      if (!request_info.creatives.empty())
-      {
-        adserver::campaign_svcs::campaign_manager::ClickInfo click_info;
-
-        const RequestInfo::CreativeInfo& first_creative = request_info.creatives.front();
-        click_info.set_colo_id(request_info.colo_id);
-        click_info.set_tag_id(request_info.tag_id);
-        click_info.set_tag_size_id(request_info.tag_size_id);
-        click_info.set_creative_id(request_info.creative_id);
-        click_info.set_log_click(request_info.consider_request);
-        click_info.set_ccid(first_creative.ccid);
-        click_info.set_ccg_keyword_id(first_creative.ccg_keyword_id);
-        click_info.mutable_ctr()->set_value(
-          GrpcAlgs::pack_decimal(first_creative.ctr));
-
-        if(request_info.user_id_hash_mod.present())
+      campaign_manager_->get_click_url(
+        click_url_request,
+        [this,
+          response,
+          request_info,
+          callback = std::move(callback),
+          FUN](
+            const grpc::Status& status,
+            const adserver::campaign_svcs::campaign_manager::
+              GetClickUrlResponse& click_url_response) mutable
         {
-          auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
-          user_id_hash_mod->set_defined(true);
-          user_id_hash_mod->set_value(*request_info.user_id_hash_mod);
-        }
-        else if(request_info.consider_request &&
-          !request_info.enabled_notice &&
-          !request_info.user_id.is_null())
-        {
-          auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
-          user_id_hash_mod->set_defined(true);
-          user_id_hash_mod->set_value(
-            AdServer::LogProcessing::user_id_distribution_hash(request_info.user_id));
-        }
-        else
-        {
-          auto* user_id_hash_mod = click_info.mutable_user_id_hash_mod();
-          user_id_hash_mod->set_value(0);
-          user_id_hash_mod->set_defined(false);
-        }
-
-        click_info.set_time(GrpcAlgs::pack_time(request_info.time));
-        click_info.set_bid_time(GrpcAlgs::pack_time(request_info.bid_time));
-
-        if (inst_ad_result.request_ids_size())
-        {
-          click_info.set_request_id(inst_ad_result.request_ids(0));
-        }
-        click_info.set_referer(request_info.referer);
-
-        adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
-          click_url_request;
-        *click_url_request.mutable_click_info() = click_info;
-        click_url_request.set_service_index(request_info.campaign_manager_index);
-        auto click_url_response = AdServer::Grpc::sync_call<
-          adserver::campaign_svcs::campaign_manager::GetClickUrlResponse>(
-            [&](auto callback)
+          workers_->post(
+            [this,
+              response,
+              request_info,
+              status,
+              click_url_response,
+              callback = std::move(callback),
+              FUN]() mutable
             {
-              campaign_manager_->get_click_url(
-                click_url_request,
-                std::move(callback));
-            },
-            [](const grpc::Status& status)
-            {
-              Stream::Error ostr;
-              ostr << "CampaignManager::get_click_url(): "
-                "gRPC call failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              throw Exception(ostr);
+              try
+              {
+                if(!status.ok())
+                {
+                  throw_grpc_exception_(
+                    "CampaignManager::get_click_url()",
+                    status);
+                }
+
+                if(click_url_response.found())
+                {
+                  response->add_header_nocopy_name(
+                    Response::Header::LOCATION,
+                    request_info.click_prefix_url +
+                      click_url_response.click_result_info().url());
+                  callback(302);
+                }
+                else
+                {
+                  callback(204);
+                }
+              }
+              catch(const eh::Exception& ex)
+              {
+                Stream::Error ostr;
+                ostr << FUN << ": fail. Caught eh::Exception: " <<
+                  ex.what();
+                logger()->log(
+                  ostr.str(),
+                  Logging::Logger::EMERGENCY,
+                  Aspect::AD_INST_FRONTEND);
+                callback(500);
+              }
             });
-
-        if(click_url_response.found())
-        {
-          // do redirect to click_url
-          response.add_header_nocopy_name(
-            Response::Header::LOCATION,
-            request_info.click_prefix_url +
-              click_url_response.click_result_info().url());
-          return 302;
-        }
-      }
-    }
-    catch (const Exception&)
-    {
-      throw;
+        });
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": fail. Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::AD_INST_FRONTEND);
+      callback(500);
     }
-    return 204;
   }
 
-  int
-  Frontend::instantiate_ad_(
-    HttpResponse& response,
+  void
+  Frontend::instantiate_ad_async_(
+    FCGI::HttpResponse_var response,
     const RequestInfo& request_info,
-    const Generics::SubStringHashAdapter& instantiate_type)
-    /*throw(Exception)*/
+    const Generics::SubStringHashAdapter& instantiate_type,
+    InstantiateCallback callback)
+    noexcept
   {
-    static const char* FUN = "Frontend::instantiate_ad_()";
+    static const char* FUN = "Frontend::instantiate_ad_async_()";
 
     try
     {
@@ -879,66 +1095,98 @@ namespace Instantiate
       *instantiate_ad_request.mutable_instantiate_ad_info() = inst_ad_info;
       instantiate_ad_request.set_service_index(
         request_info.campaign_manager_index);
-      auto instantiate_ad_response = AdServer::Grpc::sync_call<
-        adserver::campaign_svcs::campaign_manager::InstantiateAdResponse>(
-          [&](auto callback)
-          {
-            campaign_manager_->instantiate_ad(
-              instantiate_ad_request,
-              std::move(callback));
-          },
-          [](const grpc::Status& status)
-          {
-            Stream::Error ostr;
-            ostr << "CampaignManager::instantiate_ad(): "
-              "gRPC call failed: code=" <<
-              static_cast<int>(status.error_code()) <<
-              ", message=" << status.error_message();
-            throw Exception(ostr);
-          });
-      const auto& inst_ad_result =
-        instantiate_ad_response.instantiate_ad_result();
 
-      if (request_info.emulate_click)
-      {
-        return instantiate_click_(
+      campaign_manager_->instantiate_ad(
+        instantiate_ad_request,
+        [this,
           response,
           request_info,
-          inst_ad_result);
-      }
-      else if (!inst_ad_result.creative_body().empty())
-      {
-        std::string response_body(inst_ad_result.creative_body());
-        response.set_content_type(inst_ad_result.mime_format());
-
-        response.get_output_stream().write(
-          response_body.c_str(), response_body.length());
-
-        if(logger()->log_level() >= TraceLevel::MIDDLE)
+          callback = std::move(callback),
+          FUN](
+            const grpc::Status& status,
+            const adserver::campaign_svcs::campaign_manager::
+              InstantiateAdResponse& instantiate_ad_response) mutable
         {
-          Stream::Error ostr;
-          ostr << FUN << ": response:" << std::endl << response_body;
+          workers_->post(
+            [this,
+              response,
+              request_info,
+              status,
+              instantiate_ad_response,
+              callback = std::move(callback),
+              FUN]() mutable
+            {
+              try
+              {
+                if(!status.ok())
+                {
+                  throw_grpc_exception_(
+                    "CampaignManager::instantiate_ad()",
+                    status);
+                }
 
-          logger()->log(ostr.str(),
-            TraceLevel::MIDDLE,
-            Aspect::AD_INST_FRONTEND);
-        }
+                const auto& inst_ad_result =
+                  instantiate_ad_response.instantiate_ad_result();
 
-        return 200;
-      }
-    }
-    catch (const Exception&)
-    {
-      throw;
+                if(request_info.emulate_click)
+                {
+                  instantiate_click_async_(
+                    response,
+                    request_info,
+                    inst_ad_result,
+                    std::move(callback));
+                }
+                else if(!inst_ad_result.creative_body().empty())
+                {
+                  std::string response_body(inst_ad_result.creative_body());
+                  response->set_content_type(inst_ad_result.mime_format());
+
+                  response->get_output_stream().write(
+                    response_body.c_str(),
+                    response_body.length());
+
+                  if(logger()->log_level() >= TraceLevel::MIDDLE)
+                  {
+                    Stream::Error ostr;
+                    ostr << FUN << ": response:" << std::endl <<
+                      response_body;
+
+                    logger()->log(ostr.str(),
+                      TraceLevel::MIDDLE,
+                      Aspect::AD_INST_FRONTEND);
+                  }
+
+                  callback(200);
+                }
+                else
+                {
+                  callback(204);
+                }
+              }
+              catch(const eh::Exception& ex)
+              {
+                Stream::Error ostr;
+                ostr << FUN << ": fail. Caught eh::Exception: " <<
+                  ex.what();
+                logger()->log(
+                  ostr.str(),
+                  Logging::Logger::EMERGENCY,
+                  Aspect::AD_INST_FRONTEND);
+                callback(500);
+              }
+            });
+        });
     }
     catch(const eh::Exception& ex)
     {
       Stream::Error ostr;
       ostr << FUN << ": fail. Caught eh::Exception: " << ex.what();
-      throw Exception(ostr);
+      logger()->log(
+        ostr.str(),
+        Logging::Logger::EMERGENCY,
+        Aspect::AD_INST_FRONTEND);
+      callback(500);
     }
-
-    return 204;
   }
 }
 }

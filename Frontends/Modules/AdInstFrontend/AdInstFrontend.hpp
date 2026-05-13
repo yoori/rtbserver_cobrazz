@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <list>
@@ -10,6 +11,7 @@
 #include <Logger/DistributorLogger.hpp>
 
 #include <Generics/ActiveObject.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/Statistics.hpp>
 #include <Generics/Scheduler.hpp>
 #include <Generics/TaskRunner.hpp>
@@ -31,7 +33,7 @@
 #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -49,7 +51,8 @@ namespace Instantiate
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -84,17 +87,17 @@ namespace Instantiate
      * @param response The object to write the HTTP response body.
      * @return HTTP status code.
      */
-    virtual void
-    handle_request_(
+    void
+    handle_request(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
-    virtual void
-    handle_request_noparams_(
+    void
+    handle_request_noparams(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -126,29 +129,48 @@ namespace Instantiate
 
   private:
     void
-    parse_configs_() /*throw(Exception)*/;
-
-    void
-    merge_users_(
-      bool& merge_success,
-      std::string& merge_error_message,
-      const RequestInfo& request_info)
+    handle_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
 
-    int
-    instantiate_click_(
-      HttpResponse& response,
+    void
+    handle_request_noparams_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept;
+
+    void
+    parse_configs_() /*throw(Exception)*/;
+
+    using MergeUsersCallback =
+      std::function<void(bool, std::string)>;
+
+    using InstantiateCallback =
+      std::function<void(int)>;
+
+    void
+    merge_users_async_(
+      const RequestInfo& request_info,
+      MergeUsersCallback callback)
+      noexcept;
+
+    void
+    instantiate_click_async_(
+      FCGI::HttpResponse_var response,
       const RequestInfo& request_info,
       const adserver::campaign_svcs::campaign_manager::InstantiateAdResult&
-        inst_ad_result)
-      /*throw(Exception)*/;
+        inst_ad_result,
+      InstantiateCallback callback)
+      noexcept;
 
-    int
-    instantiate_ad_(
-      HttpResponse& response,
+    void
+    instantiate_ad_async_(
+      FCGI::HttpResponse_var response,
       const RequestInfo& request_info,
-      const Generics::SubStringHashAdapter& instantiate_creative_type)
-      /*throw(Exception)*/;
+      const Generics::SubStringHashAdapter& instantiate_creative_type,
+      InstantiateCallback callback)
+      noexcept;
 
     void
     log_request_(
@@ -174,6 +196,7 @@ namespace Instantiate
       campaign_manager_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
+    FrontendCommons::FrontendWorkers_var workers_;
   };
 }
 }

@@ -14,6 +14,7 @@ add_library(FCGI SHARED
   HttpRequest.cpp
   FrontendInterface.cpp
   FrontendTaskPool.cpp
+  FrontendWorkers.cpp
 )
 
 target_link_libraries(FCGI

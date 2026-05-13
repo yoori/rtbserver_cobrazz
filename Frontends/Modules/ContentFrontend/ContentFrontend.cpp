@@ -1,3 +1,6 @@
+#include <condition_variable>
+#include <mutex>
+
 #include <Generics/Time.hpp>
 #include <Logger/StreamLogger.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -101,6 +104,85 @@ namespace Tokens
 
 namespace AdServer
 {
+  ContentFrontend::CreativesUpdater::CreativesUpdater(
+    std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
+      campaign_manager)
+    noexcept
+    : campaign_manager_(std::move(campaign_manager))
+  {}
+
+  ContentFrontend::CreativesUpdater::~CreativesUpdater() noexcept = default;
+
+  ContentFrontend::CreativesUpdater::Holder
+  ContentFrontend::CreativesUpdater::far_update(
+    const char* file,
+    const char* service_index)
+    /*throw(Exception)*/
+  {
+    try
+    {
+      adserver::campaign_svcs::campaign_manager::GetFileRequest request;
+      request.set_file_name(file);
+      if(service_index)
+      {
+        request.set_service_index(service_index);
+      }
+
+      std::mutex mutex;
+      std::condition_variable condition;
+      bool done = false;
+      grpc::Status result_status;
+      adserver::campaign_svcs::campaign_manager::GetFileResponse response;
+
+      campaign_manager_->get_file(
+        request,
+        [&mutex, &condition, &done, &result_status, &response](
+          const grpc::Status& status,
+          const adserver::campaign_svcs::campaign_manager::
+            GetFileResponse& get_file_response)
+        {
+          {
+            std::lock_guard<std::mutex> lock(mutex);
+            result_status = status;
+            response = get_file_response;
+            done = true;
+          }
+          condition.notify_one();
+        });
+
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        condition.wait(lock, [&done]() { return done; });
+      }
+
+      if(!result_status.ok())
+      {
+        Stream::Error ostr;
+        ostr << "CampaignManager get_file failed: code=" <<
+          static_cast<int>(result_status.error_code()) <<
+          ", message=" << result_status.error_message();
+        throw Exception(ostr);
+      }
+
+      String::SubString file_body(
+        response.file().data(),
+        response.file().size());
+      Generics::Time now = Generics::Time::get_time_of_day();
+      return new ConfigType::TextTemplateHolder(
+        Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
+        now,
+        now,
+        file_body.size());
+    }
+    catch (const eh::Exception& e)
+    {
+      Stream::Error ostr;
+      ostr << "CreativesUpdater::far_update(): caugth eh::Exception: "
+        << e.what();
+      throw Exception(ostr);
+    }
+  }
+
   /**
    * ContentFrontend implementation
    */
@@ -115,10 +197,6 @@ namespace AdServer
             frontend_config->get().ContentFeConfiguration()->Logger().log_level())),
         "ContentFrontend",
         Aspect::CONTENT_FRONTEND, 0),
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().ContentFeConfiguration()->threads(),
-        0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config))
   {}
 
@@ -194,12 +272,15 @@ namespace AdServer
       campaign_manager_ = campaign_manager;
       add_child_object(campaign_manager);
 
+      workers_ = new ContentFrontendWorkers(callback(), config_->threads());
+      add_child_object(workers_);
+
       template_files_ = new Commons::TextTemplateCache(
         config_->TemplateCache().size(),
         Generics::Time(config_->TemplateCache().timeout()),
         Commons::TextTemplateCacheConfiguration<Commons::TextTemplate>(
           Generics::Time::ONE_SECOND,
-          new CreativesUpdater(*campaign_manager_)));
+          new CreativesUpdater(campaign_manager_)));
 
       activate_object();
     }
@@ -216,6 +297,8 @@ namespace AdServer
   {
     try
     {
+      deactivate_object();
+      wait_object();
       campaign_manager_.reset();
 
       log(String::SubString(
@@ -269,6 +352,23 @@ namespace AdServer
         break;
       }
     }
+  }
+
+  void
+  ContentFrontend::handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_noparams_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void
@@ -338,6 +438,23 @@ namespace AdServer
     request.set_params(std::move(params));
 
     handle_request_(std::move(request_holder), std::move(response_writer));
+  }
+
+  void
+  ContentFrontend::handle_request(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void

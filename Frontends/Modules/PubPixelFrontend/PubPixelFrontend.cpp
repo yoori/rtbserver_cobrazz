@@ -1,4 +1,5 @@
 #include <sstream>
+#include <utility>
 
 #include <Generics/Rand.hpp>
 #include <Logger/StreamLogger.hpp>
@@ -44,10 +45,6 @@ namespace PubPixel
             frontend_config->get().PubPixelFeConfiguration()->Logger().log_level())),
         "PubPixelFrontend",
         Aspect::PUBPIXEL_FRONTEND, 0),
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().PubPixelFeConfiguration()->threads(),
-        0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config))
   {}
 
@@ -124,6 +121,11 @@ namespace PubPixel
         common_config_->GeoIP().present() ?
         common_config_->GeoIP()->path().c_str() : 0));
 
+      workers_ = new FrontendCommons::FrontendWorkers(
+        callback(),
+        config_->threads());
+      add_child_object(workers_);
+
       grpc_executor_ = std::make_shared<AdServer::Grpc::GrpcExecutor>(
         common_config_->grpc_executor_threads());
       add_child_object(grpc_executor_);
@@ -156,6 +158,8 @@ namespace PubPixel
   {
     try
     {
+      deactivate_object();
+      wait_object();
       campaign_manager_.reset();
 
       log(String::SubString(
@@ -165,6 +169,23 @@ namespace PubPixel
     }
     catch(...)
     {}
+  }
+
+  void
+  Frontend::handle_request(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void

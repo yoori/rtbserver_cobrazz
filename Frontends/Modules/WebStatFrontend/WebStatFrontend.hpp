@@ -5,10 +5,12 @@
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/FileCache.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <String/StringManip.hpp>
 #include <HTTP/Http.hpp>
 #include <HTTP/HTTPCookie.hpp>
@@ -20,7 +22,7 @@
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -31,7 +33,8 @@ namespace WebStat
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:
@@ -46,6 +49,12 @@ namespace WebStat
 
     virtual bool
     will_handle(const String::SubString& uri) noexcept;
+
+    void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
 
     void
     handle_request_(
@@ -111,6 +120,7 @@ namespace WebStat
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    FrontendCommons::FrontendWorkers_var workers_;
 
     FileCachePtr pixel_;
   };

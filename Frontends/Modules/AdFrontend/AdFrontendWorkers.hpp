@@ -1,43 +1,9 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-
-#include <boost/asio.hpp>
-
-#include <Commons/DelegateActiveObject.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 namespace AdServer
 {
-  class AdFrontendWorkers:
-    public AdServer::Commons::DelegateActiveObject
-  {
-  public:
-    AdFrontendWorkers(
-      Generics::ActiveObjectCallback* callback,
-      unsigned long threads);
-
-    void
-    post(std::function<void()> task);
-
-  protected:
-    ~AdFrontendWorkers() noexcept override = default;
-
-  private:
-    void
-    work_() noexcept override;
-
-    void
-    terminate_() noexcept override;
-
-  private:
-    using IoService = boost::asio::io_service;
-    using Work = IoService::work;
-
-    std::shared_ptr<IoService> io_service_;
-    std::unique_ptr<Work> io_work_;
-  };
-
-  using AdFrontendWorkers_var =
-    ReferenceCounting::SmartPtr<AdFrontendWorkers>;
+  using AdFrontendWorkers = FrontendCommons::FrontendWorkers;
+  using AdFrontendWorkers_var = FrontendCommons::FrontendWorkers_var;
 }

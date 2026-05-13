@@ -1,6 +1,5 @@
 add_library(ImprTrackFrontend SHARED
   ImprTrackFrontend.cpp
-  ImprTrackFrontendWorkers.cpp
   RequestInfoFiller.cpp
 )
 

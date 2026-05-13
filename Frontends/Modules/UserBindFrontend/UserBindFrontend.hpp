@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include <eh/Exception.hpp>
@@ -8,6 +9,7 @@
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
 
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/FileCache.hpp>
 #include <Generics/Uuid.hpp>
@@ -29,7 +31,8 @@
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/ChannelClientConfig.hpp>
 
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendInterface.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -49,7 +52,8 @@ namespace AdServer
   class UserBindFrontend:
     private FrontendCommons::HTTPExceptions,
     public Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -73,10 +77,10 @@ namespace AdServer
     will_handle(const String::SubString& uri) noexcept;
 
     void
-    handle_request_(
+    handle_request(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -87,27 +91,18 @@ namespace AdServer
     shutdown() noexcept;
 
   protected:
-    class RequestTask;
-    typedef ReferenceCounting::SmartPtr<RequestTask>
-      RequestTask_var;
-
     class UserMatchTask;
+    class BindProcessingState;
 
     struct BindResult;
-    struct BindResultHolder;
 
   protected:
     virtual ~UserBindFrontend() noexcept;
 
-    int
+    void
     handle_request_(
-      const FCGI::HttpRequest& request,
-      FCGI::HttpResponse& response)
-      noexcept;
-
-    int
-    handle_delete_request_(
-      const UserBind::RequestInfo& request_info)
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
 
   private:
@@ -165,11 +160,13 @@ namespace AdServer
     void
     parse_configs_() /*throw(Exception)*/;
 
-    int
-    process_request_(
-      BindResultHolder& result_holder,
-      const UserBind::RequestInfo& request_info,
-      const String::SubString& dns_bind_request_id)
+    using ProcessRequestCallback = std::function<void(int, BindResult)>;
+
+    void
+    process_request_async_(
+      UserBind::RequestInfo_var request_info,
+      std::string dns_bind_request_id,
+      ProcessRequestCallback callback)
       noexcept;
 
     uint32_t
@@ -206,6 +203,19 @@ namespace AdServer
       /*throw(UserBindFrontend::InvalidSource)*/;
 
     void
+    schedule_user_match_(
+      const Commons::UserId& result_user_id,
+      const Commons::UserId& merge_user_id,
+      bool create_user_profile,
+      const String::SubString& keywords,
+      const String::SubString& cohort,
+      const String::SubString& referer,
+      unsigned long colo_id,
+      const FrontendCommons::Location* location,
+      const String::SubString& source)
+      noexcept;
+
+    void
     user_match_(
       const Commons::UserId& result_user_id,
       const Commons::UserId& merge_user_id,
@@ -231,22 +241,11 @@ namespace AdServer
       const String::SubString& source)
       const noexcept;
 
-    int handle_user_channels_request_(
-      const UserBind::RequestInfo& request_info,
-      FCGI::HttpResponse& response);
-
-    void
-    add_bind_request_(
-      const adserver::user_info_svcs::user_bind::AddBindRequestRequest&
-        request);
-
-    adserver::user_info_svcs::user_bind::GetUserIdResponse
-    get_user_id_(
-      const adserver::user_info_svcs::user_bind::GetUserIdRequest& request);
-
-    adserver::user_info_svcs::user_bind::AddUserIdResponse
-    add_user_id_(
-      const adserver::user_info_svcs::user_bind::AddUserIdRequest& request);
+    void handle_user_channels_request_async_(
+      UserBind::RequestInfo_var request_info,
+      FCGI::HttpResponse_var response,
+      std::function<void(int)> callback)
+      noexcept;
 
   private:
     // configuration
@@ -270,6 +269,7 @@ namespace AdServer
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
+    FrontendCommons::FrontendWorkers_var workers_;
     std::shared_ptr<AdServer::ChannelSvcs::ChannelServerGrpcAsyncClient>
       channel_client_;
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
@@ -277,10 +277,8 @@ namespace AdServer
     std::unique_ptr<FrontendCommons::CookieManager<
       FCGI::HttpRequest, FCGI::HttpResponse> > cookie_manager_;
 
-    Generics::TaskExecutor_var bind_task_runner_;
     Generics::TaskExecutor_var match_task_runner_;
 
-    Algs::AtomicInt bind_task_count_;
     Algs::AtomicInt match_task_count_;
   };
 }

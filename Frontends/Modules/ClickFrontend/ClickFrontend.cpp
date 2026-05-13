@@ -1,5 +1,6 @@
 
 #include <sstream>
+#include <functional>
 
 #include <Generics/Rand.hpp>
 #include <Logger/StreamLogger.hpp>
@@ -12,16 +13,14 @@
 
 #include <Commons/ErrorHandler.hpp>
 #include <Commons/CorbaConfig.hpp>
-#include <Commons/CorbaAlgs.hpp>
 #include <Commons/GrpcAlgs.hpp>
-#include <Commons/Grpc/GrpcSync.hpp>
 #include <Commons/UserInfoManip.hpp>
+#include <UserInfoSvcs/UserInfoClient/UserInfoGrpcAlgs.hpp>
 
 #include <Frontends/FrontendCommons/Cookies.hpp>
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/add_UID_cookie.hpp>
 #include <Frontends/FrontendCommons/Location.hpp>
-#include <Frontends/FrontendCommons/GeoInfoUtils.hpp>
 
 #include <Frontends/CommonModule/CommonModule.hpp>
 
@@ -31,6 +30,59 @@
 
 namespace
 {
+  DECLARE_EXCEPTION(GrpcCallException, eh::DescriptiveException);
+
+  void
+  throw_grpc_exception_(
+    const char* name,
+    const grpc::Status& status)
+  {
+    Stream::Error ostr;
+    ostr << name << ": gRPC call failed: code=" <<
+      static_cast<int>(status.error_code()) <<
+      ", message=" << status.error_message();
+    throw GrpcCallException(ostr);
+  }
+
+  void
+  throw_user_bind_exception_(const grpc::Status& status)
+  {
+    const std::string message = status.error_message();
+    switch(status.error_code())
+    {
+    case grpc::StatusCode::UNAVAILABLE:
+      throw AdServer::UserInfoSvcs::UserBindClient::NotReady(
+        message.c_str());
+    case grpc::StatusCode::NOT_FOUND:
+      throw AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound(
+        message.c_str());
+    default:
+      throw AdServer::UserInfoSvcs::UserBindClient::ImplementationException(
+        message.c_str());
+    }
+  }
+
+  void
+  throw_user_info_exception_(
+    const char* name,
+    const grpc::Status& status)
+  {
+    Stream::Error ostr;
+    ostr << name << ": gRPC call failed: code=" <<
+      static_cast<int>(status.error_code()) <<
+      ", message=" << status.error_message();
+    const std::string message = ostr.str().str();
+
+    if(status.error_code() == grpc::StatusCode::UNAVAILABLE)
+    {
+      throw AdServer::UserInfoSvcs::UserInfoMatcher::NotReady(
+        message.c_str());
+    }
+
+    throw AdServer::UserInfoSvcs::UserInfoMatcher::ImplementationException(
+      message.c_str());
+  }
+
   struct ClickFrontendConstrainTraits
   {
     static const unsigned long MAX_NUMBER_PARAMS = 30;
@@ -133,10 +185,6 @@ namespace AdServer
         "ClickFrontend",
         Aspect::CLICK_FRONTEND,
         0),
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().ClickFeConfiguration()->threads(),
-        0), // max pending tasks
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module))
   {}
@@ -204,6 +252,23 @@ namespace AdServer
         "': " << e.what();
       throw Exception(ostr);
     }
+  }
+
+  void
+  ClickFrontend::handle_request_noparams(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_noparams_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void
@@ -294,6 +359,11 @@ namespace AdServer
           common_config_->grpc_executor_threads());
         add_child_object(grpc_executor_);
 
+        workers_ = new FrontendCommons::FrontendWorkers(
+          callback(),
+          config_->threads());
+        add_child_object(workers_);
+
         auto campaign_manager = std::make_shared<
           AdServer::CampaignSvcs::CampaignManagerDistributedGrpcClient>(
             FrontendCommons::read_campaign_manager_grpc_refs(*common_config_),
@@ -372,6 +442,23 @@ namespace AdServer
         throw Exception(ostr);
       }
     }
+  }
+
+  void
+  ClickFrontend::handle_request(
+    FCGI::HttpRequestHolder_var request_holder,
+    FCGI::BaseHttpResponseWriter_var response_writer)
+    noexcept
+  {
+    workers_->post(
+      [this,
+        request_holder = std::move(request_holder),
+        response_writer = std::move(response_writer)]() mutable
+      {
+        handle_request_(
+          std::move(request_holder),
+          std::move(response_writer));
+      });
   }
 
   void
@@ -572,7 +659,6 @@ namespace AdServer
     const FCGI::HttpRequest& request = request_holder->request();
 
     FCGI::HttpResponse_var response_ptr(new FCGI::HttpResponse());
-    FCGI::HttpResponse& response = *response_ptr;
 
     log(String::SubString("ClickFrontend::handle_request: entered"),
       TraceLevel::MIDDLE,
@@ -721,173 +807,232 @@ namespace AdServer
 
       adserver::campaign_svcs::campaign_manager::ClickResultInfo
         click_result_info;
-      bool got_click_url = false;
+      auto finish_response =
+        [this,
+          request_holder,
+          response_writer,
+          response_ptr,
+          click_info,
+          request_info,
+          FUN](
+            bool got_click_url,
+            const adserver::campaign_svcs::campaign_manager::ClickResultInfo&
+              click_result_info) mutable
+        {
+          int http_status = 200;
+          FCGI::HttpResponse& response = *response_ptr;
+          const FCGI::HttpRequest& request = request_holder->request();
 
-      AdServer::SetUidController::SetUidPtr set_uid;
+          try
+          {
+            AdServer::SetUidController::SetUidPtr set_uid =
+              set_uid_controller_->generate_if_allowed(
+                request_info.user_status,
+                request_info.cookie_user_id,
+                false);
 
-      if (click_info.ccid() != 0 || click_info.creative_id() != 0)
+            if(got_click_url && (
+              (!request_info.match_user_id.is_null() && !(
+                request_info.match_user_id ==
+                  AdServer::Commons::PROBE_USER_ID)) ||
+              (!request_info.cookie_user_id.is_null() && !(
+                request_info.cookie_user_id ==
+                  AdServer::Commons::PROBE_USER_ID)) ||
+              set_uid))
+            {
+              try
+              {
+                task_runner_->enqueue_task(new MatchClickChannelsTask(
+                  this,
+                  set_uid ?
+                    set_uid->client_id.uuid() :
+                    request_info.match_user_id,
+                  request_info.cookie_user_id,
+                  GrpcAlgs::unpack_time(click_info.time()),
+                  click_result_info.campaign_id(),
+                  click_result_info.advertiser_id(),
+                  request_info.peer_ip,
+                  request_info.markers));
+              }
+              catch (const Generics::TaskRunner::Overflow& ex)
+              {
+                logger()->sstream(
+                  Logging::Logger::ERROR,
+                  Aspect::CLICK_FRONTEND,
+                  "ADS-IMPL-198") << FUN <<
+                  ": the limit of simultaneous matching tasks has been "
+                  "reached: " << ex.what();
+              }
+            }
+
+            if(set_uid)
+            {
+              FrontendCommons::add_UID_cookie(
+                response,
+                request,
+                *cookie_manager_,
+                set_uid->client_id.str());
+            }
+
+            if(common_config_->ResponseHeaders().present())
+            {
+              FrontendCommons::add_headers(
+                *(common_config_->ResponseHeaders()),
+                response);
+            }
+
+            FrontendCommons::CORS::set_headers(request, response);
+
+            bool instantiated = false;
+
+            if(request_info.use_click_template)
+            {
+              try
+              {
+                Commons::TextTemplate_var templ =
+                  template_files_->get(click_template_file_);
+
+                typedef std::map<String::SubString, std::string> ArgMap;
+                ArgMap args_cont;
+                if(!request_info.preclick_url.empty())
+                {
+                  args_cont[Tokens::PRECLICK] = request_info.preclick_url;
+                }
+
+                if(got_click_url)
+                {
+                  args_cont[Tokens::CLICK_URL] = request_info.click_prefix +
+                    click_result_info.url();
+                }
+
+                String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
+                String::TextTemplate::DefaultValue args_with_default(&args);
+                String::TextTemplate::ArgsEncoder args_with_encoding(
+                  &args_with_default);
+                std::string response_content = templ->instantiate(
+                  args_with_encoding);
+
+                response.set_content_type_nocopy(
+                  FrontendCommons::ContentType::TEXT_HTML);
+                response.get_output_stream().write(
+                  response_content.data(),
+                  response_content.size());
+                http_status = 200;
+
+                instantiated = true;
+              }
+              catch(const eh::Exception& ex)
+              {
+                logger()->sstream(
+                  Logging::Logger::EMERGENCY,
+                  Aspect::CLICK_FRONTEND,
+                  "ADS-IMPL-?") <<
+                  FUN << ": eh::Exception has been caught: " << ex.what();
+              }
+            }
+
+            if(!instantiated)
+            {
+              if(got_click_url)
+              {
+                http_status = 302;
+                response.add_header_nocopy_name(
+                  Response::Header::LOCATION,
+                  request_info.click_prefix + click_result_info.url());
+
+                if(log_level() >= TraceLevel::MIDDLE)
+                {
+                  Stream::Error ostr;
+                  ostr << FUN << ": redirecting to " <<
+                    click_result_info.url();
+
+                  log(ostr.str(),
+                    TraceLevel::MIDDLE,
+                    Aspect::CLICK_FRONTEND);
+                }
+              }
+              else
+              {
+                log(String::SubString("DO NOT redirecting !"),
+                  TraceLevel::MIDDLE,
+                  Aspect::CLICK_FRONTEND);
+
+                http_status = 204;
+              }
+            }
+          }
+          catch(const eh::Exception& e)
+          {
+            http_status = 500;
+            Stream::Error ostr;
+            ostr << FUN << ": eh::Exception caught:" << e.what();
+
+            log(ostr.str(),
+              Logging::Logger::EMERGENCY,
+              Aspect::CLICK_FRONTEND);
+          }
+
+          response_writer->write(http_status, response_ptr);
+        };
+
+      if(click_info.ccid() != 0 || click_info.creative_id() != 0)
       {
         adserver::campaign_svcs::campaign_manager::GetClickUrlRequest
           click_url_request;
         *click_url_request.mutable_click_info() = click_info;
         click_url_request.set_service_index(request_info.campaign_manager_index);
 
-        auto click_url_response = AdServer::Grpc::sync_call<
-          adserver::campaign_svcs::campaign_manager::GetClickUrlResponse>(
-            [&](auto callback)
-            {
-              campaign_manager_->get_click_url(
-                click_url_request,
-                std::move(callback));
-            },
-            [](const grpc::Status& status)
-            {
-              Stream::Error ostr;
-              ostr << "CampaignManager::get_click_url(): gRPC call failed: "
-                "code=" << static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              throw Exception(ostr);
-            });
-
-        got_click_url = click_url_response.found();
-        click_result_info = click_url_response.click_result_info();
-
-        set_uid = set_uid_controller_->generate_if_allowed(
-          request_info.user_status,
-          request_info.cookie_user_id,
-          false);
-
-        if((!request_info.match_user_id.is_null() && !(
-              request_info.match_user_id == AdServer::Commons::PROBE_USER_ID)) ||
-           (!request_info.cookie_user_id.is_null() && !(
-              request_info.cookie_user_id == AdServer::Commons::PROBE_USER_ID)) ||
-           set_uid)
-        {
-          try
+        campaign_manager_->get_click_url(
+          click_url_request,
+          [this,
+            finish_response = std::move(finish_response),
+            FUN](
+              const grpc::Status& status,
+              const adserver::campaign_svcs::campaign_manager::
+                GetClickUrlResponse& click_url_response) mutable
           {
-            // delay match click channels
-            task_runner_->enqueue_task(new MatchClickChannelsTask(
-              this,
-              set_uid ? set_uid->client_id.uuid() : request_info.match_user_id,
-              request_info.cookie_user_id,
-              GrpcAlgs::unpack_time(click_info.time()),
-              click_result_info.campaign_id(),
-              click_result_info.advertiser_id(),
-              request_info.peer_ip,
-              request_info.markers));
-          }
-          catch (const Generics::TaskRunner::Overflow& ex)
-          {
-            logger()->sstream(
-              Logging::Logger::ERROR,
-              Aspect::CLICK_FRONTEND,
-              "ADS-IMPL-198") << FUN <<
-              ": the limit of simultaneous matching tasks has been reached: " <<
-              ex.what();
-          }
-        }
+            workers_->post(
+              [this,
+                status,
+                click_url_response,
+                finish_response = std::move(finish_response),
+                FUN]() mutable
+              {
+                try
+                {
+                  if(!status.ok())
+                  {
+                    throw_grpc_exception_(
+                      "CampaignManager::get_click_url()",
+                      status);
+                  }
+
+                  finish_response(
+                    click_url_response.found(),
+                    click_url_response.click_result_info());
+                }
+                catch(const eh::Exception& e)
+                {
+                  Stream::Error ostr;
+                  ostr << FUN << ": eh::Exception caught:" << e.what();
+
+                  log(ostr.str(),
+                    Logging::Logger::EMERGENCY,
+                    Aspect::CLICK_FRONTEND);
+
+                  adserver::campaign_svcs::campaign_manager::ClickResultInfo
+                    empty_click_result;
+                  finish_response(false, empty_click_result);
+                }
+              });
+          });
       }
       else
       {
-        set_uid = set_uid_controller_->generate_if_allowed(
-          request_info.user_status,
-          request_info.cookie_user_id,
-          false);
+        finish_response(false, click_result_info);
       }
 
-      if (set_uid)
-      {
-        FrontendCommons::add_UID_cookie(
-          response,
-          request,
-          *cookie_manager_,
-          set_uid->client_id.str());
-      }
-
-      if(common_config_->ResponseHeaders().present())
-      {
-        FrontendCommons::add_headers(
-          *(common_config_->ResponseHeaders()),
-          response);
-      }
-
-      FrontendCommons::CORS::set_headers(request, response);
-
-      bool instantiated = false;
-
-      if (request_info.use_click_template)
-      {
-        try
-        {
-          // instantiate click template
-          Commons::TextTemplate_var templ = template_files_->get(click_template_file_);
-
-          typedef std::map<String::SubString, std::string> ArgMap;
-          ArgMap args_cont;
-          if(!request_info.preclick_url.empty())
-          {
-            args_cont[Tokens::PRECLICK] = request_info.preclick_url;
-          }
-
-          if(got_click_url)
-          {
-            args_cont[Tokens::CLICK_URL] = request_info.click_prefix +
-              click_result_info.url();
-          }
-
-          String::TextTemplate::ArgsContainer<ArgMap> args(&args_cont);
-          String::TextTemplate::DefaultValue args_with_default(&args);
-          String::TextTemplate::ArgsEncoder args_with_encoding(
-            &args_with_default);
-          std::string response_content = templ->instantiate(
-            args_with_encoding);
-
-          response.set_content_type_nocopy(FrontendCommons::ContentType::TEXT_HTML);
-          response.get_output_stream().write(
-            response_content.data(), response_content.size());
-          http_status = 200;
-
-          instantiated = true;
-        }
-        catch(const eh::Exception& ex)
-        {
-          logger()->sstream(
-            Logging::Logger::EMERGENCY,
-            Aspect::CLICK_FRONTEND,
-            "ADS-IMPL-?") <<
-            FUN << ": eh::Exception has been caught: " << ex.what();
-        }
-      }
-
-      if(!instantiated)
-      {
-        if(got_click_url)
-        {
-          // do redirect to click_url
-          http_status = 302;
-          response.add_header_nocopy_name(
-            Response::Header::LOCATION,
-            request_info.click_prefix + click_result_info.url());
-
-          if(log_level() >= TraceLevel::MIDDLE)
-          {
-            Stream::Error ostr;
-            ostr << FUN << ": redirecting to " << click_result_info.url();
-
-            log(ostr.str(),
-              TraceLevel::MIDDLE,
-              Aspect::CLICK_FRONTEND);
-          }
-        }
-        else
-        {
-          log(String::SubString("DO NOT redirecting !"),
-            TraceLevel::MIDDLE,
-            Aspect::CLICK_FRONTEND);
-
-          http_status = 204;
-        }
-      }
+      return;
     }
     catch (const ForbiddenException& ex)
     {
@@ -932,66 +1077,90 @@ namespace AdServer
   {
     static const char* FUN = "ClickFrontend::match_click_channels_()";
 
-    // do trigger match
-    adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
-    bool trigger_match_result_present = false;
-
-    try
+    struct State: public std::enable_shared_from_this<State>
     {
-      adserver::channel_svcs::channel_server::MatchRequest channel_request;
-      channel_request.set_non_strict_word_match(false);
-      channel_request.set_non_strict_url_match(false);
-      channel_request.set_return_negative(false);
-      channel_request.set_simplify_page(false);
-      channel_request.set_fill_content(false);
-      channel_request.set_statuses("A", 2);
-      std::ostringstream keywords_ostr;
-      keywords_ostr << "poadclick poadclicka" << advertiser_id <<
-        " poadclickc" << campaign_id;
-      for(auto mit = markers.begin(); mit != markers.end(); ++mit)
+      ClickFrontend* self;
+      AdServer::Commons::UserId user_id;
+      AdServer::Commons::UserId cookie_user_id;
+      AdServer::Commons::UserId resolved_cookie_user_id;
+      Generics::Time now;
+      ::CORBA::ULong campaign_id;
+      ::CORBA::ULong advertiser_id;
+      std::string peer_ip;
+      std::list<std::string> markers;
+      adserver::channel_svcs::channel_server::MatchResponse trigger_match_result;
+      bool trigger_match_result_present = false;
+      AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var
+        history_match_result;
+
+      adserver::user_info_svcs::user_info_manager::MatchRequest
+      make_history_match_request(const AdServer::Commons::UserId& match_user_id)
       {
-        std::string base_trigger = std::string("poad") + *mit + "click";
-        keywords_ostr << " " << base_trigger <<
-          " " << base_trigger << "a" << advertiser_id <<
-          " " << base_trigger << "c" << campaign_id;
+        adserver::user_info_svcs::user_info_manager::MatchRequest request;
+        auto* match_params = request.mutable_match_params();
+        match_params->set_use_empty_profile(false);
+        match_params->set_silent_match(false);
+        match_params->set_no_match(false);
+        match_params->set_no_result(true);
+        match_params->set_ret_freq_caps(false);
+        match_params->set_provide_channel_count(false);
+        match_params->set_provide_persistent_channels(false);
+        match_params->set_change_last_request(false);
+        match_params->set_filter_contextual_triggers(false);
+        match_params->set_publishers_optin_timeout(
+          GrpcAlgs::pack_time(Generics::Time::ZERO));
+
+        auto* user_info = request.mutable_user_info();
+        user_info->set_user_id(GrpcAlgs::pack_user_id(match_user_id));
+        user_info->set_last_colo_id(-1);
+        user_info->set_request_colo_id(self->common_config_->colo_id());
+        user_info->set_current_colo_id(-1);
+        user_info->set_temporary(false);
+        user_info->set_time(now.tv_sec);
+
+        typedef std::set<ChannelMatch> ChannelMatchSet;
+        ChannelMatchSet page_channels;
+        std::transform(
+          trigger_match_result.matched_channels().page_channels().begin(),
+          trigger_match_result.matched_channels().page_channels().end(),
+          std::inserter(page_channels, page_channels.end()),
+          GetChannelTriggerId());
+
+        auto* page_channel_ids =
+          request.mutable_match_params()->mutable_page_channel_ids();
+        for(const auto& channel_match : page_channels)
+        {
+          auto* result = page_channel_ids->Add();
+          result->set_channel_id(channel_match.channel_id);
+          result->set_channel_trigger_id(channel_match.channel_trigger_id);
+        }
+
+        return request;
       }
 
-      channel_request.set_pwords(keywords_ostr.str());
-
-      trigger_match_result =
-        AdServer::ChannelSvcs::GrpcAlgs::channel_match(
-          *channel_client_,
-          channel_request);
-      trigger_match_result_present = true;
-    }
-    catch(const eh::Exception& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN <<
-        ": caught ChannelServerGrpcAsyncClient error: " <<
-        ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-117");
-    }
-
-    // resolve actual user id (cookies)
-    AdServer::Commons::UserId resolved_cookie_user_id = cookie_user_id;
-
-    assert(user_bind_client_);
-
-    // resolve cookie user id
-    try
-    {
-      // resolve cookie user id only if user id in params not equal to cookie user id
-      if(!cookie_user_id.is_null() && user_id != cookie_user_id)
+      void log_user_bind_error(const eh::Exception& ex)
       {
+        Stream::Error ostr;
+        ostr << FUN << ": caught UserBindClient exception: " << ex.what();
+        self->logger()->log(
+          ostr.str(),
+          Logging::Logger::ERROR,
+          Aspect::CLICK_FRONTEND,
+          "ADS-IMPL-109");
+      }
+
+      void resolve_cookie()
+      {
+        if(cookie_user_id.is_null() || user_id == cookie_user_id)
+        {
+          match_history_user();
+          return;
+        }
+
         const std::string cookie_external_id_str =
           std::string("c/") + cookie_user_id.to_string();
 
-        adserver::user_info_svcs::user_bind::GetUserIdRequest
-          get_request_info;
+        adserver::user_info_svcs::user_bind::GetUserIdRequest get_request_info;
         get_request_info.set_id(cookie_external_id_str);
         get_request_info.set_timestamp(GrpcAlgs::pack_time(now));
         get_request_info.set_silent(true);
@@ -1002,174 +1171,147 @@ namespace AdServer
         get_request_info.set_current_user_id(
           GrpcAlgs::pack_user_id(cookie_user_id));
 
-        auto prev_user_bind_info =
-          AdServer::UserInfoSvcs::sync_get_user_id(
-            user_bind_client_.get(),
-            get_request_info);
-
-        resolved_cookie_user_id =
-          GrpcAlgs::unpack_user_id(prev_user_bind_info.user_id());
-      }
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindClient::NotReady&)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindServer::NotReady";
-      logger()->log(ostr.str(),
-        Logging::Logger::EMERGENCY,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindClient::ChunkNotFound& )
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindClient::ChunkNotFound";
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const AdServer::UserInfoSvcs::UserBindClient::ImplementationException& ex)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught UserBindClient::ImplementationException: " <<
-        ex.what();
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CLICK_FRONTEND,
-        "ADS-IMPL-109");
-    }
-    catch(const CORBA::SystemException& e)
-    {
-      Stream::Error ostr;
-      ostr << FUN << ": caught CORBA::SystemException: " << e;
-      logger()->log(ostr.str(),
-        Logging::Logger::ERROR,
-        Aspect::CLICK_FRONTEND,
-        "ADS-ICON-6");
-    }
-
-    // do history match
-    AdServer::UserInfoSvcs::UserInfoMatcher::MatchResult_var history_match_result;
-
-    if(trigger_match_result_present &&
-       trigger_match_result.matched_channels().page_channels_size() != 0)
-    {
-      try
-      {
-        // call UIM only if any page channel matched
-        auto build_history_match_request =
-          [&](const AdServer::Commons::UserId& match_user_id)
-        {
-          adserver::user_info_svcs::user_info_manager::MatchRequest request;
-          auto* match_params = request.mutable_match_params();
-          match_params->set_use_empty_profile(false);
-          match_params->set_silent_match(false);
-          match_params->set_no_match(false);
-          match_params->set_no_result(true);
-          match_params->set_ret_freq_caps(false);
-          match_params->set_provide_channel_count(false);
-          match_params->set_provide_persistent_channels(false);
-          match_params->set_change_last_request(false);
-          match_params->set_filter_contextual_triggers(false);
-          match_params->set_publishers_optin_timeout(
-            GrpcAlgs::pack_time(Generics::Time::ZERO));
-
-          auto* user_info = request.mutable_user_info();
-          user_info->set_user_id(GrpcAlgs::pack_user_id(match_user_id));
-          user_info->set_last_colo_id(-1);
-          user_info->set_request_colo_id(common_config_->colo_id());
-          user_info->set_current_colo_id(-1);
-          user_info->set_temporary(false);
-          user_info->set_time(now.tv_sec);
-          return request;
-        };
-
-        typedef std::set<ChannelMatch> ChannelMatchSet;
-        ChannelMatchSet page_channels;
-
-        std::transform(
-          trigger_match_result.matched_channels().page_channels().begin(),
-          trigger_match_result.matched_channels().page_channels().end(),
-          std::inserter(page_channels, page_channels.end()),
-          GetChannelTriggerId());
-
-        if (user_id != AdServer::Commons::PROBE_USER_ID)
-        {
-          auto history_match_request = build_history_match_request(user_id);
-          auto* page_channel_ids =
-            history_match_request.mutable_match_params()->
-              mutable_page_channel_ids();
-          for(const auto& channel_match : page_channels)
+        auto self_state = shared_from_this();
+        self->user_bind_client_->get_user_id(
+          get_request_info,
+          [self_state](
+            const grpc::Status& status,
+            const adserver::user_info_svcs::user_bind::GetUserIdResponse&
+              response)
           {
-            auto* result = page_channel_ids->Add();
-            result->set_channel_id(channel_match.channel_id);
-            result->set_channel_trigger_id(channel_match.channel_trigger_id);
-          }
-          history_match_result =
-            AdServer::UserInfoSvcs::GrpcAlgs::history_match(
-              *user_info_client_,
-              history_match_request);
+            self_state->self->workers_->post(
+              [self_state, status, response]()
+              {
+                try
+                {
+                  if(!status.ok())
+                  {
+                    throw_user_bind_exception_(status);
+                  }
+                  self_state->resolved_cookie_user_id =
+                    GrpcAlgs::unpack_user_id(response.user_id());
+                }
+                catch(const eh::Exception& ex)
+                {
+                  self_state->log_user_bind_error(ex);
+                }
+                self_state->match_history_user();
+              });
+          });
+      }
+
+      void match_history_user()
+      {
+        if(!trigger_match_result_present ||
+          trigger_match_result.matched_channels().page_channels_size() == 0)
+        {
+          return;
         }
 
-        if (user_id != resolved_cookie_user_id && !resolved_cookie_user_id.is_null())
+        if(user_id == AdServer::Commons::PROBE_USER_ID)
         {
-          auto history_match_request =
-            build_history_match_request(resolved_cookie_user_id);
-          auto* page_channel_ids =
-            history_match_request.mutable_match_params()->
-              mutable_page_channel_ids();
-          for(const auto& channel_match : page_channels)
-          {
-            auto* result = page_channel_ids->Add();
-            result->set_channel_id(channel_match.channel_id);
-            result->set_channel_trigger_id(channel_match.channel_trigger_id);
-          }
-          adserver::user_info_svcs::user_info_manager::MatchResponse
-            history_match_response;
-          AdServer::UserInfoSvcs::GrpcAlgs::history_match(
-            *user_info_client_,
-            history_match_request,
-            history_match_response);
+          match_history_cookie();
+          return;
         }
-      }
-      catch(const UserInfoSvcs::UserInfoMatcher::ImplementationException& e)
-      {
-        Stream::Error ostr;
-        ostr << FUN <<
-          ": UserInfoSvcs::UserInfoMatcher::ImplementationException caught: " <<
-          e.description;
 
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::CLICK_FRONTEND,
-          "ADS-IMPL-112");
-      }
-      catch(const UserInfoSvcs::UserInfoMatcher::NotReady& e)
-      {
-        logger()->log(
-          String::SubString("UserInfoManager not ready for matching."),
-          TraceLevel::MIDDLE,
-          Aspect::CLICK_FRONTEND);
-      }
-      catch(const CORBA::SystemException& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN <<
-          ": Can't match history channels. Caught CORBA::SystemException: " <<
-          ex;
+        auto request = make_history_match_request(user_id);
+        auto self_state = shared_from_this();
+        self->user_info_client_->match(
+          request,
+          [self_state](
+            const grpc::Status& status,
+            const adserver::user_info_svcs::user_info_manager::MatchResponse&
+              response)
+          {
+            self_state->self->workers_->post(
+              [self_state, status, response]()
+              {
+                try
+                {
+                  if(!status.ok())
+                  {
+                    throw_user_info_exception_(
+                      "UserInfoManager::match()",
+                      status);
+                  }
+                  self_state->history_match_result =
+                    AdServer::UserInfoSvcs::GrpcAlgs::
+                      make_history_match_result(response);
+                }
+                catch(const UserInfoSvcs::UserInfoMatcher::
+                  ImplementationException& e)
+                {
+                  Stream::Error ostr;
+                  ostr << FUN << ": UserInfoSvcs::UserInfoMatcher::"
+                    "ImplementationException caught: " << e.description;
 
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::CLICK_FRONTEND,
-          "ADS-ICON-2");
+                  self_state->self->logger()->log(
+                    ostr.str(),
+                    Logging::Logger::EMERGENCY,
+                    Aspect::CLICK_FRONTEND,
+                    "ADS-IMPL-112");
+                }
+                catch(const UserInfoSvcs::UserInfoMatcher::NotReady&)
+                {
+                  self_state->self->logger()->log(
+                    String::SubString(
+                      "UserInfoManager not ready for matching."),
+                    TraceLevel::MIDDLE,
+                    Aspect::CLICK_FRONTEND);
+                }
+                self_state->match_history_cookie();
+              });
+          });
       }
 
-      try
+      void match_history_cookie()
+      {
+        if(user_id == resolved_cookie_user_id ||
+          resolved_cookie_user_id.is_null())
+        {
+          process_match();
+          return;
+        }
+
+        auto request = make_history_match_request(resolved_cookie_user_id);
+        auto self_state = shared_from_this();
+        self->user_info_client_->match(
+          request,
+          [self_state](const grpc::Status& status, const auto&)
+          {
+            self_state->self->workers_->post(
+              [self_state, status]()
+              {
+                if(!status.ok())
+                {
+                  try
+                  {
+                    throw_user_info_exception_(
+                      "UserInfoManager::match()",
+                      status);
+                  }
+                  catch(const eh::Exception& ex)
+                  {
+                    Stream::Error ostr;
+                    ostr << FUN << ": cookie history match failed: " <<
+                      ex.what();
+                    self_state->self->logger()->log(
+                      ostr.str(),
+                      Logging::Logger::EMERGENCY,
+                      Aspect::CLICK_FRONTEND,
+                      "ADS-IMPL-112");
+                  }
+                }
+                self_state->process_match();
+              });
+          });
+      }
+
+      void process_match()
       {
         adserver::campaign_svcs::campaign_manager::ProcessMatchRequestRequest
           process_match_request;
-        fill_match_request_info_(
+        self->fill_match_request_info_(
           *process_match_request.mutable_match_request_info(),
           user_id,
           now,
@@ -1177,36 +1319,95 @@ namespace AdServer
           history_match_result,
           peer_ip);
 
-        AdServer::Grpc::sync_call<
-          adserver::campaign_svcs::campaign_manager::ProcessMatchRequestResponse>(
-            [&](auto callback)
+        auto self_state = shared_from_this();
+        self->campaign_manager_->process_match_request(
+          process_match_request,
+          [self_state](const grpc::Status& status, const auto&)
+          {
+            self_state->self->workers_->post(
+              [self_state, status]()
+              {
+                if(!status.ok())
+                {
+                  Stream::Error ostr;
+                  ostr << FUN << ": Can't process match request. "
+                    "Possible problem with Campaignmanager. gRPC code=" <<
+                    static_cast<int>(status.error_code()) <<
+                    ", message=" << status.error_message();
+                  self_state->self->logger()->log(
+                    ostr.str(),
+                    Logging::Logger::EMERGENCY,
+                    Aspect::CLICK_FRONTEND,
+                    "ADS-ICON-4");
+                }
+              });
+          });
+      }
+    };
+
+    auto state = std::make_shared<State>();
+    state->self = this;
+    state->user_id = user_id;
+    state->cookie_user_id = cookie_user_id;
+    state->resolved_cookie_user_id = cookie_user_id;
+    state->now = now;
+    state->campaign_id = campaign_id;
+    state->advertiser_id = advertiser_id;
+    state->peer_ip = peer_ip.str();
+    state->markers = markers;
+
+    adserver::channel_svcs::channel_server::MatchRequest channel_request;
+    channel_request.set_non_strict_word_match(false);
+    channel_request.set_non_strict_url_match(false);
+    channel_request.set_return_negative(false);
+    channel_request.set_simplify_page(false);
+    channel_request.set_fill_content(false);
+    channel_request.set_statuses("A", 2);
+    std::ostringstream keywords_ostr;
+    keywords_ostr << "poadclick poadclicka" << advertiser_id <<
+      " poadclickc" << campaign_id;
+    for(auto mit = markers.begin(); mit != markers.end(); ++mit)
+    {
+      std::string base_trigger = std::string("poad") + *mit + "click";
+      keywords_ostr << " " << base_trigger <<
+        " " << base_trigger << "a" << advertiser_id <<
+        " " << base_trigger << "c" << campaign_id;
+    }
+    channel_request.set_pwords(keywords_ostr.str());
+
+    channel_client_->match(
+      channel_request,
+      [state](
+        const grpc::Status& status,
+        const adserver::channel_svcs::channel_server::MatchResponse& response)
+      {
+        state->self->workers_->post(
+          [state, status, response]()
+          {
+            try
             {
-              campaign_manager_->process_match_request(
-                process_match_request,
-                std::move(callback));
-            },
-            [](const grpc::Status& status)
+              if(!status.ok())
+              {
+                throw_grpc_exception_("ChannelServer::match()", status);
+              }
+              state->trigger_match_result = response;
+              state->trigger_match_result_present = true;
+            }
+            catch(const eh::Exception& ex)
             {
               Stream::Error ostr;
-              ostr << "CampaignManager::process_match_request(): "
-                "gRPC call failed: code=" <<
-                static_cast<int>(status.error_code()) <<
-                ", message=" << status.error_message();
-              throw Exception(ostr);
-            });
-      }
-      catch(const eh::Exception& ex)
-      {
-        Stream::Error ostr;
-        ostr << FUN << ": Can't process match request. "
-          "Possible problem with Campaignmanager. Caught Exception: " <<
-          ex.what();
-        logger()->log(ostr.str(),
-          Logging::Logger::EMERGENCY,
-          Aspect::CLICK_FRONTEND,
-          "ADS-ICON-4");
-      }
-    }
+              ostr << FUN <<
+                ": caught ChannelServerGrpcAsyncClient error: " <<
+                ex.what();
+              state->self->logger()->log(
+                ostr.str(),
+                Logging::Logger::EMERGENCY,
+                Aspect::CLICK_FRONTEND,
+                "ADS-IMPL-117");
+            }
+            state->resolve_cookie();
+          });
+      });
   }
 
   bool

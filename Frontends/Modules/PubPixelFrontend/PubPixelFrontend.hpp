@@ -5,9 +5,11 @@
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 
 #include <HTTP/Http.hpp>
 
@@ -17,7 +19,7 @@
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include "RequestInfoFiller.hpp"
 
@@ -28,7 +30,8 @@ namespace PubPixel
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
@@ -58,6 +61,12 @@ namespace PubPixel
      *
      * @return HTTP status code.
      */
+    void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
+
     void
     handle_request_(
       FCGI::HttpRequestHolder_var request_holder,
@@ -124,6 +133,7 @@ namespace PubPixel
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    FrontendCommons::FrontendWorkers_var workers_;
   };
 } // namespace PubPixel
 } // namespace AdServer

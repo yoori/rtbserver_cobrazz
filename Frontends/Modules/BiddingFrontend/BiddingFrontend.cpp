@@ -774,12 +774,6 @@ namespace AdServer::Bidding
         "Bidding::Frontend",
         Aspect::BIDDING_FRONTEND,
         0),
-      /*
-      FrontendCommons::FrontendTaskPool(
-        this->callback(),
-        frontend_config->get().BidFeConfiguration()->threads(),
-        frontend_config->get().BidFeConfiguration()->max_pending_tasks()),
-      */
       frontend_config_(ReferenceCounting::add_ref(frontend_config)),
       common_module_(ReferenceCounting::add_ref(common_module)),
       colo_id_(0),

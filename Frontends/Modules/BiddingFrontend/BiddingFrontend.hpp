@@ -37,7 +37,6 @@
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
 
 #include "GroupLogger.hpp"
 #include "CampaignManagerTypes.hpp"
@@ -63,7 +62,6 @@ namespace AdServer::Bidding
     private GroupLogger,
     public virtual FrontendCommons::FrontendInterface,
     public Generics::CompositeActiveObject,
-    //public FrontendCommons::FrontendTaskPool,
     public virtual ReferenceCounting::AtomicImpl
   {
     using GroupLogger::logger;

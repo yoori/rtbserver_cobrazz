@@ -7,8 +7,10 @@
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Generics/FileCache.hpp>
 #include <Generics/Uuid.hpp>
 #include <GeoIP/IPMap.hpp>
@@ -25,7 +27,7 @@
 #include <ChannelServerGrpc.grpc.pb.h>
 #include <UserInfoManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -42,7 +44,8 @@ namespace AdServer::Action
   class Frontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
     typedef FrontendCommons::HTTPExceptions::Exception Exception;
@@ -79,6 +82,12 @@ namespace AdServer::Action
      *
      * @return HTTP status code.
      */
+    virtual void
+    handle_request(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept override;
+
     virtual void
     handle_request_(
       FCGI::HttpRequestHolder_var request_holder,
@@ -262,6 +271,7 @@ namespace AdServer::Action
     std::shared_ptr<AdServer::UserInfoSvcs::UserBindServerGrpcAsyncClient>
       user_bind_client_;
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
+    FrontendCommons::FrontendWorkers_var workers_;
   };
 }
 

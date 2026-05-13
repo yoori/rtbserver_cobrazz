@@ -1,40 +1,42 @@
 #pragma once
 
+#include <memory>
+
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Logger/ActiveObjectCallback.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/DistributorLogger.hpp>
 
+#include <Generics/CompositeActiveObject.hpp>
+
 #include <Frontends/FrontendCommons/HTTPUtils.hpp>
-// #include <Frontends/FrontendCommons/CookieManager.hpp>
 #include <Commons/TextTemplateCache.hpp>
-#include <Commons/Grpc/GrpcSync.hpp>
 #include <CampaignManagerGrpc.grpc-client.hpp>
 #include <Frontends/FrontendCommons/CampaignManagerGrpcClientConfig.hpp>
 #include <Frontends/FrontendCommons/HTTPExceptions.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+
+#include "ContentFrontendWorkers.hpp"
 
 namespace AdServer
 {
   class ContentFrontend:
     public FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public ReferenceCounting::AtomicImpl
   {
   public:
-    typedef Configuration::FeConfig::CommonFeConfiguration_type
-      CommonFeConfiguration;
-    typedef Configuration::FeConfig::ContentFeConfiguration_type
-      ContentFeConfiguration;
+    using CommonFeConfiguration =
+      Configuration::FeConfig::CommonFeConfiguration_type;
+    using ContentFeConfiguration =
+      Configuration::FeConfig::ContentFeConfiguration_type;
 
-    typedef ReferenceCounting::SmartPtr<ContentFrontend>
-      ContentFrontend_var;
-
-  public:
-    static ContentFrontend_var instance;
+    using ContentFrontend_var =
+      ReferenceCounting::SmartPtr<ContentFrontend>;
 
   public:
     ContentFrontend(
@@ -42,28 +44,28 @@ namespace AdServer
       Logging::Logger* logger)
       /*throw(eh::Exception)*/;
 
-    virtual void
-    init() /*throw(eh::Exception)*/;
+    void
+    init() override /*throw(eh::Exception)*/;
 
-    virtual bool
+    bool
     will_handle(
-      const String::SubString& uri) noexcept;
+      const String::SubString& uri) noexcept override;
 
-    virtual void
-    handle_request_noparams_(
+    void
+    handle_request_noparams(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
-    virtual void
-    handle_request_(
+    void
+    handle_request(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
     /** Performs shutdown for the module child process. */
-    virtual void
-    shutdown() noexcept;
+    void
+    shutdown() noexcept override;
 
     bool
     log(const String::SubString& text,
@@ -73,8 +75,8 @@ namespace AdServer
       noexcept;
 
   private:
-    typedef Commons::TextTemplateCacheConfiguration<
-      Commons::TextTemplate>::Exception Exception;
+    using Exception = Commons::TextTemplateCacheConfiguration<
+      Commons::TextTemplate>::Exception;
 
     struct TraceLevel
     {
@@ -86,10 +88,10 @@ namespace AdServer
       };
     };
 
-    typedef std::unique_ptr<CommonFeConfiguration> CommonConfigPtr;
-    typedef std::unique_ptr<ContentFeConfiguration> ConfigPtr;
+    using CommonConfigPtr = std::unique_ptr<CommonFeConfiguration>;
+    using ConfigPtr = std::unique_ptr<ContentFeConfiguration>;
 
-    typedef std::map<std::string, std::string> TokenValueMap;
+    using TokenValueMap = std::map<std::string, std::string>;
 
     struct TemplateRule
     {
@@ -97,88 +99,55 @@ namespace AdServer
       std::string resource_url_prefix;
     };
 
-    typedef std::list<std::string> StringList;
+    using StringList = std::list<std::string>;
 
-    typedef Generics::GnuHashTable<
-      Generics::SubStringHashAdapter, TemplateRule>
-      TemplateRuleMap;
+    using TemplateRuleMap = Generics::GnuHashTable<
+      Generics::SubStringHashAdapter, TemplateRule>;
 
   private:
     class CreativesUpdater :
       public Commons::TextTemplateCacheConfiguration<
         Commons::TextTemplate>::FarUpdater
     {
-      typedef Commons::TextTemplateCacheConfiguration<
-        Commons::TextTemplate> ConfigType;
-      typedef ConfigType::Holder Holder;
-      typedef ConfigType::Exception Exception;
+      using ConfigType = Commons::TextTemplateCacheConfiguration<
+        Commons::TextTemplate>;
+      using Holder = ConfigType::Holder;
+      using Exception = ConfigType::Exception;
 
-      virtual ~CreativesUpdater() noexcept {}
+      ~CreativesUpdater() noexcept override;
 
-      AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient&
+      std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
         campaign_manager_;
     public:
 
       CreativesUpdater(
-        AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient&
+        std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
           campaign_manager)
-        noexcept
-        : campaign_manager_(campaign_manager)
-      {}
+        noexcept;
 
-      virtual Holder
-      far_update(const char* file, const char* service_index) /*throw(Exception)*/
-      {
-        try
-        {
-          adserver::campaign_svcs::campaign_manager::GetFileRequest request;
-          request.set_file_name(file);
-          if(service_index)
-          {
-            request.set_service_index(service_index);
-          }
-
-          const auto response = AdServer::Grpc::sync_call<
-            adserver::campaign_svcs::campaign_manager::GetFileResponse>(
-              [this, &request](auto callback)
-              {
-                campaign_manager_.get_file(request, std::move(callback));
-              },
-              [](const grpc::Status& status)
-              {
-                Stream::Error ostr;
-                ostr << "CampaignManager get_file failed: code=" <<
-                  static_cast<int>(status.error_code()) <<
-                  ", message=" << status.error_message();
-                throw Exception(ostr);
-              });
-
-          String::SubString file_body(
-            response.file().data(),
-            response.file().size());
-          Generics::Time now = Generics::Time::get_time_of_day();
-          return new ConfigType::TextTemplateHolder(
-            Commons::TextTemplate_var(new Commons::TextTemplate(file_body)),
-            now,
-            now,
-            file_body.size());
-        }
-        catch (const eh::Exception& e)
-        {
-          Stream::Error ostr;
-          ostr << "CreativesUpdater::far_update(): caugth eh::Exception: "
-            << e.what();
-          throw Exception(ostr);
-        }
-      }
+      Holder
+      far_update(const char* file, const char* service_index)
+        override /*throw(Exception)*/;
     };
 
-    virtual ~ContentFrontend() noexcept {};
+    ~ContentFrontend() noexcept override = default;
 
     int
     handle_request_(
       const FCGI::HttpRequest& request,
       FCGI::HttpResponse& response)
+      noexcept;
+
+    void
+    handle_request_noparams_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept;
+
+    void
+    handle_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
       noexcept;
 
     void parse_configs_() /*throw(Exception)*/;
@@ -197,6 +166,7 @@ namespace AdServer
 
     std::shared_ptr<AdServer::CampaignSvcs::CampaignManagerGrpcAsyncClient>
       campaign_manager_;
+    ContentFrontendWorkers_var workers_;
     Commons::TextTemplateCache_var template_files_;
   };
 

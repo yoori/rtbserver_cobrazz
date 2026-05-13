@@ -7,6 +7,7 @@
 #include <eh/Exception.hpp>
 
 #include <ReferenceCounting/AtomicImpl.hpp>
+#include <Generics/CompositeActiveObject.hpp>
 #include <Generics/ActiveObject.hpp>
 #include <Generics/Uuid.hpp>
 #include <Logger/Logger.hpp>
@@ -27,7 +28,7 @@
 #include <Frontends/FrontendCommons/UserBindClientConfig.hpp>
 #include <Frontends/FrontendCommons/HttpResponse.hpp>
 #include <Frontends/FrontendCommons/FrontendInterface.hpp>
-#include <Frontends/FrontendCommons/FrontendTaskPool.hpp>
+#include <Frontends/FrontendCommons/FrontendWorkers.hpp>
 
 #include <xsd/Frontends/FeConfig.hpp>
 
@@ -43,7 +44,8 @@ namespace AdServer
   class ClickFrontend:
     private FrontendCommons::HTTPExceptions,
     private Logging::LoggerCallbackHolder,
-    public FrontendCommons::FrontendTaskPool,
+    public virtual FrontendCommons::FrontendInterface,
+    public Generics::CompositeActiveObject,
     public virtual ReferenceCounting::AtomicImpl
   {
   public:
@@ -78,17 +80,17 @@ namespace AdServer
      *
      * @return HTTP status code.
      */
-    virtual void
-    handle_request_(
+    void
+    handle_request(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
-    virtual void
-    handle_request_noparams_(
+    void
+    handle_request_noparams(
       FCGI::HttpRequestHolder_var request_holder,
       FCGI::BaseHttpResponseWriter_var response_writer)
-      noexcept;
+      noexcept override;
 
     /** Performs initialization for the module child process. */
     virtual void
@@ -132,6 +134,18 @@ namespace AdServer
   private:
     virtual
     ~ClickFrontend() noexcept;
+
+    void
+    handle_request_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept;
+
+    void
+    handle_request_noparams_(
+      FCGI::HttpRequestHolder_var request_holder,
+      FCGI::BaseHttpResponseWriter_var response_writer)
+      noexcept;
 
     void
     parse_config_() /*throw(Exception)*/;
@@ -186,6 +200,7 @@ namespace AdServer
     std::shared_ptr<AdServer::Grpc::GrpcExecutor> grpc_executor_;
     std::shared_ptr<AdServer::UserInfoSvcs::UserInfoManagerGrpcAsyncClient>
       user_info_client_;
+    FrontendCommons::FrontendWorkers_var workers_;
 
     Generics::StringHashAdapter click_template_file_;
     Commons::TextTemplateCache_var template_files_;
